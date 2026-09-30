@@ -357,7 +357,6 @@
 /* ─── Row Layout ──────────────────────────────────────────────────────────── */
 .row { border-bottom: 1px solid var(--border-2); transition: background 0.2s ease; }
 .row:last-child { border-bottom: none; }
-.rowSelected { background: rgba(var(--blueprint-blue-rgb), 0.05); }
 
 .rowMain { display: flex; align-items: center; padding: var(--admin-row-pad-y) 1.5rem; min-height: var(--admin-row-min); transition: background 0.12s ease; }
 /* Touch press feedback (compact stays visually unchanged — min-height dominates) */
@@ -601,7 +600,6 @@
   border-bottom-color: var(--home-line-strong);
 }
 :global([data-admin-kit]) .row { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .rowSelected,
 :global([data-admin-kit]) .rowMain:active { background: var(--home-olive-soft); }
 :global([data-admin-kit]) .primaryCell {
   font-family: var(--font-sans, system-ui, sans-serif);

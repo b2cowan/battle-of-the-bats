@@ -34,7 +34,7 @@
     "legacy": 1
   },
   "app/[orgSlug]/admin/admin-common.module.css": {
-    "kitScope": 46
+    "kitScope": 45
   },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
     "kitScope": 130
@@ -154,14 +154,6 @@
     "kx": 2,
     "helpers": 2
   },
-  "app/[orgSlug]/admin/tournaments/communication/communication.module.css": {
-    "kitScope": 52
-  },
-  "app/[orgSlug]/admin/tournaments/communication/page.tsx": {
-    "kx": 7,
-    "helpers": 1,
-    "legacy": 1
-  },
   "app/[orgSlug]/admin/tournaments/dashboard/dashboard.module.css": {
     "kitScope": 207
   },
@@ -175,13 +167,6 @@
   "app/[orgSlug]/admin/tournaments/divisions/page.tsx": {
     "kx": 21,
     "helpers": 1
-  },
-  "app/[orgSlug]/admin/tournaments/registrations/page.tsx": {
-    "kx": 14,
-    "helpers": 1
-  },
-  "app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css": {
-    "kitScope": 233
   },
   "app/[orgSlug]/admin/tournaments/rules/RulesAdmin.tsx": {
     "useAdminKit": 1,

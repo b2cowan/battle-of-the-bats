@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-30T02:58:28.150Z",
+  "generated": "2026-09-30T20:33:24.477Z",
   "entries": {
     "admin-hub|361|tap-floor|a·Public site": {
       "reason": null,
@@ -6785,26 +6785,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-communication|361|tap-floor|button·New Message": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-t-communication|361|tap-floor|button·Site Posts": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-communication|361|tap-floor|button·Emails": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-communication|361|tap-floor|button·Active": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-communication|361|tap-floor|button·Deleted": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
     "admin-t-communication|361|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -6932,62 +6912,6 @@
     "admin-t-registrations|361|control-width|button·Export and import options": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|361|tap-floor|select·U11 GirlsU13 BoysU15 Open": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|361|tap-floor|button·Select many registrations": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|361|control-width|button·Select many registrations": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|361|tap-floor|button·Swap mode": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|361|control-width|button·Swap mode": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|361|tap-floor|button·Randomize slots": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|361|control-width|button·Randomize slots": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|361|tap-floor|button·13 teams past due on payment — Accepted ": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "admin-t-registrations|361|tap-floor|button·10 teams missing required info — Require": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "admin-t-registrations|361|tap-floor|button·2 teams waiting for review — New registr": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "admin-t-registrations|361|tap-floor|button·Close Registration": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-t-registrations|361|tap-floor|button·<button>": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-registrations|361|control-width|button·<button>": {
-      "reason": null,
-      "detail": "24px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|361|tap-floor|button·No Slots": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
     },
     "admin-t-registrations|361|tap-floor|a·2 games to finalize": {
       "reason": null,
@@ -7841,26 +7765,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-communication|390|tap-floor|button·New Message": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-t-communication|390|tap-floor|button·Site Posts": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-communication|390|tap-floor|button·Emails": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-communication|390|tap-floor|button·Active": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-communication|390|tap-floor|button·Deleted": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
     "admin-t-communication|390|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -7988,62 +7892,6 @@
     "admin-t-registrations|390|control-width|button·Export and import options": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|tap-floor|select·U11 GirlsU13 BoysU15 Open": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|390|tap-floor|button·Select many registrations": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|390|control-width|button·Select many registrations": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|tap-floor|button·Swap mode": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|390|control-width|button·Swap mode": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|tap-floor|button·Randomize slots": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|390|control-width|button·Randomize slots": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|tap-floor|button·13 teams past due on payment — Accepted ": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "admin-t-registrations|390|tap-floor|button·10 teams missing required info — Require": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "admin-t-registrations|390|tap-floor|button·2 teams waiting for review — New registr": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "admin-t-registrations|390|tap-floor|button·Close Registration": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-t-registrations|390|tap-floor|button·<button>": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-registrations|390|control-width|button·<button>": {
-      "reason": null,
-      "detail": "24px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|tap-floor|button·No Slots": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
     },
     "admin-t-registrations|390|tap-floor|a·2 games to finalize": {
       "reason": null,
@@ -9025,26 +8873,6 @@
       "reason": null,
       "detail": "38px tall (floor 44)"
     },
-    "admin-t-communication|768|tap-floor|button·New Message": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-t-communication|768|tap-floor|button·Site Posts": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-communication|768|tap-floor|button·Emails": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-communication|768|tap-floor|button·Active": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-communication|768|tap-floor|button·Deleted": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
     "admin-t-communication|768|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -9304,54 +9132,6 @@
     "admin-t-registrations|768|control-width|button·Export and import options": {
       "reason": null,
       "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|768|control-width|a·Configure registration questions": {
-      "reason": null,
-      "detail": "31px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|768|tap-floor|select·U11 GirlsU13 BoysU15 Open": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-registrations|768|tap-floor|button·Select many registrations": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-registrations|768|tap-floor|button·Swap mode": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-registrations|768|tap-floor|button·Randomize slots": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-registrations|768|tap-floor|button·13 teams past due on payment — Accepted ": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-registrations|768|tap-floor|button·10 teams missing required info — Require": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-registrations|768|tap-floor|button·2 teams waiting for review — New registr": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-registrations|768|tap-floor|button·Close Registration": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-t-registrations|768|tap-floor|button·<button>": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-registrations|768|control-width|button·<button>": {
-      "reason": null,
-      "detail": "24px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|768|tap-floor|button·No Slots": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
     },
     "admin-t-registrations|768|tap-floor|a·2 games to finalize": {
       "reason": null,

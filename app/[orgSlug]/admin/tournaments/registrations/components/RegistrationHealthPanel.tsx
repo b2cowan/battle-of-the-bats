@@ -1,10 +1,20 @@
 'use client';
 
+/**
+ * REGISTRATION HEALTH — the first row of Teams' "At a glance" card (Tournament admin redesign Stage 2,
+ * T1; the /design review's D3 and D11). Closed, it is one line of fact: the score WITH ITS SCALE as the
+ * row's lead mark ("78/100" — alone, "78" can read as 78 teams), and a caption that says only what no
+ * neighbour says: the teams waiting for a decision are the review band's and the division menu's, the
+ * money is the Payments row's. It is the only row that covers every division, and says so. Opened (in
+ * place), it is today's panel: the four tiles and the issues, each opening the teams behind it.
+ */
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, ChevronDown, Info, Lock, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, Lock, ShieldAlert } from 'lucide-react';
 import type { RegistrationAttentionKey } from '@/lib/registration-attention';
 import type { RegistrationHealthIssue, RegistrationHealthMetrics } from '@/lib/registration-health';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
+import { TEAMS_WORDS } from '@/lib/registration-words';
+import GlanceRow from './GlanceRow';
 import styles from '../teams-admin.module.css';
 
 type KpiTone = 'good' | 'warning' | 'danger' | 'neutral';
@@ -15,41 +25,39 @@ interface RegistrationHealthPanelProps {
   capacityTotal: number;
   /** Accepted teams within those same capacity-bearing divisions. */
   capacityAccepted: number;
-  defaultOpen?: boolean;
   onJumpToBucket: (key: RegistrationAttentionKey) => void;
   onJumpToCapacity: (divisionId: string) => void;
   onUpgrade: () => void;
+}
+
+/** The caption's facts, in the order they cost an organizer: at most two, each said once. */
+function healthCaption(m: RegistrationHealthMetrics): string {
+  const facts: string[] = [];
+  if (m.missingEmail > 0) facts.push(TEAMS_WORDS.missingEmail(m.missingEmail));
+  if (m.missingIntake > 0) facts.push(TEAMS_WORDS.missingInfo(m.missingIntake));
+  if (m.unplaced > 0) facts.push(TEAMS_WORDS.withoutSpot(m.unplaced));
+  if (m.capacityGaps.length > 0) facts.push(TEAMS_WORDS.shortOfTeams(m.capacityGaps.length));
+  return [TEAMS_WORDS.healthScope, ...(facts.length > 0 ? facts.slice(0, 2) : [TEAMS_WORDS.healthNothing])].join(' · ');
 }
 
 export default function RegistrationHealthPanel({
   metrics,
   capacityTotal,
   capacityAccepted,
-  defaultOpen = true,
   onJumpToBucket,
   onJumpToCapacity,
   onUpgrade,
 }: RegistrationHealthPanelProps) {
-  // "See it live" sandbox — false for every real org, so nothing below changes for a customer.
+  // "See it live" sandbox — false for every real org. In the demo this row IS the tour's destination
+  // (step 5, "Go back three weeks"), so it opens there, as it always has; whether the tour should still
+  // open it is /demos' call (F46), not this build's. A real customer's row opens closed.
   const isSandbox = useIsSandbox();
-  /**
-   * In the demo this panel IS the destination: tour step 5 ("Go back three weeks") lands here to
-   * show the week's work, and a collapsed strip reading "Registration Health" hides the whole
-   * argument behind a click nobody knows to make — the same trap the schedule-health panel
-   * already escaped (plan build note 31). A real customer keeps the page's own default.
-   */
-  const [expanded, setExpanded] = useState(isSandbox || defaultOpen);
+  const [open, setOpen] = useState(isSandbox);
 
   if (!metrics.hasTeams) return null;
 
-  const scoreClass = metrics.tone === 'good' ? styles.regHealthScoreGood
-    : metrics.tone === 'warning' ? styles.regHealthScoreWarning
-      : metrics.tone === 'danger' ? styles.regHealthScoreDanger
-        : styles.regHealthScoreNeutral;
-
   const hasCapacity = capacityTotal > 0;
   const capacityPct = hasCapacity ? Math.round((capacityAccepted / capacityTotal) * 100) : null;
-  const teamsValue = String(metrics.accepted);
   const teamsDetail = hasCapacity
     ? `${capacityAccepted}/${capacityTotal} · ${capacityPct}% filled`
     : metrics.pending > 0 || metrics.waitlist > 0
@@ -69,35 +77,18 @@ export default function RegistrationHealthPanel({
   const needsActionCount = metrics.pending + metrics.unplaced + metrics.missingIntake;
 
   return (
-    <details
-      className={styles.regHealthPanel}
-      open={expanded}
-      onToggle={event => setExpanded(event.currentTarget.open)}
-      // Inert hook for the sandbox tour's "Go back three weeks" beat. Safe to ring: unlike the
-      // panels that burned the first tour, this one renders whenever the tournament has teams,
-      // and the demo's registration-week seed guarantees it does.
-      data-sandbox-tour="registration-health"
-    >
-      <summary className={styles.regHealthSummary} aria-label={`${expanded ? 'Collapse' : 'Expand'} Registration Health`}>
-        <div className={styles.regHealthHeader}>
-          <div>
-            <h4>Registration Health</h4>
-            <p>{metrics.teamsTotal} team{metrics.teamsTotal === 1 ? '' : 's'} in the pipeline</p>
-          </div>
-        </div>
-        <div className={`${styles.regHealthScore} ${scoreClass}`}>
-          <span>{metrics.score}</span>
-          <small>/100</small>
-        </div>
-        <span className={styles.regHealthToggle}>
-          <span>{expanded ? 'Hide' : 'Show'}</span>
-          <ChevronDown size={14} aria-hidden />
-        </span>
-      </summary>
-
-      <div className={styles.regHealthBody}>
+    // The demo tour's anchor rides the WHOLE row — the closed line and, opened, its tiles — so the
+    // tour's ring and the marketing picture (lib/marketing-shots.ts) still frame the panel.
+    <div className={styles.glanceItem} data-sandbox-tour="registration-health">
+      <GlanceRow
+        lead={<>{metrics.score}<small>/100</small></>}
+        title={TEAMS_WORDS.health}
+        caption={healthCaption(metrics)}
+        open={open}
+        onToggle={() => setOpen(o => !o)}
+      >
         <div className={styles.regHealthKpiGrid}>
-          <Kpi label="Teams" value={teamsValue} detail={teamsDetail} tone={teamsTone} />
+          <Kpi label="Teams" value={String(metrics.accepted)} detail={teamsDetail} tone={teamsTone} />
           <Kpi
             label="Missing email"
             value={String(metrics.missingEmail)}
@@ -142,12 +133,12 @@ export default function RegistrationHealthPanel({
           </div>
         ) : (
           <div className={styles.regHealthGood}>
-            <CheckCircle2 size={14} />
+            <CheckCircle2 size={14} aria-hidden />
             <span>No registration health issues found.</span>
           </div>
         )}
-      </div>
-    </details>
+      </GlanceRow>
+    </div>
   );
 }
 
@@ -164,18 +155,14 @@ function Kpi({
   return (
     <button
       type="button"
-      className={styles.regHealthKpi}
+      className={styles.glanceTile}
       data-tone={tone === 'neutral' ? undefined : tone}
       onClick={onClick}
       disabled={!onClick}
-      style={!onClick ? { cursor: 'default' } : undefined}
     >
-      {locked && (
-        <span className={styles.regHealthKpiLock}>
-          <Lock size={9} style={{ verticalAlign: '-1px', marginRight: '2px' }} aria-hidden />
-          Plus
-        </span>
-      )}
+      {/* The padlock alone: the tile's own line names the plan in full ("Tournament Plus") — the brand
+          never shortens a plan to "Plus". */}
+      {locked && <span className={styles.regHealthKpiLock}><Lock size={11} aria-label="Locked" /></span>}
       <span>{label}</span>
       <strong>{value}</strong>
       <small>{detail}</small>

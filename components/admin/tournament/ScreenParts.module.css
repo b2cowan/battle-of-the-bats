@@ -1,0 +1,59 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   The redesigned tournament screens' small shared parts (ScreenParts.tsx). TOKENS ONLY — this folder
+   is held by scripts/check-public-tokens.mjs.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* A record's block: a hairline above, its heading inside (the drawing's 16/700). */
+.recordSection { padding: 0.9rem 0; border-top: 1px solid var(--home-line); }
+.recordSection:first-child { border-top: 0; padding-top: 0.25rem; }
+/* The body face, set explicitly: the global h1–h6 rule would draw it in the display face. */
+.recordHeading {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+.recordText { margin: 0 0 0.6rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+.recordActions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* A plain worded button inside a record (Reject, Resend the access link, See who it reached) — the
+   drawing's ink, not olive: the olive is a row's one worded action, the lime a screen's one main one. */
+.plainButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 38px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.plainButton:hover { background: var(--home-olive-soft); }
+.plainButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.plainButton:disabled { opacity: 0.55; cursor: default; }
+@media (max-width: 768px) { .plainButton { min-height: var(--tap-min, 44px); } }
+
+/* The product's own checkbox (globals.css draws it at 16px), at the drawing's 22px with its tick scaled. */
+input[type='checkbox'].check22 { width: 22px; height: 22px; flex: none; margin: 0; border-radius: 5px; }
+input[type='checkbox'].check22::before { width: 6px; height: 11px; border-width: 0 2.5px 2.5px 0; }
+
+/* The title band's worded button: labelled at a desk, a 44px icon on a phone (Stage 1's form). */
+.headerButton { display: inline-flex; align-items: center; gap: 0.35rem; }
+@media (max-width: 760px) {
+  .headerButtonLabel { display: none; }
+  .headerButton { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); justify-content: center; padding: 0; }
+}
+
+/* A worded kit button inside a record (Accept) takes the admin's 38px at a desk, the 44px floor on touch. */
+.recordSection :global(.btn) { min-height: 38px; }
+@media (max-width: 768px) { .recordSection :global(.btn) { min-height: var(--tap-min, 44px); } }

@@ -99,6 +99,23 @@ export const POST = withObservability(async (req: Request) => {
   try {
     const { action, id, data } = await req.json();
 
+    // ── preview-recipients (A14/A15): the composer's live count — a DRY RUN of the send's own rule
+    // with the same targeting and the same gate, so the number the organizer reads and the number the
+    // send reaches are one definition. Writes nothing and emails no one.
+    if (action === 'preview-recipients') {
+      if (!data?.tournamentId) return NextResponse.json({ error: 'Missing tournamentId.' }, { status: 400 });
+      const denied = scopeGuard(ctx, data.tournamentId);
+      if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
+      if (wrongOrg) return wrongOrg;
+      const targeting = (data.targeting ?? null) as RecipientTargeting | null;
+      if (usesAdvancedTargeting(targeting) && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
+        return NextResponse.json({ error: requiresTournamentPlusCopy('targeted_tournament_announcements') }, { status: 403 });
+      }
+      const recipients = await resolveRecipients(data.tournamentId, targeting);
+      return NextResponse.json({ count: recipients.length });
+    }
+
     // ── save (create new communication) ────────────────────────────────────
     if (action === 'save') {
       if (!data?.tournamentId) return NextResponse.json({ error: 'Missing tournamentId.' }, { status: 400 });

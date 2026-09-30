@@ -1,2858 +1,216 @@
-﻿/* ─── Teams-Specific Styles ───────────────────────────────────────────────── */
-/* Common styles live in ../admin-common.module.css                           */
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   TEAMS — the tournament organizer's registration desk (Tournament admin redesign Stage 2, ruled
+   2026-09-30, hub v16). Rebuilt on the admin kit, so the old look is RETIRED here, not restated: no
+   `[data-admin-kit]` layer, no legacy literal. The shared parts are the kit's and are not restated —
+   the row recipe, band, frame and table (`RepKit`), the chip and callout, the form window
+   (`KitDialog`) and its fields (`ClubKit`), the page header (`TournamentAdminHeader`). What lives here
+   is Teams' own: the toolbar line, the "At a glance" card, the selection and swap rows (A17), the
+   docked bulk bar, the record's blocks, the view sheet, the desk filters and the rep-team picker.
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs holds this sheet on the strict admin list.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-/* ─── Flat Table Container ────────────────────────────────────────────────── */
-/* Wraps flat-view rows so compactList's gap:2.5rem applies to the whole      */
-/* table block, not to individual rows.                                       */
-.flatList {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  overflow: hidden;
-}
+.teamsPage { min-width: 0; }
 
-/* Pool sub-sections inside flatList sit flush — margin handled via border-top on poolSubHeader */
+/* Money owed, in Check-in's ink (T5): the amber of money owed, never a status colour. */
+.owes { color: var(--warning-light); font-weight: 650; }
 
-/* ─── Column Header Row ───────────────────────────────────────────────────── */
-.colHeader {
-  display: flex;
-  align-items: center;
-  padding: 0.4rem 1.5rem;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--data-gray);
-  background: var(--surface-2);
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  user-select: none;
-}
-
-.colHeader > * {
-  /* inherit the same flex widths as renderFlatRow cells */
-}
-
-@media (max-width: 768px) {
-  .colHeader { display: none; }
-  .flatList { border-radius: var(--radius-sm); }
-}
-
-/* ─── Bulk Action Bar ─────────────────────────────────────────────────────── */
-.bulkBar {
-  position: sticky;
-  /* Stick BELOW the shared AdminEventHeader (falls back to 1rem when there's no header).
-     The header itself now sticks below the Stage C top strip, so both offsets stack. */
-  top: calc(var(--admin-header-h, 1rem) + var(--admin-topstrip-h, 0px));
-  z-index: 100;
-  background: rgba(var(--blueprint-blue-rgb), 0.18);
-  border-radius: 2px;
-  padding: 0.55rem 1rem;
-  margin-bottom: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: none;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
-  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slideDown {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.bulkInfo { display: flex; align-items: center; gap: 1rem; color: var(--white); font-size: 1rem; }
-.bulkButtons { display: flex; align-items: center; gap: 0.75rem; }
-.bulkButtons .btn { border-color: rgba(255, 255, 255, 0.2); }
-.bulkButtons .btn:hover { background: rgba(255, 255, 255, 0.1); }
-
-/* ─── Payments roll-up (collapsible — mirrors the Schedule Health panel) ─────
-   Full-bleed horizontally (margin: 0) so it spans the same width as the capacity
-   row + team table above/below it — matching the Schedule Health panel's edge. */
-.payPanel {
-  margin: 0 0 1rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  background: var(--surface);
-  border-radius: 4px;
-}
-
-.paySummary {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.62rem 0.85rem;
+.inlineLink {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
-  list-style: none;
 }
 
-.paySummary::-webkit-details-marker {
-  display: none;
+.quiet { margin: 1rem 0; font-size: var(--type-body); color: var(--text-tertiary); }
+.emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.1rem 1.1rem 1.2rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font-size: var(--type-body);
+  color: var(--text-secondary);
 }
+.emptyCard p { margin: 0; }
 
-.payHeader {
+/* ── ONE toolbar line (T1): the division, (desk) the view's filters and search, then the tools ── */
+.toolbar {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
   min-width: 0;
 }
-
-.payHeader h4 {
-  margin: 0;
-  font-family: var(--font-data);
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--white-85);
-}
-
-.payHeader p {
-  margin: 0.15rem 0 0;
-  color: var(--white-50);
-  font-size: 0.68rem;
-  line-height: 1.35;
-  white-space: nowrap;
-  overflow: hidden;
+.divisionField { flex: none; width: 16.25rem; min-width: 0; }
+.divisionSelect {
+  width: 100%;
+  min-height: 38px;
+  padding: 0.4rem 2rem 0.4rem 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background-color: var(--home-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
   text-overflow: ellipsis;
 }
-
-.payGlance {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  min-height: 30px;
-  padding: 0.22rem 0.6rem;
-  border-radius: 4px;
-  border: 1px solid currentColor;
-  background: var(--white-5);
-  font-family: var(--font-data);
-  white-space: nowrap;
-}
-
-.payGlance span {
-  font-size: 0.92rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.payGlance small {
-  font-size: 0.56rem;
-  color: var(--white-50);
-  line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.payGlance[data-tone="good"] {
-  color: var(--success);
-  background: rgba(var(--success-rgb), 0.08);
-}
-
-.payGlance[data-tone="warning"] {
-  color: var(--warning);
-  background: rgba(var(--warning-rgb), 0.08);
-}
-
-.payGlance[data-tone="danger"] {
-  color: var(--danger);
-  background: rgba(var(--danger-rgb), 0.08);
-}
-
-.payToggle {
+.divisionSelect:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.deskFilters { display: flex; align-items: center; gap: 0.5rem; min-width: 0; flex-wrap: wrap; }
+.toolbarSpacer { flex: 1 1 auto; }
+/* A board tool — worded at a desk (38px, K-18), a 44×44 icon on a phone (K-18 never covered width). */
+.tool {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.24rem;
-  color: rgba(var(--logic-lime-rgb), 0.72);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.payToggle svg {
-  transition: transform 0.15s ease;
-}
-
-.payPanel[open] .payToggle svg {
-  transform: rotate(180deg);
-}
-
-.payBody {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 0 0.85rem 0.75rem;
-}
-
-/* ── Collected-progress headline ───────────────────────────────────────────── */
-.payProgress {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.payProgressTop {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.payProgressLabel {
-  font-family: var(--font-data);
-  font-size: 0.54rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--white-45);
-}
-
-.payProgressValue {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--white-50);
-  white-space: nowrap;
-}
-
-.payProgressValue strong {
-  color: var(--white-90);
-  font-size: 0.82rem;
-}
-
-.payProgressTrack {
-  height: 5px;
-  border-radius: 3px;
-  background: var(--white-8);
-  overflow: hidden;
-}
-
-.payProgressFill {
-  height: 100%;
-  border-radius: 3px;
-  background: var(--success);
-  transition: width 0.3s ease;
-}
-
-/* ── Deposit / final-payment due dates ─────────────────────────────────────── */
-.payDueDates {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.9rem;
-  padding-top: 0.05rem;
-}
-
-.payDueItem {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  letter-spacing: 0.02em;
-  color: var(--white-50);
-}
-
-.payDueItem svg {
-  color: var(--white-35);
-}
-
-.payDueItem[data-overdue] {
-  color: var(--danger);
-}
-
-.payDueItem[data-overdue] svg {
-  color: var(--danger);
-}
-
-.payGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.45rem;
-}
-
-.payKpi {
-  min-width: 0;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
-  background: var(--white-5);
-  border-radius: 4px;
-  padding: 0.5rem 0.6rem;
-}
-
-.payKpi span,
-.payKpi small {
-  display: block;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.payKpi span {
-  color: var(--white-45);
-  font-family: var(--font-data);
-  font-size: 0.54rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.payKpi strong {
-  display: block;
-  color: var(--white-90);
-  font-family: var(--font-data);
-  font-size: 1.05rem;
-  line-height: 1.15;
-  margin-top: 0.14rem;
-}
-
-.payKpi small {
-  color: var(--white-50);
-  font-size: 0.62rem;
-  margin-top: 0.1rem;
-}
-
-.payKpi[data-tone="good"] strong {
-  color: var(--success);
-}
-
-.payKpi[data-tone="danger"] strong {
-  color: var(--danger);
-}
-
-.paymentFilters {
-  display: flex;
-  align-items: center;
   gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.paymentFilter {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  background: transparent;
-  color: rgba(148, 163, 184, 0.5);
+  min-height: 38px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  white-space: nowrap;
   cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.55rem;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
+.tool:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.tool:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.tool:disabled { opacity: 0.55; cursor: default; }
+.tool[data-on] { border-color: var(--home-olive); color: var(--home-olive); }
+.phoneTool { display: none; }
 
-.paymentFilter:hover {
-  border-color: var(--white-20);
-  color: var(--white-80);
-}
-
-.paymentFilterActive {
-  border-color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
-}
-
-/* ─── Registration Attention Command Center ──────────────────────────────── */
-.attentionPanel {
-  margin: 0 2rem 0.65rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.24);
-  background: rgba(var(--blueprint-blue-rgb), 0.035);
-}
-
-.attentionDesktop {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 0.5rem 0.75rem;
-}
-
-.attentionStrip {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  min-height: 40px;
-}
-
-.attentionStripIcon {
-  color: var(--warning);
-  flex-shrink: 0;
-}
-
-.attentionStripBody {
-  min-width: 0;
-  flex: 1;
-}
-
-.attentionStripBody h2 {
-  margin: 0;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.attentionStripBody p {
-  margin: 0.12rem 0 0;
-  color: var(--white-50);
-  font-size: 0.74rem;
-  line-height: 1.3;
-}
-
-.attentionStripChips {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
-.attentionStripChip {
+.grouping {
   display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-height: 26px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.24);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--white-65);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  padding: 0.18rem 0.48rem;
-  text-transform: uppercase;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
 }
-
-.attentionStripChip:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.45);
-  color: var(--logic-lime);
-}
-
-.attentionStripChip strong {
-  color: var(--logic-lime);
-  font-size: 0.76rem;
-}
-
-.attentionStripChip[data-tone="danger"] {
-  border-color: rgba(var(--danger-rgb), 0.3);
-}
-
-.attentionStripChip[data-tone="warning"] {
-  border-color: rgba(var(--warning-rgb), 0.32);
-}
-
-.attentionHeaderActions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.attentionClearButton,
-.attentionUpgradeLink {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.26);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--data-gray);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 0.25rem 0.5rem;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.attentionClearButton:hover,
-.attentionUpgradeLink:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.45);
-  color: var(--logic-lime);
-}
-
-.attentionGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.55rem;
-}
-
-.attentionBucket {
-  min-height: 78px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: 0.65rem;
-  position: relative;
-  padding: 0.65rem 0.7rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 2px;
-  background: rgba(3, 7, 18, 0.16);
-  color: inherit;
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.attentionBucket:hover,
-.attentionBucketActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.48);
-  background: rgba(var(--logic-lime-rgb), 0.055);
-}
-
-.attentionBucket[data-tone="danger"] {
-  border-color: rgba(var(--danger-rgb), 0.28);
-}
-
-.attentionBucket[data-tone="warning"] {
-  border-color: rgba(var(--warning-rgb), 0.28);
-}
-
-.attentionBucket[data-locked="true"] {
-  border-style: dashed;
-}
-
-.attentionBucket:disabled {
-  cursor: default;
-  opacity: 1;
-}
-
-.attentionBucketCount {
-  min-width: 1.65rem;
-  font-family: var(--font-data);
-  font-size: 1.45rem;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--logic-lime);
-  text-align: right;
-}
-
-.attentionBucketBody {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.attentionBucketBody strong {
-  overflow-wrap: anywhere;
-  color: var(--white);
-  font-size: 0.82rem;
-  line-height: 1.25;
-}
-
-.attentionBucketBody small {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  color: var(--white-45);
-  font-size: 0.72rem;
-  line-height: 1.35;
-}
-
-.attentionLockLabel {
-  position: absolute;
-  top: 0.45rem;
-  right: 0.5rem;
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.54rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.attentionDivisionBreakdown {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-top: 0.15rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.14);
-}
-
-.attentionDivisionBreakdown > span {
-  color: var(--white-40);
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.attentionDivisionButtons {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.attentionDivisionButtons button,
-.attentionSheetDivisions button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  min-height: 32px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.24);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--white-65);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.3rem 0.55rem;
-}
-
-.attentionDivisionButtons button:hover,
-.attentionDivisionActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.45) !important;
-  color: var(--logic-lime) !important;
-}
-
-.attentionDivisionButtons strong,
-.attentionSheetDivisions strong {
-  color: var(--logic-lime);
-}
-
-.attentionEmpty,
-.attentionUpgradeCopy,
-.attentionSheetCopy {
-  margin: 0;
-  color: var(--white-45);
-  font-size: 0.78rem;
-  line-height: 1.45;
-}
-
-.attentionMobileSummary {
-  display: none;
-}
-
-/* ─── Registration Health panel — 1:1 mirror of Schedule Health's card
-   (schedule-admin.module.css .healthPanel family) so the two pages read as
-   the same product language, not two different designs. ─────────────────── */
-.regHealthPanel {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  background: var(--surface);
-  border-radius: 4px;
-  padding: 0;
-  margin: 0.65rem 0 0.85rem;
-}
-
-.regHealthSummary {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.62rem 0.75rem;
-  cursor: pointer;
-  list-style: none;
-}
-
-.regHealthSummary::-webkit-details-marker { display: none; }
-
-.regHealthHeader {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.regHealthHeader h4 {
-  margin: 0;
-  font-family: var(--font-data);
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--white-85);
-}
-
-.regHealthHeader p {
-  margin: 0.15rem 0 0;
-  color: var(--white-50);
-  font-size: 0.68rem;
-  line-height: 1.35;
-}
-
-.regHealthScore {
-  min-width: 70px;
+.groupingOption {
   min-height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.14rem;
-  border-radius: 4px;
-  border: 1px solid currentColor;
-  background: var(--white-5);
-  font-family: var(--font-data);
-  padding: 0.22rem 0.5rem;
-}
-
-.regHealthScore span { font-size: 1.05rem; font-weight: 900; line-height: 1; }
-.regHealthScore small { font-size: 0.56rem; color: var(--white-50); line-height: 1; transform: translateY(0.08rem); }
-
-.regHealthScoreGood { color: var(--success); background: rgba(var(--success-rgb), 0.08); }
-.regHealthScoreWarning { color: var(--warning); background: rgba(var(--warning-rgb), 0.08); }
-.regHealthScoreDanger { color: var(--danger); background: rgba(var(--danger-rgb), 0.08); }
-.regHealthScoreNeutral { color: var(--white-50); }
-
-.regHealthToggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.24rem;
-  color: rgba(var(--logic-lime-rgb), 0.72);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.regHealthToggle svg { transition: transform 0.15s ease; }
-.regHealthPanel[open] .regHealthToggle svg { transform: rotate(180deg); }
-
-.regHealthBody {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.5rem;
-  padding: 0 0.75rem 0.72rem;
-}
-
-.regHealthKpiGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.45rem;
-}
-
-.regHealthKpi {
-  position: relative;
-  min-width: 0;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
-  background: var(--white-5);
-  border-radius: 4px;
-  padding: 0.45rem 0.55rem;
-  text-align: left;
-  cursor: default;
-}
-
-button.regHealthKpi { cursor: pointer; }
-button.regHealthKpi:hover:not(:disabled) { border-color: rgba(var(--logic-lime-rgb), 0.4); }
-button.regHealthKpi:disabled { cursor: default; opacity: 1; }
-
-.regHealthKpi span,
-.regHealthKpi small {
-  display: block;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.regHealthKpi span {
-  color: var(--white-45);
-  font-family: var(--font-data);
-  font-size: 0.54rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.regHealthKpi strong {
-  display: block;
-  color: var(--white-90);
-  font-size: 1rem;
-  line-height: 1.15;
-  margin-top: 0.12rem;
-}
-
-.regHealthKpi small {
-  color: var(--white-50);
-  font-size: 0.62rem;
-  margin-top: 0.08rem;
-}
-
-.regHealthKpi[data-tone="good"] strong { color: var(--success); }
-.regHealthKpi[data-tone="warning"] strong { color: var(--warning); }
-.regHealthKpi[data-tone="danger"] strong { color: var(--danger); }
-
-.regHealthKpiLock {
-  position: absolute;
-  top: 0.4rem;
-  right: 0.45rem;
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.52rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.regHealthIssues {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.regHealthIssue {
-  display: flex;
-  align-items: center;
-  gap: 0.38rem;
-  border-radius: 4px;
-  padding: 0.34rem 0.5rem;
-  font-size: 0.68rem;
-  line-height: 1.35;
-  color: var(--white-70);
-  text-align: left;
-  border: none;
-  width: 100%;
-  cursor: pointer;
-  background: transparent;
-}
-
-.regHealthIssue:disabled { cursor: default; }
-.regHealthIssue strong { color: var(--white-85); }
-.regHealthIssue svg { flex: 0 0 auto; }
-
-.regHealthIssue[data-tone="danger"] { color: var(--danger-light); background: rgba(var(--danger-rgb), 0.08); border: 1px solid rgba(var(--danger-rgb), 0.26); }
-.regHealthIssue[data-tone="warning"] { color: var(--warning-light); background: rgba(var(--warning-rgb), 0.08); border: 1px solid rgba(var(--warning-rgb), 0.24); }
-.regHealthIssue[data-tone="neutral"] { color: var(--blueprint-blue); background: rgba(var(--blueprint-blue-rgb), 0.08); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2); }
-
-.regHealthGood {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 0.38rem;
-  border-radius: 4px;
-  padding: 0.34rem 0.5rem;
-  color: var(--success);
-  background: rgba(var(--success-rgb), 0.08);
-  border: 1px solid rgba(var(--success-rgb), 0.22);
-  font-size: 0.68rem;
-}
-
-@media (max-width: 640px) {
-  .regHealthPanel { margin-top: 0.55rem; }
-  .regHealthSummary { padding: 0.58rem 0.65rem; }
-  .regHealthToggle span { display: none; }
-  .regHealthScore { min-width: 66px; }
-  .regHealthBody { padding: 0 0.65rem 0.65rem; }
-  .regHealthKpiGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-/* ─── Expanded Row Details ────────────────────────────────────────────────── */
-.infoLine { display: flex; align-items: center; gap: 2rem; font-size: 0.9rem; }
-.infoLine span { color: var(--white-40); }
-.infoLine a { color: var(--logic-lime); font-weight: 600; text-decoration: underline; }
-
-.notesArea, .transferGroup { display: flex; flex-direction: column; gap: 0.75rem; }
-.notesArea label, .transferGroup label { font-size: 0.75rem; text-transform: uppercase; font-weight: 900; color: var(--white-20); letter-spacing: 0.1em; }
-
-.notesArea textarea {
-  background: var(--bg-2);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius);
-  color: var(--white-80);
-  padding: 0.65rem 0.75rem;
-  font-size: 0.875rem;
-  min-height: 72px;
-  width: 100%;
-  resize: vertical;
-  transition: border-color 0.2s ease;
-}
-
-.notesArea textarea:focus { border-color: var(--blueprint-blue); outline: none; }
-
-.transferGroup select {
-  background: var(--teams-select-bg);
-  border: 1px solid var(--border-2);
-  color: var(--white);
-  padding: 0.75rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.95rem;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  padding-right: 2.5rem;
-  color-scheme: dark;
-}
-
-.transferGroup select:hover {
-  border-color: var(--white-20);
-  background-color: var(--black-20);
-}
-
-.transferGroup select:focus {
-  outline: none;
-  border-color: var(--blueprint-blue);
-  box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.15);
-}
-
-.buttonGroup { display: flex; flex-wrap: wrap; gap: 0.75rem; }
-
-.teamRowMain {
-  min-height: var(--admin-row-min);
-  padding-top: var(--admin-row-pad-y);
-  padding-bottom: var(--admin-row-pad-y);
-}
-
-.registrationNameCell {
-  flex: 2;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  /* Long names wrap (no truncation); anywhere covers rare no-space tokens. */
-  overflow-wrap: anywhere;
-}
-
-.registrationNameCell strong {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-/* Name + inline pool picker stacked so the picker sits under the team name */
-.registrationNameStack {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  min-width: 0;
-  align-items: flex-start;
-}
-
-/* Compact per-row pool assignment control (Pools view, pool-enabled divisions) */
-.rowPoolSelect {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.08);
-  border: 1px solid rgba(var(--logic-lime-rgb, 217, 249, 157), 0.35);
+  padding: 0 0.7rem;
+  border: 0;
   border-radius: 6px;
-  padding: 0.15rem 1.3rem 0.15rem 0.45rem;
-  max-width: 100%;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
   cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23d9f99d' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.4rem center;
 }
+.groupingOption:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.groupingOption[aria-pressed="true"] { background: var(--home-ink); color: var(--home-paper); }
 
-.rowPoolSelect:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-/* Unassigned teams get a warning-tinted picker so they stand out as needing action */
-.rowPoolSelect[data-unassigned] {
-  /* --danger-light is now defined globally (P3 token pass) — used directly, no fallback needed. */
-  color: var(--danger-light);
-  background-color: rgba(var(--danger-rgb), 0.08);
-  border-color: rgba(var(--danger-rgb), 0.35);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23ff6b6b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-}
-
-.rowPoolSelect option {
-  color: var(--white-90);
-  background: var(--surface-2);
-}
-
-/* Empty-pool hint under a pool header with no teams yet */
-.poolSectionEmpty {
-  padding: 0.5rem 0.75rem 0.75rem;
-  font-size: 0.78rem;
-  color: var(--white-40);
-  font-style: italic;
-}
-
-/* No-pools-at-all note (Pools view on a division with pools off) */
-.poolEmptyState {
-  padding: 0.6rem 0.75rem;
-  font-size: 0.78rem;
-  color: var(--white-40, rgba(255, 255, 255, 0.4));
-  text-align: left;
-  line-height: 1.45;
-}
-
-.poolEmptyState a {
-  color: var(--logic-lime);
-  font-weight: 600;
-  text-decoration: underline;
-}
-
-/* Bulk "Move to pool" select in the selection action bar */
-.bulkPoolSelect {
-  cursor: pointer;
-  padding-top: 0.35rem;
-  padding-bottom: 0.35rem;
-}
-
-.registrationCoachCell {
-  flex: 1.5;
-  min-width: 0;
-}
-
-.registrationStatusCell,
-.registrationPaymentCell {
-  width: 120px;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.registrationPaymentCell {
-  padding-left: 1rem;
-}
-
-.registrationExpandCell {
-  width: 40px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.desktopStatusBadge,
-.desktopPaymentBadge {
+.searchField {
   display: inline-flex;
-}
-
-.mobileStatusMarker,
-.paymentSymbolGroup {
-  display: none;
-}
-
-.paymentPlaceholder {
-  color: var(--white-45);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-}
-
-.paymentSymbol {
-  color: rgba(148, 163, 184, 0.42);
-  font-family: var(--font-data);
-  font-size: 0.76rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.paymentSymbol[data-tone="paid"] {
-  color: var(--success);
-}
-
-.paymentSymbol[data-tone="danger"] {
-  color: var(--danger);
-}
-
-.paymentSymbol[data-tone="pending"] {
-  color: rgba(148, 163, 184, 0.42);
-}
-
-.selectionCell {
-  width: 32px;
-  display: flex;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.selectionCheckbox {
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-content: center;
-  flex-shrink: 0;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.42);
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.05);
-  cursor: pointer;
-}
-
-.selectionCheckbox::before {
-  content: "";
-  width: 5px;
-  height: 9px;
-  border: solid var(--logic-lime);
-  border-width: 0 2px 2px 0;
-  opacity: 0;
-  transform: rotate(45deg) translateY(-1px);
-}
-
-.selectionCheckbox:checked {
-  border-color: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.85);
-  background: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.14);
-}
-
-.selectionCheckbox:checked::before {
-  opacity: 1;
-}
-
-.selectionCheckbox:focus-visible {
-  outline: 2px solid rgba(var(--logic-lime-rgb, 217, 249, 157), 0.45);
-  outline-offset: 2px;
-}
-
-.compactExpandedRow {
-  padding: 0.8rem 1.25rem 1rem 5rem;
-}
-
-.teamDetailShell {
-  display: grid;
-  gap: 0.5rem;
-  width: 100%;
-  max-width: 920px;
-  /* Scoped token for the transfer-group select (.transferGroup select) below. */
-  --teams-select-bg: #111111; /* token-exempt: one-off near-black select bg, no token match */
-}
-
-/* Single row: meta left, actions right */
-.teamDetailMetaRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.teamDetailMeta {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
-  color: var(--white-45);
-  font-size: 0.8rem;
-  min-width: 0;
-}
-
-.teamDetailMeta a {
-  color: var(--data-gray);
-  font-weight: 500;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.teamDetailMeta a:hover {
-  color: var(--fl-text);
-}
-
-/* Two labelled identities in the expanded row — head coach (name + contact email)
-   and registered-by (account email) — STACKED so they never blur into one person.
-   Each label is a quiet uppercase tag; the value inherits the meta colour with the
-   email as a normal meta link; the registered-on date trails below, dimmer. */
-.teamIdentityStack {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-}
-.teamIdentity {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  color: var(--white-60);
-}
-.teamIdentityLabel {
-  flex-shrink: 0;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--white-40);
-}
-.teamRegisteredOn {
-  font-size: 0.74rem;
-  color: var(--white-40);
-}
-
-/* Actions inline with meta, right-aligned */
-.teamQuickActions {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  flex-shrink: 0;
-}
-
-.teamDetailSection {
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-}
-
-.teamDetailSummary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-height: 1.75rem;
-  color: rgba(148, 163, 184, 0.55);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.teamDetailPanel {
-  padding: 0.2rem 0 0.55rem;
-}
-
-.paymentEditor {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(120px, 1fr));
-  gap: 0.75rem;
-}
-
-.paymentField {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.paymentField span {
-  color: var(--white-45);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.paymentField input {
-  width: 100%;
-  padding: 0.45rem 0.55rem;
-  border: 1px solid var(--border-2);
-  border-radius: 2px;
-  background: var(--bg-2);
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.82rem;
-}
-
-.paymentField input:focus {
-  border-color: var(--blueprint-blue);
-  outline: none;
-}
-
-.paymentDue {
-  margin: 0.65rem 0 0;
-  color: var(--white-50);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-}
-
-.paymentDue strong {
-  color: var(--white-85);
-}
-
-.answerList {
-  display: grid;
-  gap: 0.55rem;
-  color: var(--white-70);
-  font-size: 0.84rem;
-}
-
-.answerItem {
-  display: grid;
-  gap: 0.14rem;
-}
-
-.answerItem strong {
-  color: var(--white-85);
-}
-
-.notifyToggle {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  margin-top: 1rem;
-  color: var(--white-70);
-  cursor: pointer;
-  font-size: 0.88rem;
-  line-height: 1.4;
-}
-
-.notifyToggle input {
-  margin-top: 0.15rem;
-}
-
-/* ─── Selected Registration Actions ──────────────────────────────────────── */
-.registrationSelectionBar {
-  max-width: 100%;
-}
-
-.registrationSelectionBar :global(.btn) {
-  min-height: 28px;
-  padding: 0.26rem 0.5rem;
-  font-size: 0.72rem;
-}
-
-.registrationSelectionBar :global(.btn-outline),
-.registrationSelectionBar :global(.btn-ghost) {
-  background: rgba(0, 0, 0, 0.12);
-}
-
-/* ─── Mobile: triage-only bulk action bar ─────────────────────────────────── */
-/* Deposit / Paid / Reminder are bookkeeping tasks (desktop). On mobile the    */
-/* sticky docked bar shows Accept + Waitlist + Reject only.                    */
-@media (max-width: 900px) {
-  .bulkPaymentAction {
-    display: none !important;
-  }
-
-  /* 3 triage buttons fill one row in the docked bar */
-  .registrationSelectionBar :global(.btn) {
-    flex: 1 1 calc(33.333% - 0.22rem);
-  }
-}
-
-/* ─── Compact Toolbar Additions ──────────────────────────────────────────── */
-.registrationToolbar {
-  row-gap: 0.55rem;
-}
-
-.registrationContextGroup {
-  min-width: 14rem;
-}
-
-.registrationActionGroup {
-  align-items: center;
-}
-
-/* Dual-placement segmented control: one instance per breakpoint */
-.segmentedDesktop { display: flex; align-items: center; }
-.segmentedMobile  { display: none;  }
-
-.registrationUtilityStart {
-  display: inline-flex;
-}
-
-.registrationFilterGroup {
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.55rem;
-}
-
-/* ── Desktop filter dropdowns (hidden on mobile — sheet handles it there) ── */
-.desktopFilterChips {
-  display: flex;
   align-items: center;
   gap: 0.4rem;
+  min-height: 38px;
+  min-width: 13rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--home-card);
+  color: var(--text-tertiary);
+}
+.searchField:focus-within { border-color: var(--home-olive); }
+.searchField input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  outline: none;
+}
+.searchClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  margin-right: -0.6rem;
+  border: 0;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.phoneSearch { display: none; }
+
+/* Touch widths: every control on the line clears the 44px floor (a tablet is a touch width too). */
+@media (max-width: 768px) {
+  .divisionSelect,
+  .tool,
+  .regFilterButton,
+  .searchField,
+  .groupingOption { min-height: var(--tap-min, 44px); }
+  .regFilterOption { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .toolbar { gap: 0.4rem; }
+  .divisionField { flex: 1 1 auto; width: auto; }
+  .divisionSelect { min-height: var(--tap-min, 44px); }
+  .deskFilters, .toolbarSpacer, .toolLabel { display: none; }
+  .phoneTool { display: inline-flex; }
+  .tool { width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); padding: 0; flex: none; }
+  .phoneSearch { display: flex; width: 100%; min-height: var(--tap-min, 44px); margin: 0 0 0.75rem; }
 }
 
-/* ── Registration filter dropdown (mirrors schedule VenueFilterMenu) ───────── */
-.regFilterRoot {
-  position: relative;
-}
-
+/* ── The desk's filter menus (status and payment are filters, not a lens — the formatting check, 6) ── */
+.regFilterRoot { position: relative; }
 .regFilterButton {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  height: 28px;
-  padding: 0 0.65rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 2px;
-  background: var(--bg-2);
-  color: rgba(148, 163, 184, 0.6);
+  min-height: 38px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--home-card);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 650;
+  white-space: nowrap;
   cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  white-space: nowrap;
 }
-
-.regFilterButton span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
+.regFilterButton span { overflow: hidden; text-overflow: ellipsis; }
 .regFilterButton:hover,
-.regFilterButtonActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.42);
-  background: rgba(var(--logic-lime-rgb), 0.07);
-  color: var(--logic-lime);
-}
-
+.regFilterButton[data-active] { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
 .regFilterPanel {
   position: absolute;
   top: calc(100% + 0.35rem);
   left: 0;
   z-index: 210;
-  min-width: 180px;
+  min-width: 12rem;
   max-height: 18rem;
   overflow-y: auto;
   padding: 0.4rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 2px;
-  background: var(--hud-surface);
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  box-shadow: var(--home-shadow);
 }
-
 .regFilterHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.35rem 0.4rem 0.45rem;
-  color: var(--white-50);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.regFilterHeader button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  border: 0;
-  background: transparent;
-  color: var(--white-50);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.regFilterHeader button:hover { color: var(--logic-lime); }
-
-.regFilterList {
-  display: grid;
-  gap: 0.2rem;
-}
-
-.regFilterOption {
-  display: grid;
-  grid-template-columns: 1rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.45rem;
-  width: 100%;
-  min-height: 2rem;
-  padding: 0.35rem 0.45rem;
-  border: 1px solid transparent;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--white-70);
-  cursor: pointer;
-  text-align: left;
-}
-
-.regFilterOption:hover,
-.regFilterOptionActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.26);
-  background: rgba(var(--logic-lime-rgb), 0.07);
-  color: var(--white);
-}
-
-.regFilterCheck {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--logic-lime);
-}
-
-.regFilterName {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-align: left;
-}
-
-.regFilterCount {
-  color: var(--white-40);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-}
-
-.registrationStatusFilters {
-  min-width: 0;
-}
-
-/* Desktop chip height matches venue button / Schedule + Results chips (28px) */
-.registrationStatusFilters > button {
-  justify-content: center;
-  min-height: 28px;
-}
-
-.addTeamLabel {
-  display: inline;
-}
-
-/* "Add my team" (2026-09-13) — the host's own team on a portal-run tournament. Ghost beside the lime
-   Add Team; collapses to its icon on a phone the same way. */
-.ownTeamButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 28px;
-}
-
-.ownTeamButton > svg {
-  color: var(--logic-lime);
-  flex-shrink: 0;
-}
-
-/* The row's "Your team" chip — the rep-link chip's slot and shape, in the host's own colour. Clickable
-   (it explains itself), so it is a button, not a span. */
-.ownTeamChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.28rem 0.5rem;
-  border-radius: 6px;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  color: var(--logic-lime);
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.ownTeamChip:hover {
-  background: rgba(var(--logic-lime-rgb), 0.18);
-}
-
-.ownTeamHint {
-  margin: 1rem 0 0;
-  color: var(--white-70);
-  font-size: 0.88rem;
-  line-height: 1.45;
-}
-
-/* Email-aware Add Team (2026-09-13) — one status line under the email: known coach (lime) or new.
-   Quiet on purpose; the form is otherwise unchanged. */
-.coachAccountLine {
-  margin: 0.45rem 0 0;
-  padding: 0.5rem 0.65rem;
-  border-radius: 4px;
-  border: 1px solid var(--border-2);
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--white-70);
-  font-size: 0.8rem;
-  line-height: 1.45;
-}
-
-.coachAccountKnown {
-  border-color: rgba(var(--logic-lime-rgb), 0.35);
-  background: rgba(var(--logic-lime-rgb), 0.06);
-  color: var(--logic-lime);
-}
-.emptyActions {
-  display: flex;
-  gap: 0.6rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-}
-
-@media (max-width: 760px) {
-  /* 32px touch target for icon-only Add Team button (up from 28px) */
-  .addTeamButton {
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-    min-height: 32px;
-    padding: 0 !important;
-    justify-content: center;
-    gap: 0;
-  }
-
-  .addTeamLabel {
-    display: none;
-  }
-
-  .ownTeamButton {
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-    min-height: 32px;
-    padding: 0 !important;
-    justify-content: center;
-    gap: 0;
-  }
-}
-
-.selectCurrent {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 28px;
-  color: rgba(148, 163, 184, 0.55);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-/* accent-color removed — global branded checkbox handles this */
-
-.multiSelectToggle,
-.multiSelectDone {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 28px;
-  padding: 0.26rem 0.62rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.24);
-  border-radius: 2px;
-  background: rgba(0, 0, 0, 0.12);
-  color: rgba(148, 163, 184, 0.65);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.multiSelectToggle[data-active="true"] {
-  border-color: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.4);
-  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.08);
-  color: var(--logic-lime);
-}
-
-.multiSelectDone {
-  color: rgba(148, 163, 184, 0.55);
-}
-
-.multiSelectLabel {
-  display: inline;
-}
-
-.activeFilterBadge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 22px;
-  padding: 0.18rem 0.5rem;
-  border: 1px solid rgba(var(--logic-lime-rgb, 194, 255, 74), 0.3);
-  border-radius: 2px;
-  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.06);
-  color: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.8);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.toolsSection {
-  display: grid;
-  gap: 0.55rem;
-  padding: 0.65rem 0.7rem;
-}
-
-.toolsSectionTitle {
-  color: var(--white-45);
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.toolsMetrics {
-  display: grid;
-  gap: 0.4rem;
-}
-
-.toolsMetrics span {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.65rem;
-  color: var(--white-55);
-  font-size: 0.78rem;
-}
-
-.toolsMetrics strong {
-  color: var(--white);
-}
-
-.toolsFilterGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.toolsFilterButton {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  background: transparent;
-  color: rgba(148, 163, 184, 0.5);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
-}
-
-.toolsFilterButton:hover {
-  border-color: var(--white-20);
-  color: var(--white-80);
-}
-
-.toolsFilterButtonActive {
-  border-color: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.45);
-  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.08);
-  color: var(--logic-lime);
-}
-
-/* ─── Slot Board ──────────────────────────────────────────────────────────── */
-
-.slotBoard {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.slotBoardCounts {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  background: var(--black-30);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  color: var(--white-60);
-}
-
-.slotBoardCounts strong { color: var(--white); }
-
-.countChip {
-  padding: 0.2rem 0.6rem;
-  border-radius: 99px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.countChip[data-variant="warning"] { background: rgba(var(--warning-rgb), 0.15); color: var(--warning); /* pinned to --warning to preserve the prior render; joining --warning-light is a separate value change */ }
-.countChip[data-variant="neutral"]  { background: var(--white-10); color: var(--white-40); }
-
-.slotPoolSection {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.slotPoolHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 1rem;
-  background: var(--black-40);
-  border-bottom: 1px solid var(--border-2);
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--white-60);
-}
-
-.slotPoolDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--logic-lime);
-  flex-shrink: 0;
-}
-
-.slotPoolCount {
-  margin-left: auto;
-  font-size: 0.75rem;
-  color: var(--white-30);
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.slotRow {
-  border-bottom: 1px solid var(--border-2);
-  transition: background 0.15s ease;
-}
-
-.slotRow:last-child { border-bottom: none; }
-
-.slotRow:hover:not(.slotRowEmpty) { background: var(--black-20); }
-
-.slotRowEmpty { opacity: 0.45; }
-
-.slotRowSwapSelected { background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.07) !important; outline: 1px solid var(--logic-lime); }
-
-.slotRowMain {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.7rem 1rem;
-  min-height: 48px;
-}
-
-.slotName {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--white-30);
-  width: 130px;
-  flex-shrink: 0;
-}
-
-.slotTeamName {
-  flex: 1;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--white);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.slotCoach {
-  width: 160px;
-  flex-shrink: 0;
-  font-size: 0.8rem;
-  color: var(--white-40);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.slotEmpty {
-  flex: 1;
-  font-size: 0.85rem;
-  color: var(--white-20);
-  font-style: italic;
-}
-
-.slotRowActions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.swapIndicator {
-  display: flex;
-  align-items: center;
-  padding: 0.25rem;
-}
-
-/* F16 (J1-071) — the reach on a phone. Two fixed columns (the slot 130px, the coach 160px) left no
-   room for the badges and the row's open button, which ran up to 225px past the card at 360 and were
-   clipped by it — unreachable. At ≤768 (where the flat list also becomes cards) a filled row restacks:
-   the slot name as its own line, the team name with the open button, then the coach with the badges
-   (a zero-height `::after` is the line break). An empty slot keeps its one line. The waitlist and
-   "needs a spot" rows share the coach column, so their coach drops below too. Only the reach is fixed;
-   Teams' redesign is Stage 2. */
-@media (max-width: 768px) {
-  .slotRowMain { flex-wrap: wrap; gap: 0.15rem 0.6rem; }
-  .slotRowMain > .slotName { order: -1; flex: 1 0 100%; width: auto; }
-  .slotRowMain::after { content: ''; order: 1; flex: 0 0 100%; height: 0; }
-  .slotRowMain > .slotCoach { order: 2; flex: 0 1 auto; width: auto; }
-  .slotRowMain > :global(.badge) { order: 2; }
-  .slotRowEmpty .slotRowMain > .slotName { flex: 0 0 auto; }
-  .slotRowEmpty .slotRowMain::after { display: none; }
-
-  .waitlistRow { flex-wrap: wrap; gap: 0.15rem 0.6rem; }
-  .waitlistRow > .slotCoach { order: 1; flex: 1 0 100%; width: auto; }
-}
-
-/* ─── Waitlist Section ────────────────────────────────────────────────────── */
-
-.waitlistSection {
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.waitlistHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 1rem;
-  background: var(--black-40);
-  border-bottom: 1px solid var(--border-2);
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--white-40);
-}
-
-.waitlistRow {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.65rem 1rem;
-  border-bottom: 1px solid var(--border-2);
-}
-
-.waitlistRow:last-child { border-bottom: none; }
-
-.waitlistPosition {
-  width: 36px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--white-30);
-  flex-shrink: 0;
-}
-
-/* Without a deposit step the grid has 3 tiles — fill the width on desktop so there's
-   no empty 4th column. Gated to desktop so the ≤980px 2-col rule still governs mobile. */
-@media (min-width: 981px) {
-  .payGrid[data-cols="3"] {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 980px) {
-  .payGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .attentionGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .payToggle span {
-    display: none;
-  }
-
-  .compactExpandedRow {
-    padding: 0.75rem 1rem 0.9rem;
-  }
-
-  .teamRowMain {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
-    grid-template-areas:
-      "status name payment expand";
-    align-items: center;
-    column-gap: 0.6rem;
-    min-height: 44px;
-    padding: 0.48rem 0.75rem;
-  }
-
-  .teamRowSelecting {
-    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
-    grid-template-areas:
-      "select status name payment expand";
-  }
-
-  .registrationNameCell {
-    grid-area: name;
-    flex: initial;
-    min-width: 0;
-  }
-
-  .registrationNameCell strong {
-    display: block;
-    overflow-wrap: anywhere;
-    line-height: 1.25;
-  }
-
-  .registrationCoachCell {
-    display: none;
-  }
-
-  .registrationStatusCell {
-    grid-area: status;
-    width: auto;
-    padding-left: 0;
-  }
-
-  .registrationPaymentCell {
-    grid-area: payment;
-    width: auto;
-    min-width: 0;
-    padding-left: 0;
-    justify-content: flex-end;
-  }
-
-  .registrationExpandCell {
-    grid-area: expand;
-    width: auto;
-    text-align: right;
-  }
-
-  .desktopStatusBadge,
-  .desktopPaymentBadge {
-    display: none;
-  }
-
-  .mobileStatusMarker {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.12rem;
-    height: 1.12rem;
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    border-radius: 2px;
-    background: rgba(148, 163, 184, 0.08);
-    color: rgba(148, 163, 184, 0.72);
-    font-family: var(--font-data);
-    font-size: 0.58rem;
-    font-weight: 900;
-    line-height: 1;
-  }
-
-  .mobileStatusMarker[data-status="pending"] {
-    border-color: rgba(var(--warning-rgb), 0.48);
-    background: rgba(var(--warning-rgb), 0.08);
-    color: var(--warning);
-  }
-
-  .mobileStatusMarker[data-status="accepted"] {
-    border-color: rgba(var(--logic-lime-rgb), 0.45);
-    background: rgba(var(--logic-lime-rgb), 0.08);
-    color: var(--logic-lime);
-  }
-
-  .mobileStatusMarker[data-status="waitlist"] {
-    border-color: rgba(var(--blueprint-blue-rgb), 0.48);
-    background: rgba(var(--blueprint-blue-rgb), 0.08);
-    color: var(--blueprint-blue);
-  }
-
-  .mobileStatusMarker[data-status="rejected"] {
-    border-color: rgba(var(--danger-rgb), 0.48);
-    background: rgba(var(--danger-rgb), 0.08);
-    color: var(--danger);
-  }
-
-  .paymentSymbolGroup {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.08rem;
-    min-height: 1.12rem;
-  }
-
-  .paymentPlaceholder {
-    display: none;
-  }
-
-  .teamDetailShell {
-    gap: 0.55rem;
-  }
-
-  .teamDetailMeta {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.8rem;
-  }
-
-  .teamDetailMetaRow {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .teamQuickActions {
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-
-  .teamDetailSummary {
-    min-height: 2.35rem;
-    font-size: 0.76rem;
-  }
-
-  .paymentEditor {
-    grid-template-columns: 1fr;
-  }
-
-  .registrationSelectionBar {
-    margin-bottom: 0.6rem;
-  }
-
-  /* Inline filter chips are desktop-only; mobile uses the bottom sheet */
-  .desktopFilterChips {
-    display: none;
-  }
-
-  /* Toolbar: Division + action buttons share row 1; filter group takes row 2 */
-  .registrationToolbar {
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    align-items: flex-end !important;
-    gap: 0.55rem;
-  }
-
-  /* Division group expands to fill row 1 */
-  .teamsStartGroup {
-    flex: 1 1 auto !important;
-    width: auto !important;
-  }
-
-  /* Action buttons stay compact beside the division select */
-  .teamsActionGroup {
-    flex: 0 0 auto !important;
-    width: auto !important;
-    flex-wrap: nowrap;
-  }
-
-  /* Match button height to select's 38px mobile height */
-  .teamsActionGroup :global(button) {
-    height: 38px !important;
-    min-height: 38px !important;
-  }
-
-  /* Filter group (search + chips) keeps full-width own row */
-  .registrationFilterGroup {
-    width: 100%;
-    flex: 1 1 100%;
-    align-items: stretch;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 0.55rem;
-  }
-
-  .registrationUtilityStart {
-    margin-left: auto;
-  }
-
-  /* Segmented control stays in desktop toolbar only; sheet handles mobile */
-  .segmentedDesktop { display: none; }
-  .segmentedMobile  { display: none; }
-
-  .registrationStatusFilters {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.38rem;
-    width: 100%;
-  }
-
-  /* 34px touch target for status chips (up from 28px) */
-  .registrationStatusFilters > button {
-    min-height: 34px;
-    width: 100%;
-  }
-
-  .registrationSelectionBar :global(.btn) {
-    flex: 1 1 calc(33.333% - 0.25rem);
-    min-height: 28px;
-    min-width: 0;
-    padding: 0.2rem 0.36rem;
-    font-size: 0.62rem;
-    white-space: normal;
-  }
-
-  /* 32px touch target for icon-mode multi-select buttons (up from 28px) */
-  .multiSelectToggle,
-  .multiSelectDone {
-    width: 32px;
-    min-width: 32px;
-    min-height: 32px;
-    padding: 0;
-    gap: 0;
-  }
-
-  .multiSelectLabel {
-    display: none;
-  }
-
-  .selectionCell {
-    grid-area: select;
-    align-self: start;
-    width: 28px;
-    padding-top: 0.05rem;
-  }
-
-}
-
-/* ─── Mobile settings bottom sheet (Teams) ─────────────────────────────────── */
-.sheetBackdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.62);
-  z-index: 490;
-  backdrop-filter: blur(2px);
-}
-
-.sheet {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 500;
-  background: var(--hud-surface);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  animation: teamsSheetSlideUp 0.22s cubic-bezier(0.32, 0.72, 0, 1);
-  max-width: 760px;
-  margin: 0 auto;
-}
-
-@keyframes teamsSheetSlideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-
-.sheetHandle {
-  width: 36px;
-  height: 4px;
-  background: rgba(var(--blueprint-blue-rgb), 0.35);
-  border-radius: 2px;
-  margin: 0.75rem auto 0;
-}
-
-.sheetBody {
-  display: flex;
-  flex-direction: column;
-  padding: 0.75rem 1.25rem 1.25rem;
-}
-
-.sheetSection {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-}
-
-.sheetSection:last-of-type { border-bottom: none; }
-
-.sheetSectionLabel {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.65);
-  margin-bottom: 0.6rem;
-}
-
-.sheetSegments {
-  display: flex;
-  gap: 0.35rem;
-}
-
-.sheetSeg {
-  flex: 1;
-  height: 36px;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--data-gray);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-
-.sheetSeg:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.35);
-  color: var(--fl-text);
-}
-
-.sheetSegActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  color: var(--logic-lime);
-}
-
-.sheetDone {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 1rem;
-  width: 100%;
-  height: 42px;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
-  border-radius: 2px;
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.sheetDone:hover { background: rgba(var(--logic-lime-rgb), 0.14); }
-
-.attentionSheetBuckets {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.45rem;
-}
-
-.attentionSheetBucket {
-  min-height: 58px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-areas:
-    "count label"
-    "count meta";
-  align-items: center;
-  gap: 0.1rem 0.5rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.26);
-  border-radius: 2px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  padding: 0.55rem;
-  text-align: left;
-}
-
-.attentionSheetBucketActive,
-.attentionSheetBucket:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.48);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-}
-
-.attentionSheetBucket[data-locked="true"] {
-  border-style: dashed;
-}
-
-.attentionSheetBucket span {
-  grid-area: count;
-  min-width: 1.5rem;
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 1.1rem;
-  font-weight: 800;
-  text-align: right;
-}
-
-.attentionSheetBucket strong {
-  grid-area: label;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--white);
-  font-size: 0.72rem;
-  line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.attentionSheetBucket small {
-  grid-area: meta;
-  color: var(--white-40);
-  font-family: var(--font-data);
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.attentionSheetDivisions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.attentionSheetDivisions button {
-  width: 100%;
-}
-
-.attentionSheetClear {
-  width: 100%;
-  min-height: 34px;
-  margin-bottom: 0.55rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.26);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--data-gray);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.attentionSheetClear:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.45);
-  color: var(--logic-lime);
-}
-
-/* ─── Active settings summary strip (mobile only) ─────────────────────────── */
-.activeSettingsSummary {
-  display: none;
-}
-
-@media (max-width: 640px) {
-  .activeSettingsSummary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.4rem 0;
-    margin-bottom: 0.5rem;
-    border: none;
-    border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-    background: transparent;
-    cursor: pointer;
-    text-align: left;
-  }
-
-  .activeSettingsSummaryText {
-    font-family: var(--font-data);
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--logic-lime);
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .activeSettingsSummaryIcon {
-    color: var(--data-gray);
-    flex-shrink: 0;
-    transition: color 0.12s;
-  }
-
-  .activeSettingsSummary:hover .activeSettingsSummaryIcon {
-    color: var(--logic-lime);
-  }
-
-  .attentionPanel {
-    margin: 0 1rem 0.75rem;
-    border: none;
-    border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-    background: transparent;
-  }
-
-  .attentionDesktop {
-    display: none;
-  }
-
-  .attentionMobileSummary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.4rem;
-    width: 100%;
-    min-height: 38px;
-    padding: 0.35rem 0;
-  }
-
-  .attentionMobileOpen {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border: none;
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
-    padding: 0;
-    text-align: left;
-    min-width: 0;
-  }
-
-  .attentionMobileOpen span {
-    display: flex;
-    align-items: baseline;
-    gap: 0.45rem;
-    min-width: 0;
-  }
-
-  .attentionMobileOpen strong {
-    color: var(--logic-lime);
-    font-family: var(--font-data);
-    font-size: 1.05rem;
-    font-weight: 800;
-    line-height: 1;
-  }
-
-  .attentionMobileOpen small {
-    overflow: hidden;
-    color: var(--white-70);
-    font-family: var(--font-data);
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-overflow: ellipsis;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .attentionMobileOpen svg {
-    color: var(--data-gray);
-    flex-shrink: 0;
-  }
-
-  .attentionMobileClear {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-    border-radius: 2px;
-    background: transparent;
-    color: var(--data-gray);
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
-  .attentionMobileClear:hover {
-    border-color: rgba(var(--logic-lime-rgb), 0.45);
-    color: var(--logic-lime);
-  }
-
-  .attentionSheet {
-    max-height: 88vh;
-    overflow-y: auto;
-  }
-
-  .attentionSheetBuckets {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ── Mobile auto-card layout ─────────────────────────────────────────────────
-   On mobile (≤768px) the flat list automatically renders as cards — no toggle.
-   Coach is visible; compact A/$$ markers stay (full text badges already hidden
-   by the 768px block above). Desktop is always the flat list view. */
-@media (max-width: 768px) {
-  .flatList {
-    border: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .flatList .regRow {
-    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-    border-radius: 0;
-    background: rgba(var(--blueprint-blue-rgb), 0.03);
-    overflow: hidden;
-  }
-
-  /* Override the mobile grid → flex-wrap so name + coach stack vertically */
-  .flatList .teamRowMain {
-    position: relative;
-    display: flex !important;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.25rem 0.55rem;
-    padding: 0.6rem 0.75rem;
-  }
-
-  /* Name takes the full top line; right-pad clears the absolute checkbox */
-  .flatList .registrationNameCell {
-    flex: 1 1 100%;
-    padding-right: 2.25rem;
-    font-size: 0.92rem;
-  }
-
-  /* Checkbox floats to top-right of the card in selection mode */
-  .flatList .selectionCell {
-    position: absolute;
-    top: 0.6rem;
-    right: 0.75rem;
-    width: auto;
-  }
-
-  /* Coach visible below the name */
-  .flatList .registrationCoachCell {
-    display: block;
-    flex: 1 1 auto;
-    color: var(--data-gray);
-    font-size: 0.78rem;
-  }
-}
-
-/* ── WI-2C.3 · "Link to rep team" control + org-scoped picker popover ── */
-.repLinkWrap {
-  position: relative;
-  display: inline-flex;
-}
-
-.repLinkBtnLabel {
-  white-space: nowrap;
-}
-
-/* Linked-state chip (replaces the button once a rep team is attached) */
-.repLinkChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.28rem 0.32rem 0.28rem 0.5rem;
-  border-radius: 6px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.1);
-  color: var(--white-80);
-  font-size: 0.72rem;
-}
-
-.repLinkChip > svg {
-  color: rgba(var(--blueprint-blue-rgb), 0.9);
-  flex-shrink: 0;
-}
-
-.repLinkChipName {
-  border: none;
-  background: transparent;
-  color: rgba(var(--blueprint-blue-rgb), 0.95);
-  font-weight: 600;
-  font-size: 0.72rem;
-  cursor: pointer;
-  padding: 0;
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.repLinkChipName:hover:not(:disabled) {
-  text-decoration: underline;
-}
-
-.repLinkChipX {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.05rem;
-  height: 1.05rem;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--white-40);
-  cursor: pointer;
-}
-
-.repLinkChipX:hover:not(:disabled) {
-  color: rgb(var(--danger-rgb));
-  background: rgba(var(--danger-rgb), 0.12);
-}
-
-/* Anchored picker popover */
-.repLinkPopover {
-  position: absolute;
-  top: calc(100% + 0.4rem);
-  right: 0;
-  z-index: 40;
-  width: 20rem;
-  max-width: min(20rem, 78vw);
-  background: var(--surface-2);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  border-radius: 10px;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
-  overflow: hidden;
-}
-
-.repLinkPopHead {
-  padding: 0.65rem 0.8rem 0.55rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.14);
-}
-
-.repLinkPopTitle {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--white-90);
-}
-
-.repLinkPopSub {
-  margin-top: 0.1rem;
-  font-size: 0.68rem;
-  color: var(--white-40);
-}
-
-.repLinkSearch {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0.55rem 0.8rem;
-  padding: 0.4rem 0.55rem;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.repLinkSearch > svg {
-  color: var(--white-40);
-  flex-shrink: 0;
-}
-
-.repLinkSearch input {
-  width: 100%;
-  border: none;
-  background: transparent;
-  color: var(--white-90);
-  font-size: 0.8rem;
-  outline: none;
-}
-
-.repLinkList {
-  max-height: 13rem;
-  overflow-y: auto;
-  padding: 0 0.35rem 0.5rem;
-}
-
-.repLinkItem {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  width: 100%;
-  padding: 0.5rem 0.5rem;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--white-80);
-  cursor: pointer;
-  text-align: left;
-}
-
-.repLinkItem:hover:not(:disabled) {
-  background: rgba(148, 163, 184, 0.1);
-}
-
-.repLinkItem:disabled {
-  cursor: default;
-  opacity: 0.75;
-}
-
-.repLinkItemText {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-  min-width: 0;
-}
-
-.repLinkItemName {
-  font-size: 0.8rem;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.repLinkItemMeta {
-  font-size: 0.68rem;
-  color: var(--white-40);
-}
-
-.repLinkItemPick {
-  margin-left: auto;
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--logic-lime);
-  white-space: nowrap;
-}
-
-.repLinkItemCurrent {
-  margin-left: auto;
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: rgba(var(--blueprint-blue-rgb), 0.9);
-  white-space: nowrap;
-}
-
-.repLinkEmpty {
-  padding: 1.1rem 0.8rem;
-  text-align: center;
-  color: var(--white-40);
-  font-size: 0.76rem;
-}
-
-.repLinkPopFoot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.5rem 0.8rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.14);
-  font-size: 0.68rem;
-  color: var(--white-40);
-}
-
-.repLinkPopClose {
-  border: none;
-  background: transparent;
-  color: var(--white-60);
-  font-size: 0.72rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0.1rem 0.2rem;
-}
-
-.repLinkPopClose:hover {
-  color: var(--white-90);
-}
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
-   Teams' own parts on the coaches portal's kit: row cells, chips, the payments/health/attention
-   panels, the pool board, the import windows' shared parts and the rep-link picker. The shared table
-   standard, filter chips and row chrome (`admin-common.module.css`) and the page header
-   (`TournamentAdminHeader`) are not restated.
-   ⚠ CASCADE NOTE: a kit rule on a base class (`[data-admin-kit] .x`) is (0,2,0) specificity — the SAME
-   as a legacy state modifier (`.x[data-tone]`, `.x.xActive`, `.x:hover`) — and it lands LATER in the
-   file, so it would silently win and erase the state colour if left unanswered. Every base rule below
-   that touches a coloured property is followed by an explicit kit-scoped restatement of every legacy
-   modifier on that same property, in the legacy file's own relative order, even where the resulting
-   value is unchanged. ⚠ TOKENS ONLY — checkAdminKit fails on a literal colour here. */
-
-/* ── Flat table container + column header (mirrors admin-common's own table standard) ── */
-:global([data-admin-kit]) .flatList {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .colHeader {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-tertiary);
-  background: var(--card-bg);
-  border-bottom-color: var(--home-line-strong);
-}
-
-/* ── Bulk action bar — a selection state, the kit's olive wash ── */
-:global([data-admin-kit]) .bulkBar {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .bulkInfo { color: var(--text-primary); }
-:global([data-admin-kit]) .bulkButtons .btn { border-color: var(--home-line-strong); }
-:global([data-admin-kit]) .bulkButtons .btn:hover { background: var(--home-olive-soft); }
-
-/* ── Payments roll-up ── */
-:global([data-admin-kit]) .payPanel {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-/* The kit eyebrow, once for every small label over a figure or a field on this screen (the payment
-   and health panels' titles and KPI labels, the progress label, the payment form's field labels). */
-:global([data-admin-kit]) .payHeader h4,
-:global([data-admin-kit]) .payProgressLabel,
-:global([data-admin-kit]) .payKpi span,
-:global([data-admin-kit]) .regHealthHeader h4,
-:global([data-admin-kit]) .regHealthKpi span,
-:global([data-admin-kit]) .paymentField span {
   font-family: var(--font-data);
   font-size: var(--type-label);
   font-weight: 700;
@@ -2860,595 +218,570 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .payHeader p { color: var(--text-secondary); }
-/* .payGlance's own background is always masked by one of the three data-tone variants below
-   (glanceTone is never unset in page.tsx) — no base override needed, only the tone text. */
-:global([data-admin-kit]) .payGlance small { color: var(--text-secondary); }
-:global([data-admin-kit]) .payGlance[data-tone="good"] { color: var(--success-light); }
-:global([data-admin-kit]) .payGlance[data-tone="warning"] { color: var(--warning-light); }
-:global([data-admin-kit]) .payGlance[data-tone="danger"] { color: var(--danger-light); }
-/* A "Show/Hide" disclosure toggle — body face, accent ink (was mono lime). */
-:global([data-admin-kit]) .payToggle {
-  font-family: var(--font-sans, system-ui, sans-serif);
+.regFilterHeader button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
   font-weight: 650;
   letter-spacing: normal;
   text-transform: none;
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .payProgressValue { color: var(--text-secondary); }
-:global([data-admin-kit]) .payProgressValue strong { color: var(--text-primary); }
-/* Progress track (the empty groove) — a hairline-strength neutral, not a full wash. */
-:global([data-admin-kit]) .payProgressTrack { background: var(--home-line-strong); }
-/* .payProgressFill keeps --success as a decorative meter fill — not text, AA doesn't apply. */
-:global([data-admin-kit]) .payDueItem { color: var(--text-secondary); }
-:global([data-admin-kit]) .payDueItem svg { color: var(--text-tertiary); }
-:global([data-admin-kit]) .payDueItem[data-overdue] { color: var(--danger-light); }
-:global([data-admin-kit]) .payDueItem[data-overdue] svg { color: var(--danger-light); }
-:global([data-admin-kit]) .payKpi {
-  background: var(--home-card);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) .payKpi strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
-:global([data-admin-kit]) .payKpi small { color: var(--text-secondary); }
-:global([data-admin-kit]) .payKpi[data-tone="good"] strong { color: var(--success-light); }
-:global([data-admin-kit]) .payKpi[data-tone="danger"] strong { color: var(--danger-light); }
-/* Payment filter pills — body face, the quiet/active pair (mirrors admin-common's filterChip). */
-:global([data-admin-kit]) .paymentFilter {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  border-color: var(--home-line-strong);
   color: var(--text-tertiary);
+  cursor: pointer;
 }
-:global([data-admin-kit]) .paymentFilter:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
-:global([data-admin-kit]) .paymentFilterActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-
-/* ── Registration Attention Command Center ── */
-:global([data-admin-kit]) .attentionPanel {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) .attentionStripIcon { color: var(--warning-light); }
-/* An actual <h2> — the kit's heading face, not the console mono. */
-:global([data-admin-kit]) .attentionStripBody h2 {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 700;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .attentionStripBody p { color: var(--text-secondary); }
-:global([data-admin-kit]) .attentionStripChip {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  border-color: var(--home-line-strong);
+.regFilterHeader button:hover { color: var(--home-olive); }
+.regFilterList { display: grid; gap: 0.2rem; }
+.regFilterOption {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
   color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
 }
-:global([data-admin-kit]) .attentionStripChip:hover { border-color: var(--home-olive); color: var(--home-olive); }
-:global([data-admin-kit]) .attentionStripChip strong { color: var(--home-olive); }
-:global([data-admin-kit]) .attentionStripChip[data-tone="danger"] { border-color: rgba(var(--danger-rgb), 0.3); }
-:global([data-admin-kit]) .attentionStripChip[data-tone="warning"] { border-color: rgba(var(--warning-rgb), 0.32); }
-:global([data-admin-kit]) .attentionClearButton,
-:global([data-admin-kit]) .attentionUpgradeLink {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .attentionClearButton:hover,
-:global([data-admin-kit]) .attentionUpgradeLink:hover { border-color: var(--home-olive); color: var(--home-olive); }
-:global([data-admin-kit]) .attentionBucket {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) .attentionBucket:hover,
-:global([data-admin-kit]) .attentionBucketActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .attentionBucket[data-tone="danger"] { border-color: rgba(var(--danger-rgb), 0.28); }
-:global([data-admin-kit]) .attentionBucket[data-tone="warning"] { border-color: rgba(var(--warning-rgb), 0.28); }
-:global([data-admin-kit]) .attentionBucketCount { color: var(--home-olive); }
-:global([data-admin-kit]) .attentionBucketBody strong { color: var(--text-primary); }
-:global([data-admin-kit]) .attentionBucketBody small { color: var(--text-tertiary); }
-:global([data-admin-kit]) .attentionLockLabel { color: var(--home-olive); }
-:global([data-admin-kit]) .attentionDivisionBreakdown { border-top-color: var(--home-line); }
-:global([data-admin-kit]) .attentionDivisionBreakdown > span { color: var(--text-tertiary); }
-:global([data-admin-kit]) .attentionDivisionButtons button,
-:global([data-admin-kit]) .attentionSheetDivisions button {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  border-color: var(--home-line-strong);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .attentionDivisionButtons button:hover,
-:global([data-admin-kit]) .attentionDivisionActive {
-  border-color: var(--home-olive) !important;
-  color: var(--home-olive) !important;
-}
-:global([data-admin-kit]) .attentionDivisionButtons strong,
-:global([data-admin-kit]) .attentionSheetDivisions strong { color: var(--home-olive); }
-:global([data-admin-kit]) .attentionEmpty,
-:global([data-admin-kit]) .attentionUpgradeCopy,
-:global([data-admin-kit]) .attentionSheetCopy { color: var(--text-tertiary); }
+.regFilterOption:hover,
+.regFilterOption[data-on] { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--text-primary); }
+.regFilterCheck { display: inline-flex; align-items: center; justify-content: center; color: var(--home-olive); }
+.regFilterName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-body); font-weight: 600; }
+.regFilterCount { font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); }
 
-/* ── Registration Health panel ── */
-:global([data-admin-kit]) .regHealthPanel {
-  background: var(--card-bg);
-  border-color: var(--home-line);
+/* ── A mode's note (swap, selection, a dashboard bucket) — the kit's Callout, its words and Done ── */
+.modeNote { display: flex; align-items: center; gap: 0.5rem 0.75rem; flex-wrap: wrap; width: 100%; }
+.modeNote > :first-child { flex: 1 1 auto; min-width: 0; }
+.modeCount { font-weight: 650; }
+.modeSub { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.modeDone {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 0.9rem;
+  text-decoration: none;
+  border: 1px solid var(--home-line-strong);
   border-radius: 8px;
-}
-:global([data-admin-kit]) .regHealthHeader p { color: var(--text-secondary); }
-:global([data-admin-kit]) .regHealthScore { background: var(--home-card); }
-:global([data-admin-kit]) .regHealthScore small { color: var(--text-secondary); }
-:global([data-admin-kit]) .regHealthScoreGood { background: rgba(var(--success-rgb), 0.08); color: var(--success-light); }
-:global([data-admin-kit]) .regHealthScoreWarning { background: rgba(var(--warning-rgb), 0.08); color: var(--warning-light); }
-:global([data-admin-kit]) .regHealthScoreDanger { background: rgba(var(--danger-rgb), 0.08); color: var(--danger-light); }
-:global([data-admin-kit]) .regHealthScoreNeutral { color: var(--text-secondary); }
-:global([data-admin-kit]) .regHealthToggle {
-  font-family: var(--font-sans, system-ui, sans-serif);
+  background: var(--card-bg);
+  font: inherit;
+  font-size: var(--type-body);
   font-weight: 650;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.modeDone:hover { background: var(--home-olive-soft); }
+@media (max-width: 768px) { .modeDone { min-height: var(--tap-min, 44px); } }
+
+/* ── "At a glance" (T1): ONE section card, its heading inside (16/700), closed rows with hairlines ── */
+.glance {
+  margin: 0 0 0.9rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow: clip;
+}
+/* The body face, set explicitly: the global h1–h6 rule would draw it in the display face. */
+.glanceHeading {
+  margin: 0;
+  padding: 0.75rem 1.1rem 0.25rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.25;
   letter-spacing: normal;
   text-transform: none;
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .regHealthKpi {
-  background: var(--home-card);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) button.regHealthKpi:hover:not(:disabled) { border-color: var(--home-olive); }
-:global([data-admin-kit]) .regHealthKpi strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
-:global([data-admin-kit]) .regHealthKpi small { color: var(--text-secondary); }
-:global([data-admin-kit]) .regHealthKpi[data-tone="good"] strong { color: var(--success-light); }
-:global([data-admin-kit]) .regHealthKpi[data-tone="warning"] strong { color: var(--warning-light); }
-:global([data-admin-kit]) .regHealthKpi[data-tone="danger"] strong { color: var(--danger-light); }
-:global([data-admin-kit]) .regHealthKpiLock { color: var(--home-olive); }
-:global([data-admin-kit]) .regHealthIssue { color: var(--text-secondary); }
-:global([data-admin-kit]) .regHealthIssue strong { color: var(--text-primary); }
-:global([data-admin-kit]) .regHealthIssue[data-tone="danger"] { color: var(--danger-light); }
-:global([data-admin-kit]) .regHealthIssue[data-tone="warning"] { color: var(--warning-light); }
-/* "neutral" reads as an informational note (a capacity fact) — the info tier, not raw platform navy. */
-:global([data-admin-kit]) .regHealthIssue[data-tone="neutral"] {
-  color: var(--info-light);
-  background: rgba(var(--info-rgb), 0.08);
-  border-color: rgba(var(--info-rgb), 0.2);
-}
-:global([data-admin-kit]) .regHealthGood { color: var(--success-light); }
-
-/* ── Expanded row details ── */
-:global([data-admin-kit]) .infoLine span { color: var(--text-tertiary); }
-:global([data-admin-kit]) .infoLine a { color: var(--home-olive); }
-:global([data-admin-kit]) .notesArea label,
-:global([data-admin-kit]) .transferGroup label { color: var(--text-tertiary); }
-:global([data-admin-kit]) .notesArea textarea {
-  background: var(--home-card);
-  border-color: var(--home-line-strong);
-  border-radius: 7px;
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .notesArea textarea:focus { border-color: var(--home-olive); }
-/* .transferGroup select's own literal near-black --teams-select-bg is legacy-only (token-exempt);
-   the kit answers with the Field ground directly — as background-COLOR: the shorthand would also
-   wipe the arrow. The legacy arrow is a white data-URI image (an SVG stroke cannot read a token), so
-   on the kit the chevron is redrawn from two gradients in the field's own ink (`currentColor`), at
-   the legacy arrow's place — visible on either theme's field. */
-:global([data-admin-kit]) .transferGroup select {
-  background-color: var(--home-card);
-  background-image:
-    linear-gradient(45deg, transparent 50%, currentColor 50%),
-    linear-gradient(135deg, currentColor 50%, transparent 50%);
-  background-size: 5px 5px, 5px 5px;
-  background-position: right calc(0.75rem + 5px) center, right 0.75rem center;
-  background-repeat: no-repeat;
-  border-color: var(--home-line-strong);
+.glanceItem { border-bottom: 1px solid var(--home-line); }
+.glanceItem:last-child { border-bottom: 0; }
+.glanceRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.5rem 1.1rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
   color: var(--text-primary);
+  cursor: pointer;
 }
-:global([data-admin-kit]) .transferGroup select:hover {
-  border-color: var(--home-line-strong);
-  background-color: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .transferGroup select:focus {
-  border-color: var(--home-olive);
-  box-shadow: none;
-}
-
-/* ── Row cells ── */
-/* .rowPoolSelect's own colour is a chosen/assigned indicator — the kit's olive selection.
-   [data-unassigned] already reads --danger-light on an rgba(--danger-rgb) tint (already theme-true);
-   restated here only so it survives the base rule's specificity tie. */
-/* background-COLOR, and the chevron redrawn in the picker's own ink (as `.transferGroup select`
-   above): the legacy arrows are fixed-colour images (lime, and red when unassigned). */
-:global([data-admin-kit]) .rowPoolSelect {
+.glanceRow:hover { background: var(--home-olive-soft); }
+.glanceRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.glanceLead {
+  flex: none;
+  min-width: 2rem;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1;
   color: var(--home-olive);
-  background-color: var(--home-olive-soft);
-  background-image:
-    linear-gradient(45deg, transparent 50%, currentColor 50%),
-    linear-gradient(135deg, currentColor 50%, transparent 50%);
-  background-size: 4px 4px, 4px 4px;
-  background-position: right calc(0.4rem + 4px) center, right 0.4rem center;
-  background-repeat: no-repeat;
-  border-color: var(--home-olive);
+  font-variant-numeric: tabular-nums;
 }
-:global([data-admin-kit]) .rowPoolSelect[data-unassigned] {
-  color: var(--danger-light);
-  background-color: rgba(var(--danger-rgb), 0.08);
-  border-color: rgba(var(--danger-rgb), 0.35);
+.glanceLead small { margin-left: 1px; font-size: var(--type-label); font-weight: 600; color: var(--text-tertiary); }
+.glanceMain { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.1rem 0.65rem; flex-wrap: wrap; }
+.glanceTitle { font-size: var(--type-body); font-weight: 600; }
+.glanceCaption { font-size: var(--type-support); color: var(--text-tertiary); }
+.glanceFigure { flex: none; font-size: var(--type-body); font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.glanceFigure[data-bad] { color: var(--danger-light); }
+.glanceChevron { flex: none; color: var(--text-tertiary); transition: transform 0.15s ease; }
+.glanceRow[aria-expanded="true"] .glanceChevron { transform: rotate(180deg); }
+/* A row that expands in place shows its detail on the paper tone (§3.10.8). */
+.glanceBody {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem 1.1rem 0.95rem;
+  background: var(--home-paper);
+  border-top: 1px solid var(--home-line);
 }
-:global([data-admin-kit]) .rowPoolSelect option {
-  color: var(--text-primary);
-  background: var(--home-card);
-}
-:global([data-admin-kit]) .poolSectionEmpty { color: var(--text-tertiary); }
-:global([data-admin-kit]) .poolEmptyState { color: var(--text-tertiary); }
-:global([data-admin-kit]) .poolEmptyState a { color: var(--home-olive); }
-:global([data-admin-kit]) .paymentPlaceholder { color: var(--text-tertiary); }
-:global([data-admin-kit]) .paymentSymbol { color: var(--text-tertiary); }
-:global([data-admin-kit]) .paymentSymbol[data-tone="paid"] { color: var(--success-light); }
-:global([data-admin-kit]) .paymentSymbol[data-tone="danger"] { color: var(--danger-light); }
-:global([data-admin-kit]) .paymentSymbol[data-tone="pending"] { color: var(--text-tertiary); }
-:global([data-admin-kit]) .selectionCheckbox {
-  border-color: var(--home-line-strong);
-  background: var(--home-card);
-}
-:global([data-admin-kit]) .selectionCheckbox::before { border-color: var(--home-olive); }
-:global([data-admin-kit]) .selectionCheckbox:checked {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .selectionCheckbox:focus-visible { outline-color: var(--home-olive); }
-
-/* ── Team detail shell ── */
-:global([data-admin-kit]) .teamDetailMeta { color: var(--text-tertiary); }
-:global([data-admin-kit]) .teamDetailMeta a { color: var(--text-secondary); }
-:global([data-admin-kit]) .teamDetailMeta a:hover { color: var(--text-primary); }
-:global([data-admin-kit]) .teamIdentity { color: var(--text-secondary); }
-:global([data-admin-kit]) .teamIdentityLabel { color: var(--text-tertiary); }
-:global([data-admin-kit]) .teamRegisteredOn { color: var(--text-tertiary); }
-:global([data-admin-kit]) .teamDetailSection { border-top-color: var(--home-line); }
-:global([data-admin-kit]) .teamDetailSummary {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .paymentField input {
-  border-color: var(--home-line-strong);
-  border-radius: 7px;
-  background: var(--home-card);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .paymentField input:focus { border-color: var(--home-olive); }
-:global([data-admin-kit]) .paymentDue { color: var(--text-secondary); }
-:global([data-admin-kit]) .paymentDue strong { color: var(--text-primary); }
-:global([data-admin-kit]) .answerList { color: var(--text-secondary); }
-:global([data-admin-kit]) .answerItem strong { color: var(--text-primary); }
-:global([data-admin-kit]) .notifyToggle { color: var(--text-secondary); }
-
-/* ── Selected registration actions ── */
-:global([data-admin-kit]) .registrationSelectionBar :global(.btn-outline),
-:global([data-admin-kit]) .registrationSelectionBar :global(.btn-ghost) { background: var(--home-card); }
-
-/* ── Registration filter dropdown ── */
-:global([data-admin-kit]) .regFilterButton {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  background: var(--home-card);
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .regFilterButton:hover,
-:global([data-admin-kit]) .regFilterButtonActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .regFilterPanel {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  box-shadow: var(--home-shadow);
-}
-:global([data-admin-kit]) .regFilterHeader { color: var(--text-tertiary); }
-:global([data-admin-kit]) .regFilterHeader button {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .regFilterHeader button:hover { color: var(--home-olive); }
-:global([data-admin-kit]) .regFilterOption { color: var(--text-secondary); }
-:global([data-admin-kit]) .regFilterOption:hover,
-:global([data-admin-kit]) .regFilterOptionActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .regFilterCheck { color: var(--home-olive); }
-:global([data-admin-kit]) .regFilterCount { color: var(--text-tertiary); }
-
-/* ── Add team / own team / coach-account line ── */
-:global([data-admin-kit]) .ownTeamButton > svg { color: var(--home-olive); }
-:global([data-admin-kit]) .ownTeamChip {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .ownTeamChip:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .ownTeamHint { color: var(--text-secondary); }
-:global([data-admin-kit]) .coachAccountLine {
-  border-color: var(--home-line-strong);
-  background: var(--home-card);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .coachAccountKnown {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-
-/* ── Select-current / multi-select / active-filter badge ── */
-:global([data-admin-kit]) .selectCurrent {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .multiSelectToggle,
-:global([data-admin-kit]) .multiSelectDone {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  border-color: var(--home-line-strong);
-  background: var(--home-card);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .multiSelectToggle[data-active="true"] {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-/* Chip, not a button — keeps the console mono face per F2's chip exception. */
-:global([data-admin-kit]) .activeFilterBadge {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-
-/* ── Tools sheet ── */
-:global([data-admin-kit]) .toolsSectionTitle { color: var(--text-tertiary); }
-:global([data-admin-kit]) .toolsMetrics span { color: var(--text-secondary); }
-:global([data-admin-kit]) .toolsMetrics strong { color: var(--text-primary); }
-:global([data-admin-kit]) .toolsFilterButton {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .toolsFilterButton:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
-:global([data-admin-kit]) .toolsFilterButtonActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-
-/* ── Slot board ── */
-:global([data-admin-kit]) .slotBoardCounts {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .slotBoardCounts strong { color: var(--text-primary); }
-/* .countChip has no base colour (only its two variants do) — restated on their own selectors,
-   no base-rule conflict. The warning tint is pinned to --warning in legacy (see its own comment);
-   the kit still answers with the AA-safe -light tier since that comment only protects the switch-off
-   pixel, not the kit render. */
-:global([data-admin-kit]) .countChip[data-variant="warning"] { color: var(--warning-light); }
-:global([data-admin-kit]) .countChip[data-variant="neutral"] {
-  background: var(--home-olive-soft);
-  color: var(--text-tertiary);
-}
-/* The frame is the one painter (table standard §3.3 / §3.10.1, F-24's lesson). Only the headers were
-   restated, so each pool — and the waitlist and "needs a spot" below — drew a white heading over rows on
-   the paper, the grid showing through. The rows stay transparent; the frame paints the card. */
-:global([data-admin-kit]) .slotPoolSection,
-:global([data-admin-kit]) .waitlistSection { background: var(--card-bg); }
-:global([data-admin-kit]) .slotPoolHeader {
-  background: var(--card-bg);
-  border-bottom-color: var(--home-line-strong);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .slotPoolDot { background: var(--home-lime); }
-:global([data-admin-kit]) .slotPoolCount { color: var(--text-tertiary); }
-:global([data-admin-kit]) .slotRow:hover:not(.slotRowEmpty) { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .slotRowSwapSelected {
-  background: var(--home-olive-soft) !important;
-  outline-color: var(--home-olive);
-}
-:global([data-admin-kit]) .slotName { color: var(--text-tertiary); }
-:global([data-admin-kit]) .slotTeamName { color: var(--text-primary); }
-:global([data-admin-kit]) .slotCoach { color: var(--text-tertiary); }
-:global([data-admin-kit]) .slotEmpty { color: var(--text-tertiary); }
-
-/* ── Waitlist ── */
-:global([data-admin-kit]) .waitlistHeader {
-  background: var(--card-bg);
-  border-bottom-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .waitlistPosition { color: var(--text-tertiary); }
-
-/* ── Mobile status marker (visible only under the file's own max-width:640px rule — a colour set
-   here has no effect while the element is display:none at wider widths) ── */
-:global([data-admin-kit]) .mobileStatusMarker {
-  border-color: var(--home-line-strong);
-  background: var(--home-card);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .mobileStatusMarker[data-status="pending"] {
-  border-color: rgba(var(--warning-rgb), 0.48);
-  background: rgba(var(--warning-rgb), 0.08);
-  color: var(--warning-light);
-}
-/* "accepted" here reads brand lime, not the desktop badge's success green — a pre-existing
-   inconsistency between this marker, the slot-board badge and the flat-row badge; see the report. */
-:global([data-admin-kit]) .mobileStatusMarker[data-status="accepted"] {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-/* Waitlisted reads as the drawn spec's quiet chip here, not platform navy — see the report. */
-:global([data-admin-kit]) .mobileStatusMarker[data-status="waitlist"] {
-  border-color: var(--home-line-strong);
-  background: var(--home-olive-soft);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .mobileStatusMarker[data-status="rejected"] {
-  border-color: rgba(var(--danger-rgb), 0.48);
-  background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger-light);
-}
-
-/* ── Mobile auto-card layout ── */
-:global([data-admin-kit]) .flatList .regRow {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-}
-:global([data-admin-kit]) .flatList .registrationCoachCell { color: var(--text-tertiary); }
-
-/* ── Mobile settings bottom sheet ── */
-:global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }
-:global([data-admin-kit]) .sheet {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) .sheetHandle { background: var(--home-line-strong); }
-:global([data-admin-kit]) .sheetSectionLabel { color: var(--home-olive); }
-:global([data-admin-kit]) .sheetSeg {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .sheetSeg:hover { border-color: var(--home-olive); color: var(--text-primary); }
-:global([data-admin-kit]) .sheetSegActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-/* A tint (rgba lime .08 + lime text), not a solid primary — the accent pair, same as every other
-   "active"/"chosen" chip in this file; the sheet does not need a second ink-on-lime button. */
-:global([data-admin-kit]) .sheetDone {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-/* The rule above ties with the legacy `.sheetDone:hover` and wins, so the hover step is restated —
-   the portal's chosen-chip tint, as Results' own "Done" does. */
-:global([data-admin-kit]) .sheetDone:hover { background: rgba(var(--logic-lime-rgb), 0.16); }
-:global([data-admin-kit]) .attentionSheetBucket { border-color: var(--home-line-strong); }
-:global([data-admin-kit]) .attentionSheetBucketActive,
-:global([data-admin-kit]) .attentionSheetBucket:hover {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .attentionSheetBucket span { color: var(--home-olive); }
-:global([data-admin-kit]) .attentionSheetBucket strong { color: var(--text-primary); }
-:global([data-admin-kit]) .attentionSheetBucket small { color: var(--text-tertiary); }
-:global([data-admin-kit]) .attentionSheetClear {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .attentionSheetClear:hover { border-color: var(--home-olive); color: var(--home-olive); }
-
-/* ── Active settings summary (mobile) ── */
-:global([data-admin-kit]) .activeSettingsSummary { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .activeSettingsSummaryText { color: var(--home-olive); }
-:global([data-admin-kit]) .activeSettingsSummaryIcon { color: var(--text-tertiary); }
-:global([data-admin-kit]) .activeSettingsSummary:hover .activeSettingsSummaryIcon { color: var(--home-olive); }
-:global([data-admin-kit]) .attentionMobileOpen strong { color: var(--home-olive); }
-:global([data-admin-kit]) .attentionMobileOpen small { color: var(--text-secondary); }
-:global([data-admin-kit]) .attentionMobileOpen svg { color: var(--text-tertiary); }
-:global([data-admin-kit]) .attentionMobileClear {
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .attentionMobileClear:hover { border-color: var(--home-olive); color: var(--home-olive); }
-/* The mobile strip drops the card look for a plain border-bottom — restated inside the same
-   max-width:640px condition the legacy rule uses, so the desktop card rule above doesn't leak in. */
+.glanceSentence { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+.glanceBody > button { justify-self: start; }
 @media (max-width: 640px) {
-  :global([data-admin-kit]) .attentionPanel {
-    background: transparent;
-    border-bottom-color: var(--home-line);
+  .glanceHeading { padding: 0.75rem 0.85rem 0.25rem; }
+  .glanceRow { min-height: 56px; padding: 0.5rem 0.75rem 0.5rem 0.85rem; }
+  .glanceMain { flex-direction: column; align-items: flex-start; }
+  .glanceBody { padding: 0.75rem 0.85rem 0.9rem; }
+}
+@media (prefers-reduced-motion: reduce) { .glanceChevron { transition: none; } }
+
+/* Health's opened tiles and issues (today's panel, on the kit). */
+.regHealthKpiGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.45rem; }
+/* ONE tile for the glance card's opened figures — health's (a button) and Payments' (a figure). */
+.glanceTile {
+  position: relative;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--home-card);
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+}
+button.glanceTile:not(:disabled) { cursor: pointer; }
+button.glanceTile:hover:not(:disabled) { border-color: var(--home-olive); }
+button.glanceTile:disabled { cursor: default; opacity: 1; }
+.glanceTile span,
+.glanceTile small { display: block; min-width: 0; overflow-wrap: anywhere; }
+.glanceTile span,
+.payProgressLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.glanceTile strong { display: block; margin-top: 0.12rem; font-size: var(--type-heading); line-height: 1.15; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.glanceTile small { margin-top: 0.08rem; font-size: var(--type-support); color: var(--text-secondary); }
+.glanceTile[data-tone="good"] strong { color: var(--success-light); }
+.glanceTile[data-tone="warning"] strong { color: var(--warning-light); }
+.glanceTile[data-tone="danger"] strong { color: var(--danger-light); }
+.regHealthKpiLock { position: absolute; top: 0.4rem; right: 0.45rem; display: inline-flex; color: var(--home-olive); }
+.regHealthIssues { display: flex; flex-direction: column; gap: 0.35rem; }
+.regHealthIssue {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 38px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--home-line);
+  border-left-width: 3px;
+  border-radius: 8px;
+  background: var(--card-bg);
+  font: inherit;
+  font-size: var(--type-support);
+  line-height: 1.35;
+  text-align: left;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.regHealthIssue:disabled { cursor: default; }
+.regHealthIssue strong { color: var(--text-primary); }
+.regHealthIssue svg { flex: none; }
+/* A white note with a coloured edge — tinted panels were retired (2026-09-21). */
+.regHealthIssue[data-tone="danger"] { border-left-color: var(--home-live); }
+.regHealthIssue[data-tone="danger"] svg { color: var(--danger-light); }
+.regHealthIssue[data-tone="warning"] { border-left-color: var(--warning); }
+.regHealthIssue[data-tone="warning"] svg { color: var(--warning-light); }
+.regHealthIssue[data-tone="neutral"] { border-left-color: var(--home-olive); }
+.regHealthIssue[data-tone="neutral"] svg { color: var(--home-olive); }
+.regHealthGood { display: flex; align-items: center; gap: 0.4rem; font-size: var(--type-support); color: var(--text-secondary); }
+.regHealthGood svg { color: var(--success-light); }
+@media (max-width: 640px) {
+  .regHealthKpiGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .regHealthIssue { min-height: var(--tap-min, 44px); }
+}
+
+/* Payments, opened: the collected bar, the four figures, the due dates (today's panel, on the kit). */
+.payProgress { display: flex; flex-direction: column; gap: 0.3rem; }
+.payProgressTop { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.payProgressValue { font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.payProgressValue strong { font-size: var(--type-body); color: var(--text-primary); }
+.payProgressTrack { height: 5px; border-radius: 3px; background: var(--home-line-strong); overflow: hidden; }
+/* The fill is a meter, not text. */
+.payProgressFill { height: 100%; border-radius: 3px; background: var(--success); transition: width 0.3s ease; }
+.payGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.45rem; }
+.payDueDates { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.payDueItem { display: inline-flex; align-items: center; gap: 0.3rem; font-size: var(--type-support); color: var(--text-secondary); }
+.payDueItem svg { color: var(--text-tertiary); }
+.payDueItem[data-overdue],
+.payDueItem[data-overdue] svg { color: var(--danger-light); }
+@media (min-width: 981px) { .payGrid[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 980px) { .payGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .payProgressFill { transition: none; } }
+
+/* ── The list's own parts (T4, A17): Teams' selection row, the swap mark, the desk's action cell ── */
+/* A selection row keeps the kit row's metrics — a 22px tick leads, the whole row is the toggle. */
+.selItem { display: block; border-bottom: 1px solid var(--home-line); }
+.selItem:last-child { border-bottom: 0; }
+.selRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 60px;
+  padding: var(--table-pad-comfortable) 1.1rem;
+  cursor: pointer;
+}
+/* Never tinted — hovered or chosen, a selection row is marked by its tick alone (§3.3); only the
+   keyboard's focus draws a ring. */
+.selRow:has(input:focus-visible) { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.selMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.selTitle { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.selCaption { font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+.tickCell { width: 2.75rem; }
+@media (max-width: 640px) { .selRow { padding: 0.65rem 0.85rem; } }
+/* The swap mark: 44px, olive once chosen — the row itself is never tinted (§3.3). */
+.swapMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  flex: none;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+.swapMark[data-on] { border-color: var(--home-olive); color: var(--home-olive); }
+.swapButton { display: inline-flex; padding: 0; border: 0; background: none; cursor: pointer; }
+/* Swapping, the chosen row is shown by its MARK alone — a row is never tinted (§3.3). A phone keeps a
+   tapped row's hover, so the rows' hover tint stands down while the mode is on. */
+.swapping :global([data-row-list-row]) > button:hover { background: none; }
+.swapButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 8px; }
+.actionCell { width: 1%; white-space: nowrap; text-align: right; }
+
+/* ── The bulk bar (A17, D8): two lines, the decisions first (Reject set apart), the money second.
+   Olive on white — a bulk action is not the screen's main action, so no lime. At a desk it sits under
+   the note; on a phone it DOCKS above the bar while teams are chosen. ── */
+.bulkBar { display: grid; gap: 0.4rem; }
+.bulkLine { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.bulkGap { flex: 0 0 0.4rem; }
+.bulkBtn {
+  flex: 0 1 auto;
+  min-height: 38px;
+  padding: 0 0.8rem;
+  border: 1px solid rgba(var(--home-olive-rgb), 0.45);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 700;
+  color: var(--home-olive);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.bulkBtn:hover { background: var(--home-olive-soft); }
+.bulkBtn:disabled { opacity: 0.5; cursor: default; }
+.bulkQuiet { border-color: var(--home-line-strong); color: var(--text-secondary); font-weight: 650; }
+.bulkSelect { padding-right: 0.5rem; }
+.selectHead { margin: 0 0 0.75rem; }
+.selectHead > :first-child { margin-bottom: 0.5rem; }
+.bulkInline { margin: 0 0 0.25rem; }
+.bulkDock { display: none; }
+@media (max-width: 640px) {
+  .bulkInline { display: none; }
+  .bulkDock {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + var(--admin-strip-h, 0px));
+    z-index: 250;
+    padding: 0.5rem 0.75rem 0.6rem;
+    background: var(--card-bg);
+    border-top: 1px solid var(--home-line-strong);
+    box-shadow: var(--home-shadow);
   }
+  .bulkLine { flex-wrap: nowrap; }
+  .bulkBtn { flex: 1 1 auto; min-height: var(--tap-min, 44px); padding: 0 0.5rem; }
+  .bulkGap { flex: 0 0 0.35rem; }
+  /* While the bar is docked, the list's last rows can still scroll clear of it. */
+  .teamsPage[data-selecting] { padding-bottom: 8.5rem; }
 }
 
-/* ── "Link to rep team" control + picker popover ── */
-:global([data-admin-kit]) .repLinkChip {
-  border-color: var(--home-line-strong);
+/* ── The team's record (T3): its blocks inside the kit's form window ── */
+.recordIdentity { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.5rem; }
+.recordGrow { flex: 1 1 auto; }
+.recordPlace { margin-top: 0.5rem; }
+.recordWide { margin: 0 0 0.25rem; }
+.recordWide > button { width: 100%; }
+.recordFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; margin-top: 0.75rem; }
+.recordFields > label { margin-bottom: 0.25rem; }
+.recordFacts { display: grid; gap: 0.1rem; margin: 0 0 0.5rem; }
+.recordFacts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.recordFacts dt { flex: none; font-size: var(--type-support); color: var(--text-tertiary); }
+.recordFacts dd { margin: 0; min-width: 0; text-align: right; overflow-wrap: anywhere; }
+.recordFacts a { color: var(--home-olive); text-decoration: underline; text-underline-offset: 3px; }
+.recordDelete {
+  min-height: 38px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--danger-light);
+  cursor: pointer;
+}
+.recordDelete:hover { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 768px) { .recordDelete { min-height: var(--tap-min, 44px); } }
+
+/* ── The rep-team picker (T7): a line in the record's Coach block, opening today's picker ── */
+.repLinkWrap { position: relative; display: inline-flex; }
+.repLinkButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 38px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.repLinkButton:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.repLinkChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.32rem 0.28rem 0.5rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 6px;
   background: var(--home-olive-soft);
+  font-size: var(--type-support);
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .repLinkChip > svg { color: var(--text-secondary); }
-:global([data-admin-kit]) .repLinkChipName { color: var(--text-primary); }
-:global([data-admin-kit]) .repLinkChipX { color: var(--text-tertiary); }
-:global([data-admin-kit]) .repLinkChipX:hover:not(:disabled) {
-  color: var(--danger-light);
-  background: rgba(var(--danger-rgb), 0.12);
+.repLinkChip > svg { flex-shrink: 0; color: var(--text-secondary); }
+.repLinkChipName {
+  max-width: 9rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
 }
-:global([data-admin-kit]) .repLinkPopover {
+.repLinkChipName:hover:not(:disabled) { text-decoration: underline; }
+.repLinkChipX {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.repLinkChipX:hover:not(:disabled) { color: var(--danger-light); background: rgba(var(--danger-rgb), 0.12); }
+@media (max-width: 768px) {
+  .repLinkButton { min-height: var(--tap-min, 44px); }
+  .repLinkChipX { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+}
+.repLinkPopover {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 40;
+  width: 20rem;
+  max-width: min(20rem, 78vw);
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
   background: var(--card-bg);
-  border-color: var(--home-line);
   box-shadow: var(--home-shadow);
+  overflow: hidden;
+  text-align: left;
 }
-:global([data-admin-kit]) .repLinkPopHead { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .repLinkPopTitle { color: var(--text-primary); }
-:global([data-admin-kit]) .repLinkPopSub { color: var(--text-tertiary); }
-:global([data-admin-kit]) .repLinkSearch {
-  border-color: var(--home-line-strong);
+.repLinkPopHead { padding: 0.65rem 0.8rem 0.55rem; border-bottom: 1px solid var(--home-line); }
+.repLinkPopTitle { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.repLinkPopSub { margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.repLinkSearch {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.55rem 0.8rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 6px;
   background: var(--home-card);
 }
-:global([data-admin-kit]) .repLinkSearch > svg { color: var(--text-tertiary); }
-:global([data-admin-kit]) .repLinkSearch input { color: var(--text-primary); }
-:global([data-admin-kit]) .repLinkItem { color: var(--text-secondary); }
-:global([data-admin-kit]) .repLinkItem:hover:not(:disabled) { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .repLinkItemMeta { color: var(--text-tertiary); }
-:global([data-admin-kit]) .repLinkItemPick { color: var(--home-olive); }
-:global([data-admin-kit]) .repLinkItemCurrent { color: var(--text-secondary); }
-:global([data-admin-kit]) .repLinkEmpty { color: var(--text-tertiary); }
-:global([data-admin-kit]) .repLinkPopFoot {
-  border-top-color: var(--home-line);
+.repLinkSearch > svg { flex-shrink: 0; color: var(--text-tertiary); }
+.repLinkSearch input { width: 100%; border: 0; background: none; font: inherit; font-size: var(--type-body); color: var(--text-primary); outline: none; }
+.repLinkList { max-height: 13rem; overflow-y: auto; padding: 0 0.35rem 0.5rem; }
+.repLinkItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.repLinkItem:hover:not(:disabled) { background: var(--home-olive-soft); }
+.repLinkItem:disabled { cursor: default; opacity: 0.75; }
+.repLinkItemText { display: flex; flex-direction: column; gap: 0.05rem; min-width: 0; }
+.repLinkItemName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-body); font-weight: 600; }
+.repLinkItemMeta { font-size: var(--type-support); color: var(--text-tertiary); }
+.repLinkItemPick,
+.repLinkItemCurrent { margin-left: auto; font-size: var(--type-support); font-weight: 650; white-space: nowrap; }
+.repLinkItemPick { color: var(--home-olive); }
+.repLinkItemCurrent { color: var(--text-secondary); }
+.repLinkEmpty { padding: 1.1rem 0.8rem; text-align: center; font-size: var(--type-support); color: var(--text-tertiary); }
+.repLinkPopFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.5rem 0.8rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
-:global([data-admin-kit]) .repLinkPopClose { color: var(--text-secondary); }
-:global([data-admin-kit]) .repLinkPopClose:hover { color: var(--text-primary); }
+.repLinkPopClose { min-height: 2.25rem; padding: 0 0.3rem; border: 0; background: none; font: inherit; font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); cursor: pointer; }
+.repLinkPopClose:hover { color: var(--text-primary); }
 
-/* ── Phone layout safety (F0's documented defect: a control 149–178px past the right edge on this
-   screen) — the pools-view action row (Select many / Swap or Randomize) is the one explicit
-   `flex-wrap: nowrap` button row in this file, and the kit's body-face buttons are wider than the
-   legacy condensed mono ones, so it would newly spill further. NOT the fix for the logged defect
-   (still not reachable at 361–390px either way) — this only stops the kit from making it worse. */
-@media (max-width: 640px) {
-  :global([data-admin-kit]) .teamsActionGroup { flex-wrap: wrap; }
+/* ── The view sheet (phone): status and payment filters, the grouping where a division has pools ── */
+.sheetSection { padding: 0.75rem 0; border-bottom: 1px solid var(--home-line); }
+.sheetSection:last-of-type { border-bottom: 0; }
+.sheetSectionLabel {
+  margin-bottom: 0.6rem;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
 }
+.sheetSegments { display: flex; gap: 0.35rem; }
+.sheetSegmentsWrap { flex-wrap: wrap; }
+.sheetSegmentsWrap > .sheetSeg { flex: 1 1 calc(50% - 0.35rem); }
+.sheetSeg {
+  flex: 1;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.5rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.sheetSeg:hover { border-color: var(--home-olive); color: var(--text-primary); }
+.sheetSeg[aria-pressed="true"] { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
+.sheetReset,
+.sheetDone {
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  border-radius: 8px;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  cursor: pointer;
+}
+/* Reset sits under the filters; Done is the shared sheet's footer, which spaces itself. */
+.sheetReset { margin-top: 0.75rem; border: 1px solid var(--home-line-strong); background: none; color: var(--text-secondary); }
+.sheetReset:hover { border-color: var(--home-olive); color: var(--home-olive); }
+.sheetDone { border: 1px solid var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
+.sheetDone:hover { background: var(--home-olive-soft); border-color: var(--text-primary); color: var(--text-primary); }
+
+/* ── A question's list of teams (the kit's question window) ── */
+.askItems {
+  display: grid;
+  gap: 0.3rem;
+  max-height: 12.5rem;
+  margin: 0.25rem 0 0;
+  padding: 0.5rem 0.75rem;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.askItems li { display: flex; justify-content: space-between; gap: 0.5rem; }
+.askNote { color: var(--text-tertiary); overflow-wrap: anywhere; }
+
+/* ── The payment reminder window's field ── */
+.reminderField { margin: 0.9rem 0 0; }
+
+/* ── Add team / Add my team (create asks — unchanged forms, on the kit's ink) ── */
+.notifyToggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  font-size: var(--type-body);
+  line-height: 1.4;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.notifyToggle input { margin-top: 0.15rem; accent-color: var(--home-olive); }
+.ownTeamHint { margin: 1rem 0 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+/* Email-aware Add Team (2026-09-13) — one status line under the email: a known coach, or new. */
+.coachAccountLine {
+  margin: 0.45rem 0 0;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--home-card);
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.coachAccountKnown { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }

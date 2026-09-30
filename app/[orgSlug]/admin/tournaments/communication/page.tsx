@@ -1,88 +1,51 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  AlertCircle, BellRing, CheckCircle2, Copy, Globe, Lock,
-  Mail, Plus, RefreshCw, RotateCcw, Send,
-  Star, Trash2, Users, X,
-} from 'lucide-react';
+/**
+ * COMMUNICATIONS (Tournament admin redesign Stage 2, C1 · C2 — ruled 2026-09-30, hub v16).
+ *
+ *   C1  ONE LIST: one row per message — a message sent to the site AND by email is one row, because it
+ *       is one record (`channel_site` + `channel_email` on the same announcement). The row says when,
+ *       where it went and how many it reached ("Jun 13 · On the site, pinned · Emailed to 18"); a failed
+ *       send is the one coloured word. One filter (All · On the site · Emailed). A post removed from the
+ *       site is a band at the foot — the record is kept, so "removed", never "deleted". Every row opens
+ *       the message's record in the kit's form window. At a desk, a table (Date · Message · Where it
+ *       went · Reached). The empty state is one sentence; the header's + is its one action.
+ *   C2  THE COMPOSER says the true thing (MessageComposer): who an email reaches is the send's own rule.
+ */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertCircle, CheckCircle2, ChevronRight, Copy, Plus, RefreshCw, RotateCcw, Trash2 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature } from '@/lib/plan-features';
-import { Division, Communication, Team } from '@/lib/types';
-import s from '../../admin-common.module.css';
-import styles from './communication.module.css';
+import { formatStoredDate } from '@/lib/timezone';
+import { Division, Communication } from '@/lib/types';
+import { COMMS_WORDS as W, RECIPIENTS_NOT_KEPT } from '@/lib/communication-words';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
-import { SandboxLockNote, useSandboxLock } from '@/components/sandbox/SandboxLock';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
-import { COMMS_LOCK, COMMS_LOCK_PLAN, RECIPIENTS_NOT_KEPT } from '@/lib/communication-words';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { Callout, ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, repKit } from '@/components/admin/kit/club/RepKit';
+import { TournamentAdminHeader } from '@/components/admin/tournament';
+import { joinDots, RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
+import MessageComposer, { targetingOf, type ComposerValues } from './MessageComposer';
+import styles from './communication.module.css';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+type Lens = 'all' | 'site' | 'email';
 
-type HistoryFilter = 'site' | 'email';
+const EMPTY: ComposerValues = {
+  title: '', body: '', pinned: false, channelSite: true, channelEmail: false, channelPush: false,
+  divisionIds: [], teamChoice: 'accepted', divisionChoice: '', paymentChoice: 'any',
+};
 
-// ─── Quick templates (free for all plans) ────────────────────────────────────
+const shortDate = (iso: string) => formatStoredDate(iso, { withYear: false });
 
-const QUICK_TEMPLATES = [
-  {
-    label: 'Schedule Published',
-    title: 'Schedule is live — {{tournament}}',
-    body: 'Hi teams,\n\nThe schedule for {{tournament}} is now live. You can view game times, dates, and locations on the tournament site.\n\nSee you on the field!',
-  },
-  {
-    label: 'Payment Reminder',
-    title: 'Reminder: Payment outstanding — {{tournament}}',
-    body: 'Hi teams,\n\nThis is a friendly reminder that payment for {{tournament}} is still outstanding. Please arrange payment at your earliest convenience to secure your spot.\n\nThank you!',
-  },
-  {
-    label: 'Weather Update',
-    title: '⚠️ Weather update — {{tournament}}',
-    body: 'Hi teams,\n\nDue to weather conditions, we have an update regarding {{tournament}}. [Add details here.]\n\nWe will share further updates as soon as they are available. Thank you for your patience.',
-  },
-  {
-    label: 'Welcome & Info',
-    title: 'Welcome to {{tournament}} — important info',
-    body: 'Hi teams,\n\nWe are excited to welcome you to {{tournament}}! Here is some important information:\n\n• [Parking / venue info]\n• [Check-in instructions]\n• [Schedule link]\n\nSee you there!',
-  },
-  {
-    label: 'Results Posted',
-    title: 'Final results are in — {{tournament}}',
-    body: 'Hi teams,\n\nThe final results for {{tournament}} are now posted. Thank you to all teams and families for a great tournament!\n\n[Add any closing remarks here.]\n\nHope to see you next year!',
-  },
-];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function toggleSetValue<T>(set: Set<T>, value: T) {
-  const next = new Set(set);
-  if (next.has(value)) next.delete(value);
-  else next.add(value);
-  return next;
+/** "Jun 13 · On the site, pinned · Emailed to 18 · 1 failed" — when, where it went, how many it reached. */
+function rowCaption(c: Communication): React.ReactNode {
+  return joinDots([
+    shortDate(c.createdAt),
+    c.channelSite && (c.deletedAt ? W.removedOn(shortDate(c.deletedAt)) : c.pinned ? W.onSitePinned : W.onSite),
+    c.channelEmail && W.emailedTo(c.emailRecipientCount),
+    (c.emailFailedCount ?? 0) > 0 && <span className={styles.bad}>{W.failed(c.emailFailedCount!)}</span>,
+  ]);
 }
-
-function formatDate(iso: string) {
-  const d = new Date(iso.includes('T') ? iso : iso + 'T12:00:00');
-  return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-/** Stable fingerprint of every editable composer field — so the unsaved-changes guard catches
- *  pin / division / channel edits, not just title/body (which silently lose otherwise). */
-function composerFingerprint(f: {
-  title: string; body: string; pinned: boolean;
-  channelSite: boolean; channelEmail: boolean; channelPush: boolean;
-  divisionIds: Iterable<string>;
-}): string {
-  return JSON.stringify({
-    title: f.title, body: f.body, pinned: f.pinned,
-    cs: f.channelSite, ce: f.channelEmail, cp: f.channelPush,
-    d: [...f.divisionIds].sort(),
-  });
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AdminCommunicationPage() {
   const { currentTournament } = useTournament();
@@ -92,990 +55,376 @@ export default function AdminCommunicationPage() {
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '?';
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const billingHref = `/${orgSlug}/admin/tournaments/settings/subscription`;
-  // "See it live" sandbox: outbound is disabled before the press, not caught after. False for
-  // every real org, so nothing about a customer's compose screen changes.
-  const sandboxLocked = useSandboxLock();
-  const kx = useKitStyle();
-  // Hand-set inline colours (kx patches them on the kit; unchanged while the switch is off).
-  // The composer's small print under a channel toggle — same object, used at two points.
-  const channelNoteStyle = kx({ margin: '0.25rem 0 0 1.7rem', fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }, KIT_INK.secondary);
-  const pushNoteStyle = kx({ margin: 0, fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }, KIT_INK.secondary);
-  const noDeletedStyle = kx({ color: 'var(--white-40)', fontSize: '0.88rem', margin: 0 }, KIT_INK.tertiary);
-  const deleteConfirmTextStyle = kx({ color: 'var(--white-60)', fontSize: '0.9rem', margin: '0 0 1.25rem' }, KIT_INK.secondary);
+  const planHref = `${billingHref}?plan=tournament_plus`;
 
-  // ── Data ────────────────────────────────────────────────────────────────────
+  // ── Data ──
   const [communications, setCommunications] = useState<Communication[]>([]);
-  const [teams,     setTeams]    = useState<Team[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
-  const [loading,   setLoading]  = useState(true);
-  const [sending,   setSending]  = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
 
-  // ── View state ──────────────────────────────────────────────────────────────
-  const [isComposing,              setIsComposing]              = useState(false);
-  const [historyFilter,            setHistoryFilter]            = useState<HistoryFilter>('site');
-  const [editingId,                setEditingId]                = useState<string | null>(null);
-  const [deleteId,                 setDeleteId]                 = useState<string | null>(null);
-  const [sendResult,               setSendResult]               = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
-  const [emailDetailId,            setEmailDetailId]            = useState<string | null>(null);
-  const [emailDetailRecipientsOpen,setEmailDetailRecipientsOpen]= useState(false);
-  const [siteFilter,               setSiteFilter]               = useState<'active' | 'deleted'>('active');
+  // ── View ──
+  const [lens, setLens] = useState<Lens>('all');
+  const [composing, setComposing] = useState<'new' | 'edit' | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [emailDetailId, setEmailDetailId] = useState<string | null>(null);
+  const [recipientsOpen, setRecipientsOpen] = useState(false);
+  const [removeId, setRemoveId] = useState<string | null>(null);
+  const [result, setResult] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [composeError, setComposeError] = useState<string | null>(null);
+  const [values, setValues] = useState<ComposerValues>(EMPTY);
+  // The composer's fields when it opened — the unsaved-changes guard warns only on a genuine edit.
+  const [baseline, setBaseline] = useState(JSON.stringify(EMPTY));
 
-  // ── Compose fields ──────────────────────────────────────────────────────────
-  const [title,       setTitle]       = useState('');
-  const [body,        setBody]        = useState('');
-  const [channelSite, setChannelSite] = useState(true);
-  const [channelEmail,setChannelEmail]= useState(false);
-  const [channelPush, setChannelPush] = useState(false);
-  const [pinned,      setPinned]      = useState(false);
-  const [siteDivisionIds, setSiteDivisionIds] = useState<Set<string>>(() => new Set());
-  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
-  // Fingerprint of the composer captured when composing/editing starts (and after a Clear), so the
-  // unsaved-changes guard only warns on genuine edits — not on a freshly-opened composer, an untouched
-  // template/post, or a cleared draft.
-  const [composeBaseline, setComposeBaseline] = useState('');
-
-  // ── Load data ────────────────────────────────────────────────────────────────
+  // Only an event's FIRST read blanks the screen; the re-read after a send, a removal or a restore
+  // keeps it (and the window on it) standing (/review 2026-09-30).
+  const loadedFor = useRef<string | null>(null);
   const loadData = useCallback(async () => {
     if (!currentTournament?.id) {
-      setCommunications([]); setTeams([]); setDivisions([]);
+      setCommunications([]); setDivisions([]);
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (loadedFor.current !== currentTournament.id) setLoading(true);
+    loadedFor.current = currentTournament.id;
     const tid = encodeURIComponent(currentTournament.id);
-    const [commsRes, teamsRes, groupsRes] = await Promise.all([
+    const [commsRes, groupsRes] = await Promise.all([
       fetch(`/api/admin/communications?tournamentId=${tid}${orgParam}`),
-      fetch(`/api/admin/teams?tournamentId=${tid}${orgParam}`),
       fetch(`/api/admin/divisions?tournamentId=${tid}${orgParam}`),
     ]);
     setCommunications(commsRes.ok ? await commsRes.json() : []);
-    setTeams(teamsRes.ok ? await teamsRes.json() : []);
     setDivisions(groupsRes.ok ? await groupsRes.json() : []);
     setLoading(false);
   }, [currentTournament?.id, orgParam]);
 
   useEffect(() => { void loadData(); }, [loadData]);
 
-  // ── Derived data ─────────────────────────────────────────────────────────────
-  const divisionNameById = useMemo(() => new Map(divisions.map(g => [g.id, g.name])), [divisions]);
-  const acceptedTeamCount = useMemo(() => teams.filter(t => t.status === 'accepted').length, [teams]);
-  // Fan push (buzz opted-in fans' phones) is the Plus fan-alerts feature — same gate as score alerts.
-  const fanPushAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'fan_score_alerts') : false;
-  // A post shown under chosen divisions, and a targeted email, are Tournament Plus — the send refuses
-  // either without it, so the Tournament plan sees the lock with the plan's name instead (F43, A6).
-  const targetingAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'targeted_tournament_announcements') : false;
-  const planHref = `${billingHref}?plan=tournament_plus`;
+  // Targeted sends and a post shown under chosen divisions are Tournament Plus — the send refuses
+  // either without it, so the Tournament plan sees the lock with the plan's name (F43, A6, A14).
+  const canTarget = currentOrg ? hasPlanFeature(currentOrg.planId, 'targeted_tournament_announcements') : false;
+  const canPush = currentOrg ? hasPlanFeature(currentOrg.planId, 'fan_score_alerts') : false;
 
-  // ── Compose helpers ──────────────────────────────────────────────────────────
-  function openNewMessage() {
-    setEditingId(null);
-    setTitle(''); setBody(''); setPinned(false);
-    setSiteDivisionIds(new Set());
-    setChannelSite(true); setChannelEmail(false); setChannelPush(false);
-    setComposeBaseline(composerFingerprint({ title: '', body: '', pinned: false, channelSite: true, channelEmail: false, channelPush: false, divisionIds: [] }));
-    setActiveTemplate(null);
-    setIsComposing(true);
-    setSendResult(null);
+  function openNew() {
+    setValues(EMPTY); setBaseline(JSON.stringify(EMPTY));
+    setEditingId(null); setComposeError(null); setResult(null);
+    setComposing('new');
+  }
+  function openPost(item: Communication) {
+    const v: ComposerValues = { ...EMPTY, title: item.title, body: item.body, pinned: item.pinned, divisionIds: item.divisionIds ?? [] };
+    setValues(v); setBaseline(JSON.stringify(v));
+    setEditingId(item.id); setComposeError(null); setResult(null);
+    setComposing('edit');
+  }
+  function closeComposer() {
+    setComposing(null); setEditingId(null); setComposeError(null);
+  }
+  /** A site post opens its post record (with its email inside, if it went both ways); an email-only
+   *  message opens its email record. */
+  function openRecord(item: Communication) {
+    if (item.channelSite) { openPost(item); return; }
+    setRecipientsOpen(false);
+    setEmailDetailId(item.id);
   }
 
-  function openEdit(item: Communication) {
-    setTitle(item.title);
-    setBody(item.body);
-    setPinned(item.pinned);
-    setSiteDivisionIds(new Set(item.divisionIds ?? []));
-    setChannelSite(item.channelSite);
-    setChannelEmail(false);
-    setChannelPush(false);
-    setComposeBaseline(composerFingerprint({ title: item.title, body: item.body, pinned: item.pinned, channelSite: item.channelSite, channelEmail: false, channelPush: false, divisionIds: item.divisionIds ?? [] }));
-    setEditingId(item.id);
-    // isComposing stays false — edit uses a modal, not the inline panel
-    setSendResult(null);
-  }
-
-  function cancelCompose() {
-    setIsComposing(false);
-    setEditingId(null);
-    setTitle(''); setBody(''); setPinned(false);
-    setSiteDivisionIds(new Set());
-    setChannelSite(true); setChannelEmail(false); setChannelPush(false);
-    setActiveTemplate(null);
-  }
-
-  function applyTemplate(tpl: typeof QUICK_TEMPLATES[number]) {
-    const tName = currentTournament?.name ?? 'the tournament';
-    const nextTitle = tpl.title.replace('{{tournament}}', tName);
-    const nextBody = tpl.body.replace(/{{tournament}}/g, tName);
-    setTitle(nextTitle);
-    setBody(nextBody);
-    // Applying a template isn't itself "unsaved work" — rebase so only edits after it warn (a template
-    // changes only title/body, so carry the current values of the other fields into the baseline).
-    setComposeBaseline(composerFingerprint({ title: nextTitle, body: nextBody, pinned, channelSite, channelEmail, channelPush, divisionIds: siteDivisionIds }));
-    setActiveTemplate(tpl.label);
-  }
-
-  // ── Submit ───────────────────────────────────────────────────────────────────
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit() {
     if (!currentTournament?.id) return;
-    setSending(true);
-    setSendResult(null);
-
+    setSending(true); setComposeError(null);
     try {
-      if (editingId) {
+      if (composing === 'edit' && editingId) {
         const res = await fetch(`/api/admin/communications${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            action: 'update',
-            id: editingId,
+            action: 'update', id: editingId,
             // Divisions are sent only where the plan can set them: a Tournament plan editing an older
-            // division-scoped post leaves its divisions as they are rather than being refused (F43).
-            data: { title: title.trim(), body: body.trim(), pinned, ...(targetingAvailable ? { divisionIds: Array.from(siteDivisionIds) } : {}) },
+            // division-scoped post leaves them as they are rather than being refused (F43).
+            data: { title: values.title.trim(), body: values.body.trim(), pinned: values.pinned, ...(canTarget ? { divisionIds: values.divisionIds } : {}) },
           }),
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to update.');
-        setSendResult({ type: 'success', msg: 'Post updated.' });
+        if (!res.ok) throw new Error(json.error || 'That didn’t save.');
+        setResult({ type: 'success', msg: 'Post updated.' });
       } else {
         const res = await fetch(`/api/admin/communications${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'save',
             data: {
               tournamentId: currentTournament.id,
-              title: title.trim(),
-              body: body.trim(),
-              channelSite,
-              channelEmail,
-              channelPush,
-              pinned,
-              divisionIds: targetingAvailable ? Array.from(siteDivisionIds) : [],
-              // No targeting = every accepted team — the send's own default (lib/announcement-recipients, F42).
-              targeting: null,
+              title: values.title.trim(),
+              body: values.body.trim(),
+              channelSite: values.channelSite,
+              channelEmail: values.channelEmail,
+              channelPush: values.channelPush,
+              pinned: values.pinned,
+              divisionIds: canTarget && values.channelSite ? values.divisionIds : [],
+              // The picker's choices ARE the send's targeting; none chosen = every accepted team.
+              targeting: values.channelEmail ? targetingOf(values, canTarget) : null,
             },
           }),
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to send.');
-
-        // Build a single result line covering every channel that ran.
+        if (!res.ok) throw new Error(json.error || 'That didn’t send.');
+        // One result line covering every channel that ran.
         const email = json.emailResults;
-        const push  = json.pushResults;
+        const push = json.pushResults;
         const parts: string[] = [];
-        if (channelSite) parts.push('posted to site');
-        if (channelEmail && email) parts.push(`emailed ${email.sent}${email.failed ? ` (${email.failed} failed)` : ''}`);
-        if (channelPush && push) {
-          if (push.sent > 0)        parts.push(`pushed to ${push.sent} fan${push.sent === 1 ? '' : 's'}${push.failed ? ` (${push.failed} failed)` : ''}`);
+        if (values.channelSite) parts.push('posted to the site');
+        if (values.channelEmail && email) parts.push(`emailed ${email.sent}${email.failed ? ` (${email.failed} failed)` : ''}`);
+        if (values.channelPush && push) {
+          if (push.sent > 0) parts.push(`pushed to ${push.sent} fan${push.sent === 1 ? '' : 's'}${push.failed ? ` (${push.failed} failed)` : ''}`);
           else if (push.failed > 0) parts.push(`push failed for ${push.failed} device${push.failed === 1 ? '' : 's'}`);
-          else                      parts.push('no fans have alerts on yet');
+          else parts.push('no fans have alerts on yet');
         }
         const joined = parts.join(' · ');
-        const msg = joined ? joined.charAt(0).toUpperCase() + joined.slice(1) + '.' : 'Done.';
-        const pushHadError = channelPush && push && push.failed > 0;
-        setSendResult({ type: (channelEmail && email?.failed > 0) || pushHadError ? 'error' : 'success', msg });
+        const pushHadError = values.channelPush && push && push.failed > 0;
+        setResult({
+          type: (values.channelEmail && email?.failed > 0) || pushHadError ? 'error' : 'success',
+          msg: joined ? joined.charAt(0).toUpperCase() + joined.slice(1) + '.' : 'Done.',
+        });
       }
-
       await loadData();
-      cancelCompose();
+      closeComposer();
     } catch (err: unknown) {
-      setSendResult({ type: 'error', msg: err instanceof Error ? err.message : 'Something went wrong.' });
+      setComposeError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
       setSending(false);
     }
   }
 
-  // ── Delete ───────────────────────────────────────────────────────────────────
-  async function handleDelete() {
-    if (!deleteId) return;
+  async function post(action: 'delete' | 'restore', id: string) {
     await fetch(`/api/admin/communications${orgQuery}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', id: deleteId }),
-    });
-    setDeleteId(null);
-    await loadData();
-  }
-
-  // ── Restore (undo soft-delete) ────────────────────────────────────────────────
-  async function handleRestore(id: string) {
-    await fetch(`/api/admin/communications${orgQuery}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'restore', id }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, id }),
     });
     await loadData();
   }
 
-  // ── Toggle pin ────────────────────────────────────────────────────────────────
-  async function handleTogglePin(item: Communication) {
-    await fetch(`/api/admin/communications${orgQuery}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'toggle-pin', id: item.id }),
-    });
-    await loadData();
-  }
+  // ── The list ──
+  const counts = useMemo(() => ({
+    all: communications.length,
+    site: communications.filter(c => c.channelSite).length,
+    email: communications.filter(c => c.channelEmail).length,
+  }), [communications]);
+  // A post removed from the site sits in the foot band — except under Emailed, where the email is the record.
+  const { live, removed } = useMemo(() => {
+    const inLens = communications.filter(c => lens === 'all' || (lens === 'site' ? c.channelSite : c.channelEmail));
+    const isRemoved = (c: Communication) => lens !== 'email' && c.channelSite && !!c.deletedAt;
+    return { live: inLens.filter(c => !isRemoved(c)), removed: inLens.filter(isRemoved) };
+  }, [communications, lens]);
+  const emailDetail = useMemo(() => communications.find(c => c.id === emailDetailId) ?? null, [communications, emailDetailId]);
+  const editItem = useMemo(() => (editingId ? communications.find(c => c.id === editingId) ?? null : null), [communications, editingId]);
 
-  // ── History lists ─────────────────────────────────────────────────────────────
-  const sitePosts      = useMemo(() => communications.filter(c => c.channelSite),           [communications]);
-  const filteredSitePosts = useMemo(
-    () => siteFilter === 'deleted'
-      ? sitePosts.filter(c => !!c.deletedAt)
-      : sitePosts.filter(c => !c.deletedAt),
-    [sitePosts, siteFilter],
-  );
-  const liveSiteCount  = useMemo(() => sitePosts.filter(c => !c.deletedAt).length,          [sitePosts]);
-  const emailItems     = useMemo(() => communications.filter(c => c.channelEmail),          [communications]);
-  const emailDetail = useMemo(
-    () => communications.find(c => c.id === emailDetailId) ?? null,
-    [communications, emailDetailId],
-  );
-
-  const sendButtonLabel = useMemo(() => {
-    if (editingId) return 'Save Changes';
-    const verbs: string[] = [];
-    if (channelSite)  verbs.push('Post');
-    if (channelEmail) verbs.push('Send');
-    if (channelPush)  verbs.push('Push');
-    if (verbs.length === 0) return 'Post to Site';
-    if (verbs.length === 1) {
-      if (channelSite)  return 'Post to Site';
-      if (channelEmail) return `Send${acceptedTeamCount > 0 ? ` to ${acceptedTeamCount}` : ''}`;
-      return 'Push to Fans';
-    }
-    return verbs.join(' & ');
-  }, [editingId, channelSite, channelEmail, channelPush, acceptedTeamCount]);
-
-  // Unsaved-changes guard: warn before a same-tab flip abandons an in-progress message. Fingerprints
-  // every editable field (title/body/pin/channels/divisions) vs. the compose/edit/template baseline,
-  // so a pin- or division-only edit still warns; never mid-send.
-  const composerDirty =
-    (isComposing || editingId != null) && !sending &&
-    composerFingerprint({ title, body, pinned, channelSite, channelEmail, channelPush, divisionIds: siteDivisionIds }) !== composeBaseline;
-
-  // ─────────────────────────────────────────────────────────────────────────────
+  const composerDirty = composing != null && !sending && JSON.stringify(values) !== baseline;
 
   if (loading) return <div className="empty-state"><RefreshCw className="spin" /><p>Loading communications…</p></div>;
 
-  // Same element, lifted so both the legacy header and the kit header's `actions` render it.
-  const newMessageButton = (
-    <button className="btn btn-lime btn-data" onClick={openNewMessage} disabled={!currentTournament}>
-      <Plus size={15} /><span className={styles.headerBtnLabel}> New Message</span>
+  const newButton = (
+    <button type="button" className={`btn btn-lime btn-data ${screenParts.headerButton}`} onClick={openNew} disabled={!currentTournament} aria-label={W.newMessage} title={W.newMessage}>
+      <Plus size={15} aria-hidden /><span className={screenParts.headerButtonLabel}>{W.newMessage}</span>
     </button>
   );
 
+  const deskRow = (c: Communication, isRemoved: boolean) => {
+    const failed = c.emailFailedCount ?? 0;
+    const total = c.emailRecipientCount ?? ((c.emailSuccessCount ?? 0) + failed || null);
+    const where = [
+      c.channelSite ? (isRemoved ? `${W.whereSite(false)} · ${W.removedOn(shortDate(c.deletedAt!))}` : W.whereSite(c.pinned)) : null,
+      c.channelEmail ? W.whereEmail : null,
+    ].filter(Boolean).join(' · ');
+    return (
+      <tr key={c.id} className={repKit.rowOpens} onClick={() => openRecord(c)}>
+        <td className={repKit.dim}>{formatStoredDate(c.createdAt)}</td>
+        <td>
+          <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} aria-haspopup="dialog" onClick={e => { e.stopPropagation(); openRecord(c); }}>{c.title}</button>
+        </td>
+        <td>{where}</td>
+        <td>
+          {c.channelEmail && total != null
+            ? <>{W.reached(c.emailSuccessCount ?? 0, total)}{failed > 0 && <> · <span className={styles.bad}>{W.failed(failed)}</span></>}</>
+            : <span className={repKit.dim}>—</span>}
+        </td>
+        <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
+      </tr>
+    );
+  };
+
   return (
     <div className={styles.page}>
-      {/* Same-tab flips (The Flip) can now leave the composer mid-message; warn before losing it. */}
-      <UnsavedChangesGuard
-        active={composerDirty}
-        message="You have an unsent message with unsaved changes. Leave without sending it?"
-      />
+      <UnsavedChangesGuard active={composerDirty} message="You have an unsent message with unsaved changes. Leave without sending it?" />
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <AdminPageHeader
-        inlineActions
-        title="Communications"
-        actions={newMessageButton}
-        legacy={
-          <div className={styles.pageHeader}>
-            <div className={styles.headerLeft}>
-              <div className={styles.headerIcon}><Mail size={20} /></div>
-              <div>
-                <h1 className={styles.pageTitle}>Communications</h1>
-                <p className={styles.pageSub}>Post updates to your site, email your teams, or both — from one place.</p>
-              </div>
-            </div>
-            {newMessageButton}
+      <TournamentAdminHeader title="Communications" mobileActionsInline actions={newButton} />
+
+      {result && composing == null && (
+        <Callout tone={result.type === 'success' ? 'olive' : 'bad'} role="status"
+          icon={result.type === 'success' ? <CheckCircle2 size={16} aria-hidden /> : <AlertCircle size={16} aria-hidden />}>
+          <div className={styles.resultLine}>
+            <span>{result.msg}</span>
+            <button type="button" className={styles.resultDismiss} onClick={() => setResult(null)}>Dismiss</button>
           </div>
-        }
-      />
-      {/* The sub is a DESCRIPTION of the page ("Post updates to your site…"), not a live fact —
-          not re-homed (F3). */}
-
-      {/* ── Result banner ───────────────────────────────────────────────────── */}
-      {sendResult && !isComposing && (
-        <div className={`${styles.resultBanner} ${sendResult.type === 'success' ? styles.resultSuccess : styles.resultError}`}>
-          {sendResult.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-          <span>{sendResult.msg}</span>
-          <button className={styles.bannerDismiss} onClick={() => setSendResult(null)}><X size={14} /></button>
-        </div>
+        </Callout>
       )}
 
-      {/* ── Compose modal ──────────────────────────────────────────────────── */}
-      {isComposing && (
-        <div className="modal-overlay" onClick={cancelCompose}>
-          <div className="modal" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{editingId ? 'Edit Post' : 'New Message'}</h3>
-              <button type="button" className="btn btn-ghost btn-data" onClick={cancelCompose}><X size={16} /></button>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <div className={styles.composeModalBody}>
-
-                {/* Quick templates */}
-                {!editingId && (
-                  <div className={styles.templateRow}>
-                    <span className={styles.templateLabel}>Templates:</span>
-                    {QUICK_TEMPLATES.map(tpl => (
-                      <button
-                        key={tpl.label}
-                        type="button"
-                        className={`${styles.templateChip} ${activeTemplate === tpl.label ? styles.templateChipActive : ''}`}
-                        onClick={() => applyTemplate(tpl)}
-                      >
-                        {tpl.label}
-                      </button>
-                    ))}
-                    {(title || body) && (
-                      <button type="button" className={styles.draftClear} onClick={() => {
-                        setTitle(''); setBody(''); setActiveTemplate(null);
-                        // Rebase so a deliberately-cleared draft isn't flagged as unsaved changes.
-                        setComposeBaseline(composerFingerprint({ title: '', body: '', pinned, channelSite, channelEmail, channelPush, divisionIds: siteDivisionIds }));
-                      }}>
-                        × Clear
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Title */}
-                <div className={styles.formGroup}>
-                  <label className="form-label">Title *</label>
-                  <input
-                    className="form-input"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    placeholder="e.g. Schedule is live — U14 Boys"
-                    required
-                  />
-                </div>
-
-                {/* Body */}
-                <div className={styles.formGroup}>
-                  <label className="form-label">Message *</label>
-                  <textarea
-                    className="form-textarea"
-                    rows={6}
-                    value={body}
-                    onChange={e => setBody(e.target.value)}
-                    placeholder="Write your message here…"
-                    required
-                  />
-                </div>
-
-                {/* ── Channels ──────────────────────────────────────────── */}
-                <div className={styles.channelsSection}>
-                  <span className={styles.channelsSectionLabel}>Channels</span>
-
-                  {/* Site post */}
-                  <div className={`${styles.channelRow} ${channelSite ? styles.channelActive : ''}`}>
-                    <label className={styles.channelToggle}>
-                      <input type="checkbox" checked={channelSite} onChange={e => { const on = e.target.checked; setChannelSite(on); if (!on) setChannelPush(false); }} disabled={!!editingId} />
-                      <Globe size={15} />
-                      <span className={styles.channelName}>Post to site</span>
-                      <span className={styles.channelDesc}>Appears on the public tournament News page</span>
-                    </label>
-
-                    {channelSite && (
-                      <div className={styles.channelOptions}>
-                        <label className={styles.pinLabel}>
-                          <input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} />
-                          <Star size={13} fill={pinned ? 'currentColor' : 'none'} />
-                          Pin at top of News page
-                        </label>
-                        <p style={channelNoteStyle}>
-                          While the tournament is live, pinned site posts also appear as a banner at the top of the public Schedule — use it for rain delays and urgent day-of updates.
-                        </p>
-
-                        {/* Division visibility — vertical checklist. On the Tournament plan it is the
-                            plan's lock line instead: the send refuses a division filter there (F43). */}
-                        {divisions.length > 0 && !targetingAvailable && (
-                          <PlanLockLine href={planHref} plan={COMMS_LOCK_PLAN}>{COMMS_LOCK.showUnder}</PlanLockLine>
-                        )}
-                        {divisions.length > 0 && targetingAvailable && (
-                          <div className={styles.divisionCheckList}>
-                            <span className={styles.divisionFilterLabel}>Division visibility</span>
-                            <label className={styles.divisionCheckRow}>
-                              <input type="checkbox" checked={siteDivisionIds.size === 0} onChange={() => setSiteDivisionIds(new Set())} />{' '}
-                              All divisions
-                            </label>
-                            <div className={styles.divisionCheckIndent}>
-                              {divisions.map(g => (
-                                <label key={g.id} className={styles.divisionCheckRow}>
-                                  <input
-                                    type="checkbox"
-                                    checked={siteDivisionIds.has(g.id)}
-                                    onChange={() => setSiteDivisionIds(prev => toggleSetValue(prev, g.id))}
-                                  />
-                                  {g.name}
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Email channel */}
-                  {!editingId && (
-                    <div className={`${styles.channelRow} ${channelEmail ? styles.channelActive : ''}`}>
-                      <label className={styles.channelToggle}>
-                        <input type="checkbox" checked={channelEmail} onChange={e => setChannelEmail(e.target.checked)} />
-                        <Send size={15} />
-                        <span className={styles.channelName}>Email recipients</span>
-                        <span className={styles.channelDesc}>Send directly to team inboxes</span>
-                      </label>
-
-                      {channelEmail && (
-                        <div className={styles.channelOptions}>
-                          <div className={styles.recipientLine}>
-                            <Users size={13} />
-                            <span>
-                              All accepted teams
-                              {acceptedTeamCount > 0 && <span className={styles.recipientCount}> · {acceptedTeamCount} recipient{acceptedTeamCount === 1 ? '' : 's'}</span>}
-                            </span>
-                          </div>
-                          <a href={billingHref} className={styles.targetingHint}>
-                            <Lock size={10} /> Tournament Plus unlocks sends to specific divisions or registration statuses
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Push-to-fans channel (Tournament Plus fan alerts) */}
-                  {!editingId && (
-                    fanPushAvailable ? (
-                      <div className={`${styles.channelRow} ${channelPush ? styles.channelActive : ''}`}>
-                        <label className={styles.channelToggle}>
-                          <input type="checkbox" checked={channelPush} onChange={e => { const on = e.target.checked; setChannelPush(on); if (on) setChannelSite(true); }} />
-                          <BellRing size={15} />
-                          <span className={styles.channelName}>Push to fans</span>
-                          <span className={styles.channelDesc}>Buzzes fans who turned on alerts for this tournament</span>
-                        </label>
-
-                        {channelPush && (
-                          <div className={styles.channelOptions}>
-                            <p style={pushNoteStyle}>
-                              Sends a phone notification to every fan following a team in this tournament who opted in. Great for rain delays and urgent day-of updates. Also posts to the site (so the notification opens the full message) — pin it to show it on the schedule too.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className={styles.channelRow}>
-                        <label className={styles.channelToggle} style={{ opacity: 0.6 }}>
-                          <input type="checkbox" checked={false} disabled />
-                          <BellRing size={15} />
-                          <span className={styles.channelName}>Push to fans</span>
-                          <span className={styles.channelDesc}>Buzz fans’ phones with day-of updates</span>
-                        </label>
-                        <div className={styles.channelOptions}>
-                          <a href={billingHref} className={styles.targetingHint}>
-                            <Lock size={10} /> Tournament Plus unlocks push notifications to fans
-                          </a>
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-
-                {/* Inline result (errors during compose) */}
-                {sendResult && isComposing && (
-                  <div className={`${styles.inlineResult} ${sendResult.type === 'success' ? styles.inlineSuccess : styles.inlineError}`}>
-                    {sendResult.type === 'success' ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
-                    {sendResult.msg}
-                  </div>
-                )}
-
-              </div>
-
-              {/* "See it live" sandbox: compose works exactly as it does for a real organizer —
-                  the visitor can see what they would write and who it would reach — but the send
-                  is disabled BEFORE it is pressed, with the honest line beneath. A send that
-                  visibly fails teaches a prospect the product is flaky; a send that is honestly
-                  locked teaches them we are careful with other people's inboxes. */}
-              <SandboxLockNote />
-              <div className="modal-footer">
-                <button type="button" className="btn btn-ghost btn-data" onClick={cancelCompose}>
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-lime btn-data"
-                  disabled={sandboxLocked || sending || (!channelSite && !channelEmail && !channelPush)}
-                >
-                  {sending
-                    ? <><RefreshCw className="spin" size={16} /> Sending…</>
-                    : <><Send size={16} /> {sendButtonLabel}</>}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ── History ────────────────────────────────────────────────────────── */}
-      <div className={styles.historySection}>
-
-        {/* Tab bar — always visible */}
-        <div className={styles.filterTabs}>
-          <div className={styles.filterTabsLeft}>
-            {(['site', 'email'] as HistoryFilter[]).map(f => (
-              <button
-                key={f}
-                className={`${styles.filterTab} ${historyFilter === f ? styles.filterTabActive : ''}`}
-                onClick={() => setHistoryFilter(f)}
-              >
-                {f === 'site'
-                  ? <><Globe size={12} /> Site Posts {liveSiteCount > 0 && <span className={styles.tabCount}>{liveSiteCount}</span>}</>
-                  : <><Mail size={12} /> Emails {emailItems.length > 0 && <span className={styles.tabCount}>{emailItems.length}</span>}</>}
+      {communications.length === 0 ? (
+        <p className={styles.empty}>{W.empty}</p>
+      ) : (
+        <>
+          {/* One filter, its count on each choice (Stage 1's one pill shape). */}
+          <div className={repKit.views} role="group" aria-label="Show messages">
+            {([['all', W.lensAll], ['site', W.lensSite], ['email', W.lensEmail]] as const).map(([k, label]) => (
+              <button key={k} type="button" className={`${repKit.view}${lens === k ? ` ${repKit.viewOn}` : ''}`} aria-pressed={lens === k} onClick={() => setLens(k)}>
+                {label} <b className={styles.lensCount}>{counts[k]}</b>
               </button>
             ))}
           </div>
 
-          {historyFilter === 'site' && (
-            <div className={styles.filterTabsRight}>
-              {(['active', 'deleted'] as const).map(f => (
-                <button
-                  key={f}
-                  className={`${styles.filterTab} ${styles.filterTabSmall} ${siteFilter === f ? styles.filterTabActive : ''}`}
-                  onClick={() => setSiteFilter(f)}
-                >
-                  {f === 'active' ? 'Active' : 'Deleted'}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ── Site Posts tab ──────────────────────────────────────────────── */}
-        {historyFilter === 'site' && (
-          <>
-            {filteredSitePosts.length === 0 && !isComposing && (
-              <div className="empty-state">
-                {siteFilter === 'deleted' ? (
-                  <p style={noDeletedStyle}>No deleted posts.</p>
-                ) : (
-                  <>
-                    <Globe size={40} />
-                    <p className={styles.emptyTitle}>No site posts yet</p>
-                    <p>Post an update to your tournament's public News page.</p>
-                    <button className={`btn btn-lime ${styles.emptyCta}`} onClick={openNewMessage} disabled={!currentTournament}>
-                      <Plus size={15} /> New Message
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-
-            {filteredSitePosts.length > 0 && (
-              <div className={styles.emailTable}>
-                <div className={`${s.tableHeader} ${styles.siteColHeader}`}>
-                  <span className={styles.siteColDate}>Date</span>
-                  <span className={styles.siteColTitle}>Title</span>
-                  <span className={styles.siteColStatus}>Status</span>
-                  <span className={styles.siteColPostedBy}>Posted by</span>
-                </div>
-
-                {filteredSitePosts.map(item => {
-                  const isDeleted = !!item.deletedAt;
-                  return (
-                    <div
-                      key={item.id}
-                      className={`${s.row} ${styles.emailRow} ${isDeleted ? styles.siteRowDeleted : ''}`}
-                      onClick={() => openEdit(item)}
-                    >
-                      <div className={`${s.rowMain} ${styles.emailRowMain}`}>
-                        <div className={`${s.secondaryCell} ${styles.siteColDate}`}>
-                          {formatDate(item.createdAt)}
-                        </div>
-                        <div className={`${s.primaryCell} ${styles.siteColTitle}`}>
-                          {item.pinned && !isDeleted && (
-                            <Star size={11} fill="currentColor" className={styles.pinnedStar} />
-                          )}
-                          {item.title}
-                          <span className={styles.mobileMeta}>
-                            {formatDate(item.createdAt)} · {isDeleted ? 'Deleted' : 'Live'}
-                          </span>
-                        </div>
-                        <div className={styles.siteColStatus}>
-                          {isDeleted
-                            ? <span className="badge badge-neutral">Deleted</span>
-                            : <span className="badge badge-success">Live</span>}
-                        </div>
-                        <div className={`${s.secondaryCell} ${styles.siteColPostedBy}`}>
-                          {item.sentByEmail ?? '—'}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ── Emails tab ──────────────────────────────────────────────────── */}
-        {historyFilter === 'email' && (
-          <>
-            {emailItems.length === 0 && (
-              <div className="empty-state">
-                <Send size={40} />
-                <p className={styles.emptyTitle}>No emails sent yet</p>
-                <p>Compose a message and enable the Email channel to send to your teams.</p>
-                <button className={`btn btn-lime ${styles.emptyCta}`} onClick={openNewMessage} disabled={!currentTournament}>
-                  <Plus size={15} /> New Message
-                </button>
-              </div>
-            )}
-
-            {emailItems.length > 0 && (
-              <div className={styles.emailTable}>
-                {/* Column header */}
-                <div className={`${s.tableHeader} ${styles.emailColHeader}`}>
-                  <span className={styles.emailColDate}>Date sent</span>
-                  <span className={styles.emailColSubject}>Subject</span>
-                  <span className={styles.emailColRecipients}>Recipients</span>
-                  <span className={styles.emailColStatus}>Status</span>
-                  <span className={styles.emailColSentBy}>Sent by</span>
-                </div>
-
-                {/* Rows */}
-                {emailItems.map(item => {
-                  const hasFailed = item.emailFailedCount && item.emailFailedCount > 0;
-                  const derivedTotal = (item.emailSuccessCount ?? 0) + (item.emailFailedCount ?? 0);
-                  const total = item.emailRecipientCount ?? (derivedTotal > 0 ? derivedTotal : null);
-                  return (
-                    <div
-                      key={item.id}
-                      className={`${s.row} ${styles.emailRow}`}
-                      onClick={() => setEmailDetailId(item.id)}
-                    >
-                      <div className={`${s.rowMain} ${styles.emailRowMain}`}>
-                        <div className={`${s.secondaryCell} ${styles.emailColDate}`}>
-                          {formatDate(item.emailSentAt ?? item.createdAt)}
-                        </div>
-                        <div className={`${s.primaryCell} ${styles.emailColSubject}`}>
-                          {item.title}
-                          <span className={styles.mobileMeta}>
-                            {formatDate(item.emailSentAt ?? item.createdAt)} · {hasFailed ? `${item.emailFailedCount} failed` : 'All sent'}
-                          </span>
-                        </div>
-                        <div className={`${s.secondaryCell} ${styles.emailColRecipients}`}>
-                          {total ?? '—'}
-                        </div>
-                        <div className={styles.emailColStatus}>
-                          {hasFailed
-                            ? <span className="badge badge-warning"><AlertCircle size={10} /> {item.emailFailedCount} failed</span>
-                            : <span className="badge badge-success"><CheckCircle2 size={10} /> All sent</span>}
-                        </div>
-                        <div className={`${s.secondaryCell} ${styles.emailColSentBy}`}>
-                          {item.sentByEmail ?? '—'}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* ── Delete confirm ──────────────────────────────────────────────────── */}
-      {deleteId && (
-        <div className="modal-overlay" onClick={() => setDeleteId(null)}>
-          <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Delete communication?</h3>
-              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}><X size={16} /></button>
-            </div>
-            <p style={deleteConfirmTextStyle}>
-              This removes the post from your public News page immediately. The record is kept in your communications history and can be restored at any time.
-            </p>
-            <div className="modal-footer">
-              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger btn-data" onClick={handleDelete}><Trash2 size={14} /> Remove from site</button>
-            </div>
+          {/* Phone: one frame, a message per row, "Removed from the site" as the foot band. */}
+          <div className={`${repKit.phoneOnly} ${styles.listGap}`}>
+            <ClubRowFrame>
+              {live.length > 0 && (
+                <ClubRowList inset label="Messages">
+                  {live.map(c => (
+                    <ClubRow key={c.id} as="button" onClick={() => openRecord(c)} aria-haspopup="dialog" title={c.title} caption={rowCaption(c)} chevron />
+                  ))}
+                </ClubRowList>
+              )}
+              {removed.length > 0 && (
+                <ClubRowList inset label={W.removedBand}>
+                  <ClubRowBand count={removed.length}>{W.removedBand}</ClubRowBand>
+                  {removed.map(c => (
+                    <ClubRow key={c.id} as="button" onClick={() => openRecord(c)} aria-haspopup="dialog" title={c.title} caption={rowCaption(c)} chevron />
+                  ))}
+                </ClubRowList>
+              )}
+            </ClubRowFrame>
           </div>
-        </div>
+
+          {/* Desk: a table — "Reached" is read down the column to find the send that failed. */}
+          <div className={`${repKit.deskOnly} ${repKit.tableFrame} ${styles.listGap}`}>
+            <table className={repKit.table}>
+              <thead>
+                <tr>
+                  <th scope="col">{W.colDate}</th>
+                  <th scope="col">{W.colMessage}</th>
+                  <th scope="col">{W.colWhere}</th>
+                  <th scope="col">{W.colReached}</th>
+                  <th scope="col" className={repKit.go}><span className="sr-only">Open</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {live.map(c => deskRow(c, false))}
+                {removed.length > 0 && (
+                  <tr className={repKit.band}><td colSpan={5}>{W.removedBand} <span className={repKit.rowBandCount}>{removed.length}</span></td></tr>
+                )}
+                {removed.map(c => deskRow(c, true))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
-      {/* ── Email detail modal + Recipients modal ──────────────────────────── */}
-      {emailDetail && (() => {
-        function closeEmailDetail() {
-          setEmailDetailId(null);
-          setEmailDetailRecipientsOpen(false);
-        }
-        const failedAddresses = emailDetail.emailFailedAddresses ?? [];
-        const failedSet = new Set(failedAddresses.map(a => a.toLowerCase()));
-        // WHO IT REACHED is the send's own list, written down when it went (mig 314, F42) — never
-        // rebuilt from today's teams, so a team accepted after the email is not listed as reached.
-        // An email sent before the list was kept shows its counts and its failed addresses only.
-        const kept = emailDetail.emailRecipients;
-        const recipientRows = (kept ?? failedAddresses.map(email => ({ email, teams: [] as Array<{ id: string; name: string }> })))
-          .map(r => ({ email: r.email, names: r.teams.map(t => t.name).filter(Boolean).join(' · '), failed: failedSet.has(r.email.toLowerCase()) }))
-          // Failed first, then delivered, each alphabetically by team.
-          .sort((a, b) => (a.failed !== b.failed ? (a.failed ? -1 : 1) : a.names.localeCompare(b.names)));
-        const hasFailures = failedSet.size > 0;
-        const deliveredCount = emailDetail.emailSuccessCount ?? 0;
-        const failedCount = failedSet.size;
-        // Row-invariant — computed once here, not per row in the maps below.
-        const deliveredStyle = kx({ color: hasFailures ? 'var(--warning)' : 'var(--success)' }, hasFailures ? KIT_INK.warning : KIT_INK.success);
-        const failedCountStyle = kx({ color: 'var(--danger)', marginLeft: '0.5rem' }, KIT_INK.danger);
-        const unknownTeamNameStyle = kx({ color: 'var(--white-40)', fontStyle: 'italic' }, KIT_INK.tertiary);
+      {/* ── The composer / a post's record (C2) ── */}
+      {composing && currentTournament && (
+        <MessageComposer
+          mode={composing}
+          values={values}
+          onChange={patch => setValues(v => ({ ...v, ...patch }))}
+          // A template is a starting point, not unsaved work: only edits made after it warn on close.
+          onTemplate={patch => { const next = { ...values, ...patch }; setValues(next); setBaseline(JSON.stringify(next)); }}
+          divisions={divisions}
+          tournamentId={currentTournament.id}
+          tournamentName={currentTournament.name ?? 'the tournament'}
+          orgQuery={orgQuery}
+          canTarget={canTarget}
+          canPush={canPush}
+          planHref={planHref}
+          sending={sending}
+          error={composeError}
+          onSubmit={() => void submit()}
+          onCancel={closeComposer}
+          footerStart={composing === 'edit' && editItem ? (
+            editItem.deletedAt
+              ? <button type="button" className="btn btn-outline" onClick={async () => { closeComposer(); await post('restore', editItem.id); }}><RotateCcw size={14} aria-hidden /> Restore to site</button>
+              : <button type="button" className="btn btn-danger" onClick={() => { const id = editItem.id; closeComposer(); setRemoveId(id); }}><Trash2 size={14} aria-hidden /> Remove from site</button>
+          ) : undefined}
+          emailPart={composing === 'edit' && editItem?.channelEmail ? <EmailRecord item={editItem} open={recipientsOpen} onToggle={() => setRecipientsOpen(o => !o)} /> : null}
+        />
+      )}
 
-        return (
-          <>
-            {/* Email Details modal */}
-            <div className="modal-overlay" onClick={closeEmailDetail}>
-              <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
-                <div className="modal-header">
-                  <h3>Email Details</h3>
-                  <button className="btn btn-ghost btn-data" onClick={closeEmailDetail}><X size={16} /></button>
-                </div>
+      {/* ── Remove from the site: asks first; the record is kept and can be restored ── */}
+      {removeId && (
+        <KitDialog
+          kind="question"
+          title="Remove from the site?"
+          onClose={() => setRemoveId(null)}
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setRemoveId(null)}>Cancel</button>
+              <button type="button" className="btn btn-danger" onClick={async () => { const id = removeId; setRemoveId(null); await post('delete', id); }}>
+                <Trash2 size={14} aria-hidden /> Remove from site
+              </button>
+            </>
+          )}
+        >
+          <p>This removes the post from your public News page immediately. The record is kept in your communications history and can be restored at any time.</p>
+        </KitDialog>
+      )}
 
-                <div className={styles.emailDetailBody}>
-
-                  {/* Subject */}
-                  <div className={styles.emailDetailField}>
-                    <span className={styles.emailDetailLabel}>Subject</span>
-                    <span className={styles.emailDetailValue}>{emailDetail.title}</span>
-                  </div>
-
-                  {/* Sent */}
-                  <div className={styles.emailDetailField}>
-                    <span className={styles.emailDetailLabel}>Sent</span>
-                    <span className={styles.emailDetailValue}>
-                      {formatDate(emailDetail.emailSentAt ?? emailDetail.createdAt)}
-                      {emailDetail.sentByEmail && (
-                        <span className={styles.emailDetailBy}> · {emailDetail.sentByEmail}</span>
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Recipients — summary row with View all button */}
-                  <div className={styles.emailDetailField}>
-                    <div className={styles.recipientsSummaryRow}>
-                      <span>
-                        <span className={styles.emailDetailLabel}>Recipients</span>
-                        <span className={styles.emailDetailLabelCount}>
-                          {' '}{deliveredCount} delivered
-                          {hasFailures && ` · ${failedCount} failed`}
-                        </span>
-                      </span>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-data"
-                        onClick={() => setEmailDetailRecipientsOpen(true)}
-                      >
-                        View all
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Message body */}
-                  <div className={styles.emailDetailField}>
-                    <span className={styles.emailDetailLabel}>Message</span>
-                    <div className={styles.emailDetailMessage}>{emailDetail.body}</div>
-                  </div>
-
-                </div>
-
-                <div className="modal-footer">
-                  <button className="btn btn-ghost btn-data" onClick={closeEmailDetail}>
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Recipients modal — renders on top of Email Details */}
-            {emailDetailRecipientsOpen && (
-              <div className="modal-overlay" style={{ zIndex: 1001 }} onClick={() => setEmailDetailRecipientsOpen(false)}>
-                <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
-                  <div className="modal-header">
-                    <h3>Recipients</h3>
-                    <button className="btn btn-ghost btn-data" onClick={() => setEmailDetailRecipientsOpen(false)}><X size={16} /></button>
-                  </div>
-
-                  <div className={styles.recipientsModalBody}>
-                    <div className={styles.recipientsModalMeta}>
-                      <span>
-                        <span style={deliveredStyle}>
-                          {deliveredCount} delivered
-                        </span>
-                        {hasFailures && (
-                          <span style={failedCountStyle}>
-                            · {failedCount} failed
-                          </span>
-                        )}
-                      </span>
-                      {hasFailures && (
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-data"
-                          onClick={() => navigator.clipboard.writeText(
-                            (emailDetail.emailFailedAddresses ?? []).join('\n'),
-                          )}
-                        >
-                          <Copy size={12} /> Copy failed
-                        </button>
-                      )}
-                    </div>
-
-                    {!kept && <p className={styles.recipientsNotKept}>{RECIPIENTS_NOT_KEPT}</p>}
-                    <div className={styles.emailDetailRecipientList}>
-                      {recipientRows.map(r => (
-                        <div key={r.email} className={`${styles.emailDetailRecipientRow} ${r.failed ? styles.recipientFailed : styles.recipientDelivered}`}>
-                          <span className={styles.recipientIcon}>
-                            {r.failed ? <AlertCircle size={13} /> : <CheckCircle2 size={13} />}
-                          </span>
-                          {r.names
-                            ? <span className={styles.recipientName}>{r.names}</span>
-                            : <span className={styles.recipientName} style={unknownTeamNameStyle}>Unknown team</span>}
-                          <span className={styles.recipientEmail}>{r.email}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="modal-footer">
-                    <button className="btn btn-ghost btn-data" onClick={() => setEmailDetailRecipientsOpen(false)}>
-                      Close
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        );
-      })()}
-
-      {/* ── Site post edit modal ────────────────────────────────────────────── */}
-      {editingId && !isComposing && (() => {
-        const editItem = communications.find(c => c.id === editingId);
-        const isDeleted = !!editItem?.deletedAt;
-        return (
-          <div className="modal-overlay" onClick={cancelCompose}>
-            <div className="modal" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>{isDeleted ? 'Post Details' : 'Edit Post'}</h3>
-                <button className="btn btn-ghost btn-data" onClick={cancelCompose}><X size={16} /></button>
-              </div>
-
-              <form onSubmit={handleSubmit}>
-                <div className={styles.editModalBody}>
-                  {/* Title */}
-                  <div className={styles.formGroup}>
-                    <label className="form-label">Title *</label>
-                    <input
-                      className="form-input"
-                      value={title}
-                      onChange={e => setTitle(e.target.value)}
-                      placeholder="e.g. Schedule is live — U14 Boys"
-                      required
-                    />
-                  </div>
-
-                  {/* Body */}
-                  <div className={styles.formGroup}>
-                    <label className="form-label">Message *</label>
-                    <textarea
-                      className="form-textarea"
-                      rows={7}
-                      value={body}
-                      onChange={e => setBody(e.target.value)}
-                      placeholder="Write your message here…"
-                      required
-                    />
-                  </div>
-
-                  {/* Pin toggle */}
-                  {!isDeleted && (
-                    <>
-                      <label className={styles.pinLabel}>
-                        <input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} />
-                        <Star size={13} fill={pinned ? 'currentColor' : 'none'} />
-                        Pin at top of News page
-                      </label>
-                      <p style={channelNoteStyle}>
-                        While the tournament is live, pinned site posts also appear as a banner at the top of the public Schedule — use it for rain delays and urgent day-of updates.
-                      </p>
-                    </>
-                  )}
-
-                  {/* Division visibility — the plan's lock line on the Tournament plan (F43). */}
-                  {divisions.length > 0 && !isDeleted && !targetingAvailable && (
-                    <PlanLockLine href={planHref} plan={COMMS_LOCK_PLAN}>{COMMS_LOCK.showUnder}</PlanLockLine>
-                  )}
-                  {divisions.length > 0 && !isDeleted && targetingAvailable && (
-                    <div className={styles.divisionCheckList}>
-                      <span className={styles.divisionFilterLabel}>Division visibility</span>
-                      <label className={styles.divisionCheckRow}>
-                        <input type="checkbox" checked={siteDivisionIds.size === 0} onChange={() => setSiteDivisionIds(new Set())} />{' '}
-                        All divisions
-                      </label>
-                      <div className={styles.divisionCheckIndent}>
-                        {divisions.map(g => (
-                          <label key={g.id} className={styles.divisionCheckRow}>
-                            <input
-                              type="checkbox"
-                              checked={siteDivisionIds.has(g.id)}
-                              onChange={() => setSiteDivisionIds(prev => toggleSetValue(prev, g.id))}
-                            />
-                            {g.name}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Inline error */}
-                  {sendResult?.type === 'error' && (
-                    <div className={styles.inlineError}>
-                      <AlertCircle size={14} /> {sendResult.msg}
-                    </div>
-                  )}
-                </div>
-
-                <div className="modal-footer">
-                  {/* Left: destructive action */}
-                  {isDeleted ? (
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-data"
-                      onClick={async () => { const id = editingId; cancelCompose(); await handleRestore(id); }}
-                    >
-                      <RotateCcw size={14} /> Restore to site
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-data"
-                      onClick={() => { const id = editingId; cancelCompose(); setDeleteId(id); }}
-                    >
-                      <Trash2 size={14} /> Remove from site
-                    </button>
-                  )}
-                  {/* Right: save / cancel */}
-                  <button type="button" className="btn btn-ghost btn-data" onClick={cancelCompose}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-lime btn-data" disabled={sending}>
-                    {sending ? <><RefreshCw className="spin" size={14} /> Saving…</> : 'Save Changes'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        );
-      })()}
+      {/* ── An email's record ── */}
+      {emailDetail && (
+        <KitDialog
+          kind="form"
+          title={emailDetail.title}
+          identity={`Sent ${formatStoredDate(emailDetail.emailSentAt ?? emailDetail.createdAt)}${emailDetail.sentByEmail ? ` · ${emailDetail.sentByEmail}` : ''}`}
+          onClose={() => setEmailDetailId(null)}
+          footer={<button type="button" className="btn btn-outline" onClick={() => setEmailDetailId(null)}>Close</button>}
+        >
+          <EmailRecord item={emailDetail} open={recipientsOpen} onToggle={() => setRecipientsOpen(o => !o)} />
+          <RecordSection title="Message">
+            <div className={styles.messageText}>{emailDetail.body}</div>
+          </RecordSection>
+        </KitDialog>
+      )}
     </div>
+  );
+}
+
+/** Who an email reached — the send's own list (mig 314), never rebuilt from today's teams (F42). */
+function EmailRecord({ item, open, onToggle }: { item: Communication; open: boolean; onToggle: () => void }) {
+  const failedAddresses = item.emailFailedAddresses ?? [];
+  const failedSet = new Set(failedAddresses.map(a => a.toLowerCase()));
+  const kept = item.emailRecipients;
+  const rows = (kept ?? failedAddresses.map(email => ({ email, teams: [] as Array<{ id: string; name: string }> })))
+    .map(r => ({ email: r.email, names: r.teams.map(t => t.name).filter(Boolean).join(' · '), failed: failedSet.has(r.email.toLowerCase()) }))
+    .sort((a, b) => (a.failed !== b.failed ? (a.failed ? -1 : 1) : a.names.localeCompare(b.names)));
+  const delivered = item.emailSuccessCount ?? 0;
+  const failed = failedSet.size;
+  return (
+    <RecordSection title="Email">
+      <p className={screenParts.recordText}>
+        {delivered} delivered{failed > 0 && <> · <span className={styles.bad}>{failed} failed</span></>}
+      </p>
+      {!kept && <p className={screenParts.recordText}>{RECIPIENTS_NOT_KEPT}</p>}
+      <div className={screenParts.recordActions}>
+        {rows.length > 0 && (
+          <button type="button" className={screenParts.plainButton} aria-expanded={open} onClick={onToggle}>See who it reached</button>
+        )}
+        {failed > 0 && (
+          <button type="button" className={screenParts.plainButton} onClick={() => void navigator.clipboard.writeText(failedAddresses.join('\n'))}>
+            <Copy size={13} aria-hidden /> Copy failed
+          </button>
+        )}
+      </div>
+      {open && rows.length > 0 && (
+        <ul className={styles.recipients}>
+          {rows.map(r => (
+            <li key={r.email} data-failed={r.failed || undefined}>
+              {r.failed ? <AlertCircle size={13} aria-hidden /> : <CheckCircle2 size={13} aria-hidden />}
+              <span className={styles.recipientName}>{r.names || 'Unknown team'}</span>
+              <span className={styles.recipientEmail}>{r.email}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </RecordSection>
   );
 }

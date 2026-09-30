@@ -141,12 +141,6 @@
   margin-bottom: 0;
 }
 
-.channelRow {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
 .channelItem {
   display: flex;
   align-items: center;

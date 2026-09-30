@@ -78,7 +78,10 @@ describe('the organizer never picks another club\'s team', () => {
 
   it('the Teams page keeps the rep-team picker behind the module gate (no cross-org list for a portal)', () => {
     const src = read('app', '[orgSlug]', 'admin', 'tournaments', 'registrations', 'page.tsx');
-    assert.match(src, /\{orgHasRepTeams && renderRepLinkControl\(/);
+    // Tournament admin redesign Stage 2 moved the picker from the row into the team's record (T7): the
+    // record takes it only when the module gate holds (`orgHasRepTeams ? renderRepLinkControl(…) : null`).
+    assert.match(src, /orgHasRepTeams (?:&&|\?) renderRepLinkControl\(/);
+    assert.doesNotMatch(src, /[^?&] renderRepLinkControl\(openTeam/, 'the picker renders only behind the gate');
   });
 });
 
