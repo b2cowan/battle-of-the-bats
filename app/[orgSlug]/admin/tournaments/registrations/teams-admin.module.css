@@ -3263,6 +3263,11 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
   background: var(--home-olive-soft);
   color: var(--text-tertiary);
 }
+/* The frame is the one painter (table standard §3.3 / §3.10.1, F-24's lesson). Only the headers were
+   restated, so each pool — and the waitlist and "needs a spot" below — drew a white heading over rows on
+   the paper, the grid showing through. The rows stay transparent; the frame paints the card. */
+:global([data-admin-kit]) .slotPoolSection,
+:global([data-admin-kit]) .waitlistSection { background: var(--card-bg); }
 :global([data-admin-kit]) .slotPoolHeader {
   background: var(--card-bg);
   border-bottom-color: var(--home-line-strong);
