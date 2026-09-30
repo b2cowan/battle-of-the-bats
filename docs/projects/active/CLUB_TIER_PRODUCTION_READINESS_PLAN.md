@@ -782,6 +782,16 @@ after Stages 3, 6 and 10 at the earliest.
   allocations, payment requests; Stage 4: the Public Site editor; Stage 6: the venue library; Stage 9: house
   league. A shared part another surface wears (the export menu, collapsible card, bottom sheet, `globals.css`)
   keeps its scoped kit layer.
+- **Admin Design Continuity CLOSED 2026-09-30** (plan archived: `docs/projects/archive/ADMIN_DESIGN_CONTINUITY_PLAN.md`
+  §3a "PART B AREA 3 + THE CLOSING STEP"). **The old look left in the club screens is now this program's to retire,
+  held by two build gates:** `npm run check:old-look` (in `verify:changed`) refuses any new old-look code and fails
+  until a drop is locked in with `node scripts/check-admin-old-look.mjs --init` in the same change; the strict admin
+  colour gate (`check-public-tokens.mjs`, also in the production build) holds every admin stylesheet to no colour
+  literal unless it is on `ADMIN_COLOUR_DEBT`, and a sheet that comes clean must leave that list. Club's share at
+  the close (`npm run check:old-look:report` prints it live): **Stage 3** Accounting, allocations and payment
+  requests — 12 files, colour debt `accounting` / `bva` / `budget`; **Stage 4** the public site editor — 2 files,
+  `public-site`; **Stage 6** the venue library — 2 files; **Stage 9** house league — 9 files, `house-league`; and
+  `admin-common.module.css`, shared with the tournament screens, folds with its last user.
 
 ## 8. Build gates to add (the club side has none of the coach side's)
 

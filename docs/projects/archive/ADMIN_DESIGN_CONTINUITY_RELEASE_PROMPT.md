@@ -220,6 +220,10 @@ look with no rollback call, because Part B removes the rollback. Work area by ar
   - **then** the identity tool and `.admin-identity/` retire.
 - Each area is its own commit with its own `/review`; `/simplify` is worth offering there. Each ships with
   any release.
+- **Club Tier Stage 2 redraws the rep-teams screens** (mockup prompt `CLUB_TIER_STAGE2_MOCKUP_PROMPT.md`). A
+  rep-teams screen that Stage 2's build has replaced, or is replacing, is **skipped** by Part B, the same way
+  the foundation skipped Stage 1's six screens. Check the Stage 2 build's file list before starting the Rep
+  Teams area, and never clean up a file that session has open.
 
 ## Every session
 

@@ -500,14 +500,14 @@ dialog.truesize::backdrop{background:#16201899}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · where it stands: the Progress tab</small></div>
+  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · released 2026-09-28 · closed 2026-09-30 · the admin side joins the coaches portal's design system and the one Warm / Dark setting</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
     <li class="stage done" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27. Slice 1's open questions ruled 2026-09-27; the phone bar and Warm shadow fixes committed dca4ac25 for both portals. Slice 5, the volunteer screens and the help guide, committed 530d87e9 2026-09-27. Slice 6, the prove step (Plan &amp; billing for every plan, the club windows, the preview fix, Q5, the two Dark fixes), committed c72afdeb 2026-09-28">Build</li>
     <li class="stage done" title="Every slice 0–5 ran its cleanup and adversarial review before its commit; slice 6 ran its own on 2026-09-28 (one Back flaw on Settings found and fixed)">Review</li>
     <li class="stage done" title="Owner walk §245 PASSED 2026-09-28: all eight walks, both themes, zero flags; every build-time call kept">QA</li>
-    <li class="stage done" title="Released 2026-09-28: 74f45113, promoted to production (Amplify job 273). Part B, the invisible cleanup, started 2026-09-29 (settling weekend waived by the owner); area 1, the frame and shared parts, committed f6d36059; re-scoped the same day to the screens no redesign is coming for; area 2, the organization's own screens, Families and Rep Teams outside money, committed 20ca46cf">Shipped</li>
+    <li class="stage done" title="Released 2026-09-28: 74f45113, promoted to production (Amplify job 273). Part B, the invisible cleanup, started 2026-09-29 (settling weekend waived by the owner); area 1, the frame and shared parts, committed f6d36059; re-scoped the same day to the screens no redesign is coming for; area 2, the organization's own screens, Families and Rep Teams outside money, committed 20ca46cf; area 3, the tournament data tools, and the closing step 2026-09-30: the program is closed">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="phone" aria-pressed="false" hidden>Phone width</button></div>
 </div>
@@ -522,8 +522,9 @@ dialog.truesize::backdrop{background:#16201899}
 </nav>
 
 <section id="hub-progress" class="hubsection prog">
-  <div class="eyebrow">Progress · Phase 1, the foundation</div>
+  <div class="eyebrow">Progress · the program is complete</div>
   <h1>Where the program stands</h1>
+  <p class="lede"><strong>Complete, 2026-09-30.</strong> The last area, the tournament Data tools page and its two import windows, is clean, and so is the switch's leftover plumbing. Every screen it touched matched its before-picture in both themes, and hover and press looked the same too. <strong>Where the rest of the old look went:</strong> it sits only in screens the tournament redesign (Stages 2–6) and Club Tier (Stages 3, 4, 6 and 9) rebuild, and each rebuild deletes its own screens' old look as part of being done. Two build checks keep that honest (the handoff below). The picture-comparison tool stays, for the next change that must look identical.</p>
   <p class="lede"><strong>Released on 2026-09-28.</strong> Every organization now sees the new look: the admin, the scorekeeper and gate, and the admin's help, in Warm by default with Dark one choice away in Account → Appearance, and each organization's colours on its public pages. The coaches portal's help follows Warm / Dark too, and Club Stage 1's screens went live for provisioned clubs (Club is not on sale). Your walk, §245, passed the same morning with nothing flagged. <strong>The invisible cleanup (Part B) started on 2026-09-29</strong>: you waived the wait for a tournament weekend (none is coming for 8–10 months, and Club is not live). Its first area, the admin's frame and shared parts, is done and matched every screen pixel for pixel. The one-step rollback ended with it. <strong>The same day you narrowed it</strong>: the cleanup keeps only the screens no redesign is coming for, and every screen the tournament redesign or a Club stage rebuilds sheds its old look in that rebuild, so nothing is cleaned twice. <strong>The second area is done</strong>: the organization's own screens (Members, audit log, Settings, Plan &amp; billing for the non-Club plans, PDF settings, Notifications), Families, and Rep Teams outside money. Every screen matched its before-picture, and every button, link and field was also checked under hover, focus and press. The last area and the closing step come after the tournament redesign's first stage.</p>
 
   <ol class="track" aria-label="The nine build slices, in order">
@@ -539,11 +540,11 @@ dialog.truesize::backdrop{background:#16201899}
   </ol>
   <div class="legend2" aria-hidden="true"><span><i class="l-committed"></i>Committed</span><span><i class="l-built"></i>Built, being committed</span><span><i class="l-next"></i>Next</span><span><i class="l-todo"></i>Not started</span></div>
 
-  <h2>Waiting on you</h2>
+  <h2>Nothing waits on you for this program</h2>
   <div class="waiting">
-    <p class="sub" style="margin:0">The release is out and the cleanup has started. What waits on you now:</p>
+    <p class="sub" style="margin:0">The program is closed. What it hands to other work:</p>
     <ol>
-      <li><b>A quiet window for the last area.</b><span>Each area takes a fresh set of before-pictures, an after-set, a hover-and-press check and a layout check on the dev server alone, about two hours in all. Nobody walks the test club while it runs. Next up, after the tournament redesign's first stage lands: area 3 (the tournament data tools, the help guide's own styles, the setup welcome) and the closing step.</span></li>
+      <li><b>For the tournament redesign.</b><span>Two tournament screens still carrying the old look, Chat and Staff kit, aren't named by any of its stages yet. Its plan also owes a line saying this program closed and that the two build checks are now its to keep (another session had that plan open, so it wasn't edited here).</span></li>
       <li><b>For the Club Tier work, not this program.</b><span>On a team's Tryouts page, the two export buttons are 32 px, under the 44 px finger floor on a phone. They were like that before this cleanup, and it's the Club Tier screen's to fix.</span></li>
       <li><b>For the club work, not this program.</b><span>On “Set up your club”, the “Staff your board” line can list the same two people in either order from one visit to the next, because on the test club they joined at the same instant. A one-line tie-breaker fixes it.</span></li>
       <li><b>For the demos session, not this program.</b><span>The tournament demo's tour step 3 points at the dashboard's "Now playing" strip, which only appears while a demo game is in progress. Early in the demo's day none is, so that step has nothing to highlight (seen on dev at 2 p.m.; on production at 4:30 p.m. a game was live and it worked). Not caused by the new look.</span></li>
@@ -612,6 +613,11 @@ dialog.truesize::backdrop{background:#16201899}
       <div class="sid">B2</div>
       <div><h3>The cleanup, area 2: the organization's screens, Families, Rep Teams outside money</h3><p>The old versions of Members, the audit log and Settings are gone, and every hidden old look on the organization's pages, Families and the Rep Teams screens outside money, about 6,000 lines. Plan &amp; billing for the non-Club plans keeps working as it does. Nothing on screen changed.</p><p class="proof">54 screens, phone and desktop: Dark 108 of 108 identical · Warm 107 of 108 (the same test-club name swap) · hover, focus and press on every styled button, link and field: unchanged · layout check: nothing new from the cleanup</p></div>
       <div class="state"><span class="st committed">Committed</span><span class="meta">20ca46cf · 2026-09-29</span><button type="button" class="linkbtn" data-report="Area 2">Read the report</button></div>
+    </article>
+    <article class="slice" id="sl-b3">
+      <div class="sid">B3</div>
+      <div><h3>The cleanup, area 3, and the closing step: the program closes</h3><p>The tournament Data tools page and its two import windows lost their hidden old look; the switch's leftovers went (the always-on switch values in the scorekeeper and gate, the unread setting in the production build). The build now refuses any new old-look code and any hard-coded colour in an admin stylesheet, except on a named list that can only shrink. Nothing on screen changed.</p><p class="proof">16 screens, phone and desktop: Warm 32 of 32 identical · Dark 31 of 32 (the same test-club name swap) · hover, focus and press on the two cleaned style files: unchanged</p></div>
+      <div class="state"><span class="st committed">Committed</span><span class="meta">261ad285 · 2026-09-30</span><button type="button" class="linkbtn" data-report="Area 3">Read the report</button></div>
     </article>
   </div>
 
@@ -1616,6 +1622,43 @@ dialog.truesize::backdrop{background:#16201899}
     <li>A leftover style in the coaches portal (a colour swatch nothing has used since July) looked alive only because the old Rep Teams headers used the same name. The check caught it once they went, and it's deleted; nothing can show it.</li>
   </ul>
   <p><strong>Review.</strong> Three independent readings (the pages, the style folds, the safety checks) found no fault. One note kept on the record: the plan panel's "Not right now" keeps its quieter ink on style order rather than weight, as it did before the new look.</p>
+  <h2>Area 3 and the closing step — the program closes (2026-09-30)</h2>
+  <p>Committed 2026-09-30 (261ad285), with the production build's one-line change in a commit of its own (fd8772e3). Nothing customers see changed. It ran after the tournament redesign's first stage was committed and walked.</p>
+  <p><strong>Your four calls at the start, all as recommended:</strong> start now; keep the picture-comparison tool and delete its pictures (it is the only check that compares pixels, and the next invisible change would need it); remove the setting the production build still wrote though nothing had read it since the release, in its own commit; and count the one open Teams fix (§252) into the new check's starting point.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Where</th><th>What went</th></tr></thead>
+    <tbody>
+      <tr><td>Data tools</td><td>The page and its two import windows (Teams, Schedule): their hidden old look, and 16 old styles the page no longer used.</td></tr>
+      <tr><td>The switch's leftovers</td><td>The scorekeeper's and gate's always-on switch values and their hidden off branches; the file that used to be the switch, renamed for what it holds now; the developer-only stand-in for Stripe's billing page.</td></tr>
+      <tr><td>The layout check</td><td>It now refuses a flag it doesn't know, and has a help page. Before, a mistyped flag, or asking for help, started a full 20-minute sweep.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>What the build now refuses.</strong> Two checks this program leaves behind, so the old look can only shrink:</p>
+  <ul>
+    <li><strong>Any new old-look code</strong>, in any file. Each file's count of old-look code can only go down, and a drop must be locked in the same change, so it can't creep back. When it fails, it names the stage that owns the file.</li>
+    <li><strong>Any hard-coded colour in an admin stylesheet.</strong> A new stylesheet is held to none from the start. The 24 still carrying the old look are on a named list, each owned by the stage that rebuilds its screen, and a sheet leaves the list the day it comes clean. This one also runs on every production build.</li>
+  </ul>
+  <p>Each check was shown refusing what it exists for (then put back): new old-look code in a new file, one more in the schedule page, a colour in a new stylesheet, a clean sheet left on the list, a drop not locked in.</p>
+  <p><strong>The proof.</strong> Fresh before-pictures of the 16 screens this touches (the frame, the hub, Data tools and both windows, the volunteer screens), phone and desktop, in Warm and Dark. After the cleanup, Warm matched 32 of 32; Dark matched 31 of 32, the one being “Set up your club” again, the same two board names in swapped order. Every button, link and field the two cleaned style files dress was read at rest and while hovered, focused and pressed, before and after: about 1,100 readings, nothing changed. The developer-only billing stand-in only appears with the billing test mode on, so a check of the style files themselves proves it instead: no difference. The layout check found nothing new from the cleanup. It measured the two import windows for the first time: their close button, template links and Preview button are smaller than the finger floor on a phone, as they were before, and are recorded as existing debt. It also saw that one team at the test Championship is now checked in (the gate’s filter labels carry the count).</p>
+  <p><strong>Where the old look lives now, and who retires it:</strong></p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Owner</th><th>Files with old look</th><th>Style files on the colour list</th></tr></thead>
+    <tbody>
+      <tr><td>Tournament Stage 2 — Teams and registration, Communications</td><td>4</td><td>2</td></tr>
+      <tr><td>Tournament Stage 3 — the schedule</td><td>13</td><td>4</td></tr>
+      <tr><td>Tournament Stage 4 — the dashboard before and after the event, Summary, Past tournaments, the Tournaments list</td><td>11</td><td>4</td></tr>
+      <tr><td>Tournament Stage 5 — settings, divisions, venues, rules, public site, the creation wizards, the first-run setup</td><td>19</td><td>4</td></tr>
+      <tr><td>Tournament Stage 6 — the volunteers</td><td>4</td><td>2</td></tr>
+      <tr><td>Tournament — Chat and Staff kit (no stage names them yet)</td><td>6</td><td>1</td></tr>
+      <tr><td>Tournament — the shared header and toolbar, with its last user</td><td>2</td><td>1</td></tr>
+      <tr><td>Club Stage 3 — Accounting, allocations, payment requests</td><td>12</td><td>3</td></tr>
+      <tr><td>Club Stage 4 — the public site editor</td><td>2</td><td>1</td></tr>
+      <tr><td>Club Stage 6 — the venue library</td><td>2</td><td>0</td></tr>
+      <tr><td>Club Stage 9 — house league</td><td>9</td><td>1</td></tr>
+      <tr><td>The shared admin style file, with its last user</td><td>1</td><td>1</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>The success criteria, honestly:</strong> every admin screen renders in both themes with nothing too faint to read (met at release); no hard-coded colour in admin code (met for every clean style file, the rest on a list that can only shrink, owned by the two programs); one product (walked, §245); public pages unchanged (held).</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1631,6 +1674,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>6</td><td>Prove, walk, release</td><td>Prove and walk committed c72afdeb 2026-09-28; your walk §245 passed 2026-09-28 (all eight walks, nothing flagged); <strong>released 2026-09-28</strong> (74f45113, production job 273)</td></tr>
       <tr><td>B1</td><td>Part B, area 1: the frame and shared parts (the old frame deleted, the header's old slot unread)</td><td>Committed f6d36059, 2026-09-29; pixel-identical (Dark 230/230, Warm 228/230, two attributed)</td></tr>
       <tr><td>B2</td><td>Part B, area 2: the organization's screens, Families, Rep Teams outside money (the old pages and hidden looks deleted, five style layers folded)</td><td>Committed 20ca46cf, 2026-09-29; pixel-identical (Dark 108/108, Warm 107/108, one attributed); hover, focus and press unchanged</td></tr>
+      <tr><td>B3</td><td>Part B, area 3 and the closing step: the tournament data tools, the switch's leftovers, the two checks that keep the old look shrinking</td><td>Committed 261ad285, 2026-09-30; pixel-identical (Warm 32/32, Dark 31/32, one attributed); hover, focus and press unchanged; <strong>the program is closed</strong></td></tr>
     </tbody>
   </table></div>
 </section>
@@ -1738,6 +1782,10 @@ $('s1TrueClose').onclick=()=>$('s1True').close();
 document.querySelectorAll('[data-truesize]').forEach(b=>b.addEventListener('click',()=>{const src=document.getElementById(b.dataset.truesize);if(!src)return;const d=$('s1True');const body=d.querySelector('.tsbody');body.innerHTML='';const c=src.cloneNode(true);c.removeAttribute('id');body.appendChild(c);d.showModal()}));
 
 const DECISIONS=[
+  {date:'2026-09-30 · area 3 and the closing step',ask:'Start the last area now, with tournament Stage 1 walked?',ruling:'accepted',label:'Go now',why:'Owner, 2026-09-30: “Go now.” Stage 1 was committed and its walk (§253) had passed that morning; nobody walked either test club until the after-pictures were in.'},
+  {date:'2026-09-30 · area 3 and the closing step',ask:'The picture-comparison tool was due to retire with the program. Keep it or retire it?',ruling:'accepted',label:'Keep the tool, delete its pictures',why:'Owner, 2026-09-30, as recommended. It is the only check in the repo that compares pixels (the layout check measures rules), and the next change that must look identical, a framework upgrade or a colour-name change, would otherwise have to rebuild it. Its pictures were deleted; a new job takes fresh ones.'},
+  {date:'2026-09-30 · area 3 and the closing step',ask:'The production build still wrote a setting nothing had read since the release. Remove it?',ruling:'accepted',label:'Remove it, in its own commit',why:'Owner, 2026-09-30, as recommended. It told the old switch which build it was in; the switch is gone. One line out of the production build, in a commit of its own whose message says the behaviour change is none.'},
+  {date:'2026-09-30 · area 3 and the closing step',ask:'The open Teams fix (§252) adds one rule of the kind the new check refuses. Count it in, or refuse it?',ruling:'accepted',label:'Count it in',why:'Owner, 2026-09-30, as recommended. It is a fix the owner asked for; the Teams style file starts the check with it counted, and the count can only go down from there. The Teams rebuild (tournament Stage 2) folds it with the rest.'},
   {date:'2026-09-29 · Part B, area 2',ask:'What does the second cleanup area cover, and five calls the code made?',ruling:'accepted',label:'As recommended',why:'Owner, 2026-09-29: “As recommended.” The organization’s own screens, Families and Rep Teams outside money. Coaches-portal links had nothing left to clean; the two style files only the old pages used were deleted whole; the export list now names the new Members and audit-log screens; a style file joins the strict colour check only when no raw colour is left in it; the developer-only Stripe stand-in waits for the closing step because nothing pictures it.'},
   {date:'2026-09-29 · after area 1',ask:'Does the cleanup still walk every area, or only the screens no redesign is coming for?',ruling:'accepted',label:'Re-scoped: only those',why:'Owner, 2026-09-29: “sure.” Nearly all the old look left sits in screens a tournament redesign stage or a Club stage rebuilds within months; cleaning them pixel for pixel first would be the same work twice. The cleanup keeps two more areas and a closing step; every rebuild sheds its own screens’ old look, as Club Tier Stage 2 did.'},
   {date:'2026-09-29 · Part B, at the start',ask:'Does the cleanup still wait for a settling tournament weekend?',ruling:'accepted',label:'Waived: start now',why:'Owner, 2026-09-29: no tournaments are coming for 8–10 months and Club is not live, so there is no weekend to wait for and no customer the one-step rollback protects. The cleanup started the same day, and the rollback ended with its first change (f6d36059).'},

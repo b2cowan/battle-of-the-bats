@@ -54,9 +54,16 @@
 > billing for the non-Club plans, PDF settings, Notifications), Families, and the Rep Teams screens outside
 > money — is done (committed 2026-09-29):** about 6,000 lines of hidden old look gone; every screen matched
 > its before-picture (one test-club name swap again), and — new this time — every button, link and field was
-> also checked under hover, focus and press, which pictures cannot show: nothing moved. Next: the last area
-> (tournament data tools, the help guide's own styles, the setup welcome) and the closing step, after the
-> tournament redesign's first stage lands.
+> also checked under hover, focus and press, which pictures cannot show: nothing moved.
+> **CLOSED (2026-09-30).** The last area, the tournament Data tools page and its two import windows, is clean,
+> and so is the switch's plumbing (the always-on switch values, the unread setting in the production build).
+> Every screen it touched matched its before-picture in both themes, and hover and press looked the same too.
+> The program is done. **Where the rest of the old look went:** it sits in screens the tournament redesign
+> (Stages 2–6) and Club Tier (Stages 3, 4, 6 and 9) rebuild, and each of those rebuilds deletes its own screens'
+> old look as part of being done. Two build checks keep that honest: one refuses any new old-look code and makes
+> each deletion stick, and one refuses any hard-coded colour in an admin stylesheet except on a named list of
+> the sheets still waiting for their rebuild, which can only get shorter. The picture-comparison tool stays for
+> the next change that must look identical (a framework upgrade, for example).
 
 ## What it is
 One design system and one theme choice across every working screen in FieldLogicHQ. The club admin,
@@ -95,7 +102,9 @@ their public pages.
 5. **House league screens:** with the club project's house-league stage.
 
 ## Success criteria
-- Every admin screen passes the automated check in warm and in dark.
-- No hard-coded colour can be added to admin code without the build refusing it.
-- Moving between the coaches portal and the admin feels like one product.
-- Public pages are unchanged.
+- Every admin screen passes the automated check in warm and in dark. **Met at release.**
+- No hard-coded colour can be added to admin code without the build refusing it. **Met:** every clean admin
+  stylesheet is held to none; the ones still carrying the old look are on a list that can only shrink, owned by
+  the redesigns that rebuild them.
+- Moving between the coaches portal and the admin feels like one product. **Walked and passed (§245).**
+- Public pages are unchanged. **Held.**

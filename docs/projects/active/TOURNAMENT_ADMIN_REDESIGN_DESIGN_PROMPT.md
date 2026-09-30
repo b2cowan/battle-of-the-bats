@@ -47,7 +47,7 @@ before a first director learns these screens. That is a defensible call, and it 
 
 ## Read first (in this order)
 
-1. `docs/projects/active/ADMIN_DESIGN_CONTINUITY_PLAN.md` — §1 (rulings R0–R5), §3 Phase 3, and §3a
+1. `docs/projects/archive/ADMIN_DESIGN_CONTINUITY_PLAN.md` — §1 (rulings R0–R5), §3 Phase 3, and §3a
    "RELEASE — Part A" (what shipped). The foundation's hub https://claude.ai/artifact/R1Zcp2s93gmgaHGHn6SLSZ,
    Mockups tab specimens 2 (Teams restyled), 4 (the tournament frame on a phone) and 7 (scorekeeper): match
    its visual identity; you are starting a new hub, not adding to that one.

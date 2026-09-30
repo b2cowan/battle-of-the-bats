@@ -39,8 +39,12 @@
 > look in that redesign's own build. Part B's record and the joint sequence with the tournament redesign and
 > Club Tier: §3a "PART B — the cleanup" → "PART B RE-SCOPED". **Part B area 2 (Organization's leftovers,
 > Families, Rep Teams outside money) COMMITTED `20ca46cf` 2026-09-29** — Dark 108/108, Warm 107/108 + 1 attributed;
-> forced-state computed styles unchanged; /review done (§3a "PART B AREA 2"). Next: area 3 and the closing
-> step, after tournament Stage 1 lands.
+> forced-state computed styles unchanged; /review done (§3a "PART B AREA 2"). **Part B area 3 (tournament data
+> tools and its import windows) and THE CLOSING STEP COMMITTED `261ad285` 2026-09-30 — THE PROGRAM IS CLOSED and
+> archived** (§3a "PART B AREA 3 + THE CLOSING STEP"): pixel-identical (Warm 32/32, Dark 31/32 + the known board-name tie); the switch's
+> leftovers gone; the old look left in the code is the tournament redesign's and Club Tier's, held by two build
+> gates — the old-look ratchet (`check:old-look`, only shrinks) and the strict admin colour gate with a debt list
+> that only shrinks; the identity tool kept for the next invisible change.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -1774,7 +1778,12 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   tournament-only workspace — the org overview, coaches-portal links, PDF settings, Plan & billing for
   non-Club plans), Families (its redesign, D9's P3, comes after the Club release), and Rep Teams outside
   money (assistant coaches, shared library, past seasons, a team's history, rename URLs); area 3: tournament
-  data tools, the admin help guide's own sheets, the setup welcome unless tournament Stage 5 claims it — then
+  data tools and its two import windows (they share one sheet and serve Data tools alone). ⚠ Corrected
+  2026-09-29 while writing area 3's prompt (`ADMIN_DESIGN_CONTINUITY_PART_B_AREA3_CLOSE_PROMPT.md`): the setup
+  welcome IS tournament Stage 5's (its "one set of creation questions" covers the first-run setup, F25), and the
+  help guide's `help.module.css` is worn by the coaches portal and the platform console, so its kit layer stays
+  scoped — neither is area 3's. The identity tool's retirement and the unread `APP_BUILD_BRANCH` line are put to
+  the owner at area 3's kickoff (recommended: keep the tool, delete its pictures; remove the line) — then
   **the closing step**: the strict colour gate widened over every clean file, the switch-era guards rewritten,
   `lib/admin-kit-preview.ts`'s leftovers and an unread `APP_BUILD_BRANCH` removed, the identity tool and
   `.admin-identity/` retired (a redesign changes pixels by design; its proof is the owner walk and the sweep),
@@ -1783,7 +1792,7 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   definition of done** — each stage's build prompt deletes the `useAdminKit()` false branches, `kx()` legacy
   halves, `legacy` props and kit layers of the files it rebuilds, and lowers the ratchet: tournament Stage 1
   (the dashboard's game-day board, Results + the game list, Check-in + the check-in board, the live event log,
-  guidance rail, persona panel), Stage 2 (Teams, the import windows, registration health, Communications),
+  guidance rail, persona panel), Stage 2 (Teams, registration health, Communications),
   Stage 3 (the Schedule and everything it opens, the number stepper; the shared tournament header / toolbar
   parts in `components/admin/tournament/` go with whichever stage rebuilds their last user — about ten screens
   use them), Stage 4 (Past tournaments, the summary, the Tournaments list), Stage 5 (event settings,
@@ -1901,6 +1910,137 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   strip (never on its own page) and the Tournaments list's archive confirm. None sits in Part B's re-scoped areas, but
   **an identity compare that still includes any of them recaptures its reference first** — a diff there is this pass,
   not a leak.
+- **PART B AREA 3 + THE CLOSING STEP (2026-09-30) — COMMITTED `261ad285` (+ `amplify.yml` alone, `fd8772e3`); THE PROGRAM
+  CLOSED** (prompt `ADMIN_DESIGN_CONTINUITY_PART_B_AREA3_CLOSE_PROMPT.md`; step 5 of the joint sequence, after
+  tournament Stage 1 `890d0aac` and its walk §253 ✅ 2026-09-30). Owner at kickoff, all four as recommended: quiet
+  window **"Go now"**; the identity tool **kept, its pictures deleted** (it is the repo's only pixel-level check —
+  the layout sweep measures rules — and the next invisible change would have to rebuild it); `amplify.yml`'s unread
+  `APP_BUILD_BRANCH` line **removed, in its own commit** (behaviour change: none); the open §252 Teams fix (another
+  session's, uncommitted: one `[data-admin-kit]`-scoped rule, +2 mentions in `teams-admin.module.css`) **counted
+  into the ratchet's starting point**.
+  **Measured first, in CODE only (comments blanked):** after Stage 1, HEAD `e715b9dc` held 97 files · 19
+  `useAdminKit()` · 439 `kx(` · 29 `legacy={` · 2,404 `[data-admin-kit]` in stylesheets. The prompt's 09-29 figures
+  (103 · 26 · 466 · 30 · 2,548) counted comment text too; on the same commit this rule gives 100 · 21 · 459 · 30 ·
+  2,520. A comment explaining why a layer stays scoped is not old look, so the ratchet counts code.
+  **Area 3 built.** Data tools: the page's one `kx()` → `KIT_INK.secondary` (the merged object it already returned);
+  `data-tools.module.css` folded (47 kit mentions → 0) and its 16 already-dead classes deleted (`.toolGrid`,
+  `.toolCard`, `.cardHeader`, `.cardIcon`, `.cardBody`, `.actionGroup`, `.actionLabel`, `.buttonGrid`,
+  `.actionButton`, `.actionPrimary`, `.actionGhost`, `.lockedNote`, `.referenceGrid`, `.referenceItem`, `.section`,
+  `.sectionHeader` — the page renders none, and slice 4a's own note had flagged them; eight sat in the selector
+  baseline, whose entry went); the two import windows' shared `TournamentTeamsImportDialog.module.css` folded (32 →
+  0). **Three fold traps, each resolved to the kit's value:** `.planGateLink:hover`'s legacy ink (the kit base
+  outranked it; merged it would win — dropped); `.historyStateWarning`'s warning tint and `.historyStateWarning svg`'s
+  colour (the kit's `.historyState` card and icon outranked both — dropped, the kit's ink kept). All three sheets now
+  hold no colour literal. **The proof couldn't see the windows**, so two entries were added before the "before"
+  capture (`admin-t-data-tools-import-teams` / `-schedule`, each opened from its own Import item, nothing uploaded);
+  the first quiet check caught a flake — the pointer, left where the menu item was, rests over the Teams window's
+  CSV button on a phone and its hover painted in one run and not the next — so the opener moves the pointer off and
+  FAILS if the window doesn't open (a picture of the page would pass as the window); re-run quiet: 3 captures, 2
+  compares, 0 differences.
+  **The switch's leftovers.** `lib/admin-kit-preview.ts` → `lib/admin-kit-marker.ts` (exports unchanged; the admin
+  layout, `AdminKitProvider`, the switch guard, `globals.css`'s comment). `GuestKitRoot` loses `on` (no off state);
+  both volunteer layouts lose `guestKit` and `kitStyler`, and their 11 `kx()` each become `{ …legacy, …DAYOF_KIT.x }`
+  with the legacy keys the patch overrides dropped (they never painted — six hex/rgba literals per layout gone; no
+  object pairs a shorthand with its longhand, so key order cannot matter); `DAYOF_KIT` untouched (Stage 6's).
+  `mock-portal.module.css` (dev-only, owed by area 2) folded: every literal was a `var()` fallback behind a token
+  `:root` always defines; the page 404s unless the billing mock is on, so it is proven by the static cascade check
+  (0 / 0 / 0), not photographed. The layout sweep **refuses any unknown flag** (nothing swept) and has a real
+  `--help` (the `--admin-kit` special case folded into the general rule); `layout-screens.mjs`'s `kitOnly` note
+  tidied. `admin-kit-switch-guard` re-headed (the old look is the redesigns' debt now) and re-pointed at the
+  marker module; the only assertion retired is `const guestKit = true` (switch mechanics nothing can reintroduce),
+  replaced by "`GuestKitRoot` takes no prop"; every live-truth pin kept. `kit-inline.ts` / `AdminKitProvider`
+  comments say who retires the helpers now; the identity tool's header says what it is for now.
+  **The gates this program leaves behind.**
+  (1) **Strict colour over the whole admin** (`checkAdminKit` in `check-public-tokens.mjs`, which the PRODUCTION build
+  runs too): every stylesheet under `ADMIN_ROOTS` (`app/[orgSlug]/admin`, `components/admin`, the volunteer shells)
+  holds NO colour literal, whole file — a new sheet is born strict and needs no entry — unless it is on
+  `ADMIN_COLOUR_DEBT` (24 sheets at the close) or is a `SHARED_SURFACE` part (bottom sheet, export menu, collapsible
+  card, and the creation wizard's picture of the PUBLIC page, R2), whose kit rules alone are strict. **A debt entry
+  that comes clean or disappears fails until it is taken off** — the list only shrinks. 39 admin sheets strict whole
+  at the close (36 + area 3's three); `KIT_FILES` shrinks to the one admin-only sheet outside the roots
+  (`PlanArticlePanel`).
+  (2) **The old-look ratchet** — `scripts/check-admin-old-look.mjs` (`npm run check:old-look`, `check:old-look:report`;
+  in `verify:changed`, not in the production build): per file `useAdminKit()` calls, `kx(` calls, **the switch-era
+  helper calls** (`useKitStyle` / `useKitButtons` / `useKitAsterisk` / `kitStyler` — a fifth count beyond the
+  prompt's four, so a file cannot leave the ratchet while it still calls a helper, and "the helpers go with their
+  last caller" is checkable), `legacy={` props and `[data-admin-kit]` in stylesheets; comments blanked. It fails on
+  a count above its baseline, on any old look in a file the baseline does not hold, and on **a drop not locked in**
+  (`--init` in the same change — otherwise the headroom lets the old look creep back). `--init` only lowers: it
+  refuses a raise or a new file (raising = editing the JSON by hand, where review sees it). KEEP (not counted): the
+  shared-surface parts (`globals.css`, bottom sheet, export menu, collapsible card, `help.module.css`) and
+  `AdminKitProvider`. A failure names the owning stage (`scripts/lib/admin-old-look.mjs`, shared by both gates).
+  **Starting counts: 85 files · 19 `useAdminKit()` · 413 `kx(` · 70 helper calls · 29 `legacy={` · 2,056 kit
+  mentions.** ⚠ The prompt listed "the chat panels" among the shared-surface sheets; the code says they are admin-only
+  (the tournament chat page is their one importer), so they are counted, owned by the tournament redesign's Chat.
+  (3) The restyled ratchet finalized (`--init-restyled`, the committed key order kept): 56 files, 751 literals — area
+  3's sheets, both volunteer layouts and mock-portal locked in, plus entries other work had already cleared (Club
+  Tier Stage 2's deleted program-year pages, Stage 1's Results and check-in board, one dashboard literal).
+  (4) `check:css-selectors`: the data-tools dead-class entry dropped.
+  **Each gate was proven to refuse what it exists for, then reverted:** a new admin file with a `kx(` and a kit scope
+  (both named "no stage"); one more `kx(` in the schedule page (named "Stage 3 — the schedule"); a new admin sheet with
+  a hex; a debt sheet made clean; a drop not locked in; `--init` asked to raise.
+  **Proof.** Fresh reference on `e715b9dc` before any edit — `frame, hub`, Data tools and its two windows, `volunteer`
+  — 16 screens × phone + desktop × Warm + Dark, warmed first, a restarted server per pass (the first "before" pass hit
+  the known bad start — the route probe caught it). **After: Warm 32 / 32 pixel-identical** (the board-name tie did not
+  swap this time); **Dark 31 / 32** — the one is `admin-club-setup` at phone width: the club setup checklist's two board names in swapped order (the `accepted_at` tie in the test club, `lib/club-checklist.ts`, attributed in every area; not in this diff). **States** (Data tools and both windows, the two folded sheets, at rest and under forced
+  hover / focus / focus-visible / active / focus-within, 1440 + 390): 6 screen-widths, 1,086 element-state reads, **0 differences**. **Static cascade** (`fold-check`,
+  HEAD vs working): the import windows' sheet 0 / 0 / 0, mock-portal 0 / 0 / 0, Data tools 0 real (every flagged
+  profile impossible: `.historyStateWarning` without `.historyState`, a history chip inside the format toggle).
+  **Layout sweep** (the same entries, 361 / 390 / 768 / 1440, default theme, against the committed baseline, one
+  runner): **nothing new from the cleanup**; 32 findings the baseline lacks, every one attributed — **30 are the two new import-window entries' pre-existing findings** (never measured before; their pixels did not move): the ghost Close (28 px tall, 38 px wide), the XLSX / CSV template links (34 px) and the disabled Preview (25 px), at 361 / 390 / 768. Recorded in the layout baseline as unargued debt (the slice-0 ruling), inserted after the Data tools entries without reordering the file — what a scoped `--init` of the two entries writes. ⚠ Data tools has no redesign stage, so its windows' tap targets are reported, not owned. **2 are the gate's bucket buttons at 768 re-keyed by test data** ("18 Not arrived 18" → "17 …", "0 Checked in 0" → "1 …": one Championship team is now checked in on the test club — the same 42 px elements); not re-baselined, as areas 1 and 2 left theirs. Gates: `verify:changed` green (unit 5,249 / 5,249); typecheck (typegen first); eslint 0 errors.
+  **/simplify + /review (2026-09-30, owner: "Simplify, review, then commit").** /simplify (four lenses): the
+  string-aware comment reader moved to `scripts/lib/code-comments.mjs` and shared with `check-css-selectors.mjs` (it
+  had been copied; importing it from that gate would have RUN that gate, so it moved rather than being exported);
+  the ratchet's rise and drop checks became one pass; **the pointer move went into `admin-identity.mjs` after EVERY
+  `interact`** (the altitude lens: the other openers — the kit dialogs, the schedule tools, the score sheet, the
+  Account sheet — leave the pointer on what they clicked too; one line in the tool covers them all); a note on why
+  `ADMIN_COLOUR_DEBT` is a hand list (membership is the decision; values are held by the restyled ratchet). Skipped:
+  one shared `--help` printer (two one-liners extracting different sections), owner strings that could drift if a
+  plan renumbers (cosmetic). /review (standard, three lenses — gate logic, blast radius, production-build safety; the
+  deterministic gate green: `verify:changed` 5,249 / 5,249, typecheck, eslint): **no defect**. The production run
+  simulated on HEAD + this change alone passes `--scope=all`; the ratchet there reports only the owner-approved
+  §252 +2 as a drop (expected until that fix is committed). The rename, `GuestKitRoot`, both shells' folds (every
+  dropped key is one the patch sets), Data tools' `KIT_INK.secondary`, the 16 deleted classes and the switch guard:
+  all clean. **Hardened from the logic lens:** the ratchet's patterns now tolerate spacing and an optional call
+  (`kx (`, `kx?.(`, `useAdminKit ( )`, `legacy = {`, `[data-admin-kit="…"]`) and ignore a `const legacy = {…}`
+  declaration — the counts on the tree did not move. **Found, not fixed (pre-existing, reported):** the shared
+  `COLOR_LITERAL` misses an `rgba()`/`hsla()` whose value nests a function (`rgba(255,255,255,var(--a))`,
+  `rgba(0,0,0,min(1,.5))`), and `KIT_LITERAL` names only white/black among keywords — changing either reaches every
+  scope of the production-build gate, so it is its own change; a colour inside a `<style jsx>` block is outside the
+  stylesheet gate (RulesAdmin's one is held by value by the restyled ratchet); the comment reader treats a bare `//`
+  in JSX text as a comment for the rest of that line (documented limit); a plain `.css` under an admin root is outside
+  the strict gate (none exists). `--init` with NO baseline creates one (a whole-file diff in review) — documented.
+  **The hand-off — where the old look lives now, and who retires it** (`npm run check:old-look:report` prints it
+  live; the owning programs are told in their plans):
+
+  | Owner | Old-look files | Colour-debt sheets |
+  |---|---|---|
+  | Tournament Stage 2 — Teams and registration; Communications | 4 | teams-admin, communication |
+  | Tournament Stage 3 — the schedule (+ the number stepper) | 13 | schedule-admin, ScheduleTimeline, BracketBuilder, NumberStepper |
+  | Tournament Stage 4 — the dashboard before/after the event (+ its rail, persona panel, live log), Summary, Past tournaments, the Tournaments list | 11 | dashboard, GuidanceRail, summary, tournaments-admin |
+  | Tournament Stage 5 — settings, Divisions, Venues, Rules, Public site, the creation wizards, the first-run setup (F25) | 19 | branding, TournamentSetupWizard, onboarding, notifications |
+  | Tournament Stage 6 — the volunteers | 4 | scorekeeper, DayOfShell |
+  | Tournament — Chat, Staff kit (**no stage names them yet**) | 6 | staff-kit |
+  | Tournament — the shared header/toolbar (`components/admin/tournament`), with the stage that rebuilds its last user | 2 | TournamentAdminUI |
+  | Club Stage 3 — Accounting, allocations, payment requests | 12 | accounting, bva, budget |
+  | Club Stage 4 — the public site editor | 2 | public-site |
+  | Club Stage 6 — the venue library | 2 | — |
+  | Club Stage 9 — house league | 9 | house-league |
+  | Whoever rebuilds its last user — `admin-common.module.css` | 1 | admin-common |
+
+  The kit helpers (`useKitStyle`, `kitStyler`, `useKitButtons`, `useKitAsterisk`) and `AdminPageHeader`'s `legacy`
+  prop (29 callers) go with their last caller; `admin-common.module.css` and the shared tournament header/toolbar
+  parts fold when their last user is rebuilt; the shared-surface kit layers never fold.
+  **Found, not fixed (reported):** Chat and Staff kit have no tournament stage naming them — for the tournament
+  program's ladder; the §252 rule adds a kit-scoped rule to an old-look sheet (counted in, as ruled; the next Teams
+  build folds it with the rest).
+  **The success criteria (§8), honestly:** (1) every admin screen renders in both themes, contrast 0 / 0 in the
+  working screens — **met at release** and held through Part B; (2) no raw colour in admin code — **met for every
+  clean sheet (39, strict whole, a new sheet born strict); the rest (24) on a debt list that can only shrink, owned
+  by the two programs**; inline TSX colour stays under the restyled ratchet; (3) one product — **walked**, §245;
+  (4) public pages unchanged — **held** (the R2 guards, the preview pixel proofs).
+  **Owed elsewhere, as the handoff lists:** a line in `TOURNAMENT_ADMIN_REDESIGN_PLAN.md` (another session had it
+  open — not edited here); the Club Tier plan's §7 carries its line.
 
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
@@ -1952,3 +2092,10 @@ Club Stage 1 server half (after slice 0) ┘ (beside slice 1; ships on its own)
 2. No raw colour in admin code outside the allowlist, guarded by the build.
 3. The owner, moving between a coaches portal and the club or tournament admin, sees one product.
 4. Public pages look exactly as they do today, in each organization's own colours.
+
+**At the close (2026-09-30), honestly** (§3a "PART B AREA 3 + THE CLOSING STEP"): (1) **met at release** — contrast
+0 / 0 in the working screens in both themes — and held through Part B's three pixel-identical areas; (2) **met for
+every clean admin stylesheet** (39, strict whole file; a new sheet is born strict); the other 24 sit on a debt list
+the build lets only shrink, owned by the tournament redesign and Club Tier, and inline colour in TSX stays under the
+restyled ratchet; (3) **walked** — §245 passed in both themes; (4) **held** — the R2 guards and the preview pixel
+proofs.
