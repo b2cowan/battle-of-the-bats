@@ -114,6 +114,93 @@
   .back { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
 }
 
+/* ── A RECORD opened from a list (Tournament admin redesign Stage 2, design decisions 2026-09-30) ── */
+/* Its head holds a pinned name over a body that scrolls, so a hairline separates the two. */
+.panel[data-record] .head { padding-bottom: 0.75rem; border-bottom: 1px solid var(--home-line); }
+.panel[data-record] .body { padding-top: 0.9rem; }
+
+/* The record's transient save word, beside the name (the head never scrolls away). */
+.status { flex: 0 1 auto; max-width: 45%; align-self: center; }
+
+/* The name AS the title — the bill room's title slot: a dashed rule at REST and a pencil, because a
+   control only a mouse can find is not a control on a phone (owner §114 walk, 2026-08-27). `font:
+   inherit` so the title's own size and weight carry through. */
+.titleField { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.titleInput {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 2px;
+  border: 0;
+  border-bottom: 1px dashed var(--home-line-strong);
+  border-radius: 0;
+  background: transparent;
+}
+.titleInput:hover { border-bottom-color: var(--text-tertiary); }
+.titleInput:focus { outline: none; border-bottom-style: solid; border-bottom-color: var(--home-olive); }
+.titleInput::placeholder { color: var(--text-tertiary); font-weight: 400; }
+.titlePencil { flex: none; color: var(--text-tertiary); }
+
+/* Named Previous / Next with the position between — the depth chart's player (register F-43). Two lines
+   a button: the small word, then the name, cut with an ellipsis. An absent end keeps its column, so the
+   position never moves. */
+.steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+}
+.step {
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.step:hover { background: var(--home-olive-soft); }
+.step:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.stepNext { grid-column: 3; align-items: flex-end; text-align: right; }
+.stepWord { font-size: var(--type-label); font-weight: 600; line-height: 1.2; color: var(--text-tertiary); }
+.stepName {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--type-support);
+  font-weight: 650;
+  line-height: 1.25;
+}
+.stepPos {
+  grid-column: 2;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
+.stepPosShort { display: none; }
+@media (max-width: 640px) {
+  .steps .step { min-height: 48px; }
+  .stepPosShort { display: inline; }
+  .stepPosWide { display: none; }
+}
+
 /* A FORM fills the phone and covers the bar (the drawer-layers ruling), ← at the top left. */
 @media (max-width: 640px) {
   .overlayForm { padding: 0; align-items: stretch; }

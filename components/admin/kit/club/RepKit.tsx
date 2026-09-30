@@ -311,11 +311,15 @@ type SaveState = 'held' | 'error' | 'saving' | 'dirty' | 'saved';
  * knows) — the pill fades by opacity and its text clears once hidden. Retry lands focus on the pill
  * first, because the button it replaces leaves in the same render.
  */
-export function SavePill({ saving, dirty, error, held, onRetry }: {
+export function SavePill({ saving, dirty, error, held, onRetry, inline = false }: {
   saving: boolean; dirty: boolean; error?: string | null;
   /** Why the edit is held right now (a required field emptied), or null. Shown while dirty. */
   held?: string | null;
   onRetry: () => void;
+  /** INSIDE A WINDOW (KitDialog's `status`, beside a record's name): the same word and the same states,
+   *  without the pill's pinned frame — a window covers the page's corner, and its head never scrolls
+   *  away, which is the placement's whole reason (Tournament admin redesign Stage 2, 2026-09-30). */
+  inline?: boolean;
 }) {
   const state: SaveState = held && dirty ? 'held' : error ? 'error' : saving ? 'saving' : dirty ? 'dirty' : 'saved';
   const pillRef = useRef<HTMLDivElement>(null);
@@ -337,7 +341,7 @@ export function SavePill({ saving, dirty, error, held, onRetry }: {
 
   return (
     /* -1: never in the tab order; focusable as the landing spot when Retry's own button leaves. */
-    <div ref={pillRef} tabIndex={-1} className={styles.savePill} data-state={state} data-phase={phase}>
+    <div ref={pillRef} tabIndex={-1} className={inline ? `${styles.savePill} ${styles.savePillInline}` : styles.savePill} data-state={state} data-phase={phase}>
       <span className={styles.saveStatus} aria-live="polite">
         {phase === 'hidden' ? null
           : state === 'held' ? held

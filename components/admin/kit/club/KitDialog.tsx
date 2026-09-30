@@ -32,9 +32,26 @@
  * open: the step tidies its history entry one tick after the click, before the router has pushed the
  * new address, and that Back cancels the navigation (`useBackStep`'s header). Settings' "Save your
  * changes?" is the one case today.
+ *
+ * A RECORD OPENED FROM A LIST (Tournament admin redesign Stage 2, design decisions 2026-09-30 — the
+ * coaches portal's own answers, now the admin's; first used by the tournament team record, the club's
+ * records when their stages draw them):
+ *   - `steps` — the foot names the record before and after it in the list it was opened from, with the
+ *     position between ("‹ Previous · Falcons U11 Girls · 3 of 8 · Next › · Ravens U11 Girls"; "3 of 8
+ *     in U11 Girls" at a desk). Stepping keeps the window open, starts the next record at its top and
+ *     puts the keyboard in the window. At either END of the list that button is ABSENT and the position
+ *     keeps its place — the depth chart's player (register F-43) does exactly this. A window with
+ *     steps opens with the PANEL focused, never a field: a record is read first, and a phone must not
+ *     open its keyboard on the name.
+ *   - `KitTitleField` as the `title` — the record's name is its one editor (the bill room's title
+ *     slot): a dashed rule at rest and a pencil, NO required marker; the caller refuses an empty name
+ *     in words (its save word's held state) and never sends one. Pass `ariaLabel` with it: the window
+ *     keeps the record's saved name as its accessible name while the field is being typed in.
+ *   - `status` — the record's transient save word, in the head (which never scrolls), beside the name.
+ *     The page's floating `SavePill` sits UNDER a window (250 < 400), so a window's word lives here.
  */
 import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, Pencil, X } from 'lucide-react';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import styles from './KitDialog.module.css';
 
@@ -53,47 +70,74 @@ function unlockPageScroll() {
   if (openWindows === 0) document.body.style.overflow = pageOverflow;
 }
 
+/** One neighbour of a record in the list it was opened from. */
+export type KitStep = { name: string; onStep: () => void };
+
 export default function KitDialog({
   kind,
   title,
+  ariaLabel,
   eyebrow,
   identity,
+  status,
   onClose,
   children,
   footer,
   footerStart,
+  steps,
   busy = false,
 }: {
   kind: 'question' | 'form';
   title: ReactNode;
+  /** The window's accessible name when `title` is a control (`KitTitleField`): the record's SAVED name. */
+  ariaLabel?: string;
   /** The record the window is about, ABOVE the title ("9U A" over "Start the 2027 Season?"). */
   eyebrow?: ReactNode;
   /** A form's identity line under its title (Manage: "sam@example.com · Admin since August 2026").
    *  Not a page header, so it keeps its second line (hub v8). */
   identity?: ReactNode;
+  /** A record's transient save word (`SavePill inline`), in the head beside the name. */
+  status?: ReactNode;
   onClose: () => void;
   children: ReactNode;
-  /** The window's own actions, right-aligned: Cancel, then the primary. */
-  footer: ReactNode;
+  /** The window's own actions, right-aligned: Cancel, then the primary. A record that saves as you go
+   *  has none — its foot is its `steps`. */
+  footer?: ReactNode;
   /** The far-left of the footer — a destructive door kept away from Save (Manage's Suspend…). */
   footerStart?: ReactNode;
+  /** A record opened from a list: its neighbours, named, and where it sits ("3 of 8"; `positionWide`,
+   *  "3 of 8 in U11 Girls", above a phone). `noun` names what steps for a screen reader ("team"). */
+  steps?: { prev: KitStep | null; next: KitStep | null; position: string; positionWide?: string; noun: string };
   /** While a save runs, Escape and the scrim do nothing. */
   busy?: boolean;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const isRecord = steps != null;
   // Mounted = open. Called BEFORE the focus effect below, so the floor records the opener while it
   // still has focus, then that effect moves the cursor into the first field.
   useDialogFloor(true, panelRef, { onClose, busy });
 
   useEffect(() => {
     const panel = panelRef.current;
-    // Focus the first field (a form) or the panel itself (a question), so the keyboard is inside.
-    const first = panel?.querySelector<HTMLElement>('[data-autofocus], input:not([type=hidden]), select, textarea');
+    // Focus the first field (a form) or the panel itself (a question, or a record — read first, and no
+    // phone keyboard opening on its name), so the keyboard is inside.
+    const first = isRecord ? null : panel?.querySelector<HTMLElement>('[data-autofocus], input:not([type=hidden]), select, textarea');
     (first ?? panel)?.focus();
     lockPageScroll();
     return unlockPageScroll;
+    // Mount only: stepping to the next record is not a new window.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /** Previous / Next: the caller swaps the record; the window stays, starts it at its top, and keeps
+   *  the keyboard inside (the depth chart's player). */
+  const step = (target: KitStep) => {
+    target.onStep();
+    bodyRef.current?.scrollTo({ top: 0 });
+    panelRef.current?.focus({ preventScroll: true });
+  };
 
   return (
     <div
@@ -107,9 +151,11 @@ export default function KitDialog({
         className={`${styles.panel} ${kind === 'question' ? styles.question : styles.form}`}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={titleId}
+        aria-labelledby={ariaLabel ? undefined : titleId}
+        aria-label={ariaLabel}
         tabIndex={-1}
         data-kit-dialog=""
+        data-record={isRecord || undefined}
       >
         <div className={styles.head}>
           {kind === 'form' && (
@@ -122,18 +168,74 @@ export default function KitDialog({
             <h2 id={titleId} className={styles.title}>{title}</h2>
             {identity && <p className={styles.identity}>{identity}</p>}
           </div>
+          {status != null && <div className={styles.status}>{status}</div>}
           {kind === 'form' && (
             <button type="button" className={styles.close} onClick={onClose} aria-label="Close" disabled={busy}>
               <X size={16} aria-hidden />
             </button>
           )}
         </div>
-        <div className={styles.body}>{children}</div>
-        <div className={styles.foot}>
-          {footerStart && <div className={styles.footStart}>{footerStart}</div>}
-          <div className={styles.footEnd}>{footer}</div>
-        </div>
+        <div ref={bodyRef} className={styles.body}>{children}</div>
+        {(footer != null || footerStart != null) && (
+          <div className={styles.foot}>
+            {footerStart && <div className={styles.footStart}>{footerStart}</div>}
+            {footer != null && <div className={styles.footEnd}>{footer}</div>}
+          </div>
+        )}
+        {steps && (
+          <nav className={`${styles.foot} ${styles.steps}`} aria-label={`Other ${steps.noun}s in this list`}>
+            {steps.prev && (
+              <button type="button" className={styles.step} onClick={() => step(steps.prev!)} disabled={busy}
+                aria-label={`Previous ${steps.noun}, ${steps.prev.name}`}>
+                <span className={styles.stepWord} aria-hidden>‹ Previous</span>
+                <span className={styles.stepName} aria-hidden>{steps.prev.name}</span>
+              </button>
+            )}
+            <span className={styles.stepPos}>
+              <span className={styles.stepPosShort}>{steps.position}</span>
+              <span className={styles.stepPosWide}>{steps.positionWide ?? steps.position}</span>
+            </span>
+            {steps.next && (
+              <button type="button" className={`${styles.step} ${styles.stepNext}`} onClick={() => step(steps.next!)} disabled={busy}
+                aria-label={`Next ${steps.noun}, ${steps.next.name}`}>
+                <span className={styles.stepWord} aria-hidden>Next ›</span>
+                <span className={styles.stepName} aria-hidden>{steps.next.name}</span>
+              </button>
+            )}
+          </nav>
+        )}
       </div>
     </div>
+  );
+}
+
+/**
+ * A record's NAME AS ITS TITLE, editable in place — the bill room's title slot (the coaches portal's
+ * CommitmentView), now the admin kit's. It must READ as the title and BEHAVE as a field: its dashed
+ * rule is there at REST with a pencil beside it (owner §114 walk, 2026-08-27: a rule that appeared only
+ * on hover was a control nobody on a phone could see). NO required marker — a record's name in the
+ * title slot is exempt (2026-09-03/04). The caller holds an empty name back from autosave and says why.
+ * Read-only viewers get the plain name instead: pass the text, not this.
+ */
+export function KitTitleField({ value, onChange, label, placeholder, maxLength = 200 }: {
+  value: string;
+  onChange: (value: string) => void;
+  /** The field's own name ("Team name"). */
+  label: string;
+  placeholder?: string;
+  maxLength?: number;
+}) {
+  return (
+    <span className={styles.titleField}>
+      <input
+        className={styles.titleInput}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        aria-label={label}
+        placeholder={placeholder}
+        maxLength={maxLength}
+      />
+      <Pencil size={13} aria-hidden className={styles.titlePencil} />
+    </span>
   );
 }
