@@ -10,8 +10,10 @@ import type { CSSProperties } from 'react';
  * over the legacy style inside the admin and returns the legacy style untouched anywhere else.
  *
  * ⚠ TOKENS ONLY — each value must resolve in BOTH themes (the warm block and the dark gate).
- * ⚠ Part B (the cleanup) folds each patch into its style, area by area, and deletes this file with the
- *   last caller.
+ * ⚠ Each `kx()` is folded into its merged style by the redesign stage that rebuilds its screen (Admin Design
+ *   Continuity closed 2026-09-30; `scripts/check-admin-old-look.mjs` counts what is left). `kitStyler` goes
+ *   with its last caller; the recipes stay for any inline style the kit still needs (`DAYOF_KIT`, a fold's
+ *   merged object).
  */
 
 const body: CSSProperties = { fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontWeight: 650, borderRadius: 'var(--radius-sm)' };
@@ -84,8 +86,8 @@ export const KIT_LINE = '1px solid var(--home-line)';
 
 /**
  * `kx(legacy, kit)` for a kit state already known — `useKitStyle()` (AdminKitProvider) is this behind the
- * context, and a SERVER component that knows it itself (the volunteer shells' layouts, slice 5) calls it
- * directly. Off: `legacy`, the same object. On: the patch laid over it.
+ * context, its one caller since the volunteer shells' layouts folded theirs (Part B's closing step).
+ * Off: `legacy`, the same object. On: the patch laid over it.
  */
 export function kitStyler(on: boolean): (legacy: CSSProperties, kit: CSSProperties) => CSSProperties {
   return on ? (legacy, kit) => ({ ...legacy, ...kit }) : (legacy) => legacy;

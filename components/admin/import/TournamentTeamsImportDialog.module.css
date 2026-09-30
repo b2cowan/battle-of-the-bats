@@ -1,3 +1,11 @@
+/* Data tools' two import windows (Teams, Schedule) share this sheet; they serve Data tools alone.
+   `.modal` / `.modal-header` / `.modal-footer` / `btn-primary` / `btn-ghost` are global and dressed by the kit
+   there — not restated here.
+
+   On the coaches portal's kit (Admin Design Continuity: slice 4b built it behind the dev switch; Part B area 3
+   folded it into these rules, 2026-09-30): white sections on hairlines, the portal's quiet eyebrows, olive
+   accents, the kit's success tint for an applied import, the table standard's quiet heads.
+   ⚠ TOKENS ONLY — the whole sheet is held to no colour literal (`scripts/check-public-tokens.mjs`). */
 .modal {
   width: min(880px, calc(100vw - 2rem));
   max-width: min(880px, calc(100vw - 2rem));
@@ -15,7 +23,7 @@
 .titleRow svg,
 .sectionHeader svg,
 .previewTitle svg {
-  color: var(--logic-lime);
+  color: var(--home-olive);
 }
 
 .titleBlock {
@@ -30,7 +38,7 @@
 .titleBlock p {
   max-width: 680px;
   margin: 0;
-  color: var(--data-gray);
+  color: var(--text-secondary);
   font-size: 0.82rem;
   line-height: 1.4;
 }
@@ -44,18 +52,21 @@
 .templateSection,
 .uploadSection,
 .previewPanel {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
   padding: 0.9rem 1rem;
 }
 
+/* Section eyebrow ("Templates", "Upload for Preview") — a label over content; an eyebrow keeps the
+   console face (mono, uppercase). */
 .sectionHeader {
   margin-bottom: 0.7rem;
   font-family: var(--font-data);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--white);
+  color: var(--text-secondary);
 }
 
 .templateRows {
@@ -72,7 +83,7 @@
 }
 
 .templateRow + .templateRow {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--home-line);
 }
 
 .templateCopy {
@@ -82,12 +93,12 @@
 }
 
 .templateCopy strong {
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.9rem;
 }
 
 .templateCopy span {
-  color: var(--data-gray);
+  color: var(--text-tertiary);
   font-size: 0.78rem;
   line-height: 1.35;
 }
@@ -99,6 +110,7 @@
   gap: 0.5rem;
 }
 
+/* A quiet action link (download a template) — accent ink on the field ground, not a filled button. */
 .templateButton {
   display: inline-flex;
   align-items: center;
@@ -106,9 +118,9 @@
   gap: 0.35rem;
   min-width: 74px;
   min-height: 34px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.65);
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--logic-lime);
+  border: 1px solid var(--home-line-strong);
+  background: var(--home-card);
+  color: var(--home-olive);
   padding: 0.45rem 0.65rem;
   font-family: var(--font-data);
   font-size: 0.68rem;
@@ -118,8 +130,8 @@
 }
 
 .templateButton:hover {
-  border-color: var(--logic-lime);
-  background: rgba(var(--blueprint-blue-rgb), 0.18);
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
 }
 
 .uploadRow {
@@ -132,14 +144,15 @@
   align-items: center;
   min-width: 0;
   flex: 1;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
   min-height: 40px;
 }
 
 .filePicker:focus-within {
-  border-color: var(--logic-lime);
-  box-shadow: 0 0 0 1px rgba(var(--logic-lime-rgb), 0.25);
+  border-color: var(--home-olive);
+  box-shadow: none;
 }
 
 .fileInput {
@@ -155,9 +168,9 @@
   align-items: center;
   align-self: stretch;
   gap: 0.4rem;
-  border-right: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.18);
-  color: var(--logic-lime);
+  border-right: 1px solid var(--home-line-strong);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
   padding: 0 0.85rem;
   font-family: var(--font-data);
   font-size: 0.68rem;
@@ -172,7 +185,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 0 0.8rem;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.82rem;
 }
 
@@ -193,20 +206,21 @@
   font-size: 0.82rem;
 }
 
+/* A good outcome said in a box (import applied) — the kit's success tint, not raw brand lime. */
 .successBox {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
   margin-bottom: 0.85rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--white);
+  border: 1px solid rgba(var(--success-rgb), 0.28);
+  background: rgba(var(--success-rgb), 0.07);
+  color: var(--text-primary);
   padding: 0.6rem 0.7rem;
   font-size: 0.82rem;
 }
 
 .successBox svg {
-  color: var(--logic-lime);
+  color: var(--success-light);
   flex-shrink: 0;
 }
 
@@ -226,7 +240,7 @@
 
 .modeNote {
   margin: -0.35rem 0 0.8rem;
-  color: var(--data-gray);
+  color: var(--text-tertiary);
   font-size: 0.78rem;
 }
 
@@ -235,15 +249,15 @@
   align-items: flex-start;
   gap: 0.5rem;
   margin-bottom: 0.85rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--white);
+  border: 1px solid var(--home-line);
+  background: var(--card-bg);
+  color: var(--text-primary);
   padding: 0.6rem 0.7rem;
   font-size: 0.8rem;
 }
 
 .noticeBox svg {
-  color: var(--logic-lime);
+  color: var(--home-olive);
   flex-shrink: 0;
 }
 
@@ -257,7 +271,7 @@
 .batchId,
 .footerNote,
 .muted {
-  color: var(--data-gray);
+  color: var(--text-tertiary);
   font-size: 0.74rem;
 }
 
@@ -269,9 +283,9 @@
 }
 
 .summaryGrid span {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--home-line);
   padding: 0.55rem;
-  color: var(--white);
+  color: var(--text-primary);
   font-family: var(--font-data);
   font-size: 0.72rem;
 }
@@ -279,7 +293,7 @@
 .tableWrap {
   max-height: min(48vh, 520px);
   overflow: auto;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--home-line);
 }
 
 .previewTable {
@@ -292,7 +306,7 @@
 .previewTable th,
 .previewTable td {
   padding: 0.65rem 0.7rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--home-line);
   text-align: left;
   vertical-align: top;
 }
@@ -301,11 +315,12 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--hud-surface);
-  color: var(--data-gray);
-  font-family: var(--font-data);
+  background: var(--card-bg);
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.68rem;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .previewTable tr[data-blocked="true"] td {
@@ -315,7 +330,7 @@
 .operation {
   display: inline-block;
   min-width: 74px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  border: 1px solid var(--home-line-strong);
   padding: 0.2rem 0.35rem;
   font-family: var(--font-data);
   font-size: 0.66rem;
@@ -332,7 +347,7 @@
 }
 
 .changeList strong {
-  color: var(--white);
+  color: var(--text-primary);
 }
 
 .errorNote {
@@ -370,102 +385,3 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
-   The Teams and Schedule "Add or Update" import windows, on the coaches portal's kit. Both dialogs
-   share this one sheet. `.modal`/`.modal-header`/`.modal-footer`/`btn-primary`/`btn-ghost` are global
-   and already on the kit — not restated. ⚠ TOKENS ONLY. */
-:global([data-admin-kit]) .titleRow svg,
-:global([data-admin-kit]) .sectionHeader svg,
-:global([data-admin-kit]) .previewTitle svg { color: var(--home-olive); }
-
-:global([data-admin-kit]) .titleBlock p { color: var(--text-secondary); }
-
-:global([data-admin-kit]) .templateSection,
-:global([data-admin-kit]) .uploadSection,
-:global([data-admin-kit]) .previewPanel {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-
-/* Section eyebrow ("Templates", "Upload for Preview") — a label over content, in the body face
-   per F2 (was mono+uppercase already; kept, since an eyebrow keeps the console face). */
-:global([data-admin-kit]) .sectionHeader {
-  color: var(--text-secondary);
-}
-
-:global([data-admin-kit]) .templateRow + .templateRow { border-top-color: var(--home-line); }
-:global([data-admin-kit]) .templateCopy strong { color: var(--text-primary); }
-:global([data-admin-kit]) .templateCopy span { color: var(--text-tertiary); }
-
-/* A quiet action link (download a template) — accent ink on the field ground, not a filled button. */
-:global([data-admin-kit]) .templateButton {
-  background: var(--home-card);
-  border-color: var(--home-line-strong);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .templateButton:hover {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-
-:global([data-admin-kit]) .filePicker {
-  background: var(--home-card);
-  border-color: var(--home-line-strong);
-  border-radius: 7px;
-}
-:global([data-admin-kit]) .filePicker:focus-within {
-  border-color: var(--home-olive);
-  box-shadow: none;
-}
-:global([data-admin-kit]) .filePickerButton {
-  background: var(--home-olive-soft);
-  border-right-color: var(--home-line-strong);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .fileName { color: var(--text-primary); }
-
-/* errorBox / errorNote already read --danger-light directly — already theme-true, not restated. */
-
-/* A good outcome said in a box (import applied) — the kit's success tint, not raw brand lime. */
-:global([data-admin-kit]) .successBox {
-  background: rgba(var(--success-rgb), 0.07);
-  border-color: rgba(var(--success-rgb), 0.28);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .successBox svg { color: var(--success-light); }
-
-:global([data-admin-kit]) .modeNote { color: var(--text-tertiary); }
-
-:global([data-admin-kit]) .noticeBox {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .noticeBox svg { color: var(--home-olive); }
-
-:global([data-admin-kit]) .batchId,
-:global([data-admin-kit]) .footerNote,
-:global([data-admin-kit]) .muted { color: var(--text-tertiary); }
-
-:global([data-admin-kit]) .summaryGrid span {
-  border-color: var(--home-line);
-  color: var(--text-primary);
-}
-
-:global([data-admin-kit]) .tableWrap { border-color: var(--home-line); }
-:global([data-admin-kit]) .previewTable th,
-:global([data-admin-kit]) .previewTable td { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .previewTable th {
-  background: var(--card-bg);
-  color: var(--text-tertiary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  letter-spacing: normal;
-  text-transform: none;
-}
-/* tr[data-blocked] td already reads rgba(var(--danger-rgb), 0.08) — already theme-true. */
-
-:global([data-admin-kit]) .operation { border-color: var(--home-line-strong); }
-:global([data-admin-kit]) .changeList strong { color: var(--text-primary); }
-/* .errorNote already reads --danger-light — already theme-true. */

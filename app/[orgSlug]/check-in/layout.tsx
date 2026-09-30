@@ -11,7 +11,6 @@ import InstallAppPrompt from '@/components/InstallAppPrompt';
 import DayOfTabBar from '@/components/volunteer/DayOfBottomBars';
 import { getUserDisplayName } from '@/lib/user-display';
 import { GuestKitRoot } from '@/components/admin/AdminKitProvider';
-import { kitStyler } from '@/components/admin/kit/kit-inline';
 import { DAYOF_KIT } from '@/components/volunteer/day-of-kit';
 import shell from '@/components/volunteer/DayOfShell.module.css';
 
@@ -44,9 +43,7 @@ export default async function CheckInVolunteerLayout({
   const { orgSlug } = await params;
 
   // Admin Design Continuity, slice 5 / ruling R3 — released 2026-09-28, exactly as the scorekeeper twin (see
-  // there): the kit with its warm palette FIXED, in every build.
-  const guestKit = true;
-  const kx = kitStyler(guestKit);
+  // there): the kit with its warm palette FIXED, in every build, through `GuestKitRoot`, which has no off state.
 
   // `allowSuspendedOrg` so a cancelled org reaches the wall below rather than a 500. The check-in
   // APIs are closed by the same rail regardless — this decides only what the volunteer SEES.
@@ -63,18 +60,18 @@ export default async function CheckInVolunteerLayout({
   // enforces the before-the-capability-wall ordering so a cancelled org gets the accurate reason,
   // not "Access Denied".
   const suspendedWall = suspendedOrgWall(authCtx.org, 'check-in');
-  if (suspendedWall) return <GuestKitRoot on={guestKit}>{suspendedWall}</GuestKitRoot>;
+  if (suspendedWall) return <GuestKitRoot>{suspendedWall}</GuestKitRoot>;
 
   // Gate volunteers (check_in_teams) and organizers (manage_registrations) both qualify.
   const allowed = hasCapability(authCtx.role, authCtx.capabilities, 'check_in_teams')
     || hasCapability(authCtx.role, authCtx.capabilities, 'manage_registrations');
   if (!allowed) {
     return (
-    <GuestKitRoot on={guestKit}>
-      <div style={kx({ minHeight: '100vh', background: 'var(--hud-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }, DAYOF_KIT.refusalPage)}>
-        <div style={kx({ border: '1px solid rgba(var(--blueprint-blue-rgb), 0.4)', background: 'var(--hud-surface)', padding: '2rem', maxWidth: '420px', width: '100%' }, DAYOF_KIT.refusalCard)}>
-          <div className="hud-label" style={kx({ marginBottom: '0.75rem' }, DAYOF_KIT.refusalLabel)}>Access Denied</div>
-          <p className="data-mono" style={kx({ color: '#94A3B8', fontSize: '0.875rem', lineHeight: 1.6 }, DAYOF_KIT.refusalText)}>
+    <GuestKitRoot>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', ...DAYOF_KIT.refusalPage }}>
+        <div style={{ padding: '2rem', maxWidth: '420px', width: '100%', ...DAYOF_KIT.refusalCard }}>
+          <div className="hud-label" style={{ marginBottom: '0.75rem', ...DAYOF_KIT.refusalLabel }}>Access Denied</div>
+          <p className="data-mono" style={{ fontSize: '0.875rem', lineHeight: 1.6, ...DAYOF_KIT.refusalText }}>
             This account does not have check-in access. Contact your organization admin if you need to check teams in at the gate.
           </p>
         </div>
@@ -87,7 +84,7 @@ export default async function CheckInVolunteerLayout({
   const duties = [canScore ? 'Scorekeeper' : null, 'Gate'].filter(Boolean) as string[];
 
   return (
-    <GuestKitRoot on={guestKit}>
+    <GuestKitRoot>
     {/* Day-of volunteer shell — a RULED EXCEPTION to the nav grammar (top-nav audit §3):
        the wordmark is deliberately INERT text, not a door. Do not "unify" this header into a
        platform strip.
@@ -99,24 +96,23 @@ export default async function CheckInVolunteerLayout({
        scorekeeper's flip resolves to the public side of the EVENT, not to a mirror of the scoring
        board, and a gate volunteer stands at the same event. Settled 2026-08-07 (owner): the public
        door lives in the Account sheet on BOTH shells, and no ⇄ pill is added to this row. */}
-    <div className={shell.shell} style={kx({ minHeight: '100vh', background: 'var(--hud-surface)' }, DAYOF_KIT.shell)}>
-      <header style={kx({
-        borderBottom: '1px solid rgba(var(--blueprint-blue-rgb), 0.4)', background: 'var(--hud-surface)', padding: '0 1.25rem',
-        minHeight: 'var(--dayof-bar-h)', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        gap: '1.25rem', position: 'sticky', top: 0, zIndex: 40,
-      }, DAYOF_KIT.header)}>
+    <div className={shell.shell} style={{ minHeight: '100vh', ...DAYOF_KIT.shell }}>
+      <header style={{
+        padding: '0 1.25rem', minHeight: 'var(--dayof-bar-h)', display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', gap: '1.25rem', position: 'sticky', top: 0, zIndex: 40, ...DAYOF_KIT.header,
+      }}>
         {/* `identity` clips — see the scorekeeper twin: the wordmark is `nowrap` and the actions
             beside it cannot shrink, so a narrow row made the mark paint across them. */}
         <div className={shell.identity} style={{ flex: '1 1 auto', minWidth: 0 }}>
           <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap' }}>
-            <span style={kx({ color: '#F1F5F9' }, DAYOF_KIT.markField)}>FIELD</span>
-            <span style={kx({ color: '#D9F99D' }, DAYOF_KIT.markLogic)}>LOGIC</span>
-            <span style={kx({ color: 'rgba(148,163,184,0.5)' }, DAYOF_KIT.markHq)}>HQ</span>
+            <span style={DAYOF_KIT.markField}>FIELD</span>
+            <span style={DAYOF_KIT.markLogic}>LOGIC</span>
+            <span style={DAYOF_KIT.markHq}>HQ</span>
           </div>
-          <div style={kx({
-            color: '#94A3B8', fontFamily: 'var(--font-data)', fontSize: '0.68rem', letterSpacing: '0.08em',
-            textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }, DAYOF_KIT.orgName)}>
+          <div style={{
+            fontFamily: 'var(--font-data)', fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...DAYOF_KIT.orgName,
+          }}>
             {authCtx.org.name}
           </div>
         </div>
@@ -129,7 +125,7 @@ export default async function CheckInVolunteerLayout({
               href={`/${orgSlug}/scorekeeper`}
               aria-label="Scorekeeper"
               className={`${shell.hop} ${shell.deskOnly}`}
-              style={kx({ color: '#D9F99D', fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.06em', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }, DAYOF_KIT.hop)}
+              style={{ textDecoration: 'none', whiteSpace: 'nowrap', ...DAYOF_KIT.hop }}
             >
               {/* The admin nav's Results icon — score entry is where this door goes. */}
               <Trophy size={15} aria-hidden />

@@ -86,16 +86,6 @@
       "recipientsToggleRight",
       "smallCheckLabel"
     ],
-    "app/[orgSlug]/admin/tournaments/data-tools/data-tools.module.css": [
-      "actionButton",
-      "actionGhost",
-      "actionPrimary",
-      "buttonGrid",
-      "referenceGrid",
-      "referenceItem",
-      "toolCard",
-      "toolGrid"
-    ],
     "app/[orgSlug]/admin/tournaments/divisions/admin-page.module.css": [
       "colActions",
       "colAge",

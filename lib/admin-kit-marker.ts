@@ -1,16 +1,14 @@
 /**
- * lib/admin-kit-preview.ts — the admin's MARKERS on the coaches portal's kit (Admin Design Continuity;
- * plan `docs/projects/active/ADMIN_DESIGN_CONTINUITY_PLAN.md` §3a, release prompt
- * `ADMIN_DESIGN_CONTINUITY_RELEASE_PROMPT.md`).
+ * lib/admin-kit-marker.ts — the admin's MARKERS on the coaches portal's kit (Admin Design Continuity,
+ * released 2026-09-28, closed 2026-09-30; plan `docs/projects/archive/ADMIN_DESIGN_CONTINUITY_PLAN.md`).
  *
- * ⚠ RELEASED 2026-09-28 (Part A, the flip). This file used to be THE SWITCH: a dev-only cookie
- * (`flhq_admin_kit`), its door (`/api/dev/admin-kit`) and a fail-closed staging-branch check kept the
- * half-built kit off production while Phase 1 was built on the shared `dev` branch. The flip deleted all
- * three: the admin layout and both volunteer shells now wear the marker in EVERY build, and every reader
- * (`useAdminKit()`) answers true inside them. The legacy branches that rendered when it was false are
- * dead code until Part B (the cleanup) deletes them — which is also what keeps the rollback one revert.
+ * This file used to be THE SWITCH (`lib/admin-kit-preview.ts`): a dev-only cookie, its door and a
+ * fail-closed staging-branch check kept the half-built kit off production while Phase 1 was built on the
+ * shared `dev` branch. The release deleted all three: the admin layout and both volunteer shells wear the
+ * marker in EVERY build, and every reader (`useAdminKit()`) answers true inside them. The program's
+ * closing step renamed the file to what it is now.
  *
- * What stays is the two attribute pairs, each spread in ONE place (`tests/unit/admin-kit-switch-guard.test.ts`):
+ * What it holds is the two attribute pairs, each spread in ONE place (`tests/unit/admin-kit-switch-guard.test.ts`):
  *   • `adminKitAttr` — the admin layout (and `PortalKitRoot` for a surface portaled out of it);
  *   • `guestKitAttr` — the volunteer shells, through `GuestKitRoot`.
  */

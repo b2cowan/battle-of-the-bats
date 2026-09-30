@@ -2,31 +2,33 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { adminKitAttr, guestKitAttr } from '../../lib/admin-kit-preview.ts';
+import { adminKitAttr, guestKitAttr } from '../../lib/admin-kit-marker.ts';
 import { readCode, stripComments } from './_source-code.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
- * THE ADMIN KIT, RELEASED (Admin Design Continuity — Part A, the flip, 2026-09-28)
+ * THE ADMIN KIT'S MARKERS (Admin Design Continuity — released 2026-09-28, closed 2026-09-30)
  *
  * Phase 1 was built behind a dev-only switch (a cookie, its door, a fail-closed staging check) so the
- * half-built kit could never reach a customer. The flip deleted the switch: the admin and both volunteer
- * shells wear the marker in EVERY build. What this pins now:
+ * half-built kit could never reach a customer. The release deleted the switch: the admin and both
+ * volunteer shells wear the marker in EVERY build, and nothing can turn it off. What this pins:
  *
- *   1. THE MARKER IS ON ALL THREE SHELLS, IN EVERY BUILD — the admin layout (`adminKitAttr`, the account's
- *      Warm / Dark setting chooses) and the scorekeeper and gate (`guestKitAttr` through `GuestKitRoot`,
- *      warm FIXED, R3). No condition sits between a shell and its marker.
- *   2. THE SWITCH IS GONE — nothing reads its cookie, the door route does not exist, and the helper no
- *      longer exports a reader. A second way to turn the kit off is how the old look would creep back.
+ *   1. THE MARKER IS ON ALL THREE SHELLS, UNCONDITIONALLY — the admin layout (`adminKitAttr`, the
+ *      account's Warm / Dark setting chooses) and the scorekeeper and gate (`guestKitAttr` through
+ *      `GuestKitRoot`, warm FIXED, R3). No condition sits between a shell and its marker, and
+ *      `GuestKitRoot` takes none: it has no off state to thread one through.
+ *   2. THE SWITCH IS GONE — nothing reads its cookie, the door route does not exist, and the marker
+ *      module exports the markers only. A second way to turn the kit off is how the old look returns.
  *   3. ONE PLACE SPREADS EACH MARKER — the admin layout (+ `PortalKitRoot`, which forwards it to portals),
  *      and `GuestKitRoot` for the guest pair.
  *   4. PUBLIC LAYOUTS NEVER CARRY IT — R2: public pages stay in the organization's own branding, and the
  *      tournament preview island inside the admin turns the kit off.
  *
- * The legacy branches (an admin page's `useAdminKit()` false path, `legacy` props, the switch-off
- * stylesheet rules) are dead code that Part B (the cleanup) deletes area by area; its first area (the
- * frame and shared parts, 2026-09-29) ended the one-revert rollback. The context's OFF answer itself is
- * not legacy: the preview island and other surfaces still rely on it (`AdminKitProvider`'s header).
+ * The old look still in the code — an admin page's `useAdminKit()` false branch, `kx()` legacy halves,
+ * `legacy` header props, kit layers not yet folded — is no longer this program's dead code: it is the
+ * tournament admin redesign's and Club Tier's debt, retired as each stage rebuilds its screens, counted
+ * per file by `scripts/check-admin-old-look.mjs` (it may only shrink). The context's OFF answer itself is
+ * not old look: the preview island and other surfaces rely on it (`AdminKitProvider`'s header).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -55,21 +57,24 @@ describe('the admin kit, released', () => {
     assert.doesNotMatch(layout, /\bcookies\(/, 'the admin layout reads no switch cookie');
   });
 
-  it('both volunteer shells wear the guest marker in every build (R3)', () => {
+  it('both volunteer shells wear the guest marker, unconditionally (R3)', () => {
     for (const p of VOLUNTEER_LAYOUTS) {
       const src = stripComments(read(p));
-      assert.match(src, /const guestKit = true;/, `${p}: the kit is on in every build`);
       assert.doesNotMatch(src, /\bcookies\(/, `${p} reads no switch cookie`);
-      const roots = src.match(/<GuestKitRoot on=\{guestKit\}>/g) ?? [];
+      const roots = src.match(/<GuestKitRoot>/g) ?? [];
       assert.equal(roots.length, 3, `${p}: the wall, the refusal and the shell must each render through GuestKitRoot`);
+      assert.doesNotMatch(src, /<GuestKitRoot\s+[^>]/, `${p}: GuestKitRoot takes no prop — nothing may decide it`);
     }
+    const provider = stripComments(read('components/admin/AdminKitProvider.tsx'));
+    assert.match(provider, /export function GuestKitRoot\(\{ children \}: \{ children: ReactNode \}\)/,
+      'GuestKitRoot has no off state: its only prop is what it wraps');
   });
 
   it('the switch is gone: no cookie, no door, no reader', () => {
     assert.ok(!existsSync(path.join(ROOT, 'app/api/dev/admin-kit')), 'the door route must stay deleted');
-    const helper = stripComments(read('lib/admin-kit-preview.ts'));
+    const helper = stripComments(read('lib/admin-kit-marker.ts'));
     assert.doesNotMatch(helper, /export (function|const) (readAdminKit|isAdminKitAvailable|ADMIN_KIT_COOKIE)\b/,
-      'the helper exports the markers only — no reader, no availability check, no cookie name');
+      'the marker module exports the markers only — no reader, no availability check, no cookie name');
     const offenders: string[] = [];
     for (const dir of ['app', 'components', 'lib', 'scripts']) {
       for (const file of walk(path.join(ROOT, dir))) {

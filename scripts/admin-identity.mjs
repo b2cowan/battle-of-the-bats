@@ -7,13 +7,20 @@
  * overflow, contrast), not pixels, so a border that changed colour passes it untouched. This compares
  * PIXELS.
  *
- * ⚠ SINCE THE RELEASE (2026-09-28) it proves PART B, the cleanup: deleting the legacy branches and
- * folding each kit layer into its base rules must change ZERO pixels of the new look. The release
- * captured the reference ("before", in each theme) on the flipped tree; each Part B area runs
- * `after --only=<area>` in BOTH themes against it. It retires at Part B's end, not before.
+ * ⚠ AFTER THE RELEASE (2026-09-28) it proved PART B, the cleanup: deleting the legacy branches and
+ * folding each kit layer into its base rules had to change ZERO pixels of the new look, and each area
+ * took its own "before" on the tree it started from and compared its "after" in BOTH themes.
+ *
+ * ⚠ KEPT WHEN THE PROGRAM CLOSED (owner, 2026-09-30) — for the NEXT change that must be invisible. It is
+ * the repo's only pixel-level check: the layout sweep measures rules, not pixels. Reach for it when a
+ * change should move nothing a customer sees (a framework upgrade, a design-token rename, a refactor of a
+ * shared part): `before` on the tree you start from (warm every route first on a cold server — a capture
+ * stacks compiles), change, `after`, `compare` in both themes, and attribute every difference before
+ * calling it one. A redesign changes pixels on purpose; its proof is the owner walk and the sweep, not this.
+ * Its old picture sets were deleted with the program; a new job takes a fresh `before`.
  *
  * It is a machine diff, not an eyeball: the layout sweep's "never eyeball a screenshot" rule stands.
- * The pictures are LOCAL ONLY (`.admin-identity/<set>-<theme>/`, git-ignored), so Part B runs on the
+ * The pictures are LOCAL ONLY (`.admin-identity/<set>-<theme>/`, git-ignored), so a job runs on the
  * machine that took the reference.
  *
  * ── USAGE ─────────────────────────────────────────────────────────────────────
@@ -184,7 +191,13 @@ async function capture(set) {
         await page.waitForSelector(s.ready, { timeout: 150_000, state: 'attached' });
         await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
         await waitForNoLoading(page);
-        if (s.interact) await s.interact(page);
+        if (s.interact) {
+          await s.interact(page);
+          // An opener leaves the pointer where it clicked, and whatever opens under it may or may not paint its
+          // hover (the browser recomputes hover on the next pointer move) — the Teams import window's CSV
+          // button did in one run and not the next (Part B area 3's quiet check). Move it, so hover is decided.
+          await page.mouse.move(0, 0);
+        }
         // Same landing rule as the sweep: the admin gates by redirect, so it must end where sent.
         const got = new URL(page.url()).pathname;
         if (got !== new URL(url).pathname) throw new Error(`redirected to ${got}`);

@@ -9109,6 +9109,126 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
+    "admin-t-data-tools-import-teams|361|tap-floor|button·Close import dialog": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|361|control-width|button·Close import dialog": {
+      "reason": null,
+      "detail": "38px wide (floor 44) — icon-only control"
+    },
+    "admin-t-data-tools-import-teams|361|tap-floor|a·XLSX": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|361|tap-floor|a·CSV": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|361|tap-floor|button·Preview": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|361|tap-floor|button·Close schedule import dialog": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|361|control-width|button·Close schedule import dialog": {
+      "reason": null,
+      "detail": "38px wide (floor 44) — icon-only control"
+    },
+    "admin-t-data-tools-import-schedule|361|tap-floor|a·XLSX": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|361|tap-floor|a·CSV": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|361|tap-floor|button·Preview": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|390|tap-floor|button·Close import dialog": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|390|control-width|button·Close import dialog": {
+      "reason": null,
+      "detail": "38px wide (floor 44) — icon-only control"
+    },
+    "admin-t-data-tools-import-teams|390|tap-floor|a·XLSX": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|390|tap-floor|a·CSV": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|390|tap-floor|button·Preview": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|390|tap-floor|button·Close schedule import dialog": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|390|control-width|button·Close schedule import dialog": {
+      "reason": null,
+      "detail": "38px wide (floor 44) — icon-only control"
+    },
+    "admin-t-data-tools-import-schedule|390|tap-floor|a·XLSX": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|390|tap-floor|a·CSV": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|390|tap-floor|button·Preview": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|768|tap-floor|button·Close import dialog": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|768|control-width|button·Close import dialog": {
+      "reason": null,
+      "detail": "38px wide (floor 44) — icon-only control"
+    },
+    "admin-t-data-tools-import-teams|768|tap-floor|a·XLSX": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|768|tap-floor|a·CSV": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-teams|768|tap-floor|button·Preview": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|768|tap-floor|button·Close schedule import dialog": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|768|control-width|button·Close schedule import dialog": {
+      "reason": null,
+      "detail": "38px wide (floor 44) — icon-only control"
+    },
+    "admin-t-data-tools-import-schedule|768|tap-floor|a·XLSX": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|768|tap-floor|a·CSV": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "admin-t-data-tools-import-schedule|768|tap-floor|button·Preview": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
     "admin-t-divisions|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
       "detail": "38px tall (floor 44)"

@@ -1,4 +1,8 @@
-﻿.page {
+/* The billing mock portal — a DEV-ONLY stand-in for Stripe's (the page 404s unless the billing mock is on).
+   On the coaches portal's kit (Admin Design Continuity: slice 2 built it behind the dev switch; Part B's closing
+   step folded it into these rules, 2026-09-30): the warning banner, the kit card, the portal's chips for the plan
+   and status choices. ⚠ TOKENS ONLY — the whole sheet is held to no colour literal. */
+.page {
   max-width: 560px;
 }
 
@@ -7,19 +11,19 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1rem;
-  border-radius: 2px;
-  background: rgba(var(--warning-rgb), 0.08);
-  border: 1px solid rgba(var(--warning-rgb), 0.25);
-  color: var(--warning);
+  border-radius: 8px;
+  background: rgba(var(--warning-rgb), 0.07);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
+  color: var(--badge-warning-ink);
   font-size: 0.8rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
 }
 
 .card {
-  background: var(--surface, rgba(255,255,255,0.04));
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 12px;
   padding: 2rem;
   display: flex;
   flex-direction: column;
@@ -27,16 +31,17 @@
 }
 
 .title {
+  font-family: var(--font-display);
   font-size: 1.4rem;
-  font-weight: 900;
-  color: var(--white-90);
+  font-weight: 700;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .sub {
   margin: -1rem 0 0;
   font-size: 0.875rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
 }
 
 .field {
@@ -46,11 +51,11 @@
 }
 
 .label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
 }
 
 .pills {
@@ -59,15 +64,16 @@
   gap: 0.5rem;
 }
 
+/* The choices → the portal's filter chip: tinted when chosen, never solid. */
 .pill {
   display: flex;
   align-items: center;
   gap: 0.375rem;
   padding: 0.4rem 0.875rem;
-  border-radius: 2px;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  background: transparent;
-  color: var(--white-60, rgba(255,255,255,0.6));
+  border-radius: 999px;
+  border: 1px solid var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-secondary);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -76,23 +82,24 @@
 }
 
 .pill:hover {
-  border-color: var(--blueprint-blue);
-  color: var(--white-90);
+  border-color: var(--text-tertiary);
+  color: var(--text-primary);
 }
 
-.pillActive {
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  border-color: var(--blueprint-blue);
-  color: var(--white-90);
+.pillActive,
+.pillActive:hover {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
 }
 
 .pillActive svg {
-  color: var(--logic-lime);
+  color: var(--home-olive);
 }
 
 .hint {
   font-size: 0.78rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
+  color: var(--text-tertiary);
   margin: 0;
 }
 
@@ -102,49 +109,5 @@
   align-items: center;
   gap: 0.75rem;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-top: 1px solid var(--home-line);
 }
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
-   The billing mock portal (a dev-only stand-in for Stripe's) on the kit: the warning banner, the
-   kit card, the portal's chips for the plan and status choices. ⚠ TOKENS ONLY (checkAdminKit). */
-:global([data-admin-kit]) .banner {
-  border-radius: 8px;
-  color: var(--badge-warning-ink);
-  background: rgba(var(--warning-rgb), 0.07);
-  border-color: rgba(var(--warning-rgb), 0.3);
-}
-:global([data-admin-kit]) .card {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 12px;
-}
-:global([data-admin-kit]) .title {
-  font-family: var(--font-display);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .sub,
-:global([data-admin-kit]) .hint { color: var(--text-tertiary); }
-:global([data-admin-kit]) .label {
-  font-size: var(--type-support);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary);
-}
-/* The choices → the portal's filter chip: tinted when chosen, never solid. */
-:global([data-admin-kit]) .pill {
-  border-radius: 999px;
-  border-color: var(--home-line-strong);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .pill:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
-:global([data-admin-kit]) .pillActive,
-:global([data-admin-kit]) .pillActive:hover {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .pillActive svg { color: var(--home-olive); }
-:global([data-admin-kit]) .actions { border-top-color: var(--home-line); }

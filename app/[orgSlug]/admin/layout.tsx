@@ -11,7 +11,7 @@ import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
-import { adminKitAttr } from '@/lib/admin-kit-preview';
+import { adminKitAttr } from '@/lib/admin-kit-marker';
 import AdminChrome from './AdminChrome';
 
 const MEMBER_INSTALL = {
@@ -108,7 +108,7 @@ export default async function AdminLayout({
   );
 
   // Admin Design Continuity — the admin wears the coaches portal's kit in every build (released
-  // 2026-09-28; the dev-only switch that decided it is gone — `lib/admin-kit-preview.ts`). The marker
+  // 2026-09-28; the dev-only switch that decided it is gone — `lib/admin-kit-marker.ts`). The marker
   // sits on a box-less wrapper ABOVE the providers — the coaches layout's placement, for its reason: the
   // shell's modals, drawers and install prompt render as SIBLINGS of the shell, and custom properties
   // reach them only through a common ancestor.

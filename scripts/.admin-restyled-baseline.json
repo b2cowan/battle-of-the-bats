@@ -192,13 +192,6 @@
     "rgba(248,113,113,0.35)": 1,
     "rgba(248,113,113,0.08)": 1
   },
-  "app/[orgSlug]/admin/org/billing/mock-portal/mock-portal.module.css": {
-    "rgba(255,255,255,0.04)": 1,
-    "rgba(255,255,255,0.08)": 3,
-    "rgba(255,255,255,0.4)": 2,
-    "rgba(255,255,255,0.6)": 1,
-    "rgba(255,255,255,0.3)": 1
-  },
   "app/[orgSlug]/admin/org/settings/pdf/page.tsx": {
     "#1e293b": 1
   },
@@ -230,16 +223,6 @@
   "app/[orgSlug]/admin/rep-teams/allocations/new/page.tsx": {
     "#ffffff": 1
   },
-  "app/[orgSlug]/admin/rep-teams/documents/page.tsx": {
-    "rgba(74,222,128,0.1)": 1,
-    "rgba(248,113,113,0.1)": 1,
-    "rgba(74,222,128,0.3)": 1,
-    "rgba(248,113,113,0.3)": 1
-  },
-  "app/[orgSlug]/admin/rep-teams/page.tsx": {
-    "#facc15": 1,
-    "#3b82f6": 1
-  },
   "app/[orgSlug]/admin/rep-teams/payment-requests/page.tsx": {
     "rgba(250,204,21,0.15)": 1,
     "rgba(74,222,128,0.15)": 2,
@@ -249,19 +232,6 @@
     "rgba(74,222,128,0.1)": 2,
     "#000000": 1,
     "rgba(248,113,113,0.25)": 1
-  },
-  "app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/page.tsx": {
-    "#f0f0f0": 1
-  },
-  "app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/schedule/page.tsx": {
-    "#f97316": 1,
-    "#f59e0b": 1,
-    "#22c55e": 1,
-    "#a855f7": 1,
-    "#6b7280": 1
-  },
-  "app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx": {
-    "#f0f0f0": 1
   },
   "app/[orgSlug]/admin/tournaments/branding/branding.module.css": {
     "rgba(0,0,0,0.25)": 1,
@@ -293,21 +263,7 @@
   },
   "app/[orgSlug]/admin/tournaments/dashboard/page.tsx": {
     "rgba(0,0,0,0.72)": 1,
-    "rgba(0,0,0,0.7)": 1,
-    "rgba(148,163,184,0.4)": 1
-  },
-  "app/[orgSlug]/admin/tournaments/data-tools/data-tools.module.css": {
-    "rgba(0,0,0,0.12)": 3,
-    "rgba(255,255,255,0.42)": 2,
-    "rgba(255,255,255,0.78)": 2,
-    "rgba(255,255,255,0.76)": 1,
-    "rgba(255,255,255,0.08)": 3,
-    "rgba(148,163,184,0.6)": 1,
-    "rgba(255,255,255,0.12)": 2,
-    "rgba(255,255,255,0.045)": 1,
-    "rgba(255,255,255,0.16)": 1,
-    "rgba(255,255,255,0.14)": 1,
-    "rgba(255,255,255,0.04)": 1
+    "rgba(0,0,0,0.7)": 1
   },
   "app/[orgSlug]/admin/tournaments/registrations/page.tsx": {
     "#fbbf24": 1,
@@ -334,12 +290,6 @@
     "rgba(148,163,184,0.22)": 1,
     "rgba(0,0,0,0.25)": 1,
     "rgba(148,163,184,0.1)": 1
-  },
-  "app/[orgSlug]/admin/tournaments/results/results-admin.module.css": {
-    "rgba(148,163,184,0.6)": 1,
-    "rgba(0,0,0,0.55)": 1,
-    "rgba(0,0,0,0.62)": 1,
-    "rgba(0,0,0,0.35)": 1
   },
   "app/[orgSlug]/admin/tournaments/rules/RulesAdmin.tsx": {
     "rgba(0,0,0,0.5)": 1
@@ -423,18 +373,6 @@
     "rgba(0,0,0,0.16)": 1,
     "rgba(255,255,255,0.35)": 1
   },
-  "app/[orgSlug]/check-in/layout.tsx": {
-    "#94a3b8": 2,
-    "#f1f5f9": 1,
-    "#d9f99d": 2,
-    "rgba(148,163,184,0.5)": 1
-  },
-  "app/[orgSlug]/scorekeeper/layout.tsx": {
-    "#94a3b8": 2,
-    "#f1f5f9": 1,
-    "#d9f99d": 2,
-    "rgba(148,163,184,0.5)": 1
-  },
   "app/[orgSlug]/scorekeeper/scorekeeper.module.css": {
     "rgba(148,163,184,0.24)": 1,
     "rgba(148,163,184,0.28)": 1,
@@ -448,9 +386,6 @@
   "components/admin/BottomSheet.module.css": {
     "rgba(0,0,0,0.62)": 1,
     "rgba(0,0,0,0.55)": 1
-  },
-  "components/admin/CheckInBoard.module.css": {
-    "rgba(255,255,255,0.03)": 1
   },
   "components/admin/ExportMenu.module.css": {
     "rgba(0,0,0,0.5)": 1,
@@ -491,11 +426,6 @@
   },
   "components/admin/TournamentSetupWizard.tsx": {
     "rgba(0,0,0,0.4)": 1
-  },
-  "components/admin/import/TournamentTeamsImportDialog.module.css": {
-    "rgba(255,255,255,0.08)": 2,
-    "rgba(0,0,0,0.16)": 1,
-    "rgba(255,255,255,0.1)": 2
   },
   "components/admin/tournament/GuidanceRail.module.css": {
     "rgba(255,255,255,0.03)": 1

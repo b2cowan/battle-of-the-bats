@@ -35,6 +35,13 @@
  *   node scripts/check-layout-invariants.mjs --list          print the screen list and exit
  *   … --theme=dark | warm      run in that account theme (default: the session's own — warm)
  *   … --dump=<file.json>       also write every finding this run saw, for a before/after diff
+ *   … --changed                just the screens the working tree touches (an explicit --only wins)
+ *   … --allow-partial          let --init / --prune write from a run with unmeasured screens
+ *   node scripts/check-layout-invariants.mjs --help          this list, and nothing else
+ *
+ * ⚠ AN UNKNOWN FLAG IS REFUSED, and nothing is swept. Until 2026-09-30 one was silently ignored, so a
+ * mistyped flag — or `--help`, which did not exist — started a full sweep (~20 minutes of the dev
+ * server; Admin Design Continuity Part B lost a quiet window's minutes to it beside a capture).
  *
  * ⚠ THE BASELINE HAS NO THEME. It was recorded in the default (warm — no UAT session stores a
  * theme), so a `--theme=dark` run reads dark findings against warm entries: use it with `--dump`
@@ -167,17 +174,25 @@ const argv = process.argv.slice(2);
 const has = (f) => argv.includes(f);
 const val = (f) => argv.find((a) => a.startsWith(`${f}=`))?.split('=')[1];
 
+// Every flag this runner reads — anything else is refused before a browser starts (see USAGE).
+const SWITCHES = new Set(['--init', '--report', '--prune', '--list', '--changed', '--allow-partial', '--help', '-h']);
+const VALUED = ['--only', '--width', '--theme', '--dump'];
+if (has('--help') || has('-h')) {
+  const usage = readFileSync(fileURLToPath(import.meta.url), 'utf8').match(/── USAGE ─+\n([\s\S]*?)\n \* ⚠ THE BASELINE/)[1];
+  console.log(usage.split('\n').map((l) => l.replace(/^ \* ?/, '')).join('\n').trimEnd());
+  process.exit(0);
+}
+const unknownFlags = argv.filter((a) => !SWITCHES.has(a) && !VALUED.some((f) => a.startsWith(`${f}=`)));
+if (unknownFlags.length) {
+  console.error(`✗ Unknown option ${unknownFlags.join(' ')} — nothing was swept. A value flag takes "=" (--only=a,b). See --help.`);
+  process.exit(1);
+}
+
 const mode = has('--init') ? 'init' : has('--report') ? 'report' : has('--prune') ? 'prune' : 'check';
 let onlyIds = val('--only')?.split(',').map((s) => s.trim()).filter(Boolean);
 const onlyWidth = val('--width');
 const theme = val('--theme');
 const dumpFile = val('--dump');
-// `--admin-kit` is gone with the Admin Design Continuity switch (released 2026-09-28): the admin and
-// volunteer screens wear the kit in every build, so every run measures them as customers see them.
-if (has('--admin-kit')) {
-  console.error('✗ --admin-kit is retired: the admin kit is released and always on. Drop the flag.');
-  process.exit(1);
-}
 if (theme && theme !== 'dark' && theme !== 'warm') {
   console.error(`✗ --theme must be dark or warm (got "${theme}")`);
   process.exit(1);

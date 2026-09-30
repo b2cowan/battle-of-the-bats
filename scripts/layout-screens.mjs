@@ -274,6 +274,15 @@ async function openScheduleHealth(page) {
   await summary.click();
   await page.locator('details[open] > summary[aria-label^="Collapse"]').first().waitFor({ timeout: 15_000 });
 }
+/** One of Data tools' import windows, from its item under the Import menu. Unlike the schedule's openers
+ *  this never falls back to the page: a locked item says why in a notice instead of opening, and a
+ *  picture of the page would then pass as the window, so a window that does not appear fails the entry.
+ *  (The identity check moves the pointer off after every opener — see `admin-identity.mjs`.) */
+async function openDataToolsImport(page, item) {
+  await page.locator('button[aria-haspopup="menu"][aria-label="Import"]:visible').first().click();
+  await page.locator('[role="menu"] [role="menuitem"]:visible', { hasText: item }).first().click();
+  await page.locator('.modal').first().waitFor({ state: 'visible', timeout: 15_000 });
+}
 
 // The team sheet, open (stage 1 · B1): the switcher's rows, reached from the team name in the
 // masthead. The name is a button only with two or more teams and only below the nav breakpoint;
@@ -1362,10 +1371,8 @@ export const SCREENS = [
   { id: 'admin-org-billing',           area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/billing` },
   { id: 'admin-org-settings',          area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings` },
 
-  // ── Club Tier Stage 1's screens and windows that exist only in the kit version (the club setup
-  // checklist for a club that finished setup, the open kit windows, the treasurer's hub and board).
-  // Switch-on only (`kitOnly`) until the Admin Design Continuity release made the kit the only admin
-  // (2026-09-28); ordinary entries since.
+  // ── Club Tier Stage 1's screens and windows (the club setup checklist for a club that finished setup,
+  // the open kit windows, the treasurer's hub and board).
   { id: 'admin-hub-treasurer',         area: 'hub', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin` },
   { id: 'admin-club-setup',            area: 'hub', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/onboarding?plan=club` },
   { id: 'admin-org-members-treasurer', area: 'org', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members` },
@@ -1506,6 +1513,14 @@ export const SCREENS = [
     clock: (c) => `${c.tournamentGameDay}T07:00:00-04:00`,
     interact: (p) => openScheduleTool(p, 'Rain delay', '.modal'),
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/schedule?tournamentId=${c.tournamentId}` },
+  // Data tools' two import windows (Admin Design Continuity Part B, area 3), each opened by its own item
+  // under the Import menu, nothing chosen or uploaded. They share one sheet and serve Data tools alone.
+  ...[
+    ['admin-t-data-tools-import-teams', 'Teams'],
+    ['admin-t-data-tools-import-schedule', 'Schedule'],
+  ].map(([id, item]) => ({ id, area: 'tournaments', session: 'orgOwner', ready: 'h1', scope: '.modal',
+    interact: (p) => openDataToolsImport(p, item),
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/data-tools?tournamentId=${c.tournamentId}` })),
   // A club's own tournament, inside the CLUB frame — the tournament screens under the other rail.
   { id: 'admin-club-t-dashboard', area: 'tournaments', session: 'repClubOwner', ready: 'h1',
     path: (c) => `/${c.clubSlug}/admin/tournaments/dashboard?tournamentId=${c.clubTournamentId}` },

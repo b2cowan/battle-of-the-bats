@@ -1,20 +1,21 @@
 'use client';
 /**
  * WHERE a component is drawing: inside the admin (or a volunteer shell), or somewhere else. The admin
- * layout and both volunteer shells pass `on` (since the release, 2026-09-28, in every build — the dev-only
- * switch that decided it is gone, `lib/admin-kit-preview.ts`). Everywhere else the answer is OFF, and that
- * is not a leftover: the tournament preview island (R2, `AdminChrome`) turns it off so a public page
- * previewed in the admin stays the public page, and a part shared with another surface — the bottom sheet
- * on the public follow sheets, the chat panels, the help drawer — asks it before carrying the admin's
- * marker into a portal (`PortalKitRoot`).
+ * layout and both volunteer shells turn it on (since the release, 2026-09-28, in every build — the dev-only
+ * switch that decided it is gone; the markers live in `lib/admin-kit-marker.ts`). Everywhere else the
+ * answer is OFF, and that is not a leftover: the tournament preview island (R2, `AdminChrome`) turns it off
+ * so a public page previewed in the admin stays the public page, and a part shared with another surface —
+ * the bottom sheet on the public follow sheets, the chat panels, the help drawer — asks it before carrying
+ * the admin's marker into a portal (`PortalKitRoot`).
  *
  * ⚠ What IS left over: an admin page's own `useAdminKit()` false branch and its `kx(legacy, kit)` legacy
- * half. An admin page never renders outside the admin layout, so those are dead, and Admin Design
- * Continuity Part B deletes them area by area (Part B's area 1, 2026-09-29, took the frame and the page
- * header). Do not add one.
+ * half. An admin page never renders outside the admin layout, so those are dead. Admin Design Continuity
+ * (closed 2026-09-30) retired them from every screen no redesign is coming for; the rest belong to the
+ * tournament admin redesign and Club Tier, retired as each stage rebuilds its screens, and
+ * `scripts/check-admin-old-look.mjs` refuses a new one. The helpers below go with their last caller.
  */
 import { createContext, useContext, useMemo, type CSSProperties, type ReactNode } from 'react';
-import { adminKitAttr, guestKitAttr } from '@/lib/admin-kit-preview';
+import { adminKitAttr, guestKitAttr } from '@/lib/admin-kit-marker';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import { KIT_BUTTON, KIT_INK, kitStyler } from './kit/kit-inline';
 
@@ -63,14 +64,12 @@ export function PortalKitRoot({ children }: { children: ReactNode }) {
 
 /**
  * The volunteer shells' way onto the kit (slice 5, ruling R3) — one piece, so the scorekeeper and the gate
- * cannot drift. Their layouts pass `on` — always, since the release; the `on={false}` branch below is
- * the switch's leftover, which the volunteer area's Part B pass removes with the layouts' `guestKit`. On:
- * the kit's context in its GUEST form (a portal opened inside carries the guest pair), the marker on a
- * box-less wrapper ABOVE the shell (the admin layout's placement, for its reason), and the status bar
- * tinted warm to match.
+ * cannot drift. No off state: since the release it takes nothing but what it wraps (the switch's `on` prop
+ * went at Part B's closing step). The kit's context in its GUEST form (a portal opened inside carries the
+ * guest pair), the marker on a box-less wrapper ABOVE the shell (the admin layout's placement, for its
+ * reason), and the status bar tinted warm to match.
  */
-export function GuestKitRoot({ on, children }: { on: boolean; children: ReactNode }) {
-  if (!on) return <>{children}</>;
+export function GuestKitRoot({ children }: { children: ReactNode }) {
   return (
     <AdminKitProvider on guest>
       <div style={{ display: 'contents' }} {...guestKitAttr}>
@@ -86,8 +85,8 @@ export function GuestKitRoot({ on, children }: { on: boolean; children: ReactNod
  * `legacy` (the same object) where the context is off (Admin Design Continuity slice 2). For the
  * admin's hand-set inline colours, which no stylesheet can reach. Patches hold tokens only
  * (`components/admin/kit/kit-inline.ts`). Every caller renders inside the admin or a volunteer shell,
- * where the legacy half is dead: each area's Part B pass folds its patches in, and this goes with the
- * last caller.
+ * where the legacy half is dead: the redesign stage that rebuilds each caller folds its patches in, and
+ * this goes with the last caller.
  */
 export function useKitStyle(): (legacy: CSSProperties, kit: CSSProperties) => CSSProperties {
   const on = useAdminKit();

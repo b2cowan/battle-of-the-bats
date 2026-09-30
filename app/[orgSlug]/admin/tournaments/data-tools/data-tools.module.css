@@ -1,3 +1,11 @@
+/* Data tools — the page body (its header is the shared `TournamentAdminHeader`; `.page`'s base frame is
+   `admin-common.module.css`, imported as `s`).
+
+   On the coaches portal's kit (Admin Design Continuity: slice 4a built it behind the dev switch; Part B area 3
+   folded it into these rules, 2026-09-30): the guidance strip on the olive tint, white cards and hairlines, the
+   portal's quiet labels, the kit's status chips. Where a state rule had been outranked by the kit's base rule
+   (the plan gate's hover ink; the history's warning state and its icon), only the value the kit showed is kept.
+   ⚠ TOKENS ONLY — the whole sheet is held to no colour literal (`scripts/check-public-tokens.mjs`). */
 .page {
   display: grid;
   gap: 1rem;
@@ -8,8 +16,9 @@
   align-items: flex-start;
   gap: 0.55rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  border-radius: 8px;
   background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--white);
+  color: var(--text-primary);
   padding: 0.75rem 0.85rem;
   font-size: 0.84rem;
   line-height: 1.4;
@@ -25,11 +34,9 @@
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.75rem;
   align-items: start;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
+  border: 1px solid var(--home-line);
   border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgba(var(--logic-lime-rgb), 0.1), rgba(var(--blueprint-blue-rgb), 0.04)),
-    rgba(0, 0, 0, 0.12);
+  background: var(--home-olive-soft);
   padding: 0.9rem;
 }
 
@@ -38,10 +45,10 @@
   place-items: center;
   width: 38px;
   height: 38px;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.32);
+  border: 1px solid var(--home-line);
   border-radius: 6px;
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
+  background: var(--card-bg);
+  color: var(--home-olive);
 }
 
 .guidanceBody {
@@ -59,14 +66,15 @@
 
 .guidanceHeader h2 {
   margin: 0;
-  color: var(--white);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
   font-size: 0.98rem;
   line-height: 1.25;
 }
 
 .guidanceHeader p {
   margin: 0.2rem 0 0;
-  color: var(--data-gray);
+  color: var(--text-secondary);
   font-size: 0.82rem;
   line-height: 1.4;
 }
@@ -78,10 +86,10 @@
   gap: 0.35rem;
   min-height: 34px;
   min-width: max-content;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.5);
-  border-radius: 4px;
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--logic-lime);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--home-olive);
   padding: 0.45rem 0.65rem;
   font-family: var(--font-data);
   font-size: 0.66rem;
@@ -94,12 +102,12 @@
 }
 
 .guidanceLink:hover:not(:disabled) {
-  border-color: var(--logic-lime);
-  background: rgba(var(--blueprint-blue-rgb), 0.16);
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
 }
 
 .guidanceLink:disabled {
-  color: rgba(255, 255, 255, 0.42);
+  color: var(--text-tertiary);
   cursor: not-allowed;
 }
 
@@ -111,10 +119,10 @@
 
 .guidancePoints span {
   min-width: 0;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.12);
-  color: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
   padding: 0.45rem 0.55rem;
   font-size: 0.74rem;
   line-height: 1.35;
@@ -148,14 +156,14 @@
 
 .planGateBody h2 {
   margin: 0;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.92rem;
   line-height: 1.25;
 }
 
 .planGateBody p {
   margin: 0.18rem 0 0;
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--text-secondary);
   font-size: 0.8rem;
   line-height: 1.4;
 }
@@ -170,7 +178,7 @@
   border: 1px solid rgba(var(--warning-rgb), 0.45);
   border-radius: 4px;
   background: rgba(var(--warning-rgb), 0.12);
-  color: var(--white);
+  color: var(--text-primary);
   padding: 0.45rem 0.65rem;
   font-family: var(--font-data);
   font-size: 0.66rem;
@@ -182,19 +190,19 @@
   transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
 
+/* No ink here: the kit's base ink outranked this rule's, so the link keeps its ink on hover. */
 .planGateLink:hover {
   border-color: var(--warning);
   background: rgba(var(--warning-rgb), 0.18);
-  color: var(--white);
 }
 
 .noticeSuccess {
-  border-color: rgba(var(--logic-lime-rgb), 0.35);
-  background: rgba(var(--logic-lime-rgb), 0.08);
+  border-color: rgba(var(--success-rgb), 0.35);
+  background: rgba(var(--success-rgb), 0.08);
 }
 
 .noticeSuccess svg {
-  color: var(--logic-lime);
+  color: var(--success);
 }
 
 .noticeWarning {
@@ -209,7 +217,7 @@
 /* ── Consolidated Import & Export card ──────────────────────────────────── */
 .cardLede {
   margin: 0 0 0.85rem;
-  color: var(--data-gray);
+  color: var(--text-secondary);
   font-size: 0.82rem;
   line-height: 1.5;
 }
@@ -222,7 +230,7 @@
 
 .cardHint {
   margin: 0.85rem 0 0;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.74rem;
   line-height: 1.4;
 }
@@ -231,7 +239,7 @@
 .templatesBlock {
   margin-top: 1rem;
   padding-top: 0.85rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--home-line);
 }
 
 .templatesHead {
@@ -244,11 +252,11 @@
 }
 
 .templatesLabel {
-  color: var(--white);
+  color: var(--text-secondary);
   font-family: var(--font-data);
-  font-size: 0.68rem;
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
@@ -256,18 +264,18 @@
   display: inline-flex;
   gap: 2px;
   padding: 2px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 2px;
-  background: var(--bg-2);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 6px;
+  background: var(--home-card);
 }
 
 .formatToggle button {
   min-width: 3rem;
   height: 24px;
   border: 1px solid transparent;
-  border-radius: 2px;
+  border-radius: 6px;
   background: transparent;
-  color: rgba(148, 163, 184, 0.6);
+  color: var(--text-tertiary);
   cursor: pointer;
   font-family: var(--font-data);
   font-size: 0.6rem;
@@ -277,9 +285,9 @@
 }
 
 .formatToggle button[data-active] {
-  border-color: rgba(var(--logic-lime-rgb), 0.35);
-  background: rgba(var(--logic-lime-rgb), 0.12);
-  color: var(--logic-lime);
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
 }
 
 .templateGrid {
@@ -294,16 +302,16 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: var(--data-gray);
+  color: var(--text-secondary);
   font-family: var(--font-data);
-  font-size: 0.72rem;
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
 .templateRowLabel svg {
-  color: var(--logic-lime);
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
 
@@ -324,235 +332,35 @@
   margin-bottom: 0.75rem;
 }
 
-.section {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-top: 0.2rem;
-}
-
-.sectionHeader h2 {
-  margin: 0;
-  color: var(--white);
-  font-size: 1rem;
-  line-height: 1.2;
-}
-
-.sectionHeader p {
-  max-width: 720px;
-  margin: 0.2rem 0 0;
-  color: var(--data-gray);
-  font-size: 0.82rem;
-  line-height: 1.4;
-}
-
-.toolGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
-  gap: 0.9rem;
-  align-items: start;
-}
-
-.toolCard,
-.referenceItem,
-.emptyState {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.36);
-  border-radius: 8px;
-  background: rgba(var(--blueprint-blue-rgb), 0.05);
-}
-
-.toolCard {
-  display: grid;
-  gap: 0.85rem;
-  padding: 0.95rem;
-}
-
-.toolCard:first-child {
-  grid-row: span 2;
-}
-
-.cardHeader {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.7rem;
-  align-items: start;
-}
-
-.cardIcon {
-  display: inline-grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  border-radius: 6px;
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
-}
-
-.cardHeader h3,
-.referenceItem h3,
-.emptyState h2 {
-  margin: 0;
-  color: var(--white);
-  font-size: 0.95rem;
-  line-height: 1.25;
-}
-
-.cardHeader p,
-.referenceItem p,
-.emptyState p,
-.subtleNote,
-.lockedNote {
-  margin: 0.22rem 0 0;
-  color: var(--data-gray);
-  font-size: 0.78rem;
-  line-height: 1.42;
-}
-
-.cardBody {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.actionGroup {
-  display: grid;
-  gap: 0.5rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.actionGroup:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-
-.actionLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--white);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.actionLabel svg {
-  color: var(--logic-lime);
-}
-
-.buttonGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-}
-
-.actionButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.38rem;
-  min-height: 36px;
-  min-width: 0;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.62);
-  border-radius: 4px;
-  background: rgba(var(--blueprint-blue-rgb), 0.09);
-  color: var(--logic-lime);
-  padding: 0.48rem 0.7rem;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1.15;
-  text-align: center;
-  text-decoration: none;
-  text-transform: uppercase;
-  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
-  cursor: pointer;
-}
-
-.actionButton span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.actionButton:hover:not(:disabled) {
-  border-color: var(--logic-lime);
-  background: rgba(var(--blueprint-blue-rgb), 0.18);
-}
-
-.actionButton:focus-visible {
-  outline: 2px solid rgba(var(--logic-lime-rgb), 0.5);
-  outline-offset: 2px;
-}
-
-.actionButton:disabled {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.045);
-  color: rgba(255, 255, 255, 0.42);
-  cursor: not-allowed;
-}
-
-.actionPrimary {
-  border-color: rgba(var(--logic-lime-rgb), 0.55);
-  background: rgba(var(--logic-lime-rgb), 0.12);
-  color: var(--logic-lime);
-}
-
-.actionGhost {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: transparent;
-  color: var(--white);
-}
-
-.lockedNote {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.4rem;
-  color: var(--data-gray);
-}
-
-.lockedNote svg {
-  flex: 0 0 auto;
-  margin-top: 0.1rem;
-  color: var(--warning);
-}
-
-.referenceGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
-}
-
-.referenceItem {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.7rem;
-  align-items: center;
-  padding: 0.85rem;
-}
-
-.referenceItem > svg {
-  color: var(--logic-lime);
-}
-
 .emptyState {
   display: grid;
   place-items: center;
   gap: 0.45rem;
   min-height: 240px;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
   padding: 2rem;
   text-align: center;
 }
 
+.emptyState h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.emptyState p,
+.subtleNote {
+  margin: 0.22rem 0 0;
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+  line-height: 1.42;
+}
+
 .emptyState svg {
-  color: var(--logic-lime);
+  color: var(--text-tertiary);
 }
 
 .historyState {
@@ -560,10 +368,10 @@
   align-items: center;
   gap: 0.5rem;
   min-height: 52px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.32);
+  border: 1px solid var(--home-line);
   border-radius: 8px;
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-  color: var(--data-gray);
+  background: var(--card-bg);
+  color: var(--text-tertiary);
   padding: 0.8rem 0.9rem;
   font-size: 0.82rem;
   line-height: 1.4;
@@ -571,24 +379,19 @@
 
 .historyState svg {
   flex-shrink: 0;
-  color: var(--logic-lime);
+  color: var(--text-tertiary);
 }
 
+/* Ink only: the kit's `.historyState` card outranked this state's warning tint and its icon's colour. */
 .historyStateWarning {
-  border-color: rgba(var(--warning-rgb), 0.36);
-  background: rgba(var(--warning-rgb), 0.07);
-  color: var(--white);
-}
-
-.historyStateWarning svg {
-  color: var(--warning);
+  color: var(--text-primary);
 }
 
 .historyList {
   display: grid;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.32);
+  border: 1px solid var(--home-line);
   border-radius: 8px;
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
+  background: var(--card-bg);
   overflow: hidden;
 }
 
@@ -601,7 +404,7 @@
 }
 
 .historyRow + .historyRow {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--home-line);
 }
 
 .historyMain {
@@ -619,12 +422,12 @@
 
 .historyTitleRow > svg {
   flex-shrink: 0;
-  color: var(--logic-lime);
+  color: var(--text-tertiary);
 }
 
 .historyTitleRow strong {
   min-width: 0;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 0.9rem;
   line-height: 1.25;
 }
@@ -634,7 +437,7 @@
   align-items: center;
   gap: 0.3rem;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid transparent;
   border-radius: 999px;
   padding: 0.15rem 0.45rem;
   font-family: var(--font-data);
@@ -644,27 +447,27 @@
 }
 
 .historyStatusSuccess {
-  border-color: rgba(var(--logic-lime-rgb), 0.34);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
+  border-color: rgba(var(--success-rgb), 0.28);
+  background: rgba(var(--success-rgb), 0.08);
+  color: var(--badge-success-ink);
 }
 
 .historyStatusWarning {
-  border-color: rgba(var(--warning-rgb), 0.34);
+  border-color: rgba(var(--warning-rgb), 0.3);
   background: rgba(var(--warning-rgb), 0.08);
-  color: var(--warning);
+  color: var(--badge-warning-ink);
 }
 
 .historyStatusDanger {
-  border-color: rgba(var(--danger-rgb), 0.34);
+  border-color: rgba(var(--danger-rgb), 0.3);
   background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger);
+  color: var(--badge-danger-ink);
 }
 
 .historyStatusMuted {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--data-gray);
+  border-color: var(--home-line-strong);
+  background: var(--home-olive-soft);
+  color: var(--text-tertiary);
 }
 
 .historyMeta {
@@ -672,7 +475,7 @@
   flex-wrap: wrap;
   gap: 0.35rem 0.7rem;
   min-width: 0;
-  color: var(--data-gray);
+  color: var(--text-tertiary);
   font-size: 0.76rem;
   line-height: 1.35;
 }
@@ -682,7 +485,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--text-secondary);
 }
 
 .historyCounts {
@@ -697,36 +500,30 @@
   display: grid;
   min-width: 68px;
   gap: 0.08rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border: 1px solid var(--home-line);
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.12);
+  background: var(--home-olive-soft);
   padding: 0.35rem 0.45rem;
   text-align: center;
 }
 
 .historyCount strong {
-  color: var(--white);
+  color: var(--text-primary);
   font-family: var(--font-data);
   font-size: 0.9rem;
   line-height: 1;
 }
 
 .historyCount span {
-  color: var(--data-gray);
+  color: var(--text-tertiary);
   font-size: 0.62rem;
   line-height: 1.15;
   text-transform: uppercase;
 }
 
 @media (max-width: 980px) {
-  .toolGrid,
-  .referenceGrid,
   .guidancePoints {
     grid-template-columns: 1fr;
-  }
-
-  .toolCard:first-child {
-    grid-row: auto;
   }
 }
 
@@ -745,19 +542,6 @@
     width: 100%;
   }
 
-  .buttonGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .referenceItem {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .referenceItem .actionButton {
-    grid-column: 1 / -1;
-    width: 100%;
-  }
-
   .historyRow {
     grid-template-columns: 1fr;
     align-items: stretch;
@@ -772,152 +556,3 @@
     min-width: 0;
   }
 }
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
-   Data tools' BODY on the coaches portal's kit (its `TournamentAdminHeader` call is already converted
-   by the lead — untouched here — and it also imports the shared `admin-common.module.css` as `s`,
-   also the lead's, so `.page`'s own base frame is out of this file's scope).
-   ⚠ Several classes below (`.toolGrid`, `.toolCard`, `.cardHeader`, `.cardIcon`, `.cardBody`,
-   `.actionGroup`, `.actionLabel`, `.buttonGrid`, `.actionButton`, `.actionPrimary`, `.actionGhost`,
-   `.lockedNote`, `.referenceGrid`, `.referenceItem`, `.section`, `.sectionHeader`) are pre-existing
-   DEAD CSS — no element in this page's JSX renders them (the `ToolbarMenu`/template-matrix UI
-   replaced whatever used to render them). Left alone rather than styled or deleted; flagged to the
-   lead below. ⚠ TOKENS ONLY (checkAdminKit). */
-:global([data-admin-kit]) .notice {
-  border-radius: 8px;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .noticeSuccess {
-  border-color: rgba(var(--success-rgb), 0.35);
-  background: rgba(var(--success-rgb), 0.08);
-}
-:global([data-admin-kit]) .noticeSuccess svg { color: var(--success); }
-:global([data-admin-kit]) .noticeWarning {
-  border-color: rgba(var(--warning-rgb), 0.4);
-  background: rgba(var(--warning-rgb), 0.08);
-}
-:global([data-admin-kit]) .noticeWarning svg { color: var(--warning); }
-
-:global([data-admin-kit]) .guidanceStrip {
-  background: var(--home-olive-soft);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) .guidanceIcon {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .guidanceHeader h2 {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .guidanceHeader p { color: var(--text-secondary); }
-:global([data-admin-kit]) .guidanceLink {
-  border-radius: 6px;
-  border-color: var(--home-line-strong);
-  background: var(--card-bg);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .guidanceLink:hover:not(:disabled) {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .guidanceLink:disabled { color: var(--text-tertiary); }
-:global([data-admin-kit]) .guidancePoints span {
-  border-radius: 6px;
-  border-color: var(--home-line);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-}
-
-:global([data-admin-kit]) .planGateBody h2 { color: var(--text-primary); }
-:global([data-admin-kit]) .planGateBody p { color: var(--text-secondary); }
-:global([data-admin-kit]) .planGateLink { color: var(--text-primary); }
-
-:global([data-admin-kit]) .cardLede { color: var(--text-secondary); }
-:global([data-admin-kit]) .cardHint { color: var(--text-tertiary); }
-
-/* ── Templates matrix ── */
-:global([data-admin-kit]) .templatesBlock { border-top-color: var(--home-line); }
-:global([data-admin-kit]) .templatesLabel {
-  font-size: var(--type-label);
-  letter-spacing: 0.09em;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .formatToggle {
-  border-radius: 6px;
-  border-color: var(--home-line-strong);
-  background: var(--home-card);
-}
-:global([data-admin-kit]) .formatToggle button {
-  border-radius: 6px;
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .formatToggle button[data-active] {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .templateRowLabel {
-  font-size: var(--type-label);
-  letter-spacing: 0.09em;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .templateRowLabel svg { color: var(--text-tertiary); }
-
-/* ── Import history ── */
-:global([data-admin-kit]) .emptyState {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .emptyState h2 { color: var(--text-primary); }
-:global([data-admin-kit]) .emptyState p,
-:global([data-admin-kit]) .subtleNote { color: var(--text-tertiary); }
-:global([data-admin-kit]) .emptyState svg { color: var(--text-tertiary); }
-
-:global([data-admin-kit]) .historyState {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .historyState svg { color: var(--text-tertiary); }
-:global([data-admin-kit]) .historyStateWarning { color: var(--text-primary); }
-
-:global([data-admin-kit]) .historyList {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) .historyRow + .historyRow { border-top-color: var(--home-line); }
-:global([data-admin-kit]) .historyTitleRow > svg { color: var(--text-tertiary); }
-:global([data-admin-kit]) .historyTitleRow strong { color: var(--text-primary); }
-
-:global([data-admin-kit]) .historyStatus { border-color: transparent; }
-:global([data-admin-kit]) .historyStatusSuccess {
-  color: var(--badge-success-ink);
-  background: rgba(var(--success-rgb), 0.08);
-  border-color: rgba(var(--success-rgb), 0.28);
-}
-:global([data-admin-kit]) .historyStatusWarning {
-  color: var(--badge-warning-ink);
-  background: rgba(var(--warning-rgb), 0.08);
-  border-color: rgba(var(--warning-rgb), 0.3);
-}
-:global([data-admin-kit]) .historyStatusDanger {
-  color: var(--badge-danger-ink);
-  background: rgba(var(--danger-rgb), 0.08);
-  border-color: rgba(var(--danger-rgb), 0.3);
-}
-:global([data-admin-kit]) .historyStatusMuted {
-  color: var(--text-tertiary);
-  background: var(--home-olive-soft);
-  border-color: var(--home-line-strong);
-}
-
-:global([data-admin-kit]) .historyMeta { color: var(--text-tertiary); }
-:global([data-admin-kit]) .historyFile { color: var(--text-secondary); }
-:global([data-admin-kit]) .historyCount {
-  background: var(--home-olive-soft);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) .historyCount strong { color: var(--text-primary); }
-:global([data-admin-kit]) .historyCount span { color: var(--text-tertiary); }

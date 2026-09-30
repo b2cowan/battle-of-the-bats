@@ -43,6 +43,7 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { execSync } from 'node:child_process';
+import { ownerOf, SHARED_SURFACE } from './lib/admin-old-look.mjs';
 
 const ROOT = process.cwd();
 
@@ -473,38 +474,60 @@ function checkScope(name) {
   return true;
 }
 
-// ── the admin kit: STRICT, no ratchet (Admin Design Continuity, Phase 1) ─────────────────────────
-// Phase 1 moves the admin onto the coaches portal's kit behind a dev switch, one area per slice. The
-// rules above count only hex and BRAND rgb; white/black alphas and one-off tints pass them, and
-// those are exactly the literals a theme cannot move (the Phase 0 inventory: 769 of the admin's 812).
-// So the KIT LAYER is held to more: every rule in a kit stylesheet, and every rule an admin sheet
-// scopes under `[data-admin-kit]`, may hold NO literal colour at all — no hex, no rgb()/hsl() without
-// a var() inside, no named colour. Zero, not a baseline: the layer is new, so it starts clean and a
-// restyled area cannot regress. It WIDENS as the areas come clean — when an area's legacy rules are
-// deleted (Part B, the cleanup, area by area), its whole stylesheet joins KIT_FILES.
-// ⚠ Only a sheet that NOTHING outside the admin reads: a shared part's base rules are another surface's
-// look (the export menu and the collapsible card on the platform console, the bottom sheet on public
-// pages), so those keep their scoped kit layer and never join.
-const KIT_DIRS = ['components/admin/kit/'];
+// ── the admin: STRICT — no colour literal at all, with a debt list that only shrinks ─────────────
+// (Admin Design Continuity: Phase 1 2026-09-25 → released 2026-09-28 → closed 2026-09-30.)
+// The rules above count only hex and BRAND rgb; white/black alphas and one-off tints pass them, and those
+// are exactly the literals a theme cannot move (the Phase 0 inventory: 769 of the admin's 812). So the admin
+// is held to more: NO literal colour — no hex, no rgb()/hsl() without a var() inside, no named colour.
+//   • EVERY stylesheet under the admin's roots (`ADMIN_ROOTS`: the admin, its components, the volunteer
+//     shells) is strict, whole file — a new sheet is born strict, and needs no entry here.
+//   • …unless it is on `ADMIN_COLOUR_DEBT`: a sheet still carrying the old look, retired by the redesign
+//     stage that rebuilds its screen (named from `scripts/lib/admin-old-look.mjs`). The list may only
+//     SHRINK: an entry that has come clean fails until it is taken off, so it cannot quietly regress. Its
+//     literals are held meanwhile by value in the restyled ratchet below, and its kit rules are strict.
+//   • …or a SHARED-SURFACE part (`SHARED_SURFACE`, the same lib): its base rules are another surface's
+//     look, so only its `[data-admin-kit]` rules are strict — as for every sheet anywhere that scopes one.
+//   • Outside the roots, a sheet only the admin reads joins by name (`KIT_FILES`).
+const ADMIN_ROOTS = [
+  'app/[orgSlug]/admin/',
+  'components/admin/',
+  'app/[orgSlug]/scorekeeper/',
+  'app/[orgSlug]/check-in/',
+  'components/volunteer/',
+];
 const KIT_FILES = new Set([
-  'components/admin/AdminPageHeader.module.css',
-  // Part B area 1 — the frame and shared parts (2026-09-29).
-  'app/[orgSlug]/admin/admin.module.css',
-  'components/admin/AdminContextStrip.module.css',
-  // Part B area 2 — Families, Rep Teams outside money (also read by Club Stage 3's money pages, all admin),
-  // Plan & billing for the non-Club plans and its "See what … includes" panel (2026-09-29). Not the admin
-  // Notifications page's sheet: the coaches portal reads it too.
-  'app/[orgSlug]/admin/families/families.module.css',
-  'app/[orgSlug]/admin/rep-teams/rep-teams.module.css',
-  'app/[orgSlug]/admin/org/billing/billing.module.css',
+  // Plan & billing's "See what … includes" panel — the admin's alone (Part B area 2, 2026-09-29).
   'components/billing/PlanArticlePanel.module.css',
-  // Tournament admin redesign Stage 1 — game day, rebuilt with its old look retired (2026-09-29): the
-  // board's own sheet (born clean), Results (rewritten whole), and Check-in (the board — the gate's too,
-  // which carries the kit marker as the guest shell — and the page wrapper).
-  'app/[orgSlug]/admin/tournaments/dashboard/GameDayBoard.module.css',
-  'app/[orgSlug]/admin/tournaments/results/results-admin.module.css',
-  'app/[orgSlug]/admin/tournaments/check-in/check-in.module.css',
-  'components/admin/CheckInBoard.module.css',
+]);
+// The admin's old look, by stylesheet (2026-09-30, when Admin Design Continuity closed). Remove an entry the
+// day its sheet comes clean — the gate fails until you do. A hand list on purpose, unlike the old-look
+// ratchet's generated baseline: membership is the decision (no tool may add a sheet to it), and the values
+// inside a listed sheet are already held, by value, by the restyled ratchet below.
+const ADMIN_COLOUR_DEBT = new Set([
+  'app/[orgSlug]/admin/accounting/accounting.module.css',
+  'app/[orgSlug]/admin/accounting/budget-vs-actual/bva.module.css',
+  'app/[orgSlug]/admin/accounting/budget/budget.module.css',
+  'app/[orgSlug]/admin/admin-common.module.css',
+  'app/[orgSlug]/admin/house-league/house-league.module.css',
+  'app/[orgSlug]/admin/onboarding/onboarding.module.css',
+  'app/[orgSlug]/admin/org/tournaments/tournaments-admin.module.css',
+  'app/[orgSlug]/admin/public-site/public-site.module.css',
+  'app/[orgSlug]/admin/tournaments/branding/branding.module.css',
+  'app/[orgSlug]/admin/tournaments/communication/communication.module.css',
+  'app/[orgSlug]/admin/tournaments/dashboard/dashboard.module.css',
+  'app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css',
+  'app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css',
+  'app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css',
+  'app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css',
+  'app/[orgSlug]/admin/tournaments/settings/notifications/notifications.module.css',
+  'app/[orgSlug]/admin/tournaments/staff-kit/staff-kit.module.css',
+  'app/[orgSlug]/admin/tournaments/summary/summary.module.css',
+  'app/[orgSlug]/scorekeeper/scorekeeper.module.css',
+  'components/admin/NumberStepper.module.css',
+  'components/admin/tournament/GuidanceRail.module.css',
+  'components/admin/tournament/TournamentAdminUI.module.css',
+  'components/admin/TournamentSetupWizard.module.css',
+  'components/volunteer/DayOfShell.module.css',
 ]);
 // A colour literal: hex, or rgb/rgba/hsl/hsla with no var() inside. The kit check also refuses the keywords.
 const COLOR_LITERAL = String.raw`#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\((?![^()]*var\()[^()]*\)`;
@@ -521,16 +544,23 @@ function checkAdminKit() {
   const files = [...scopeFiles({ dirs: ['app', 'components'], files: [], excludeSegments: new Set() }), 'app/globals.css'];
   const offenders = [];
   let kitRules = 0;
+  let strictSheets = 0;
+  const cleanDebt = [...ADMIN_COLOUR_DEBT].filter(d => !files.includes(d));   // gone = off the list too
   for (const f of files) {
-    const wholeFile = KIT_FILES.has(f) || KIT_DIRS.some(d => f.startsWith(d));
+    const debt = ADMIN_COLOUR_DEBT.has(f);
+    const wholeFile = KIT_FILES.has(f)
+      || (ADMIN_ROOTS.some(r => f.startsWith(r)) && !debt && !SHARED_SURFACE.has(f));
     const raw = readFileSync(join(ROOT, f), 'utf8');
-    if (!wholeFile && !raw.includes('[data-admin-kit]')) continue;
+    if (!wholeFile && !debt && !raw.includes('[data-admin-kit]')) continue;
+    if (wholeFile) strictSheets++;
     const rawLines = raw.split(/\r?\n/);
     const txt = blankComments(raw);
+    let debtLeft = 0;   // a debt sheet's own literals: counted, not reported — they say whether it is clean
     for (const m of txt.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       const selector = m[1].trim();
-      if (!wholeFile && !isKitSelector(selector)) continue;
-      kitRules++;
+      const strict = wholeFile || isKitSelector(selector);
+      if (!strict && !debt) continue;
+      if (strict) kitRules++;
       const bodyStart = m.index + m[0].indexOf('{') + 1;
       let offset = 0;
       for (const decl of m[2].split(';')) {
@@ -539,20 +569,32 @@ function checkAdminKit() {
         if (value && KIT_LITERAL.test(value)) {
           const line = txt.slice(0, bodyStart + offset + decl.indexOf(value)).split('\n').length;
           if (!exemptAt(rawLines, line - 1)) {
-            offenders.push({ f, line, selector: selector.split('\n').pop().trim(), value });
+            if (strict) offenders.push({ f, line, selector: selector.split('\n').pop().trim(), value });
+            else debtLeft++;
           }
         }
         offset += decl.length + 1;
       }
     }
+    if (debt && !debtLeft) cleanDebt.push(f);
   }
+  let ok = true;
   if (offenders.length) {
-    console.error(`✖ Admin kit (strict): ${offenders.length} literal colour(s) in the kit layer — tokens only.`);
+    ok = false;
+    console.error(`✖ Admin (strict): ${offenders.length} literal colour(s) — the admin holds none.`);
     for (const o of offenders) console.error(`    ${o.f}:${o.line}  ${o.selector}  →  ${o.value}`);
     console.error('  Use a var(--token) the warm block and the dark gate both define (app/globals.css).');
-    return false;
+    console.error('  A sheet still on the old look is on ADMIN_COLOUR_DEBT; nothing new joins that list.');
   }
-  console.log(`✓ Admin kit (strict): ${kitRules} kit rule(s), no literal colour.`);
+  if (cleanDebt.length) {
+    ok = false;
+    console.error('✖ Admin (strict): these debt-list sheets hold no colour literal now (or are gone) — take them off');
+    console.error('  ADMIN_COLOUR_DEBT in scripts/check-public-tokens.mjs, so they stay clean:');
+    for (const f of cleanDebt) console.error(`    ${f}  (retired by ${ownerOf(f)})`);
+  }
+  if (!ok) return false;
+  console.log(`✓ Admin (strict): ${strictSheets} admin sheet(s) whole and ${kitRules} kit rule(s) in all, no literal colour; `
+    + `${ADMIN_COLOUR_DEBT.size} on the shrinking debt list.`);
   return true;
 }
 

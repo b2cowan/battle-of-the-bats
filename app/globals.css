@@ -736,7 +736,7 @@ body:has([data-chat-fullbleed]) {
    the sun. No account attribute in the selector, and the guest marker carries no
    [data-coach-warm-enabled], so the dark gate below never answers it. `:root` gives it (0,2,0), above
    R1's `[data-admin-kit]` block (0,1,0) on the same element — theme first, platform beneath, as for the
-   admin. Only `guestKitAttr` (lib/admin-kit-preview.ts, through `GuestKitRoot`) writes the attribute. */
+   admin. Only `guestKitAttr` (lib/admin-kit-marker.ts, through `GuestKitRoot`) writes the attribute. */
 :root [data-guest-kit],
 html[data-user-theme="warm"] [data-coach-warm-enabled] {
   /* Warm palette — mirrors warmTheme.module.css .warmVars (Round-1 ratified values). */

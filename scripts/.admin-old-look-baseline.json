@@ -1,0 +1,332 @@
+{
+  "app/[orgSlug]/admin/accounting/accounting.module.css": {
+    "kitScope": 71
+  },
+  "app/[orgSlug]/admin/accounting/budget-vs-actual/bva.module.css": {
+    "kitScope": 61
+  },
+  "app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx": {
+    "kx": 2,
+    "helpers": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx": {
+    "kx": 7,
+    "helpers": 2,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/accounting/budget/budget.module.css": {
+    "kitScope": 54
+  },
+  "app/[orgSlug]/admin/accounting/budget/page.tsx": {
+    "kx": 1,
+    "helpers": 2,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/accounting/ledger/[ledgerId]/page.tsx": {
+    "kx": 3,
+    "helpers": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/accounting/page.tsx": {
+    "kx": 11,
+    "helpers": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/admin-common.module.css": {
+    "kitScope": 46
+  },
+  "app/[orgSlug]/admin/house-league/house-league.module.css": {
+    "kitScope": 130
+  },
+  "app/[orgSlug]/admin/house-league/page.tsx": {
+    "kx": 1,
+    "helpers": 2,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx": {
+    "useAdminKit": 1,
+    "kx": 11,
+    "helpers": 2,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx": {
+    "useAdminKit": 1,
+    "kx": 12,
+    "helpers": 1,
+    "legacy": 2
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx": {
+    "kx": 1,
+    "helpers": 2
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx": {
+    "useAdminKit": 2,
+    "kx": 18,
+    "helpers": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
+    "useAdminKit": 1,
+    "kx": 9,
+    "helpers": 8,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
+    "kx": 9,
+    "helpers": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx": {
+    "kx": 2,
+    "helpers": 6,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/onboarding/onboarding.module.css": {
+    "kitScope": 80
+  },
+  "app/[orgSlug]/admin/onboarding/page.tsx": {
+    "useAdminKit": 1
+  },
+  "app/[orgSlug]/admin/org/tournaments/page.tsx": {
+    "useAdminKit": 1,
+    "kx": 3,
+    "helpers": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/org/tournaments/tournaments-admin.module.css": {
+    "kitScope": 49
+  },
+  "app/[orgSlug]/admin/org/venues/page.tsx": {
+    "useAdminKit": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/org/venues/venues-admin.module.css": {
+    "kitScope": 34
+  },
+  "app/[orgSlug]/admin/public-site/page.tsx": {
+    "useAdminKit": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/public-site/public-site.module.css": {
+    "kitScope": 25
+  },
+  "app/[orgSlug]/admin/rep-teams/allocations/[allocationId]/page.tsx": {
+    "useAdminKit": 1,
+    "kx": 6,
+    "helpers": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/rep-teams/allocations/new/page.tsx": {
+    "kx": 5,
+    "helpers": 2,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/rep-teams/allocations/page.tsx": {
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/rep-teams/payment-requests/page.tsx": {
+    "useAdminKit": 2,
+    "kx": 7,
+    "helpers": 2,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/tournaments/archives/archives-admin.module.css": {
+    "kitScope": 7
+  },
+  "app/[orgSlug]/admin/tournaments/archives/page.tsx": {
+    "useAdminKit": 1,
+    "kx": 4,
+    "helpers": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/tournaments/branding/branding.module.css": {
+    "kitScope": 71
+  },
+  "app/[orgSlug]/admin/tournaments/branding/page.tsx": {
+    "kx": 2,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/chat/chat-admin.module.css": {
+    "kitScope": 2
+  },
+  "app/[orgSlug]/admin/tournaments/chat/page.tsx": {
+    "kx": 2,
+    "helpers": 2
+  },
+  "app/[orgSlug]/admin/tournaments/communication/communication.module.css": {
+    "kitScope": 52
+  },
+  "app/[orgSlug]/admin/tournaments/communication/page.tsx": {
+    "kx": 7,
+    "helpers": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/tournaments/dashboard/dashboard.module.css": {
+    "kitScope": 207
+  },
+  "app/[orgSlug]/admin/tournaments/dashboard/page.tsx": {
+    "kx": 35,
+    "helpers": 2
+  },
+  "app/[orgSlug]/admin/tournaments/divisions/admin-page.module.css": {
+    "kitScope": 22
+  },
+  "app/[orgSlug]/admin/tournaments/divisions/page.tsx": {
+    "kx": 21,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/registrations/page.tsx": {
+    "kx": 14,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css": {
+    "kitScope": 233
+  },
+  "app/[orgSlug]/admin/tournaments/rules/RulesAdmin.tsx": {
+    "useAdminKit": 1,
+    "kx": 6,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/rules/rules-kit.module.css": {
+    "kitScope": 75
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/Generator.tsx": {
+    "kx": 7,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx": {
+    "kx": 35,
+    "helpers": 2
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {
+    "kitScope": 53
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/BracketColumns.tsx": {
+    "kx": 9,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/BracketEditor.tsx": {
+    "kx": 11,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx": {
+    "kx": 9,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css": {
+    "kitScope": 72
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/ShiftDayModal.tsx": {
+    "kx": 33,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/TournamentFieldPicker.tsx": {
+    "kx": 1,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/ZeroVenuePrompt.tsx": {
+    "kx": 4,
+    "helpers": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/page.tsx": {
+    "useAdminKit": 1,
+    "kx": 55,
+    "helpers": 7
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
+    "kitScope": 275
+  },
+  "app/[orgSlug]/admin/tournaments/settings/event/page.tsx": {
+    "kx": 22,
+    "helpers": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/tournaments/settings/notifications/notifications.module.css": {
+    "kitScope": 28
+  },
+  "app/[orgSlug]/admin/tournaments/settings/notifications/page.tsx": {
+    "useAdminKit": 1,
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/tournaments/settings/page.tsx": {
+    "legacy": 1
+  },
+  "app/[orgSlug]/admin/tournaments/settings/registration-fields/page.tsx": {
+    "useAdminKit": 1,
+    "kx": 9,
+    "helpers": 1,
+    "legacy": 2
+  },
+  "app/[orgSlug]/admin/tournaments/settings/settings-access.module.css": {
+    "kitScope": 6
+  },
+  "app/[orgSlug]/admin/tournaments/staff-kit/staff-kit.module.css": {
+    "kitScope": 10
+  },
+  "app/[orgSlug]/admin/tournaments/summary/page.tsx": {
+    "useAdminKit": 1,
+    "legacy": 2
+  },
+  "app/[orgSlug]/admin/tournaments/summary/summary.module.css": {
+    "kitScope": 54
+  },
+  "app/[orgSlug]/admin/tournaments/venues/page.tsx": {
+    "kx": 8,
+    "helpers": 3
+  },
+  "app/[orgSlug]/check-in/check-in-volunteer.module.css": {
+    "kitScope": 6
+  },
+  "app/[orgSlug]/scorekeeper/scorekeeper.module.css": {
+    "kitScope": 58
+  },
+  "components/admin/LiveEventLog.tsx": {
+    "kx": 6,
+    "helpers": 1
+  },
+  "components/admin/NumberStepper.module.css": {
+    "kitScope": 5
+  },
+  "components/admin/TieBreakerEditor.module.css": {
+    "kitScope": 18
+  },
+  "components/admin/TournamentSetupWizard.module.css": {
+    "kitScope": 77
+  },
+  "components/admin/TournamentSetupWizard.tsx": {
+    "kx": 4,
+    "helpers": 1
+  },
+  "components/admin/TournamentStyleCards.module.css": {
+    "kitScope": 5
+  },
+  "components/admin/tournament/GuidanceRail.module.css": {
+    "kitScope": 26
+  },
+  "components/admin/tournament/PersonaPanel.module.css": {
+    "kitScope": 12
+  },
+  "components/admin/tournament/TournamentAdminUI.module.css": {
+    "kitScope": 47
+  },
+  "components/admin/tournament/TournamentAdminUI.tsx": {
+    "useAdminKit": 1
+  },
+  "components/chat/ChatManagePanel.module.css": {
+    "kitScope": 24
+  },
+  "components/chat/ChatRoomsPanel.module.css": {
+    "kitScope": 15
+  },
+  "components/chat/NewRoomDialog.module.css": {
+    "kitScope": 21
+  },
+  "components/volunteer/DayOfShell.module.css": {
+    "kitScope": 25
+  },
+  "components/volunteer/ShellSignOutButton.tsx": {
+    "kx": 1,
+    "helpers": 1
+  }
+}
