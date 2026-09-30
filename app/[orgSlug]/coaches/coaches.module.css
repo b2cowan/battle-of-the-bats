@@ -2921,15 +2921,6 @@ a.oneChip:hover { border-color: currentColor; }
   background: var(--home-olive-soft, rgba(255,255,255,0.06));
 }
 
-.colorSwatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  flex-shrink: 0;
-  margin-top: 3px;
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
-}
-
 .teamName {
   font-weight: 700;
   font-size: var(--type-heading);

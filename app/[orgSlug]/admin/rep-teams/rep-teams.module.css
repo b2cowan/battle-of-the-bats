@@ -1,6 +1,19 @@
+/* Rep Teams outside the Club Tier Stage 2 screens (assistant coaches, shared library, past seasons, a team's
+   history and a finished season, rename URLs, the team schedule's calendar) — and the club's money pages that
+   borrow this sheet (allocations, payment requests, Accounting's "Allocate to teams"; Club Tier Stage 3's).
+
+   On the coaches portal's kit (Admin Design Continuity slice 3, folded into these rules by Part B area 2,
+   2026-09-29): the same screens, words, columns and actions, in both themes. The recipes are the portal's own,
+   by value — the kit card, its eyebrow and chips, the table standard's ground, the portal's field, tab bar,
+   window and buttons. Titles and figures left the console face (F2); monospace stays on eyebrows and chips.
+   ⚠ TOKENS ONLY for any new rule — `scripts/check-public-tokens.mjs` holds this area's remaining literals
+   (the money pages' old header, below) and fails on a new one. */
+
 /* ── Shared layout ────────────────────────────────────────────────────────── */
 .page { max-width: 960px; }
 
+/* The money pages' OLD header (allocations, payment requests, Allocate to teams): read only inside a `legacy`
+   prop AdminPageHeader no longer renders — Club Tier Stage 3 retires both with those pages. */
 .pageHeader {
   display: flex;
   align-items: center;
@@ -45,20 +58,20 @@
 }
 
 .muted {
-  color: var(--white-40);
+  color: var(--text-tertiary);
   padding: 2rem;
 }
 
 .accessDenied {
   padding: 4rem 2rem;
   text-align: center;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 .accessDenied h2 {
   font-size: 1.1rem;
   font-weight: 700;
   margin: 1rem 0 0.5rem;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 .accessDenied p {
   font-size: 0.9rem;
@@ -70,27 +83,28 @@
 .emptyState {
   text-align: center;
   padding: 4rem 2rem;
-  color: var(--white-40);
+  color: var(--text-tertiary);
   font-size: 0.9rem;
 }
 
 /* ── Tabs — the history year page's Roster · Schedule & Results · Coaches · Documents ─────────
    ⚠ THESE THREE NAMES WERE REFERENCED FROM THE DAY THE PAGE WAS WRITTEN (2026-05-11) AND NEVER
    DECLARED — four browser-default buttons in a row on a live admin screen, for four months, found
-   by `check:css-selectors` direction C (2026-09-21). The recipe is the org-admin's own: the
-   accounting page's D3 tab row (`accounting.module.css` `.tabRow/.tab/.tabActive`), copied rather
-   than imported across feature modules. The 1.5rem the page used to set inline lives here. */
+   by `check:css-selectors` direction C (2026-09-21). On the kit they are the portal's tab bar
+   (`CoachTabBar`): sentence-weight sans, olive when chosen. The 1.5rem the page used to set inline
+   lives here. */
 .tabs {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--home-line);
   margin-bottom: 1.5rem;
 }
 .tab {
   padding: 0.5rem 1.1rem;
-  font-size: 0.8rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
   font-weight: 600;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -98,135 +112,38 @@
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
-.tab:hover { color: var(--white-70, rgba(255,255,255,0.7)); }
-.tabActive { color: var(--blueprint-blue); border-bottom-color: var(--blueprint-blue); }
+.tab:hover { color: var(--text-secondary); }
+.tabActive,
+.tabActive:hover { color: var(--home-olive); border-bottom-color: var(--home-olive); }
 
-/* ── Team card grid ───────────────────────────────────────────────────────── */
-.teamGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-.teamCard {
-  background: var(--card-bg);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.colorSwatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 2px;
-  flex-shrink: 0;
-  margin-top: 3px;
-  border: 1px solid rgba(255,255,255,0.15);
-}
-
-.teamName {
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--white-90);
-  line-height: 1.2;
-}
-
-.teamMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  align-items: center;
-}
-
+/* ── Chips → the kit's chips. A draft or finished season NAMES something, so it is the quiet chip (a
+   finished season is not a verdict — slice 2 set House league's the same); a division is the blue identity
+   chip; live is green. The one chip that IS a verdict — an installment overdue — has its own class
+   (`.badgeOverdue`), because the allocation page used to borrow "completed" for it. ── */
 .badge {
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 0.15rem 0.5rem;
-  border-radius: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.badgeDivision {
-  background: rgba(var(--blueprint-blue-rgb), 0.18);
-  color: var(--blueprint-blue);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-}
-
-.badgeDraft     { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); }
-.badgeActive    { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
-.badgeCompleted { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
-.badgeArchived  { background: var(--white-05); color: rgba(255,255,255,0.3); border: 1px solid var(--border-2); }
-
-.teamStats {
-  display: flex;
-  gap: 1.25rem;
-}
-
-.statItem { display: flex; flex-direction: column; gap: 0.1rem; }
-.statLabel { font-size: 0.7rem; color: var(--white-35); text-transform: uppercase; letter-spacing: 0.04em; }
-.statValue { font-size: 1rem; font-weight: 700; color: var(--white-90); }
-
-/* ── Modal ────────────────────────────────────────────────────────────────── */
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  padding: 1rem;
-}
-
-.modal {
-  background: var(--card-bg);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 2px;
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modalHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
-}
-
-.modalTitle {
-  font-size: 1.1rem;
+  font-family: var(--font-data);
+  font-size: var(--type-token);
   font-weight: 700;
-  color: var(--white-90);
-  margin: 0;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid transparent;
 }
 
-.modalCloseBtn {
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.4);
-  cursor: pointer;
-  padding: 0.25rem;
-  line-height: 1;
+.badgeDraft     { background: var(--home-olive-soft); color: var(--text-secondary); border: 1px solid var(--home-line-strong); }
+.badgeCompleted { background: var(--home-olive-soft); color: var(--text-secondary); border: 1px solid var(--home-line-strong); }
+.badgeArchived  { background: var(--home-olive-soft); color: var(--text-secondary); border: 1px solid var(--home-line-strong); }
+.badgeDivision {
+  /* The light blue as ink — the reason sits on `.badge-info`'s kit rule in app/globals.css. */
+  background: rgba(var(--info-rgb), 0.08);
+  color: var(--info-light);
+  border: 1px solid rgba(var(--info-rgb), 0.3);
 }
-.modalCloseBtn:hover { color: rgba(255,255,255,0.8); }
+.badgeActive    { background: rgba(var(--success-rgb), 0.08); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.28); }
+.badgeOverdue   { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
 
-.modalFooter {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
-}
-
-/* ── Form fields ──────────────────────────────────────────────────────────── */
+/* ── Form fields → the portal's field ─────────────────────────────────────── */
 .formGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -238,36 +155,40 @@
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 
 .label {
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 600;
-  color: var(--white-55);
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .input, .select, .textarea {
-  background: var(--white-05);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 2px;
-  color: var(--white-90);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
   padding: 0.5rem 0.75rem;
   font-size: 0.9rem;
   width: 100%;
 }
+.input::placeholder,
+.textarea::placeholder { color: var(--text-tertiary); }
 .input:focus, .select:focus, .textarea:focus {
   outline: none;
-  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
+  border-color: var(--home-olive);
 }
 /* The invalid state the rename-slugs form asked for from the day it was written and never got —
    it drew the red border INLINE with a raw hex beside a `styles.inputError ?? ''` hedge (found by
    `check:css-selectors` direction C, 2026-09-21). The rule now exists on the module's own danger
    token; the hedge and the inline colour are gone. */
 .inputError, .inputError:focus { border-color: rgba(var(--danger-rgb), 0.6); }
+.select option { background: var(--home-card); color: var(--text-primary); }
 .textarea { resize: vertical; min-height: 70px; }
 
 .hint {
   font-size: 0.75rem;
-  color: rgba(255,255,255,0.3);
+  color: var(--text-tertiary);
   margin: 0;
 }
 
@@ -275,9 +196,9 @@
 .yearList { display: flex; flex-direction: column; gap: 0.75rem; }
 
 .yearCard {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  border-radius: 2px;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
   padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
@@ -287,11 +208,11 @@
 }
 
 .yearCardLeft { display: flex; flex-direction: column; gap: 0.3rem; }
-.yearCardName { font-weight: 700; font-size: 0.95rem; color: var(--white-90); }
+.yearCardName { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); }
 .yearCardMeta { display: flex; gap: 0.5rem; align-items: center; }
 .yearCardRight { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
-/* ── Summary cards ────────────────────────────────────────────────────────── */
+/* ── Summary cards — the kit card; the label the kit's eyebrow, the figure in the display face ── */
 .summaryGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -300,9 +221,9 @@
 }
 
 .summaryCard {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  border-radius: 2px;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -310,48 +231,29 @@
 }
 
 .summaryCardLabel {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.4);
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.09em;
 }
 
 .summaryCardValue {
+  font-family: var(--font-display);
   font-size: 1.75rem;
-  font-weight: 900;
-  color: var(--white-90);
+  font-weight: 700;
+  color: var(--text-primary);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── Status transitions ───────────────────────────────────────────────────── */
-
-.lifecycleLabel {
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.4);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-/* ── Two-column coach layout ──────────────────────────────────────────────── */
-
-.coachRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-.coachRow:last-child { border-bottom: none; }
-
-.coachName { font-size: 0.9rem; color: var(--white-90); font-weight: 600; }
-.coachEmail { font-size: 0.78rem; color: var(--white-35); }
-
-/* ── Danger confirm dialog ────────────────────────────────────────────────── */
+/* ── Danger confirm dialog → the portal's window, keeping its danger edge (the box says what kind of
+   question it is) ── */
 .confirmOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: var(--home-scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -361,23 +263,25 @@
 
 .confirmBox {
   background: var(--card-bg);
-  border: 1px solid rgba(var(--danger-rgb), 0.3);
-  border-radius: 2px;
+  border: 1px solid rgba(var(--danger-rgb), 0.35);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
   padding: 1.5rem;
   max-width: 420px;
   width: 100%;
 }
 
 .confirmTitle {
+  font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 700;
-  color: var(--danger);
+  color: var(--home-live);
   margin: 0 0 0.5rem;
 }
 
 .confirmMsg {
   font-size: 0.88rem;
-  color: var(--white-55);
+  color: var(--text-secondary);
   margin: 0 0 1.25rem;
 }
 
@@ -387,21 +291,23 @@
   gap: 0.5rem;
 }
 
-/* ── Section divider ──────────────────────────────────────────────────────── */
+/* ── Section divider — the kit's eyebrow ──────────────────────────────────── */
 .sectionTitle {
-  font-size: 0.8rem;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
   font-weight: 700;
-  color: rgba(255,255,255,0.4);
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.09em;
   margin: 2rem 0 0.75rem;
 }
 
-/* ── Table ────────────────────────────────────────────────────────────────── */
+/* ── Table → the table standard's ground: quiet body-face heads, hairline rows ── */
 .tableWrap {
   overflow-x: auto;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  border-radius: 2px;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
 }
 
 .table {
@@ -410,52 +316,53 @@
   font-size: 0.88rem;
 }
 
+/* ⚠ `text-transform: none` here is the S2-06 sentence-case override (Club Tier Stage 2's report), folded
+   as it stood: dropping it would change pixels — the money pages' tables decide it when Club Stage 3 redraws
+   them. */
 .th {
   text-align: left;
   padding: 0.6rem 1rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--white-35);
-  background: rgba(255,255,255,0.02);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-tertiary);
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--home-line-strong);
   white-space: nowrap;
 }
 
 .td {
   padding: 0.7rem 1rem;
-  color: var(--white-90);
-  border-bottom: 1px solid var(--white-05);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--home-line);
   vertical-align: middle;
 }
 
 .tr { transition: background 0.1s; }
-.tr:hover .td { background: rgba(255,255,255,0.03); }
+.tr:hover .td { background: var(--home-olive-soft); }
 .tr:last-child .td { border-bottom: none; }
+/* F4: an amount sits right, in even-width digits — its heading with it (after `.th`, at its weight). */
+.num { text-align: right; font-variant-numeric: tabular-nums; }
 
-/* ── Detail section ───────────────────────────────────────────────────────── */
+/* ── Detail section — the kit card, its head the kit's eyebrow ────────────── */
 .detailSection {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  border-radius: 2px;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
   padding: 1.25rem;
   margin-bottom: 1.25rem;
 }
 
 .detailSectionTitle {
-  font-size: 0.72rem;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
   margin: 0 0 1rem;
-}
-
-.detailPlaceholder {
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.25);
-  font-style: italic;
 }
 
 /* ── Rename slugs page ────────────────────────────────────────────────────── */
@@ -467,52 +374,54 @@
   gap: 1.25rem;
   align-items: center;
   padding: 1rem 1.25rem;
-  border-radius: 2px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  border: 1px solid var(--home-line);
+  background: var(--card-bg);
   transition: border-color 0.15s, background 0.15s;
 }
 @media (max-width: 600px) { .renameRow { grid-template-columns: 1fr; } }
 
+/* A rename in progress: the kit's olive selection; one that will not save: the danger edge. */
 .renameRowChanged {
-  border-color: rgba(var(--logic-lime-rgb), 0.35);
-  background: rgba(var(--logic-lime-rgb), 0.03);
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
 }
 .renameRowError {
-  border-color: rgba(var(--danger-rgb), 0.4);
-  background: rgba(var(--danger-rgb), 0.04);
+  border-color: rgba(var(--danger-rgb), 0.45);
+  background: rgba(var(--danger-rgb), 0.05);
 }
 
 .renameTeamInfo { display: flex; flex-direction: column; gap: 0.25rem; }
 .renameTeamName {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--white-90);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 .renameCurrentSlug {
   font-size: 0.75rem;
-  color: rgba(255,255,255,0.3);
+  color: var(--text-tertiary);
   font-family: var(--font-data);
 }
 
 .renameInputGroup { display: flex; flex-direction: column; gap: 0.3rem; }
 .renamePreview {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.3);
+  color: var(--text-tertiary);
   font-family: var(--font-data);
 }
-.renamePreviewChanged { color: var(--logic-lime); }
-.renameInputError { font-size: 0.75rem; color: var(--danger); margin: 0; }
+.renamePreviewChanged { color: var(--home-olive); }
+.renameInputError { font-size: 0.75rem; color: var(--danger-light); margin: 0; }
 
 .renameSectionLabel {
-  font-size: 0.72rem;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -522,7 +431,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255,255,255,0.07);
+  background: var(--home-line);
 }
 
 .saveBar {
@@ -531,55 +440,34 @@
   gap: 1rem;
   margin-top: 1.5rem;
   padding-top: 1.25rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid var(--home-line);
   flex-wrap: wrap;
 }
-.changeCount { font-size: 0.85rem; color: rgba(255,255,255,0.4); }
+.changeCount { font-size: 0.85rem; color: var(--text-tertiary); }
 
 .introNote {
   font-size: 0.88rem;
-  color: rgba(255,255,255,0.5);
+  color: var(--text-secondary);
   line-height: 1.6;
   margin: 0 0 1.75rem;
   max-width: 640px;
 }
 
-/* ── Breadcrumb ───────────────────────────────────────────────────────────── */
+/* ── Breadcrumb (the money pages' own; the kit header replaces the rest) ──── */
 .breadcrumb {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   font-size: 0.82rem;
-  color: var(--white-35);
+  color: var(--text-tertiary);
   margin-bottom: 1.5rem;
 }
 
-.breadcrumb a { color: var(--white-55); text-decoration: none; }
-.breadcrumb a:hover { color: rgba(255,255,255,0.8); }
-.breadcrumb span { color: rgba(255,255,255,0.25); }
+.breadcrumb a { color: var(--text-secondary); text-decoration: none; }
+.breadcrumb a:hover { color: var(--home-olive); }
+.breadcrumb span { color: var(--text-tertiary); }
 
-/* ── Calendar (Phase 6J) ──────────────────────────────────────────────────── */
-.viewToggle {
-  display: flex;
-  border: 1px solid var(--white-10);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.viewToggleBtn {
-  background: none;
-  border: none;
-  color: var(--white-45);
-  padding: 0.35rem 0.75rem;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: background 0.1s, color 0.1s;
-}
-.viewToggleBtn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
-.viewToggleBtnActive { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); font-weight: 600; }
-
-/* W/L/T record widget */
-.wltSep { color: var(--white-20); font-size: 1.1rem; }
-
+/* ── Calendar (Phase 6J) — the team schedule's calendar grids and event chips ── */
 /* Calendar nav bar */
 .calNav {
   display: flex;
@@ -588,10 +476,10 @@
   margin-bottom: 1rem;
 }
 .calNavBtn {
-  background: var(--white-05);
-  border: 1px solid var(--white-10);
-  border-radius: 2px;
-  color: var(--white-60);
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 6px;
+  color: var(--text-secondary);
   width: 32px;
   height: 32px;
   display: flex;
@@ -599,19 +487,20 @@
   justify-content: center;
   cursor: pointer;
 }
-.calNavBtn:hover { background: rgba(255,255,255,0.09); }
-.calNavLabel { font-size: 0.95rem; font-weight: 700; color: var(--white-90); }
+.calNavBtn:hover { background: var(--home-olive-soft); }
+.calNavLabel { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
 
 /* List view grouping */
 .calMonthGroup { margin-bottom: 1.75rem; }
 .calMonthLabel {
-  font-size: 0.72rem;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid var(--home-line);
   margin-bottom: 0.75rem;
 }
 .calEventList { display: flex; flex-direction: column; gap: 0.35rem; }
@@ -621,19 +510,19 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255,255,255,0.04);
+  background: var(--card-bg);
   border: none;
   border-left: 3px solid transparent;
-  border-radius: 2px;
+  border-radius: 6px;
   padding: 0.45rem 0.75rem;
   text-align: left;
   cursor: pointer;
   width: 100%;
   transition: background 0.1s;
 }
-.eventChip:hover { background: rgba(255,255,255,0.07); }
-.eventChipTime { font-size: 0.78rem; color: rgba(255,255,255,0.4); min-width: 5.5rem; }
-.eventChipName { font-size: 0.88rem; color: var(--white-90); flex: 1; }
+.eventChip:hover { background: var(--home-olive-soft); }
+.eventChipTime { font-size: 0.78rem; color: var(--text-tertiary); min-width: 5.5rem; }
+.eventChipName { font-size: 0.88rem; color: var(--text-primary); flex: 1; }
 
 /* Week view */
 .calWeekGrid {
@@ -643,56 +532,59 @@
   overflow-x: auto;
 }
 .calWeekDay {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 2px;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
   min-width: 110px;
 }
 .calWeekDayLabel {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--white-35);
+  color: var(--text-secondary);
   padding: 0.5rem 0.6rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--home-line);
 }
 .calWeekDayEvents { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.4rem; min-height: 60px; }
-.calWeekEmpty { font-size: 0.78rem; color: rgba(255,255,255,0.15); padding: 0.25rem 0; }
+.calWeekEmpty { font-size: 0.78rem; color: var(--text-tertiary); padding: 0.25rem 0; }
 
-/* Month grid */
+/* Month grid — its hairlines are the 1px gap over this ground (the portal's table trick). */
 .calMonthGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 1px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border-2);
-  border-radius: 2px;
+  background: var(--home-line);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
   overflow: hidden;
 }
 .calMonthHeader {
-  background: rgba(255,255,255,0.03);
+  background: var(--card-bg);
   padding: 0.4rem;
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.3);
+  color: var(--text-tertiary);
   text-align: center;
 }
 .calMonthCell {
-  background: var(--pitch-black);
+  background: var(--card-bg);
   min-height: 80px;
   padding: 0.35rem;
   position: relative;
 }
-.calMonthCellToday { background: rgba(var(--blueprint-blue-rgb),0.07); }
-.calMonthDayNum { font-size: 0.78rem; color: var(--white-35); }
+.calMonthCellToday { background: var(--home-olive-soft); }
+.calMonthDayNum { font-size: 0.78rem; color: var(--text-secondary); }
 .calMonthDayEvents { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+/* A month-grid event is a filled chip of its type's colour: white text on the portal's event hues
+   (`--on-team-color` is the platform's fixed white-on-a-colour ink; each `--evt-*` warm value was
+   chosen dark enough for it). */
 .calMonthEventDot {
   display: block;
   font-size: 0.68rem;
   padding: 1px 4px;
-  border-radius: 2px;
-  color: var(--white);
+  border-radius: 4px;
+  color: var(--on-team-color);
   border: none;
   cursor: pointer;
   text-align: left;
@@ -702,330 +594,42 @@
   opacity: 0.9;
 }
 .calMonthEventDot:hover { opacity: 1; }
-.calMonthMoreDots { font-size: 0.67rem; color: rgba(255,255,255,0.3); padding-left: 2px; }
+.calMonthMoreDots { font-size: 0.67rem; color: var(--text-tertiary); padding-left: 2px; }
 
-/* Slide-over panel */
-.slideOver {
-  background: var(--card-bg);
-  border: 1px solid rgba(var(--blueprint-blue-rgb),0.3);
-  border-radius: 2px;
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 440px;
-  max-height: 90vh;
-  overflow-y: auto;
-  margin-left: auto;
-}
-.slideOverTitle { font-size: 1.2rem; font-weight: 800; color: var(--white-90); margin: 0.5rem 0 1rem; }
+/* Error text — the LIGHT red, which clears AA on the kit's Dark ground */
+.errorText { color: var(--danger-light); font-size: 0.85rem; margin: 0; }
 
-.eventTypePill {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 0.15rem 0.5rem;
-  border-radius: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-/* Score section */
-
-/* Delete confirm inline */
-
-/* Error text */
-.errorText { color: var(--danger); font-size: 0.85rem; margin: 0; }
-
-/* Button variants (calendar pages) */
+/* ── Buttons the calendar and money pages set by hand → the portal's own buttons ── */
 .btnPrimary {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  background: var(--blueprint-blue); color: var(--white);
-  border: none; border-radius: 2px; padding: 0.45rem 0.9rem;
-  font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+  background: var(--home-lime); color: var(--home-lime-ink);
+  border: none; border-radius: 6px; padding: 0.45rem 0.9rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.88rem; font-weight: 650; cursor: pointer; transition: opacity 0.15s;
 }
-.btnPrimary:hover { opacity: 0.88; }
 .btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+/* After `:disabled`, at its weight: under the pointer a disabled button reads 0.9, as it did on the kit. */
+.btnPrimary:hover { opacity: 0.9; }
 
 .btnSecondary {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  background: rgba(255,255,255,0.07); color: var(--white-75);
-  border: 1px solid rgba(255,255,255,0.12); border-radius: 2px;
-  padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  background: var(--card-bg); color: var(--text-secondary);
+  border: 1px solid var(--home-line-strong); border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.88rem; font-weight: 650; cursor: pointer;
 }
-.btnSecondary:hover { background: rgba(255,255,255,0.11); }
+.btnSecondary:hover { background: var(--home-olive-soft); color: var(--text-primary); }
 
 .btnGhost {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  background: none; border: none; color: var(--white-45);
+  background: none; border: none; color: var(--text-tertiary);
   font-size: 0.85rem; cursor: pointer; padding: 0.3rem 0.5rem;
 }
-.btnGhost:hover { color: rgba(255,255,255,0.8); }
+.btnGhost:hover { color: var(--text-primary); }
 
-/* ═══ ON THE KIT (Admin Design Continuity slice 3 — only with the switch on) ═══════════════════════
-   Rep Teams on the coaches portal's kit: the same screens, words, columns and actions, in both themes.
-   Also serves Accounting's "Allocate to teams" (it borrows this sheet). Every rule is scoped under
-   `[data-admin-kit]` (only the admin shell carries it, and only while the dev switch is on), so the
-   legacy rules above render untouched until the release slice deletes them. The recipes are the
-   portal's own, by value — the ones slice 2 set House league on: the kit card, its eyebrow and chips,
-   the table standard's ground, the portal's field, tab bar, window and buttons. Titles and figures
-   leave the console face (F2); monospace stays on eyebrows and chips. The platform navy that the
-   legacy rules use as TEXT (1.39:1 on the dark ground) leaves with them: on the kit it is olive.
-   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
-
-/* ── Page frame ── */
-:global([data-admin-kit]) .muted,
-:global([data-admin-kit]) .accessDenied,
-:global([data-admin-kit]) .emptyState,
-:global([data-admin-kit]) .hint,
-:global([data-admin-kit]) .detailPlaceholder,
-:global([data-admin-kit]) .changeCount { color: var(--text-tertiary); }
-:global([data-admin-kit]) .accessDenied h2 { color: var(--text-secondary); }
-:global([data-admin-kit]) .introNote { color: var(--text-secondary); }
-:global([data-admin-kit]) .errorText,
-:global([data-admin-kit]) .renameInputError { color: var(--danger-light); }
-
-/* Labels over a figure, section and panel heads → the kit eyebrow. */
-:global([data-admin-kit]) .sectionTitle,
-:global([data-admin-kit]) .statLabel,
-:global([data-admin-kit]) .summaryCardLabel,
-:global([data-admin-kit]) .lifecycleLabel,
-:global([data-admin-kit]) .detailSectionTitle,
-:global([data-admin-kit]) .renameSectionLabel,
-:global([data-admin-kit]) .calMonthLabel {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .renameSectionLabel::after { background: var(--home-line); }
-:global([data-admin-kit]) .calMonthLabel { border-bottom-color: var(--home-line); }
-
-/* Figures → the kit's ink, even-width digits; the big one in the display face. */
-:global([data-admin-kit]) .statValue { color: var(--text-primary); font-variant-numeric: tabular-nums; }
-:global([data-admin-kit]) .summaryCardValue {
-  font-family: var(--font-display);
-  font-weight: 700;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Cards: teams, seasons, summaries, panels, sections, rows → the kit card ── */
-:global([data-admin-kit]) .teamCard,
-:global([data-admin-kit]) .yearCard,
-:global([data-admin-kit]) .summaryCard,
-:global([data-admin-kit]) .detailSection,
-:global([data-admin-kit]) .renameRow {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .teamName,
-:global([data-admin-kit]) .yearCardName,
-:global([data-admin-kit]) .coachName,
-:global([data-admin-kit]) .renameTeamName { color: var(--text-primary); }
-:global([data-admin-kit]) .coachEmail,
-:global([data-admin-kit]) .renameCurrentSlug,
-:global([data-admin-kit]) .renamePreview { color: var(--text-tertiary); }
-:global([data-admin-kit]) .coachRow { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .colorSwatch { border-color: var(--home-line-strong); border-radius: 4px; }
-/* A rename in progress: the kit's olive selection; one that will not save: the danger edge. */
-:global([data-admin-kit]) .renameRowChanged { background: var(--home-olive-soft); border-color: var(--home-olive); }
-:global([data-admin-kit]) .renameRowError { background: rgba(var(--danger-rgb), 0.05); border-color: rgba(var(--danger-rgb), 0.45); }
-:global([data-admin-kit]) .renamePreviewChanged { color: var(--home-olive); }
-:global([data-admin-kit]) .saveBar { border-top-color: var(--home-line); }
-
-/* ── Chips → the kit's chips. A group, an assistant, a draft or finished season NAME something, so
-   they are the quiet chip (a finished season is not a verdict — slice 2 set House league's the same);
-   a division and a head coach are the blue identity chip; live is green; waiting is amber. The one
-   chip that IS a verdict — an installment overdue — has its own kit class (`.badgeOverdue`), because
-   the legacy page borrows "completed" for it. ── */
-:global([data-admin-kit]) .badge,
-:global([data-admin-kit]) .eventTypePill {
-  font-family: var(--font-data);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  border-radius: 999px;
-  padding: 0.14rem 0.5rem;
-  border: 1px solid transparent;
-}
-:global([data-admin-kit]) .badgeDraft,
-:global([data-admin-kit]) .badgeCompleted,
-:global([data-admin-kit]) .badgeArchived {
-  color: var(--text-secondary);
-  background: var(--home-olive-soft);
-  border-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .badgeDivision {
-  /* The light blue as ink — the reason sits on `.badge-info`'s kit rule in app/globals.css. */
-  color: var(--info-light);
-  background: rgba(var(--info-rgb), 0.08);
-  border-color: rgba(var(--info-rgb), 0.3);
-}
-:global([data-admin-kit]) .badgeActive {
-  color: var(--badge-success-ink);
-  background: rgba(var(--success-rgb), 0.08);
-  border-color: rgba(var(--success-rgb), 0.28);
-}
-:global([data-admin-kit]) .badgeOverdue {
-  color: var(--badge-warning-ink);
-  background: rgba(var(--warning-rgb), 0.08);
-  border-color: rgba(var(--warning-rgb), 0.3);
-}
-
-/* ── Tabs → the portal's tab bar (`CoachTabBar`): sentence-weight sans, olive when chosen ── */
-:global([data-admin-kit]) .tabs { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .tab {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-body);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .tab:hover { color: var(--text-secondary); }
-:global([data-admin-kit]) .tabActive,
-:global([data-admin-kit]) .tabActive:hover { color: var(--home-olive); border-bottom-color: var(--home-olive); }
-
-/* ── Tables → the table standard's ground: quiet body-face heads, hairline rows ── */
-:global([data-admin-kit]) .tableWrap {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .th {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-tertiary);
-  background: var(--card-bg);
-  border-bottom-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .td {
-  color: var(--text-secondary);
-  border-bottom-color: var(--home-line);
-}
-:global([data-admin-kit]) .tr:hover .td { background: var(--home-olive-soft); }
-/* F4: an amount sits right, in even-width digits — its heading with it. */
-:global([data-admin-kit]) .num { text-align: right; font-variant-numeric: tabular-nums; }
-
-/* ── Fields → the portal's field ── */
-:global([data-admin-kit]) .label {
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-:global([data-admin-kit]) .input,
-:global([data-admin-kit]) .select,
-:global([data-admin-kit]) .textarea {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  background: var(--home-card);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .input::placeholder,
-:global([data-admin-kit]) .textarea::placeholder { color: var(--text-tertiary); }
-:global([data-admin-kit]) .input:focus,
-:global([data-admin-kit]) .select:focus,
-:global([data-admin-kit]) .textarea:focus { border-color: var(--home-olive); }
-:global([data-admin-kit]) .inputError,
-:global([data-admin-kit]) .inputError:focus { border-color: rgba(var(--danger-rgb), 0.6); }
-:global([data-admin-kit]) .select option { background: var(--home-card); color: var(--text-primary); }
-
-/* ── Dialogs, the confirm box and the slide-overs → the portal's window ── */
-:global([data-admin-kit]) .modalOverlay,
-:global([data-admin-kit]) .confirmOverlay { background: var(--home-scrim); }
-:global([data-admin-kit]) .modal,
-:global([data-admin-kit]) .confirmBox,
-:global([data-admin-kit]) .slideOver {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-radius: 12px;
-  box-shadow: var(--shadow-lg);
-}
-/* A confirm that archives or removes keeps its danger edge — the box says what kind of question it is. */
-:global([data-admin-kit]) .confirmBox { border-color: rgba(var(--danger-rgb), 0.35); }
-:global([data-admin-kit]) .modalTitle,
-:global([data-admin-kit]) .slideOverTitle {
-  font-family: var(--font-display);
-  font-size: var(--type-heading);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .confirmTitle { font-family: var(--font-display); color: var(--home-live); }
-:global([data-admin-kit]) .confirmMsg { color: var(--text-secondary); }
-:global([data-admin-kit]) .modalCloseBtn { color: var(--text-tertiary); }
-:global([data-admin-kit]) .modalCloseBtn:hover { color: var(--text-primary); }
-:global([data-admin-kit]) .modalFooter { border-color: var(--home-line); }
-
-/* ── Buttons the calendar pages set by hand → the portal's own buttons ── */
-:global([data-admin-kit]) .btnPrimary,
-:global([data-admin-kit]) .btnSecondary {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  border-radius: 6px;
-}
-:global([data-admin-kit]) .btnPrimary { background: var(--home-lime); color: var(--home-lime-ink); }
-:global([data-admin-kit]) .btnPrimary:hover { opacity: 0.9; }
-:global([data-admin-kit]) .btnSecondary {
-  background: var(--card-bg);
-  color: var(--text-secondary);
-  border-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .btnSecondary:hover { background: var(--home-olive-soft); color: var(--text-primary); }
-:global([data-admin-kit]) .btnGhost { color: var(--text-tertiary); }
-:global([data-admin-kit]) .btnGhost:hover { color: var(--text-primary); }
-
-/* ── The schedule: the view switch, the record, the calendar grids and event chips ── */
-:global([data-admin-kit]) .viewToggle { border-color: var(--home-line-strong); border-radius: 6px; }
-:global([data-admin-kit]) .viewToggleBtn { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-secondary); }
-:global([data-admin-kit]) .viewToggleBtn:hover { background: var(--home-olive-soft); color: var(--text-primary); }
-:global([data-admin-kit]) .viewToggleBtnActive,
-:global([data-admin-kit]) .viewToggleBtnActive:hover { background: var(--home-olive-soft); color: var(--home-olive); }
-/* The record's letters stay in their own hue — the portal's win / loss / tie inks. */
-:global([data-admin-kit]) .wltSep { color: var(--home-line-strong); }
-:global([data-admin-kit]) .calNavBtn {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  border-radius: 6px;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .calNavBtn:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .calNavLabel { color: var(--text-primary); }
-:global([data-admin-kit]) .eventChip { background: var(--card-bg); border-radius: 6px; }
-:global([data-admin-kit]) .eventChip:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .eventChipTime { color: var(--text-tertiary); }
-:global([data-admin-kit]) .eventChipName { color: var(--text-primary); }
-:global([data-admin-kit]) .calWeekDay {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .calWeekDayLabel { color: var(--text-secondary); border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .calWeekEmpty,
-:global([data-admin-kit]) .calMonthMoreDots { color: var(--text-tertiary); }
-/* The month grid draws its hairlines as the 1px gap over this ground (the portal's table trick). */
-:global([data-admin-kit]) .calMonthGrid { background: var(--home-line); border-color: var(--home-line); border-radius: 8px; }
-:global([data-admin-kit]) .calMonthHeader { background: var(--card-bg); color: var(--text-tertiary); }
-:global([data-admin-kit]) .calMonthCell { background: var(--card-bg); }
-:global([data-admin-kit]) .calMonthCellToday { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .calMonthDayNum { color: var(--text-secondary); }
-/* A month-grid event is a filled chip of its type's colour: white text on the portal's event hues
-   (`--on-team-color` is the platform's fixed white-on-a-colour ink; each `--evt-*` warm value was
-   chosen dark enough for it). */
-:global([data-admin-kit]) .calMonthEventDot { color: var(--on-team-color); border-radius: 4px; }
-
-/* ── Breadcrumbs (the calendar pages' own; the kit header replaces the rest) ── */
-:global([data-admin-kit]) .breadcrumb { color: var(--text-tertiary); }
-:global([data-admin-kit]) .breadcrumb a { color: var(--text-secondary); }
-:global([data-admin-kit]) .breadcrumb a:hover { color: var(--home-olive); }
-:global([data-admin-kit]) .breadcrumb span { color: var(--text-tertiary); }
-
-/* ── Kit-only pieces the pages render with the switch on ── */
 /* A fact F3 moved out of a header, at the top of the body it describes. */
-:global([data-admin-kit]) .kitLede {
+.kitLede {
   margin: -0.25rem 0 1.25rem;
   font-size: var(--type-support);
   color: var(--text-secondary);

@@ -1,14 +1,17 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Archive, ChevronRight } from 'lucide-react';
+import { Archive } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../rep-teams.module.css';
 import type { RepPastProgramYear } from '@/lib/types';
+
+// Row-invariant inks: a team's division and a season's facts faint, the way into its history in the accent.
+const divisionInk = { fontSize: '0.75rem', color: 'var(--text-tertiary)' };
+const historyLink = { marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--home-olive)', textDecoration: 'none' };
+const seasonMeta = { fontSize: '0.78rem', color: 'var(--text-tertiary)' };
 
 function groupByTeam(years: RepPastProgramYear[]): Map<string, RepPastProgramYear[]> {
   const map = new Map<string, RepPastProgramYear[]>();
@@ -24,8 +27,6 @@ export default function PastProgramYearsPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
-  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
 
   const [years, setYears] = useState<RepPastProgramYear[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -62,37 +63,14 @@ export default function PastProgramYearsPage() {
 
   const grouped = groupByTeam(years);
 
-  // Row-invariant styles, computed once per render rather than once per row.
-  const divisionInk = kx({ fontSize: '0.75rem', color: 'var(--white-40)' }, KIT_INK.tertiary);
-  const historyLink = kx({ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--white-50)', textDecoration: 'none' }, KIT_INK.accent);
-  const seasonMeta = kx({ fontSize: '0.78rem', color: 'var(--white-35)' }, KIT_INK.tertiary);
-
   return (
     <div className={styles.page}>
-      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
-          breadcrumb's "Rep Teams" is the eyebrow (still a link) beside the organization's name;
-          "completed and archived program years" describes the page and is not re-homed — each season's
+      {/* Header — "Rep Teams" is the eyebrow (a link) beside the organization's name. The old subtitle
+          "completed and archived program years" described the page and was not re-homed — each season's
           chip says which it is (F3). */}
       <AdminPageHeader
         crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
         title="Past seasons"
-        legacy={<>
-      <div className={styles.breadcrumb}>
-        <Link href={`${base}/rep-teams`}>Rep Teams</Link>
-        <span><ChevronRight size={12} /></span>
-        <span>Past Seasons</span>
-      </div>
-
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Archive size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Past Seasons</h1>
-            <p className={styles.pageSub}>{currentOrg?.name} — completed and archived program years</p>
-          </div>
-        </div>
-      </div>
-        </>}
       />
 
       {error && <p style={{ color: 'var(--danger-light)', marginBottom: '1rem' }}>{error}</p>}

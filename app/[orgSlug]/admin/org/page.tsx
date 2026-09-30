@@ -4,12 +4,9 @@ import { Users2, RefreshCw, MapPin, CreditCard, Settings, FileText, UserCheck } 
 import { useOrg } from '@/lib/org-context';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
 
 export default function OrgAdminHub() {
   const { currentOrg, userRole, loading } = useOrg();
-  // Admin Design Continuity slice 2: the kit's version while the switch is on; today's while it is off.
-  const kit = useAdminKit();
   const base = `/${currentOrg?.slug ?? ''}/admin/org`;
   const adminBase = `/${currentOrg?.slug ?? ''}/admin`;
   // Rep-only here: the "My Coaches Portal" tile opens the paid team workspace assigned to the
@@ -81,14 +78,6 @@ export default function OrgAdminHub() {
       <AdminPageHeader
         eyebrow="Organization"
         title={currentOrg?.name ?? 'Organization Admin'}
-        legacy={
-      <header className="border-b border-blueprint-blue/60 pb-4 mb-8">
-        <div className="hud-label mb-1">Organization</div>
-        <h1 className="font-extrabold text-2xl uppercase tracking-tighter">
-          {currentOrg?.name ?? 'Organization Admin'}
-        </h1>
-      </header>
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -102,7 +91,7 @@ export default function OrgAdminHub() {
               <Icon size={28} />
             </div>
             <div>
-              <div className={kit ? 'font-bold text-fl-text text-base' : 'font-bold text-fl-text text-base uppercase tracking-wide'}>{label}</div>
+              <div className="font-bold text-fl-text text-base">{label}</div>
               <div className="text-data-gray text-sm mt-1">{desc}</div>
             </div>
           </Link>

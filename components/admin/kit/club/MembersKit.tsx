@@ -1,8 +1,8 @@
 'use client';
 /**
  * MEMBERS on the kit (Club Tier Stage 1, screens session; ratified specimen 5, club hub v8). Rendered
- * by the Members page, whose old page is dead since the release and goes in Admin Design Continuity
- * Part B's Organization pass.
+ * by the Members page (its old page went with Admin Design Continuity Part B, area 2), which tournament
+ * Settings → Members re-exports.
  *
  *   The board first — the people who run the organization — with "What they can open", computed by
  *   the one access computation (`whatTheyCanOpen`), never typed, and a chip per change from the

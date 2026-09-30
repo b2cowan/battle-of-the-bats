@@ -13,7 +13,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Contact } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -22,7 +21,6 @@ import { usePageTitle } from '@/lib/usePageTitle';
 // READER's timezone and has printed wrong dates on three screens before.
 import { formatStoredDate } from '@/lib/timezone';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import styles from './families.module.css';
 
@@ -50,7 +48,6 @@ const LENS_PREDICATES: Record<Exclude<Lens, 'all' | 'nofamily'>, (f: Family) => 
 
 export default function FamiliesWorklistPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
-  const kit = useAdminKit();
   usePageTitle('Families');
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
@@ -141,26 +138,12 @@ export default function FamiliesWorklistPage() {
 
   return (
     <div className={styles.page}>
-      <AdminPageHeader
-        legacy={(
-          <div className={styles.pageHeader}>
-            <div className={styles.headerIcon}><Contact size={20} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>Families</h1>
-              <p className={styles.pageSub}>
-                {families.length} families · {families.reduce((s, f) => s + f.children.length, 0)} children attached
-                {noFamily.length > 0 && <> · <strong>{noFamily.length} children have no family on file</strong></>}
-              </p>
-            </div>
-          </div>
-        )}
-        title="Families"
-      />
+      <AdminPageHeader title="Families" />
 
-      {/* F3 — the header's count line moves to the body it describes: the list's own lede (the kit
-          toolbar's), above the search and the lenses. Same facts, same words, same emphasis. Shown
-          once the book has loaded, so it never announces "0 families" while it is still arriving. */}
-      {kit && data && (
+      {/* F3 — the old header's count line lives in the body it describes: the list's own lede (the kit
+          toolbar's), above the search and the lenses. Shown once the book has loaded, so it never
+          announces "0 families" while it is still arriving. */}
+      {data && (
         <CoachListToolbar
           lede={(
             <>

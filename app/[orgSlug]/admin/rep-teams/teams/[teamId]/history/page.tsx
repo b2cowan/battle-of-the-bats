@@ -1,14 +1,15 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Archive, ChevronRight } from 'lucide-react';
+import { Archive } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../rep-teams.module.css';
 import type { RepTeam, RepTeamHistoryYear } from '@/lib/types';
+
+// A season's facts line, faint — the tertiary ink (the dark ramp's 35% missed AA on the kit's ground).
+const metaInk = { fontSize: '0.78rem', color: 'var(--text-tertiary)' };
 
 function acceptanceRate(total: number, accepted: number): string {
   if (!total) return '—';
@@ -24,8 +25,6 @@ export default function TeamHistoryPage({
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
-  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
 
   const [team, setTeam] = useState<RepTeam | null>(null);
   const [history, setHistory] = useState<RepTeamHistoryYear[]>([]);
@@ -64,40 +63,15 @@ export default function TeamHistoryPage({
 
   if (!team) return <p className={styles.muted}>Team not found.</p>;
 
-  // A season's facts line, faint — on the kit the tertiary ink (the dark ramp's 35% misses AA there).
-  const metaInk = kx({ fontSize: '0.78rem', color: 'var(--white-35)' }, KIT_INK.tertiary);
-
   return (
     <div className={styles.page}>
-      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the team
-          is the way up (the title's "{team} —" half, and the breadcrumb's middle) and "Rep Teams" the
-          eyebrow; "Completed and archived program years" describes the list and is not re-homed — each
-          season's chip says which it is (F3). */}
+      {/* Header — the team is the way up (backTo) and "Rep Teams" the eyebrow. The old subtitle "Completed
+          and archived program years" described the list and was not re-homed — each season's chip says
+          which it is (F3). */}
       <AdminPageHeader
         crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
         title="History"
         backTo={{ href: `${base}/rep-teams/teams/${params.teamId}`, label: team.name }}
-        legacy={<>
-      <div className={styles.breadcrumb}>
-        <Link href={`${base}/rep-teams`}>Rep Teams</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={`${base}/rep-teams/teams/${params.teamId}`}>{team.name}</Link>
-        <span><ChevronRight size={12} /></span>
-        <span>History</span>
-      </div>
-
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          {team.color && (
-            <span className={styles.colorSwatch} style={{ background: team.color, width: 20, height: 20 }} />
-          )}
-          <div>
-            <h1 className={styles.pageTitle}>{team.name} — History</h1>
-            <p className={styles.pageSub}>Completed and archived program years</p>
-          </div>
-        </div>
-      </div>
-        </>}
       />
 
       {error && <p style={{ color: 'var(--danger-light)', marginBottom: '1rem' }}>{error}</p>}

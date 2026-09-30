@@ -2,12 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import { isClubPlan } from '@/lib/module-entitlements';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, Star, ArrowRight, Users, CalendarRange, Building2 } from 'lucide-react';
+import { CheckCircle, Archive, ShieldOff, Link2, Star, ArrowRight, Users, CalendarRange, Building2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
@@ -155,29 +153,26 @@ const PRODUCT_SHELF_ICON: Partial<Record<OrgPlan, React.ReactElement>> = {
   club:   <Building2 size={18} />,
 };
 
-// Admin Design Continuity switch (Club Tier Stage 1): on, for a Club band → the kit's Plan & billing;
-// otherwise today's page, untouched below (the drawings cover the Club's billing only — owner,
-// 2026-09-26). The release slice deletes this wrapper; slice 6 closes the other plans' gap first.
+// A Club band → the Club's Plan & billing (Club Tier Stage 1 + 1b; the drawings cover the Club's billing
+// only — owner, 2026-09-26). Every other plan → the page below. Its own chunk, as it always was (Admin
+// Design Continuity Part B area 1's rule: a static import moves its sheets in the bundle).
 const BillingKit = dynamic(() => import('@/components/admin/kit/club/BillingKit'));
 
 export default function BillingPage() {
-  const kit = useAdminKit();
   const { currentOrg } = useOrg();
-  return kit && isClubPlan(currentOrg?.planId) ? <BillingKit /> : <BillingPageLegacy />;
+  return isClubPlan(currentOrg?.planId) ? <BillingKit /> : <BillingPagePlans />;
 }
 
-// Slice 6 (owner, 2026-09-27: "restyle it here"): every plan but Club renders THIS page with the switch
-// on too, so it carries a kit layer like every other admin screen — `billing.module.css`'s kit section,
-// the shared header, and the hand-set colours below through `kx` (the exact legacy object with the switch
-// off). A restyle, not the Club page's redesign: same sections, words and buttons.
+// Plan & billing for every plan but Club — Tournament, Tournament Plus, League, the coach's team workspace
+// (Admin Design Continuity slice 6, owner 2026-09-27: "restyle it here"): a restyle onto the kit, not the
+// Club page's redesign — same sections, words and buttons. (It was `BillingPageLegacy` while a dev switch
+// could still show its old look; Part B, area 2, folded that look away.)
 // The meter's three tones are the Club page's own capacity bar (`Billing.module.css` .capFill/.capNear/
 // .capFull), so the two plan pages fill alike.
-const LEGACY_METER = { ok: 'var(--logic-lime)', near: 'var(--warning)', full: 'var(--danger)' } as const;
-const KIT_METER = { ok: 'var(--home-olive)', near: 'var(--warning)', full: 'var(--home-live)' } as const;
+const METER = { ok: 'var(--home-olive)', near: 'var(--warning)', full: 'var(--home-live)' } as const;
 
-function BillingPageLegacy() {
+function BillingPagePlans() {
   const { currentOrg, refresh: refreshOrg, userRole } = useOrg();
-  const kx = useKitStyle();
   usePageTitle('Plan & Billing');
   const { tournaments, refresh: refreshTournaments }  = useTournament();
   const searchParams     = useSearchParams();
@@ -497,7 +492,7 @@ function BillingPageLegacy() {
   }
 
   if (!currentOrg) {
-    return <div className={styles.page}><p style={kx({ color: 'var(--white-40)' }, KIT_INK.tertiary)}>Loading…</p></div>;
+    return <div className={styles.page}><p style={{ color: 'var(--text-tertiary)' }}>Loading…</p></div>;
   }
 
   // Tournament and Tournament Plus orgs have no org-level modules beyond core.
@@ -577,33 +572,18 @@ function BillingPageLegacy() {
   const chosenPlan = nextSeasonChoice ? PLAN_CONFIG[nextSeasonChoice.planKey as OrgPlan] : null;
   const chosenIsAnnual = nextSeasonChoice?.billingCycle === 'annual';
   const chosenPrice = chosenPlan ? (chosenIsAnnual ? chosenPlan.annualPrice : chosenPlan.monthlyPrice) : null;
-  const subscriptionTitle = isTeamWorkspaceBilling ? 'Coaches Portal billing' : 'Subscription';
-  const subscriptionSub = isTeamWorkspaceBilling
-    ? 'Manage Premium Coaches Portal billing and reactivation'
-    : 'Manage your plan and payment method';
-  // Today's header while the switch is off. On the kit (F3): the eyebrow, the page's name as the rail
-  // and the Club page say it ("Plan & billing"; a team workspace keeps its own), no icon tile, and no
-  // subtitle — it describes the page, not a fact on it, so it is not re-homed.
+  // The header (F3): the eyebrow, the page's name as the rail and the Club page say it ("Plan & billing";
+  // a team workspace keeps its own), no icon tile, and no subtitle — it described the page, not a fact on
+  // it, so it was not re-homed.
   const pageHeader = (
     <AdminPageHeader
       eyebrow="Organization"
-      title={isTeamWorkspaceBilling ? subscriptionTitle : 'Plan & billing'}
-      legacy={
-        <div className={styles.pageHeader}>
-          <div className={styles.headerLeft}>
-            <div className={styles.headerIcon}><CreditCard size={20} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>{subscriptionTitle}</h1>
-              <p className={styles.pageSub}>{subscriptionSub}</p>
-            </div>
-          </div>
-        </div>
-      }
+      title={isTeamWorkspaceBilling ? 'Coaches Portal billing' : 'Plan & billing'}
     />
   );
   const meterFill = (pct: number) => {
     const tone = pct >= 100 ? 'full' : pct >= 80 ? 'near' : 'ok';
-    return kx({ width: `${pct}%`, background: LEGACY_METER[tone] }, { background: KIT_METER[tone] });
+    return { width: `${pct}%`, background: METER[tone] };
   };
   const cancelReviewTitle = isTeamWorkspaceBilling ? 'Cancel Premium Coaches Portal' : 'Cancel account';
   const cancelWarningCopy = isTeamWorkspaceBilling
@@ -696,7 +676,7 @@ function BillingPageLegacy() {
           <div className={styles.reactivateCard}>
             <div className={styles.reactivateHeader}>
               <div>
-                <h2 className={`${styles.sectionTitle} ${styles.sectionTitleLime}`}>
+                <h2 className={styles.sectionTitle}>
                   Reactivate your account
                 </h2>
                 <p className={styles.reactivateCopy}>
@@ -750,7 +730,7 @@ function BillingPageLegacy() {
         {/* Coaches Portal reactivation */}
         {isTeamWorkspaceBilling && (
           <div className={styles.reactivateCard}>
-            <h2 className={`${styles.sectionTitle} ${styles.sectionTitleLime}`}>
+            <h2 className={styles.sectionTitle}>
               Reactivate Coaches Portal
             </h2>
             <p className={styles.reactivateCopy}>
@@ -1006,7 +986,7 @@ function BillingPageLegacy() {
             <span className={styles.usageLabel}>
               Staff seats
               {seatUsage.officialsFree && seatUsage.officials > 0 && (
-                <span style={kx({ marginLeft: '0.5rem', fontWeight: 400, color: 'var(--white-30)' }, KIT_INK.tertiary)}>
+                <span style={{ marginLeft: '0.5rem', fontWeight: 400, color: 'var(--text-tertiary)' }}>
                   · {seatUsage.officials} scorekeeper{seatUsage.officials === 1 ? '' : 's'} free
                 </span>
               )}
@@ -1067,7 +1047,7 @@ function BillingPageLegacy() {
                     ? PLAN_ARTICLE_CONTENT[planKey as keyof typeof PLAN_ARTICLE_CONTENT]
                     : null;
                   return (
-                    <div key={planKey} className={`${styles.planCard} ${styles.featuredPlanCard} ${isComingSoon ? styles.planCardComingSoon : ''}`}>
+                    <div key={planKey} className={`${styles.planCard} ${styles.featuredPlanCard}`}>
                       <div className={styles.planCardHeader}>
                         <div className={styles.planCardName}>{plan.label}</div>
                         {isComingSoon && <span className={styles.comingSoonBadge}>{gatedPlanTag(planKey)}</span>}
@@ -1130,7 +1110,7 @@ function BillingPageLegacy() {
 
                   if (isComingSoon) {
                     return (
-                      <div key={planKey} className={`${styles.planCard} ${styles.productCard} ${styles.planCardComingSoon}`}>
+                      <div key={planKey} className={`${styles.planCard} ${styles.productCard}`}>
                         <div className={styles.planCardHeader}>
                           <div className={styles.productHeaderLeft}>
                             {icon && <div className={styles.planCardIcon}>{icon}</div>}
@@ -1177,7 +1157,7 @@ function BillingPageLegacy() {
                       </div>
                       {savings && <div className={styles.savingsBadge}>{savings}</div>}
                       {article && (
-                        <div className={`${styles.planQuestion} ${styles.productPitch}`}>
+                        <div className={styles.planQuestion}>
                           <p className={styles.planQuestionText}>{article.billingQuestion}</p>
                           <p className={styles.planQuestionSub}>{article.billingSub}</p>
                           <button

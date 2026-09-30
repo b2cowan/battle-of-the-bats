@@ -1,8 +1,8 @@
 'use client';
 /**
  * ORGANIZATION SETTINGS on the kit (Club Tier Stage 1, screens session; specimen 9 "the decisions
- * only"). Rendered by the Settings page, whose old page is dead since the release and goes in Admin
- * Design Continuity Part B's Organization pass. Owner only, as always.
+ * only"). Rendered by the Settings page (its old page went with Admin Design Continuity Part B, area 2).
+ * Owner only, as always.
  *
  *   NEW — "Your public site": the one mislabelled checkbox ("Listed on /discover", which really
  *   switched the WHOLE site, A09/F04) becomes the two real settings — the site's master switch and

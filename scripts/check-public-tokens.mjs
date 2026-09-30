@@ -491,6 +491,13 @@ const KIT_FILES = new Set([
   // Part B area 1 — the frame and shared parts (2026-09-29).
   'app/[orgSlug]/admin/admin.module.css',
   'components/admin/AdminContextStrip.module.css',
+  // Part B area 2 — Families, Rep Teams outside money (also read by Club Stage 3's money pages, all admin),
+  // Plan & billing for the non-Club plans and its "See what … includes" panel (2026-09-29). Not the admin
+  // Notifications page's sheet: the coaches portal reads it too.
+  'app/[orgSlug]/admin/families/families.module.css',
+  'app/[orgSlug]/admin/rep-teams/rep-teams.module.css',
+  'app/[orgSlug]/admin/org/billing/billing.module.css',
+  'components/billing/PlanArticlePanel.module.css',
 ]);
 // A colour literal: hex, or rgb/rgba/hsl/hsla with no var() inside. The kit check also refuses the keywords.
 const COLOR_LITERAL = String.raw`#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\((?![^()]*var\()[^()]*\)`;

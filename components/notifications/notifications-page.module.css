@@ -3,8 +3,8 @@
 
    ⚠ TWO SHELLS, ONE BODY (coach-notifications review R1/R2, 2026-09-03). The FEED BODY
    (toolbar · list · load more · states — NotificationFeedBody) is shared by the admin page and the
-   coach page; each shell owns its own FRAME. The admin frame is the `.header` block below; the coach
-   frame is CoachPageHeader, which is why nothing in this file styles a coach title.
+   coach page; each shell owns its own FRAME. The admin frame is AdminPageHeader, whose actions wear
+   `.markAllBtn` below; the coach frame is CoachPageHeader. So nothing in this file styles a title.
 
    ⚠ TEXT READS THE SEMANTIC INKS, NEVER THE --white-N ALPHA LADDER. In the warm coach portal
    --white-30/25/20 remap to the HAIRLINE token — correct for a border, 1.43:1 for a word. The
@@ -20,52 +20,17 @@
   padding: 1.25rem 1rem 3rem;
 }
 
-/* ── Header (ADMIN frame only — the coach page wears CoachPageHeader) ─────────── */
-
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  /* Two controls beside a title wanted 443px at 361 and nothing could give — the page scrolled
-     sideways and "Mark all read" sat past the edge. Wrapping is the least the admin frame owes. */
-  flex-wrap: wrap;
-}
-
-/* Right-side header actions (optional "Notification settings" link + Mark all read). */
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.headerActions a.markAllBtn { text-decoration: none; }
-
-.title {
-  font-family: var(--font-display, inherit);
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  color: var(--fl-text);
-  margin: 0;
-}
-
-.sub {
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-  margin: 0.2rem 0 0;
-}
-
+/* ── The ADMIN frame's header actions ("Notification settings" + Mark all read) — the portal's secondary
+   button. Admin-only: the coach page's actions are CoachPageHeader's own. ⚠ Tokens only. ─────────── */
 .markAllBtn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: none;
-  border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.4);
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong);
   color: var(--text-secondary);
-  font-size: 0.76rem;
-  font-weight: 600;
+  font-size: var(--type-body);
+  font-weight: 650;
   border-radius: 6px;
   padding: 0.35rem 0.65rem;
   cursor: pointer;
@@ -73,10 +38,7 @@
   transition: color 0.15s, border-color 0.15s;
 }
 
-.markAllBtn:hover {
-  color: var(--fl-text);
-  border-color: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.7);
-}
+.markAllBtn:hover { color: var(--text-primary); background: var(--home-olive-soft); border-color: var(--home-line-strong); }
 
 /* ── The coach frame's settings door ──────────────────────────────────────────── */
 /* A BARE GLYPH, the twin of the help "?" beside it (owner, 2026-09-25: "the same format as the help
@@ -538,16 +500,3 @@
      Display-only, so the zone filter state survives a rotation back to a wide viewport. */
   .chips { display: none; }
 }
-
-/* ═══ THE ADMIN FRAME ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════
-   The admin page's two header actions become the portal's secondary button (the feed body below is
-   the coaches portal's own and already follows the theme). Admin-only: `[data-admin-kit]` never
-   reaches the coach page. ⚠ TOKENS ONLY (checkAdminKit). */
-:global([data-admin-kit]) .markAllBtn {
-  font-size: var(--type-body);
-  font-weight: 650;
-  color: var(--text-secondary);
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .markAllBtn:hover { color: var(--text-primary); background: var(--home-olive-soft); border-color: var(--home-line-strong); }

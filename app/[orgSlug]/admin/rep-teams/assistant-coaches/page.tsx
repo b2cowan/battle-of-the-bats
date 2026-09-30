@@ -1,12 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { UserCog, ChevronLeft, Trash2, Check, X, ShieldCheck } from 'lucide-react';
+import { Trash2, Check, X, ShieldCheck } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { STAFF_KIND_COPY, staffKindWord, type CoachCapabilities, type StaffKind } from '@/lib/coach-capabilities';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../rep-teams.module.css';
 
 /**
@@ -67,14 +64,17 @@ function grantSummary(c: Caps): string {
   return segs.join(' ');
 }
 
+// The page's panels — the kit card (the last one sits flush) — and the faint lines under each name.
+const panel = { padding: '1rem', marginBottom: '1rem', background: 'var(--card-bg)', border: '1px solid var(--home-line)', borderRadius: '8px' };
+const lastPanel = { padding: '1rem', background: 'var(--card-bg)', border: '1px solid var(--home-line)', borderRadius: '8px' };
+const whoInk = { color: 'var(--text-tertiary)', fontSize: '0.85rem' };
+const staffMeta = { margin: '0.1rem 0 0', fontSize: '0.82rem', color: 'var(--text-tertiary)' };
+
 export default function AdminAssistantCoachesPage() {
   const { currentOrg } = useOrg();
   const orgSlug = currentOrg?.slug ?? '';
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const base = `/${orgSlug}/admin/rep-teams`;
-  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
-  const kit = useAdminKit();
-  const kx = useKitStyle();
 
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [pending, setPending] = useState<PendingInvite[]>([]);
@@ -140,41 +140,17 @@ export default function AdminAssistantCoachesPage() {
 
   const approvalPending = pending.filter(p => p.status === 'pending_approval');
   const awaitingAccept = pending.filter(p => p.status === 'pending');
-  // The page's panels (the last one sits flush) and the faint lines under each name, each wearing the
-  // kit's patch when on — computed once per render rather than once per row.
-  const panel = kx({ padding: '1rem', marginBottom: '1rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10 }, KIT_SURFACE.card);
-  const lastPanel = kx({ padding: '1rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10 }, KIT_SURFACE.card);
-  const whoInk = kx({ color: 'var(--white-45)', fontSize: '0.85rem' }, KIT_INK.tertiary);
-  const staffMeta = kx({ margin: '0.1rem 0 0', fontSize: '0.82rem', color: 'var(--white-45)' }, KIT_INK.tertiary);
 
   return (
     <div className={styles.page}>
-      {/* Header — today's back link and header as `legacy` while the switch is off. On the kit the back
-          link is the eyebrow's "Rep Teams" (the same door, as on every Rep Teams page), and the
-          subtitle — the page's framing, which tells an owner that head coaches set their own staff and
-          this is the override — moves, word for word, to the top of the body it frames (F3). */}
+      {/* Header — the way back is the eyebrow's "Rep Teams" (the same door as on every Rep Teams page);
+          the page's framing, which tells an owner that head coaches set their own staff and this is the
+          override, sits word for word at the top of the body it frames (F3). */}
       <AdminPageHeader
         crumbs={[{ href: base, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
         title="Assistant coaches"
-        legacy={<>
-      <Link href={base} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.6rem', fontSize: '0.85rem', color: 'var(--white-55)' }}>
-        <ChevronLeft size={14} /> Rep Teams
-      </Link>
-
-      <div className={styles.pageHeader}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <UserCog size={22} />
-          <div>
-            <h1 className={styles.pageTitle}>Assistant coaches</h1>
-            <p className={styles.pageSub}>Oversight across your teams. Head coaches invite and set their own staff — assistant coaches, team managers, treasurers and helpers — and this is your view + override.</p>
-          </div>
-        </div>
-      </div>
-        </>}
       />
-      {kit && (
-        <p className={styles.kitLede}>Oversight across your teams. Head coaches invite and set their own staff — assistant coaches, team managers, treasurers and helpers — and this is your view + override.</p>
-      )}
+      <p className={styles.kitLede}>Oversight across your teams. Head coaches invite and set their own staff — assistant coaches, team managers, treasurers and helpers — and this is your view + override.</p>
 
       {error && <p className={styles.errorText}>{error}</p>}
 
@@ -182,7 +158,7 @@ export default function AdminAssistantCoachesPage() {
       <section style={panel}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: '0.6rem' }}>
-            <ShieldCheck size={18} style={kx({ color: 'var(--white-45)', marginTop: 2 }, KIT_INK.tertiary)} />
+            <ShieldCheck size={18} style={{ color: 'var(--text-tertiary)', marginTop: 2 }} />
             <div>
               <p style={{ margin: 0, fontWeight: 600 }}>Require admin approval</p>
               <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--white-55)', maxWidth: 560 }}>

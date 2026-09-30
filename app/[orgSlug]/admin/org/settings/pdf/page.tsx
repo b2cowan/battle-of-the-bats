@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { FileText, Save, Eye, AlertTriangle, Lock } from 'lucide-react';
+import { Save, Eye, AlertTriangle, Lock } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, type OrgPdfSettings } from '@/lib/export/pdf';
@@ -8,8 +8,6 @@ import HelpCallout from '@/components/help/HelpCallout';
 import FeedbackModal from '@/components/FeedbackModal';
 import s from '@/app/[orgSlug]/admin/admin-common.module.css';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import { tournamentToday } from '@/lib/timezone';
 
 // ── Placeholder data for the preview PDF ─────────────────────────────────────
@@ -35,8 +33,6 @@ function emptyForm(org: { name?: string; themeAccent?: string | null } | null): 
 
 export default function PdfSettingsPage() {
   const { currentOrg, userRole, loading: orgLoading } = useOrg();
-  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const [form, setForm]     = useState<OrgPdfSettings | null>(null);
   const [saved, setSaved]   = useState<OrgPdfSettings | null>(null);
@@ -144,7 +140,7 @@ export default function PdfSettingsPage() {
   if (orgLoading || !form) {
     return (
       <div className={s.page}>
-        <div style={kx({ padding: '3rem', color: 'var(--white-40)', fontSize: '0.88rem' }, KIT_INK.tertiary)}>Loading…</div>
+        <div style={{ padding: '3rem', color: 'var(--text-tertiary)', fontSize: '0.88rem' }}>Loading…</div>
       </div>
     );
   }
@@ -161,7 +157,6 @@ export default function PdfSettingsPage() {
     );
   }
 
-  // The header's actions, rendered by both headers (Admin Design Continuity slice 2).
   const headerActions = (
     <>
       <button
@@ -187,27 +182,12 @@ export default function PdfSettingsPage() {
 
   return (
     <div className={s.page}>
-      {/* ── Page header — today's as `legacy` while the switch is off. On the kit (F3) its
-          description line is not re-homed: every section below names what it sets. ── */}
+      {/* ── Page header (F3): no description line — every section below names what it sets. ── */}
       <AdminPageHeader
         eyebrow="Organization"
         title="PDF settings"
         backTo={{ href: `/${currentOrg?.slug ?? ''}/admin/org/settings`, label: 'Settings' }}
         actions={headerActions}
-        legacy={
-      <div className={s.pageHeader}>
-        <div className={s.headerLeft}>
-          <div className={s.headerIcon}><FileText size={20} /></div>
-          <div>
-            <h1 className={s.pageTitle}>PDF Settings</h1>
-            <p className={s.pageSub}>Configure the default template for all PDF exports from this organization</p>
-          </div>
-        </div>
-        <div className={s.headerActions}>
-          {headerActions}
-        </div>
-      </div>
-        }
       />
 
       {!canCustomize && (
@@ -223,7 +203,7 @@ export default function PdfSettingsPage() {
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <section>
-          <h2 style={kx(sectionTitle, KIT_INK.eyebrow)}>Header</h2>
+          <h2 style={sectionTitle}>Header</h2>
           <div className="form-group" style={{ marginBottom: '0.875rem' }}>
             <label className="form-label">Organization name in header</label>
             <input
@@ -233,13 +213,13 @@ export default function PdfSettingsPage() {
               placeholder={currentOrg?.name ?? 'Your Organization'}
               onChange={e => set('headerLine1', e.target.value)}
             />
-            <p style={kx(hint, KIT_INK.tertiary)}>
+            <p style={hint}>
               Shown at the top of every admin PDF. Left blank, it defaults to your org name.
               Documents printed from a team&apos;s coaches portal carry the team&apos;s name instead.
             </p>
           </div>
           <div className="form-group">
-            <label className="form-label">Second header line <span style={kx({ color: 'var(--white-30)' }, KIT_INK.tertiary)}>(optional)</span></label>
+            <label className="form-label">Second header line <span style={{ color: 'var(--text-tertiary)' }}>(optional)</span></label>
             <input
               className="form-input"
               type="text"
@@ -255,8 +235,8 @@ export default function PdfSettingsPage() {
             automatically — there is nothing to configure, so nothing pretends otherwise.
             The old "PDF-specific logo override — coming soon" dead radio is gone. */}
         <section>
-          <h2 style={kx(sectionTitle, KIT_INK.eyebrow)}>Logo</h2>
-          <div style={kx(radioLabel(true), { ...KIT_SURFACE.chosen, cursor: 'default' })}>
+          <h2 style={sectionTitle}>Logo</h2>
+          <div style={logoCard}>
             <div>
               <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>
                 {currentOrg?.logoUrl ? 'Your org logo prints on every PDF' : 'No org logo uploaded yet'}
@@ -273,9 +253,9 @@ export default function PdfSettingsPage() {
 
         {/* ── Footer ──────────────────────────────────────────────────────── */}
         <section>
-          <h2 style={kx(sectionTitle, KIT_INK.eyebrow)}>Footer</h2>
+          <h2 style={sectionTitle}>Footer</h2>
           <div className="form-group" style={{ marginBottom: '0.875rem' }}>
-            <label className="form-label">Footer text <span style={kx({ color: 'var(--white-30)' }, KIT_INK.tertiary)}>(optional)</span></label>
+            <label className="form-label">Footer text <span style={{ color: 'var(--text-tertiary)' }}>(optional)</span></label>
             <textarea
               className="form-input"
               rows={2}
@@ -319,7 +299,7 @@ export default function PdfSettingsPage() {
 
         {/* ── Appearance ──────────────────────────────────────────────────── */}
         <section>
-          <h2 style={kx(sectionTitle, KIT_INK.eyebrow)}>Appearance</h2>
+          <h2 style={sectionTitle}>Appearance</h2>
           <div className="form-group" style={{ marginBottom: '0.875rem' }}>
             <label className="form-label">Accent colour</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -327,11 +307,11 @@ export default function PdfSettingsPage() {
                 type="color"
                 value={form.accentColor}
                 onChange={e => set('accentColor', e.target.value)}
-                style={kx({
+                style={{
                   width: '40px', height: '36px', padding: '2px 4px',
-                  background: 'transparent', border: '1px solid var(--border)',
-                  borderRadius: '2px', cursor: 'pointer',
-                }, { border: '1px solid var(--home-line-strong)', borderRadius: '7px' })}
+                  background: 'transparent', border: '1px solid var(--home-line-strong)',
+                  borderRadius: '7px', cursor: 'pointer',
+                }}
               />
               <input
                 className="form-input"
@@ -351,7 +331,7 @@ export default function PdfSettingsPage() {
                 Reset
               </button>
             </div>
-            <p style={kx(hint, KIT_INK.tertiary)}>Used for table header rows. Defaults to your org brand colour.</p>
+            <p style={hint}>Used for table header rows. Defaults to your org brand colour.</p>
           </div>
           <div className="form-group" style={{ marginBottom: '0.875rem' }}>
             <label className="form-label">Default orientation</label>
@@ -363,7 +343,7 @@ export default function PdfSettingsPage() {
               <option value="portrait">Portrait (default)</option>
               <option value="landscape">Landscape</option>
             </select>
-            <p style={kx(hint, KIT_INK.tertiary)}>
+            <p style={hint}>
               Some documents own their shape — the schedule, results, rosters and brackets always
               print landscape. This sets the default for reports that fit either way.
             </p>
@@ -378,13 +358,13 @@ export default function PdfSettingsPage() {
               <option value="readable">Readable — more spacing, easier to scan</option>
               <option value="compact">Compact — more rows per page</option>
             </select>
-            <p style={kx(hint, KIT_INK.tertiary)}>Compact fits large registration lists. Readable is better for board reports and dues statements.</p>
+            <p style={hint}>Compact fits large registration lists. Readable is better for board reports and dues statements.</p>
           </div>
         </section>
 
         {/* ── Privacy ─────────────────────────────────────────────────────── */}
         <section>
-          <h2 style={kx(sectionTitle, KIT_INK.eyebrow)}>Privacy defaults</h2>
+          <h2 style={sectionTitle}>Privacy defaults</h2>
           <p style={{ fontSize: '0.82rem', color: 'var(--white-50)', marginBottom: '0.875rem', lineHeight: 1.55 }}>
             These control which sensitive fields appear in PDF exports by default. You can override per-export from the export menu.
           </p>
@@ -417,19 +397,19 @@ export default function PdfSettingsPage() {
 
         {/* ── Filename preview ─────────────────────────────────────────────── */}
         <section>
-          <h2 style={kx(sectionTitle, KIT_INK.eyebrow)}>Filename pattern</h2>
-          <div style={kx({
+          <h2 style={sectionTitle}>Filename pattern</h2>
+          <div style={{
             padding: '0.65rem 0.875rem',
-            background: 'var(--white-5)',
-            border: '1px solid var(--white-10)',
-            borderRadius: '2px',
-            fontFamily: 'monospace',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--home-line)',
+            borderRadius: '8px',
+            fontFamily: 'var(--font-data)',
             fontSize: '0.83rem',
-            color: 'var(--white-60)',
-          }, { ...KIT_SURFACE.card, fontFamily: 'var(--font-data)', ...KIT_INK.secondary })}>
+            color: 'var(--text-secondary)',
+          }}>
             {filenamePreview}
           </div>
-          <p style={kx(hint, KIT_INK.tertiary)}>Pattern: <code style={kx({ color: 'var(--white-40)' }, KIT_INK.tertiary)}>org-dataset-scope-date.pdf</code></p>
+          <p style={hint}>Pattern: <code style={{ color: 'var(--text-tertiary)' }}>org-dataset-scope-date.pdf</code></p>
         </section>
       </div>
 
@@ -474,28 +454,29 @@ function Toggle({
 
 // ── Inline styles ─────────────────────────────────────────────────────────────
 
+// A section's name — the kit's eyebrow.
 const sectionTitle: React.CSSProperties = {
-  fontSize: '0.72rem',
-  fontWeight: 800,
-  letterSpacing: '0.08em',
+  fontSize: 'var(--type-label)',
+  fontWeight: 700,
+  letterSpacing: '0.09em',
   textTransform: 'uppercase',
-  color: 'var(--white-40)',
+  color: 'var(--text-secondary)',
   marginBottom: '0.875rem',
+  fontFamily: 'var(--font-data)',
 };
 
 const hint: React.CSSProperties = {
   fontSize: '0.75rem',
-  color: 'var(--white-40)',
+  color: 'var(--text-tertiary)',
   marginTop: '0.35rem',
   lineHeight: 1.45,
 };
 
-function radioLabel(active: boolean): React.CSSProperties {
-  return {
-    display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
-    padding: '0.75rem', borderRadius: '2px', cursor: 'pointer',
-    background: active ? 'rgba(var(--blueprint-blue-rgb),0.08)' : 'transparent',
-    border: active ? '1px solid rgba(var(--blueprint-blue-rgb),0.3)' : '1px solid var(--white-8)',
-    marginBottom: '0',
-  };
-}
+// The logo's one fact, set as the kit's chosen option (there is nothing to choose — D4).
+const logoCard: React.CSSProperties = {
+  display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
+  padding: '0.75rem', borderRadius: '8px', cursor: 'default',
+  background: 'var(--home-olive-soft)',
+  border: '1px solid var(--home-olive)',
+  marginBottom: '0',
+};

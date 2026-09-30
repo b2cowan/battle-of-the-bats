@@ -7,8 +7,9 @@ import { readCode } from './_source-code.ts';
  * CLUB TIER STAGE 1 · SESSION 2 — THE CLUB SCREENS, BEHIND THE ADMIN DESIGN CONTINUITY SWITCH
  * (`docs/projects/active/CLUB_TIER_STAGE1_SCREENS_PROMPT.md`; ratified specimens 1–12, hub v8).
  *
- *   1. THE SWITCH. Every screen here is a kit version that renders only with the switch on; with it
- *      off today's screen renders untouched. The release slice deletes the legacy branch.
+ *   1. THE SWITCH. Every screen here was a kit version that rendered only with the switch on. The release
+ *      (2026-09-28) made the kit unconditional; Admin Design Continuity Part B (area 2, 2026-09-29) deleted
+ *      the old pages the switch kept, so each page now renders its kit screen alone.
  *   2. NO MONEY ON THE HUB (C04) — the morning brief is counts and ages, never an amount.
  *   3. A DOOR ONLY WHERE IT OPENS — a brief card links only when the person can open its page (the
  *      treasurer's two are plain counts until Stage 3a, owner 2026-09-26); owner-only areas are
@@ -17,11 +18,14 @@ import { readCode } from './_source-code.ts';
  */
 
 describe('the switch — the hub', () => {
-  it('the hub renders today\'s component with the switch off, and for a tournament-only workspace', () => {
+  it('the hub is the club\'s kit hub; the old hub serves only a tournament-only workspace and the no-org moment', () => {
+    // Admin Design Continuity Part B, area 2 (2026-09-29): the switch-off half of the condition is gone —
+    // `AdminHubClient` still sends a tournament-only workspace to its tournaments.
     const hub = readCode('app/[orgSlug]/admin/AdminHub.tsx');
-    assert.match(hub, /if \(!kit \|\| !currentOrg \|\| isTournamentOnlyWorkspace\(currentOrg\)\) return <AdminHubClient \/>;/);
+    assert.match(hub, /if \(!currentOrg \|\| isTournamentOnlyWorkspace\(currentOrg\)\) return <AdminHubClient \/>;/);
+    assert.doesNotMatch(hub, /useAdminKit/, 'no switch is read here any more');
     assert.match(hub, /dynamic\(\(\) => import\('@\/components\/admin\/kit\/club\/ClubHubKit'\)\)/,
-      'the kit hub is its own chunk — it rides no switch-off page');
+      'the kit hub stays its own chunk — a static import would move its sheets in the bundle');
     assert.match(readCode('app/[orgSlug]/admin/page.tsx'), /<AdminHub \/>/);
   });
 
@@ -34,15 +38,18 @@ describe('the switch — the hub', () => {
   });
 });
 
-describe('the switch — Members and the audit log', () => {
-  it('each page renders today\'s version with the switch off, unchanged below its wrapper', () => {
+describe('the switch — Members, the audit log and Settings', () => {
+  it('each page renders its kit screen alone, in its own chunk (the old pages went with Part B, area 2)', () => {
     for (const [file, kitName, legacy] of [
       ['app/[orgSlug]/admin/org/members/page.tsx', 'MembersKit', 'MembersPageLegacy'],
       ['app/[orgSlug]/admin/org/members/audit/page.tsx', 'AuditLogKit', 'AuditLogPageLegacy'],
+      ['app/[orgSlug]/admin/org/settings/page.tsx', 'SettingsKit', 'OrgSettingsPageLegacy'],
     ] as const) {
       const src = readCode(file);
-      assert.match(src, new RegExp(`return useAdminKit\\(\\) \\? <${kitName} /> : <${legacy} />;`), `${file}: the switch picks the version`);
-      assert.match(src, new RegExp(`function ${legacy}\\(\\)`), `${file}: today's page is still here, whole`);
+      assert.match(src, new RegExp(`return <${kitName} />;`), `${file}: the kit screen renders`);
+      assert.match(src, new RegExp(`const ${kitName} = dynamic\\(\\(\\) => import\\('@/components/admin/kit/club/${kitName}'\\)\\);`),
+        `${file}: the kit screen stays its own chunk — a static import would move its sheets in the bundle`);
+      assert.doesNotMatch(src, new RegExp(`\\b${legacy}\\b|useAdminKit`), `${file}: the old page and the switch are gone`);
     }
   });
 });

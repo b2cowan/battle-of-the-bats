@@ -1,8 +1,8 @@
 'use client';
 /**
  * THE CLUB HUB on the kit — "Overview" (Club Tier Stage 1, screens session; ratified specimens 1–2,
- * built to club hub v8). Rendered by `AdminHub`, whose old hub branch is dead since the release and
- * goes in Admin Design Continuity Part B's Organization pass.
+ * built to club hub v8). Rendered by `AdminHub` (its old hub branch went with Admin Design Continuity
+ * Part B, area 2).
  *
  *   This morning   — the president's brief: COUNTS the person can act on, never money (C04). A card
  *                    is a door only where its page opens for this person; the treasurer's two are

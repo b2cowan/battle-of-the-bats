@@ -34,12 +34,6 @@
       "planIcon",
       "priceUnit"
     ],
-    "app/[orgSlug]/admin/org/members/members.module.css": [
-      "statusAccepted"
-    ],
-    "app/[orgSlug]/admin/org/settings/settings.module.css": [
-      "themeFooter"
-    ],
     "app/[orgSlug]/admin/org/tournaments/tournaments-admin.module.css": [
       "activeToggle",
       "contactList",

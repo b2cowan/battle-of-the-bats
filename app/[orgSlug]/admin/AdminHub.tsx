@@ -1,24 +1,21 @@
 'use client';
 /**
- * The admin hub, behind the Admin Design Continuity switch (Club Tier Stage 1, screens session).
- * Off: today's hub (`AdminHubClient`), untouched. On: the club's hub on the kit (`ClubHubKit`).
+ * The admin hub: the club's hub on the kit (`ClubHubKit`, Club Tier Stage 1).
  *
- * A tournament-only workspace has no club hub in either version — today's component sends it to its
- * tournaments (with its setup fallback), so it keeps doing that job with the switch on too.
- * ⚠ The release slice deletes this file's legacy branch and `AdminHubClient` with it.
+ * A tournament-only workspace has no club hub — `AdminHubClient` sends it to its tournaments (with its
+ * setup fallback), and it also holds the moment before the organization has loaded. The switch-off branch
+ * that also rendered it went with Admin Design Continuity Part B (area 2, 2026-09-29).
  */
 import dynamic from 'next/dynamic';
 import { useOrg } from '@/lib/org-context';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import AdminHubClient from './AdminHubClient';
 
-// Kit only — its source rides no switch-off page (the frame's own `/simplify` rule, slice 1).
+// Its own chunk, as it always was: a static import would move its sheets in the bundle (Part B area 1's rule).
 const ClubHubKit = dynamic(() => import('@/components/admin/kit/club/ClubHubKit'));
 
 export default function AdminHub() {
-  const kit = useAdminKit();
   const { currentOrg } = useOrg();
-  if (!kit || !currentOrg || isTournamentOnlyWorkspace(currentOrg)) return <AdminHubClient />;
+  if (!currentOrg || isTournamentOnlyWorkspace(currentOrg)) return <AdminHubClient />;
   return <ClubHubKit />;
 }

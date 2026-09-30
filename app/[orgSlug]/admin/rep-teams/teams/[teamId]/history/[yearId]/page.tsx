@@ -1,14 +1,12 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Archive, ChevronRight } from 'lucide-react';
+import { Archive } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { hasDecidedGames, rosterCountOf, seasonRecordOf } from '@/lib/team-season-figures';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../../rep-teams.module.css';
 import type { RepTeam, RepProgramYear, RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 
@@ -49,6 +47,11 @@ function fmtDate(s: string) {
   });
 }
 
+// The faint inks this page repeats — the tertiary ink (the dark ramp's 40% missed AA on the kit's ground).
+const statLabel = { fontSize: '0.75rem', color: 'var(--text-tertiary)' };
+const faintCell = { color: 'var(--text-tertiary)', fontSize: '0.78rem' };
+const numberCell = { color: 'var(--text-tertiary)', width: '2.5rem' };
+
 export default function PastYearDetailPage({
   params: paramsPromise,
 }: {
@@ -59,8 +62,6 @@ export default function PastYearDetailPage({
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
-  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
 
   const [tab, setTab] = useState<Tab>('roster');
   const [team, setTeam] = useState<RepTeam | null>(null);
@@ -137,25 +138,17 @@ export default function PastYearDetailPage({
   const { w: wins, l: losses, t: ties } = seasonRecordOf(events);
   const hasRecord = hasDecidedGames({ w: wins, l: losses, t: ties });
 
-  // The faint inks this page repeats — on the kit the tertiary ink (the dark ramp's 40% misses AA there).
-  const statLabel = kx({ fontSize: '0.75rem', color: 'var(--white-40)' }, KIT_INK.tertiary);
-  const faintCell = kx({ color: 'var(--white-40)', fontSize: '0.78rem' }, KIT_INK.tertiary);
   const readOnlyNote = (
-        <span style={kx({ fontSize: '0.8rem', color: 'var(--white-35)', alignSelf: 'center' }, KIT_INK.tertiary)}>
+        <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', alignSelf: 'center' }}>
           Read-only archive
         </span>
   );
 
-  // Row-invariant styles, computed once per render rather than once per row.
-  const numberCell = kx({ color: 'var(--white-40)', width: '2.5rem' }, KIT_INK.tertiary);
-
   return (
     <div className={styles.page}>
-      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the way
-          up is the team's History; the eyebrow names the team (the subtitle's first fact, and the
-          breadcrumb's middle), the status is a chip beside the title, and the year is a chip only
-          where the season's name does not already carry it (F3). "Read-only archive" stays at the
-          header's end. */}
+      {/* Header — the way up is the team's History; the eyebrow names the team, the status is a chip
+          beside the title, and the year is a chip only where the season's name does not already carry it
+          (F3). "Read-only archive" stays at the header's end. */}
       <AdminPageHeader
         crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { href: `${base}/rep-teams/teams/${params.teamId}`, label: team.name }]}
         title={programYear.name}
@@ -169,38 +162,6 @@ export default function PastYearDetailPage({
         </>}
         backTo={{ href: `${base}/rep-teams/teams/${params.teamId}/history`, label: 'History' }}
         actions={readOnlyNote}
-        legacy={<>
-      <div className={styles.breadcrumb}>
-        <Link href={`${base}/rep-teams`}>Rep Teams</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={`${base}/rep-teams/teams/${params.teamId}`}>{team.name}</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={`${base}/rep-teams/teams/${params.teamId}/history`}>History</Link>
-        <span><ChevronRight size={12} /></span>
-        <span>{programYear.name}</span>
-      </div>
-
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          {team.color && (
-            <span className={styles.colorSwatch} style={{ background: team.color, width: 20, height: 20 }} />
-          )}
-          <div>
-            <h1 className={styles.pageTitle}>{programYear.name}</h1>
-            <p className={styles.pageSub}>
-              {team.name} · {programYear.year}
-              <span
-                className={`${styles.badge} ${STATUS_CSS[programYear.status] ?? ''}`}
-                style={{ marginLeft: '0.5rem' }}
-              >
-                {STATUS_LABEL[programYear.status] ?? programYear.status}
-              </span>
-            </p>
-          </div>
-        </div>
-        {readOnlyNote}
-      </div>
-        </>}
       />
 
       {error && <p style={{ color: 'var(--danger-light)', marginBottom: '1rem' }}>{error}</p>}
@@ -369,7 +330,7 @@ export default function PastYearDetailPage({
           <p>
             <Link
               href={`${base}/rep-teams/documents`}
-              style={kx({ color: '#a78bfa', fontSize: '0.85rem' }, KIT_INK.accent)}
+              style={{ color: 'var(--home-olive)', fontSize: '0.85rem' }}
             >
               View document templates →
             </Link>

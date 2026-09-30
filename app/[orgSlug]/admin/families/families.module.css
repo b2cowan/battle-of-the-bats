@@ -1,202 +1,155 @@
-/* Families area (P2) — page-local styles, admin dark theme tokens only.
-   Follows the members-page idiom: CSS module per page family, shared here
-   because the three screens are one area with one visual system. */
+/* Families area (P2) — page-local styles. Follows the members-page idiom: CSS module per page family,
+   shared here because the three screens are one area with one visual system.
+
+   On the coaches portal's kit (Admin Design Continuity: the pilot slice 1 built behind the dev switch, folded
+   into these rules by Part B area 2, 2026-09-29): the same screens, words, columns and actions, in both themes.
+   The recipes are the portal's own, by value: the search is the portal's field, the lenses are its filter chip
+   (`.clubChip`), the state pills are the kit's chips (`CoachKit` `.chip` + tones), the panels its card, the table
+   the table standard's ground (quiet heads, hairline rows).
+   ⚠ TOKENS ONLY for any new rule — `scripts/check-public-tokens.mjs` holds this area's literals and fails on a
+   new one. */
 
 .page { padding: 2rem; max-width: 72rem; }
 
-.pageHeader { display: flex; align-items: center; gap: 0.85rem; border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.6); padding-bottom: 1rem; margin-bottom: 1.25rem; }
-.headerIcon { color: var(--blueprint-blue); display: flex; }
-.pageTitle { margin: 0; font-size: 1.15rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; color: var(--logic-lime); }
-.pageSub { margin: 0.15rem 0 0; font-size: 0.82rem; color: var(--white-50); }
-
 .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.1rem; }
-.search { flex: 1 1 240px; min-width: 200px; background: var(--dark-navy, rgba(255,255,255,0.04)); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35); border-radius: 2px; padding: 0.5rem 0.7rem; font-size: 0.85rem; color: var(--white-80); }
-.search::placeholder { color: var(--white-30); }
-
-.chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-.chip { font-size: 0.72rem; font-weight: 700; padding: 0.32rem 0.65rem; border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35); border-radius: 999px; color: var(--white-60); background: transparent; cursor: pointer; white-space: nowrap; }
-.chipOn { background: var(--blueprint-blue); color: var(--white); border-color: var(--blueprint-blue); }
-.chipZero { opacity: 0.45; }
-
-.tableScroll { overflow-x: auto; }
-.table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 640px; }
-.table th { text-align: left; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--white-30); padding: 0 0.75rem 0.5rem 0; border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); }
-.table td { padding: 0.7rem 0.75rem 0.7rem 0; border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.16); vertical-align: top; color: var(--white-80); }
-.table tr:last-child td { border-bottom: 0; }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
-.who { font-weight: 700; color: var(--white); }
-.whoLink { color: var(--white); text-decoration: none; }
-.whoLink:hover { color: var(--logic-lime); }
-.kids { font-size: 0.75rem; color: var(--white-50); margin-top: 0.15rem; }
-
-.pill { display: inline-block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.12rem 0.45rem; border-radius: 2px; white-space: nowrap; }
-.pillGood { background: rgba(var(--logic-lime-rgb, 190,242,100), 0.14); color: var(--logic-lime); }
-.pillWarn { background: rgba(var(--warning-rgb), 0.14); color: var(--warning); }
-.pillBad  { background: rgba(var(--danger-rgb), 0.14); color: var(--danger-light); }
-.pillInfo { background: rgba(var(--blueprint-blue-rgb), 0.18); color: var(--blueprint-blue); }
-.pillMute { background: rgba(255,255,255,0.06); color: var(--white-40, rgba(255,255,255,0.4)); }
-
-/* panels (family page) */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-.panel { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 2px; padding: 0.9rem 1rem; background: rgba(255,255,255,0.02); }
-.panelHead { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--white-30); margin: 0 0 0.6rem; display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
-.panelScope { font-size: 0.68rem; text-transform: none; letter-spacing: 0; color: var(--white-30); font-weight: 500; }
-.line { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.4rem 0; font-size: 0.83rem; color: var(--white-80); border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12); }
-.line:first-of-type { border-top: 0; }
-.lineSub { padding-left: 0.9rem; font-size: 0.78rem; color: var(--white-50); }
-.lineTotal { font-weight: 800; color: var(--white); }
-.lineV { color: var(--white-50); font-variant-numeric: tabular-nums; text-align: right; }
-.panelFoot { font-size: 0.72rem; color: var(--white-30); margin-top: 0.55rem; padding-top: 0.5rem; border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12); line-height: 1.45; }
-
-.actionbar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); }
-
-.empty { border: 1px dashed rgba(var(--blueprint-blue-rgb), 0.4); border-radius: 2px; padding: 2rem 1.5rem; text-align: center; }
-.emptyTitle { margin: 0 0 0.4rem; font-size: 0.98rem; font-weight: 800; color: var(--white); }
-.emptyBody { margin: 0 auto; max-width: 46ch; font-size: 0.82rem; color: var(--white-50); line-height: 1.55; }
-
-/* duplicates */
-.mergeGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
-@media (max-width: 700px) { .mergeGrid { grid-template-columns: 1fr; } }
-.mergeSide { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 2px; padding: 0.85rem 1rem; }
-.mergeKeep { border-color: var(--blueprint-blue); background: rgba(var(--blueprint-blue-rgb), 0.08); }
-.mergeName { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 800; color: var(--white); }
-.mergeRow { font-size: 0.8rem; color: var(--white-60); padding: 0.18rem 0; }
-.pairCard { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 2px; padding: 1rem 1.1rem; margin-bottom: 1.1rem; background: rgba(255,255,255,0.02); }
-.pairReasons { font-size: 0.72rem; color: var(--white-40, rgba(255,255,255,0.4)); margin: 0 0 0.75rem; }
-
-.msgForm { display: grid; gap: 0.5rem; margin-top: 1rem; border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 2px; padding: 0.9rem 1rem; }
-.msgInput { background: rgba(255,255,255,0.04); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35); border-radius: 2px; padding: 0.5rem 0.7rem; font-size: 0.85rem; color: var(--white-80); }
-.msgTextarea { min-height: 110px; resize: vertical; }
-
-.backLink { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--white-50); text-decoration: none; margin-bottom: 0.9rem; }
-.backLink:hover { color: var(--white-80); }
-.notice { font-size: 0.8rem; color: var(--white-50); margin: 0.75rem 0 0; }
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 1 — only with the switch on) ═══════════════════════
-   Families is the pilot the build prompt names for proving the frame end to end: the same screens,
-   words, columns and actions, on the coaches portal's kit, in both themes. Every rule below is scoped
-   under `[data-admin-kit]`, which only the admin shell carries and only while the dev switch is on,
-   so the legacy rules above render untouched until the release slice deletes them.
-   The recipes are the portal's own, by value: the search is the portal's field, the lenses are its
-   filter chip (`.clubChip`), the state pills are the kit's chips (`CoachKit` `.chip` + tones), the
-   panels its card, the table the table standard's ground (quiet heads, hairline rows).
-   ⚠ TOKENS ONLY — `tests/unit/admin-kit-guard.test.ts` fails on a literal colour in a kit rule. */
-
-/* The duplicates list's framing line (F3's re-home — the header lost its subtitle). */
-.lede { margin: 0 0 1rem; max-width: 64ch; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
-
-:global([data-admin-kit]) .search {
+.search {
+  flex: 1 1 240px;
+  min-width: 200px;
   background: var(--home-card);
   border: 1px solid var(--home-line-strong);
   border-radius: 7px;
-  color: var(--text-primary);
+  padding: 0.5rem 0.7rem;
   font-size: var(--type-body);
+  color: var(--text-primary);
 }
-:global([data-admin-kit]) .search::placeholder { color: var(--text-tertiary); }
-:global([data-admin-kit]) .search:focus { outline: none; border-color: var(--home-olive); }
+.search::placeholder { color: var(--text-tertiary); }
+.search:focus { outline: none; border-color: var(--home-olive); }
 
 /* The lenses — the portal's filter chip: sans, tinted when chosen, never solid. */
-:global([data-admin-kit]) .chip {
+.chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.chip {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--home-line);
-  background: var(--home-card);
-  color: var(--text-secondary);
-  border-radius: 999px;
-  padding: 0.3rem 0.75rem;
   font-size: var(--type-support);
   font-weight: 650;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--home-line);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: var(--home-card);
+  cursor: pointer;
+  white-space: nowrap;
   letter-spacing: normal;
   text-transform: none;
   min-height: 32px;
   font-variant-numeric: tabular-nums;
 }
-:global([data-admin-kit]) .chip:hover { border-color: var(--text-tertiary); }
-:global([data-admin-kit]) .chipOn,
-:global([data-admin-kit]) .chipOn:hover {
+.chip:hover { border-color: var(--text-tertiary); }
+/* After `.chip:hover`, at its weight: a chosen lens keeps its olive edge under the pointer. */
+.chipOn,
+.chipOn:hover {
   background: rgba(var(--logic-lime-rgb), 0.16);
   border-color: var(--home-olive);
   color: var(--home-olive);
 }
+.chipZero { opacity: 0.45; }
 @media (max-width: 768px) {
-  :global([data-admin-kit]) .chip { min-height: 44px; padding-block: calc((44px - 1.25em) / 2); }
+  .chip { min-height: 44px; padding-block: calc((44px - 1.25em) / 2); }
 }
 
 /* The table — the standard's ground. */
-:global([data-admin-kit]) .table th {
+.tableScroll { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 640px; }
+.table th {
+  text-align: left;
   font-family: var(--font-sans);
   font-size: var(--type-support);
   font-weight: 650;
-  letter-spacing: normal;
   text-transform: none;
+  letter-spacing: normal;
   color: var(--text-tertiary);
+  padding: 0 0.75rem 0.5rem 0;
   border-bottom: 1px solid var(--home-line-strong);
 }
-:global([data-admin-kit]) .table td { color: var(--text-secondary); border-bottom: 1px solid var(--home-line); }
-:global([data-admin-kit]) .who,
-:global([data-admin-kit]) .whoLink { color: var(--text-primary); }
-:global([data-admin-kit]) .whoLink:hover { color: var(--home-olive); }
-:global([data-admin-kit]) .kids { color: var(--text-tertiary); }
+.table td { padding: 0.7rem 0.75rem 0.7rem 0; border-bottom: 1px solid var(--home-line); vertical-align: top; color: var(--text-secondary); }
+.table tr:last-child td { border-bottom: 0; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.who { font-weight: 700; color: var(--text-primary); }
+.whoLink { color: var(--text-primary); text-decoration: none; }
+.whoLink:hover { color: var(--home-olive); }
+.kids { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.15rem; }
 
 /* State pills → the kit's chips (a state is recognised, not read). */
-:global([data-admin-kit]) .pill {
+.pill {
+  display: inline-block;
   font-family: var(--font-data);
   font-size: var(--type-token);
   font-weight: 700;
-  letter-spacing: 0.05em;
   text-transform: none;
-  border-radius: 999px;
+  letter-spacing: 0.05em;
   padding: 0.14rem 0.5rem;
+  border-radius: 999px;
   border: 1px solid transparent;
+  white-space: nowrap;
 }
-:global([data-admin-kit]) .pillGood { color: var(--home-olive); background: rgba(var(--success-rgb), 0.07); border-color: rgba(var(--success-rgb), 0.25); }
-:global([data-admin-kit]) .pillWarn { color: var(--warning); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
-:global([data-admin-kit]) .pillBad { color: var(--home-live); background: rgba(var(--danger-rgb), 0.08); border-color: rgba(var(--danger-rgb), 0.3); }
-:global([data-admin-kit]) .pillInfo { color: var(--info-light); background: rgba(var(--home-blue-rgb), 0.08); border-color: rgba(var(--home-blue-rgb), 0.3); }
-:global([data-admin-kit]) .pillMute { color: var(--text-secondary); background: var(--home-olive-soft); border-color: var(--home-line-strong); }
+.pillGood { background: rgba(var(--success-rgb), 0.07); color: var(--home-olive); border-color: rgba(var(--success-rgb), 0.25); }
+.pillWarn { background: rgba(var(--warning-rgb), 0.08); color: var(--warning); border-color: rgba(var(--warning-rgb), 0.3); }
+.pillBad  { background: rgba(var(--danger-rgb), 0.08); color: var(--home-live); border-color: rgba(var(--danger-rgb), 0.3); }
+.pillInfo { background: rgba(var(--home-blue-rgb), 0.08); color: var(--info-light); border-color: rgba(var(--home-blue-rgb), 0.3); }
+.pillMute { background: var(--home-olive-soft); color: var(--text-secondary); border-color: var(--home-line-strong); }
 
-/* Panels → the kit's card; their heads → the kit's eyebrow. */
-:global([data-admin-kit]) .panel,
-:global([data-admin-kit]) .pairCard,
-:global([data-admin-kit]) .mergeSide,
-:global([data-admin-kit]) .msgForm {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .mergeKeep { border-color: var(--home-olive); background: var(--home-olive-soft); }
-:global([data-admin-kit]) .panelHead {
+/* Panels (family page) → the kit's card; their heads → the kit's eyebrow. */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+.panel { border: 1px solid var(--home-line); border-radius: 8px; padding: 0.9rem 1rem; background: var(--card-bg); }
+.panelHead {
   font-family: var(--font-data);
   font-size: var(--type-label);
+  font-weight: 700;
+  text-transform: uppercase;
   letter-spacing: 0.09em;
   color: var(--text-secondary);
-  /* The Children card's head now carries the count the page header lost (F3); at 361 the two do
-     not fit one line, so the count wraps under the eyebrow rather than pushing past the card. */
+  margin: 0 0 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+  /* The Children card's head carries the count the page header lost (F3); at 361 the two do not fit one
+     line, so the count wraps under the eyebrow rather than pushing past the card. */
   flex-wrap: wrap;
 }
-:global([data-admin-kit]) .panelScope { font-family: var(--font-sans); font-size: var(--type-support); color: var(--text-tertiary); }
-:global([data-admin-kit]) .line { color: var(--text-secondary); border-top-color: var(--home-line); }
-:global([data-admin-kit]) .lineSub,
-:global([data-admin-kit]) .lineV { color: var(--text-tertiary); }
-:global([data-admin-kit]) .lineTotal { color: var(--text-primary); }
-:global([data-admin-kit]) .panelFoot { color: var(--text-tertiary); border-top-color: var(--home-line); }
-:global([data-admin-kit]) .actionbar { border-top-color: var(--home-line); }
-:global([data-admin-kit]) .mergeName { color: var(--text-primary); }
-:global([data-admin-kit]) .mergeRow { color: var(--text-secondary); }
-:global([data-admin-kit]) .pairReasons,
-:global([data-admin-kit]) .notice { color: var(--text-tertiary); }
-:global([data-admin-kit]) .msgInput {
-  background: var(--home-card);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
-  color: var(--text-primary);
-}
+.panelScope { font-family: var(--font-sans); font-size: var(--type-support); text-transform: none; letter-spacing: 0; color: var(--text-tertiary); font-weight: 500; }
+.line { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.4rem 0; font-size: 0.83rem; color: var(--text-secondary); border-top: 1px solid var(--home-line); }
+.line:first-of-type { border-top-style: none; border-top-width: 0; }
+.lineSub { padding-left: 0.9rem; font-size: 0.78rem; color: var(--text-tertiary); }
+.lineTotal { font-weight: 800; color: var(--text-primary); }
+.lineV { color: var(--text-tertiary); font-variant-numeric: tabular-nums; text-align: right; }
+.panelFoot { font-size: 0.72rem; color: var(--text-tertiary); margin-top: 0.55rem; padding-top: 0.5rem; border-top: 1px solid var(--home-line); line-height: 1.45; }
+
+.actionbar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--home-line); }
 
 /* The empty and refusal states — the portal's empty-state card. */
-:global([data-admin-kit]) .empty { border: 1px dashed var(--home-line-strong); border-radius: 8px; background: var(--card-bg); }
-:global([data-admin-kit]) .emptyTitle { color: var(--text-primary); }
-:global([data-admin-kit]) .emptyBody { color: var(--text-tertiary); }
+.empty { border: 1px dashed var(--home-line-strong); border-radius: 8px; padding: 2rem 1.5rem; text-align: center; background: var(--card-bg); }
+.emptyTitle { margin: 0 0 0.4rem; font-size: 0.98rem; font-weight: 800; color: var(--text-primary); }
+.emptyBody { margin: 0 auto; max-width: 46ch; font-size: 0.82rem; color: var(--text-tertiary); line-height: 1.55; }
+
+/* duplicates */
+.mergeGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+@media (max-width: 700px) { .mergeGrid { grid-template-columns: 1fr; } }
+.mergeSide { border: 1px solid var(--home-line); border-radius: 8px; padding: 0.85rem 1rem; background: var(--card-bg); }
+.mergeKeep { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.mergeName { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 800; color: var(--text-primary); }
+.mergeRow { font-size: 0.8rem; color: var(--text-secondary); padding: 0.18rem 0; }
+.pairCard { border: 1px solid var(--home-line); border-radius: 8px; padding: 1rem 1.1rem; margin-bottom: 1.1rem; background: var(--card-bg); }
+.pairReasons { font-size: 0.72rem; color: var(--text-tertiary); margin: 0 0 0.75rem; }
+
+.msgForm { display: grid; gap: 0.5rem; margin-top: 1rem; border: 1px solid var(--home-line); border-radius: 8px; padding: 0.9rem 1rem; background: var(--card-bg); }
+.msgInput { background: var(--home-card); border: 1px solid var(--home-line-strong); border-radius: 7px; padding: 0.5rem 0.7rem; font-size: 0.85rem; color: var(--text-primary); }
+.msgTextarea { min-height: 110px; resize: vertical; }
 
 /* The failed-load branch keeps its own way back (no header to hold one): quiet chrome. */
-:global([data-admin-kit]) .backLink { color: var(--text-secondary); }
-:global([data-admin-kit]) .backLink:hover { color: var(--text-primary); }
+.backLink { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 0.9rem; }
+.backLink:hover { color: var(--text-primary); }
+.notice { font-size: 0.8rem; color: var(--text-tertiary); margin: 0.75rem 0 0; }
+
+/* The duplicates list's framing line (F3's re-home — the header has no subtitle). */
+.lede { margin: 0 0 1rem; max-width: 64ch; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }

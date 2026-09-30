@@ -1,21 +1,15 @@
 'use client';
 import { useState, useEffect, useCallback, type CSSProperties } from 'react';
-import Link from 'next/link';
-import { Tag, ChevronLeft, Pencil, Trash2, GitMerge, Plus, Check, X, Archive, RotateCcw, Library } from 'lucide-react';
+import { Pencil, Trash2, GitMerge, Plus, Check, X, Archive, RotateCcw, Library } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import AwardIconPicker from '@/components/coaches/AwardIconPicker';
 import type { RepTeamTag, RepTeamAwardType, RepTeamDrill } from '@/lib/types';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../rep-teams.module.css';
 
-/** A library row. On the kit its rule is the kit's hairline — `--white-8` is the card's own white in
- *  Warm, so the legacy rule vanishes there (Admin Design Continuity slice 3). */
-const ROW: CSSProperties = { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0', borderBottom: '1px solid var(--white-8)' };
-function useRowStyle() {
-  return useKitStyle()(ROW, { borderBottom: KIT_LINE });
-}
+/** A library row, ruled with the kit's hairline (`--white-8` was the card's own white in Warm, so the old
+ *  rule vanished there — Admin Design Continuity slice 3). */
+const ROW: CSSProperties = { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0', borderBottom: '1px solid var(--home-line)' };
 
 // Org-authored shared library (Coach Tags & Player Awards, Phase 3). The org owner/admin curates a
 // small set of game tags, money tags, and award types that EVERY team can use — a top-down
@@ -32,7 +26,6 @@ function TagSection({
   const [tags, setTags] = useState<RepTeamTag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const rowStyle = useRowStyle();
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -127,7 +120,7 @@ function TagSection({
         <>
           {sorted.length === 0 && <p className={styles.muted} style={{ fontSize: '0.85rem' }}>No shared {label.toLowerCase()} yet.</p>}
           {sorted.map(tag => (
-            <div key={tag.id} style={rowStyle}>
+            <div key={tag.id} style={ROW}>
               {renamingId === tag.id ? (
                 <>
                   <input className={styles.input} style={{ flex: 1 }} value={renameDraft} maxLength={40} autoFocus
@@ -180,7 +173,6 @@ function AwardTypeSection({ orgQuery, canWrite }: { orgQuery: string; canWrite: 
   const [types, setTypes] = useState<RepTeamAwardType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const rowStyle = useRowStyle();
   const [newName, setNewName] = useState('');
   const [newEmoji, setNewEmoji] = useState<string | null>('🏆');
   const [adding, setAdding] = useState(false);
@@ -250,7 +242,7 @@ function AwardTypeSection({ orgQuery, canWrite }: { orgQuery: string; canWrite: 
         <>
           {active.length === 0 && <p className={styles.muted} style={{ fontSize: '0.85rem' }}>No shared award types yet.</p>}
           {active.map(t => (
-            <div key={t.id} style={rowStyle}>
+            <div key={t.id} style={ROW}>
               {editId === t.id ? (
                 <>
                   <button className={styles.btnSecondary} style={{ fontSize: '1.05rem', padding: '0.2rem 0.5rem' }} onClick={() => setPickerFor(t.id)}>{editEmoji ?? '—'}</button>
@@ -337,7 +329,6 @@ function SharedDrillSection({ orgQuery, canWrite }: { orgQuery: string; canWrite
   const [drills, setDrills] = useState<RepTeamDrill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const rowStyle = useRowStyle();
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -409,7 +400,7 @@ function SharedDrillSection({ orgQuery, canWrite }: { orgQuery: string; canWrite
             </p>
           )}
           {active.map(d => (
-            <div key={d.id} style={rowStyle}>
+            <div key={d.id} style={ROW}>
               {editId === d.id ? (
                 <>
                   <input className={styles.input} style={{ flex: 1 }} value={editName} maxLength={120} autoFocus
@@ -497,8 +488,6 @@ function ClubBookSharingSection({ orgQuery }: { orgQuery: string }) {
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
 
   /** Re-read the server's answer. Used on mount, and as the recovery path after a failed
    *  toggle — the switch must never settle on a value the client merely assumed. */
@@ -547,10 +536,10 @@ function ClubBookSharingSection({ orgQuery }: { orgQuery: string }) {
   }
 
   return (
-    <section style={kx({ padding: '1rem', marginBottom: '1.25rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10 }, KIT_SURFACE.card)}>
+    <section style={{ padding: '1rem', marginBottom: '1.25rem', background: 'var(--card-bg)', border: '1px solid var(--home-line)', borderRadius: '8px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: '0.6rem' }}>
-          <Library size={18} style={kx({ color: 'var(--white-45)', marginTop: 2 }, KIT_INK.tertiary)} />
+          <Library size={18} style={{ color: 'var(--text-tertiary)', marginTop: 2 }} />
           <div>
             <p style={{ margin: 0, fontWeight: 600 }}>Teams can share their opponent books with each other</p>
             <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--white-55)', maxWidth: 620 }}>
@@ -585,24 +574,12 @@ export default function AdminSharedLibraryPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header — today's back link and header as `legacy` while the switch is off. On the kit the back
-          link is the eyebrow's "Rep Teams" (the same door); the subtitle describes the page and is not
-          re-homed — the paragraph below says it at length, and each section is one of the three (F3). */}
+      {/* Header — the way back is the eyebrow's "Rep Teams" (the same door). The old subtitle described the
+          page and was not re-homed — the paragraph below says it at length, and each section is one of
+          the three (F3). */}
       <AdminPageHeader
         crumbs={[{ href: base, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
         title="Shared library"
-        legacy={<>
-      <Link href={base} className={styles.breadcrumb}><ChevronLeft size={14} /> Rep Teams</Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Tag size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Shared library</h1>
-            <p className={styles.pageSub}>Tags, award types &amp; drills every team can use</p>
-          </div>
-        </div>
-      </div>
-        </>}
       />
 
       <p className={styles.muted} style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', maxWidth: 640 }}>
