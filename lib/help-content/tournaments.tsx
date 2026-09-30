@@ -709,8 +709,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Build the schedule',
       heading: 'Build and adjust the tournament schedule',
       summary: 'Create games manually or generate round-robin schedules, then edit exceptions before game day.',
-      keywords: ['build schedule', 'generate schedule', 'round robin', 'edit games', 'venues', 'auto-generate', 'adjust today', 'shift the day', 'rain delay', 'tools menu', 'move all games', 'bulk reschedule', 'delay games', 'cancel games', 'division filter', 'venue filter', 'exhibition', 'scrimmage day', 'no playoffs', 'notify teams', 'schedule change notification', 'does editing a game notify', 'who gets told', 'edit game warning', 'unpublished schedule silent', 'one message per team', 'double-booked', 'double booking', 'conflict warning', 'buffer warning', 'field picker', 'somewhere else', 'off-site game', 'not being checked', 'no field set', 'schedule health', 'locations typed by hand', 'review locations', 'match typed locations', 'link typed field name', 'create field from name', 'leave as typed text'],
-      searchText: 'build tournament schedule generate round robin auto-generate accepted teams venues time slots edit games cancel restore public schedule pools flat list timeline exhibition tournament scrimmage day no playoffs no bracket to build adjust today shift the day rain delay tools menu tournament plus running behind move push all remaining games back bulk reschedule delay cancel today games one step before after preview atomic filter by division venue field diamond editing a published game notifies the teams edit game dialog warning saving alerts followers who gets told coaches and families same message tournament plus reaches phones free plan nobody notified knowing is not the paid part unpublished division is silent build freely nobody has seen those times notes game length bracket wiring do not notify swapping a team into or out of a game is silent no true your game moved already started already played never notifies one message per team not one per game held a few minutes imminent game sent straight away reminder email refreshed stale first game time announcement replaces the automatic alert skip lets it send double-booked two games same field same time conflict warning buffer too close save blocked pick a field somewhere else type it off-site typed location not checked no field set unchecked schedule health score clear a field no diamond locations typed by hand review match typed locations link a typed field name to a real field one row per name exact match no match create field from typed name leave as typed text undo already linked change field for many games at once nobody notified tidy field names greyed out completed tournament dismiss notice',
+      keywords: ['build schedule', 'generate schedule', 'round robin', 'edit games', 'venues', 'auto-generate', 'adjust today', 'shift the day', 'rain delay', 'running late', 'tools menu', 'move all games', 'bulk reschedule', 'delay games', 'cancel games', 'division filter', 'venue filter', 'exhibition', 'scrimmage day', 'no playoffs', 'notify teams', 'schedule change notification', 'does editing a game notify', 'who gets told', 'edit game warning', 'unpublished schedule silent', 'one message per team', 'double-booked', 'double booking', 'conflict warning', 'buffer warning', 'field picker', 'somewhere else', 'off-site game', 'not being checked', 'no field set', 'schedule health', 'locations typed by hand', 'review locations', 'match typed locations', 'link typed field name', 'create field from name', 'leave as typed text'],
+      searchText: 'build tournament schedule generate round robin auto-generate accepted teams venues time slots edit games cancel restore public schedule pools flat list timeline exhibition tournament scrimmage day no playoffs no bracket to build adjust today shift the day rain delay running late tools menu tournament plus running behind move push all remaining games back bulk reschedule delay cancel today games one step before after preview atomic filter by division venue field diamond editing a published game notifies the teams edit game dialog warning saving alerts followers who gets told coaches and families same message tournament plus reaches phones free plan nobody notified knowing is not the paid part unpublished division is silent build freely nobody has seen those times notes game length bracket wiring do not notify swapping a team into or out of a game is silent no true your game moved already started already played never notifies one message per team not one per game held a few minutes imminent game sent straight away reminder email refreshed stale first game time announcement replaces the automatic alert skip lets it send double-booked two games same field same time conflict warning buffer too close save blocked pick a field somewhere else type it off-site typed location not checked no field set unchecked schedule health score clear a field no diamond locations typed by hand review match typed locations link a typed field name to a real field one row per name exact match no match create field from typed name leave as typed text undo already linked change field for many games at once nobody notified tidy field names greyed out completed tournament dismiss notice',
       links: [
         { label: 'Schedule', href: '../tournaments/schedule' },
       ],
@@ -777,6 +777,7 @@ const tournamentsHelp: HelpPageContent = {
             <>
               <p>Whenever the event has upcoming games, open <strong>Tools ▾ → Rain delay</strong> on the Schedule page. Pick a day (today or any upcoming day), optionally narrow to one division or venue, and it moves or cancels those games in one step — push them back 30 minutes, an hour, two hours, or a custom amount, and/or cancel a few — with a live before-and-after preview, then a ready-to-send notice so you update the schedule and tell everyone in one action.</p>
               <p>It applies all-or-nothing, leaves games that already have a result alone, and won&rsquo;t let a playoff game land before the games that feed it. <strong>Rain delay is a Tournament Plus tool</strong>; on the free plan you can still reschedule games one at a time and post a rain-delay banner (see the day-of question below).</p>
+              <p>On game day, a <strong>Running late?</strong> card on the tournament dashboard opens this same window — it shows while the event still has games left to play today or later, so you don&rsquo;t have to leave the board to push a day&rsquo;s games back. On the Tournament plan the card shows a lock and opens Plan &amp; billing&rsquo;s Tournament Plus panel instead.</p>
             </>
           ),
         },
@@ -1091,8 +1092,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Game Day & Scores',
       heading: 'Hand scoring to scorekeepers',
       summary: 'Set up scorekeepers and the Staff Kit so volunteers can enter scores from the field.',
-      keywords: ['scorekeepers', 'scorekeeper', 'staff kit', 'volunteer', 'day of scoring', 'submit score', 'game day', 'public site pill'],
-      searchText: 'scorekeepers staff kit qr code volunteer check-in gate scorekeeper view day of game scoring submit score results scoring pending review finalization public site pill flip public schedule chooser',
+      keywords: ['scorekeepers', 'scorekeeper', 'staff kit', 'volunteer', 'day of scoring', 'submit score', 'game day', 'public site pill', 'not arrived', 'checked in', 'no-show', 'still owe', 'check in button', 'undo button', 'arrival filter'],
+      searchText: 'scorekeepers staff kit qr code volunteer check-in gate scorekeeper view day of game scoring submit score results scoring pending review finalization public site pill flip public schedule chooser all not arrived checked in no-show teams still owe all teams are paid check in button undo button gate table roster payment desk phone bucket bar refreshes every 30 seconds',
       links: [
         { label: 'Staff Kit', href: '../tournaments/staff-kit' },
         { label: 'Scorekeeper View', href: '../../scorekeeper' },
@@ -1103,7 +1104,7 @@ const tournamentsHelp: HelpPageContent = {
           <p>You do not have to enter every score yourself. Scorekeepers use <strong>Scorekeeper View</strong> at <code>/{'{orgSlug}'}/scorekeeper</code> — a field-focused interface that only shows assigned games, no admin access required.</p>
           <p>Scorekeeper View also carries a <strong>⇄ Public site</strong> pill in its header — one tap opens the public schedule for the event being scored, so a volunteer can confirm a posted score is live without leaving their station. If two of your events run on the same day, the pill opens a small chooser with one row per tournament.</p>
           <p>Use the <strong>Staff Kit</strong> page to distribute scorekeeper and gate volunteer links. Staff Kit generates a QR code and copy-link for each volunteer surface (Scorekeeper View and Check-in/Gate), so you can print one sheet and post it at the volunteer table.</p>
-          <p>Gate check-in is a separate surface at <code>/{'{orgSlug}'}/check-in</code>. Use it to run team arrivals at the gate without giving volunteers full admin access. Open the <strong>Gate view</strong> link from the Check-in admin page.</p>
+          <p>Gate check-in is a separate surface at <code>/{'{orgSlug}'}/check-in</code> — the same board the Check-in admin page uses, so a gate volunteer&rsquo;s work shows up there within 30 seconds, no reload needed. Its filter is four buttons — <strong>All, Not arrived, Checked in, No-show</strong> — each carrying its own count, with a line underneath reading how many teams still owe (or that every team is paid). A team&rsquo;s row carries one worded <strong>Check in</strong> button; once they&rsquo;re in, that becomes <strong>Undo</strong>. <strong>No-show now lives only in the team&rsquo;s own sheet</strong> — tap the row to reach it, alongside payment and the roster. At a desk the board is a table (Team, Roster, Payment); on a phone it&rsquo;s one frame of rows. Open the <strong>Gate view</strong> link from the Check-in admin page to hand volunteers that same board without admin access.</p>
           <p>Volunteers still authenticate when they arrive at each surface — Staff Kit links do not bypass login.</p>
         </>
       ),
@@ -1147,29 +1148,52 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Game Day & Scores',
       heading: 'Review and finalize scores',
       summary: 'Record results from admins or scorekeepers, confirm pending reviews, and correct mistakes.',
-      keywords: ['enter scores', 'finalize scores', 'pending review', 'scorekeeper submissions', 'results', 'review scores', 'now playing', 'up next', 'needs a score', 'game-day dashboard', 'completed chip', 'show finalized games', 'correct a final score', 'score submitted notification', 'no games found', 'results is empty', 'results looks empty', 'nothing in results', 'show all games', 'status filters', 'results filters', 'why cant i see my games'],
-      searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring completed games public standings correct score revert scheduled score finalization now playing up next needs a score game day dashboard live board overdue unscored game what is on now sections panels reorder completed count chip show finalized games on phone mobile correct an already final score score submitted notification opens results with the game ready results opens showing every game no games found results is empty results looks empty nothing shows in results why cant i see my games all my games are missing show all games button status filter chips hidden by the status filters remembered filter choice per tournament pick a stage with nothing in it playoffs in a division with none switch stage',
+      keywords: ['enter scores', 'finalize scores', 'pending review', 'scorekeeper submissions', 'results', 'review scores', 'playing now', 'up next', 'needs a score', 'to finalize', 'game-day dashboard', 'needs you', 'all games', 'correct a final score', 'score submitted notification', 'no games found', 'results is empty', 'nothing in results', 'show all games', 'results filters', 'why cant i see my games', 'tie', 'level score'],
+      searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring final games public standings correct score revert scheduled score to finalize needs a score playing now up next game day dashboard game-day board overdue live game what is on now lists hidden when empty one tap open score editor needs you all games lens scheduled cancelled correct an already final score score submitted notification opens results with the game ready no games found results is empty nothing shows in results why cant i see my games all my games are missing show all games button tie level score scores are level forfeit pending review final export status column word customize this board show hide checkboxes drag to reorder',
       links: [
         { label: 'Results & Scoring', href: '../tournaments/results' },
         { label: 'Scorekeeper View', href: '../../scorekeeper' },
       ],
       content: (
-        <>
-          <p>Admins can enter, review, finalize, correct, export, or revert scores from <strong>Results &amp; Scoring</strong>.</p>
-          <ol>
-            <li>Open the game that has a final result.</li>
-            <li>Enter home and away scores from Results &amp; Scoring, or open <strong>Scorekeeper View</strong> for the lightweight day-of workflow.</li>
-            <li>Review submitted scores — Results &amp; Scoring shows who submitted the current visible score, when it happened, and whether it came from Scorekeeper View or admin.</li>
-            <li>If score finalization is enabled in Event Settings, mark reviewed scorekeeper submissions as final using <strong>Finalize</strong>.</li>
-            <li>Correct mistakes by editing the score or reverting the game to Scheduled and re-entering it. Revert clears the current score and submission metadata.</li>
-            <li>Check standings or bracket paths after important score changes.</li>
-          </ol>
-          <p><strong>Pending Review</strong> means a score has been submitted but still needs admin confirmation before it is treated as final. If finalization is disabled, scorekeeper submissions become completed scores immediately.</p>
-          <p>Public result pages update from the game data in FieldLogicHQ. Pending Review scores may appear as submitted results, but only completed scores are treated as final for playoff advancement.</p>
-          <p><strong>Results opens showing every game</strong> — still to score, submitted, and already final — so a division whose games are all played never greets you with an empty screen. To work through just what is outstanding, tap the status chips above the list (on a phone they sit in the filter strip). Your choice is remembered for that tournament, so the next visit opens the way you left it.</p>
-          <p>If the filters ever hide everything, the page says which ones did it — <em>&ldquo;6 games here &mdash; all hidden by the status filters above&rdquo;</em> — with a <strong>Show all games</strong> button to bring them straight back. Pick a stage with nothing in it (Playoffs in a division that has none) and it tells you how many games are in the other stage and offers to switch. It will never simply say there are no games when there are.</p>
-        </>
+        <p>Admins can enter, review, finalize, correct, export, or revert scores from <strong>Results &amp; Scoring</strong>. It opens on <strong>Needs you</strong> — games waiting to finalize, needing a score, or playing right now — with <strong>All games</strong> one tap away.</p>
       ),
+      subtopics: [
+        {
+          id: 'results-needs-you-all-games',
+          title: 'Needs you and All games',
+          content: (
+            <p><strong>Results &amp; Scoring</strong> opens on <strong>Needs you</strong> — every division&rsquo;s games waiting to finalize, needing a score, or playing right now. Tap <strong>All games</strong> to also see games not yet due and games already final. Tap any game&rsquo;s row to open its score editor in that same place in the list, or open <strong>Scorekeeper View</strong> for the lightweight day-of workflow.</p>
+          ),
+        },
+        {
+          id: 'results-score-editor',
+          title: 'The score editor',
+          content: (
+            <p>Enter home and away scores with the − / + steppers. On a score a scorekeeper submitted that you haven&rsquo;t changed, the main button already reads <strong>Finalize</strong> — one tap confirms it; otherwise it reads <strong>Save score</strong>. A row still waiting on your review also carries its own worded <strong>Finalize</strong> button beside its chevron, so a score you&rsquo;re happy with takes two taps total (the row, then Finalize) without opening the full editor. <strong>Discard</strong> closes without saving; <strong>Revert score</strong> clears the score and sends the game back to Scheduled so you can re-enter it.</p>
+          ),
+        },
+        {
+          id: 'results-pending-review',
+          title: 'Pending Review, and what’s public',
+          content: (
+            <p><strong>Pending Review</strong> means a score has been submitted but still needs admin confirmation before it is treated as final. If finalization is disabled, scorekeeper submissions become completed scores immediately. Public result pages update from the same game data — Pending Review scores may appear as submitted results, but only completed scores are treated as final for playoff advancement.</p>
+          ),
+        },
+        {
+          id: 'results-tied-score',
+          title: 'A tied score',
+          content: (
+            <p>When the two scores you&rsquo;ve entered are level, the editor says so — <em>&ldquo;Scores are level — this game will save as a tie&rdquo;</em> — and you can still save it that way. For a playoff game it adds that the bracket won&rsquo;t advance the winner until the game is re-scored or a forfeit is recorded; a tied playoff score does save, and the next round keeps reading &ldquo;Winner of &hellip;&rdquo; until it&rsquo;s resolved.</p>
+          ),
+        },
+        {
+          id: 'results-stays-current',
+          title: 'It stays current, and one word everywhere',
+          content: (
+            <p>Results &amp; Scoring re-checks itself every 30 seconds while it&rsquo;s open, so a scorekeeper&rsquo;s submission from the field appears without a reload — it never refreshes while you have an editor, the view sheet, or a confirm dialog open. Every screen that names a game&rsquo;s state — this page, the game-day dashboard, the schedule&rsquo;s game tags, and the scorekeeper — uses the same five words: <strong>Needs a score, Pending Review, Final, Forfeit,</strong> and <strong>Tie</strong>. The export&rsquo;s Status column says the same words, adding <strong>Scheduled</strong> and <strong>Cancelled</strong> for games that aren&rsquo;t due yet or were called off.</p>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-score-submitted-notification',
@@ -1186,30 +1210,32 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-correct-final-score-mobile',
           question: 'How do I correct a score that’s already final?',
-          answerText: 'Open Results and find the game — finalized and forfeited games are shown by default now, alongside the ones still needing a score, so nothing is hidden. Open the game and correct it, or revert it to Scheduled and re-enter. If you have previously narrowed the status chips on this tournament, that choice is remembered and a finalized game may be filtered out — tap the Completed chip to bring those games back. Results no longer opens on only the games needing action; it used to, which is why a fully-played division looked empty.',
-          keywords: ['correct final score', 'correct final score on phone', 'mobile results', 'completed chip', 'show finalized games', 'finalized game hidden', 'fix a final score', 'completed count', 'phone results filter', 'no games found', 'results looks empty', 'results empty', 'show all games', 'nothing in results'],
+          answerText: 'Open Results and tap All games — Final and Forfeit games are there alongside Scheduled ones (Needs you, the view it opens on, only shows what still needs your attention: games waiting to finalize, needing a score, or playing now). Find the game, tap its row to open the score editor in place, and correct it, or use Revert score to send it back to Scheduled and re-enter.',
+          keywords: ['correct final score', 'correct final score on phone', 'mobile results', 'all games', 'needs you', 'fix a final score', 'no games found', 'results looks empty', 'results empty', 'show all games', 'nothing in results'],
           answer: (
             <>
-              <p>Open <strong>Results &amp; Scoring</strong> and find the game. Finalized and forfeited games are <strong>shown by default</strong> alongside the ones still needing a score, so nothing is tucked away — open the game and correct it, or revert it to Scheduled and re-enter.</p>
-              <p>If you have narrowed the status chips on this tournament before, that choice is remembered, so a finalized game may be filtered out. Tap the <strong>Completed</strong> chip to bring those games back — and if the filters hide everything, the page tells you so and offers <strong>Show all games</strong>.</p>
+              <p>Open <strong>Results &amp; Scoring</strong> and tap <strong>All games</strong>. <strong>Final</strong> and <strong>Forfeit</strong> games are there alongside <strong>Scheduled</strong> ones — the page opens on <strong>Needs you</strong>, which only shows what still needs your attention: games waiting to finalize, needing a score, or playing now.</p>
+              <p>Find the game and tap its row — the score editor opens in that same place in the list. Correct it there, or use <strong>Revert score</strong> to send it back to Scheduled and re-enter.</p>
             </>
           ),
         },
         {
           id: 'faq-game-day-sections',
-          question: 'What do the Now Playing, Up Next, and Needs a Score sections mean?',
-          answerText: 'On game day your tournament dashboard groups games into three sections. Now Playing is games being scored right now, plus scheduled games inside their play window. Up Next is today’s scheduled games that haven’t started yet, earliest first. Needs a Score is games whose scheduled time has fully passed but still have no result — your safety net so a finished game never sits unscored. Each section hides itself when it is empty, and you can reorder or hide these panels from the dashboard.',
-          keywords: ['now playing', 'up next', 'needs a score', 'game day dashboard', 'game-day board', 'live games', 'overdue game', 'unscored', 'dashboard sections'],
+          question: 'What do To finalize, Needs a score, Playing now, and Up next mean on the dashboard?',
+          answerText: 'On game day your tournament dashboard is four lists, in the order of the day. To finalize is scores a scorekeeper submitted from the field, waiting for you to confirm them. Needs a score is games whose scheduled time has passed with no result yet — it shows the day when that day is not today. Playing now is games in progress right now. Up next is today\'s scheduled games that have not started yet, earliest first. Each list carries its own count and hides itself when it is empty. Tap any game to open it in Results with its score editor already open — a waiting score finalizes with one more tap on Finalize. Once your event reaches game day (its dates, or its first game starting, until you mark it complete) the header\'s status chip reads Game day too.',
+          keywords: ['to finalize', 'needs a score', 'playing now', 'up next', 'game day dashboard', 'game-day board', 'live games', 'overdue game', 'dashboard lists', 'game day chip', 'header status'],
           popular: true,
           answer: (
             <>
-              <p>On game day your tournament <strong>dashboard</strong> groups games into three at-a-glance sections:</p>
+              <p>On game day your tournament <strong>dashboard</strong> is four lists, in the order of your day:</p>
               <ul>
-                <li><strong>Now Playing</strong> — games being scored right now, plus scheduled games inside their play window.</li>
-                <li><strong>Up Next</strong> — today&rsquo;s scheduled games that haven&rsquo;t started yet, earliest first.</li>
-                <li><strong>Needs a Score</strong> — games whose scheduled time has fully passed but still have no result. It&rsquo;s your safety net so a finished game never sits unscored.</li>
+                <li><strong>To finalize</strong> — scores a scorekeeper submitted from the field, waiting for you to confirm them.</li>
+                <li><strong>Needs a score</strong> — games whose scheduled time has passed with no result yet (it shows the day when that day isn&rsquo;t today).</li>
+                <li><strong>Playing now</strong> — games in progress right now.</li>
+                <li><strong>Up next</strong> — today&rsquo;s scheduled games that haven&rsquo;t started yet, earliest first.</li>
               </ul>
-              <p>Each section hides itself when there&rsquo;s nothing to show, and you can reorder or hide these panels from the dashboard.</p>
+              <p>Each list carries its own count and hides itself when there&rsquo;s nothing to show. <strong>Tap any game</strong> to open it in Results with its score editor already open — a waiting score finalizes with one more tap on <strong>Finalize</strong>.</p>
+              <p><strong>Customize this board</strong>, at the board&rsquo;s foot, shows and hides these lists — on game day it no longer reorders them; the order follows the day. Once your event reaches game day (its dates, or its first game starting, until you mark it complete) the header&rsquo;s status chip reads <strong>Game day</strong> too.</p>
             </>
           ),
         },

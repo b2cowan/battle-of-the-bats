@@ -1,0 +1,135 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE GAME-DAY BOARD'S own layout (Tournament admin redesign Stage 1, G2 · G3 · G8 — hub v5). The parts
+   are the kit's: the row list is `ClubRow*` (components/admin/kit/club/RepKit — the portal's
+   `CoachRowList` restated for the admin shell), the cards the coach kit's `CoachCard` /
+   `CoachDoorCard`. This file lays them out and sets the few words the kit has no slot for.
+   Born clean, so it is held whole by the strict admin-kit check (KIT_FILES). ⚠ TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* One column on a phone and a tablet — the lists, then the door, the summary, health, Customize.
+   At a desk the lists take the wide column and the rest a narrow one, the summary first (as drawn). */
+.board { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+.lists { min-width: 0; }
+.side { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+@media (min-width: 1180px) {
+  .board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 20.5rem;
+    gap: 1.25rem;
+    align-items: start;
+  }
+  .side > .summary { order: -1; }
+  /* Nothing in the lists (a quiet hour): the side cards keep their narrow width. */
+  .board:not(:has(> .lists)) { grid-template-columns: minmax(0, 20.5rem); }
+}
+
+/* The top note — the kit's card with its accent edge (not an alert): no counts, no button. */
+.note {
+  --card-pad: 0.7rem 0.9rem;
+  margin: 0 0 0.9rem;
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.note p { margin: 0; }
+.note b { font-weight: 700; }
+
+/* A row's score: the figure the row carries, tabular. */
+.score {
+  font-size: var(--type-body);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+/* A list Customize shows while it is empty. */
+.emptyRow { font-weight: 400; color: var(--text-tertiary); }
+
+/* The door card (G8): the kit's door, its title and one line. */
+.door { --card-gap: 0.2rem; }
+.doorTitle { font-size: var(--type-body); font-weight: 650; line-height: 1.35; color: var(--text-primary); }
+.doorLine { font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
+
+/* The summary card. ⚠ The heading sets the BODY face itself: the global h1–h6 rule would draw it in
+   the condensed display face (the section heading is 16 / 700 body, as `CoachPageSection`). */
+.summary { --card-gap: 0.6rem; }
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+.figs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.6rem; }
+.figLabel { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.divLines { list-style: none; margin: 0; padding: 0; }
+.divLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-body);
+}
+.divLine b { font-weight: 600; color: var(--text-primary); min-width: 0; }
+.divLine > span { color: var(--text-tertiary); text-align: right; }
+.champ { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--home-olive); font-weight: 700; }
+
+/* Schedule health as one row that opens its panel in place (a down chevron: it expands). */
+.health { background: var(--card-bg); border: 1px solid var(--home-line); border-radius: 8px; }
+.healthRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.5rem 0.8rem;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.healthRow:hover { background: var(--home-olive-soft); }
+.healthRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.healthScore {
+  min-width: 1.6rem;
+  font-size: var(--type-heading);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--home-olive);
+}
+.healthScore[data-tone='warning'] { color: var(--warning-light); }
+.healthScore[data-tone='danger'] { color: var(--danger-light); }
+.healthText { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.healthTitle { font-size: var(--type-body); font-weight: 650; }
+.healthCaption { font-size: var(--type-support); color: var(--text-tertiary); }
+.healthChevron { flex: none; color: var(--text-tertiary); transition: transform 0.15s; }
+.healthRow[aria-expanded='true'] .healthChevron { transform: rotate(180deg); }
+.healthBody { padding: 0.75rem 0.8rem 0.85rem; border-top: 1px solid var(--home-line); }
+@media (prefers-reduced-motion: reduce) { .healthChevron { transition: none; } }
+
+/* Customize, at the board's foot: a quiet link, a real target. */
+.quietLink {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.quietLink:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }

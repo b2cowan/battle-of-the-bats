@@ -17,7 +17,6 @@ import { SandboxLockNote, useSandboxLock } from '@/components/sandbox/SandboxLoc
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useTournamentCrumb } from '@/components/admin/tournament';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -95,7 +94,6 @@ export default function AdminCommunicationPage() {
   // every real org, so nothing about a customer's compose screen changes.
   const sandboxLocked = useSandboxLock();
   const kx = useKitStyle();
-  const crumb = useTournamentCrumb();
   // Hand-set inline colours (kx patches them on the kit; unchanged while the switch is off).
   // The composer's small print under a channel toggle — same object, used at two points.
   const channelNoteStyle = kx({ margin: '0.25rem 0 0 1.7rem', fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }, KIT_INK.secondary);
@@ -368,7 +366,7 @@ export default function AdminCommunicationPage() {
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <AdminPageHeader
-        crumbs={[crumb]}
+        inlineActions
         title="Communications"
         actions={newMessageButton}
         legacy={

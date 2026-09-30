@@ -34,7 +34,12 @@ export default function AdminPageHeader({
   titleChips,
   actions,
   backTo,
+  inlineActions = false,
 }: {
+  /** On a phone the actions join the title's line (44px each, help last) instead of dropping to a row
+   *  of their own — the tournament screens' header (Tournament admin redesign G1, 2026-09-29), whose
+   *  actions are icons on a phone. Other areas keep the row until their own redesign says otherwise. */
+  inlineActions?: boolean;
   /** @deprecated Read by nothing — the page's old header, deleted by its area's Part B pass (above). */
   legacy?: ReactNode;
   /** The program or tournament the page sits in. Never a count — that is a subtitle wearing a hat. */
@@ -63,7 +68,7 @@ export default function AdminPageHeader({
       ))
     : eyebrow;
   return (
-    <div className={styles.header}>
+    <div className={styles.header} data-actions-inline={inlineActions || undefined}>
       <div className={styles.left}>
         {backTo && (
           <>

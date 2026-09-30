@@ -10,7 +10,6 @@ import { useTournament } from '@/lib/tournament-context';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { TournamentRegistrationField, TournamentRegistrationFieldType } from '@/lib/types';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useTournamentCrumb } from '@/components/admin/tournament';
 import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../branding/branding.module.css';
@@ -62,7 +61,6 @@ export default function RegistrationFieldsSettingsPage() {
   const { currentOrg } = useOrg();
   usePageTitle('Registration Questions');
   const { currentTournament } = useTournament();
-  const tournamentCrumb = useTournamentCrumb();
   const kit = useAdminKit();
   const kx = useKitStyle();
   const requiredLabelStyle = kx(REQUIRED_LABEL_STYLE, KIT_INK.secondary); // one per question row
@@ -210,7 +208,7 @@ export default function RegistrationFieldsSettingsPage() {
       <div className={styles.page}>
         <AdminPageHeader
           backTo={{ href: backHref, label: backLabel }}
-          crumbs={[tournamentCrumb]}
+          inlineActions
           title="Registration questions"
           legacy={<>
             <div className={styles.pageHeader}>
@@ -253,7 +251,7 @@ export default function RegistrationFieldsSettingsPage() {
     <div className={styles.page}>
       <AdminPageHeader
         backTo={{ href: backHref, label: backLabel }}
-        crumbs={[tournamentCrumb]}
+        inlineActions
         title="Registration questions"
         legacy={<>
           <div className={styles.pageHeader}>

@@ -498,6 +498,13 @@ const KIT_FILES = new Set([
   'app/[orgSlug]/admin/rep-teams/rep-teams.module.css',
   'app/[orgSlug]/admin/org/billing/billing.module.css',
   'components/billing/PlanArticlePanel.module.css',
+  // Tournament admin redesign Stage 1 — game day, rebuilt with its old look retired (2026-09-29): the
+  // board's own sheet (born clean), Results (rewritten whole), and Check-in (the board — the gate's too,
+  // which carries the kit marker as the guest shell — and the page wrapper).
+  'app/[orgSlug]/admin/tournaments/dashboard/GameDayBoard.module.css',
+  'app/[orgSlug]/admin/tournaments/results/results-admin.module.css',
+  'app/[orgSlug]/admin/tournaments/check-in/check-in.module.css',
+  'components/admin/CheckInBoard.module.css',
 ]);
 // A colour literal: hex, or rgb/rgba/hsl/hsla with no var() inside. The kit check also refuses the keywords.
 const COLOR_LITERAL = String.raw`#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\((?![^()]*var\()[^()]*\)`;

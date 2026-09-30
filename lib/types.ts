@@ -300,6 +300,9 @@ export interface Tournament {
   isActive: boolean;   // derived: status === 'active'. Kept for compatibility.
   startDate?: string;    // YYYY-MM-DD
   endDate?: string;      // YYYY-MM-DD
+  /** Derived, not a column: an active event's first game has started (the game-day rule's second half,
+   *  `lib/tournament-phase` `isGameDay`). Sent by the admin tournaments list; absent everywhere else. */
+  firstGameStarted?: boolean;
   contactEmail?: string; // shown in coach-facing email footers
   feeScheduleMode?: 'tournament' | 'division';
   depositAmount?: number | null;

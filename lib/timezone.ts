@@ -31,13 +31,20 @@ export const ORG_TIME_ZONE = 'America/Toronto';
  * Works by formatting the instant in the target zone and comparing the rendered
  * wall-clock to the same instant's UTC wall-clock.
  */
+const offsetFormatters = new Map<string, Intl.DateTimeFormat>();
 function tzOffsetMinutes(utcDate: Date, timeZone: string): number {
-  const dtf = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-    hour12: false,
-  });
+  // One formatter per zone, built once: constructing an Intl.DateTimeFormat is the expensive part, and
+  // a list converts every game's wall clock (twice, for the DST re-check) on every read.
+  let dtf = offsetFormatters.get(timeZone);
+  if (!dtf) {
+    dtf = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    });
+    offsetFormatters.set(timeZone, dtf);
+  }
   const parts = dtf.formatToParts(utcDate);
   const get = (t: string) => Number(parts.find(p => p.type === t)?.value);
   let hour = get('hour');
@@ -379,6 +386,20 @@ export function formatWeekdayDate(value: string | null | undefined): string {
   if (!p) return value ?? '';
   const dow = new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay();
   return `${LONG_DAYS[dow]}, ${LONG_MONTHS[p.m - 1]} ${p.d}`;
+}
+
+const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/**
+ * "Fri, Jun 12" — `formatWeekdayDate`'s short shape, for a row that names a game's day in a list
+ * (the tournament admin's game-day board and Results, Stage 1: an overdue game on a phone read as
+ * today's when it carried only "1:00 p.m."). The same UTC construction, for the same reason.
+ */
+export function formatShortWeekdayDate(value: string | null | undefined): string {
+  const p = parseDateOnlyParts(value);
+  if (!p) return value ?? '';
+  const dow = new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay();
+  return `${SHORT_DAYS[dow]}, ${SHORT_MONTHS[p.m - 1]} ${p.d}`;
 }
 
 /**

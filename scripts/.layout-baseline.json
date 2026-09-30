@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-29T20:10:58.387Z",
+  "generated": "2026-09-30T02:58:28.150Z",
   "entries": {
     "admin-hub|361|tap-floor|a·Public site": {
       "reason": null,
@@ -809,14 +809,6 @@
       "reason": null,
       "detail": "32px tall (floor 44)"
     },
-    "admin-t-schedule-health|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule-health|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule-health|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -830,14 +822,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule-health|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-health|361|control-width|button·Add game": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-health|361|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -905,14 +889,6 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-schedule-timeline|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule-timeline|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule-timeline|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -926,14 +902,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule-timeline|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-timeline|361|control-width|button·Add game": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-timeline|361|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -1021,14 +989,6 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-schedule-playoff-timeline|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule-playoff-timeline|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule-playoff-timeline|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -1042,14 +1002,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule-playoff-timeline|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-playoff-timeline|361|control-width|button·Edit bracket": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-playoff-timeline|361|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -1137,14 +1089,6 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-schedule-bracket|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule-bracket|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule-bracket|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -1158,14 +1102,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule-bracket|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-bracket|361|control-width|button·Edit bracket": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-bracket|361|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -1245,14 +1181,6 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-schedule-bracket-editor|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule-bracket-editor|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule-bracket-editor|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -1266,10 +1194,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule-bracket-editor|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-bracket-editor|361|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -1601,14 +1525,6 @@
       "reason": null,
       "detail": "41px tall (floor 44)"
     },
-    "admin-t-schedule-health|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule-health|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule-health|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -1622,14 +1538,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule-health|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-health|390|control-width|button·Add game": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-health|390|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -1697,14 +1605,6 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-schedule-timeline|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule-timeline|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule-timeline|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -1718,14 +1618,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule-timeline|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-timeline|390|control-width|button·Add game": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-timeline|390|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -1813,14 +1705,6 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-schedule-playoff-timeline|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule-playoff-timeline|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule-playoff-timeline|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -1834,14 +1718,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule-playoff-timeline|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-playoff-timeline|390|control-width|button·Edit bracket": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-playoff-timeline|390|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -1929,14 +1805,6 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-schedule-bracket|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule-bracket|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule-bracket|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -1950,14 +1818,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule-bracket|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-bracket|390|control-width|button·Edit bracket": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-bracket|390|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -2037,14 +1897,6 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-schedule-bracket-editor|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule-bracket-editor|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule-bracket-editor|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -2058,10 +1910,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule-bracket-editor|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule-bracket-editor|390|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -2379,11 +2227,7 @@
     },
     "admin-t-schedule-health|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-schedule-health|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-schedule-health|768|control-width|button·More export formats": {
       "reason": null,
@@ -2463,11 +2307,7 @@
     },
     "admin-t-schedule-timeline|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-schedule-timeline|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-schedule-timeline|768|control-width|button·More export formats": {
       "reason": null,
@@ -2575,11 +2415,7 @@
     },
     "admin-t-schedule-playoff-timeline|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-schedule-playoff-timeline|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-schedule-playoff-timeline|768|control-width|button·More export formats": {
       "reason": null,
@@ -2691,11 +2527,7 @@
     },
     "admin-t-schedule-bracket|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-schedule-bracket|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-schedule-bracket|768|control-width|button·More export formats": {
       "reason": null,
@@ -2791,11 +2623,7 @@
     },
     "admin-t-schedule-bracket-editor|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-schedule-bracket-editor|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-schedule-bracket-editor|768|control-width|button·More export formats": {
       "reason": null,
@@ -3129,7 +2957,7 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-schedule-bracket-editor|361|content-overflow|div·UAT Phase 2C Plus Championship 2026Sched": {
+    "admin-t-schedule-bracket-editor|361|content-overflow|div·Schedule managementSchedule PublishedExp": {
       "reason": null,
       "detail": "content spills 4px with overflow-x:visible — no scroller owns it"
     },
@@ -6877,42 +6705,6 @@
       "reason": null,
       "detail": "cells at 12.80px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-dashboard|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-dashboard|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-t-dashboard|361|tap-floor|button·It’s game day — here’s your live view": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-t-dashboard|361|tap-floor|a·Enter & review scores →": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "admin-t-dashboard|361|tap-floor|button·Expand game-day guidance": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-t-dashboard|361|control-width|button·Expand game-day guidance": {
-      "reason": null,
-      "detail": "20px wide (floor 44) — icon-only control"
-    },
-    "admin-t-dashboard|361|tap-floor|a·Enter scores →": {
-      "reason": null,
-      "detail": "17px tall (floor 44)"
-    },
-    "admin-t-dashboard|361|tap-floor|a·Open board →": {
-      "reason": null,
-      "detail": "17px tall (floor 44)"
-    },
-    "admin-t-dashboard|361|tap-floor|a·Review ->": {
-      "reason": null,
-      "detail": "17px tall (floor 44)"
-    },
     "admin-t-dashboard|361|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -6925,14 +6717,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-archives|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-archives|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-archives|361|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -6944,14 +6728,6 @@
     "admin-t-archives|361|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-branding|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-branding|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-branding|361|tap-floor|button·Public Pages": {
       "reason": null,
@@ -6997,126 +6773,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-check-in|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-t-check-in|361|control-width|a·Open gate volunteer view": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
-    },
-    "admin-t-check-in|361|tap-floor|input·Search teams…": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·All": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Not arrived": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Checked in": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·No-show": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Comets U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|control-width|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px wide (floor 44) — icon-only control"
-    },
-    "admin-t-check-in|361|tap-floor|button·Check in": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|control-width|button·Check in": {
-      "reason": null,
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-check-in|361|tap-floor|button·Falcons U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Ravens U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Royals U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Storm U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Wolves U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Aces U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Comets U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Cyclones U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Falcons U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Freeze U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·North Stars U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Ravens U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Storm U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Blaze U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Royals U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Titans U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|361|tap-floor|button·Wolves U15 OpenNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
     "admin-t-check-in|361|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -7129,21 +6785,9 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-communication|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-communication|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-communication|361|tap-floor|button·New Message": {
       "reason": null,
       "detail": "35px tall (floor 44)"
-    },
-    "admin-t-communication|361|control-width|button·New Message": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
     },
     "admin-t-communication|361|tap-floor|button·Site Posts": {
       "reason": null,
@@ -7172,14 +6816,6 @@
     "admin-t-communication|361|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-data-tools|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-data-tools|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-data-tools|361|tap-floor|select·UAT Phase 2C Plus Championship 2026 (202": {
       "reason": null,
@@ -7229,22 +6865,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-divisions|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-divisions|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-t-divisions|361|control-width|button·Add Division": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-divisions|361|control-width|button·Help: Divisions": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
     "admin-t-divisions|361|tap-floor|button·<button>": {
       "reason": null,
       "detail": "25px tall (floor 44)"
@@ -7264,14 +6884,6 @@
     "admin-t-divisions|361|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-manage|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-manage|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-manage|361|tap-floor|button·How statuses work": {
       "reason": null,
@@ -7305,14 +6917,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-registrations|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-registrations|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -7326,18 +6930,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-registrations|361|control-width|button·Export and import options": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|361|control-width|a·Configure registration questions": {
-      "reason": null,
-      "detail": "31px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|361|control-width|button·Add team": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|361|control-width|button·Help: Teams": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -7409,14 +7001,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-results|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-results|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-results|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -7433,46 +7017,6 @@
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
-    "admin-t-results|361|control-width|button·Open scorekeeper view": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-results|361|tap-floor|select·U11 GirlsU13 BoysU15 Open": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-results|361|tap-floor|input·Search teams...": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-results|361|tap-floor|button·View settings: Round Robin": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-t-results|361|tap-floor|button·Open view settings": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-results|361|control-width|button·Open view settings": {
-      "reason": null,
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-results|361|tap-floor|button·Edit score": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-t-results|361|control-width|button·Edit score": {
-      "reason": null,
-      "detail": "22px wide (floor 44) — icon-only control"
-    },
-    "admin-t-results|361|tap-floor|button·Finalize result": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-t-results|361|control-width|button·Finalize result": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
-    },
     "admin-t-results|361|tap-floor|a·2 teams to review": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -7484,14 +7028,6 @@
     "admin-t-results|361|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-rules|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-rules|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-rules|361|tap-floor|button·Browse samples": {
       "reason": null,
@@ -7537,14 +7073,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-schedule|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -7558,14 +7086,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule|361|control-width|button·Add game": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule|361|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -7633,14 +7153,6 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-settings|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-settings|361|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -7652,14 +7164,6 @@
     "admin-t-settings|361|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-settings-event|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-event|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-settings-event|361|tap-floor|input·e.g. Spring Invitational 2026": {
       "reason": null,
@@ -7833,14 +7337,6 @@
       "reason": null,
       "detail": "content spills 48px with overflow-x:visible — no scroller owns it"
     },
-    "admin-t-settings-members|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-members|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-settings-members|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -7869,14 +7365,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-settings-audit|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-audit|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-settings-audit|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -7904,14 +7392,6 @@
     "admin-t-settings-audit|361|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-settings-notifications|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-notifications|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-settings-notifications|361|tap-floor|a·Manage what you receive →": {
       "reason": null,
@@ -8017,14 +7497,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-settings-pdf|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-pdf|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-settings-pdf|361|tap-floor|input·UAT Plus Org": {
       "reason": null,
       "detail": "41px tall (floor 44)"
@@ -8068,14 +7540,6 @@
     "admin-t-settings-pdf|361|content-overflow|select·Readable — more spacing, easier to scanC": {
       "reason": null,
       "detail": "content spills 49px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-settings-fields|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-fields|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-settings-fields|361|tap-floor|a·Add Question": {
       "reason": null,
@@ -8129,14 +7593,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-settings-subscription|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-subscription|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-settings-subscription|361|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -8148,14 +7604,6 @@
     "admin-t-settings-subscription|361|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-staff-kit|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-staff-kit|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-staff-kit|361|tap-floor|button·Copy the Scorekeeper link": {
       "reason": null,
@@ -8185,14 +7633,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-summary|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-summary|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-summary|361|tap-floor|a·See what League Plus and Club include →": {
       "reason": null,
       "detail": "15px tall (floor 44)"
@@ -8208,14 +7648,6 @@
     "admin-t-summary|361|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-venues|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-venues|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-venues|361|tap-floor|button·Export as Excel": {
       "reason": null,
@@ -8233,10 +7665,6 @@
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
-    "admin-t-venues|361|control-width|button·Add venue": {
-      "reason": null,
-      "detail": "36px wide (floor 44) — icon-only control"
-    },
     "admin-t-venues|361|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -8248,14 +7676,6 @@
     "admin-t-venues|361|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-chat|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-chat|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-chat|361|tap-floor|button·Rooms": {
       "reason": null,
@@ -8341,42 +7761,6 @@
       "reason": null,
       "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 9px"
     },
-    "admin-t-dashboard|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-dashboard|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-t-dashboard|390|tap-floor|button·It’s game day — here’s your live view": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-t-dashboard|390|tap-floor|a·Enter & review scores →": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "admin-t-dashboard|390|tap-floor|button·Expand game-day guidance": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-t-dashboard|390|control-width|button·Expand game-day guidance": {
-      "reason": null,
-      "detail": "20px wide (floor 44) — icon-only control"
-    },
-    "admin-t-dashboard|390|tap-floor|a·Enter scores →": {
-      "reason": null,
-      "detail": "17px tall (floor 44)"
-    },
-    "admin-t-dashboard|390|tap-floor|a·Open board →": {
-      "reason": null,
-      "detail": "17px tall (floor 44)"
-    },
-    "admin-t-dashboard|390|tap-floor|a·Review ->": {
-      "reason": null,
-      "detail": "17px tall (floor 44)"
-    },
     "admin-t-dashboard|390|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -8389,14 +7773,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-archives|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-archives|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-archives|390|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -8408,14 +7784,6 @@
     "admin-t-archives|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-branding|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-branding|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-branding|390|tap-floor|button·Public Pages": {
       "reason": null,
@@ -8461,126 +7829,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-check-in|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-t-check-in|390|control-width|a·Open gate volunteer view": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
-    },
-    "admin-t-check-in|390|tap-floor|input·Search teams…": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·All": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Not arrived": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Checked in": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·No-show": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Comets U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|control-width|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px wide (floor 44) — icon-only control"
-    },
-    "admin-t-check-in|390|tap-floor|button·Check in": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|control-width|button·Check in": {
-      "reason": null,
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-check-in|390|tap-floor|button·Falcons U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Ravens U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Royals U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Storm U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Wolves U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Aces U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Comets U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Cyclones U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Falcons U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Freeze U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·North Stars U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Ravens U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Storm U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Blaze U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Royals U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Titans U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|390|tap-floor|button·Wolves U15 OpenNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
     "admin-t-check-in|390|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -8593,21 +7841,9 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-communication|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-communication|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-communication|390|tap-floor|button·New Message": {
       "reason": null,
       "detail": "35px tall (floor 44)"
-    },
-    "admin-t-communication|390|control-width|button·New Message": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
     },
     "admin-t-communication|390|tap-floor|button·Site Posts": {
       "reason": null,
@@ -8636,14 +7872,6 @@
     "admin-t-communication|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-data-tools|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-data-tools|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-data-tools|390|tap-floor|select·UAT Phase 2C Plus Championship 2026 (202": {
       "reason": null,
@@ -8693,22 +7921,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-divisions|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-divisions|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-t-divisions|390|control-width|button·Add Division": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-divisions|390|control-width|button·Help: Divisions": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
     "admin-t-divisions|390|tap-floor|button·<button>": {
       "reason": null,
       "detail": "25px tall (floor 44)"
@@ -8728,14 +7940,6 @@
     "admin-t-divisions|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-manage|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-manage|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-manage|390|tap-floor|button·How statuses work": {
       "reason": null,
@@ -8769,14 +7973,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-registrations|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-registrations|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -8790,18 +7986,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-registrations|390|control-width|button·Export and import options": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|control-width|a·Configure registration questions": {
-      "reason": null,
-      "detail": "31px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|control-width|button·Add team": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|control-width|button·Help: Teams": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -8873,14 +8057,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-results|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-results|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-results|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -8897,46 +8073,6 @@
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
-    "admin-t-results|390|control-width|button·Open scorekeeper view": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-results|390|tap-floor|select·U11 GirlsU13 BoysU15 Open": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-results|390|tap-floor|input·Search teams...": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-results|390|tap-floor|button·View settings: Round Robin": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-t-results|390|tap-floor|button·Open view settings": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-results|390|control-width|button·Open view settings": {
-      "reason": null,
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-results|390|tap-floor|button·Edit score": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-t-results|390|control-width|button·Edit score": {
-      "reason": null,
-      "detail": "22px wide (floor 44) — icon-only control"
-    },
-    "admin-t-results|390|tap-floor|button·Finalize result": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-t-results|390|control-width|button·Finalize result": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
-    },
     "admin-t-results|390|tap-floor|a·2 teams to review": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -8948,14 +8084,6 @@
     "admin-t-results|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-rules|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-rules|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-rules|390|tap-floor|button·Browse samples": {
       "reason": null,
@@ -9001,14 +8129,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-schedule|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-schedule|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-schedule|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -9022,14 +8142,6 @@
       "detail": "32px tall (floor 44)"
     },
     "admin-t-schedule|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule|390|control-width|button·Add game": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-schedule|390|control-width|button·Help": {
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
@@ -9097,14 +8209,6 @@
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-t-settings|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-settings|390|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -9116,14 +8220,6 @@
     "admin-t-settings|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-settings-event|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-event|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-settings-event|390|tap-floor|input·e.g. Spring Invitational 2026": {
       "reason": null,
@@ -9289,14 +8385,6 @@
       "reason": null,
       "detail": "content spills 19px with overflow-x:visible — no scroller owns it"
     },
-    "admin-t-settings-members|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-members|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-settings-members|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -9325,14 +8413,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-settings-audit|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-audit|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-settings-audit|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -9360,14 +8440,6 @@
     "admin-t-settings-audit|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-settings-notifications|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-notifications|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-settings-notifications|390|tap-floor|a·Manage what you receive →": {
       "reason": null,
@@ -9473,14 +8545,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-settings-pdf|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-pdf|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-settings-pdf|390|tap-floor|input·UAT Plus Org": {
       "reason": null,
       "detail": "41px tall (floor 44)"
@@ -9524,14 +8588,6 @@
     "admin-t-settings-pdf|390|content-overflow|select·Readable — more spacing, easier to scanC": {
       "reason": null,
       "detail": "content spills 20px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-settings-fields|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-fields|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-settings-fields|390|tap-floor|a·Add Question": {
       "reason": null,
@@ -9585,14 +8641,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-settings-subscription|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-settings-subscription|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-settings-subscription|390|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -9604,14 +8652,6 @@
     "admin-t-settings-subscription|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-staff-kit|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-staff-kit|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-staff-kit|390|tap-floor|button·Copy the Scorekeeper link": {
       "reason": null,
@@ -9641,14 +8681,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-summary|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-summary|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-t-summary|390|tap-floor|a·See what League Plus and Club include →": {
       "reason": null,
       "detail": "15px tall (floor 44)"
@@ -9664,14 +8696,6 @@
     "admin-t-summary|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-venues|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-venues|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-venues|390|tap-floor|button·Export as Excel": {
       "reason": null,
@@ -9689,10 +8713,6 @@
       "reason": null,
       "detail": "32px wide (floor 44) — icon-only control"
     },
-    "admin-t-venues|390|control-width|button·Add venue": {
-      "reason": null,
-      "detail": "36px wide (floor 44) — icon-only control"
-    },
     "admin-t-venues|390|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -9704,14 +8724,6 @@
     "admin-t-venues|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-chat|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-chat|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-t-chat|390|tap-floor|button·Rooms": {
       "reason": null,
@@ -9791,39 +8803,7 @@
     },
     "admin-t-dashboard|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-dashboard|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-t-dashboard|768|tap-floor|button·It’s game day — here’s your live view": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-t-dashboard|768|tap-floor|a·Enter & review scores →": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "admin-t-dashboard|768|tap-floor|button·Expand game-day guidance": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-t-dashboard|768|control-width|button·Expand game-day guidance": {
-      "reason": null,
-      "detail": "20px wide (floor 44) — icon-only control"
-    },
-    "admin-t-dashboard|768|tap-floor|a·Enter scores →": {
-      "reason": null,
-      "detail": "17px tall (floor 44)"
-    },
-    "admin-t-dashboard|768|tap-floor|a·Open board →": {
-      "reason": null,
-      "detail": "17px tall (floor 44)"
-    },
-    "admin-t-dashboard|768|tap-floor|a·Review ->": {
-      "reason": null,
-      "detail": "17px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-dashboard|768|tap-floor|a·2 games to finalize": {
       "reason": null,
@@ -9839,11 +8819,7 @@
     },
     "admin-t-archives|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-archives|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-archives|768|tap-floor|a·2 games to finalize": {
       "reason": null,
@@ -9859,11 +8835,7 @@
     },
     "admin-t-branding|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-branding|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-branding|768|tap-floor|button·Public Pages": {
       "reason": null,
@@ -10035,122 +9007,6 @@
     },
     "admin-t-check-in|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-t-check-in|768|control-width|a·Open gate volunteer view": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
-    },
-    "admin-t-check-in|768|tap-floor|input·Search teams…": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|select·Division": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·All": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Not arrived": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Checked in": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·No-show": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Comets U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|control-width|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px wide (floor 44) — icon-only control"
-    },
-    "admin-t-check-in|768|tap-floor|button·Check in": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Falcons U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Ravens U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Royals U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Storm U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Wolves U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Aces U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Comets U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Cyclones U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Falcons U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Freeze U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·North Stars U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Ravens U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Storm U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Blaze U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Royals U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Titans U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-check-in|768|tap-floor|button·Wolves U15 OpenNo rosterPaid": {
-      "reason": null,
       "detail": "38px tall (floor 44)"
     },
     "admin-t-check-in|768|tap-floor|a·2 games to finalize": {
@@ -10167,11 +9023,7 @@
     },
     "admin-t-communication|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-communication|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-communication|768|tap-floor|button·New Message": {
       "reason": null,
@@ -10207,11 +9059,7 @@
     },
     "admin-t-data-tools|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-data-tools|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-data-tools|768|tap-floor|select·UAT Phase 2C Plus Championship 2026 (202": {
       "reason": null,
@@ -10263,11 +9111,7 @@
     },
     "admin-t-divisions|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-divisions|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-divisions|768|tap-floor|button·<button>": {
       "reason": null,
@@ -10291,11 +9135,7 @@
     },
     "admin-t-manage|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-manage|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-manage|768|tap-floor|button·How statuses work": {
       "reason": null,
@@ -10339,11 +9179,7 @@
     },
     "admin-t-registrations|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-registrations|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-registrations|768|control-width|button·Export and import options": {
       "reason": null,
@@ -10411,55 +9247,11 @@
     },
     "admin-t-results|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-results|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-results|768|control-width|button·More export formats": {
       "reason": null,
       "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-t-results|768|tap-floor|select·U11 GirlsU13 BoysU15 Open": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-results|768|tap-floor|button·Round Robin": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-t-results|768|tap-floor|button·Playoffs": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-t-results|768|tap-floor|button·Flat": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-t-results|768|tap-floor|button·Pools": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-t-results|768|tap-floor|input·Search teams...": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-t-results|768|tap-floor|button·Edit score": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-t-results|768|control-width|button·Edit score": {
-      "reason": null,
-      "detail": "22px wide (floor 44) — icon-only control"
-    },
-    "admin-t-results|768|tap-floor|button·Finalize result": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-t-results|768|control-width|button·Finalize result": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
     },
     "admin-t-results|768|tap-floor|a·2 teams to review": {
       "reason": null,
@@ -10473,21 +9265,9 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-results|361|control-width|button·Help: Results & scoring": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-results|390|control-width|button·Help: Results & scoring": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
     "admin-t-rules|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-rules|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-rules|768|tap-floor|button·Browse samples": {
       "reason": null,
@@ -10527,11 +9307,7 @@
     },
     "admin-t-schedule|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-schedule|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-schedule|768|control-width|button·More export formats": {
       "reason": null,
@@ -10611,11 +9387,7 @@
     },
     "admin-t-settings|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings|768|tap-floor|a·2 games to finalize": {
       "reason": null,
@@ -10631,11 +9403,7 @@
     },
     "admin-t-settings-event|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings-event|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings-event|768|tap-floor|input·e.g. Spring Invitational 2026": {
       "reason": null,
@@ -10815,11 +9583,7 @@
     },
     "admin-t-settings-members|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings-members|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings-members|768|control-width|button·More export formats": {
       "reason": null,
@@ -10843,11 +9607,7 @@
     },
     "admin-t-settings-audit|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings-audit|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings-audit|768|control-width|button·More export formats": {
       "reason": null,
@@ -10867,11 +9627,7 @@
     },
     "admin-t-settings-notifications|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings-notifications|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings-notifications|768|tap-floor|a·Manage what you receive →": {
       "reason": null,
@@ -10979,11 +9735,7 @@
     },
     "admin-t-settings-pdf|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings-pdf|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings-pdf|768|tap-floor|input·UAT Plus Org": {
       "reason": null,
@@ -11027,11 +9779,7 @@
     },
     "admin-t-settings-fields|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings-fields|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings-fields|768|tap-floor|a·Add Question": {
       "reason": null,
@@ -11091,11 +9839,7 @@
     },
     "admin-t-settings-subscription|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings-subscription|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings-subscription|768|tap-floor|a·2 games to finalize": {
       "reason": null,
@@ -11123,11 +9867,7 @@
     },
     "admin-t-staff-kit|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-staff-kit|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-staff-kit|768|tap-floor|button·Copy the Scorekeeper link": {
       "reason": null,
@@ -11159,11 +9899,7 @@
     },
     "admin-t-summary|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-summary|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-summary|768|tap-floor|button·Copy standings link": {
       "reason": null,
@@ -11199,11 +9935,7 @@
     },
     "admin-t-venues|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-venues|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-venues|768|control-width|button·More export formats": {
       "reason": null,
@@ -11223,11 +9955,7 @@
     },
     "admin-t-chat|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-chat|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-chat|768|tap-floor|button·Rooms": {
       "reason": null,
@@ -11373,14 +10101,6 @@
       "reason": null,
       "detail": "4.23:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(43, 29, 42) at 12px"
     },
-    "admin-t-preview-schedule|390|contrast|span·Cancelled·rgb(239, 68, 68)on49,35,48": {
-      "reason": null,
-      "detail": "3.92:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(49, 35, 48) at 8px"
-    },
-    "admin-t-preview-schedule|390|contrast|span·Lions Diamond · Blue Pool·rgba(255, 255, 255, 0.4)on24,30,45": {
-      "reason": null,
-      "detail": "3.76:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(24, 30, 45) at 9px"
-    },
     "admin-t-preview-schedule|768|contrast|span·- 11:30 a.m.·rgba(255, 255, 255, 0.45)on24,30,45": {
       "reason": null,
       "detail": "4.39:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(24, 30, 45) at 11px"
@@ -11388,6 +10108,14 @@
     "admin-t-preview-schedule|768|contrast|span·Cancelled·rgb(239, 68, 68)on49,35,48": {
       "reason": null,
       "detail": "3.92:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(49, 35, 48) at 8px"
+    },
+    "admin-t-preview-schedule|390|contrast|span·Cancelled·rgb(239, 68, 68)on43,29,42": {
+      "reason": null,
+      "detail": "4.23:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(43, 29, 42) at 8px"
+    },
+    "admin-t-preview-schedule|390|contrast|span·Lions Diamond · Blue Pool·rgba(255, 255, 255, 0.4)on17,24,39": {
+      "reason": null,
+      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 9px"
     },
     "admin-hub-admin|361|tap-floor|a·Public site": {
       "reason": null,
@@ -11665,98 +10393,6 @@
       "reason": null,
       "detail": "42px tall (floor 44)"
     },
-    "guest-check-in|361|tap-floor|input·Search teams…": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Comets U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|control-width|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px wide (floor 44) — icon-only control"
-    },
-    "guest-check-in|361|tap-floor|button·Check in": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|control-width|button·Check in": {
-      "reason": null,
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "guest-check-in|361|tap-floor|button·Falcons U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Ravens U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Royals U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Storm U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Wolves U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Aces U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Comets U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Cyclones U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Falcons U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Freeze U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·North Stars U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Ravens U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Storm U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Blaze U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Royals U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Titans U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|361|tap-floor|button·Wolves U15 OpenNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
     "guest-scorekeeper|390|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -11789,98 +10425,6 @@
       "reason": null,
       "detail": "42px tall (floor 44)"
     },
-    "guest-check-in|390|tap-floor|input·Search teams…": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Comets U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|control-width|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px wide (floor 44) — icon-only control"
-    },
-    "guest-check-in|390|tap-floor|button·Check in": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|control-width|button·Check in": {
-      "reason": null,
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "guest-check-in|390|tap-floor|button·Falcons U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Ravens U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Royals U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Storm U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Wolves U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Aces U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Comets U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Cyclones U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Falcons U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Freeze U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·North Stars U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Ravens U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Storm U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Blaze U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Royals U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Titans U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|390|tap-floor|button·Wolves U15 OpenNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
     "guest-scorekeeper|768|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -11909,10 +10453,6 @@
       "reason": null,
       "detail": "16px tall (floor 44)"
     },
-    "guest-scorekeeper|768|tap-floor|button·4To Score 4": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
     "guest-scorekeeper|768|tap-floor|button·0Review 0": {
       "reason": null,
       "detail": "42px tall (floor 44)"
@@ -11937,14 +10477,6 @@
       "reason": null,
       "detail": "19px tall (floor 44)"
     },
-    "guest-check-in|768|tap-floor|input·Search teams…": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|select·Division": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
     "guest-check-in|768|tap-floor|button·18All 18": {
       "reason": null,
       "detail": "42px tall (floor 44)"
@@ -11961,93 +10493,13 @@
       "reason": null,
       "detail": "42px tall (floor 44)"
     },
-    "guest-check-in|768|tap-floor|button·Comets U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|control-width|button·Mark no-show": {
-      "reason": null,
-      "detail": "38px wide (floor 44) — icon-only control"
-    },
-    "guest-check-in|768|tap-floor|button·Check in": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Falcons U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Ravens U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Royals U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Storm U11 GirlsNo rosterOwes $475": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Wolves U11 GirlsNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Aces U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Comets U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Cyclones U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Falcons U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Freeze U13 BoysNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·North Stars U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Ravens U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Storm U13 BoysNo rosterOwes $525": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Blaze U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Royals U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Titans U15 OpenNo rosterOwes $575": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Wolves U15 OpenNo rosterPaid": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
     "guest-scorekeeper|768|tap-floor|button·Sign out": {
       "reason": null,
       "detail": "15px tall (floor 44)"
+    },
+    "guest-scorekeeper|768|tap-floor|button·4To score 4": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
     },
     "guest-check-in|768|tap-floor|button·Sign out": {
       "reason": null,
@@ -15674,10 +14126,6 @@
       "reason": null,
       "detail": "16px tall (floor 44)"
     },
-    "guest-scorekeeper-account|768|tap-floor|button·4To Score 4": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
     "guest-scorekeeper-account|768|tap-floor|button·0Review 0": {
       "reason": null,
       "detail": "42px tall (floor 44)"
@@ -15687,6 +14135,10 @@
       "detail": "42px tall (floor 44)"
     },
     "guest-scorekeeper-account|768|tap-floor|button·6All 6": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|tap-floor|button·4To score 4": {
       "reason": null,
       "detail": "42px tall (floor 44)"
     },
@@ -15860,11 +14312,7 @@
     },
     "admin-t-settings-subscription-panel|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings-subscription-panel|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings-subscription-panel|361|tap-floor|button·See what Premium Coaches Portal includes": {
       "reason": null,
@@ -15896,11 +14344,7 @@
     },
     "admin-t-settings-subscription-panel|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings-subscription-panel|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings-subscription-panel|390|tap-floor|button·See what Premium Coaches Portal includes": {
       "reason": null,
@@ -15932,11 +14376,7 @@
     },
     "admin-t-settings-subscription-panel|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-settings-subscription-panel|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
+      "detail": "38px tall (floor 44)"
     },
     "admin-t-settings-subscription-panel|768|tap-floor|button·See what Premium Coaches Portal includes": {
       "reason": null,

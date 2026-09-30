@@ -57,19 +57,43 @@ export function ClubSection({
 }
 
 /** The row list — framed on the page, or `inset` inside a section that already paints the ground. */
-export function ClubRowList({ inset = false, label, children }: { inset?: boolean; label?: string; children: ReactNode }) {
+export function ClubRowList({
+  inset = false, label, children, 'data-sandbox-tour': tourAnchor,
+}: {
+  inset?: boolean;
+  label?: string;
+  children: ReactNode;
+  /** The demo tour anchors on a LIST, never on a row — written as the literal attribute at the call
+   *  site (`data-sandbox-tour="…"`), which is what the tour-anchor guard's static scan reads. */
+  'data-sandbox-tour'?: string;
+}) {
   return (
-    <ul className={inset ? styles.rowListInset : styles.rowList} data-row-list={inset ? 'inset' : 'frame'} aria-label={label}>
+    <ul
+      className={inset ? styles.rowListInset : styles.rowList}
+      data-row-list={inset ? 'inset' : 'frame'}
+      aria-label={label}
+      data-sandbox-tour={tourAnchor}
+    >
       {children}
     </ul>
   );
 }
 
-/** A label row inside the frame (a group, a month) — a heading to assistive tech, not a record. */
-export function ClubRowBand({ children }: { children: ReactNode }) {
+/** ONE frame around several banded lists (the game-day board's four, Results' bands, Check-in's
+ *  divisions): the frame paints the ground once, each list inside it is `inset` and opens on its band. */
+export function ClubRowFrame({ children }: { children: ReactNode }) {
+  return <div className={styles.rowFrame} data-row-list="frame">{children}</div>;
+}
+
+/** A label row inside the frame (a group, a month) — a heading to assistive tech, not a record.
+ *  `count` is the band's one figure ("To finalize 2", "U11 Girls 2 of 6 in"), said once, beside it. */
+export function ClubRowBand({ children, count }: { children: ReactNode; count?: ReactNode }) {
   return (
     <li className={styles.rowBand} role="presentation">
-      <span role="heading" aria-level={3}>{children}</span>
+      <span role="heading" aria-level={3}>
+        {children}
+        {count != null && <span className={styles.rowBandCount}> {count}</span>}
+      </span>
     </li>
   );
 }
@@ -77,11 +101,23 @@ export function ClubRowBand({ children }: { children: ReactNode }) {
 type RowBase = {
   title: ReactNode;
   caption?: ReactNode;
+  /** The date column (the portal's `lead`): a column of its own at a desk; on a phone it moves onto
+   *  the caption's line, ahead of the caption, joined by " ·". Formatted by the caller. */
+  lead?: ReactNode;
+  /** On a phone, the lead and caption read ABOVE the title (Results' "when" line over its two teams). */
+  captionFirst?: boolean;
   trail?: ReactNode;
   /** The one door: a chevron, last, right — only where something opens. */
   chevron?: boolean;
   /** Worded actions BESIDE the row (a pending invitation's Resend / Cancel), never inside its link. */
   actions?: ReactNode;
+  /**
+   * The ONE worded action a list exists to do (Finalize, Check in) — in the row, beside its chevron, at
+   * every width (A11 Option 1, owner 2026-09-29: the portal's form for a list whose rows fit a phone).
+   * A sibling of the row's own control, never nested in it; the row's tap covers the rest of the row,
+   * the chevron included, so the two targets touch and never overlap.
+   */
+  beside?: ReactNode;
   'aria-label'?: string;
 };
 export type ClubRowProps =
@@ -90,25 +126,28 @@ export type ClubRowProps =
   | (RowBase & { as?: 'static' });
 
 export function ClubRow(props: ClubRowProps) {
-  const { title, caption, trail, chevron, actions } = props;
+  const { title, caption, lead, captionFirst, trail, chevron, actions, beside } = props;
   const opens = props.as === 'link' || props.as === 'button';
   const cls = `${styles.row}${opens ? ` ${styles.rowDoor}` : ''}`;
+  const chevronEl = <span className={styles.rowChevron}><ChevronRight size={16} aria-hidden /></span>;
   const inner = (
     <>
+      {lead != null && <span className={styles.rowLead}>{lead}</span>}
       <span className={styles.rowMain}>
         <span className={styles.rowTitle}>{title}</span>
         {caption != null && <span className={styles.rowCaption}>{caption}</span>}
       </span>
-      {(trail != null || chevron) && (
+      {(trail != null || (chevron && !beside)) && (
         <span className={styles.rowTrail}>
           {trail}
-          {chevron && <span className={styles.rowChevron}><ChevronRight size={16} aria-hidden /></span>}
+          {chevron && !beside && chevronEl}
         </span>
       )}
     </>
   );
+  const itemCls = `${styles.rowItem}${actions ? ` ${styles.rowItemWithActions}` : ''}${beside ? ` ${styles.rowItemBeside}` : ''}`;
   return (
-    <li className={`${styles.rowItem}${actions ? ` ${styles.rowItemWithActions}` : ''}`} data-row-list-row>
+    <li className={itemCls} data-row-list-row data-caption-first={captionFirst || undefined}>
       {props.as === 'link' ? (
         <Link href={props.href} className={cls} aria-label={props['aria-label']}>{inner}</Link>
       ) : props.as === 'button' ? (
@@ -118,8 +157,38 @@ export function ClubRow(props: ClubRowProps) {
       ) : (
         <div className={cls}>{inner}</div>
       )}
+      {beside && <span className={styles.rowBeside}>{beside}</span>}
+      {/* Beside a worded action the chevron still ends the row (the drawing's "a chevron ends every
+          row"): drawn after the action, and covered by the row's own stretched tap, not a second control. */}
+      {beside && chevron && chevronEl}
       {actions && <span className={styles.rowActions}>{actions}</span>}
     </li>
+  );
+}
+
+/** The worded action beside a row's chevron (`ClubRow` `beside`): olive on white, never lime — the
+ *  lime is one main action per screen (A12, owner 2026-09-29). 44px on a phone, the admin's 38px above. */
+export function RowAction({
+  children, onClick, disabled, quiet = false, icon, 'aria-label': ariaLabel,
+}: {
+  children: ReactNode;
+  onClick: MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
+  /** The undoing action (Undo) — the quiet ink, not the olive. */
+  quiet?: boolean;
+  icon?: ReactNode;
+  'aria-label'?: string;
+}) {
+  return (
+    <button
+      type="button"
+      className={`${styles.rowAction}${quiet ? ` ${styles.rowActionQuiet}` : ''}`}
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+    >
+      {icon}{children}
+    </button>
   );
 }
 

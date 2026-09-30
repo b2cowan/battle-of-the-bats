@@ -153,9 +153,75 @@
 .rowItemWithActions > .row { flex: 1 1 auto; min-width: 0; width: auto; }
 .rowActions { display: flex; align-items: center; gap: 0.4rem; flex: none; padding-right: 1.1rem; }
 
+/* ONE frame around several banded lists (`ClubRowFrame` — Tournament admin redesign Stage 1: the
+   game-day board's four lists, Results' bands, Check-in's divisions). The frame paints the ground
+   once; each list inside is `inset` and opens on its band, whose top rule parts it from the list above. */
+.rowFrame {
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow: hidden;
+}
+.rowFrame > .rowListInset + .rowListInset > .rowBand:first-child { border-top: 1px solid var(--home-line); }
+/* The band's one figure ("To finalize 2", "U11 Girls 2 of 6 in"): the data face at the label step. */
+.rowBandCount {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+/* The date column (the portal's `.rowListLead`): wide enough for "Sun, Jun 14 · 11:30 a.m.". */
+.rowLead {
+  flex: none;
+  width: 10.5rem;
+  color: var(--text-tertiary);
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* ONE worded action beside the chevron (`beside`, A11 Option 1). The row's own control stays one
+   control: its stretched cover (::after) makes the whole item its target — the chevron drawn after the
+   action included — and the action sits above the cover, so the two targets touch and never overlap. */
+.rowItemBeside { display: flex; align-items: center; position: relative; }
+.rowItemBeside > .row { flex: 1 1 auto; min-width: 0; width: auto; }
+.rowItemBeside > .rowDoor::after { content: ''; position: absolute; inset: 0; }
+.rowItemBeside > .rowDoor:hover { background: none; }
+/* The hover tint rides the row's own cover, never the <li> (a row is not a card — the list-ground rule),
+   and only where a pointer hovers (a tapped row on a touch screen keeps :hover). */
+@media (hover: hover) { .rowItemBeside > .rowDoor:hover::after { background: var(--home-olive-soft); } }
+.rowItemBeside > .rowDoor:focus-visible { outline: none; }
+.rowItemBeside:has(> .rowDoor:focus-visible) { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.rowBeside { position: relative; z-index: 1; flex: none; display: flex; align-items: center; }
+.rowItemBeside > .rowChevron { padding: 0 1.1rem 0 0.75rem; pointer-events: none; }
+/* The action itself (`RowAction`): olive on white (A12 — the lime is one main action per screen). */
+.rowAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 38px;
+  padding: 0 0.8rem;
+  border: 1px solid rgba(var(--home-olive-rgb), 0.45);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--home-olive);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rowAction:hover { background: var(--home-olive-soft); }
+.rowAction:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.rowAction:disabled { opacity: 0.5; cursor: default; }
+.rowActionQuiet { border-color: var(--home-line-strong); color: var(--text-secondary); font-weight: 650; }
+
 @media (max-width: 768px) {
   a.row, button.row { min-height: var(--tap-min, 44px); }
   .rowActions button { min-height: var(--tap-min, 44px); }
+  .rowAction { min-height: var(--tap-min, 44px); }
 }
 
 /* ≤ 640 — ONE FRAME, THE ROWS HAIRLINED (owner ruling P1, 2026-09-29, "Phone lists in one frame",
@@ -173,6 +239,37 @@
   .rowItemWithActions > .row { flex-basis: 100%; }
   .rowActions { flex-basis: 100%; padding: 0 0.85rem 0.75rem; }
   .rowActions > * { flex: 1 1 0; }
+  .rowFrame { overflow: clip; }
+  /* Beside a worded action the chevron stays in the flow after it (not the corner), and the row
+     gives back the corner's reserve. */
+  .rowItemBeside:has(.rowChevron) > .row { padding-right: 0.5rem; }
+  .rowItemBeside > .rowChevron { position: static; transform: none; padding: 0 0.8rem 0 0.55rem; }
+  .rowAction { min-height: var(--tap-min, 44px); }
+  /* A row with a date column: the portal's phone order (`.rowList`'s block) — title and trail on the
+     first line, then the date joined to the caption on the second. The line break is ::before, since
+     ::after is the stretched cover of a row with an action beside it. */
+  .row:has(> .rowLead) { flex-wrap: wrap; gap: 0.15rem 0.5rem; }
+  .row:has(> .rowLead) .rowMain { display: contents; }
+  .row:has(> .rowLead) .rowTitle { order: 1; flex: 1 1 0; min-width: 0; }
+  .row:has(> .rowLead) .rowTrail { order: 2; margin-left: auto; }
+  .row:has(> .rowLead)::before { content: ''; order: 3; flex-basis: 100%; height: 0; }
+  .row:has(> .rowLead) .rowLead { order: 4; width: auto; font-size: var(--type-support); }
+  .row:has(> .rowLead):has(.rowCaption) .rowLead::after { content: ' ·'; }
+  .row:has(> .rowLead) .rowCaption { order: 5; flex: 1 1 0; min-width: 0; }
+  /* `captionFirst`: the date and caption read above the title (Results' "when" line over two teams). */
+  li[data-caption-first] > .row:has(> .rowLead) .rowLead { order: 0; }
+  li[data-caption-first] > .row:has(> .rowLead) .rowCaption { order: 1; }
+  li[data-caption-first] > .row:has(> .rowLead)::before { order: 2; }
+  li[data-caption-first] > .row:has(> .rowLead) .rowTitle { order: 3; flex-basis: 100%; }
+  li[data-caption-first] > .row:has(> .rowLead) .rowTrail { order: 4; }
+  /* …and with a worded action beside it (Results' To finalize row, the hub's drawn form): the date
+     and caption line runs the row's FULL width, and the action sits beside the title under it, the
+     chevron in the corner — so the line is never squeezed into a column beside the button. */
+  li[data-caption-first].rowItemBeside { display: block; }
+  li[data-caption-first].rowItemBeside > .row { padding-right: 2.6rem; }
+  li[data-caption-first].rowItemBeside > .row .rowTitle { padding-right: 7.5rem; }
+  li[data-caption-first].rowItemBeside > .rowBeside { position: absolute; right: 2.4rem; bottom: 0.6rem; padding: 0; }
+  li[data-caption-first].rowItemBeside > .rowChevron { position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); padding: 0; }
 }
 
 /* ── The table (standard §3.2–3.6) ── */

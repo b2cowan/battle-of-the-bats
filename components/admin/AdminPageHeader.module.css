@@ -79,4 +79,11 @@
   /* Words become symbols on a phone (house rule 3); the aria-label keeps the destination. */
   .header .backLabel { display: none; }
   .header .back { min-width: var(--tap-min, 44px); justify-content: center; }
+  /* `inlineActions` (the tournament screens, G1): the icons join the title's line, 44px each, help
+     last; the title takes what is left and wraps to a second line before an icon is pushed off. */
+  .header[data-actions-inline] { display: flex; flex-wrap: wrap; align-items: center; column-gap: 0.5rem; }
+  .header[data-actions-inline] .left { flex: 1 1 8rem; margin-right: 0; }
+  /* A page with more icons than the line holds (the schedule) drops them to a right-pinned row. */
+  .header[data-actions-inline] .actions { flex: none; flex-wrap: nowrap; gap: 0.4rem; margin-left: auto; }
+  .header[data-actions-inline] .actions > :is(button, a) { min-width: var(--tap-min, 44px); justify-content: center; }
 }

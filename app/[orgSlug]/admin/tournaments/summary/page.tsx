@@ -13,7 +13,6 @@ import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { Callout } from '@/components/admin/kit/club/RepKit';
-import { useTournamentCrumb } from '@/components/admin/tournament';
 import styles from './summary.module.css';
 
 type SummaryData = {
@@ -185,7 +184,6 @@ export default function TournamentSummaryPage() {
   usePageTitle('Post-Event Summary');
   const { currentTournament, setCurrentTournament, refresh } = useTournament();
   const kit = useAdminKit();
-  const tournamentCrumbs = [useTournamentCrumb()];
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [state, setState] = useState<LoadState>('idle');
   const [message, setMessage] = useState('');
@@ -370,7 +368,7 @@ export default function TournamentSummaryPage() {
     return (
       <div className={styles.page}>
         <AdminPageHeader
-          crumbs={tournamentCrumbs}
+          inlineActions
           title="Post-event summary"
           legacy={
             <div className={styles.pageHeader}>
@@ -396,7 +394,7 @@ export default function TournamentSummaryPage() {
     return (
       <div className={styles.page}>
         <AdminPageHeader
-          crumbs={tournamentCrumbs}
+          inlineActions
           title="Next tournament draft created"
           legacy={
             <div className={styles.pageHeader}>
@@ -464,7 +462,7 @@ export default function TournamentSummaryPage() {
           states the same tournament start/end dates. */}
       {kit ? (
         <div data-sandbox-tour="post-event-summary">
-          <AdminPageHeader crumbs={tournamentCrumbs} title="Post-event summary" />
+          <AdminPageHeader inlineActions title="Post-event summary" />
         </div>
       ) : (
         <div className={styles.pageHeader} data-sandbox-tour="post-event-summary">

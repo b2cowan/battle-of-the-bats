@@ -6,7 +6,7 @@ import {
   AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Copy, Info,
   Users, Calendar, Trophy, DollarSign, TrendingUp, Zap, Flag,
   Clock, Activity, Star, Shield, BarChart2, Target, Bell,
-  Settings, RotateCcw, Megaphone, GripVertical, X, Plus, Pencil, UserCheck,
+  Settings, RotateCcw, Megaphone, GripVertical, X, Plus, Pencil,
   MessageCircle,
 } from 'lucide-react';
 import {
@@ -20,6 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
+import { useVisiblePoll } from '@/lib/hooks/useVisiblePoll';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -31,15 +32,19 @@ import GuidanceRail from '@/components/admin/tournament/GuidanceRail';
 import PersonaPanel from '@/components/admin/tournament/PersonaPanel';
 import { getGuidance, getStageShortcuts, type GuidanceStage } from '@/lib/tournament-guidance';
 import styles from './dashboard.module.css';
-import { copiedSummary, formatTime } from '@/lib/utils';
+import { copiedSummary } from '@/lib/utils';
 import type { CloneCopiedCounts } from '@/lib/types';
-import { hasPlayoffs, isReadyToFinalize, resolvePhase } from '@/lib/tournament-phase';
+import { hasPlayoffs, isReadyToFinalize } from '@/lib/tournament-phase';
 import { tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
-import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
-import { Callout } from '@/components/admin/kit/club/RepKit';
+import { Callout, repKit } from '@/components/admin/kit/club/RepKit';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { ARCHIVE_CONFIRM_BODY } from '@/lib/tournament-archive-words';
+import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import GameDayBoard, {
+  BoardNote, CustomizeLink, EMPTY_GAME_DAY, GAME_DAY_PARTS, type GameDayPartId, type GameDayStats,
+} from './GameDayBoard';
 
 // ── Kit ink patches (Admin Design Continuity slice 4b) ──────────────────────
 // Shared single-property style objects reused across this page's many inline icon/text colours.
@@ -89,52 +94,6 @@ type PaymentCounts = {
   pending: number;
   pastDue: number;
   noSchedule: number;
-};
-
-type GameDayDivisionStat = {
-  id: string;
-  name: string;
-  poolTotal: number;
-  poolCompleted: number;
-  playoffStarted: boolean;
-  latestRound: string | null;
-  nextRound: string | null;
-};
-
-type LiveGameStat = {
-  id: string;
-  homeTeamName: string;
-  awayTeamName: string;
-  homeScore: number | null;
-  awayScore: number | null;
-  status: string;
-  time: string | null;
-  location: string | null;
-  divisionName: string | null;
-  isPlayoff: boolean;
-};
-
-type GameDayStats = {
-  totalGames: number;
-  completed: number;
-  /** Every game in a terminal state (completed OR forfeit) — drives "ready to finalize". */
-  resolved: number;
-  inProgress: number;
-  completedPct: number;
-  poolGamesTotal: number;
-  poolGamesCompleted: number;
-  playoffStarted: boolean;
-  playoffGamesTotal: number;
-  playoffGamesCompleted: number;
-  /** Playoff games in a terminal state (completed OR forfeit) — drives the "Playoffs complete" footer. */
-  playoffResolved: number;
-  byDivision: GameDayDivisionStat[];
-  liveGames: LiveGameStat[];
-  liveGamesTotal: number;
-  upNextGames: LiveGameStat[];
-  upNextTotal: number;
-  needsScoreGames: LiveGameStat[];
-  needsScoreTotal: number;
 };
 
 type ScheduleHealthDashboardStats = {
@@ -254,23 +213,45 @@ const AVAILABLE_ICONS = Object.keys(ICON_MAP) as IconKey[];
 
 type StatCardId = 'teams' | 'scheduled' | 'completed' | 'days';
 type PanelId = 'registration' | 'payment' | 'communications' | 'tournamentChat' | 'scheduleHealth';
-// Game-day board panels — a SEPARATE customizable set from the pre-event panels
-// (they show different content; hiding one board's panel never affects the other).
-type GameDayPanelId = 'nowPlaying' | 'upNext' | 'needsScore' | 'gamesProgress' | 'checkIn' | 'gdScheduleHealth' | 'byDivision';
+// The game-day board's panels BEFORE Stage 1 (v1–v3 layouts): read only to carry an organizer's
+// hide choices onto the new board's parts (below).
+type LegacyGameDayPanelId = 'nowPlaying' | 'upNext' | 'needsScore' | 'gamesProgress' | 'checkIn' | 'gdScheduleHealth' | 'byDivision';
 
 type StatCardConfig = { id: StatCardId; label: string; icon: IconKey; visible: boolean; order: number };
 type PanelConfig    = { id: PanelId;   label: string;                  visible: boolean; order: number };
-type GameDayPanelConfig = { id: GameDayPanelId; label: string; visible: boolean; order: number };
+/** The game-day board's parts: shown or hidden only — the order is the day's (owner 2026-09-29). */
+type GameDayPartConfig = { id: GameDayPartId; visible: boolean };
 
 type DashboardLayout = {
-  version: 3;
+  version: 4;
   statCards: StatCardConfig[];
   panels: PanelConfig[];
-  gameDayPanels: GameDayPanelConfig[];
+  gameDayParts: GameDayPartConfig[];
 };
 
+const DEFAULT_GAME_DAY_PARTS: GameDayPartConfig[] = GAME_DAY_PARTS.map(p => ({ id: p.id, visible: true }));
+
+/**
+ * A v1–v3 layout's game-day panels → the Stage 1 board's parts, keeping what an organizer hid: the
+ * three lists and health by their own ids; To finalize (which came OUT of Now playing) with Now
+ * playing; the summary card (which replaced Games progress, Team check-in and By division) unless
+ * all three were hidden. The rain-delay door is new, so it shows.
+ */
+function gameDayPartsFromLegacy(saved: Array<{ id: LegacyGameDayPanelId; visible: boolean }> | undefined): GameDayPartConfig[] {
+  const shown = (id: LegacyGameDayPanelId) => (saved ?? []).find(p => p.id === id)?.visible ?? true;
+  const legacy: Partial<Record<GameDayPartId, boolean>> = {
+    toFinalize: shown('nowPlaying'),
+    needsScore: shown('needsScore'),
+    playingNow: shown('nowPlaying'),
+    upNext: shown('upNext'),
+    summary: shown('gamesProgress') || shown('checkIn') || shown('byDivision'),
+    gdScheduleHealth: shown('gdScheduleHealth'),
+  };
+  return DEFAULT_GAME_DAY_PARTS.map(p => ({ id: p.id, visible: legacy[p.id] ?? true }));
+}
+
 const DEFAULT_LAYOUT: DashboardLayout = {
-  version: 3,
+  version: 4,
   statCards: [
     { id: 'teams',     label: 'Teams',     icon: 'Users',    visible: true, order: 0 },
     { id: 'scheduled', label: 'Scheduled', icon: 'Calendar', visible: true, order: 1 },
@@ -284,15 +265,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: 'communications', label: 'Communications', visible: true, order: 3 },
     { id: 'scheduleHealth', label: 'Schedule Health', visible: true, order: 4 },
   ],
-  gameDayPanels: [
-    { id: 'nowPlaying',       label: 'Now Playing',     visible: true, order: 0 },
-    { id: 'upNext',           label: 'Up Next',         visible: true, order: 1 },
-    { id: 'needsScore',       label: 'Needs a Score',   visible: true, order: 2 },
-    { id: 'gamesProgress',    label: 'Games Progress',  visible: true, order: 3 },
-    { id: 'checkIn',          label: 'Team Check-in',   visible: true, order: 4 },
-    { id: 'gdScheduleHealth', label: 'Schedule Health', visible: true, order: 5 },
-    { id: 'byDivision',       label: 'By Division',     visible: true, order: 6 },
-  ],
+  gameDayParts: DEFAULT_GAME_DAY_PARTS,
 };
 
 function layoutKey(orgSlug: string) { return `fl_dash_v1_${orgSlug}`; }
@@ -306,33 +279,25 @@ function loadLayout(orgSlug: string): DashboardLayout {
       version?: number;
       statCards?: StatCardConfig[];
       panels?: PanelConfig[];
-      gameDayPanels?: GameDayPanelConfig[];
+      gameDayPanels?: Array<{ id: LegacyGameDayPanelId; visible: boolean }>;
+      gameDayParts?: GameDayPartConfig[];
     };
-    // Accept v1 (no gameDayPanels), v2, and v3 — default-merge fills any missing set,
-    // so an older saved layout gains new cards/panels without being discarded.
+    // Accept v1–v4 — default-merge fills any missing set, so an older saved layout gains new
+    // cards/panels without being discarded.
     const savedVersion = p.version;
-    if (savedVersion !== 1 && savedVersion !== 2 && savedVersion !== 3) return DEFAULT_LAYOUT;
+    if (savedVersion !== 1 && savedVersion !== 2 && savedVersion !== 3 && savedVersion !== 4) return DEFAULT_LAYOUT;
     const mergeBy = <T extends { id: string }>(defs: T[], saved: T[] | undefined): T[] =>
       defs.map(def => {
         const hit = (saved ?? []).find(c => c.id === def.id);
         return hit ? { ...def, ...hit } : def;
       });
-    // Game-day panels gained 'upNext' + 'needsScore' in v3. For a pre-v3 saved layout,
-    // adopt the new default order (Now Playing → Up Next → Needs a Score → …) but carry
-    // over each existing panel's show/hide choice (so a customizer keeps what they hid,
-    // and the two new panels land in a sensible spot instead of colliding on order).
-    // v3+ layouts merge order + visibility as usual.
-    const gameDayPanels = savedVersion >= 3
-      ? mergeBy(DEFAULT_LAYOUT.gameDayPanels, p.gameDayPanels)
-      : DEFAULT_LAYOUT.gameDayPanels.map(def => {
-          const hit = (p.gameDayPanels ?? []).find(c => c.id === def.id);
-          return hit ? { ...def, visible: hit.visible } : def;
-        });
     return {
-      version: 3,
+      version: 4,
       statCards: mergeBy(DEFAULT_LAYOUT.statCards, p.statCards),
       panels: mergeBy(DEFAULT_LAYOUT.panels, p.panels),
-      gameDayPanels,
+      gameDayParts: savedVersion === 4
+        ? mergeBy(DEFAULT_GAME_DAY_PARTS, p.gameDayParts)
+        : gameDayPartsFromLegacy(p.gameDayPanels),
     };
   } catch { return DEFAULT_LAYOUT; }
 }
@@ -342,19 +307,6 @@ function saveLayout(orgSlug: string, layout: DashboardLayout) {
 }
 
 // ── Misc helpers ─────────────────────────────────────────────────────────────
-
-const EMPTY_GAME_DAY: GameDayStats = {
-  totalGames: 0, completed: 0, resolved: 0, inProgress: 0, completedPct: 0,
-  poolGamesTotal: 0, poolGamesCompleted: 0,
-  playoffStarted: false, playoffGamesTotal: 0, playoffGamesCompleted: 0, playoffResolved: 0,
-  byDivision: [],
-  liveGames: [],
-  liveGamesTotal: 0,
-  upNextGames: [],
-  upNextTotal: 0,
-  needsScoreGames: [],
-  needsScoreTotal: 0,
-};
 
 /* ── Minute clock (external store) ───────────────────────────────────────────
    Backs the chat reminder's cooldown countdown. Defined at module scope so the three function
@@ -449,26 +401,6 @@ function getSourceSortRank(status?: string | null) {
 
 function fmt(n: number) {
   return n.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
-}
-
-// "HH:MM[:SS]" wall-clock → friendly "9:00 AM" (returns '' if unparseable/absent).
-function fmtClock(time: string | null | undefined): string {
-  if (!time) return '';
-  const m = /^(\d{1,2}):(\d{2})/.exec(time);
-  if (!m) return '';
-  return formatTime(`${m[1]}:${m[2]}`);
-}
-
-function fmtDateRange(start?: string, end?: string): string | null {
-  if (!start) return null;
-  const p = (d: string) => { const [y, m, day] = d.split('-').map(Number); return new Date(y, m - 1, day); };
-  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-  const full: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-  if (!end || end === start) return p(start).toLocaleDateString('en-CA', full);
-  const s = p(start), e = p(end);
-  return s.getFullYear() === e.getFullYear()
-    ? `${s.toLocaleDateString('en-CA', opts)} – ${e.toLocaleDateString('en-CA', full)}`
-    : `${s.toLocaleDateString('en-CA', full)} – ${e.toLocaleDateString('en-CA', full)}`;
 }
 
 // Counted in the ORG timezone, not the viewer's device — otherwise an out-of-province organizer
@@ -598,7 +530,7 @@ function SortableStatCard({
 
 /** A sortable analytics panel in edit mode: grip + remove overlay; body is inert. */
 function SortablePanel({ id, label, onRemove, children }: {
-  id: PanelId | GameDayPanelId;
+  id: PanelId;
   label: string;
   onRemove: () => void;
   children: React.ReactNode;
@@ -658,12 +590,13 @@ function AddTile({ kind, items, open, onToggle, onAdd }: {
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  const { currentTournament, refresh: refreshTournaments } = useTournament();
+  const { currentTournament, isLocked, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
   usePageTitle('Dashboard');
   const router = useRouter();
-  const kit = useAdminKit();
   const kx = useKitStyle();
+  // The rain-delay tool (the board's "Running late?" door) is Tournament Plus (2026-07-07 decision).
+  const canRainDelay = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_reschedule') : false;
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
@@ -729,45 +662,11 @@ export default function AdminDashboard() {
    */
   const nowMs = useSyncExternalStore(subscribeToMinuteTick, getMinuteNow, getMinuteNowServer);
 
-  // ── Now Playing one-row fit ───────────────────────────────────────────────
-  // Measure the live-games strip and show exactly as many tiles as fit in ONE row
-  // (floor of width / tile-width, min 4), with the remainder collapsing into a
-  // "+N more" tile. Below the width where 4 tiles fit, wrap to multiple rows so
-  // tiles stack on narrow/mobile instead of shrinking unusably.
-  const LIVE_TILE_MIN = 200; // must match .liveList > * min-width (px)
-  const LIVE_TILE_GAP = 8;   // must match .liveList gap (0.5rem)
-  const LIVE_MIN_TILES = 4;
-  const liveStripRef = useRef<HTMLDivElement | null>(null);
-  const [liveFit, setLiveFit] = useState<{ cols: number; wrap: boolean }>({ cols: LIVE_MIN_TILES, wrap: false });
-
-  useEffect(() => {
-    const el = liveStripRef.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    const measure = () => {
-      const w = el.clientWidth;
-      if (w <= 0) return;
-      // How many whole tiles fit: (w + gap) / (tile + gap).
-      const fit = Math.floor((w + LIVE_TILE_GAP) / (LIVE_TILE_MIN + LIVE_TILE_GAP));
-      if (fit < LIVE_MIN_TILES) {
-        // Can't fit the 4-tile floor → let the row wrap and show everything.
-        setLiveFit({ cols: LIVE_MIN_TILES, wrap: true });
-      } else {
-        setLiveFit({ cols: fit, wrap: false });
-      }
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-    // Re-attach when the strip appears/disappears or the live count changes, so the
-    // observer binds to the live node (stats is the early useState source of truth).
-  }, [stats.gameDay.liveGames.length, stats.isGameDay]);
-
   // ── Layout customization ──────────────────────────────────────────────────
   const [layout, setLayout] = useState<DashboardLayout>(DEFAULT_LAYOUT);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [expandedIconPicker, setExpandedIconPicker] = useState<StatCardId | null>(null);
-  const [addMenuZone, setAddMenuZone] = useState<'stat' | 'panel' | 'gameday' | null>(null);
+  const [addMenuZone, setAddMenuZone] = useState<'stat' | 'panel' | null>(null);
   const [reuseDismissed, setReuseDismissed] = useState(false);
 
   const sensors = useSensors(
@@ -806,8 +705,8 @@ export default function AdminDashboard() {
     updateLayout({ ...layout, statCards: layout.statCards.map(c => c.id === id ? { ...c, visible } : c) });
   const togglePanelVisible = (id: PanelId, visible: boolean) =>
     updateLayout({ ...layout, panels: layout.panels.map(p => p.id === id ? { ...p, visible } : p) });
-  const toggleGameDayPanelVisible = (id: GameDayPanelId, visible: boolean) =>
-    updateLayout({ ...layout, gameDayPanels: layout.gameDayPanels.map(p => p.id === id ? { ...p, visible } : p) });
+  const toggleGameDayPartVisible = (id: GameDayPartId, visible: boolean) =>
+    updateLayout({ ...layout, gameDayParts: layout.gameDayParts.map(p => p.id === id ? { ...p, visible } : p) });
   const setCardIcon = (id: StatCardId, icon: IconKey) =>
     updateLayout({ ...layout, statCards: layout.statCards.map(c => c.id === id ? { ...c, icon } : c) });
 
@@ -828,11 +727,6 @@ export default function AdminDashboard() {
     if (!over || active.id === over.id) return;
     updateLayout({ ...layout, panels: reorderById(layout.panels, String(active.id), String(over.id)) });
   };
-  const onGameDayPanelDragEnd = (e: DragEndEvent) => {
-    const { active, over } = e;
-    if (!over || active.id === over.id) return;
-    updateLayout({ ...layout, gameDayPanels: reorderById(layout.gameDayPanels, String(active.id), String(over.id)) });
-  };
   const exitCustomize = () => { setIsCustomizing(false); setExpandedIconPicker(null); setAddMenuZone(null); };
 
   // ── Populate-from (draft only) ────────────────────────────────────────────
@@ -850,6 +744,8 @@ export default function AdminDashboard() {
   const reuseUpgradeCopy = requiresTournamentPlusCopy('tournament_cloning');
 
   // ── Fetch stats ───────────────────────────────────────────────────────────
+  /** The current read, for the live refresh below (null while there is no tournament). */
+  const pollStatsRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     const tournamentId = currentTournament?.id;
     if (!tournamentId) return;
@@ -871,7 +767,7 @@ export default function AdminDashboard() {
           scheduleHealth:  data?.scheduleHealth  ?? EMPTY_STATS.scheduleHealth,
           isTournamentDay: data?.isTournamentDay ?? false,
           isGameDay:       data?.isGameDay       ?? false,
-          gameDay:         data?.gameDay         ?? EMPTY_GAME_DAY,
+          gameDay:         { ...EMPTY_GAME_DAY, ...(data?.gameDay ?? {}) },
           champions:       data?.champions       ?? [],
           notifyTeamsOnComplete: data?.notifyTeamsOnComplete ?? false,
           coinTossNeeded:  data?.coinTossNeeded  ?? [],
@@ -910,24 +806,17 @@ export default function AdminDashboard() {
       }
     }
     void fetchStats(tournamentId);
-
-    // Live auto-refresh (J1-086): the board's gauges were one-shot and froze on a
-    // live game day. Poll every 30s so games-complete / check-in / live-now numbers
-    // move on their own. Gated on tab visibility so a backgrounded tab doesn't poll,
-    // and re-fetches immediately when the tab is refocused. Cheap (one cached GET).
-    const POLL_MS = 30_000;
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === 'visible') void fetchStats(tournamentId);
-    }, POLL_MS);
-    const onVisible = () => { if (document.visibilityState === 'visible') void fetchStats(tournamentId); };
-    document.addEventListener('visibilitychange', onVisible);
+    pollStatsRef.current = () => { void fetchStats(tournamentId); };
 
     return () => {
       controller.abort();
-      window.clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisible);
+      pollStatsRef.current = null;
     };
   }, [currentTournament?.id, orgParam, statsReloadKey]);
+
+  // Live auto-refresh (J1-086, and G6's shared rule): the board's figures move on their own every 30 s
+  // while the tab is visible, and at once when it comes back. Cheap (one cached GET).
+  useVisiblePoll(() => pollStatsRef.current?.(), { enabled: Boolean(currentTournament?.id) });
 
   // Fetch other tournaments for populate-from
   useEffect(() => {
@@ -1043,7 +932,6 @@ export default function AdminDashboard() {
   const isDraft       = status === 'draft';
   const isActive      = status === 'active';
   const isCompleted   = status === 'completed';
-  const statusColor   = { active: 'var(--logic-lime)', draft: 'var(--white-60)', completed: 'var(--warning)', archived: 'rgba(148,163,184,0.4)' }[status] ?? 'var(--white-60)';
 
   const visibleStats  = currentTournament?.id ? stats : EMPTY_STATS;
   const checklist     = visibleStats.publishChecklist;
@@ -1078,14 +966,9 @@ export default function AdminDashboard() {
     playoffGamesTotal: gd.playoffGamesTotal,
     hasPlayoffs: tournamentHasPlayoffs,
   });
-  // Playoffs done (every playoff game terminal) — completion-aware By-Division footer.
-  const playoffsAllDone  = gd.playoffGamesTotal > 0 && gd.playoffResolved >= gd.playoffGamesTotal;
-
   // Active sub-states
   const isPreEvent      = isActive && daysUntil !== null && daysUntil > 0;
   const isPostEventActive = isActive && !isTournamentDay && (daysUntil === null || daysUntil <= 0);
-
-  const statusLabel = readyToFinalize ? 'Ready to finalize' : (isActive && isGameDay) ? 'Live' : isPreEvent ? 'Pre-Event' : isPostEventActive ? 'Event Ended' : isCompleted ? 'Completed' : status.charAt(0).toUpperCase() + status.slice(1);
 
   // ── Discovery & Orientation rail (help Layer 3) ─────────────────────────────
   // One stage-aware "what's next" card pinned at the top of each dashboard stage.
@@ -1146,9 +1029,7 @@ export default function AdminDashboard() {
     .map(c => ({ id: c.id, label: c.label, icon: c.icon }));
   const hiddenPanels = [...layout.panels].filter(p => !p.visible).sort((a, b) => a.order - b.order)
     .map(p => ({ id: p.id, label: p.label }));
-  const sortedGameDayPanels = [...layout.gameDayPanels].sort((a, b) => a.order - b.order).filter(p => p.visible);
-  const hiddenGameDayPanels = [...layout.gameDayPanels].filter(p => !p.visible).sort((a, b) => a.order - b.order)
-    .map(p => ({ id: p.id, label: p.label }));
+  const gameDayPartShown = (id: GameDayPartId) => layout.gameDayParts.find(p => p.id === id)?.visible ?? true;
 
   // Checklist
   type ChecklistItem = { key: string; done: boolean; label: string; desc: string; href: string; action: string; help?: { title: string; body: string } };
@@ -1618,7 +1499,9 @@ export default function AdminDashboard() {
     );
   }
 
-  function renderScheduleHealthPanel() {
+  // Schedule health's body — the before-the-event board's panel, and what the game-day board's health
+  // row opens in place (G2: "Schedule health as a row that expands in place").
+  function renderScheduleHealthBody() {
     const health = visibleStats.scheduleHealth;
     const hasTimedSchedule = health.timedGames > 0;
     const healthLabel = health.tone === 'good' ? 'Healthy' : health.tone === 'warning' ? 'Review' : 'Needs work';
@@ -1632,17 +1515,7 @@ export default function AdminDashboard() {
       : health.travelBufferWarnings > 0
         ? { value: health.travelBufferWarnings, label: 'Travel buffer', tone: 'warning' as const }
         : { value: health.conflicts, label: 'Conflicts', tone: health.conflicts > 0 ? 'danger' as const : 'good' as const };
-
-    return (
-      // data-sandbox-tour: the beat the "Break the schedule" tour chip points at in the
-      // "See it live" sandbox. An inert attribute — nothing reads it outside a demo org.
-      <section className={`${styles.analyticsPanel} ${styles.scheduleHealthPanel}`} data-tone={health.tone} data-sandbox-tour="schedule-health">
-        <div className={styles.panelHeader}>
-          <Activity size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
-          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Schedule Health</h2>
-          <Link href={`${base}/schedule`} className={styles.panelLink}>Review -&gt;</Link>
-        </div>
-        {hasTimedSchedule ? (
+    return hasTimedSchedule ? (
           <>
             <div className={styles.scheduleHealthTopline}>
               <div className={styles.scheduleHealthScore} data-tone={health.tone}>
@@ -1692,9 +1565,23 @@ export default function AdminDashboard() {
         ) : (
           <div className={styles.emptyPanel}>
             <span>No timed schedule generated yet.</span>
-            <Link href={`${base}/schedule`} className={styles.panelLink}>Build schedule -&gt;</Link>
+            <Link href={`${base}/schedule`} className={styles.panelLink}>Build schedule →</Link>
           </div>
-        )}
+        );
+  }
+
+  function renderScheduleHealthPanel() {
+    const health = visibleStats.scheduleHealth;
+    return (
+      // data-sandbox-tour: the beat the "Break the schedule" tour chip points at in the
+      // "See it live" sandbox. An inert attribute — nothing reads it outside a demo org.
+      <section className={`${styles.analyticsPanel} ${styles.scheduleHealthPanel}`} data-tone={health.tone} data-sandbox-tour="schedule-health">
+        <div className={styles.panelHeader}>
+          <Activity size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Schedule Health</h2>
+          <Link href={`${base}/schedule`} className={styles.panelLink}>Review →</Link>
+        </div>
+        {renderScheduleHealthBody()}
       </section>
     );
   }
@@ -1832,12 +1719,30 @@ export default function AdminDashboard() {
   }
 
   // ── Edit-mode toolbar ─────────────────────────────────────────────────────
+  // On the game-day board Customize shows and hides the board's parts (owner 2026-09-29): one
+  // checkbox per part, in the day's order, which Customize never changes. The before-the-event
+  // board keeps its drag-to-reorder panels.
   function renderEditToolbar() {
+    const gameDayBoard = isActive && isGameDay;
     return (
       <div className={styles.editToolbar}>
         <Settings size={14} className={styles.editToolbarIcon} />
         <span className={styles.editToolbarTitle}>Edit Layout</span>
-        <span className={styles.editToolbarHint}>Drag to reorder · saved to your browser</span>
+        <span className={styles.editToolbarHint}>{gameDayBoard ? GAME_DAY_WORDS.customizeHint : 'Drag to reorder · saved to your browser'}</span>
+        {gameDayBoard && (
+          <div className={styles.editToolbarParts} role="group" aria-label={GAME_DAY_WORDS.customize}>
+            {GAME_DAY_PARTS.map(part => (
+              <label key={part.id} className={styles.editToolbarPart}>
+                <input
+                  type="checkbox"
+                  checked={gameDayPartShown(part.id)}
+                  onChange={e => toggleGameDayPartVisible(part.id, e.target.checked)}
+                />
+                {part.label}
+              </label>
+            ))}
+          </div>
+        )}
         <div className={styles.editToolbarActions}>
           <button
             type="button"
@@ -1912,361 +1817,6 @@ export default function AdminDashboard() {
     );
   }
 
-  // ── Game-day panels (each extracted so the live board can be customized) ──
-  // Panels that have nothing to show return null; the zone skips them so an empty
-  // box never renders (and an empty-data panel isn't draggable when not customizing).
-  function renderNowPlayingPanel() {
-    if (gd.liveGames.length === 0) return null;
-
-    // total = real live count (API caps the loaded list at 6, liveGamesTotal is the
-    // true count). Decide how many tiles to show so the row stays ONE line on wide
-    // screens; the "+N more" tile occupies one of the row's slots when it appears.
-    const total = Math.max(gd.liveGamesTotal, gd.liveGames.length);
-    let shown = gd.liveGames;
-    let moreCount = total - gd.liveGames.length; // overflow beyond what the API loaded
-
-    if (!liveFit.wrap) {
-      // One-row mode: fit `cols` items total. If everything fits, show it; otherwise
-      // reserve the last slot for "+N more" and show cols-1 games.
-      if (total > liveFit.cols) {
-        const gamesToShow = Math.max(0, liveFit.cols - 1);
-        shown = gd.liveGames.slice(0, gamesToShow);
-        moreCount = total - gamesToShow;
-      } else {
-        shown = gd.liveGames.slice(0, liveFit.cols);
-        moreCount = total - shown.length;
-      }
-    }
-
-    return (
-      // Full-width command strip across the board (not a uniform gauge cell).
-      // data-sandbox-tour: the beat the "Watch a score land" tour chip points at in the
-      // "See it live" sandbox. An inert attribute — nothing reads it outside a demo org.
-      <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`} data-sandbox-tour="now-playing">
-        <div className={styles.panelHeader}>
-          <Activity size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
-          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Now Playing</h2>
-          <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
-        </div>
-        <div className={styles.liveList} data-wrap={liveFit.wrap ? 'true' : 'false'} ref={liveStripRef}>
-          {shown.map(lg => (
-            <Link
-              key={lg.id}
-              href={`${base}/results`}
-              className={styles.liveRow}
-              data-live={lg.status === 'submitted' ? 'review' : 'live'}
-            >
-              <div className={styles.liveStatusRow}>
-                <span className={`badge ${lg.status === 'submitted' ? 'badge-warning' : 'badge-primary'} ${styles.liveBadge}`}>
-                  {lg.status === 'submitted' ? 'IN REVIEW' : 'LIVE'}
-                </span>
-              </div>
-              <div className={styles.liveRowMain}>
-                <span className={styles.liveMatchup}>
-                  {lg.awayTeamName} <span className={styles.liveAt}>@</span> {lg.homeTeamName}
-                </span>
-                <span className={styles.liveScore}>{lg.awayScore ?? 0}–{lg.homeScore ?? 0}</span>
-              </div>
-              {(lg.location || lg.divisionName) && (
-                <div className={styles.liveMeta}>
-                  {[lg.location, lg.divisionName].filter(Boolean).join(' · ')}
-                </div>
-              )}
-            </Link>
-          ))}
-          {moreCount > 0 && (
-            <Link href={`${base}/results`} className={styles.liveMoreTile}>
-              +{moreCount} more →
-            </Link>
-          )}
-        </div>
-      </section>
-    );
-  }
-
-  // Up Next — the next scheduled games today that haven't started. Hidden when none.
-  function renderUpNextPanel() {
-    if (gd.upNextGames.length === 0) return null;
-    const shown = gd.upNextGames.slice(0, 6);
-    const total = Math.max(gd.upNextTotal, gd.upNextGames.length);
-    const moreCount = total - shown.length;
-    return (
-      <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`}>
-        <div className={styles.panelHeader}>
-          <Clock size={16} style={kx(INFO_LEGACY, KIT_INK.info)} />
-          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Up Next</h2>
-          <Link href={`${base}/schedule`} className={styles.panelLink}>View schedule →</Link>
-        </div>
-        <div className={styles.liveList} data-wrap="true">
-          {shown.map(g => (
-            <Link key={g.id} href={`${base}/schedule`} className={styles.liveRow} data-live="next">
-              <div className={styles.liveStatusRow}>
-                <span className={`badge badge-neutral ${styles.liveBadge}`}>
-                  {fmtClock(g.time) || 'NEXT'}
-                </span>
-              </div>
-              <div className={styles.liveRowMain}>
-                <span className={styles.liveMatchup}>
-                  {g.awayTeamName} <span className={styles.liveAt}>@</span> {g.homeTeamName}
-                </span>
-              </div>
-              {(g.location || g.divisionName) && (
-                <div className={styles.liveMeta}>
-                  {[g.location, g.divisionName].filter(Boolean).join(' · ')}
-                </div>
-              )}
-            </Link>
-          ))}
-          {moreCount > 0 && (
-            <Link href={`${base}/schedule`} className={styles.liveMoreTile}>
-              +{moreCount} more →
-            </Link>
-          )}
-        </div>
-      </section>
-    );
-  }
-
-  // Needs a Score — games whose window has passed but still have no result (any day).
-  // The action bucket so a finished-but-unscored game is never hidden. Hidden when none.
-  function renderNeedsScorePanel() {
-    if (gd.needsScoreGames.length === 0) return null;
-    const shown = gd.needsScoreGames.slice(0, 6);
-    const total = Math.max(gd.needsScoreTotal, gd.needsScoreGames.length);
-    const moreCount = total - shown.length;
-    return (
-      <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`}>
-        <div className={styles.panelHeader}>
-          <AlertCircle size={16} style={kx(ICON_WARNING_LEGACY, KIT_INK.warning)} />
-          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Needs a Score</h2>
-          <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
-        </div>
-        <div className={styles.liveList} data-wrap="true">
-          {shown.map(g => (
-            <Link key={g.id} href={`${base}/results`} className={styles.liveRow} data-live="overdue">
-              <div className={styles.liveStatusRow}>
-                <span className={`badge badge-warning ${styles.liveBadge}`}>NEEDS SCORE</span>
-              </div>
-              <div className={styles.liveRowMain}>
-                <span className={styles.liveMatchup}>
-                  {g.awayTeamName} <span className={styles.liveAt}>@</span> {g.homeTeamName}
-                </span>
-                {fmtClock(g.time) && <span className={styles.liveMeta} style={{ padding: 0 }}>{fmtClock(g.time)}</span>}
-              </div>
-              {(g.location || g.divisionName) && (
-                <div className={styles.liveMeta}>
-                  {[g.location, g.divisionName].filter(Boolean).join(' · ')}
-                </div>
-              )}
-            </Link>
-          ))}
-          {moreCount > 0 && (
-            <Link href={`${base}/results`} className={styles.liveMoreTile}>
-              +{moreCount} more →
-            </Link>
-          )}
-        </div>
-      </section>
-    );
-  }
-
-  function renderGamesProgressPanel() {
-    return (
-      <section className={styles.analyticsPanel}>
-        <div className={styles.panelHeader}>
-          <Zap size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
-          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Games Progress</h2>
-          <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
-        </div>
-        {gd.totalGames > 0 ? (
-          <>
-            {/* Count RESOLVED games (scored + forfeit) so the gauge reaches 100% exactly when
-                every game is in — matching the "ready to finalize" rail. A forfeit is a
-                finished game; the sub-stat below breaks it out so the number stays honest. */}
-            <div className={styles.mainGauge}>
-              <div className={styles.gaugeFigures}>
-                <span className={styles.gaugeMain}><CountUp value={gd.resolved} /></span>
-                <span className={styles.gaugeOf}>/ {gd.totalGames}</span>
-                <span className={styles.gaugeLabel}>games final</span>
-              </div>
-              <GaugeBar value={gd.resolved} max={gd.totalGames} />
-            </div>
-            <div className={styles.subStats}>
-              {gd.resolved - gd.completed > 0 && <span className={styles.subStat}><span className="badge badge-neutral">{gd.resolved - gd.completed}</span> By forfeit</span>}
-              {gd.inProgress > 0 && <span className={styles.subStat}><span className="badge badge-warning">{gd.inProgress}</span> In review</span>}
-              {gd.poolGamesTotal > 0 && <span className={styles.subStat}><span className="badge badge-neutral">{gd.poolGamesCompleted}/{gd.poolGamesTotal}</span> Pool games</span>}
-              {gd.playoffStarted && <span className={styles.subStat}><span className="badge badge-primary">{gd.playoffGamesCompleted}/{gd.playoffGamesTotal}</span> Playoff games</span>}
-            </div>
-          </>
-        ) : (
-          <div className={styles.emptyPanel}>
-            <span>No games scheduled yet.</span>
-            <Link href={`${base}/schedule`} className={styles.panelLink}>Build schedule →</Link>
-          </div>
-        )}
-      </section>
-    );
-  }
-
-  function renderCheckInPanel() {
-    if (checkIn.accepted === 0) return null;
-    return (
-      <section className={styles.analyticsPanel}>
-        <div className={styles.panelHeader}>
-          <UserCheck size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
-          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Team Check-in</h2>
-          <Link href={`${base}/check-in`} className={styles.panelLink}>Open board →</Link>
-        </div>
-        <div className={styles.mainGauge}>
-          <div className={styles.gaugeFigures}>
-            <span className={styles.gaugeMain}><CountUp value={checkIn.checkedIn} /></span>
-            <span className={styles.gaugeOf}>/ {checkIn.accepted}</span>
-            <span className={styles.gaugeLabel}>teams arrived</span>
-          </div>
-          <GaugeBar value={checkIn.checkedIn} max={checkIn.accepted} />
-        </div>
-        {checkIn.noShow > 0 && (
-          <div className={styles.subStats}>
-            <span className={styles.subStat}><span className="badge badge-danger">{checkIn.noShow}</span> No-show{checkIn.noShow !== 1 ? 's' : ''}</span>
-          </div>
-        )}
-      </section>
-    );
-  }
-
-  function renderByDivisionPanel() {
-    if (gd.byDivision.length === 0) return null;
-    // Row-invariant (every champion row wears the same treatment) — computed once above the
-    // .map(), not per row.
-    const championLabelStyle = kx(
-      { display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--logic-lime)', fontWeight: 700, fontSize: '0.82rem' },
-      { color: 'var(--home-olive)' },
-    );
-    return (
-      <section className={styles.analyticsPanel}>
-        <div className={styles.panelHeader}>
-          <Flag size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
-          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>By Division</h2>
-        </div>
-        <div className={styles.divisionTable}>
-          {gd.byDivision.map(d => {
-            const poolPct = d.poolTotal > 0 ? Math.round((d.poolCompleted / d.poolTotal) * 100) : 0;
-            // J1-100: crown the champion the moment the final goes final — live.
-            const champ = champions.find(c => c.divisionId === d.id);
-            // Row-variant (depends on this row's playoffStarted/poolPct), so computed per row —
-            // the fill is a solid tone (base tokens stay AA-safe as a fill; only the "still in
-            // pools" blue needs a kit-specific answer); the %/round text is TEXT, so its ink
-            // moves to the `-light` tier on the kit.
-            const fillColor = d.playoffStarted ? 'var(--warning)' : poolPct >= 100 ? (kit ? 'var(--success)' : 'var(--logic-lime)') : (kit ? 'var(--info)' : 'var(--blueprint-blue)');
-            const pctInkStyle = kx(
-              { color: d.playoffStarted ? 'var(--warning)' : 'var(--data-gray)' },
-              { color: d.playoffStarted ? 'var(--warning-light)' : 'var(--text-tertiary)' },
-            );
-            return (
-              <div key={d.id} className={styles.divisionRow}>
-                <span className={styles.divisionName}>{d.name}</span>
-                <span className={styles.divisionCount}>
-                  {champ ? 'Champion' : d.playoffStarted ? (d.latestRound ?? 'Playoffs') : `${d.poolCompleted}/${d.poolTotal}`}
-                </span>
-                {champ ? (
-                  <div className={styles.gaugeWrap}>
-                    <span style={championLabelStyle}>
-                      <Trophy size={13} aria-hidden /> {champ.championTeamName}
-                    </span>
-                  </div>
-                ) : (
-                  <div className={styles.gaugeWrap}>
-                    <div className={styles.gaugeTrack}>
-                      <div className={styles.gaugeFill} style={{ width: `${d.playoffStarted ? 100 : poolPct}%`, background: fillColor }} />
-                    </div>
-                    <span className={styles.gaugePct} style={pctInkStyle}>
-                      {d.playoffStarted ? (d.nextRound ? `→ ${d.nextRound}` : 'Done') : `${poolPct}%`}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {gd.playoffStarted && (
-          <div className={styles.subStats} style={{ marginTop: '0.5rem' }}>
-            {playoffsAllDone ? (
-              <span className={styles.subStat} style={kx({ color: 'var(--success)' }, KIT_INK.success)}><Trophy size={12} /> Playoffs complete</span>
-            ) : (
-              <span className={styles.subStat} style={kx({ color: 'var(--warning)' }, KIT_INK.warning)}><Trophy size={12} /> Playoffs underway</span>
-            )}
-          </div>
-        )}
-      </section>
-    );
-  }
-
-  function gameDayPanelNode(id: GameDayPanelId) {
-    switch (id) {
-      case 'nowPlaying':       return renderNowPlayingPanel();
-      case 'upNext':           return renderUpNextPanel();
-      case 'needsScore':       return renderNeedsScorePanel();
-      case 'gamesProgress':    return renderGamesProgressPanel();
-      case 'checkIn':          return renderCheckInPanel();
-      case 'gdScheduleHealth': return renderScheduleHealthPanel();
-      case 'byDivision':       return renderByDivisionPanel();
-      default:                 return null;
-    }
-  }
-
-  // Game-day board zone — edit-aware, mirrors renderPanelZone but with the
-  // separate gameDayPanels set. Panels whose data is empty (null node) are
-  // skipped when NOT customizing; in customize mode they still render their
-  // (possibly empty) shell so they can be reordered/hidden.
-  function renderGameDayZone() {
-    if (!isCustomizing) {
-      const nodes = sortedGameDayPanels
-        .map(p => ({ p, node: gameDayPanelNode(p.id) }))
-        .filter(x => x.node != null);
-      return (
-        <div className={styles.analyticsGrid}>
-          {nodes.map(({ p, node }) => (
-            <div key={p.id} style={{ display: 'contents' }}>{node}</div>
-          ))}
-          {nodes.length === 0 && (
-            <div style={kx({ color: 'var(--data-gray)', fontSize: '0.8rem' }, KIT_INK.tertiary)}>
-              All panels are hidden. Click <strong>Customize</strong> to restore them.
-            </div>
-          )}
-        </div>
-      );
-    }
-    return (
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onGameDayPanelDragEnd}>
-        <SortableContext items={sortedGameDayPanels.map(p => p.id)} strategy={rectSortingStrategy}>
-          <div className={styles.analyticsGrid}>
-            {sortedGameDayPanels.map(panel => (
-              <SortablePanel key={panel.id} id={panel.id} label={panel.label} onRemove={() => toggleGameDayPanelVisible(panel.id, false)}>
-                {gameDayPanelNode(panel.id) ?? (
-                  <section className={styles.analyticsPanel}>
-                    <div className={styles.panelHeader}>
-                      <h2 className={styles.sectionTitle} style={{ margin: 0 }}>{panel.label}</h2>
-                    </div>
-                    <div className={styles.emptyPanel}><span>Nothing to show right now.</span></div>
-                  </section>
-                )}
-              </SortablePanel>
-            ))}
-            {hiddenGameDayPanels.length > 0 && (
-              <AddTile
-                kind="panel"
-                items={hiddenGameDayPanels}
-                open={addMenuZone === 'gameday'}
-                onToggle={() => { setExpandedIconPicker(null); setAddMenuZone(z => z === 'gameday' ? null : 'gameday'); }}
-                onAdd={(id) => { toggleGameDayPanelVisible(id as GameDayPanelId, true); setAddMenuZone(null); }}
-              />
-            )}
-          </div>
-        </SortableContext>
-      </DndContext>
-    );
-  }
-
   // ── Analytics-panel zone (edit-aware) — pre/post-event only ───────────────
   function panelNode(id: PanelId) {
     switch (id) {
@@ -2316,79 +1866,40 @@ export default function AdminDashboard() {
     );
   }
 
-  // Same element, same condition, lifted so both the legacy header and the kit header's
-  // `actions` render it.
-  const customizeButton = (isActive || isCompleted) && currentTournament?.id && !isCustomizing ? (
-    <button
-      type="button"
-      className={`btn btn-ghost btn-data ${styles.customizeToggleBtn}`}
-      onClick={() => { setIsCustomizing(true); setExpandedIconPicker(null); setAddMenuZone(null); }}
-    >
-      <Settings size={12} />
-      Customize
-    </button>
+  // Customize lives at the foot of an active board ("Customize this board", G1: it left the title
+  // band). A completed event's dashboard has nothing to customize, so it offers none.
+  const openCustomize = isActive && currentTournament?.id && !isCustomizing
+    ? () => { setIsCustomizing(true); setExpandedIconPicker(null); setAddMenuZone(null); }
+    : null;
+
+  // The top note (G2): only for a step the lists can't say — the event's dates have passed and not
+  // every game is final yet. The kit's card with its accent edge, no counts, no button.
+  const datesPassedNote = isPostEventActive && !readyToFinalize ? (
+    <BoardNote>
+      {GAME_DAY_WORDS.datesPassedNote.fact} <b>{GAME_DAY_WORDS.datesPassedNote.step}</b>
+    </BoardNote>
   ) : null;
-  // Toned like the event header's phase chip directly above (AdminEventHeader, same rule: live/
-  // game day red, open olive/green, otherwise quiet) — the SAME status + isGameDay fact, not a
-  // second read of it.
-  const kitPhase = resolvePhase({ status, isGameDay });
-  const kitBadgeClass = kitPhase === 'gameday' ? 'badge-danger' : kitPhase === 'open' ? 'badge-success' : 'badge-neutral';
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className={styles.page}>
-      <AdminPageHeader
-        crumbs={[{ label: currentOrg?.name ?? 'Admin' }]}
-        title={currentTournament?.name ?? currentOrg?.name ?? 'Admin'}
-        titleChips={
-          <span className={styles.kitTitleChips}>
-            <span className={`badge ${kitBadgeClass}`}>{status.toUpperCase()}</span>
-            {isActive && <span className={styles.kitStatusLabel}>{statusLabel.toUpperCase()}</span>}
-          </span>
-        }
-        actions={customizeButton}
-        legacy={
-          <header className="flex items-center justify-between border-b border-blueprint-blue/60 pb-4 mb-5" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div>
-              <div className="hud-label mb-1">{currentOrg?.name ?? 'Admin'}</div>
-              <h1 className="font-mono font-bold text-xl uppercase tracking-tight" style={{ color: 'var(--logic-lime)' }}>
-                {currentTournament?.name ?? currentOrg?.name ?? 'Admin'}
-              </h1>
-              {fmtDateRange(currentTournament?.startDate, currentTournament?.endDate) && (
-                <div className="hud-label mt-1" style={{ color: 'var(--white-50)', textTransform: 'none', letterSpacing: 'normal' }}>
-                  {fmtDateRange(currentTournament?.startDate, currentTournament?.endDate)}
-                </div>
-              )}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-              {customizeButton}
-              <div className={styles.statusBlockDesktop} style={{ textAlign: 'right' }}>
-                <div className="font-mono text-xs font-bold" style={{ color: statusColor }}>{status.toUpperCase()}</div>
-                {isActive && <div className="font-mono" style={{ fontSize: '0.6rem', color: 'var(--white-40)', letterSpacing: '0.06em', marginTop: '0.15rem' }}>{statusLabel.toUpperCase()}</div>}
-              </div>
-            </div>
-          </header>
-        }
-      />
+      {/* G1: the event header above names the event and carries its one status chip; the page names
+          only itself — no second copy of the name, no ACTIVE/LIVE tags, Customize at the board's foot. */}
+      <AdminPageHeader title="Dashboard" />
 
       {currentTournament?.id && statsError && (
         <div className="mb-4 text-xs" style={kx(ICON_MUTED_LEGACY, KIT_INK.tertiary)}>Dashboard counts are unavailable right now.</div>
       )}
 
-      {/* ── COIN TOSS NEEDED ─────────────────────────────── */}
+      {/* ── COIN TOSS NEEDED — a step the lists can't say, with its one action ── */}
       {currentTournament?.id && visibleStats.coinTossNeeded.length > 0 && (
-        <div className={styles.reuseSetupPrompt} style={kx({ borderColor: 'var(--warning)' }, { borderColor: 'rgba(var(--warning-rgb), 0.35)', background: 'rgba(var(--warning-rgb), 0.06)' })}>
-          <div className={styles.reusePromptBody}>
-            <AlertCircle size={16} className={styles.reusePromptIcon} style={kx(ICON_WARNING_LEGACY, KIT_INK.warning)} />
-            <div>
-              <strong className={styles.reusePromptTitle}>Coin toss required</strong>
-              <p>
-                {visibleStats.coinTossNeeded.map(c => `${c.divisionName} — ${c.teamNames.join(' & ')}`).join(' · ')}.
-                {' '}Teams are tied; record the coin-toss result to finalize standings &amp; playoff seeding.
-              </p>
-            </div>
-          </div>
-          <div className={styles.reusePromptActions}>
+        <Callout tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />}>
+          <b>Coin toss required</b>
+          <span className={repKit.calloutSub}>
+            {visibleStats.coinTossNeeded.map(c => `${c.divisionName} — ${c.teamNames.join(' & ')}`).join(' · ')}.
+            {' '}Teams are tied; record the coin-toss result to finalize standings &amp; playoff seeding.
+          </span>
+          <div className={repKit.calloutActions}>
             <Link
               className="btn btn-lime btn-data"
               href={`/${currentOrg?.slug}/admin/tournaments/preview/${currentTournament.slug}/standings`}
@@ -2396,7 +1907,7 @@ export default function AdminDashboard() {
               Record coin toss
             </Link>
           </div>
-        </div>
+        </Callout>
       )}
 
       {/* ── EDIT LAYOUT TOOLBAR ──────────────────────────── */}
@@ -2543,28 +2054,44 @@ export default function AdminDashboard() {
         </>
       )}
 
-      {/* ── LIVE DASHBOARD (active) ──────────────────────── */}
-      {isActive && currentTournament?.id && (
+      {/* ── GAME DAY (active, and the dates have come or the first game has started) — the Stage 1
+          board (G2 · G3 · G8). The live "It's game day" card retired with it: the lists ARE the day.
+          Once every game is final the rail's ready card stays, because it has the one button the day
+          needs next (Mark complete). */}
+      {isActive && currentTournament?.id && isGameDay && (
+        <>
+          {guidanceStage === 'ready' ? guidanceRail : datesPassedNote}
+          <GameDayBoard
+            base={base}
+            planHref={`${subscriptionHref}?plan=tournament_plus`}
+            gd={gd}
+            arrived={{ checkedIn: checkIn.checkedIn, accepted: checkIn.accepted }}
+            champions={champions}
+            health={visibleStats.scheduleHealth}
+            healthBody={
+              <>
+                {renderScheduleHealthBody()}
+                <Link href={`${base}/schedule`} className={styles.panelLink}>Review →</Link>
+              </>
+            }
+            canRainDelay={canRainDelay}
+            locked={isLocked}
+            visible={gameDayPartShown}
+            customizing={isCustomizing}
+            onCustomize={openCustomize}
+          />
+        </>
+      )}
+
+      {/* ── BEFORE / AFTER THE EVENT (active, no game day yet or none left) — Stage 4's ── */}
+      {isActive && currentTournament?.id && !isGameDay && (
         <>
           {guidanceRail}
-
-          {/* Compact metric strip — absent on game day where the board gives richer context */}
-          {!isGameDay && renderMetricStrip()}
-
-          {/* ── GAME DAY board (customizable) vs PRE/POST event panels ── */}
-          {isGameDay ? renderGameDayZone() : renderPanelZone()}
-
-          {/* Post-event nudge: the dates have passed but scores are still outstanding.
-              Suppressed once every game is resolved — then the "ready to finalize"
-              guidance rail owns the mark-complete prompt, so the two never contradict. */}
-          {isPostEventActive && !readyToFinalize && (
-            <div className={styles.postEventBanner}>
-              <Trophy size={15} style={kx({ color: 'var(--warning)', flexShrink: 0 }, KIT_INK.warning)} />
-              <span>The tournament dates have passed. Once all scores and payments are finalized, you can mark this tournament as complete.</span>
-            </div>
-          )}
-
+          {renderMetricStrip()}
+          {renderPanelZone()}
+          {datesPassedNote}
           <LiveEventLog tournamentId={currentTournament.id} orgSlug={currentOrg?.slug} className={styles.recentEvents} />
+          {openCustomize && <CustomizeLink onClick={openCustomize} />}
         </>
       )}
 

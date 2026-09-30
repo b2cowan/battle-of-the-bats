@@ -451,3 +451,29 @@
   border-color: rgba(var(--home-olive-rgb), 0.5);
   color: var(--home-olive);
 }
+
+/* ── The bar INLINE (the organizer's Check-in — Tournament admin redesign G7, 2026-09-29) ──
+   The same four buckets at the top of the organizer's board: never pinned (the admin has its own
+   bottom nav). On a phone the count still leads (46px, one line at 390); at a desk the bar is one
+   line of auto-width buttons at the admin's 38px — "Not arrived 16". It outranks the pinned rules
+   above by WEIGHT, not by its place in the file: the kit-scoped selector beats the kit's pinned
+   ground (`[data-admin-kit] .filterBar`), the plain one the base. The gate never wears this class. */
+.filterBar.filterBarInline,
+:global([data-admin-kit]) .filterBar.filterBarInline {
+  position: static;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border-top: 0;
+}
+@media (min-width: 641px) {
+  .filterBar.filterBarInline {
+    display: inline-grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 0.4rem;
+  }
+  .filterBarInline .barBtn { min-height: 38px; padding: 0 0.8rem; }
+}
+@media (min-width: 641px) and (max-width: 768px) {
+  .filterBarInline .barBtn { min-height: var(--tap-min, 44px); }
+}

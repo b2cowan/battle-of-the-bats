@@ -2424,58 +2424,8 @@
   }
 }
 
-/* ─── Scoring mode: 2-row grid on mobile so team names get full width ───── */
-/* desktopStatusSlot: shown on desktop inside the rail; hidden on mobile */
-.desktopStatusSlot {
-  display: flex;
-}
-
-@media (max-width: 768px) {
-  /* 2-column grid: date (auto) | matchup (1fr) | rail (auto)
-     Status moves into the date cell as a sub-line, matching planning mode. */
-  .scoringGameRow {
-    display: grid !important;
-    grid-template-columns: auto 1fr auto;
-    grid-template-areas:
-      "date . rail"
-      "matchup matchup matchup";
-    gap: 0.2rem 0.5rem !important;
-    align-items: start !important;
-    padding: 0.45rem 0.75rem !important;
-    min-height: 54px;
-  }
-
-  .scoringDateCell {
-    grid-area: date;
-    justify-self: start;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.12rem;
-  }
-
-  .scoringRailCell {
-    grid-area: rail;
-    justify-self: end;
-    align-self: center;
-  }
-
-  .scoringMatchupCell {
-    grid-area: matchup;
-    max-width: none;
-    width: 100%;
-  }
-
-  /* Rail badge hidden on mobile — scoringMobileStatus in date cell replaces it */
-  .desktopStatusSlot {
-    display: none !important;
-  }
-}
-
-/* ─── Scoring Mobile Status Tag (inline after time, non-default states only) ─
-   Hidden on desktop where the rail cell badge covers it. On mobile renders
-   inline as "· ✓ FINAL" or "· ⚠ REVIEWING" — no separate line needed.      */
+/* ⚰ The scoring mode's rows (`.scoring*`, `.score*`, Finalize's label) are GONE (Tournament admin
+   redesign Stage 1, 2026-09-29): Results draws its own list (`results/ResultsList.tsx`). */
 
 /* ─── Matchup Team Names — desktop reflow + 2-line wrap ──────────────────── */
 /* Long names (30+ chars) borrow the short opponent's slack (flex: 0 1 auto    */
@@ -2512,69 +2462,6 @@
 }
 .planningTeamAway,
 .planningTeamHome { text-align: left; }
-
-/* Scoring-mode name span (sits beside the inline score). */
-.scoringTeamName {
-  font-family: var(--font-data);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--fl-text);
-  min-width: 0;
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.25;
-}
-
-/* Scoring matchup — stacked away-over-home (mirrors the public score cards);
-   the score value / input-stepper stays inline on the right of each team row. */
-.scoringMatchupCell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  width: 100%;
-  max-width: 28rem;
-  /* Left-aligned (not centered): the matchup column width varies per row with the
-     rail (Finalize vs Scheduled), so centering would drift the names. The date
-     column is a fixed width, so left-aligning lines the names up across every
-     row — scored or not — and keeps the score column at a consistent right edge. */
-  margin: 0;
-  min-width: 0;
-}
-
-.scoringTeamRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.scoringTeamRow .scoringTeamName {
-  flex: 1;
-  text-align: left;
-}
-
-/* While editing a score, let the matchup use the full column width so the score
-   inputs/steppers reach across instead of bunching in a narrow left block. */
-.scoringMatchupCell[data-editing="true"] {
-  max-width: none;
-}
-
-/* Keep the status/edit rail flush to the row's right edge — the matchup is
-   width-capped for alignment, so without this the rail would sit mid-row. */
-.scoringRailCell {
-  margin-left: auto;
-}
-
-/* Finalize — full "Finalize" label on desktop, compact ✓ icon on mobile so the
-   row rail stays slim (the floating worklist bar carries the batched action). */
-.finalizeIcon { display: none; }
-@media (max-width: 768px) {
-  .finalizeLabel { display: none; }
-  .finalizeIcon { display: inline-flex; align-items: center; }
-}
 
 /* ─── Planning Mode Status Cell ──────────────────────────────────────────── */
 /* Replaces the `flex: 0 0 96px` inline style, adds mobile width collapse.  */
@@ -2667,19 +2554,6 @@
   border-left: 3px solid rgba(var(--danger-rgb), 0.55);
 }
 .planningRow[data-status="completed"] {
-  border-left: 3px solid rgba(var(--success-rgb), 0.48);
-}
-
-/* ─── Scoring Row Status Stripe ──────────────────────────────────────────── */
-/* Same 3px stripe for scoring-mode rows (Results page).                     */
-/* Colours mirror the results tally dots: info=unscored, warning=reviewing.  */
-.scoringRow[data-status="scheduled"] {
-  border-left: 3px solid rgba(var(--info-rgb), 0.55);
-}
-.scoringRow[data-status="submitted"] {
-  border-left: 3px solid rgba(var(--warning-rgb), 0.55);
-}
-.scoringRow[data-status="completed"] {
   border-left: 3px solid rgba(var(--success-rgb), 0.48);
 }
 
@@ -2961,43 +2835,6 @@
   }
 }
 
-/* ─── Score Entry (shared with Results) ───────────────────────────────────── */
-
-/* ─── Inline Score (scoring mode) ────────────────────────────────────────── */
-
-/* Read-only score number shown beside team name */
-.scoreInlineValue {
-  font-family: var(--font-data);
-  font-size: 1rem;
-  font-weight: 900;
-  flex-shrink: 0;
-  letter-spacing: 0.02em;
-  line-height: 1;
-}
-
-/* Compact score input — same position as the score number */
-.scoreInlineInput {
-  width: 48px;
-  height: 28px;
-  padding: 0;
-  text-align: center;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
-  border-radius: 2px;
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 1rem;
-  font-weight: 900;
-  flex-shrink: 0;
-}
-
-.scoreInlineInput:focus {
-  outline: none;
-  border-color: var(--logic-lime);
-  box-shadow: 0 0 0 2px rgba(var(--logic-lime-rgb), 0.12);
-  color: var(--logic-lime);
-}
-
 /* Deliberate duplicate of the keyframes in ../../admin-common.module.css.
    CSS Modules scope @keyframes per file and rewrite animation-name to the
    local scoped identifier, so a cross-module reference resolves to nothing
@@ -3008,61 +2845,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Slim action bar — appears below the row when editing is active */
-.scoreActionBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.3rem 1.5rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12);
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-  gap: 0.5rem;
-  animation: adminSlideDown 0.12s ease-out;
-}
-
-.scoreActionBarLeft {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.scoreActionBarAudit {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  color: var(--data-gray);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* "Forfeit" → "who forfeited?" picker — the team buttons only appear after the
-   single Forfeit button is tapped, so the bar isn't cluttered with two full team
-   names by default. Wraps cleanly on narrow widths. */
-
-.forfeitPrompt {
-  font-size: 0.7rem;
-  color: var(--data-gray);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-/* Per-team "Forfeited" choice that replaces the score stepper in forfeit mode. */
-.forfeitChoiceBtn {
-  flex-shrink: 0;
-  white-space: nowrap;
-  color: rgba(var(--warning-rgb), 0.85);
-}
-
-@media (max-width: 768px) {
-  /* Phones: let the action bar wrap so BOTH No-show buttons and Save are always
-     visible — the desktop single-row layout clipped the second forfeit button.
-     Forfeit options take the first line(s); Discard/Save sit right-aligned below. */
-  .scoreActionBar { flex-wrap: wrap; }
-  .scoreActionBarLeft { overflow: visible; flex-wrap: wrap; flex: 1 1 100%; }
-  .scoreActionBarRight { margin-left: auto; }
-}
 
 /* ─── Game Row Cell ───────────────────────────────────────────────────────── */
 .cell {
@@ -3304,20 +3086,17 @@
    Placed after the [data-status] stripe rules so equal-specificity wins. Only
    un-scored (scheduled) games get these; the global prefers-reduced-motion guard
    freezes the pulse. */
-.planningRow[data-live="live"],
-.scoringRow[data-live="live"] {
+.planningRow[data-live="live"] {
   border-left: 3px solid var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.04);
 }
 
-.planningRow[data-live="overdue"],
-.scoringRow[data-live="overdue"] {
+.planningRow[data-live="overdue"] {
   border-left: 3px solid var(--warning);
   background: rgba(var(--warning-rgb), 0.045);
 }
 
-.planningRow[data-live="next"],
-.scoringRow[data-live="next"] {
+.planningRow[data-live="next"] {
   border-left: 3px solid rgba(var(--info-rgb), 0.7);
 }
 
@@ -3500,40 +3279,6 @@
 .statusTag[data-status="submitted"] { color: var(--warning); }
 .statusTag[data-status="cancelled"] { color: var(--danger); }
 .statusTag[data-status="scheduled"] { color: var(--data-gray); }
-
-/* ─── B7: thumb score steppers (mobile only) ──────────────────────────────────
-   The − / + buttons are hidden on desktop (keyboard is fine there); on mobile the
-   scoring edit row stacks the two teams so each gets a full-width row + big steppers. */
-.scoreStepper {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.scoreStepBtn { display: none; }
-
-@media (max-width: 768px) {
-  .scoreStepBtn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    flex-shrink: 0;
-    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
-    border-radius: 2px;
-    background: rgba(var(--blueprint-blue-rgb), 0.08);
-    color: var(--fl-text);
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .scoreStepBtn:active {
-    background: rgba(var(--logic-lime-rgb), 0.14);
-    border-color: rgba(var(--logic-lime-rgb), 0.5);
-    color: var(--logic-lime);
-  }
-}
 
 /* ============================================================
    Read-view bracket (committed games "Bracket" layout) — C2/C1
@@ -4043,9 +3788,9 @@
 }
 
 /* ═══ ON THE KIT — the game list (Admin Design Continuity slice 4b, only with the switch on) ═══════
-   GameList.tsx is the body of Results in score-entry mode (mode="scoring") AND the Schedule page's
-   list view (mode="planning") — every rule below answers a class GameList actually reads from this
-   sheet, in both modes, so the two never fall out of sync when the switch flips. Everything else in
+   GameList.tsx is the Schedule page's list view — every rule below answers a class GameList reads from
+   this sheet. (It was Results' body too, in a scoring mode; Tournament admin redesign Stage 1 deleted
+   that mode and its rules on 2026-09-29, and the planning rules left here are Stage 3's to fold.) Everything else in
    this 4,000-line file (the schedule page chrome, timeline, brackets, generator, playoff wizard, the
    shift-day / resolve-locations / field-picker windows) belongs to slice 4c and is untouched here.
    ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here.
@@ -4075,8 +3820,7 @@
 
 /* ── Matchup team names — body face, bold (ADC specimen 4: "the matchup in the body face bold") ── */
 :global([data-admin-kit]) .planningTeamAway,
-:global([data-admin-kit]) .planningTeamHome,
-:global([data-admin-kit]) .scoringTeamName {
+:global([data-admin-kit]) .planningTeamHome {
   font-family: var(--font-sans, system-ui, sans-serif);
   color: var(--text-primary);
 }
@@ -4124,51 +3868,12 @@
 /* Longhand border-LEFT-color only — the shorthand would also have worked here (nothing else sets
    this row's other three border sides), but longhand keeps the intent explicit: only the stripe's
    hue moves, not its width/style. */
-:global([data-admin-kit]) .planningRow[data-live="live"],
-:global([data-admin-kit]) .scoringRow[data-live="live"] {
+:global([data-admin-kit]) .planningRow[data-live="live"] {
   border-left-color: var(--home-live);
   background: var(--home-live-soft);
 }
 
-/* ── Score entry — steppers, inline input, action bar (Field recipe: sans face, home-card ground) ── */
-:global([data-admin-kit]) .scoreStepBtn {
-  background: var(--home-card);
-  border-color: var(--home-line-strong);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .scoreStepBtn:active {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .scoreInlineInput {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  letter-spacing: normal;
-  background: var(--home-card);
-  border-color: var(--home-line-strong);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .scoreInlineInput:focus {
-  border-color: var(--home-olive);
-  box-shadow: none;
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .scoreActionBar {
-  background: var(--home-olive-soft);
-  border-top-color: var(--home-line);
-}
-:global([data-admin-kit]) .scoreActionBarAudit {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-/* "Tap the team that forfeited" — an instruction sentence, not a label: sentence case, body face. */
-:global([data-admin-kit]) .forfeitPrompt {
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-tertiary);
-}
-/* Forfeit / clear a recorded result — the kit's danger, per the drawn screen's destructive tier. */
-:global([data-admin-kit]) .forfeitChoiceBtn { color: var(--danger-light); }
+/* ── The no-show tag beside a team's name (a planning row) ── */
 :global([data-admin-kit]) .noShowTag {
   background: rgba(var(--danger-rgb), 0.08);
   color: var(--danger-light);

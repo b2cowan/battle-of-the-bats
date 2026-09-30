@@ -9,7 +9,6 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import FeedbackModal from '@/components/FeedbackModal';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useTournamentCrumb } from '@/components/admin/tournament';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
@@ -59,7 +58,6 @@ function feeScopeToScheduleMode(scope: FeeScope | null): 'tournament' | 'divisio
 export default function TournamentEventSettingsPage() {
   const { currentTournament, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole } = useOrg();
-  const tournamentCrumb = useTournamentCrumb();
   const router = useRouter();
   const kx = useKitStyle();
   usePageTitle('Event Settings');
@@ -877,7 +875,7 @@ export default function TournamentEventSettingsPage() {
             tournament page's does); "identity, dates & status" describes the page and is not
             re-homed — the kit header has no subtitle slot. */}
         <AdminPageHeader
-          crumbs={[tournamentCrumb]}
+          inlineActions
           title="Event settings"
           legacy={
             <div className={styles.settingsTitleRow}>

@@ -20,7 +20,7 @@ import { ClipboardList, Users, Trophy, FileText, ArrowRight, Check, X } from 'lu
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useAdminWorklist } from '@/lib/admin-worklist';
-import { resolvePhase, isWithinEventDates } from '@/lib/tournament-phase';
+import { resolvePhase, isGameDay } from '@/lib/tournament-phase';
 import { resolveFlip, primaryTarget } from '@/lib/flip-twins';
 import styles from './AdminContextStrip.module.css';
 
@@ -91,7 +91,12 @@ export default function AdminContextStrip() {
     const results = worklist.results ?? 0;
     const phase = resolvePhase({
       status: currentTournament.status,
-      isGameDay: isWithinEventDates(currentTournament.startDate, currentTournament.endDate),
+      // The one game-day rule (G1): the dates, or the first game having started — as the event header says.
+      isGameDay: isGameDay({
+        startDate: currentTournament.startDate,
+        endDate: currentTournament.endDate,
+        firstGameStarted: Boolean(currentTournament.firstGameStarted),
+      }),
     });
     // In priority order; open / game day with nothing pending → nothing to surface.
     const candidates: (StripAction | null)[] = [

@@ -26,9 +26,18 @@ import styles from './DayOfShell.module.css';
  * Rendered in its NATURAL position in the page's flow — the media query lifts it. Rendering it
  * last and un-fixing it above 640px would drop the buckets to the bottom of a desktop page.
  */
-export function DayOfFilterBar({ label, children }: { label: string; children: React.ReactNode }) {
+export function DayOfFilterBar({ label, children, inline = false }: {
+  label: string;
+  children: React.ReactNode;
+  /**
+   * The organizer's Check-in wears the gate's bar at the top of its board, never pinned (Tournament
+   * admin redesign G7, 2026-09-29): the admin already has its own bottom nav. At a desk it sits on one
+   * line at the admin's 38px, "Not arrived 16". The gate's bar is unchanged.
+   */
+  inline?: boolean;
+}) {
   return (
-    <div className={styles.filterBar} role="group" aria-label={label}>
+    <div className={`${styles.filterBar}${inline ? ` ${styles.filterBarInline}` : ''}`} role="group" aria-label={label}>
       {children}
     </div>
   );

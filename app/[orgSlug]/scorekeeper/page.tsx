@@ -18,6 +18,10 @@ import { DayOfFilterBar, DayOfFilterButton } from '@/components/volunteer/DayOfB
 import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
+import { GAME_DAY_LIST, GAME_STATE_WORD, SCOREKEEPER_BUCKET } from '@/lib/game-day-words';
+import { gameWindowState } from '@/lib/game-live-state';
+import { resolveGameTiming } from '@/lib/schedule-conflict';
+import { tournamentToday } from '@/lib/timezone';
 import { typedLocationKey } from '@/lib/venue-identity';
 import styles from './scorekeeper.module.css';
 
@@ -136,11 +140,20 @@ function canEdit(game: Game) {
   return game.status === 'scheduled' || game.status === 'submitted';
 }
 
-function statusLabel(status: GameStatus) {
-  if (status === 'submitted') return 'Pending Review';
-  if (status === 'completed') return 'Finalized';
+// Game day's one word per state (Tournament admin redesign G5, /marketing 2026-09-29) — the same words
+// as the organizer's board and Results, by the shared play-window rule: "Needs a score" once a game's time
+// has passed, "Scheduled" before then. The game's length is its own or its division's (this page spans
+// tournaments and holds none's settings); a scheduler-built game carries its own. A forfeit is a forfeit
+// (it used to read "To Score").
+function statusLabel(game: Game, divisions: Division[], readAt: number) {
+  const { status } = game;
+  if (status === 'submitted') return GAME_STATE_WORD.pendingReview;
+  if (status === 'completed') return GAME_STATE_WORD.final;
+  if (status === 'forfeit') return GAME_STATE_WORD.forfeit;
   if (status === 'cancelled') return 'Cancelled';
-  return 'To Score';
+  const { durationMinutes } = resolveGameTiming(divisions.find(d => d.id === game.divisionId), null, game.durationMinutes);
+  const w = gameWindowState({ date: game.date, time: game.time, durationMinutes, nowMs: readAt, today: tournamentToday(new Date(readAt)) });
+  return w === 'overdue' ? GAME_STATE_WORD.needsScore : GAME_DAY_LIST.scheduled;
 }
 
 export default function ScorekeeperPage() {
@@ -152,6 +165,8 @@ export default function ScorekeeperPage() {
   const [cards, setCards] = useState<GameCard[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
+  /** When the cards were last read — the clock a card's "Needs a score" is judged by. */
+  const [readAt, setReadAt] = useState(() => Date.now());
   const [tournamentIds, setTournamentIds] = useState<string[]>([]);
   const [scorePolicies, setScorePolicies] = useState<Record<string, boolean>>({});
   const [emptyState, setEmptyState] = useState<ScorekeeperEmptyState | null>(null);
@@ -228,6 +243,7 @@ export default function ScorekeeperPage() {
       }
 
       setCards(Array.isArray(data.cards) ? data.cards : []);
+      setReadAt(Date.now());
       const loadedVenues: Venue[] = Array.isArray(data.venues) ? data.venues : [];
       setVenues(loadedVenues);
       // The field list is day-scoped now (only fields the day's games are on, plus typed
@@ -678,10 +694,10 @@ export default function ScorekeeperPage() {
           foot of a desktop page. */}
       <DayOfFilterBar label="Status filter">
         {([
-          ['open', 'To Score', counts.open],
-          ['pending', 'Review', counts.pending],
-          ['final', 'Final', counts.final],
-          ['all', 'All', cards.length],
+          ['open', SCOREKEEPER_BUCKET.open, counts.open],
+          ['pending', SCOREKEEPER_BUCKET.pending, counts.pending],
+          ['final', SCOREKEEPER_BUCKET.final, counts.final],
+          ['all', SCOREKEEPER_BUCKET.all, cards.length],
         ] as const).map(([filter, label, count]) => (
           <DayOfFilterButton
             key={filter}
@@ -738,7 +754,7 @@ export default function ScorekeeperPage() {
                   ? <span className={styles.nowBadge}>Up next</span>
                   : (
                     <span className={`${styles.statusBadge} ${styles[`status_${game.status}`] ?? ''}`}>
-                      {statusLabel(game.status)}
+                      {statusLabel(game, divisions, readAt)}
                     </span>
                   )}
 

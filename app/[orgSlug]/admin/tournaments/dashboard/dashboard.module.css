@@ -528,131 +528,9 @@
 
 .panelLink:hover { color: var(--logic-lime); }
 
-/* ── Now Playing (live game-day command strip) ────────────────────────────── */
-/* Now Playing is the live operating focus, so it spans the full board width
-   (like the public broadcast marquee) instead of competing in the uniform gauge
-   grid — which otherwise stranded whitespace beside the short gauge panels.
-   See design decision 2026-06-15. */
-.liveStripPanel {
-  grid-column: 1 / -1;
-}
-
-/* Games tile horizontally in a single row that fills the strip. JS measures how
-   many whole tiles fit (min 4) and renders that many + a "+N more" tile; below
-   the 4-tile width it switches to wrap so tiles stack on narrow/mobile instead
-   of shrinking unusably. */
-.liveList {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 0.5rem;
-}
-
-/* Narrow screens (can't fit 4 tiles): wrap to multiple rows. JS sets data-wrap. */
-.liveList[data-wrap='true'] {
-  flex-wrap: wrap;
-}
-
-/* Each tile shares the row equally; min-width keeps them from getting too narrow
-   (and is the basis the JS fit-math uses). */
-.liveList > * {
-  flex: 1 1 0;
-  min-width: 200px;
-}
-
-.liveRow {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.5rem 0.6rem 0.5rem 0.7rem;
-  border-radius: 6px;
-  background: rgba(var(--blueprint-blue-rgb), 0.06);
-  /* 3px accent stripe — reuses the GameList live-row system (B3 2026-06-03). */
-  border-left: 3px solid var(--data-gray);
-  text-decoration: none;
-  color: inherit;
-  transition: background 0.15s;
-}
-
-.liveRow:hover { background: rgba(var(--blueprint-blue-rgb), 0.12); }
-
-/* LIVE = lime heartbeat, IN REVIEW = amber (paired with the badge, never colour-only). */
-.liveRow[data-live='live']   { border-left-color: var(--logic-lime); }
-.liveRow[data-live='review'] { border-left-color: var(--warning); }
-/* NEXT = blueprint blue (informational), NEEDS SCORE = amber (action needed). */
-.liveRow[data-live='next']    { border-left-color: var(--blueprint-blue); }
-.liveRow[data-live='overdue'] { border-left-color: var(--warning); }
-
-/* Badge on its own eyebrow line so a wider "IN REVIEW" never squeezes the matchup
-   into a narrow wrapping column — keeps LIVE + IN REVIEW tiles aligned. */
-.liveStatusRow {
-  display: flex;
-  align-items: center;
-}
-
-.liveRowMain {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.liveBadge {
-  font-size: 0.6rem;
-  flex-shrink: 0;
-}
-
-/* Matchup takes the remaining width and WRAPS rather than truncating, so both
-   team names are always readable (the old single-line ellipsis cut the home team). */
-.liveMatchup {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.82rem;
-  font-weight: 600;
-  line-height: 1.25;
-  overflow-wrap: anywhere;
-}
-
-.liveAt {
-  color: var(--data-gray);
-  font-weight: 400;
-}
-
-.liveScore {
-  font-family: var(--font-data);
-  font-weight: 800;
-  font-size: 0.95rem;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-/* Venue · division on its own line — never competes with the matchup for width. */
-.liveMeta {
-  font-size: 0.7rem;
-  color: var(--data-gray);
-  padding-left: 0.1rem;
-  overflow-wrap: anywhere;
-}
-
-/* "+N more" tile — same footprint as a game tile, links to Results. */
-.liveMoreTile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 0.6rem;
-  border-radius: 6px;
-  border: 1px dashed rgba(var(--blueprint-blue-rgb), 0.35);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: rgba(var(--logic-lime-rgb), 0.7);
-  text-decoration: none;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.liveMoreTile:hover {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-}
+/* ⚰ The Now Playing / Up Next / Needs a Score tile strips (`.liveStripPanel`, `.liveList`, `.liveRow`
+   and parts) are GONE (Tournament admin redesign Stage 1, 2026-09-29): the game-day board is
+   `GameDayBoard.tsx`, its four lists in one frame of the kit's row list. */
 
 .mainGauge {
   display: flex;
@@ -715,21 +593,6 @@
   font-weight: 700;
   min-width: 32px;
   text-align: right;
-}
-
-.subStats {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.subStat {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
 }
 
 .registrationStatusTable {
@@ -1290,26 +1153,6 @@
 .payDivCell[data-tone="warning"] { color: var(--warning);         border-color: rgba(var(--warning-rgb), 0.28); }
 .payDivCell[data-tone="danger"]  { color: var(--danger);          border-color: rgba(var(--danger-rgb), 0.28); }
 
-/* ── Dashboard customize panel ───────────────────────── */
-.customizeToggleBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.62rem;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--white-40);
-  border-color: var(--border-2);
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.customizeToggleBtn:hover {
-  color: var(--white-70);
-  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
-}
-
-/* Mobile status chip (lives in the title block; desktop uses the right-corner block) */
-
 /* ── Edit Layout mode ──────────────────────────────────── */
 .editToolbar {
   display: flex;
@@ -1354,6 +1197,26 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+/* The game-day board's Customize (Tournament admin redesign Stage 1): one checkbox per part, in the
+   day's order — shown or hidden, never moved. Full width under the toolbar's title line. */
+.editToolbarParts {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  order: 1;
+}
+.editToolbarPart {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: var(--tap-min, 44px);
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.editToolbarPart input { width: 1rem; height: 1rem; accent-color: var(--home-olive); }
 
 /* Stat card in edit mode */
 .statCardEditing {
@@ -1910,21 +1773,6 @@
   .chatSkelBar { animation: none; }
 }
 
-/* Post-event banner */
-.postEventBanner {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid rgba(var(--warning-rgb), 0.3);
-  background: rgba(var(--warning-rgb), 0.04);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  color: var(--white-60);
-  margin-bottom: 0;
-  line-height: 1.5;
-}
-
 /* ── Activate banner (ready state) ──────────────────── */
 .activateBanner {
   display: flex;
@@ -2189,12 +2037,6 @@
     padding: 0.5rem 0.75rem;
     min-height: 36px;
   }
-}
-
-/* Shell mobile threshold — top app-bar takes over status + context */
-@media (max-width: 900px) {
-  .statusBlockDesktop { display: none; }
-  .customizeToggleBtn { display: none; }
 }
 
 @media (max-width: 640px) {
@@ -2538,27 +2380,6 @@
 }
 :global([data-admin-kit]) .panelLink:hover { color: var(--home-olive); }
 
-/* ── Now Playing / Up Next / Needs a Score strips ────────────────────────── */
-:global([data-admin-kit]) .liveRow {
-  background: var(--home-card, var(--card-bg));
-  border-left-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .liveRow:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .liveRow[data-live='live']    { border-left-color: var(--danger); }
-:global([data-admin-kit]) .liveRow[data-live='review'] { border-left-color: var(--warning); }
-:global([data-admin-kit]) .liveRow[data-live='next']    { border-left-color: var(--info); }
-:global([data-admin-kit]) .liveRow[data-live='overdue'] { border-left-color: var(--warning); }
-:global([data-admin-kit]) .liveAt,
-:global([data-admin-kit]) .liveMeta { color: var(--text-tertiary); }
-:global([data-admin-kit]) .liveMoreTile {
-  border-color: var(--home-line-strong);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .liveMoreTile:hover {
-  color: var(--home-olive);
-  border-color: var(--home-olive);
-}
-
 /* ── Gauges ───────────────────────────────────────────────────────────────── */
 :global([data-admin-kit]) .gaugeMain {
   font-family: var(--font-data);
@@ -2568,7 +2389,6 @@
 :global([data-admin-kit]) .gaugeOf { color: var(--text-tertiary); }
 :global([data-admin-kit]) .gaugeLabel { color: var(--text-secondary); }
 :global([data-admin-kit]) .gaugeTrack { background: var(--home-line); }
-:global([data-admin-kit]) .subStat,
 :global([data-admin-kit]) .payRow {
   font-family: var(--font-sans, system-ui, sans-serif);
   color: var(--text-tertiary);
@@ -2735,8 +2555,6 @@
 :global([data-admin-kit]) .sparkline polyline { stroke: var(--home-olive); }
 
 /* ── Customize / edit-layout mode ────────────────────────────────────────── */
-:global([data-admin-kit]) .customizeToggleBtn { color: var(--text-tertiary); border-color: var(--home-line-strong); }
-:global([data-admin-kit]) .customizeToggleBtn:hover { color: var(--text-primary); border-color: var(--home-olive); }
 :global([data-admin-kit]) .editToolbar {
   border-color: var(--home-line);
   background: var(--card-bg);
@@ -2933,12 +2751,6 @@
 }
 
 /* ── Post-event / activate / wrap-up banners ──────────────────────────────── */
-:global([data-admin-kit]) .postEventBanner {
-  border-color: rgba(var(--warning-rgb), 0.3);
-  background: rgba(var(--warning-rgb), 0.06);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-secondary);
-}
 :global([data-admin-kit]) .activateBanner {
   border-color: rgba(var(--success-rgb), 0.35);
   background: rgba(var(--success-rgb), 0.06);
@@ -3009,20 +2821,3 @@
 }
 :global([data-admin-kit]) .recentEvents { border-color: var(--home-line); }
 
-/* ── Kit-only title chip (the dashboard's own page header) ───────────────── */
-:global([data-admin-kit]) .kitTitleChips {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-:global([data-admin-kit]) .kitStatusLabel {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-@media (max-width: 900px) {
-  :global([data-admin-kit]) .kitTitleChips { display: none; }
-}

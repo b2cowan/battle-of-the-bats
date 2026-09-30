@@ -8,11 +8,10 @@
  *  completed — status 'completed'
  *  archived  — status 'archived'
  *
- * Game-day boundary = within event dates OR the first game has started. The
- * "first game started" half needs game data, so surfaces that have it (the
- * dashboard, via its API) pass a full `isGameDay`; shell-wide surfaces that
- * don't (e.g. the mobile top-bar pill) pass the date-only signal — an accepted
- * edge-case difference.
+ * Game-day boundary = within event dates OR the first game has started — `isGameDay()` below, the
+ * one rule. The "first game started" half needs game data: the dashboard's API reads its games, and
+ * the admin tournaments list sends `first_game_started`, which the event header, the context strip and
+ * the help drawer read from the tournament context.
  */
 
 // Explicit `.ts` extensions (repo convention) so this module — and everything that depends on it,
@@ -138,6 +137,41 @@ export function isWithinEventDates(
   return today >= startDate && today <= endDate;
 }
 
+/** The one fact about a game the game-day rule reads — each caller maps its own rows onto it. */
+export type GameStartFact = { status: string | null; date: string | null; time: string | null };
+
+/**
+ * The "first game has started" half of the game-day rule: a game that is not cancelled has a score
+ * submitted or final, or its scheduled start (in the tournament's zone) has passed.
+ */
+export function hasFirstGameStarted(
+  games: Iterable<GameStartFact>,
+  now: { date: string; time: string },
+): boolean {
+  for (const g of games) {
+    if (g.status === 'cancelled') continue;
+    if (g.status === 'submitted' || g.status === 'completed') return true;
+    if (g.date != null && (g.date < now.date || (g.date === now.date && g.time != null && g.time <= now.time))) return true;
+  }
+  return false;
+}
+
+/**
+ * THE game-day rule (Tournament admin redesign G1, 2026-09-29): an event is on game day while today
+ * falls within its dates OR its first game has started — so it stays there after the last date, while
+ * scores are finalized, until it is marked complete. The dashboard's API and the admin tournaments list
+ * (which feeds the event header's chip) both ask this function, so the header and the board can no
+ * longer disagree; before, the header used the dates alone and said "Open" after the last day.
+ */
+export function isGameDay(opts: {
+  startDate?: string | null;
+  endDate?: string | null;
+  firstGameStarted: boolean;
+  today?: string;
+}): boolean {
+  return isWithinEventDates(opts.startDate, opts.endDate, opts.today) || opts.firstGameStarted;
+}
+
 export function resolvePhase(opts: { status?: string | null; isGameDay: boolean }): TournamentPhase {
   const { status, isGameDay } = opts;
   if (status === 'archived') return 'archived';
@@ -150,7 +184,9 @@ export function resolvePhase(opts: { status?: string | null; isGameDay: boolean 
 export const PHASE_LABEL: Record<TournamentPhase, string> = {
   draft: 'Draft',
   open: 'Open',
-  gameday: 'Live',
+  // "Game day", not "Live" (/marketing, Tournament admin redesign G1): the phase now runs past the last
+  // date while scores are finalized, when nothing is literally live. "Live" means one game, right now.
+  gameday: 'Game day',
   completed: 'Completed',
   archived: 'Archived',
 };

@@ -1,6 +1,7 @@
 ﻿'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, CloudRain, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { buildPlaceholderOptions, descendantBracketCodes, findBracketSchedulingViolations, nextManualBracketCode, groupGamesByBracketId } from '@/lib/playoff-bracket';
@@ -271,6 +272,21 @@ export default function AdminSchedulePage() {
     }
     setShowShiftDay(true);
   }
+
+  // The game-day board's "Running late?" door (Tournament admin redesign G8) lands here with
+  // `?tool=rain-delay` and opens the rain-delay window on arrival — once per visit (ref-guarded, as
+  // Results reads `?gameId=`), after the games load so the window has days to offer. With nothing left
+  // to move (or a completed event) it opens nothing; the board hides the door in both cases anyway.
+  const searchParams = useSearchParams();
+  const toolParam = searchParams.get('tool');
+  const toolOpenedRef = useRef(false);
+  useEffect(() => {
+    // …and after the org is known, so the plan check reads the real plan, not "no org yet".
+    if (toolParam !== 'rain-delay' || toolOpenedRef.current || tournamentLoading || gamesLoading || !tournamentId || !currentOrg) return;
+    toolOpenedRef.current = true;
+    if (hasUpcomingGames && !isLocked) openRainDelay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toolParam, tournamentLoading, gamesLoading, tournamentId, currentOrg, hasUpcomingGames, isLocked]);
 
   const refresh = useCallback(async () => {
     if (tournamentLoading) return;
@@ -1979,7 +1995,6 @@ export default function AdminSchedulePage() {
                     onSave={isLocked ? undefined : handleSaveGame}
                     onPlayoffEdit={(isLocked || !canBuildPlayoffsManually) ? undefined : (g) => enterBracketEditor(g.id, g.divisionId)}
                     onCreateVenue={() => setAddVenueOpen(true)}
-                    mode="planning"
                     conflictsOnly={conflictsOnly}
                     tournament={currentTournament}
                   />
@@ -2020,7 +2035,6 @@ export default function AdminSchedulePage() {
               onSave={isLocked ? undefined : handleSaveGame}
               onPlayoffEdit={(isLocked || !canBuildPlayoffsManually) ? undefined : (g) => enterBracketEditor(g.id, g.divisionId)}
               onCreateVenue={() => setAddVenueOpen(true)}
-              mode="planning"
               conflictsOnly={conflictsOnly}
               tournament={currentTournament}
             />

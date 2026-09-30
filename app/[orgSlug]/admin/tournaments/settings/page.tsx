@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { ArrowRight, Bell, CreditCard, Lock, ShieldCheck, Users2, type LucideIcon } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { useTournamentCrumb } from '@/components/admin/tournament';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasCapability } from '@/lib/roles';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -20,7 +19,6 @@ type SettingsCard = {
 
 export default function TournamentSettingsAccessPage() {
   const { currentOrg, userRole, userCapabilities } = useOrg();
-  const tournamentCrumb = useTournamentCrumb();
   usePageTitle('Settings');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const subscriptionHref = `${base}/settings/subscription`;
@@ -92,7 +90,7 @@ export default function TournamentSettingsAccessPage() {
   return (
     <div className={styles.page}>
       <AdminPageHeader
-        crumbs={[tournamentCrumb]}
+        inlineActions
         title="Settings & access"
         legacy={
           <div className={styles.pageHeader}>

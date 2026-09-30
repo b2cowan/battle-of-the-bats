@@ -4,13 +4,35 @@
  * Shared gate / team check-in board. Used by the admin Check-in page and the
  * gate-volunteer surface. Takes orgSlug + tournamentId by prop (no admin
  * contexts) so it works inside or outside the admin shell.
+ *
+ * Tournament admin redesign Stage 1 · G7 (hub v5, ruled 2026-09-29) — the organizer's board and the
+ * gate volunteer's are THIS board, so every change here reaches the gate:
+ *   · the filter is the gate's own bucket bar (All · Not arrived · Checked in · No-show — single
+ *     choice, All first and the default): inline at the top of the organizer's board, pinned at the
+ *     bottom of the gate's phone (owner Option C, 2026-08-07). The three count tiles and the 24px
+ *     segmented filter are gone — the bar's counts ARE the scoreboard;
+ *   · payment is not a bucket: "N of M teams still owe" is a count under the bar, and each row says
+ *     what it owes ("Owes $475" amber — money owed; "Paid" plain);
+ *   · a row carries ONE worded Check in (olive on white, A12) beside its chevron (A11 Option 1), or a
+ *     worded Undo once the team is in or a no-show; the row opens the team's sheet, where No-show now
+ *     lives (twin person icons one mis-tap apart were F11). The sheet is unchanged; its big Check in is
+ *     the screen's one lime;
+ *   · a phone draws one frame with the divisions as band rows; a desk draws a table (Team · Roster ·
+ *     Payment) with the divisions as band rows;
+ *   · it stays current by itself (G6): every 30 s while visible, never while a team's sheet is open or
+ *     an action is in flight.
  */
 
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { usePathname } from 'next/navigation';
-import { UserCheck, UserX, RotateCcw, Search, DollarSign, ClipboardList, Plus, Trash2, Check } from 'lucide-react';
+import { UserCheck, UserX, RotateCcw, Search, DollarSign, ClipboardList, Plus, Trash2, Check, ChevronRight } from 'lucide-react';
 import BottomSheet from '@/components/admin/BottomSheet';
 import { DayOfFilterBar, DayOfFilterButton } from '@/components/volunteer/DayOfBottomBars';
+import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, RepChip, RowAction, repKit } from '@/components/admin/kit/club/RepKit';
+import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import { formatTime } from '@/lib/utils';
+import { formatInOrgZone } from '@/lib/timezone';
+import { useVisiblePoll } from '@/lib/hooks/useVisiblePoll';
 import styles from './CheckInBoard.module.css';
 
 const FETCH: RequestInit = { credentials: 'same-origin' };
@@ -38,15 +60,17 @@ type DivInfo = { id: string; name: string; fee: number | null };
 function formatMoney(v: number) {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v);
 }
+/** "9:58 a.m." — an instant's clock in the org's zone, in the house spelling (it used to print the
+ *  device's own "9:58 AM", in the device's zone). */
 function timeOf(iso: string | null) {
   if (!iso) return '';
-  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return formatTime(formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit' }));
 }
 
-const STATUS_META: Record<CheckInStatus, { label: string; cls: string }> = {
-  not_arrived: { label: 'Not arrived', cls: styles.dotIdle },
-  checked_in: { label: 'Checked in', cls: styles.dotIn },
-  no_show: { label: 'No-show', cls: styles.dotNo },
+const STATUS_META: Record<CheckInStatus, { label: string }> = {
+  not_arrived: { label: 'Not arrived' },
+  checked_in: { label: 'Checked in' },
+  no_show: { label: 'No-show' },
 };
 
 /** The local patch to apply optimistically for an action (mirrors the server write). */
@@ -78,63 +102,101 @@ function optimisticPatch(act: string, now: string, extra?: Record<string, unknow
   }
 }
 
-/** One team row. Memoized: re-renders only when its own team object changes
- * (the optimistic update gives only the acted-on team a new reference). */
-const TeamRow = memo(function TeamRow({ team, fee, locked, busy, onOpen, onCheckIn, onNoShow, onUndo }: {
+/** The team's roster fact, as the row says it. */
+function rosterFact(team: CheckInTeam) {
+  return team.rosterConfirmedAt ? `Roster ✓ ${team.roster.length}` : team.roster.length > 0 ? `Roster · ${team.roster.length}` : 'No roster';
+}
+
+/** The team's payment fact: what it owes in the amber of money owed, or a plain "Paid". */
+function PaymentFact({ team, fee }: { team: CheckInTeam; fee: number | null }) {
+  if (team.paymentStatus === 'paid') return <span>Paid</span>;
+  return <span className={styles.owes}>{fee ? `Owes ${formatMoney(fee)}` : 'Unpaid'}</span>;
+}
+
+/** Where the team is: in at a time, or a no-show; nothing while it has not arrived. */
+function ArrivalChip({ team }: { team: CheckInTeam }) {
+  if (team.checkInStatus === 'checked_in') {
+    return <span className={styles.inChip}>{team.checkedInAt ? GAME_DAY_WORDS.arrivedAt(timeOf(team.checkedInAt)) : STATUS_META.checked_in.label}</span>;
+  }
+  if (team.checkInStatus === 'no_show') return <RepChip tone="bad">{STATUS_META.no_show.label}</RepChip>;
+  return null;
+}
+
+/** The row's one worded action: Check in while the team has not arrived, Undo once it has (or no-showed). */
+function ArrivalAction({ team, disabled, onCheckIn, onUndo }: {
+  team: CheckInTeam;
+  disabled: boolean;
+  onCheckIn: (id: string) => void;
+  onUndo: (id: string) => void;
+}) {
+  return team.checkInStatus === 'not_arrived' ? (
+    <RowAction onClick={e => { e.stopPropagation(); onCheckIn(team.id); }} disabled={disabled} icon={<Check size={14} aria-hidden />}>
+      {GAME_DAY_WORDS.checkIn}
+    </RowAction>
+  ) : (
+    <RowAction
+      quiet
+      onClick={e => { e.stopPropagation(); onUndo(team.id); }}
+      disabled={disabled}
+      aria-label={`${GAME_DAY_WORDS.undo} — reset ${team.name} to not arrived`}
+    >
+      {GAME_DAY_WORDS.undo}
+    </RowAction>
+  );
+}
+
+type RowProps = {
   team: CheckInTeam;
   fee: number | null;
   locked: boolean;
   busy: boolean;
   onOpen: (id: string) => void;
   onCheckIn: (id: string) => void;
-  onNoShow: (id: string) => void;
   onUndo: (id: string) => void;
-}) {
-  const meta = STATUS_META[team.checkInStatus];
+};
+
+/** A phone row (the frame's): the name, its facts, the action beside the chevron. Memoized: re-renders
+ *  only when its own team object changes (the optimistic update gives only the acted-on team a new
+ *  reference). */
+const PhoneRow = memo(function PhoneRow({ team, fee, locked, busy, onOpen, onCheckIn, onUndo }: RowProps) {
+  const arrived = team.checkInStatus !== 'not_arrived';
   return (
-    <div className={styles.row} data-status={team.checkInStatus}>
-      <button type="button" className={styles.rowMain} onClick={() => onOpen(team.id)}>
-        <span className={`${styles.dot} ${meta.cls}`} aria-hidden />
-        <span className={styles.rowText}>
-          <span className={styles.teamName}>{team.name}</span>
-          <span className={styles.rowSub}>
-            <span className={styles.rosterTag} data-state={team.rosterConfirmedAt ? 'confirmed' : team.roster.length > 0 ? 'submitted' : 'none'}>
-              {team.rosterConfirmedAt ? `Roster ✓ ${team.roster.length}` : team.roster.length > 0 ? `Roster · ${team.roster.length}` : 'No roster'}
-            </span>
-            <span className={styles.payTag} data-paid={team.paymentStatus === 'paid' ? 'true' : 'false'}>
-              {team.paymentStatus === 'paid' ? 'Paid' : fee ? `Owes ${formatMoney(fee)}` : 'Unpaid'}
-            </span>
-            {team.checkInStatus === 'checked_in' && team.checkedInAt && (
-              <span className={styles.timeTag}>{timeOf(team.checkedInAt)}</span>
-            )}
-          </span>
+    <ClubRow
+      as="button"
+      onClick={() => onOpen(team.id)}
+      aria-haspopup="dialog"
+      title={team.name}
+      caption={
+        <span className={styles.facts}>
+          {arrived && <><ArrivalChip team={team} /><span aria-hidden> · </span></>}
+          {rosterFact(team)} · <PaymentFact team={team} fee={fee} />
         </span>
-      </button>
-      <div className={styles.rowActions}>
-        {team.checkInStatus === 'not_arrived' ? (
-          <>
-            <button type="button" className={styles.noShowIconBtn} disabled={locked || busy} onClick={() => onNoShow(team.id)} title="Mark no-show" aria-label="Mark no-show">
-              <UserX size={16} aria-hidden />
-            </button>
-            <button type="button" className={styles.checkInBtn} disabled={locked || busy} onClick={() => onCheckIn(team.id)}>
-              <UserCheck size={16} aria-hidden />
-              <span className={styles.checkInLabel}>Check in</span>
-            </button>
-          </>
-        ) : (
-          <>
-            {team.checkInStatus === 'checked_in' ? (
-              <span className={`${styles.statePill} ${styles.statePillIn}`}><Check size={14} aria-hidden /> In</span>
-            ) : (
-              <span className={`${styles.statePill} ${styles.statePillNo}`}>No-show</span>
-            )}
-            <button type="button" className={styles.undoIconBtn} disabled={locked || busy} onClick={() => onUndo(team.id)} title="Undo — reset to not arrived" aria-label="Undo">
-              <RotateCcw size={15} aria-hidden />
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+      }
+      chevron
+      beside={<ArrivalAction team={team} disabled={locked || busy} onCheckIn={onCheckIn} onUndo={onUndo} />}
+    />
+  );
+});
+
+/** A desk row (the table's): the name opens the team's sheet, as does the whole row. */
+const DeskRow = memo(function DeskRow({ team, fee, locked, busy, onOpen, onCheckIn, onUndo }: RowProps) {
+  return (
+    <tr className={repKit.rowOpens} onClick={() => onOpen(team.id)}>
+      <td>
+        <button type="button" className={`${repKit.nameButton} ${repKit.nameLink} ${styles.deskName}`} aria-haspopup="dialog" onClick={e => { e.stopPropagation(); onOpen(team.id); }}>
+          {team.name}
+        </button>
+      </td>
+      <td className={repKit.dim}>{rosterFact(team)}</td>
+      <td><PaymentFact team={team} fee={fee} /></td>
+      <td className={styles.actionCell}>
+        <span className={styles.actionCellInner}>
+          <ArrivalChip team={team} />
+          <ArrivalAction team={team} disabled={locked || busy} onCheckIn={onCheckIn} onUndo={onUndo} />
+        </span>
+      </td>
+      <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
+    </tr>
   );
 });
 
@@ -143,12 +205,9 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
   tournamentId: string;
   locked: boolean;
   /**
-   * Host opt-in: move the arrival filter out of the toolbar and into the day-of shell's pinned
-   * bottom bar (phone only — above 640px it renders in the same place either way).
-   *
-   * ⚠ Opt-in per host, never a default. This board is ALSO mounted by the admin gate screen,
-   * which already carries `AdminBottomNav` — two more bars stacked under it would be three bands
-   * of chrome on one phone screen.
+   * Host opt-in: the arrival bar rides the day-of shell's pinned bottom bar (phone only — above 640px
+   * it renders in the flow either way). The gate volunteer's shell passes it; the organizer's board,
+   * which carries the admin's own bottom nav, draws the bar inline at the top instead.
    */
   pinnedFilters?: boolean;
 }) {
@@ -160,6 +219,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
   // instead of a generic "Action failed." dead end. Works from both mount routes (gate + admin).
   const [authLost, setAuthLost] = useState(false);
   const [search, setSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const [divFilter, setDivFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | CheckInStatus>('all');
   const [sheetId, setSheetId] = useState<string | null>(null);
@@ -178,17 +238,27 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
     setError('Signed out — sign back in to continue check-in.');
   }, []);
 
+  // Only the newest read may paint: a refresh already in flight when a volunteer taps Check in (`action`
+  // bumps this) or overtaken by a newer read would otherwise put the team back to "not arrived".
+  const loadSeqRef = useRef(0);
+  /** The tournament whose divisions are on screen — a refresh skips them once they are. */
+  const divisionsForRef = useRef<string | null>(null);
   const loadBoard = useCallback(async (silent = false) => {
     if (!tournamentId) return;
+    const seq = ++loadSeqRef.current;
+    const current = () => seq === loadSeqRef.current;
     if (!silent) setLoading(true);
     // A silent revert-reload after an action failure must NOT wipe the failure message that's
     // already on screen — only a fresh (non-silent) load starts clean.
     if (!silent) { setError(null); setAuthLost(false); }
     try {
       const tid = encodeURIComponent(tournamentId);
+      // The divisions don't change on game day: once they are on screen, a silent read (the refresh, a
+      // revert) takes the board only.
+      const withDivisions = !silent || divisionsForRef.current !== tournamentId;
       const [boardRes, divRes] = await Promise.all([
         fetch(`/api/admin/check-in?tournamentId=${tid}${orgParam}`, FETCH),
-        fetch(`/api/admin/divisions?tournamentId=${tid}${orgParam}`, FETCH),
+        withDivisions ? fetch(`/api/admin/divisions?tournamentId=${tid}${orgParam}`, FETCH) : null,
       ]);
       if (boardRes.status === 401) {
         markAuthLost();
@@ -196,17 +266,31 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
       }
       if (!boardRes.ok) throw new Error((await boardRes.json().catch(() => ({})))?.error || 'Could not load check-in.');
       const board = await boardRes.json();
+      const divs = divRes?.ok ? await divRes.json() : [];
+      if (!current()) return;
       setTeams(board.teams ?? []);
-      const divs = divRes.ok ? await divRes.json() : [];
-      setDivisions((Array.isArray(divs) ? divs : []).map((d: any) => ({ id: d.id, name: d.name, fee: d.totalFeeAmount ?? null })));
+      if (divRes) {
+        divisionsForRef.current = tournamentId;
+        setDivisions((Array.isArray(divs) ? divs : []).map((d: { id: string; name: string; totalFeeAmount?: number | null }) => ({ id: d.id, name: d.name, fee: d.totalFeeAmount ?? null })));
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load check-in.');
+      // A failed background refresh keeps the board as it is; the next tick tries again.
+      if (!silent && current()) setError(e instanceof Error ? e.message : 'Could not load check-in.');
     } finally {
-      if (!silent) setLoading(false);
+      // The read that paints ends the loading line (a silent one too, when it overtook the first read).
+      if (current()) setLoading(false);
     }
   }, [tournamentId, orgParam, markAuthLost]);
 
   useEffect(() => { void loadBoard(); }, [loadBoard]);
+
+  // G6 · game day stays current: a second gate volunteer's check-in reaches this board within 30 s,
+  // with no reload — while the page is visible, and never while a team's sheet is open or an action
+  // is in flight (a refresh would move the team the volunteer has in hand).
+  useVisiblePoll(() => { void loadBoard(true); }, {
+    enabled: Boolean(tournamentId),
+    paused: sheetId !== null || busyId !== null,
+  });
 
   const divMap = useMemo(() => new Map(divisions.map(d => [d.id, d])), [divisions]);
 
@@ -216,6 +300,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
   const action = useCallback(async (act: string, teamId: string, extra?: Record<string, unknown>) => {
     if (!tournamentId) return;
     const patch = optimisticPatch(act, new Date().toISOString(), extra);
+    loadSeqRef.current++; // a read already in flight predates this change — it must not paint over it
     setBusyId(teamId);
     setTeams(prev => prev.map(t => t.id === teamId ? { ...t, ...patch } : t));
     try {
@@ -246,7 +331,6 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
 
   const openTeam = useCallback((id: string) => setSheetId(id), []);
   const quickCheckIn = useCallback((id: string) => { void action('check_in', id); }, [action]);
-  const quickNoShow = useCallback((id: string) => { void action('no_show', id); }, [action]);
   const quickUndo = useCallback((id: string) => { void action('undo', id); }, [action]);
 
   const filtered = useMemo(() => {
@@ -267,67 +351,46 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
     return Array.from(m.entries()).sort((a, b) => (divMap.get(a[0])?.name ?? '').localeCompare(divMap.get(b[0])?.name ?? ''));
   }, [filtered, divMap]);
 
-  const gauges = useMemo(() => {
-    const total = teams.length;
-    const arrived = teams.filter(t => t.checkInStatus === 'checked_in').length;
-    const noShow = teams.filter(t => t.checkInStatus === 'no_show').length;
-    const unpaid = teams.filter(t => t.paymentStatus !== 'paid').length;
-    return { total, arrived, noShow, unpaid };
+  // Every team's arrival in one division, whatever the filter — the band's "2 of 6 in".
+  const inByDivision = useMemo(() => {
+    const m = new Map<string, { in: number; total: number }>();
+    for (const t of teams) {
+      const c = m.get(t.divisionId) ?? { in: 0, total: 0 };
+      c.total++;
+      if (t.checkInStatus === 'checked_in') c.in++;
+      m.set(t.divisionId, c);
+    }
+    return m;
   }, [teams]);
+  const owing = useMemo(() => teams.filter(t => t.paymentStatus !== 'paid').length, [teams]);
 
   const sheetTeam = sheetId ? teams.find(t => t.id === sheetId) ?? null : null;
 
   const ARRIVAL_FILTERS = ['all', 'not_arrived', 'checked_in', 'no_show'] as const;
   const arrivalLabel = (k: (typeof ARRIVAL_FILTERS)[number]) => (k === 'all' ? 'All' : STATUS_META[k].label);
-  // How many teams each bucket holds — the pinned bar leads on the count, because on a phone it
-  // replaces the reading a volunteer used to get from the gauges scrolled off above.
+  // How many teams each bucket holds — the bar leads on the count on a phone, because it is where the
+  // numbers live (the count tiles are gone).
   const arrivalCount = (k: (typeof ARRIVAL_FILTERS)[number]) =>
     k === 'all' ? teams.length : teams.filter(t => t.checkInStatus === k).length;
+  const bandCount = (divId: string) => {
+    const c = inByDivision.get(divId);
+    return c ? `${c.in} of ${c.total} in` : '';
+  };
+  const rowProps = (t: CheckInTeam): RowProps => ({
+    team: t,
+    fee: divMap.get(t.divisionId)?.fee ?? null,
+    locked,
+    busy: busyId === t.id,
+    onOpen: openTeam,
+    onCheckIn: quickCheckIn,
+    onUndo: quickUndo,
+  });
 
   return (
     <>
-      <div className={styles.gauges}>
-        <div className={styles.gauge}>
-          <span className={styles.gaugeMain}>{gauges.arrived}<span className={styles.gaugeOf}>/{gauges.total}</span></span>
-          <span className={styles.gaugeLabel}>Checked in</span>
-        </div>
-        <div className={styles.gauge} data-tone="danger">
-          <span className={styles.gaugeMain}>{gauges.noShow}</span>
-          <span className={styles.gaugeLabel}>No-shows</span>
-        </div>
-        <div className={styles.gauge} data-tone="warning">
-          <span className={styles.gaugeMain}>{gauges.unpaid}</span>
-          <span className={styles.gaugeLabel}>Unpaid</span>
-        </div>
-      </div>
-
       <div className={styles.toolbar}>
-        <div className={styles.searchWrap}>
-          <Search size={15} aria-hidden />
-          <input className={styles.search} placeholder="Search teams…" value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-        <select className={styles.select} value={divFilter} onChange={e => setDivFilter(e.target.value)} aria-label="Division">
-          <option value="all">All divisions</option>
-          {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-        </select>
-        {!pinnedFilters && (
-          <div className={styles.segmented} role="tablist" aria-label="Arrival filter">
-            {ARRIVAL_FILTERS.map(k => (
-              <button key={k} type="button" role="tab" aria-selected={statusFilter === k}
-                className={styles.segBtn} data-on={statusFilter === k ? 'true' : 'false'}
-                onClick={() => setStatusFilter(k)}>
-                {arrivalLabel(k)}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* The volunteer shell's pinned version — same four buckets, same state, thumb-reachable.
-          Rendered in this position so that above 640px it is simply a row where the toolbar's
-          segmented control used to sit. */}
-      {pinnedFilters && (
-        <DayOfFilterBar label="Arrival filter">
+        {/* The gate's own bucket bar — inline here, pinned to a phone's foot on the gate. */}
+        <DayOfFilterBar label="Arrival filter" inline={!pinnedFilters}>
           {ARRIVAL_FILTERS.map(k => (
             <DayOfFilterButton
               key={k}
@@ -338,7 +401,35 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
             />
           ))}
         </DayOfFilterBar>
-      )}
+        {teams.length > 0 && (
+          <p className={styles.owe}>{owing > 0 ? GAME_DAY_WORDS.stillOwe(owing, teams.length) : GAME_DAY_WORDS.allPaid}</p>
+        )}
+        <div className={styles.narrow}>
+          <label className={styles.selectField}>
+            <span className="sr-only">Division</span>
+            <select className={styles.select} value={divFilter} onChange={e => setDivFilter(e.target.value)}>
+              <option value="all">All divisions</option>
+              {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </label>
+          {/* Search: always a field at a desk; behind its icon on a phone until opened (or in use). */}
+          <button
+            type="button"
+            className={styles.searchToggle}
+            aria-label="Search teams"
+            aria-expanded={searchOpen || search !== ''}
+            data-on={searchOpen || search !== '' || undefined}
+            onClick={() => setSearchOpen(o => !o)}
+          >
+            <Search size={18} aria-hidden />
+          </button>
+          <label className={styles.searchWrap} data-open={searchOpen || search !== '' || undefined}>
+            <span className="sr-only">Search teams</span>
+            <Search size={15} className={styles.searchIcon} aria-hidden />
+            <input className={styles.search} type="search" placeholder="Search teams…" value={search} onChange={e => setSearch(e.target.value)} />
+          </label>
+        </div>
+      </div>
 
       {error && (
         <div className={styles.errorBanner}>
@@ -354,29 +445,45 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
         </div>
       )}
 
-      {!loading && grouped.map(([divId, divTeams]) => (
-        <section key={divId} className={styles.group}>
-          <div className={styles.groupHead}>
-            <span className={styles.groupName}>{divMap.get(divId)?.name ?? 'Division'}</span>
-            <span className={styles.groupCount}>{divTeams.filter(t => t.checkInStatus === 'checked_in').length}/{divTeams.length} in</span>
+      {!loading && grouped.length > 0 && (
+        <>
+          {/* Phone: one frame, the divisions as band rows, the action beside each chevron. */}
+          <div className={repKit.phoneOnly}>
+            <ClubRowFrame>
+              {grouped.map(([divId, divTeams]) => (
+                <ClubRowList key={divId} inset label={divMap.get(divId)?.name ?? 'Division'}>
+                  <ClubRowBand count={bandCount(divId)}>{divMap.get(divId)?.name ?? 'Division'}</ClubRowBand>
+                  {divTeams.map(t => <PhoneRow key={t.id} {...rowProps(t)} />)}
+                </ClubRowList>
+              ))}
+            </ClubRowFrame>
           </div>
-          <div className={styles.rows}>
-            {divTeams.map(t => (
-              <TeamRow
-                key={t.id}
-                team={t}
-                fee={divMap.get(t.divisionId)?.fee ?? null}
-                locked={locked}
-                busy={busyId === t.id}
-                onOpen={openTeam}
-                onCheckIn={quickCheckIn}
-                onNoShow={quickNoShow}
-                onUndo={quickUndo}
-              />
-            ))}
+          {/* Desk: a table (a gate reads roster and payment down the column), the divisions as band rows. */}
+          <div className={`${repKit.deskOnly} ${repKit.tableFrame}`}>
+            <table className={repKit.table}>
+              <thead>
+                <tr>
+                  <th scope="col">Team</th>
+                  <th scope="col">Roster</th>
+                  <th scope="col">Payment</th>
+                  <th scope="col"><span className="sr-only">Arrival</span></th>
+                  <th scope="col" className={repKit.go}><span className="sr-only">Open</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {grouped.map(([divId, divTeams]) => [
+                  <tr key={`band-${divId}`} className={repKit.band}>
+                    <td colSpan={5}>
+                      {divMap.get(divId)?.name ?? 'Division'} <span className={repKit.rowBandCount}>{bandCount(divId)}</span>
+                    </td>
+                  </tr>,
+                  ...divTeams.map(t => <DeskRow key={t.id} {...rowProps(t)} />),
+                ])}
+              </tbody>
+            </table>
           </div>
-        </section>
-      ))}
+        </>
+      )}
 
       {sheetTeam && (
         <CheckInSheet

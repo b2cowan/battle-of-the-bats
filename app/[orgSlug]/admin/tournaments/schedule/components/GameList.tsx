@@ -1,6 +1,14 @@
 ﻿'use client';
+/**
+ * The schedule's game list (planning: each row expands into its edit form).
+ *
+ * ⚰ Its SCORING mode is gone (Tournament admin redesign Stage 1, 2026-09-29): Results renders its own
+ * banded list (`results/ResultsList.tsx`) with the score editor in a row's place, so the scoring
+ * branch, its score state, its Finalize tick and its 22px pencil were deleted here with the
+ * deep-link focus that only Results used.
+ */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock, Plus, Minus, Network } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock, Network } from 'lucide-react';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import { fieldNounFor } from '@/lib/sports';
 import { checkVenueConflict, buildConflictMap, resolveGameTiming, toConflictGame, type ConflictResult, type ConflictInfo } from '@/lib/schedule-conflict';
@@ -10,12 +18,12 @@ import TournamentFieldPicker, { fieldPickerValueForGame } from './TournamentFiel
 import { scheduledWindowState } from '@/lib/game-live-state';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { buildPlaceholderOptions, descendantBracketCodes } from '@/lib/playoff-bracket';
-import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
+import { GAME_STATE_WORD, PENDING_FORFEIT } from '@/lib/game-day-words';
 import { Pool } from '@/lib/types';
 import s from '../../../admin-common.module.css';
 import styles from '../schedule-admin.module.css';
 import { tournamentToday } from '@/lib/timezone';
-import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 
 interface GameListProps {
@@ -30,30 +38,19 @@ interface GameListProps {
   /** Playoff games only: open the inline bracket canvas editor focused on this
    *  game (structural wiring). When absent, playoff rows edit inline as before. */
   onPlayoffEdit?: (g: Game) => void;
-  onFinalize?: (id: string) => void;
   onDelete?: (id: string) => void;
   onCancel?: (id: string) => void;
   onSchedule?: (id: string) => void;
   onToggleGeneratorLock?: (id: string, nextLocked: boolean) => void;
   onSave?: (gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; location: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder: string; awayPlaceholder: string }) => Promise<void>;
-  onSaveScore?: (gameId: string, homeScore: number, awayScore: number) => Promise<void>;
-  /** Mark a game a forfeit; winningSide is the team that showed up and advances. */
-  onForfeit?: (gameId: string, winningSide: 'home' | 'away') => Promise<void>;
   onCreateVenue?: () => void;
-  mode: 'planning' | 'scoring';
   /** When true, only render games that currently have a venue conflict (planning triage). */
   conflictsOnly?: boolean;
   /** Tournament context used for conflict detection timing resolution. */
   tournament?: Tournament | null;
-  /** WI-2: a notification deep-link target. When it appears in the rendered list, its row expands
-   *  once and scrolls into view. Ref-guarded so a polling refresh can't re-expand a row the user
-   *  chose to collapse. */
-  focusGameId?: string | null;
 }
 
 type EditFields = { date: string; time: string; venueId: string; venueFacilityId: string; location: string; venueTextMode: boolean; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder: string; awayPlaceholder: string };
-
-type ScoreFields = { home: string; away: string };
 
 type LiveState = 'live' | 'overdue' | 'next';
 
@@ -68,26 +65,18 @@ function parseGameStart(date?: string | null, time?: string | null): number {
 
 export default function GameList({
   games, teams, divisions, venues, viewMode, groupByPool, pools: poolsProp,
-  onEdit, onPlayoffEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onForfeit, onCreateVenue, mode, conflictsOnly = false, tournament, focusGameId
+  onEdit, onPlayoffEdit, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onCreateVenue, conflictsOnly = false, tournament,
 }: GameListProps) {
-  // Admin Design Continuity slice 4b — the kit switch. `kit` gates the one className swap
-  // (Finalize's fill); `kx` patches every hand-set inline colour below while the switch is off.
-  const kit = useAdminKit();
+  // `kx` patches every hand-set inline colour below (Admin Design Continuity slice 4b); the rest of
+  // this file is the schedule's (Stage 3) and keeps it until that stage rebuilds the list.
   const kx = useKitStyle();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   // Sport-pack surface noun for the field picker — never hard-coded.
   const fieldNoun = fieldNounFor(tournament?.sport);
-  // Which game's "who forfeited?" picker is open (scoring mode); null = closed.
-  const [forfeitPickerId, setForfeitPickerId] = useState<string | null>(null);
   const [editState, setEditState] = useState<Record<string, EditFields>>({});
   const [saving, setSaving] = useState<Set<string>>(new Set());
   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
   const previousStatusesRef = useRef<Map<string, string>>(new Map());
-
-  // Scoring-mode inline state
-  const [scoreState, setScoreState] = useState<Record<string, ScoreFields>>({});
-  const [scoreSaving, setScoreSaving] = useState<Set<string>>(new Set());
-  const [scoreErrors, setScoreErrors] = useState<Record<string, string>>({});
 
   // ── Live game-row states (B3) — re-evaluate "now" each minute so live/overdue/next advance ──
   const [now, setNow] = useState(() => Date.now());
@@ -95,21 +84,6 @@ export default function GameList({
     const id = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(id);
   }, []);
-
-  // WI-2: expand + scroll to a notification-linked game, exactly once per id. Waits until the game
-  // is actually in the rendered list (the parent snaps filters so it is), then never fires again for
-  // that id — so the 15s polling refresh can't re-open a row the user has since collapsed.
-  const focusedRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!focusGameId || focusedRef.current === focusGameId) return;
-    if (!games.some(g => g.id === focusGameId)) return;
-    focusedRef.current = focusGameId;
-    setExpanded(prev => (prev.has(focusGameId) ? prev : new Set(prev).add(focusGameId)));
-    requestAnimationFrame(() => {
-      const sel = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(focusGameId) : focusGameId;
-      document.querySelector(`[data-game-id="${sel}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-  }, [focusGameId, games]);
 
   const liveStates = useMemo(() => {
     const map = new Map<string, LiveState>();
@@ -138,15 +112,6 @@ export default function GameList({
     if (nextId) map.set(nextId, 'next');
     return map;
   }, [games, divisions, tournament, now]);
-
-  // Thumb score steppers (B7) — bump a score without the keyboard; clamps at 0.
-  function bumpScore(id: string, side: 'home' | 'away', delta: number) {
-    setScoreState(prev => {
-      const cur = prev[id] ?? { home: '', away: '' };
-      const next = Math.max(0, (parseInt(cur[side], 10) || 0) + delta);
-      return { ...prev, [id]: { ...cur, [side]: String(next) } };
-    });
-  }
 
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
@@ -202,15 +167,14 @@ export default function GameList({
 
   function toggleExpand(id: string, game?: Game) {
     const isExpanding = !expanded.has(id);
-    setForfeitPickerId(null);
     setExpanded(prev => {
       const set = new Set(prev);
       if (set.has(id)) set.delete(id);
       else set.add(id);
       return set;
     });
-    // Initialize edit state the first time a planning-mode row expands
-    if (isExpanding && game && mode === 'planning') {
+    // Initialize edit state the first time a row expands
+    if (isExpanding && game) {
       setEditState(prev => {
         if (prev[id]) return prev;
         return {
@@ -219,23 +183,6 @@ export default function GameList({
         };
       });
     }
-    // Initialize score state the first time a scoring-mode row expands
-    if (isExpanding && game && mode === 'scoring') {
-      setScoreState(prev => {
-        if (prev[id]) return prev;
-        return {
-          ...prev,
-          [id]: {
-            home: game.homeScore != null ? String(game.homeScore) : '',
-            away: game.awayScore != null ? String(game.awayScore) : '',
-          },
-        };
-      });
-    }
-  }
-
-  function formatDate(d: string) {
-    return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   function renderLiveChip(id: string) {
@@ -269,9 +216,9 @@ export default function GameList({
   // Read-mode badges: which saved games already conflict with each other,
   // including the clashing partner (for "double-booked with…" labels).
   const conflictMap = useMemo((): Map<string, ConflictInfo> => {
-    if (!tournament || mode !== 'planning') return new Map();
+    if (!tournament) return new Map();
     return buildConflictMap(games.map(toConflictGame), divisions, tournament);
-  }, [games, divisions, tournament, mode]);
+  }, [games, divisions, tournament]);
 
   // Feature 5: optionally show only games that have a conflict (planning triage).
   const sortedGames = [...games]
@@ -290,7 +237,6 @@ export default function GameList({
 
   // Inline-edit conflicts: conflict result for any currently expanded+editing row.
   const inlineConflicts = useMemo((): Map<string, ConflictResult | null> => {
-    if (mode !== 'planning') return new Map();
     const result = new Map<string, ConflictResult | null>();
     for (const gameId of expanded) {
       const edit = editState[gameId];
@@ -325,18 +271,11 @@ export default function GameList({
       result.set(gameId, conflict);
     }
     return result;
-  }, [expanded, editState, games, divisions, tournament, mode]);
+  }, [expanded, editState, games, divisions, tournament]);
 
   // ── Row-invariant kit patches — computed once per render, not once per row/map() call ──
-  const scoringDateBoldStyle = kx({ fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }, KIT_INK.primary);
-  const scoringDateTimeStyle = kx({ fontSize: '0.72rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }, KIT_INK.tertiary);
   const planningDateBoldStyle = kx({ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }, KIT_INK.primary);
   const planningDateTimeStyle = kx({ fontSize: '0.75rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }, KIT_INK.tertiary);
-  // Revert Score / Forfeit — both clear a recorded (or about-to-be-recorded) result, so both
-  // move to the kit's danger ink (brief: "destructive (forfeit/clear) the kit's danger"),
-  // not the legacy warning-amber ghost-button text.
-  const revertScoreBtnStyle = kx({ color: 'rgba(var(--warning-rgb), 0.8)', flexShrink: 0 }, KIT_INK.danger);
-  const forfeitTriggerBtnStyle = kx({ color: 'rgba(var(--warning-rgb), 0.85)', flexShrink: 0 }, KIT_INK.danger);
   const saveAnywayBtnStyle = kx(
     { borderColor: 'rgba(251,191,36,0.5)', color: 'var(--warning-light)' },
     { borderColor: 'rgba(var(--warning-rgb), 0.5)' },
@@ -347,16 +286,16 @@ export default function GameList({
   const poolDotNeutralStyle = kx({ background: 'var(--white-20)' }, { background: 'var(--text-tertiary)' });
 
   function statusBadge(status: string, source?: string | null) {
-    // A passive status label — deliberately borderless (no button-like box) so it
-    // never reads as the clickable Finalize control beside it.
+    // A passive status label — deliberately borderless (no button-like box).
     // A PENDING forfeit is status 'submitted' with source 'forfeit' — label it as
     // a forfeit awaiting approval so it never reads as a real played score.
+    // The words are game day's one word per state (Tournament admin redesign G5, lib/game-day-words).
     const pendingForfeit = status === 'submitted' && source === 'forfeit';
     const cfg =
-      status === 'completed' ? { label: '✓ Final', tone: 'completed' }
-      : status === 'forfeit' ? { label: '⚑ Forfeit', tone: 'completed' }
-      : pendingForfeit ? { label: '⚑ Forfeit — Pending', tone: 'submitted' }
-      : status === 'submitted' ? { label: '⚠ Pending Review', tone: 'submitted' }
+      status === 'completed' ? { label: `✓ ${GAME_STATE_WORD.final}`, tone: 'completed' }
+      : status === 'forfeit' ? { label: `⚑ ${GAME_STATE_WORD.forfeit}`, tone: 'completed' }
+      : pendingForfeit ? { label: `⚑ ${PENDING_FORFEIT}`, tone: 'submitted' }
+      : status === 'submitted' ? { label: `⚠ ${GAME_STATE_WORD.pendingReview}`, tone: 'submitted' }
       : status === 'cancelled' ? { label: '✕ Cancelled', tone: 'cancelled' }
       : { label: 'Scheduled', tone: 'scheduled' };
     return <span className={styles.statusTag} data-status={cfg.tone}>{cfg.label}</span>;
@@ -364,265 +303,6 @@ export default function GameList({
 
   const renderRow = (g: Game) => {
     const isExpanded = expanded.has(g.id);
-    const hasScoredResult = mode === 'scoring'
-      && (g.status === 'completed' || g.status === 'submitted' || g.status === 'forfeit')
-      && g.homeScore != null
-      && g.awayScore != null;
-    const scoreAuditSummary = hasScoredResult
-      ? scoreSubmissionSummary({
-          source: g.scoreSubmissionSource,
-          email: g.scoreSubmittedByEmail,
-          submittedAt: g.scoreSubmittedAt,
-        })
-      : '';
-
-    // ── SCORING MODE ──────────────────────────────────────────────────────────
-    if (mode === 'scoring') {
-      const score = scoreState[g.id] ?? { home: '', away: '' };
-      const isScoringBusy = scoreSaving.has(g.id);
-      const hasExistingScore = g.status === 'completed' || g.status === 'submitted';
-
-      // Derived win/loss/tie for colour coding
-      const awayWon  = hasScoredResult && (g.awayScore ?? 0) > (g.homeScore ?? 0);
-      const homeWon  = hasScoredResult && (g.homeScore ?? 0) > (g.awayScore ?? 0);
-
-      const handleScoreDiscard = () => {
-        setScoreState(prev => { const n = { ...prev }; delete n[g.id]; return n; });
-        setScoreErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
-        setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
-      };
-
-      const handleScoreSave = async () => {
-        if (!onSaveScore) return;
-        if (score.home === '' || score.away === '') {
-          setScoreErrors(prev => ({ ...prev, [g.id]: 'Both scores are required.' }));
-          return;
-        }
-        setScoreSaving(prev => new Set(prev).add(g.id));
-        setScoreErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
-        try {
-          await onSaveScore(g.id, Number(score.home), Number(score.away));
-          setScoreState(prev => { const n = { ...prev }; delete n[g.id]; return n; });
-          setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
-        } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'Save failed — please try again.';
-          setScoreErrors(prev => ({ ...prev, [g.id]: msg }));
-        } finally {
-          setScoreSaving(prev => { const next = new Set(prev); next.delete(g.id); return next; });
-        }
-      };
-
-      const handleForfeit = async (winningSide: 'home' | 'away') => {
-        if (!onForfeit) return;
-        setScoreSaving(prev => new Set(prev).add(g.id));
-        setScoreErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
-        try {
-          await onForfeit(g.id, winningSide);
-          setScoreState(prev => { const n = { ...prev }; delete n[g.id]; return n; });
-          setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
-        } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'Forfeit failed — please try again.';
-          setScoreErrors(prev => ({ ...prev, [g.id]: msg }));
-        } finally {
-          setScoreSaving(prev => { const next = new Set(prev); next.delete(g.id); return next; });
-        }
-      };
-
-      // Forfeit is offered only on a game with no recorded result yet (scheduled),
-      // and only when both teams are known (a TBD/placeholder bracket slot can't
-      // forfeit). A game that's already submitted/completed/forfeit is resolved via
-      // Finalize/Revert, not a fresh forfeit. The winning side is the team that
-      // showed up; the loser is the no-show.
-      const canForfeit = Boolean(onForfeit) && !!g.homeTeamId && !!g.awayTeamId
-        && g.status === 'scheduled';
-      const homeLabel = resolveTeam(g.homeTeamId ?? '', g.homePlaceholder);
-      const awayLabel = resolveTeam(g.awayTeamId ?? '', g.awayPlaceholder);
-      // Forfeit mode: the user tapped "Forfeit" — the per-team score steppers become
-      // "Forfeited" pickers right beside each name, and the action bar shows a hint.
-      const forfeitMode = canForfeit && forfeitPickerId === g.id;
-
-      return (
-        <div key={g.id} data-game-id={g.id} className={`${s.row} ${styles.scoringRow}`} data-status={g.status} data-live={liveStates.get(g.id) ?? undefined}>
-          {/* ── Compact row — scores always visible inline with team names ── */}
-          <div className={`${s.rowMain} ${styles.gameRowMain} ${styles.scoringGameRow}`} style={{ gap: '1rem' }}>
-            {/* Date · Time · status */}
-            <div className={`${s.gameColDate} ${styles.scoringDateCell}`} style={{ fontFamily: 'var(--font-data)' }}>
-              <div className={styles.dateLine}>
-                <span style={{ whiteSpace: 'nowrap' }}>
-                  <span style={scoringDateBoldStyle}>
-                    {g.date ? formatShortDate(g.date) : 'TBD'}
-                  </span>
-                  <span style={scoringDateTimeStyle}>
-                    {g.time ? `· ${formatTime(g.time)}` : '· —'}
-                  </span>
-                </span>
-                {renderLiveChip(g.id)}
-              </div>
-            </div>
-
-            {/* Matchup — stacked away-over-home (mirrors the public score cards);
-                score input/stepper stays inline on the right of each team row. */}
-            <div className={`${s.gameColMatchup} ${styles.scoringMatchupCell}`} data-editing={isExpanded ? 'true' : undefined}>
-
-              {/* Away row — name left, score/stepper right */}
-              <div className={styles.scoringTeamRow}>
-                {isNoShow(g.awayTeamId) && <span className={styles.noShowTag}>No-show</span>}
-                <span className={styles.scoringTeamName} title={resolveTeam(g.awayTeamId, g.awayPlaceholder)}>
-                  {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
-                </span>
-                {forfeitMode ? (
-                  <button
-                    type="button"
-                    className={`btn btn-ghost btn-data ${styles.forfeitChoiceBtn}`}
-                    disabled={isScoringBusy}
-                    title={`${awayLabel} forfeited — ${homeLabel} advances`}
-                    onClick={e => { e.stopPropagation(); setForfeitPickerId(null); void handleForfeit('home'); }}
-                  >
-                    Forfeited
-                  </button>
-                ) : isExpanded ? (
-                  <span className={styles.scoreStepper}>
-                    <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'away', -1); }} aria-label="Decrease away score"><Minus size={16} /></button>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={score.away}
-                      onChange={e => { const v = e.target.value; if (v === '' || /^\d+$/.test(v)) setScoreState(prev => ({ ...prev, [g.id]: { ...prev[g.id], away: v } })); }}
-                      className={styles.scoreInlineInput}
-                      placeholder="0"
-                      autoFocus
-                    />
-                    <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'away', 1); }} aria-label="Increase away score"><Plus size={16} /></button>
-                  </span>
-                ) : hasScoredResult ? (
-                  <span className={styles.scoreInlineValue} style={kx({ color: awayWon ? 'var(--success)' : 'var(--data-gray)' }, { color: awayWon ? 'var(--success-light)' : 'var(--text-tertiary)' })}>
-                    {g.awayScore}
-                  </span>
-                ) : null}
-              </div>
-
-              {/* Home row — name left, score/stepper right */}
-              <div className={styles.scoringTeamRow}>
-                {isNoShow(g.homeTeamId) && <span className={styles.noShowTag}>No-show</span>}
-                <span className={styles.scoringTeamName} title={resolveTeam(g.homeTeamId, g.homePlaceholder)}>
-                  {resolveTeam(g.homeTeamId, g.homePlaceholder)}
-                </span>
-                {forfeitMode ? (
-                  <button
-                    type="button"
-                    className={`btn btn-ghost btn-data ${styles.forfeitChoiceBtn}`}
-                    disabled={isScoringBusy}
-                    title={`${homeLabel} forfeited — ${awayLabel} advances`}
-                    onClick={e => { e.stopPropagation(); setForfeitPickerId(null); void handleForfeit('away'); }}
-                  >
-                    Forfeited
-                  </button>
-                ) : isExpanded ? (
-                  <span className={styles.scoreStepper}>
-                    <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'home', -1); }} aria-label="Decrease home score"><Minus size={16} /></button>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={score.home}
-                      onChange={e => { const v = e.target.value; if (v === '' || /^\d+$/.test(v)) setScoreState(prev => ({ ...prev, [g.id]: { ...prev[g.id], home: v } })); }}
-                      className={styles.scoreInlineInput}
-                      placeholder="0"
-                    />
-                    <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'home', 1); }} aria-label="Increase home score"><Plus size={16} /></button>
-                  </span>
-                ) : hasScoredResult ? (
-                  <span className={styles.scoreInlineValue} style={kx({ color: homeWon ? 'var(--success)' : 'var(--data-gray)' }, { color: homeWon ? 'var(--success-light)' : 'var(--text-tertiary)' })}>
-                    {g.homeScore}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Right rail — status (desktop) · Finalize · Edit pencil */}
-            <div className={styles.scoringRailCell} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-              {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
-                <span className="badge badge-neutral" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>SLOT</span>
-              )}
-              {/* Desktop-only status badge — hidden on mobile where scoringStatusRow renders it */}
-              <div className={`${s.gameStatusSlot} ${styles.desktopStatusSlot}`}>{statusBadge(g.status, g.scoreSubmissionSource)}</div>
-              {/* Finalize — quick-access, rendered only when relevant (no fixed-width wrapper) */}
-              {!isExpanded && onFinalize && g.status === 'submitted' && (
-                <button className={`btn ${kit ? 'btn-lime' : 'btn-success'} btn-data`} aria-label="Finalize result" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>
-                  <Check size={15} className={styles.finalizeIcon} aria-hidden />
-                  <span className={styles.finalizeLabel}>Finalize</span>
-                </button>
-              )}
-              {/* Pencil — only visible when not editing */}
-              <div style={{ width: 28, display: 'flex', justifyContent: 'center' }}>
-                {!isExpanded && (
-                  <button
-                    className={s.iconBtn}
-                    title={hasExistingScore ? 'Edit score' : 'Enter score'}
-                    onClick={e => { e.stopPropagation(); toggleExpand(g.id, g); }}
-                  >
-                    <Pencil size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* ── Slim action bar — only while editing ── */}
-          {isExpanded && (forfeitMode ? (
-            <div className={styles.scoreActionBar}>
-              <div className={styles.scoreActionBarLeft}>
-                <span className={styles.forfeitPrompt}>Tap the team that forfeited</span>
-                {scoreErrors[g.id] && (
-                  <span className={styles.saveError}>{scoreErrors[g.id]}</span>
-                )}
-              </div>
-              <div className={styles.scoreActionBarRight} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
-                <button type="button" className="btn btn-ghost btn-data" onClick={e => { e.stopPropagation(); setForfeitPickerId(null); }}>Cancel</button>
-              </div>
-            </div>
-          ) : (
-            <div className={styles.scoreActionBar}>
-              <div className={styles.scoreActionBarLeft}>
-                {hasExistingScore && onSchedule && (
-                  <button className="btn btn-ghost btn-data" style={revertScoreBtnStyle} onClick={e => { e.stopPropagation(); onSchedule(g.id); }}>
-                    <X size={13} /> Revert Score
-                  </button>
-                )}
-                {canForfeit && (
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-data"
-                    style={forfeitTriggerBtnStyle}
-                    disabled={isScoringBusy}
-                    onClick={e => { e.stopPropagation(); setForfeitPickerId(g.id); }}
-                  >
-                    Forfeit
-                  </button>
-                )}
-                {hasExistingScore && scoreAuditSummary && (
-                  <span className={styles.scoreActionBarAudit}>{scoreAuditSummary}</span>
-                )}
-                {scoreErrors[g.id] && (
-                  <span className={styles.saveError}>{scoreErrors[g.id]}</span>
-                )}
-              </div>
-              <div className={styles.scoreActionBarRight} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
-                <button className="btn btn-ghost btn-data" onClick={handleScoreDiscard}>Discard</button>
-                <button
-                  className="btn btn-lime btn-data"
-                  disabled={isScoringBusy || !onSaveScore}
-                  onClick={handleScoreSave}
-                >
-                  {isScoringBusy ? 'Saving…' : <><Check size={13} /> Save Result</>}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    // ── PLANNING MODE ─────────────────────────────────────────────────────────
     const edit = editState[g.id] ?? editDefaultsFor(g);
     const isSaving = saving.has(g.id);
 
@@ -690,7 +370,11 @@ export default function GameList({
                 </span>
                 {g.status !== 'scheduled' && (
                   <span className={styles.mobileStatusTag} data-status={g.status}>
-                    {g.status === 'completed' ? '· ✓ Final' : g.status === 'submitted' ? '· ⚠ Pending' : '· ✕ Cancelled'}
+                    {/* G5's one word per state — and a forfeit is a forfeit (it used to fall through to "Cancelled"). */}
+                    {g.status === 'completed' ? `· ✓ ${GAME_STATE_WORD.final}`
+                      : g.status === 'forfeit' ? `· ⚑ ${GAME_STATE_WORD.forfeit}`
+                      : g.status === 'submitted' ? `· ⚠ ${g.scoreSubmissionSource === 'forfeit' ? PENDING_FORFEIT : GAME_STATE_WORD.pendingReview}`
+                      : '· ✕ Cancelled'}
                   </span>
                 )}
                 {!isExpanded && conflictMap.has(g.id) && (
@@ -1110,7 +794,7 @@ export default function GameList({
   return (
     <div className={s.flatList}>
       <div className={s.tableHeader} style={{ gap: '1rem' }}>
-        <div className={s.gameColDate}>{mode === 'scoring' ? 'Date' : 'Date / Location'}</div>
+        <div className={s.gameColDate}>Date / Location</div>
         <div className={s.gameColMatchup} style={{ textAlign: 'center' }}>Matchup</div>
         <div style={{ flex: '0 0 96px' }} />
         <div style={{ flex: '0 0 28px' }} />

@@ -32,7 +32,7 @@ export default function CheckInPage() {
         actions={currentOrg && (
           <Link
             href={`/${currentOrg.slug}/check-in`}
-            className="btn btn-ghost btn-data"
+            className={`btn btn-ghost btn-data ${page.gateView}`}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Open gate volunteer view"

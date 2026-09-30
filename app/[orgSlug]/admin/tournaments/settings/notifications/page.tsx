@@ -10,7 +10,6 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import type { NotificationEventType } from '@/lib/types';
 import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useTournamentCrumb } from '@/components/admin/tournament';
 import styles from './notifications.module.css';
 
 const CHAT_EVENT: NotificationEventType = 'chat_message';
@@ -59,7 +58,6 @@ function Toggle({
 export default function TournamentNotificationPreferencesPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
-  const tournamentCrumb = useTournamentCrumb();
   const kit = useAdminKit();
   usePageTitle('Notifications');
   const tournamentId = currentTournament?.id;
@@ -167,7 +165,7 @@ export default function TournamentNotificationPreferencesPage() {
     <div className={styles.page}>
       {/* Header */}
       <AdminPageHeader
-        crumbs={[tournamentCrumb]}
+        inlineActions
         title="Tournament notifications"
         legacy={
           <div className={styles.pageHeader}>

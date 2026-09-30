@@ -52,6 +52,8 @@ type TournamentRow = {
   results_notified_at?: string | null;
   results_notification_sent_count?: number | null;
   settings?: Record<string, unknown> | null;
+  /** Computed by the list route, not a column (the game-day rule's "first game started" half). */
+  first_game_started?: boolean;
 };
 
 function mapRow(r: TournamentRow): Tournament {
@@ -67,6 +69,7 @@ function mapRow(r: TournamentRow): Tournament {
     isActive:       status === 'active',
     startDate:      r.start_date ?? undefined,
     endDate:        r.end_date ?? undefined,
+    firstGameStarted: Boolean(r.first_game_started),
     contactEmail:   r.contact_email ?? undefined,
     notifyTeamsOnComplete: Boolean(r.notify_teams_on_complete),
     resultsNotifiedAt: r.results_notified_at ?? null,

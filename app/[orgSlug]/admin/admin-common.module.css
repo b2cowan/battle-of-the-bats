@@ -212,17 +212,6 @@
 .chipActive.chip_cancelled { border-color: rgba(var(--danger-rgb), 0.5);   background: rgba(var(--danger-rgb), 0.08);   color: var(--danger); }
 .chipActive.chip_completed { border-color: rgba(var(--success-rgb), 0.5);   background: rgba(var(--success-rgb), 0.08);   color: var(--success); }
 
-/* ─── Semantic status filter chips (info / warning / success) ──────────────────
-   Match the game-row stripes + the results tally so a filter's colour equals its
-   rows' colour. Used by the Results filters (Unscored / Reviewing / Completed). */
-.chip_info::before    { background: var(--info); }
-.chip_warning::before { background: var(--warning); }
-.chip_success::before { background: var(--success); }
-
-.chipActive.chip_info    { border-color: rgba(var(--info-rgb), 0.5);    background: rgba(var(--info-rgb), 0.1);     color: var(--info); }
-.chipActive.chip_warning { border-color: rgba(var(--warning-rgb), 0.5); background: rgba(var(--warning-rgb), 0.08); color: var(--warning); }
-.chipActive.chip_success { border-color: rgba(var(--success-rgb), 0.5); background: rgba(var(--success-rgb), 0.08); color: var(--success); }
-
 /* ─── Search ──────────────────────────────────────────────────────────────── */
 .searchWrapper {
   position: relative;
@@ -390,19 +379,6 @@
   /* flex-basis: 200px establishes a real space claim so shrink math activates. */
   flex: 2 1 200px;
   min-width: 0;
-}
-
-/* Status-badge slot in scoring mode.
-   96px matches the planning-mode status area and fits "PENDING REVIEW" comfortably. */
-.gameStatusSlot {
-  width: 96px;
-  display: flex;
-  justify-content: flex-end;
-  flex-shrink: 0;
-}
-
-@media (max-width: 768px) {
-  .gameStatusSlot { width: auto; }            /* badge sized to its content  */
 }
 
 /* ─── Icon Button ─────────────────────────────────────────────────────────── */
@@ -594,15 +570,12 @@
 }
 :global([data-admin-kit]) .chipCount { font-variant-numeric: tabular-nums; }
 :global([data-admin-kit]) .chip_pending::before,
-:global([data-admin-kit]) .chip_pay_unpaid::before,
-:global([data-admin-kit]) .chip_warning::before { background: var(--warning); }
+:global([data-admin-kit]) .chip_pay_unpaid::before { background: var(--warning); }
 :global([data-admin-kit]) .chip_accepted::before,
 :global([data-admin-kit]) .chip_pay_paid::before,
-:global([data-admin-kit]) .chip_completed::before,
-:global([data-admin-kit]) .chip_success::before { background: var(--success); }
+:global([data-admin-kit]) .chip_completed::before { background: var(--success); }
 :global([data-admin-kit]) .chip_waitlist::before,
-:global([data-admin-kit]) .chip_pay_deposit::before,
-:global([data-admin-kit]) .chip_info::before { background: var(--info); }
+:global([data-admin-kit]) .chip_pay_deposit::before { background: var(--info); }
 :global([data-admin-kit]) .chip_rejected::before,
 :global([data-admin-kit]) .chip_pay_pastdue::before,
 :global([data-admin-kit]) .chip_cancelled::before { background: var(--danger); }

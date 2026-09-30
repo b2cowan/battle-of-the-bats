@@ -1,13 +1,16 @@
 /* Page-level states for the admin Check-in wrapper. The board UI lives in
-   components/admin/CheckInBoard.module.css. */
+   components/admin/CheckInBoard.module.css. Its two layers (console + kit) folded into one by the
+   Tournament admin redesign's Stage 1 (2026-09-29) — the look is the kit's, as before.
+   ⚠ TOKENS ONLY. */
 
 .empty {
   padding: 2rem 1rem;
   text-align: center;
-  color: var(--data-gray);
+  color: var(--text-tertiary);
   font-size: 0.85rem;
-  border: 1px dashed rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 0;
+  background: var(--card-bg);
+  border: 1px dashed var(--home-line-strong);
+  border-radius: 8px;
   margin-top: 0.9rem;
 }
 
@@ -18,14 +21,6 @@
 
 @media (max-width: 900px) {
   .gateViewLabel { display: none; }
-}
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
-   The admin Check-in wrapper's own empty state — the board's kit layer is CheckInBoard.module.css.
-   ⚠ TOKENS ONLY — checkAdminKit fails on a literal colour here. */
-:global([data-admin-kit]) .empty {
-  background: var(--card-bg);
-  border: 1px dashed var(--home-line-strong);
-  border-radius: 8px;
-  color: var(--text-tertiary);
+  /* Icon-only here, so a thumb's square (measured 35px wide at 768). */
+  .gateView { min-width: var(--tap-min, 44px); justify-content: center; }
 }

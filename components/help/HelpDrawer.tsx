@@ -7,7 +7,7 @@ import { ExternalLink, X } from 'lucide-react';
 import { getHelpSections } from '@/lib/help-content/registry';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { hasPlayoffs, isWithinEventDates } from '@/lib/tournament-phase';
+import { hasPlayoffs, isGameDay } from '@/lib/tournament-phase';
 import { daysUntilStart, getStageShortcuts, resolveGuidanceStage, type TaskShortcut } from '@/lib/tournament-guidance';
 import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
@@ -117,10 +117,11 @@ export default function HelpDrawer({
   const { currentTournament } = useTournament();
   const shortcuts = useMemo<TaskShortcut[]>(() => {
     if (!request || request.module !== 'tournaments' || !currentOrg?.slug || !currentTournament) return [];
-    const { startDate, endDate, status } = currentTournament;
+    const { startDate, endDate, status, firstGameStarted } = currentTournament;
     const stage = resolveGuidanceStage({
       status,
-      isGameDay: isWithinEventDates(startDate, endDate),
+      // The one game-day rule (G1), as the event header and the board read it.
+      isGameDay: isGameDay({ startDate, endDate, firstGameStarted: Boolean(firstGameStarted) }),
       daysUntil: daysUntilStart(startDate),
     });
     if (!stage) return [];

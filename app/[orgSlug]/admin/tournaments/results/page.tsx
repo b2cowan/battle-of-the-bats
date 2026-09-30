@@ -1,7 +1,19 @@
 'use client';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+/**
+ * Results & scoring — Tournament admin redesign Stage 1 (G4 · G5 · G6), built to hub v5, ruled
+ * 2026-09-29.
+ *
+ * It opens on "Needs you" — waiting and unscored games, EVERY division — with "All games" one tap
+ * away (A10). The division, stage and search sit in the view sheet on a phone and as toolbar dropdowns
+ * at a desk. The list is `ResultsList` (one frame, banded; each row opens its score editor in place).
+ * It stays current by itself (G6): every 30 s while the page is visible, the same way the board does,
+ * and never while an editor, the view sheet or a confirm is open — a refresh never moves a game out
+ * from under the organizer. A link with `?gameId=` (the board's rows, a notification) opens THAT game's
+ * editor, once per id; `?view=all` opens on All games.
+ */
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ExternalLink, SlidersHorizontal, Trophy, RefreshCw } from 'lucide-react';
+import { ExternalLink, SlidersHorizontal, Trophy, RefreshCw, Search } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -13,21 +25,16 @@ import {
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { Game, Team, Division, Venue } from '@/lib/types';
-import GameList from '../schedule/components/GameList';
-import s from '../../admin-common.module.css';
-import styles from './results-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import { formatScoreSubmittedAt, scoreSubmissionSourceLabel } from '@/lib/tournament-score-audit';
-import {
-  StatusLegendPopover,
-  ToolbarGroup,
-  ToolbarSearch,
-  ToolbarSegmentedControl,
-  ToolbarSelect,
-  TournamentAdminHeader,
-  TournamentAdminToolbar,
-} from '@/components/admin/tournament/TournamentAdminUI';
+import { TournamentAdminHeader } from '@/components/admin/tournament/TournamentAdminUI';
+import { tournamentToday } from '@/lib/timezone';
+import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import { useVisiblePoll } from '@/lib/hooks/useVisiblePoll';
+import s from '../../admin-common.module.css';
+import styles from './results-admin.module.css';
+import ResultsList, { ALL_BANDS, NEEDS_YOU_BANDS, bandFor, gameStateWord, type ResultsBand } from './ResultsList';
 
 /**
  * Signal that a game's score just became public (finalize / forfeit) so the mobile AdminContextStrip
@@ -63,9 +70,6 @@ const RESULTS_EXPORT_COLS: ExportColumnDef[] = [
  * ⚠ THE THREE AUDIT COLUMNS ARE GONE FROM PAPER FOR GOOD. Who submitted a score, when, and
  * through which door is working data an admin reconciles a dispute with — it belongs in a
  * spreadsheet, and `RESULTS_EXPORT_COLS` above still carries all three into xlsx and csv.
- * On paper they cost more than they were worth: an email address was the widest thing on the
- * page, the report ran to four landscape pages for 24 games, and one audit column was dropped
- * with an apology anyway.
  *
  * ⚠ WITH THE DIET THIS IS A FIXED-COLUMN REPORT, so the standing rule applies: it must fit by
  * construction, and the fit contract's "didn't fit this page" line appearing on it is a BUG,
@@ -74,11 +78,13 @@ const RESULTS_EXPORT_COLS: ExportColumnDef[] = [
 const RESULTS_AUDIT_KEYS = new Set(['submittedBy', 'submittedAt', 'submissionSource']);
 const RESULTS_PDF_COLS: ExportColumnDef[] = RESULTS_EXPORT_COLS.filter(c => !RESULTS_AUDIT_KEYS.has(c.key));
 
-type ResultsFilter = 'pending' | 'submitted' | 'completed';
-
-/** Every status bucket — the opening view, and what "Show all games" restores. Named once so the
- *  two can never drift, and so adding a fourth bucket is a single edit. */
-const ALL_RESULT_STATUSES: ResultsFilter[] = ['pending', 'submitted', 'completed'];
+type Lens = 'needs' | 'all';
+type Stage = 'all' | 'pool' | 'playoff';
+const STAGE_OPTIONS: Array<{ value: Stage; label: string }> = [
+  { value: 'all', label: 'Both stages' },
+  { value: 'pool', label: 'Round Robin' },
+  { value: 'playoff', label: 'Playoffs' },
+];
 
 export default function AdminResultsPage() {
   const { currentTournament, loading: tournamentLoading } = useTournament();
@@ -86,35 +92,21 @@ export default function AdminResultsPage() {
   usePageTitle('Results & Scoring');
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
-  const requiresFinalization = currentTournament?.requireScoreFinalization ?? currentOrg?.requireScoreFinalization ?? false;
+  const searchParams = useSearchParams();
   const [games, setGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
+  /** When the list last read the games — the clock the bands (overdue / live / to come) are judged by. */
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const [filterGroup, setFilterGroup] = useState('');
-  /**
-   * All three buckets, not just the outstanding work — owner ruling 2026-08-04.
-   *
-   * This used to open on `['pending', 'submitted']`, a scorekeeper's worklist: only games still
-   * needing something. It reads beautifully mid-game-day and terribly at every other moment. Land
-   * on a division whose games are all played — the morning after, a finished pool, or the demo,
-   * where every U11 pool game is complete — and the screen says **"No games found."** on a
-   * tournament with fifteen games in it. That sentence is not just unhelpful, it is untrue, and it
-   * arrives before the visitor has learned that a status filter exists.
-   *
-   * Showing everything costs an organizer nothing: the chips sit directly above with live counts,
-   * so narrowing to "needs a score" is one click AND that click teaches the control. The reverse —
-   * discovering that an empty screen is a filter, not an empty tournament — teaches nothing.
-   *
-   * Existing organizers are unaffected: their choice is remembered per tournament (below), so this
-   * only changes the first visit to a tournament they have not filtered before.
-   */
-  const [selectedStatuses, setSelectedStatuses] = useState<ResultsFilter[]>(ALL_RESULT_STATUSES);
+  const [lens, setLens] = useState<Lens>(() => (searchParams.get('view') === 'all' ? 'all' : 'needs'));
+  const [filterGroup, setFilterGroup] = useState(''); // '' = every division
+  const [stage, setStage] = useState<Stage>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'pool' | 'playoff'>('pool');
-  const [groupMode, setGroupMode] = useState<'flat' | 'pools'>('pools');
+  const [openGameId, setOpenGameId] = useState<string | null>(null);
+  const [finalizingId, setFinalizingId] = useState<string | null>(null);
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
@@ -124,11 +116,22 @@ export default function AdminResultsPage() {
     onConfirm?: () => void;
   }>({ isOpen: false, title: '', message: '', type: 'primary' });
 
+  const loadSeqRef = useRef(0);
+  /** The tournament whose divisions and venues are on screen — a refresh skips them once they are. */
+  const setupForRef = useRef<string | null>(null);
+
   // PDF settings — fetched once; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
 
-  const refresh = useCallback(async () => {
+  /** Reads the games. `silent` (the 30 s refresh, and after a save) keeps the list on screen instead of
+   *  swapping it for the loading line, and reads only what changes on game day — the games and the
+   *  teams (a no-show); the divisions and venues are read once per tournament. */
+  const load = useCallback(async (silent: boolean) => {
     if (tournamentLoading) return;
+    // Only the newest read may paint: a slow refresh that lands after a newer one, after a tournament
+    // switch, or after a score was written (`patchGame` bumps this too) is dropped.
+    const seq = ++loadSeqRef.current;
+    const current = () => seq === loadSeqRef.current;
     if (!tournamentId) {
       setGames([]);
       setTeams([]);
@@ -137,45 +140,51 @@ export default function AdminResultsPage() {
       setLoading(false);
       return;
     }
-
     try {
-      setLoading(true);
-      const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+      if (!silent) setLoading(true);
+      const withSetup = !silent || setupForRef.current !== tournamentId;
+      const q = `?tournamentId=${encodeURIComponent(tournamentId)}${orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : ''}`;
       const [gamesRes, teamsRes, groupsRes, venuesRes] = await Promise.all([
-        fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-        fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-        fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-        fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+        fetch(`/api/admin/games${q}`),
+        fetch(`/api/admin/teams${q}`),
+        withSetup ? fetch(`/api/admin/divisions${q}`) : null,
+        withSetup ? fetch(`/api/admin/venues${q}`) : null,
       ]);
-
+      if (!current()) return;
+      // A silent refresh that fails keeps what is on screen; the next tick tries again.
+      if (silent && !gamesRes.ok) return;
       const allGames = gamesRes.ok ? await gamesRes.json() : [];
       const allTeams = teamsRes.ok ? await teamsRes.json() : [];
-      const groups = groupsRes.ok ? await groupsRes.json() : [];
-      const allVenues = venuesRes.ok ? await venuesRes.json() : [];
-
+      const groups = groupsRes?.ok ? await groupsRes.json() : [];
+      const allVenues = venuesRes?.ok ? await venuesRes.json() : [];
+      if (!current()) return;
       setGames(allGames);
-      setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
-      setDivisions(groups);
-      setFilterGroup(prev => {
-        // Keep current selection if still valid
-        if (prev && groups.some((g: any) => g.id === prev)) return prev;
-        // Restore from cache if the stored division still exists in this tournament
-        try {
-          const cachedGroup = (JSON.parse(localStorage.getItem(`flhq-results-${tournamentId}`) ?? '{}') as any).filterGroup as string | undefined;
-          if (cachedGroup && groups.some((g: any) => g.id === cachedGroup)) return cachedGroup;
-        } catch {}
-        return groups.length > 0 ? groups[0].id : '';
-      });
-      setVenues(allVenues);
+      setTeams(allTeams.filter((t: Team) => t.status === 'accepted'));
+      if (groupsRes) setDivisions(groups);
+      if (venuesRes) setVenues(allVenues);
+      if (withSetup) setupForRef.current = tournamentId;
+      setNowMs(Date.now());
+    } catch {
+      /* a failed silent refresh keeps the list; a failed first read shows the empty state */
     } finally {
-      setLoading(false);
+      // The read that paints ends the loading line (a silent one too, when it overtook the first read).
+      if (current()) setLoading(false);
     }
   }, [tournamentId, tournamentLoading, orgSlug]);
 
+  const refresh = useCallback(() => load(true), [load]);
+
   useEffect(() => {
-    const timer = window.setTimeout(() => { void refresh(); }, 0);
+    const timer = window.setTimeout(() => { void load(false); }, 0);
     return () => window.clearTimeout(timer);
-  }, [refresh]);
+  }, [load]);
+
+  // G6 · game day stays current — never while the organizer is in something (an editor, the view sheet,
+  // a confirm): a refresh would move that game between bands under their thumb.
+  useVisiblePoll(refresh, {
+    enabled: Boolean(tournamentId),
+    paused: openGameId !== null || finalizingId !== null || mobileSettingsOpen || feedback.isOpen,
+  });
 
   useEffect(() => {
     // D4: server-resolved — org-name header fallback + the org's uploaded logo, print-ready.
@@ -183,69 +192,54 @@ export default function AdminResultsPage() {
     void fetchResolvedPdfSettings(`/api/admin/org/pdf-settings${orgQuery}`).then(setPdfSettings);
   }, [orgSlug]);
 
-  // Restore filter state from localStorage when the tournament changes.
-  useEffect(() => {
-    if (!tournamentId) return;
-    try {
-      const raw = localStorage.getItem(`flhq-results-${tournamentId}`);
-      if (!raw) return;
-      const cached = JSON.parse(raw) as Partial<{
-        selectedStatuses: ResultsFilter[];
-        viewMode: 'pool' | 'playoff';
-        groupMode: 'flat' | 'pools';
-      }>;
-      if (Array.isArray(cached.selectedStatuses) && cached.selectedStatuses.length > 0) {
-        setSelectedStatuses(cached.selectedStatuses);
-      }
-      if (cached.viewMode === 'pool' || cached.viewMode === 'playoff') setViewMode(cached.viewMode);
-      if (cached.groupMode === 'flat' || cached.groupMode === 'pools') setGroupMode(cached.groupMode);
-    } catch {}
-  }, [tournamentId]);
-
-  // Persist filter state to localStorage. Guard: only write once divisions are loaded
-  // so we don't overwrite valid cache with empty default state on initial render.
-  useEffect(() => {
-    if (!tournamentId || !filterGroup || divisions.length === 0) return;
-    try {
-      localStorage.setItem(`flhq-results-${tournamentId}`, JSON.stringify({
-        filterGroup,
-        selectedStatuses,
-        viewMode,
-        groupMode,
-      }));
-    } catch {}
-  }, [tournamentId, filterGroup, selectedStatuses, viewMode, groupMode, divisions.length]);
-
-  // WI-2: notification deep link (…/results?gameId=…). Once games load, snap division / stage /
-  // status filters so the target game is actually in view BEFORE GameList renders (default filters
-  // would otherwise hide a completed game entirely), then hand GameList the id to expand + scroll.
-  // Runs once per gameId (ref-guarded) so it never fights the user's later filter changes.
-  const searchParams = useSearchParams();
-  const focusGameId = searchParams.get('gameId');
-  const focusSnappedRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!focusGameId || focusSnappedRef.current === focusGameId) return;
-    const target = games.find(g => g.id === focusGameId);
-    if (!target) return; // wait until the games list has loaded
-    focusSnappedRef.current = focusGameId;
-    if (target.divisionId) setFilterGroup(target.divisionId);
-    setViewMode(target.isPlayoff ? 'playoff' : 'pool');
-    const bucket: ResultsFilter =
-      target.status === 'scheduled' ? 'pending' : target.status === 'submitted' ? 'submitted' : 'completed';
-    setSelectedStatuses(prev => (prev.includes(bucket) ? prev : [...prev, bucket]));
-  }, [focusGameId, games]);
-
-  // One toggle for the status filter chips — shared by the desktop chip row, the mobile settings
-  // sheet, and the mobile summary-strip Completed chip (all three flip the same `selectedStatuses`).
-  const toggleStatus = useCallback((key: ResultsFilter) => {
-    setSelectedStatuses(prev => (prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key]));
-  }, []);
-
-  /** The empty state's way out: drop every narrowing the organizer may have applied. */
-  const showEverything = useCallback(() => {
-    setSelectedStatuses(ALL_RESULT_STATUSES);
+  // A new tournament starts on the opening view (reset while rendering, React's pattern for state that
+  // follows a prop — no effect, so no extra render with the old tournament's filters).
+  const [viewFor, setViewFor] = useState(tournamentId);
+  if (viewFor !== tournamentId) {
+    setViewFor(tournamentId);
+    setLens('needs');
+    setFilterGroup('');
+    setStage('all');
     setSearchQuery('');
-  }, []);
+    setOpenGameId(null);
+  }
+
+  const today = tournamentToday();
+  /** Each game's band, judged once per read (the clock math is not free) — not once per count, per list
+   *  and per keystroke in the search. */
+  const bandById = useMemo(() => {
+    const m = new Map<string, ResultsBand | null>();
+    for (const g of games) m.set(g.id, bandFor(g, divisions, currentTournament, nowMs, today));
+    return m;
+  }, [games, divisions, currentTournament, nowMs, today]);
+  const bandOf = useCallback((g: Game) => bandById.get(g.id) ?? null, [bandById]);
+
+  // G3 · a game opens that game: `?gameId=` (the board's rows, a notification) opens its score editor,
+  // once per id (ref-guarded, so the refresh never fights the organizer's later choices). The filters
+  // widen to hold it, and All games is chosen when its band is not one of Needs you's.
+  const focusGameId = searchParams.get('gameId');
+  const focusedRef = useRef<string | null>(null);
+  const scrollToOpenRef = useRef(false);
+  useEffect(() => {
+    if (!focusGameId || focusedRef.current === focusGameId) return;
+    const target = games.find(g => g.id === focusGameId);
+    if (!target) return; // wait until the games have loaded
+    focusedRef.current = focusGameId;
+    const band = bandOf(target);
+    if (!band) return; // a cancelled game has no editor
+    if (!NEEDS_YOU_BANDS.includes(band)) setLens('all');
+    setFilterGroup('');
+    setStage('all');
+    setSearchQuery('');
+    scrollToOpenRef.current = true;
+    setOpenGameId(focusGameId);
+  }, [focusGameId, games, bandOf]);
+  useEffect(() => {
+    if (!openGameId || !scrollToOpenRef.current) return;
+    scrollToOpenRef.current = false;
+    const sel = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(openGameId) : openGameId;
+    document.querySelector(`[data-game-id="${sel}"]`)?.scrollIntoView({ block: 'center' });
+  }, [openGameId]);
 
   function getTeamName(id: string) {
     return teams.find(t => t.id === id)?.name ?? 'TBD';
@@ -256,6 +250,7 @@ export default function AdminResultsPage() {
   }
 
   async function patchGame(body: Record<string, unknown>) {
+    loadSeqRef.current++; // a read already in flight predates this write — it must not paint
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const res = await fetch(`/api/admin/games${orgQuery}`, {
       method: 'PATCH',
@@ -268,18 +263,40 @@ export default function AdminResultsPage() {
     }
   }
 
+  const published = (id: string) => emitScorePublished({
+    gameId: id, orgSlug: orgSlug ?? '', tournamentSlug: currentTournament?.slug ?? '', isDraft: currentTournament?.status === 'draft',
+  });
+
   async function handleSaveScore(id: string, homeScore: number, awayScore: number) {
     await patchGame({ action: 'submit-score', id, homeScore, awayScore });
-    refresh();
+    void refresh();
   }
 
   async function handleForfeit(id: string, winningSide: 'home' | 'away') {
     await patchGame({ action: 'forfeit', id, winningSide });
-    emitScorePublished({ gameId: id, orgSlug: orgSlug ?? '', tournamentSlug: currentTournament?.slug ?? '', isDraft: currentTournament?.status === 'draft' });
-    refresh();
+    published(id);
+    void refresh();
   }
 
-  async function markScheduled(id: string) {
+  async function handleFinalize(id: string) {
+    await patchGame({ action: 'finalize', id });
+    published(id);
+    void refresh();
+  }
+
+  /** The row's Finalize: the same action, with its own failure line (there is no editor to hold one). */
+  async function finalizeFromRow(id: string) {
+    setFinalizingId(id);
+    try {
+      await handleFinalize(id);
+    } catch (err) {
+      setFeedback({ isOpen: true, title: 'Finalize failed', message: err instanceof Error ? err.message : 'Finalize failed — please try again.', type: 'danger' });
+    } finally {
+      setFinalizingId(null);
+    }
+  }
+
+  function markScheduled(id: string) {
     setFeedback({
       isOpen: true,
       title: 'Revert Score?',
@@ -287,63 +304,32 @@ export default function AdminResultsPage() {
       type: 'warning',
       onConfirm: async () => {
         await patchGame({ action: 'revert-score', id });
-        refresh();
-      }
+        setOpenGameId(null);
+        void refresh();
+      },
     });
   }
 
-  async function finalizeGame(id: string) {
-    await patchGame({ action: 'finalize', id });
-    emitScorePublished({ gameId: id, orgSlug: orgSlug ?? '', tournamentSlug: currentTournament?.slug ?? '', isDraft: currentTournament?.status === 'draft' });
-    refresh();
-  }
-
-  // Compute counts for filter chips
-  const divisionGames = games.filter(g => {
-    const matchesGroup = g.divisionId === filterGroup;
-    const matchesView = viewMode === 'pool' ? !g.isPlayoff : g.isPlayoff;
-    return matchesGroup && matchesView;
+  // Division, stage and search narrow the games; the lens picks the bands.
+  const q = searchQuery.trim().toLowerCase();
+  const narrowed = games.filter(g => {
+    if (filterGroup && g.divisionId !== filterGroup) return false;
+    if (stage === 'pool' && g.isPlayoff) return false;
+    if (stage === 'playoff' && !g.isPlayoff) return false;
+    if (!q) return true;
+    const names = [getTeamName(g.homeTeamId), getTeamName(g.awayTeamId), g.homePlaceholder ?? '', g.awayPlaceholder ?? ''];
+    return names.some(n => n.toLowerCase().includes(q));
   });
-  const pendingCount   = divisionGames.filter(g => g.status === 'scheduled').length;
-  const submittedCount = divisionGames.filter(g => g.status === 'submitted').length;
-  // Forfeits are a final result — group them with completed for counts/filters.
-  const completedCount = divisionGames.filter(g => g.status === 'completed' || g.status === 'forfeit').length;
-
-  const filtered = games.filter(g => {
-    const matchesGroup = g.divisionId === filterGroup;
-    const matchesStatus = selectedStatuses.length === 0 ||
-      selectedStatuses.some(sf =>
-        sf === 'pending'    ? g.status === 'scheduled' :
-        sf === 'submitted'  ? g.status === 'submitted' :
-        (g.status === 'completed' || g.status === 'forfeit')
-      );
-
-    const hName = getTeamName(g.homeTeamId).toLowerCase();
-    const aName = getTeamName(g.awayTeamId).toLowerCase();
-    const hPlace = (g.homePlaceholder || '').toLowerCase();
-    const aPlace = (g.awayPlaceholder || '').toLowerCase();
-    const q = searchQuery.toLowerCase();
-    const matchesSearch = q === '' || hName.includes(q) || aName.includes(q) || hPlace.includes(q) || aPlace.includes(q);
-
-    const matchesView = viewMode === 'pool' ? !g.isPlayoff : g.isPlayoff;
-
-    return matchesGroup && matchesStatus && matchesSearch && matchesView;
-  });
-
-  // Why is the list empty? "No games found." is the wrong sentence on a tournament that has games —
-  // it reads as "there are none" when it means "your filters hid them", and it lands before anyone
-  // has noticed the filters exist. These three counts turn a dead end into an explanation with a
-  // one-click fix.
-  const gamesInDivision = games.filter(g => g.divisionId === filterGroup);
-  // `divisionGames` is already this division AND this stage — so when the visible list is empty and
-  // that count is not, status or search is what hid them.
-  /** This division's games that sit in the other stage (pool ↔ playoffs). */
-  const inOtherStage = gamesInDivision.length - divisionGames.length;
-  const inOtherDivisions = games.length - gamesInDivision.length;
+  const needsCount = narrowed.filter(g => { const b = bandOf(g); return b != null && NEEDS_YOU_BANDS.includes(b); }).length;
+  const allCount = narrowed.filter(g => bandOf(g) != null).length;
+  const bands = lens === 'needs' ? NEEDS_YOU_BANDS : ALL_BANDS;
+  const listed = narrowed.filter(g => { const b = bandOf(g); return b != null && bands.includes(b); });
+  const narrowing = Boolean(filterGroup || stage !== 'all' || q);
 
   // ── Export handlers ────────────────────────────────────────────────────
+  // The export takes what the screen lists; its Status column says each game's one word (G5).
   function buildResultsRows() {
-    return filtered.map(g => ({
+    return listed.map(g => ({
       date:      g.date ?? '',
       time:      formatTime(g.time),
       division:  getGroupName(g.divisionId),
@@ -351,7 +337,7 @@ export default function AdminResultsPage() {
       homeScore: g.homeScore != null ? g.homeScore : '',
       awayTeam:  getTeamName(g.awayTeamId),
       awayScore: g.awayScore != null ? g.awayScore : '',
-      status:    g.status,
+      status:    gameStateWord(g, bandOf(g)),
       submittedBy: g.scoreSubmittedByEmail ?? '',
       submittedAt: formatScoreSubmittedAt(g.scoreSubmittedAt),
       submissionSource: g.scoreSubmissionSource ? scoreSubmissionSourceLabel(g.scoreSubmissionSource) : '',
@@ -382,10 +368,10 @@ export default function AdminResultsPage() {
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
     };
 
-    // Build groups: one table per division (all games for that division)
+    // One table per division: every listed-stage game that is not cancelled.
     const allFiltered = games.filter(g => {
-      const matchesView = viewMode === 'pool' ? !g.isPlayoff : g.isPlayoff;
-      return matchesView && (g.status === 'completed' || g.status === 'submitted' || g.status === 'scheduled' || g.status === 'forfeit');
+      const matchesStage = stage === 'all' || (stage === 'pool' ? !g.isPlayoff : g.isPlayoff);
+      return matchesStage && g.status !== 'cancelled';
     });
 
     const groupMap = new Map<string, typeof allFiltered>();
@@ -427,7 +413,7 @@ export default function AdminResultsPage() {
           g.homeScore != null ? g.homeScore : '—',
           getTeamName(g.awayTeamId),
           g.awayScore != null ? g.awayScore : '—',
-          g.status,
+          gameStateWord(g, bandOf(g)),
         ]),
       }));
 
@@ -458,21 +444,46 @@ export default function AdminResultsPage() {
     );
   }
 
-  const statusFilterOptions = [
-    { key: 'pending'   as ResultsFilter, label: 'Unscored',   count: pendingCount },
-    { key: 'submitted' as ResultsFilter, label: 'Reviewing',  count: submittedCount },
-    { key: 'completed' as ResultsFilter, label: 'Completed',  count: completedCount },
-  ];
-
-  const statusChipClass: Record<ResultsFilter, string> = {
-    pending: s.chip_info,      // Unscored → info-blue (matches scheduled row stripe + tally)
-    submitted: s.chip_warning, // Reviewing → warning-amber (matches submitted row + tally)
-    completed: s.chip_success, // Completed → success-green
-  };
-
-  // Stage label for the mobile summary strip — the grouping sub-mode (Pools/Flat)
-  // is one tap away in the sheet, so the strip stays to the coarse context only.
-  const settingsSummary = viewMode === 'pool' ? 'Round Robin' : 'Playoffs';
+  // The lens — the kit's filter pill with its count (the admin's `filterChip`): 12px, 44px on a phone,
+  // 38px at a desk. Single choice; the chosen one wears the kit's olive.
+  const lensPills = (
+    <div className={styles.lens} role="group" aria-label="Which games">
+      {([['needs', GAME_DAY_WORDS.lensNeedsYou, needsCount], ['all', GAME_DAY_WORDS.lensAllGames, allCount]] as const).map(([key, label, count]) => (
+        <button
+          key={key}
+          type="button"
+          className={`${s.filterChip} ${styles.lensPill} ${lens === key ? s.chipActive : ''}`}
+          aria-pressed={lens === key}
+          onClick={() => { setLens(key); setOpenGameId(null); }}
+        >
+          <span>{label}</span>
+          <span className={s.chipCount}>{count}</span>
+        </button>
+      ))}
+    </div>
+  );
+  const divisionSelect = (className: string) => (
+    <label className={className}>
+      <span className="sr-only">Division</span>
+      <select className={styles.select} value={filterGroup} onChange={e => setFilterGroup(e.target.value)}>
+        <option value="">All divisions</option>
+        {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+      </select>
+    </label>
+  );
+  const searchField = (className: string) => (
+    <label className={className}>
+      <span className="sr-only">Search games</span>
+      <Search size={15} className={styles.searchIcon} aria-hidden />
+      <input
+        type="search"
+        className={styles.searchInput}
+        value={searchQuery}
+        placeholder="Search teams…"
+        onChange={e => setSearchQuery(e.target.value)}
+      />
+    </label>
+  );
 
   return (
     <div className={s.page}>
@@ -480,7 +491,6 @@ export default function AdminResultsPage() {
         icon={<Trophy size={20} />}
         title="Results & Scoring"
         kitTitle="Results & scoring"
-        subtitle={currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Enter scores and finalize tournament outcomes'}
         mobileActionsInline
         help={{
           module: 'tournaments',
@@ -496,182 +506,83 @@ export default function AdminResultsPage() {
               onExportCSV={handleExportCSV}
               onExportPDF={handleExportPDF}
               planId={currentOrg?.planId}
-              disabled={filtered.length === 0}
+              disabled={listed.length === 0}
             />
             {currentOrg?.slug && (
               <button
                 type="button"
-                className={`btn btn-ghost btn-data ${styles.mobileIconButton}`}
+                className={`btn btn-ghost btn-data ${styles.headerIconButton}`}
                 onClick={() => window.open(`/${currentOrg!.slug}/scorekeeper`, '_blank', 'noopener,noreferrer')}
                 title="Open scorekeeper view"
                 aria-label="Open scorekeeper view"
               >
-                <ExternalLink size={12} />
-                <span className={styles.mobileButtonLabel}>Scorekeeper</span>
+                <ExternalLink size={14} aria-hidden />
+                <span className={styles.headerButtonLabel}>Scorekeeper</span>
               </button>
             )}
           </>
         )}
       />
 
-      <TournamentAdminToolbar ariaLabel="Results controls" className={styles.resultsToolbar}>
-        {/* ── Row 1 left: Division first, then view-mode controls ── */}
-        <ToolbarGroup align="start" className={styles.resultsStartGroup}>
-          {/* Division always first — primary context selector, matches Schedule pattern */}
-          {divisions.length > 0 && (
-            <ToolbarSelect<string>
-              label="Division"
-              value={filterGroup}
-              options={divisions.map(g => ({ value: g.id, label: g.name }))}
-              onChange={setFilterGroup}
-            />
-          )}
-          <ToolbarSegmentedControl<'pool' | 'playoff'>
-            className={styles.desktopModeControl}
-            value={viewMode}
-            options={[
-              { value: 'pool', label: 'Round Robin' },
-              { value: 'playoff', label: 'Playoffs' },
-            ]}
-            onChange={setViewMode}
-            ariaLabel="View mode"
-          />
-          {viewMode === 'pool' && (
-            <ToolbarSegmentedControl<'flat' | 'pools'>
-              className={styles.desktopModeControl}
-              value={groupMode}
-              options={[
-                { value: 'flat', label: 'Flat' },
-                { value: 'pools', label: 'Pools' },
-              ]}
-              onChange={setGroupMode}
-              ariaLabel="Grouping mode"
-            />
-          )}
-        </ToolbarGroup>
-
-        {/* ── Row 2: search + status filters ── */}
-        <ToolbarGroup fullWidth>
-          <ToolbarSearch className={styles.resultsSearch} value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." label="Search games" />
-          <div className={`${s.statusFilters} ${styles.resultsStatusFilters}`}>
-            {statusFilterOptions.map(({ key, label, count }) => (
-              <button
-                key={key}
-                type="button"
-                className={`${s.filterChip} ${statusChipClass[key]} ${selectedStatuses.includes(key) ? s.chipActive : ''}`}
-                data-empty={count === 0 ? 'true' : undefined}
-                onClick={() => toggleStatus(key)}
-              >
-                <span>{label}</span>
-                <span className={s.chipCount}>{count}</span>
-              </button>
-            ))}
-            {requiresFinalization && (
-              <StatusLegendPopover
-                label="Score statuses"
-                title="Score Status Guide"
-                items={[
-                  {
-                    label: 'To Be Scored',
-                    description: 'Game is scheduled but no score has been submitted yet.',
-                    tone: 'info',
-                  },
-                  {
-                    label: 'Pending Review',
-                    description: 'Score submitted by a scorekeeper - visible to the public but not yet final. Use Finalize to confirm it.',
-                    tone: 'warning',
-                  },
-                  {
-                    label: 'Completed',
-                    description: 'Score is finalized. Admins can still correct or revert the result if needed.',
-                    tone: 'success',
-                  },
-                ]}
-              />
-            )}
+      {currentTournament && games.length > 0 && (
+        <div className={styles.toolbar}>
+          {lensPills}
+          {/* Desk: the division and stage as dropdowns (form selects are dropdowns), then search. */}
+          <div className={styles.deskFilters}>
+            {divisionSelect(styles.field)}
+            <label className={styles.field}>
+              <span className="sr-only">Stage</span>
+              <select className={styles.select} value={stage} onChange={e => setStage(e.target.value as Stage)}>
+                {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+            {searchField(styles.search)}
           </div>
-        </ToolbarGroup>
-      </TournamentAdminToolbar>
+          {/* Phone: the same three live in the view sheet, behind the sliders. */}
+          <button
+            type="button"
+            className={styles.viewButton}
+            onClick={() => setMobileSettingsOpen(true)}
+            aria-label="View settings"
+            data-narrowed={narrowing || undefined}
+          >
+            <SlidersHorizontal size={18} aria-hidden />
+          </button>
+        </div>
+      )}
 
-      {/* ── Mobile settings bottom sheet ────────────────────── */}
+      {/* ── The view sheet (phone) — division, stage, search ── */}
       {mobileSettingsOpen && (
         <>
-          <div
-            className={styles.sheetBackdrop}
-            onClick={() => setMobileSettingsOpen(false)}
-            aria-hidden
-          />
+          <div className={styles.sheetBackdrop} onClick={() => setMobileSettingsOpen(false)} aria-hidden />
           <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="View settings">
             <div className={styles.sheetHandle} />
             <div className={styles.sheetBody}>
               <div className={styles.sheetSection}>
+                <div className={styles.sheetSectionLabel}>Division</div>
+                {divisionSelect(styles.sheetField)}
+              </div>
+              <div className={styles.sheetSection}>
                 <div className={styles.sheetSectionLabel}>Stage</div>
                 <div className={styles.sheetSegments}>
-                  {(['pool', 'playoff'] as const).map(v => (
+                  {STAGE_OPTIONS.map(o => (
                     <button
-                      key={v}
+                      key={o.value}
                       type="button"
-                      className={`${styles.sheetSeg} ${viewMode === v ? styles.sheetSegActive : ''}`}
-                      onClick={() => setViewMode(v)}
+                      className={`${styles.sheetSeg} ${stage === o.value ? styles.sheetSegActive : ''}`}
+                      aria-pressed={stage === o.value}
+                      onClick={() => setStage(o.value)}
                     >
-                      {v === 'pool' ? 'Round Robin' : 'Playoffs'}
+                      {o.label}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {viewMode === 'pool' && (
-                <div className={styles.sheetSection}>
-                  <div className={styles.sheetSectionLabel}>Grouping</div>
-                  <div className={styles.sheetSegments}>
-                    {(['flat', 'pools'] as const).map(v => (
-                      <button
-                        key={v}
-                        type="button"
-                        className={`${styles.sheetSeg} ${groupMode === v ? styles.sheetSegActive : ''}`}
-                        onClick={() => setGroupMode(v)}
-                      >
-                        {v === 'flat' ? 'Flat' : 'Pools'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div className={styles.sheetSection}>
-                <div className={styles.sheetSectionLabel}>Game Status</div>
-                <div className={styles.sheetSegments}>
-                  {statusFilterOptions.map(({ key, label }) => (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`${styles.sheetSeg} ${selectedStatuses.includes(key) ? styles.sheetSegActive : ''}`}
-                      onClick={() => toggleStatus(key)}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                {requiresFinalization && (
-                  <div style={{ marginTop: '0.6rem' }}>
-                    <StatusLegendPopover
-                      label="What do these mean?"
-                      title="Score Status Guide"
-                      items={[
-                        { label: 'To Be Scored', description: 'Game is scheduled but no score has been submitted yet.', tone: 'info' },
-                        { label: 'Pending Review', description: 'Score submitted by a scorekeeper - visible to the public but not yet final. Use Finalize to confirm it.', tone: 'warning' },
-                        { label: 'Completed', description: 'Score is finalized. Admins can still correct or revert the result if needed.', tone: 'success' },
-                      ]}
-                    />
-                  </div>
-                )}
+                <div className={styles.sheetSectionLabel}>Search</div>
+                {searchField(styles.sheetSearch)}
               </div>
-
-              <button
-                type="button"
-                className={styles.sheetDone}
-                onClick={() => setMobileSettingsOpen(false)}
-              >
+              <button type="button" className={styles.sheetDone} onClick={() => setMobileSettingsOpen(false)}>
                 Done
               </button>
             </div>
@@ -679,58 +590,9 @@ export default function AdminResultsPage() {
         </>
       )}
 
-      {/* ── Active settings summary strip (mobile only, outside sheet) ──
-          WI-4: split from a single strip-button into a wrapper (buttons can't nest) so the new
-          Completed chip is independently tappable. The text + sliders both still open the sheet. */}
-      {currentTournament && !mobileSettingsOpen && (
-        <div className={styles.activeSettingsSummary}>
-          <button
-            type="button"
-            className={styles.activeSettingsSummaryText}
-            onClick={() => setMobileSettingsOpen(true)}
-            aria-label={`View settings: ${settingsSummary}`}
-          >
-            {settingsSummary}
-          </button>
-          <span className={styles.summaryRight}>
-            {/* Single "needs action" count — only games awaiting finalize (the one
-                number that demands attention); per-row stripes carry the rest. */}
-            {submittedCount > 0 && (
-              <span className={`${styles.tallyPill} ${styles.tallySubmitted}`} aria-hidden>
-                <span className={styles.tallyDot} />
-                {submittedCount}
-              </span>
-            )}
-            {/* WI-4: the desktop's Completed chip, now on mobile — one tap reveals finalized games
-                (the most common bleachers correction) without opening the settings sheet. */}
-            <button
-              type="button"
-              className={`${s.filterChip} ${s.chip_success} ${styles.summaryCompletedChip} ${selectedStatuses.includes('completed') ? s.chipActive : ''}`}
-              data-empty={completedCount === 0 ? 'true' : undefined}
-              aria-pressed={selectedStatuses.includes('completed')}
-              aria-label={`${selectedStatuses.includes('completed') ? 'Hide' : 'Show'} completed games (${completedCount})`}
-              onClick={() => toggleStatus('completed')}
-            >
-              <span>Completed</span>
-              <span className={s.chipCount}>{completedCount}</span>
-            </button>
-            <button
-              type="button"
-              className={styles.summarySlidersBtn}
-              onClick={() => setMobileSettingsOpen(true)}
-              aria-label="Open view settings"
-            >
-              <SlidersHorizontal size={12} className={styles.activeSettingsSummaryIcon} aria-hidden />
-            </button>
-          </span>
-        </div>
-      )}
-
-
       {!loading && currentTournament && games.length === 0 && (
         // No games exist yet → point the organizer to build the schedule first (J1-087). Say what
-        // this page is for, and nothing about timing: Results reads its games once, so "live" and
-        // "no refresh needed" were false (F08, J1-086). Stage 1's refresh (G6) may earn them back.
+        // this page is for, and nothing about timing (F08 — "no refresh needed" is gone for good).
         <HelpCallout
           variant="info"
           title="No schedule built yet"
@@ -746,61 +608,47 @@ export default function AdminResultsPage() {
           <Trophy size={40} style={{ opacity: 0.2 }} />
           <p>No tournament selected.</p>
         </div>
-      ) : filtered.length === 0 && games.length > 0 ? (
-        <div className="empty-state">
-          <Trophy size={40} style={{ opacity: 0.2 }} />
-          {divisionGames.length > 0 ? (
-            <>
-              <p>
-                {searchQuery
-                  ? `No games match “${searchQuery}”.`
-                  : `${divisionGames.length} game${divisionGames.length === 1 ? '' : 's'} here — all hidden by the status filters above.`}
-              </p>
-              <button type="button" className="btn btn-outline btn-sm" onClick={showEverything}>
-                Show all games
-              </button>
-            </>
-          ) : inOtherStage > 0 ? (
-            <>
-              <p>
-                No {viewMode === 'pool' ? 'pool' : 'playoff'} games in this division — its{' '}
-                {inOtherStage} game{inOtherStage === 1 ? ' is' : 's are'} in the{' '}
-                {viewMode === 'pool' ? 'playoffs' : 'pool round'}.
-              </p>
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() => setViewMode(viewMode === 'pool' ? 'playoff' : 'pool')}
-              >
-                Show {viewMode === 'pool' ? 'playoff' : 'pool'} games
-              </button>
-            </>
-          ) : (
-            <p>
-              No games in this division
-              {inOtherDivisions > 0
-                ? ` — ${inOtherDivisions} game${inOtherDivisions === 1 ? '' : 's'} in the others.`
-                : '.'}
-            </p>
-          )}
-        </div>
       ) : games.length > 0 ? (
-        <div className={s.compactList}>
-          <GameList
-            games={filtered}
-            teams={teams}
-            divisions={divisions}
-            venues={venues}
-            viewMode={viewMode}
-            groupByPool={groupMode === 'pools'}
-            onSaveScore={handleSaveScore}
-            onForfeit={handleForfeit}
-            onFinalize={finalizeGame}
-            onSchedule={markScheduled}
-            focusGameId={focusGameId}
-            mode="scoring"
-          />
-        </div>
+        <ResultsList
+          games={narrowed}
+          bands={bands}
+          bandOf={bandOf}
+          teams={teams}
+          divisions={divisions}
+          venues={venues}
+          today={today}
+          openGameId={openGameId}
+          onOpen={setOpenGameId}
+          finalizingId={finalizingId}
+          actions={{
+            onSaveScore: handleSaveScore,
+            onForfeit: handleForfeit,
+            onFinalize: handleFinalize,
+            onRevert: markScheduled,
+            onRowFinalize: id => { void finalizeFromRow(id); },
+          }}
+          empty={
+            <div className={styles.empty}>
+              {narrowing ? (
+                <>
+                  <p>{q ? `No games match “${searchQuery}”.` : 'No games match these filters.'}</p>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => { setFilterGroup(''); setStage('all'); setSearchQuery(''); }}>
+                    Show all games
+                  </button>
+                </>
+              ) : lens === 'needs' ? (
+                <>
+                  <p>{GAME_DAY_WORDS.needsYouEmpty}</p>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => setLens('all')}>
+                    {GAME_DAY_WORDS.lensAllGames}
+                  </button>
+                </>
+              ) : (
+                <p>No games to show.</p>
+              )}
+            </div>
+          }
+        />
       ) : null}
 
       <FeedbackModal
@@ -810,4 +658,3 @@ export default function AdminResultsPage() {
     </div>
   );
 }
-

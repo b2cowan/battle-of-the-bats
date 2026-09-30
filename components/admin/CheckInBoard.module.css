@@ -1,13 +1,25 @@
-/* Gate / team check-in board (Phase 2) */
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE CHECK-IN BOARD — the organizer's AND the gate volunteer's (app/[orgSlug]/check-in mounts it
+   too, and carries [data-admin-kit] as the guest marker, warm FIXED — R3).
+
+   Tournament admin redesign Stage 1 · G7 (2026-09-29) rebuilt the board and retired its old look in
+   the same pass: the count tiles, the 24px segmented filter, the twin person icons, the dotted row
+   cards and the legacy console layer are gone, and the team sheet's two layers (console + kit) are
+   FOLDED into one — the sheet renders exactly as it did (the sheet is unchanged by ruling). The rows
+   are the kit's row list and table (`ClubRow*` / `.table`, components/admin/kit/club/RepKit); the
+   filter is the gate's own bucket bar (`DayOfFilterBar`). Held whole by the strict admin-kit check.
+   Green = checked in, amber = money owed, red = a problem, quiet = not yet. ⚠ TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 .empty,
 .loading {
   padding: 2rem 1rem;
   text-align: center;
-  color: var(--data-gray);
+  color: var(--text-tertiary);
   font-size: 0.85rem;
-  border: 1px dashed rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 0;
+  border: 1px dashed var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
   margin-top: 0.75rem;
 }
 
@@ -18,10 +30,10 @@
   gap: 0.75rem;
   margin: 0.75rem 0;
   padding: 0.6rem 0.8rem;
-  border: 1px solid rgba(var(--danger-rgb), 0.4);
-  background: rgba(var(--danger-rgb), 0.1);
-  color: var(--danger);
-  border-radius: 0;
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+  border-radius: 8px;
   font-size: 0.8rem;
 }
 
@@ -29,297 +41,126 @@
 .errorAction {
   flex-shrink: 0;
   padding: 0.35rem 0.7rem;
-  border: 1px solid var(--danger);
-  color: var(--danger);
+  border: 1px solid rgba(var(--danger-rgb), 0.35);
+  border-radius: 6px;
+  color: var(--danger-light);
   font-weight: 600;
   font-size: 0.8rem;
   text-decoration: none;
   white-space: nowrap;
 }
-.errorAction:hover {
-  background: rgba(var(--danger-rgb), 0.15);
-}
+.errorAction:hover { background: rgba(var(--danger-rgb), 0.14); }
 
-/* ── gauges ──────────────────────────────────────────────────────────────── */
-.gauges {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.6rem;
-  margin: 0.9rem 0;
-}
-
-.gauge {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.7rem 0.8rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  border-radius: 0;
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-  box-shadow: var(--highlight-top);
-}
-.gauge[data-tone="danger"] { border-color: rgba(var(--danger-rgb), 0.35); }
-.gauge[data-tone="warning"] { border-color: rgba(var(--warning-rgb), 0.35); }
-
-.gaugeMain {
-  font-family: var(--font-data);
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--fl-text);
-  line-height: 1;
-}
-.gauge[data-tone="danger"] .gaugeMain { color: var(--danger); }
-.gauge[data-tone="warning"] .gaugeMain { color: var(--warning); }
-.gaugeOf { font-size: 0.9rem; font-weight: 700; color: var(--data-gray); }
-
-.gaugeLabel {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-/* ── toolbar ─────────────────────────────────────────────────────────────── */
+/* ── The toolbar: the bucket bar, who still owes, the division and search ──
+   A phone: the bar, then the owe line, then [division ▾][search]. A desk: [bar][division ▾][search] on
+   one line, the owe line under it. */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.5rem 0.6rem;
   margin-bottom: 0.75rem;
 }
-
-.searchWrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex: 1 1 180px;
-  min-width: 160px;
-  height: var(--admin-control-h, 38px);
-  padding: 0 0.6rem;
-  border: 1px solid var(--border-2);
-  border-radius: 2px;
-  background: var(--bg-2);
-  color: var(--data-gray);
+.toolbar > :first-child { flex: 1 1 100%; }
+.owe {
+  order: 1;
+  flex: 1 1 100%;
+  margin: 0 0.1rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
 }
-.search {
-  flex: 1;
+.narrow { order: 2; display: flex; align-items: center; gap: 0.5rem; flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
+@media (min-width: 641px) {
+  .toolbar > :first-child { flex: 0 0 auto; }
+  .narrow { order: 1; flex: 1 1 auto; flex-wrap: nowrap; }
+  .owe { order: 2; }
+}
+.selectField { display: flex; flex: 1 1 auto; min-width: 0; }
+.select {
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.6rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+}
+.searchWrap {
+  position: relative;
+  display: none;
+  flex: 1 1 100%;
   min-width: 0;
-  border: none;
-  background: transparent;
-  color: var(--fl-text);
-  font-size: 0.85rem;
+}
+.searchWrap[data-open] { display: flex; }
+.searchIcon { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
+.search {
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.7rem 0 2rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
   outline: none;
 }
-
-.select {
-  height: var(--admin-control-h, 38px);
-  padding: 0 0.6rem;
-  border: 1px solid var(--border-2);
-  border-radius: 2px;
-  background: var(--bg-2);
-  color: var(--white-80);
-  font-family: var(--font-data);
-  font-size: 0.8rem;
-}
-
-.segmented {
+.search:focus, .select:focus { border-color: var(--home-olive); }
+/* A phone opens search from its icon (44px, beside the division); a desk always shows the field. */
+.searchToggle {
+  flex: none;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
   display: inline-flex;
-  gap: 0.2rem;
-  padding: 0.2rem;
-  border: 1px solid var(--border-2);
-  border-radius: 4px;
-  background: var(--bg-2);
-}
-.segBtn {
-  padding: 0.3rem 0.6rem;
-  border: none;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
   cursor: pointer;
+}
+.searchToggle[data-on] { border-color: var(--home-olive); color: var(--home-olive); }
+.searchToggle:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+@media (min-width: 641px) {
+  .selectField { flex: 0 0 auto; }
+  .select { width: auto; min-width: 11.5rem; min-height: 38px; font-size: var(--type-support); }
+  .searchToggle { display: none; }
+  .searchWrap, .searchWrap[data-open] { display: flex; flex: 1 1 14rem; max-width: 22rem; }
+  .search { min-height: 38px; font-size: var(--type-support); }
+}
+/* A tablet is touched: the floor reaches 768; the desk's 38px starts above it. */
+@media (min-width: 641px) and (max-width: 768px) {
+  .select, .search { min-height: var(--tap-min, 44px); }
+}
+
+/* ── A team's facts (the phone row's caption) and its arrival ── */
+.facts { display: inline; }
+/* "In · 9:58 a.m." — the kit's chip at its 10px step, in the arrived green. */
+.inChip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.14rem 0.45rem;
+  border-radius: 999px;
+  color: var(--badge-success-ink);
+  background: rgba(var(--success-rgb), 0.08);
+  border: 1px solid rgba(var(--success-rgb), 0.28);
   white-space: nowrap;
 }
-.segBtn[data-on="true"] { background: rgba(var(--logic-lime-rgb), 0.14); color: var(--logic-lime); }
+/* Money owed keeps its amber (bad news); "Paid" is plain ink. */
+.owes { color: var(--warning-light); font-weight: 650; }
+/* The desk table's arrival cell: the chip, then the one worded action, at the row's right. */
+.actionCell { width: 1%; white-space: nowrap; text-align: right; }
+.actionCellInner { display: inline-flex; align-items: center; gap: 0.5rem; justify-content: flex-end; }
 
-/* ── board ───────────────────────────────────────────────────────────────── */
-.group { margin-bottom: 1.1rem; }
-
-.groupHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 0 0.2rem 0.4rem;
-}
-.groupName {
-  font-family: var(--font-data);
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--fl-text);
-}
-.groupCount {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--data-gray);
-}
-
-.rows { display: flex; flex-direction: column; gap: 0.4rem; }
-
-.row {
-  display: flex;
-  align-items: stretch;
-  gap: 0.5rem;
-  padding: 0.5rem 0.6rem;
-  border: 1px solid var(--border-2);
-  border-left: 3px solid transparent;
-  border-radius: 0;
-  background: var(--bg-2);
-}
-.row[data-status="checked_in"] { border-left-color: var(--success); }
-.row[data-status="no_show"] { border-left-color: var(--danger); }
-
-.rowMain {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  padding: 0;
-}
-
-.dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.dotIdle { background: var(--data-gray); }
-.dotIn { background: var(--success); }
-.dotNo { background: var(--danger); }
-
-.rowText { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-.teamName {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--fl-text);
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.25;
-}
-.rowSub { display: flex; flex-wrap: wrap; gap: 0.3rem 0.5rem; align-items: center; }
-
-.rosterTag, .payTag, .timeTag {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-}
-.rosterTag[data-state="none"] { color: var(--data-gray); }
-.rosterTag[data-state="submitted"] { color: var(--blueprint-blue); }
-.rosterTag[data-state="confirmed"] { color: var(--success); }
-.payTag[data-paid="true"] { color: var(--success); }
-.payTag[data-paid="false"] { color: var(--warning); }
-.timeTag { color: var(--data-gray); }
-
-.rowActions { display: flex; align-items: center; flex-shrink: 0; gap: 0.4rem; }
-
-.checkInBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  height: 38px;
-  padding: 0 0.75rem;
-  border: none;
-  border-radius: 2px;
-  background: var(--logic-lime);
-  color: var(--bg);
-  font-family: var(--font-data);
-  font-size: 0.76rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-.checkInBtn:disabled { opacity: 0.45; cursor: default; }
-
-/* Hide label text on mobile — icon alone is sufficient at the gate */
-@media (max-width: 640px) {
-  .checkInLabel { display: none; }
-  .checkInBtn { padding: 0 0.55rem; }
-
-  /* Phone: the toolbar wraps into a stacked column, so each control takes the full row
-     (matches the scorekeeper's full-width division filter) at the 44px day-of touch height. */
-  .searchWrap,
-  .select {
-    flex: 1 1 100%;
-    height: 44px;
-  }
-}
-
-/* Direct "mark no-show" affordance on the row (full options still live in the sheet). */
-.noShowIconBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  border: 1px solid var(--border-2);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--data-gray);
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-.noShowIconBtn:hover:not(:disabled) {
-  border-color: rgba(var(--danger-rgb), 0.5);
-  background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger);
-}
-.noShowIconBtn:disabled { opacity: 0.45; cursor: default; }
-
-/* Undo a check-in / no-show straight from the row (resets to not arrived). */
-.undoIconBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  border: 1px solid var(--border-2);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--data-gray);
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-.undoIconBtn:hover:not(:disabled) {
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
-}
-.undoIconBtn:disabled { opacity: 0.45; cursor: default; }
-
-.statePill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 999px;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 800;
-}
-.statePillIn { background: rgba(var(--success-rgb), 0.14); color: var(--success); }
-.statePillNo { background: rgba(var(--danger-rgb), 0.14); color: var(--danger); }
-
-/* ── detail sheet ────────────────────────────────────────────────────────── */
+/* ── The team's sheet (unchanged by ruling; its two layers folded into one) ── */
 .sheetMeta {
   display: flex;
   flex-wrap: wrap;
@@ -327,7 +168,7 @@
   gap: 0.5rem;
   margin-bottom: 1rem;
   font-size: 0.78rem;
-  color: var(--data-gray);
+  color: var(--text-tertiary);
 }
 .sheetStatus {
   font-family: var(--font-data);
@@ -338,9 +179,9 @@
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
 }
-.sheetStatus[data-status="not_arrived"] { background: var(--white-5); color: var(--data-gray); }
-.sheetStatus[data-status="checked_in"] { background: rgba(var(--success-rgb), 0.14); color: var(--success); }
-.sheetStatus[data-status="no_show"] { background: rgba(var(--danger-rgb), 0.14); color: var(--danger); }
+.sheetStatus[data-status="not_arrived"] { background: var(--home-olive-soft); color: var(--text-secondary); }
+.sheetStatus[data-status="checked_in"] { background: rgba(var(--success-rgb), 0.14); color: var(--success-light); }
+.sheetStatus[data-status="no_show"] { background: rgba(var(--danger-rgb), 0.14); color: var(--danger-light); }
 .sheetBy { font-size: 0.7rem; }
 
 .sheetSection {
@@ -349,7 +190,7 @@
   gap: 0.5rem;
   padding-top: 0.9rem;
   margin-top: 0.9rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.14);
+  border-top: 1px solid var(--home-line);
 }
 .sheetLabel {
   display: inline-flex;
@@ -360,7 +201,7 @@
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--data-gray);
+  color: var(--text-secondary);
 }
 
 .paidRow {
@@ -370,7 +211,7 @@
   gap: 0.6rem;
   font-size: 0.84rem;
   font-weight: 600;
-  color: var(--success);
+  color: var(--success-light);
 }
 .paidRow > span {
   display: inline-flex;
@@ -383,11 +224,11 @@
   flex-shrink: 0;
   min-height: 36px;
   padding: 0.35rem 0.7rem;
-  border: 1px solid var(--border-2);
+  border: 1px solid var(--home-line-strong);
   border-radius: 2px;
   background: transparent;
-  color: var(--white-80);
-  font-family: var(--font-data);
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
@@ -397,11 +238,11 @@
 .markPaidBtn {
   align-self: flex-start;
   padding: 0.55rem 0.9rem;
-  border: 1px solid rgba(var(--warning-rgb), 0.5);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
   border-radius: 2px;
-  background: rgba(var(--warning-rgb), 0.1);
-  color: var(--warning);
-  font-family: var(--font-data);
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--warning-light);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.8rem;
   font-weight: 800;
   cursor: pointer;
@@ -415,18 +256,18 @@
   gap: 0.6rem;
   padding: 0.4rem 0.5rem;
   border-radius: 2px;
-  background: rgba(255,255,255,0.03);
+  background: var(--home-olive-soft);
 }
 .rosterNum {
   min-width: 28px;
   font-family: var(--font-data);
   font-size: 0.78rem;
   font-weight: 800;
-  color: var(--logic-lime);
+  color: var(--home-olive);
   text-align: center;
 }
-.rosterName { flex: 1; font-size: 0.85rem; color: var(--fl-text); }
-.rosterDob { font-family: var(--font-data); font-size: 0.7rem; color: var(--data-gray); }
+.rosterName { flex: 1; font-size: 0.85rem; color: var(--text-primary); }
+.rosterDob { font-family: var(--font-data); font-size: 0.7rem; color: var(--text-tertiary); }
 
 .rosterActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .confirmBtn {
@@ -436,55 +277,54 @@
   padding: 0.5rem 0.8rem;
   border: none;
   border-radius: 2px;
-  background: var(--logic-lime);
-  color: var(--bg);
-  font-family: var(--font-data);
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.78rem;
   font-weight: 800;
   cursor: pointer;
 }
 .confirmBtn:disabled { opacity: 0.45; cursor: default; }
-.rosterConfirmed { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 700; color: var(--success); }
+.rosterConfirmed { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 700; color: var(--success-light); }
 .editRosterBtn, .addRosterBtn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   padding: 0.45rem 0.7rem;
-  border: 1px solid var(--border-2);
+  border: 1px solid var(--home-line-strong);
   border-radius: 2px;
   background: transparent;
-  color: var(--white-80);
-  font-family: var(--font-data);
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.76rem;
   font-weight: 700;
   cursor: pointer;
 }
 /* J8-011: "Add roster at the gate" creates a new roster from scratch — a consequential gate action,
-   not a neutral label. Give it a clear, field-grade tappable affordance (solid fill, >=44px target)
-   distinct from the secondary "Edit" so a never-trained volunteer reads it as a real button. */
+   louder than the quiet "Edit" (>=44px target), never a second primary: the olive accent. */
 .addRosterBtn {
   min-height: 44px;
   padding: 0.6rem 1rem;
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  background: rgba(var(--logic-lime-rgb), 0.12);
-  color: var(--logic-lime);
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
 }
 .editRosterBtn:disabled, .addRosterBtn:disabled { opacity: 0.45; cursor: default; }
 
 /* roster editor */
 .rosterEditor { display: flex; flex-direction: column; gap: 0.45rem; }
 .editRow { display: flex; align-items: center; gap: 0.4rem; }
-.numInput, .nameInput, .dobInput {
+.numInput, .nameInput {
   height: 40px;
-  border: 1px solid var(--border-2);
-  border-radius: 2px;
-  background: var(--bg-2);
-  color: var(--fl-text);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+  color: var(--text-primary);
   font-size: 0.85rem;
   padding: 0 0.5rem;
   outline: none;
 }
-.numInput { width: 46px; text-align: center; font-family: var(--font-data); font-weight: 700; }
+.numInput { width: 46px; text-align: center; font-family: var(--font-sans, system-ui, sans-serif); font-weight: 700; }
 .nameInput { flex: 1; min-width: 0; }
 .removeRow {
   display: inline-flex;
@@ -495,10 +335,10 @@
   flex-shrink: 0;
   border: none;
   background: transparent;
-  color: var(--data-gray);
+  color: var(--text-tertiary);
   cursor: pointer;
 }
-.removeRow:hover { color: var(--danger); }
+.removeRow:hover { color: var(--danger-light); }
 
 .addRowBtn {
   align-self: flex-start;
@@ -506,11 +346,11 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.4rem 0.6rem;
-  border: 1px dashed rgba(var(--logic-lime-rgb), 0.5);
+  border: 1px dashed var(--home-olive);
   border-radius: 2px;
   background: transparent;
-  color: var(--logic-lime);
-  font-family: var(--font-data);
+  color: var(--home-olive);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
@@ -521,16 +361,16 @@
   flex: 1;
   height: 42px;
   border-radius: 2px;
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.8rem;
   font-weight: 800;
   cursor: pointer;
 }
-.cancelEdit { border: 1px solid var(--border-2); background: transparent; color: var(--white-80); }
-.saveRoster { border: none; background: var(--logic-lime); color: var(--bg); }
+.cancelEdit { border: 1px solid var(--home-line-strong); background: transparent; color: var(--text-secondary); }
+.saveRoster { border: none; background: var(--home-lime); color: var(--home-lime-ink); }
 .saveRoster:disabled { opacity: 0.45; cursor: default; }
 
-/* ── sheet footer (arrival actions) ──────────────────────────────────────── */
+/* ── The sheet's footer (arrival): No-show a third, Check in two thirds — the screen's one lime ── */
 .sheetFooter { display: flex; gap: 0.6rem; }
 .bigCheckIn {
   flex: 2;
@@ -540,10 +380,10 @@
   gap: 0.4rem;
   height: 48px;
   border: none;
-  border-radius: 2px;
-  background: var(--logic-lime);
-  color: var(--bg);
-  font-family: var(--font-data);
+  border-radius: 6px;
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
@@ -556,11 +396,11 @@
   justify-content: center;
   gap: 0.35rem;
   height: 48px;
-  border: 1px solid rgba(var(--danger-rgb), 0.5);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
   border-radius: 2px;
   background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger);
-  font-family: var(--font-data);
+  color: var(--danger-light);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.82rem;
   font-weight: 800;
   cursor: pointer;
@@ -573,233 +413,17 @@
   justify-content: center;
   gap: 0.4rem;
   height: 46px;
-  border: 1px solid var(--border-2);
+  border: 1px solid var(--home-line-strong);
   border-radius: 2px;
   background: transparent;
-  color: var(--white-80);
-  font-family: var(--font-data);
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
 }
 .undoBtn:disabled { opacity: 0.45; cursor: default; }
 
-@media (min-width: 640px) {
-  .gauges { max-width: 460px; }
-}
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
-   ⚠ SHARED COMPONENT: this board also mounts on the guest gate page (app/[orgSlug]/check-in). Since
-   slice 5 the gate carries [data-admin-kit] too (the guest marker, warm FIXED — R3), so every rule below
-   reaches the gate as well, on purpose: it wears game day's look there, in warm. A rule that must stay
-   admin-only would need `:not([data-guest-kit] *)`.
-   Green = checked in, amber = pending/late, red = a problem, quiet = not yet (owner vocabulary).
-   ⚠ TOKENS ONLY — checkAdminKit fails on a literal colour here. */
-
-/* ── Empty / loading ── */
-:global([data-admin-kit]) .empty,
-:global([data-admin-kit]) .loading {
-  background: var(--card-bg);
-  border: 1px dashed var(--home-line-strong);
-  border-radius: 8px;
-  color: var(--text-tertiary);
-}
-
-/* ── Session-lapsed banner (a problem = red) ── */
-:global([data-admin-kit]) .errorBanner {
-  border-color: rgba(var(--danger-rgb), 0.3);
-  background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger-light);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .errorAction {
-  border-color: rgba(var(--danger-rgb), 0.35);
-  color: var(--danger-light);
-  border-radius: 6px;
-}
-:global([data-admin-kit]) .errorAction:hover { background: rgba(var(--danger-rgb), 0.14); }
-
-/* ── Gauges — counts/progress readouts: card ground, no glow, mono figure ── */
-:global([data-admin-kit]) .gauge {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: none;
-}
-:global([data-admin-kit]) .gauge[data-tone="danger"] { border-color: rgba(var(--danger-rgb), 0.3); }
-:global([data-admin-kit]) .gauge[data-tone="warning"] { border-color: rgba(var(--warning-rgb), 0.3); }
-:global([data-admin-kit]) .gaugeMain {
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-:global([data-admin-kit]) .gauge[data-tone="danger"] .gaugeMain { color: var(--danger-light); }
-:global([data-admin-kit]) .gauge[data-tone="warning"] .gaugeMain { color: var(--warning-light); }
-:global([data-admin-kit]) .gaugeOf { color: var(--text-tertiary); }
-:global([data-admin-kit]) .gaugeLabel { color: var(--text-secondary); }
-
-/* ── Toolbar: the portal's field + segmented control ── */
-:global([data-admin-kit]) .searchWrap {
-  border-color: var(--home-line-strong);
-  border-radius: 7px;
-  background: var(--home-card);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .search { color: var(--text-primary); }
-:global([data-admin-kit]) .select {
-  border-color: var(--home-line-strong);
-  border-radius: 7px;
-  background: var(--home-card);
-  color: var(--text-primary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-:global([data-admin-kit]) .segmented {
-  border-color: var(--home-line-strong);
-  border-radius: 7px;
-  background: var(--home-card);
-}
-:global([data-admin-kit]) .segBtn {
-  color: var(--text-tertiary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-:global([data-admin-kit]) .segBtn[data-on="true"] { background: var(--home-olive-soft); color: var(--home-olive); }
-
-/* ── Board rows and the arrival dot ── */
-:global([data-admin-kit]) .groupName { color: var(--text-secondary); }
-:global([data-admin-kit]) .groupCount { color: var(--text-tertiary); }
-:global([data-admin-kit]) .row {
-  border-color: var(--home-line);
-  border-left-color: transparent;
-  background: var(--card-bg);
-  border-radius: 8px;
-}
-/* The arrival stripe, restated: the rule above weighs the same as the legacy stripe rules and comes
-   later, so without these a checked-in or no-show row would lose its colour on the kit. */
-:global([data-admin-kit]) .row[data-status="checked_in"] { border-left-color: var(--success); }
-:global([data-admin-kit]) .row[data-status="no_show"] { border-left-color: var(--danger); }
-:global([data-admin-kit]) .dotIdle { background: var(--text-tertiary); }
-:global([data-admin-kit]) .teamName { color: var(--text-primary); }
-:global([data-admin-kit]) .rosterTag[data-state="none"] { color: var(--text-tertiary); }
-:global([data-admin-kit]) .rosterTag[data-state="submitted"] { color: var(--info-light); }
-:global([data-admin-kit]) .rosterTag[data-state="confirmed"] { color: var(--success-light); }
-:global([data-admin-kit]) .payTag[data-paid="true"] { color: var(--success-light); }
-:global([data-admin-kit]) .payTag[data-paid="false"] { color: var(--warning-light); }
-:global([data-admin-kit]) .timeTag { color: var(--text-tertiary); }
-
-/* ── Row actions: the primary "Check in" CTA, then the quiet icon buttons ── */
-:global([data-admin-kit]) .checkInBtn {
-  border-radius: 6px;
-  background: var(--home-lime);
-  color: var(--home-lime-ink);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-:global([data-admin-kit]) .noShowIconBtn {
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .noShowIconBtn:hover:not(:disabled) {
-  border-color: rgba(var(--danger-rgb), 0.3);
-  background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger-light);
-}
-:global([data-admin-kit]) .undoIconBtn { border-color: var(--home-line-strong); color: var(--text-tertiary); }
-:global([data-admin-kit]) .undoIconBtn:hover:not(:disabled) {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .statePillIn { color: var(--success-light); }
-:global([data-admin-kit]) .statePillNo { color: var(--danger-light); }
-
-/* ── Detail sheet ── */
-:global([data-admin-kit]) .sheetMeta { color: var(--text-tertiary); }
-:global([data-admin-kit]) .sheetStatus[data-status="not_arrived"] {
-  background: var(--home-olive-soft);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .sheetStatus[data-status="checked_in"] { color: var(--success-light); }
-:global([data-admin-kit]) .sheetStatus[data-status="no_show"] { color: var(--danger-light); }
-:global([data-admin-kit]) .sheetSection { border-top-color: var(--home-line); }
-:global([data-admin-kit]) .sheetLabel { color: var(--text-secondary); }
-
-/* ── Payment ── */
-:global([data-admin-kit]) .paidRow { color: var(--success-light); }
-:global([data-admin-kit]) .unpayBtn {
-  border-color: var(--home-line-strong);
-  color: var(--text-secondary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-:global([data-admin-kit]) .markPaidBtn {
-  border-color: rgba(var(--warning-rgb), 0.3);
-  background: rgba(var(--warning-rgb), 0.08);
-  color: var(--warning-light);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-
-/* ── Roster: list, confirm, gate-added entry ── */
-:global([data-admin-kit]) .rosterItem { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .rosterNum { color: var(--home-olive); }
-:global([data-admin-kit]) .rosterName { color: var(--text-primary); }
-:global([data-admin-kit]) .rosterDob { color: var(--text-tertiary); }
-:global([data-admin-kit]) .confirmBtn {
-  background: var(--home-lime);
-  color: var(--home-lime-ink);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-:global([data-admin-kit]) .rosterConfirmed { color: var(--success-light); }
-:global([data-admin-kit]) .editRosterBtn,
-:global([data-admin-kit]) .addRosterBtn {
-  border-color: var(--home-line-strong);
-  color: var(--text-secondary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-/* A consequential gate action (creates a roster from scratch). Today a lime TINT, not a fill — the
-   sheet's solid primary is the arrival button in its footer — so on the kit it is the olive accent:
-   louder than the quiet "Edit", never a second primary. */
-:global([data-admin-kit]) .addRosterBtn {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-
-/* ── Roster editor ── */
-:global([data-admin-kit]) .numInput,
-:global([data-admin-kit]) .nameInput,
-:global([data-admin-kit]) .dobInput {
-  border-color: var(--home-line-strong);
-  border-radius: 7px;
-  background: var(--home-card);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .numInput { font-family: var(--font-sans, system-ui, sans-serif); }
-:global([data-admin-kit]) .removeRow { color: var(--text-tertiary); }
-:global([data-admin-kit]) .removeRow:hover { color: var(--danger-light); }
-:global([data-admin-kit]) .addRowBtn {
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-:global([data-admin-kit]) .cancelEdit,
-:global([data-admin-kit]) .saveRoster {
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-:global([data-admin-kit]) .cancelEdit { border-color: var(--home-line-strong); color: var(--text-secondary); }
-:global([data-admin-kit]) .saveRoster { background: var(--home-lime); color: var(--home-lime-ink); }
-
-/* ── Sheet footer (arrival actions) ── */
-:global([data-admin-kit]) .bigCheckIn {
-  border-radius: 6px;
-  background: var(--home-lime);
-  color: var(--home-lime-ink);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-:global([data-admin-kit]) .noShowBtn {
-  border-color: rgba(var(--danger-rgb), 0.3);
-  background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger-light);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-:global([data-admin-kit]) .undoBtn {
-  border-color: var(--home-line-strong);
-  color: var(--text-secondary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
+/* The desk table's team name — the row's name, bold as drawn (the shared name button's `font: inherit`
+   would otherwise reset the name link's weight). */
+button.deskName { font-weight: 650; }

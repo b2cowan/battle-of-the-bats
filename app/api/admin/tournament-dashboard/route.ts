@@ -15,9 +15,11 @@ import { hasCapability } from '@/lib/roles';
 import { buildScheduleMetrics, type ScheduleMetricGame } from '@/lib/schedule-metrics';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { tournamentNow, zonedWallClockToUtc } from '@/lib/timezone';
-import { scheduledWindowState, type ScheduledWindowState } from '@/lib/game-live-state';
+import { tournamentNow } from '@/lib/timezone';
+import { gameWindowState, type ScheduledWindowState } from '@/lib/game-live-state';
 import { decidedFinalFor, type ChampionGameInput } from '@/lib/champions';
+import { hasFirstGameStarted, isGameDay as isGameDayRule } from '@/lib/tournament-phase';
+import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
 import { coachEmailsPaused } from '@/lib/email';
 import { resolveTournamentChatParticipants } from '@/lib/chat-resolvers';
@@ -260,17 +262,14 @@ export const GET = withObservability(async (req: Request) => {
   // ── Game-day stats ────────────────────────────────────────────────
   const activeGames = games.filter(g => g.status !== 'cancelled');
 
-  // Game-day boundary: within event dates OR the first game has started
-  // (any game submitted/completed, or its scheduled start time has passed).
+  // Game-day boundary: within event dates OR the first game has started — THE rule in
+  // lib/tournament-phase, which the event header's chip reads too (G1: one chip, one rule).
   const nowTime = tournamentNow().time;
-  const firstGameStarted = activeGames.some(g =>
-    g.status === 'submitted' || g.status === 'completed' ||
-    (g.game_date != null && (
-      g.game_date < today ||
-      (g.game_date === today && g.game_time != null && g.game_time <= nowTime)
-    ))
+  const firstGameStarted = hasFirstGameStarted(
+    activeGames.map(g => ({ status: g.status, date: g.game_date, time: g.game_time })),
+    { date: today, time: nowTime },
   );
-  const isGameDay = isTournamentDay || firstGameStarted;
+  const isGameDay = isGameDayRule({ startDate: t.start_date, endDate: t.end_date, firstGameStarted, today });
 
   const poolGames   = activeGames.filter(g => !g.is_playoff);
   const playoffGames = activeGames.filter(g => g.is_playoff);
@@ -286,21 +285,29 @@ export const GET = withObservability(async (req: Request) => {
       ? (ROUND_ORDER.filter(r => completedPlayoffRounds.includes(r)).pop() ?? completedPlayoffRounds[0])
       : null;
 
-    const pendingPlayoffRounds = divPlayoff
-      .filter(gm => gm.status !== 'completed')
-      .map(gm => roundLabel(gm.bracket_code));
+    // A forfeit is a finished game (the summary card's "games final" counts it), so it neither
+    // keeps a round "to play" nor goes missing from a pool's final count.
+    const pendingPlayoff = divPlayoff.filter(gm => gm.status !== 'completed' && gm.status !== 'forfeit');
+    const pendingPlayoffRounds = pendingPlayoff.map(gm => roundLabel(gm.bracket_code));
     const nextRound = pendingPlayoffRounds.length > 0
       ? (ROUND_ORDER.find(r => pendingPlayoffRounds.includes(r)) ?? pendingPlayoffRounds[0])
       : null;
+    const nextRoundGames = nextRound ? pendingPlayoff.filter(gm => roundLabel(gm.bracket_code) === nextRound) : [];
 
     return {
       id: g.id,
       name: g.name,
       poolTotal:      divPool.length,
-      poolCompleted:  divPool.filter(gm => gm.status === 'completed').length,
+      poolCompleted:  divPool.filter(gm => gm.status === 'completed' || gm.status === 'forfeit').length,
       playoffStarted: divPlayoff.length > 0,
       latestRound,
       nextRound,
+      // The board's division line names ONE game by its own round ("Final", "Semifinal") and
+      // several by the group ("Semifinals").
+      nextRoundLabel: nextRoundGames.length === 1 ? bracketRoundLabel(nextRoundGames[0].bracket_code) : nextRound,
+      nextRoundGameIds: nextRoundGames.map(gm => gm.id),
+      // A next-round game already played and waiting for the organizer is under way, not "to play".
+      nextRoundSubmitted: nextRoundGames.some(gm => gm.status === 'submitted'),
     };
   });
 
@@ -353,21 +360,18 @@ export const GET = withObservability(async (req: Request) => {
   const defaultDurationMin = positiveNumber(tSettings.game_duration_minutes) ?? 60;
   const nowMs = Date.now();
 
-  // Per-game window state (scheduled games only), computed once. A game with a real
-  // start time is classified by its play window (DST-correct via zonedWallClockToUtc).
-  // A timeless game (date but no start time) has no window to test, so fall back to its
-  // date: a past day is 'overdue' so it still surfaces in Needs a Score (the old
-  // safety-net behaviour — never lose an unscored past game); today/future stays
-  // 'future' (window unknown — never false-positive "live").
+  // Per-game window state (scheduled games only), computed once — the shared rule Results' bands read
+  // too (a timeless game on a past day is 'overdue', so it still surfaces in Needs a score).
   const windowStateById = new Map<string, ScheduledWindowState>();
   for (const g of activeGames) {
     if (g.status !== 'scheduled') continue;
-    const iso = zonedWallClockToUtc(g.game_date, g.game_time);
-    if (iso) {
-      windowStateById.set(g.id, scheduledWindowState(new Date(iso).getTime(), g.duration_minutes ?? defaultDurationMin, nowMs));
-    } else {
-      windowStateById.set(g.id, g.game_date != null && g.game_date < today ? 'overdue' : 'future');
-    }
+    windowStateById.set(g.id, gameWindowState({
+      date: g.game_date,
+      time: g.game_time,
+      durationMinutes: g.duration_minutes ?? defaultDurationMin,
+      nowMs,
+      today,
+    }));
   }
 
   const toGameStat = (g: GameRow) => ({
@@ -377,23 +381,29 @@ export const GET = withObservability(async (req: Request) => {
     homeScore: g.home_score,
     awayScore: g.away_score,
     status: g.status,
+    date: g.game_date,
     time: g.game_time,
     location: g.location,
     divisionName: g.division_id ? (divisionNameById.get(g.division_id) ?? null) : null,
     isPlayoff: g.is_playoff,
+    // The row's caption names a playoff game's round ("Semifinal") — the admin's singular label.
+    round: g.is_playoff ? bracketRoundLabel(g.bracket_code) : null,
   });
   const byStartAsc = (a: GameRow, b: GameRow) =>
     String(a.game_date ?? '').localeCompare(String(b.game_date ?? ''))
     || String(a.game_time ?? '').localeCompare(String(b.game_time ?? ''));
 
-  // NOW PLAYING — being scored, or scheduled and inside its play window. In-review
-  // (submitted) first, then by start time. Capped so the board strip stays compact.
+  // TO FINALIZE — a score a scorekeeper submitted, waiting for the organizer (Pending Review).
+  // Its own list since Stage 1 (G2): it used to sit under Now Playing as "IN REVIEW", so the board
+  // opened on scores nobody was playing, filed as live games.
+  const allToFinalizeGames = activeGames.filter(g => g.status === 'submitted').sort(byStartAsc);
+  const toFinalizeTotal = allToFinalizeGames.length;
+  const toFinalizeGames = allToFinalizeGames.slice(0, 8).map(toGameStat);
+
+  // NOW PLAYING — scheduled and inside its play window, earliest first. Capped so the board stays compact.
   const allLiveGames = activeGames
-    .filter(g => g.status === 'submitted' || (g.status === 'scheduled' && windowStateById.get(g.id) === 'live'))
-    .sort((a, b) => {
-      if (a.status !== b.status) return a.status === 'submitted' ? -1 : 1;
-      return byStartAsc(a, b);
-    });
+    .filter(g => g.status === 'scheduled' && windowStateById.get(g.id) === 'live')
+    .sort(byStartAsc);
   const liveGamesTotal = allLiveGames.length;
   const liveGames = allLiveGames.slice(0, 8).map(toGameStat);
 
@@ -412,6 +422,14 @@ export const GET = withObservability(async (req: Request) => {
   const needsScoreTotal = allNeedsScoreGames.length;
   const needsScoreGames = allNeedsScoreGames.slice(0, 8).map(toGameStat);
 
+  // The division line's "in progress": a game of the division's next round is inside its play window,
+  // or already played and waiting to be finalized.
+  const liveIds = new Set(allLiveGames.map(g => g.id));
+  const byDivisionWithLive = gameDayByDivision.map(({ nextRoundGameIds, nextRoundSubmitted, ...d }) => ({
+    ...d,
+    nextRoundLive: nextRoundSubmitted || nextRoundGameIds.some(id => liveIds.has(id)),
+  }));
+
   const gameDay = {
     totalGames,
     completed:            completedGames,
@@ -426,13 +444,17 @@ export const GET = withObservability(async (req: Request) => {
     // Playoff games in any terminal state (completed or forfeit) — drives the
     // "Playoffs complete" vs "Playoffs underway" By-Division footer.
     playoffResolved:      playoffGames.filter(g => g.status === 'completed' || g.status === 'forfeit').length,
-    byDivision: gameDayByDivision,
+    byDivision: byDivisionWithLive,
+    toFinalizeGames,
+    toFinalizeTotal,
     liveGames,
     liveGamesTotal,
     upNextGames,
     upNextTotal,
     needsScoreGames,
     needsScoreTotal,
+    // The rain-delay tool works on unplayed games from today on; with none left, its door is not shown.
+    hasGamesToShift: activeGames.some(g => g.status === 'scheduled' && g.game_date != null && g.game_date >= today),
   };
 
   // ── Registration stats ────────────────────────────────────────────

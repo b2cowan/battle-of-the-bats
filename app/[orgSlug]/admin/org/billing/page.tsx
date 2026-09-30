@@ -179,7 +179,13 @@ function BillingPagePlans() {
   const router           = useRouter();
 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
-  const [panelPlan, setPanelPlan]       = useState<'tournament_plus' | 'league' | 'club' | 'team' | null>(null);
+  // `?plan=tournament_plus` opens that plan's panel on arrival — the door a plan lock elsewhere in the
+  // admin sends an organizer through (the game-day board's locked "Running late?", Tournament admin
+  // redesign G8), so the lock lands on what the plan includes rather than on the whole page.
+  const [panelPlan, setPanelPlan]       = useState<'tournament_plus' | 'league' | 'club' | 'team' | null>(() => {
+    const asked = searchParams.get('plan');
+    return asked === 'tournament_plus' || asked === 'league' || asked === 'club' || asked === 'team' ? asked : null;
+  });
   const [loading, setLoading]           = useState<OrgPlan | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [addCardLoading, setAddCardLoading] = useState(false);

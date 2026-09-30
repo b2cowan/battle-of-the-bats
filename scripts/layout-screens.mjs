@@ -166,7 +166,10 @@ async function openVolunteerAccount(page) {
 /** The gate board's team SHEET (a bottom sheet portaled to <body>), opened from the first team's row.
  *  Only the sheet's arrival, payment and roster buttons write, and none is pressed. */
 async function openGateTeamSheet(page) {
-  const row = page.locator('button[class*="rowMain"]:visible').first();
+  // The gate's row is the kit row (Tournament admin redesign Stage 1, 2026-09-29): its own button opens
+  // the team's sheet; the worded Check in beside it is a sibling, never this.
+  // A phone's kit row and a desk's table name both open it (the table shows from 641px).
+  const row = page.locator('li[data-row-list-row] > button[aria-haspopup="dialog"]:visible, td button[aria-haspopup="dialog"]:visible').first();
   if (await row.count() === 0) return;
   await row.click();
   await page.locator('[role="dialog"][aria-modal="true"]').first().waitFor({ state: 'attached', timeout: 15_000 });
