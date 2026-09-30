@@ -6,7 +6,8 @@
 > A1–A11 and the walk's shape questions RULED 2026-09-29, all as recommended** (owner: "I agree with your
 > recommendations"). Build prompts: `TOURNAMENT_ADMIN_REDESIGN_DEFECTS_PROMPT.md` (run first) and
 > `TOURNAMENT_ADMIN_REDESIGN_STAGE1_BUILD_PROMPT.md`. **The defects pass (§5 row D) COMMITTED `936655a9` 2026-09-29 (/simplify + /review first);
-> owner walk §251 on the hub's QA tab.** **Stage 1 (game day) COMMITTED `890d0aac` 2026-09-30** (/simplify + /review first) — §6 "Stage 1 — as built"; owner walk §253.
+> owner walk §251 ✅ PASSED 2026-09-29, 24 of 24.** F40 (Teams' pool board off the white card) fixed the same
+> day, walk §252. **Stage 1 (game day) COMMITTED `890d0aac` 2026-09-30** (/simplify + /review first) — §6 "Stage 1 — as built"; owner walk §253 ✅ PASSED 2026-09-30, 31 of 31.
 > ⚠ Part B was RE-SCOPED the same day (`ADMIN_DESIGN_CONTINUITY_PLAN.md`
 > §3a "PART B RE-SCOPED"): it no longer covers the screens this redesign rebuilds, and each stage retires its own
 > screens' old look as it builds — so "after Part B's cleanup" below is superseded (§8). Each stage is built only
@@ -191,6 +192,17 @@ payment are single-letter glyphs (J1-073, open).
 **F18 — Communications tells a Plus organizer that Plus unlocks targeting, and has no targeting.** The hint
 shows on every plan and the composer has no audience picker (J1-070, open).
 
+**F40 — The pool board's rows sit on the paper (found 2026-09-29, after the walk; FIXED the same day, §252).** The
+owner's screenshot: each pool's heading was white and its team rows showed the paper and the grid through them;
+the Waitlist and "needs a spot" sections the same. The admin look repainted the three section headings and not
+their frames, so nothing painted the card behind the rows — the table standard's one-painter rule (§3.3 / §3.10.1,
+the portal's F-24) had never reached this board. The flat list on the same page was right (its frame paints the
+card). Fix: the two frame classes paint `--card-bg` in the kit layer; nothing moves. Probe
+`.probe/ground/slot-ground.mjs` reads the first painted ground behind every heading and row (Warm + Dark, 390 +
+1440): all on the card after, all 15 rows on the paper with the rule removed. ⚠ Stage 2 still owns the board's
+SHAPE: each pool is its own card with a gap between, where the phone ruling (v4, S.7) is one frame with the pools
+as band rows.
+
 ### The schedule
 
 **F19 — The schedule opens on an empty list once a division has played.** At both widths it opens on U11
@@ -318,7 +330,8 @@ which reads as the product changing its mind. Routed to the foundation / Club St
 | D · Defects now | Not a stage: F32 archive promise, F16 pools button, F26 bare Plus notice, F08's "no refresh needed", J1-075 "email will be sent", F34's leader sort, F04's empty box, J1-116 the strip on its own page, "0 champions detected" — **COMMITTED `936655a9` 2026-09-29** (record below; walk §251) | A8 | — |
 
 **D · the defects pass — COMMITTED `936655a9` 2026-09-29** (prompt `TOURNAMENT_ADMIN_REDESIGN_DEFECTS_PROMPT.md`;
-owner walk **§251**, the hub's QA tab). The nine, plus five the code showed were the same defects, accepted by
+owner walk **§251 ✅ PASSED 2026-09-29, 24 of 24**, the hub's QA tab; F40 followed the same day as its own small
+fix, walk §252). The nine, plus five the code showed were the same defects, accepted by
 the owner before the build (the Decisions tab): (a) the bulk Accept / Reject confirm; (b) the waitlist and "needs a
 spot" rows (same fixed coach column — the waitlist's button ended 2px past its card at 360); (c) no Leader before a
 division has a result; (d) the strip skips its own page on every destination; (e) three more boxes with the same
@@ -440,7 +453,7 @@ schedule's panel. `registration-health` and `post-event-summary` are untouched b
 waiting score from the board **3–5 → 2** (the row, then Finalize in the open game); check a team in **1 → 1**,
 now a worded 44px target instead of a 34px icon beside a 38px no-show.
 
-### Stage 1 — as built (2026-09-29; committed `890d0aac` 2026-09-30; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE1_BUILD_PROMPT.md`; owner walk §253)
+### Stage 1 — as built (2026-09-29; committed `890d0aac` 2026-09-30; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE1_BUILD_PROMPT.md`; owner walk §253 ✅ PASSED 2026-09-30, 31 of 31 — the three build-time calls stand)
 
 Owner at the start (2026-09-29, all as recommended): a tied playoff score — **say the true thing** (it SAVES and
 the bracket waits; the drawing's "can't be saved tied" was false, `lib/db.ts` `advancePlayoffs`); Customize on

@@ -3,9 +3,9 @@
 > **Status:** design. The walk, the stage ladder and Stage 1 (game day) are drawn on the project hub
 > (https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM), 2026-09-28; Stage 1 redrawn 2026-09-29 after a check
 > against the portal's written formatting rules, and ruled the same day. The defects pass is built and
-> committed (2026-09-29); its owner walk (§251) is on the hub's QA tab. **Stage 1 (game day) is built and
-> committed (2026-09-30)**, measured against the drawings (within a few pixels on every first-screen figure) and waiting on
-> its owner walk (§253, the hub's QA tab). Two things differ from the drawings on purpose: the "Running late?"
+> committed (2026-09-29); its owner walk (§251) PASSED the same day, 24 of 24. **Stage 1 (game day) is built and
+> committed (2026-09-30)**, measured against the drawings (within a few pixels on every first-screen figure); its owner
+> walk (§253) PASSED on 2026-09-30, 31 of 31, every step in both looks. Two things differ from the drawings on purpose: the "Running late?"
 > card shows only while there are games left to play (the test event's are all past), and a waiting score's
 > editor offers Finalize until the organizer changes a number. Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
@@ -72,7 +72,11 @@ Reject say an email goes only when one will, and to whom; Results stops promisin
 leader is the team the public standings put first, and no leader shows before a game is played; no "0 champions
 detected", no empty activity box, no bare-text notices; and the phone's action strip never points at the page you
 are on. Nothing was restyled or rearranged beyond the fix. Two notices it redrew can't be reached on any current
-plan — reported for the create and reuse stages.
+plan — reported for the create and reuse stages. **The owner's walk passed on 2026-09-29, every step in both looks.**
+
+**One more, found after the walk (2026-09-29, walk §252):** on Teams, each pool's team rows showed the page's
+beige paper and grid behind them under a white heading; the Waitlist too. Every pool is one white card again,
+heading and rows together, as the plain team list on the same page already was. Nothing moved.
 
 ## Success criteria
 

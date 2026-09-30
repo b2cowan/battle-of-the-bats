@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-09-28 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-09-29 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-09-28
+# DB Schema Reference — 2026-09-29
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -419,7 +419,7 @@ id (uuid), team_workspace_id (uuid) → team_workspaces.id, org_id (uuid) → or
 
 ### team_org_links
 id (uuid), team_workspace_id (uuid) → team_workspaces.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, linked_org_id (uuid) → organizations.id NOT NULL, status, link_type, sharing_level, requested_by_user_id (uuid), approved_by_team_user_id (uuid), approved_by_org_user_id (uuid), billing_mode_after_approval, created_at, updated_at
-- Indexes: team_org_links_active_unique, team_org_links_linked_org_idx, team_org_links_rep_team_id_idx, team_org_links_workspace_idx
+- Indexes: team_org_links_active_unique, team_org_links_linked_org_idx, team_org_links_one_open_request, team_org_links_rep_team_id_idx, team_org_links_workspace_idx
 
 ### team_workspace_claims
 id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, tournament_team_id (uuid), contact_email NOT NULL, claim_token_hash NOT NULL, status, team_workspace_id (uuid) → team_workspaces.id, claimed_by_user_id (uuid), expires_at, created_at, claimed_at

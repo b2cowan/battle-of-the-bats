@@ -7,6 +7,37 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-09-29 — CHECK-IN'S FILTER IS THE GATE'S OWN BUCKET BAR: SINGLE CHOICE, "ALL" FIRST AND THE DEFAULT; PAYMENT IS NOT A BUCKET (owner, on the Tournament admin redesign's Stage 1 — asked "should these be a dropdown multi select that defaults to 'all'?", then "I agree, go ahead" to the recommendation)
+
+**Decision:** The tournament organizer's Check-in filter is the gate volunteer's own bucket bar — four equal
+single-choice buttons, **All** · Not arrived · Checked in · No-show, the count leading on a phone (46px, one
+line at 390), one line "Not arrived 16" at a desk (38px). **All** is first and chosen when the page opens.
+Payment is not a fifth bucket: "13 of 18 teams still owe" is a count under the bar, and each row says what it
+owes. Not a multi-select dropdown.
+**Rationale:** The counts are the gate's scoreboard, and a dropdown hides them behind a tap. The four arrival
+states exclude each other (a team is in exactly one), so multi-select only adds the question "either or
+both?". One tap beats a sheet of checkboxes at a gate. The gate's board IS the organizer's Check-in (one
+component), and the bar is the 2026-08-07 Option C one, so the two stay one board. "All" is today's
+default; the draft had dropped it without a ruling. The draft had also mixed "Unpaid" into the row — two
+questions (where is the team? has it paid?) in one control — which is what made a multi-select look needed.
+**Applies to:** tournament Check-in (organizer and gate), both widths. A separate "owes money" switch, if a
+director asks for one, narrows the arrival choice; it never joins the row.
+
+### 2026-09-29 — A ROW'S WORDED ACTION IS OLIVE; LIME IS FOR ONE MAIN ACTION PER SCREEN (owner, on the Tournament admin redesign's Stage 1 formatting check — "for B I agree with your recommendation")
+
+**Decision:** A worded action that repeats on the rows of a list (Results' **Finalize**, Check-in's
+**Check in**) is **olive on white** (a 1px olive-tinted border, olive text, 44px on a phone, the admin's
+38px at a desk). The lime stays for **one main action per screen** (the score editor's Save, the team
+sheet's big Check in).
+**Rationale:** Results drawn with §245's kept "Finalize lime" put a lime button on every waiting row plus
+the editor's lime Save, so no lime meant "the one thing to do here". The one-lime rule is the reason lime
+exists; a per-row lime spends it. This **amends §245's kept "Finalize lime" for row buttons** (the
+foundation's release kept it when Finalize was a 25px tick). The same check left one question OPEN, not
+decided here: whether a phone card's worded action sits beside the chevron or on a full-width row at the
+card's foot (the table standard's K-09) — the redesign hub's A11, drawn both ways.
+**Applies to:** tournament admin game-day rows (Results, Check-in, the shared gate board) and any list whose
+rows carry one repeated worded action.
+
 ### 2026-09-27 (slice 6) — THE TAB YOU ARE ON IS NAMED BY ITS COLOUR; EVERY PLAN'S BILLING PAGE JOINS THE KIT; THE CLUB WINDOWS STAND ON THE PORTAL'S DIALOG FLOOR (owner, at the start of Admin Design Continuity slice 6 — all four asked with a recommendation, all four answered as recommended)
 
 **Q5 · the active tab.** Once the Dark bar's inactive names took the quiet tier (the entry below), they read

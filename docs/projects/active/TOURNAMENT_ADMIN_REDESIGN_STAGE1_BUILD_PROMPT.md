@@ -28,6 +28,9 @@
    redesign rebuilds, and "retire the old look as you rebuild" is part of every stage's definition of done —
    Stage 1 deletes the `useAdminKit()` false branches, `kx()` legacy halves, `legacy` props and kit layers of the
    files it rebuilds. Read that section, confirm with the owner in one line, and skip step 1's "if not yet".
+   **Answered (2026-09-29, the Admin Design Continuity session):** the owner waived the settling weekend and
+   approved the re-scope ("sure"), so steps 0–1 need no new question; the plan line step 1 asks for is already in
+   §3a "PART B RE-SCOPED". Read "Running beside Part B area 2" and "Retire the old look" below instead.
 1. **Ask the owner: is the new admin look staying?** It was released 2026-09-28 (flip `74f45113`), and its
    rollback ("revert the flip") is valid until Part B starts.
    - **If yes:** build on the released kit, as Club Tier Stage 2 did. Add one line to
@@ -51,6 +54,52 @@
    tester at a time, and scope sweeps with `--only=`.
 5. **The UX summary for the owner comes first** (AGENCY_RULES). Keep it short, because the drawings are ruled:
    what the organizer and the gate volunteer each see differently, and any departure.
+
+## ⚠ Running beside Part B area 2 (added 2026-09-29)
+
+The owner may run `ADMIN_DESIGN_CONTINUITY_PART_B_AREA2_PROMPT.md` (the cleanup of Organization, Families and
+Rep Teams' non-money pages — invisible, proven by before/after pictures) at the same time. The code doesn't
+overlap; three rules keep it that way:
+
+1. **Stay off the dev server during Part B's three windows** (its "before" capture, its "after" capture, its layout
+   sweep). The Part B session tells the owner when each opens and closes; ask the owner before any dev-server use.
+   No browsing, no restart, no `auth-setup`, no probe, no sweep while a window is open: each one rotates the shared
+   UAT sessions, compiles routes into its memory budget, or kills its server. Write code meanwhile — most of this
+   build is code before it is proof.
+2. **Do G1 last, and only after the owner relays "Part B area 2's pictures are in".** G1 changes the event
+   header (`AdminEventHeader` + its kit sheet) and the page header's phone actions (`AdminPageHeader`), which sit
+   on every screen Part B photographs. G2–G8 touch tournament and volunteer files only — build them first.
+3. **Neither session fixes the other's files.** Whole-tree gates may fail on the other session's half-done edits:
+   typecheck your commit's own tree in an isolated copy (`git archive` of the staged tree, `node_modules`
+   junctioned in), run your tests by file, and report a failure in someone else's files. Stage by explicit
+   pathspecs from a private index; commit only your hunks of shared docs (`TODO.md`, the ledger, the plans).
+
+## Retire the old look as you rebuild (definition of done, Admin Design Continuity re-scope 2026-09-29)
+
+Every file this stage rebuilds loses its old look in the same build — there is no separate cleanup pass for it:
+- **What goes:** each `useAdminKit()` false branch; each `kx(legacy, kit)` becomes the merged object it already
+  returns (`{ ...legacy, ...kit }`, same order); each `legacy={…}` passed to `AdminPageHeader` (and the markup,
+  imports and classes only it used); each `[data-admin-kit] .x` rule folds into `.x` — one rule at a time, checked
+  against the legacy state rules it outranked (`node .probe/kit-shadow-audit.mjs <sheets>`) and for a `background:`
+  shorthand that wipes an image (`node .probe/kit-bg-shorthand.mjs <sheets>`). Keep every
+  `:where(:not([data-public-preview] *))` guard.
+- **Files this stage owns:** the dashboard page and its sheet (the game-day board and whatever else of the file
+  you rewrite — the pre-event and completed views are Stage 4's if you leave them), `LiveEventLog`,
+  `GuidanceRail`, `PersonaPanel` if the board keeps them; Results (`results/page.tsx`, `results-admin.module.css`);
+  **the game list's own kit block** at the end of `schedule/schedule-admin.module.css` (the rest of that sheet is
+  Stage 3's) and `GameList.tsx`'s scoring mode; Check-in (`tournaments/check-in/page.tsx` + `check-in.module.css`) and
+  `CheckInBoard.tsx` + `CheckInBoard.module.css` — it is the gate's board too, so the volunteer check-in screen is
+  in your proof.
+- **Never fold (another surface wears the base rules):** `globals.css`'s kit layer, `BottomSheet` (the check-in
+  sheet — public follow sheets use it too), `ExportMenu`, `CollapsibleCard`, `admin-common.module.css` (Admin
+  Design Continuity's closing step folds it once every user is rebuilt), and the shared tournament header /
+  toolbar parts in `components/admin/tournament/` (about ten tournament screens use them — the stage that
+  rebuilds their last user retires them).
+- **Don't remove the shared helpers** (`useKitStyle`, `kitStyler`, `useKitButtons`, `useKitAsterisk`) or
+  `AdminPageHeader`'s `legacy` prop itself — other areas still use them.
+- Report in the handoff what was retired and anything left in a file you edited (it stays for the stage that owns
+  the rest). Admin Design Continuity's closing step adds a build ratchet on these counts; until then the plan's
+  record is the count.
 
 ## What to build (all ruled 2026-09-29)
 
