@@ -422,8 +422,11 @@ async function main() {
      name to match them on, and a check that re-implemented the identity rule would be one more
      private copy of the thing this project exists to consolidate.
 
-     ⚠ THE REGISTER SIDE MAPS ITS KINDS ONTO THE BANDS. A dues PAYOUT carries no category and is the
-     grid's own "Paid back to families" group; everything else that moved cash out is filed by name. */
+     ⚠ THE REGISTER SIDE MAPS ITS KINDS ONTO THE BANDS. A dues PAYOUT is the returned band's own
+     group; since 2026-09-30 the register prints that group's name in its Category column too, so
+     the mapping below now agrees with the row rather than supplying a name it lacked — kept, so a
+     dues row that ever lost its label still lands in the right group. Everything else that moved
+     cash out is filed by name. */
   const expenseByName = new Map();
   const bumpExpense = (name, side, c) => {
     const key = (name ?? '').trim() || NO_CATEGORY_LABEL;

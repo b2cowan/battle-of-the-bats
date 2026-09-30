@@ -14,6 +14,7 @@ import { orgDayKey, tournamentToday, daysBetweenDateStrings } from './timezone';
 import { duesRemainingByInstallment } from './coach-dues-remaining';
 import { cashOnHandCents, REGISTER_SOURCE_LABEL, formatMoney, toCents, type RegisterRow } from './coach-register';
 import { incomeCategoryFor } from './coach-cash-strip';
+import { PAYOUT_CATEGORY_NAME, revenueGroupLabel } from './coach-budget-months';
 import { joinNames } from './practice-plan-send';
 import type { RepProgramYear } from './types';
 
@@ -383,7 +384,17 @@ export async function loadSeasonRegisterRows(
    * settled here are properties of the workspace, not of the individual row — so a change to any of
    * them (a second dues section, a different chip, a Mark paid that dues rows one day earn) had to
    * be made three times correctly or the book would show three subtly different kinds of dues row.
+   *
+   * ⚠ THE CATEGORY IS THE SHELF THE MONTHS GRID PUTS IT ON — never a dash (owner, 2026-09-30).
+   * Dues are a SCHEDULE, never a budget line, so no row here has a category it was filed in; but a
+   * dash in that column means "nobody filed this" on a bill, and a dues payment is not unfiled.
+   * Money in reads the grid's own revenue group ("Player dues"); a payout reads the returned band's
+   * group ("Dues credits paid out"), the same phrase the report uses. ITEM STAYS EMPTY: there is no
+   * word in the library to name, and an invented one ("Installment #2") would become an Item-filter
+   * option that matches nothing on any other screen.
    */
+  const duesCategoryName = (direction: 'in' | 'out', scheduled: boolean) =>
+    direction === 'out' ? PAYOUT_CATEGORY_NAME : revenueGroupLabel('dues', scheduled ? 'scheduled' : 'actual');
   const duesRow = (r: {
     id: string; date: string | null; description: string;
     amount: number; direction: 'in' | 'out'; scheduled: boolean; playerId: string;
@@ -392,7 +403,7 @@ export async function loadSeasonRegisterRows(
     date: r.date,
     kind: 'dues',
     description: r.description,
-    categoryName: null,
+    categoryName: duesCategoryName(r.direction, r.scheduled),
     itemName: null,
     moneyOut: r.direction === 'out' ? r.amount : 0,
     moneyIn: r.direction === 'in' ? r.amount : 0,
@@ -701,7 +712,7 @@ export async function loadSeasonRegisterRows(
         date: g.dueDate,
         kind: 'dues',
         description: `Installment #${g.installmentNumber}`,
-        categoryName: null,
+        categoryName: duesCategoryName('in', true),
         itemName: null,
         moneyOut: 0,
         moneyIn: g.amount,
