@@ -105,7 +105,10 @@ Each stage below is independently decidable. **Nothing proceeds without an expli
 > Its walk re-checked the June journeys against the code: J1's 76 organizer-screen rows — 26 fixed, 9 partly,
 > 6 changed, 32 open; J8's 23 volunteer rows — 14 fixed, 4 partly, 1 changed, 3 open. It does not design
 > Stages 5 or 6 above; its Stage 1 (game day) leaves them a place on the board (a "Running late?" row on
-> today's rain-delay tool, and a reserved spot for the Big Board's door).
+> today's rain-delay tool, and a reserved spot for the Big Board's door). **Stage 1 COMMITTED `890d0aac` 2026-09-30** (its plan's
+> §6 "Stage 1 — as built", owner walk §253): the "Running late?" door opens the schedule's rain-delay window
+> through `?tool=rain-delay` — the door Storm Mode's "Declare a delay" takes over; the Big Board's spot is
+> reserved on the drawing only (nothing built).
 
 ---
 

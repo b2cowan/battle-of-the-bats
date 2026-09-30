@@ -3,7 +3,11 @@
 > **Status:** design. The walk, the stage ladder and Stage 1 (game day) are drawn on the project hub
 > (https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM), 2026-09-28; Stage 1 redrawn 2026-09-29 after a check
 > against the portal's written formatting rules, and ruled the same day. The defects pass is built and
-> committed (2026-09-29); its owner walk (§251) is on the hub's QA tab. Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
+> committed (2026-09-29); its owner walk (§251) is on the hub's QA tab. **Stage 1 (game day) is built and
+> committed (2026-09-30)**, measured against the drawings (within a few pixels on every first-screen figure) and waiting on
+> its owner walk (§253, the hub's QA tab). Two things differ from the drawings on purpose: the "Running late?"
+> card shows only while there are games left to play (the test event's are all past), and a waiting score's
+> editor offers Finalize until the organizer changes a number. Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is
 

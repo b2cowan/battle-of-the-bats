@@ -6,7 +6,8 @@
 > A1–A11 and the walk's shape questions RULED 2026-09-29, all as recommended** (owner: "I agree with your
 > recommendations"). Build prompts: `TOURNAMENT_ADMIN_REDESIGN_DEFECTS_PROMPT.md` (run first) and
 > `TOURNAMENT_ADMIN_REDESIGN_STAGE1_BUILD_PROMPT.md`. **The defects pass (§5 row D) COMMITTED `936655a9` 2026-09-29 (/simplify + /review first);
-> owner walk §251 on the hub's QA tab.** ⚠ Part B was RE-SCOPED the same day (`ADMIN_DESIGN_CONTINUITY_PLAN.md`
+> owner walk §251 on the hub's QA tab.** **Stage 1 (game day) COMMITTED `890d0aac` 2026-09-30** (/simplify + /review first) — §6 "Stage 1 — as built"; owner walk §253.
+> ⚠ Part B was RE-SCOPED the same day (`ADMIN_DESIGN_CONTINUITY_PLAN.md`
 > §3a "PART B RE-SCOPED"): it no longer covers the screens this redesign rebuilds, and each stage retires its own
 > screens' old look as it builds — so "after Part B's cleanup" below is superseded (§8). Each stage is built only
 > after the owner rules it and Part B's cleanup has passed its screens; the next stage is drawn only after the
@@ -438,6 +439,125 @@ schedule's panel. `registration-health` and `post-event-summary` are untouched b
 **Stage 1 taps (organizer, phone):** score a game from the board **5 → 1** (plus typing); finalize a
 waiting score from the board **3–5 → 2** (the row, then Finalize in the open game); check a team in **1 → 1**,
 now a worded 44px target instead of a 34px icon beside a 38px no-show.
+
+### Stage 1 — as built (2026-09-29; committed `890d0aac` 2026-09-30; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE1_BUILD_PROMPT.md`; owner walk §253)
+
+Owner at the start (2026-09-29, all as recommended): a tied playoff score — **say the true thing** (it SAVES and
+the bracket waits; the drawing's "can't be saved tied" was false, `lib/db.ts` `advancePlayoffs`); Customize on
+the game-day board — **show/hide the parts**, no reorder; Results' **All games — the same bands, every state**;
+the dev server quiet. Words by `/marketing` the same day (all in `lib/game-day-words.ts`, one home).
+
+- **G1.** THE rule is `isGameDay()` / `hasFirstGameStarted()` in `lib/tournament-phase.ts`, read by the
+  dashboard's API and by the admin tournaments list, which now sends `first_game_started` for ACTIVE events
+  (one games read) → `Tournament.firstGameStarted` → the event header. The chip reads **Game day** (was "Live",
+  /marketing: the phase now runs past the last date), sits on the dates line; the organization's name hides at
+  ≤900; condensed on a phone, a second (aria-hidden) chip sits beside the one-line name. Dates via
+  `formatEventDateRange` (the header had hand-rolled `toLocaleDateString`). At ≤900 the ⇄ pill is 44×44 and the
+  name's link box 38px+ (measured 41×30 and 19px). Pages name only themselves: `TournamentAdminHeader` and the six
+  pages that passed `useTournamentCrumb()` (deleted) drop the event eyebrow; `AdminPageHeader` gained
+  `inlineActions` (tournament screens only — other areas keep the row) so a phone's icons join the title line. The
+  dashboard's header is `title="Dashboard"` — no chips, no actions, no `legacy`.
+- **G2 · G3.** `dashboard/GameDayBoard.tsx` (+ a born-clean sheet). The API splits **To finalize** (submitted)
+  out of Now playing, gives each row its `date` and `round` (`bracketRoundLabel`), each division its
+  `nextRoundLabel` / `nextRoundLive`, and `hasGamesToShift`; a forfeit now counts as final in the division line (it
+  used to leave a round "to play" and drop out of the pool count). Rows are the kit row with a date lead; every row
+  links `results?gameId=`. The top note is `CoachCard accent`; the live "It's game day" rail card is retired on game
+  day, the **ready** card stays (it holds the one button the day needs next). Summary = `CoachCard` +
+  `CoachFigure`; the division line reads the pools while any pool game is open, then the round to play / in
+  progress, then the champion (the drawing's fixture read "Semifinal to play" with pool games still open — kept the
+  pools first; build-time call). Health = one row that opens the shared panel body (`renderScheduleHealthBody`;
+  "Review ->" typed as two characters fixed to "→"). **Customize** = a foot link on an active board; on game day a
+  checkbox per part (layout v4 `gameDayParts`; a v1–v3 layout's hidden panels carry over); a completed dashboard
+  offers none (it customized nothing). The coin-toss box → `Callout tone="warn"`. The activity feed is off the
+  game-day board (not drawn); it stays before/after the event.
+- **G4.** `results/ResultsList.tsx` (bands, rows, the editor in a row's place) + the page rewritten: the lens (the
+  admin's `filterChip`), division / stage ("Both stages") / search as dropdowns at a desk and in the view sheet on a
+  phone; the old status chips and legend gone; filters no longer restored per tournament (it opens on the ruled
+  view). `?gameId=` opens THAT game's editor once per id (All games when its band isn't Needs you's); `?view=all`.
+  **Build-time call:** on a Pending Review score the organizer hasn't changed, the editor's lime reads **Finalize**
+  (the board's two taps: the row, then Finalize); once a number changes it reads **Save score**. The export's
+  Status column says the G5 words. **GameList's scoring mode is deleted** (its rules in
+  `schedule-admin.module.css`, and `admin-common`'s orphaned `chip_info/warning/success` + `gameStatusSlot`).
+- **G5.** Board, Results, the schedule's tags (`GameList`; `ScheduleTimeline` names no state — nothing to change)
+  and the scorekeeper's labels say Needs a score · Pending Review · Final · Forfeit · Tie; a pending forfeit is
+  "Forfeit · Pending Review". Two forfeit bugs found on the way: the scorekeeper labelled a forfeit "To Score" and
+  the schedule's phone tag labelled it "Cancelled". **/marketing kept the scorekeeper's four-button bar on short
+  forms** ("To score · Review · Final · All", width at 360) — against G5's placement; an owner question.
+- **G6.** Results and the check-in board refresh every 30 s while visible, silently, never while an editor, the view
+  sheet, a confirm or a team's sheet is open or an action is in flight. Results' "no refresh needed" was already gone.
+- **G7.** `CheckInBoard` rebuilt: the gate's bar (`DayOfFilterBar inline` — new variant, the gate's pinned bar
+  untouched) + "N of M teams still owe" / "All teams are paid."; phone rows = the kit row with `beside` (Check in ·
+  Undo); desk = the kit table (Team · Roster · Payment, division bands); No-show only in the sheet; the sheet
+  unchanged (its layers folded). The check-in time now reads the org's zone in the house clock (it printed the
+  device's "9:58 AM"). The Gate view icon is 44px wide.
+- **G8.** The door (`CoachDoorCard`) → `schedule?tool=rain-delay`, which the schedule reads once (as Results reads
+  `gameId`); locked → `settings/subscription?plan=tournament_plus`, which Plan & billing now reads to open that
+  plan's panel. **The door shows only while the event has unplayed games from today on** (the tool's own condition —
+  the Tools menu hides Rain delay the same way), so on the test event (every game past) it is absent; pictured by a
+  probe that flips the flag.
+- **One row recipe, extended — not a second one.** The admin already restates the portal's `CoachRowList` for its
+  shell (`ClubRow*` in `components/admin/kit/club/RepKit`, Club Tier Stage 2; the portal's own imports the 16,000-line
+  stylesheet). It gained `lead` (+ the portal's phone order), `captionFirst`, `beside` (A11 Option 1, with a
+  stretched row cover so the targets touch and never overlap), `RowAction` (olive on white, A12), `ClubRowFrame`,
+  a band `count`, and the tour anchor. The cards are the coach kit's (as the Club hub renders them). A neutral home
+  for these parts (they are admin-wide now, still named "Club") is a follow-up, like `Callout`'s.
+- **Retired with the build:** Results' and Check-in's sheets carry no old-look rule (Results rewritten whole — its
+  dead venue filter too; Check-in's 72 kit rules folded into one layer); the dashboard's live strip and title-chip
+  rules (17 kit rules, 16 `kx`/`legacy` uses); GameList's scoring half (10 kit rules, 7 `kx`). `KIT_FILES` += the
+  board's, Results', Check-in's and the check-in page's sheets. **Left for their stages:** the dashboard's
+  before/after-event views (207 kit rules, 36 `kx` — Stage 4), GameList's planning half and the game list's kit block
+  (Stage 3), `TournamentAdminUI`'s legacy branch (never fold), the `legacy=` props on the settings, communication and
+  summary pages (Stages 4–5).
+- **Measured** (390 × 844, the test event; drawn in brackets): event header 87 (≈88); board's first row 247
+  (≈250), Needs a score from 386 (≈399), board 1,474 (≈1,373 — the three semifinal rows' captions wrap to two
+  lines, and the door is absent); Results' first waiting game 248 (≈247), Needs you spans all three divisions;
+  Check-in's first team 327 (≈321), 6 teams above the bar (6); the desk board 852 (fits 900). Probes
+  `.probe/stage1/probe.mjs` (A board → editor 1 tap · B finalize 2 taps · C Results' first screen · D check-in 1 tap
+  · E a second browser's check-in in 29.5 s, no reload — a real write, undone · F tap sizes · G figures).
+- **Verified** (2026-09-29): typecheck and `verify:changed` clean. Layout sweep of the 41 `admin-t-*` / `guest-*`
+  screens at 361 / 390 / 768 / 1440: the warm baseline re-recorded with a scoped `--init` (395 entries fixed and
+  dropped; 5 re-keyed, the same finding under a new name — the bracket editor's 4px spill, the scorekeeper's 42px
+  "To score" at 768, the preview schedule's two pre-existing contrast pairs; nothing outside those screens
+  touched); the Dark pass (`--theme=dark --dump`) adds nothing on a Stage 1 screen. The volunteer walk (Admin Design
+  Continuity W5) as the gate account on a phone set to Dark, `.probe/stage1/volunteer.mjs`: 10 of 10 — warm screens,
+  one "Up next", the G5 words, a score sheet that covers the bar and ignores a tap outside it, the gate's pinned
+  bucket bar unchanged (46px, fixed, never the inline form), a team opening as a sheet. Hub v10 carries the built
+  pictures and walk W3.
+- **/simplify + /review (2026-09-29, before the commit).** /simplify: one poll hook for the three game-day
+  screens (`lib/hooks/useVisiblePoll.ts` — the board's J1-086 poll moved onto it too); Results judges each game's
+  band once per read (not four times per keystroke) and `tzOffsetMinutes` keeps one formatter per zone; a
+  refresh reads only what game day changes (Results: games + teams; Check-in: the board) — the divisions and
+  venues once per tournament; the timeless-game rule lives once, in `gameWindowState` (`lib/game-live-state.ts`),
+  read by the dashboard API and Results; the context strip and the help drawer read `isGameDay` (the plumbing was
+  already on the tournament); the inline bucket bar wins by weight, not file order; unused RepKit props dropped.
+  Skipped, on purpose: `NumberStepper` (its box, numeral and a11y names differ from the ruled editor), one
+  select/search recipe for Results and Check-in (alike, not copies — different paddings and phone behaviour), and
+  a grid for RepKit's caption-first + beside row (the caption must stay inside the row's one button; its 7.5rem
+  reserve fits "Finalize" — a longer word or a second caller needs the recipe's own rework). /review (high-risk
+  tier, five lenses): **a pending forfeit opened in the editor offered only Save score, which would record the
+  nominal margin as a played result and lose the forfeit** — the editor now offers Finalize on every unchanged
+  waiting score (finalize promotes a pending forfeit to a forfeit); **stale reads could paint** — a slow refresh
+  landing after a tournament switch, a newer read or a write (Results), or after a volunteer's optimistic check-in
+  (Check-in) — both now drop any read that is not the newest, a write supersedes reads in flight, and Results'
+  poll also pauses under a row's Finalize; the scorekeeper said "Needs a score" on games not yet played — it now
+  says "Scheduled" until the game's time has passed (the board's rule); the rain-delay link waits for the org
+  before reading the plan; a switch of tournament resets Results to Needs you; Playing now's "more" opens Needs
+  you; a division whose next-round game is played and waiting reads "in progress", not "to play". Security,
+  data-contract and blast-radius lenses: clean (every new query org-scoped; the dashboard response's one consumer
+  merges onto `EMPTY_GAME_DAY`; every removed export has no importer; RepKit and the page header changes are
+  opt-in). Reported, not fixed (pre-existing): a game's LENGTH has three readings — the dashboard API takes the
+  game's own, else the tournament's, else 60 (it skips the division's); Results and the Schedule take
+  `resolveGameTiming` (game → division → tournament → 90); the scorekeeper, which holds no tournament settings,
+  game → division → 90. A scheduler-built game carries its own length, so they agree on it; a game with none can
+  move between "Playing now" and "Needs a score" at different minutes on the three screens. The division line's plural round name comes from the route's old `roundLabel` (a double-elimination
+  "Winners Bracket" reads "Playoffs"); `hasGamesToShift` (API) and `hasUpcomingGames` (schedule) are two copies
+  of one rule.
+- **Found, not fixed:** `ExportMenu`'s buttons are 32px on a phone (29px wide at 768) — shared by 47 screens, the
+  admin's recorded convention; the context strip and the help drawer still read the date-only phase (the frame's
+  and help's); the strip's "2 games to finalize" repeats the list heading (F39); the shared table recipe's chevron
+  cell (`.go` / `.goLink`) sits 3px above the row's centre on every RepKit table (Check-in's desk table, and the
+  Club's rep-team tables) — the recipe's fix, with its own pixel proof; Teams' "Past Due" badge fails Dark contrast
+  (4.41:1) on another session's uncommitted `teams-admin.module.css` change — theirs.
 
 ## 7. The asks
 
