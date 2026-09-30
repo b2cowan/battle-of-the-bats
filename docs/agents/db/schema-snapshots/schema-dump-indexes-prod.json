@@ -3696,6 +3696,11 @@
   },
   {
     "tablename": "team_org_links",
+    "indexname": "team_org_links_one_open_request",
+    "indexdef": "CREATE UNIQUE INDEX team_org_links_one_open_request ON public.team_org_links USING btree (team_workspace_id) WHERE (status = 'ownership_pending'::text)"
+  },
+  {
+    "tablename": "team_org_links",
     "indexname": "team_org_links_pkey",
     "indexdef": "CREATE UNIQUE INDEX team_org_links_pkey ON public.team_org_links USING btree (id)"
   },
