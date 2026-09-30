@@ -34,7 +34,13 @@
 > one-commit rollback protects); Part B started the same day, and the one-revert rollback (runbook in §3a
 > "Release — Part A") ended with Part B's first commit. **Part B area 1 (the frame and shared parts)
 > COMMITTED `f6d36059` 2026-09-29** — pixel-identical (Dark 230/230, Warm 228/230 + 2 attributed), /review
-> done. Next: the tournament areas, in the redesign's stage order. Part B's record: §3a "PART B — the cleanup".
+> done. **Part B RE-SCOPED the same day (owner: "sure"):** two more areas (the screens no redesign is coming
+> for), then the closing step and this program is archived; every screen a redesign rebuilds retires its old
+> look in that redesign's own build. Part B's record and the joint sequence with the tournament redesign and
+> Club Tier: §3a "PART B — the cleanup" → "PART B RE-SCOPED". **Part B area 2 (Organization's leftovers,
+> Families, Rep Teams outside money) COMMITTED `20ca46cf` 2026-09-29** — Dark 108/108, Warm 107/108 + 1 attributed;
+> forced-state computed styles unchanged; /review done (§3a "PART B AREA 2"). Next: area 3 and the closing
+> step, after tournament Stage 1 lands.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -1646,6 +1652,8 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   not live, so there is no weekend to wait for and no customer the one-commit rollback protects. This is the
   owner's confirmation that the prompt's "Start only after…" line and its "Do not start Part B" rule ask for.
   **The rollback runbook above ended with Part B's first commit (`f6d36059`, area 1, 2026-09-29).**
+  ⚠ **SUPERSEDED the same day by "PART B RE-SCOPED" below** (owner, 2026-09-29: "sure") — the tournament areas
+  are no longer Part B's; kept as the record of the first re-sort.
   **Area order, re-sorted 2026-09-29 with the tournament admin redesign in mind** (`TOURNAMENT_ADMIN_REDESIGN_PLAN.md`
   §8, amended 2026-09-29): (1) the frame and shared parts; then **the tournament areas, in the redesign's stage
   order** — game day, teams and registration, the schedule, after the event, create and set up — so each later
@@ -1753,6 +1761,138 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   proven; the likeliest is the old server still releasing its port), cured by a clean restart; `.probe/partb/fresh-pass.sh` now waits for the port and probes those
   routes before a capture. (2) `check-layout-invariants.mjs` has NO `--help`: an unknown flag starts a full sweep
   (one ran for ~2 minutes beside an identity pass before it was stopped; it writes nothing without `--init`).
+- **PART B RE-SCOPED (2026-09-29, after area 1; owner: "sure").** Measured after area 1, the old look left in
+  the code (`useAdminKit()` calls · `kx()` patches · `legacy` props · `[data-admin-kit]` mentions in area sheets):
+  tournaments 54 files · 9 · 329 · 10 · 1,556 (~60% of what is left); house league 9 · 5 · 63 · 8 · 131; org 12 · 7 ·
+  25 · 5 · 180; accounting 8 · 0 · 24 · 5 · 189; rep teams 11 · 4 · 35 · 10 · 119; volunteer 6 · 0 · 23 · 0 · 90;
+  onboarding 2 · 1 · 0 · 0 · 81; families 4 · 3 · 0 · 3 · 44; public site 2 · 1 · 0 · 1 · 26. Nearly all of it
+  sits in screens a redesign stage rebuilds within months, and Club Tier Stage 2 showed the cheaper pattern: a
+  stage that rebuilds a screen deletes its old look as it goes (no switch, no legacy branch). Cleaning those
+  screens pixel for pixel first, then redrawing them, is the same work twice plus a quiet window each time.
+  **So: (1) Part B keeps only the screens no redesign is coming for** — area 2: Organization's leftovers (the
+  old pages Club Stage 1's screens replaced — pure deletion, `AdminHubClient` excepted, it still serves a
+  tournament-only workspace — the org overview, coaches-portal links, PDF settings, Plan & billing for
+  non-Club plans), Families (its redesign, D9's P3, comes after the Club release), and Rep Teams outside
+  money (assistant coaches, shared library, past seasons, a team's history, rename URLs); area 3: tournament
+  data tools, the admin help guide's own sheets, the setup welcome unless tournament Stage 5 claims it — then
+  **the closing step**: the strict colour gate widened over every clean file, the switch-era guards rewritten,
+  `lib/admin-kit-preview.ts`'s leftovers and an unread `APP_BUILD_BRANCH` removed, the identity tool and
+  `.admin-identity/` retired (a redesign changes pixels by design; its proof is the owner walk and the sweep),
+  and a **legacy-count ratchet** added to the build (the five counts above, per file) that may only go down.
+  Then this program is archived. **(2) "Retire the old look as you rebuild" joins both redesign programs'
+  definition of done** — each stage's build prompt deletes the `useAdminKit()` false branches, `kx()` legacy
+  halves, `legacy` props and kit layers of the files it rebuilds, and lowers the ratchet: tournament Stage 1
+  (the dashboard's game-day board, Results + the game list, Check-in + the check-in board, the live event log,
+  guidance rail, persona panel), Stage 2 (Teams, the import windows, registration health, Communications),
+  Stage 3 (the Schedule and everything it opens, the number stepper; the shared tournament header / toolbar
+  parts in `components/admin/tournament/` go with whichever stage rebuilds their last user — about ten screens
+  use them), Stage 4 (Past tournaments, the summary, the Tournaments list), Stage 5 (event settings,
+  divisions, venues, rules, public site/branding, the settings screens, both creation wizards and their style
+  cards, the tie-breaker editor), Stage 6 (scorekeeper and gate, `GuestKitRoot`'s `on`, the tournament nav's
+  Title Case labels if still there); Club Stage 3 (Accounting, allocations, payment requests), Stage 4 (the
+  public site editor), Stage 6 (the venue library), Stage 9 (house league). The kit layers of parts other
+  surfaces wear (the export menu, collapsible card, bottom sheet, `globals.css`) stay scoped — never folded.
+  **(3) The tournament redesign no longer waits for Part B** — its plan's "each stage is built only after Part B's
+  cleanup has passed its screens" is superseded by §8's amended path; the owner's waiver answers the question
+  its Stage 1 build prompt's first step asks. ⚠ That plan and its prompts are another session's uncommitted
+  files — the change is recorded here and on the Club Tier plan (§7), and belongs in them at their next session.
+  **The joint sequence (proposed 2026-09-29; which program leads when they compete for the owner's time is the
+  owner's commercial call — recommended: Club leads, the tournament redesign fills the gaps; for `/strategy`):**
+  NOW — (1) tournament defects pass · (2) Club Stage 2 walks §249/§250, and migs 312 + 313 on prod before anyone's
+  next promote · (3) Part B area 2 · (4) tournament Stage 1 build + walk · (5) Part B area 3 + the closing step →
+  this program archived. NEXT — (6) Club 3a drawn · (7) tournament Stage 2 drawn · (8) Club 3a built + walked ·
+  (9) tournament Stage 2 built + walked · (10) Club 3b · (11) Club 3c. MIDDLE — (12) Club Stage 6 (venue book,
+  clash check, calendar) · (13) tournament Stage 3 (schedule) · (14) Club Stage 7 (after tournament Stage 2 and
+  Club 3) · (15) tournament Stage 4 · (16) Club Stage 4 · (17) Club Stage 5 · (18) tournament Stage 5 (after Club
+  Stage 6). RUN-IN — (19) Club Stage 10 (permits) · (20) tournament Stage 6 (volunteers) — the tournament redesign
+  done and walked by about April 2027, ahead of a season that returns in June–July · (21) Club Stage 8 → the Club
+  release · (22) Club Stage 9 (house league, its own track; may start beside Stage 10) — the ratchet reaches zero
+  with it · (23) Families P3, after the Club release. Two orderings are load-bearing: Club Stage 6 before tournament
+  Stages 3 and 5 (they draw the real clash warning and venue book once), and tournament Stage 2 before Club Stage 7
+  (it plugs "Add my team" and fees into the redesigned Teams screen).
+- **PART B AREA 2 — Organization's leftovers, Families, Rep Teams outside money (2026-09-29) — COMMITTED `20ca46cf`**
+  (prompt `ADMIN_DESIGN_CONTINUITY_PART_B_AREA2_PROMPT.md`; step 3 of the joint sequence). Owner at the start: quiet
+  window **"Go now"**; scope **"as recommended"** — the prompt's list plus five calls the code made, put to the owner
+  before any edit: (1) **"Coaches-portal links" has nothing to clean** — it is a one-line forward to Rep Teams › Bring
+  in a coach's team (Club Tier Stage 2's screen, out); (2) **the old Members/audit-log sheet and the old Settings sheet
+  lose their only readers** (the three old pages) → deleted whole, with their guard/baseline entries; (3) **the export
+  registry** named the Members and audit-log PAGE files as the screens that export — after the deletion the export
+  lives only in `MembersKit` / `AuditLogKit`, and `check:export-catalog` checks only that a named file exists, so it
+  would have stayed green over a wrong answer → both entries re-pointed; (4) **a sheet joins the strict gate only when
+  no raw colour is left** — a fold keeps every legacy value the kit never overrode, and those are live pixels;
+  (5) **the dev-only Stripe portal stand-in** (`mock-portal.module.css`, 12 kit mentions) is not in the picture set →
+  left for the closing step rather than folded without proof.
+  **Built.** *Organization:* `MembersPageLegacy` (~1,080 lines), `AuditLogPageLegacy`, `OrgSettingsPageLegacy` deleted
+  — each page renders its kit screen alone, the `dynamic()` import kept (area 1's bundle-order rule); `AdminHub`'s
+  `!kit ||` gone (`AdminHubClient` still serves a tournament-only workspace and the no-org moment); Plan & billing:
+  the chooser's dead `kit &&` gone, `BillingPageLegacy` **renamed `BillingPagePlans`** (the live page for every
+  non-Club plan — the old name read as dead code), its three `kx()` patches and old header folded,
+  `billing.module.css` + `PlanArticlePanel.module.css` folded; the org overview, PDF settings (18 `kx()`) and the admin
+  Notifications page (`NotificationsPageContent`'s old header; the sheet's two admin-only kit rules folded — the sheet
+  stays out of the strict gate, the coaches portal reads it). *Families:* the three pages' switch branches and old
+  headers; `families.module.css` folded. *Rep Teams:* assistant coaches, shared library, past seasons, a team's history
+  + a season, rename URLs (every `kx()` → its merged object, hoisted to a module constant where row-invariant);
+  `rep-teams.module.css` folded — ALSO the money pages' sheet (allocations, payment requests, Accounting's allocate:
+  Club Stage 3's), so those screens were in the picture set; its `.th` sentence-case override (S2-06) folded as it
+  stood (a report for Stage 3). **26 already-dead classes deleted with it** (Club Tier Stage 2's replaced team /
+  season pages' cards, stats, modals, coach rows, view toggle, slide-over — no importer reads them;
+  `check:css-selectors` counts a class "used" if its name appears ANYWHERE, so it never flagged them) + the swatch these
+  deletions left. Comment truth-ups in `ClubHubKit`, `MembersKit`, `SettingsKit`.
+  **The folds found four traps; each resolved to the kit's cascade exactly:** (a) a legacy MODIFIER after its base that
+  the kit's base rule used to outrank — `.planCardComingSoon`, `.productPitch`, `.retentionCard`'s background,
+  `.reviewCard`'s lime edge — merged in place it would win again: the dead declarations went (and the three fully-dead
+  modifiers with their className mentions); (b) `.sectionTitleLime` was `!important` lime and its kit twin
+  `!important` primary = `.sectionTitle`'s own ink → the class went; (c) Rep Teams' `.btnPrimary:hover` (kit weight)
+  used to beat `:disabled` → `:hover` now sits after `:disabled`; (d) Families' `.line:first-of-type { border-top: 0 }`
+  would reset the colour the kit kept → longhands. Badge order mirrors the kit's, so even an impossible variant pair
+  resolves the same.
+  **Two new tools, because the photos cannot see a hover.** `.probe/partb2/fold-check.mjs` — a static cascade check:
+  the winning VALUE of every longhand, for every element the sheet can describe (selector-derived, TSX-co-applied and
+  pair-union profiles, each with every state the sheet names, at every media band), HEAD vs the working copy; a
+  shorthand restating a longhand compares equal; a pair no className makes, or a class on a tag it is never put on, is
+  skipped as impossible. Proven by a naive fold (strip the prefix only), which it catches. Result: **all five sheets
+  0 selector / 0 real differences** (Rep Teams' 28 hypothetical = classed paragraphs inside the access-denied block,
+  which renders only an icon, a heading and a bare paragraph). `.probe/partb2/states.mjs` — the runtime twin: every
+  element a folded sheet dresses (its class, or an ancestor's within 4 levels), `getComputedStyle` at rest and under
+  each FORCED state (CDP `CSS.forcePseudoState`: hover, focus, focus-visible, active, focus-within), transitions off,
+  before vs after. **Reuse both for area 3.**
+  **Gates:** strict kit gate `KIT_FILES` += `families.module.css`, `rep-teams.module.css`, `billing.module.css`,
+  `PlanArticlePanel.module.css` (all four fold to zero raw colours); `club-stage1-screens-guard` re-pinned (the hub's
+  condition; Members / audit log / Settings render their kit screen alone, in their own chunk, no legacy function);
+  `table-recipe-guard` drops the deleted Members sheet's debt entry; `.css-selector-baseline.json` drops the two
+  deleted sheets' dead entries; the restyled ratchet's six area entries removed (now zero — counted by the gate's own
+  `--init-restyled` in an isolated copy of the commit's tree, so no other session's edit was counted and no other
+  entry touched). ⚠ **Found by the selector gate:** `coaches.module.css`'s `.colorSwatch` had no reader since the
+  coaches portal's season-end rework (`85d2a015`, 2026-07-29) — it looked alive only because the Rep Teams old headers
+  used a class of the same name → deleted (no element can carry it).
+  **Proof.** Fresh reference re-taken on `924a7be8` before any edit (area 1's sets kept as `.admin-identity/area1-*`):
+  the set `frame, hub, org, families, rep-teams, accounting` + tournament Settings › Plan & billing and its panel
+  (non-Club Plan & billing lives there) — 54 screens × phone + desktop × Warm + Dark = 216, a warm-up first, a freshly
+  restarted server per pass. **After: Dark 108 / 108 pixel-identical; Warm 107 / 108** — the one is the club setup
+  checklist's two board names in swapped order (area 1's `accepted_at` tie, `lib/club-checklist.ts`, not in this diff)
+  — attributed, not a leak. **States: 108 screen-widths, ~2,330 element-state reads, 0 value changes**; the 136
+  elements renamed by a dropped modifier match their before twins value for value in both directions (144 / 144
+  reverse). **Layout sweep** (361 / 390 / 768 / 1440, default theme, committed baseline, two groups, one runner):
+  nothing new from this area — Families duplicates ×10 and the allocate team picker ×3 are area 1's re-keyed baseline
+  findings; ⚠ the team Tryouts page's two export buttons (×9, 32px under the 44px tap floor at 361 / 390 / 768) were
+  there before this diff (identical photos, never in the baseline) — **Club Tier Stage 2's screen, reported, not
+  re-baselined**. Gate: `verify:changed` green (unit 5,237 / 5,237), typecheck in an isolated copy of the commit's
+  tree, eslint 0 errors (= HEAD file for file; one new spacing warning fixed). **/review (standard, three lenses —
+  TSX correctness, CSS cascade, gates):** no defect; three advisories — the panel's "Not right now" ink wins over the
+  global `.btn-ghost` on stylesheet ORDER (globals load first), as before the kit (comment sharpened with the fix if a
+  kit rule ever colours `.btn-ghost`); `check:export-catalog`'s surface walk sees only `app/` (pre-existing; the
+  registry now names two `components/` files); the four cleaned sheets are double-held by `KIT_FILES` and the restyled
+  lists (harmless; the closing step can prune `RESTYLED_DIRS`/`RESTYLED_FILES`).
+  ⚠ **Lessons:** (1) a restart can come up 404ing ONE nested route only (the history YEAR page while `…/history`
+  served) — the route probe now covers it and reads the team from the fixture (the old probe's hard-coded id would go
+  stale at the next test-club rebuild); (2) the identity tool's `after` exits 1 on ANY difference, so a runner that
+  stops on exit 1 halts at the known board-name swap — run every pass, then read every log; (3) dropping a class from a
+  className renames the element in a state dump, and two signatures merging shift the per-signature sampling — pair
+  them by a normalised signature (`.probe/partb2/states-pair.mjs`) before calling a difference.
+  **Owed to the closing step:** `mock-portal.module.css`'s kit layer (dev-only, unphotographed); the redundant restyled
+  entries for the strict sheets; the `AdminPageHeader` `legacy` prop — 27 files still pass it, every one a screen a
+  redesign stage rebuilds (tournaments 8, house league 7, accounting 5, the money pages 4, the org Tournaments list
+  and Venues, the public site editor), so the prop goes when the last of them is rebuilt, or at the closing step.
 - **The tournament defects pass changed pixels on purpose (2026-09-29, commit `936655a9`; `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`
   §5 row D):** the tournament dashboard (the archive confirm's sentence; the reuse window's plan notice and error as the
   kit callout; the activity frame not drawn while empty), Teams (the pools view restacks at ≤768; the Accept/Reject

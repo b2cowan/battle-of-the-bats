@@ -176,10 +176,11 @@ sweep it in.
 
 ## Part B — the cleanup (after the settling period; one area per session; invisible)
 
-> **⚠ Updated 2026-09-29 — read plan §3a "PART B — the cleanup" first.** The owner WAIVED the settling
-> period (Part B started that day). The area order below is RE-SORTED there (the tournament areas right after
-> the frame, in the tournament redesign's stage order, skipping screens a redesign stage rebuilds), and area 1
-> ruled three corrections to the recipe below: a shared part whose base rules another surface wears (the
+> **⚠ Updated 2026-09-29 — read plan §3a "PART B — the cleanup" and "PART B RE-SCOPED" first.** The owner
+> WAIVED the settling period (Part B started that day), and after area 1 Part B was RE-SCOPED: it keeps only
+> the screens no redesign is coming for (two areas, then the closing step); every screen the tournament
+> redesign or a Club Tier stage rebuilds retires its old look in that build. The area list below is
+> superseded. Area 1 also ruled three corrections to the recipe below: a shared part whose base rules another surface wears (the
 > platform console, public pages, the coaches portal) keeps its scoped kit layer — and `globals.css`'s kit
 > layer is never folded; the foot-rule re-anchor is moot and the `:is()` twins are dropped; the crumb tap floor
 > is a visible change, not a cleanup. Each area takes its own fresh reference (the plan says how).

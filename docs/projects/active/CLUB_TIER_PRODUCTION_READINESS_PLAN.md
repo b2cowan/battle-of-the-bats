@@ -769,6 +769,19 @@ after Stages 3, 6 and 10 at the earliest.
 - Stage 6's venue book is a prerequisite for Stage 9's league scheduling, not for the Club release.
 - Every stage that adds a migration lands it **with** its dictionary line and snapshot refresh; prod
   application order is recorded in `MANUAL_PROD_STEPS.json` as usual.
+- **⚖ Joint sequence with the tournament admin redesign and Admin Design Continuity's cleanup (proposed
+  2026-09-29, owner "sure"; the full list is in `ADMIN_DESIGN_CONTINUITY_PLAN.md` §3a "PART B RE-SCOPED").**
+  Recommended: Club leads (the revenue path, and the longest chain: 3 → 6 → 10 → 8), and the tournament redesign
+  fills the gaps — which program leads when they compete for the owner's time is the owner's call, for
+  `/strategy`. Two orderings are load-bearing: **Stage 6 before the tournament redesign's Stages 3 (schedule) and
+  5 (setup, venues)**, so those screens draw the real clash warning and the one venue book once; and **the
+  tournament redesign's Stage 2 (teams) before Stage 7**, which plugs "Add my team" and tournament fees into the
+  redesigned Teams screen. **Every stage that rebuilds an admin screen retires its old look in the same build**
+  (Stage 2's precedent): its `useAdminKit()` false branches, `kx()` legacy halves, `legacy` header props and
+  `[data-admin-kit]` kit layers go, and the build's legacy-count ratchet goes down — Stage 3: Accounting,
+  allocations, payment requests; Stage 4: the Public Site editor; Stage 6: the venue library; Stage 9: house
+  league. A shared part another surface wears (the export menu, collapsible card, bottom sheet, `globals.css`)
+  keeps its scoped kit layer.
 
 ## 8. Build gates to add (the club side has none of the coach side's)
 

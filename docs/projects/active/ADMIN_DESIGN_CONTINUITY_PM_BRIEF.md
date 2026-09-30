@@ -47,9 +47,16 @@
 > change no pixel customers see. **The first area, the admin's frame and shared parts, is done (committed
 > 2026-09-29):** the old sidebar, phone bar, top strip and event header are gone from the code, and every
 > admin and volunteer screen matched its before-picture in Warm and Dark (the only two differences were two
-> test-club names listed in swapped order, a test-data quirk). The quick rollback ended with it. The
-> tournament areas come next, in the tournament redesign's order, skipping any screen a redesign stage is
-> rebuilding.
+> test-club names listed in swapped order, a test-data quirk). The quick rollback ended with it. **The cleanup
+> was then narrowed (owner, 2026-09-29):** it keeps only the screens no redesign is coming for; every screen
+> the tournament redesign or a Club stage rebuilds sheds its old look in that rebuild instead, so no screen is
+> cleaned twice. **The second area — the organization's own screens (Members, audit log, Settings, Plan &
+> billing for the non-Club plans, PDF settings, Notifications), Families, and the Rep Teams screens outside
+> money — is done (committed 2026-09-29):** about 6,000 lines of hidden old look gone; every screen matched
+> its before-picture (one test-club name swap again), and — new this time — every button, link and field was
+> also checked under hover, focus and press, which pictures cannot show: nothing moved. Next: the last area
+> (tournament data tools, the help guide's own styles, the setup welcome) and the closing step, after the
+> tournament redesign's first stage lands.
 
 ## What it is
 One design system and one theme choice across every working screen in FieldLogicHQ. The club admin,
