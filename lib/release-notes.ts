@@ -44,6 +44,60 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-09-30',
+    title: 'One tap to any score on game day, tidier lists on your phone, and fundraising named in your ledger',
+    highlights: [
+      {
+        category: 'improved',
+        text: "On game day, your tournament dashboard starts with what needs you: scores waiting to be finalized, then games still missing a score, then what's playing and what's next. Tap a game and its score box opens — one tap, where it used to take five.",
+      },
+      {
+        category: 'improved',
+        text: "Results opens on the games that still need a score or a final check, in every division, instead of the first division's full list. Tap anywhere on a row to edit it. A waiting score has one Finalize button, and a tie now says Tie.",
+      },
+      {
+        category: 'improved',
+        text: 'Results and Check-in update on their own. A score a scorekeeper submits, or a team another volunteer checks in at the gate, shows up without a reload.',
+      },
+      {
+        category: 'improved',
+        text: "Check-in's counts are now its filter — All, Not arrived, Checked in, No-show — the same four buttons your gate volunteers use, with All chosen when it opens. How many teams still owe money sits just below. On a phone, each team has one Check in button, and No-show is in the team's sheet.",
+      },
+      {
+        category: 'improved',
+        text: 'Every game-day screen now calls a game the same thing: Needs a score, Pending Review, Final, Forfeit or Tie.',
+      },
+      {
+        category: 'fixed',
+        text: "A round of tournament fixes: archiving an event now tells you its public site goes offline and how to bring it back; every button on Teams fits on a phone; Accept and Reject say whether an email will go out, and to whom; and Summary's leader is the team your public standings put first, with no leader until a game is played.",
+      },
+      {
+        category: 'fixed',
+        text: 'On Teams, each pool and the Waitlist sit on one white card again, heading and teams together.',
+      },
+      {
+        category: 'improved',
+        text: "On a phone, the coaches portal's lists — Roster, Practice plans, Lineups, Player Dues, the Scouting Book and more — now sit in one frame with a line between rows, the way Schedule already did. The roster is a compact table of number, player and positions; its call buttons are gone, and parents' numbers are still on each player's page.",
+      },
+      {
+        category: 'improved',
+        text: "On the depth chart, tap a player and their positions open full-screen on a phone. Put their Best positions in order by dragging — on the player's page too, on any screen.",
+      },
+      {
+        category: 'new',
+        text: "Money → Ledger now names your fundraising: sponsorship and fundraiser rows show their Category and Item, money a player hands in from a fundraiser names that player, and a sponsor's cheque says which families it was credited to.",
+      },
+      {
+        category: 'improved',
+        text: "The Ledger export adds a Player column, naming the player on every dues and fundraising row. It's added at the end, so the columns you already use stay where they are.",
+      },
+      {
+        category: 'fixed',
+        text: 'The depth chart\'s save message no longer sticks on "Unsaved changes" when your changes cancel each other out.',
+      },
+    ],
+  },
+  {
     date: '2026-09-28',
     title: 'One look for your whole admin, Warm or Dark, plus pairs and groups for any drill, practice plans on your phone, and awards at any event',
     highlights: [
