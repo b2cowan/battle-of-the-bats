@@ -735,6 +735,9 @@ export interface Communication {
   emailSuccessCount: number | null;
   emailFailedCount: number | null;
   emailFailedAddresses: string[] | null;
+  /** Who the email was sent to, written by the send (mig 314) — null for a site-only post or an
+   *  email sent before the list was kept. Same shape as `lib/announcement-recipients`. */
+  emailRecipients: Array<{ email: string; teams: Array<{ id: string; name: string }> }> | null;
   emailSentAt: string | null;
   sentByEmail: string | null;
   createdAt: string;

@@ -17,6 +17,8 @@ import { SandboxLockNote, useSandboxLock } from '@/components/sandbox/SandboxLoc
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
+import { COMMS_LOCK, COMMS_LOCK_PLAN, RECIPIENTS_NOT_KEPT } from '@/lib/communication-words';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -159,6 +161,10 @@ export default function AdminCommunicationPage() {
   const acceptedTeamCount = useMemo(() => teams.filter(t => t.status === 'accepted').length, [teams]);
   // Fan push (buzz opted-in fans' phones) is the Plus fan-alerts feature — same gate as score alerts.
   const fanPushAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'fan_score_alerts') : false;
+  // A post shown under chosen divisions, and a targeted email, are Tournament Plus — the send refuses
+  // either without it, so the Tournament plan sees the lock with the plan's name instead (F43, A6).
+  const targetingAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'targeted_tournament_announcements') : false;
+  const planHref = `${billingHref}?plan=tournament_plus`;
 
   // ── Compose helpers ──────────────────────────────────────────────────────────
   function openNewMessage() {
@@ -222,7 +228,9 @@ export default function AdminCommunicationPage() {
           body: JSON.stringify({
             action: 'update',
             id: editingId,
-            data: { title: title.trim(), body: body.trim(), pinned, divisionIds: Array.from(siteDivisionIds) },
+            // Divisions are sent only where the plan can set them: a Tournament plan editing an older
+            // division-scoped post leaves its divisions as they are rather than being refused (F43).
+            data: { title: title.trim(), body: body.trim(), pinned, ...(targetingAvailable ? { divisionIds: Array.from(siteDivisionIds) } : {}) },
           }),
         });
         const json = await res.json();
@@ -242,8 +250,9 @@ export default function AdminCommunicationPage() {
               channelEmail,
               channelPush,
               pinned,
-              divisionIds: Array.from(siteDivisionIds),
-              targeting: null, // always send to all accepted teams
+              divisionIds: targetingAvailable ? Array.from(siteDivisionIds) : [],
+              // No targeting = every accepted team — the send's own default (lib/announcement-recipients, F42).
+              targeting: null,
             },
           }),
         });
@@ -481,8 +490,12 @@ export default function AdminCommunicationPage() {
                           While the tournament is live, pinned site posts also appear as a banner at the top of the public Schedule — use it for rain delays and urgent day-of updates.
                         </p>
 
-                        {/* Division visibility — vertical checklist */}
-                        {divisions.length > 0 && (
+                        {/* Division visibility — vertical checklist. On the Tournament plan it is the
+                            plan's lock line instead: the send refuses a division filter there (F43). */}
+                        {divisions.length > 0 && !targetingAvailable && (
+                          <PlanLockLine href={planHref} plan={COMMS_LOCK_PLAN}>{COMMS_LOCK.showUnder}</PlanLockLine>
+                        )}
+                        {divisions.length > 0 && targetingAvailable && (
                           <div className={styles.divisionCheckList}>
                             <span className={styles.divisionFilterLabel}>Division visibility</span>
                             <label className={styles.divisionCheckRow}>
@@ -799,24 +812,19 @@ export default function AdminCommunicationPage() {
           setEmailDetailId(null);
           setEmailDetailRecipientsOpen(false);
         }
-        const failedSet = new Set(
-          (emailDetail.emailFailedAddresses ?? []).map(a => a.toLowerCase()),
-        );
-        const acceptedTeams = teams.filter(t => t.status === 'accepted');
-        // Sort: failed first, then delivered, both groups alphabetically by name
-        const sortedTeams = [...acceptedTeams].sort((a, b) => {
-          const aFailed = failedSet.has(a.email.toLowerCase());
-          const bFailed = failedSet.has(b.email.toLowerCase());
-          if (aFailed !== bFailed) return aFailed ? -1 : 1;
-          return a.name.localeCompare(b.name);
-        });
-        // Failed addresses not matched to a known team
-        const unknownFailed = (emailDetail.emailFailedAddresses ?? []).filter(
-          addr => !acceptedTeams.some(t => t.email.toLowerCase() === addr.toLowerCase()),
-        );
-        const hasFailures = failedSet.size > 0 || unknownFailed.length > 0;
+        const failedAddresses = emailDetail.emailFailedAddresses ?? [];
+        const failedSet = new Set(failedAddresses.map(a => a.toLowerCase()));
+        // WHO IT REACHED is the send's own list, written down when it went (mig 314, F42) — never
+        // rebuilt from today's teams, so a team accepted after the email is not listed as reached.
+        // An email sent before the list was kept shows its counts and its failed addresses only.
+        const kept = emailDetail.emailRecipients;
+        const recipientRows = (kept ?? failedAddresses.map(email => ({ email, teams: [] as Array<{ id: string; name: string }> })))
+          .map(r => ({ email: r.email, names: r.teams.map(t => t.name).filter(Boolean).join(' · '), failed: failedSet.has(r.email.toLowerCase()) }))
+          // Failed first, then delivered, each alphabetically by team.
+          .sort((a, b) => (a.failed !== b.failed ? (a.failed ? -1 : 1) : a.names.localeCompare(b.names)));
+        const hasFailures = failedSet.size > 0;
         const deliveredCount = emailDetail.emailSuccessCount ?? 0;
-        const failedCount = failedSet.size + unknownFailed.length;
+        const failedCount = failedSet.size;
         // Row-invariant — computed once here, not per row in the maps below.
         const deliveredStyle = kx({ color: hasFailures ? 'var(--warning)' : 'var(--success)' }, hasFailures ? KIT_INK.warning : KIT_INK.success);
         const failedCountStyle = kx({ color: 'var(--danger)', marginLeft: '0.5rem' }, KIT_INK.danger);
@@ -921,24 +929,17 @@ export default function AdminCommunicationPage() {
                       )}
                     </div>
 
+                    {!kept && <p className={styles.recipientsNotKept}>{RECIPIENTS_NOT_KEPT}</p>}
                     <div className={styles.emailDetailRecipientList}>
-                      {sortedTeams.map(t => {
-                        const failed = failedSet.has(t.email.toLowerCase());
-                        return (
-                          <div key={t.id} className={`${styles.emailDetailRecipientRow} ${failed ? styles.recipientFailed : styles.recipientDelivered}`}>
-                            <span className={styles.recipientIcon}>
-                              {failed ? <AlertCircle size={13} /> : <CheckCircle2 size={13} />}
-                            </span>
-                            <span className={styles.recipientName}>{t.name}</span>
-                            <span className={styles.recipientEmail}>{t.email}</span>
-                          </div>
-                        );
-                      })}
-                      {unknownFailed.map(addr => (
-                        <div key={addr} className={`${styles.emailDetailRecipientRow} ${styles.recipientFailed}`}>
-                          <span className={styles.recipientIcon}><AlertCircle size={13} /></span>
-                          <span className={styles.recipientName} style={unknownTeamNameStyle}>Unknown team</span>
-                          <span className={styles.recipientEmail}>{addr}</span>
+                      {recipientRows.map(r => (
+                        <div key={r.email} className={`${styles.emailDetailRecipientRow} ${r.failed ? styles.recipientFailed : styles.recipientDelivered}`}>
+                          <span className={styles.recipientIcon}>
+                            {r.failed ? <AlertCircle size={13} /> : <CheckCircle2 size={13} />}
+                          </span>
+                          {r.names
+                            ? <span className={styles.recipientName}>{r.names}</span>
+                            : <span className={styles.recipientName} style={unknownTeamNameStyle}>Unknown team</span>}
+                          <span className={styles.recipientEmail}>{r.email}</span>
                         </div>
                       ))}
                     </div>
@@ -1009,8 +1010,11 @@ export default function AdminCommunicationPage() {
                     </>
                   )}
 
-                  {/* Division visibility */}
-                  {divisions.length > 0 && !isDeleted && (
+                  {/* Division visibility — the plan's lock line on the Tournament plan (F43). */}
+                  {divisions.length > 0 && !isDeleted && !targetingAvailable && (
+                    <PlanLockLine href={planHref} plan={COMMS_LOCK_PLAN}>{COMMS_LOCK.showUnder}</PlanLockLine>
+                  )}
+                  {divisions.length > 0 && !isDeleted && targetingAvailable && (
                     <div className={styles.divisionCheckList}>
                       <span className={styles.divisionFilterLabel}>Division visibility</span>
                       <label className={styles.divisionCheckRow}>

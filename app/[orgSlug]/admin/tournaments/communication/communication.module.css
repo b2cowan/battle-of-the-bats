@@ -677,6 +677,13 @@
 
 /* ── Recipient list ─────────────────────────────────────────────────────── */
 
+/* An email sent before the send kept its list (mig 314): one quiet line, the counts stay above. */
+.recipientsNotKept {
+  margin: 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
 .emailDetailRecipientList {
   border: 1px solid var(--border-2);
   border-radius: 2px;

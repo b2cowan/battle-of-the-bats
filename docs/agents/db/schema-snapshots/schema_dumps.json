@@ -389,6 +389,15 @@
         "column_default": null
       },
       {
+        "table_name": "announcements",
+        "pos": 18,
+        "column_name": "email_recipients",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "assistant_invite_tokens",
         "pos": 1,
         "column_name": "id",
@@ -30464,6 +30473,15 @@
         "column_name": "deleted_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "announcements",
+        "pos": 18,
+        "column_name": "email_recipients",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
       },

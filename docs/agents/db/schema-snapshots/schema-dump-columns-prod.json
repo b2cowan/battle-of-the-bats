@@ -387,6 +387,15 @@
     "ordinal_position": 17
   },
   {
+    "table_name": "announcements",
+    "column_name": "email_recipients",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
     "table_name": "assistant_invite_tokens",
     "column_name": "id",
     "data_type": "uuid",

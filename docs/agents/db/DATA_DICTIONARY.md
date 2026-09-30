@@ -1093,7 +1093,7 @@ the studio and mirrored to the platform audit log.
 1. **Public reads MUST filter `channel_site = true` AND `deleted_at IS NULL`.** Email-only rows (`channel_site=false`) are admin-internal — forgetting either filter leaks internal comms ([lib/db.ts:1732](../../../lib/db.ts#L1732)).
 2. **Three different timestamps** — `published_at` (post date, drives ordering, surfaced as the app's `createdAt`), `email_sent_at` (when the blast actually went out, only on emailed rows), and `created_at`. Don't conflate.
 3. **`email_*` counters are written in a SECOND update**, after the insert + send. If the process dies mid-send, the row exists with **null** counters — a null counter ≠ zero recipients.
-4. **`email_targeting` JSONB has dead keys** — `includeContacts`/`contactRoles` are no-ops (the `contacts` table was removed); only teams are resolved. Advanced targeting is a Tournament Plus gate.
+4. **`email_targeting` JSONB has dead keys** — `includeContacts`/`contactRoles` are no-ops (the `contacts` table was removed); only teams are resolved. Advanced targeting is a Tournament Plus gate. **An empty or null targeting means the ACCEPTED teams** (since 2026-09-30, F42 — before, every registered team); any other audience — another status, a division, a payment state, chosen teams — counts as advanced (`usesAdvancedTargeting`, `lib/announcement-recipients.ts`). Who a send actually reached is `email_recipients`, never a re-read of this rule.
 5. **Dev/prod drift:** `published_at` (dev default `now()` / **prod no default**, both NOT NULL) and `body` (dev nullable / **prod NOT NULL**) — a DB-direct insert omitting either passes on dev, fails on prod. `lib/db.ts saveAnnouncement` doesn't validate `body` (the comms API does). `id` default does **not** drift here (both `gen_random_uuid()`).
 6. **Two delete semantics** — the comms API soft-deletes (sets `deleted_at`, unpins); `lib/db.ts deleteAnnouncement` **hard**-deletes.
 
@@ -1130,6 +1130,9 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:announcements.email_failed_addresses -->
 <!-- dict:col:announcements.email_sent_at -->
 **Email-send result block** — `email_recipient_count` / `email_success_count` / `email_failed_count` (int, nullable), `email_failed_addresses` (`text[]`), `email_sent_at` (timestamptz) — written in the post-send update (gotcha 3). `recipient = success + failed`.
+
+<!-- dict:col:announcements.email_recipients -->
+**`email_recipients`** (jsonb, nullable; mig 314, 2026-09-30) — **who the email was sent to**, written by the send in the same post-send update: `[{ email, teams: [{ id, name }] }]`, one element per address (two teams sharing a coach's address are one element naming both), team names as they were **at send time**. `email_recipient_count` = its length; failed addresses are also in `email_failed_addresses` (delivered = this list minus those). The admin's email record ("Recipients") reads **only this** — it used to rebuild the list from the teams accepted when the record was opened, so a team accepted later read as reached (F42). **NULL** = a site-only post, or an email sent before mig 314 (the list was not kept; the record says so). The list comes from `lib/announcement-recipients.ts` `selectAnnouncementRecipients` — the send's one rule: **no targeting (or no status named) = the ACCEPTED teams only**; before 2026-09-30 an untargeted send reached every registered team, rejected ones included.
 
 <!-- dict:col:announcements.sent_by_email -->
 **`sent_by_email`** (text) — email of the admin who sent it (audit; not a FK).

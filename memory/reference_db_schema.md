@@ -16,7 +16,7 @@ Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
 ## Module: Tournament
 
 ### announcements
-id (uuid), tournament_id (uuid) → tournaments.id, title NOT NULL, body NOT NULL, published_at, pinned (boolean), division_ids, channel_site (boolean), channel_email (boolean), email_targeting (jsonb), email_recipient_count (integer), email_success_count (integer), email_failed_count (integer), email_failed_addresses, email_sent_at, sent_by_email, deleted_at
+id (uuid), tournament_id (uuid) → tournaments.id, title NOT NULL, body NOT NULL, published_at, pinned (boolean), division_ids, channel_site (boolean), channel_email (boolean), email_targeting (jsonb), email_recipient_count (integer), email_success_count (integer), email_failed_count (integer), email_failed_addresses, email_sent_at, sent_by_email, deleted_at, email_recipients (jsonb)
 - Indexes: announcements_channel_email_idx, announcements_channel_site_idx, announcements_deleted_at_idx, announcements_tournament_id_idx
 
 ### diamonds

@@ -1,0 +1,21 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   PlanLockLine — a plan lock as one plain line (design decision 2026-09-30). TOKENS ONLY: this folder
+   is held by scripts/check-public-tokens.mjs. No border, no tint, no dashed edge (K-24: a dashed edge
+   is a record that left a list).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+.line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0;
+  font-size: var(--type-support);
+  line-height: 1.35;
+  color: var(--text-tertiary);
+  text-decoration: none;
+}
+.line:hover .words { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; }
+.line:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+.icon { flex: none; color: var(--text-tertiary); }
+.words { flex: 1 1 auto; min-width: 0; }
+.plan { flex: none; margin-left: auto; }

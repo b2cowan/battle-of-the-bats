@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendEmail, announcementHtml, resolveCoachRecipient } from '@/lib/email';
+import { sendEmail, announcementHtml } from '@/lib/email';
 import { getAuthContextWithScope, scopeGuard, unauthorized, forbidden, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
@@ -7,21 +7,21 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Communication } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import {
+  readStoredRecipients, selectAnnouncementRecipients, usesAdvancedTargeting,
+  type AnnouncementRecipient, type RecipientTargeting, type RecipientTeamRow,
+} from '@/lib/announcement-recipients';
 import { notifyFansForAnnouncement } from '@/lib/fan-notify';
 import { supersedeScheduleChangeNotices } from '@/lib/schedule-change-notices';
 import { notify } from '@/lib/notify';
 
-// Free-tier email volume guard (ratified 2026-06-22). Basic all-team announcements are
+// Free-tier email volume guard (ratified 2026-06-22). Basic announcements (every accepted team) are
 // free, but lightly capped so the free floor can't be used as a bulk mailer. Tournament
 // Plus and above are uncapped (they carry the targeted_tournament_announcements feature).
 const FREE_EMAIL_RECIPIENT_CAP = 100;
 const FREE_EMAIL_SENDS_PER_DAY = 10;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function stringSet(value: unknown) {
-  return new Set(Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []);
-}
 
 function mapRow(a: any): Communication {
   return {
@@ -38,6 +38,7 @@ function mapRow(a: any): Communication {
     emailSuccessCount: a.email_success_count ?? null,
     emailFailedCount: a.email_failed_count ?? null,
     emailFailedAddresses: a.email_failed_addresses ?? null,
+    emailRecipients: readStoredRecipients(a.email_recipients),
     emailSentAt: a.email_sent_at ?? null,
     sentByEmail: a.sent_by_email ?? null,
     createdAt: a.published_at ?? a.created_at,
@@ -45,70 +46,19 @@ function mapRow(a: any): Communication {
   };
 }
 
-type RecipientTargeting = {
-  includeTeams?: boolean;
-  includeContacts?: boolean;
-  teamStatuses?: string[];
-  paymentStatuses?: string[];
-  divisionIds?: string[];
-  teamIds?: string[];
-  contactRoles?: string[];
-};
-
-/** Resolve recipient emails from targeting rules. Returns a deduplicated email list. */
-async function resolveRecipients(tournamentId: string, targeting: RecipientTargeting | null) {
-  const recipientMap = new Map<string, string>();
-
-  if (!targeting || targeting.includeTeams !== false) {
-    // Default: include teams
-    const teamStatuses  = stringSet(targeting?.teamStatuses);
-    const paymentStatuses = stringSet(targeting?.paymentStatuses);
-    const divisionIds   = stringSet(targeting?.divisionIds);
-    const teamIds       = stringSet(targeting?.teamIds);
-
-    const { data: teams, error: teamsError } = await supabaseAdmin
-      .from('teams')
-      .select('id, email, coach_email, status, payment_status, division_id')
-      .eq('tournament_id', tournamentId);
-
-    if (teamsError) throw teamsError;
-
-    for (const team of teams ?? []) {
-      const selectedById = teamIds.size > 0 && teamIds.has(team.id);
-      const selectedByFilters =
-        teamIds.size === 0 &&
-        (teamStatuses.size === 0 || teamStatuses.has(team.status)) &&
-        (paymentStatuses.size === 0 || paymentStatuses.has(team.payment_status ?? 'pending')) &&
-        (divisionIds.size === 0 || divisionIds.has(team.division_id));
-
-      if (!selectedById && !selectedByFilters) continue;
-      // Honor an assigned head-coach contact (teams.coach_email) over the original registration
-      // email — mirrors every automatic coach email, so a reassigned coach gets the announcement.
-      const email = resolveCoachRecipient({ coach_email: team.coach_email, email: team.email });
-      if (email) recipientMap.set(email, email);
-    }
-  }
-
+/**
+ * Who an email reaches — the tournament's teams through the ONE rule (`lib/announcement-recipients`):
+ * the accepted teams unless the targeting says otherwise (F42, 2026-09-30). The send, the record it
+ * writes and the free plan's cap all read this.
+ */
+async function resolveRecipients(tournamentId: string, targeting: RecipientTargeting | null): Promise<AnnouncementRecipient[]> {
+  const { data: teams, error: teamsError } = await supabaseAdmin
+    .from('teams')
+    .select('id, name, email, coach_email, status, payment_status, division_id')
+    .eq('tournament_id', tournamentId);
+  if (teamsError) throw teamsError;
   // contacts table removed — includeContacts is a no-op; targeting by org member is not yet implemented
-
-  return Array.from(recipientMap.keys());
-}
-
-function usesAdvancedTargeting(targeting: RecipientTargeting | null): boolean {
-  if (!targeting) return false;
-  const teamStatuses = stringSet(targeting.teamStatuses);
-  const ALL_STATUSES = new Set(['accepted', 'pending', 'waitlist', 'rejected']);
-  const isAllStatuses = teamStatuses.size === 0 ||
-    (teamStatuses.size === ALL_STATUSES.size && Array.from(teamStatuses).every(s => ALL_STATUSES.has(s)));
-
-  return Boolean(
-    targeting.includeContacts ||
-    stringSet(targeting.divisionIds).size > 0 ||
-    stringSet(targeting.teamIds).size > 0 ||
-    stringSet(targeting.contactRoles).size > 0 ||
-    stringSet(targeting.paymentStatuses).size > 0 ||
-    !isAllStatuses,
-  );
+  return selectAnnouncementRecipients((teams ?? []) as RecipientTeamRow[], targeting);
 }
 
 // ─── GET — list all communications for a tournament ──────────────────────────
@@ -197,8 +147,9 @@ export const POST = withObservability(async (req: Request) => {
       }
 
       // Free-tier email volume guard: cap basic announcements so the free floor isn't a
-      // bulk mailer. Free orgs only ever send basic all-team emails (advanced targeting is
-      // already gated above). Tournament Plus and above carry the feature and are uncapped.
+      // bulk mailer. Free orgs only ever send the basic email — every accepted team (advanced
+      // targeting is already gated above) — and the cap counts exactly the addresses that send
+      // reaches, the same list the send uses (F42). Tournament Plus and above are uncapped.
       if (channelEmail && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
         const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         const { count: recentEmailSends } = await supabaseAdmin
@@ -327,7 +278,7 @@ export const POST = withObservability(async (req: Request) => {
           },
         });
 
-        let recipients: string[] = [];
+        let recipients: AnnouncementRecipient[] = [];
         try {
           recipients = await resolveRecipients(data.tournamentId, targeting);
         } catch (resolveErr) {
@@ -345,7 +296,7 @@ export const POST = withObservability(async (req: Request) => {
 
         const results = { success: 0, failed: 0, failedAddresses: [] as string[] };
 
-        for (const email of recipients) {
+        for (const { email } of recipients) {
           try {
             await sendEmail(email, data.title.trim(), announcementHtml({
               title: data.title.trim(),
@@ -370,6 +321,8 @@ export const POST = withObservability(async (req: Request) => {
             email_success_count:    results.success,
             email_failed_count:     results.failed,
             email_failed_addresses: results.failedAddresses.length ? results.failedAddresses : null,
+            // The record IS the send's list (mig 314): who it went to, named as the teams were now.
+            email_recipients:       recipients,
             email_sent_at:          new Date().toISOString(),
           })
           .eq('id', inserted.id);
