@@ -807,6 +807,14 @@ export const REGISTER_COLUMNS: ExportColumnDef[] = [
      WHOSE money did, which is the fact a treasurer needs to reconcile a household's credit against
      the bill it came from. */
   { label: 'Paid by',   key: 'paidBy',   format: 'text' },
+  /* ⚠ APPENDED TOO, AND FOR THE SAME REASON (2026-09-30). Until now the screen named the family on
+     every dues row and this file named nobody — a season's worth of "Dues payment" lines a treasurer
+     could not tell apart. It carries who a dues or fundraising row is ABOUT: the family that paid or
+     was paid back, the player who handed a drive's money in, the families a sponsor's cheque
+     credited. "Player" because the Player Dues export already calls that column so — one word for
+     one thing. ⚠ Deliberately NOT folded into `Paid by`: a credited family did not pay the sponsor's
+     cheque, and that column's whole value is that it only ever names who paid. */
+  { label: 'Player',    key: 'player',   format: 'text' },
 ];
 
 export function registerExportRows(
@@ -838,6 +846,7 @@ export function registerExportRows(
     /* Blank rather than a placeholder on the overwhelming majority of rows the team paid: a
        spreadsheet is filtered and sorted, and "The team" as text would sort in among real names. */
     paidBy: r.paidByName ?? '',
+    player: r.playerName ?? '',
   }));
 }
 

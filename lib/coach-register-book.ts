@@ -13,6 +13,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { orgDayKey, tournamentToday, daysBetweenDateStrings } from './timezone';
 import { duesRemainingByInstallment } from './coach-dues-remaining';
 import { cashOnHandCents, REGISTER_SOURCE_LABEL, formatMoney, toCents, type RegisterRow } from './coach-register';
+import { incomeCategoryFor } from './coach-cash-strip';
+import { joinNames } from './practice-plan-send';
 import type { RepProgramYear } from './types';
 
 /**
@@ -85,6 +87,7 @@ export async function loadSeasonRegisterRows(
     requestsRes,
     rosterRes,
     standings,
+    shelvesRes,
   ] = await Promise.all([
     getRepTeamExpenses(programYear.id),
     getRepTeamMoneyIn(programYear.id),
@@ -95,16 +98,19 @@ export async function loadSeasonRegisterRows(
     /* ⚠ THE ENTRY'S OWN QUERY, not `getSeasonFundraiserEntries`. That reader deliberately returns
        only what a TOTAL needs; a dated book needs the day the money was booked and the drive's name,
        and neither is in its shape. Filtering by kind/status is done here from the same parent
-       columns it reads, so "realised" cannot mean two things. */
+       columns it reads, so "realised" cannot mean two things.
+       ⚠ `player_id` and the parent's budget line ride along for the row's WORDS only — who handed a
+       drive's money in, and the Category / Item the record is raising for (mig 285). Neither
+       decides whether a row is cash. */
     supabaseAdmin
       .from('rep_fundraiser_entries')
-      .select('id, fundraiser_id, amount_raised, created_at, received_date, rep_fundraisers!inner(name, kind, sponsor_status, program_year_id)')
+      .select('id, fundraiser_id, player_id, amount_raised, created_at, received_date, rep_fundraisers!inner(name, kind, sponsor_status, program_year_id, budget_item_id, budget_category_id)')
       .eq('rep_fundraisers.program_year_id', programYear.id),
     /* ⚠ The PLEDGE line reads the RECORD, not entries (mig 268) — a pledged sponsor has no
        entries at all, and a part-paid one's outstanding promise is pledged minus arrived. */
     supabaseAdmin
       .from('rep_fundraisers')
-      .select('id, name, pledged_amount, created_at')
+      .select('id, name, pledged_amount, created_at, budget_item_id, budget_category_id')
       .eq('program_year_id', programYear.id)
       .eq('kind', 'sponsor'),
     supabaseAdmin
@@ -132,6 +138,14 @@ export async function loadSeasonRegisterRows(
        per-commitment fetch on the heaviest read in the portal is exactly what this route's own
        comments about serialisation are written about. */
     getCommitmentStandings(programYear.id),
+    /* The platform's two money-in shelves — where a drive or sponsor that names no line files
+       (owner ruling 2026-09-09, "the category is the shelf"). Budget vs. Actual reads the same rows
+       for the same fallback; this book used to print "—" for every fundraising row instead. */
+    supabaseAdmin
+      .from('budget_categories')
+      .select('id, name, income_source')
+      .is('org_id', null)
+      .in('income_source', ['fundraiser', 'sponsor']),
   ]);
 
   const rows: RegisterRow[] = [];
@@ -167,6 +181,23 @@ export async function loadSeasonRegisterRows(
   for (const r of clubRequests) {
     if (r.budget_item_id) itemIds.add(r.budget_item_id);
     if (r.budget_category_id) categoryIds.add(r.budget_category_id);
+  }
+  /* ⚠ FUNDRAISING FILES ITSELF TOO (mig 285) — the line a drive or sponsor is RAISING FOR joins the
+     same lookup, for the same reason club money does: one way of turning an id into a word. */
+  type FundraisingLine = { budget_item_id: string | null; budget_category_id: string | null };
+  type FundraiserEntryRow = {
+    id: string; fundraiser_id: string; player_id: string | null; amount_raised: number;
+    created_at: string; received_date: string | null;
+    rep_fundraisers: (FundraisingLine & { name: string; kind: string | null; sponsor_status: string | null }) | null;
+  };
+  type SponsorRecordRow = FundraisingLine & {
+    id: string; name: string; pledged_amount: number | string | null; created_at: string;
+  };
+  const fundraiserEntries = (fundraiserRes.data ?? []) as unknown as FundraiserEntryRow[];
+  const sponsorRecords = (sponsorRecordRes.data ?? []) as unknown as SponsorRecordRow[];
+  for (const line of [...fundraiserEntries.map(e => e.rep_fundraisers), ...sponsorRecords]) {
+    if (line?.budget_item_id) itemIds.add(line.budget_item_id);
+    if (line?.budget_category_id) categoryIds.add(line.budget_category_id);
   }
 
   /**
@@ -375,6 +406,7 @@ export async function loadSeasonRegisterRows(
     recordPayment: null,
     sourceLabel: REGISTER_SOURCE_LABEL.dues,
     detail: playerName.get(r.playerId) ?? null,
+    playerName: playerName.get(r.playerId) ?? null,
   });
 
   for (const p of duesPayments) {
@@ -394,13 +426,53 @@ export async function loadSeasonRegisterRows(
   }
 
   // ── Derived: Fundraising — drives and sponsors ────────────────────────────
-  type FundraiserEntryRow = {
-    id: string; fundraiser_id: string; amount_raised: number; created_at: string;
-    received_date: string | null;
-    rep_fundraisers: { name: string; kind: string | null; sponsor_status: string | null } | null;
+  /**
+   * Where a drive's or sponsor's money files — the Category and Item columns.
+   *
+   * ⚠⚠ THE SAME ANSWER BUDGET vs. ACTUAL GIVES (owner ruling 2026-09-09, "the category is the shelf,
+   * on every surface"). This book printed "—" in both columns for every fundraising row until
+   * 2026-09-30 — it predated mig 285's raising-for link and was missed when the ruling went across
+   * the reports — so the Item filter could never find a sponsorship. The line the record names, else
+   * its kind's platform shelf through `incomeCategoryFor`, the one rule the cash strip and the
+   * Months pledge rows read.
+   * ⚠ A record naming no line shows its shelf and NO item. Budget vs. Actual's "Sponsor money" is a
+   * report bucket, not a budget item; written here it would become a word in the Item filter that
+   * no record is filed under. "Raising for" counts only when the item still resolves, exactly as
+   * that report's `raisingForByRecord` does — a deleted item falls to the shelf there too.
+   */
+  const shelfFor = (source: 'fundraiser' | 'sponsor') => {
+    const c = ((shelvesRes.data ?? []) as Array<{ id: string; name: string; income_source: string }>)
+      .find(s => s.income_source === source);
+    return c ? { categoryId: c.id, categoryName: c.name } : null;
   };
+  const shelves = { fundraising: shelfFor('fundraiser'), sponsorship: shelfFor('sponsor') };
+  const fundraisingFiling = (line: FundraisingLine, source: 'fundraiser' | 'sponsor') => {
+    const item = line.budget_item_id ? itemName.get(line.budget_item_id) ?? null : null;
+    const raisingFor = item && line.budget_category_id
+      ? { categoryId: line.budget_category_id, categoryName: catName.get(line.budget_category_id) ?? null }
+      : null;
+    return {
+      categoryName: incomeCategoryFor(raisingFor, source, shelves).categoryName,
+      itemName: raisingFor ? item : null,
+    };
+  };
+  /**
+   * The families each sponsor cheque CREDITED, by arrival — one cheque can credit several (Q16).
+   * Read from the credits themselves rather than the credit plan: a share accrues per cheque, so
+   * the credit rows are what actually happened on THIS arrival.
+   */
+  const creditedByArrival = new Map<string, string[]>();
+  for (const c of duesCredits) {
+    if (!c.fundraiserEntryId || !c.playerId) continue;
+    const ids = creditedByArrival.get(c.fundraiserEntryId) ?? [];
+    if (!ids.includes(c.playerId)) ids.push(c.playerId);
+    creditedByArrival.set(c.fundraiserEntryId, ids);
+  }
+  const namesOf = (ids: readonly (string | null)[]) =>
+    ids.map(id => (id ? playerName.get(id) : undefined)).filter((n): n is string => !!n);
+
   const arrivedBySponsor = new Map<string, number>();
-  for (const raw of (fundraiserRes.data ?? []) as unknown as FundraiserEntryRow[]) {
+  for (const raw of fundraiserEntries) {
     const parent = raw.rep_fundraisers;
     if (!parent) continue;
     const isSponsor = parent.kind === 'sponsor';
@@ -413,6 +485,15 @@ export async function loadSeasonRegisterRows(
     if (isSponsor) {
       arrivedBySponsor.set(raw.fundraiser_id, (arrivedBySponsor.get(raw.fundraiser_id) ?? 0) + amount);
     }
+    /* ⚠⚠ WHO THE ROW IS ABOUT, AND THE NAME MEANS A DIFFERENT THING ON EACH KIND (owner, 2026-09-30).
+       A drive's row is one player's hand-in, so the bare name reads exactly as it does on a dues
+       payment: who brought the money in. A sponsor's cheque came from the SPONSOR — the family is
+       who it CREDITED — so the bare "· Isla Cowan" a dues row wears would claim her family wrote the
+       cheque; it says "credited to" instead. A whole-team hand-in names nobody. The credit's AMOUNT
+       is never shown: it lowers a family's dues and moves no team cash, and a figure on a cash book
+       reads as money leaving (the rebate-is-a-note ruling, 2026-08-24). */
+    const names = isSponsor ? namesOf(creditedByArrival.get(raw.id) ?? []) : namesOf([raw.player_id]);
+    const who = names.length === 0 ? null : isSponsor ? `credited to ${joinNames(names)}` : names[0];
     rows.push({
       id: `fundraiser-${raw.id}`,
       /* ⚠ THE DAY THE MONEY ARRIVED when the record knows it (mig 261/268 — sponsor arrivals
@@ -422,8 +503,7 @@ export async function loadSeasonRegisterRows(
       date: raw.received_date ?? orgDayKey(raw.created_at),
       kind: 'fundraising',
       description: parent.name,
-      categoryName: null,
-      itemName: null,
+      ...fundraisingFiling(parent, isSponsor ? 'sponsor' : 'fundraiser'),
       moneyOut: 0,
       moneyIn: amount,
       scheduled: false,
@@ -442,14 +522,15 @@ export async function loadSeasonRegisterRows(
          dated when the coach typed it in, rather than when the money came, is quietly different
          from its neighbours and nothing else on the row reveals that. Pre-mig-261 drive entries
          only; the set shrinks to nothing on its own. */
-      detail: raw.received_date ? null : 'Recorded on this date',
+      detail: [who, raw.received_date ? null : 'Recorded on this date'].filter(Boolean).join(' · ') || null,
+      playerName: names.length > 0 ? names.join(', ') : null,
     });
   }
   /* The PLEDGE line — what a sponsor has promised and not sent, read from the record itself
      (mig 268). No date: it has not arrived, and nothing records when it is expected (Q13 owns
-     that). A part-paid pledge shows only what is STILL to come, beside its arrivals above. */
-  type SponsorRecordRow = { id: string; name: string; pledged_amount: number | string | null; created_at: string };
-  for (const s of (sponsorRecordRes.data ?? []) as unknown as SponsorRecordRow[]) {
+     that). A part-paid pledge shows only what is STILL to come, beside its arrivals above.
+     ⚠ It names no family: credits accrue per CHEQUE, so a promise has credited nobody yet. */
+  for (const s of sponsorRecords) {
     const pledged = s.pledged_amount != null ? Number(s.pledged_amount) : 0;
     const remaining = Math.max(0, Math.round((pledged - (arrivedBySponsor.get(s.id) ?? 0)) * 100) / 100);
     if (!(remaining > 0.005)) continue;
@@ -458,8 +539,8 @@ export async function loadSeasonRegisterRows(
       date: null,
       kind: 'fundraising',
       description: s.name,
-      categoryName: null,
-      itemName: null,
+      // The promise files where its cash will land — Budget vs. Actual's pledge rows do the same.
+      ...fundraisingFiling(s, 'sponsor'),
       moneyOut: 0,
       moneyIn: remaining,
       scheduled: true,

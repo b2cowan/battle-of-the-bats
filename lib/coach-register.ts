@@ -181,13 +181,26 @@ export interface RegisterRow {
    * drives, club money and scheduled rows have no payer to name and are not asked to say so.
    */
   paidByName?: string | null;
+  /**
+   * The player (or players) a dues or fundraising row is ABOUT, bare — the export's Player column.
+   *
+   * ⚠ SAME REASON AS `paidByName`: `detail` is a sentence ("credited to Isla Cowan and Kayla
+   * Demesa"), and a spreadsheet cannot filter a sentence. On a dues row it is the family that paid
+   * or was paid back; on a drive row, the player who handed the money in; on a sponsor's cheque, the
+   * families it credited (comma-joined — one cheque can credit several, Q16).
+   *
+   * ⚠ NOT `paidByName` UNDER ANOTHER NAME. That column says whose money moved on a COST; writing a
+   * credited family into it would claim they paid the sponsor's cheque.
+   */
+  playerName?: string | null;
   open: RegisterOpen | null;
   /** Present only on a SCHEDULED money-out row. Opens Record a payment pre-aimed at this piece,
    *  suggesting its REMAINDER — the coach's override of the application rule (R3), not a lock. */
   recordPayment: { expenseId: string; installmentId: string | null; amount: number } | null;
   /** The workspace chip on a derived row; null on a recorded one. */
   sourceLabel: string | null;
-  /** A second line under the description — a player's name, a due note, why a date is what it is. */
+  /** A second line under the description — a player's name, the families a sponsor credited, a due
+   *  note, why a date is what it is. */
   detail: string | null;
 }
 
