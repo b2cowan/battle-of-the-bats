@@ -852,7 +852,7 @@ Championship's U11 Girls. Captures on the hub's Stage 2 tab ("Built").
 FAQs rewritten for the new screens; two new FAQs (a team's record; who an email reached); a stale "League Plus" plan
 name removed.
 
-### Stage 2 follow-ups from the §252 walk (owner, 2026-10-01; built, not yet committed)
+### Stage 2 follow-ups from the §252 walk (owner, 2026-10-01; committed `4db0faab` + record `974c9293` 2026-10-01, after /review and /marketing)
 
 Raised by the owner while walking §252, each ruled in the conversation and built the same day:
 
