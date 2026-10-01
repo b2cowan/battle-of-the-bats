@@ -1,6 +1,7 @@
 # Tournament admin redesign — implementation plan
 
-> **Status:** DESIGN. The measured walk, the stage ladder and Stage 1 (game day) were drawn on
+> **Status:** BUILD — **Stage 2 (Teams and Communications) COMMITTED 2026-09-30: `f4a4cc79` (Part 0, migration 314 applied to prod the same day) · `12aee778` (Part 1) · `aab3a3f4` (Parts 2–3, after /simplify + /review)** — §6b "Stage 2 — as built"; owner walk §254 open. **The defects pass, F40 (`dbc55916`) and Stage 1 (game day) are on prod
+> 2026-09-30 (Amplify job 274, prod HEAD `3ec661b5`)**; walk §252 still open. The measured walk, the stage ladder and Stage 1 (game day) were drawn on
 > 2026-09-28 and published on the project hub (https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM); Stage 1 was redrawn on
 > 2026-09-29 (hub v3–v5) after a formatting check against the portal's written rules (§11). **Stage 1, asks
 > A1–A11 and the walk's shape questions RULED 2026-09-29, all as recommended** (owner: "I agree with your
@@ -13,6 +14,13 @@
 > screens' old look as it builds — so "after Part B's cleanup" below is superseded (§8). Each stage is built only
 > after the owner rules it and Part B's cleanup has passed its screens; the next stage is drawn only after the
 > owner rules on the one before.
+> **Stage 2 (Teams and registration, Communications) DRAWN 2026-09-30** on the hub's Stage 2 tab (§6b), from
+> `TOURNAMENT_ADMIN_REDESIGN_STAGE2_DESIGN_PROMPT.md`: T1–T7, C1–C2 and asks A13–A17; the `/design` review's twelve
+> changes applied the same day (hub v15, editable title corrected v16). **RULED 2026-09-30, all as recommended**
+> (owner: "I agree with your recommendations, go ahead with the build prompt"). Build prompt
+> `TOURNAMENT_ADMIN_REDESIGN_STAGE2_BUILD_PROMPT.md`: Part 0 the A15 email defect (own commit, first) · Part 1 the
+> form window's named Previous / Next and editable title (own commit — Club Tier 3a's screens start after it) ·
+> Parts 2–3 Teams and Communications. Sequencing beside Club Tier 3a: §8.
 > **Created:** 2026-09-28 · **Branch:** dev · **Companions:** `TOURNAMENT_ADMIN_REDESIGN_PM_BRIEF.md` ·
 > hub `TOURNAMENT_ADMIN_REDESIGN_HUB.html` (republish the same path for the project's life).
 > **Origin:** Phase 3 of `ADMIN_DESIGN_CONTINUITY_PLAN.md` ("Tournament screens — its own project when it
@@ -203,6 +211,66 @@ card). Fix: the two frame classes paint `--card-bg` in the kit layer; nothing mo
 SHAPE: each pool is its own card with a gap between, where the phone ruling (v4, S.7) is one frame with the pools
 as band rows.
 
+**Re-measured 2026-09-30 for Stage 2** (after Stage 1 and the defects pass; probe `.probe/s2/probe.mjs`, the
+`org-owner` session, the Championship and the demo's Invitational, 390 · 360 · 768 · 1440, Warm and Dark, read-only):
+F15's first team is at **783px** on a 390 phone (U11 Girls; 761 U13 Boys, 801 U15 Open; 817 at 360) — the header
+change bought 81px, and the tab bar still starts at 772, so no team is on screen one. At 1440: 687px. On the demo's
+Invitational (15 teams, registration open) **1,277px** on a phone and **1,052px** at a desk. F17 measured: Accepted is
+green in the desk list, warm grey (Dark: white-70 on navy) on the pool board, an olive "A" 18×18 at 9.28px on a
+phone; payment on a phone is "$" glyphs 7×12. Nothing spills sideways at any width since F16's restack. Controls
+under 44 on a phone: 13 on U11 Girls below 38px (row chevrons 24×24, Close Registration 122×20, the three tools
+32 wide, the waitlist's "No Slots" 69×25).
+
+**F41 — A team waiting for a decision is not on the pool board (found 2026-09-30, the Stage 2 walk).** On a division
+with pool slots the board draws slots, the waitlist and "Accepted — needs a spot"; a pending team is on no row. A
+counts card says "1 pending review" and cannot be tapped. The context strip ("2 teams to review") and the rail's
+Teams badge open Teams on the first division, not the one with the work. The way in is Registration health → "2
+teams waiting for review", which shows **"Showing: Pending review (2)" over one row** (the list is the selected
+division's; the other team is in U15 Open); the "Needs action · 12" figure beside it jumps to missing information,
+not review. **Accepting a pending team: 5 taps** (health → the line → a 24×24 chevron → a 62×25 Accept → the
+confirm), probed. Code: `registrations/page.tsx` — the slot board renders `slotsByPool`, `waitlistTeams`,
+`unplacedTeams` only; `AdminContextStrip.tsx:104` links `/registrations` with no division; `focusAttentionBucket`
+keeps the selected division when it has a match.
+
+**F42 — "All accepted teams · 18 recipients" emails every registered team (found 2026-09-30).** The composer's
+email line counts accepted teams; the send (`api/admin/communications` `resolveRecipients(tournamentId, null)`)
+reads every team in the tournament with no status filter: **22 addresses on the test event**, including Freeze U15
+Open (rejected), Titans U11 Girls (waitlisted), Blaze U11 Girls and Cyclones U15 Open (pending) — read-only
+probe `.probe/s2/recipients.mjs`. The email's record ("Recipients") then lists the accepted teams only, and the free
+plan's 100-recipient cap counts every team. The client's own comment says "always send to all accepted teams". A
+say-the-true-thing defect with a privacy edge: the first "Welcome and info" would reach the team the organizer
+rejected. Ask A15.
+
+**F43 — The Tournament plan is offered a division choice it cannot send (code, 2026-09-30).** A site post's
+"Division visibility" renders whenever the event has divisions, on every plan; the send refuses a division filter
+without `targeted_tournament_announcements` (Tournament Plus) with a 403 after the message is written. Not rendered:
+the free fixture's tournament has no divisions. A6 says a plan lock is shown with the plan's name. Ask A15.
+
+**F44 — Communications' formatting (2026-09-30).** Two sets of tabs (Site Posts · Emails, Active · Deleted), four
+28px buttons in two shapes; a message sent both ways is two records in two lists with different columns; the empty
+state adds a second lime under the header's +; the composer is a centred window at every width with a tinted
+Channels panel, 16px checkboxes on 23px lines and mono template chips 24px tall. **Drift for `/strategy` (report
+only):** `PLAN_PRICING_FACTS.md`'s email table lists templates and delivery tracking as Tournament Plus; the product
+gives both to every plan (`QUICK_TEMPLATES`, "free for all plans"; the per-recipient Email Details), and the Facts
+doc's own change-log note says templates "don't exist yet".
+
+**F45 — The team record folds open with small controls, and Delete is a row action (2026-09-30).** A 24×24 down
+chevron folds the record open inside the list: Accept 62×25 (lime), Reject 59×27, three 28×24 icons (resend access,
+edit, delete). Details save in a separate Edit window with a button while payment and notes save when the field is
+left. The registration date prints in the device's format ("22/05/2026", `toLocaleDateString()`), not the
+product's. The standard: delete is never a row action; a row that opens a form opens it full screen on a phone
+(§3.10.8); edit autosaves (owner 2026-09-24).
+
+**F46 — The demo force-opens Registration health (2026-09-30, for `/demos`).** The tour's "Go back three weeks"
+opens the health panel (342px on a phone) and Payments opens by default (287px), so the Invitational's first team is
+at 1,277px on a phone. The anchor `registration-health` stays on the health row in Stage 2; whether the tour should
+still open it is `/demos`' call.
+
+**F18, re-read 2026-09-30.** The hint shows only when Email is ticked, on every plan including Tournament Plus. The
+send already accepts `targeting` (divisions, registration statuses, payment states, team ids) and gates it on
+`targeted_tournament_announcements` (Tournament Plus, League Plus, Club); the composer always sends `targeting:
+null`. So "build targeting" is a picker and a true count on a send that exists (ask A14).
+
 ### The schedule
 
 **F19 — The schedule opens on an empty list once a division has played.** At both widths it opens on U11
@@ -322,7 +390,7 @@ which reads as the product changing its mind. Routed to the foundation / Club St
 | Stage | Covers | Asks | Width it is FOR (A3) |
 |---|---|---|---|
 | **1 · Game day** | The dashboard's game-day board, Results, Check-in; the one-event-identity rule (A2) first applied here; one word per game state | A2, A4, A6, A7, A9, A10 | Phone first, desk second |
-| 2 · Teams and registration | Teams (first team on screen one, the pools row, one colour per status, words not glyphs, a row opens the team), registration health, Communications | Q 6.1 | Both |
+| 2 · Teams and registration — **DRAWN + RULED 2026-09-30 (§6b); build prompt written** | Teams (first team on screen one, the pools row, one colour per status, words not glyphs, a row opens the team), registration health, Communications; + the pending team on the board (F41), the email that reaches every team (F42, F43), Communications' formatting (F44), the record (F45) | Q 6.1 (ruled) · T1 T3 · A13–A17 | Both |
 | 3 · The schedule | Opens on the day; the bracket shows scores and winners; one generator name; drag with undo; the coin toss where seeding happens; the rain delay as Storm Mode's home | Q 8.1 | Both |
 | 4 · After the event | The completed board celebrates and offers "Run it back"; one reuse flow; Summary on a phone; the champions page shared; Past tournaments and the Tournaments list | Q 13.1 | Desk first |
 | 5 · Create and set up | One set of creation questions (diamonds in both wizards); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens | Q 1.1, 2.1, 3.1, 4.1 | Desk first, phone usable |
@@ -572,6 +640,259 @@ the dev server quiet. Words by `/marketing` the same day (all in `lib/game-day-w
   Club's rep-team tables) — the recipe's fix, with its own pixel proof; Teams' "Past Due" badge fails Dark contrast
   (4.41:1) on another session's uncommitted `teams-admin.module.css` change — theirs.
 
+## 6b. Stage 2 — Teams and registration, as drawn (2026-09-30)
+
+Drawn at true size on the hub's **Stage 2** tab, phone and desk, before (captured 2026-09-30 on the test event,
+after Stage 1 and the defects pass) and after (drawn Warm; a Dark copy cloned at load). Prompt
+`TOURNAMENT_ADMIN_REDESIGN_STAGE2_DESIGN_PROMPT.md`. Measured figures below are read from the drawing
+(`.probe/s2/measure2.mjs` → the hub's `{{M:s2-*}}` keys), re-measured at build as Stage 1 was.
+
+- **T1 · Teams opens on the teams (Q 6.1, ruled 2026-09-29).** The title band as Stage 1 built it (Export ·
+  Registration questions · Add team, the screen's one lime · Help). One toolbar line: the division dropdown (its
+  options say "· 1 to review") and the board's three tools at 44×44 (today 32 wide; Randomize wears the shuffle
+  mark, not today's "reload" arrows). Then **one section card, "At a glance"** (heading inside, 16/700 — words for
+  `/marketing`), **of three closed rows**: Registration health (score with its scale as the lead mark, "78/100";
+  "Every division · 10 missing info" — only what no neighbour says; down chevron, keeps the `registration-health`
+  anchor), **Payments** (this division, "$1,025 of $2,850 in", one figure in three states: "past due" in the danger
+  ink only once a due date has passed, "to collect" in plain ink before, "All collected"; down chevron; opens to
+  today's panel; **closed by default** — today open at 287px and remembered), **Registration open** ("6 of 6 spots ·
+  full", down chevron; it **expands in place** like its neighbours, and opened it holds Close registration under one
+  sentence, "New teams can't sign up for U11 Girls. You can reopen it any time."; Reopen keeps today's
+  published-schedule warning). The counts card goes (each fact is said once elsewhere). Then the division's teams
+  in **one frame**. **First team ≈469px on a phone (today 783, behind the bar), 3 teams above the strip (today
+  none); desk ≈519px (today 687).** (The "At a glance" heading costs 32px and the fourth team on screen one; the
+  first draft, without it, measured 437 / 4 / 487.) At a desk Teams is a **table** — Team · Coach · Slot · Payment, the pools,
+  the review queue and the waitlist as band rows, heading row in the display face — because Payment is read down
+  the column; status is not a column (the band says it).
+- **T2 · A pending team is on the screen (F41).** The division's pending teams are the **first band, "To
+  review"**, each row "Coach Blaze · registered May 8" with a worded **Accept** beside the chevron (olive, A12;
+  44px on a phone, 38 at a desk, where it appears in that band only — G4's desk rule). Teams opens on the first
+  division with a team to review, else the remembered one. **Accept: 5 taps → 2** (the row's Accept, the confirm
+  that says whether an email goes). Where the band lives is ask A16.
+- **T3 · A row opens the team (rule 3, F45).** The whole row opens the team's record in the admin kit's **form
+  window** (KitDialog form: full screen with ← on a phone, the phone's Back closes it; a window at a desk).
+  Title = the team's name, **and the title is the name's one editor** (the bill room's title slot, 2026-09-04: no
+  required marker; an empty name is refused in words), one status chip + "Red Team 2 · Red Pool · U11 Girls".
+  Payment first (facts, not narration: "Owes $475 · deposit due May 28 · balance due Jun 7 · past due";
+  **"Mark paid · $475"** — Check-in's own sheet button — and the two amounts, saving as they change); Coach (house
+  dates; "Resend the access link" worded, still asks); **Team details save as you go** (coach, email, seed — the
+  name is edited in the title, so not asked twice; the Edit window retires, edit autosaves 2026-09-24; **Seed absent
+  for an Exhibition**); notes; answers; Registration (Reject for an accepted team — "Rejecting it frees Red Team 2",
+  true: `api/admin/teams` releases the slot); **Delete ends the body**, alone, asking first (today's two-step for a
+  team with games kept). **The foot is named Previous / Next with the position** ("‹ Falcons U11 Girls · 3 of 8 ·
+  Ravens U11 Girls ›"; at a desk "3 of 8 in U11 Girls"), in the list's order (review band, pools, waitlist) — the
+  portal's form for a record opened full screen from a list (the depth chart's player, F-43), so a payment run is
+  Mark paid → Next per team. A pending team's record opens on the decision: Accept (the record's one lime) · Reject, and a sentence
+  that says the truth about a full division ("Accepting puts Blaze on the list of teams that need a spot" —
+  `claimNextOpenSlot` returns null when full). Nothing new is offered (no single-team "Move to waitlist").
+- **T4 · The pool board's shape (F16, F40).** One frame per division, a band per pool with its fill ("Red Pool 3
+  of 3"), the waitlist and "Accepted — needs a spot" as bands in the same frame; each team one row (the name, then
+  "Red Team 2 · Coach Storm · Owes $475"). No status badge under a pool band. Swap mode drawn: a note with the
+  accent edge ("Tap two teams to swap their places" + Done), a 44px swap mark per row, the first choice shown by
+  its mark turning olive (the row is not tinted). **Move a team to the other pool: 4 taps → 4** (a swap is two teams and a confirm), every target 44px.
+  Waitlist without an open spot: no button, the caption says "waits for an open spot" (today a lime "No Slots"
+  button that does nothing).
+- **T5 · One colour per status, words not glyphs (F17).** The band a team sits under says its status once. Where a
+  chip shows (the record; a row whose status differs from its band) it uses **the club tryouts' tone map**
+  (`TRYOUT_STATUS_TONE`: pending warn · accepted good · waitlisted and declined neutral) — no new tone. Rejected is
+  neutral (a decision, not a problem). Payment reads as Check-in does: "Paid" plain, "Owes $475" amber; "past due"
+  is said once, on the Payments row and in the record. The 9px letters and 7px "$" glyphs go. Words to `/marketing`,
+  with a flag: the game state is "Pending Review" (§245) and the club's tryouts say "Pending review" — one spelling.
+- **T6 · A division without pool slots, and Exhibition.** Bands are statuses (To review · Accepted · Waitlist; Rejected
+  only when chosen in the view). **What does not apply is absent:** no Pools grouping where a division has no pools,
+  no "Pools aren't turned on" note, no Randomize (today it answers "needs at least 2 pools"). A division with pools
+  but no slots keeps the grouping (bands = pools + "No pool yet"); its in-row pool dropdown moves into the record
+  and the bulk "Move to pool" (the standard: no controls in a row) — **+1 tap for one team**, bulk unchanged.
+  **Exhibition changes one thing on Teams: Seed is absent.** It keeps its pools: the prompt's "an Exhibition has no
+  pools" is not what the code does (`lib/public-pages.ts`: "An Exhibition HAS a round robin"; nothing in
+  `registrations/page.tsx` branches on format).
+- **T7 · The Club seams (A5), drawn as today.** Payments (the second closed row; Club Stage 7 — fees to the club
+  ledger), "Add my team" (a star in the title's icon line while it applies; the "Your team" chip in the record's
+  identity line), "Link to a rep team" (a line in the record's Coach block opening today's picker). The demo's
+  `registration-health` anchor stays on the health row (F46 for `/demos`).
+- **C1 · Communications is one list (F44).** A message per row (title; "Jun 13 · On the site, pinned · Emailed to
+  18"; a failed send the one coloured word), one filter pill (All · On the site · Emailed), "Removed from the site"
+  as a band at the foot (the record is kept, so "removed", not "deleted"), every row opening today's Edit Post or
+  Email Details. The empty state keeps one sentence; the header's + is its one action (no second lime). At a desk a
+  table: Date · Message · Where it went · Reached.
+- **C2 · The composer says the true thing (F18, F42, F43).** The kit's form window (full screen on a phone),
+  the five templates as one **"Start from" dropdown** ("A blank message" first — a form choice is a dropdown, the
+  pill stays the filter's shape, and it returns ≈130px above the Title on a phone), the tinted Channels panel → a plain "Where it goes" block with 22px boxes on
+  44px lines. **Drawn as A14 option 1:** under "Email the teams", three dropdowns — Teams (Accepted · Waitlisted ·
+  Waiting for a decision · Every registered team), Division, Payment (Any · Owes · Paid) — and a live count from
+  the send's own rule; the send button says the same number ("Post and email 18"). The email's Division is one
+  division or all (the send accepts several — one is drawn as the common case, a guess a first director would
+  correct). A site post keeps today's multi-division checklist, renamed "Show under", at 44px lines. The Tournament plan sees each Plus choice as one plain 44px line — a padlock, the
+  words and the plan's name (A6), Stage 1's "Running late?" form, **no dashed box** (a dashed edge means a record
+  that has left a list, K-24) — opening the `?plan=` door; no price, no gate change. Option 2 (no picker, hint gone) is drawn beside it.
+  **Message every team: 3 taps → 3.**
+
+**The formatting check** (the hub's Stage 2 tab, last section) ran Stage 1's sixteen departures, §3.6 as amended,
+§3.10.7–8, K-08, one lime, tinted panels and the required marker against the drawing before the owner saw it. One
+named question is left to A13: at a desk Accept appears only in the To review band, against K-08's "nothing
+conditional beside the chevron" in a table — the band is the condition, as G4's desk drew Finalize. **A second,
+independent reviewer** then checked the drawing and its rendered pictures against the same written rules and
+found two departures, both fixed before publishing: the required asterisk was drawn red (the owner ruling of
+2026-08-26 and the kit's `.req` make it the label's own ink) and swap mode tinted the chosen row (§3.3: an item row
+is never tinted; selection mode marks a row by its box alone). It confirmed the three closed rows, the record's
+16/700 block headings, the composer's checkbox rows, the lens and "Removed" band, and the swap note's accent edge
+(the kit's own `Callout`) as the standard's forms.
+
+**The `/design` review (2026-09-30), twelve changes, all applied to the drawing on the owner's "go ahead"** (each
+is a row in the tab's formatting check, D1–D12): the record gets named Previous / Next at its foot and Delete ends
+its body (D1); the Registration row expands like its neighbours and Close moves inside it under its consequence
+sentence (D2 — a lone "Close" read as "close this panel", and closing asked nothing); the health caption says only
+what no neighbour says (D3); the readouts become an "At a glance" section card (D4 — without a heading they read as
+a second list of records); Randomize wears the shuffle mark (D5); templates become a "Start from" dropdown (D6);
+plan locks lose their dashed boxes (D7); selection mode's bar docks above the phone bar, two lines, decisions first
+with Reject set apart, money second (D8); the record's name is its editable title and the Team name field goes
+(D9); the payment line states facts (D10); the health score shows its scale, "78/100" (D11 — Stage 1's
+schedule-health row takes the same form when next touched); the Payments figure has three states (D12).
+
+**Stage 2 taps (organizer, phone):** accept a pending team **5 → 2**; open a team's record **1 → 1** (a 24px chevron →
+the whole row); record full payments team after team **per team: a chevron + typing the amount → Mark paid + Next,
+no typing** (the record's named Next); move a team to the other pool **4 → 4** (every target 44px); message every
+team **3 → 3** (to the teams it names — today 22 while it says 18).
+
+**The asks (A13–A17), each on the Stage 2 tab with options, a recommendation, the tradeoff and a checkbox per option:**
+A13 which Teams rows earn a worded action (rec.: Accept on To review; Promote / Place only when a spot is open; none
+on placed rows) · A14 Communications' targeting (rec.: build the picker in Stage 2 for Tournament Plus; the
+Tournament plan sees it locked) · A15 the email that reaches every team (rec.: fix now as a defect, like A8/F40) ·
+A16 where a pending team shows (rec.: first band of its division; alt. a "Needs you" lens across divisions, A10's
+shape) · A17 the bulk-select row (rec.: Teams keeps its own until a second screen needs a shared one — tagged
+"shared — Club Tier's money tables draw tables too"; drawn with its bar docked above the phone bar). T1 and T3 carry a ruling each.
+**⚖ ALL RULED 2026-09-30 AS RECOMMENDED** (owner: "I agree with your recommendations, go ahead with the build
+prompt"), T1 and T3 as drawn, including the "At a glance" heading's cost (first team ≈469px, 3 on screen one).
+The build prompt (`TOURNAMENT_ADMIN_REDESIGN_STAGE2_BUILD_PROMPT.md`) carries **P1**, one placement the drawing
+does not show — Promote / Place on the Tournament plan (recommended: no button on the row; the record's
+Registration block carries the lock line) — to the owner at the build's start.
+
+**Stage 2's build prompt's definition of done** includes retiring the old look of every file it
+rebuilds (the Teams page and `teams-admin.module.css`, `RegistrationHealthPanel`, Communications and
+`communication.module.css`), held by `npm run check:old-look` and the strict admin colour gate (Admin Design
+Continuity's closing step made them this program's).
+
+### Stage 2 — as built (2026-09-30; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE2_BUILD_PROMPT.md`; owner walk §254 open)
+
+**Owner calls at the build's start (2026-09-30, all as recommended):** **P1** — on the Tournament plan Promote /
+Place is a lock line in the record's Decision / Registration block, no row button. **P2** — a pending team that
+already holds a slot stays on its slot row with a PENDING chip and Accept; "To review" holds pending teams without
+a slot. **P3** — add a migration so an email keeps who it reached.
+
+**Three commits, in the prompt's order:**
+
+- **Part 0 — `f4a4cc79`** (F42, F43). Migration **314** (`announcements.email_recipients jsonb`) applied to dev and
+  **prod 2026-09-30**, snapshots and dictionary refreshed. `lib/announcement-recipients.ts` is the one recipient
+  rule: an untargeted send reaches **accepted** teams only (it reached every team, rejected included — "22 while it
+  says 18"); anything else is advanced targeting (Tournament Plus). The send stores who it reached; the free cap
+  counts recipients; on the Tournament plan division visibility is a lock line (`PlanLockLine`).
+- **Part 1 — `12aee778`**. `KitDialog` learns a record's two parts: `steps` (named Previous / Next with the
+  position — "3 of 8", at a desk "3 of 8 in U11 Girls"; 48px on a phone), `KitTitleField` (the record's name as its
+  editable title: dashed rule, pencil, no marker), a `status` slot in the head, and `ariaLabel`; `SavePill inline`.
+  Club Tier 3a's screens were free to start after it.
+- **Parts 2–3 — `aab3a3f4`** (Teams T1–T7, Communications C1–C2), after `/simplify` and `/review`.
+  - **Teams.** One frame per division in `ClubRow` (the admin's one row recipe): To review · each pool with its
+    fill and every slot (an open slot is a row) · Waitlist · "Accepted — needs a spot" (`lib/tournament-teams.ts`
+    `buildSlotBands`; a division without slots: `buildListBands`, by status or, with pools, by pool with "No pool
+    yet"). At a desk a table (Team · Coach · Slot · Payment). One worded action per row (A13): Accept · Promote ·
+    Place, olive on white. The whole row opens `TeamRecord` in the kit form window: Decision or Payment first,
+    Coach (with the rep-team line for League / Club, T7), Team details that autosave (Coach, Email, Seed, Pool),
+    Admin notes, Registration answers, Delete at the end. Teams lands on the first division with a team to review
+    (once per event, never over a link naming its own division or bucket). "At a glance": Registration health
+    (`78/100`, caption from the counts, opens today's panel; the tour anchor `registration-health` kept as a
+    literal), Payments (three-state figure, closed by default, Tournament Plus), Registration open / closed (close
+    and reopen in place). Teams keeps its own selection row (A17): 22px boxes, a bar docked above the phone bar.
+    Swap marks the chevron olive and never tints the row. The F41 attention banner says "N in this division · M
+    more in other divisions". Words: `lib/registration-words.ts`.
+  - **Communications.** One list (All · On the site · Emailed), removed posts in a foot band; desk table (Date ·
+    Message · Where it went · Reached). A message sent both ways is one record with its email's delivery inside
+    ("See who it reached", "Copy failed"; an email from before migration 314 says its list wasn't kept).
+    `MessageComposer` in the kit form window: Start from (a dropdown), Title, Message, Where it goes; the Plus
+    picker (Teams · Division · Payment) with a live count from the route's new **`preview-recipients`** action (the
+    send's own rule, same scope and plan gate) that the send button repeats ("Post and email 18"). Words:
+    `lib/communication-words.ts`.
+  - **Shared, small:** `components/admin/tournament/ScreenParts` (RecordSection, joinDots, a plain record button, a
+    22px checkbox, the title band's worded button). No new kit part.
+  - **Old look retired** in every rebuilt file: the old-look baseline re-recorded with `--init`; both sheets off the
+    strict admin colour debt list; `admin-common`'s `.rowSelected` and notifications' `.channelRow` (dead) removed;
+    55 layout-baseline entries pruned, all on these two screens.
+
+**Build-time calls (on walk §254):** the save word sits in the record's head (the form window's status slot);
+confirms are kit question windows on top of the record; an open slot is a row (a swap target); an email's
+recipients open in place inside its record; the payment-reminder window moved onto the kit form window, words
+unchanged; "Every registered team" reads **All except rejected** (`/marketing`) and never reaches a rejected team;
+on a phone the view settings are a `BottomSheet`.
+
+**Measured (the test event):** first team at 390 **478px** (drawn ≈469; the three glance rows are the kit row's
+59px), 3 teams on screen one; at 1440 **516px** (≈519). Accept 2 taps, open a record 1, Mark paid 1. Text contrast
+0 findings, Warm and Dark. Scoped layout sweep (361 / 390 / 768 / 1440): no new findings.
+
+**/simplify, then /review (high-risk tier, five lenses) before `aab3a3f4`.** Fixed: the record could send two saves
+at once while stepping teams (and re-base the next team's form) — it now saves one change at a time on a chain;
+a Mark paid could be overwritten by a typed figure's pending autosave — every record action saves first; half an
+email autosaved into `teams.email` (the claim key) — held, never sent (**new word "Enter a full email address to
+save it." — owed to `/marketing`**); a stale first `load()` could flip the chosen division, and every division
+change re-read the whole event — functional setters, `load` no longer depends on the division; an older slot read
+could paint over a newer one — a per-read sequence; a team on a slot in a pool missing from the read vanished —
+`placed` counts only drawn slots (test); Communications blanked after every send — only an event's first read
+blanks; a template counted as unsaved — the composer re-bases the guard; push no longer said it posts to the site;
+the locked attention banner lost Upgrade. Refuted: the bulk bar's old email hint (the Accept / Reject question
+names the email), the "Your team" chip on the row (T7 puts it in the record), a double Next skipping teams.
+**Reported, not fixed:** a single waitlisted team accepted by hand keeps its `waitlist_position` (server); the
+shared export menu is 32px on a phone (47 screens); two quick actions on different rows share one `working` key
+(as before); the communications GET has no capability check beyond the org (house pattern); Send can be pressed in
+the 250ms before the count shows (the send applies the same rule).
+
+**Not walkable, probed instead** (`.probe/s2b/openspot.mjs`, read-only): Promote / Place on rows and the P1 lock
+line in the record — no division on either test event has an open slot, and the free club's Classic is archived.
+The probe empties one slot in the reads; the Tournament plan run is the free club's own event shown the
+Championship's U11 Girls. Captures on the hub's Stage 2 tab ("Built").
+
+**Help:** `/docs` 2026-09-30 — the tournaments guide's registration, review, pools and Communications sections and
+FAQs rewritten for the new screens; two new FAQs (a team's record; who an email reached); a stale "League Plus" plan
+name removed.
+
+### Stage 2 follow-ups from the §252 walk (owner, 2026-10-01; built, not yet committed)
+
+Raised by the owner while walking §252, each ruled in the conversation and built the same day:
+
+- **Export is one button** — no chevron; it opens the formats, Excel first (every export menu, platform-wide).
+- **A waiting count is the amber pill** — the division picker is a menu, not a `<select>`: each division with teams
+  to review wears the rail's amber count, and the closed box an amber dot when another division has some. "· 1 to
+  review" is gone from the name.
+- **The kit header's Help is the bare "?"**, 44px on a touch width (≤768).
+- **A team's record reads first and edits whole** — the header pencil turns the WHOLE record into fields and ✓ turns
+  it back (the practice plan's format, owner: "it should be our standard"). Team merges the old Coach and Team
+  details sections; Placement holds Seed and Pool; reading shows the saved values. The save word is the portal's
+  floating pill at the window's foot, not a word in the head.
+- **The Teams toolbar is one line in every division (TB1–TB4, hub tab "Teams toolbar", ruled "A, as drawn" without
+  the note under a search).** The division, Search, Filter and Tools — on a pool board too. Tools holds Select many
+  (Teams), Swap and Randomize (Pools) and Registration questions (Setup), each only where it applies: Swap needs the
+  whole board, so a search or a filter takes it away; Randomize acts on the division and stays. A search or a filter
+  on a pool board lists the matches under their own pools, open spots gone (`narrowSlotBands`); the dashboard's
+  bucket links narrow the board the same way (they used to fall back to a status list). At a desk one Filter menu
+  holds Status, Payment and Group by, and counts the filters on; on a phone the Filter square opens the same sheet.
+  Tools is the coaches portal's `CoachToolbarMenu` (a menu at a desk, a sheet over the bar's top on a phone); the
+  page declares `--coach-foot-clear` as the admin's bar + context strip + home indicator for it. Registration
+  questions left the title band. **Two build-time calls, put to the owner:** a filter is no longer remembered
+  between visits (one left on would open a board as a list with nothing saying why — the division and grouping
+  still are), and a payment filter lists only accepted teams (Unpaid listed teams still to review, whose Payment
+  reads "—"). Proven by `.probe/teams-toolbar.mjs` (read-only; 390, 360, 1440; Warm and Dark): four 44px controls
+  on a phone, the division box 207px at 390 and 177px at 360; "storm" on U11 Girls lists Storm under Red Pool;
+  Payment · Unpaid lists Storm, Ravens, Comets and Royals under their pools. The scoped layout sweep adds nothing
+  (three touch-floor findings it raised at 768 — the Filter button's floor cancelled by its own base rule, the
+  search input 2px short inside its field, the kit "?" floored only to 760 — fixed).
+- **Owed:** a QA walk for these follow-ups, and §254's W4 steps 1, 4, 6–10 and 13 describe the screen before them
+  (the "· 1 to review" name, the title's pencil, the head's "Saved", the Team details section, the separate Swap /
+  Select many / Randomize buttons).
+- **Words — `/marketing` 2026-10-01: every new word kept as built** — Tools (the Schedule's menu already wears it)
+  and its groups Teams · Pools · Setup; Filter, Status, Payment, Group by, Reset filters, "Filter, N on";
+  Registration questions (sentence case, as every menu item; its destination page's Title Case heading is older);
+  "Teams waiting in another division", "N to review"; Team, Placement, Coach's email, Edit this team / Done
+  editing, "No notes yet."; and the two held-save words owed since Stage 2's review, "Enter a full email address to
+  save it." and "Give the team a name to save it.". Two help sentences warmed ("when you're done"; "Swap comes back
+  when every spot is showing again").
+
 ## 7. The asks
 
 A1 · which stage first · A2 · one event identity · A3 · phone or desk per station · A4 · Storm Mode and
@@ -625,6 +946,16 @@ both jobs harder and breaks Part B's pixel proof. The drawings don't wait.
   tie Stage 1 to a "settling tournament weekend" that, with no customers, has no date. The Stage 1 prompt's
   first precondition asks; if the owner says the release is not yet staying, the build waits for Part B as
   first written above.
+- **Stage 2 beside Club Tier Stage 3a (2026-09-30, owner asked "parallel or sequenced?").** Staggered, not
+  start-to-start. 3a (club money) was drawn the same day with five asks open, so it cannot build yet; Stage 2 is
+  ruled and can. What the two share is small but real: the admin row recipe (`RepKit`), the form window
+  (`KitDialog`), the old-look baseline, the one dev server and UAT sessions, and the owner's walks. So: Stage 2
+  builds now and lands its one shared-kit change (the form window's named Previous / Next and editable title) as
+  its own early commit; 3a's asks are ruled meanwhile; 3a's **server** session may run beside Stage 2 at any time
+  (no shared files); 3a's **screens** session starts after Stage 2's shared-kit commit and reuses it. ⚠ 3a's
+  drawing (its hub v20) predates the 2026-09-30 "a record names its neighbours" decision; its allocation record
+  should be read against it when its asks are ruled. The build prompt's "Running beside Club Tier Stage 3a"
+  section holds the working rules.
 
 ## 9. Verification at build (for each stage's build prompt)
 
