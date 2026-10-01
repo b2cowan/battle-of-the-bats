@@ -23,6 +23,7 @@ import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { tournamentToday } from '@/lib/timezone';
 import { cashOnHandCents, toCents, toDollars } from '@/lib/coach-register';
+import { clubInstallmentLeftTeamOn, clubInstallmentState } from '@/lib/club-money-figures';
 import { spendAgainstPlan, moneyBackAgainstSpending } from '@/lib/coach-money-summary';
 import { seasonDuesBand, type DuesCreditKind } from '@/lib/coach-dues-actual';
 import {
@@ -312,16 +313,30 @@ export const GET = withObservability(async (_req: Request,
   // ── Org allocations ──────────────────────────────────────────────────────
   const splits = (splitsRes.data ?? []) as Array<{ id: string; amount: number }>;
   const totalAllocated = splits.reduce((s, sp) => s + (sp.amount ?? 0), 0);
+  /* ⚖ TWO QUESTIONS, TWO FIGURES (Club Tier Stage 3a, ruled 2026-09-30, question 1):
+       · allocationsPaid — money that has LEFT the team for the club: sent (the coach said so) or
+         received. It is the CASH figure: Cash on hand, money out and headroom read it, and it must
+         equal the register's club rows (`clubInstallmentLeftTeamOn`, one rule — check:register).
+       · allocationsReceived — what the CLUB has. The bill's "Left" means "the club has it", so a
+         sent installment is still outstanding there.
+     Overdue is the club's one rule: unpaid, not sent, past due in the club's day. */
   let allocationsPaid = 0;
+  let allocationsReceived = 0;
   let allocationsOverdueCount = 0;
   if (splits.length > 0) {
     const { data: installs } = await supabaseAdmin
       .from('rep_allocation_installments')
-      .select('amount, due_date, paid_at')
+      .select('amount, due_date, paid_at, sent_at, sent_on, paid_on')
       .in('split_id', splits.map(s => s.id));
-    for (const inst of (installs ?? []) as Array<{ amount: number; due_date: string | null; paid_at: string | null }>) {
-      if (inst.paid_at) allocationsPaid += inst.amount ?? 0;
-      else if (inst.due_date && inst.due_date < today) allocationsOverdueCount += 1;
+    for (const inst of (installs ?? []) as Array<{
+      amount: number; due_date: string | null; paid_at: string | null;
+      sent_at: string | null; sent_on: string | null; paid_on: string | null;
+    }>) {
+      const amount = Number(inst.amount ?? 0);
+      const facts = { paidAt: inst.paid_at, sentAt: inst.sent_at, sentOn: inst.sent_on, paidOn: inst.paid_on };
+      if (clubInstallmentLeftTeamOn(facts)) allocationsPaid += amount;
+      if (inst.paid_at) allocationsReceived += amount;
+      if (inst.due_date && clubInstallmentState({ ...facts, dueDate: inst.due_date }, today) === 'overdue') allocationsOverdueCount += 1;
     }
   }
 
@@ -554,7 +569,7 @@ export const GET = withObservability(async (_req: Request,
     allocations: {
       count: splits.length,
       totalAllocated: r2(totalAllocated),
-      outstanding: r2(totalAllocated - allocationsPaid),
+      outstanding: r2(totalAllocated - allocationsReceived),
       overdueCount: allocationsOverdueCount,
     },
     paymentRequests: {

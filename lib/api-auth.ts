@@ -239,6 +239,9 @@ async function getAcceptedMember(orgId: string, userId: string) {
   return data;
 }
 
+/** The roles a team-group limit never narrows. ONE list — the club-money recipients read it too. */
+export const GROUP_UNSCOPED_ROLES: readonly OrgRole[] = ['owner', 'admin', 'treasurer'];
+
 export async function getAuthContextWithRole(options: AuthContextOptions = {}): Promise<AuthContextWithRole | null> {
   const ctx = await getAuthContext(options);
   if (!ctx) return null;
@@ -250,7 +253,7 @@ export async function getAuthContextWithRole(options: AuthContextOptions = {}): 
   const capabilities = (member.capabilities as Record<string, boolean> | null) ?? null;
 
   // Owners, admins, and treasurers are always unrestricted
-  if (role === 'owner' || role === 'admin' || role === 'treasurer') {
+  if (GROUP_UNSCOPED_ROLES.includes(role)) {
     return { ...ctx, role, capabilities, repGroupIds: null };
   }
 

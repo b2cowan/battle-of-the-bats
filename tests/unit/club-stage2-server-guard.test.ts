@@ -542,10 +542,16 @@ describe('B09 / B11 / B12 / B13 — the rest of the server list', () => {
   });
 
   it('the money decisions carry the team-group guard', () => {
+    // Club Tier Stage 3a: the decisions moved into the one-step moves (lib/club-money-moves.ts), which
+    // check the group limit before they write — club-stage3a-server-guard.test.ts holds each move to it.
+    // These old doors must keep delegating, never write themselves.
     const request = handler(readCode('app/api/admin/rep-teams/payment-requests/[id]/route.ts'), 'PATCH');
-    const guardAt = request.indexOf('repGroupScopeGuard(ctx!, scopedTeam?.groupId ?? null)');
-    assert.ok(guardAt > 0 && guardAt < request.search(/status:\s+'denied'/), 'checked before approve AND deny write');
-    assert.match(readCode('app/api/admin/rep-teams/allocations/[allocationId]/splits/[splitId]/installments/[installId]/route.ts'), /repGroupScopeGuard\(ctx!, team\.groupId\)/);
+    assert.match(request, /clubDeclineRequest\(r\.ctx,/);
+    assert.match(request, /clubApproveRequest\(r\.ctx,/);
+    assert.doesNotMatch(request, /from\('rep_team_payment_requests'\)/);
+    const installment = readCode('app/api/admin/rep-teams/allocations/[allocationId]/splits/[splitId]/installments/[installId]/route.ts');
+    assert.match(installment, /clubReceiveInstallment\(r\.ctx,/);
+    assert.doesNotMatch(installment, /create_accounting_transfer/);
     assert.match(handler(readCode('app/api/admin/rep-teams/allocations/[allocationId]/route.ts'), 'PATCH'),
       /const inScope = await teamIdsInScope\(ctx!\);[\s\S]*detail\.splits\.some\(s => !inScope\.has\(s\.teamId\)\)/);
   });

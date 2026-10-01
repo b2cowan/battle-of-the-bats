@@ -40,6 +40,14 @@ export const EVENT_ICONS: Record<string, string> = {
   club_coach_declined:               '✉️',
   team_move_requested:               '🤝',
   team_move_answered:                '🏟️',
+  club_money_received:               '💵',
+  club_money_undone:                 '↩️',
+  club_request_approved:             '✅',
+  club_request_declined:             '✋',
+  club_request_reversed:             '↩️',
+  team_money_sent:                   '📤',
+  team_request_filed:                '🧾',
+  team_request_holding_payout:       '⏳',
   // ⚠ This map is Record<string, …>, so TypeScript does NOT enforce a key per event type the
   // way the three maps in lib/notification-labels.ts do — a new event type falls back to the
   // generic bell instead of failing the build. Add here whenever one is added there.

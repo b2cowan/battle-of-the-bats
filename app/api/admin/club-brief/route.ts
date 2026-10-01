@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
-import { canOpenModule, canOpenRepMoney } from '@/lib/member-access';
+import { canMoveClubMoney, canOpenModule, canOpenRepMoney } from '@/lib/member-access';
+import { briefMoneyCounts, seasonsHoldingPayout } from '@/lib/club-money-reads';
 import { planCarriesModule } from '@/lib/module-entitlements';
 import { orgRunsHouseLeague } from '@/lib/board-roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
-import { tournamentToday, addCalendarDays } from '@/lib/timezone';
+import { tournamentToday } from '@/lib/timezone';
 import type { OrgRole } from '@/lib/types';
 
 /**
@@ -39,25 +40,26 @@ import type { OrgRole } from '@/lib/types';
  *            and paymentRequests { oldestDays }. Present only where the count itself is present.
  */
 
-/** Who may act, per count — copied from the route that performs the action, never widened. */
+/** Who may act, per count — copied from the route that performs the action, never widened. ⚖ The two
+ *  money counts (paymentRequests, installmentsDue) are not here: since Club Tier Stage 3a they answer
+ *  to the ONE money rule, `canMoveClubMoney` (Ask 1). */
 const ACTING_ROLES = {
   // tryouts/[regId] PATCH: owner | admin
   tryoutApplications: ['owner', 'admin'],
-  // payment-requests/[id] PATCH: owner | treasurer | admin
-  paymentRequests: ['owner', 'treasurer', 'admin'],
-  // allocation installment PATCH (mark paid): owner | treasurer
-  installmentsDue: ['owner', 'treasurer'],
   // assistant-coaches POST (approve): owner | admin
   assistantCoaches: ['owner', 'admin'],
 } as const satisfies Record<string, readonly OrgRole[]>;
 
-type ClubBriefCounts = Partial<Record<keyof typeof ACTING_ROLES, number>>;
+type ClubBriefCounts = Partial<Record<'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches', number>>;
 type ClubBriefDetail = {
   tryoutApplications?: { teams: number; oldest: { teamId: string; programYearId: string } | null };
-  paymentRequests?: { oldestDays: number | null };
+  /** `holdingPayout`: waiting requests the club's answer is the one thing between a team and its
+   *  end-of-season payout (Ask 5b) — the door card names them. */
+  paymentRequests?: { oldestDays: number | null; holdingPayout?: number };
+  /** Payments coaches say they've SENT, waiting for the club to confirm (Ask 1). */
+  installmentsDue?: { sent: number };
 };
 
-const DUE_WINDOW_DAYS = 14;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const GET = withObservability(async (req: Request) => {
@@ -68,12 +70,12 @@ export const GET = withObservability(async (req: Request) => {
   const org = ctx.org;
   const actsAs = (key: keyof typeof ACTING_ROLES) => (ACTING_ROLES[key] as readonly string[]).includes(ctx.role);
   const repTeams = canOpenModule(ctx, org, 'module_rep_teams');
-  const repMoney = canOpenRepMoney(ctx, org);
+  const movesMoney = canOpenRepMoney(ctx, org) && canMoveClubMoney(ctx, org);
 
   const want = {
     tryoutApplications: repTeams && actsAs('tryoutApplications'),
-    paymentRequests: repMoney && actsAs('paymentRequests'),
-    installmentsDue: repMoney && actsAs('installmentsDue'),
+    paymentRequests: movesMoney,
+    installmentsDue: movesMoney,
     assistantCoaches: repTeams && actsAs('assistantCoaches'),
   };
   const today = tournamentToday();
@@ -141,33 +143,37 @@ export const GET = withObservability(async (req: Request) => {
       reads.push((async () => {
         const { data, error } = await supabaseAdmin
           .from('rep_team_payment_requests')
-          .select('created_at')
+          .select('created_at, program_year_id')
           .eq('org_id', org.id)
           .eq('status', 'pending')
           .in('team_id', teamIds)
           .order('created_at', { ascending: true });
         if (error) { fail.error = error; return; }
-        const rows = (data ?? []) as { created_at: string }[];
+        const rows = (data ?? []) as { created_at: string; program_year_id: string }[];
         counts.paymentRequests = rows.length;
-        // Whole days since the oldest request was sent — an age, never an amount (C04).
-        detail.paymentRequests = {
-          oldestDays: rows[0] ? Math.max(0, Math.floor((Date.now() - Date.parse(rows[0].created_at)) / DAY_MS)) : null,
-        };
+        try {
+          // Waiting requests whose season's payout the club's answer is holding up (Ask 5b) — the
+          // coach's own closeOutBlockers, read once per season with one waiting.
+          const held = await seasonsHoldingPayout(rows.map(r => r.program_year_id));
+          detail.paymentRequests = {
+            // Whole days since the oldest request was sent — an age, never an amount (C04).
+            oldestDays: rows[0] ? Math.max(0, Math.floor((Date.now() - Date.parse(rows[0].created_at)) / DAY_MS)) : null,
+            holdingPayout: rows.filter(r => held.has(r.program_year_id)).length,
+          };
+        } catch (e) { fail.error = e; }
       })());
     }
 
     if (want.installmentsDue) {
       reads.push((async () => {
-        // "Due in 14 days" counts what must be paid by then — so an overdue installment counts too.
-        // Dates are the org's calendar day (`tournamentToday`), never the server's UTC day.
-        const { count, error } = await supabaseAdmin
-          .from('rep_allocation_installments')
-          .select('id', { count: 'exact', head: true })
-          .eq('org_id', org.id)
-          .is('paid_at', null)
-          .lte('due_date', addCalendarDays(today, DUE_WINDOW_DAYS))
-          .in('team_id', teamIds);
-        if (error) fail.error = error; else counts.installmentsDue = count ?? 0;
+        /* ⚖ THE ONE DEFINITION (Club Tier Stage 3a, S3A-05): "due in 14 days" is Coming due's overdue
+           and due-soon bands — so this count and the band the door opens on agree. A payment a coach
+           has SENT is waiting on the club, counted on its own. Dates are the club's day. */
+        try {
+          const m = await briefMoneyCounts(org.id, teamIds, today);
+          counts.installmentsDue = m.installmentsDue;
+          detail.installmentsDue = { sent: m.installmentsSent };
+        } catch (e) { fail.error = e; }
       })());
     }
 

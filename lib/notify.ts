@@ -9,7 +9,7 @@
  */
 
 import { supabaseAdmin } from './supabase-admin';
-import { sendEmail } from './email';
+import { sendEmail, escapeHtml } from './email';
 import { sendWebPush, isPushConfigured } from './web-push';
 import { captureError } from './observability';
 import { hasPlanFeature, type PlanFeature } from './plan-features';
@@ -87,7 +87,16 @@ function systemDefaults(eventType: NotificationEventType, role: string): Channel
   };
 }
 
-function notificationEmailHtml(title: string, body?: string, link?: string, appUrl = '') {
+/**
+ * ⚠ TITLE AND BODY ARE ESCAPED (Club Tier Stage 3a, 2026-09-30). They are plain text — the bell renders
+ * them as text — and many carry words people typed: team names, request descriptions, and from 3a the
+ * club's reason for undoing, declining or reversing. They used to be pasted into this HTML raw, so a
+ * reason containing markup became markup in someone's inbox. No caller passes HTML (checked at the
+ * change: all 33 `notify({` call sites).
+ */
+function notificationEmailHtml(rawTitle: string, rawBody?: string, link?: string, appUrl = '') {
+  const title = escapeHtml(rawTitle);
+  const body = rawBody ? escapeHtml(rawBody) : rawBody;
   const linkHtml = link
     ? `<p style="margin:1rem 0 0;"><a href="${appUrl}${link}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.6rem 1.25rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">View →</a></p>`
     : '';

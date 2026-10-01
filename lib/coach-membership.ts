@@ -12,6 +12,7 @@ import {
 } from './db';
 import {
   resolveCoachCapabilities,
+  canViewMoney,
   denyUnless,
   canManageStaff,
   MANAGE_STAFF_DENIED_MESSAGE,
@@ -346,6 +347,47 @@ export async function listHeadCoachOrgIdsForUser(userId: string): Promise<string
     .eq('coach_role', 'head_coach');
   if (error) throw error;
   return [...new Set((data ?? []).map((r: { org_id: string }) => r.org_id))];
+}
+
+/**
+ * Is this member one of a team's MONEY people — the head coach, or staff the head coach has given
+ * money access (read or write)? A head coach always holds money, so it is `canViewMoney` on the
+ * member's resolved capabilities. ONE test for every club-money audience (Club Tier Stage 3a,
+ * question 2): who a reminder reaches, who hears about club money, who sees those toggles.
+ */
+export function isTeamMoneyMember(m: TeamStaffMembership): boolean {
+  return canViewMoney(resolveMembershipCapabilities(m));
+}
+
+/**
+ * Does this person hold a team's money anywhere in the org? The coach's notification card offers the
+ * five club-money rows only to someone they can reach (a toggle with nothing behind it is the thing
+ * Stage 1's rule forbids).
+ */
+export async function holdsTeamMoneyInOrg(orgId: string, userId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('user_id', userId)
+    .eq('status', 'active');
+  if (error) throw error;
+  return (data ?? []).some(r => isTeamMoneyMember(mapMembership(r as MembershipRow)));
+}
+
+/** The ACTIVE staff of many teams at once (one read), head coach first within each team. */
+export async function listActiveStaffForTeams(teamIds: readonly string[]): Promise<TeamStaffMembership[]> {
+  if (teamIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('*')
+    .in('team_id', [...teamIds])
+    .eq('status', 'active');
+  if (error) throw error;
+  return (data ?? [])
+    .map(r => mapMembership(r as MembershipRow))
+    .sort((a, b) => a.teamId.localeCompare(b.teamId)
+      || (a.coachRole === b.coachRole ? a.createdAt.localeCompare(b.createdAt) : a.coachRole === 'head_coach' ? -1 : 1));
 }
 
 /** Every ACTIVE member of a team's staff (head coach first, then assistants oldest-first). */

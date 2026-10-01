@@ -1,137 +1,36 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
-import { canOpenRepMoney } from '@/lib/member-access';
-import {
-  getRepTeam,
-  getOrCreateRepTeamLedger,
-  getOrCreateOrgLedger,
-} from '@/lib/db';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import { withObservability, captureAndJson } from '@/lib/observability';
+import { withObservability } from '@/lib/observability';
+import { resolveClubMoney, moveRefused } from '@/lib/club-money-route';
+import { clubApproveRequest, clubDeclineRequest } from '@/lib/club-money-moves';
 
-// The club ↔ team money loop: Rep Teams OR Accounting, on an org that runs rep teams (D8 + Ask 1 —
-// a treasurer reaches it from Accounting). The write handlers below keep their own role checks.
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!canOpenRepMoney(ctx, ctx.org)) return forbidden();
-  return null;
-}
-
-// PATCH /api/admin/rep-teams/payment-requests/[id]
-// Body: { action: 'approve' | 'deny', denialReason?: string }
+/**
+ * The OLD payment requests page's Approve / Deny (Rep Teams › Payment requests).
+ * ⚠ ON SESSION 2'S RETIRE LIST: Accounting › Payment requests decides through
+ * `/api/admin/accounting/payment-requests/[id]` (approve · decline · reverse).
+ *
+ * Until it goes, both run through the SAME moves (Club Tier Stage 3a, C07): an approval is the
+ * transfer and the decision in one database step, guarded on the request still waiting (a double
+ * approval used to post two transfers), dated by the club's day (it was UTC), with its ledger link
+ * kept so it can be reversed. Who: whoever holds the club's accounting (Ask 1).
+ *
+ * Body: { action: 'approve' | 'deny', denialReason?: string }
+ */
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ id: string }> },) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
-
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer' && ctx!.role !== 'admin') {
-    return forbidden();
-  }
-
+  const r = await resolveClubMoney(req, { scope: 'loop', write: true });
+  if ('error' in r) return r.error;
   const { id } = await params;
-  const body = await req.json();
-  const { action, denialReason } = body;
+  const body = await req.json().catch(() => ({})) as Record<string, unknown>;
 
-  if (!['approve', 'deny'].includes(action)) {
-    return NextResponse.json({ error: 'action must be approve or deny' }, { status: 400 });
-  }
-  if (action === 'deny') {
-    if (!denialReason?.trim() || denialReason.trim().length > 500) {
-      return NextResponse.json({ error: 'denialReason is required and must be 500 characters or fewer' }, { status: 400 });
-    }
-  }
-
-  const { data: request, error: fetchErr } = await supabaseAdmin
-    .from('rep_team_payment_requests')
-    .select('*')
-    .eq('id', id)
-    .eq('org_id', ctx!.org.id)
-    .single();
-
-  if (fetchErr || !request) {
-    return NextResponse.json({ error: 'Request not found' }, { status: 404 });
-  }
-  if (request.status !== 'pending') {
-    return NextResponse.json({ error: 'Only pending requests can be reviewed' }, { status: 409 });
-  }
-
-  // ⚠ The member's team-group limit (Club Tier Stage 2, B11). Unreachable TODAY — only an owner,
-  // admin or treasurer may act here, and those roles never carry a group limit — so this is the
-  // guard for the day a limited role is given the power, not a fix for a live hole.
-  if (ctx!.repGroupIds) {
-    const scopedTeam = await getRepTeam(request.team_id);
-    const scoped = repGroupScopeGuard(ctx!, scopedTeam?.groupId ?? null);
-    if (scoped) return scoped;
-  }
-
-  const now = new Date().toISOString();
-
-  if (action === 'deny') {
-    const { error } = await supabaseAdmin
-      .from('rep_team_payment_requests')
-      .update({
-        status:        'denied',
-        denial_reason: denialReason.trim(),
-        reviewed_by:   ctx!.user.id,
-        reviewed_at:   now,
-        updated_at:    now,
-      })
-      .eq('id', id);
-
-    if (error) return captureAndJson(error, { error: error.message }, 500);
+  if (body.action === 'deny') {
+    const moved = await clubDeclineRequest(r.ctx, { requestId: id, reason: body.denialReason });
+    if (!moved.ok) return moveRefused(moved);
     return NextResponse.json({ ok: true, status: 'denied' });
   }
-
-  // --- Approve ---
-  const team = await getRepTeam(request.team_id);
-  if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
-
-  const [teamLedger, orgLedger] = await Promise.all([
-    getOrCreateRepTeamLedger(ctx!.org.id, team.id, team.name),
-    getOrCreateOrgLedger(ctx!.org.id, ctx!.org.name),
-  ]);
-
-  if (!orgLedger) {
-    return captureAndJson(
-      new Error('Org ledger not found for rep-team payment approval'),
-      { error: 'Org ledger not found' },
-      500,
-    );
+  if (body.action === 'approve') {
+    const moved = await clubApproveRequest(r.ctx, { requestId: id, on: null, method: null, reference: null });
+    if (!moved.ok) return moveRefused(moved);
+    return NextResponse.json({ ok: true, status: 'approved' });
   }
-
-  // payment_to_org → team pays org (team_ledger → org_ledger)
-  // charge_to_org  → org pays team (org_ledger → team_ledger)
-  const fromLedgerId = request.request_type === 'payment_to_org' ? teamLedger.id : orgLedger.id;
-  const toLedgerId   = request.request_type === 'payment_to_org' ? orgLedger.id  : teamLedger.id;
-  const category     = request.request_type === 'payment_to_org' ? 'team_payment_to_org' : 'team_charge_to_org';
-
-  const { error: transferError } = await supabaseAdmin.rpc('create_accounting_transfer', {
-    p_from_ledger_id: fromLedgerId,
-    p_to_ledger_id:   toLedgerId,
-    p_amount:         Number(request.amount),
-    p_entry_date:     now.slice(0, 10),
-    p_description:    request.description,
-    p_category:       category,
-    p_created_by:     ctx!.user.id,
-  });
-
-  if (transferError) {
-    return captureAndJson(transferError, { error: 'Failed to create accounting transfer' }, 500);
-  }
-
-  const { error: updateError } = await supabaseAdmin
-    .from('rep_team_payment_requests')
-    .update({
-      status:      'approved',
-      reviewed_by: ctx!.user.id,
-      reviewed_at: now,
-      updated_at:  now,
-    })
-    .eq('id', id);
-
-  if (updateError) return captureAndJson(updateError, { error: updateError.message }, 500);
-
-  return NextResponse.json({ ok: true, status: 'approved' });
+  return NextResponse.json({ error: 'action must be approve or deny' }, { status: 400 });
 }, { route: '/api/admin/rep-teams/payment-requests/[id]' });

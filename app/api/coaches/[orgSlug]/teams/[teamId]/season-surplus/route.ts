@@ -8,6 +8,8 @@ import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilitie
 import { loadSeasonSettlement } from '@/lib/coach-season-settlement';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { fmt } from '@/lib/coach-money-summary';
+import { closeOutBlockers, clubRequestsHoldPayout } from '@/lib/season-settlement';
+import { tellClubIfRequestsHoldPayout } from '@/lib/club-money-moves';
 
 /**
  * The season settlement sheet.
@@ -52,12 +54,29 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
-  const { capabilities, programYear, isReadOnly } = resolved;
+  const { ctx, team, capabilities, programYear, isReadOnly } = resolved;
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
   const sheet = await loadSeasonSettlement({ programYear, capabilities });
-  return NextResponse.json({ ...sheet, readOnly: isReadOnly });
+
+  /* ⚖ OPENING THIS SHEET IS REACHING THE PAYOUT (it is fetched only when it opens). When the club's
+     answer is the one thing left, the club is told — once per waiting request — and the sheet learns
+     when, for its "the club has been told" line (Club Tier Stage 3a, Ask 5b, S3A-03). Only on a live
+     season, and only for someone who could pay families out. A failed notice never fails the sheet. */
+  let clubToldAt: string | null = null;
+  if (!isReadOnly && canWriteMoney(capabilities)) {
+    try {
+      clubToldAt = await tellClubIfRequestsHoldPayout({
+        org: ctx.org, team: { id: team.id, name: team.name, groupId: team.groupId ?? null },
+        programYearId: programYear.id, holdsPayout: clubRequestsHoldPayout(closeOutBlockers(sheet)),
+        userId: ctx.user.id,
+      });
+    } catch (e) {
+      console.error('[season-surplus] telling the club about a held payout failed:', e);
+    }
+  }
+  return NextResponse.json({ ...sheet, readOnly: isReadOnly, clubToldAt });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/season-surplus' });
 
 // PUT /api/coaches/[orgSlug]/teams/[teamId]/season-surplus — the hold-back, and a note.

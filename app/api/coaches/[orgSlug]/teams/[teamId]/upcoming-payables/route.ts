@@ -15,6 +15,7 @@ import { canViewMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday, addCalendarDays, daysBetweenDateStrings } from '@/lib/timezone';
 import { duesRemainingByInstallment } from '@/lib/coach-dues-remaining';
 import { installmentLabel } from '@/lib/payable-standing';
+import { clubInstallmentState } from '@/lib/club-money-figures';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -289,15 +290,18 @@ export const GET = withObservability(async (req: Request,
   if (splitIds.length > 0) {
     let allocQuery = supabaseAdmin
       .from('rep_allocation_installments')
-      .select('id, split_id, installment_number, amount, due_date, paid_at')
+      .select('id, split_id, installment_number, amount, due_date, paid_at, sent_at')
       .in('split_id', splitIds)
       .lte('due_date', cutoffStr)
       .order('due_date', { ascending: true });
-    if (!includePaid) allocQuery = allocQuery.is('paid_at', null);
+    /* ⚖ "Still to pay" excludes what the coach has SENT (Club Tier Stage 3a, question 1): the team's
+       money has left; it waits on the club's confirmation, not on the team. */
+    if (!includePaid) allocQuery = allocQuery.is('paid_at', null).is('sent_at', null);
     const { data: allocInst } = await allocQuery;
 
     allocItems = (allocInst ?? []).map((i: any) => {
       const d = daysUntil(i.due_date);
+      const state = clubInstallmentState({ dueDate: i.due_date, paidAt: i.paid_at, sentAt: i.sent_at }, todayStr);
       return {
         id:          i.id,
         /* ⚠ THE BILL THIS PIECE BELONGS TO, not just the piece (2026-09-06). Without it the Ledger
@@ -312,8 +316,11 @@ export const GET = withObservability(async (req: Request,
         amount:      Number(i.amount),
         dueDate:     i.due_date,
         daysUntilDue: d,
-        overdue:     !i.paid_at && d < 0,
-        paid:        !!i.paid_at,
+        // The club's one overdue rule: a sent payment is never overdue.
+        overdue:     state === 'overdue',
+        // Settled from the TEAM's side once the money left — sent or received (the register's rule).
+        paid:        state === 'received' || state === 'sent',
+        waitingOnClub: state === 'sent',
         label:       `Installment #${i.installment_number}`,
       };
     });

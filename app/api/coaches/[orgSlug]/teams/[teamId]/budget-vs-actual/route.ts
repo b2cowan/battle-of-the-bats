@@ -38,6 +38,7 @@ import {
 } from '@/lib/coach-dues-actual';
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
 import { buildActualCashStrip, incomeCategoryFor } from '@/lib/coach-cash-strip';
+import { clubInstallmentLeftTeamOn } from '@/lib/club-money-figures';
 import { placeDerivedActual, taxonomyKey, UNPLANNED_DERIVED_CATEGORY, unplannedDerivedItemName } from '@/lib/coach-money-derived';
 import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
@@ -820,15 +821,19 @@ export const GET = withObservability(async (req: Request,
       itemId: split.budgetItemId, itemName: split.budgetItemName,
     };
     for (const inst of split.installments) {
-      // Only what has actually been PAID — this report is settled money, like every other feed on it.
-      if (!inst.paidAt) continue;
+      /* Only money that has LEFT the team — settled, like every other feed on this report. ⚖ Since
+         Club Tier Stage 3a that includes a payment the coach SENT and the club has not confirmed
+         (ruled 2026-09-30): the team's money left its bank that day. One rule with the register and
+         Cash on hand (`clubInstallmentLeftTeamOn`). */
+      const leftOn = clubInstallmentLeftTeamOn(inst);
+      if (!leftOn) continue;
       clubSpend.push({
         id: `club-allocation-${inst.id}`,
         description: split.allocationDescription || 'Club allocation',
         ...placed,
         amount: inst.amount,
         // The day the team paid it, so it lands in the right month on the grid.
-        paidDate: orgDayKey(inst.paidAt),
+        paidDate: leftOn,
         direction: 'out' as const,
       });
     }
@@ -1258,7 +1263,7 @@ export const GET = withObservability(async (req: Request,
     const count = split.installments.length;
     const description = split.allocationDescription || 'Club allocation';
     for (const inst of split.installments) {
-      if (inst.paidAt) continue;
+      if (clubInstallmentLeftTeamOn(inst)) continue; // sent or received: settled above, never scheduled
       gridScheduled.push({ ...cat, itemId: split.budgetItemId, date: inst.dueDate, amount: inst.amount });
       pushDetail('scheduled', cat, inst.dueDate, {
         id: inst.id,
@@ -1354,6 +1359,9 @@ export const GET = withObservability(async (req: Request,
         amount: i.amount,
         place: { categoryId: s.budgetCategoryId, categoryName: s.budgetCategoryName, itemId: s.budgetItemId },
         paidAt: i.paidAt,
+        sentAt: i.sentAt,
+        sentOn: i.sentOn,
+        paidOn: i.paidOn,
       }))),
   });
 

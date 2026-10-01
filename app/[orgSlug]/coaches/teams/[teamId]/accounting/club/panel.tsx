@@ -26,7 +26,8 @@ import {
   type ClubMoneyInMeaning, type ClubRequest, type ClubRequestType,
 } from '@/lib/coach-club-money';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
-import { isInstallmentOverdue } from '@/lib/dues-status';
+import { clubBillFigures, clubInstallmentLeftTeamOn, clubInstallmentState } from '@/lib/club-money-figures';
+import { coachSentLine } from '@/lib/club-money-words';
 import type { RepAllocationInstallment, BudgetCategoryWithItems } from '@/lib/types';
 import { CLUB_MONEY_COLUMNS, clubMoneyRows } from '@/lib/coach-money-exports';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
@@ -151,6 +152,8 @@ const STATUS_CHIP: Record<string, { cls: string; label: string }> = {
   pending:  { cls: 'badgePending',  label: 'Awaiting the club' },
   approved: { cls: 'badgeApproved', label: 'Approved' },
   denied:   { cls: 'badgeDenied',   label: 'Declined' },
+  // The club took back an approval (Club Tier Stage 3a, Ask 3) — a correction, so not red.
+  reversed: { cls: 'badgeDraft',    label: 'Reversed' },
 };
 
 /* `sandboxRefusal` lived here (it was born on this screen) and moved to `lib/coach-sandbox-refusal.ts`
@@ -733,11 +736,13 @@ export function ClubPanel({
 
   // ── The standing band ────────────────────────────────────────────────────
   const standing = useMemo(() => {
-    const allInstallments = splits.flatMap(s => s.installments);
-    const owed = allInstallments.filter(i => !i.paidAt).reduce((s, i) => s + i.amount, 0);
-    const owedCount = allInstallments.filter(i => !i.paidAt).length;
-    const overdueCount = allInstallments.filter(i => !i.paidAt && i.dueDate < today).length;
-    const allocationsPaid = allInstallments.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
+    /* ⚖ THE CLUB'S ONE DEFINITION (Club Tier Stage 3a): Paid and Left mean "the club has it", and a
+       payment the team has SENT is never overdue — the same figures the club reads. */
+    const all = clubBillFigures(splits.flatMap(s => s.installments), today);
+    const owed = all.outstanding;
+    const owedCount = all.installmentCount - all.receivedCount;
+    const overdueCount = all.overdue.count;
+    const allocationsPaid = all.collected;
 
     const pending = requests.filter(r => r.status === 'pending');
     const approved = requests.filter(r => r.status === 'approved');
@@ -778,26 +783,22 @@ export function ClubPanel({
   const splitFigures = useMemo(() => {
     const byId = new Map<string, typeof EMPTY_FIGURES>();
     for (const s of splits) {
-      let paid = 0, outstanding = 0, overdue = 0;
-      // One pass per bill, not three — the figures partition the same list.
-      for (const i of s.installments) {
-        if (i.paidAt) { paid += i.amount; continue; }
-        outstanding += i.amount;
-        if (i.dueDate < today) overdue += 1;
-      }
-      byId.set(s.id, { paid, outstanding, overdue });
+      // The club's one definition, per bill (Club Tier Stage 3a) — one pass, to the cent.
+      const f = clubBillFigures(s.installments, today);
+      byId.set(s.id, { paid: f.collected, outstanding: f.outstanding, overdue: f.overdue.count });
     }
     return byId;
   }, [splits, today]);
 
-  /** Every installment the loaded list says is paid — what settles a mark (see `marking`). */
+  /** Every installment the loaded list says has LEFT the team — sent or received — what settles a
+   *  mark (see `marking`). Since Club Tier Stage 3a the coach's tap records SENT; the club confirms. */
   const paidIds = useMemo(
-    () => new Set(splits.flatMap(s => s.installments.filter(i => i.paidAt).map(i => i.id))),
+    () => new Set(splits.flatMap(s => s.installments.filter(i => clubInstallmentLeftTeamOn(i)).map(i => i.id))),
     [splits],
   );
   /** A write on this installment is in flight AND the list has not yet read it back as paid. */
   const isMarking = useCallback(
-    (inst: RepAllocationInstallment) => !!marking[inst.id] && !inst.paidAt,
+    (inst: RepAllocationInstallment) => !!marking[inst.id] && !clubInstallmentLeftTeamOn(inst),
     [marking],
   );
 
@@ -921,7 +922,7 @@ export function ClubPanel({
     if (!openSplit) return null;
     const figures = splitFigures.get(openSplit.id) ?? EMPTY_FIGURES;
     const nextDue = [...openSplit.installments]
-      .filter(i => !i.paidAt)
+      .filter(i => !clubInstallmentLeftTeamOn(i))   // a sent one is no longer the team's to pay
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
     const tiles: RoomTile[] = [
       { label: 'Billed', value: fmt(openSplit.amount) },
@@ -1674,6 +1675,10 @@ export function ClubPanel({
                             {r.status === 'denied' && r.denialReason && (
                               <span className={styles.listRowSub}>&ldquo;{preview(r.denialReason)}&rdquo;</span>
                             )}
+                            {/* A reversal's reason reads the same way (Club Tier Stage 3a, Ask 3). */}
+                            {r.status === 'reversed' && r.reversedReason && (
+                              <span className={styles.listRowSub}>&ldquo;{preview(r.reversedReason)}&rdquo;</span>
+                            )}
                           </td>
                           {/* ⚠ THE CELL READS, IT DOES NOT ACT — both controls that change this are
                               live inside the request's window. */}
@@ -1764,7 +1769,8 @@ export function ClubPanel({
                 </thead>
                 <tbody>
                   {openSplit.installments.map(inst => {
-                    const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
+                    const overdue = clubInstallmentState(inst, today) === 'overdue';
+                    const sentOn = inst.paidAt ? null : clubInstallmentLeftTeamOn(inst);
                     return (
                       <tr key={inst.id} className={styles.tr}>
                         <td className={styles.td} data-label="Installment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
@@ -1778,6 +1784,10 @@ export function ClubPanel({
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--success-light)' }}>
                               <CheckCircle2 size={13} /> Paid {fmtDate(inst.paidAt)}
                             </span>
+                          ) : sentOn ? (
+                            /* Club Tier Stage 3a (specimen 7's words): the team sent it; the club has not
+                               confirmed. Paid stays "the club has it". */
+                            <span className={`${styles.badge} ${styles.badgePending}`}>{coachSentLine(sentOn)}</span>
                           ) : (
                             /* ⚠ `badgeOverdue`, NOT `badgeCompleted` — this row said "Overdue" in the
                                AMBER of a completed season while every other overdue mark in the
@@ -1796,30 +1806,33 @@ export function ClubPanel({
                               correction, not a destruction: it voids the transfer on BOTH ledgers
                               and leaves it visible in the audit trail, and recording it paid again
                               is one tap. Dressing it in red would tell a coach they were about to
-                              do something they cannot take back, which is the opposite of true. */}
-                          {inst.paidAt && canWriteMoney && (
+                              do something they cannot take back, which is the opposite of true.
+                              ⚖ SINCE CLUB TIER STAGE 3a (S3A-01) it takes back only the team's OWN
+                              "sent" the club has not confirmed: a payment the club recorded is the
+                              club's to undo, so a received row offers nothing here. */}
+                          {sentOn && canWriteMoney && (
                             <button
                               type="button"
                               className={`${styles.linkBtn} ${styles.undoPaidBtn}`}
-                              disabled={isMarking(inst)}
+                              disabled={!!marking[inst.id]}
                               onClick={() => undoPaid(openSplit, inst)}
-                              aria-label={`Undo the ${fmt(inst.amount)} payment on installment ${inst.installmentNumber}`}
+                              aria-label={`Take back the ${fmt(inst.amount)} payment on installment ${inst.installmentNumber}`}
                             >
-                              <Undo2 size={13} aria-hidden /> {isMarking(inst) ? 'Undoing…' : 'Undo'}
+                              <Undo2 size={13} aria-hidden /> {marking[inst.id] ? '…' : 'Take it back'}
                             </button>
                           )}
-                          {!inst.paidAt && canWriteMoney && (
+                          {!inst.paidAt && !sentOn && canWriteMoney && (
                             <button
                               type="button"
                               className={`${styles.btnSecondary} ${styles.compactAction}`}
                               disabled={isMarking(inst)}
                               onClick={() => markPaid(openSplit, inst)}
                             >
-                              {/* ⚖ "Record as paid", not "Mark paid" — it RECORDS a payment; the
-                                  server derives amount, date and description. ⚠⚠ AND IT STAYS ONE
-                                  TAP (ruling R-D): a club instalment is fieldless by design, so a
-                                  form would add a step and ask nothing. */}
-                              {isMarking(inst) ? '…' : 'Record as paid'}
+                              {/* ⚖ "We've sent it" (Club Tier Stage 3a, specimen 7): the team says it SENT
+                                  the money; the club confirms it received. Still one tap — today, no
+                                  method — until session 2 draws the window that asks the day, how and
+                                  the reference. The server derives amount and description. */}
+                              {isMarking(inst) ? '…' : 'We’ve sent it'}
                             </button>
                           )}
                         </td>

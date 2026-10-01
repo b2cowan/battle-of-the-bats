@@ -343,7 +343,10 @@ describe('the coach\'s side (specimens 4 and 6)', () => {
 
   it('"Your club" is a notification row on a CLUB coach\'s card only', () => {
     const client = readCode('app/(consumer)/account/notifications/AccountNotificationsClient.tsx');
-    assert.match(client, /clubTeam \? \['coach_insights_digest', 'practice_plan_sent', 'club_season_changed'\]/);
+    // Stage 3a: the club row is a list now (the season notice, plus the five money notices for a
+    // coach who holds the team's money) — still only on a CLUB coach's card.
+    assert.match(client, /clubTeam \? \['coach_insights_digest', 'practice_plan_sent', \.\.\.clubEvents\]/);
+    assert.match(client, /clubMoney \? \['club_season_changed', \.\.\.CLUB_MONEY_EVENTS\] : \['club_season_changed'\]/);
     assert.match(readCode('app/(consumer)/account/notifications/page.tsx'), /clubTeam: {10}ctx\.isTeamWorkspace !== true/);
   });
 

@@ -472,7 +472,7 @@ export const POST = withObservability(async (req: Request,
   const receivedDay  = receivedDate ?? tournamentToday();
 
   // 1 — Create team ledger income entry
-  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id);
   const accountingEntry = await createEntry(
     ledger.id,
     {

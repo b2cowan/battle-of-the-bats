@@ -9,6 +9,7 @@ import {
   closeOpenSeason, reopenLatestClosedSeason, startNextRepSeason, SeasonRolloverError,
 } from '@/lib/rep-season-rollover';
 import { tellClubTeamStaff } from '@/lib/club-season-notify';
+import { seasonOwedToClub } from '@/lib/club-money-reads';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear } from '@/lib/types';
 
@@ -54,6 +55,9 @@ function seasonShape(s: RepProgramYear) {
  *   canReopen / reopenSeason   reopen is offered only with no live season, on the newest closed one
  *   hasSeasons   false for a brand-new team (its door is "Start the first season")
  *   unsettled    { familiesOwing, familiesWaitingToReturn } for a live season, else null. COUNTS.
+ *   owedToClub   { installments, amount, sent, requestsWaiting } for a live season, else null — what the
+ *                team still owes the club and the requests waiting on it (Club Tier Stage 3a, Ask 5b,
+ *                S3A-03). It WARNS beside families' dues and never blocks (owner, 2026-08-17).
  */
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ teamId: string }> },) => {
@@ -68,22 +72,27 @@ export const GET = withObservability(async (req: Request,
   const rollsFrom = live ?? lastClosed;
   const reopenSeason = !live && lastClosed?.status === 'completed' ? lastClosed : null;
 
-  let unsettled: { familiesOwing: number; familiesWaitingToReturn: number } | null = null;
-  if (live) {
-    try {
-      // The club reads COUNTS off the same settlement sheet the coach settles from; a head coach's
-      // capabilities are only what lets the sheet assemble (no figure leaves this route).
-      const sheet = await loadSeasonSettlement({
-        programYear: live, capabilities: resolveCoachCapabilities('head_coach', null),
-      });
-      unsettled = unsettledFamilyCounts(sheet.rows);
-    } catch (e) {
-      /* ⚠ QUIET, as the portal's is: a failed settlement read must not stop the club ending a
-         season — the window then warns about nothing, exactly as it does for a team with no money
-         recorded at all. */
-      console.error('[club seasons GET] settlement preflight failed:', e);
-    }
-  }
+  // The two preflight reads are independent — read side by side, each quiet on its own.
+  const [owedToClub, unsettled] = live
+    ? await Promise.all([
+        // Quiet, like the families' read beside it: a warning that failed must never stop the club.
+        seasonOwedToClub(team.orgId, team.id, live.id).catch(e => {
+          console.error('[club seasons GET] club money preflight failed:', e);
+          return null;
+        }),
+        // The club reads COUNTS off the same settlement sheet the coach settles from; a head coach's
+        // capabilities are only what lets the sheet assemble (no figure leaves this route).
+        loadSeasonSettlement({ programYear: live, capabilities: resolveCoachCapabilities('head_coach', null) })
+          .then(sheet => unsettledFamilyCounts(sheet.rows))
+          .catch(e => {
+            /* ⚠ QUIET, as the portal's is: a failed settlement read must not stop the club ending a
+               season — the window then warns about nothing, exactly as it does for a team with no
+               money recorded at all. */
+            console.error('[club seasons GET] settlement preflight failed:', e);
+            return null;
+          }),
+      ])
+    : [null, null];
 
   return NextResponse.json({
     season: live ? seasonShape(live) : null,
@@ -95,6 +104,7 @@ export const GET = withObservability(async (req: Request,
     reopenSeason: reopenSeason ? seasonShape(reopenSeason) : null,
     hasSeasons: seasons.length > 0,
     unsettled,
+    owedToClub,
   });
 }, { route: ROUTE });
 

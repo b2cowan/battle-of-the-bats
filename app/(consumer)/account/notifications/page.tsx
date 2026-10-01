@@ -6,6 +6,7 @@ import { getUserAccessContexts } from '@/lib/user-contexts';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getFanAlertOverview } from '@/lib/fan-alert-prefs';
 import { isNotificationsPaused } from '@/lib/notification-pause';
+import { holdsTeamMoneyInOrg } from '@/lib/coach-membership';
 import type { Capability } from '@/lib/roles';
 import type { Organization } from '@/lib/types';
 import type { FanCardData } from '@/components/notifications/FanAlertsCard';
@@ -22,8 +23,10 @@ export const metadata: Metadata = {
 };
 
 // The reserved modules that gate an org card's optional sections (rule R4 — a section
-// only renders for a module the org actually has).
-const RESERVED_MODULES: Capability[] = ['module_rep_teams', 'module_house_league'];
+// only renders for a module the org actually has). Accounting joined with Club Tier Stage 3a: its
+// three rows (a team says it sent a payment, a new request, a request holding up a payout) ship
+// with their events.
+const RESERVED_MODULES: Capability[] = ['module_rep_teams', 'module_house_league', 'module_accounting'];
 
 async function resolveOrgModules(orgId: string): Promise<string[]> {
   const { data } = await supabaseAdmin
@@ -104,6 +107,10 @@ export default async function AccountNotificationsPage({
         subtitle:          'Coaches Portal',
         modules:           [],
         clubTeam:          ctx.isTeamWorkspace !== true,
+        // Stage 3a: the five club-money rows show only to someone who can receive them — a head
+        // coach, or staff the head coach has given money access, on one of the club's teams.
+        clubMoney:         ctx.isTeamWorkspace !== true && !!ctx.orgId
+          && await holdsTeamMoneyInOrg(ctx.orgId, user.id).catch(() => false),
       });
     }
   }

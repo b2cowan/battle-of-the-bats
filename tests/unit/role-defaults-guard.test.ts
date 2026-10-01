@@ -91,11 +91,15 @@ describe('D8 — the treasurer holds what the allocation loop needs', () => {
       'app/api/admin/rep-teams/payment-requests/route.ts',
       'app/api/admin/rep-teams/payment-requests/[id]/route.ts',
     ];
+    // Club Tier Stage 3a: the loop's decisions go through the shared club-money gate, whose 'loop'
+    // scope IS canOpenRepMoney (asserted below) — either form satisfies the rule.
     for (const route of routes) {
       const src = read(route);
-      assert.match(src, /canOpenRepMoney\(ctx, ctx\.org\)/, `${route} must gate on canOpenRepMoney`);
+      assert.match(src, /canOpenRepMoney\(ctx, ctx\.org\)|resolveClubMoney\(req, \{ scope: 'loop'/, `${route} must gate on canOpenRepMoney`);
       assert.doesNotMatch(src, /'module_rep_teams'/, `${route} gates on Rep Teams alone again — a treasurer is refused (C03)`);
     }
+    assert.match(read('lib/club-money-route.ts'), /opts\.scope === 'loop'\s*\?\s*canOpenRepMoney\(ctx, ctx\.org\)/,
+      'the shared gate\'s loop scope must stay canOpenRepMoney');
   });
 
   it('the allocate wizard reads its teams from Accounting, never from a Rep Teams route', () => {

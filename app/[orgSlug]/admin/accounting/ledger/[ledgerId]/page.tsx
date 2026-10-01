@@ -108,6 +108,9 @@ export default function LedgerDetailPage() {
   const kx = useKitStyle();
 
   const [ledger,      setLedger]      = useState<AccountingLedger | null>(null);
+  /* ⚖ A TEAM'S BOOK IS THE COACHES' (Club Tier Stage 3a, C12): the server refuses every club write on
+     it, so none is offered here. Until session 2 replaces this page (it is on its retire list). */
+  const canWrite = canEdit && ledger?.entityType !== 'team';
   const [summary,     setSummary]     = useState<LedgerSummary | null>(null);
   const [entries,     setEntries]     = useState<AccountingEntry[]>([]);
   const [tab,         setTab]         = useState<Tab>('all');
@@ -192,6 +195,20 @@ export default function LedgerDetailPage() {
   }
 
   async function handleVoid(entry: AccountingEntry) {
+    /* ⚖ A TRANSFER IS VOIDED BOTH HALVES TOGETHER, WITH A REASON (Club Tier Stage 3a, C13). Voiding one
+       half here used to leave the other book carrying money that never moved; the line's own void now
+       refuses a transfer half, so this asks the two-sided void instead. Until session 2's window. */
+    if (entry.entryType === 'transfer_in' || entry.entryType === 'transfer_out') {
+      const reason = window.prompt('Void this transfer? Both sides are voided together and stay in both ledgers for audit. Why is it being voided?');
+      if (reason === null) return;
+      const res = await fetch(`/api/admin/accounting/transfers/${entry.id}/void${orgQuery}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { showFeedback('danger', data.error ?? 'Failed to void the transfer.'); return; }
+      fetchPage(tab, 0, false);
+      return;
+    }
     if (!window.confirm('Void this entry? It will remain in the ledger for audit purposes but be excluded from totals.')) return;
     const res = await fetch(`/api/admin/accounting/ledgers/${ledgerId}/entries/${entry.id}${orgQuery}`, { method: 'DELETE' });
     const data = await res.json();
@@ -277,7 +294,8 @@ export default function LedgerDetailPage() {
     try {
       const res  = await fetch(`/api/admin/accounting/ledgers${orgQuery}`);
       const data = await res.json();
-      setAllLedgers((data.ledgers ?? []).filter((l: LedgerSummary) => l.ledger.id !== ledgerId));
+      // A team's book is never a transfer's other side (the server refuses it: Club Tier Stage 3a, C13).
+      setAllLedgers((data.ledgers ?? []).filter((l: LedgerSummary) => l.ledger.id !== ledgerId && l.ledger.entityType !== 'team'));
     } catch { /* non-critical: user sees empty dropdown */ }
   }
 
@@ -454,13 +472,13 @@ export default function LedgerDetailPage() {
                 onExportCSV={handleExportCSV}
                 disabled={entries.length === 0}
               />
-              <div className={styles.addEntryBtns}>
+              {canWrite && <div className={styles.addEntryBtns}>
                 <button type="button" className="btn btn-secondary" onClick={openAddEntry}>+ Add Entry</button>
                 <button type="button" className="btn btn-ghost" onClick={openTransferModal}>
                   <ArrowRightLeft size={14} style={{ marginRight: '0.35rem' }} />
                   Add Transfer
                 </button>
-              </div>
+              </div>}
             </div>
           )}
 
@@ -488,7 +506,7 @@ export default function LedgerDetailPage() {
                     <th>Type</th>
                     <th className={styles.num}>Amount</th>
                     <th>Status</th>
-                    {canEdit && <th></th>}
+                    {canWrite && <th></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -518,7 +536,7 @@ export default function LedgerDetailPage() {
                             {entry.status}
                           </span>
                         </td>
-                        {canEdit && (
+                        {canWrite && (
                           <td>
                             <div className={styles.actionBtns}>
                               {!isTransfer && entry.status !== 'void' && (
@@ -533,7 +551,7 @@ export default function LedgerDetailPage() {
                               {entry.status !== 'void' && (
                                 <button
                                   className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                                  title={isTransfer ? 'Void entry (transfer — both sides must be voided separately)' : 'Void entry'}
+                                  title={isTransfer ? 'Void this transfer (both sides together)' : 'Void entry'}
                                   onClick={() => handleVoid(entry)}
                                 >
                                   <X size={13} />

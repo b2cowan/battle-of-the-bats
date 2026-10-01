@@ -5,6 +5,8 @@ import { withObservability } from '@/lib/observability';
 import { teamLimitRefusal } from '@/lib/team-cap';
 import { loadClubBoard, loadRosterCounts, loadSeasonRecords, seasonShape } from '@/lib/club-team-board';
 import { resolveClubTeam } from '@/lib/club-team-route';
+import { canOpenModule } from '@/lib/member-access';
+import { withTheClub } from '@/lib/club-money-reads';
 
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ teamId: string }> },) => {
@@ -21,6 +23,18 @@ export const GET = withObservability(async (_req: Request,
   if (new URL(_req.url).searchParams.get('light') === '1') {
     return NextResponse.json({ team: { ...team, pdfLook: undefined }, programYears });
   }
+
+  /* ⚖ "WITH THE CLUB" (Club Tier Stage 3a, Ask 2's other half): for someone who can open Accounting,
+     what this team owes the club, its next due, and whether a request waits — opening the team's
+     account in Accounting. The club's own records only; the team's cash is the coaches' (D1). Null
+     for a member without Accounting (the section is not drawn). A failed read never fails the page.
+     Started here so it runs beside the board's reads. */
+  const withClubRead = canOpenModule(ctx!, ctx!.org, 'module_accounting')
+    ? withTheClub(ctx!.org.id, team.id).catch(e => {
+        console.error('[rep-teams team GET] with-the-club read failed:', e);
+        return null;
+      })
+    : Promise.resolve(null);
 
   /**
    * THE TEAM PAGE'S READ (Club Tier Stage 2, B09 / specimen 2): the board's row for this team, plus
@@ -65,9 +79,11 @@ export const GET = withObservability(async (_req: Request,
       .map(r => ({ userId: r.user_id, name: identities.get(r.user_id)?.displayName ?? null })),
   }));
 
+  const withClub = await withClubRead;
+
   // pdfLook (a base64 crest) is coach-portal data nothing on this screen reads — stripped.
   const teamJson = { ...team, pdfLook: undefined };
-  return NextResponse.json({ team: teamJson, programYears: yearsWithCounts, board: board.get(team.id), seasons });
+  return NextResponse.json({ team: teamJson, programYears: yearsWithCounts, board: board.get(team.id), seasons, withTheClub: withClub });
 }, { route: '/api/admin/rep-teams/teams/[teamId]' });
 
 export const PATCH = withObservability(async (req: Request,

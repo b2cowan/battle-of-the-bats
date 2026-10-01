@@ -1,95 +1,32 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
-import { canOpenRepMoney } from '@/lib/member-access';
-import {
-  getRepAllocationInstallment,
-  getRepAllocationSplit,
-  markRepAllocationInstallmentPaid,
-  getOrCreateRepTeamLedger,
-  getOrCreateOrgLedger,
-  getRepTeam,
-} from '@/lib/db';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { tournamentToday } from '@/lib/timezone';
+import { resolveClubMoney, moveRefused } from '@/lib/club-money-route';
+import { clubReceiveInstallment } from '@/lib/club-money-moves';
+import { getRepAllocationInstallment } from '@/lib/db';
 
-// The club ↔ team money loop: Rep Teams OR Accounting, on an org that runs rep teams (D8 + Ask 1 —
-// a treasurer reaches it from Accounting). The write handlers below keep their own role checks.
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!canOpenRepMoney(ctx, ctx.org)) return forbidden();
-  return null;
-}
+type Params = { params: Promise<{ allocationId: string; splitId: string; installId: string }> };
 
-export const PATCH = withObservability(async (_req: Request,
-  { params }: { params: Promise<{ allocationId: string; splitId: string; installId: string }> },) => {
-  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
-
+/**
+ * The OLD allocation page's "Mark Paid" (Rep Teams › Cost allocation). ⚠ ON SESSION 2'S RETIRE LIST:
+ * the Accounting › Allocations page records through
+ * `/api/admin/accounting/allocations/[allocationId]/installments/[installId]`.
+ *
+ * Until it goes, it runs through the SAME one-step move (Club Tier Stage 3a, C07): the stamp and both
+ * ledger lines in one database step, refused if somebody got there first — the old order (lines
+ * first, stamp second) could leave an orphaned pair. The old button knows nothing of a coach's
+ * "sent", so it records against whatever state the installment is in now: unpaid → recorded today,
+ * sent → confirmed. Who: whoever holds the club's accounting (Ask 1; it was owner/treasurer).
+ */
+export const PATCH = withObservability(async (req: Request, { params }: Params) => {
+  const r = await resolveClubMoney(req, { scope: 'loop', write: true });
+  if ('error' in r) return r.error;
   const { allocationId, splitId, installId } = await params;
 
-  const split = await getRepAllocationSplit(splitId);
-  if (!split || split.allocationId !== allocationId || split.orgId !== ctx!.org.id) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
-
-  const installment = await getRepAllocationInstallment(installId);
-  if (!installment || installment.splitId !== splitId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-  if (installment.paidAt) {
-    return NextResponse.json({ error: 'Installment is already marked as paid' }, { status: 409 });
-  }
-
-  // Ensure ledgers exist for both sides of the transfer
-  const team = await getRepTeam(split.teamId);
-  if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
-  // ⚠ The member's team-group limit (Club Tier Stage 2, B11). Unreachable TODAY — only an owner,
-  // admin or treasurer may act here, and those roles never carry a group limit — so this is the
-  // guard for the day a limited role is given the power, not a fix for a live hole.
-  const scoped = repGroupScopeGuard(ctx!, team.groupId);
-  if (scoped) return scoped;
-
-  const [teamLedger, orgLedger] = await Promise.all([
-    getOrCreateRepTeamLedger(ctx!.org.id, team.id, team.name),
-    getOrCreateOrgLedger(ctx!.org.id, ctx!.org.name),
-  ]);
-
-  if (!orgLedger) {
-    return NextResponse.json({ error: 'Org ledger not found' }, { status: 500 });
-  }
-
-  // Create paired transfer entries: team pays → org receives
-  /* ⚠ THE TRANSFER'S OWN ENTRY ID IS KEPT (mig 275). The RPC returned void until then, so every
-     caller threw both halves away and `accounting_entry_id` sat unwritten — which is why a club
-     payment could not be taken back. The coach's undo reads this link, and an admin mark must
-     leave one too or it quietly creates a payment only the club office can reverse. */
-  const { data: transferEntryId, error: transferError } = await supabaseAdmin.rpc('create_accounting_transfer', {
-    p_from_ledger_id: teamLedger.id,
-    p_to_ledger_id: orgLedger.id,
-    p_amount: installment.amount,
-    p_description: `Rep allocation payment — installment #${installment.installmentNumber}`,
-    p_entry_date: tournamentToday(),
-    p_category: 'rep_allocation',
-    p_created_by: ctx!.user.id,
+  const current = await getRepAllocationInstallment(installId);
+  const moved = await clubReceiveInstallment(r.ctx, {
+    installmentId: installId, allocationId, splitId,
+    expect: current?.sentAt ? 'sent' : 'unpaid', on: null, method: null, reference: null,
   });
-
-  if (transferError) {
-    return NextResponse.json({ error: 'Failed to create accounting transfer' }, { status: 500 });
-  }
-
-  /* ⚠⚠ SAME RACE AS THE COACH'S DOOR, AND THE SAME ANSWER (`/review`, 2026-08-17). The pre-check
-     runs before the transfer; the transfer is a round trip; a second request can slip through that
-     window and post a second pair of ledger entries for one instalment. The writer refuses the
-     second stamp now, and a zero-row result has to be reported rather than dressed as success. */
-  const updated = await markRepAllocationInstallmentPaid(installId, ctx!.user.id, (transferEntryId as string | null) ?? null);
-  if (!updated) {
-    return NextResponse.json({ error: 'That installment has already been marked paid.' }, { status: 409 });
-  }
-
-  return NextResponse.json({ installment: updated });
+  if (!moved.ok) return moveRefused(moved);
+  return NextResponse.json({ installment: moved.installment });
 }, { route: '/api/admin/rep-teams/allocations/[allocationId]/splits/[splitId]/installments/[installId]' });

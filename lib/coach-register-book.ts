@@ -16,6 +16,8 @@ import { cashOnHandCents, REGISTER_SOURCE_LABEL, formatMoney, toCents, type Regi
 import { incomeCategoryFor } from './coach-cash-strip';
 import { PAYOUT_CATEGORY_NAME, revenueGroupLabel } from './coach-budget-months';
 import { joinNames } from './practice-plan-send';
+import { clubInstallmentLeftTeamOn, clubInstallmentWaitingOnClub } from './club-money-figures';
+import { CLUB_SENT_WAITING_WORD } from './club-money-words';
 import type { RepProgramYear } from './types';
 
 /**
@@ -47,6 +49,7 @@ import type { RepProgramYear } from './types';
 type AllocationInstallmentRow = {
   id: string; split_id: string; installment_number: number;
   amount: number; due_date: string | null; paid_at: string | null;
+  sent_at: string | null; sent_on: string | null; paid_on: string | null;
 };
 type DuesInstallmentRow = {
   id: string; schedule_id: string; player_id: string | null; installment_number: number;
@@ -223,7 +226,7 @@ export async function loadSeasonRegisterRows(
     splits.length > 0
       ? supabaseAdmin
           .from('rep_allocation_installments')
-          .select('id, split_id, installment_number, amount, due_date, paid_at')
+          .select('id, split_id, installment_number, amount, due_date, paid_at, sent_at, sent_on, paid_on')
           .in('split_id', splits.map(s => s.id))
       : EMPTY<AllocationInstallmentRow>(),
     schedules.length > 0
@@ -569,9 +572,16 @@ export async function loadSeasonRegisterRows(
     const splitById = new Map(splits.map(s => [s.id, s]));
     for (const i of (allocInstRes.data ?? []) as AllocationInstallmentRow[]) {
       const split = splitById.get(i.split_id);
+      /* ⚖ THE TEAM'S SIDE OF A CLUB BILL (Stage 3a, question 1): money left the team the day the coach
+         SENT it, whether or not the club has confirmed — one rule, `clubInstallmentLeftTeamOn`, that
+         money-summary, the settlement pot and the cash band read too, so Cash on hand and this book
+         agree to the cent. A pre-3a payment has no sent day and dates by its stamp, as before. */
+      const facts = { paidAt: i.paid_at, sentAt: i.sent_at, sentOn: i.sent_on, paidOn: i.paid_on };
+      const leftOn = clubInstallmentLeftTeamOn(facts);
+      const waiting = clubInstallmentWaitingOnClub(facts);
       rows.push({
         id: `allocation-${i.id}`,
-        date: i.paid_at ? orgDayKey(i.paid_at) : i.due_date,
+        date: leftOn ?? i.due_date,
         kind: 'club',
         description: split?.rep_cost_allocations?.description ?? 'Club allocation',
         /* ⚠ THE FILING IS THE SPLIT'S, NOT THE INSTALMENT'S. One bill, one classification — the
@@ -581,7 +591,7 @@ export async function loadSeasonRegisterRows(
         itemName: split?.budget_item_id ? itemName.get(split.budget_item_id) ?? null : null,
         moneyOut: Number(i.amount ?? 0),
         moneyIn: 0,
-        scheduled: !i.paid_at,
+        scheduled: !leftOn,
         overdueDays: null, // tagged for real below, once every row exists
         movesCash: true,
         open: { kind: 'workspace', section: 'club' },
@@ -590,7 +600,10 @@ export async function loadSeasonRegisterRows(
            unlinked record of money the club has already accounted for. */
         recordPayment: null,
         sourceLabel: REGISTER_SOURCE_LABEL.club,
-        detail: `Installment #${i.installment_number}`,
+        detail: waiting
+          ? `Installment #${i.installment_number} · ${CLUB_SENT_WAITING_WORD}`
+          : `Installment #${i.installment_number}`,
+        ...(waiting ? { waitingOnClub: true } : {}),
       });
     }
   }

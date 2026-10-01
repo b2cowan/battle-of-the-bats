@@ -5,7 +5,9 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getOrCreateOrgLedger, getOrgAllLedgers, getLedgerSummary } from '@/lib/db';
+import { bookInScope, teamIdsInScope } from '@/lib/club-team-route';
 import { withObservability } from '@/lib/observability';
+import { canMoveClubMoney } from '@/lib/member-access';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -24,10 +26,14 @@ export const GET = withObservability(async (req: Request) => {
   const from = url.searchParams.get('from') ?? undefined;
   const to   = url.searchParams.get('to')   ?? undefined;
 
-  await getOrCreateOrgLedger(ctx!.org.id, ctx!.org.name);
-  const ledgers   = await getOrgAllLedgers(ctx!.org.id);
+  await getOrCreateOrgLedger(ctx!.org.id);
+  // A member limited to some team groups sees only their groups' team books (B11).
+  const [all, scope] = await Promise.all([getOrgAllLedgers(ctx!.org.id), teamIdsInScope(ctx!)]);
+  const ledgers   = all.filter(l => bookInScope(l, scope));
   const summaries = await Promise.all(ledgers.map(l => getLedgerSummary(l, { from, to })));
 
+  // Each summary carries its book's all-time `balance` (one scope everywhere, C14). The badge's word
+  // for its kind is LEDGER_KIND_WORD (lib/club-ledger.ts), which knows all four.
   return NextResponse.json({ ledgers: summaries });
 }, { route: '/api/admin/accounting/ledgers' });
 
@@ -37,7 +43,8 @@ export const POST = withObservability(async (req: Request) => {
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
+  // ⚖ One rule for every club money write (Club Tier Stage 3a, Ask 1): whoever holds the club's accounting.
+  if (!canMoveClubMoney(ctx!, ctx!.org)) return forbidden();
 
   const body = await req.json();
 

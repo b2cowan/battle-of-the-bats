@@ -4608,6 +4608,7 @@ schedule was added for it.
 **Gotchas (read first):**
 1. **`getRepAllocationSplitsForTeam` queried the non-existent column `allocation_split_id`** (real FK = **`split_id`**) → the coach allocations GET errored. **✓ FIXED 2026-06-09** (corrected to `split_id`).
 2. **`org_id` is NOT NULL with no default/trigger.** `createRepCostAllocationWithSplits` historically omitted it on insert → NN violation — **✓ FIXED 2026-06-09** (now sets `org_id` + the denormalized `team_id`). `team_id` remains nullable by design (denormalized copy of the split's team; `team_idx`).
+0. **⚖ MIG 315 (Club Tier Stage 3a, Ask 1): "PAID" MEANS RECEIVED BY THE CLUB, AND A COACH CAN ONLY SAY "SENT".** An installment's ONE state, both sides, is `clubInstallmentState` ([lib/club-money-figures.ts](../../../lib/club-money-figures.ts)): **received** (`paid_at` set — the club recorded it or confirmed a coach's sent; the ONE moment the club's ledger is written, by `club_installment_receive`) · **sent** (`sent_at` set, `paid_at` null — the coach says the team sent it; writes NO ledger line; never overdue) · **overdue** (neither, `due_date` < the club's day) · **upcoming**. The coach's "Record as paid" now writes `sent_*` only; the coach may take back the team's own unconfirmed sent; a payment the club recorded is the club's to undo (`club_installment_undo`: both lines voided with the reason, `undone_*` set, sent cleared). The coach's CASH counts a sent installment as money out on `sent_on` (`clubInstallmentLeftTeamOn` — register, Cash on hand, settlement pot, cash band, coach BvA); the bill's Paid/Left still mean "the club has it". **No backfill:** every pre-315 row has the new columns NULL.
 3. **Paid = `paid_at` (+ `paid_by`), NOT `accounting_entry_id`** — still true, and now for a different reason. `markRepAllocationInstallmentPaid` sets `paid_at`/`paid_by`; the payment itself posts via `create_accounting_transfer` (team→org). ⚠⚠ **PAY IS NO LONGER ONE-WAY (mig 275, 2026-09-03).** The transfer RPC returns the payer-side (`transfer_out`) entry id, both mark routes store it here, and `unmarkRepAllocationInstallmentPaid` voids **both halves** through `linked_entry_id` before clearing the stamp — voiding one ledger and not the other is the one failure this domain exists to prevent. The undo **REFUSES** on a paid installment whose `accounting_entry_id` is NULL (recorded pre-275, no unambiguous backfill match): clearing the stamp there would report the bill unpaid while the money stayed moved. Still 409 if already paid, and 409 if already taken back.
 4. **ONE reminder column** (`reminder_sent_at`, 7-day re-send debounce) — contrast the dues installments' three.
 5. **CHECK `amount > 0`**; UNIQUE `(split_id, installment_number)`.
@@ -4634,11 +4635,49 @@ schedule was added for it.
 **`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — the `transfer_out` entry that "Record as paid" posted, **written from mig 275 onward** and backfilled by 275 for older payments whose entry matched beyond doubt (same ledger, category, amount and description, and unique in BOTH directions — ambiguous groups were deliberately skipped, not guessed). Cleared with `paid_at` when the payment is taken back. ⚠ Never a paid flag (gotcha 3); NULL on a PAID row means "recorded before 275" and is what makes the undo refuse.
 
 <!-- dict:col:rep_allocation_installments.reminder_sent_at -->
-**`reminder_sent_at`** (timestamptz, nullable) — single org→coach reminder stamp (gotcha 4).
+**`reminder_sent_at`** (timestamptz, nullable) — single org→coach reminder stamp (gotcha 4). From mig 315 written by the Accounting reminder send (`rep_allocation_reminder_waves` records the wave itself; "last sent" reads the wave, not this).
+
+<!-- dict:col:rep_allocation_installments.sent_on -->
+<!-- dict:col:rep_allocation_installments.sent_method -->
+<!-- dict:col:rep_allocation_installments.sent_reference -->
+<!-- dict:col:rep_allocation_installments.sent_by -->
+<!-- dict:col:rep_allocation_installments.sent_at -->
+**`sent_on`** (date) / **`sent_method`** (text, CHECK `etransfer|cash|cheque|card|other` — the product's one method list) / **`sent_reference`** (text, ≤100) / **`sent_by`** (FK → `auth.users.id`, SET NULL) / **`sent_at`** (timestamptz) — the COACH says the team sent it (**mig 315**, gotcha 0). CHECK: `sent_at` and `sent_on` are set together or not at all. Writes no ledger line; cleared when the coach takes it back or the club undoes a payment; KEPT (as history) when the club confirms.
+
+<!-- dict:col:rep_allocation_installments.paid_on -->
+<!-- dict:col:rep_allocation_installments.paid_method -->
+<!-- dict:col:rep_allocation_installments.paid_reference -->
+**`paid_on`** (date) / **`paid_method`** (text, CHECK the one method list) / **`paid_reference`** (text, ≤100) — how the money reached the club, as the club recorded it (**mig 315**). `paid_at` stays the moment of recording; `paid_on` is the club's day it came. NULL before 3a (readers fall back to the org day of `paid_at`).
+
+<!-- dict:col:rep_allocation_installments.undone_at -->
+<!-- dict:col:rep_allocation_installments.undone_by -->
+<!-- dict:col:rep_allocation_installments.undone_reason -->
+**`undone_at`** (timestamptz) / **`undone_by`** (FK → `auth.users.id`, SET NULL) / **`undone_reason`** (text, ≤500) — the club's LAST undo of a recorded payment (**mig 315**, Ask 3); CHECK: a reason whenever `undone_at` is set. The coach reads the reason on the bill. Cleared when the installment is received again (the voided lines keep the history).
 
 <!-- dict:col:rep_allocation_installments.org_id -->
 <!-- dict:col:rep_allocation_installments.team_id -->
 **`org_id`** (FK → `organizations.id`, **NOT NULL — but unwritten**, gotcha 2; index `org_idx`) / **`team_id`** (FK → `rep_teams.id`, nullable, also unset; index `team_idx`) — denormalized scope.
+
+### `rep_allocation_reminder_waves`
+<!-- dict:table:rep_allocation_reminder_waves -->
+
+**Purpose:** one row per allocation-reminder SEND (**mig 315**, Club Tier Stage 3a, Ask 4) — who sent it, when, and which teams it reached — so the preview's "last sent" is true and a double submit within a minute is refused (`just_sent`). ⚖ **A wave is CLAIMED before any email goes** — `club_reminder_wave_claim` (mig 315) takes a per-club advisory lock for its transaction, refuses `just_sent` when a wave (the org's, or for the single-team variant one whose `team_ids` holds that team) is under 60 seconds old, and inserts the row with `recipient_count` 0 (found by /review 2026-10-01: two sends a breath apart both passed an app-side check and emailed every coach twice). `sendReminders` ([lib/club-money-reminders.ts](../../../lib/club-money-reminders.ts)) then UPDATES the row with what actually went, or DELETES it when no email went (so a retry is not refused). A row with `recipient_count` 0 is a claim in flight (or a process that died mid-send). Server-only (RLS on, no policies; service role granted explicitly). Org-scoped; it stays with the club (a coach's own org never sends one — named in `team-move-coverage.test.ts`).
+
+<!-- dict:col:rep_allocation_reminder_waves.org_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL, ON DELETE CASCADE) — the club; index `(org_id, sent_at DESC)`.
+
+<!-- dict:col:rep_allocation_reminder_waves.sent_by -->
+<!-- dict:col:rep_allocation_reminder_waves.sent_at -->
+**`sent_by`** (FK → `auth.users.id`, SET NULL) / **`sent_at`** (timestamptz, NOT NULL, default now()) — who sent the wave and when (the preview's "Last sent … by …").
+
+<!-- dict:col:rep_allocation_reminder_waves.team_id -->
+<!-- dict:col:rep_allocation_reminder_waves.team_ids -->
+**`team_id`** (FK → `rep_teams.id`, SET NULL, nullable) — set only on the single-team variant ("Remind 16U Girls" from a team's bill) / **`team_ids`** (uuid[], NOT NULL, default `{}`) — every team the wave emailed; not FK-checked (a record of a send). The single-team preview's "last sent" reads the newest wave whose `team_ids` contains the team.
+
+<!-- dict:col:rep_allocation_reminder_waves.recipient_count -->
+<!-- dict:col:rep_allocation_reminder_waves.installment_count -->
+<!-- dict:col:rep_allocation_reminder_waves.amount -->
+**`recipient_count`** (int, NOT NULL, ≥0) — people emailed (never the sender) / **`installment_count`** (int, NOT NULL, ≥0) — installments listed, overdue included / **`amount`** (numeric(12,2), NOT NULL, ≥0) — what the wave asked for across the teams it reached.
 
 ### `rep_team_expenses`
 <!-- dict:table:rep_team_expenses -->
@@ -4888,10 +4927,10 @@ schedule was added for it.
 
 **Gotchas (read first):**
 1. **`request_type` DIRECTION (CHECK `payment_to_org|charge_to_org`):** `payment_to_org` = team pays the org (transfer team→org ledger, category `team_payment_to_org`); `charge_to_org` = org pays/charges to the team (transfer org→team ledger, category `team_charge_to_org`).
-2. **On approve, `accounting_entry_id` is NOT set** — approval calls the `create_accounting_transfer` RPC then updates status, but ignores the RPC's entry id; the column has an FK but is never populated. The ledger transfer is authoritative.
+2. **⚖ SINCE MIG 315 APPROVAL IS ONE STEP AND KEEPS ITS LINK.** `club_request_approve` locks the row, refuses unless `status = 'pending'` (a double approval used to post two transfers), writes both lines and the decision together, dates by the club's day (it was UTC), and stores the payer-side entry in `accounting_entry_id`. Before 315 the id was thrown away — every pre-315 approval has it NULL, and a reversal of one REFUSES (`unlinked`) rather than guessing which two lines to void.
 3. **Approve posts a ledger transfer but creates NO `rep_team_expense`** — the two finance tables are decoupled.
 4. **`budget_line_id` → `org_budget_lines` (ORG Accounting), NOT `rep_budget_lines`** (dual-budget-line trap). Accepted from the coach and surfaced on read, but **not used in the approval/transfer logic** — a categorization hint only, often NULL.
-5. **`status` (CHECK `pending|approved|denied`, default `pending`) is a one-way machine** — both approve and deny 409 if `status != pending`; no reopening. `denial_reason` is required (app-layer) on deny. `reviewed_by`/`reviewed_at` stamped on the decision. Coaches may DELETE (cancel) only their own **pending** requests.
+5. **`status` (CHECK `pending|approved|denied|reversed` since mig 315, default `pending`)** — approve and deny only from `pending`; **`reversed` only from `approved`** (`club_request_reverse`: both lines voided with the reason; the request stays in the list, closed — the coach may file a new one). CHECK: `reversed` ⇔ `reversed_at` set, and a reason with it. `denial_reason` is required (app-layer) on deny. The stored `denied` reads "Declined" everywhere (one spelling; never renamed — it is an identifier). Coaches may DELETE (cancel) only their own **pending** requests. ⚠ A reversed request moved no money: every reader that sums approved requests excludes it by construction (`status = 'approved'`).
 6. **`created_by` is NOT NULL** (the requesting coach); `reviewed_by` nullable until decided. **NO Stripe columns** — settlement is internal double-entry only (`payment_method` is a free-text label, not a Stripe ref). **CHECK `amount > 0`**; indexes `(org_id, status)`, `(team_id, status)`, `(team_id, program_year_id, status)`.
 7. **⚠⚠ THIS TABLE HAD NO SEASON UNTIL MIGRATION 247 (2026-08-17), and two readers were wrong because of it.** The coach's **Cash on hand** summed approved requests **team-lifetime** while every other input to that figure was scoped to the working program year — so a team in its second season read the previous season's club money as this season's cash. And the **season close-out pot** (`lib/coach-season-settlement.ts`) excluded club money outright, printing a caveat on the card, because it could not attribute it; its comment named this migration as the fix. Both read `program_year_id` now. **Anything that sums this table must scope by season.**
 8. **⚠⚠ AND IT CARRIED NO TEAM-SIDE CLASSIFICATION UNTIL MIGRATION 250 (2026-08-17), which is why NO club money reached Budget vs. Actual at all.** That route reads the budget plan, `rep_team_expenses`, `rep_team_money_in`, realised fundraiser entries and dues — and neither this table nor `rep_allocation_installments`. So on a club-run team, every dollar of the club's bill the team paid *and* every cost the club agreed to cover were absent from the one screen that answers "how did we do against plan?" — frequently the season's largest line. The cause was this gap: `budget_line_id` points at the **club's** `org_budget_lines` (gotcha 4) and could not carry a team's vocabulary even if something wrote it. Fixed by `budget_item_id`/`budget_category_id` below, on this table and on `rep_allocation_splits`.
@@ -4939,7 +4978,20 @@ schedule was added for it.
 **`budget_item_id`** (FK → `budget_items.id`, nullable, **ON DELETE SET NULL**; **mig 250**) / **`budget_category_id`** (FK → `budget_categories.id`, nullable, **ON DELETE SET NULL**; **mig 250**) — what the request is **for**, in the team's own shared taxonomy (gotcha 8). ⚠ **Chosen from the money-OUT side of the item library on BOTH request directions.** A `charge_to_org` brings money *in*, but what it is *for* is a cost — it is a reimbursement, and the refund rule applies: the direction flips the money, never the list (mig 246 + redesign P2). Filing it as revenue would double-count the season, which `rep_team_money_in`'s own table comment already spells out. ⚠ **Both levels are stored on every row**, because Budget vs. Actual reads them in **different orders** — month attribution prefers the stored category, cost placement derives from the item — so a row carrying only one reports under two different headings depending which part of the page is asking. The write path derives the category from the chosen item and never trusts the caller. Registered in `BUDGET_ITEM_REFERENCES` (`lib/coach-budget-item-usage.ts`) as *club requests*.
 
 <!-- dict:col:rep_team_payment_requests.accounting_entry_id -->
-**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — never written (gotcha 2).
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — the approval's payer-side (`transfer_out`) line, **written from mig 315 on** (gotcha 2); NULL on every earlier approval. Read by the reversal (both halves via `linked_entry_id`).
+
+<!-- dict:col:rep_team_payment_requests.paid_on -->
+<!-- dict:col:rep_team_payment_requests.paid_method -->
+<!-- dict:col:rep_team_payment_requests.paid_reference -->
+**`paid_on`** (date) / **`paid_method`** (text, CHECK the one method list) / **`paid_reference`** (text, ≤100) — how the money moved on approval, as the club recorded it (**mig 315**). NULL on a request decided before 3a.
+
+<!-- dict:col:rep_team_payment_requests.reversed_at -->
+<!-- dict:col:rep_team_payment_requests.reversed_by -->
+<!-- dict:col:rep_team_payment_requests.reversed_reason -->
+**`reversed_at`** (timestamptz) / **`reversed_by`** (FK → `auth.users.id`, SET NULL) / **`reversed_reason`** (text, ≤500) — the club took an approval back (**mig 315**, gotcha 5); the coach reads the reason.
+
+<!-- dict:col:rep_team_payment_requests.payout_hold_told_at -->
+**`payout_hold_told_at`** (timestamptz, nullable) — when the club was told this WAITING request is holding up the team's end-of-season payout (**mig 315**, Ask 5b). Stamped once (conditional on NULL) the first time a coach who can pay out opens the payout sheet while the club's answer is the one thing left (`clubRequestsHoldPayout` over the coach's own `closeOutBlockers`); the sheet returns it as `clubToldAt`.
 
 <!-- dict:col:rep_team_payment_requests.created_by -->
 <!-- dict:col:rep_team_payment_requests.reviewed_by -->
@@ -5952,7 +6004,9 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 3. **DELETE is a soft-`void`** — `voidEntry` sets `status='void'`, row preserved ([lib/db.ts:2823](../../../lib/db.ts#L2823)); `getLedgerSummary` excludes void ([:2839](../../../lib/db.ts#L2839)). Already-void can't be re-voided/edited.
 4. **`category` is FREE TEXT (no FK)** — and budget-vs-actual does **not** join it to `budget_items` by name (it sums org-wide expenses). Don't treat `category` as a chart-of-accounts key.
 5. **`payee_id` (→`org_payees`) vs `payee_payer` (text) are mutually exclusive by CONVENTION only — no DB CHECK.**
-6. **`source_module`/`source_entity_id` = cross-module provenance, but only `'league_registration'` is actually written** at this commit ([lib/db.ts:3677](../../../lib/db.ts#L3677)); the migration's `module_house_league` example is aspirational/unimplemented.
+6. **`source_module`/`source_entity_id` = cross-module provenance.** `'league_registration'` (house-league fees) and, **from mig 315 (Club Tier Stage 3a), `'rep_allocation_installment'` and `'rep_payment_request'`** on BOTH halves of every club-loop transfer (the installment's / request's id). A line with a source is **changed where it came from, never on the ledger** — the entry PATCH/DELETE and `club_transfer_void` refuse it (`from_a_source`); pre-315 loop lines carry no source and are caught by their category key (`rep_allocation` / `team_*_to_org`) or by an installment/request naming them in `accounting_entry_id` (`isSourcedLine`, [lib/club-ledger.ts](../../../lib/club-ledger.ts)).
+7. **⚖ MIG 315: EVERY CLUB MONEY MOVE IS ONE DATABASE FUNCTION** — `club_installment_receive` (record / confirm received), `club_installment_undo`, `club_request_approve`, `club_request_reverse`, `club_transfer_void`, `club_payee_merge`, `club_reminder_wave_claim` (a reminder wave, claimed before any email), plus `club_general_ledger` / `club_team_ledger` (get-or-create, race-safe) and `club_void_entry_pair` (both halves, one reason). Each locks its row, refuses unless the state is the one the caller saw (`{ok:false, code:'state_changed', state}` before any write), and writes the state change and both lines in one transaction — a double submit leaves one pair, a failed step leaves none (`npm run check:club-money-atomicity`, dev, rolled back, mutation-proven). Server-only (revoked from anon/authenticated). ⚠ **The words on a line are the app's** (passed in from [lib/club-money-words.ts](../../../lib/club-money-words.ts)); loop lines from 3a carry the same category **keys** the pre-3a code wrote (`'rep_allocation'` / `'team_payment_to_org'` / `'team_charge_to_org'`, `CLUB_LOOP_CATEGORY`), worded at read time by `categoryWord` — so old and new lines are one shape and a rename is one line of code — and the method word in `payment_method`.
+8. **⚠ A VOID NOW CARRIES ITS RECORD (mig 315)** — `void_reason` / `voided_by` / `voided_at`. A club void (undo, reversal, transfer void) writes all three on both halves; `voidEntry` writes `voided_at` always and the other two when given. NULL on every pre-315 void.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -5975,7 +6029,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`status`** (text, NOT NULL, default `'posted'`; CHECK `pending|posted|void`) — `pending`=receivable/payable unsettled, `posted`=settled, `void`=soft-cancelled (row kept). Manual create/edit allow only `posted|pending`.
 
 <!-- dict:col:accounting_entries.category -->
-**`category`** (text, nullable) — free-text label, ≤100 chars; NOT an FK (gotcha 4). League fee writes `'registration_fee'`; rep transfers write `'team_payment_to_org'`/`'team_charge_to_org'`.
+**`category`** (text, nullable) — free-text label, ≤100 chars; NOT an FK (gotcha 4). League fee writes `'registration_fee'`; pre-315 rep transfers wrote the keys `'rep_allocation'` / `'team_payment_to_org'` / `'team_charge_to_org'`, which are READ as "Team allocations" / "Team support" (`categoryWord`, never rewritten); from mig 315 the loop writes the same keys (gotcha 7). The club's category list reads its own books only, never a team's.
 
 <!-- dict:col:accounting_entries.linked_entry_id -->
 **`linked_entry_id`** (self-FK → `accounting_entries.id` ON DELETE SET NULL, nullable) — pairs the two transfer legs (each points at the other); populated only for `transfer_*` rows (set by the RPC).
@@ -5996,6 +6050,11 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:accounting_entries.notes -->
 **`notes`** (text, nullable) — free-text internal notes, ≤2000 chars (added mig 033).
+
+<!-- dict:col:accounting_entries.void_reason -->
+<!-- dict:col:accounting_entries.voided_by -->
+<!-- dict:col:accounting_entries.voided_at -->
+**`void_reason`** (text, nullable, CHECK ≤ 500) / **`voided_by`** (FK → `auth.users.id`, ON DELETE SET NULL, nullable) / **`voided_at`** (timestamptz, nullable) — why, who and when a line was voided (**mig 315**, gotcha 8). Printed under a void line on the club's Ledger and kept in its export (marked VOID, out of the totals). NULL on every void before 315.
 
 ---
 

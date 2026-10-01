@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { tournamentToday, addCalendarDays, daysBetweenDateStrings } from '@/lib/timezone';
+import { clubInstallmentState } from '@/lib/club-money-figures';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -27,7 +28,8 @@ export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
-  const days = Math.min(Math.max(parseInt(url.searchParams.get('days') ?? '90', 10), 1), 365);
+  const asked = parseInt(url.searchParams.get('days') ?? '90', 10);
+  const days = Math.min(Math.max(Number.isFinite(asked) ? asked : 90, 1), 365);
 
   // When the caller is scoped to specific groups, restrict to those teams
   let scopedTeamIds: string[] | null = null;
@@ -70,7 +72,7 @@ export const GET = withObservability(async (req: Request) => {
   if (splitIds.length > 0) {
     const { data: allocInst } = await supabaseAdmin
       .from('rep_allocation_installments')
-      .select('id, split_id, installment_number, amount, due_date')
+      .select('id, split_id, installment_number, amount, due_date, paid_at, sent_at, sent_on')
       .in('split_id', splitIds)
       .is('paid_at', null)
       .lte('due_date', cutoffStr)
@@ -79,13 +81,18 @@ export const GET = withObservability(async (req: Request) => {
     collectionsItems = (allocInst ?? []).map((i: any) => {
       const meta = splitMetaMap.get(i.split_id);
       const d = daysUntil(i.due_date);
+      /* ⚠ ON SESSION 2'S RETIRE LIST — Accounting › Allocations › Coming due replaces this panel. Until
+         then it answers by the ONE overdue rule (Club Tier Stage 3a): a payment a coach has SENT is
+         waiting on the club, never overdue. */
+      const state = clubInstallmentState({ dueDate: i.due_date, paidAt: i.paid_at, sentAt: i.sent_at }, todayStr);
       return {
         id:          i.id,
         description: meta?.description ?? 'Org allocation',
         amount:      Number(i.amount),
         dueDate:     i.due_date,
         daysUntilDue: d,
-        overdue:     d < 0,
+        overdue:     state === 'overdue',
+        sentToClub:  state === 'sent',
         label:       meta?.teamName ?? null,
       };
     });

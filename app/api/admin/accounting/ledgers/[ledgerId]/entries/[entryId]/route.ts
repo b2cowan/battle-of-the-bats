@@ -6,10 +6,34 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLedgerById, updateEntry, voidEntry } from '@/lib/db';
 import type { AccountingEntryType, AccountingEntryStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { canMoveClubMoney } from '@/lib/member-access';
+import { SOURCED_LINE_READ_ONLY, TEAM_BOOK_READ_ONLY } from '@/lib/club-money-words';
+import { isSourcedLine } from '@/lib/club-ledger';
+
+/**
+ * ⚖ A LINE WRITTEN BY AN ALLOCATION, A REQUEST OR A HOUSE-LEAGUE FEE IS CHANGED WHERE IT CAME FROM
+ * (Club Tier Stage 3a, C12). Today Void sat on such a line and voided the club's half only: the
+ * installment still read paid and the team's half stood. It is read here, and its source's own door
+ * (an allocation's Undo, a request's Reverse) takes both halves back with a reason.
+ * `referenced` catches a pre-3a line with no source_module: an installment or a request names it.
+ */
+async function writtenBySource(entry: { id: string; linked_entry_id: string | null; category: string | null; source_module: string | null; entry_type: string }) {
+  const ids = [entry.id, entry.linked_entry_id].filter((v): v is string => !!v);
+  const [inst, req] = await Promise.all([
+    supabaseAdmin.from('rep_allocation_installments').select('id', { count: 'exact', head: true }).in('accounting_entry_id', ids),
+    supabaseAdmin.from('rep_team_payment_requests').select('id', { count: 'exact', head: true }).in('accounting_entry_id', ids),
+  ]);
+  return isSourcedLine(
+    { entryType: entry.entry_type as never, category: entry.category, sourceModule: entry.source_module },
+    (inst.count ?? 0) > 0 || (req.count ?? 0) > 0,
+  );
+}
 
 type Params = { params: Promise<{ ledgerId: string; entryId: string }> };
 
-const VALID_ENTRY_TYPES = new Set<string>(['income', 'expense', 'transfer_in', 'transfer_out']);
+// An ordinary entry is In or Out, never half of a transfer (C12): a transfer has its own door, and a
+// re-typed "Transfer In" with no partner is money from nowhere.
+const VALID_ENTRY_TYPES = new Set<string>(['income', 'expense']);
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -33,7 +57,8 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
+  // ⚖ One rule for every club money write (Club Tier Stage 3a, Ask 1): whoever holds the club's accounting.
+  if (!canMoveClubMoney(ctx!, ctx!.org)) return forbidden();
 
   const { ledgerId, entryId } = await params;
 
@@ -42,21 +67,24 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   // A team-entity ledger is the coach's own books — read-only from the org side
   // (audit J4-021). Org-side money moves go through allocations / payment-request approvals.
   if (ledger.entityType === 'team') {
-    return NextResponse.json({ error: 'This ledger belongs to a coach-managed team and is read-only here. Use allocations or payment-request approvals to move money.' }, { status: 403 });
+    return NextResponse.json({ error: TEAM_BOOK_READ_ONLY, code: 'team_book' }, { status: 403 });
   }
 
   const { data: existing } = await supabaseAdmin
     .from('accounting_entries')
-    .select('id, entry_type, status')
+    .select('id, entry_type, status, category, source_module, linked_entry_id')
     .eq('id', entryId)
     .eq('ledger_id', ledgerId)
     .maybeSingle();
 
   if (!existing) return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
 
+  if (await writtenBySource(existing)) {
+    return NextResponse.json({ error: SOURCED_LINE_READ_ONLY, code: 'from_a_source' }, { status: 403 });
+  }
   if (existing.entry_type === 'transfer_in' || existing.entry_type === 'transfer_out') {
     return NextResponse.json(
-      { error: 'Transfer entries cannot be edited directly. Void the transfer and re-create it.' },
+      { error: 'Transfer entries cannot be edited directly. Void the transfer and re-create it.', code: 'transfer' },
       { status: 400 },
     );
   }
@@ -128,7 +156,8 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
+  // ⚖ One rule for every club money write (Club Tier Stage 3a, Ask 1): whoever holds the club's accounting.
+  if (!canMoveClubMoney(ctx!, ctx!.org)) return forbidden();
 
   const { ledgerId, entryId } = await params;
 
@@ -137,19 +166,31 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   // A team-entity ledger is the coach's own books — read-only from the org side
   // (audit J4-021). Org-side money moves go through allocations / payment-request approvals.
   if (ledger.entityType === 'team') {
-    return NextResponse.json({ error: 'This ledger belongs to a coach-managed team and is read-only here. Use allocations or payment-request approvals to move money.' }, { status: 403 });
+    return NextResponse.json({ error: TEAM_BOOK_READ_ONLY, code: 'team_book' }, { status: 403 });
   }
 
   const { data: existing } = await supabaseAdmin
     .from('accounting_entries')
-    .select('id, status')
+    .select('id, status, entry_type, category, source_module, linked_entry_id')
     .eq('id', entryId)
     .eq('ledger_id', ledgerId)
     .maybeSingle();
 
   if (!existing) return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
   if (existing.status === 'void') return NextResponse.json({ error: 'Entry is already voided' }, { status: 400 });
+  if (await writtenBySource(existing)) {
+    return NextResponse.json({ error: SOURCED_LINE_READ_ONLY, code: 'from_a_source' }, { status: 403 });
+  }
+  // One half of a transfer is never voided alone (C13): the two books would stop agreeing.
+  if (existing.entry_type === 'transfer_in' || existing.entry_type === 'transfer_out') {
+    return NextResponse.json({
+      error: 'A transfer is voided both halves together. Use Void this transfer.', code: 'use_transfer_void',
+    }, { status: 400 });
+  }
 
-  await voidEntry(entryId, ledgerId);
+  // The reason prints under the line (Ask 3). Optional here only until session 2's window asks for it.
+  const body = await req.json().catch(() => ({})) as Record<string, unknown>;
+  const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 500) || null : null;
+  await voidEntry(entryId, ledgerId, { reason, by: ctx!.user.id });
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/accounting/ledgers/[ledgerId]/entries/[entryId]' });

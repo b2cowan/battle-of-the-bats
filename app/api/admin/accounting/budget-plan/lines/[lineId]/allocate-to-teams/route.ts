@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { canMoveClubMoney } from '@/lib/member-access';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import {
@@ -43,7 +44,8 @@ export const POST = withObservability(async (req: Request, { params }: Ctx) => {
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
+  // ⚖ A new allocation answers to the ONE money rule (Club Tier Stage 3a, Ask 1). Its arithmetic is 3b's.
+  if (!canMoveClubMoney(ctx!, ctx!.org)) return forbidden();
 
   const { lineId } = await params;
 
@@ -125,7 +127,7 @@ export const POST = withObservability(async (req: Request, { params }: Ctx) => {
       );
     }
 
-    await getOrCreateRepTeamLedger(ctx!.org.id, team.id, team.name);
+    await getOrCreateRepTeamLedger(ctx!.org.id, team.id);
   }
 
   // Create the allocation using the shared DB function

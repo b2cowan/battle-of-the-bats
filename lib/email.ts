@@ -44,7 +44,17 @@ export function escapeHtml(value: string): string {
 
 export type SendEmailResult = { status: 'sent' | 'skipped' | 'provider_error' };
 
-export async function sendEmail(to: string, subject: string, html: string): Promise<SendEmailResult> {
+/**
+ * `opts.replyTo` — where a reply goes (Club Tier Stage 3a: an allocation reminder's reply reaches the
+ * person who sent it, question 3 ruled 2026-09-30 — the club has no payment-instructions setting, so
+ * the coach replies to arrange payment). Omitted, replies go to the From address as before.
+ */
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  opts: { replyTo?: string | null } = {},
+): Promise<SendEmailResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn('[email] RESEND_API_KEY not set - skipping send');
@@ -53,7 +63,10 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
   const res = await fetch(RESEND_API, {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: FROM, to, subject, html, text: htmlToText(html) }),
+    body: JSON.stringify({
+      from: FROM, to, subject, html, text: htmlToText(html),
+      ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
+    }),
   });
   if (!res.ok) {
     const err = await res.text();
@@ -1345,4 +1358,17 @@ export function cancellationConfirmationHtml(p: {
     </div>
     <a href="${p.resubscribeUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Resubscribe</a>
   `);
+}
+
+/**
+ * An allocation reminder to a team's money people (Club Tier Stage 3a, Ask 4). The words are
+ * `reminderEmailLines` (lib/club-money-words.ts, /marketing's drafts); every line is plain text and
+ * escaped here. The reply goes to the club person who sent it — the send sets `replyTo`.
+ */
+export function allocationReminderHtml(words: { intro: string; items: string[]; total: string; outro: string }): string {
+  return wrap(`
+      <p style="margin:0 0 0.75rem;">${escapeHtml(words.intro)}</p>
+      <ul style="margin:0 0 0.75rem;padding-left:1.25rem;">${words.items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
+      <p style="margin:0 0 0.75rem;font-weight:700;">${escapeHtml(words.total)}</p>
+      <p style="margin:0;">${escapeHtml(words.outro)}</p>`);
 }

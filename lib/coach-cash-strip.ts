@@ -1,4 +1,5 @@
 import { orgDayKey } from './timezone';
+import { clubInstallmentLeftTeamOn } from './club-money-figures';
 /* ⚠ THE BAND VOCABULARY LIVES IN `coach-budget-months`, NOT HERE, and is imported rather than
    re-exported: a type with two import paths is a type two readers can disagree about where it
    belongs. This module decides which RECORDS are cash; that one owns what the grid CALLS them. */
@@ -144,8 +145,11 @@ export interface CashStripInputs {
      *  level, so the row still mirrors dues (owner ruling 2026-08-24). */
     reason: string | null;
   }>;
-  /** Club allocation installments; only PAID ones are cash (on the day the team paid). */
-  clubInstallments: Array<CashOutRecord & { paidAt: string | null }>;
+  /** Club allocation installments; cash once the money LEFT the team — sent or received (Club Tier
+   *  Stage 3a, question 1), on the day it left (`clubInstallmentLeftTeamOn`, the register's rule). */
+  clubInstallments: Array<CashOutRecord & {
+    paidAt: string | null; sentAt?: string | null; sentOn?: string | null; paidOn?: string | null;
+  }>;
   /**
    * The platform's two money-in shelves, for a drive or sponsor that names no line (a record
    * migration 285 could not re-point). Its money still reports under the category its kind was
@@ -442,8 +446,9 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
     spend(p, p.paidDate);
   }
   for (const i of x.clubInstallments) {
-    if (!i.paidAt) continue;
-    spend(i, orgDayKey(i.paidAt));
+    const leftOn = clubInstallmentLeftTeamOn(i);
+    if (!leftOn) continue;
+    spend(i, leftOn);
   }
   /* ⚠ LAST ON PURPOSE. The month grid orders categories it learns from events by first appearance,
      and "Paid back to families" belongs at the FOOT of the expense band (the Option D mockup draws

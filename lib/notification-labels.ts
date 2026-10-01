@@ -43,6 +43,15 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   club_coach_declined:               'Coach declined your invitation',
   team_move_requested:               'A request to bring a team into a club',
   team_move_answered:                'A team move answered',
+  // Club Tier Stage 3a — money between a club and its teams (mig 315). Words are /marketing's drafts.
+  club_money_received:               'The club received a payment',
+  club_money_undone:                 'The club undid a payment',
+  club_request_approved:             'The club approved a request',
+  club_request_declined:             'The club declined a request',
+  club_request_reversed:             'The club reversed an approval',
+  team_money_sent:                   'A team says it sent a payment',
+  team_request_filed:                'A team filed a payment request',
+  team_request_holding_payout:       'A request is holding up a team’s payout',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -74,6 +83,14 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   club_coach_declined:               'A coach you invited from a team’s Coaches page declined the invitation.',
   team_move_requested:               'A club asked to bring your own team in, or a coach asked to bring theirs into your club. Nothing moves until you say yes.',
   team_move_answered:                'A team you asked to bring into a club moved, or the other side declined.',
+  club_money_received:               'Your club recorded a payment from your team, or confirmed one you sent.',
+  club_money_undone:                 'Your club undid a payment it had recorded, with its reason.',
+  club_request_approved:             'Your club approved one of your team’s payment requests.',
+  club_request_declined:             'Your club declined one of your team’s payment requests, with its reason.',
+  club_request_reversed:             'Your club reversed an approval it had made, with its reason.',
+  team_money_sent:                   'A team’s coach says they sent the club a payment. Confirm it when it arrives.',
+  team_request_filed:                'A team’s coach filed a payment request for the club to answer.',
+  team_request_holding_payout:       'A team can’t pay families their end-of-season share until you answer its request.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -113,6 +130,13 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
     label: 'Messaging',
     module: null,
     eventTypes: ['chat_message'],
+  },
+  // Club Tier Stage 3a (Ask 5c): the Accounting rows Stage 1 drew, each shipping with its event. Shown
+  // on the org card of an organization whose plan carries Accounting, to a member who can open it.
+  {
+    label: 'Accounting',
+    module: 'module_accounting',
+    eventTypes: ['team_money_sent', 'team_request_filed', 'team_request_holding_payout'],
   },
   // Notification Settings Phase 1 (D3): the 5 DEAD event types — 'score_disputed',
   // 'registration_deadline_approaching', 'waitlist_opened', 'roster_change_requested',
@@ -184,6 +208,15 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   // Rare, and it waits on the recipient's yes (or reports the answer to theirs).
   'team_move_requested',
   'team_move_answered',
+  // Money between a club and a team: each is rare and each changes what the other side can do next.
+  'club_money_received',
+  'club_money_undone',
+  'club_request_approved',
+  'club_request_declined',
+  'club_request_reversed',
+  'team_money_sent',
+  'team_request_filed',
+  'team_request_holding_payout',
 ]);
 
 /**
@@ -254,6 +287,15 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   // A team move: the request is a decision to make; the answer is news.
   team_move_requested:                'act',
   team_move_answered:                 'know',
+  // Club money (Stage 3a): the club's three wait on a decision from it; the coach's five are news.
+  team_money_sent:                    'act',
+  team_request_filed:                 'act',
+  team_request_holding_payout:        'act',
+  club_money_received:                'know',
+  club_money_undone:                  'know',
+  club_request_approved:              'know',
+  club_request_declined:              'know',
+  club_request_reversed:              'know',
   // A family's own team news — informational, never a decision to make.
   family_game_update:                 'know',
   // Talk — conversation (moves to the Chat tab in P3)

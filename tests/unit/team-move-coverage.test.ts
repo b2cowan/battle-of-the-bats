@@ -55,6 +55,7 @@ const STAYS: Record<string, string> = {
   org_public_site_content: 'the coach org’s own public-site page, not the team',
   notifications: 'bell messages already delivered, addressed to the old portal’s pages',
   notification_preferences: 'a person’s settings for the old portal; the club’s defaults apply in the club',
+  rep_allocation_reminder_waves: 'a CLUB’s record of its allocation reminders (mig 315); a coach’s own org never bills a team, so it has none to move',
   feedback_submissions: 'telemetry',
   platform_events: 'telemetry',
   platform_audit_log: 'telemetry',

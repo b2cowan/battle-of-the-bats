@@ -6,6 +6,7 @@ import { resolveBudgetItem } from '@/lib/coach-budget-items';
 import { mapClubRequest, resolveMoneyInMeaning } from '@/lib/coach-club-money';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { tellClubOfNewRequest } from '@/lib/club-money-moves';
 
 /**
  * What this team has asked its club for, in the season on screen.
@@ -141,6 +142,12 @@ export const POST = withObservability(async (req: Request,
     .single();
 
   if (error) return captureAndJson(error, { error: error.message }, 500);
+
+  // The club's accounting people are told (Club Tier Stage 3a, Ask 5c). Best-effort: the request landed.
+  await tellClubOfNewRequest({
+    org: ctx.org, team: { id: team.id, name: team.name, groupId: team.groupId ?? null }, userId: ctx.user.id,
+    request: { id: data.id, amount: Number(data.amount), description: data.description, requestType: data.request_type },
+  });
 
   return NextResponse.json({
     request: mapClubRequest(data, { item: item.item?.name ?? null, category: item.item?.categoryName ?? null }),

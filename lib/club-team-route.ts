@@ -37,13 +37,27 @@ export async function resolveClubTeam(
   if (!hasModuleEntitlement(ctx.org, 'module_rep_teams')) return { error: forbidden() };
   if (opts.write && ctx.role !== 'owner' && ctx.role !== 'admin') return { error: forbidden() };
 
+  const t = await clubTeamFor(ctx, teamId);
+  if ('error' in t) return t;
+  return { ctx, team: t.team };
+}
+
+/**
+ * One of THIS club's teams, inside the member's team-group limit (B11): another org's team is a 404
+ * (the caller must not learn it exists), a team outside the member's groups a 403. Shared by the
+ * Rep Teams gate above and the club-money gate (lib/club-money-route.ts).
+ */
+export async function clubTeamFor(
+  ctx: AuthContextWithRole,
+  teamId: string,
+): Promise<{ error: Response } | { team: RepTeam }> {
   const team = await getRepTeam(teamId);
   if (!team || team.orgId !== ctx.org.id) {
     return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   }
   const scoped = repGroupScopeGuard(ctx, team.groupId);
   if (scoped) return { error: scoped };
-  return { ctx, team };
+  return { team };
 }
 
 /**
@@ -83,6 +97,19 @@ export async function teamIdsInScope(ctx: AuthContextWithRole): Promise<Set<stri
     .from('rep_teams').select('id').eq('org_id', ctx.org.id).in('group_id', ctx.repGroupIds);
   if (error) throw error;
   return new Set((data ?? []).map((t: { id: string }) => t.id));
+}
+
+/**
+ * May this member read this book? A TEAM's book is one more of that team's records, so a member
+ * limited to some team groups reads only their groups' books (Club Tier B11): the ledger list leaves
+ * the rest out and a direct address is a 404. The club's own books (General, a tournament's, a league
+ * season's) are no team's and stay open to them. `scope` is `teamIdsInScope(ctx)`.
+ */
+export function bookInScope(
+  ledger: { entityType: string; entityId: string | null },
+  scope: Set<string> | null,
+): boolean {
+  return !scope || ledger.entityType !== 'team' || (ledger.entityId !== null && scope.has(ledger.entityId));
 }
 
 /**

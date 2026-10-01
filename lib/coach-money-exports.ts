@@ -36,6 +36,8 @@ import { isDuesCategory } from './coach-dues-revenue';
 import { KIND_LABEL, SPONSOR_STANDING_LABEL, sponsorStanding } from './coach-fundraising';
 import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
 import { clubMoneyInWord, type ClubMoneyInMeaning, type ClubRequestType } from './coach-club-money';
+import { clubInstallmentState } from './club-money-figures';
+import { CLUB_SENT_WAITING_WORD } from './club-money-words';
 import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
 import type { CommitmentStanding } from './payable-standing';
 
@@ -842,7 +844,10 @@ export function registerExportRows(
        moved the team's cash at all. Without the second, an out-of-pocket cost reads in a spreadsheet
        as money that left the account. */
     status: r.overdueDays != null ? `Overdue · ${r.overdueDays}d`
-      : r.scheduled ? 'Scheduled' : r.movesCash ? 'Settled' : 'Settled — no team cash',
+      : r.scheduled ? 'Scheduled'
+        // The Ledger's chip, in the file too (Club Tier Stage 3a): money sent, the club not yet confirmed.
+        : r.waitingOnClub ? CLUB_SENT_WAITING_WORD
+          : r.movesCash ? 'Settled' : 'Settled — no team cash',
     /* Blank rather than a placeholder on the overwhelming majority of rows the team paid: a
        spreadsheet is filtered and sorted, and "The team" as text would sort in among real names. */
     paidBy: r.paidByName ?? '',
@@ -999,7 +1004,7 @@ export function clubMoneyRows(
     amount: number;
     budgetCategoryName?: string | null;
     budgetItemName?: string | null;
-    installments: Array<{ amount: number; dueDate: string; paidAt: string | null }>;
+    installments: Array<{ amount: number; dueDate: string; paidAt: string | null; sentAt?: string | null }>;
   }>,
   requests: Array<{
     requestType: ClubRequestType; moneyInMeaning?: ClubMoneyInMeaning | null;
@@ -1014,7 +1019,8 @@ export function clubMoneyRows(
     for (const i of s.installments) {
       if (i.paidAt) { paid += i.amount; continue; }
       toPay += i.amount;
-      if (i.dueDate < today) overdue += 1;
+      // The club's one overdue rule: a payment the coach has sent is never overdue (Stage 3a).
+      if (clubInstallmentState(i, today) === 'overdue') overdue += 1;
     }
     return {
       group: 'Billed us',
@@ -1065,7 +1071,7 @@ export function allocationRows(
     allocationDescription: string;
     budgetCategoryName?: string | null;
     budgetItemName?: string | null;
-    installments: Array<{ dueDate: string; amount: number; paidAt: string | null }>;
+    installments: Array<{ dueDate: string; amount: number; paidAt: string | null; sentAt?: string | null }>;
   }>,
   today: string,
 ): ExportRow[] {
@@ -1080,7 +1086,7 @@ export function allocationRows(
         item: s.budgetItemName ?? '',
         dueDate: i.dueDate,
         amount: i.amount,
-        status: i.paidAt ? 'Paid' : i.dueDate < today ? 'Overdue' : 'Due',
+        status: ({ received: 'Paid', sent: CLUB_SENT_WAITING_WORD, overdue: 'Overdue', upcoming: 'Due' } as const)[clubInstallmentState(i, today)],
         paidAt: i.paidAt ?? '',
       });
     }
@@ -1115,6 +1121,8 @@ const REQUEST_STATUS_LABEL: Record<string, string> = {
   pending:  'Awaiting the club',
   approved: 'Approved',
   denied:   'Declined',
+  // Club Tier Stage 3a (mig 315): the club took an approval back, with a reason.
+  reversed: 'Reversed',
 };
 
 export function paymentRequestRows(

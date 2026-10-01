@@ -23,6 +23,8 @@ import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
 import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForPayment, type PlanPiece } from './payable-plan';
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
+import { bookBalance } from './club-money-figures';
+import { fetchAll } from './supabase-paging';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
@@ -2225,15 +2227,20 @@ export async function getOrgLedger(orgId: string): Promise<AccountingLedger | nu
   return data && data.length ? mapLedger(data[0]) : null;
 }
 
-export async function getOrCreateOrgLedger(orgId: string, orgName: string): Promise<AccountingLedger> {
+/**
+ * The club's General ledger, made ONCE (Club Tier Stage 3a, C14). Two first-ever requests used to race
+ * here: both found nothing, both inserted, mig 127's partial unique index refused the loser, and the
+ * loser crashed on a null. `club_general_ledger` (mig 315) inserts with ON CONFLICT DO NOTHING and
+ * re-reads the winner, in the database, and names the book from the organization's own row.
+ */
+export async function getOrCreateOrgLedger(orgId: string): Promise<AccountingLedger> {
   const existing = await getOrgLedger(orgId);
   if (existing) return existing;
-  const { data } = await supabaseAdmin
-    .from('accounting_ledgers')
-    .insert({ org_id: orgId, entity_type: 'org', entity_id: null, name: `${orgName} — General` })
-    .select()
-    .single();
-  return mapLedger(data!);
+  const { data: id, error } = await supabaseAdmin.rpc('club_general_ledger', { p_org: orgId });
+  if (error) throw error;
+  const made = await getLedgerById(id as string, orgId);
+  if (!made) throw new Error('The General ledger could not be read after it was made');
+  return made;
 }
 
 export async function getOrgAllLedgers(orgId: string): Promise<AccountingLedger[]> {
@@ -2256,36 +2263,20 @@ export async function getLedgerById(ledgerId: string, orgId: string): Promise<Ac
   return data ? mapLedger(data) : null;
 }
 
+/**
+ * A team's ledger, made once. The get-or-create lives in the database (`club_team_ledger`, mig 315 —
+ * ON CONFLICT on UNIQUE(org_id, entity_type, entity_id), the same step the club's money moves use), so
+ * two first-ever writes cannot race. The book takes the team's own name from its row.
+ */
 export async function getOrCreateRepTeamLedger(
   orgId: string,
   teamId: string,
-  teamName: string,
 ): Promise<AccountingLedger> {
-  const { data: existing } = await supabaseAdmin
-    .from('accounting_ledgers')
-    .select('*')
-    .eq('org_id', orgId)
-    .eq('entity_type', 'team')
-    .eq('entity_id', teamId)
-    .maybeSingle();
-  if (existing) return mapLedger(existing);
-  const { data, error } = await supabaseAdmin
-    .from('accounting_ledgers')
-    .insert({ org_id: orgId, entity_type: 'team', entity_id: teamId, name: teamName })
-    .select()
-    .single();
-  if (data) return mapLedger(data);
-  // Two first-ever writes racing: UNIQUE(org_id, entity_type, entity_id) makes the loser's
-  // insert fail — re-select the winner's row instead of crashing on a null (review 2026-08-13).
-  const { data: raced, error: reErr } = await supabaseAdmin
-    .from('accounting_ledgers')
-    .select('*')
-    .eq('org_id', orgId)
-    .eq('entity_type', 'team')
-    .eq('entity_id', teamId)
-    .maybeSingle();
-  if (raced) return mapLedger(raced);
-  throw (error ?? reErr ?? new Error('Failed to create team ledger'));
+  const { data: id, error } = await supabaseAdmin.rpc('club_team_ledger', { p_org: orgId, p_team: teamId });
+  if (error) throw error;
+  const ledger = await getLedgerById(id as string, orgId);
+  if (!ledger) throw new Error('The team ledger could not be read after it was made');
+  return ledger;
 }
 
 export async function getLedgerEntries(
@@ -2367,10 +2358,23 @@ export async function updateEntry(
   if (error) throw error;
 }
 
-export async function voidEntry(entryId: string, ledgerId: string): Promise<void> {
+export async function voidEntry(
+  entryId: string,
+  ledgerId: string,
+  /** Who voided it and why (mig 315). The club's ledger window records both; the coach paths that
+   *  void their own derived lines pass nothing, as before. */
+  record: { reason?: string | null; by?: string | null } = {},
+): Promise<void> {
+  const now = new Date().toISOString();
   const { error } = await supabaseAdmin
     .from('accounting_entries')
-    .update({ status: 'void', updated_at: new Date().toISOString() })
+    .update({
+      status: 'void',
+      updated_at: now,
+      voided_at: now,
+      ...(record.by ? { voided_by: record.by } : {}),
+      ...(record.reason ? { void_reason: record.reason } : {}),
+    })
     .eq('id', entryId)
     .eq('ledger_id', ledgerId);
   // A silently-failed void let its caller proceed as if the books were corrected — the delete
@@ -2379,19 +2383,30 @@ export async function voidEntry(entryId: string, ledgerId: string): Promise<void
   if (error) throw error;
 }
 
+/**
+ * A book's figures. ⚠ EVERY ROW, PAGED (Club Tier Stage 3a, C14): a bare select stops at 1,000 rows
+ * with no error, so a busy book's Income, Expenses and Net silently left out everything after the
+ * thousandth line. ⚠ `balance` IS ALL-TIME, whatever window the other figures were asked for — one
+ * scope for a book's Balance on every screen (the Overview's card and the Ledger tab used to print
+ * two). The windowed figures stay as they are until 3b redraws the Overview (C04).
+ */
 export async function getLedgerSummary(
   ledger: AccountingLedger,
   opts: { from?: string; to?: string } = {}
 ): Promise<LedgerSummary> {
-  let q = supabaseAdmin
-    .from('accounting_entries')
-    .select('entry_type, status, amount')
-    .eq('ledger_id', ledger.id)
-    .neq('status', 'void');
-  if (opts.from) q = q.gte('entry_date', opts.from);
-  if (opts.to)   q = q.lte('entry_date', opts.to);
-  const { data } = await q;
-  const rows: { entry_type: string; status: string; amount: number }[] = (data ?? []) as any;
+  const all = await fetchAll<{ entry_type: string; status: string; amount: number; entry_date: string }>((a, b) =>
+    supabaseAdmin
+      .from('accounting_entries')
+      .select('entry_type, status, amount, entry_date')
+      .eq('ledger_id', ledger.id)
+      .neq('status', 'void')
+      .order('id')
+      .range(a, b));
+  const rows = all.filter(r => (!opts.from || r.entry_date >= opts.from) && (!opts.to || r.entry_date <= opts.to));
+  // The book's Balance is the ONE definition's (lib/club-money-figures.ts `bookBalance`).
+  const balance = bookBalance(all.map(r => ({
+    amount: Number(r.amount), entryType: r.entry_type as AccountingEntryType, status: r.status as AccountingEntryStatus,
+  })));
   const sum = (type: AccountingEntryType, status: AccountingEntryStatus) =>
     rows.filter(r => r.entry_type === type && r.status === status)
         .reduce((acc: number, r) => acc + Number(r.amount), 0);
@@ -2406,6 +2421,7 @@ export async function getLedgerSummary(
     netPosted:       postedIncome - postedExpenses,
     incomeOnly:      sum('income',  'posted'),
     expensesOnly:    sum('expense', 'posted'),
+    balance,
   };
 }
 
@@ -3910,6 +3926,16 @@ export async function cleanupOrphanedCoachMembership(orgId: string, userId: stri
  * email address (`lib/practice-plan-staff.ts` falls back to it, and was reaching that fallback for
  * everyone the club had never named).
  */
+/** A person's name to print — the club's name for them, else their address — for many ids at once. */
+export async function resolvePersonNamer(
+  orgId: string,
+  userIds: Iterable<string | null | undefined>,
+): Promise<(id: string | null | undefined) => string | null> {
+  const ids = [...new Set([...userIds].filter((v): v is string => !!v))];
+  const identities = await resolveCoachUserIdentities(orgId, ids);
+  return id => (id ? identities.get(id)?.displayName ?? identities.get(id)?.email ?? null : null);
+}
+
 export async function resolveCoachUserIdentities(
   orgId: string,
   userIds: string[],
@@ -4140,7 +4166,10 @@ async function getCoachingBadges(
       .select('split_id')
       .in('split_id', splitIds)
       .lt('due_date', today)
-      .is('paid_at', null);
+      .is('paid_at', null)
+      // The club's one overdue rule (Club Tier Stage 3a): a payment the coach has SENT is waiting on
+      // the club, not overdue (lib/club-money-figures.ts `clubInstallmentState`).
+      .is('sent_at', null);
     for (const row of allocInst ?? []) {
       const yearId = splitToYear[(row as any).split_id];
       if (yearId && result.has(yearId)) result.get(yearId)!.overdueInstallments++;
@@ -10789,7 +10818,9 @@ function mapRepAllocationSplit(r: any): RepAllocationSplit {
   };
 }
 
-function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
+/** One row → the installment every reader holds (Club Tier Stage 3a: the ONE mapper — the club
+ *  money modules import it rather than copy its fields). */
+export function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
   return {
     id: r.id,
     splitId: r.split_id,
@@ -10801,6 +10832,17 @@ function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
     accountingEntryId: r.accounting_entry_id ?? null,
     reminderSentAt: r.reminder_sent_at ?? null,
     createdAt: r.created_at,
+    sentOn: r.sent_on ?? null,
+    sentMethod: r.sent_method ?? null,
+    sentReference: r.sent_reference ?? null,
+    sentBy: r.sent_by ?? null,
+    sentAt: r.sent_at ?? null,
+    paidOn: r.paid_on ?? null,
+    paidMethod: r.paid_method ?? null,
+    paidReference: r.paid_reference ?? null,
+    undoneAt: r.undone_at ?? null,
+    undoneBy: r.undone_by ?? null,
+    undoneReason: r.undone_reason ?? null,
   };
 }
 
@@ -11547,7 +11589,7 @@ export async function recordRepDuesPayment(opts: {
     opts.preloadedPayments
       ? Promise.resolve(opts.preloadedPayments)
       : getRepDuesPaymentsForPlayer(opts.programYearId, opts.playerId),
-    getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name),
+    getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id),
   ]);
   if (!schedule) {
     throw new Error('NO_SCHEDULE');
@@ -11738,7 +11780,7 @@ export async function createPaidExpense(opts: {
      exactly that. */
   let posted: { entryId: string; ledgerId: string } | null = null;
   try {
-    const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
+    const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id);
     const entry = await createEntry(
       ledger.id,
       {
@@ -11943,7 +11985,7 @@ export interface RepDuesPayoutWrite {
  */
 export async function writeRepDuesPayout(opts: RepDuesPayoutWrite): Promise<RepDuesPayout> {
   const ledgerId = opts.ledgerId
-    ?? (await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name)).id;
+    ?? (await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id)).id;
   const entry = await createEntry(
     ledgerId,
     {
@@ -12091,7 +12133,7 @@ export async function removeRepDuesPayout(
   team: { id: string; orgId: string; name: string },
 ): Promise<void> {
   if (payout.accountingEntryId) {
-    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id);
     await voidEntry(payout.accountingEntryId, ledger.id);
   }
   const { error } = await supabaseAdmin
@@ -12274,7 +12316,7 @@ export async function removeRepDuesPayment(
   team: { id: string; orgId: string; name: string },
 ): Promise<boolean> {
   if (payment.accountingEntryId) {
-    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id);
     await voidEntry(payment.accountingEntryId, ledger.id);
   }
   const { data: deleted, error } = await supabaseAdmin
@@ -13051,7 +13093,7 @@ export async function recordPayablePayment(opts: {
     return payment;
   }
 
-  const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
+  const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id);
   const entry = await createEntry(
     ledger.id,
     {
@@ -13156,11 +13198,11 @@ export async function removePayablePayment(opts: {
   }
 
   if (row.accounting_entry_id) {
-    const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
+    const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id);
     await voidEntry(row.accounting_entry_id as string, ledger.id);
     reversedAmount = amount;
   } else if (!fronted) {
-    const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
+    const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id);
     let installmentNumber: number | null = null;
     if (row.installment_id) {
       const { data: inst } = await supabaseAdmin
@@ -13479,13 +13521,13 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
         let entryId = r.payment.accountingEntryId;
         if (!entryId) {
           if (!opts?.team) throw new Error('updateRepTeamExpense: a figure edit that reaches the books needs the team');
-          ledgerId ??= (await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name)).id;
+          ledgerId ??= (await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id)).id;
           /* ⚠ MATCHED ON THE *BEFORE* FIGURE — a pre-236 entry is found by description and amount,
              so the lookup must describe it as it stands, not as it is about to read. */
           entryId = await matchLegacyEntryForPayment(before, r.payment, ledgerId);
           if (!entryId) continue; // already void, or never posted — nothing on the books to correct
         } else if (opts?.team) {
-          ledgerId ??= (await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name)).id;
+          ledgerId ??= (await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id)).id;
         }
         entryOps.push({
           entryId,
@@ -13626,7 +13668,7 @@ export async function adoptLedgerLinksForExpense(
     !p.accountingEntryId && !effectivePayerId(p, expense.paidByPlayerId));
   if (unlinked.length === 0) return;
 
-  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id);
   // Independent SELECTs — resolved in parallel; the ambiguity refusal still fires before any write.
   const matches = await Promise.all(
     unlinked.map(async p => ({ p, entryId: await matchLegacyEntryForPayment(expense, p, ledger.id) })));
@@ -13704,7 +13746,7 @@ export async function deleteRepTeamExpense(
     const cashPayments = payments.filter(p => !effectivePayerId(p, expense.paidByPlayerId));
     const unlinked = cashPayments.filter(p => !p.accountingEntryId);
     if (unlinked.length > 0) {
-      ledgerId = (await getOrCreateRepTeamLedger(team.orgId, team.id, team.name)).id;
+      ledgerId = (await getOrCreateRepTeamLedger(team.orgId, team.id)).id;
     }
     // Independent SELECTs, resolved in parallel — and ALL resolved before anything is voided, so
     // an ambiguous second payment refuses before the first one's void has committed.
@@ -13730,7 +13772,7 @@ export async function deleteRepTeamExpense(
       totalCents += Math.round(p.amount * 100);
     }
     if (toVoid.length > 0) {
-      ledgerId ??= (await getOrCreateRepTeamLedger(team.orgId, team.id, team.name)).id;
+      ledgerId ??= (await getOrCreateRepTeamLedger(team.orgId, team.id)).id;
       for (const entryId of toVoid) await voidEntry(entryId, ledgerId);
     }
   }
@@ -13880,7 +13922,7 @@ export async function createRepTeamMoneyIn(
   team: { id: string; orgId: string; name: string },
   itemName: string | null,
 ): Promise<RepTeamMoneyIn> {
-  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id);
   const entry = await createEntry(ledger.id, {
     entryDate:   fields.receivedDate,
     description: moneyInEntryDescription({ kind: fields.kind, description: fields.description ?? null }, itemName),
@@ -13978,7 +14020,7 @@ export async function updateRepTeamMoneyIn(
      Money screens and another on cash on hand — two pages disagreeing about the same dollar, which
      is the whole class of defect this repo's shared-arithmetic modules exist to prevent. */
   if (updated.accountingEntryId) {
-    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id);
     await updateEntry(updated.accountingEntryId, ledger.id, {
       entryDate:   updated.receivedDate,
       description: moneyInEntryDescription(updated, itemName),
@@ -14002,7 +14044,7 @@ export async function deleteRepTeamMoneyIn(
 ): Promise<{ reversedAmount: number }> {
   let reversed = 0;
   if (record.accountingEntryId) {
-    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id);
     await voidEntry(record.accountingEntryId, ledger.id);
     reversed = record.amount;
   }

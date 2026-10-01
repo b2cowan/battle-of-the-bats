@@ -271,6 +271,21 @@ export function closeOutBlockers(s: Pick<Settlement, 'pot' | 'awaitingCash' | 'p
 }
 
 /**
+ * ⚖ IS THE CLUB WHAT STANDS BETWEEN THIS TEAM AND ITS PAYOUT? (Club Tier Stage 3a, Ask 5b, S3A-03)
+ *
+ * Read off `closeOutBlockers` — the coach's own condition, shared, never re-derived — and true only
+ * when waiting club requests are the ONE thing left: dues are in and the cash covers every family. A
+ * request that waits while dues are still outstanding is not holding anything up yet, and telling
+ * the club it is would cry wolf on every request a coach files mid-season.
+ *
+ * The club's request list, the Overview's door card and the notification sent when the coach opens
+ * the payout sheet all ask this, so the three agree.
+ */
+export function clubRequestsHoldPayout(b: ReturnType<typeof closeOutBlockers>): boolean {
+  return b.pendingClubRequests > 0 && b.duesOutstanding === 0 && b.cashShort === 0;
+}
+
+/**
  * The whole sheet, from one call. Everything is derived: call it again after any payment,
  * credit, payout, expense, forgiveness or adjustment and the answer is simply true again.
  */

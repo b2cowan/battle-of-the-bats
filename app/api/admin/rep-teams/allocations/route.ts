@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { canOpenRepMoney } from '@/lib/member-access';
+import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
+import { canMoveClubMoney, canOpenRepMoney } from '@/lib/member-access';
 import {
   getRepCostAllocations,
-  getRepCostAllocationDetail,
   createRepCostAllocationWithSplits,
-  getOrCreateRepTeamLedger,
   getRepTeam,
   getRepProgramYear,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { tournamentToday } from '@/lib/timezone';
+import { teamIdsInScope } from '@/lib/club-team-route';
+import { allocationListRows, loadClubLoop } from '@/lib/club-money-reads';
 
 // The club ↔ team money loop: Rep Teams OR Accounting, on an org that runs rep teams (D8 + Ask 1 —
 // a treasurer reaches it from Accounting). The write handlers below keep their own role checks.
@@ -27,65 +27,35 @@ export const GET = withObservability(async (_req: Request) => {
   const err = gate(ctx);
   if (err) return err;
 
-  let scopedTeamIds: string[] | null = null;
-  if (ctx!.repGroupIds) {
-    const { data: scopedTeams } = await supabaseAdmin
-      .from('rep_teams')
-      .select('id')
-      .eq('org_id', ctx!.org.id)
-      .in('group_id', ctx!.repGroupIds);
-    scopedTeamIds = (scopedTeams ?? []).map((t: any) => t.id as string);
-  }
-
-  const allocations = await getRepCostAllocations(ctx!.org.id);
-
-  // Enrich each allocation with split-level summary stats
-  const enrichedAll = await Promise.all(
-    allocations.map(async alloc => {
-      let splitsQuery = supabaseAdmin
-        .from('rep_allocation_splits')
-        .select('id, amount, team_id')
-        .eq('allocation_id', alloc.id);
-      if (scopedTeamIds) splitsQuery = splitsQuery.in('team_id', scopedTeamIds);
-      const { data: splits } = await splitsQuery;
-
-      const splitIds = (splits ?? []).map((s: any) => s.id);
-      let installments: any[] = [];
-      if (splitIds.length > 0) {
-        const { data: inst } = await supabaseAdmin
-          .from('rep_allocation_installments')
-          .select('amount, paid_at')
-          .in('split_id', splitIds);
-        installments = inst ?? [];
-      }
-
-      const totalAllocated = (splits ?? []).reduce((sum: number, s: any) => sum + Number(s.amount), 0);
-      const collected = installments
-        .filter((i: any) => i.paid_at)
-        .reduce((sum: number, i: any) => sum + Number(i.amount), 0);
-      const outstanding = installments
-        .filter((i: any) => !i.paid_at)
-        .reduce((sum: number, i: any) => sum + Number(i.amount), 0);
-      const now = tournamentToday();
-      const overdueCount = installments.filter(
-        (i: any) => !i.paid_at && i.due_date < now,
-      ).length;
-
-      return {
-        ...alloc,
-        teamCount: (splits ?? []).length,
-        totalAllocated,
-        collected,
-        outstanding,
-        overdueCount,
-      };
-    }),
-  );
-
-  // Exclude allocations with no splits visible to this caller
-  const enriched = scopedTeamIds
-    ? enrichedAll.filter(a => a.teamCount > 0)
-    : enrichedAll;
+  /* ⚖ THE FIGURES ARE THE ONE DEFINITION NOW (Club Tier Stage 3a, S3A-05 / C06). This read selected
+     each installment WITHOUT its due date and then filtered on it, so it could never count one
+     overdue, and it summed Collected by hand — one of four definitions. It keeps today's response
+     shape for the old screen (session 2 retires it for Accounting › Allocations) and adds the new
+     list's fields beside it. */
+  const today = tournamentToday();
+  const [allocations, loop] = await Promise.all([
+    getRepCostAllocations(ctx!.org.id),
+    loadClubLoop(ctx!.org.id, await teamIdsInScope(ctx!)),
+  ]);
+  const rows = new Map(allocationListRows(loop, today).map(r => [r.id, r]));
+  const enriched = allocations.flatMap(alloc => {
+    const r = rows.get(alloc.id);
+    if (!r) return [];
+    return [{
+      ...alloc,
+      teamCount: r.teamIds.length,
+      totalAllocated: r.allocated,
+      collected: r.figures.collected,
+      outstanding: r.figures.outstanding,
+      overdueCount: r.figures.overdue.count,
+      teamsWord: r.teamsWord,
+      teamNames: r.teamNames,
+      figures: r.figures,
+      chip: r.chip,
+      firstDue: r.firstDue,
+      lastDue: r.lastDue,
+    }];
+  });
 
   return NextResponse.json({ allocations: enriched });
 }, { route: '/api/admin/rep-teams/allocations' });
@@ -96,10 +66,30 @@ export const POST = withObservability(async (req: Request) => {
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
+  // ⚖ One rule for every club money write (Club Tier Stage 3a, Ask 1).
+  if (!canMoveClubMoney(ctx!, ctx!.org)) return forbidden();
 
   const body = await req.json();
   const { description, totalAmount, sourceEntryId = null, splits } = body;
+
+  /* ⚖ A GENERAL ALLOCATION'S SOURCE IS ONE OF THE CLUB'S OWN ENTRIES (C17). The id arrived pasted and
+     unchecked: the only rule was the foreign key, so another club's entry was accepted, and a bad id
+     surfaced as a 500. It must be a live entry on one of this club's own books (never a team's). */
+  if (sourceEntryId !== null) {
+    if (typeof sourceEntryId !== 'string' || !/^[0-9a-f-]{36}$/i.test(sourceEntryId)) {
+      return NextResponse.json({ error: 'That isn’t one of the club’s ledger entries.', code: 'bad_source_entry' }, { status: 400 });
+    }
+    const { data: src } = await supabaseAdmin
+      .from('accounting_entries')
+      .select('id, status, accounting_ledgers!inner ( org_id, entity_type )')
+      .eq('id', sourceEntryId)
+      .eq('accounting_ledgers.org_id', ctx!.org.id)
+      .neq('accounting_ledgers.entity_type', 'team')
+      .maybeSingle();
+    if (!src || src.status === 'void') {
+      return NextResponse.json({ error: 'That isn’t one of the club’s ledger entries.', code: 'bad_source_entry' }, { status: 400 });
+    }
+  }
 
   if (!description?.trim()) {
     return NextResponse.json({ error: 'description is required' }, { status: 400 });
@@ -130,6 +120,9 @@ export const POST = withObservability(async (req: Request) => {
     if (!team || team.orgId !== ctx!.org.id) {
       return NextResponse.json({ error: `Team ${split.teamId} not found` }, { status: 404 });
     }
+    // A member limited to some groups bills only their teams (B11).
+    const scoped = repGroupScopeGuard(ctx!, team.groupId);
+    if (scoped) return scoped;
 
     const year = await getRepProgramYear(split.programYearId);
     if (!year || year.teamId !== team.id) {
@@ -154,7 +147,8 @@ export const POST = withObservability(async (req: Request) => {
       );
     }
 
-    await getOrCreateRepTeamLedger(ctx!.org.id, team.id, team.name);
+    // (No team ledger is made here any more: it was created mid-validation, before a later split
+    // could fail. The money moves make it, in the same step that first writes to it — mig 315.)
   }
 
   const result = await createRepCostAllocationWithSplits({

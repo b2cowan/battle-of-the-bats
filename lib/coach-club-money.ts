@@ -17,7 +17,12 @@
 
 /** The two directions, from the TEAM's side. Stored values — do not rename without a migration. */
 export type ClubRequestType = 'payment_to_org' | 'charge_to_org';
-export type ClubRequestStatus = 'pending' | 'approved' | 'denied';
+/**
+ * 'reversed' joined at mig 315 (Club Tier Stage 3a, Ask 3): the club took back an approval, both ledger
+ * lines voided with a reason. A reversed request is CLOSED — it moved no money, it is never pending,
+ * and the coach may file a new one. 'denied' stays the stored word; the product says "Declined".
+ */
+export type ClubRequestStatus = 'pending' | 'approved' | 'denied' | 'reversed';
 
 /**
  * What money arriving FROM the club MEANS — the coach's answer, never the code's (mig 271).
@@ -116,6 +121,16 @@ export interface ClubRequest {
   reviewedAt: string | null;
   createdAt: string;
   updatedAt: string | null;
+  /** How the money moved on approval, as the club recorded it (mig 315). NULL before 3a. */
+  paidOn: string | null;
+  paidMethod: string | null;
+  paidReference: string | null;
+  /** The club reversed the approval (status 'reversed', mig 315): when, who, and why. */
+  reversedAt: string | null;
+  reversedBy: string | null;
+  reversedReason: string | null;
+  /** When the club was told this waiting request holds up the end-of-season payout (mig 315, Ask 5b). */
+  payoutHoldToldAt: string | null;
 }
 
 /**
@@ -149,6 +164,13 @@ export function mapClubRequest(
     reviewedAt:         row.reviewed_at ?? null,
     createdAt:          row.created_at,
     updatedAt:          row.updated_at ?? null,
+    paidOn:             row.paid_on ?? null,
+    paidMethod:         row.paid_method ?? null,
+    paidReference:      row.paid_reference ?? null,
+    reversedAt:         row.reversed_at ?? null,
+    reversedBy:         row.reversed_by ?? null,
+    reversedReason:     row.reversed_reason ?? null,
+    payoutHoldToldAt:   row.payout_hold_told_at ?? null,
   };
 }
 

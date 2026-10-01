@@ -50,6 +50,16 @@
     "update_rule": null
   },
   {
+    "table_name": "accounting_entries",
+    "constraint_name": "accounting_entries_voided_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "voided_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "accounting_ledgers",
     "constraint_name": "accounting_ledgers_org_id_entity_type_entity_id_key",
     "constraint_type": "UNIQUE",
@@ -3011,6 +3021,16 @@
   },
   {
     "table_name": "rep_allocation_installments",
+    "constraint_name": "rep_allocation_installments_sent_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "sent_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_installments",
     "constraint_name": "rep_allocation_installments_split_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "split_id",
@@ -3042,6 +3062,56 @@
   {
     "table_name": "rep_allocation_installments",
     "constraint_name": "rep_allocation_installments_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_installments",
+    "constraint_name": "rep_allocation_installments_undone_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "undone_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_reminder_waves",
+    "constraint_name": "rep_allocation_reminder_waves_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_reminder_waves",
+    "constraint_name": "rep_allocation_reminder_waves_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_allocation_reminder_waves",
+    "constraint_name": "rep_allocation_reminder_waves_sent_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "sent_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_reminder_waves",
+    "constraint_name": "rep_allocation_reminder_waves_team_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_teams",
@@ -6807,6 +6877,16 @@
     "foreign_table": "rep_program_years",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_payment_requests",
+    "constraint_name": "rep_team_payment_requests_reversed_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "reversed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {

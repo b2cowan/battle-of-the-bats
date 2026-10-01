@@ -37,7 +37,15 @@ export type NotificationCard = {
   /** A coach card for a CLUB's team (not the coach's own standalone portal): its club holds the
    *  season doors, so the "Your club" row (the club's season notices) belongs on it. */
   clubTeam?: boolean;
+  /** The coach holds a club team's money (head coach, or given money access): the club-money notices
+   *  can reach them, so "Your club" lists them too (Club Tier Stage 3a, Ask 5c). */
+  clubMoney?: boolean;
 };
+
+/** The five notices a club sends a team's money people (Stage 3a) — "Your club" lists them. */
+const CLUB_MONEY_EVENTS: NotificationEventType[] = [
+  'club_money_received', 'club_money_undone', 'club_request_approved', 'club_request_declined', 'club_request_reversed',
+];
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -152,9 +160,14 @@ function CoachCard({ card }: { card: NotificationCard }) {
   // or reopened the team's season. It ships with its event (the club's season doors send it) and
   // appears only where it can arrive — a standalone portal's head coach holds those doors themselves.
   const clubTeam = card.clubTeam === true;
+  const clubMoney = clubTeam && card.clubMoney === true;
+  const clubEvents = useMemo<NotificationEventType[]>(
+    () => (clubMoney ? ['club_season_changed', ...CLUB_MONEY_EVENTS] : ['club_season_changed']),
+    [clubMoney],
+  );
   const eventTypes = useMemo<NotificationEventType[]>(
-    () => (clubTeam ? ['coach_insights_digest', 'practice_plan_sent', 'club_season_changed'] : ['coach_insights_digest', 'practice_plan_sent']),
-    [clubTeam],
+    () => (clubTeam ? ['coach_insights_digest', 'practice_plan_sent', ...clubEvents] : ['coach_insights_digest', 'practice_plan_sent']),
+    [clubTeam, clubEvents],
   );
   const groups = useMemo<PreferenceGroup[]>(
     () => [
@@ -171,11 +184,13 @@ function CoachCard({ card }: { card: NotificationCard }) {
       },
       ...(clubTeam ? [{
         label: 'Your club',
-        blurb: 'When your club closes, starts or reopens your team’s season — the portal’s screens change when it does.',
-        eventTypes: ['club_season_changed'] as NotificationEventType[],
+        blurb: clubMoney
+          ? 'When your club closes, starts or reopens your team’s season, and when it receives, undoes, approves, declines or reverses your team’s money.'
+          : 'When your club closes, starts or reopens your team’s season — the portal’s screens change when it does.',
+        eventTypes: clubEvents,
       }] : []),
     ],
-    [clubTeam],
+    [clubTeam, clubMoney, clubEvents],
   );
 
   const p = useOrgPreferences({ orgSlug: card.orgSlug, role: card.role, eventTypes });

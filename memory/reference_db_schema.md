@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-09-30 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-01 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-09-30
+# DB Schema Reference — 2026-10-01
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -120,8 +120,12 @@ id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) �
 ## Module: Rep Teams
 
 ### rep_allocation_installments
-id (uuid), split_id (uuid) → rep_allocation_splits.id NOT NULL, installment_number (integer) NOT NULL, amount (numeric) NOT NULL, due_date NOT NULL, paid_at, paid_by (uuid), accounting_entry_id (uuid) → accounting_entries.id, created_at, reminder_sent_at, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id
+id (uuid), split_id (uuid) → rep_allocation_splits.id NOT NULL, installment_number (integer) NOT NULL, amount (numeric) NOT NULL, due_date NOT NULL, paid_at, paid_by (uuid), accounting_entry_id (uuid) → accounting_entries.id, created_at, reminder_sent_at, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, sent_on, sent_method, sent_reference, sent_by (uuid), sent_at, paid_on, paid_method, paid_reference, undone_at, undone_by (uuid), undone_reason
 - Indexes: rep_allocation_installments_accounting_entry_id_idx, rep_allocation_installments_org_idx, rep_allocation_installments_split_id_installment_number_key, rep_allocation_installments_team_idx
+
+### rep_allocation_reminder_waves
+id (uuid), org_id (uuid) → organizations.id NOT NULL, sent_by (uuid), sent_at, team_id (uuid) → rep_teams.id, team_ids, recipient_count (integer) NOT NULL, installment_count (integer) NOT NULL, amount (numeric)
+- Indexes: rep_allocation_reminder_waves_org_sent_idx
 
 ### rep_allocation_splits
 id (uuid), allocation_id (uuid) → rep_cost_allocations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, amount (numeric) NOT NULL, split_method NOT NULL, split_value (numeric) NOT NULL, payment_schedule, notes, created_at, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id
@@ -348,7 +352,7 @@ id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizat
 - Indexes: idx_rep_team_opponents_org, idx_rep_team_opponents_team, rep_team_opponents_team_name_uq
 
 ### rep_team_payment_requests
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, request_type NOT NULL, amount (numeric) NOT NULL, description NOT NULL, payment_method, notes, status, denial_reason, budget_line_id (uuid) → org_budget_lines.id, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid) NOT NULL, reviewed_by (uuid), reviewed_at, created_at, updated_at, program_year_id (uuid) → rep_program_years.id NOT NULL, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id, money_in_meaning
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, request_type NOT NULL, amount (numeric) NOT NULL, description NOT NULL, payment_method, notes, status, denial_reason, budget_line_id (uuid) → org_budget_lines.id, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid) NOT NULL, reviewed_by (uuid), reviewed_at, created_at, updated_at, program_year_id (uuid) → rep_program_years.id NOT NULL, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id, money_in_meaning, paid_on, paid_method, paid_reference, reversed_at, reversed_by (uuid), reversed_reason, payout_hold_told_at
 - Indexes: rep_team_payment_requests_accounting_entry_id_idx, rep_team_payment_requests_budget_category_idx, rep_team_payment_requests_budget_item_idx, rep_team_payment_requests_budget_line_id_idx, rep_team_payment_requests_org_status_idx, rep_team_payment_requests_program_year_id_idx, rep_team_payment_requests_program_year_idx, rep_team_payment_requests_team_status_idx
 
 ### rep_team_places
@@ -432,7 +436,7 @@ id (uuid), workspace_org_id (uuid) → organizations.id NOT NULL, rep_team_id (u
 ## Module: Accounting
 
 ### accounting_entries
-id (uuid), ledger_id (uuid) → accounting_ledgers.id NOT NULL, entry_date NOT NULL, description NOT NULL, amount (numeric) NOT NULL, entry_type NOT NULL, status, category, linked_entry_id (uuid) → accounting_entries.id, source_module, source_entity_id (uuid), created_by (uuid), created_at, updated_at, payment_method, payee_id (uuid) → org_payees.id, payee_payer, notes
+id (uuid), ledger_id (uuid) → accounting_ledgers.id NOT NULL, entry_date NOT NULL, description NOT NULL, amount (numeric) NOT NULL, entry_type NOT NULL, status, category, linked_entry_id (uuid) → accounting_entries.id, source_module, source_entity_id (uuid), created_by (uuid), created_at, updated_at, payment_method, payee_id (uuid) → org_payees.id, payee_payer, notes, void_reason, voided_by (uuid), voided_at
 - Indexes: accounting_entries_entry_date_idx, accounting_entries_ledger_id_idx, accounting_entries_linked_entry_id_idx, accounting_entries_payee_id_idx
 
 ### accounting_ledgers
@@ -764,11 +768,11 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **184 tables** across 10 modules.
+Total: **185 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 71 tables
+- Rep Teams: 72 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

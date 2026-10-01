@@ -5,6 +5,8 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLedgerById } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { canMoveClubMoney } from '@/lib/member-access';
+import { TEAM_BOOK_READ_ONLY } from '@/lib/club-money-words';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -28,7 +30,8 @@ export const POST = withObservability(async (req: Request) => {
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
+  // ⚖ One rule for every club money write (Club Tier Stage 3a, Ask 1): whoever holds the club's accounting.
+  if (!canMoveClubMoney(ctx!, ctx!.org)) return forbidden();
 
   const body = await req.json();
 
@@ -62,6 +65,12 @@ export const POST = withObservability(async (req: Request) => {
 
   if (!fromLedger) return NextResponse.json({ error: 'Source ledger not found' }, { status: 404 });
   if (!toLedger)   return NextResponse.json({ error: 'Destination ledger not found' }, { status: 404 });
+  // ⚖ Between the club's OWN books only (C12). A transfer into or out of a team's book moved money in
+  // a coach's books with nobody on the team knowing; the club's money reaches a team through an
+  // allocation or an approved request.
+  if (fromLedger.entityType === 'team' || toLedger.entityType === 'team') {
+    return NextResponse.json({ error: TEAM_BOOK_READ_ONLY, code: 'team_book' }, { status: 400 });
+  }
 
   const { error } = await supabaseAdmin.rpc('create_accounting_transfer', {
     p_from_ledger_id: fromLedgerId,

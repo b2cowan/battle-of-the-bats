@@ -202,6 +202,14 @@ export interface RegisterRow {
   /** A second line under the description — a player's name, the families a sponsor credited, a due
    *  note, why a date is what it is. */
   detail: string | null;
+  /**
+   * ⚖ A CLUB INSTALLMENT THE COACH HAS SENT AND THE CLUB HAS NOT CONFIRMED (Club Tier Stage 3a,
+   * ruled 2026-09-30, question 1). The team's money has left its bank, so the row is settled money
+   * out on its sent date and moves Cash on hand; this flag is what the Ledger's "Sent · waiting for
+   * the club" chip reads, as it reads `scheduled` for a scheduled line. Optional: only a club row
+   * can carry it.
+   */
+  waitingOnClub?: boolean;
 }
 
 /** A row with the balance standing after it. */

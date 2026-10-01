@@ -2144,10 +2144,11 @@ function MoneyRecordsPanel({
       const owed: ConvClubBill[] = [];
       for (const s of (data.splits ?? []) as Array<{
         id: string; allocationDescription: string;
-        installments: Array<{ id: string; amount: number; dueDate: string; paidAt: string | null }>;
+        installments: Array<{ id: string; amount: number; dueDate: string; paidAt: string | null; sentAt: string | null }>;
       }>) {
         for (const inst of s.installments ?? []) {
-          if (!inst.paidAt) {
+          // Still the team's to pay: not received, and not already SENT (Club Tier Stage 3a).
+          if (!inst.paidAt && !inst.sentAt) {
             owed.push({
               splitId: s.id, installmentId: inst.id,
               description: s.allocationDescription, amount: inst.amount, dueDate: inst.dueDate,
@@ -2538,9 +2539,9 @@ function MoneyRecordsPanel({
     } else if (convBranch === 'club') {
       const bill = (clubBills ?? []).find(b => `${b.splitId}:${b.installmentId}` === conv.clubInstallmentId);
       if (!bill) throw new Error('Pick which installment to settle.');
-      /* The one-tap settle, exactly as the Club tab's "Mark paid" sends it: NO body — the server
-         derives amount and date, and there is nowhere to store a method or note on an allocation
-         installment. Fieldless is the design, not a shortcut (build prompt §2.2). */
+      /* The one tap, exactly as the Club tab's "We've sent it" sends it: NO body — the server records
+         the team SENT it today (Club Tier Stage 3a; the club confirms it received) and derives the
+         amount. Session 2 draws the window that asks the day, how and the reference. */
       const res = await fetch(
         `/api/coaches/${orgSlug}/teams/${teamId}/allocations/${bill.splitId}/installments/${bill.installmentId}`,
         { method: 'PATCH' });

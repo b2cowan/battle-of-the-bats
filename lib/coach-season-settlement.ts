@@ -33,6 +33,7 @@ import { familyLabel } from './coach-family-dues';
 import { normalizeGuardianEmail } from './guardian-email';
 import type { CoachCapabilities } from './coach-capabilities';
 import type { RepProgramYear, DuesPaymentMethod } from './types';
+import { clubInstallmentLeftTeamOn } from './club-money-figures';
 
 /**
  * The season settlement sheet, assembled from the database — the ONE place the whole sheet is
@@ -49,6 +50,7 @@ import type { RepProgramYear, DuesPaymentMethod } from './types';
  */
 
 type AdjustmentRow = { player_id: string; kind: string; amount: number; note: string | null };
+type AllocInstallRow = { amount: number; paid_at: string | null; sent_at: string | null };
 
 /**
  * A household's identity ON THE WIRE — stable, comparable, and carrying no PII.
@@ -120,8 +122,8 @@ export async function loadSeasonSettlement(opts: {
     // across all three results instead of a tuple. That ternary's own query is gone above.
     getRealisedFundraiserEntries(pyId),
     splitIds.length
-      ? supabaseAdmin.from('rep_allocation_installments').select('amount, paid_at').in('split_id', splitIds)
-      : Promise.resolve({ data: [] as Array<{ amount: number; paid_at: string | null }> }),
+      ? supabaseAdmin.from('rep_allocation_installments').select('amount, paid_at, sent_at').in('split_id', splitIds)
+      : Promise.resolve({ data: [] as AllocInstallRow[] }),
   ]);
   const installmentsByPlayer = groupByPlayer(installments);
 
@@ -173,9 +175,13 @@ export async function loadSeasonSettlement(opts: {
 
   // ── Money out (CASH only) ──────────────────────────────────────────────────────────────────
   const { paid: expensesPaid, cashPaid: expensesCashPaid } = expenseTotals(expenses, standings);
+  /* ⚖ Money that LEFT the team for the club — sent or received (Club Tier Stage 3a, question 1):
+     the pot is what the team is holding, and a sent payment has left its bank. The same rule the
+     register and Cash on hand read (`clubInstallmentLeftTeamOn`). */
   const allocationsPaid = amountsTotal(
-    ((allocInstallsRes.data ?? []) as Array<{ amount: number; paid_at: string | null }>)
-      .filter(i => i.paid_at).map(i => ({ amount: i.amount ?? 0 })));
+    ((allocInstallsRes.data ?? []) as AllocInstallRow[])
+      .filter(i => clubInstallmentLeftTeamOn({ paidAt: i.paid_at, sentAt: i.sent_at }) !== null)
+      .map(i => ({ amount: i.amount ?? 0 })));
   const cashOut = Math.round((expensesCashPaid + allocationsPaid + orgPayments) * 100) / 100;
 
   // ── Per player ─────────────────────────────────────────────────────────────────────────────
@@ -508,7 +514,7 @@ export async function recordSettlementPayouts(opts: {
 
   // ONE ledger lookup for the batch — it is the same team on every row, and resolving it per
   // cheque meant eight near-identical round trips to settle eight families.
-  const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
+  const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id);
 
   const written = [];
   for (const { row, amount } of planned) {

@@ -150,8 +150,9 @@ export async function loadTeamSeasons(teamIds: readonly string[]): Promise<Map<s
 
 const withCreatedAt = (rows: SeasonRow[]) => rows.map(r => ({ ...r, createdAt: r.created_at }));
 
-/** Active head coaches + pending head-coach invitations, per team. */
-async function loadHeadCoaches(orgId: string, teamIds: readonly string[]): Promise<Map<string, ClubBoardHeadCoach>> {
+/** Active head coaches + pending head-coach invitations, per team. (Shared with the club's money reads
+ *  and reminders, so "a head coach" and "an invited one" mean one thing on every club screen.) */
+export async function loadHeadCoaches(orgId: string, teamIds: readonly string[]): Promise<Map<string, ClubBoardHeadCoach>> {
   const out = new Map<string, ClubBoardHeadCoach>();
   for (const id of teamIds) out.set(id, { people: [], invited: [] });
   if (teamIds.length === 0) return out;

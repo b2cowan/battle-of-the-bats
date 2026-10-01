@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { canOpenRepMoney } from '@/lib/member-access';
+import { canMoveClubMoney, canOpenRepMoney } from '@/lib/member-access';
 import { getRepCostAllocationDetail, updateRepCostAllocationDescription } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { teamIdsInScope } from '@/lib/club-team-route';
@@ -41,7 +41,8 @@ export const PATCH = withObservability(async (req: Request,
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
+  // ⚖ One rule for every club money write (Club Tier Stage 3a, Ask 1).
+  if (!canMoveClubMoney(ctx!, ctx!.org)) return forbidden();
 
   const { allocationId } = await params;
   const body = await req.json();

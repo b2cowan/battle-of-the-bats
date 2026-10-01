@@ -1,38 +1,35 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { searchOrgPayees, createOrgPayee } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { resolveClubMoney } from '@/lib/club-money-route';
+import { searchOrgPayees, createOrgPayee } from '@/lib/db';
+import { listClubPayees } from '@/lib/club-payees';
 
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_accounting')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_accounting')) return forbidden();
-  return null;
-}
-
+/**
+ * GET /api/admin/accounting/payees?orgSlug=&q=        — the picker's search (club-wide payees).
+ * GET /api/admin/accounting/payees?orgSlug=&all=1     — the Payees page (C01): every club payee with
+ *                                                        how many lines name it (what a merge moves).
+ * POST { name, notes? }                                — create one.
+ *
+ * The club's payees only; a team's payees are the coach's.
+ */
 export const GET = withObservability(async (req: Request) => {
+  const r = await resolveClubMoney(req, { scope: 'books', write: false });
+  if ('error' in r) return r.error;
+  const { ctx } = r;
   const url = new URL(req.url);
-  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
-
-  const q = url.searchParams.get('q') ?? '';
-  const payees = await searchOrgPayees(ctx!.org.id, q);
+  if (url.searchParams.get('all') === '1') {
+    return NextResponse.json({ payees: await listClubPayees(ctx.org.id) });
+  }
+  const payees = await searchOrgPayees(ctx.org.id, url.searchParams.get('q') ?? '');
   return NextResponse.json({ payees });
 }, { route: '/api/admin/accounting/payees' });
 
 export const POST = withObservability(async (req: Request) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
+  const r = await resolveClubMoney(req, { scope: 'books', write: true });
+  if ('error' in r) return r.error;
+  const { ctx } = r;
 
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer' && ctx!.role !== 'admin') return forbidden();
-
-  const body = await req.json();
+  const body = await req.json().catch(() => ({})) as Record<string, unknown>;
   const name: string = typeof body.name === 'string' ? body.name.trim() : '';
   const notes: string | null = typeof body.notes === 'string' ? body.notes.trim() || null : null;
 
@@ -40,10 +37,10 @@ export const POST = withObservability(async (req: Request) => {
   if (name.length > 200) return NextResponse.json({ error: 'name must be 200 characters or fewer' }, { status: 400 });
 
   try {
-    const payee = await createOrgPayee({ orgId: ctx!.org.id, name, notes, createdBy: ctx!.user.id });
+    const payee = await createOrgPayee({ orgId: ctx.org.id, name, notes, createdBy: ctx.user.id });
     return NextResponse.json({ payee }, { status: 201 });
   } catch (e: any) {
-    if (e?.code === '23505') return NextResponse.json({ error: 'A payee with that name already exists' }, { status: 409 });
+    if (e?.code === '23505') return NextResponse.json({ error: 'A payee with that name already exists', code: 'payee_exists' }, { status: 409 });
     throw e;
   }
 }, { route: '/api/admin/accounting/payees' });

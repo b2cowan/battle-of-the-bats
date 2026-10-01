@@ -3593,11 +3593,11 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "admin-accounting-ledger|361|tap-floor|button·Void entry (transfer — both sides must b": {
+    "admin-accounting-ledger|361|tap-floor|button·Void this transfer (both sides together)": {
       "reason": null,
       "detail": "25px tall (floor 44)"
     },
-    "admin-accounting-ledger|361|control-width|button·Void entry (transfer — both sides must b": {
+    "admin-accounting-ledger|361|control-width|button·Void this transfer (both sides together)": {
       "reason": null,
       "detail": "29px wide (floor 44) — icon-only control"
     },
@@ -4757,11 +4757,11 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "admin-accounting-ledger|390|tap-floor|button·Void entry (transfer — both sides must b": {
+    "admin-accounting-ledger|390|tap-floor|button·Void this transfer (both sides together)": {
       "reason": null,
       "detail": "25px tall (floor 44)"
     },
-    "admin-accounting-ledger|390|control-width|button·Void entry (transfer — both sides must b": {
+    "admin-accounting-ledger|390|control-width|button·Void this transfer (both sides together)": {
       "reason": null,
       "detail": "29px wide (floor 44) — icon-only control"
     },
@@ -5941,11 +5941,11 @@
       "reason": null,
       "detail": "39px tall (floor 44)"
     },
-    "admin-accounting-ledger|768|tap-floor|button·Void entry (transfer — both sides must b": {
+    "admin-accounting-ledger|768|tap-floor|button·Void this transfer (both sides together)": {
       "reason": null,
       "detail": "25px tall (floor 44)"
     },
-    "admin-accounting-ledger|768|control-width|button·Void entry (transfer — both sides must b": {
+    "admin-accounting-ledger|768|control-width|button·Void this transfer (both sides together)": {
       "reason": null,
       "detail": "29px wide (floor 44) — icon-only control"
     },

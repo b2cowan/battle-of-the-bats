@@ -43,6 +43,25 @@ export function canOpenRepMoney(member: MemberAccessInput, org: EntitlementOrg):
   return canOpenModule(member, org, 'module_rep_teams') || canOpenModule(member, org, 'module_accounting');
 }
 
+/**
+ * WHO MAY MOVE CLUB MONEY — one rule for every club money write (⚖ Club Tier Stage 3a, Ask 1, owner
+ * 2026-09-30): whoever holds the club's ACCOUNTING — the owner, the treasurer, or an admin with
+ * Accounting (and anyone the owner has granted Accounting). Record received, confirm a coach's
+ * "sent", undo, approve, decline, reverse, send reminders, ledger entries, transfers, payees and a
+ * new allocation all ask THIS, never a role list.
+ *
+ * Before it the writes disagreed (C08): approve = owner/treasurer/admin, mark paid = owner/treasurer,
+ * reminders = owner/admin (so the treasurer who runs the loop couldn't send one), and a coach with
+ * money access posted straight to the club's General ledger. `canOpenRepMoney` stays the rule for
+ * REACHING the allocation loop; this is the rule for moving money in it.
+ *
+ * ⚠ A coach never passes it: coaching staff hold `role = 'coach'` with no capabilities, and a coach's
+ * own money move is "sent", which writes nothing to the club's books.
+ */
+export function canMoveClubMoney(member: MemberAccessInput, org: EntitlementOrg): boolean {
+  return canOpenModule(member, org, 'module_accounting');
+}
+
 /** The programs a member can be given, in the order the Members screen lists them (specimen 5). */
 export const MEMBER_PROGRAMS: readonly { module: Capability; label: string }[] = [
   { module: 'module_rep_teams', label: 'Rep Teams' },

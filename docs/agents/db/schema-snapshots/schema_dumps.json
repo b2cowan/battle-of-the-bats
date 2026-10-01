@@ -164,6 +164,33 @@
         "column_default": null
       },
       {
+        "table_name": "accounting_entries",
+        "pos": 19,
+        "column_name": "void_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "accounting_entries",
+        "pos": 20,
+        "column_name": "voided_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "accounting_entries",
+        "pos": 21,
+        "column_name": "voided_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "accounting_ledgers",
         "pos": 1,
         "column_name": "id",
@@ -9443,6 +9470,186 @@
         "column_default": null
       },
       {
+        "table_name": "rep_allocation_installments",
+        "pos": 13,
+        "column_name": "sent_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 14,
+        "column_name": "sent_method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 15,
+        "column_name": "sent_reference",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 16,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 17,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 18,
+        "column_name": "paid_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 19,
+        "column_name": "paid_method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 20,
+        "column_name": "paid_reference",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 21,
+        "column_name": "undone_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 22,
+        "column_name": "undone_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 23,
+        "column_name": "undone_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "pos": 3,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "pos": 4,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "pos": 5,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "pos": 6,
+        "column_name": "team_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": "'{}'::uuid[]"
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "pos": 7,
+        "column_name": "recipient_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "pos": 8,
+        "column_name": "installment_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "pos": 9,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "rep_allocation_splits",
         "pos": 1,
         "column_name": "id",
@@ -15743,6 +15950,69 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_payment_requests",
+        "pos": 22,
+        "column_name": "paid_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "pos": 23,
+        "column_name": "paid_method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "pos": 24,
+        "column_name": "paid_reference",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "pos": 25,
+        "column_name": "reversed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "pos": 26,
+        "column_name": "reversed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "pos": 27,
+        "column_name": "reversed_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "pos": 28,
+        "column_name": "payout_hold_told_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_places",
         "pos": 1,
         "column_name": "id",
@@ -19427,6 +19697,13 @@
         "constraint_name": "accounting_entries_payee_id_fkey"
       },
       {
+        "table_name": "accounting_entries",
+        "column_name": "voided_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "accounting_entries_voided_by_fkey"
+      },
+      {
         "table_name": "accounting_ledgers",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -20583,6 +20860,13 @@
       },
       {
         "table_name": "rep_allocation_installments",
+        "column_name": "sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_allocation_installments_sent_by_fkey"
+      },
+      {
+        "table_name": "rep_allocation_installments",
         "column_name": "split_id",
         "foreign_table": "rep_allocation_splits",
         "foreign_column": "id",
@@ -20594,6 +20878,34 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_allocation_installments_team_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "column_name": "undone_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_allocation_installments_undone_by_fkey"
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_reminder_waves_org_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "column_name": "sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_allocation_reminder_waves_sent_by_fkey"
+      },
+      {
+        "table_name": "rep_allocation_reminder_waves",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_reminder_waves_team_id_fkey"
       },
       {
         "table_name": "rep_allocation_splits",
@@ -22575,6 +22887,13 @@
         "foreign_table": "rep_program_years",
         "foreign_column": "id",
         "constraint_name": "rep_team_payment_requests_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "column_name": "reversed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_payment_requests_reversed_by_fkey"
       },
       {
         "table_name": "rep_team_payment_requests",
@@ -24990,6 +25309,16 @@
         "indexdef": "CREATE INDEX rep_allocation_installments_team_idx ON public.rep_allocation_installments USING btree (team_id)"
       },
       {
+        "tablename": "rep_allocation_reminder_waves",
+        "indexname": "rep_allocation_reminder_waves_org_sent_idx",
+        "indexdef": "CREATE INDEX rep_allocation_reminder_waves_org_sent_idx ON public.rep_allocation_reminder_waves USING btree (org_id, sent_at DESC)"
+      },
+      {
+        "tablename": "rep_allocation_reminder_waves",
+        "indexname": "rep_allocation_reminder_waves_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_allocation_reminder_waves_pkey ON public.rep_allocation_reminder_waves USING btree (id)"
+      },
+      {
         "tablename": "rep_allocation_splits",
         "indexname": "rep_allocation_splits_allocation_id_team_id_key",
         "indexdef": "CREATE UNIQUE INDEX rep_allocation_splits_allocation_id_team_id_key ON public.rep_allocation_splits USING btree (allocation_id, team_id)"
@@ -27290,6 +27619,12 @@
         "check_clause": "(status = ANY (ARRAY['pending'::text, 'posted'::text, 'void'::text]))"
       },
       {
+        "kind": "CHECK",
+        "table_name": "accounting_entries",
+        "detail": "accounting_entries_void_reason_length_check",
+        "check_clause": "((void_reason IS NULL) OR (char_length(void_reason) <= 500))"
+      },
+      {
         "kind": "RLS",
         "table_name": "accounting_entries",
         "detail": "ENABLED",
@@ -28442,8 +28777,62 @@
         "check_clause": "(amount > (0)::numeric)"
       },
       {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_installments",
+        "detail": "rep_allocation_installments_paid_method_check",
+        "check_clause": "((paid_method IS NULL) OR (paid_method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_installments",
+        "detail": "rep_allocation_installments_sent_is_whole_check",
+        "check_clause": "((sent_at IS NULL) = (sent_on IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_installments",
+        "detail": "rep_allocation_installments_sent_method_check",
+        "check_clause": "((sent_method IS NULL) OR (sent_method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_installments",
+        "detail": "rep_allocation_installments_undo_has_reason_check",
+        "check_clause": "((undone_at IS NULL) = (undone_reason IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_installments",
+        "detail": "rep_allocation_installments_words_length_check",
+        "check_clause": "(((sent_reference IS NULL) OR (char_length(sent_reference) <= 100)) AND ((paid_reference IS NULL) OR (char_length(paid_reference) <= 100)) AND ((undone_reason IS NULL) OR (char_length(undone_reason) <= 500)))"
+      },
+      {
         "kind": "RLS",
         "table_name": "rep_allocation_installments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_reminder_waves",
+        "detail": "rep_allocation_reminder_waves_amount_check",
+        "check_clause": "(amount >= (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_reminder_waves",
+        "detail": "rep_allocation_reminder_waves_installment_count_check",
+        "check_clause": "(installment_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_reminder_waves",
+        "detail": "rep_allocation_reminder_waves_recipient_count_check",
+        "check_clause": "(recipient_count >= 0)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_allocation_reminder_waves",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -29602,14 +29991,32 @@
       {
         "kind": "CHECK",
         "table_name": "rep_team_payment_requests",
+        "detail": "rep_team_payment_requests_paid_method_check",
+        "check_clause": "((paid_method IS NULL) OR (paid_method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_payment_requests",
         "detail": "rep_team_payment_requests_request_type_check",
         "check_clause": "(request_type = ANY (ARRAY['payment_to_org'::text, 'charge_to_org'::text]))"
       },
       {
         "kind": "CHECK",
         "table_name": "rep_team_payment_requests",
+        "detail": "rep_team_payment_requests_reversal_is_whole_check",
+        "check_clause": "(((status = 'reversed'::text) = (reversed_at IS NOT NULL)) AND ((reversed_at IS NULL) = (reversed_reason IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_payment_requests",
         "detail": "rep_team_payment_requests_status_check",
-        "check_clause": "(status = ANY (ARRAY['pending'::text, 'approved'::text, 'denied'::text]))"
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'approved'::text, 'denied'::text, 'reversed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_payment_requests",
+        "detail": "rep_team_payment_requests_words_length_check",
+        "check_clause": "(((paid_reference IS NULL) OR (char_length(paid_reference) <= 100)) AND ((reversed_reason IS NULL) OR (char_length(reversed_reason) <= 500)))"
       },
       {
         "kind": "RLS",

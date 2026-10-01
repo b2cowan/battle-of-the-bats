@@ -3,8 +3,11 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLedgerById, getLedgerEntries, createEntry } from '@/lib/db';
+import { bookInScope, teamIdsInScope } from '@/lib/club-team-route';
 import type { AccountingEntryStatus, AccountingEntryType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { canMoveClubMoney } from '@/lib/member-access';
+import { TEAM_BOOK_READ_ONLY } from '@/lib/club-money-words';
 
 type Params = { params: Promise<{ ledgerId: string }> };
 
@@ -35,8 +38,9 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   if (err) return err;
 
   const { ledgerId } = await params;
-  const ledger = await getLedgerById(ledgerId, ctx!.org.id);
-  if (!ledger) return NextResponse.json({ error: 'Ledger not found' }, { status: 404 });
+  const [ledger, scope] = await Promise.all([getLedgerById(ledgerId, ctx!.org.id), teamIdsInScope(ctx!)]);
+  // A team book outside the member's groups is not theirs to read (B11).
+  if (!ledger || !bookInScope(ledger, scope)) return NextResponse.json({ error: 'Ledger not found' }, { status: 404 });
   const statusParam = url.searchParams.get('status');
   const limit  = Math.min(parseInt(url.searchParams.get('limit')  ?? '50', 10), 200);
   const offset = Math.max(parseInt(url.searchParams.get('offset') ?? '0',  10), 0);
@@ -55,7 +59,8 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
+  // ⚖ One rule for every club money write (Club Tier Stage 3a, Ask 1): whoever holds the club's accounting.
+  if (!canMoveClubMoney(ctx!, ctx!.org)) return forbidden();
 
   const { ledgerId } = await params;
   const ledger = await getLedgerById(ledgerId, ctx!.org.id);
@@ -63,7 +68,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   // A team-entity ledger is the coach's own books — read-only from the org side
   // (audit J4-021). Org-side money moves go through allocations / payment-request approvals.
   if (ledger.entityType === 'team') {
-    return NextResponse.json({ error: 'This ledger belongs to a coach-managed team and is read-only here. Use allocations or payment-request approvals to move money.' }, { status: 403 });
+    return NextResponse.json({ error: TEAM_BOOK_READ_ONLY, code: 'team_book' }, { status: 403 });
   }
 
   const body = await req.json();

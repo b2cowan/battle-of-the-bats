@@ -96,8 +96,11 @@ describe('the morning brief (J4-041) — counts, never money (C04)', () => {
 
   it('a count is present only where the person can act — the acting routes\' roles, never widened', () => {
     assert.match(route, /tryoutApplications: repTeams && actsAs\('tryoutApplications'\)/);
-    assert.match(route, /paymentRequests: repMoney && actsAs\('paymentRequests'\)/);
-    assert.match(route, /installmentsDue: repMoney && actsAs\('installmentsDue'\)/);
+    // Club Tier Stage 3a (Ask 1): the two money counts follow the ONE money rule the acting routes now
+    // ask — whoever holds the club's accounting — so the count is still present only where they can act.
+    assert.match(route, /const movesMoney = canOpenRepMoney\(ctx, org\) && canMoveClubMoney\(ctx, org\);/);
+    assert.match(route, /paymentRequests: movesMoney,/);
+    assert.match(route, /installmentsDue: movesMoney,/);
     assert.match(route, /assistantCoaches: repTeams && actsAs\('assistantCoaches'\)/);
   });
 

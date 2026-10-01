@@ -330,8 +330,8 @@ export async function provisionStandaloneTeamWorkspace(
     if (!coachAssignment) {
       throw new Error('Team provisioning could not confirm the head-coach assignment row.');
     }
-    const orgLedger = await getOrCreateOrgLedger(provisionedOrg.id, provisionedOrg.name);
-    const teamLedger = await getOrCreateRepTeamLedger(provisionedOrg.id, team.id, team.name);
+    const orgLedger = await getOrCreateOrgLedger(provisionedOrg.id);
+    const teamLedger = await getOrCreateRepTeamLedger(provisionedOrg.id, team.id);
 
     const { data: workspace, error: workspaceError } = await supabaseAdmin
       .from('team_workspaces')

@@ -843,6 +843,9 @@ export interface LedgerSummary {
   netPosted: number;
   incomeOnly: number;    // income entries only — for org-level totals that exclude inter-ledger transfers
   expensesOnly: number;  // expense entries only — counterpart to incomeOnly
+  /** The book's Balance, ALL-TIME (posted in − posted out), whatever window the figures above were
+   *  asked for — one scope on every screen (Club Tier Stage 3a, C14). */
+  balance: number;
 }
 
 export interface TournamentArchive {
@@ -2704,11 +2707,26 @@ export interface RepAllocationInstallment {
   installmentNumber: number;
   amount: number;
   dueDate: string;
+  /** RECEIVED BY THE CLUB — the moment it was recorded (mig 275's stamp). The day it came is `paidOn`. */
   paidAt: string | null;
   paidBy: string | null;
   accountingEntryId: string | null;
   reminderSentAt: string | null;
   createdAt: string;
+  /** The coach says the team SENT it (mig 315, Ask 1): writes nothing to any ledger until the club confirms. */
+  sentOn: string | null;
+  sentMethod: DuesPaymentMethod | null;
+  sentReference: string | null;
+  sentBy: string | null;
+  sentAt: string | null;
+  /** How the money reached the club, as the club recorded it (mig 315). NULL before 3a. */
+  paidOn: string | null;
+  paidMethod: DuesPaymentMethod | null;
+  paidReference: string | null;
+  /** The club's LAST undo of a recorded payment, with its reason (mig 315, Ask 3). */
+  undoneAt: string | null;
+  undoneBy: string | null;
+  undoneReason: string | null;
 }
 
 export interface RepPlayerDuesSchedule {
@@ -3273,7 +3291,20 @@ export type NotificationEventType =
   // 'team_move_answered' tells the other side how it ended (moved / declined). Targeted lifecycle
   // bells with no toggle row, like the two above; TS-union only (no DB CHECK on event_type).
   | 'team_move_requested'
-  | 'team_move_answered';
+  | 'team_move_answered'
+  // Club Tier Stage 3a (mig 315, Ask 5c) — money between a club and its team, both ways. Each ships
+  // with its event (Stage 1's rule: never a toggle with nothing behind it). TS-union only (no DB CHECK
+  // on event_type, verified on dev and prod 2026-09-28).
+  //   To the team's head coaches and money staff ("Your club" on a club coach's card):
+  | 'club_money_received'      // the club recorded or confirmed a payment from the team
+  | 'club_money_undone'        // the club undid a recorded payment (with its reason)
+  | 'club_request_approved'    // the club approved a request
+  | 'club_request_declined'    // the club declined a request (with its reason)
+  | 'club_request_reversed'    // the club reversed an approval (with its reason)
+  //   To the club's accounting people (the Accounting rows on the org card):
+  | 'team_money_sent'          // a coach says a payment is sent: confirm it when it arrives
+  | 'team_request_filed'       // a coach filed a request
+  | 'team_request_holding_payout'; // a waiting request holds up the team's payout to families
 
 export interface AppNotification {
   id: string;

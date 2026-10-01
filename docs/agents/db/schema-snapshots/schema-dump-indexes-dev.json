@@ -1690,6 +1690,16 @@
     "indexdef": "CREATE INDEX rep_allocation_installments_team_idx ON public.rep_allocation_installments USING btree (team_id)"
   },
   {
+    "tablename": "rep_allocation_reminder_waves",
+    "indexname": "rep_allocation_reminder_waves_org_sent_idx",
+    "indexdef": "CREATE INDEX rep_allocation_reminder_waves_org_sent_idx ON public.rep_allocation_reminder_waves USING btree (org_id, sent_at DESC)"
+  },
+  {
+    "tablename": "rep_allocation_reminder_waves",
+    "indexname": "rep_allocation_reminder_waves_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_allocation_reminder_waves_pkey ON public.rep_allocation_reminder_waves USING btree (id)"
+  },
+  {
     "tablename": "rep_allocation_splits",
     "indexname": "rep_allocation_splits_allocation_id_team_id_key",
     "indexdef": "CREATE UNIQUE INDEX rep_allocation_splits_allocation_id_team_id_key ON public.rep_allocation_splits USING btree (allocation_id, team_id)"

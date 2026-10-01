@@ -313,7 +313,7 @@ export async function writeSponsorArrivalRow(args: {
   const pctRows = plan.filter(p => p.unit === 'percent');
   const rebatePercent = plan.length === 1 && pctRows.length === 1 ? pctRows[0].value : 0;
 
-  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
+  const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id);
   const posted = await createEntry(ledger.id, {
     entryDate: receivedDate,
     description: `Sponsorship — ${fundraiser.name}`,
