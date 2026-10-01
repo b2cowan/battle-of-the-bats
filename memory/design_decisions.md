@@ -7,6 +7,53 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-09-30 — THE CLUB'S MONEY BOOK READS EXACTLY LIKE THE COACH'S LEDGER (owner, Club Tier Stage 3a Ask 6, ratified with the hub v22 drawings; recorded 2026-10-01 by the build)
+
+**Decision:** The club's Ledger (Accounting › Ledger) is the coach's Ledger: one book, **oldest first** between a
+Starting balance and an Ending balance line (K-04); **Money out, then Money in**, each positive, the empty side of
+the pair **blank**, a running **Balance** beside them; compact register rows (K-01); **no Source column** (the What
+words say where a line came from, the Type filter narrows by it); two decks — what stays put on top (the Book pill,
+Export, the creates, the one lime last), the four filter pills below (Type · Status · Category · Date, quiet at
+rest) — with the book's figure at the strip's right edge; a pending line carries its own chip and the balance before
+it; voids off the book until Status asks; a card per entry on a phone (K-25). **Two deliberate differences:** the
+Date pill opens on **This month** (a treasurer's period is the month her bank statement and her board use; the
+coach's opens Around today because a team's book carries money still to come), and the figure is **"Balance"**, not
+"Cash on hand" (a club book's balance is not the club's cash, which is spread over several books).
+**Rationale:** The coach's Ledger took the word "Ledger" from the club's Accounting so that a treasurer who also
+coaches meets one word for one thing; the first club drawing (hub v21) took only the Register's column words and
+ran newest first with a Source column and figure cards — three things the coach's Ledger had already ruled out.
+**Applies to:** every club book (General, a tournament's, a reserve, a house league's). A team's statement
+(Accounting › a team) is not a cash book and keeps its own columns (Billed · Collected · Paid to the team · Outstanding).
+
+### 2026-09-30 — ACCOUNTING IS ONE PAGE WITH TABS; THE RULE FOR WHEN A PROGRAM GETS TABS (owner, Club Tier Stage 3a Ask 2 option B; recorded 2026-10-01)
+
+**Decision:** The club's Accounting is **one page titled Accounting** with the coach's tab row (the promoted
+`CoachTabBar`): Overview · Ledger · Allocations · Payment requests · Budget · Budget vs. Actual, each tab a real
+address. No create in the page header (a create belongs to the tab's own toolbar, standard §3.9). A page one level
+down (an allocation, a team's account, Payees) has a back arrow and **no tab row**. In the rail Accounting is **one
+row that never opens**, carrying the waiting count; on a phone the tabs scroll sideways (the "In ‹program›" row does
+not render for it). **The rule proposed for the Stage 8 nav review** (written into the formatting standard there):
+*a program whose pages are views of one body of records is one page with tabs; a program whose pages are separate
+jobs lists them in the rail.* The coaches portal already follows it (Money and Insights are tabs; Schedule, Roster
+and Practice plans are rail entries); in the admin only Accounting changes — Rep Teams stays in the rail.
+**Rationale:** Accounting's pages are views of one book a treasurer crosses in one sitting (recording an allocation
+received writes a ledger line; approving a request writes one); on a phone the rail-pages shape reached a sibling
+page only through the program's first page (three taps), the tab row reaches every one in one; and the club's money
+book gets the coach's Money frame. Its cost — Accounting becomes the admin's only program with tabs — is why the
+rule is written down rather than left as drift.
+**Applies to:** the admin's programs at the Stage 8 nav review; until then Accounting alone.
+
+### 2026-09-30 — THREE SHARED TABLE PARTS: A VOID ROW, A BAND THAT CARRIES A TOTAL, A BLANK MONEY CELL (owner, Club Tier Stage 3a Ask 5d; recorded 2026-10-01 in the table standard §3.5 and §3.7)
+
+**Decision:** (1) **A void row** — off the book until a Status filter asks for it; then in place, struck through in
+the faintest ink, a Void chip, the reason as its detail, no balance, counted nowhere. (2) **A band row may carry a
+total in its words** ("Overdue · 2 · $900.00"), never as a figure column. (3) **The empty side of a paired Money out /
+Money in column is blank**; the em dash stays for "nothing here" everywhere else.
+**Rationale:** none of the three was in the written rules, and the club's money pages and the tournament redesign
+(which voids fees and refunds) would each have invented one. The blank is the Register's own drawing; a dash on
+every row of a pair doubles the ink and reads as data.
+**Applies to:** every money table in the product, club and tournament first.
+
 ### 2026-09-29 — CHECK-IN'S FILTER IS THE GATE'S OWN BUCKET BAR: SINGLE CHOICE, "ALL" FIRST AND THE DEFAULT; PAYMENT IS NOT A BUCKET (owner, on the Tournament admin redesign's Stage 1 — asked "should these be a dropdown multi select that defaults to 'all'?", then "I agree, go ahead" to the recommendation)
 
 **Decision:** The tournament organizer's Check-in filter is the gate volunteer's own bucket bar — four equal

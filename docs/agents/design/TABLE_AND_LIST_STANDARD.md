@@ -196,6 +196,20 @@ folds with its section). **One closing answer per table**; a row that merely res
 deleted, not styled quieter (QA §132/§142). A footnote stack under the table, in caption type, holds
 the basis, the caveats and the doors — never a sentence inside a money column.
 
+- **A band row may carry a total IN ITS WORDS** (owner, Club Tier Stage 3a Ask 5d, 2026-09-30):
+  "Overdue · 2 · $900.00", "Waiting on you · 3 · $555.00". The band is still a label — the figure
+  is part of its sentence, never a figure column inside the band, and never a second closing row.
+  Use it when the band answers "how much is waiting in this group", which a closing row cannot
+  (bands with different questions do not sum to one answer). Shared with the tournament redesign,
+  which draws money tables too.
+- **A void row** (same ruling). A voided line is **off the book until a Status filter asks for
+  it**; then it sits in place, at its own date: struck through in the **faintest** ink, a **Void**
+  chip after its name, the **reason** (and who) as its detail, **no balance**, and it counts
+  **nowhere** — not in a band, a closing row, a figure card or an export total. A void is a
+  correction, not money, so a book opens without it; an auditor asks for it, so it stays one pick
+  away. First drawn on the club's Ledger (Stage 3a specimen 1); the tournament redesign's voided
+  fees and refunds use the same recipe.
+
 ### 3.6 Interaction
 
 - **A row that opens is a button.** An expanding row carries a real `<button aria-expanded>` named
@@ -245,6 +259,7 @@ the basis, the caveats and the doors — never a sentence inside a money column.
 | Nothing to list | one sentence saying why + one action; the heading row is **not** drawn over an empty body (F-13) |
 | A real zero | `$0.00` — a zero is a fact |
 | Not applicable / nothing here | an em dash, quiet ink |
+| The empty side of a PAIRED money column (Money out / Money in) | **blank** — the column a figure sits in is its direction, and a dash on every row of a pair doubles the ink and reads as data (owner, Club Tier Stage 3a Ask 5d, 2026-09-30; the coach's Register already drew it). The em dash stays for "nothing here" everywhere else. A figure in a money cell always carries its dollar sign. |
 | Not yet known | a dash with the amber ink **only** where the product has ruled it (K-03) |
 | Loading | skeleton rows at the recipe's own row height — no layout shift when data lands |
 | Error | one inline line in `--danger` above the table; the table keeps its last good rows |
