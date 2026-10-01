@@ -4,7 +4,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 
 /**
  * AuditExportClient.tsx
- * Thin client component that renders the shared ExportMenu dropdown (Excel on primary click, CSV in
+ * Thin client component that renders the shared ExportMenu dropdown (Excel the first row, CSV in
  * the menu) for the platform-admin audit log. The audit page is a server component, so export
  * actions are server-side downloads via /api/platform-admin/audit/export. This builds the correct
  * download URL from the current filters and triggers it on click.

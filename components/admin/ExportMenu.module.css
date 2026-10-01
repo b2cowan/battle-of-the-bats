@@ -5,31 +5,15 @@
   display: inline-flex;
 }
 
-/* ── Split button (primary + chevron) ─────────────────────────────────── */
+/* ── The one button (no chevron — owner, 2026-10-01) ─────────────────── */
 
-.buttonGroup {
+.trigger {
   display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-.buttonGroupDisabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.primaryBtn {
-  border-top-right-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-  border-right: none !important;
-}
-
-.chevronBtn {
-  border-top-left-radius: 0 !important;
-  border-bottom-left-radius: 0 !important;
-  padding-left: 0.4rem !important;
-  padding-right: 0.4rem !important;
-}
-
-.primaryLabel {
+.triggerLabel {
   display: inline;
 }
 
@@ -132,18 +116,17 @@
 }
 
 @media (max-width: 760px) {
-  .primaryBtn,
-  .chevronBtn {
-    width: 32px !important;
-    min-width: 32px !important;
-    height: 32px !important; /* match the 32px mobile icon-button touch target used across admin headers */
-    min-height: 32px !important;
+  /* A 44px icon on a phone — the title band's worded buttons' form. It was two 32px halves, the
+     shortfall Stage 1 reported on every admin screen that exports. */
+  .trigger {
+    min-width: var(--tap-min, 44px);
+    min-height: var(--tap-min, 44px);
     padding: 0 !important;
     justify-content: center;
-    gap: 0 !important;
+    gap: 0;
   }
 
-  .primaryLabel {
+  .triggerLabel {
     display: none;
   }
 
@@ -154,7 +137,7 @@
 
 /* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
    The export menu on the coaches portal's kit: the portal's popover (card ground, hairline, 8px, the
-   kit shadow) and its menu rows in the body face. The two buttons are the global `.btn-outline
+   kit shadow) and its menu rows in the body face. The button is the global `.btn-outline
    .btn-data`, which the kit layer in app/globals.css already dresses. Reaches every admin screen with
    an export (the tournament screens, and Rep Teams, Accounting, House league and Members, whose
    earlier slices left this menu in the console look). Platform-admin screens never carry the marker.

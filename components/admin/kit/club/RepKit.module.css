@@ -596,24 +596,12 @@
 }
 /* A long failure sentence wraps on a phone rather than running off the window. */
 @media (max-width: 640px) { .savePill { border-radius: 1.1rem; } .saveStatus { white-space: normal; } }
-/* INSIDE A WINDOW — the same word and states in a record's head (KitDialog `status`): no pinned frame,
-   because the window covers the page's corner and its head never scrolls. Opt-in; the page pill is
-   unchanged. A held or failed save keeps its red words; the frame's red edge has no frame to sit on. */
-.savePillInline,
-.savePillInline[data-state='error'],
-.savePillInline[data-state='held'] {
-  position: static;
-  z-index: auto;
-  min-height: 0;
-  max-width: 100%;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-.savePillInline .saveStatus { white-space: normal; text-align: right; }
-@media (max-width: 900px) { .savePillInline { right: auto; bottom: auto; } }
+/* INSIDE A WINDOW (KitDialog `status`) — the SAME floating pill, frame, red edge and all; only where it
+   is pinned differs: the window holds it at its body's bottom-right corner (owner, 2026-10-01 — it had
+   been a frameless word in the window's head). Fixed to the viewport it would sit under the window
+   (250 < 400) or, on a phone, over Previous / Next. */
+.savePillInline { position: static; z-index: auto; max-width: 100%; }
+.savePillInline .saveStatus { white-space: normal; }
 
 /* ── A window's facts: a label, then its words (the invite window's "What they'll be able to open") ── */
 .facts {

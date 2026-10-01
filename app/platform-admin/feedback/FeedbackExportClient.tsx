@@ -4,7 +4,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 
 /**
  * Thin client export control for the feedback triage page (server component). Uses the shared
- * ExportMenu dropdown (Excel on primary click, CSV in the menu). Builds the filtered download URL
+ * ExportMenu dropdown (Excel the first row, CSV the next). Builds the filtered download URL
  * and triggers it on click, mirroring AuditExportClient / IssuesExportClient.
  */
 interface FeedbackExportClientProps {

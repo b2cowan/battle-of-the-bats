@@ -20,8 +20,8 @@
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { AlertCircle, ArrowLeftRight, Check, ClipboardList, Link2, ListChecks, Plus, RefreshCw, Search, Shuffle, SlidersHorizontal, Star, Users, X } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { AlertCircle, ArrowLeftRight, Check, ChevronDown, ClipboardList, Link2, ListChecks, MoreHorizontal, Plus, RefreshCw, Search, Shuffle, SlidersHorizontal, Star, Users, X } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -55,13 +55,15 @@ import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { TournamentAdminHeader } from '@/components/admin/tournament';
 import { joinDots, screenParts } from '@/components/admin/tournament/ScreenParts';
 import BottomSheet from '@/components/admin/BottomSheet';
+import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import DivisionPicker from './components/DivisionPicker';
 import RegistrationHealthPanel from './components/RegistrationHealthPanel';
 import TeamsGlance, { type PaymentSummary } from './components/TeamsGlance';
 import TeamList, { type ListMode, type RowFacts } from './components/TeamList';
 import TeamRecordWindow, { type TeamRecordUpdates } from './components/TeamRecord';
 import {
   buildListBands, buildSlotBands, computePaymentStatus, getEffectiveFee, hasDepositStep,
-  nextOpenSlot, paymentFact, recordOrder, sortedPools,
+  narrowSlotBands, nextOpenSlot, paymentFact, recordOrder, sortedPools,
   type BandKind, type FeeMode, type FeeSchedule, type PoolInfo, type PoolSlot, type Status, type TeamRecord,
 } from '@/lib/tournament-teams';
 
@@ -144,6 +146,7 @@ export default function UnifiedTeamsPage() {
   const { currentTournament, isLocked, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
   const searchParams = useSearchParams();
+  const router = useRouter();
   usePageTitle('Teams');
   const [regs, setRegs] = useState<TeamRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1077,16 +1080,17 @@ export default function UnifiedTeamsPage() {
   }, [orgQuery]);
 
   // Restore view settings from localStorage when tournament changes. (Payments no longer remembers
-  // being open — T1: it opens closed every time.)
+  // being open — T1: it opens closed every time.) The grouping and the division are remembered; a
+  // FILTER is not (the Teams toolbar ruling, 2026-10-01): a filter now narrows a pool board to a list,
+  // so one left on last visit would open the board as a list with nothing on screen saying why.
   useEffect(() => {
     const tid = currentTournament?.id;
     if (!tid) return;
     try {
       const raw = localStorage.getItem(`flhq-teams-${tid}`);
       if (!raw) return;
-      const cached = JSON.parse(raw) as Partial<{ viewMode: 'flat' | 'pools'; selectedStatuses: Status[]; selectedDivisionId: string }>;
+      const cached = JSON.parse(raw) as Partial<{ viewMode: 'flat' | 'pools'; selectedDivisionId: string }>;
       if (cached.viewMode === 'flat' || cached.viewMode === 'pools') setViewMode(cached.viewMode);
-      if (Array.isArray(cached.selectedStatuses) && cached.selectedStatuses.length > 0) setSelectedStatuses(cached.selectedStatuses);
       if (cached.selectedDivisionId) setSelectedDivisionId(cached.selectedDivisionId);
     } catch {}
   }, [currentTournament?.id]);
@@ -1096,9 +1100,9 @@ export default function UnifiedTeamsPage() {
     const tid = currentTournament?.id;
     if (!tid || !selectedDivisionId || divisions.length === 0) return;
     try {
-      localStorage.setItem(`flhq-teams-${tid}`, JSON.stringify({ viewMode, selectedStatuses, selectedDivisionId }));
+      localStorage.setItem(`flhq-teams-${tid}`, JSON.stringify({ viewMode, selectedDivisionId }));
     } catch {}
-  }, [currentTournament?.id, viewMode, selectedStatuses, selectedDivisionId, divisions.length]);
+  }, [currentTournament?.id, viewMode, selectedDivisionId, divisions.length]);
 
   // T2 — Teams opens on the first division with a team to review, else the remembered one. Once per
   // event, after the first read, and never over a link that names its own division or bucket — so the
@@ -1252,8 +1256,9 @@ export default function UnifiedTeamsPage() {
   const filtered = useMemo(() => divRegs.filter(r => {
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(r.status);
     const matchesSearch = search === '' || r.name.toLowerCase().includes(search.toLowerCase()) || r.coach.toLowerCase().includes(search.toLowerCase());
-    const pStatus = computePaymentStatus(r, feeOf(r), today);
-    const matchesPayment = !paymentToolsAvailable || paymentFilters.length === 0 || paymentFilters.some(f => matchesPaymentFilter(pStatus, f));
+    // Only an accepted team pays (T5): a payment filter never lists a team whose Payment reads "—".
+    const matchesPayment = !paymentToolsAvailable || paymentFilters.length === 0
+      || (r.status === 'accepted' && paymentFilters.some(f => matchesPaymentFilter(computePaymentStatus(r, feeOf(r), today), f)));
     const matchesAttention = !activeAttentionKey || activeAttentionLocked || teamMatchesRegistrationAttentionKey({
       id: r.id,
       divisionId: r.division_id,
@@ -1268,11 +1273,22 @@ export default function UnifiedTeamsPage() {
     }, activeAttentionKey, attentionContext);
     return matchesStatus && matchesSearch && matchesPayment && matchesAttention;
   }), [divRegs, selectedStatuses, search, feeOf, today, paymentToolsAvailable, paymentFilters, activeAttentionKey, activeAttentionLocked, attentionContext]);
-  const onSlotBoard = slotConfigured && !activeAttentionKey;
+  const hasNonDefaultFilters = paymentFilters.length > 0 ||
+    selectedStatuses.length !== 3 ||
+    !selectedStatuses.includes('pending') ||
+    !selectedStatuses.includes('accepted') ||
+    !selectedStatuses.includes('waitlist');
+  // A search, a filter or a dashboard bucket narrows the division. On a slot board the matches keep
+  // their pools and spots and the open spots go (the Teams toolbar ruling, 2026-10-01); the whole
+  // board — every spot, the one Swap needs — is drawn only when nothing narrows it.
+  const narrowed = Boolean(activeAttentionKey) || search !== '' || hasNonDefaultFilters;
+  const onSlotBoard = slotConfigured && !narrowed;
   const listGrouping = poolAssignable && viewMode === 'pools' ? 'pools' : 'status';
-  const bands = useMemo(() => (onSlotBoard
-    ? buildSlotBands({ divRegs, pools: poolsForDivision, poolSlots })
-    : buildListBands({ teams: filtered, grouping: listGrouping, pools: poolsForDivision })), [onSlotBoard, divRegs, poolsForDivision, poolSlots, filtered, listGrouping]);
+  const bands = useMemo(() => {
+    if (!slotConfigured) return buildListBands({ teams: filtered, grouping: listGrouping, pools: poolsForDivision });
+    const board = buildSlotBands({ divRegs, pools: poolsForDivision, poolSlots });
+    return narrowed ? narrowSlotBands(board, filtered) : board;
+  }, [slotConfigured, narrowed, divRegs, poolsForDivision, poolSlots, filtered, listGrouping]);
   const order = useMemo(() => recordOrder(bands), [bands]);
   const openSlot = useMemo(() => nextOpenSlot(poolsForDivision, poolSlots), [poolsForDivision, poolSlots]);
   const slotOf = useMemo(() => new Map(poolSlots.filter(x => x.teamId).map(x => [x.teamId as string, x])), [poolSlots]);
@@ -1286,6 +1302,15 @@ export default function UnifiedTeamsPage() {
   const visibleSelectableIds = order.map(t => t.id);
   const allVisibleSelected = visibleSelectableIds.length > 0 && visibleSelectableIds.every(id => selectedRegistrationIds.has(id));
   const listMode: ListMode = selectionModeActive ? 'select' : swapMode && onSlotBoard && !isLocked ? 'swap' : 'normal';
+  // Select many and Swap are picked from Tools, and the mode's note replaces the toolbar that held the
+  // menu — so the keyboard would land at the top of the page. It lands on the mode's Done instead.
+  const modeDoneRef = useRef<HTMLButtonElement>(null);
+  const lastListModeRef = useRef<ListMode>('normal');
+  useEffect(() => {
+    const was = lastListModeRef.current;
+    lastListModeRef.current = listMode;
+    if (was === 'normal' && listMode !== 'normal') modeDoneRef.current?.focus({ preventScroll: true });
+  }, [listMode]);
 
   /** What a row says: its caption (Check-in's words for money), a chip where its status differs from its
    *  band, and its one worded action (A13; the Tournament plan's Promote/Place is a lock in the record, P1). */
@@ -1309,9 +1334,9 @@ export default function UnifiedTeamsPage() {
       action = acceptAction;
     } else if (band === 'waitlist') {
       const pos = team.waitlistPosition != null ? TEAMS_WORDS.waitlistPosition(team.waitlistPosition) : null;
-      parts = onSlotBoard ? [pos, coach, spotWords] : [pos, coach];
+      parts = slotConfigured ? [pos, coach, spotWords] : [pos, coach];
       place = pos ?? place;
-      if (onSlotBoard && openSlot && waitlistAutomationAvailable && !isLocked) {
+      if (slotConfigured && openSlot && waitlistAutomationAvailable && !isLocked) {
         action = <RowAction onClick={() => handlePromote(team)} disabled={busy} aria-label={`${TEAMS_WORDS.promote} ${team.name}`}>{TEAMS_WORDS.promote}</RowAction>;
       }
     } else if (band === 'unplaced') {
@@ -1325,7 +1350,7 @@ export default function UnifiedTeamsPage() {
       // A team waiting for a decision that already holds its spot keeps its row, with its Accept (P2).
       action = acceptAction;
     } else {
-      const poolName = !onSlotBoard && poolAssignable && viewMode !== 'pools' ? poolNameOf(team, null) : null;
+      const poolName = poolAssignable && viewMode !== 'pools' ? poolNameOf(team, null) : null;
       parts = [poolName, coach, payNode];
       if (poolAssignable) place = poolNameOf(team, null) ?? place;
     }
@@ -1454,12 +1479,6 @@ export default function UnifiedTeamsPage() {
     setPaymentFilters([filter]);
   }, [currentTournament?.id, hasLoadedInitial, paymentParam, paymentToolsAvailable]);
 
-  const hasNonDefaultFilters = paymentFilters.length > 0 ||
-    selectedStatuses.length !== 3 ||
-    !selectedStatuses.includes('pending') ||
-    !selectedStatuses.includes('accepted') ||
-    !selectedStatuses.includes('waitlist');
-
   const chooseDivision = (id: string) => {
     setSelectedDivisionId(id);
     setSwapMode(false);
@@ -1467,10 +1486,11 @@ export default function UnifiedTeamsPage() {
     setActiveAttentionKey(null);
   };
 
-  // WI-2C.3 — the passive "Link to rep team" control, now a line in the record's Coach block (T7):
-  // a linked name (opens the picker to relink, ✕ unlinks) or "Link to a rep team", and the org-scoped
-  // picker. Only for rep-capable orgs.
-  function renderRepLinkControl(team: TeamRecord, busy: boolean) {
+  // WI-2C.3 — the passive "Link to rep team" control, now the record's "Rep team" line (T7), in its two
+  // faces: the linked team's NAME while the record reads, and while it is edited a linked name (opens the
+  // picker to relink, ✕ unlinks) or "Link to a rep team", and the org-scoped picker. Only for
+  // rep-capable orgs — called only behind `orgHasRepTeams` (coach-own-team-entry-guard).
+  function renderRepLinkControl(team: TeamRecord, busy: boolean): { name: string | null; control: React.ReactNode; closePicker: () => void } {
     const link = repLinks.get(team.id);
     const pickerOpen = repLinkPickerId === team.id;
     const togglePicker = () => {
@@ -1480,7 +1500,7 @@ export default function UnifiedTeamsPage() {
     const q = repLinkSearch.trim().toLowerCase();
     const matches = repTeams.filter(t => !q || t.name.toLowerCase().includes(q));
 
-    return (
+    const control = (
       <div className={styles.repLinkWrap}>
         {link ? (
           <span className={styles.repLinkChip} title={`Linked to rep team ${link.repTeamName}`}>
@@ -1543,6 +1563,7 @@ export default function UnifiedTeamsPage() {
         )}
       </div>
     );
+    return { name: link?.repTeamName || null, control, closePicker: () => setRepLinkPickerId(null) };
   }
 
   // ── The team's record (T3): the list's order is the foot's order ──
@@ -1551,9 +1572,15 @@ export default function UnifiedTeamsPage() {
   const openSlotOfTeam = openTeam ? slotOf.get(openTeam.id) ?? null : null;
   const slotFill = slotConfigured ? { filled: poolSlots.filter(x => x.teamId).length, total: poolSlots.length } : null;
 
-  const divisionOptions = divisions.map(g => ({ value: g.id, label: TEAMS_WORDS.toReviewOption(g.name, reviewByDivision.get(g.id) ?? 0) }));
-  const showRandomize = !isLocked && (onSlotBoard || (poolAssignable && poolsForDivision.length > 1));
-  const showViewTools = slotsReady && !onSlotBoard;
+  const divisionChoices = divisions.map(g => ({ id: g.id, name: g.name, waiting: reviewByDivision.get(g.id) ?? 0 }));
+  const showRandomize = !isLocked && (slotConfigured || (poolAssignable && poolsForDivision.length > 1));
+  const showViewTools = slotsReady;
+  const questionsHref = !isLocked && currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields')
+    ? `/${currentOrg.slug}/admin/tournaments/settings/registration-fields?from=registrations`
+    : null;
+  const canSelectMany = !isLocked && order.length > 0;
+  const canSwap = !isLocked && onSlotBoard;
+  const hasTools = canSelectMany || canSwap || showRandomize || Boolean(questionsHref);
   const bulkBar = (
     <div className={styles.bulkBar} role="toolbar" aria-label="Actions for the selected teams">
       <div className={styles.bulkLine}>
@@ -1623,17 +1650,6 @@ export default function UnifiedTeamsPage() {
                   : 'Templates, imports, and bulk exports'
               }
             />
-            {!isLocked && currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields') && (
-              <Link
-                href={`/${currentOrg.slug}/admin/tournaments/settings/registration-fields?from=registrations`}
-                className={`btn btn-ghost btn-data ${screenParts.headerButton}`}
-                title="Registration questions"
-                aria-label="Registration questions"
-              >
-                <ClipboardList size={15} aria-hidden />
-                <span className={screenParts.headerButtonLabel}>Questions</span>
-              </Link>
-            )}
             {!isLocked && ownTeam && !ownTeam.registrationId && (
               <button
                 className={`btn btn-ghost btn-data ${screenParts.headerButton}`}
@@ -1676,7 +1692,7 @@ export default function UnifiedTeamsPage() {
             <span>{swapFirstSlotId
               ? TEAMS_WORDS.swapChosen(poolSlots.find(x => x.id === swapFirstSlotId)?.teamName ?? poolSlots.find(x => x.id === swapFirstSlotId)?.displayName ?? '')
               : TEAMS_WORDS.swapNote}</span>
-            <button type="button" className={styles.modeDone} onClick={() => { setSwapMode(false); setSwapFirstSlotId(null); }}>{TEAMS_WORDS.done}</button>
+            <button ref={modeDoneRef} type="button" className={styles.modeDone} onClick={() => { setSwapMode(false); setSwapFirstSlotId(null); }}>{TEAMS_WORDS.done}</button>
           </div>
         </Callout>
       ) : listMode === 'select' ? (
@@ -1688,7 +1704,7 @@ export default function UnifiedTeamsPage() {
                 onClick={() => setSelectedRegistrationIds(allVisibleSelected ? new Set() : new Set(visibleSelectableIds))}>
                 {allVisibleSelected ? TEAMS_WORDS.clearVisible : TEAMS_WORDS.selectVisible}
               </button>
-              <button type="button" className={styles.modeDone} onClick={clearRegistrationSelection}>{TEAMS_WORDS.done}</button>
+              <button ref={modeDoneRef} type="button" className={styles.modeDone} onClick={clearRegistrationSelection}>{TEAMS_WORDS.done}</button>
             </div>
           </Callout>
           {/* At a desk the bulk actions sit under the note; on a phone they dock above the bar (below). */}
@@ -1696,101 +1712,101 @@ export default function UnifiedTeamsPage() {
         </div>
       ) : (
         <div className={styles.toolbar}>
-          <label className={styles.divisionField}>
-            <span className="sr-only">Division</span>
-            <select className={styles.divisionSelect} value={selectedDivisionId} disabled={divisions.length === 0}
-              onChange={e => chooseDivision(e.target.value)}>
-              {divisionOptions.length === 0 && <option value="">No divisions</option>}
-              {divisionOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </label>
+          <DivisionPicker divisions={divisionChoices} value={selectedDivisionId} onChange={chooseDivision} />
           {showViewTools && (
             <div className={styles.deskFilters}>
-              <RegistrationFilterMenu
-                heading="Status"
-                allLabel="All statuses"
-                options={(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => ({
+              <label className={styles.searchField}>
+                <Search size={14} aria-hidden />
+                <span className="sr-only">{TEAMS_WORDS.search}</span>
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`${TEAMS_WORDS.search}…`} />
+              </label>
+              <TeamsFilterMenu
+                statuses={(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => ({
                   key: st,
                   label: APPROVAL_STATUS_LABEL[st],
                   count: divRegs.filter(r => r.status === st).length,
                 }))}
-                selectedKeys={selectedStatuses}
-                isDefault={selectedStatuses.length === DEFAULT_STATUSES.length && DEFAULT_STATUSES.every(x => selectedStatuses.includes(x))}
-                onToggle={key => setSelectedStatuses(prev =>
-                  prev.includes(key as Status) ? prev.filter(x => x !== key) : [...prev, key as Status]
-                )}
-                onReset={() => setSelectedStatuses(DEFAULT_STATUSES)}
+                selectedStatuses={selectedStatuses}
+                statusesNarrowed={!(selectedStatuses.length === DEFAULT_STATUSES.length && DEFAULT_STATUSES.every(x => selectedStatuses.includes(x)))}
+                onToggleStatus={st => setSelectedStatuses(prev => prev.includes(st) ? prev.filter(x => x !== st) : [...prev, st])}
+                payments={paymentToolsAvailable ? (['unpaid', 'deposit-paid', 'paid', 'past-due'] as ActivePaymentFilter[]).map(p => ({
+                  key: p,
+                  label: PAYMENT_FILTER_LABEL[p],
+                  count: divRegs.filter(r => r.status === 'accepted' && matchesPaymentFilter(computePaymentStatus(r, feeOf(r), today), p)).length,
+                })) : null}
+                selectedPayments={paymentFilters}
+                onTogglePayment={p => setPaymentFilters(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])}
+                grouping={poolAssignable ? viewMode : null}
+                onGrouping={setViewMode}
+                onReset={() => { setSelectedStatuses(DEFAULT_STATUSES); setPaymentFilters([]); }}
               />
-              {paymentToolsAvailable && (
-                <RegistrationFilterMenu
-                  heading="Payment"
-                  allLabel="All payments"
-                  options={(['unpaid', 'deposit-paid', 'paid', 'past-due'] as ActivePaymentFilter[]).map(f => ({
-                    key: f,
-                    label: PAYMENT_FILTER_LABEL[f],
-                    count: divRegs.filter(r => matchesPaymentFilter(computePaymentStatus(r, feeOf(r), today), f)).length,
-                  }))}
-                  selectedKeys={paymentFilters}
-                  isDefault={paymentFilters.length === 0}
-                  onToggle={key => setPaymentFilters(prev =>
-                    prev.includes(key as ActivePaymentFilter) ? prev.filter(x => x !== key) : [...prev, key as ActivePaymentFilter]
-                  )}
-                  onReset={() => setPaymentFilters([])}
-                />
-              )}
-              {poolAssignable && (
-                <div className={styles.grouping} role="group" aria-label="Group teams">
-                  {(['pools', 'flat'] as const).map(v => (
-                    <button key={v} type="button" className={styles.groupingOption} aria-pressed={viewMode === v} onClick={() => setViewMode(v)}>
-                      {v === 'pools' ? 'Pools' : 'Status'}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <label className={styles.searchField}>
-                <Search size={14} aria-hidden />
-                <span className="sr-only">Search teams or coaches</span>
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search teams or coaches…" />
-              </label>
             </div>
           )}
           <span className={styles.toolbarSpacer} aria-hidden />
           {showViewTools && (
             <>
               <button type="button" className={`${styles.tool} ${styles.phoneTool}`} onClick={() => setSearchOpen(o => !o)}
-                aria-expanded={searchOpen || search !== ''} aria-label="Search teams or coaches" data-on={search !== '' || undefined}>
+                aria-expanded={searchOpen || search !== ''} aria-label={TEAMS_WORDS.search} data-on={search !== '' || undefined}>
                 <Search size={18} aria-hidden />
               </button>
               <button type="button" className={`${styles.tool} ${styles.phoneTool}`} onClick={() => setMobileSettingsOpen(true)}
-                aria-label="View settings" data-on={hasNonDefaultFilters || undefined}>
+                aria-label={TEAMS_WORDS.filter} data-on={hasNonDefaultFilters || undefined}>
                 <SlidersHorizontal size={18} aria-hidden />
               </button>
             </>
           )}
-          {!isLocked && order.length > 0 && (
-            <button type="button" className={styles.tool} onClick={() => setMultiSelectMode(true)} aria-label={TEAMS_WORDS.selectMany}>
-              <ListChecks size={18} aria-hidden /><span className={styles.toolLabel}>{TEAMS_WORDS.selectMany}</span>
-            </button>
-          )}
-          {!isLocked && onSlotBoard && (
-            <button type="button" className={styles.tool} onClick={() => { setSwapMode(true); setSwapFirstSlotId(null); }} aria-label={TEAMS_WORDS.swap}>
-              <ArrowLeftRight size={18} aria-hidden /><span className={styles.toolLabel}>{TEAMS_WORDS.swap}</span>
-            </button>
-          )}
-          {showRandomize && (
-            <button type="button" className={styles.tool} onClick={onSlotBoard ? randomizeSlots : randomizePools}
-              disabled={loading || working === 'randomizing'} aria-label={TEAMS_WORDS.randomize}>
-              {working === 'randomizing' ? <RefreshCw size={18} className="spin" aria-hidden /> : <Shuffle size={18} aria-hidden />}
-              <span className={styles.toolLabel}>{TEAMS_WORDS.randomize}</span>
-            </button>
+          {/* Tools: what an event uses a few times, grouped by what it acts on, each only where it
+              applies (Swap needs the whole board; Randomize two pools or numbered spots; Registration
+              questions Tournament Plus). At a desk a menu; on a phone the ⋯ square opens it as a sheet
+              over the bar's top, the practice plan's toolbar form (E1). */}
+          {hasTools && (
+            <CoachToolbarMenu
+              label={TEAMS_WORDS.tools}
+              icon={working === 'randomizing'
+                ? <RefreshCw size={18} className="spin" aria-hidden />
+                : <MoreHorizontal size={18} className={styles.toolsGlyph} aria-hidden />}
+              disabled={working === 'randomizing'}
+              collapseOnPhone
+              bareOnPhone
+              drawerOnPhone
+              drawerTitle={TEAMS_WORDS.tools}
+              triggerClassName={styles.tool}
+            >
+              {canSelectMany && (
+                <>
+                  <CoachToolbarMenuHeading>{TEAMS_WORDS.toolsTeams}</CoachToolbarMenuHeading>
+                  <CoachToolbarMenuItem icon={<ListChecks size={16} aria-hidden />} label={TEAMS_WORDS.selectMany} onSelect={() => setMultiSelectMode(true)} />
+                </>
+              )}
+              {(canSwap || showRandomize) && (
+                <>
+                  <CoachToolbarMenuHeading>{TEAMS_WORDS.toolsPools}</CoachToolbarMenuHeading>
+                  {canSwap && (
+                    <CoachToolbarMenuItem icon={<ArrowLeftRight size={16} aria-hidden />} label={TEAMS_WORDS.swap}
+                      onSelect={() => { setSwapMode(true); setSwapFirstSlotId(null); }} />
+                  )}
+                  {showRandomize && (
+                    <CoachToolbarMenuItem icon={<Shuffle size={16} aria-hidden />} label={TEAMS_WORDS.randomize} disabled={loading}
+                      onSelect={() => void (slotConfigured ? randomizeSlots() : randomizePools())} />
+                  )}
+                </>
+              )}
+              {questionsHref && (
+                <>
+                  <CoachToolbarMenuHeading>{TEAMS_WORDS.toolsSetup}</CoachToolbarMenuHeading>
+                  <CoachToolbarMenuItem icon={<ClipboardList size={16} aria-hidden />} label={TEAMS_WORDS.registrationQuestions}
+                    onSelect={() => router.push(questionsHref)} />
+                </>
+              )}
+            </CoachToolbarMenu>
           )}
         </div>
       )}
       {listMode === 'normal' && showViewTools && (searchOpen || search !== '') && (
         <label className={`${styles.searchField} ${styles.phoneSearch}`}>
           <Search size={14} aria-hidden />
-          <span className="sr-only">Search teams or coaches</span>
-          <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search teams or coaches…" />
+          <span className="sr-only">{TEAMS_WORDS.search}</span>
+          <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder={`${TEAMS_WORDS.search}…`} />
           {search !== '' && (
             <button type="button" className={styles.searchClear} onClick={() => { setSearch(''); setSearchOpen(false); }} aria-label="Clear the search">
               <X size={14} aria-hidden />
@@ -1881,7 +1897,7 @@ export default function UnifiedTeamsPage() {
         <TeamList
           bands={bands}
           mode={listMode}
-          placeColumn={onSlotBoard ? 'Slot' : poolAssignable ? 'Pool' : null}
+          placeColumn={slotConfigured ? 'Slot' : poolAssignable ? 'Pool' : null}
           facts={rowFacts}
           selectedIds={selectedRegistrationIds}
           swapFirstSlotId={swapFirstSlotId}
@@ -1900,12 +1916,12 @@ export default function UnifiedTeamsPage() {
       <BottomSheet
         open={mobileSettingsOpen}
         onClose={() => setMobileSettingsOpen(false)}
-        ariaLabel="View settings"
+        ariaLabel={TEAMS_WORDS.filter}
         footer={<button type="button" className={styles.sheetDone} onClick={() => setMobileSettingsOpen(false)}>Done</button>}
       >
               {poolAssignable && (
                 <div className={styles.sheetSection}>
-                  <div className={styles.sheetSectionLabel}>Group by</div>
+                  <div className={styles.sheetSectionLabel}>{TEAMS_WORDS.groupBy}</div>
                   <div className={styles.sheetSegments}>
                     {(['pools', 'flat'] as const).map(v => (
                       <button key={v} type="button" className={styles.sheetSeg} aria-pressed={viewMode === v} onClick={() => setViewMode(v)}>
@@ -1945,7 +1961,7 @@ export default function UnifiedTeamsPage() {
               {hasNonDefaultFilters && (
                 <button type="button" className={styles.sheetReset}
                   onClick={() => { setSelectedStatuses(DEFAULT_STATUSES); setPaymentFilters([]); }}>
-                  Reset filters
+                  {TEAMS_WORDS.resetFilters}
                 </button>
               )}
       </BottomSheet>
@@ -2158,77 +2174,128 @@ export default function UnifiedTeamsPage() {
   );
 }
 
-function RegistrationFilterMenu({
-  heading,
-  allLabel,
-  options,
-  selectedKeys,
-  isDefault,
-  onToggle,
+type FilterChoice<K extends string> = { key: K; label: string; count: number };
+
+/**
+ * The desk's ONE Filter menu (the Teams toolbar ruling, owner 2026-10-01): Status, Payment and, where
+ * the division has pools to group by, Group by — under one button in every division, a pool board's
+ * too. The phone's Filter square opens the same three as a sheet. The ticks are checkboxes, so the menu
+ * stays open while they change; the button counts the filters on (Group by arranges the list, it
+ * filters nothing, so it is not counted).
+ */
+function TeamsFilterMenu({
+  statuses,
+  selectedStatuses,
+  statusesNarrowed,
+  onToggleStatus,
+  payments,
+  selectedPayments,
+  onTogglePayment,
+  grouping,
+  onGrouping,
   onReset,
 }: {
-  heading: string;
-  allLabel: string;
-  options: Array<{ key: string; label: string; count?: number }>;
-  selectedKeys: string[];
-  isDefault: boolean;
-  onToggle: (key: string) => void;
+  statuses: FilterChoice<Status>[];
+  selectedStatuses: Status[];
+  statusesNarrowed: boolean;
+  onToggleStatus: (key: Status) => void;
+  /** Null where payments are not tracked (the Tournament plan) — the section is absent. */
+  payments: FilterChoice<ActivePaymentFilter>[] | null;
+  selectedPayments: ActivePaymentFilter[];
+  onTogglePayment: (key: ActivePaymentFilter) => void;
+  /** Null without pools to group by — the section is absent. */
+  grouping: 'pools' | 'flat' | null;
+  onGrouping: (value: 'pools' | 'flat') => void;
   onReset: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
 
-  useDismissable(open, rootRef, () => setOpen(false));
+  // A click away just closes; Escape hands focus back to the button (the keyboard is still driving).
+  useDismissable(open, rootRef, () => setOpen(false), () => { setOpen(false); triggerRef.current?.focus(); });
 
-  const buttonText = isDefault
-    ? allLabel
-    : selectedKeys.length === 1
-      ? (options.find(o => o.key === selectedKeys[0])?.label ?? allLabel)
-      : `${selectedKeys.length} ${heading.toLowerCase()}`;
+  // `role="menu"` promises the arrows: open lands on the first row, Up / Down / Home / End move between
+  // rows (the division picker's pattern), and the rows are not Tab stops of their own.
+  const ITEM = '[role^="menuitem"]';
+  React.useEffect(() => {
+    if (open) panelRef.current?.querySelector<HTMLButtonElement>(ITEM)?.focus();
+  }, [open]);
+  const onPanelKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Home' && e.key !== 'End') return;
+    const items = Array.from(panelRef.current?.querySelectorAll<HTMLButtonElement>(ITEM) ?? []);
+    if (items.length === 0) return;
+    e.preventDefault();
+    const at = items.indexOf(document.activeElement as HTMLButtonElement);
+    const next = e.key === 'Home' ? 0
+      : e.key === 'End' ? items.length - 1
+        : (at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+    items[next].focus();
+  };
+
+  const on = (statusesNarrowed ? 1 : 0) + (selectedPayments.length > 0 ? 1 : 0);
+  const row = (key: string, label: string, checked: boolean, onPick: () => void, count?: number, radio = false) => (
+    <button
+      key={key}
+      type="button"
+      className={styles.regFilterOption}
+      data-on={checked || undefined}
+      onClick={onPick}
+      role={radio ? 'menuitemradio' : 'menuitemcheckbox'}
+      aria-checked={checked}
+      tabIndex={-1}
+    >
+      <span className={styles.regFilterCheck}>{checked ? <Check size={12} aria-hidden /> : null}</span>
+      <span className={styles.regFilterName}>{label}</span>
+      {count !== undefined && <span className={styles.regFilterCount}>{count}</span>}
+    </button>
+  );
 
   return (
     <div className={styles.regFilterRoot} ref={rootRef}>
       <button
+        ref={triggerRef}
         type="button"
         className={styles.regFilterButton}
-        data-active={!isDefault || undefined}
+        data-active={on > 0 || undefined}
         onClick={() => setOpen(v => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={on > 0 ? `${TEAMS_WORDS.filter}, ${TEAMS_WORDS.filtersOn(on)}` : TEAMS_WORDS.filter}
       >
-        <SlidersHorizontal size={12} aria-hidden />
-        <span>{buttonText}</span>
+        <SlidersHorizontal size={14} aria-hidden />
+        <span>{TEAMS_WORDS.filter}</span>
+        {on > 0 && <span className={styles.filterOn} aria-hidden>{on}</span>}
+        <ChevronDown size={14} aria-hidden />
       </button>
       {open && (
-        <div className={styles.regFilterPanel} role="menu">
-          <div className={styles.regFilterHeader}>
-            <span>{heading}</span>
-            {!isDefault && (
-              <button type="button" onClick={() => { onReset(); setOpen(false); }}>
-                <X size={12} aria-hidden /> Reset
-              </button>
-            )}
-          </div>
+        <div ref={panelRef} className={`${styles.regFilterPanel} ${styles.filterPanel}`} role="menu" aria-label={TEAMS_WORDS.filter} onKeyDown={onPanelKey}>
+          <div className={styles.regFilterHeader}><span>{TEAMS_WORDS.filterStatus}</span></div>
           <div className={styles.regFilterList}>
-            {options.map(opt => {
-              const isSelected = selectedKeys.includes(opt.key);
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  className={styles.regFilterOption}
-                  data-on={isSelected || undefined}
-                  onClick={() => onToggle(opt.key)}
-                  role="menuitemcheckbox"
-                  aria-checked={isSelected}
-                >
-                  <span className={styles.regFilterCheck}>{isSelected ? <Check size={12} aria-hidden /> : null}</span>
-                  <span className={styles.regFilterName}>{opt.label}</span>
-                  {opt.count !== undefined && <span className={styles.regFilterCount}>{opt.count}</span>}
-                </button>
-              );
-            })}
+            {statuses.map(o => row(o.key, o.label, selectedStatuses.includes(o.key), () => onToggleStatus(o.key), o.count))}
           </div>
+          {payments && (
+            <>
+              <div className={styles.regFilterHeader}><span>{TEAMS_WORDS.filterPayment}</span></div>
+              <div className={styles.regFilterList}>
+                {payments.map(o => row(o.key, o.label, selectedPayments.includes(o.key), () => onTogglePayment(o.key), o.count))}
+              </div>
+            </>
+          )}
+          {grouping && (
+            <>
+              <div className={styles.regFilterHeader}><span>{TEAMS_WORDS.groupBy}</span></div>
+              <div className={styles.regFilterList}>
+                {(['pools', 'flat'] as const).map(v => row(v, v === 'pools' ? TEAMS_WORDS.toolsPools : TEAMS_WORDS.filterStatus, grouping === v, () => onGrouping(v), undefined, true))}
+              </div>
+            </>
+          )}
+          {on > 0 && (
+            <button type="button" role="menuitem" tabIndex={-1} className={styles.filterReset} onClick={() => { onReset(); setOpen(false); triggerRef.current?.focus(); }}>
+              <X size={12} aria-hidden /> {TEAMS_WORDS.resetFilters}
+            </button>
+          )}
         </div>
       )}
     </div>

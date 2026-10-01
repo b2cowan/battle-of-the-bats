@@ -37,7 +37,28 @@ export const TEAMS_WORDS = {
   reopenRegistration: 'Reopen registration',
 
   // ── The toolbar ──
-  toReviewOption: (division: string, n: number) => (n > 0 ? `${division} · ${n} to review` : division),
+  // The division picker says a division's waiting teams with the rail's amber count, not in words
+  // (owner, 2026-10-01: "· 1 to review" read as part of the name and was cut off on a phone). These
+  // are the words a screen reader hears for that mark and for the closed box's dot.
+  division: 'Division',
+  noDivisions: 'No divisions',
+  toReviewCount: (n: number) => `${n} to review`,
+  waitingElsewhere: 'Teams waiting in another division',
+  // One line in every division (owner, 2026-10-01, the Teams toolbar ruling): the division, Search,
+  // Filter and Tools. Tools holds what an event uses a few times, grouped by what it acts on.
+  search: 'Search teams or coaches',
+  filter: 'Filter',
+  /** What a screen reader hears after "Filter" when the button counts the filters on. */
+  filtersOn: (n: number) => `${n} on`,
+  filterStatus: 'Status',
+  filterPayment: 'Payment',
+  groupBy: 'Group by',
+  resetFilters: 'Reset filters',
+  tools: 'Tools',
+  toolsTeams: 'Teams',
+  toolsPools: 'Pools',
+  toolsSetup: 'Setup',
+  registrationQuestions: 'Registration questions',
   selectMany: 'Select many',
   swap: 'Swap',
   randomize: 'Randomize',
@@ -110,9 +131,15 @@ export const TEAM_RECORD_WORDS = {
   markUnpaid: 'Mark unpaid',
   depositPaidField: 'Deposit paid',
   totalPaidField: 'Total paid',
-  coach: 'Coach',
-  headCoach: 'Head coach',
-  registeredBy: 'Registered by',
+  // ── The record reads first and is edited whole (owner, 2026-10-01): the Team section says each fact
+  // ONCE (it replaced a read "Coach" block above a "Team details" form of the same fields).
+  // "Coach’s email" is the coach-email override, shown only where it differs from the sign-in email;
+  // it and "Placement" are new words, owed to /marketing. "No notes yet." is the portal's own.
+  team: 'Team',
+  editTeam: 'Edit this team',
+  coachEmail: 'Coach’s email',
+  placement: 'Placement',
+  notesEmpty: 'No notes yet.',
   registered: 'Registered',
   noEmail: 'Email not provided',
   repTeam: 'Rep team',
@@ -121,7 +148,6 @@ export const TEAM_RECORD_WORDS = {
   resendTitle: 'Resend the access link?',
   resendBody: (team: string) => `${team} will get an email with a link to its registration dashboard.`,
   resendConfirm: 'Send the link',
-  details: 'Team details',
   coachField: 'Coach',
   emailField: 'Email',
   seedField: 'Seed',

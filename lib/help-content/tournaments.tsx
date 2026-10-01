@@ -287,7 +287,7 @@ const tournamentsHelp: HelpPageContent = {
       searchText: 'venues fields custom location contacts public contact email notifications communication news posts welcome message rules resources documents public site rename venue rename field rename diamond edit venue name field name updates everywhere live no venues set up yet create venues import from venue library league club somewhere else type it off-site set venues up late link typed field names to real records afterwards all games using one name renamed field follows linked games',
       links: [
         { label: 'Venues', href: '../tournaments/venues' },
-        { label: 'Communication', href: '../tournaments/communication' },
+        { label: 'Communications', href: '../tournaments/communication' },
         { label: 'Rules & Resources', href: '../tournaments/rules' },
       ],
       content: (
@@ -296,7 +296,7 @@ const tournamentsHelp: HelpPageContent = {
           <p>If you try to schedule before any venues exist, the field picker asks you to set them up first. On <strong>League and Club plans</strong> it offers <strong>Import from your Venue Library</strong> — your club&apos;s own field list — so you define locations once and pull them into each event; other plans create venues directly. You can still choose to type a location anyway.</p>
           <p><strong>Set your venues up late?</strong> Games that already have a field name typed into them can be linked to the real records afterwards, all the games using one name at a time — the Schedule page offers this whenever it finds typed locations. Worth doing: a linked game follows the field when you rename it, and it can be checked for double-bookings.</p>
           <p>The public contact is the name and email teams see for tournament questions. Choose a contact from your organization members on the <strong>Contacts</strong> page inside tournament admin. If no tournament-specific contact is set, FieldLogicHQ may fall back to the organization contact where available.</p>
-          <p>Use <strong>Communication</strong> to publish news posts and send email updates to teams. Rules and resources are for durable documents and tournament policies.</p>
+          <p>Use <strong>Communications</strong> to publish news posts and send email updates to teams. Rules and resources are for durable documents and tournament policies.</p>
         </>
       ),
       faqs: [
@@ -474,20 +474,19 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Teams & Registration',
       heading: 'Open and close registration',
       summary: 'Control when teams can sign up, and understand how the public registration form works.',
-      keywords: ['registrations', 'open registration', 'close registration', 'public form', 'teams register'],
-      searchText: 'open close registration teams public form active draft division open closed capacity registration questions custom questions Tournament Plus',
+      keywords: ['registrations', 'open registration', 'close registration', 'reopen registration', 'registration open', 'registration closed', 'public form', 'teams register', 'spots left', 'division full'],
+      searchText: 'open close registration reopen registration teams public form active draft division open closed capacity spots full spots left no limit at a glance registration open registration closed close registration from the teams page registration questions custom questions Tournament Plus',
       links: [
         { label: 'Divisions', href: '../tournaments/divisions' },
-        { label: 'Registrations', href: '../tournaments/registrations' },
+        { label: 'Teams', href: '../tournaments/registrations' },
         { label: 'Registration Questions', href: '../tournaments/settings/registration-fields' },
       ],
       content: (
         <>
           <p>Teams register through the public tournament registration form once the tournament is active and at least one division is open.</p>
-          <p>To close registration for a division, mark it closed from the Divisions page. The tournament can remain active with other divisions still open, or you can leave all divisions closed once the team list is final.</p>
+          <p>To close registration for a division, open <strong>Teams</strong>, pick the division, and tap the <strong>Registration open</strong> row in the <strong>At a glance</strong> card: it says how full the division is (&ldquo;6 of 6 spots &middot; full&rdquo;) and offers <strong>Close registration</strong>. <strong>Reopen registration</strong> is in the same place. You can also do it from the <strong>Divisions</strong> page. The tournament can remain active with other divisions still open, or you can leave all divisions closed once the team list is final.</p>
           <p>The free Tournament plan supports standard registration fields, payment tracking, and waitlist collection. Tournament Plus adds custom registration questions, file collection, Excel/PDF exports, payment reminders, and waitlist promotion workflows.</p>
-          <p>Use <strong>Registration Questions</strong> (under Settings &amp; Access) when you need tournament-specific coach confirmations, dropdown answers, or uploaded documents. Submitted answers appear in admin registration details and registration exports.</p>
-          <p>Use bulk actions only after filtering and selecting the exact registrations you want to change. Bulk actions update selected registrations only; they do not apply to hidden rows or every registration in the tournament.</p>
+          <p>Use <strong>Registration Questions</strong> (under Settings &amp; Access, or <strong>Tools</strong> &rarr; <strong>Registration questions</strong> on the Teams page) when you need tournament-specific coach confirmations, dropdown answers, or uploaded documents. Submitted answers appear in each team&rsquo;s record, under <strong>Registration answers</strong>, and in registration exports.</p>
         </>
       ),
       faqs: [
@@ -517,49 +516,69 @@ const tournamentsHelp: HelpPageContent = {
       id: 'recipe-review-tournament-teams',
       group: 'Teams & Registration',
       heading: 'Review and accept teams',
-      summary: 'Approve, waitlist, reject, and track payment readiness for teams.',
-      keywords: ['review teams', 'approve registration', 'waitlist team', 'payment status', 'accepted teams', 'registration health', 'delete team', 'remove team', 'delete registration'],
-      searchText: 'review team registrations approve accept waitlist reject pending payment deposit paid paid in full schedule eligibility selected teams bulk actions registration health score health score missing email no email on file needs action capacity filled percent filled add team email edit team email link to rep team connect registration rep team recognize coach public page paid portal coaches portal delete team remove team delete a registration team has games confirmation warning games are kept blank side empty slot opponent score preserved cannot be undone tournament locked completed',
+      summary: 'Accept, waitlist or reject teams, one division at a time, and track what each team has paid.',
+      keywords: ['review teams', 'approve registration', 'accept team', 'waitlist team', 'reject team', 'to review', 'pending', 'payment status', 'accepted teams', 'registration health', 'team record', 'delete team', 'remove team', 'delete registration', 'accepted needs a spot', 'promote', 'place'],
+      searchText: 'review team registrations approve accept waitlist reject pending to review waiting for a decision pending chip accepted needs a spot open spot promote place team record previous next payment owes paid mark paid deposit paid paid in full schedule eligibility select many bulk actions registration health score health score missing email no email on file needs action capacity filled percent filled at a glance add team email edit team email link to rep team connect registration rep team recognize coach public page paid portal coaches portal delete team remove team delete a registration delete this team team has games confirmation warning games are kept blank side empty slot opponent score preserved cannot be undone tournament locked completed',
       links: [
-        { label: 'Registrations', href: '../tournaments/registrations' },
+        { label: 'Teams', href: '../tournaments/registrations' },
       ],
       content: (
         <>
-          <p>Review teams regularly while registration is open so schedule planning starts from a clean accepted-team list. The <strong>Registration Health</strong> card at the top of the Teams page gives you a one-glance score for exactly this — expand it any time to see what needs a look.</p>
+          <p>Review teams while registration is open, so the schedule starts from a clean list of accepted teams. <strong>Teams</strong> opens on the first division with a team to review, and the division menu marks every division with teams waiting with an amber count. An amber dot on the menu means another division has teams waiting.</p>
           <ol>
-            <li>Open <strong>Registrations</strong> from tournament admin.</li>
-            <li>Filter by division or status if the list is large.</li>
-            <li>Open each pending team and confirm contacts, division, payment status, and custom question answers.</li>
-            <li>Move the team to <strong>Accepted</strong>, <strong>Waitlist</strong>, or <strong>Rejected</strong>.</li>
-            <li>Track deposit or full payment status as payments arrive.</li>
-            <li>Before building the schedule, confirm every team that should play is <strong>Accepted</strong>.</li>
+            <li>Open <strong>Teams</strong> and pick the division.</li>
+            <li>Teams waiting for a decision sit under <strong>To review</strong>. Tap <strong>Accept</strong> on the row, or tap the team to open its record first.</li>
+            <li>In the record, check the coach, the team details and the registration answers, then choose <strong>Accept</strong> or <strong>Reject</strong>.</li>
+            <li>Tap <strong>Next</strong> at the foot of the record to go straight to the next team.</li>
+            <li>As payments arrive, open an accepted team and tap <strong>Mark paid</strong>, or enter the amounts under <strong>Deposit paid</strong> and <strong>Total paid</strong>.</li>
+            <li>Before building the schedule, check that every team that should play is <strong>Accepted</strong>.</li>
           </ol>
-          <p>Only accepted teams appear in schedule assignment controls. If a team is missing from the schedule builder, check its registration status.</p>
+          <p>In a division with pool spots, the list reads top to bottom: <strong>To review</strong>, then each pool with how full it is (&ldquo;Red Pool 3 of 3&rdquo;) and every spot in it, an open spot shown as its own row, the <strong>Waitlist</strong>, and <strong>Accepted &mdash; needs a spot</strong>. A team waiting for a decision that already holds a spot stays on it, marked <strong>Pending</strong>, with <strong>Accept</strong> beside it. A division without spots lists its teams by status.</p>
+          <p>Only accepted teams appear in schedule assignment controls. If a team is missing from the schedule builder, check its status.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-registration-health-score',
           question: 'What does the Registration Health score tell me?',
-          answerText: 'The Registration Health card at the top of the Teams page gives a 0-100 score for your tournament\'s registrations, plus four tiles — Teams, Missing email, Payments, and Needs action — and a list of specific issues. It starts collapsed; click Show to expand it. Each tile and issue is clickable and jumps straight to the matching filtered team list, so you go straight from "12 teams missing an email" to those exact 12 teams. The Payments tile requires Tournament Plus; on the free Tournament plan it shows a Plus badge instead of numbers. A full waitlist never lowers the score — it isn\'t a problem to fix.',
-          keywords: ['registration health', 'health score', 'health card', 'needs action', 'missing email tile', 'capacity filled', 'percent filled', '/100'],
+          answerText: 'Registration health is the first row of the At a glance card on the Teams page. Closed, it shows a score out of 100 for every division and at most two things to fix, for example "Every division · 3 missing an email". Tap it to open four tiles — Teams, Missing email, Payments, and Needs action — and a list of specific issues. Each tile and issue is clickable and jumps straight to the matching filtered team list, so you go straight from "12 teams missing an email" to those exact 12 teams. The Payments tile requires Tournament Plus; on the free Tournament plan it shows a Plus badge instead of numbers. A full waitlist never lowers the score — it isn\'t a problem to fix.',
+          keywords: ['registration health', 'health score', 'health card', 'at a glance', 'needs action', 'missing email tile', 'capacity filled', 'percent filled', '/100'],
           popular: true,
           answer: (
             <>
-              <p>The <strong>Registration Health</strong> card at the top of the <strong>Teams</strong> page gives you a 0&ndash;100 score for your tournament&rsquo;s registrations, plus four tiles &mdash; <strong>Teams</strong>, <strong>Missing email</strong>, <strong>Payments</strong>, and <strong>Needs action</strong> &mdash; and a list of specific issues underneath. It starts collapsed; tap <strong>Show</strong> to expand it.</p>
-              <p>Every tile and issue is clickable and jumps straight to the matching filtered team list &mdash; so &ldquo;3 teams missing an email&rdquo; takes you directly to those 3 teams instead of making you hunt through the full roster.</p>
+              <p><strong>Registration health</strong> is the first row of the <strong>At a glance</strong> card on the <strong>Teams</strong> page. Closed, it shows a score out of 100 for every division and at most two things to fix &mdash; for example &ldquo;Every division &middot; 3 missing an email&rdquo;. Tap it to open four tiles &mdash; <strong>Teams</strong>, <strong>Missing email</strong>, <strong>Payments</strong>, and <strong>Needs action</strong> &mdash; and a list of specific issues underneath.</p>
+              <p>Every tile and issue is clickable and jumps straight to the matching teams &mdash; so &ldquo;3 missing an email&rdquo; takes you directly to those 3 teams instead of making you hunt through the full list. A line above the list says how many are in this division and how many more are in other divisions; <strong>Clear</strong> puts the full list back.</p>
               <p>The <strong>Payments</strong> tile needs <strong>Tournament Plus</strong> (it tracks unpaid and past-due fees); on the free Tournament plan it shows a small <strong>Plus</strong> badge instead of numbers. A full waitlist never counts against the score &mdash; it isn&rsquo;t something you need to fix.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-team-record',
+          question: 'What’s in a team’s record?',
+          answerText: 'Tap any team on the Teams page to open its record — full screen on a phone, a window at a desk. The team\'s name is the title, and beside it a chip says the team\'s status and where it sits. The record opens to read. To change anything, tap the pencil at the top: every section becomes fields at once, saving as you type, and the check in the same spot takes you back to reading. Accept, Reject, Mark paid and Resend the access link work either way. A team waiting for a decision shows Decision first; an accepted team shows Payment first. Then comes Team: the team name, coach and email (the address the coach signs in with), when it registered, Resend the access link, and on League and Club plans the Rep team line. Placement holds the Seed, and the Pool in a division with pools but no spots. Then Admin notes, which only admins see, and Registration answers. Delete this team… ends the record. Previous and Next at the foot move through the list without closing it and show your place, for example "3 of 8". Anything you have typed is saved before you move on or act.',
+          keywords: ['team record', 'open a team', 'team details', 'rename team', 'edit team', 'change coach', 'change email', 'placement', 'admin notes', 'registration answers', 'resend the access link', 'seed', 'previous', 'next', 'saved', 'saves as you type'],
+          answer: (
+            <>
+              <p>Tap any team on the <strong>Teams</strong> page to open its record &mdash; full screen on a phone, a window at a desk. The team&rsquo;s name is the title, and beside it a chip says the team&rsquo;s status and where it sits.</p>
+              <p>The record opens to read. To change anything, tap the <strong>pencil</strong> at the top: every section becomes fields at once, saving as you type, and the <strong>check</strong> in the same spot takes you back to reading. Accept, Reject, Mark paid and Resend the access link work either way.</p>
+              <ul>
+                <li><strong>Decision</strong> comes first for a team waiting for one, with <strong>Accept</strong> and <strong>Reject</strong>; <strong>Payment</strong> comes first for an accepted team.</li>
+                <li><strong>Team</strong> &mdash; the team name, coach and email (the address the coach signs in with), when it registered, <strong>Resend the access link</strong>, and on League and Club plans the <strong>Rep team</strong> line.</li>
+                <li><strong>Placement</strong> &mdash; the Seed, and the Pool in a division with pools but no spots.</li>
+                <li><strong>Admin notes</strong> (only admins see them), <strong>Registration answers</strong>, then <strong>Delete this team&hellip;</strong> at the end.</li>
+              </ul>
+              <p><strong>Previous</strong> and <strong>Next</strong> at the foot move through the list without closing it, and show your place (&ldquo;3 of 8&rdquo;). Anything you have typed is saved before you move on or act.</p>
             </>
           ),
         },
         {
           id: 'faq-add-team-manually',
           question: 'How do I add a team by hand — and what is the note under the email?',
-          answerText: 'On the Teams page click Add Team. Type the team name, the coach and their email, pick the division and a payment status, and save — the team is accepted straight away. When you tab out of the email field the form tells you one of two things. "This coach is on FieldLogicHQ" means the address already belongs to a coach account: the Notify checkbox turns itself on, because that notification is how the coach accepts the entry — the moment they do, it appears in their Coaches Portal with the schedule, scores and status. You can turn the notification back off. The other note, "this email becomes their sign-in", means the address is new to the platform: notifying them creates their free Coaches Portal around this entry. There is no way to attach an entry to another club\'s team from your side, on purpose — a team joins a tournament only by its own coach registering or accepting. If you run the tournament from your own Coaches Portal, your own team has its own one-click door: Add my team.',
+          answerText: 'On the Teams page tap Add team. Type the team name, the coach and their email, pick the division and a payment status, and save — the team is accepted straight away. When you tab out of the email field the form tells you one of two things. "This coach is on FieldLogicHQ" means the address already belongs to a coach account: the Notify checkbox turns itself on, because that notification is how the coach accepts the entry — the moment they do, it appears in their Coaches Portal with the schedule, scores and status. You can turn the notification back off. The other note, "this email becomes their sign-in", means the address is new to the platform: notifying them creates their free Coaches Portal around this entry. There is no way to attach an entry to another club\'s team from your side, on purpose — a team joins a tournament only by its own coach registering or accepting. If you run the tournament from your own Coaches Portal, your own team has its own one-click door: Add my team.',
           keywords: ['add team', 'add team manually', 'add a team by hand', 'register a team for them', 'coach is on fieldlogichq', 'notify team', 'notification checkbox', 'email becomes their sign-in', 'this coach is on', 'attach to a team', 'search for a team', 'find a team on the platform', 'link a team', 'add my team'],
           answer: (
             <>
-              <p>On the <strong>Teams</strong> page click <strong>Add Team</strong>. Type the team name, the coach and their email, pick the division and a payment status, and save &mdash; the team is accepted straight away.</p>
+              <p>On the <strong>Teams</strong> page tap <strong>Add team</strong>. Type the team name, the coach and their email, pick the division and a payment status, and save &mdash; the team is accepted straight away.</p>
               <p>When you tab out of the <strong>Email</strong> field the form tells you one of two things:</p>
               <ul>
                 <li><strong>&ldquo;This coach is on FieldLogicHQ&rdquo;</strong> &mdash; the address already belongs to a coach account. The <strong>Notify</strong> checkbox turns itself on, because that notification is how the coach <em>accepts</em> the entry: the moment they do, it appears in their Coaches Portal with the schedule, scores and status. You can turn the notification back off.</li>
@@ -572,20 +591,23 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-add-team-email',
           question: 'How do I add or fix a team\'s email address?',
-          answerText: 'Open Registrations, expand the team\'s row, and click the pencil (Edit) icon to add or change its email. If the Registration Health card or the dashboard flags teams with no email on file, click that flag to jump straight to the affected teams instead of searching the full list.',
-          keywords: ['add team email', 'edit team email', 'fix email', 'no email on file', 'missing email', 'coach email'],
+          answerText: 'On the Teams page, tap the team to open its record, then tap the pencil at the top. Under Team, type the address in Email — it saves as you type, and "Saved" shows briefly at the foot of the record. A half-typed address is never saved: the record waits, saying "Enter a full email address to save it." To rename the team, change Team name in the same section. Tap the check when you\'re done. If Registration health or the dashboard flags teams with no email on file, tap that line to jump straight to the teams that need one.',
+          keywords: ['add team email', 'edit team email', 'change team email', 'fix email', 'no email on file', 'missing email', 'coach email', 'rename team', 'edit team name', 'team details'],
           answer: (
-            <p>Open <strong>Registrations</strong>, expand the team&rsquo;s row, and click the pencil (<strong>Edit</strong>) icon &mdash; the email field is there along with the team name and coach name. If the <strong>Registration Health</strong> card or the dashboard&rsquo;s <strong>Coach Sign-ups &amp; Chat</strong> panel flags teams with no email on file, click that flag instead of searching manually &mdash; it jumps straight to the exact teams that need one.</p>
+            <>
+              <p>On the <strong>Teams</strong> page, tap the team to open its record, then tap the pencil at the top. Under <strong>Team</strong>, type the address in <strong>Email</strong> &mdash; it saves as you type, and <strong>Saved</strong> shows briefly at the foot of the record. A half-typed address is never saved: the record waits, saying &ldquo;Enter a full email address to save it.&rdquo; To rename the team, change <strong>Team name</strong> in the same section. Tap the check when you&rsquo;re done.</p>
+              <p>If <strong>Registration health</strong> or the dashboard&rsquo;s <strong>Coach Sign-ups &amp; Chat</strong> panel flags teams with no email on file, tap that line instead of searching &mdash; it jumps straight to the teams that need one.</p>
+            </>
           ),
         },
         {
           id: 'faq-link-registration-rep-team',
           question: 'How do I connect a team’s registration to one of my rep teams?',
-          answerText: 'On League and Club plans, expand the team’s registration row and use "Link to rep team" to attach it to one of your organization’s rep teams. Once linked, that team’s coaches are recognized as coaches on your public tournament pages — the flip pill in the top-right corner takes them straight to their coach view. Coaches whose email is already on the registration are recognized automatically, so you only need this when a team was registered under a shared office email. You can pick a different team or unlink at any time. You can only link to rep teams in your own organization.',
-          keywords: ['link to rep team', 'rep team', 'connect registration', 'recognize coach', 'public page coach', 'rep coach recognition', 'paid portal coach'],
+          answerText: 'On League and Club plans, open the team’s record on the Teams page and, in its Coach block, tap "Link to a rep team" on the Rep team line to attach it to one of your organization’s rep teams. Once linked, that team’s coaches are recognized as coaches on your public tournament pages — the flip pill in the top-right corner takes them straight to their coach view. Coaches whose email is already on the registration are recognized automatically, so you only need this when a team was registered under a shared office email. You can pick a different team or unlink at any time. You can only link to rep teams in your own organization.',
+          keywords: ['link to rep team', 'link to a rep team', 'unlink rep team', 'rep team', 'connect registration', 'recognize coach', 'public page coach', 'rep coach recognition', 'paid portal coach'],
           answer: (
             <>
-              <p>On <strong>League</strong> and <strong>Club</strong> plans, expand the team&rsquo;s registration row and use <strong>Link to rep team</strong> to attach it to one of your organization&rsquo;s rep teams. Once linked, that team&rsquo;s coaches are recognized as coaches on your <strong>public tournament pages</strong> &mdash; the <strong>flip pill</strong> in the top-right corner takes them straight to their team&rsquo;s <strong>tournament record</strong> for this event in their coach portal.</p>
+              <p>On <strong>League</strong> and <strong>Club</strong> plans, open the team&rsquo;s record on the <strong>Teams</strong> page and, in its <strong>Coach</strong> block, tap <strong>Link to a rep team</strong> on the <strong>Rep team</strong> line to attach it to one of your organization&rsquo;s rep teams. Once linked, that team&rsquo;s coaches are recognized as coaches on your <strong>public tournament pages</strong> &mdash; the <strong>flip pill</strong> in the top-right corner takes them straight to their team&rsquo;s <strong>tournament record</strong> for this event in their coach portal.</p>
               <p>Coaches whose email is already on the registration are recognized <em>automatically</em>, so you only need this when a team was registered under a shared office email that doesn&rsquo;t match any coach. You can pick a different team or <strong>unlink</strong> at any time. You can only link to rep teams in <strong>your own organization</strong>.</p>
             </>
           ),
@@ -603,10 +625,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-bulk-registration-actions',
           question: 'How do bulk registration actions work?',
-          answerText: 'Select the registrations you want to update, then choose the bulk action. Only selected registrations are changed.',
-          keywords: ['bulk actions', 'selected teams', 'approve', 'reject', 'waitlist'],
+          answerText: 'On the Teams page open Tools and choose Select many, tick the teams you want (Select visible ticks every team the list is showing), then choose Accept, Waitlist, Reject, Deposit paid, Paid in full, Send a reminder (Tournament Plus), or Move to pool where the division has pools. Accept, Waitlist, Reject and the payment marks ask before they change anything, and only the ticked teams change. Tap Done to leave.',
+          keywords: ['bulk actions', 'select many', 'selected teams', 'select visible', 'approve', 'accept several', 'reject', 'waitlist', 'deposit paid', 'paid in full', 'send a reminder', 'move to pool'],
           answer: (
-            <p>Select specific rows on the Registrations page, then choose a bulk action such as accept, reject, waitlist, mark deposit paid, or mark paid. Only the selected rows are affected.</p>
+            <>
+              <p>On the <strong>Teams</strong> page open <strong>Tools</strong> and choose <strong>Select many</strong>, then tick the teams you want &mdash; <strong>Select visible</strong> ticks every team the list is showing. Then choose <strong>Accept</strong>, <strong>Waitlist</strong>, <strong>Reject</strong>, <strong>Deposit paid</strong>, <strong>Paid in full</strong>, <strong>Send a reminder</strong> (Tournament Plus), or <strong>Move to pool</strong> where the division has pools.</p>
+              <p>Accept, Waitlist, Reject and the payment marks ask before they change anything, and only the ticked teams change. Tap <strong>Done</strong> to leave.</p>
+            </>
           ),
         },
         {
@@ -624,11 +649,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-delete-team-with-games',
           question: 'Can I delete a team that already has games?',
-          answerText: 'Yes, but FieldLogicHQ checks first. If the team appears in any game, deleting is paused and you are told how many games it plays in and how many already have a recorded score — for example "this team appears in 6 games (4 with a recorded score)". You can back out, or confirm to continue. If you continue, those games are KEPT, not deleted: each one loses that one side and shows an empty slot where the team was, and the opponent\'s record and score are untouched. This is deliberate — a game belongs to both teams, so removing one team must never erase the other team\'s history. Tidy up by reassigning or removing those games from the schedule afterwards. Note this differs from deleting a whole division, which does remove its games and scores. If the tournament is Completed and locked, deletion is blocked until you set the status back to Active.',
+          answerText: 'Yes. Open the team\'s record and tap Delete this team… at the end. FieldLogicHQ checks first: if the team appears in any game, deleting is paused and you are told how many games it plays in and how many already have a recorded score — for example "this team appears in 6 games (4 with a recorded score)". You can back out, or confirm to continue. If you continue, those games are KEPT, not deleted: each one loses that one side and shows an empty slot where the team was, and the opponent\'s record and score are untouched. This is deliberate — a game belongs to both teams, so removing one team must never erase the other team\'s history. Tidy up by reassigning or removing those games from the schedule afterwards. Note this differs from deleting a whole division, which does remove its games and scores. If the tournament is Completed and locked, deletion is blocked until you set the status back to Active.',
           keywords: ['delete team', 'remove team', 'delete registration', 'team has games', 'delete a team with games', 'blank team', 'empty slot in schedule', 'undo delete team'],
           answer: (
             <>
-              <p>Yes, but FieldLogicHQ checks first. If the team appears in any game, deleting pauses and tells you what&rsquo;s at stake &mdash; for example &ldquo;this team appears in 6 games (4 with a recorded score).&rdquo; You can back out, or confirm to continue.</p>
+              <p>Yes. Open the team&rsquo;s record and tap <strong>Delete this team&hellip;</strong> at the end. FieldLogicHQ checks first: if the team appears in any game, deleting pauses and tells you what&rsquo;s at stake &mdash; for example &ldquo;this team appears in 6 games (4 with a recorded score).&rdquo; You can back out, or confirm to continue.</p>
               <p>If you continue, <strong>those games are kept, not deleted</strong>. Each one loses that one side and shows an empty slot where the team was, while the opponent&rsquo;s record and score stay exactly as they were. That&rsquo;s deliberate: a game belongs to <em>both</em> teams, so removing one team must never erase the other team&rsquo;s history. Tidy up by reassigning or removing those games in the schedule afterwards.</p>
               <p>This differs from deleting a whole <strong>division</strong>, which <em>does</em> remove its games and scores. If the tournament is <strong>Completed</strong> and locked, deletion is blocked until you set the status back to Active.</p>
             </>
@@ -637,19 +662,25 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-payment-status',
           question: 'Where do payment statuses come from?',
-          answerText: 'Payment statuses are based on fee schedule and team payment tracking.',
-          keywords: ['payment status', 'deposit', 'paid', 'past due'],
+          answerText: 'Payment status is calculated from the tournament or division fee schedule and the amounts recorded for each accepted team. On the Teams page an accepted team reads Paid or Owes and the amount. Its record\'s Payment block states the facts, for example "Owes $475 · deposit due May 28 · balance due Jun 7", with Mark paid and the Deposit paid and Total paid amounts. On Tournament Plus, the Payments row in At a glance totals the division: what is in, what is left to collect, and what is past due.',
+          keywords: ['payment status', 'deposit', 'paid', 'owes', 'past due', 'mark paid', 'deposit paid', 'total paid', 'to collect', 'all collected'],
           answer: (
-            <p>Payment status is calculated from the tournament or division fee schedule and the payment values tracked for each accepted registration.</p>
+            <>
+              <p>Payment status is calculated from the tournament or division fee schedule and the amounts recorded for each accepted team. On the <strong>Teams</strong> page an accepted team reads <strong>Paid</strong> or <strong>Owes</strong> and the amount.</p>
+              <p>Its record&rsquo;s <strong>Payment</strong> block states the facts &mdash; for example &ldquo;Owes $475 &middot; deposit due May 28 &middot; balance due Jun 7&rdquo; &mdash; with <strong>Mark paid</strong> and the <strong>Deposit paid</strong> and <strong>Total paid</strong> amounts. On <strong>Tournament Plus</strong>, the <strong>Payments</strong> row in <strong>At a glance</strong> totals the division: what is in, what is left to collect, and what is past due.</p>
+            </>
           ),
         },
         {
           id: 'faq-waitlist-order',
           question: 'How is waitlist order preserved?',
-          answerText: 'Waitlisted teams receive a numbered position in their division queue, and promotions compact the remaining queue.',
-          keywords: ['waitlist', 'queue', 'promotion', 'position'],
+          answerText: 'When a team joins or is moved to the waitlist, it gets the next place in its division\'s queue — the Waitlist band lists teams in that order (#1, #2…). When a spot opens, a waitlisted team\'s row offers Promote on Tournament Plus, and the rest of the queue closes the gap. On the Tournament plan, the team\'s record shows Promote from the waitlist as a Tournament Plus line instead. An accepted team without a spot sits under Accepted — needs a spot, and offers Place when a spot opens.',
+          keywords: ['waitlist', 'queue', 'promotion', 'promote', 'place', 'position', 'accepted needs a spot', 'open spot'],
           answer: (
-            <p>When a team joins or is moved to the waitlist, FieldLogicHQ assigns the next queue position for that division. Tournament Plus adds promotion and queue-management tools; when a waitlisted team is promoted, the remaining waitlist closes the gap so the queue stays in order.</p>
+            <>
+              <p>When a team joins or is moved to the waitlist, it gets the next place in its division&rsquo;s queue &mdash; the <strong>Waitlist</strong> band lists teams in that order (#1, #2&hellip;).</p>
+              <p>When a spot opens, a waitlisted team&rsquo;s row offers <strong>Promote</strong> on <strong>Tournament Plus</strong>, and the rest of the queue closes the gap. On the Tournament plan, the team&rsquo;s record shows <strong>Promote from the waitlist</strong> as a Tournament Plus line instead. An accepted team without a spot sits under <strong>Accepted &mdash; needs a spot</strong>, and offers <strong>Place</strong> when a spot opens.</p>
+            </>
           ),
         },
       ],
@@ -660,21 +691,22 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Teams & Registration',
       heading: 'Put teams into pools',
       summary: 'Place accepted teams into a division’s pools by hand, in batches, or all at once.',
-      keywords: ['assign pools', 'add teams to pools', 'put teams in pools', 'move to pool', 'randomize pools', 'unassigned', 'pool assignment'],
-      searchText: 'assign teams to pools add teams to pools put teams in pools where do i add teams to pools move to pool randomize spread teams unassigned pool view flat view self-select pool place teams division pools pool a pool b',
+      keywords: ['assign pools', 'add teams to pools', 'put teams in pools', 'move to pool', 'randomize pools', 'no pool yet', 'unassigned', 'pool assignment', 'swap teams', 'swap spots', 'pool spots'],
+      searchText: 'assign teams to pools add teams to pools put teams in pools where do i add teams to pools move to pool randomize spread teams no pool yet unassigned group by pools group by status filter tools menu self-select pool place teams division pools pool a pool b spots open spot red team 2 swap two teams swap their places next open spot accepting places a team',
       links: [
         { label: 'Teams', href: '../tournaments/registrations' },
         { label: 'Divisions', href: '../tournaments/divisions' },
       ],
       content: (
         <>
-          <p>Pools are created on the <strong>Divisions</strong> page &mdash; turn on <strong>Enable pools</strong> for the division and name them first. Until a division has pools, every team sits under <strong>Unassigned</strong> on the Teams page, and that view links you back to Divisions to turn pools on.</p>
-          <p>Once pools exist, open the <strong>Teams</strong> page, choose the division, and switch to <strong>Pools</strong> view. Every pool appears, even before it has any teams, so you always know where teams can go. There are three ways to place accepted teams:</p>
+          <p>Pools are created on the <strong>Divisions</strong> page &mdash; turn on <strong>Enable pools</strong> for the division and name them first. A division without pools lists its teams by status on the Teams page.</p>
+          <p>Once pools exist, open the <strong>Teams</strong> page, choose the division, and under <strong>Filter</strong> group by <strong>Pools</strong>. Teams not yet placed sit under <strong>No pool yet</strong>, and every pool appears, even before it has any teams. There are three ways to place accepted teams:</p>
           <ul>
-            <li><strong>One at a time</strong> &mdash; pick a pool from the dropdown on each team&rsquo;s row.</li>
-            <li><strong>In batches</strong> &mdash; use <strong>Select Many</strong>, tick the teams you want together, then choose <strong>Move to pool</strong>.</li>
-            <li><strong>All at once</strong> &mdash; use <strong>Randomize</strong> to spread every accepted team evenly across the pools, then adjust by hand.</li>
+            <li><strong>One at a time</strong> &mdash; open the team, tap the pencil, and pick its <strong>Pool</strong> under <strong>Placement</strong>.</li>
+            <li><strong>In batches</strong> &mdash; open <strong>Tools</strong> and choose <strong>Select many</strong>, tick the teams you want together, then choose <strong>Move to pool</strong>.</li>
+            <li><strong>All at once</strong> &mdash; choose <strong>Randomize</strong> in <strong>Tools</strong> to spread every accepted team evenly across the pools, then adjust by hand.</li>
           </ul>
+          <p>A division whose pools have numbered spots (&ldquo;Red Team 2&rdquo;) always shows its pools and every spot. Accepting a team places it in the next open spot. To move teams, open <strong>Tools</strong> and choose <strong>Swap</strong>, then tap two teams &mdash; or a team and an open spot &mdash; to swap their places; <strong>Randomize</strong>, also in Tools, shuffles the spots. A search or a filter shows only the teams that match, still under their pools; Swap comes back when every spot is showing again.</p>
           <p>This is how you assign pools when <strong>self-select pool</strong> is off for the division. With self-select on, teams choose their own pool as they register, and you only step in to make changes.</p>
         </>
       ),
@@ -682,20 +714,23 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-where-add-teams-to-pools',
           question: 'Where do I add teams to pools?',
-          answerText: 'On the Teams page, choose the division and switch to Pools view. Set a team’s pool from the dropdown on its row, select several teams and use Move to pool, or use Randomize to spread all accepted teams across the pools. Pools must first be enabled and named on the Divisions page; the Pools toggle on the Teams page only changes how teams are grouped, it does not create pools.',
-          keywords: ['where add teams to pools', 'assign pool', 'move to pool', 'randomize', 'pools view', 'unassigned'],
+          answerText: 'On the Teams page, choose the division and, under Filter, group by Pools. Open a team, tap the pencil and pick its Pool under Placement; open Tools and choose Select many, then Move to pool, for several teams; or choose Randomize in Tools to spread all accepted teams across the pools. Pools must first be enabled and named on the Divisions page; grouping by Pools or Status only changes how the list is arranged, it does not create pools. In a division whose pools have numbered spots, accepting a team places it in the next open spot, and Swap, in Tools, moves teams between spots.',
+          keywords: ['where add teams to pools', 'assign pool', 'move to pool', 'randomize', 'group by pools', 'pools view', 'no pool yet', 'unassigned', 'swap'],
           popular: true,
           answer: (
-            <p>On the <strong>Teams</strong> page, pick the division and switch to <strong>Pools</strong> view, then use the pool dropdown on a team&rsquo;s row, <strong>Move to pool</strong> after selecting several teams, or <strong>Randomize</strong> to spread them all at once. Note the <strong>Flat / Pools</strong> toggle only changes how teams are grouped &mdash; pools themselves are created on the <strong>Divisions</strong> page.</p>
+            <>
+              <p>On the <strong>Teams</strong> page, pick the division and, under <strong>Filter</strong>, group by <strong>Pools</strong>. Then open a team, tap the pencil and pick its <strong>Pool</strong> under <strong>Placement</strong>; use <strong>Move to pool</strong> after ticking several teams in <strong>Select many</strong> (in <strong>Tools</strong>); or choose <strong>Randomize</strong> in Tools to spread them all at once.</p>
+              <p>Grouping by <strong>Pools</strong> or <strong>Status</strong> only changes how the list is arranged &mdash; pools themselves are created on the <strong>Divisions</strong> page. In a division whose pools have numbered spots, accepting a team places it in the next open spot, and <strong>Swap</strong>, in Tools, moves teams between spots.</p>
+            </>
           ),
         },
         {
           id: 'faq-only-unassigned-showing',
-          question: 'Why do all my teams show as Unassigned?',
-          answerText: 'Teams show under Unassigned until you place them in a pool, or because the division has no pools enabled yet. Empty pools still appear in Pools view so you can assign into them. If there are no pools at all, enable pools for the division on the Divisions page first, then assign teams on the Teams page.',
-          keywords: ['unassigned', 'no pools', 'pools missing', 'teams not in pools'],
+          question: 'Why do my teams show under No pool yet?',
+          answerText: 'When you group by Pools, a team sits under No pool yet until you place it in a pool. Empty pools still appear so you can place teams into them. If the Pools grouping is missing, the division has no pools: enable and name them on the Divisions page first, then place teams on the Teams page.',
+          keywords: ['no pool yet', 'unassigned', 'no pools', 'pools missing', 'teams not in pools', 'pools grouping missing'],
           answer: (
-            <p>Teams stay under <strong>Unassigned</strong> until you place them, or because the division has no pools yet. If you see no pools at all, open the <strong>Divisions</strong> page, enable pools for that division, and name them &mdash; then come back to the Teams page and assign teams.</p>
+            <p>When you group by <strong>Pools</strong>, a team sits under <strong>No pool yet</strong> until you place it. Empty pools still appear so you can place teams into them. If the <strong>Pools</strong> grouping is missing, the division has no pools &mdash; open the <strong>Divisions</strong> page, enable pools for that division and name them, then come back to the Teams page and place teams.</p>
           ),
         },
       ],
@@ -1286,49 +1321,63 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Communicate & Publish',
       heading: 'Announcements and email',
       summary: 'Publish news to the public site, pin urgent day-of updates, email registered teams, and push notifications to fans.',
-      keywords: ['communication', 'announcements', 'email', 'news posts', 'targeted email', 'pin', 'pinned', 'rain delay', 'schedule banner', 'email limit', 'recipient limit', 'free email cap', 'push', 'push notification', 'push to fans', 'notify fans', 'fan alerts', 'phone alert'],
-      searchText: 'communication audiences send email announcements news posts public tournament page teams division payment status selected teams contact role targeted communication all teams pin pinned post top of news rain delay urgent day-of update game day schedule banner live event free plan email limit 100 recipients per send 10 announcements per day daily email cap volume limit basic email cap too many emails send limit push to fans push notification phone notification notify fans buzz fans phones fan alerts followed team alerts opt in tournament plus channels post to site email recipients three channels',
+      keywords: ['communications', 'communication', 'announcements', 'new message', 'email', 'email the teams', 'news posts', 'post to the public site', 'targeted email', 'templates', 'start from', 'pin', 'pinned', 'rain delay', 'schedule banner', 'email limit', 'recipient limit', 'free email cap', 'push', 'push notification', 'push to fans', 'notify fans', 'fan alerts', 'phone alert', 'who it reached', 'removed from the site', 'restore post'],
+      searchText: 'communications communication new message start from a blank message template schedule is live payment reminder weather update welcome and info results are in title message where it goes post to the public site news page pin it at the top show under divisions email the teams each accepted team coach teams accepted waitlisted waiting for a decision all except rejected division payment any owes paid live count post and email send button number send announcements news posts public tournament page targeted communication accepted teams only rejected teams never emailed rain delay urgent day-of update game day schedule banner live event free plan email limit 100 recipients per send 10 announcements per day daily email cap volume limit basic email cap too many emails send limit push to fans phones push notification phone notification notify fans buzz fans phones fan alerts followed team alerts opt in tournament plus all on the site emailed filter removed from the site restore to site remove from site edit post email record delivered failed copy failed see who it reached',
       links: [
-        { label: 'Communication', href: '../tournaments/communication' },
+        { label: 'Communications', href: '../tournaments/communication' },
       ],
       content: (
         <>
-          <p>Use <strong>Communication</strong> for tournament messages. A single message can go out on up to three channels at once: <strong>Post to site</strong> (adds it to the public News page), <strong>Email recipients</strong> (sends to registered teams), and <strong>Push to fans</strong> (a phone notification to fans who&rsquo;ve turned on alerts). Free Tournament supports basic all-team email — up to 100 recipients per message and 10 email announcements per day. Tournament Plus removes those limits and can target by division, registration status, payment status, selected teams, and contact role.</p>
-          <p><strong>Push to fans (Tournament Plus).</strong> Turn on <strong>Push to fans</strong> to send a phone notification to everyone following a team in this tournament who has turned on alerts. Because tapping the notification opens the tournament&rsquo;s public <strong>News</strong> page, <strong>Post to site</strong> stays on automatically whenever you push. It&rsquo;s built for rain delays and urgent day-of updates — <strong>pin</strong> the post too and it also shows as the banner on the public Schedule. After sending, you&rsquo;ll see how many fans were reached (or &ldquo;no fans have alerts on yet&rdquo; if nobody has opted in). On the free plan this option is locked.</p>
-          <p><strong>Pinning a site post.</strong> When you post a message to the site and <strong>pin</strong> it, it stays at the top of the public <strong>News</strong> page — and, while the tournament is live (today falls within the event dates), it also appears as a <strong>banner at the top of the public Schedule</strong>. That puts urgent day-of updates — a rain delay, a diamond change, a start-time push — right where fans are already looking. Pin sparingly so the banner stays meaningful; unpin it once the situation clears.</p>
-          <p>Review recipients and message content carefully before sending. Targeted sends should be operational and useful for teams, not broad marketing blasts.</p>
+          <p>Use <strong>Communications</strong> for tournament messages. One message can go to the public site, to your teams by email, and to fans&rsquo; phones, all at once.</p>
+          <ol>
+            <li>Tap <strong>New message</strong>.</li>
+            <li>Under <strong>Start from</strong>, keep <strong>A blank message</strong> or pick a template such as <strong>Schedule is live</strong> or <strong>Weather update</strong>, then write the <strong>Title</strong> and <strong>Message</strong>.</li>
+            <li>Under <strong>Where it goes</strong>, tick <strong>Post to the public site</strong> (the tournament&rsquo;s News page), <strong>Email the teams</strong>, <strong>Push to fans&rsquo; phones</strong>, or any mix.</li>
+            <li>Check the count under the email choice, then send. The button says what it will do and for how many &mdash; for example <strong>Post and email 18</strong>.</li>
+          </ol>
+          <p>An email goes to each <strong>accepted</strong> team&rsquo;s coach unless you choose otherwise. On Tournament Plus you choose the teams by status, division and payment, and the count updates as you choose. A rejected team is never emailed.</p>
+          <p>The list shows everything you have sent; filter it with <strong>All</strong>, <strong>On the site</strong> and <strong>Emailed</strong>. A post taken off the site moves to <strong>Removed from the site</strong> at the end &mdash; open it to put it back. Open any message to edit a post or to see who an email reached.</p>
+          <p>Keep sends operational and useful for teams, not broad marketing blasts.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-targeted-communication',
           question: 'Who can use targeted tournament communication?',
-          answerText: 'Tournament Plus, League Plus, and Club can target messages by team status, payment status, division, selected teams, and contact role, and remove the free plan\'s basic-email limits (100 recipients per send, 10 sends per day).',
-          keywords: ['targeted communication', 'email selected', 'division email', 'payment status'],
+          answerText: 'Tournament Plus and higher. Under Email the teams, three choices set who an email reaches: Teams (Accepted, Waitlisted, Waiting for a decision, or All except rejected), Division (all divisions or one), and Payment (Any, Owes, or Paid). The count below them updates as you choose, and the send button repeats it. A post can also show under chosen divisions. On the free Tournament plan an email goes to every accepted team\'s coach, and each choice appears as a locked line naming Tournament Plus — a choice you cannot make never widens who gets the email. Tournament Plus also removes the free plan\'s email limits (100 recipients per send, 10 sends per day).',
+          keywords: ['targeted communication', 'choose teams', 'email waitlisted teams', 'email teams waiting for a decision', 'all except rejected', 'division email', 'payment status', 'owes', 'who gets the email', 'recipient count'],
           answer: (
-            <p>Targeted communication is included with Tournament Plus and higher. Free Tournament can still send basic all-team email, but targeted filters are locked so an unauthorized filter never falls back to sending everyone. Tournament Plus also removes the free plan&apos;s volume limits (see below).</p>
+            <>
+              <p>Targeted communication is included with <strong>Tournament Plus</strong> and higher. Under <strong>Email the teams</strong>, three choices set who an email reaches:</p>
+              <ul>
+                <li><strong>Teams</strong> &mdash; Accepted, Waitlisted, Waiting for a decision, or All except rejected.</li>
+                <li><strong>Division</strong> &mdash; all divisions, or one.</li>
+                <li><strong>Payment</strong> &mdash; Any, Owes, or Paid.</li>
+              </ul>
+              <p>The count below them updates as you choose (&ldquo;18 teams &middot; every accepted team, all divisions&rdquo;), and the send button repeats it. A post can also show under chosen divisions. On the free Tournament plan an email goes to every accepted team&rsquo;s coach, and each choice appears as a locked line naming Tournament Plus &mdash; a choice you can&rsquo;t make never widens who gets the email. Tournament Plus also removes the free plan&rsquo;s volume limits (see below).</p>
+            </>
           ),
         },
         {
           id: 'faq-free-email-limits',
           question: 'Is there a limit on emails from the free Tournament plan?',
-          answerText: 'Yes. The free Tournament plan can send a basic all-team announcement to up to 100 recipients per message and up to 10 email announcements per day. Tournament Plus and above remove both limits. Posting to the public site (no email) is never limited.',
+          answerText: 'Yes. The free Tournament plan emails every accepted team, up to 100 recipients per message and up to 10 email announcements per day. Tournament Plus and above remove both limits. Posting to the public site (no email) is never limited.',
           keywords: ['email limit', 'free plan email', '100 recipients', '10 per day', 'send limit', 'too many emails', 'daily email limit'],
           answer: (
-            <p>The free Tournament plan can send a basic all-team announcement to <strong>up to 100 recipients per message</strong> and <strong>up to 10 email announcements per day</strong>. If you reach a limit, you&apos;ll see a message saying so. <strong>Tournament Plus</strong> and above remove both limits. Posting to the public <strong>site</strong> (without email) is never limited.</p>
+            <p>The free Tournament plan emails every accepted team, <strong>up to 100 recipients per message</strong> and <strong>up to 10 email announcements per day</strong>. If you reach a limit, you&apos;ll see a message saying so. <strong>Tournament Plus</strong> and above remove both limits. Posting to the public <strong>site</strong> (without email) is never limited.</p>
           ),
         },
         {
           id: 'faq-rain-delay-banner',
           question: 'How do I get a rain delay or urgent update in front of fans on game day?',
-          answerText: 'If games are actually moving or being cancelled, use Tools then Rain delay on the Schedule page (a Tournament Plus tool) — pick the day, and it re-times that day and hands you a ready-to-send notice in one flow. If you are on the free plan, or you just need to get the word out without changing game times, post a message and pin it: a pinned site post stays at the top of the News page and, while the tournament is live, also shows as a banner at the top of the public Schedule page. On Tournament Plus you can also turn on Push to fans to send a phone notification at the same time. Unpin it once the situation clears.',
+          answerText: 'If games are actually moving or being cancelled, use Tools then Rain delay on the Schedule page (a Tournament Plus tool) — pick the day, and it re-times that day and hands you a ready-to-send notice in one flow. If you are on the free plan, or you just need to get the word out without changing game times, post a message and tick Pin it at the top: a pinned site post stays at the top of the News page and, while the tournament is live, also shows as a banner at the top of the public Schedule page. On Tournament Plus you can also tick Push to fans’ phones to send a phone notification at the same time. Unpin it once the situation clears.',
           keywords: ['rain delay', 'urgent update', 'game day', 'schedule banner', 'pin announcement', 'day-of', 'push to fans', 'notify fans', 'shift the day', 'move games', 'tools menu', 'tournament plus'],
           popular: true,
           answer: (
             <>
               <p><strong>If games are actually moving or being cancelled,</strong> start with <strong>Tools ▾ → Rain delay</strong> on the <strong>Schedule</strong> page — pick the day and it re-times that day, then hands you a ready-to-send notice in one flow (see &ldquo;How do I move or cancel a whole day of games at once&rdquo;). Rain delay is a <strong>Tournament Plus</strong> tool; on the free plan — or when you just need to get the word out <em>without</em> changing game times — use the steps below instead.</p>
-              <p>Open <strong>Communication</strong>, write the update, keep <strong>Post to site</strong> on, and turn on <strong>Pin</strong>. While the tournament is live, a pinned site post appears as a banner at the top of the public <strong>Schedule</strong> (and stays pinned at the top of <strong>News</strong>). It&rsquo;s the fastest way to reach fans already watching the schedule for a rain delay, a diamond change, or a start-time push.</p>
-              <p>On <strong>Tournament Plus</strong>, also turn on <strong>Push to fans</strong> to buzz the phones of fans who&rsquo;ve enabled alerts — the fastest way to reach people who aren&rsquo;t looking at the schedule right then.</p>
+              <p>Open <strong>Communications</strong>, tap <strong>New message</strong>, write the update, keep <strong>Post to the public site</strong> ticked, and tick <strong>Pin it at the top</strong>. While the tournament is live, a pinned site post appears as a banner at the top of the public <strong>Schedule</strong> (and stays pinned at the top of <strong>News</strong>). It&rsquo;s the fastest way to reach fans already watching the schedule for a rain delay, a diamond change, or a start-time push.</p>
+              <p>On <strong>Tournament Plus</strong>, also tick <strong>Push to fans&rsquo; phones</strong> to buzz the phones of fans who&rsquo;ve enabled alerts — the fastest way to reach people who aren&rsquo;t looking at the schedule right then.</p>
               <p><strong>Unpin</strong> it once the situation clears so the banner stays reserved for things that matter in the moment.</p>
             </>
           ),
@@ -1336,13 +1385,25 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-push-to-fans',
           question: 'Can I send a push notification to fans?',
-          answerText: 'Yes, on Tournament Plus and higher. Turn on "Push to fans" when posting a message to send a phone notification to everyone following a team in this tournament who has turned on alerts. It requires "Post to site" because the notification opens the public News page, and it is ideal for rain delays and day-of updates. Fans opt in themselves by following a team, signing in with a free account, and enabling alerts, so early on you may see "no fans have alerts on yet." On the free plan the option is locked.',
-          keywords: ['push', 'push notification', 'push to fans', 'notify fans', 'phone alert', 'fan alerts', 'buzz phone', 'opt in'],
+          answerText: 'Yes, on Tournament Plus and higher. Tick "Push to fans’ phones" in a new message to send a phone notification to everyone following a team in this tournament who has turned on alerts. It also posts to the site (Post to the public site ticks itself), so the notification opens the full message, and it is ideal for rain delays and day-of updates. Fans opt in themselves by following a team, signing in with a free account, and enabling alerts, so early on you may see "no fans have alerts on yet." On the free plan the option is locked.',
+          keywords: ['push', 'push notification', 'push to fans', 'push to fans phones', 'notify fans', 'phone alert', 'fan alerts', 'buzz phone', 'opt in'],
           popular: true,
           answer: (
             <>
-              <p><strong>Yes — on Tournament Plus and higher.</strong> When you write a message, turn on <strong>Push to fans</strong> to send a phone notification to everyone following a team in this tournament who has turned on alerts. Because the notification opens the tournament&rsquo;s public <strong>News</strong> page, <strong>Post to site</strong> stays on whenever you push.</p>
-              <p>It&rsquo;s ideal for rain delays and urgent day-of updates — pin the post and it also appears as the banner on the public <strong>Schedule</strong>. Fans opt in themselves by following a team, signing in, and turning on alerts, so early in an event you may see &ldquo;no fans have alerts on yet.&rdquo; On the free plan this option is locked.</p>
+              <p><strong>Yes &mdash; on Tournament Plus and higher.</strong> In a new message, tick <strong>Push to fans&rsquo; phones</strong> to send a phone notification to everyone following a team in this tournament who has turned on alerts. It also posts to the site &mdash; <strong>Post to the public site</strong> ticks itself &mdash; so the notification opens the full message.</p>
+              <p>It&rsquo;s ideal for rain delays and urgent day-of updates — pin the post and it also appears as the banner on the public <strong>Schedule</strong>. Fans opt in themselves by following a team, signing in, and turning on alerts, so early in an event you may see &ldquo;no fans have alerts on yet.&rdquo; On the free plan it appears as a locked line naming Tournament Plus.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-email-who-it-reached',
+          question: 'How do I see who an email reached?',
+          answerText: 'In Communications, the list shows each email\'s count, for example "Emailed to 18 · 1 failed". Open the message: its Email block says how many were delivered and how many failed, See who it reached lists the teams, and Copy failed copies the addresses that failed so you can check them. A message that went to the site and by email opens as one record, with its email inside. Older emails, sent before the list was kept, show the counts and any failed addresses but not the full list.',
+          keywords: ['who it reached', 'see who it reached', 'email recipients', 'delivered', 'failed email', 'bounced', 'copy failed', 'email record', 'did my email send'],
+          answer: (
+            <>
+              <p>In <strong>Communications</strong>, the list shows each email&rsquo;s count &mdash; for example &ldquo;Emailed to 18 &middot; 1 failed&rdquo;. Open the message: its <strong>Email</strong> block says how many were delivered and how many failed, <strong>See who it reached</strong> lists the teams, and <strong>Copy failed</strong> copies the addresses that failed so you can check them.</p>
+              <p>A message that went to the site and by email opens as one record, with its email inside. Older emails, sent before the list was kept, show the counts and any failed addresses but not the full list.</p>
             </>
           ),
         },

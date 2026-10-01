@@ -2095,9 +2095,15 @@
 /* ── FieldHint ────────────────────────────────────────────────────────────── */
 :global([data-admin-kit]) .fieldHint:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
 
-/* ── The work-page "?" button (.helpButtonIconOnly is NOT ours — another session owns it) ───────── */
+/* ── The work-page "?" button ──────────────────────────────────────────────────────────────────────── */
 :global([data-admin-kit]) .helpButton:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
 :global([data-admin-kit]) .helpButton:where(:not([data-public-preview] *)):hover { color: var(--home-olive); }
+/* The admin's title band wears the portal's bare "?" (2026-10-01) beside 44px icon buttons, so on a
+   touch width its hit box takes the same 44px floor; the glyph and its paint are unchanged. 768, not
+   760: a tablet is a touch width, and the layout sweep measures this "?" at 768. */
+@media (max-width: 768px) {
+  :global([data-admin-kit]) .helpButtonIconOnly { width: var(--tap-min, 44px); height: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+}
 :global([data-admin-kit]) .helpButton:where(:not([data-public-preview] *)):focus-visible,
 :global([data-admin-kit]) .helpDrawerClose:where(:not([data-public-preview] *)):focus-visible {
   outline-color: var(--home-olive);

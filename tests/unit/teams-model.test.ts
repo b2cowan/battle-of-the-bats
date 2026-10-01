@@ -15,7 +15,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  buildListBands, buildSlotBands, nextOpenSlot, paymentFact, paymentLine, recordOrder,
+  buildListBands, buildSlotBands, narrowSlotBands, nextOpenSlot, paymentFact, paymentLine, recordOrder,
   type FeeSchedule, type PoolSlot, type TeamRecord,
 } from '../../lib/tournament-teams';
 
@@ -80,6 +80,28 @@ describe('the slot board (T2, T4)', () => {
   it('finds the spot the next accept would take (pool order, then slot number)', () => {
     assert.equal(nextOpenSlot(pools, slots)?.id, 'b2');
     assert.equal(nextOpenSlot(pools, slots.map(s => ({ ...s, teamId: s.teamId ?? 'x' }))), null);
+  });
+
+  // The Teams toolbar ruling (owner, 2026-10-01): a search or a filter on a board lists the matches.
+  it('narrowed, keeps a match on its spot under its pool, counted, with no open spots', () => {
+    const narrowed = narrowSlotBands(bands, [regs[2]]);   // storm, Red Team 2
+    assert.deepEqual(narrowed.map(b => [b.label, b.count]), [['Red Pool', '1']]);
+    const row = narrowed[0].rows[0];
+    assert.equal(row.kind === 'team' && row.slot?.displayName, 'Red Team 2');
+  });
+
+  it('narrowed, keeps the board\'s other bands for their matches, in the board\'s order', () => {
+    const narrowed = narrowSlotBands(bands, regs.filter(t => t.status === 'pending' || t.status === 'waitlist'));
+    assert.deepEqual(narrowed.map(b => b.kind), ['review', 'pool', 'waitlist']);
+    assert.deepEqual(recordOrder(narrowed).map(t => t.id), ['blaze', 'comets', 'titans']);
+  });
+
+  it('narrowed, gives a rejected match (never on the board) its own band, and nothing twice', () => {
+    const narrowed = narrowSlotBands(bands, regs);
+    assert.equal(narrowed[narrowed.length - 1].kind, 'rejected');
+    const ids = recordOrder(narrowed).map(t => t.id);
+    assert.equal(new Set(ids).size, ids.length);
+    assert.deepEqual(narrowSlotBands(bands, []), []);
   });
 });
 

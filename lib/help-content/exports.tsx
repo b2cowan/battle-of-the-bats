@@ -21,7 +21,7 @@ const exportsHelp: HelpPageContent = {
       content: (
         <p>
           Four formats, and the choice comes down to what happens to the file next. When you
-          click <strong>Export</strong> on any table you get Excel unless you pick otherwise —
+          click <strong>Export</strong> on any table, Excel is the first choice in the list —
           if you're not sure, that's the right answer.
         </p>
       ),

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-01T14:51:14.313Z",
+  "generated": "2026-10-01T16:10:28.670Z",
   "entries": {
     "admin-rep-assistant-coaches|361|tap-floor|a·Public site": {
       "reason": null,
@@ -6001,22 +6001,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-registrations|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-t-registrations|361|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|361|tap-floor|button·Export and import options": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-t-registrations|361|control-width|button·Export and import options": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
     "admin-t-registrations|361|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -6980,22 +6964,6 @@
     "admin-t-manage|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-t-registrations|390|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|tap-floor|button·Export and import options": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-t-registrations|390|control-width|button·Export and import options": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
     },
     "admin-t-registrations|390|tap-floor|a·2 games to finalize": {
       "reason": null,
@@ -8232,10 +8200,6 @@
     "admin-t-registrations|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
       "detail": "38px tall (floor 44)"
-    },
-    "admin-t-registrations|768|control-width|button·Export and import options": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
     },
     "admin-t-registrations|768|tap-floor|a·2 games to finalize": {
       "reason": null,

@@ -5,7 +5,8 @@
  * Shared export dropdown used on every admin export surface.
  *
  * CONTRACT (from lib/export/catalog.ts Export Standard):
- *  1. Primary click → xlsx (non-negotiable default)
+ *  1. One button opens the formats; Excel is the first row (owner, 2026-10-01 — it was a split
+ *     button whose left half downloaded Excel in one click, retired for the portal's one control)
  *  2. CSV always present as a secondary option
  *  3. iCal available when formats includes 'ics'
  *  4. PDF available when formats includes 'pdf' — gated at tournament_plus+
@@ -15,7 +16,7 @@
  */
 
 import { useState, useRef } from 'react';
-import { Download, ChevronDown, FileSpreadsheet, FileText, Calendar, Lock, Upload } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, Calendar, Lock, Upload } from 'lucide-react';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import type { OrgPlan } from '@/lib/types';
 import type { PlanFeature } from '@/lib/plan-features';
@@ -27,7 +28,7 @@ export type ExportFormat = 'xlsx' | 'csv' | 'ics' | 'pdf';
 export interface ExportMenuProps {
   /** Formats available on this surface. Always include 'xlsx' and 'csv'. */
   formats: ExportFormat[];
-  /** Called when user selects Excel (.xlsx). Also the primary-click action. */
+  /** Called when user selects Excel (.xlsx) — the menu's first row. */
   onExportXLSX: () => void | Promise<void>;
   /** Called when user selects CSV. */
   onExportCSV: () => void | Promise<void>;
@@ -161,7 +162,7 @@ export default function ExportMenu({
   const menuStyle = useAnchoredMenu(open, rootRef, menuRef, {
     minWidth: 220,
     narrowMinWidth: 160,
-    // Always right-aligned: the chevron sits at the right end of a right-aligned button group.
+    // Always right-aligned: the button sits at the right end of a right-aligned button group.
     align: 'end',
   });
 
@@ -195,45 +196,29 @@ export default function ExportMenu({
     run(action);
   }
 
-  function handlePrimaryClick() {
-    if (disabled || loading || exportDisabled) return;
-    run(onExportXLSX);
-  }
-
-  function handleChevronClick(e: React.MouseEvent) {
-    e.stopPropagation();
+  // ONE control, no chevron (owner, 2026-10-01 — the coaches portal's export standard): the button
+  // opens the formats, Excel first. It replaced a split button whose left half downloaded Excel
+  // outright and whose chevron opened this menu — two sub-44px targets on a phone, read as one.
+  function handleTriggerClick() {
     if (disabled || loading) return;
     setOpen((v) => !v);
   }
 
   return (
     <div ref={rootRef} className={`${styles.root}${className ? ` ${className}` : ''}`}>
-      {/* ── Primary button + chevron ───────────────────────────────────── */}
-      <div className={`${styles.buttonGroup}${disabled || loading ? ` ${styles.buttonGroupDisabled}` : ''}`}>
-        <button
-          type="button"
-          className={`btn btn-outline btn-data ${styles.primaryBtn}`}
-          onClick={handlePrimaryClick}
-          disabled={disabled || loading || exportDisabled}
-          aria-label={`${label} as Excel`}
-          title={exportDisabled ? 'No rows available to export' : 'Download Excel (.xlsx)'}
-        >
-          <Download size={14} aria-hidden />
-          <span className={styles.primaryLabel}>{loading ? 'Exporting...' : label}</span>
-        </button>
-        <button
-          type="button"
-          className={`btn btn-outline btn-data ${styles.chevronBtn}`}
-          onClick={handleChevronClick}
-          disabled={disabled || loading}
-          aria-haspopup="menu"
-          aria-expanded={open}
-          aria-label={hasImportOption ? 'Export and import options' : 'More export formats'}
-          title={hasImportOption ? 'Export and import options' : 'More export options'}
-        >
-          <ChevronDown size={14} aria-hidden />
-        </button>
-      </div>
+      <button
+        type="button"
+        className={`btn btn-outline btn-data ${styles.trigger}`}
+        onClick={handleTriggerClick}
+        disabled={disabled || loading}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={label}
+        title={hasImportOption ? `${label} and import` : label}
+      >
+        <Download size={14} aria-hidden />
+        <span className={styles.triggerLabel}>{loading ? 'Exporting...' : label}</span>
+      </button>
 
       {/* ── Dropdown menu ─────────────────────────────────────────────── */}
       {open && (

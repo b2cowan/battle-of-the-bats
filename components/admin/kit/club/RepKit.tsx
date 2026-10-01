@@ -319,9 +319,9 @@ export function SavePill({ saving, dirty, error, held, onRetry, inline = false }
   /** Why the edit is held right now (a required field emptied), or null. Shown while dirty. */
   held?: string | null;
   onRetry: () => void;
-  /** INSIDE A WINDOW (KitDialog's `status`, beside a record's name): the same word and the same states,
-   *  without the pill's pinned frame — a window covers the page's corner, and its head never scrolls
-   *  away, which is the placement's whole reason (Tournament admin redesign Stage 2, 2026-09-30). */
+  /** INSIDE A WINDOW (KitDialog's `status`): the same floating pill, pinned by the window to its body's
+   *  bottom-right corner rather than to the viewport, which a window covers (owner, 2026-10-01 — from
+   *  2026-09-30 it was a frameless word in the window's head). */
   inline?: boolean;
 }) {
   const state: SaveState = held && dirty ? 'held' : error ? 'error' : saving ? 'saving' : dirty ? 'dirty' : 'saved';

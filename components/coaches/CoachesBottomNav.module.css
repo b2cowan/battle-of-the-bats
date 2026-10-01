@@ -233,7 +233,12 @@
     transition: background 0.15s ease, color 0.15s ease;
   }
 
-  .dropItem:hover { background: rgba(79, 163, 224, 0.08); color: var(--text-primary); }
+  /* ⚠ HOVER ONLY WHERE THERE IS A POINTER THAT HOVERS (owner, 2026-10-01). A phone — and a desktop
+     browser's device mode — leaves :hover stuck on the last spot tapped, which tinted a second row
+     exactly like the page you are on. Every row hover in this sheet sits behind this query. */
+  @media (hover: hover) {
+    .dropItem:hover { background: rgba(79, 163, 224, 0.08); color: var(--text-primary); }
+  }
 
   .dropActive {
     background: rgba(79, 163, 224, 0.12);
@@ -299,7 +304,9 @@
   }
 
   .dropLogout { color: var(--danger-light); }
-  .dropLogout:hover { background: rgba(var(--danger-rgb), 0.1); color: var(--danger-light); }
+  @media (hover: hover) {
+    .dropLogout:hover { background: rgba(var(--danger-rgb), 0.1); color: var(--danger-light); }
+  }
 
   @keyframes slideUpMenu {
     from { opacity: 0; transform: translateY(12px); }
@@ -433,10 +440,15 @@
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropSectionLabel { color: var(--text-tertiary); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItemMeta { color: var(--text-tertiary); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem { color: var(--text-secondary); }
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem:hover { background: var(--home-olive-soft); }
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropActive { background: var(--home-olive-soft); }
+  @media (hover: hover) {
+    :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem:hover { background: var(--home-olive-soft); }
+    :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropLogout:hover { background: var(--home-live-soft); }
+  }
+  /* The page you are on is NAMED BY COLOUR as well as tinted — the bar's current tab's olive (slice 6).
+     Before 2026-10-01 the warm `.dropItem` rule above outranked `.dropActive`'s ink, so the current
+     row and a hovered row were the same olive wash with the same grey words: two rows read as "here". */
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropActive { background: var(--home-olive-soft); color: var(--home-olive); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropDivider { background: var(--home-line); }
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropLogout:hover { background: var(--home-live-soft); }
   /* The sheet's own pieces in the warm skin (A1) — the scrim, the grab, the tiles. */
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sheetScrim { background: rgba(36, 30, 21, 0.28); } /* token-exempt: scrim over the warm page */
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sheetGrab { background: rgba(var(--home-line-rgb), 0.9); }

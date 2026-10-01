@@ -4,20 +4,27 @@
  * The whole row opens it in the admin kit's FORM window: full screen with ← on a phone (the phone's
  * Back closes it; a form covers the nav), a window at a desk. In order:
  *
- *   the name AS the title (its one editor — no separate name field, no required marker; an empty name
- *   is refused in words and never sent), one status chip + where it sits, the transient "Saved";
+ *   the name as a PLAIN title, one status chip + where it sits, the transient "Saved";
  *   a DECISION first for a team that needs one (waiting, or waitlisted): Accept is the record's one lime;
  *   PAYMENT first for an accepted team — facts, not narration — with Check-in's own "Mark paid · $475";
- *   the coach; the team's details, saving as you go (edit autosaves, 2026-09-24 — the Edit window
- *   retires); admin notes; registration answers; the Registration block (Reject, and what it frees);
+ *   the TEAM — name, coach, email, each said ONCE, saving as you go (edit autosaves, 2026-09-24);
+ *   Placement (seed, pool); admin notes; registration answers; the Registration block (Reject, and what it frees);
  *   Delete ENDS the body, alone, red, asking first; the foot names the team before and after it in the
  *   list it was opened from, with the position (the 2026-09-30 decision; KitDialog `steps`).
  *
  * Nothing new is offered: every action here existed in today's fold. The questions (Accept, Reject,
  * Delete…) are the page's, opened as the kit's question window ON TOP of this one.
+ *
+ * ⚠ READ FIRST, EDITED WHOLE — THE STANDARD (owner, 2026-10-01: the practice plan's format, "it goes
+ * from full read only to full editing"). The record opens to read; the head's pencil (KitDialog `edit`)
+ * turns every section into its fields at once and ✓ in the same spot turns them back. Until then the
+ * name had its own editor in the title, the coach and the email were said twice (a read "Coach" block
+ * above a "Team details" form), and seed, payment and notes were always fields. A per-section pencil
+ * was tried the same day and rejected: a split record. The registration date is the Team section's,
+ * said once.
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import KitDialog, { KitTitleField } from '@/components/admin/kit/club/KitDialog';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { RepChip, RowAction, SavePill } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
@@ -93,8 +100,9 @@ export interface TeamRecordProps {
   canPlace: boolean;
   planHref: string;
   isOwnTeam: boolean;
-  /** League/Club organizations: today's rep-team picker, as the Coach block's "Rep team" line (T7). */
-  repLink: ReactNode | null;
+  /** League/Club organizations: the Team section's "Rep team" line (T7) — the linked team's NAME while
+   *  reading, today's rep-team picker (`control`, which saves on its own) while editing. */
+  repLink: { name: string | null; control: ReactNode; closePicker: () => void } | null;
   prev: TeamRecord | null;
   next: TeamRecord | null;
   position: string;
@@ -125,6 +133,9 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   const [form, setForm] = useState<Form>(() => formOf(team));
   const [saved, setSaved] = useState<Form>(() => formOf(team));
   const [leaveError, setLeaveError] = useState('');
+  // Which team the head's pencil turned into its form (the read / edit mode — see toggleEdit below).
+  // Declared here so the re-seed can clear it: the window stays mounted as it steps through the list.
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const formRef = useRef(form);
   const savedRef = useRef(saved);
   // Whose form this is, as last drawn — a save that lands after a step must not re-base the next team.
@@ -156,6 +167,9 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
       const next = { ...f, name: f.name.trim() ? f.name : s.name, email: emailOk(f.email) ? f.email : s.email };
       savedRef.current = next;
       setSaved(next);
+      // A save that lands answers an earlier failed leave or ✓ — so a background retry that succeeds
+      // never leaves "Couldn’t save · Retry" standing over a record that is saved (/review 2026-10-01).
+      setLeaveError('');
     });
     chain.current = run;
     return run;
@@ -168,6 +182,9 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   const incoming = serverSigOf(team);
   if (team.id !== formTeam || (incoming !== serverSig && !dirty && !saving)) {
     // Stepped to another team, or this one was re-read with nothing unsaved: start from the server.
+    // A step also ends any edit, so stepping BACK opens the team to read, not in its old form
+    // (/review 2026-10-01: the id match had silently resumed it).
+    if (team.id !== formTeam) setEditingTeamId(null);
     setFormTeam(team.id);
     setServerSig(incoming);
     setForm(formOf(team));
@@ -177,6 +194,36 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   }
 
   const set = (patch: Partial<Form>) => { setForm(f => ({ ...f, ...patch })); setLeaveError(''); touch(); };
+
+  // ── READ FIRST, EDIT ON PURPOSE (owner, 2026-10-01 — the practice plan's format, now the standard:
+  //    "it goes from full read only to full editing"). The record opens to read, every section; the
+  //    head's pencil turns the WHOLE record into its form and ✓, in the same spot, turns it back.
+  //    Actions (Accept, Mark paid, Resend, Delete…) are not edits and work in both. Stepping to another
+  //    team opens that one to read (the id no longer matches). ✓ sends what is unsaved first, and stays
+  //    in the form — the save word saying why — while a name or an email is held or the save fails. ──
+  const editing = canWrite && editingTeamId === team.id;
+  // Opening moves focus to the record's first field (the portal's rule): a fresh tick per open.
+  const recordRef = useRef<HTMLDivElement>(null);
+  const [focusTick, setFocusTick] = useState(0);
+  useEffect(() => {
+    if (focusTick) recordRef.current?.querySelector<HTMLElement>('input, select, textarea')?.focus();
+  }, [focusTick]);
+  // The rep-team picker's popover is the PAGE's state and lives in the edit form only: whenever the
+  // record is not being edited (✓, a step, a fresh open) it is closed, so the next edit never opens
+  // with it already up (/review 2026-10-01).
+  const closeRepPickerRef = useRef(props.repLink?.closePicker);
+  useEffect(() => { closeRepPickerRef.current = props.repLink?.closePicker; });
+  useEffect(() => { if (!editing) closeRepPickerRef.current?.(); }, [editing]);
+  const toggleEdit = () => {
+    if (!editing) { setEditingTeamId(team.id); setFocusTick(n => n + 1); return; }
+    if (held) return;
+    void flushThen(() => {
+      // Typed after ✓ while the save ran: that is still editing — the autosave sends it, and the
+      // form stays up rather than reading back a value a keystroke short (/review 2026-10-01).
+      if (JSON.stringify(formRef.current) !== JSON.stringify(savedRef.current)) return;
+      setEditingTeamId(null);
+    });
+  };
 
   /** Leaving (Back, ✕, Previous, Next) and every action here (Accept, Mark paid…) send what is unsaved
    *  first — an empty name or half an email keeps the saved one — and stay put, with the reason in the
@@ -201,8 +248,9 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   const t = team;
   const chip = TEAM_STATUS_CHIP[t.status];
   const placed = props.slot != null;
+  // Where it sits. A waiting team's registration date is the Team section's, said once (2026-10-01).
   const where = t.status === 'pending'
-    ? [props.divisionName, TEAMS_WORDS.registeredOn(formatStoredDate(t.registered_at))]
+    ? [props.divisionName]
     : [props.slot?.displayName, props.poolName, props.divisionName].filter(Boolean) as string[];
   const identity = (
     <span className={styles.recordIdentity}>
@@ -211,6 +259,29 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
       {props.isOwnTeam && <RepChip>{W.yourTeam}</RepChip>}
     </span>
   );
+
+  // Reading shows what is SAVED — never a held name or half an email still sitting in the form.
+  const teamFacts = (
+    <>
+      <div><dt>{W.nameLabel}</dt><dd>{saved.name.trim() || '—'}</dd></div>
+      <div><dt>{W.coachField}</dt><dd>{saved.coach.trim() || '—'}</dd></div>
+      <div><dt>{W.emailField}</dt><dd>{saved.email.trim() ? <a href={`mailto:${saved.email.trim()}`}>{saved.email.trim()}</a> : W.noEmail}</dd></div>
+    </>
+  );
+  // The coach-email override, only where it is a second address (coach-facing emails go there).
+  const coachEmail = t.coach_email?.trim() && t.coach_email.trim().toLowerCase() !== saved.email.trim().toLowerCase()
+    ? t.coach_email.trim() : null;
+  // The Team section's facts that are never typed in: in both modes, after the name, coach and email.
+  // The rep team is a picker that saves on its own — a control, so it is the edit form's; reading
+  // shows the linked team's name.
+  const teamFixedFacts = (
+    <>
+      <div><dt>{W.registered}</dt><dd>{formatStoredDate(t.registered_at)}</dd></div>
+      {coachEmail && <div><dt>{W.coachEmail}</dt><dd><a href={`mailto:${coachEmail}`}>{coachEmail}</a></dd></div>}
+      {props.repLink && <div><dt>{W.repTeam}</dt><dd>{editing ? props.repLink.control : (props.repLink.name ?? '—')}</dd></div>}
+    </>
+  );
+  const savedPoolName = props.poolChoices?.find(p => p.id === saved.poolId)?.name;
 
   const line = paymentLine(t, props.fee, props.today);
   const owed = owedAmount(t, props.fee);
@@ -281,35 +352,39 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
             : <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onMarkUnpaid(t))} disabled={props.busy}>{W.markUnpaid}</button>}
         </div>
       )}
-      {line && (
+      {line && (editing ? (
         <div className={styles.recordFields}>
           <label className={ck.field}>
             <span className={ck.label}>{W.depositPaidField}</span>
             <input className={ck.input} type="number" inputMode="decimal" min="0" step="0.01" placeholder="$0"
-              value={form.depositPaid} disabled={!canWrite} onChange={e => set({ depositPaid: e.target.value })} />
+              value={form.depositPaid} onChange={e => set({ depositPaid: e.target.value })} />
           </label>
           <label className={ck.field}>
             <span className={ck.label}>{W.totalPaidField}</span>
             <input className={ck.input} type="number" inputMode="decimal" min="0" step="0.01" placeholder="$0"
-              value={form.totalPaid} disabled={!canWrite} onChange={e => set({ totalPaid: e.target.value })} />
+              value={form.totalPaid} onChange={e => set({ totalPaid: e.target.value })} />
           </label>
         </div>
-      )}
+      ) : (
+        <dl className={`${styles.recordFacts} ${styles.recordFactsAfter}`}>
+          <div><dt>{W.depositPaidField}</dt><dd>{formatMoney(money(saved.depositPaid))}</dd></div>
+          <div><dt>{W.totalPaidField}</dt><dd>{formatMoney(money(saved.totalPaid))}</dd></div>
+        </dl>
+      ))}
     </RecordSection>
   );
 
   return (
     <KitDialog
       kind="form"
-      title={canWrite
-        ? <KitTitleField value={form.name} onChange={v => set({ name: v })} label={W.nameLabel} />
-        : t.name}
+      title={saved.name.trim() || t.name}
       ariaLabel={saved.name.trim() || t.name}
       identity={identity}
       status={canWrite ? (
         <SavePill inline saving={saving} dirty={dirty} error={leaveError || saveError || null}
           held={held} onRetry={() => void handleSave()} />
       ) : undefined}
+      edit={canWrite ? { editing, onToggle: toggleEdit, label: W.editTeam } : undefined}
       onClose={() => void flushThen(props.onClose)}
       steps={{
         prev: props.prev ? { name: props.prev.name, onStep: () => void flushThen(() => props.onStep(props.prev!.id)) } : null,
@@ -319,79 +394,97 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
         noun: W.noun,
       }}
     >
-      {decisionBlock}
-      {paymentBlock}
+      <div ref={recordRef}>
+        {decisionBlock}
+        {paymentBlock}
 
-      <RecordSection title={W.coach}>
-        <dl className={styles.recordFacts}>
-          {t.coach?.trim() && (
-            <div><dt>{W.headCoach}</dt><dd>{t.coach.trim()}{t.coach_email?.trim() && <> · <a href={`mailto:${t.coach_email.trim()}`}>{t.coach_email.trim()}</a></>}</dd></div>
+        <RecordSection title={W.team}>
+          {editing ? (
+            <>
+              <div className={`${styles.recordFields} ${styles.recordFieldsLead}`}>
+                <label className={`${ck.field} ${styles.recordFieldWide}`}>
+                  <span className={ck.label}>{W.nameLabel}</span>
+                  <input className={ck.input} value={form.name} maxLength={200} onChange={e => set({ name: e.target.value })} />
+                </label>
+                <label className={ck.field}>
+                  <span className={ck.label}>{W.coachField}</span>
+                  <input className={ck.input} value={form.coach} onChange={e => set({ coach: e.target.value })} />
+                </label>
+                <label className={ck.field}>
+                  <span className={ck.label}>{W.emailField}</span>
+                  <input className={ck.input} type="email" value={form.email} onChange={e => set({ email: e.target.value })} placeholder="coach@example.com" />
+                </label>
+              </div>
+              <dl className={styles.recordFacts}>{teamFixedFacts}</dl>
+            </>
+          ) : (
+            <dl className={styles.recordFacts}>{teamFacts}{teamFixedFacts}</dl>
           )}
-          <div><dt>{W.registeredBy}</dt><dd>{t.email ? <a href={`mailto:${t.email}`}>{t.email}</a> : W.noEmail}</dd></div>
-          <div><dt>{W.registered}</dt><dd>{formatStoredDate(t.registered_at)}</dd></div>
-          {props.repLink && <div><dt>{W.repTeam}</dt><dd>{props.repLink}</dd></div>}
-        </dl>
-        {canWrite && t.email?.trim() && (
-          <div className={screenParts.recordActions}>
-            <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onResend(t))} disabled={props.busy}>{W.resendAccess}</button>
-          </div>
-        )}
-      </RecordSection>
+          {canWrite && t.email?.trim() && (
+            <div className={screenParts.recordActions}>
+              <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onResend(t))} disabled={props.busy}>{W.resendAccess}</button>
+            </div>
+          )}
+        </RecordSection>
 
-      <RecordSection title={W.details}>
-        <div className={styles.recordFields}>
-          <label className={ck.field}>
-            <span className={ck.label}>{W.coachField}</span>
-            <input className={ck.input} value={form.coach} disabled={!canWrite} onChange={e => set({ coach: e.target.value })} />
-          </label>
-          <label className={ck.field}>
-            <span className={ck.label}>{W.emailField}</span>
-            <input className={ck.input} type="email" value={form.email} disabled={!canWrite} onChange={e => set({ email: e.target.value })} placeholder="coach@example.com" />
-          </label>
-        </div>
         {(props.showSeed || props.poolChoices) && (
-          <div className={styles.recordFields}>
-            {props.showSeed && (
-              <label className={ck.field}>
-                <span className={ck.label}>{W.seedField}</span>
-                <input className={ck.input} type="number" min="1" max="999" step="1" inputMode="numeric" placeholder={W.seedPlaceholder}
-                  value={form.seed} disabled={!canWrite} onChange={e => set({ seed: e.target.value })} />
-                <span className={ck.hint}>{W.seedHint}</span>
-              </label>
+          <RecordSection title={W.placement}>
+            {editing ? (
+              <div className={`${styles.recordFields} ${styles.recordFieldsLead}`}>
+                {props.showSeed && (
+                  <label className={ck.field}>
+                    <span className={ck.label}>{W.seedField}</span>
+                    <input className={ck.input} type="number" min="1" max="999" step="1" inputMode="numeric" placeholder={W.seedPlaceholder}
+                      value={form.seed} onChange={e => set({ seed: e.target.value })} />
+                    <span className={ck.hint}>{W.seedHint}</span>
+                  </label>
+                )}
+                {props.poolChoices && (
+                  <label className={ck.field}>
+                    <span className={ck.label}>{W.poolField}</span>
+                    <select className={ck.select} value={form.poolId} onChange={e => set({ poolId: e.target.value })}>
+                      <option value="">{TEAMS_WORDS.noPoolYet}</option>
+                      {props.poolChoices.map(p => <option key={p.id} value={p.id}>{formatPoolName(p.name)}</option>)}
+                    </select>
+                  </label>
+                )}
+              </div>
+            ) : (
+              <dl className={styles.recordFacts}>
+                {props.showSeed && <div><dt>{W.seedField}</dt><dd>{seedOf(saved.seed) ?? W.seedPlaceholder}</dd></div>}
+                {props.poolChoices && <div><dt>{W.poolField}</dt><dd>{savedPoolName ? formatPoolName(savedPoolName) : TEAMS_WORDS.noPoolYet}</dd></div>}
+              </dl>
             )}
-            {props.poolChoices && (
-              <label className={ck.field}>
-                <span className={ck.label}>{W.poolField}</span>
-                <select className={ck.select} value={form.poolId} disabled={!canWrite} onChange={e => set({ poolId: e.target.value })}>
-                  <option value="">{TEAMS_WORDS.noPoolYet}</option>
-                  {props.poolChoices.map(p => <option key={p.id} value={p.id}>{formatPoolName(p.name)}</option>)}
-                </select>
-              </label>
-            )}
-          </div>
+          </RecordSection>
         )}
-      </RecordSection>
 
-      <RecordSection title={W.notes}>
-        <textarea className={ck.textarea} aria-label={W.notes} placeholder={W.notesPlaceholder}
-          value={form.adminNotes} disabled={!canWrite} onChange={e => set({ adminNotes: e.target.value })} />
-      </RecordSection>
-
-      {t.customAnswers && t.customAnswers.length > 0 && (
-        <RecordSection title={W.answers}>
-          <dl className={styles.recordFacts}>
-            {t.customAnswers.map(a => <div key={a.fieldId}><dt>{a.label}</dt><dd>{a.value || '—'}</dd></div>)}
-          </dl>
+        <RecordSection title={W.notes}>
+          {editing ? (
+            <textarea className={ck.textarea} aria-label={W.notes} placeholder={W.notesPlaceholder}
+              value={form.adminNotes} onChange={e => set({ adminNotes: e.target.value })} />
+          ) : (
+            <p className={styles.recordNotes} data-empty={!saved.adminNotes.trim() || undefined}>
+              {saved.adminNotes.trim() || W.notesEmpty}
+            </p>
+          )}
         </RecordSection>
-      )}
 
-      {registrationBlock}
+        {t.customAnswers && t.customAnswers.length > 0 && (
+          <RecordSection title={W.answers}>
+            <dl className={styles.recordFacts}>
+              {t.customAnswers.map(a => <div key={a.fieldId}><dt>{a.label}</dt><dd>{a.value || '—'}</dd></div>)}
+            </dl>
+          </RecordSection>
+        )}
 
-      {canWrite && (
-        <RecordSection>
-          <button type="button" className={styles.recordDelete} onClick={() => void flushThen(() => props.onDelete(t))} disabled={props.busy}>{W.deleteTeam}</button>
-        </RecordSection>
-      )}
+        {registrationBlock}
+
+        {canWrite && (
+          <RecordSection>
+            <button type="button" className={styles.recordDelete} onClick={() => void flushThen(() => props.onDelete(t))} disabled={props.busy}>{W.deleteTeam}</button>
+          </RecordSection>
+        )}
+      </div>
     </KitDialog>
   );
 }

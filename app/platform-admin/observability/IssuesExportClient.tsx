@@ -4,7 +4,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 
 /**
  * Exports the FULL filtered issue set (not just the current page) to Excel / CSV via the shared
- * ExportMenu dropdown (Excel on primary click, CSV in the menu). The list page is a server
+ * ExportMenu dropdown (Excel the first row, CSV the next). The list page is a server
  * component, so this builds the server export URL — carrying the current filters — and triggers
  * it as a download. The route re-runs the same filtered query without pagination (capped 5,000).
  */

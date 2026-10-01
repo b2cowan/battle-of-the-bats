@@ -353,7 +353,7 @@ test.describe.serial('Tournament scorekeeper UAT smoke', () => {
     await expect(ownerPage.getByText(/Scorekeeper - /)).toBeVisible({ timeout: 10_000 })
     await expect(ownerPage.getByText(smoke.scorekeeperEmail)).toBeVisible()
 
-    await ownerPage.getByLabel('More export formats').click()
+    await ownerPage.getByRole('button', { name: 'Export', exact: true }).click()
     const downloadPromise = ownerPage.waitForEvent('download')
     await ownerPage.getByRole('menuitem', { name: /CSV/ }).click()
     const download = await downloadPromise

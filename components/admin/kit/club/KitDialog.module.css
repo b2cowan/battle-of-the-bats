@@ -81,8 +81,29 @@
   cursor: pointer;
 }
 .close { display: inline-flex; }
+/* A record's Edit / Done (`edit`): the head's borderless icon at every width — a pencil, then ✓ in its
+   exact spot — the portal's award sheet and practice plan. Its ✓ takes the olive, so the mode shows. */
+.edit {
+  flex-shrink: 0;
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.edit[aria-pressed='true'] { color: var(--home-olive); }
+.edit:disabled { cursor: default; opacity: 0.5; }
 .close:hover,
-.back:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.back:hover,
+.edit:hover:not(:disabled) { background: var(--home-olive-soft); color: var(--text-primary); }
+@media (max-width: 640px) {
+  .edit { width: var(--tap-min, 44px); height: var(--tap-min, 44px); margin: -0.4rem -0.5rem -0.4rem 0; }
+}
 
 .body {
   flex: 1;
@@ -120,7 +141,22 @@
 .panel[data-record] .body { padding-top: 0.9rem; }
 
 /* The record's transient save word, beside the name (the head never scrolls away). */
-.status { flex: 0 1 auto; max-width: 45%; align-self: center; }
+/* A record's save word — the kit's floating pill, pinned to the bottom-right of the scrolling body, just
+   above the foot (owner, 2026-10-01: the portal's floating pill; it sat in the head until then). The
+   body is wrapped so the corner is the body's VISIBLE corner at any scroll, and it leaves the pill room
+   so the last line is never under the word. The slot never takes a tap — only the pill's Retry does. */
+.bodyWrap { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.bodyWrap[data-has-status] > .body { padding-bottom: 3.75rem; }
+.status {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.75rem;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  max-width: calc(100% - 2rem);
+  pointer-events: none;
+}
 
 /* The name AS the title — the bill room's title slot: a dashed rule at REST and a pencil, because a
    control only a mouse can find is not a control on a phone (owner §114 walk, 2026-08-27). `font:

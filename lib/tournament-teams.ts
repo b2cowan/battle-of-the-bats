@@ -233,6 +233,28 @@ export function buildListBands({ teams, grouping, pools }: {
   return bands;
 }
 
+/**
+ * A slot board narrowed by a search, a filter or a dashboard bucket (the Teams toolbar ruling, owner
+ * 2026-10-01: a board offers search and filters like every division). The matches keep the board's
+ * own bands — a team on a spot stays under its pool, with the band counting its matches — and the open
+ * spots go, since an open spot matches nothing. A rejected team is never on the board, so one the
+ * Status filter asks for gets its own band at the end.
+ */
+export function narrowSlotBands(board: TeamBand[], matches: TeamRecord[]): TeamBand[] {
+  const ids = new Set(matches.map(t => t.id));
+  const bands: TeamBand[] = [];
+  const shown = new Set<string>();
+  for (const band of board) {
+    const rows = band.rows.filter(r => r.kind === 'team' && ids.has(r.team.id));
+    if (rows.length === 0) continue;
+    for (const r of rows) if (r.kind === 'team') shown.add(r.team.id);
+    bands.push({ ...band, count: String(rows.length), rows });
+  }
+  const rejected = matches.filter(t => t.status === 'rejected' && !shown.has(t.id)).sort(byRegistered);
+  if (rejected.length > 0) bands.push({ key: 'rejected', kind: 'rejected', label: TEAMS_WORDS.rejected, count: String(rejected.length), rows: teamRows(rejected) });
+  return bands;
+}
+
 /** The order the record's Previous / Next walks: the list's own, band by band (the review band, then
  *  the pools, then the waitlist) — the teams only, never an open spot. */
 export function recordOrder(bands: TeamBand[]): TeamRecord[] {

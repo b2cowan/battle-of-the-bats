@@ -47,11 +47,14 @@
  *     slot): a dashed rule at rest and a pencil, NO required marker; the caller refuses an empty name
  *     in words (its save word's held state) and never sends one. Pass `ariaLabel` with it: the window
  *     keeps the record's saved name as its accessible name while the field is being typed in.
- *   - `status` — the record's transient save word, in the head (which never scrolls), beside the name.
- *     The page's floating `SavePill` sits UNDER a window (250 < 400), so a window's word lives here.
+ *   - `status` — the record's transient save word: the kit's floating pill (`SavePill inline`), pinned to
+ *     the bottom-right of the window's scrolling body, just above its foot — the portal's place for the
+ *     word (owner, 2026-10-01: "our portal standard … the floating pill in the bottom right"; until then
+ *     it sat in the head beside the name). The PAGE's pill sits under a window (250 < 400) and on a
+ *     phone would cover Previous / Next, so the window carries its own, as the portal's award sheet does.
  */
 import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { ArrowLeft, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import styles from './KitDialog.module.css';
 
@@ -80,6 +83,7 @@ export default function KitDialog({
   eyebrow,
   identity,
   status,
+  edit,
   onClose,
   children,
   footer,
@@ -96,8 +100,15 @@ export default function KitDialog({
   /** A form's identity line under its title (Manage: "sam@example.com · Admin since August 2026").
    *  Not a page header, so it keeps its second line (hub v8). */
   identity?: ReactNode;
-  /** A record's transient save word (`SavePill inline`), in the head beside the name. */
+  /** A record's transient save word (`SavePill inline`), floating at the body's bottom-right corner. */
   status?: ReactNode;
+  /**
+   * A record that opens to READ and is edited on purpose (owner, 2026-10-01 — the practice plan's
+   * format as the standard: "it goes from full read only to full editing"). ONE borderless button in
+   * the head, before ✕: a pencil while reading, a ✓ in its exact spot while editing, so focus and the
+   * thumb stay where they were (the portal's award sheet). The caller owns what each mode shows.
+   */
+  edit?: { editing: boolean; onToggle: () => void; label: string; disabled?: boolean };
   onClose: () => void;
   children: ReactNode;
   /** The window's own actions, right-aligned: Cancel, then the primary. A record that saves as you go
@@ -168,14 +179,22 @@ export default function KitDialog({
             <h2 id={titleId} className={styles.title}>{title}</h2>
             {identity && <p className={styles.identity}>{identity}</p>}
           </div>
-          {status != null && <div className={styles.status}>{status}</div>}
+          {edit && (
+            <button type="button" className={styles.edit} onClick={edit.onToggle} disabled={edit.disabled || busy}
+              aria-label={edit.editing ? 'Done editing' : edit.label} aria-pressed={edit.editing} title={edit.editing ? 'Done' : 'Edit'}>
+              {edit.editing ? <Check size={18} aria-hidden /> : <Pencil size={17} aria-hidden />}
+            </button>
+          )}
           {kind === 'form' && (
             <button type="button" className={styles.close} onClick={onClose} aria-label="Close" disabled={busy}>
               <X size={16} aria-hidden />
             </button>
           )}
         </div>
-        <div ref={bodyRef} className={styles.body}>{children}</div>
+        <div className={styles.bodyWrap} data-has-status={status != null || undefined}>
+          <div ref={bodyRef} className={styles.body}>{children}</div>
+          {status != null && <div className={styles.status}>{status}</div>}
+        </div>
         {(footer != null || footerStart != null) && (
           <div className={styles.foot}>
             {footerStart && <div className={styles.footStart}>{footerStart}</div>}
@@ -216,6 +235,11 @@ export default function KitDialog({
  * on hover was a control nobody on a phone could see). NO required marker — a record's name in the
  * title slot is exempt (2026-09-03/04). The caller holds an empty name back from autosave and says why.
  * Read-only viewers get the plain name instead: pass the text, not this.
+ *
+ * ⚠ NO SCREEN USES THIS NOW — DO NOT REACH FOR IT (owner, 2026-10-01). Its one user, Teams' team record,
+ * now reads first and is edited whole (the practice plan's format, the standard): the window's `edit`
+ * pencil turns every section into fields, the record's name among them; the title is the plain name.
+ * Kept only until the portal's bill room, the idiom's origin, is judged against the same standard.
  */
 export function KitTitleField({ value, onChange, label, placeholder, maxLength = 200 }: {
   value: string;

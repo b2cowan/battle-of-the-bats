@@ -10,6 +10,13 @@
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 .teamsPage { min-width: 0; }
+/* The Tools sheet is the coaches portal's ⋯ menu (`CoachToolbarMenu`, the practice plan's E1 form),
+   reused: on a phone it and its scrim stop at `--coach-foot-clear`, which the coach shell declares as
+   its nav plus the home indicator. The admin has no coach shell, so this page says what that sum is
+   here — the admin's bar, its context strip and the home indicator, the docked bulk bar's own sum. */
+@media (max-width: 640px) {
+  .teamsPage { --coach-foot-clear: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + var(--admin-strip-h, 0px)); }
+}
 
 /* Money owed, in Check-in's ink (T5): the amber of money owed, never a status colour. */
 .owes { color: var(--warning-light); font-weight: 650; }
@@ -50,7 +57,7 @@
   margin: 0 0 0.75rem;
   min-width: 0;
 }
-.divisionField { flex: none; width: 16.25rem; min-width: 0; }
+.divisionField { position: relative; flex: none; width: 16.25rem; min-width: 0; }
 .divisionSelect {
   width: 100%;
   min-height: 38px;
@@ -65,10 +72,23 @@
   text-overflow: ellipsis;
 }
 .divisionSelect:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+/* The division picker's closed box (owner, 2026-10-01): `.divisionSelect` drawn as a button, the
+   browser's arrow replaced by our chevron. The amber dot says another division has teams waiting —
+   the rail's waiting amber, as a mark. */
+.divisionTrigger { display: flex; align-items: center; gap: 0.5rem; padding-right: 0.65rem; text-align: left; cursor: pointer; }
+.divisionTrigger:disabled { cursor: default; color: var(--text-tertiary); }
+.divisionTriggerName { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.divisionWaitingDot { flex: none; width: 8px; height: 8px; border-radius: 999px; background: var(--home-amber); }
+.divisionChevron { flex: none; color: var(--text-secondary); }
+/* Its list is the filter menus' panel, as wide as the box (two classes deep: `.regFilterPanel` sits
+   later in this file and would win at one). */
+.divisionField > .divisionPanel { right: 0; min-width: 0; }
 .deskFilters { display: flex; align-items: center; gap: 0.5rem; min-width: 0; flex-wrap: wrap; }
 .toolbarSpacer { flex: 1 1 auto; }
-/* A board tool — worded at a desk (38px, K-18), a 44×44 icon on a phone (K-18 never covered width). */
-.tool {
+/* A toolbar tool — worded at a desk (38px, K-18), a 44×44 icon on a phone (K-18 never covered width).
+   Two classes deep on purpose: the Tools trigger is `CoachToolbarMenu`'s button wearing this class, and
+   its own `.trigger` (one class, another module) would otherwise win or lose by bundle order. */
+.toolbar .tool {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -85,34 +105,14 @@
   white-space: nowrap;
   cursor: pointer;
 }
-.tool:hover { background: var(--home-olive-soft); color: var(--text-primary); }
-.tool:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
-.tool:disabled { opacity: 0.55; cursor: default; }
-.tool[data-on] { border-color: var(--home-olive); color: var(--home-olive); }
-.phoneTool { display: none; }
-
-.grouping {
-  display: inline-flex;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-  background: var(--card-bg);
-}
-.groupingOption {
-  min-height: 30px;
-  padding: 0 0.7rem;
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  font: inherit;
-  font-size: var(--type-support);
-  font-weight: 650;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-.groupingOption:hover { background: var(--home-olive-soft); color: var(--text-primary); }
-.groupingOption[aria-pressed="true"] { background: var(--home-ink); color: var(--home-paper); }
+.toolbar .tool:hover,
+.toolbar .tool[aria-expanded="true"] { background: var(--home-olive-soft); color: var(--text-primary); }
+.toolbar .tool:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.toolbar .tool:disabled { opacity: 0.55; cursor: default; }
+.toolbar .tool[data-on] { border-color: var(--home-olive); color: var(--home-olive); }
+.toolbar .phoneTool { display: none; }
+/* Tools' ⋯ is the phone's face of the button; a desk reads the word. */
+.toolsGlyph { display: none; }
 
 .searchField {
   display: inline-flex;
@@ -121,14 +121,18 @@
   min-height: 38px;
   min-width: 13rem;
   padding: 0 0.6rem;
-  border: 1px solid var(--home-line-strong);
+  /* The outline is an inset shadow, not a border, so the input inside takes the field's whole height
+     (a border took 2px from it: a 42px input in a 44px field at a touch width). */
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--home-line-strong);
   border-radius: 8px;
   background: var(--home-card);
   color: var(--text-tertiary);
 }
-.searchField:focus-within { border-color: var(--home-olive); }
+.searchField:focus-within { box-shadow: inset 0 0 0 1px var(--home-olive); }
 .searchField input {
   flex: 1 1 auto;
+  align-self: stretch;   /* the field's whole height is the input's, so the tap lands on it */
   min-width: 0;
   border: 0;
   background: none;
@@ -154,19 +158,17 @@
 /* Touch widths: every control on the line clears the 44px floor (a tablet is a touch width too). */
 @media (max-width: 768px) {
   .divisionSelect,
-  .tool,
-  .regFilterButton,
-  .searchField,
-  .groupingOption { min-height: var(--tap-min, 44px); }
-  .regFilterOption { min-height: var(--tap-min, 44px); }
+  .toolbar .tool,
+  .searchField { min-height: var(--tap-min, 44px); }
 }
 @media (max-width: 640px) {
   .toolbar { gap: 0.4rem; }
   .divisionField { flex: 1 1 auto; width: auto; }
   .divisionSelect { min-height: var(--tap-min, 44px); }
-  .deskFilters, .toolbarSpacer, .toolLabel { display: none; }
-  .phoneTool { display: inline-flex; }
-  .tool { width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); padding: 0; flex: none; }
+  .deskFilters, .toolbarSpacer { display: none; }
+  .toolbar .phoneTool { display: inline-flex; }
+  .toolbar .tool { width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); padding: 0; flex: none; }
+  .toolsGlyph { display: block; }
   .phoneSearch { display: flex; width: 100%; min-height: var(--tap-min, 44px); margin: 0 0 0.75rem; }
 }
 
@@ -183,12 +185,14 @@
   background: var(--home-card);
   color: var(--text-secondary);
   font: inherit;
-  font-size: var(--type-support);
+  font-size: var(--type-body);  /* the line's size, beside Search and Tools */
   font-weight: 650;
   white-space: nowrap;
   cursor: pointer;
 }
 .regFilterButton span { overflow: hidden; text-overflow: ellipsis; }
+/* The Filter button's touch floor sits AFTER its own 38px, as the rows' does below (2026-10-01). */
+@media (max-width: 768px) { .regFilterButton { min-height: var(--tap-min, 44px); } }
 .regFilterButton:hover,
 .regFilterButton[data-active] { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
 .regFilterPanel {
@@ -255,6 +259,34 @@
 .regFilterCheck { display: inline-flex; align-items: center; justify-content: center; color: var(--home-olive); }
 .regFilterName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-body); font-weight: 600; }
 .regFilterCount { font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); }
+/* The one Filter menu (2026-10-01): three sections under one button, so it is taller than one list. */
+.regFilterPanel.filterPanel { min-width: 15rem; max-height: min(34rem, calc(100dvh - 12rem)); }
+.filterPanel .regFilterList + .regFilterHeader { margin-top: 0.35rem; padding-top: 0.6rem; border-top: 1px solid var(--home-line); }
+.filterOn { font-family: var(--font-data); font-weight: 700; }
+.filterReset {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  min-height: 2.25rem;
+  margin-top: 0.35rem;
+  padding: 0.35rem 0.45rem;
+  border: 0;
+  border-top: 1px solid var(--home-line);
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.filterReset:hover { color: var(--home-olive); }
+/* The menu rows' 44px touch floor sits AFTER the rows' own 2.25rem — it used to live in the touch
+   block above, where this later base rule silently cancelled it (36px rows on a tablet, 2026-10-01). */
+@media (max-width: 768px) {
+  .regFilterOption,
+  .filterReset { min-height: var(--tap-min, 44px); }
+}
 
 /* ── A mode's note (swap, selection, a dashboard bucket) — the kit's Callout, its words and Done ── */
 .modeNote { display: flex; align-items: center; gap: 0.5rem 0.75rem; flex-wrap: wrap; width: 100%; }
@@ -551,6 +583,18 @@ button.glanceTile:disabled { cursor: default; opacity: 1; }
 .recordFacts dt { flex: none; font-size: var(--type-support); color: var(--text-tertiary); }
 .recordFacts dd { margin: 0; min-width: 0; text-align: right; overflow-wrap: anywhere; }
 .recordFacts a { color: var(--home-olive); text-decoration: underline; text-underline-offset: 3px; }
+/* A section's first row of fields sits right under its heading. */
+.recordFieldsLead { margin-top: 0; }
+.recordFieldWide { grid-column: 1 / -1; }
+/* Facts that follow a line or a button in the same section (Payment's amounts under Mark paid). */
+.recordFactsAfter { margin-top: 0.6rem; }
+/* The admin notes, read: the words as typed, line breaks kept; the quiet ink when there are none. */
+.recordNotes { margin: 0; font-size: var(--type-body); color: var(--text-primary); white-space: pre-wrap; overflow-wrap: anywhere; }
+.recordNotes[data-empty] { color: var(--text-tertiary); }
+/* Editing on a phone: one field to a line (a 2-up row of inputs leaves an email ~150px). */
+@media (max-width: 640px) {
+  .recordFields { grid-template-columns: minmax(0, 1fr); }
+}
 .recordDelete {
   min-height: 38px;
   padding: 0;

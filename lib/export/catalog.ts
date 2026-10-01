@@ -35,7 +35,8 @@ export interface ExportCatalogEntry {
   file: string;
   /** Formats available on this surface */
   formats: ('xlsx' | 'csv' | 'ics' | 'pdf')[];
-  /** Default format triggered by the primary Export button click. 'pdf' is a ruled exception:
+  /** The format an export leads with — a primary click where the surface has one, the first row of the
+   *  admin's one-button menu (2026-10-01). 'pdf' is a ruled exception:
    *  the coaches tryout report defaults to the board-safe PDF so the safe-to-share variant is
    *  the path of least resistance (Tryout Insights ruling R1, 2026-08-02). */
   defaultFormat: 'xlsx' | 'csv' | 'pdf';

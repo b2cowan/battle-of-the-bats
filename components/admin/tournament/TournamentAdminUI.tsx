@@ -64,7 +64,9 @@ export function TournamentAdminHeader({
   const kit = useAdminKit();
   // The "?" is named after the title on screen — the kit's sentence case when the switch is on.
   const shownTitle = kit ? (kitTitle ?? title) : title;
-  const helpButton = help && <HelpButton help={help} label={typeof shownTitle === 'string' ? shownTitle : undefined} />;
+  // On the kit the "?" is the coaches portal's bare glyph at every width (owner, 2026-10-01), not the
+  // grey ghost square; the legacy header keeps its worded "? Help".
+  const helpButton = help && <HelpButton help={help} label={typeof shownTitle === 'string' ? shownTitle : undefined} iconOnly={kit} />;
   const lockedCopy = (
     <>
       <Lock size={13} aria-hidden />
