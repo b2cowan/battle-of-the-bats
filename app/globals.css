@@ -2581,14 +2581,21 @@ tbody tr:last-child td { border-bottom: none; }
    A transparent track shows whatever surface it sits over (page ground OR card), so it can never
    be wrong about one of them. The thumb follows the palette's stronger hairline, which is declared
    in BOTH the warm and the dark coach blocks and falls back to a translucent white on the dark
-   admin/public grounds, where no --home-* token is in scope. */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-/* The square where a vertical and a horizontal bar meet — same reasoning, and it sits in the
-   BOTTOM-RIGHT corner, so an opaque one is the most visible instance of the bug. */
-::-webkit-scrollbar-corner { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--home-line-strong, rgba(255,255,255,0.18)); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+   admin/public grounds, where no --home-* token is in scope.
+   ⚠ MOUSE AND TRACKPAD ONLY (owner, 2026-10-01). A phone's own scrollbar is an overlay that shows
+   while the finger moves and fades when it stops — the mobile convention. Styling the pseudo-
+   elements replaces that overlay with a classic bar, and Android Chrome then paints it for good:
+   a permanent stripe down every scrolling list (the coach Schedule showed it). On a touch screen
+   the platform draws its own, so none of these rules apply there. */
+@media (pointer: fine) {
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  /* The square where a vertical and a horizontal bar meet — same reasoning, and it sits in the
+     BOTTOM-RIGHT corner, so an opaque one is the most visible instance of the bug. */
+  ::-webkit-scrollbar-corner { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--home-line-strong, rgba(255,255,255,0.18)); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+}
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 /* The tournament public bottom nav shows ≤900px (where top-nav links hide), so

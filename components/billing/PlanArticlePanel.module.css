@@ -142,17 +142,24 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--home-line-rgb), 0.6) transparent;
 }
 
-.panelBody::-webkit-scrollbar {
-  width: 4px;
-}
+/* The quiet bar is for a mouse — a touch screen keeps the phone's own fading overlay (see the
+   scrollbar block in globals.css). */
+@media (pointer: fine) {
+  .panelBody {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--home-line-rgb), 0.6) transparent;
+  }
 
-.panelBody::-webkit-scrollbar-thumb {
-  background: rgba(var(--home-line-rgb), 0.6);
-  border-radius: 2px;
+  .panelBody::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .panelBody::-webkit-scrollbar-thumb {
+    background: rgba(var(--home-line-rgb), 0.6);
+    border-radius: 2px;
+  }
 }
 
 /* ── Sections ──────────────────────────────────────────────────────────────── */
