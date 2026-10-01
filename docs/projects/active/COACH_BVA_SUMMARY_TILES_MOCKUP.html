@@ -1,0 +1,789 @@
+<title>Budget vs. Actual Tiles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  /* ── Document chrome: a cool review sheet, so the warm product frames read as specimens ── */
+  :root {
+    --doc-ground: #ECEEF1;
+    --doc-surface: #FFFFFF;
+    --doc-ink: #1B1F24;
+    --doc-dim: #57606A;
+    --doc-line: #D3D8DF;
+    --doc-accent: #2C5A86;
+    --doc-accent-soft: rgba(44, 90, 134, 0.10);
+    --doc-new: #2C5A86;
+    --doc-new-soft: rgba(44, 90, 134, 0.12);
+    --doc-same: #57606A;
+    --doc-same-soft: rgba(87, 96, 106, 0.12);
+    --doc-gone: #9A2E17;
+    --doc-gone-soft: rgba(154, 46, 23, 0.10);
+    --doc-shadow: 0 1px 2px rgba(20, 24, 30, 0.06), 0 8px 24px rgba(20, 24, 30, 0.08);
+
+    /* ── Product tokens: the warm coaches portal, fixed in both themes (it is a specimen) ── */
+    --p-paper: #F8F4ED;
+    --p-card: #FFFFFF;
+    --p-ink: #241E15;
+    --p-ink-soft: #4A4235;
+    --p-dim: #615A54;
+    --p-line: rgba(70, 55, 30, 0.12);
+    --p-line-strong: rgba(70, 55, 30, 0.20);
+    --p-olive: #57651E;
+    --p-olive-soft: rgba(87, 101, 30, 0.10);
+    --p-win: #34662A;
+    --p-warn: #6B4105;
+    --p-danger: #9A2E17;
+    --p-band: #E9ECF1;
+    --p-row: #F2F0EB;
+    --p-lime: #D9F5A6;
+    --p-grid: rgba(70, 55, 30, 0.045);
+
+    --f-doc: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --f-ui: Inter, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --doc-ground: #121519;
+      --doc-surface: #1B1F25;
+      --doc-ink: #E6E9EE;
+      --doc-dim: #9AA3AE;
+      --doc-line: #2E343C;
+      --doc-accent: #8DB4DD;
+      --doc-accent-soft: rgba(141, 180, 221, 0.14);
+      --doc-new: #9CC0E6;
+      --doc-new-soft: rgba(141, 180, 221, 0.16);
+      --doc-same: #A7B0BA;
+      --doc-same-soft: rgba(167, 176, 186, 0.14);
+      --doc-gone: #F0937D;
+      --doc-gone-soft: rgba(240, 147, 125, 0.14);
+      --doc-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --doc-ground: #121519;
+    --doc-surface: #1B1F25;
+    --doc-ink: #E6E9EE;
+    --doc-dim: #9AA3AE;
+    --doc-line: #2E343C;
+    --doc-accent: #8DB4DD;
+    --doc-accent-soft: rgba(141, 180, 221, 0.14);
+    --doc-new: #9CC0E6;
+    --doc-new-soft: rgba(141, 180, 221, 0.16);
+    --doc-same: #A7B0BA;
+    --doc-same-soft: rgba(167, 176, 186, 0.14);
+    --doc-gone: #F0937D;
+    --doc-gone-soft: rgba(240, 147, 125, 0.14);
+    --doc-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  body {
+    background: var(--doc-ground);
+    color: var(--doc-ink);
+    font-family: var(--f-doc);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .page {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 40px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+  }
+  @media (max-width: 600px) { .page { padding-inline: 16px; padding-block: 28px 56px; gap: 44px; } }
+
+  /* ── Masthead ── */
+  .mast { display: flex; flex-direction: column; gap: 12px; max-width: 760px; }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--doc-dim);
+  }
+  h1 {
+    margin: 0;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 44px;
+    line-height: 1;
+    letter-spacing: 0.005em;
+    text-wrap: balance;
+  }
+  .lede { margin: 0; font-size: 17px; line-height: 1.55; max-width: 64ch; }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 6px 18px;
+    font-family: var(--f-mono); font-size: 12px; color: var(--doc-dim);
+  }
+
+  /* ── Sections ── */
+  section { display: flex; flex-direction: column; gap: 18px; }
+  .sec-head { display: flex; flex-direction: column; gap: 6px; max-width: 760px; }
+  h2 {
+    margin: 0;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+  .sec-head p { margin: 0; color: var(--doc-dim); max-width: 68ch; }
+  .sheet {
+    background: var(--doc-surface);
+    border: 1px solid var(--doc-line);
+    border-radius: 12px;
+    box-shadow: var(--doc-shadow);
+    padding: 24px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  @media (max-width: 600px) { .sheet { padding: 16px; border-radius: 10px; } }
+  .rowlabel {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--doc-dim);
+  }
+  .rowlabel b { color: var(--doc-ink); font-weight: 500; }
+  .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .stack { display: flex; flex-direction: column; gap: 10px; }
+
+  /* ── Tags (NEW / UNCHANGED), clickable ── */
+  .tagrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; min-width: 900px; }
+  .tag {
+    justify-self: start;
+    margin-left: 12px;
+    font-family: var(--f-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+    padding: 3px 8px; border-radius: 999px; border: 1px solid transparent;
+    cursor: pointer; background: none; color: inherit;
+  }
+  .tag:focus-visible, .seg button:focus-visible, .q:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+  .tag[data-k="new"] { background: var(--doc-new-soft); color: var(--doc-new); }
+  .tag[data-k="same"] { background: var(--doc-same-soft); color: var(--doc-same); }
+  .tag[aria-expanded="true"] { border-color: currentColor; }
+  .tag-explain {
+    margin: 0; padding: 10px 14px; border-radius: 8px;
+    background: var(--doc-accent-soft); color: var(--doc-ink); font-size: 14px;
+    min-width: 0;
+  }
+
+  /* ── The product's money band, to its own rules ── */
+  .pband {
+    font-family: var(--f-ui);
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+    background: var(--p-line); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden;
+    min-width: 900px;
+  }
+  .pband[data-tiles="3"] { grid-template-columns: repeat(3, 1fr); }
+  .ptile { display: flex; flex-direction: column; gap: 0.22rem; padding: 0.85rem 1rem; background: var(--p-card); min-width: 0; }
+  .plabel { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-dim); }
+  .pfig { font-size: 24px; font-weight: 700; line-height: 1.1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: var(--p-ink); }
+  .pfig[data-tone="good"] { color: var(--p-win); }
+  .pfig[data-tone="warn"] { color: var(--p-warn); }
+  .pfig[data-tone="danger"] { color: var(--p-danger); }
+  .pcap { font-size: 12px; line-height: 1.45; color: var(--p-dim); font-variant-numeric: tabular-nums; }
+  .ptile.gone { position: relative; }
+  .ptile.gone::after {
+    content: ""; position: absolute; inset: 6px; border: 2px dashed var(--p-danger); border-radius: 6px; opacity: 0.55; pointer-events: none;
+  }
+  .ptile.isnew { position: relative; }
+  .ptile.isnew::after {
+    content: ""; position: absolute; inset: 6px; border: 2px solid #2C5A86; border-radius: 6px; opacity: 0.45; pointer-events: none;
+  }
+
+  /* ── Spec table (the document's, not the product's) ── */
+  .spec { width: 100%; border-collapse: collapse; min-width: 720px; font-size: 14px; }
+  .spec th {
+    text-align: left; font-family: var(--f-mono); font-weight: 500; font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--doc-dim); padding: 8px 12px; border-bottom: 1px solid var(--doc-line);
+  }
+  .spec td { padding: 12px; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+  .spec tr:last-child td { border-bottom: 0; }
+  .spec .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .spec .tile { font-weight: 600; white-space: nowrap; }
+  .chip {
+    display: inline-block; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.05em;
+    padding: 2px 7px; border-radius: 999px; white-space: nowrap;
+  }
+  .chip.new { background: var(--doc-new-soft); color: var(--doc-new); }
+  .chip.same { background: var(--doc-same-soft); color: var(--doc-same); }
+  .chip.gone { background: var(--doc-gone-soft); color: var(--doc-gone); }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+  /* ── Why: the owner's own band ── */
+  .why { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .why { grid-template-columns: 1fr; } }
+  .why-card {
+    border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px;
+    display: flex; flex-direction: column; gap: 10px; background: var(--doc-surface);
+  }
+  .why-card h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .why-card p { margin: 0; }
+  .sum {
+    font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums;
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 16px;
+    padding: 12px 14px; border-radius: 8px; background: var(--doc-ground);
+  }
+  .sum .op { color: var(--doc-dim); }
+  .sum .total { border-top: 1px solid var(--doc-line); padding-top: 6px; font-weight: 500; }
+  .sum .missing { color: var(--doc-gone); }
+
+  /* ── Whole-screen frame ── */
+  .seg { display: inline-flex; border: 1px solid var(--doc-line); border-radius: 8px; overflow: hidden; background: var(--doc-surface); }
+  .seg button {
+    font: 500 13px/1 var(--f-doc); color: var(--doc-dim); background: none; border: 0;
+    padding: 9px 14px; cursor: pointer;
+  }
+  .seg button + button { border-left: 1px solid var(--doc-line); }
+  .seg button[aria-pressed="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+  .controls .hint { font-size: 13px; color: var(--doc-dim); }
+  .fit { overflow-x: auto; border-radius: 10px; border: 1px solid var(--doc-line); box-shadow: var(--doc-shadow); }
+
+  .desk {
+    width: 1440px; height: 900px; overflow: hidden;
+    font-family: var(--f-ui); color: var(--p-ink); background: var(--p-paper);
+    display: grid; grid-template-rows: 48px 1fr; grid-template-columns: 220px 1fr;
+  }
+  .d-top {
+    grid-column: 1 / -1; background: var(--p-card); border-bottom: 1px solid var(--p-line);
+    display: flex; align-items: center; gap: 14px; padding: 0 20px;
+  }
+  .d-logo { display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-weight: 500; font-size: 13px; letter-spacing: 0.04em; }
+  .d-logo i { width: 22px; height: 22px; background: var(--p-ink); border-radius: 3px; display: inline-block; position: relative; }
+  .d-logo i::after { content: ""; position: absolute; left: 6px; top: 5px; border-left: 9px solid #B7E35A; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
+  .d-portal { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--p-dim); padding-left: 14px; border-left: 1px solid var(--p-line); }
+  .d-top .sp { flex: 1; }
+  .ico { width: 18px; height: 18px; stroke: var(--p-ink-soft); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .d-side { background: var(--p-card); border-right: 1px solid var(--p-line); padding: 20px 0; display: flex; flex-direction: column; gap: 2px; font-size: 14.5px; }
+  .d-team { margin: 0 14px 18px; border: 1px solid var(--p-line-strong); border-radius: 8px; padding: 8px 12px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .d-nav { display: flex; align-items: center; gap: 10px; padding: 8px 20px; color: var(--p-ink-soft); }
+  .d-nav.on { background: var(--p-olive-soft); color: var(--p-olive); font-weight: 600; }
+  .d-nav.on .ico { stroke: var(--p-olive); }
+  .d-grp { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--p-ink-soft); padding: 14px 20px 4px; font-weight: 500; }
+  .d-main { display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+  .d-head { background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 10px 32px 12px; display: flex; align-items: center; }
+  .d-head .t { font-weight: 600; font-size: 16px; }
+  .d-head .m { font-family: var(--f-mono); font-size: 11px; color: var(--p-dim); margin-top: 2px; }
+  .d-body {
+    padding: 30px 32px 0;
+    background-image: linear-gradient(var(--p-grid) 1px, transparent 1px), linear-gradient(90deg, var(--p-grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+    display: flex; flex-direction: column; gap: 0; min-width: 0;
+  }
+  .d-title { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  .d-chip { width: 34px; height: 34px; border-radius: 9px; background: var(--p-olive-soft); border: 1px solid var(--p-line-strong); display: grid; place-items: center; font-weight: 600; color: var(--p-olive); }
+  .d-title h4 { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: 22px; }
+  .d-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--p-line); margin-bottom: 24px; }
+  .d-tabs span { padding: 8px 14px 12px; font-size: 14.5px; font-weight: 500; color: var(--p-ink-soft); }
+  .d-tabs span.on { color: var(--p-olive); box-shadow: inset 0 -2px 0 var(--p-olive); }
+  .d-body .pband { min-width: 0; margin-bottom: 10px; }
+  .d-tools { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; font-size: 13px; }
+  .pill { border: 1px solid var(--p-line-strong); border-radius: 7px; padding: 6px 10px; background: var(--p-card); color: var(--p-dim); }
+  .pill b { color: var(--p-ink); font-weight: 600; }
+  .pill.on { background: var(--p-olive-soft); border-color: rgba(87, 101, 30, 0.35); }
+  .d-tools .sp { flex: 1; }
+  .btn { border: 1px solid var(--p-line-strong); border-radius: 7px; padding: 7px 14px; background: var(--p-card); font-weight: 500; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+  .ptable { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; font-size: 14.5px; }
+  .pt-row { display: grid; grid-template-columns: 1fr 150px 150px 170px; align-items: center; border-bottom: 1px solid var(--p-line); }
+  .pt-row > span { padding: 9px 14px; font-variant-numeric: tabular-nums; }
+  .pt-row > span:not(:first-child) { text-align: right; }
+  .pt-h > span { font-family: var(--f-display); font-weight: 600; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--p-ink-soft); padding-block: 11px; }
+  .pt-band { background: var(--p-band); font-family: var(--f-mono); font-size: 11.5px; letter-spacing: 0.08em; color: var(--p-olive); padding: 12px 14px; font-weight: 500; border-bottom: 1px solid var(--p-line); }
+  .pt-row.cat { background: var(--p-row); font-weight: 600; }
+  .pt-row.cat > span:first-child::before { content: "›"; display: inline-block; width: 18px; color: var(--p-ink-soft); font-weight: 400; }
+  .pt-row.tot { background: var(--p-card); font-weight: 700; }
+  .neg { color: var(--p-danger); }
+  .pos { color: var(--p-win); }
+
+  /* ── Phone frames (true size: 390px) ── */
+  .phones { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+  .phone-col { display: flex; flex-direction: column; gap: 10px; max-width: 100%; }
+  .phone {
+    width: 390px; max-width: 100%; border-radius: 22px; overflow: hidden;
+    border: 1px solid var(--doc-line); box-shadow: var(--doc-shadow);
+    font-family: var(--f-ui); color: var(--p-ink); background: var(--p-paper);
+  }
+  .ph-head { background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 14px 16px 12px; }
+  .ph-head .t { font-weight: 600; font-size: 16px; }
+  .ph-head .m { font-family: var(--f-mono); font-size: 11px; color: var(--p-dim); margin-top: 2px; }
+  .ph-body {
+    padding: 16px;
+    background-image: linear-gradient(var(--p-grid) 1px, transparent 1px), linear-gradient(90deg, var(--p-grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .ph-title { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .ph-title .d-chip { width: 30px; height: 30px; }
+  .ph-title h4 { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: 20px; }
+  .ph-tabs { display: flex; gap: 2px; overflow: hidden; border-bottom: 1px solid var(--p-line); margin-bottom: 14px; white-space: nowrap; }
+  .ph-tabs span { padding: 6px 10px 9px; font-size: 13.5px; font-weight: 500; color: var(--p-ink-soft); }
+  .ph-tabs span.on { color: var(--p-olive); box-shadow: inset 0 -2px 0 var(--p-olive); }
+  .phone .pband { min-width: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phone .ptile { padding: 0.7rem 0.75rem; }
+  .phone .pfig { font-size: 20px; }
+  .phone .ptile:nth-child(odd):last-child { grid-column: 1 / -1; }
+  .ph-tools { display: flex; gap: 8px; margin-top: 12px; font-size: 13px; }
+  .ph-row { margin-top: 12px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .ph-row span:first-child { font-weight: 600; }
+  .ph-foot { margin-top: 12px; height: 56px; border-top: 1px solid var(--p-line); background: var(--p-card); }
+
+  /* ── Reconciliation ── */
+  .recon { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  @media (max-width: 860px) { .recon { grid-template-columns: 1fr; } }
+  .recon p { margin: 0; }
+  .recon .stack p + p { margin-top: 2px; }
+
+  /* ── Decisions ── */
+  .qs { display: flex; flex-direction: column; gap: 14px; counter-reset: q; }
+  .q {
+    border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-surface);
+    padding: 18px 20px; display: grid; grid-template-columns: auto 1fr; gap: 4px 16px;
+  }
+  .q .n { grid-row: span 3; font-family: var(--f-display); font-weight: 700; font-size: 28px; line-height: 1; color: var(--doc-accent); }
+  .q h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .q p { margin: 0; color: var(--doc-dim); max-width: 72ch; }
+  .q .rec { color: var(--doc-ink); }
+  .q .rec b { font-weight: 600; }
+  @media (max-width: 600px) { .q { grid-template-columns: 1fr; } .q .n { grid-row: auto; font-size: 22px; } }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="page">
+
+  <header class="mast">
+    <div class="eyebrow">Coaches portal · Money · Budget vs. Actual</div>
+    <h1>Budget vs. Actual tiles</h1>
+    <p class="lede">The four figures at the top of Budget vs. Actual become what came in against the plan, what went out against the plan, what nobody planned, and what the team holds today. Two tiles change. The band stays the same size and nothing below it moves.</p>
+    <div class="meta">
+      <span>Mockup · round 1 · 2026-10-01</span>
+      <span>Figures: QA Money U13 test team (dev), read from its live report</span>
+    </div>
+  </header>
+
+  <!-- ═══════════ 1 · THE CHANGE ═══════════ -->
+  <section aria-labelledby="s-change">
+    <div class="sec-head">
+      <h2 id="s-change">The change, at true size</h2>
+      <p>Same component, same type, same height. Headroom and Season end leave. Collected and Cash on hand take their places.</p>
+    </div>
+    <div class="sheet">
+      <div class="stack">
+        <div class="rowlabel"><b>Before</b> · today on dev</div>
+        <div class="scroll-x">
+          <div class="pband" role="group" aria-label="Before: the summary band today">
+            <div class="ptile gone"><span class="plabel">Headroom</span><span class="pfig" data-tone="good">+$2,507.00</span><span class="pcap">under budget</span></div>
+            <div class="ptile"><span class="plabel">Spent</span><span class="pfig">$5,993.00</span><span class="pcap">of $8,500.00 planned</span></div>
+            <div class="ptile"><span class="plabel">Off-plan</span><span class="pfig" data-tone="warn">$1,734.00</span><span class="pcap">nobody budgeted this</span></div>
+            <div class="ptile gone"><span class="plabel">Season end</span><span class="pfig">$3,665.35</span><span class="pcap">plus $619.00 possible</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="rowlabel"><b>After</b> · same team, same day</div>
+        <div class="scroll-x">
+          <div class="tagrow" aria-label="What each tile is">
+            <button type="button" class="tag" data-k="new" aria-expanded="false" aria-controls="ex-collected">NEW</button>
+            <button type="button" class="tag" data-k="same" aria-expanded="false" aria-controls="ex-spent">UNCHANGED</button>
+            <button type="button" class="tag" data-k="same" aria-expanded="false" aria-controls="ex-offplan">UNCHANGED</button>
+            <button type="button" class="tag" data-k="new" aria-expanded="false" aria-controls="ex-cash">NEW</button>
+          </div>
+        </div>
+        <div class="scroll-x">
+          <div class="pband" role="group" aria-label="After: the proposed summary band">
+            <div class="ptile isnew"><span class="plabel">Collected</span><span class="pfig">$8,979.09</span><span class="pcap">of $15,450.00 planned</span></div>
+            <div class="ptile"><span class="plabel">Spent</span><span class="pfig">$5,993.00</span><span class="pcap">of $8,500.00 planned</span></div>
+            <div class="ptile"><span class="plabel">Off-plan</span><span class="pfig" data-tone="warn">$1,734.00</span><span class="pcap">nobody budgeted this</span></div>
+            <div class="ptile isnew"><span class="plabel">Cash on hand</span><span class="pfig">$3,687.69</span><span class="pcap">as of today</span></div>
+          </div>
+        </div>
+        <p class="tag-explain" id="ex-collected" hidden>Replaces Headroom. Everything that came in this season (dues, fundraising, sponsors, tournaments, money back from the club) against everything the plan expected to come in. It is the Total revenue row from the report below, the same way Spent is the Total expenses row.</p>
+        <p class="tag-explain" id="ex-spent" hidden>No change. What the season spent against the whole-season spending plan.</p>
+        <p class="tag-explain" id="ex-offplan" hidden>No change. Spending on items nobody planned. Still hides when it is zero, and the band closes up to three tiles.</p>
+        <p class="tag-explain" id="ex-cash" hidden>Replaces Season end. The same Cash on hand figure the Money Overview shows, so the two screens always agree.</p>
+      </div>
+
+      <div class="scroll-x">
+        <table class="spec">
+          <thead>
+            <tr><th>Tile</th><th>Figure (test team)</th><th>Caption</th><th>Colour</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="tile">Collected</td>
+              <td class="num">$8,979.09</td>
+              <td>“of $15,450.00 planned”. Left off when the plan expects no income at all.</td>
+              <td><span class="swatch" style="background: var(--p-ink)"></span>Plain ink. It is a total, not a verdict.</td>
+              <td><span class="chip new">NEW</span> replaces Headroom</td>
+            </tr>
+            <tr>
+              <td class="tile">Spent</td>
+              <td class="num">$5,993.00</td>
+              <td>“of $8,500.00 planned”</td>
+              <td><span class="swatch" style="background: var(--p-ink)"></span>Plain ink</td>
+              <td><span class="chip same">UNCHANGED</span></td>
+            </tr>
+            <tr>
+              <td class="tile">Off-plan</td>
+              <td class="num">$1,734.00</td>
+              <td>“nobody budgeted this”</td>
+              <td><span class="swatch" style="background: var(--p-warn)"></span>Amber. Hidden at zero.</td>
+              <td><span class="chip same">UNCHANGED</span></td>
+            </tr>
+            <tr>
+              <td class="tile">Cash on hand</td>
+              <td class="num">$3,687.69</td>
+              <td>“as of today”</td>
+              <td><span class="swatch" style="background: var(--p-ink)"></span>Plain ink. <span class="swatch" style="background: var(--p-danger); margin-left: 4px"></span>Red only below zero.</td>
+              <td><span class="chip new">NEW</span> replaces Season end</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="stack">
+        <div class="rowlabel"><b>Wording that follows</b> · elsewhere on this tab</div>
+        <div class="scroll-x">
+          <table class="spec">
+            <thead><tr><th>Where</th><th>Today</th><th>After</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="tile">Months view, Cash reading</td>
+                <td>“Headroom counts $5,993.00 spent — why the difference?”</td>
+                <td>“Spent counts $5,993.00 — why the difference?” The note’s figure is the Spent tile’s, so it names that tile.</td>
+              </tr>
+              <tr>
+                <td class="tile">Export summary</td>
+                <td>Headroom row, Spent off-plan row</td>
+                <td>The four tiles, by the same names. See call 2.</td>
+              </tr>
+              <tr>
+                <td class="tile">Help article</td>
+                <td>Describes the band with Headroom as “the number this page exists for”</td>
+                <td>Rewritten for the four tiles once you sign off this drawing.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 2 · WHY ═══════════ -->
+  <section aria-labelledby="s-why">
+    <div class="sec-head">
+      <h2 id="s-why">Why those two go: your team’s band</h2>
+      <p>These figures are from your screenshot of Milton Bats U13 Purple, 2027 Season.</p>
+    </div>
+    <div class="sheet">
+      <div class="scroll-x">
+        <div class="pband" role="group" aria-label="Your team's band today">
+          <div class="ptile gone"><span class="plabel">Headroom</span><span class="pfig" data-tone="good">+$45,188.70</span><span class="pcap">under budget</span></div>
+          <div class="ptile"><span class="plabel">Spent</span><span class="pfig">$1,029.60</span><span class="pcap">of $46,218.30 planned</span></div>
+          <div class="ptile"><span class="plabel">Off-plan</span><span class="pfig" data-tone="warn">$109.60</span><span class="pcap">nobody budgeted this</span></div>
+          <div class="ptile gone"><span class="plabel">Season end</span><span class="pfig">$48,743.51</span></div>
+        </div>
+      </div>
+      <div class="why">
+        <div class="why-card">
+          <h3>Headroom repeats the tile beside it</h3>
+          <div class="sum" aria-label="Headroom arithmetic">
+            <span>Planned spending</span><span>$46,218.30</span>
+            <span class="op">less spent so far</span><span class="op">− $1,029.60</span>
+            <span class="total">Headroom</span><span class="total">$45,188.70</span>
+          </div>
+          <p>There is no income in it. It subtracts the two numbers the Spent tile already shows. It also says “under budget” in green in October, which only means the season has barely started.</p>
+        </div>
+        <div class="why-card">
+          <h3>Season end counts income you expect, but only spending that has been billed</h3>
+          <div class="sum" aria-label="Season end arithmetic">
+            <span>Cash today</span><span>counted</span>
+            <span class="op">+ dues installments still to come</span><span class="op">counted</span>
+            <span class="op">− bills already entered as owed</span><span class="op">counted</span>
+            <span class="missing">− planned spending not yet billed</span><span class="missing">not counted</span>
+            <span class="total">Season end</span><span class="total">$48,743.51</span>
+          </div>
+          <p>Your plan still has $45,188.70 of spending ahead. Only the part already entered as a bill is in this figure, so the team looks about that much richer at season end than its plan says.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 3 · WHOLE SCREEN ═══════════ -->
+  <section aria-labelledby="s-screen">
+    <div class="sec-head">
+      <h2 id="s-screen">The whole screen</h2>
+      <p>A 1440 × 900 desktop, drawn from the dev page. Flip between before and after. The report starts at the same height in both, because the band does not grow.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Which version">
+        <button type="button" id="v-before" aria-pressed="false">Before</button>
+        <button type="button" id="v-after" aria-pressed="true">After</button>
+      </div>
+      <div class="seg" role="group" aria-label="Scale">
+        <button type="button" id="z-fit" aria-pressed="true">Fit to width</button>
+        <button type="button" id="z-true" aria-pressed="false">True size</button>
+      </div>
+      <span class="hint">True size scrolls sideways on a smaller screen.</span>
+    </div>
+    <div class="fit" id="fit" data-w="1440">
+      <div class="desk" id="desk" data-show="after" role="img" aria-label="Budget vs. Actual, whole desktop screen">
+        <div class="d-top">
+          <span class="d-logo"><i></i>FIELDLOGICHQ</span>
+          <span class="d-portal">COACHES PORTAL</span>
+          <span class="sp"></span>
+          <svg class="ico" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        </div>
+        <aside class="d-side">
+          <div class="d-team">QA Money U13 <span style="color: var(--p-dim)">⌄</span></div>
+          <div class="d-nav"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Overview</div>
+          <div class="d-grp">SEASON</div>
+          <div class="d-nav"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>Schedule</div>
+          <div class="d-nav"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Practice plans</div>
+          <div class="d-nav"><svg class="ico" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Lineups</div>
+          <div class="d-nav"><svg class="ico" viewBox="0 0 24 24"><path d="M6 9H4a2 2 0 0 1 0-4h2M18 9h2a2 2 0 0 0 0-4h-2M6 4h12v6a6 6 0 0 1-12 0Z"/><path d="M9 21h6M12 16v5"/></svg>Tournaments</div>
+          <div class="d-grp">PROGRESS</div>
+          <div class="d-nav"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M8 17V11M13 17V7M18 17v-4"/></svg>Insights</div>
+          <div class="d-grp">MONEY</div>
+          <div class="d-nav on"><svg class="ico" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Money</div>
+          <div class="d-grp">COMMUNICATION</div>
+          <div class="d-nav"><svg class="ico" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>Chat</div>
+          <div class="d-grp">TEAM <span style="float: right; margin-right: 0">3 ›</span></div>
+          <div class="d-nav" style="margin-top: 14px; border-top: 1px solid var(--p-line); padding-top: 18px"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg>Help</div>
+        </aside>
+        <div class="d-main">
+          <div class="d-head">
+            <div><div class="t">QA Money U13</div><div class="m">QA Money Lab (throwaway) · 2026 Season</div></div>
+            <span style="flex: 1"></span>
+            <svg class="ico" viewBox="0 0 24 24" style="width: 22px; height: 22px"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg>
+          </div>
+          <div class="d-body">
+            <div class="d-title"><span class="d-chip">$</span><h4>Money</h4></div>
+            <div class="d-tabs"><span>Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraising</span><span>Ledger</span><span>Club</span><span class="on">Budget vs. Actual</span></div>
+
+            <div class="pband before-only" aria-hidden="true">
+              <div class="ptile"><span class="plabel">Headroom</span><span class="pfig" data-tone="good">+$2,507.00</span><span class="pcap">under budget</span></div>
+              <div class="ptile"><span class="plabel">Spent</span><span class="pfig">$5,993.00</span><span class="pcap">of $8,500.00 planned</span></div>
+              <div class="ptile"><span class="plabel">Off-plan</span><span class="pfig" data-tone="warn">$1,734.00</span><span class="pcap">nobody budgeted this</span></div>
+              <div class="ptile"><span class="plabel">Season end</span><span class="pfig">$3,665.35</span><span class="pcap">plus $619.00 possible</span></div>
+            </div>
+            <div class="pband after-only" aria-hidden="true">
+              <div class="ptile"><span class="plabel">Collected</span><span class="pfig">$8,979.09</span><span class="pcap">of $15,450.00 planned</span></div>
+              <div class="ptile"><span class="plabel">Spent</span><span class="pfig">$5,993.00</span><span class="pcap">of $8,500.00 planned</span></div>
+              <div class="ptile"><span class="plabel">Off-plan</span><span class="pfig" data-tone="warn">$1,734.00</span><span class="pcap">nobody budgeted this</span></div>
+              <div class="ptile"><span class="plabel">Cash on hand</span><span class="pfig">$3,687.69</span><span class="pcap">as of today</span></div>
+            </div>
+
+            <div class="d-tools">
+              <span class="pill on">View <b>Statement</b> ⌄</span>
+              <span class="pill">Compare <b>Whole season</b> ⌄</span>
+              <span style="color: var(--p-ink-soft); padding-left: 6px">Expand all</span>
+              <span class="sp"></span>
+              <span class="btn"><svg class="ico" viewBox="0 0 24 24" style="width: 15px; height: 15px"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export</span>
+            </div>
+
+            <div class="ptable">
+              <div class="pt-row pt-h"><span>Category / line item</span><span>Budgeted</span><span>Actual</span><span>Variance</span></div>
+              <div class="pt-band">REVENUE</div>
+              <div class="pt-row cat"><span>Player dues</span><span>$8,450.00</span><span>$8,219.58</span><span class="neg">-$230.42</span></div>
+              <div class="pt-row cat"><span>Fundraising</span><span>$2,000.00</span><span>$435.01</span><span class="neg">-$1,564.99</span></div>
+              <div class="pt-row cat"><span>Sponsorship</span><span>$5,000.00</span><span>$25.50</span><span class="neg">-$4,974.50</span></div>
+              <div class="pt-row cat"><span>Tournaments</span><span>—</span><span>$299.00</span><span class="pos">+$299.00</span></div>
+              <div class="pt-row tot"><span>Total revenue</span><span>$15,450.00</span><span>$8,979.09</span><span class="neg">-$6,470.91</span></div>
+              <div class="pt-band">EXPENSES</div>
+              <div class="pt-row cat"><span>Facilities</span><span>$1,200.00</span><span>$685.00</span><span class="pos">$515.00 under</span></div>
+              <div class="pt-row cat"><span>Fundraising</span><span>$300.00</span><span>$0.00</span><span class="pos">$300.00 under</span></div>
+              <div class="pt-row cat"><span>Officials</span><span>$900.00</span><span>$899.00</span><span class="pos">$1.00 under</span></div>
+              <div class="pt-row cat"><span>Team Gear</span><span>$1,800.00</span><span>$2,000.00</span><span class="neg">$200.00 over</span></div>
+              <div class="pt-row cat"><span>Tournaments</span><span>$2,800.00</span><span>$2,229.00</span><span class="pos">$571.00 under</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 4 · PHONE ═══════════ -->
+  <section aria-labelledby="s-phone">
+    <div class="sec-head">
+      <h2 id="s-phone">On a phone</h2>
+      <p>Drawn at a true 390 px wide, to the band’s phone rules: two tiles per row and 20 px figures. Every caption still fits on one line. The header and tabs are simplified. Open this page on your phone to judge it properly.</p>
+    </div>
+    <div class="phones">
+      <div class="phone-col">
+        <div class="rowlabel"><b>Before</b></div>
+        <div class="phone" role="img" aria-label="Phone, before">
+          <div class="ph-head"><div class="t">QA Money U13</div><div class="m">2026 Season</div></div>
+          <div class="ph-body">
+            <div class="ph-title"><span class="d-chip">$</span><h4>Money</h4></div>
+            <div class="ph-tabs"><span>Ledger</span><span>Club</span><span class="on">Budget vs. Actual</span></div>
+            <div class="pband">
+              <div class="ptile"><span class="plabel">Headroom</span><span class="pfig" data-tone="good">+$2,507.00</span><span class="pcap">under budget</span></div>
+              <div class="ptile"><span class="plabel">Spent</span><span class="pfig">$5,993.00</span><span class="pcap">of $8,500.00 planned</span></div>
+              <div class="ptile"><span class="plabel">Off-plan</span><span class="pfig" data-tone="warn">$1,734.00</span><span class="pcap">nobody budgeted this</span></div>
+              <div class="ptile"><span class="plabel">Season end</span><span class="pfig">$3,665.35</span><span class="pcap">plus $619.00 possible</span></div>
+            </div>
+            <div class="ph-tools"><span class="pill on">View <b>Statement</b> ⌄</span><span class="pill">Compare <b>Whole season</b> ⌄</span></div>
+            <div class="ph-row"><span>Player dues</span><span>$8,219.58</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-col">
+        <div class="rowlabel"><b>After</b></div>
+        <div class="phone" role="img" aria-label="Phone, after">
+          <div class="ph-head"><div class="t">QA Money U13</div><div class="m">2026 Season</div></div>
+          <div class="ph-body">
+            <div class="ph-title"><span class="d-chip">$</span><h4>Money</h4></div>
+            <div class="ph-tabs"><span>Ledger</span><span>Club</span><span class="on">Budget vs. Actual</span></div>
+            <div class="pband">
+              <div class="ptile"><span class="plabel">Collected</span><span class="pfig">$8,979.09</span><span class="pcap">of $15,450.00 planned</span></div>
+              <div class="ptile"><span class="plabel">Spent</span><span class="pfig">$5,993.00</span><span class="pcap">of $8,500.00 planned</span></div>
+              <div class="ptile"><span class="plabel">Off-plan</span><span class="pfig" data-tone="warn">$1,734.00</span><span class="pcap">nobody budgeted this</span></div>
+              <div class="ptile"><span class="plabel">Cash on hand</span><span class="pfig">$3,687.69</span><span class="pcap">as of today</span></div>
+            </div>
+            <div class="ph-tools"><span class="pill on">View <b>Statement</b> ⌄</span><span class="pill">Compare <b>Whole season</b> ⌄</span></div>
+            <div class="ph-row"><span>Player dues</span><span>$8,219.58</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-col">
+        <div class="rowlabel"><b>After</b> · nothing off-plan</div>
+        <div class="phone" role="img" aria-label="Phone, after, with no off-plan spending">
+          <div class="ph-head"><div class="t">QA Money U13</div><div class="m">2026 Season</div></div>
+          <div class="ph-body">
+            <div class="ph-title"><span class="d-chip">$</span><h4>Money</h4></div>
+            <div class="ph-tabs"><span>Ledger</span><span>Club</span><span class="on">Budget vs. Actual</span></div>
+            <div class="pband" data-tiles="3">
+              <div class="ptile"><span class="plabel">Collected</span><span class="pfig">$8,979.09</span><span class="pcap">of $15,450.00 planned</span></div>
+              <div class="ptile"><span class="plabel">Spent</span><span class="pfig">$5,993.00</span><span class="pcap">of $8,500.00 planned</span></div>
+              <div class="ptile"><span class="plabel">Cash on hand</span><span class="pfig">$3,687.69</span><span class="pcap">as of today</span></div>
+            </div>
+            <div class="ph-tools"><span class="pill on">View <b>Statement</b> ⌄</span><span class="pill">Compare <b>Whole season</b> ⌄</span></div>
+            <div class="ph-row"><span>Player dues</span><span>$8,219.58</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 5 · RECONCILIATION ═══════════ -->
+  <section aria-labelledby="s-recon">
+    <div class="sec-head">
+      <h2 id="s-recon">The tiles won’t add up, and that’s expected</h2>
+      <p>Someone will subtract Spent from Collected and expect Cash on hand. It won’t match, because the report counts spending when it happens and cash counts it when money leaves the account.</p>
+    </div>
+    <div class="sheet">
+      <div class="recon">
+        <div class="sum" aria-label="Test team reconciliation">
+          <span>Collected</span><span>$8,979.09</span>
+          <span class="op">less Spent</span><span class="op">− $5,993.00</span>
+          <span class="op">plus the balance the season started with</span><span class="op">+ $500.00</span>
+          <span class="total">What the subtraction suggests</span><span class="total">$3,486.09</span>
+          <span>Cash on hand</span><span>$3,687.69</span>
+        </div>
+        <div class="stack">
+          <p><b>On the test team the gap is $201.60.</b> The report already names three reasons a gap opens up:</p>
+          <p>A family paid a vendor directly. That counts as spent ($660.00 on this team), but the money never went through the team’s account.</p>
+          <p>Money came back, such as a refund. Or money went back to families. Each moves the account without being spending.</p>
+          <p style="color: var(--doc-dim)">My recommendation is no note on the band. Its one note line is for warnings, and the Statement’s cash note (“In cash, this season spent …”) already walks the difference line by line.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 6 · DECISIONS ═══════════ -->
+  <section aria-labelledby="s-q">
+    <div class="sec-head">
+      <h2 id="s-q">Four calls for you</h2>
+      <p>Each has my recommendation. Reply in the chat by number.</p>
+    </div>
+    <div class="qs">
+      <div class="q">
+        <span class="n">1</span>
+        <h3>What is the first tile called?</h3>
+        <p>Options: Collected, Revenue, Earned.</p>
+        <p class="rec"><b>Collected.</b> It is a verb like Spent, so the two read as a pair. “Earned” reads oddly for player dues. “Revenue” would also work, since it is the report’s own section name.</p>
+      </div>
+      <div class="q">
+        <span class="n">2</span>
+        <h3>Does the export summary follow the screen?</h3>
+        <p>The PDF and Excel summary currently print a Headroom row and a Spent off-plan row.</p>
+        <p class="rec"><b>Yes.</b> The export prints the same four figures with the same names, so a printed copy matches what the coach saw.</p>
+      </div>
+      <div class="q">
+        <span class="n">3</span>
+        <h3>Should the Money Overview lose Headroom too?</h3>
+        <p>The Overview also headlines Headroom, beside its spending bar, and has the same October problem.</p>
+        <p class="rec"><b>Not in this change.</b> The Overview card is a different design with a bar and its own links. Keep this change to one tab and look at the Overview separately.</p>
+      </div>
+      <div class="q">
+        <span class="n">4</span>
+        <h3>What colour is Cash on hand?</h3>
+        <p>The Overview prints this figure in green when it is positive. On this band, colour is kept for verdicts, and a balance is a total.</p>
+        <p class="rec"><b>Plain ink, red below zero.</b> The cost is that one figure has two colours on two screens. If that bothers you, the alternative is to drop the green on the Overview.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  (function () {
+    /* Tags open their explanation on click. */
+    var tags = document.querySelectorAll('.tag');
+    tags.forEach(function (t) {
+      t.addEventListener('click', function () {
+        var open = t.getAttribute('aria-expanded') === 'true';
+        tags.forEach(function (o) {
+          o.setAttribute('aria-expanded', 'false');
+          var p = document.getElementById(o.getAttribute('aria-controls'));
+          if (p) p.hidden = true;
+        });
+        if (!open) {
+          t.setAttribute('aria-expanded', 'true');
+          var mine = document.getElementById(t.getAttribute('aria-controls'));
+          if (mine) mine.hidden = false;
+        }
+      });
+    });
+
+    /* Whole-screen frame: before/after and fit/true size. */
+    var desk = document.getElementById('desk');
+    var fit = document.getElementById('fit');
+    var trueSize = false;
+    function setShow(v) {
+      desk.setAttribute('data-show', v);
+      document.getElementById('v-before').setAttribute('aria-pressed', String(v === 'before'));
+      document.getElementById('v-after').setAttribute('aria-pressed', String(v === 'after'));
+    }
+    function applyZoom() {
+      var w = Number(fit.getAttribute('data-w'));
+      var s = trueSize ? 1 : Math.min(1, fit.clientWidth / w);
+      desk.style.zoom = String(s);
+    }
+    document.getElementById('v-before').addEventListener('click', function () { setShow('before'); });
+    document.getElementById('v-after').addEventListener('click', function () { setShow('after'); });
+    document.getElementById('z-fit').addEventListener('click', function () {
+      trueSize = false; applyZoom();
+      this.setAttribute('aria-pressed', 'true');
+      document.getElementById('z-true').setAttribute('aria-pressed', 'false');
+    });
+    document.getElementById('z-true').addEventListener('click', function () {
+      trueSize = true; applyZoom();
+      this.setAttribute('aria-pressed', 'true');
+      document.getElementById('z-fit').setAttribute('aria-pressed', 'false');
+    });
+    if (window.ResizeObserver) new ResizeObserver(applyZoom).observe(fit);
+    window.addEventListener('resize', applyZoom);
+    applyZoom();
+  })();
+</script>
+<style>
+  .desk[data-show="before"] .after-only { display: none; }
+  .desk[data-show="after"] .before-only { display: none; }
+</style>

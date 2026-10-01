@@ -1,0 +1,255 @@
+<title>Budget vs. Actual Tiles Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #ECEEF1;
+    --surface: #FFFFFF;
+    --ink: #1B1F24;
+    --dim: #57606A;
+    --line: #D3D8DF;
+    --accent: #2C5A86;
+    --accent-soft: rgba(44, 90, 134, 0.10);
+    --pass: #2F6B33;
+    --pass-soft: rgba(47, 107, 51, 0.12);
+    --issue: #9A2E17;
+    --issue-soft: rgba(154, 46, 23, 0.10);
+    --call: #7A4A06;
+    --call-soft: rgba(122, 74, 6, 0.12);
+    --shadow: 0 1px 2px rgba(20, 24, 30, 0.06), 0 8px 24px rgba(20, 24, 30, 0.08);
+    --f-doc: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #121519; --surface: #1B1F25; --ink: #E6E9EE; --dim: #9AA3AE; --line: #2E343C;
+      --accent: #8DB4DD; --accent-soft: rgba(141, 180, 221, 0.14);
+      --pass: #8FD18F; --pass-soft: rgba(143, 209, 143, 0.14);
+      --issue: #F0937D; --issue-soft: rgba(240, 147, 125, 0.14);
+      --call: #E7B866; --call-soft: rgba(231, 184, 102, 0.14);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #121519; --surface: #1B1F25; --ink: #E6E9EE; --dim: #9AA3AE; --line: #2E343C;
+    --accent: #8DB4DD; --accent-soft: rgba(141, 180, 221, 0.14);
+    --pass: #8FD18F; --pass-soft: rgba(143, 209, 143, 0.14);
+    --issue: #F0937D; --issue-soft: rgba(240, 147, 125, 0.14);
+    --call: #E7B866; --call-soft: rgba(231, 184, 102, 0.14);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  body { background: var(--ground); color: var(--ink); font-family: var(--f-doc); font-size: 15px; line-height: 1.55; }
+  .page { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 72px; display: flex; flex-direction: column; gap: 28px; }
+  @media (max-width: 600px) { .page { padding-inline: 16px; } }
+  .eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); }
+  h1 { margin: 6px 0 8px; font-family: var(--f-display); font-size: 40px; line-height: 1; }
+  h2 { margin: 0; font-family: var(--f-display); font-size: 26px; line-height: 1.1; }
+  h3 { margin: 0; font-size: 14px; font-weight: 600; font-family: var(--f-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--dim); }
+  p { margin: 0; }
+  .lede { max-width: 64ch; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  @media (max-width: 600px) { .card { padding: 16px; } }
+  .signin dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+  .signin dt { color: var(--dim); }
+  .signin dd { margin: 0; font-family: var(--f-mono); font-size: 14px; overflow-wrap: anywhere; }
+  .muted { color: var(--dim); font-size: 14px; }
+  .index { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .index { grid-template-columns: 1fr; } }
+  .wcard { text-align: left; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+  .wcard[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .wcard b { font-size: 16px; }
+  .chip { align-self: flex-start; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  .chip[data-s="pass"] { background: var(--pass-soft); color: var(--pass); }
+  .chip[data-s="issue"] { background: var(--issue-soft); color: var(--issue); }
+  .chip[data-s="call"], .chip[data-s="partial"] { background: var(--call-soft); color: var(--call); }
+  .walk { display: flex; flex-direction: column; gap: 16px; }
+  .intent { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .intent section { display: flex; flex-direction: column; gap: 4px; }
+  ol.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; counter-reset: s; }
+  ol.steps li { counter-increment: s; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: start; }
+  ol.steps li.done { border-color: var(--pass); }
+  ol.steps input[type="checkbox"] { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--pass); }
+  .step-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .step-body .n::before { content: "Step " counter(s); font-family: var(--f-mono); font-size: 12px; color: var(--dim); }
+  .do b, .see b { font-weight: 600; }
+  .do::before { content: "Do  "; font-family: var(--f-mono); font-size: 12px; color: var(--accent); white-space: pre; }
+  .see::before { content: "You should see  "; font-family: var(--f-mono); font-size: 12px; color: var(--pass); white-space: pre; }
+  .ill { font-size: 13px; color: var(--dim); }
+  .verdict { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .verdict button, .tools button { font: 500 14px/1 var(--f-doc); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .verdict button[data-v="pass"][aria-pressed="true"] { background: var(--pass-soft); border-color: var(--pass); color: var(--pass); }
+  .verdict button[data-v="issue"][aria-pressed="true"] { background: var(--issue-soft); border-color: var(--issue); color: var(--issue); }
+  .verdict button[data-v="call"][aria-pressed="true"] { background: var(--call-soft); border-color: var(--call); color: var(--call); }
+  textarea { width: 100%; box-sizing: border-box; min-height: 84px; font: 14px/1.5 var(--f-doc); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; }
+  pre.out { margin: 0; white-space: pre-wrap; font: 13px/1.5 var(--f-mono); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .progress { font-family: var(--f-mono); font-size: 13px; color: var(--dim); }
+</style>
+
+<div class="page">
+  <header>
+    <div class="eyebrow">Owner QA · §256 · Coaches portal · Money</div>
+    <h1>Budget vs. Actual tiles</h1>
+    <p class="lede">Two walks for the four figures at the top of Budget vs. Actual: Collected, Spent, Off-plan and Cash on hand. Headroom and Season end left this tab. Mockup of record: <a href="https://claude.ai/artifact/9gfCkXKKkhx4MJh9PFt53g">claude.ai/artifact/9gfCkXKKkhx4MJh9PFt53g</a>.</p>
+  </header>
+
+  <div class="card signin">
+    <h3>Sign in as · both walks</h3>
+    <dl>
+      <dt>Where</dt><dd>http://localhost:3000/auth/login (dev server running)</dd>
+      <dt>Email</dt><dd>qa-money-read@dev.local</dd>
+      <dt>Password</dt><dd>devpass123</dd>
+      <dt>Team</dt><dd>QA Money U13 · QA Money Lab (throwaway) · 2026 Season</dd>
+    </dl>
+    <p class="muted">A dev-only account; keep this page private. It has read-only money access, so nothing in either walk can change the team’s money. This team is used rather than the UAT coach’s, because it has off-plan spending and a cost a family paid directly, which are what make every tile and every note appear.</p>
+    <p class="muted"><b>As of 2026-10-01.</b> Dollar figures in grey are illustrations from that day. The pass condition is always the relationship the step names (this figure equals that row), never the dollar amount.</p>
+  </div>
+
+  <div class="index" role="group" aria-label="Walks">
+    <button type="button" class="wcard" data-walk="w1" aria-pressed="true"><b>W1 · Read the season’s money at a glance</b><span class="muted">The four tiles, each agreeing with where it comes from, on desk and phone.</span><span class="chip" data-chip="w1">Not started</span></button>
+    <button type="button" class="wcard" data-walk="w2" aria-pressed="false"><b>W2 · The report explains itself without Headroom</b><span class="muted">The Months notes, the PDF and the help all point at what is on screen now.</span><span class="chip" data-chip="w2">Not started</span></button>
+  </div>
+
+  <!-- ═════════ W1 ═════════ -->
+  <div class="walk" id="w1">
+    <h2>W1 · Read the season’s money at a glance</h2>
+    <div class="card intent">
+      <section><h3>What this walk is for</h3><p>A coach opens Budget vs. Actual and, in one row, sees what came in, what went out, what nobody planned, and what the team holds today. Each figure has to agree with the place it comes from, or the row is decoration.</p></section>
+      <section><h3>It passes when</h3><p>The four tiles are there, each one equals its source, and nothing else on the page changed size or moved.</p></section>
+      <section><h3>Not in this walk</h3><p>The notes under the Months view, the PDF and the help (all in W2). The Money Overview’s own Headroom, which stays by ruling.</p></section>
+    </div>
+    <ol class="steps">
+      <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="step-body"><span class="n"></span><p class="do">Open <b>Money → Budget vs. Actual</b>. Set <b>View: Statement</b> and <b>Compare: Whole season</b>.</p><p class="see">One row of four: <b>COLLECTED · SPENT · OFF-PLAN · CASH ON HAND</b>. No Headroom and no Season end anywhere on the page.</p></div></li>
+      <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="step-body"><span class="n"></span><p class="do">Find the <b>Total revenue</b> row in the table.</p><p class="see">Collected’s big figure equals that row’s <b>Actual</b>, and its “of $X planned” equals the row’s <b>Budgeted</b>.</p><p class="ill">Illustration: $8,979.09 of $15,450.00 planned.</p></div></li>
+      <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="step-body"><span class="n"></span><p class="do">Scroll to the <b>Total expenses</b> row.</p><p class="see">Spent’s figure equals that row’s <b>Actual</b>, and its “of $X planned” equals the row’s <b>Budgeted</b>.</p><p class="ill">Illustration: $5,993.00 of $8,500.00 planned.</p></div></li>
+      <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="step-body"><span class="n"></span><p class="see">Off-plan is <b>amber</b> and says “nobody budgeted this”. Collected, Spent and Cash on hand are plain dark ink. Nothing in the row is green, and Cash on hand reads “as of today”.</p></div></li>
+      <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="step-body"><span class="n"></span><p class="do">Open <b>Money → Overview</b>, then come back to Budget vs. Actual.</p><p class="see">The Overview’s <b>Cash on hand</b> card shows the same figure as the band’s Cash on hand. The Overview prints it in green and the band in plain ink, as ruled.</p><p class="ill">Illustration: $3,687.69.</p></div></li>
+      <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="step-body"><span class="n"></span><p class="do">Switch <b>Compare</b> to <b>To date</b>, look, then switch back to <b>Whole season</b>.</p><p class="see">The table’s plan column changes. <b>The four tiles do not move</b>: they always read the whole season.</p></div></li>
+      <li><input type="checkbox" id="w1s7" aria-label="W1 step 7"><div class="step-body"><span class="n"></span><p class="do">Narrow the browser to about 390 px wide, or open the page on your phone.</p><p class="see">Two tiles per row: Collected beside Spent, then Off-plan beside Cash on hand. Every caption fits on one line, and the table starts right under the band.</p></div></li>
+      <li><input type="checkbox" id="w1s8" aria-label="W1 step 8"><div class="step-body"><span class="n"></span><p class="do">Switch the portal to <b>Dark</b>, look at the band, then switch back.</p><p class="see">All four tiles read clearly. Off-plan is still amber.</p></div></li>
+    </ol>
+    <div class="verdict" role="group" aria-label="W1 verdict">
+      <button type="button" data-w="w1" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-w="w1" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-w="w1" data-v="call" aria-pressed="false">Needs a call</button>
+      <span class="progress" data-prog="w1"></span>
+    </div>
+    <label class="muted" for="w1notes">Notes for W1</label>
+    <textarea id="w1notes" data-notes="w1"></textarea>
+  </div>
+
+  <!-- ═════════ W2 ═════════ -->
+  <div class="walk" id="w2" hidden>
+    <h2>W2 · The report explains itself without Headroom</h2>
+    <div class="card intent">
+      <section><h3>What this walk is for</h3><p>Three sentences on this report used to point at Headroom or at the Season end figure. Each one now has to point at something still on the screen, and a printed copy has to read like the screen it came from.</p></section>
+      <section><h3>It passes when</h3><p>Every note names Spent where it named Headroom and the numbers agree, the forward-figure sentence is gone, the PDF opens on the four tiles, and the help describes them.</p></section>
+      <section><h3>Not in this walk</h3><p>The band itself (W1). The Overview’s Budget card, which keeps Headroom, gets only one look, in step 6.</p></section>
+    </div>
+    <ol class="steps">
+      <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="step-body"><span class="n"></span><p class="do">On Budget vs. Actual, set <b>View: Months</b> and <b>Showing: Cash</b>. Look under the grid.</p><p class="see">A line reading “<b>Spent counts $X — why the difference?</b>”, where $X is the Spent tile’s figure. Open it: it walks down to “What this season spent”, the same figure again.</p><p class="ill">Illustration: $5,993.00.</p></div></li>
+      <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="step-body"><span class="n"></span><p class="do">Switch <b>Showing</b> to <b>Difference</b>.</p><p class="see">The note says “…on expenses its Total is your plan less the Spent figure above, to the cent.” The <b>Total expenses</b> row’s Total equals Spent’s “of” figure minus Spent’s figure, to the dollar (the grid shows whole dollars).</p><p class="ill">Illustration: 2,507, which is $8,500.00 less $5,993.00.</p></div></li>
+      <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="step-body"><span class="n"></span><p class="do">Switch <b>Showing</b> to <b>Scheduled</b>.</p><p class="see">The note “Scheduled is what’s still to come…” is there. No sentence mentions the banner’s forward figure, and nothing says what the season “ends” with.</p></div></li>
+      <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="step-body"><span class="n"></span><p class="do">Set <b>View: Statement</b>, then <b>Export → PDF</b>, and open the file.</p><p class="see">Under “This season”: Team, Season, <b>Collected</b>, <b>Spent</b>, <b>Off-plan</b> and <b>Cash on hand</b>, with the same figures as the screen’s band. No Headroom row.</p></div></li>
+      <li><input type="checkbox" id="w2s5" aria-label="W2 step 5"><div class="step-body"><span class="n"></span><p class="do">Open <b>Help</b> in the sidebar and search <b>where did headroom go</b>.</p><p class="see">One result: <b>Managing your team’s money (Premium)</b>. Open it, then its page <b>Budget vs. Actual: the two report shapes</b>. It lists Collected, Spent, Off-plan and Cash on hand as definitions, and says the Overview still shows Headroom.</p></div></li>
+      <li><input type="checkbox" id="w2s6" aria-label="W2 step 6"><div class="step-body"><span class="n"></span><p class="do">Open <b>Money → Overview</b>.</p><p class="see">The Budget card still shows headroom. That is unchanged on purpose: the Overview is a separate decision (call 3).</p></div></li>
+    </ol>
+    <div class="verdict" role="group" aria-label="W2 verdict">
+      <button type="button" data-w="w2" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-w="w2" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-w="w2" data-v="call" aria-pressed="false">Needs a call</button>
+      <span class="progress" data-prog="w2"></span>
+    </div>
+    <label class="muted" for="w2notes">Notes for W2</label>
+    <textarea id="w2notes" data-notes="w2"></textarea>
+  </div>
+
+  <div class="card">
+    <h3>Send the results back</h3>
+    <div class="tools">
+      <button type="button" id="build-one">Build summary for this walk</button>
+      <button type="button" id="build-all">Build summary for both walks</button>
+      <button type="button" id="copy">Copy</button>
+    </div>
+    <pre class="out" id="out" aria-live="polite">Tick steps as you walk, press a verdict, then build a summary and paste it into the chat.</pre>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = 'bva-tiles-walk-256-v1';
+  var state = { ticks: {}, verdict: {}, notes: {}, open: 'w1' };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') state = Object.assign(state, p); } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var TITLES = { w1: 'W1 · Read the season’s money at a glance', w2: 'W2 · The report explains itself without Headroom' };
+  var LABEL = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+
+  function boxes(w) { return Array.prototype.slice.call(document.querySelectorAll('#' + w + ' input[type="checkbox"]')); }
+  function count(w) { var b = boxes(w); var n = b.filter(function (x) { return state.ticks[x.id]; }).length; return { n: n, of: b.length }; }
+
+  function render() {
+    ['w1', 'w2'].forEach(function (w) {
+      boxes(w).forEach(function (b) { b.checked = !!state.ticks[b.id]; b.closest('li').classList.toggle('done', b.checked); });
+      var c = count(w);
+      document.querySelector('[data-prog="' + w + '"]').textContent = c.n + ' of ' + c.of + ' ticked';
+      document.querySelectorAll('.verdict button[data-w="' + w + '"]').forEach(function (btn) { btn.setAttribute('aria-pressed', String(state.verdict[w] === btn.getAttribute('data-v'))); });
+      var chip = document.querySelector('[data-chip="' + w + '"]');
+      var v = state.verdict[w];
+      var text = 'Not started', s = '';
+      if (v === 'pass' && c.n < c.of) { text = 'Passed · only ' + c.n + ' of ' + c.of + ' ticked'; s = 'partial'; }
+      else if (v === 'pass') { text = 'Passed'; s = 'pass'; }
+      else if (v === 'issue') { text = 'Issue'; s = 'issue'; }
+      else if (v === 'call') { text = 'Needs a call'; s = 'call'; }
+      else if (c.n > 0) { text = 'In progress · ' + c.n + ' of ' + c.of; }
+      chip.textContent = text; chip.setAttribute('data-s', s);
+      var ta = document.querySelector('[data-notes="' + w + '"]'); if (document.activeElement !== ta) ta.value = state.notes[w] || '';
+      document.getElementById(w).hidden = state.open !== w;
+      document.querySelector('.wcard[data-walk="' + w + '"]').setAttribute('aria-pressed', String(state.open === w));
+    });
+  }
+
+  document.addEventListener('change', function (e) {
+    var t = e.target; if (t && t.type === 'checkbox') { state.ticks[t.id] = t.checked; save(); render(); }
+  });
+  document.querySelectorAll('textarea[data-notes]').forEach(function (ta) {
+    ta.addEventListener('input', function () { state.notes[ta.getAttribute('data-notes')] = ta.value; save(); });
+  });
+  document.querySelectorAll('.verdict button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var w = btn.getAttribute('data-w'), v = btn.getAttribute('data-v');
+      state.verdict[w] = state.verdict[w] === v ? null : v; save(); render();
+    });
+  });
+  document.querySelectorAll('.wcard').forEach(function (c) {
+    c.addEventListener('click', function () { state.open = c.getAttribute('data-walk'); save(); render(); });
+  });
+
+  function summary(w) {
+    var c = count(w);
+    var lines = [TITLES[w] + ' — ' + (state.verdict[w] ? '[' + LABEL[state.verdict[w]] + ']' : '[no verdict]') + ' ' + c.n + '/' + c.of];
+    var un = boxes(w).filter(function (b) { return !state.ticks[b.id]; }).map(function (b) { return b.id.replace(w + 's', ''); });
+    if (un.length) lines.push('  not ticked: step ' + un.join(', '));
+    if (state.notes[w]) lines.push('  notes: ' + state.notes[w].trim());
+    return lines.join('\n');
+  }
+  var out = document.getElementById('out');
+  document.getElementById('build-one').addEventListener('click', function () { out.textContent = '§256 Budget vs. Actual tiles\n' + summary(state.open); });
+  document.getElementById('build-all').addEventListener('click', function () {
+    var a = count('w1'), b = count('w2');
+    out.textContent = '§256 Budget vs. Actual tiles — checked ' + (a.n + b.n) + ' of ' + (a.of + b.of) + '\n' + summary('w1') + '\n' + summary('w2');
+  });
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = out.textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function () { selectOut(); });
+    } else { selectOut(); }
+  });
+  function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  render();
+})();
+</script>
