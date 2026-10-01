@@ -157,6 +157,31 @@ club locked out of their own team. A build gate now lists every table that carri
 fails when a new one isn't accounted for, so a table added next year can't be left behind silently.
 The database change must reach production before the release that ships these pages.
 
+**Stage 3a — club money, the day-to-day loop: drawn 2026-09-30 (hub v20, redrawn the same day in v22 to
+match the coaches portal's Money page), all six questions ratified the same day as recommended.** **The server half is built and committed (2026-10-01, reviewed); the screens are next.** It needs one database change applied to production before it ships, because nearly every coach money action now relies on it. Until the screens land, a club coach's button already reads "We've sent it", and a sent payment reads "Sent · waiting for the club" with "Take it back". The treasurer's new pages arrive with the screens. What changes, by person. **The treasurer**
+does the whole loop in Accounting (today the allocation and payment-request pages sit in Rep Teams, which
+sends a treasurer away), and the proposal is that Accounting becomes one page with tabs, exactly as the
+coach's Money page is, rather than five entries in the side menu (both are drawn; tabs put every money page
+one tap from every other on a phone). The ledger reads the way the coach's Ledger reads and names the team
+on every club line; the allocations list names the
+teams, shows what was allocated, collected and outstanding, and says in words which teams are late; a
+payment is recorded with its date, method and reference after a question, and can be undone with a reason
+both sides read; a coach's request shows the coach's own words and whether they filed it as new money or
+money back, and approving asks first and can be reversed. Reminders go to the team's head coach, late
+installments included, after a preview that names every recipient. **An admin with Accounting** does the
+same work under the same rule. **A head coach** stops writing into the club's books: they tell the club a
+payment is sent, and the club confirms it arrived. They are told when the club records, approves,
+declines or takes something back, and their season's figures follow at once. Why it matters: today one
+click moves club money with no question and no way back for the club, while a coach can take back a
+payment the club itself recorded; "overdue" is never shown on the page that exists to show it; and a
+waiting request quietly holds up a team's end-of-season payout to families without the club ever knowing.
+Trade-off proposed: a team's page in Accounting becomes the team's account with the club (billed,
+received, outstanding) rather than a line-by-line copy of the coaches' books. The copy's balance is close
+to the team's cash but not equal to it, and the team's own figures arrive with 3b's summary. Success = the
+3a walks pass and every figure on these pages has one definition, held by a build check. Left to 3b: the
+Accounting overview's totals, Budget, Budget vs. Actual and the board summary. Left to 3c: the club's
+own year. Left to Stage 7: tournament fees in the books.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money
