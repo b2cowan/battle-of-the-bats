@@ -254,7 +254,8 @@ function billInstallment(i: RepAllocationInstallment, today: string, nameOf: (id
 // ── Coming due ─────────────────────────────────────────────────────────────────────────────────
 
 export interface ComingDueGroup {
-  band: ComingDueBand;
+  /** 'later' = due after the window (the `later` list only). */
+  band: ComingDueBand | 'later';
   allocationId: string;
   allocationDescription: string;
   installmentNumber: number;
@@ -263,12 +264,14 @@ export interface ComingDueGroup {
   daysLate: number;
   /** One entry per team on this installment in this band — the screen draws one row per team, or
    *  one row for every team when they share it. */
-  teams: { teamId: string; teamName: string; splitId: string; installmentId: string; amount: number; sentOn: string | null; sentHow: string | null }[];
+  teams: { teamId: string; teamName: string; splitId: string; installmentId: string; amount: number; sentOn: string | null; sentHow: string | null; sentBy: string | null }[];
   amount: number;
 }
 
 export interface ComingDue {
   bands: Record<ComingDueBand, { count: number; amount: number; groups: ComingDueGroup[] }>;
+  /** What falls due AFTER the window ("Later this season", the screen's Show all) — upcoming, unsent. */
+  later: { count: number; amount: number; groups: ComingDueGroup[] };
 }
 
 export function comingDue(loop: ClubLoop, today: string): ComingDue {
@@ -277,34 +280,36 @@ export function comingDue(loop: ClubLoop, today: string): ComingDue {
     const team = loop.teams.get(s.teamId)!;
     const a = loop.allocations.get(s.allocationId);
     for (const i of s.installments) {
-      const band = comingDueBand(i, today);
+      const band = comingDueBand(i, today) ?? (clubInstallmentState(i, today) === 'upcoming' ? 'later' as const : null);
       if (!band) continue;
       const key = `${band}|${s.allocationId}|${i.installmentNumber}|${i.dueDate}`;
-      const g = groups.get(key) ?? {
+      const g: ComingDueGroup = groups.get(key) ?? {
         band, allocationId: s.allocationId, allocationDescription: a?.description ?? 'Club allocation',
         installmentNumber: i.installmentNumber, installmentCount: s.installments.length, dueDate: i.dueDate,
         daysLate: clubInstallmentDaysLate(i, today), teams: [], amount: 0,
       };
       g.teams.push({
         teamId: team.id, teamName: team.name, splitId: s.id, installmentId: i.id, amount: i.amount,
-        sentOn: i.sentOn, sentHow: howItCame(i.sentMethod, i.sentReference),
+        sentOn: i.sentOn, sentHow: howItCame(i.sentMethod, i.sentReference), sentBy: i.sentBy,
       });
       groups.set(key, g);
     }
   }
   const empty = () => ({ count: 0, amount: 0, groups: [] as ComingDueGroup[] });
   const bands: ComingDue['bands'] = { overdue: empty(), sent: empty(), due_soon: empty() };
+  const later = empty();
   for (const g of groups.values()) {
     g.teams.sort((x, y) => x.teamName.localeCompare(y.teamName));
     g.amount = sumMoney(g.teams);
-    bands[g.band].groups.push(g);
+    if (g.band === 'later') later.groups.push(g);
+    else bands[g.band].groups.push(g);
   }
-  for (const b of Object.values(bands)) {
+  for (const b of [...Object.values(bands), later]) {
     b.groups.sort((x, y) => x.dueDate.localeCompare(y.dueDate) || x.allocationDescription.localeCompare(y.allocationDescription));
     b.count = b.groups.reduce((n, g) => n + g.teams.length, 0);
     b.amount = sumMoney(b.groups);
   }
-  return { bands };
+  return { bands, later };
 }
 
 // ── The teams' accounts (Overview's "held by the teams", Rep Teams' "With the club") ──────────
@@ -392,15 +397,25 @@ export async function teamAccountRead(
     paidMethod: methodWord(r.paid_method) ?? r.payment_method ?? null,
     moneyInMeaning: r.money_in_meaning ?? null,
   }));
-  const account = teamAccount(bills, requests, seasons.map(s => s.id), today);
+  const computed = teamAccount(bills, requests, seasons.map(s => s.id), today);
   const waiting = new Map([[teamId, reqRows.filter(r => r.status === 'pending').length]]);
-  const rows = await teamsWithTheClub(orgId, loop, today, waiting);
+  // The statement prints WHO recorded a payment (C17): names, never ids, on the way out.
+  const [rows, nameOf] = await Promise.all([
+    teamsWithTheClub(orgId, loop, today, waiting),
+    resolvePersonNamer(orgId, computed.seasons.flatMap(s => s.rows.map(r => r.recordedBy ?? null))),
+  ]);
+  const account: TeamAccount = {
+    ...computed,
+    seasons: computed.seasons.map(s => ({ ...s, rows: s.rows.map(r => (r.recordedBy ? { ...r, recordedBy: nameOf(r.recordedBy) } : r)) })),
+  };
   return { account, seasons, withTheClub: rows[0] ?? null };
 }
 
 // ── Payment requests ───────────────────────────────────────────────────────────────────────────
 
 export interface ClubRequestRow extends ClubRequest {
+  /** The team's id — the Payment requests tab's Team filter and a request's door to the team. */
+  teamId: string;
   teamName: string;
   askedBy: string | null;
   decidedBy: string | null;
@@ -442,6 +457,7 @@ export async function clubRequests(
     const pending = r.status === 'pending';
     return {
       ...mapClubRequest(r, { item: r.budget_items?.name ?? null, category: r.budget_categories?.name ?? null }),
+      teamId: r.team_id as string,
       teamName: r.rep_teams?.name ?? 'A team',
       askedBy: nameOf(r.created_by),
       decidedBy: nameOf(r.reviewed_by),
@@ -477,7 +493,7 @@ export async function seasonsHoldingPayout(programYearIds: readonly string[]): P
 /** The brief's installment counts, by the one definition: Coming due's overdue and due-soon bands,
  *  and the payments coaches say they've sent. Reads only the club's unreceived installments. */
 export async function briefMoneyCounts(orgId: string, teamIds: string[], today: string): Promise<{
-  installmentsDue: number; installmentsSent: number;
+  installmentsDue: number; installmentsSent: number; installmentsOverdue: number;
 }> {
   const open = await fetchAllIn<Record<string, any>>(teamIds, (c, a, b) =>
     supabaseAdmin.from('rep_allocation_installments')
@@ -486,7 +502,7 @@ export async function briefMoneyCounts(orgId: string, teamIds: string[], today: 
   const f = clubBillFigures(open.map(r => ({
     amount: Number(r.amount), dueDate: r.due_date, paidAt: r.paid_at, sentAt: r.sent_at,
   })), today);
-  return { installmentsDue: f.overdue.count + f.dueSoon.count, installmentsSent: f.sent.count };
+  return { installmentsDue: f.overdue.count + f.dueSoon.count, installmentsSent: f.sent.count, installmentsOverdue: f.overdue.count };
 }
 
 /**

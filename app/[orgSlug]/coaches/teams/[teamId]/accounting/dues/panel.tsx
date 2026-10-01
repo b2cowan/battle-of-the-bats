@@ -636,6 +636,8 @@ export function PlayerDuesPanel({
   // given. There is no typed pot and no Calculate button: the one figure a coach may state is
   // the hold-back, and even that is capped at the surplus.
   const [settlement, setSettlement] = useState<SettlementSheet | null>(null);
+  /** When the club was told a waiting request holds up this payout (Club Tier Stage 3a, S3A-03). */
+  const [clubToldAt, setClubToldAt] = useState<string | null>(null);
   const [settlementLoading, setSettlementLoading] = useState(false);
   const [settlementError, setSettlementError] = useState('');
   /** Which row is open to its own breakdown — nothing is explained in the table itself. */
@@ -1110,8 +1112,9 @@ export function PlayerDuesPanel({
     if (updated) setSelected(updated);
   }, [players]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const applySettlement = useCallback((data: SettlementSheet) => {
+  const applySettlement = useCallback((data: SettlementSheet & { clubToldAt?: string | null }) => {
     setSettlement(data);
+    if ('clubToldAt' in data) setClubToldAt(data.clubToldAt ?? null);
     setHoldBackInput(data.pot.holdBack > 0 ? String(data.pot.holdBack) : '');
   }, []);
 
@@ -3342,6 +3345,13 @@ export function PlayerDuesPanel({
                                 ? 'One club request is still waiting for an answer'
                                 : `${closeOut.pendingClubRequests} club requests are still waiting for an answer`}
                               {' — '}chase the club or withdraw {closeOut.pendingClubRequests === 1 ? 'it' : 'them'} on <strong>Money → Club</strong>
+                              {/* ⚖ The one new line (Club Tier Stage 3a, S3A-03): the club has been told it
+                                  holds this payout up, and when. The rule and its words are unchanged. */}
+                              {clubToldAt && (
+                                <span className={styles.mutedInline} style={{ display: 'block', marginTop: '0.2rem' }}>
+                                  The club has been told it’s holding up your payout · {formatStoredDate(clubToldAt, { withYear: false })}
+                                </span>
+                              )}
                             </span>
                           </li>
                         )}

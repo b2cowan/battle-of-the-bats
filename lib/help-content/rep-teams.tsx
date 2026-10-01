@@ -37,7 +37,7 @@ const repTeamsHelp: HelpPageContent = {
           <p>Rep Teams is included with the <strong>Club</strong> plan. If your org doesn&apos;t have it, the module is hidden.</p>
           <ul>
             <li><strong>Owners and admins</strong> — add teams, start and close seasons, invite coaches, run tryout sign-ups and publish document templates. An admin limited to some team groups sees only those groups&apos; teams.</li>
-            <li><strong>Owners and treasurers only</strong> — create and change <strong>cost allocations</strong>.</li>
+            <li><strong>Whoever holds Accounting</strong> — owners and treasurers, and admins the owner gave the accounting permission — bills the teams for shared costs (allocations) and answers their payment requests. Both live on the <a href="../help/accounting#allocations">Accounting</a> page.</li>
             <li><strong>Coaches</strong> — run their own team in their Coaches Portal and see only that team. A coach is never made a club admin to get their team.</li>
           </ul>
           <p>A rep club doesn&apos;t need a registrar: the paperwork a registrar does elsewhere belongs to each team&apos;s <strong>team manager</strong>, whom the head coach adds from the team&apos;s Staff page.</p>
@@ -395,17 +395,11 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'Cost allocations',
       summary: 'Split a shared expense across teams with installments — created by owners and treasurers.',
       keywords: ['cost allocation', 'shared expense', 'team splits', 'installments', 'collected', 'outstanding'],
-      searchText: 'cost allocation shared expense diamond rental insurance tournament fees team splits fixed dollar percentage sessions installments due dates collected outstanding owner treasurer',
+      searchText: 'cost allocation shared expense diamond rental insurance tournament fees team splits fixed dollar percentage sessions installments due dates collected outstanding owner treasurer where did cost allocation go moved to accounting allocations tab',
       content: (
         <>
-          <p>Cost allocations split a shared expense (diamond rental, insurance, tournament fees) across one or more teams for a program year. Creating allocations is limited to <strong>owners and treasurers</strong>.</p>
-          <p>Go to <strong>Cost Allocations</strong> and click <strong>New Allocation</strong>. The wizard has three steps:</p>
-          <ol>
-            <li><strong>Details</strong> — enter a description and the total shared amount. Optionally link it to an org ledger entry.</li>
-            <li><strong>Team splits</strong> — assign each team&apos;s share as a fixed dollar amount, a percentage of the total, or by number of sessions. Set a due date, or break it into multiple installments with their own dates.</li>
-            <li><strong>Review</strong> — confirm before saving.</li>
-          </ol>
-          <p>Once created, each coach sees their team&apos;s allocation as a budget target. The Allocations list shows total, collected, and outstanding amounts so you can track payment status across all teams.</p>
+          <p>Cost allocations split a shared expense (diamond rental, insurance, tournament fees) across the teams you choose, each share in installments with due dates. They moved from Rep Teams to the <strong>Allocations</strong> tab on the <strong>Accounting</strong> page — they are club money — and whoever holds Accounting creates them and records what the teams send. Old links land on the right page.</p>
+          <p>Each coach sees their team&apos;s share on their <strong>Club</strong> screen and tells the club when they&apos;ve sent each installment. For the whole loop, see <a href="../help/accounting#allocations">Allocations in the Accounting guide</a>.</p>
         </>
       ),
     },
@@ -413,12 +407,12 @@ const repTeamsHelp: HelpPageContent = {
       id: 'payment-requests',
       group: 'Org-level tools',
       heading: 'Payment requests',
-      summary: 'Review money-to-org and reimbursement requests coaches submit, and approve or deny each.',
-      keywords: ['payment requests', 'reimbursement', 'approve', 'deny', 'coach request'],
-      searchText: 'payment requests reimbursement coach submit money to org money from org approve deny reason queue review',
+      summary: 'What the teams ask of the club — answered on the Accounting page now.',
+      keywords: ['payment requests', 'reimbursement', 'approve', 'deny', 'decline', 'coach request'],
+      searchText: 'payment requests reimbursement coach submit money to org money from org approve deny decline reason queue review where did payment requests go moved to accounting',
       content: (
         <>
-          <p>Coaches can submit <strong>payment requests</strong> to the org — for example, money owed to the organization or a reimbursement they&apos;re owed. The Payment Requests page is your queue to review each request and <strong>approve</strong> or <strong>deny</strong> it (with a reason). It keeps the money conversation with coaches in one auditable place instead of email.</p>
+          <p>Coaches send the club <strong>payment requests</strong> in either direction — money owed to the club, or a cost they ask the club to cover. Requests moved from Rep Teams to the <strong>Payment requests</strong> tab on the <strong>Accounting</strong> page, where whoever holds Accounting approves or declines each one (a decline carries a reason the coach reads). See <a href="../help/accounting#payment-requests">Payment requests in the Accounting guide</a>.</p>
         </>
       ),
     },
@@ -439,7 +433,7 @@ const repTeamsHelp: HelpPageContent = {
             <li>Team schedule (games, practices, events) and the roster.</li>
             <li>Team finances — player dues and installments, expenses, fundraisers, a season budget, and payment requests to the org.</li>
           </ul>
-          <p>As an admin you oversee the structure: team and program-year setup, tryouts, document templates, and program-year status. <strong>Cost allocations are owner/treasurer-only.</strong> Admins can view rosters but coaches own the day-to-day team operations. For the coach&apos;s view, see the <a href="../help/coaches">Coaches Portal guide</a>.</p>
+          <p>As an admin you oversee the structure: team and program-year setup, tryouts, document templates, and program-year status. Allocations and payment requests are answered on the <a href="../help/accounting#allocations">Accounting</a> page. Admins can view rosters but coaches own the day-to-day team operations. For the coach&apos;s view, see the <a href="../help/coaches">Coaches Portal guide</a>.</p>
           <p>The program-year roster exports as a spreadsheet or as a <strong>printable roster</strong> on your club&apos;s paper — numbers, names and positions, grouped by each player&apos;s standing with a count on every heading. Like the applicant list, it carries <strong>no dates of birth and no guardian contacts</strong>; those stay in the spreadsheet.</p>
         </>
       ),

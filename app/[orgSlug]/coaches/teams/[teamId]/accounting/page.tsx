@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { DollarSign, Plus } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import CoachTabBar from '@/components/coaches/CoachTabBar';
+import HubTabBar from '@/components/shared/HubTabBar';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import MoneyImportMenu, { type MoneyDataNotice } from '@/components/coaches/MoneyImportMenu';
 import { MoneyRefreshProvider, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
@@ -568,7 +568,7 @@ export default function CoachesAccountingPage({
         <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : summary && (
         <>
-          <CoachTabBar
+          <HubTabBar
             tabs={tabs.map(t => ({ ...t, href: sectionHref(t.id) }))}
             activeId={effectiveSection}
             ariaLabel="Money"
@@ -579,7 +579,7 @@ export default function CoachesAccountingPage({
                on exactly one tab and nowhere else — a bigger, more visible inconsistency than the
                register's own toolbar earning a pin for being the one long, scrollable tab. The
                register keeps its own sticky filter row and column headers; this bar no longer
-               opts in for any tab. See CoachTabBar's own `sticky` prop doc. */
+               opts in for any tab. See HubTabBar's own `sticky` prop doc. */
           />
 
           {/* Overview forks by stage, but no longer by SHAPE: an operating season gets the

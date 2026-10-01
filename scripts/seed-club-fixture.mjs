@@ -41,10 +41,12 @@
  *     route itself only ever writes the live year's). (The dev seed writes none — B13.)
  *   · Rosters with guardians. Three households have a child on TWO teams, and one of them also has
  *     a child in the house league — so Families shows real multi-programme households.
- *   · This year's org budget (four lines, split into months), two allocations to teams — one with an
- *     OVERDUE installment and one paid installment that moved money — three coach payment requests
- *     (pending · approved · denied), the org General ledger and one team ledger with entries and
- *     transfers, a tournament the club hosts with its own 15U AAA linked in, tryouts OPEN on 15U AAA
+ *   · This year's org budget (four lines, split into months) and the Club Tier Stage 3a money loop,
+ *     written through the real one-step moves (mig 315): Diamond fees with two OVERDUE teams (one with no
+ *     head coach), a coach's SENT payment waiting to be confirmed, one RECEIVED then UNDONE, the rest on
+ *     track; payment requests in every state (two waiting and holding payouts, approved, declined,
+ *     reversed); the club's General ledger with a pending cheque, a void, two spellings of one payee and
+ *     a float to the tournament's own book; a tournament the club hosts with its own 15U AAA linked in, tryouts OPEN on 15U AAA
  *     (the public "Tryouts are open" card), and a house-league season open for registration.
  *
  * Run:   node --env-file=.env.local scripts/seed-club-fixture.mjs           (build if absent)
@@ -347,64 +349,111 @@ die('permit', (await entry(general.id, { entry_date: daysFromNow(-45), descripti
 die('team income', (await entry(teamLedger.id, { entry_date: daysFromNow(-70), description: 'Player fee deposits', amount: 2400, entry_type: 'income', category: 'Player fees', payment_method: 'etransfer' })).error);
 ok('ledgers: General (income + expense) and 15U AAA (income)');
 
+// ── Club Tier Stage 3a — the money loop the §E walks need, written through the REAL one-step moves
+// (mig 315's functions), so every ledger line, stamp and void is exactly what the product writes:
+//   · Diamond fees ${Y} (three installments) — 15U AA and 12U AA OVERDUE (12U AA has no head coach, so a
+//     reminder can't reach it); 13U AAA's coach says #2 is SENT (waiting for the club to confirm); 11U AA's
+//     #1 RECEIVED and then UNDONE with a reason; 15U AAA on track. #3 falls due inside the 14-day window.
+//   · Umpire fees — one installment each, later this season (Coming due's "Show all").
+//   · Payment requests in every state: two WAITING (one To club, one From club — no team here has dues
+//     outstanding, so both read "holding up the payout"), approved, declined, and approved-then-REVERSED.
+const METHOD_WORD = { etransfer: 'E-Transfer', cheque: 'Cheque', cash: 'Cash', card: 'Card', other: 'Other' };
+const TREASURER = people.TREASURER;
+async function move(fn, args, label) {
+  const { data, error } = await db.rpc(fn, args);
+  die(label, error);
+  if (!data?.ok) { console.error(`✗ ${label}: ${JSON.stringify(data)}`); process.exit(1); }
+  return data;
+}
+
 // Allocations — mirror createRepCostAllocationWithSplits
 async function allocate({ description, lineItem, splits }) {
-  const total = splits.reduce((s, x) => s + x.amount, 0);
+  const total = splits.reduce((sum, x) => sum + x.amount, 0);
   const alloc = await one(`allocation ${description}`, db.from('rep_cost_allocations').insert({
-    org_id: orgId, description, total_amount: total, created_by: OWNER, source_budget_line_id: lineIds[lineItem],
+    org_id: orgId, description, total_amount: total, created_by: TREASURER, source_budget_line_id: lineIds[lineItem],
   }).select('id').single());
   const out = {};
-  for (const s of splits) {
+  for (const sp of splits) {
     const split = await one(`split ${description}`, db.from('rep_allocation_splits').insert({
-      allocation_id: alloc.id, team_id: team[s.slug].id, program_year_id: team[s.slug].years.active, org_id: orgId,
-      amount: s.amount, split_method: 'fixed', split_value: s.amount, payment_schedule: s.installments.length > 1 ? 'custom' : 'standard',
+      allocation_id: alloc.id, team_id: team[sp.slug].id, program_year_id: team[sp.slug].years.active, org_id: orgId,
+      amount: sp.amount, split_method: 'fixed', split_value: sp.amount, payment_schedule: sp.installments.length > 1 ? 'custom' : 'standard',
     }).select('id').single());
-    out[s.slug] = [];
-    for (const [n, [amount, due]] of s.installments.entries()) {
-      out[s.slug].push(await one(`installment ${description}`, db.from('rep_allocation_installments').insert({
-        split_id: split.id, installment_number: n + 1, amount, due_date: due, org_id: orgId, team_id: team[s.slug].id,
+    out[sp.slug] = [];
+    for (const [n, [amount, due]] of sp.installments.entries()) {
+      out[sp.slug].push(await one(`installment ${description}`, db.from('rep_allocation_installments').insert({
+        split_id: split.id, installment_number: n + 1, amount, due_date: due, org_id: orgId, team_id: team[sp.slug].id,
       }).select('id').single()));
     }
   }
-  return out;
+  return { id: alloc.id, installments: out };
 }
-const permits = await allocate({
-  description: 'Diamond permits — team share', lineItem: 'Diamond Permits',
-  splits: [
-    { slug: '15u-aaa', amount: 2000, installments: [[1000, daysFromNow(-60)], [1000, daysFromNow(30)]] },
-    { slug: '15u-aa',  amount: 2000, installments: [[1000, daysFromNow(-20)], [1000, daysFromNow(30)]] },  // #1 left UNPAID → overdue
-  ],
+const DIAMOND = `Diamond fees ${Y}`;
+const DUE = [daysFromNow(-45), daysFromNow(-15), daysFromNow(10)];
+const three = (each) => DUE.map(d => [each, d]);
+const diamond = await allocate({
+  description: DIAMOND, lineItem: 'Diamond Permits',
+  splits: ['15u-aaa', '15u-aa', '13u-aaa', '11u-aa', '12u-aa'].map(slug => ({ slug, amount: 1350, installments: three(450) })),
 });
 await allocate({
-  description: 'Umpire fees — team share', lineItem: 'Umpire Fees',
+  description: `Umpire fees ${Y}`, lineItem: 'Umpire Fees',
   splits: [
     { slug: '13u-aaa', amount: 1500, installments: [[1500, daysFromNow(45)]] },
     { slug: '11u-aa',  amount: 1500, installments: [[1500, daysFromNow(45)]] },
   ],
 });
-// 15U AAA paid its first permit installment: the transfer the mark-paid routes post, then the stamp.
-const paidTransfer = await one('allocation transfer', db.rpc('create_accounting_transfer', {
-  p_from_ledger_id: teamLedger.id, p_to_ledger_id: general.id, p_amount: 1000, p_entry_date: daysFromNow(-58),
-  p_description: 'Rep allocation payment — installment #1', p_category: 'rep_allocation', p_created_by: OWNER,
-}));
-die('stamp installment', (await db.from('rep_allocation_installments').update({
-  paid_at: new Date(Date.now() - 58 * DAY).toISOString(), paid_by: OWNER, accounting_entry_id: paidTransfer,
-}).eq('id', permits['15u-aaa'][0].id)).error);
-ok('2 allocations: 15U AAA paid #1 (transfer posted); 15U AA #1 OVERDUE; umpire shares due later');
+const teamName = Object.fromEntries(TEAMS.map(t => [t.slug, t.name]));
+async function receive(slug, n, { on, method, reference }) {
+  const i = diamond.installments[slug][n - 1];
+  const what = `${DIAMOND}, ${n} of 3`;
+  await move('club_installment_receive', {
+    p_installment: i.id, p_org: orgId, p_actor: TREASURER, p_expect: 'unpaid', p_on: on, p_method: method,
+    p_method_word: METHOD_WORD[method], p_reference: reference,
+    p_club_words: `Allocation received · ${teamName[slug]} · ${what}`, p_team_words: `Allocation paid to ${ORG_NAME} · ${what}`,
+    p_category: 'rep_allocation',
+  }, `receive ${slug} #${n}`);
+}
+await receive('15u-aaa', 1, { on: daysFromNow(-47), method: 'cheque', reference: '1188' });
+await receive('15u-aaa', 2, { on: daysFromNow(-16), method: 'etransfer', reference: '4471' });
+await receive('15u-aa', 1, { on: daysFromNow(-44), method: 'cheque', reference: '1051' });
+await receive('13u-aaa', 1, { on: daysFromNow(-46), method: 'etransfer', reference: '3307' });
+await receive('11u-aa', 1, { on: daysFromNow(-40), method: 'etransfer', reference: '5520' });
+// 11U AA's e-Transfer came back from the bank: the club UNDOES it, with a reason the coach reads.
+await move('club_installment_undo', {
+  p_installment: diamond.installments['11u-aa'][0].id, p_org: orgId, p_actor: TREASURER,
+  p_reason: 'The E-Transfer was returned by the bank',
+}, 'undo 11u-aa #1');
+// 13U AAA's coach says #2 is SENT — the coach's conditional update (no ledger line).
+die('13u-aaa sent', (await db.from('rep_allocation_installments').update({
+  sent_on: daysFromNow(-2), sent_method: 'etransfer', sent_reference: '88213', sent_by: coachIds['13u-aaa'], sent_at: new Date(Date.now() - 2 * DAY).toISOString(),
+}).eq('id', diamond.installments['13u-aaa'][1].id).is('paid_at', null).is('sent_at', null)).error);
+ok(`${DIAMOND}: 15U AA + 12U AA (no head coach) overdue · 13U AAA #2 sent, waiting · 11U AA #1 received then undone · 15U AAA on track; Umpire fees later`);
 
-// Coach payment requests — three states, all from the 15U AAA head coach
-const req = (r) => db.from('rep_team_payment_requests').insert({
-  org_id: orgId, team_id: team['15u-aaa'].id, program_year_id: team['15u-aaa'].years.active, created_by: coachIds['15u-aaa'], ...r,
-});
-die('request pending', (await req({ request_type: 'charge_to_org', money_in_meaning: 'reimbursement', amount: 480, description: 'Tournament entry — Burlington Classic', status: 'pending' })).error);
-die('request approved', (await req({ request_type: 'payment_to_org', amount: 350, description: 'Umpire fees owed for June', status: 'approved', reviewed_by: OWNER, reviewed_at: new Date(Date.now() - 10 * DAY).toISOString() })).error);
-// The approve route posts the transfer and (defect C07) never records its id — mirror the product.
-await one('request transfer', db.rpc('create_accounting_transfer', {
-  p_from_ledger_id: teamLedger.id, p_to_ledger_id: general.id, p_amount: 350, p_entry_date: daysFromNow(-10),
-  p_description: 'Payment to club — Umpire fees owed for June', p_category: 'team_payment_to_org', p_created_by: OWNER,
-}));
-die('request denied', (await req({ request_type: 'charge_to_org', money_in_meaning: 'funding', amount: 900, description: "New catcher's gear", status: 'denied', denial_reason: "Not in this year's budget — ask again in the spring.", reviewed_by: OWNER, reviewed_at: new Date(Date.now() - 20 * DAY).toISOString() })).error);
-ok('3 coach payment requests: pending · approved (transfer posted) · denied');
+// Coach payment requests — every state, decided through the real moves
+const req = async (slug, r) => one(`request ${r.description}`, db.from('rep_team_payment_requests').insert({
+  org_id: orgId, team_id: team[slug].id, program_year_id: team[slug].years.active, created_by: coachIds[slug] ?? OWNER, ...r,
+}).select('id').single());
+const reqWords = (slug, type, description) => type === 'charge_to_org'
+  ? { club: `Paid to ${teamName[slug]} · ${description}`, team: `From ${ORG_NAME} · ${description}` }
+  : { club: `From ${teamName[slug]} · ${description}`, team: `Paid to ${ORG_NAME} · ${description}` };
+async function approve(slug, id, type, description, { on, method, reference }) {
+  const w = reqWords(slug, type, description);
+  await move('club_request_approve', {
+    p_request: id, p_org: orgId, p_actor: TREASURER, p_on: on, p_method: method, p_method_word: METHOD_WORD[method],
+    p_reference: reference, p_club_words: w.club, p_team_words: w.team,
+    p_category: type === 'charge_to_org' ? 'team_charge_to_org' : 'team_payment_to_org',
+  }, `approve ${description}`);
+}
+await req('15u-aaa', { request_type: 'charge_to_org', money_in_meaning: 'reimbursement', amount: 480, description: 'Tournament entry — Burlington Classic', payment_method: 'etransfer', notes: 'Burlington Classic entry. The club agreed at the August meeting to cover one tournament per team.', status: 'pending', created_at: new Date(Date.now() - 9 * DAY).toISOString() });
+await req('13u-aaa', { request_type: 'payment_to_org', amount: 180, description: 'Tournament refund — the club’s share', payment_method: 'cheque', status: 'pending', created_at: new Date(Date.now() - 12 * DAY).toISOString() });
+const appr = await req('15u-aaa', { request_type: 'payment_to_org', amount: 350, description: 'Umpire fees owed for June', payment_method: 'etransfer', status: 'pending' });
+await approve('15u-aaa', appr.id, 'payment_to_org', 'Umpire fees owed for June', { on: daysFromNow(-10), method: 'etransfer', reference: '7710' });
+const clinic = await req('13u-aaa', { request_type: 'charge_to_org', money_in_meaning: 'funding', amount: 120, description: 'Umpire clinic, two coaches', payment_method: 'etransfer', status: 'pending' });
+await approve('13u-aaa', clinic.id, 'charge_to_org', 'Umpire clinic, two coaches', { on: daysFromNow(-25), method: 'etransfer', reference: '6602' });
+await req('15u-aa', { request_type: 'charge_to_org', money_in_meaning: 'funding', amount: 900, description: "New catcher's gear", status: 'denied', denial_reason: "Not in this year's budget — ask again in the spring.", reviewed_by: TREASURER, reviewed_at: new Date(Date.now() - 20 * DAY).toISOString() });
+const float = await req('11u-aa', { request_type: 'payment_to_org', amount: 500, description: 'Fundraiser float returned', payment_method: 'cheque', status: 'pending' });
+await approve('11u-aa', float.id, 'payment_to_org', 'Fundraiser float returned', { on: daysFromNow(-30), method: 'cheque', reference: '2231' });
+await move('club_request_reverse', { p_request: float.id, p_org: orgId, p_actor: TREASURER, p_reason: 'Cheque returned by the bank' }, 'reverse float');
+ok('6 coach payment requests: 2 waiting (holding payouts) · 2 approved · declined · approved then reversed');
 
 // ── Tournament with the club's own team ───────────────────────────────────────────
 const tourn = await one('tournament', db.from('tournaments').insert({
@@ -424,6 +473,26 @@ die('link own team', (await db.from('rep_team_tournament_registrations').insert(
   tournament_team_id: ownEntry.id, rep_team_id: team['15u-aaa'].id, org_id: orgId, linked_by_user_id: OWNER, link_source: 'explicit',
 })).error);
 ok(`tournament "UAT Rep Club Invitational ${Y}" (active) — the club's own 15U AAA entered and linked`);
+
+// ── Club Tier Stage 3a — the club's books: a tournament's book and a transfer to it, two spellings of
+// one payee (the Payees page merges them), a pending cheque, and a line voided with its reason.
+const tourBook = await one('tournament book', db.from('accounting_ledgers').insert({
+  org_id: orgId, entity_type: 'tournament', entity_id: tourn.id, name: `UAT Rep Club Invitational ${Y}`,
+}).select('id').single());
+await one('tournament float', db.rpc('create_accounting_transfer', {
+  p_from_ledger_id: general.id, p_to_ledger_id: tourBook.id, p_amount: 500, p_entry_date: daysFromNow(-8),
+  p_description: 'Tournament float', p_category: 'Transfer', p_created_by: TREASURER,
+}));
+const payee = async (name) => one(`payee ${name}`, db.from('org_payees').insert({ org_id: orgId, team_id: null, name, created_by: TREASURER }).select('id').single());
+const mizuno = await payee('Mizuno Canada');
+const mizunoLtd = await payee('Mizuno Canada Ltd.');
+const town = await payee('Town of Milton');
+die('gear 1', (await entry(general.id, { entry_date: daysFromNow(-33), description: 'Helmets and catcher gear', amount: 1200, entry_type: 'expense', category: 'Equipment', payment_method: 'Cheque 2201', payee_id: mizuno.id, payee_payer: 'Mizuno Canada', created_by: TREASURER })).error);
+die('gear 2', (await entry(general.id, { entry_date: daysFromNow(-12), description: 'Practice balls', amount: 340, entry_type: 'expense', category: 'Equipment', payment_method: 'Card', payee_id: mizunoLtd.id, payee_payer: 'Mizuno Canada Ltd.', created_by: TREASURER })).error);
+die('permit 2', (await entry(general.id, { entry_date: daysFromNow(-3), description: 'Diamond permit', amount: 1850, entry_type: 'expense', category: 'Facilities', payment_method: 'Cheque 2231', payee_id: town.id, payee_payer: 'Town of Milton', created_by: TREASURER })).error);
+die('pending cheque', (await entry(general.id, { entry_date: daysFromNow(-1), description: 'Umpires’ association fees', amount: 640, entry_type: 'expense', category: 'Officials', payment_method: 'Cheque 2230', status: 'pending', notes: 'Not cleared yet', created_by: TREASURER })).error);
+die('void line', (await entry(general.id, { entry_date: daysFromNow(-6), description: 'Umpire clinic registration', amount: 240, entry_type: 'expense', category: 'Training', payment_method: 'Card', status: 'void', void_reason: 'Entered twice', voided_by: TREASURER, voided_at: new Date(Date.now() - 5 * DAY).toISOString(), created_by: TREASURER })).error);
+ok('books: the tournament\'s own book + a $500.00 float to it · payees "Mizuno Canada" and "Mizuno Canada Ltd." · a pending cheque · a void');
 
 // ── House league for the registrar ───────────────────────────────────────────────
 const season = await one('league season', db.from('league_seasons').insert({

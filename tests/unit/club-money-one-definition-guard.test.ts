@@ -32,8 +32,6 @@ const READS_THE_MODULE: Record<string, RegExp> = {
   'app/api/admin/club-brief/route.ts': /briefMoneyCounts/,
   'app/api/admin/rep-teams/teams/[teamId]/route.ts': /withTheClub/,
   'app/api/admin/rep-teams/teams/[teamId]/seasons/route.ts': /seasonOwedToClub/,
-  'app/api/admin/rep-teams/allocations/route.ts': /allocationListRows/,
-  'app/api/admin/rep-teams/upcoming-payables/route.ts': /clubInstallmentState/,
   'lib/club-money-reads.ts': /from '\.\/club-money-figures'/,
   'lib/club-ledger-read.ts': /from '\.\/club-money-figures'/,
   'lib/club-money-reminders.ts': /from '\.\/club-money-figures'/,
@@ -48,8 +46,6 @@ const NOT_YET: Record<string, string> = {
     '3b redraws Budget (C11): its Collected/Outstanding per line join the module with the board summary.',
   'app/api/admin/accounting/budget-vs-actual/route.ts':
     '3b redraws Budget vs. Actual (C05, C09): team health\'s overdue and Collected join the module there.',
-  'app/[orgSlug]/admin/rep-teams/allocations/[allocationId]/page.tsx':
-    'The old allocation page — session 2 retires it for Accounting › an allocation (its server read is the module\'s).',
 };
 
 const HAND_ROLLED: [string, RegExp][] = [

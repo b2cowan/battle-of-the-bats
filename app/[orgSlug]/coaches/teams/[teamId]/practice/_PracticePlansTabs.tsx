@@ -1,5 +1,5 @@
 'use client';
-import CoachTabBar from '@/components/coaches/CoachTabBar';
+import HubTabBar from '@/components/shared/HubTabBar';
 import { practicePlansHref, type PracticePlansSection } from '@/lib/practice-plans-address';
 
 /**
@@ -12,7 +12,7 @@ import { practicePlansHref, type PracticePlansSection } from '@/lib/practice-pla
  *
  * ⚠ ABSENT, never disabled, for a viewer the page would refuse. All three library reads gate on
  * "Schedule: View + edit" (`canManageSchedule`); an assistant with schedule view alone sees only
- * Practices — and `CoachTabBar` renders nothing for a row of one tab, so the bar itself goes.
+ * Practices — and `HubTabBar` renders nothing for a row of one tab, so the bar itself goes.
  *
  * ⚠ No overview tab and no tile row (D8). The next-practice card and the "Needs a plan" chip are
  * the room's whole state; counts of drills, circuits and templates are door labels and live on
@@ -39,5 +39,5 @@ export default function PracticePlansTabs({
         ]
       : []),
   ];
-  return <CoachTabBar tabs={tabs} activeId={active} ariaLabel="Practice plans views" />;
+  return <HubTabBar tabs={tabs} activeId={active} ariaLabel="Practice plans views" />;
 }

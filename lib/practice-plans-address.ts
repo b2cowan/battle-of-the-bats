@@ -3,7 +3,7 @@
  * 2026-09-14; a fourth tab at stage 4, L9, 2026-09-16): one room, four tabs — Practices ·
  * Templates · Circuits · Drills, a size ladder (a whole practice, a block, a station) — each a
  * real, shareable address on `?section=`, the Money / Insights / Skills & Goals hubs' convention
- * (`CoachTabBar`). The bare hub address IS the Practices landing and never carries
+ * (`HubTabBar`). The bare hub address IS the Practices landing and never carries
  * `?section=practices`.
  *
  * ⚠ The two older libraries MOVED here whole from under Skills & Goals (`/development/templates`,

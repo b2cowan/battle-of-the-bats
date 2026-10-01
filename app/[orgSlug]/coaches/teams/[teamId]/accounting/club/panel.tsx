@@ -26,9 +26,10 @@ import {
   type ClubMoneyInMeaning, type ClubRequest, type ClubRequestType,
 } from '@/lib/coach-club-money';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
-import { clubBillFigures, clubInstallmentLeftTeamOn, clubInstallmentState } from '@/lib/club-money-figures';
-import { coachSentLine } from '@/lib/club-money-words';
-import type { RepAllocationInstallment, BudgetCategoryWithItems } from '@/lib/types';
+import { clubBillFigures, clubInstallmentLeftTeamOn, clubInstallmentReceivedOn, clubInstallmentState } from '@/lib/club-money-figures';
+import { coachSentLine, howItCame } from '@/lib/club-money-words';
+import refusal from '@/components/coaches/CoachSeasonRefusalNotice.module.css';
+import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type RepAllocationInstallment, type BudgetCategoryWithItems } from '@/lib/types';
 import { CLUB_MONEY_COLUMNS, clubMoneyRows } from '@/lib/coach-money-exports';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import { sandboxRefusal } from '@/lib/coach-sandbox-refusal';
@@ -455,6 +456,78 @@ function Filing({ category, item }: { category: string | null; item: string | nu
  * ⚠ THIS IS THE ONLY PLACE A COACH EVER LEARNS ANY OF IT. Merged, the screen has no other teaching
  * surface — the band and both toolbars go quiet when there is nothing to describe.
  */
+/**
+ * "WE'VE SENT IT" — the window (Club Tier Stage 3a, specimen 7; Ask 1). Saying a payment is sent is a
+ * FORM, so it opens full-screen on a phone (a form covers the nav) and asks: the day, how (a dropdown —
+ * the product's one method list) and the reference the club needs to match it. It writes nothing into
+ * the club's books — the club confirms it when it arrives — so until then it is not Paid, and the coach
+ * can take it back. Stacks over the bill's room (the floor's top-window rule: Escape and Back close it
+ * alone).
+ */
+function SentWindow({ installmentNumber, amount, busy, onCancel, onSend }: {
+  installmentNumber: number;
+  amount: number;
+  busy: boolean;
+  onCancel: () => void;
+  onSend: (form: { sentOn: string; method: string; reference: string }) => Promise<void>;
+}) {
+  const today = tournamentToday();
+  const [sentOn, setSentOn] = useState(today);
+  const [method, setMethod] = useState('');
+  const [reference, setReference] = useState('');
+  const [error, setError] = useState('');
+  const panelRef = useRef<HTMLDivElement>(null);
+  // `busy` arrives a render late; a second tap inside that render would tell the club twice, and the
+  // loser would read "someone on your team already told the club" about its own tap.
+  const firing = useRef(false);
+  useDialogFloor(true, panelRef, { onClose: onCancel, busy });
+
+  const send = async () => {
+    if (busy || firing.current) return;
+    if (!sentOn) { setError('Give the day it went.'); return; }
+    if (sentOn > today) { setError('The day it went can’t be in the future.'); return; }
+    if (!method) { setError('Choose how it was sent.'); return; }
+    setError('');
+    firing.current = true;
+    try { await onSend({ sentOn, method, reference }); } finally { firing.current = false; }
+  };
+
+  return (
+    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !busy) onCancel(); }}>
+      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`Tell the club you’ve sent installment ${installmentNumber}`}
+        className={`${styles.modal} ${styles.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
+        <CoachModalHeader title={`Tell the club you’ve sent installment ${installmentNumber}`} subtitle={fmt(amount)} onClose={busy ? () => {} : onCancel} />
+        <div className={styles.formGrid}>
+          {error && <p className={`${styles.errorText} ${styles.formGridFull}`} role="alert">{error}</p>}
+          <label className={styles.field} htmlFor="sent-on">
+            <span className={styles.label}>Sent on<span aria-hidden> *</span></span>
+            <input id="sent-on" type="date" className={styles.input} value={sentOn} max={today} onChange={e => setSentOn(e.target.value)} />
+          </label>
+          <label className={styles.field} htmlFor="sent-how">
+            <span className={styles.label}>How<span aria-hidden> *</span></span>
+            <select id="sent-how" className={styles.select} value={method} onChange={e => setMethod(e.target.value)}>
+              <option value="">Choose…</option>
+              {DUES_PAYMENT_METHODS.map(m => <option key={m} value={m}>{DUES_PAYMENT_METHOD_LABEL[m]}</option>)}
+            </select>
+          </label>
+          <label className={`${styles.field} ${styles.formGridFull}`} htmlFor="sent-ref">
+            <span className={styles.label}>Reference</span>
+            <input id="sent-ref" className={styles.input} value={reference} maxLength={100} onChange={e => setReference(e.target.value)} />
+            <span className={styles.mutedInline}>The E-Transfer reference or cheque number, so the club can match it.</span>
+          </label>
+          <p className={`${styles.formGridFull} ${styles.mutedInline}`}>
+            The club confirms it when it arrives. Until then it isn’t counted as paid, and you can take it back.
+          </p>
+        </div>
+        <div className={styles.modalFooter}>
+          <button type="button" className={styles.btnGhost} onClick={onCancel} disabled={busy}>Cancel</button>
+          <button type="button" className={styles.btnPrimary} onClick={() => void send()} disabled={busy}>{busy ? 'Telling the club…' : 'Tell the club'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ClubExplainer() {
   return (
     <>
@@ -524,6 +597,8 @@ export function ClubPanel({
      that then agreed the payment had gone through. A mark now stays until the installment READS paid
      (`isMarking` below) and is only cleared by hand on failure. Same cure as `ClubFilingControl`. */
   const [marking, setMarking] = useState<Record<string, boolean>>({});
+  /** The installment the "We've sent it" window is open on (Club Tier Stage 3a, specimen 7). */
+  const [sending, setSending] = useState<{ split: AllocationSplit; inst: RepAllocationInstallment } | null>(null);
   /** The room's filing control is mid-write — part of the room's busy gate, not the control's alone. */
   const [filingBusy, setFilingBusy] = useState(false);
   /* ⚠ COMPONENT STATE, NEVER PERSISTED — and that is the rule, not an omission. A filter a coach
@@ -588,7 +663,8 @@ export function ClubPanel({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const today = tournamentToday();
 
-  useOverlayOpen(showForm);
+  // A form covers the nav — the request window, and the "We've sent it" window over a bill's room.
+  useOverlayOpen(showForm || sending != null);
 
   /* Money is three-state (off|read|write), and a finished season withdraws every write regardless.
      Read off `assignments`/`closedAssignments` directly because this is needed ABOVE the
@@ -944,8 +1020,25 @@ export function ClubPanel({
   }, [openSplit, splitFigures, shownSplits, splits]);
 
   // ── Writes ───────────────────────────────────────────────────────────────
-  async function markPaid(split: AllocationSplit, inst: RepAllocationInstallment) {
-    // Marks that have since read back as paid are dropped on the way in, so the map never grows.
+  /** A 409 on an installment write: the server's sentence, the mark released, the bill re-read quietly. */
+  async function refusedAsStale(data: { error?: string } | null, release: () => void) {
+    setActionError(data?.error ?? 'This installment changed a moment ago.');
+    release();
+    await refreshAfterWrite(true);
+  }
+
+  /**
+   * "WE'VE SENT IT" (Club Tier Stage 3a, specimen 7 — Ask 1): the team tells the club it SENT the
+   * money, with the day, how and the reference the club needs to match it. It writes nothing to the
+   * club's books; the club confirms it RECEIVED, and only then is it Paid. Returns whether it landed,
+   * so the window closes only on success.
+   */
+  async function markSent(
+    split: AllocationSplit,
+    inst: RepAllocationInstallment,
+    form: { sentOn: string; method: string; reference: string },
+  ): Promise<boolean> {
+    // Marks that have since read back as sent are dropped on the way in, so the map never grows.
     setMarking(prev => ({
       ...Object.fromEntries(Object.entries(prev).filter(([id, on]) => on && !paidIds.has(id))),
       [inst.id]: true,
@@ -955,16 +1048,21 @@ export function ClubPanel({
     try {
       const res = await fetch(
         `/api/coaches/${orgSlug}/teams/${teamId}/allocations/${split.id}/installments/${inst.id}`,
-        { method: 'PATCH' },
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sentOn: form.sentOn, method: form.method || null, reference: form.reference.trim() || null }),
+        },
       );
       const data = await res.json().catch(() => ({}));
-      /* Same reason as `sandboxRefusal`'s own note — "Record as paid" is the other control a
-         prospect presses inside a bill's fold, and it sat one line from showing them the code
-         name too. ⚠ The request form's own submit is NOT covered here: it is the pre-existing
-         window, outside the fold this pass rebuilt, and still shows the raw string. */
+      /* Same reason as `sandboxRefusal`'s own note — the sandbox's refusal in words, never the code. */
       const refused = sandboxRefusal(res, data);
-      if (refused) { setActionError(refused); release(); return; }
-      if (!res.ok) throw new Error(data?.error ?? 'Failed to mark this installment paid.');
+      if (refused) { setActionError(refused); release(); return false; }
+      /* ⚖ A STALE TAP IS REFUSED IN WORDS, AND THE CARD REFRESHES IN PLACE (specimen 7's rule): the
+         club confirmed it, or another coach on the team said it first. The sentence is the server's
+         (lib/club-money-words.ts), and the bill re-reads quietly under it. */
+      if (res.status === 409) { await refusedAsStale(data, release); return true; }
+      if (!res.ok) throw new Error(data?.error ?? 'We couldn’t tell the club. Please try again.');
       /* ⚠⚠ QUIET FOR THE SAME REASON `writeFiling` IS (`/review`, 2026-09-02, two lenses). This
          button lives INSIDE a bill's room, beside the filing control (or on the row as the one-tap
          pill) — a loud reload sets `loading`, the whole table goes behind that flag, and recording
@@ -975,16 +1073,20 @@ export function ClubPanel({
          switch the coach asked for — and a visible reload behind it is not the same defect. */
       /* ⚠ The mark is NOT released on success — the reload this awaits is the one the sequence
          guard discards, so "finished" here is not "read back". The mark settles by value when the
-         list reads the installment as paid (`isMarking`). */
+         list reads the installment as sent (`isMarking`). */
       await refreshAfterWrite(true);
+      return true;
     } catch (e: any) {
-      setActionError(e.message ?? 'Failed to mark this installment paid.');
+      setActionError(e.message ?? 'We couldn’t tell the club. Please try again.');
       release();
+      return false;
     }
   }
 
   /**
-   * TAKE A CLUB PAYMENT BACK — the mirror of `markPaid` (owner, §134 walk 2026-09-03).
+   * TAKE IT BACK — the mirror of `markSent` (owner, §134 walk 2026-09-03; since Club Tier Stage 3a it
+   * takes back only the team's OWN "sent" the club has not confirmed — a payment the club recorded is
+   * the club's to undo, S3A-01).
    *
    * ⚖ ONE TAP, NO CONFIRM, and that is deliberate: the act it reverses costs one tap, so guarding
    * the reversal harder than the act would be backwards — and this is the tap a coach reaches for
@@ -1012,9 +1114,11 @@ export function ClubPanel({
       const data = await res.json().catch(() => ({}));
       const refused = sandboxRefusal(res, data);
       if (refused) { setActionError(refused); release(); return; }
+      // A stale tap (the club confirmed it a minute ago): refused in words, the card refreshes in place.
+      if (res.status === 409) { await refusedAsStale(data, release); return; }
       if (!res.ok) throw new Error(data?.error ?? 'Failed to take this payment back.');
       await refreshAfterWrite(true);
-      /* ⚠ RELEASED HERE, unlike `markPaid`. That one settles BY VALUE — the mark clears itself when
+      /* ⚠ RELEASED HERE, unlike `markSent`. That one settles BY VALUE — the mark clears itself when
          the list reads the installment as paid. This write moves the row the other way, so there is
          no incoming truth to settle against and holding the flag would leave the row busy forever. */
       release();
@@ -1753,9 +1857,17 @@ export function ClubPanel({
             sentinel="club-bill"
             nav={{ ...billRoom.walk, noun: 'bills', onSelect: setOpenBillId }}
           >
-            {/* ⚠ The panel's banner sits BEHIND this overlay (`/review`, 2026-09-02) — a refused
-                "Record as paid" (the sandbox's sentence included) has to be read in the room too. */}
-            {actionError && <p className={styles.errorText}>{actionError}</p>}
+            {/* ⚠ The panel's banner sits BEHIND this overlay (`/review`, 2026-09-02) — a refused tap
+                (the sandbox's sentence included) has to be read in the room too.
+                ⚖ A STALE TAP READS AS STAGE 2'S REFUSED-SAVE NOTE (specimen 7): a white card with the
+                live-red edge, the server's sentence (what changed, and who can fix it), and the cards
+                below already refreshed. The same recipe as `CoachSeasonRefusalNotice`, not a copy. */}
+            {actionError && (
+              <div className={refusal.notice} role="alert">
+                <AlertTriangle size={16} aria-hidden className={refusal.icon} />
+                <div className={refusal.body}><p className={refusal.text}>{actionError}</p></div>
+              </div>
+            )}
             <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
               <table className={styles.table} aria-label="Installments">
                 <thead>
@@ -1771,6 +1883,8 @@ export function ClubPanel({
                   {openSplit.installments.map(inst => {
                     const overdue = clubInstallmentState(inst, today) === 'overdue';
                     const sentOn = inst.paidAt ? null : clubInstallmentLeftTeamOn(inst);
+                    const paidOn = clubInstallmentReceivedOn(inst);
+                    const paidHow = howItCame(inst.paidMethod, inst.paidReference);
                     return (
                       <tr key={inst.id} className={styles.tr}>
                         <td className={styles.td} data-label="Installment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
@@ -1781,8 +1895,14 @@ export function ClubPanel({
                         </td>
                         <td className={styles.td} data-label="Status">
                           {inst.paidAt ? (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--success-light)' }}>
-                              <CheckCircle2 size={13} /> Paid {fmtDate(inst.paidAt)}
+                            /* ⚖ "Paid" means ONE thing since Club Tier Stage 3a: the club has it — with how it
+                               came beside it (specimen 7). The coach keeps the word Paid; "Received" would
+                               read here as money the TEAM received. */
+                            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.1rem' }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--success-light)' }}>
+                                <CheckCircle2 size={13} /> Paid {fmtDate(paidOn ?? inst.paidAt)}
+                              </span>
+                              <span className={styles.mutedInline}>{paidHow ? `${paidHow} · ` : ''}the club has it</span>
                             </span>
                           ) : sentOn ? (
                             /* Club Tier Stage 3a (specimen 7's words): the team sent it; the club has not
@@ -1792,8 +1912,16 @@ export function ClubPanel({
                             /* ⚠ `badgeOverdue`, NOT `badgeCompleted` — this row said "Overdue" in the
                                AMBER of a completed season while every other overdue mark in the
                                portal says it in red. */
-                            <span className={`${styles.badge} ${overdue ? styles.badgeOverdue : styles.badgeDraft}`}>
-                              {overdue ? 'Overdue' : 'Unpaid'}
+                            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.1rem' }}>
+                              <span className={`${styles.badge} ${overdue ? styles.badgeOverdue : styles.badgeDraft}`}>
+                                {overdue ? 'Overdue' : 'Unpaid'}
+                              </span>
+                              {/* The club took a payment back: its reason, on the installment (Ask 3). */}
+                              {inst.undoneReason && (
+                                <span className={styles.mutedInline}>
+                                  The club undid a payment{inst.undoneAt ? ` on ${fmtDate(inst.undoneAt)}` : ''}: “{inst.undoneReason}”
+                                </span>
+                              )}
                             </span>
                           )}
                         </td>
@@ -1826,12 +1954,11 @@ export function ClubPanel({
                               type="button"
                               className={`${styles.btnSecondary} ${styles.compactAction}`}
                               disabled={isMarking(inst)}
-                              onClick={() => markPaid(openSplit, inst)}
+                              onClick={() => { setActionError(''); setSending({ split: openSplit, inst }); }}
                             >
                               {/* ⚖ "We've sent it" (Club Tier Stage 3a, specimen 7): the team says it SENT
-                                  the money; the club confirms it received. Still one tap — today, no
-                                  method — until session 2 draws the window that asks the day, how and
-                                  the reference. The server derives amount and description. */}
+                                  the money; the club confirms it received. It opens a window that asks
+                                  the day, how and the reference (`SentWindow`). */}
                               {isMarking(inst) ? '…' : 'We’ve sent it'}
                             </button>
                           )}
@@ -1878,6 +2005,16 @@ export function ClubPanel({
             )}
             {openSplit.notes && <p className={styles.clubRecordNote}>{openSplit.notes}</p>}
           </RoomShell>
+      )}
+      {sending && tabActive && (
+        <SentWindow
+          key={sending.inst.id}
+          installmentNumber={sending.inst.installmentNumber}
+          amount={sending.inst.amount}
+          busy={isMarking(sending.inst)}
+          onCancel={() => setSending(null)}
+          onSend={async form => { if (await markSent(sending.split, sending.inst, form)) setSending(null); }}
+        />
       )}
 
       {/* ── The request window: ONE window, two modes (List · Room · Question D3, 2026-09-02) ──

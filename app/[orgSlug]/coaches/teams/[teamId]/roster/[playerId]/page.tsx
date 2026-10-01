@@ -11,7 +11,7 @@ import CoachPlayerSwitchSheet, { type RosterSheetPlayer } from '@/components/coa
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachPageSection from '@/components/coaches/CoachPageSection';
-import CoachTabBar from '@/components/coaches/CoachTabBar';
+import HubTabBar from '@/components/shared/HubTabBar';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
 import PlayerGuardiansCard from '@/components/coaches/PlayerGuardiansCard';
@@ -722,7 +722,7 @@ export default function PlayerDetailPage({
         </div>
       </div>
 
-      <CoachTabBar
+      <HubTabBar
         tabs={tabs.map(t => ({ id: t.id, label: t.label, short: t.short, href: tabHref(t.id) }))}
         activeId={tab}
         ariaLabel="Player record"

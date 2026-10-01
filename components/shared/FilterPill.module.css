@@ -1,0 +1,181 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE FILTER PILL FAMILY — `MultiSelectDropdown`, `SingleSelectDropdown`, `DateRangeDropdown` and the tag
+   dot they share with the tag picker (promoted 2026-10-01, Club Tier Stage 3a). Moved here BY VALUE from
+   the coaches portal's stylesheet so the club's Ledger can use the coach's own controls (Ask 6: the
+   club's book reads exactly like the coach's Ledger) without the admin shell loading the portal's
+   16,000-line sheet. Nothing changed in the move; `check:layout` proves the portal's strips did not move.
+
+   ⚠ A HOST STYLES A PILL BY ITS DATA ATTRIBUTE, never by these class names: the names are this module's,
+   so a rule in another sheet that says `.myBar .multiSelectSummary` hashes to a class no element carries
+   and fails SILENTLY. The pill marks its parts `data-pill="summary"` and `data-pill="panel"` for exactly
+   that (the practice plans' drill bar is the first host: `.ppDrillFilters [data-pill="panel"]`).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── The tag dot — ONE dot for org-shared vs the team's own, worn by the tag picker, the tag manager,
+   the row chips and the pill's swatch (`MultiSelectDropdown` `swatch`). One meaning, one rule. ── */
+.tagComboDot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.tagComboDotOrg { background: rgba(var(--blueprint-blue-rgb), 0.6); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.75); }
+.tagComboDotOwn { background: rgba(var(--logic-lime-rgb), 0.6); border: 1px solid rgba(var(--logic-lime-rgb), 0.75); }
+
+/* ⚠⚠ THE DOT NEEDS THE SAME RESCUE AS THE CHIP, and for years it did not have it (found by the
+   owner on the P3 walk, 2026-08-26). The block above rescues org CHIPS; `.tagComboDotOrg` rides the
+   very same remapped `--blueprint-blue-rgb` and was simply never listed — so on cream BOTH dots
+   resolved to olive and the org-vs-own distinction the dot exists to carry silently disappeared.
+   It was wrong in the tag picker from the day warm shipped; money centralization P3 then made it
+   load-bearing by moving the tag filter onto these dots AND deleting the colour legend that used to
+   say the same thing in words, which is what finally made it visible.
+   ⚠ Only ORG needs correcting: own-tag olive is already what the remap produces, and is right. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tagComboDotOrg {
+  background: rgba(var(--home-blue-rgb), 0.55);
+  border-color: rgba(var(--home-blue-rgb), 0.75);
+}
+
+/* ── MultiSelectDropdown — a checkbox list in a native <details>, compact enough to sit beside
+   other report controls on one line (register reading-order ruling, follow-up to P3). ────────── */
+.multiSelect { position: relative; }
+.multiSelectSummary {
+  display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; list-style: none;
+  background: var(--white-8); border: 1px solid var(--border-2); color: var(--text-secondary);
+  border-radius: 8px; padding: 0.28rem 0.55rem; font-size: var(--type-support); white-space: nowrap;
+}
+.multiSelectSummary::-webkit-details-marker { display: none; }
+/* ⚠⚠ A REAL TOUCH TARGET FOR THE WHOLE REPORTING FAMILY (check:layout tap-floor, 2026-08-20).
+   31px is comfortable under a mouse and under the 44px floor for a finger, and this one pill is
+   Status, Show, Item, Date, Group by, View and Showing across Transactions, Payables, the payment
+   schedule and Budget vs. Actual — so it was the same finding reported on four screens at three
+   widths, and the reason all four sat permanently red.
+
+   ⚠ THE RED WAS THE REAL COST, more than the millimetres. Four screens that always fail are four
+   screens whose check nobody reads, and they were failing hardest in the release where the money
+   surfaces changed the most. A gate that is expected to be red cannot report a new defect.
+
+   ⚠ Touch widths only — the desktop strip keeps its compact face, because a 44px pill row on a
+   1440px reporting toolbar is bulk with nothing to gain. */
+@media (max-width: 768px) {
+  .multiSelectSummary { min-height: 44px; }
+  /* The rows inside the panel are targets too — a checkbox a finger has to find in a 25px band is
+     the same defect one level down. ⚠ The bare `<input>` inside stays its natural size and is
+     ACCEPTED in the baseline with its reason: the label is the target, it wraps the box, and
+     stretching a checkbox to 44px to satisfy a per-element measurement would make the control
+     worse to look at without making it easier to hit. */
+  .multiSelectOption { min-height: 44px; }
+}
+.multiSelectLabel { color: var(--text-tertiary); }
+.multiSelectValue { font-weight: 600; color: var(--text-primary); }
+.multiSelect[open] .multiSelectSummary { border-color: var(--logic-lime); }
+.multiSelectPanel {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 70; min-width: 190px;
+  background: var(--home-card); border: 1px solid var(--border-2); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35); padding: 0.4rem; max-height: 320px; overflow-y: auto;
+}
+/* ⚠ `body`, NOT `support` — a role correction the type ladder forced into the open (P3,
+   2026-08-28). This row is a thing you READ AND CLICK (SingleSelectDropdown renders it as a
+   <button>, the multi variant as a <label>), which makes it an interactive list item, the same
+   job as a nav tab — not the quiet meta text `support` is for. Snapping its old 0.82rem to the
+   nearest step would have given it `support` and taken the row 30px -> 28px, which the layout
+   sweep caught at 768 as three controls falling further under the tap floor. The floor itself is
+   pre-existing debt carried in the baseline; this at least stops it getting worse, and the size
+   is now decided by what the row IS rather than by which step it happened to sit nearest. */
+.multiSelectOption {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.32rem 0.4rem; border-radius: 6px;
+  font-size: var(--type-body); color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+}
+.multiSelectOption:hover { background: var(--white-8); }
+/* An option's count, quiet at the row's end — the number its filter chip used to carry. */
+.multiSelectCount { margin-left: auto; padding-left: 0.75rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+/* ⚠ NO `.multiSelectSwatch` HERE, deliberately. The dropdown's optional per-option swatch reuses
+   `.tagComboDot` / `.tagComboDotOrg` / `.tagComboDotOwn` above — the SAME dot the tag picker and
+   the row chips draw. A private swatch rule here was written first and gave org-vs-team a second
+   set of colours to drift from (`/simplify`, 2026-08-25). One meaning, one rule. */
+.multiSelectDivider { height: 1px; background: var(--border-2); margin: 0.3rem 0.2rem; }
+
+/* ── SingleSelectDropdown — the ARRANGEMENT member of the family (Payables Rebuild P3) ──────────
+   Same pill face, a list of picks instead of checkboxes. `multiSelectLead` marks the one control
+   in a strip that chooses an arrangement rather than a narrowing (plan §7): it sits first and
+   carries the accent, so it can never be mistaken for another filter. */
+.multiSelectLead > .multiSelectSummary {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+}
+.multiSelectLead > .multiSelectSummary .multiSelectLabel { color: var(--logic-lime); }
+.multiSelectPick {
+  width: 100%; border: 0; background: none; text-align: left; font-family: inherit;
+  padding-left: 1.35rem; position: relative;
+}
+/* ⚠ A REAL TOUCH TARGET (check:layout tap-floor, 44px). The shared `.multiSelectOption` row is
+   0.32rem of padding around 0.8rem text — fine for a checkbox a finger brushes, 25px for a button
+   that IS the whole decision. Scoped to the single-select picks so this fixes the control this
+   change introduced without quietly absorbing the sibling checkbox rows' own floor finding, which
+   belongs to the shared-chrome work and is failing on Transactions too. */
+@media (max-width: 768px) {
+  .multiSelectPick { min-height: 44px; align-items: center; }
+}
+.multiSelectPickOn { color: var(--text-primary); font-weight: 600; }
+/* State as a SHAPE, never colour alone — the same dot the date presets use, and the same reason
+   (deutan memory: olive↔danger ΔE 1.0 on the budget cards). */
+.multiSelectPickOn::before {
+  content: ""; position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%);
+  width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime);
+}
+
+/* ── The Date pill (the register strip's FOURTH pill — owner-approved mockup, 2026-08-19) ──
+   Extensions of the multiSelect family above: same pill face, but the panel is a single-select
+   preset menu (buttons, not checkboxes — two windows at once is not a thing) with the custom
+   from/to fields living at the bottom of the SAME panel. Custom is not a mode: editing a field
+   IS choosing it. See `DateRangeDropdown`'s header for the full argument. */
+.dateRangePanel { min-width: 264px; }
+.dateRangeOption {
+  display: flex; width: 100%; align-items: baseline; justify-content: space-between; gap: 1rem;
+  padding: 0.34rem 0.5rem 0.34rem 1.35rem; border: 0; border-radius: 6px; background: none;
+  text-align: left; font-size: var(--type-support); color: var(--text-secondary); cursor: pointer;
+  position: relative; font-family: inherit; white-space: nowrap;
+}
+.dateRangeOption:hover { background: var(--white-8); }
+.dateRangeOption[aria-pressed="true"] { color: var(--text-primary); font-weight: 600; }
+/* The active dot sits in the gutter every option's left padding reserves — the same "state as a
+   shape, never colour alone" rule the budget cards follow (deutan memory: olive↔danger ΔE 1.0). */
+.dateRangeOption[aria-pressed="true"]::before {
+  content: ""; position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%);
+  width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime);
+}
+/* Each preset row shows the dates it resolves to — the list teaches itself, and "Last 60 days"
+   is never a mystery. Tabular figures so seven stacked ranges read as one column. */
+.dateRangeOptionDates { font-size: var(--type-label); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.dateRangeCustom { padding: 0.25rem 0.5rem 0.35rem; }
+.dateRangeCustomLabel {
+  font-size: var(--type-token); letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 0.35rem; position: relative;
+}
+.dateRangeCustom[data-active] .dateRangeCustomLabel { color: var(--text-primary); padding-left: 0.85rem; }
+.dateRangeCustom[data-active] .dateRangeCustomLabel::before {
+  content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime);
+}
+.dateRangeCustomRow { display: flex; align-items: center; gap: 0.35rem; }
+.dateRangeInput {
+  background: var(--white-8); border: 1px solid var(--border-2); border-radius: 6px;
+  color: var(--text-secondary); font-size: var(--type-support); padding: 0.22rem 0.35rem;
+  font-family: inherit; min-width: 0; flex: 1;
+}
+.dateRangeCustomSep { color: var(--text-tertiary); }
+.dateRangeHint { font-size: var(--type-label); color: var(--text-tertiary); margin-top: 0.4rem; line-height: 1.45; }
+/* ⚠ THE PHONE TAP FLOOR for the panel's own controls — the same rule `.moneyFilterChip` carries
+   below and for the same reason: these are primary controls on the register, and a NEW control
+   does not get to join the touch-target debt (COACH_TOUCH_TARGET_DEBT_PLAN.md counts every
+   unargued entry). The pill FACE deliberately stays at its three siblings' compact height —
+   matching Show/Status/Item is the strip's consistency, and raising all four is that plan's
+   call to make, not this feature's. */
+@media (max-width: 768px) {
+  .dateRangeOption { min-height: var(--tap-min, 44px); }
+  .dateRangeInput { min-height: var(--tap-min, 44px); }
+}
+
+/* Quiet-at-rest filters (owner 2026-09-02): a narrowing pill wears the olive working tint the
+   moment it departs its resting state — twice as visible as before, while resting pills shrink
+   to their name alone. */
+.multiSelectSummary.multiSelectActive {
+  border-color: var(--home-olive, var(--logic-lime));
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.08));
+  color: var(--home-olive, var(--logic-lime));
+}
+.multiSelectSummary.multiSelectActive .multiSelectValue { color: inherit; font-weight: 650; }

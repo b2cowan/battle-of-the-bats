@@ -29,7 +29,7 @@ interface Props {
   rosterHref: string;
   activeTab: TabKey;
   onTabChange: (tab: TabKey) => void;
-  /** Shareable address for a stage tab — the caller owns its own query state (the CoachTabBar
+  /** Shareable address for a stage tab — the caller owns its own query state (the HubTabBar
    *  rule: tabs are LINKS, so middle-click, copy-link and browser Back all work). */
   hrefFor: (tab: TabKey) => string;
 }

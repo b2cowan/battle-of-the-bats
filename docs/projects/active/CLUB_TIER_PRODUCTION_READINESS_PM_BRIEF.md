@@ -158,11 +158,12 @@ fails when a new one isn't accounted for, so a table added next year can't be le
 The database change must reach production before the release that ships these pages.
 
 **Stage 3a — club money, the day-to-day loop: drawn 2026-09-30 (hub v20, redrawn the same day in v22 to
-match the coaches portal's Money page), all six questions ratified the same day as recommended.** **The server half is built and committed (2026-10-01, reviewed); the screens are next.** It needs one database change applied to production before it ships, because nearly every coach money action now relies on it. Until the screens land, a club coach's button already reads "We've sent it", and a sent payment reads "Sent · waiting for the club" with "Take it back". The treasurer's new pages arrive with the screens. What changes, by person. **The treasurer**
-does the whole loop in Accounting (today the allocation and payment-request pages sit in Rep Teams, which
-sends a treasurer away), and the proposal is that Accounting becomes one page with tabs, exactly as the
-coach's Money page is, rather than five entries in the side menu (both are drawn; tabs put every money page
-one tap from every other on a phone). The ledger reads the way the coach's Ledger reads and names the team
+match the coaches portal's Money page), all six questions ratified the same day as recommended.** **Both halves are built (2026-10-01): the server committed and reviewed, the screens built and reviewed, the help rewritten. Six walks (ledger §255) are ready on the hub once the test club is rebuilt.** It needs one database change applied to production before it ships, because nearly every coach money action now relies on it. What changes, by person. **The treasurer**
+does the whole loop in Accounting (the allocation and payment-request pages used to sit in Rep Teams, which
+sent a treasurer away), and Accounting is now one page with tabs, exactly as the coach's Money page is —
+Overview, Ledger, Allocations, Payment requests, Budget, Budget vs. Actual — so every money page is one tap
+from every other on a phone. Old links still land on the right tab. An admin who holds Rep Teams but not
+Accounting no longer sees the two money pages. The ledger reads the way the coach's Ledger reads and names the team
 on every club line; the allocations list names the
 teams, shows what was allocated, collected and outstanding, and says in words which teams are late; a
 payment is recorded with its date, method and reference after a question, and can be undone with a reason

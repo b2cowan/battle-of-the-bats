@@ -1,7 +1,8 @@
 'use client';
+import type { ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import useDetailsOutsideClick from './useDetailsOutsideClick';
-import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
+import styles from '../shared/FilterPill.module.css';
 
 /**
  * PICK ONE — the single-select member of the reporting control family, beside
@@ -31,10 +32,12 @@ export default function SingleSelectDropdown({
   value,
   onChange,
   lead = false,
+  foot,
 }: {
   /** Sits to the left of the chosen value — "Group by", "View", "Showing". */
   label: string;
-  options: readonly { id: string; label: string }[];
+  /** `detail` is a quiet figure at the option's end (a book's balance — the club's Book pill, Stage 3a). */
+  options: readonly { id: string; label: string; detail?: string }[];
   value: string;
   onChange: (next: string) => void;
   /**
@@ -42,18 +45,24 @@ export default function SingleSelectDropdown({
    * reads as another narrowing (plan §7). Exactly one control per strip should set this.
    */
   lead?: boolean;
+  /**
+   * The panel's foot, after a divider: doors that act on the LIST rather than pick from it — the club
+   * Ledger's Book pill ends with "Add ledger" (and, on a phone, Transfer and Payees). Opt-in; no
+   * portal strip passes one.
+   */
+  foot?: ReactNode;
 }) {
   const ref = useDetailsOutsideClick();
   const chosen = options.find(o => o.id === value);
 
   return (
     <details ref={ref} className={`${styles.multiSelect} ${lead ? styles.multiSelectLead : ''}`}>
-      <summary className={styles.multiSelectSummary}>
+      <summary data-pill="summary" className={styles.multiSelectSummary}>
         <span className={styles.multiSelectLabel}>{label}</span>
         <span className={styles.multiSelectValue}>{chosen?.label ?? options[0]?.label ?? ''}</span>
         <ChevronDown size={14} aria-hidden />
       </summary>
-      <div className={styles.multiSelectPanel} role="group" aria-label={label}>
+      <div data-pill="panel" className={styles.multiSelectPanel} role="group" aria-label={label}>
         {options.map(o => (
           /* A button, not a radio: picking applies instantly and closes the panel, which is what
              `DateRangeDropdown`'s presets already do. A radio list would need a second click to
@@ -69,8 +78,15 @@ export default function SingleSelectDropdown({
             }}
           >
             {o.label}
+            {o.detail != null && <span className={styles.multiSelectCount}>{o.detail}</span>}
           </button>
         ))}
+        {foot != null && (
+          <>
+            <div className={styles.multiSelectDivider} />
+            {foot}
+          </>
+        )}
       </div>
     </details>
   );

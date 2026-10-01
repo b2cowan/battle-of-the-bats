@@ -10846,16 +10846,6 @@ export function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
   };
 }
 
-export async function getRepCostAllocations(orgId: string): Promise<RepCostAllocation[]> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_cost_allocations')
-    .select('*')
-    .eq('org_id', orgId)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(mapRepCostAllocation);
-}
-
 export async function getRepCostAllocationDetail(
   allocationId: string,
   orgId: string,

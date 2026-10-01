@@ -84,12 +84,15 @@ describe('D8 — the treasurer holds what the allocation loop needs', () => {
   });
 
   it('the money-loop routes gate on that rule, not on Rep Teams alone (C03)', () => {
+    // Club Tier Stage 3a session 2 retired the old Rep Teams money doors (the installment PATCH, the
+    // requests GET/PATCH); the loop's reads and decisions are Accounting's routes now.
     const routes = [
       'app/api/admin/rep-teams/allocations/route.ts',
       'app/api/admin/rep-teams/allocations/[allocationId]/route.ts',
-      'app/api/admin/rep-teams/allocations/[allocationId]/splits/[splitId]/installments/[installId]/route.ts',
-      'app/api/admin/rep-teams/payment-requests/route.ts',
-      'app/api/admin/rep-teams/payment-requests/[id]/route.ts',
+      'app/api/admin/accounting/allocations/route.ts',
+      'app/api/admin/accounting/allocations/[allocationId]/installments/[installId]/route.ts',
+      'app/api/admin/accounting/payment-requests/route.ts',
+      'app/api/admin/accounting/payment-requests/[id]/route.ts',
     ];
     // Club Tier Stage 3a: the loop's decisions go through the shared club-money gate, whose 'loop'
     // scope IS canOpenRepMoney (asserted below) — either form satisfies the rule.

@@ -194,3 +194,15 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .input:focus {
   border-color: var(--home-olive, rgba(79,163,224,0.6));
 }
+
+/* A door at the list's foot (`foot`, Club Tier Stage 3a: "Manage payees") — under a hairline, and a real
+   tap target on a touch screen. */
+.foot {
+  display: flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.75rem;
+  border-top: 1px solid var(--border-2);
+  font-size: var(--type-support);
+}
+@media (max-width: 768px) { .foot { min-height: var(--tap-min, 44px); } }

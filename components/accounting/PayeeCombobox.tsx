@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import type { OrgPayee } from '@/lib/types';
 import styles from './PayeeCombobox.module.css';
@@ -19,6 +19,8 @@ interface Props {
   disabled?: boolean;
   /** Label shown on the "save" action button. E.g. "team" → "Save as team payee". Defaults to "org". */
   saveScope?: string;
+  /** A door at the list's foot — the club Ledger's "Manage payees" (Club Tier Stage 3a, C01). Opt-in. */
+  foot?: ReactNode;
 }
 
 export default function PayeeCombobox({
@@ -28,6 +30,7 @@ export default function PayeeCombobox({
   placeholder = 'Search or enter payee…',
   disabled,
   saveScope = 'org',
+  foot,
 }: Props) {
   const [inputVal, setInputVal]   = useState('');
   const [results, setResults]     = useState<OrgPayee[]>([]);
@@ -204,6 +207,7 @@ export default function PayeeCombobox({
           {!trimmed && results.length === 0 && (
             <p className={styles.empty}>Type to search or enter a new payee name</p>
           )}
+          {foot != null && <div className={styles.foot}>{foot}</div>}
         </div>
       )}
     </div>

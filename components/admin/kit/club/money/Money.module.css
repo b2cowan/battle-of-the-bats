@@ -1,0 +1,294 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE CLUB'S MONEY SCREENS (Club Tier Stage 3a, session 2 — built to hub v22, Mockups → Stage 3a).
+   The parts the Accounting tabs share that RepKit does not already draw. The table, the row list, the
+   chip, the callout and the section are RepKit's (`components/admin/kit/club/RepKit.*`) — never a
+   second recipe here. What this sheet adds:
+
+   · THE BOOK (the club's Ledger, Ask 6): the coach's Ledger restated BY VALUE — its two-deck toolbar,
+     the K-01 compact register rows, the statement-style Starting / Ending balance lines (K-04), the
+     paired Money out / Money in cells (blank on the empty side, standard §3.7), the pending line's
+     unmoved balance, the void row (§3.5), and the phone's card per entry (K-25). The portal's own
+     rules live in its 16,000-line sheet, which the admin shell does not load — the reason RepKit
+     restates the section and the row list the same way.
+   · a window's facts (the drawing's `.rec`), a coach's quote, the figure tiles in a window.
+
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder strictly.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── A page's figure cards: three across for a team's account, four for an allocation ── */
+.cards3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 0 0 0.9rem;
+}
+@media (max-width: 640px) { .cards3 { grid-template-columns: minmax(0, 1fr); } }
+/* A money figure is the widest thing on a phone's half-width card — "($1,490.00)" ran 12px past it at
+   361 (check:layout). On the narrowest phones it steps down ONE ladder rung (title) and the four keep
+   their two columns. Anchored under the grid so it beats the kit's `.big` whatever the bundle order. */
+@media (max-width: 400px) { .figures .figure { font-size: var(--type-title); } }
+
+/* ── The toolbar lede: one quiet sentence at the toolbar's start (an allocation's schedule) ── */
+.lede {
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* ── The Ledger's two decks (the coach's `.panelDeck` / `.panelFilterStrip`, owner 2026-09-02): the
+   TOP deck is what stays put (the Book pill, then Export and the creates, the one lime last); the
+   STRIP under a hairline is the narrowing, quiet at rest, with the book's figure at its right edge. ── */
+.deck {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  width: 100%;
+}
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+  align-items: center;
+  width: 100%;
+  padding-top: 0.55rem;
+  margin-top: 0.1rem;
+  border-top: 1px solid var(--home-line);
+}/* The book's Balance at the strip's right edge (where the coach's Cash on hand sits). On a phone it
+   keeps the right edge of its OWN line when the pills wrap (specimen 1's phone). */
+.balance {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.balance b { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-olive); }
+@media (max-width: 640px) {
+  .balance { flex-basis: 100%; justify-content: flex-end; }
+}
+
+/* ── The register (K-01): compact rows, the support step; the What cell is the name, then the detail
+   in quiet ink on the same line ── */
+.register td {
+  padding-top: var(--table-pad-register); /* table-exception: K-01 */
+  padding-bottom: var(--table-pad-register);
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  font-size: var(--type-support);
+  line-height: 1.25;
+}
+.register th { padding-left: 0.6rem; padding-right: 0.6rem; }
+.register td.date,
+.register td.cat,
+.register td.amt { white-space: nowrap; }
+.register td.date,
+.register td.cat { color: var(--text-tertiary); }
+.what { font-weight: 650; color: var(--text-primary); }
+.detail { font-weight: 400; color: var(--text-tertiary); }
+.register .amt { text-align: right; font-variant-numeric: tabular-nums; }
+.register .amtIn { color: var(--success-light); }
+/* A pending line's balance is the one before it, in the faint ink: an uncleared cheque hasn't moved the
+   book (the coach's overdue row does the same). */
+.register td.unmoved { color: var(--text-tertiary); }
+.inlineChip { margin-left: 0.4rem; vertical-align: 1px; }
+/* The statement-style lines: Starting balance first (everything before the window), Ending balance
+   last with the group row's weight and a 2px rule (K-04). */
+.register tr.balRow > td {
+  background: var(--home-fill);
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--home-line);
+  border-bottom: 1px solid var(--home-line);
+}
+.register tr.balRow > td.balLabel {
+  font-size: var(--type-support);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.register tr.balEnd > td { border-top: 2px solid var(--home-line-strong); color: var(--text-primary); }
+/* ⚖ THE VOID ROW (owner, Ask 5d — standard §3.5): struck through in the faintest ink, a Void chip, the
+   reason as its detail, no balance; counted nowhere. */
+.register tr.voidRow > td { color: var(--text-tertiary); }
+.register tr.voidRow .what,
+.register tr.voidRow .amt { text-decoration: line-through; text-decoration-color: var(--text-tertiary); }
+.register tr.voidRow .what { color: var(--text-tertiary); }
+/* "Showing 500 of 812 lines" — inside the frame, above the Ending balance. */
+.register tr.moreRow > td { text-align: center; color: var(--text-tertiary); }
+
+/* The phone's Starting / Ending balance lines, between which the cards sit (specimen 1's phone). */
+.phoneBal {
+  display: none;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.15rem 0.15rem 0.5rem;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.phoneBalEnd { padding: 0.5rem 0.15rem 0.15rem; color: var(--text-primary); }
+
+/* ── ≤ 640: a card per entry (K-25 — an entry is a record with LABELLED lines: Date · Category · Money
+   out or in · Balance). The lead cell is the card's title (no label); the chevron sits in its corner. ── */
+@media (max-width: 640px) {
+  .phoneBal { display: flex; }
+  .cardsFrame { border: 0; background: none; overflow: visible; }
+  .cardsFrame table,
+  .cardsFrame tbody,
+  .cardsFrame tr,
+  .cardsFrame td { display: block; width: auto; }
+  .cardsFrame thead { display: none; }
+  .cardsFrame tr.balRow,
+  .cardsFrame tr.moreRow { display: none; }
+  .cardsFrame tr {
+    position: relative;
+    border: 1px solid var(--home-line-strong);
+    border-radius: 10px;
+    padding: 0.65rem 2.6rem 0.65rem 0.85rem;
+    margin-bottom: 0.55rem;
+    background: var(--card-bg);
+  }
+  .cardsFrame td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.2rem 0 !important; /* the K-01 cell padding stands down inside a card */
+    border-bottom: 0 !important;
+    text-align: right;
+    font-size: var(--type-support);
+  }
+  .cardsFrame td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    text-align: left;
+    font-size: var(--type-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
+  }
+  .cardsFrame td:empty { display: none; }
+  /* The card's title: the name, its chips, and the detail under it in the quiet ink. */
+  .cardsFrame td.whatCell { display: block; text-align: left; font-size: var(--type-body); padding-bottom: 0.3rem !important; }
+  .cardsFrame td.whatCell .detail { display: block; font-size: var(--type-support); margin-top: 0.1rem; }
+  .cardsFrame td.whatCell .detailSep { display: none; }
+  .cardsFrame td.goCell { position: absolute; right: 0.8rem; top: 0.85rem; padding: 0 !important; }
+  /* A band (a team's season) heads the cards under it, as a label — not a card. */
+  .cardsFrame tr[data-band] { border: 0; background: none; padding: 0.35rem 0.15rem 0.25rem; margin: 0.65rem 0 0.15rem; }
+  .cardsFrame tr[data-band] > td { display: block; padding: 0 !important; background: none !important; border: 0 !important; text-align: left; }
+  /* A closing row (Outstanding on …) reads as the statement's last line, under the cards. */
+  .cardsFrame tr[data-close] { border: 0; background: none; padding: 0.5rem 0.15rem 0; }
+  .cardsFrame tr[data-close] > td { font-weight: 700; color: var(--text-primary); }
+}
+
+/* ── A window's facts (the drawing's record box): a label left, its value right ── */
+.facts {
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--home-paper);
+  padding: 0.55rem 0.8rem;
+  font-size: var(--type-body);
+  margin: 0 0 0.85rem;
+}
+.factRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding: 0.2rem 0;
+}
+.factLabel { color: var(--text-tertiary); flex: none; }
+.factValue { font-weight: 650; text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); overflow-wrap: anywhere; }
+
+/* ── A coach's own words, quoted (a request's notes) ── */
+.quote {
+  margin: 0 0 0.85rem;
+  padding: 0.1rem 0 0.1rem 0.75rem;
+  border-left: 3px solid var(--home-line-strong);
+  color: var(--text-secondary);
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
+/* ── The figure tiles INSIDE a window (a team's bill: Billed · Collected · Outstanding · Next due) ── */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+}
+@media (max-width: 640px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile {
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  padding: 0.5rem 0.65rem;
+  min-width: 0;
+}
+.tileLabel {
+  display: block;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.tileValue {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: var(--type-heading);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── An installment list inside a bill: one line each, its state or its one worded action at the end ── */
+.lines { border: 1px solid var(--home-line); border-radius: 10px; margin: 0 0 0.85rem; }
+.line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border-top: 1px solid var(--home-line);
+}
+.line:first-child { border-top: 0; }
+.lineMain { flex: 1; min-width: 0; }
+.lineTitle { font-weight: 650; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.lineSub { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+.lineEnd { display: flex; align-items: center; gap: 0.5rem; flex: none; }
+.lineQuiet { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+@media (max-width: 640px) {
+  .line { flex-wrap: wrap; }
+  .lineEnd { flex-basis: 100%; justify-content: flex-start; }
+  .lineEnd > button { flex: 1 1 auto; }
+}
+
+/* ── A window's quiet door at its foot (Undo a payment, Reverse this approval): not red — a correction ── */
+.quietDoor { margin: 0.25rem 0 0; }
+
+/* A window's "what will be written and where" lines sit in the facts box; its lead sentence above. */
+.lead1 { margin: 0 0 0.85rem; line-height: 1.5; color: var(--text-primary); }
+
+/* A row's second line inside a table cell (a request's who / when, the holding-up line in red). */
+.holding { display: block; margin-top: 0.1rem; font-size: var(--type-support); font-weight: 650; color: var(--danger-light); }
+
+/* The reminders' recipient rows, each with what the team owes. */
+.who { font-size: var(--type-support); color: var(--text-tertiary); }
+
+
+/* A one-line form row: two fields side by side, one on a phone. */
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+@media (max-width: 640px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+
+/* The statement's closing row (Outstanding on …) and an allocation's (This year, 9 teams): a group
+   row's weight set apart by a 2px rule (K-04's shape, standard §3.5). */
+.closeRow > td { border-top: 2px solid var(--home-line-strong); font-weight: 700; color: var(--text-primary); }

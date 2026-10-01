@@ -17,7 +17,6 @@ import { incomeCategoryFor } from './coach-cash-strip';
 import { PAYOUT_CATEGORY_NAME, revenueGroupLabel } from './coach-budget-months';
 import { joinNames } from './practice-plan-send';
 import { clubInstallmentLeftTeamOn, clubInstallmentWaitingOnClub } from './club-money-figures';
-import { CLUB_SENT_WAITING_WORD } from './club-money-words';
 import type { RepProgramYear } from './types';
 
 /**
@@ -600,9 +599,9 @@ export async function loadSeasonRegisterRows(
            unlinked record of money the club has already accounted for. */
         recordPayment: null,
         sourceLabel: REGISTER_SOURCE_LABEL.club,
-        detail: waiting
-          ? `Installment #${i.installment_number} · ${CLUB_SENT_WAITING_WORD}`
-          : `Installment #${i.installment_number}`,
+        /* The waiting words ride the row as its CHIP (`waitingOnClub`, specimen 7: "Sent · waiting for the
+           club"), so the detail stays the installment's number. */
+        detail: `Installment #${i.installment_number}`,
         ...(waiting ? { waitingOnClub: true } : {}),
       });
     }

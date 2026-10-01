@@ -18,7 +18,7 @@ import { usePathname } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
-import type { ClubShape } from '@/lib/admin-kit-nav';
+import type { AdminProgramKey, ClubShape } from '@/lib/admin-kit-nav';
 
 export type BriefKey = 'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches';
 
@@ -31,7 +31,11 @@ export type ClubBrief = {
   teams?: { active: number; groups: number };
   detail: {
     tryoutApplications?: { teams: number; oldest: { teamId: string; programYearId: string } | null };
-    paymentRequests?: { oldestDays: number | null };
+    /** `holdingPayout`: waiting requests the club's answer is the one thing between a team and its
+     *  end-of-season payout (Stage 3a, Ask 5b) — named on the door card. */
+    paymentRequests?: { oldestDays: number | null; holdingPayout?: number };
+    /** `sent`: payments coaches say are on the way; `overdue`: the overdue band inside the count. */
+    installmentsDue?: { sent: number; overdue?: number };
   };
 };
 
@@ -113,19 +117,24 @@ export function useClubBrief(): ClubBriefValue {
 
 /**
  * The waiting count a program or one of its pages carries on the rail and the phone bar. Rep Teams
- * carries its two pages' counts (Payment requests, Assistant coaches) — the hub's "3 waiting" is the
- * same sum, so the door, the rail and the bar say one number. Tryout applications sit on each
- * team's own page (no rail row to carry them) and installments on the Rep Teams hub's list; they are
- * the morning strip's, not the rail's.
+ * carries its Assistant coaches page's count, Accounting its waiting payment requests — the hub's
+ * "N waiting" is the same figure, so the door, the rail and the bar say one number. Tryout
+ * applications sit on each team's own page (no rail row to carry them) and installments on
+ * Accounting › Allocations' Coming due; they are the morning strip's, not the rail's.
  */
 export function briefPageCount(brief: ClubBrief | null, pageKey: string): number {
   if (!brief) return 0;
-  if (pageKey === 'rt-payment-requests') return brief.counts.paymentRequests ?? 0;
   if (pageKey === 'rt-assistant-coaches') return brief.counts.assistantCoaches ?? 0;
   return 0;
 }
 
-export function briefProgramCount(brief: ClubBrief | null, programKey: string): number {
-  if (programKey !== 'rep-teams') return 0;
-  return briefPageCount(brief, 'rt-payment-requests') + briefPageCount(brief, 'rt-assistant-coaches');
+/**
+ * ⚖ Payment requests count on ACCOUNTING since Club Tier Stage 3a (Ask 2: the requests moved there,
+ * and "Rep Teams' waiting count drops the requests"). Accounting has no rail pages, so its row carries
+ * the number itself — inside the program too.
+ */
+export function briefProgramCount(brief: ClubBrief | null, programKey: AdminProgramKey): number {
+  if (programKey === 'rep-teams') return briefPageCount(brief, 'rt-assistant-coaches');
+  if (programKey === 'accounting') return brief?.counts.paymentRequests ?? 0;
+  return 0;
 }

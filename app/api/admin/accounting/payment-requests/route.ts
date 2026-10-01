@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { resolveClubMoney } from '@/lib/club-money-route';
+import { canMoveClubMoney } from '@/lib/member-access';
 import { teamIdsInScope } from '@/lib/club-team-route';
 import { clubRequests } from '@/lib/club-money-reads';
 import { tournamentToday } from '@/lib/timezone';
@@ -31,6 +32,8 @@ export const GET = withObservability(async (req: Request) => {
 
   return NextResponse.json({
     asOf: today,
+    // Whether this member may answer them (Ask 1's one rule) — the screen offers Approve only then.
+    canMove: canMoveClubMoney(ctx, ctx.org),
     waiting: { count: waiting.length, total, holdingPayout: waiting.filter(x => x.holdingPayout).length, requests: waiting },
     decided: { count: decided.length, requests: decided },
   });

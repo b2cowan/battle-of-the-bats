@@ -1,0 +1,169 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   HubTabBar — THE ONE TAB ROW (promoted 2026-10-01, Club Tier Stage 3a, Ask 2 option B). Moved here BY
+   VALUE from the coaches portal's stylesheet, where it lived as `.coachTab*` under the Money hub. Its
+   callers are the portal's hubs (Money, Insights, Development, Lineups, Practice plans, a player, the
+   tryout flow) and the club's Accounting page — the admin shell does not load the portal's 16,000-line
+   sheet, so the row needed a module of its own to be shared rather than copied. Nothing about it
+   changed in the move; `check:layout` proves the portal's hubs did not move.
+   ⚠ TOKENS ONLY — the admin kit lints this folder's admin callers strictly; every value here is a token
+   both shells define.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Money hub tab bar (Overview + one tab per section) ───────────────────
+   Same underline-tab idiom as TournamentTopTabs/CoachRecordJumpNav — mono
+   uppercase label, warm-olive underline — but always on (not mobile-only):
+   the whole point is letting a coach hop between Money screens without a
+   trip back through Overview, on desktop as much as on phone. */
+/* The row scrolls when it must, but a hidden scrollbar means the truncation is INVISIBLE —
+   at 960px the 8th tab simply stopped mid-word with nothing saying more existed (reported
+   from a real screenshot). Each edge that has something hidden past it gets a fade AND a
+   real arrow BUTTON that scrolls the row. ⚠ The arrows were briefly `pointer-events: none`
+   decoration — they looked clickable, and the click fell straight through to the tab
+   underneath. An arrow is a control or it is not an arrow. */
+/* ⚠ The row's margins live on the WRAPPER, not on the nav. With them on the nav they
+   collapsed straight through this (padding-less, border-less) wrapper, so the wrapper
+   measured only its content and the absolutely-positioned arrows — inset by those same
+   margins — rendered 8px tall, far under the 44px tap floor. Caught by check:layout. */
+.wrap { position: relative; margin: 0.9rem 0 1.4rem; }
+
+/* ⚠ OPT-IN, AND CURRENTLY UNUSED (reading-order ruling, follow-up to P3 — reversed 2026-08-19).
+   The register briefly set CoachTabBar's `sticky` prop for the Money hub's Transactions tab, but
+   pinning this SHARED nav bar on exactly one of its seven tabs made the one piece of chrome
+   meant to behave identically everywhere freeze on a single tab and nowhere else — a bigger,
+   more visible inconsistency than the register's own toolbar earning a pin for being the one
+   long, scrollable tab. The register now pins only its own toolbar and column headers; this bar
+   pins on no tab today. Left in place as real, documented opt-in infrastructure (shared with
+   Insights' `/history`, per CoachTabBar's own prop doc) for a future screen that genuinely needs
+   it — not dead code, just not currently exercised.
+
+   If it's ever wired up again: docks under the fixed FieldLogicHQ strip AND the team masthead
+   above it — `--coach-topstrip-top` (this shell's fixed top bar, `.coachesShell`) plus
+   `--coach-header-h` (the masthead's own live-measured height, published by `CoachTeamHeader`
+   onto the page's `<main>` ancestor). ⚠⚠ NOT `--coach-top-strip` — that variable belongs to a
+   different shell (CoachPortalShell, the tournament-record route tree) and is undefined on a team
+   page; it was silently falling back to a guessed 48px here before this was found. A solid
+   background is required — without one, rows scrolling underneath would show through this layer
+   too. */
+.sticky {
+  position: sticky;
+  top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px));
+  z-index: 60;
+  background: var(--bg);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+}
+
+.bar {
+  display: flex;
+  gap: 0.15rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.bar::-webkit-scrollbar { display: none; }
+/* Fades apply per-edge, so an end-of-row never fades against nothing. */
+.fadeRight {
+  mask-image: linear-gradient(to right, black 0, black calc(100% - 40px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 40px), transparent 100%);
+}
+.fadeLeft {
+  mask-image: linear-gradient(to right, transparent 0, black 40px);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 40px);
+}
+.fadeLeft.fadeRight {
+  mask-image: linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%);
+}
+.scrollBtn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  color: var(--home-olive, var(--logic-lime));
+  z-index: 2;
+}
+.scrollBtn:hover { color: var(--text-primary); }
+/* ⚠ 44px AT TOUCH WIDTHS (coaching from a phone · stage 6, 2026-09-24). The arrows sat at 34px — a
+   baselined sub-floor control on every hub. Stage 6 · R3 scrolls the row to the tab you are on, which
+   made the LEFT arrow appear on every report and Money tab past the first screenful too; widening the
+   control beat writing thirty new "accepted" entries for it. Touch widths only (the floor is a touch
+   rule, 641–768 included — K-12); a desktop keeps the 34px arrow over its fade. */
+@media (max-width: 768px) {
+  .scrollBtn { width: var(--tap-min, 44px); }
+}
+.scrollLeft {
+  left: 0;
+  background: linear-gradient(to right, var(--home-paper, var(--bg)) 55%, transparent);
+}
+.scrollRight {
+  right: 0;
+  background: linear-gradient(to left, var(--home-paper, var(--bg)) 55%, transparent);
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0.55rem 0.85rem;
+  white-space: nowrap;
+  /* ⚠⚠ SENTENCE-WEIGHT SANS, NOT THE UPPERCASE MONO LABEL IT WAS UNTIL 2026-08-28 (type-ladder
+     pass). This bar was 0.72rem/700 uppercase mono in --font-data, which put PRIMARY NAVIGATION
+     at 11.5px — BELOW the 12.5px uppercase column headings of the very tables these tabs
+     navigate to. Both were uppercase, letter-spaced and bold, so nav did not merely lose to a
+     column label, it TIED one, and a tie reads as "these are peers".
+
+     The fix is upward and by TREATMENT, not by shrinking the headings — those were deliberately
+     raised on 2026-08-15 to end a measured legibility defect (headings 2.4x fainter than their
+     own data rows) and that ruling stands. Below ~13px a one-pixel step is invisible, so size
+     cannot separate these two roles at all; case can. Navigation now reads as sentence-case body
+     text and column headings stay uppercase support — different KINDS of thing, no competition.
+
+     ⚠ The tab LABELS are still Title Case as their callers write them ("Budget Plan", "Playing
+     Time") while the tryout flow writes sentence case ("Tryout day", "Build team"). The uppercase
+     transform was hiding that split. Normalising it is a COPY change that also reaches foot
+     links, rail links and help content, so it is deliberately NOT done here — half of it would
+     leave one thing wearing two names, which the spelling ruling forbids. */
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.tab:hover { color: var(--text-secondary); }
+.active {
+  color: var(--home-olive, var(--logic-lime));
+  border-bottom-color: var(--home-olive, var(--logic-lime));
+}
+/* A tab's short label on a phone (CoachTabBar `short`, 2026-09-13 — the player page's five tabs
+   are the first caller): the long word at every other width. */
+.long  { display: inline; }
+.short { display: none; }
+@media (max-width: 640px) {
+  .long  { display: none; }
+  .short { display: inline; }
+}
+
+@media (max-width: 640px) {
+  /* Contained scroll, not full-bleed: unlike TournamentTopTabs (which sits directly
+     under a fixed, viewport-wide header) this tab bar is nested inside .page's own
+     padding — a negative-margin bleed here escaped that padding box and caused the
+     whole document to scroll sideways by a couple pixels (caught by check:layout). */
+  /* Padding tightens on a phone; the SIZE deliberately does not. A phone override of 0.66rem
+     (10.6px) used to live here, and re-adding one now would mint an off-ladder value purely to
+     fit more tabs on screen — but this strip already scrolls, with arrow affordances on both
+     edges, so fitting more was never its job. */
+  .tab { padding: 0.5rem 0.6rem; }
+}

@@ -504,7 +504,6 @@ const KIT_FILES = new Set([
 // ratchet's generated baseline: membership is the decision (no tool may add a sheet to it), and the values
 // inside a listed sheet are already held, by value, by the restyled ratchet below.
 const ADMIN_COLOUR_DEBT = new Set([
-  'app/[orgSlug]/admin/accounting/accounting.module.css',
   'app/[orgSlug]/admin/accounting/budget-vs-actual/bva.module.css',
   'app/[orgSlug]/admin/accounting/budget/budget.module.css',
   'app/[orgSlug]/admin/admin-common.module.css',

@@ -109,6 +109,28 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, { status: 307 });
   }
 
+  // ⚖ The club's money pages MOVED to Accounting (Club Tier Stage 3a, Ask 2 option B): Rep Teams › Cost
+  // allocation (and every allocation's own address, and New), Rep Teams › Payment requests, and a
+  // ledger's own address (→ the Ledger tab on that book). Forwarded HERE, before auth and before the Rep
+  // Teams layout — which sends a treasurer away, so a page-level forward would never reach the person
+  // these pages now belong to (an old bookmark, a notification sent before the move). One hop each.
+  if (segments.length >= 4 && segments[0] !== 'api' && segments[1] === 'admin') {
+    const moved =
+      segments[2] === 'rep-teams' && segments[3] === 'allocations'
+        ? `/${segments[0]}/admin/accounting/allocations${segments.length > 4 ? `/${segments.slice(4).join('/')}` : ''}`
+      : segments[2] === 'rep-teams' && segments[3] === 'payment-requests' && segments.length === 4
+        ? `/${segments[0]}/admin/accounting/payment-requests`
+      : segments[2] === 'accounting' && segments[3] === 'ledger' && segments.length === 5
+        ? `/${segments[0]}/admin/accounting/ledger`
+      : null;
+    if (moved) {
+      const url = request.nextUrl.clone();
+      url.pathname = moved;
+      if (segments[2] === 'accounting') url.searchParams.set('book', segments[4]);
+      return NextResponse.redirect(url, { status: 307 });
+    }
+  }
+
   // Redirect legacy Basic coach portal routes before auth so old links do not
   // strand unauthenticated coaches on /my URLs.
   if (segments[0] === 'my') {

@@ -113,6 +113,12 @@ export interface ExportMenuProps {
   importHint?: string;
   /** Optional CSS class added to the root wrapper div. */
   className?: string;
+  /**
+   * What the export HOLDS, said before it runs (Club Tier Stage 3a, C14: the club's Ledger export is the
+   * whole period, signed, voids marked — not the rows on screen). A title and its lines at the top of
+   * the menu. Opt-in; no other surface passes it.
+   */
+  holds?: { title: string; lines: string[] };
 }
 
 export default function ExportMenu({
@@ -142,6 +148,7 @@ export default function ExportMenu({
   importLabel = 'Import teams',
   importHint = 'Download a template, upload a file, preview changes',
   className,
+  holds,
 }: ExportMenuProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -237,6 +244,12 @@ export default function ExportMenu({
           role="menu"
           aria-label={hasImportOption ? 'Export and import options' : 'Export options'}
         >
+          {holds && (
+            <div className={styles.holds}>
+              <span className={styles.menuItemLabel}>{holds.title}</span>
+              {holds.lines.map(l => <span key={l} className={styles.menuItemHint}>{l}</span>)}
+            </div>
+          )}
           {/* Always: Excel */}
           <button
             role="menuitem"

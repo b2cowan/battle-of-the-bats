@@ -97,8 +97,8 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
           // Exact: inside a team, the rail's TEAM block carries the active row (Club Tier Stage 2,
           // specimen 2 — "Team page" lit, "Teams" not), and its back arrow leads up to this one.
           { key: 'rt-teams', label: 'Teams', href: r, exact: true },
-          { key: 'rt-allocations', label: 'Cost allocation', href: `${r}/allocations` },
-          { key: 'rt-payment-requests', label: 'Payment requests', href: `${r}/payment-requests` },
+          // ⚖ Cost allocation and Payment requests MOVED to Accounting (Club Tier Stage 3a, Ask 2): the
+          // treasurer's program holds the treasurer's work, and their old addresses forward there.
           { key: 'rt-assistant-coaches', label: 'Assistant coaches', href: `${r}/assistant-coaches` },
           { key: 'rt-docs', label: 'Document templates', href: `${r}/documents` },
           { key: 'rt-shared-library', label: 'Shared library', href: `${r}/shared-library` },
@@ -110,15 +110,13 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
       };
     }
     case 'accounting': {
+      // ⚖ ONE ROW THAT NEVER OPENS (Club Tier Stage 3a, Ask 2 option B, owner 2026-09-30). Accounting is
+      // one page with tabs — Overview · Ledger · Allocations · Payment requests · Budget · Budget vs.
+      // Actual — so the rail lists no pages under it (and the phone's "In Accounting" row has nothing to
+      // name): the tab row on the page is how a treasurer moves between them. The tabs' own list is
+      // `accountingTabs` below; the rail row carries the waiting count while you are inside it too.
       const a = `${base}/accounting`;
-      return {
-        label: 'Accounting', icon: DollarSign, href: a,
-        pages: [
-          { key: 'accounting', label: 'Ledgers', href: a, exact: true, also: [`${a}/ledger`] },
-          { key: 'acct-budget', label: 'Budget', href: `${a}/budget` },
-          { key: 'acct-bva', label: 'Budget vs. Actual', href: `${a}/budget-vs-actual` },
-        ],
-      };
+      return { label: 'Accounting', icon: DollarSign, href: a, pages: [] };
     }
     case 'families': {
       const f = `${base}/families`;
@@ -292,4 +290,36 @@ const KIT_TOURNAMENT_LABELS: Readonly<Record<string, string>> = {
 
 export function kitTournamentLabel(label: string): string {
   return KIT_TOURNAMENT_LABELS[label] ?? label;
+}
+
+/**
+ * ⚖ ACCOUNTING'S TABS (Club Tier Stage 3a, Ask 2 option B) — the one list the Accounting page's tab row,
+ * the hub's program line and the help read, so none of them names a tab the page does not have.
+ * Allocations and Payment requests are the club ↔ team loop: they exist only where the club runs rep
+ * teams (`canOpenRepMoney`'s org half). Each tab is a real address (`HubTabBar` tabs are links).
+ */
+export type AccountingTabId = 'overview' | 'ledger' | 'allocations' | 'payment-requests' | 'budget' | 'budget-vs-actual';
+
+export function accountingTabs(base: string, opts: { runsRepTeams: boolean }): { id: AccountingTabId; label: string; href: string }[] {
+  const a = `${base}/accounting`;
+  return [
+    { id: 'overview' as const, label: 'Overview', href: a },
+    { id: 'ledger' as const, label: 'Ledger', href: `${a}/ledger` },
+    ...(opts.runsRepTeams ? [
+      { id: 'allocations' as const, label: 'Allocations', href: `${a}/allocations` },
+      { id: 'payment-requests' as const, label: 'Payment requests', href: `${a}/payment-requests` },
+    ] : []),
+    { id: 'budget' as const, label: 'Budget', href: `${a}/budget` },
+    { id: 'budget-vs-actual' as const, label: 'Budget vs. Actual', href: `${a}/budget-vs-actual` },
+  ];
+}
+
+/**
+ * Which Accounting tab a path is, or null for a page one level down (an allocation, a team's account,
+ * Payees, a budget line's allocation) — those carry a back arrow and no tab row. Read against the
+ * club's OWN tab list: where the club runs no rep teams, the loop's two addresses are no tab (a tab
+ * row with nothing lit is the frame lying about where you are).
+ */
+export function accountingTabFor(pathname: string, base: string, opts: { runsRepTeams: boolean }): AccountingTabId | null {
+  return accountingTabs(base, opts).find(t => t.href === pathname)?.id ?? null;
 }

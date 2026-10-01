@@ -35,6 +35,7 @@ import {
 } from '@/components/admin/kit/club/RepKit';
 import type { SeasonPreflight } from '@/components/admin/kit/club/SeasonDialogs';
 import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
+import { money } from '@/components/admin/kit/club/money/MoneyKit';
 import { TEAM_COLOUR_EXAMPLE, nextEventLines } from '@/lib/club-board-view';
 import {
   FIRST_SEASON_TITLE, closedCardLine, firstSeasonLine, reopenLink, startButton, twoOpenBody, twoOpenTitle,
@@ -60,6 +61,15 @@ interface TeamRead {
   programYears: RepProgramYear[];
   board: ClubBoardRow;
   seasons: TeamSeason[];
+  /** What the team owes the club (Club Tier Stage 3a, Ask 2) — null for someone who can't open Accounting. */
+  withTheClub?: WithTheClub | null;
+}
+interface WithTheClub {
+  outstanding: number;
+  nextDue: { dueDate: string; amount: number } | null;
+  overdue: { count: number; amount: number };
+  sent: { count: number; amount: number };
+  requestsWaiting: number;
 }
 interface StaffRow { membershipId: string; userId: string; name: string | null; email: string | null; coachRole: string; kindWord: string }
 interface InviteRow { id: string; email: string; coachRole: string; kindWord: string; status: string; invitedAt: string; expired: boolean }
@@ -320,6 +330,9 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
       )}
 
       <CoachesSection coaches={coaches} teamBase={teamBase} />
+      {read.withTheClub && !team.isArchived && (
+        <WithTheClubSection money={read.withTheClub} teamName={team.name} href={`/${orgSlug}/admin/accounting/teams/${teamId}`} />
+      )}
       {!team.isArchived && <WhatTheClubSees />}
       {!team.isArchived && (
         <TeamDetails
@@ -405,6 +418,29 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
         />
       )}
     </div>
+  );
+}
+
+/**
+ * WITH THE CLUB (Club Tier Stage 3a, Ask 2 — specimen 5): what the team owes the club and whether a
+ * request waits, for someone who can open Accounting. It opens the team's account in Accounting. The
+ * team's own cash stays the coaches' (D1); its per-team figures are 3b's.
+ */
+function WithTheClubSection({ money: m, teamName, href }: { money: WithTheClub; teamName: string; href: string }) {
+  const title = m.outstanding > 0
+    ? `${money(m.outstanding)} outstanding${m.nextDue ? ` · next ${money(m.nextDue.amount)} on ${formatStoredDate(m.nextDue.dueDate, { withYear: false })}` : ''}`
+    : 'Nothing owed to the club';
+  const caption = [
+    m.overdue.count > 0 ? `${money(m.overdue.amount)} overdue` : null,
+    m.sent.count > 0 ? `${money(m.sent.amount)} sent, waiting for the club to confirm` : null,
+    m.requestsWaiting > 0 ? `${pluralize(m.requestsWaiting, 'request')} waiting` : 'no request waiting',
+  ].filter(Boolean).join(' · ');
+  return (
+    <ClubSection id="with-the-club" title="With the club" meta={teamName} list>
+      <ClubRowList inset label={`${teamName} with the club`}>
+        <ClubRow as="link" href={href} title={title} caption={caption} chevron />
+      </ClubRowList>
+    </ClubSection>
   );
 }
 

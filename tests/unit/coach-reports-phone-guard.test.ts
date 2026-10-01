@@ -31,7 +31,7 @@ const awards = readCode(`${H}/awards/panel.tsx`);
 const attendance = readCode(`${H}/attendance/panel.tsx`);
 const development = readCode(`${H}/development/panel.tsx`);
 const hub = readCode(`${H}/page.tsx`);
-const tabBar = readCode('components/coaches/CoachTabBar.tsx');
+const tabBar = readCode('components/shared/HubTabBar.tsx');
 const css = readSource('app/[orgSlug]/coaches/coaches.module.css');
 const feedCss = readSource('components/notifications/notifications-page.module.css');
 

@@ -118,11 +118,12 @@ describe('the morning brief (J4-041) — counts, never money (C04)', () => {
 describe('the hub — a door only where it opens', () => {
   const hub = readCode('components/admin/kit/club/ClubHubKit.tsx');
 
-  it('every brief card that leads to Rep Teams is a door only for someone who can open Rep Teams', () => {
-    // Four specs, four hrefs, each gated on canOpenRepTeams (the treasurer's cards are counts only).
-    const gated = hub.match(/canOpenRepTeams \? `\$\{base\}\/rep-teams/g) ?? [];
-    assert.equal(gated.length, 3, 'payment requests, installments and assistant coaches');
-    assert.match(hub, /if \(!canOpenRepTeams\) return null;/, 'tryout applications');
+  it('every brief card is a door only for someone who can open where it leads', () => {
+    // Club Tier Stage 3a: the treasurer's two money cards became DOORS into Accounting (Stage 1 held
+    // them as counts until the screens existed); assistant coaches and tryouts still lead to Rep Teams.
+    assert.equal((hub.match(/can\.accounting \? `\$\{base\}\/accounting\//g) ?? []).length, 2, 'payment requests and installments due');
+    assert.equal((hub.match(/can\.repTeams \? `\$\{base\}\/rep-teams/g) ?? []).length, 1, 'assistant coaches');
+    assert.match(hub, /if \(!can\.repTeams\) return null;/, 'tryout applications');
     assert.match(hub, /return href\s*\? <CoachDoorCard[\s\S]*?: <CoachCard/, 'no href → a plain card, not a link');
   });
 

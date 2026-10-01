@@ -1,7 +1,7 @@
 'use client';
 import { ChevronDown } from 'lucide-react';
 import useDetailsOutsideClick from './useDetailsOutsideClick';
-import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
+import styles from '../shared/FilterPill.module.css';
 
 /**
  * A checkbox list inside a native `<details>` disclosure — the compact-toolbar counterpart to a
@@ -82,12 +82,12 @@ export default function MultiSelectDropdown({
 
   return (
     <details ref={ref} className={styles.multiSelect}>
-      <summary className={`${styles.multiSelectSummary} ${restQuiet && !atRest ? styles.multiSelectActive : ''}`}>
+      <summary data-pill="summary" className={`${styles.multiSelectSummary} ${restQuiet && !atRest ? styles.multiSelectActive : ''}`}>
         <span className={styles.multiSelectLabel}>{label}</span>
         {!(restQuiet && atRest) && <span className={styles.multiSelectValue}>{summary}</span>}
         <ChevronDown size={14} aria-hidden />
       </summary>
-      <div className={styles.multiSelectPanel} role="group" aria-label={label}>
+      <div data-pill="panel" className={styles.multiSelectPanel} role="group" aria-label={label}>
         <label className={styles.multiSelectOption}>
           <input type="checkbox" checked={selected.size === 0} onChange={() => onChange(new Set())} />
           {allLabel}

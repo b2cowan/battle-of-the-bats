@@ -21,7 +21,7 @@ import { Callout, repKit } from './RepKit';
 import {
   CLOSE_BODY, CLOSE_LATER, FIRST_SEASON_TITLE, START_CARRIES, START_STAFF_NOTE,
   closeTitle, closeWarning, firstSeasonLine, hasUnsettled, rosterCarryDetail, startButton, startLead,
-  startToldLine, startWarningTail, unsettledIntro, unsettledLines, type UnsettledCounts,
+  startToldLine, startWarningTail, unsettledIntro, unsettledLines, type OwedToClub, type UnsettledCounts,
 } from '@/lib/club-season-words';
 
 export interface SeasonRef { id: string; name: string; year: number; status: string; isLive: boolean }
@@ -36,6 +36,8 @@ export interface SeasonPreflight {
   reopenSeason: SeasonRef | null;
   hasSeasons: boolean;
   unsettled: UnsettledCounts | null;
+  /** What the team owes the club in the season (Stage 3a, Ask 5b) — warns, never blocks. */
+  owedToClub?: OwedToClub | null;
 }
 
 async function send(url: string, method: 'POST' | 'PATCH', body: unknown): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; error: string }> {
@@ -80,7 +82,7 @@ export function StartSeasonDialog({
   const [error, setError] = useState('');
   const yearNum = Number(year);
   const ready = name.trim().length > 0 && Number.isInteger(yearNum) && yearNum > from.year;
-  const lines = unsettledLines(preflight.unsettled);
+  const lines = unsettledLines(preflight.unsettled, preflight.owedToClub);
 
   async function start() {
     if (!ready || busy) return;
@@ -149,7 +151,7 @@ export function StartSeasonDialog({
       </div>
       <p className={repKit.windowNote}>{START_STAFF_NOTE}</p>
 
-      {from.isLive && hasUnsettled(preflight.unsettled) && (
+      {from.isLive && hasUnsettled(preflight.unsettled, preflight.owedToClub) && (
         <div className={repKit.windowWarn}>
           <UnsettledWarning heading="Before you start">
             {unsettledIntro(teamName, from.year)}
@@ -178,7 +180,7 @@ export function CloseSeasonDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const target = open.find(s => s.id === seasonId) ?? null;
-  const warning = closeWarning(preflight.unsettled);
+  const warning = closeWarning(preflight.unsettled, preflight.owedToClub);
 
   async function close() {
     if (!target || busy) return;

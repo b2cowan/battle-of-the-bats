@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { TrendingUp, Plus, HelpCircle, ArrowRight, ChevronRight } from 'lucide-react';
 import { useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import CoachTabBar from '@/components/coaches/CoachTabBar';
+import HubTabBar from '@/components/shared/HubTabBar';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { formatShortDate, formatWeekdayDate, todayLocal } from '@/lib/measurable-format';
@@ -54,7 +54,7 @@ export default function DevelopmentHubPage({
  * ═══ SKILLS & GOALS — three views on one screen ═══
  *
  * Overview · Sessions · Metrics. `?section=` addresses the view, the Money and Insights hubs'
- * convention (`CoachTabBar`), so a tab is a real, shareable address; the bare address is the
+ * convention (`HubTabBar`), so a tab is a real, shareable address; the bare address is the
  * Overview.
  *
  * **Overview is the LANDING (re-evaluation stage 0, owner ruling 2026-09-14) — Money's shape in
@@ -277,7 +277,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
         actionsPhoneInTitleRow
       />
 
-      <CoachTabBar tabs={tabs} activeId={section} ariaLabel="Skills and Goals views" />
+      <HubTabBar tabs={tabs} activeId={section} ariaLabel="Skills and Goals views" />
 
       {error && <p className={styles.errorText} role="alert">{error}</p>}
       {loading ? (

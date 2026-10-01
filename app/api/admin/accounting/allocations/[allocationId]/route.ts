@@ -5,6 +5,7 @@ import { teamIdsInScope } from '@/lib/club-team-route';
 import { allocationDetail, loadClubLoop } from '@/lib/club-money-reads';
 import { canMoveClubMoney } from '@/lib/member-access';
 import { tournamentToday } from '@/lib/timezone';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 type Params = { params: Promise<{ allocationId: string }> };
 
@@ -23,5 +24,12 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   const loop = await loadClubLoop(ctx.org.id, await teamIdsInScope(ctx), { allocationId });
   const detail = await allocationDetail(ctx.org.id, loop, allocationId, today);
   if (!detail) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json({ asOf: today, canMove: canMoveClubMoney(ctx, ctx.org), ...detail });
+  // The toolbar line names the budget line it came from ("budget line Diamond permits", specimen 3).
+  let budgetLineName: string | null = null;
+  if (detail.allocation.sourceBudgetLineId) {
+    const { data } = await supabaseAdmin.from('org_budget_lines').select('description')
+      .eq('id', detail.allocation.sourceBudgetLineId).eq('org_id', ctx.org.id).maybeSingle();
+    budgetLineName = (data as { description?: string | null } | null)?.description ?? null;
+  }
+  return NextResponse.json({ asOf: today, canMove: canMoveClubMoney(ctx, ctx.org), budgetLineName, ...detail });
 }, { route: '/api/admin/accounting/allocations/[allocationId]' });

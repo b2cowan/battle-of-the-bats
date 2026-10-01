@@ -1,5 +1,6 @@
 'use client';
 import styles from '../../../../coaches.module.css';
+import pill from '@/components/shared/FilterPill.module.css';
 import type { RepTeamTag } from '@/lib/types';
 
 /** A record's money tags as chips, in the picker's own idiom — the same flat white/black pill,
@@ -15,7 +16,7 @@ export function TagChips({ tagIds, moneyTags }: { tagIds: string[]; moneyTags: R
         const isOrg = t.teamId === null;
         return (
           <span key={t.id} className={styles.tagComboChip} style={{ marginLeft: '0.5rem' }}>
-            <span className={`${styles.tagComboDot} ${isOrg ? styles.tagComboDotOrg : styles.tagComboDotOwn}`} aria-hidden />
+            <span className={`${pill.tagComboDot} ${isOrg ? pill.tagComboDotOrg : pill.tagComboDotOwn}`} aria-hidden />
             {t.name}
           </span>
         );

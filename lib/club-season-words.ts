@@ -14,8 +14,33 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import { joinWithAnd, pluralize } from './utils';
+import { fmt } from './coach-money-summary';
 
 export interface UnsettledCounts { familiesOwing: number; familiesWaitingToReturn: number }
+
+/**
+ * What the team still owes the CLUB in the season, and the requests waiting on the club (Club Tier
+ * Stage 3a, Ask 5b, S3A-03 — the club's season window counted families' dues only). It WARNS beside
+ * them and never blocks (owner, 2026-08-17). A figure joins the counts now: this is the club's own money.
+ */
+export interface OwedToClub { installments: number; amount: number; sent: number; requestsWaiting: number }
+
+/**
+ * The club-money lines, in the warning's voice: list items for the Start window's list, or — `clauses`
+ * — with their verb, for the Close window's one sentence ("…, and 2 payment requests ARE still
+ * waiting…"). The sentence carries counts only, so it leaves out the "sent" detail and its comma.
+ */
+function owedLines(o: OwedToClub | null | undefined, clauses = false): string[] {
+  if (!o) return [];
+  const lines: string[] = [];
+  const be = (n: number) => (clauses ? (n === 1 ? 'is ' : 'are ') : '');
+  if (o.installments > 0) {
+    const sent = !clauses && o.sent > 0 ? `, ${o.sent} of them sent and waiting for the club to confirm` : '';
+    lines.push(`${pluralize(o.installments, 'installment')} (${fmt(o.amount)}) ${be(o.installments)}still owed to the club${sent}`);
+  }
+  if (o.requestsWaiting > 0) lines.push(`${pluralize(o.requestsWaiting, 'payment request')} ${be(o.requestsWaiting)}still waiting on the club`);
+  return lines;
+}
 
 /** The Start window's first line — the consequence, before anything else (season-close plan §3.2). */
 export function startLead(p: { fromName: string; fromIsLive: boolean }): string {
@@ -41,16 +66,15 @@ export const START_STAFF_NOTE =
   'The coaching staff stays, because coaches belong to the team. Starting fresh: the schedule, tryouts (closed until you open them) and player documents.';
 
 /** The warning's lines, as counts — only the ones that are outstanding. */
-export function unsettledLines(u: UnsettledCounts | null | undefined): string[] {
-  if (!u) return [];
+export function unsettledLines(u: UnsettledCounts | null | undefined, owed?: OwedToClub | null): string[] {
   const lines: string[] = [];
-  if (u.familiesOwing > 0) lines.push(`${pluralize(u.familiesOwing, 'family', 'families')} still ${u.familiesOwing === 1 ? 'owes' : 'owe'} dues`);
-  if (u.familiesWaitingToReturn > 0) lines.push(`Money is waiting to go back to ${pluralize(u.familiesWaitingToReturn, 'family', 'families')}`);
-  return lines;
+  if (u && u.familiesOwing > 0) lines.push(`${pluralize(u.familiesOwing, 'family', 'families')} still ${u.familiesOwing === 1 ? 'owes' : 'owe'} dues`);
+  if (u && u.familiesWaitingToReturn > 0) lines.push(`Money is waiting to go back to ${pluralize(u.familiesWaitingToReturn, 'family', 'families')}`);
+  return [...lines, ...owedLines(owed)];
 }
 
-export function hasUnsettled(u: UnsettledCounts | null | undefined): boolean {
-  return unsettledLines(u).length > 0;
+export function hasUnsettled(u: UnsettledCounts | null | undefined, owed?: OwedToClub | null): boolean {
+  return unsettledLines(u, owed).length > 0;
 }
 
 /** "9U A’s 2026 books aren’t settled:" — the warning's opening, before its lines. */
@@ -81,13 +105,15 @@ export const CLOSE_BODY =
   'This season becomes a record. Everything is kept on one page you can open any time: the results, the roster, the money and the practices.';
 export const CLOSE_LATER = 'You can start a new season later; closing now doesn’t prevent it.';
 /** The Close warning, one sentence, counts only, never blocking. */
-export function closeWarning(u: UnsettledCounts | null | undefined): string | null {
+export function closeWarning(u: UnsettledCounts | null | undefined, owed?: OwedToClub | null): string | null {
   const parts: string[] = [];
   if (u && u.familiesOwing > 0) parts.push(`${pluralize(u.familiesOwing, 'family', 'families')} still ${u.familiesOwing === 1 ? 'owes' : 'owe'} dues`);
   if (u && u.familiesWaitingToReturn > 0) parts.push(`money is waiting to go back to ${pluralize(u.familiesWaitingToReturn, 'family', 'families')}`);
+  parts.push(...owedLines(owed, true));
   if (parts.length === 0) return null;
-  // Two independent clauses, so the drawn comma: "…owe dues, and money is waiting…".
-  const sentence = parts.join(', and ');
+  // Independent clauses, so the drawn comma before the last: "…owe dues, and money is waiting…" — and
+  // with three or four (what the team owes the club joins them), "A, B, and C", never "A, and B, and C".
+  const sentence = parts.length <= 2 ? parts.join(', and ') : `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
   return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}. You can still close.`;
 }
 

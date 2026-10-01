@@ -2,16 +2,12 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
 import { canMoveClubMoney, canOpenRepMoney } from '@/lib/member-access';
 import {
-  getRepCostAllocations,
   createRepCostAllocationWithSplits,
   getRepTeam,
   getRepProgramYear,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { tournamentToday } from '@/lib/timezone';
-import { teamIdsInScope } from '@/lib/club-team-route';
-import { allocationListRows, loadClubLoop } from '@/lib/club-money-reads';
 
 // The club ↔ team money loop: Rep Teams OR Accounting, on an org that runs rep teams (D8 + Ask 1 —
 // a treasurer reaches it from Accounting). The write handlers below keep their own role checks.
@@ -21,44 +17,9 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export const GET = withObservability(async (_req: Request) => {
-  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
-
-  /* ⚖ THE FIGURES ARE THE ONE DEFINITION NOW (Club Tier Stage 3a, S3A-05 / C06). This read selected
-     each installment WITHOUT its due date and then filtered on it, so it could never count one
-     overdue, and it summed Collected by hand — one of four definitions. It keeps today's response
-     shape for the old screen (session 2 retires it for Accounting › Allocations) and adds the new
-     list's fields beside it. */
-  const today = tournamentToday();
-  const [allocations, loop] = await Promise.all([
-    getRepCostAllocations(ctx!.org.id),
-    loadClubLoop(ctx!.org.id, await teamIdsInScope(ctx!)),
-  ]);
-  const rows = new Map(allocationListRows(loop, today).map(r => [r.id, r]));
-  const enriched = allocations.flatMap(alloc => {
-    const r = rows.get(alloc.id);
-    if (!r) return [];
-    return [{
-      ...alloc,
-      teamCount: r.teamIds.length,
-      totalAllocated: r.allocated,
-      collected: r.figures.collected,
-      outstanding: r.figures.outstanding,
-      overdueCount: r.figures.overdue.count,
-      teamsWord: r.teamsWord,
-      teamNames: r.teamNames,
-      figures: r.figures,
-      chip: r.chip,
-      firstDue: r.firstDue,
-      lastDue: r.lastDue,
-    }];
-  });
-
-  return NextResponse.json({ allocations: enriched });
-}, { route: '/api/admin/rep-teams/allocations' });
+/* ⚰ GET RETIRED (Club Tier Stage 3a session 2): the list lives in Accounting › Allocations
+   (`GET /api/admin/accounting/allocations`). POST stays — the New allocation form (today's, moved
+   under Accounting) still creates through it. */
 
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;

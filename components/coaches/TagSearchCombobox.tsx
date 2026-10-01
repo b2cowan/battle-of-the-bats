@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Settings2, User, X } from 'lucide-react';
 import TagManagerDrawer, { type TagManagerPolicy } from '@/components/coaches/TagManagerDrawer';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import pill from '@/components/shared/FilterPill.module.css';
 import { claimEscape } from './escapeOwnership';
 
 /**
@@ -369,7 +370,7 @@ export default function TagSearchCombobox({
                 {/* The chip itself is one flat pill regardless of whose tag it is (owner ruling
                     2026-09-15); this dot is what used to be the chip's whole fill colour — the
                     same dot the dropdown's own rows below already wear. */}
-                <span className={`${styles.tagComboDot} ${isOrg ? styles.tagComboDotOrg : styles.tagComboDotOwn}`} aria-hidden />
+                <span className={`${pill.tagComboDot} ${isOrg ? pill.tagComboDotOrg : pill.tagComboDotOwn}`} aria-hidden />
                 {/* The person mark (mig 303): this word IS someone on the staff. */}
                 {tag.userId && <User size={11} aria-label="Linked to a person" className={styles.tagComboPerson} />}
                 {tag.name}
@@ -439,7 +440,7 @@ export default function TagSearchCombobox({
                     onClick={() => selectTag(t.id)}
                   >
                     <span className={styles.tagComboOptName}>
-                      <span className={`${styles.tagComboDot} ${isOrg ? styles.tagComboDotOrg : styles.tagComboDotOwn}`} />
+                      <span className={`${pill.tagComboDot} ${isOrg ? pill.tagComboDotOrg : pill.tagComboDotOwn}`} />
                       {t.name}
                     </span>
                     {n != null && <span className={styles.tagComboCount}>{n} tagged</span>}
@@ -501,13 +502,13 @@ export default function TagSearchCombobox({
       {showLegend && lib.some(t => t.teamId === null) && (
         <div className={styles.tagComboLegend}>
           <span className={styles.tagComboLegendItem}>
-            <span className={`${styles.tagComboLegendDot} ${styles.tagComboDotOrg}`} />
+            <span className={`${styles.tagComboLegendDot} ${pill.tagComboDotOrg}`} />
             {/* "club", not "organization" — the drawer, the shelf and the coach portal's own Money
                 vocabulary all say club; one thing, one word (2026-08-24 ruling; aligned P2). */}
             <span>Shared by your club</span>
           </span>
           <span className={styles.tagComboLegendItem}>
-            <span className={`${styles.tagComboLegendDot} ${styles.tagComboDotOwn}`} />
+            <span className={`${styles.tagComboLegendDot} ${pill.tagComboDotOwn}`} />
             <span>Your team&rsquo;s own</span>
           </span>
         </div>

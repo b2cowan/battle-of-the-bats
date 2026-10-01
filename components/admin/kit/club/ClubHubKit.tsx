@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
-import { isClubPlan } from '@/lib/module-entitlements';
+import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { closedProgramPlansSentence } from '@/lib/plan-config';
@@ -37,7 +37,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, CoachChip, kit } from '@/components/coaches/kit';
 import { useAdminKitNav } from '../useAdminKitNav';
 import { useClubBrief, briefProgramCount, type BriefKey, type ClubBrief } from './ClubBriefProvider';
-import type { AdminProgramKey } from '@/lib/admin-kit-nav';
+import { accountingTabs, type AdminProgramKey } from '@/lib/admin-kit-nav';
 import ck from './ClubKit.module.css';
 import styles from './ClubHub.module.css';
 
@@ -54,7 +54,7 @@ type BriefCardSpec = {
   /** The line under the figure — facts only (a count of teams, an age), never an amount. */
   sub: (n: number, brief: ClubBrief) => string;
   /** Where the card opens, or null when this person cannot open that page. */
-  href: (base: string, brief: ClubBrief, canOpenRepTeams: boolean) => string | null;
+  href: (base: string, brief: ClubBrief, can: { repTeams: boolean; accounting: boolean }) => string | null;
 };
 
 const BRIEF_CARDS: BriefCardSpec[] = [
@@ -67,8 +67,8 @@ const BRIEF_CARDS: BriefCardSpec[] = [
       return teams > 0 ? `waiting on a decision · ${pluralize(teams, 'team')}` : 'waiting on a decision';
     },
     // Opens the tryouts of the team with the OLDEST application (specimen 1's note).
-    href: (base, b, canOpenRepTeams) => {
-      if (!canOpenRepTeams) return null;
+    href: (base, b, can) => {
+      if (!can.repTeams) return null;
       const oldest = b.detail.tryoutApplications?.oldest;
       return oldest
         ? `${base}/rep-teams/teams/${oldest.teamId}/program-years/${oldest.programYearId}/tryouts`
@@ -81,23 +81,33 @@ const BRIEF_CARDS: BriefCardSpec[] = [
     sub: (n, b) => {
       if (n === 0) return 'nothing waiting';
       const days = b.detail.paymentRequests?.oldestDays;
-      if (days == null) return 'from coaches';
-      return `from coaches · oldest ${days === 0 ? 'today' : pluralize(days, 'day')}`;
+      const held = b.detail.paymentRequests?.holdingPayout ?? 0;
+      const age = days == null ? 'from coaches' : `oldest waiting ${days === 0 ? 'today' : pluralize(days, 'day')}`;
+      // ⚖ Club Tier Stage 3a, Ask 5b: a request holding up a team's payout to families is the one thing
+      // waiting on the club that holds up families' money, so the door names it.
+      return held > 0 ? `${age} · ${held} holding up a payout` : age;
     },
-    href: (base, _b, canOpenRepTeams) => (canOpenRepTeams ? `${base}/rep-teams/payment-requests` : null),
+    // ⚖ A DOOR since Club Tier Stage 3a (Stage 1's ruling held them as plain counts until the treasurer
+    // had the screens): the Payment requests tab.
+    href: (base, _b, can) => (can.accounting ? `${base}/accounting/payment-requests` : null),
   },
   {
     key: 'installmentsDue',
     label: 'Installments due',
-    sub: n => (n === 0 ? 'none in the next 14 days' : 'in the next 14 days'),
-    // Read from the Upcoming Payables list the Rep Teams page shows (specimen 1's note).
-    href: (base, _b, canOpenRepTeams) => (canOpenRepTeams ? `${base}/rep-teams` : null),
+    sub: (n, b) => {
+      if (n === 0) return 'none in the next 14 days';
+      const overdue = b.detail.installmentsDue?.overdue ?? 0;
+      return overdue > 0 ? `in the next 14 days · ${overdue} overdue` : 'in the next 14 days';
+    },
+    // Allocations on Coming due: the same 14-day window with the overdue band, so the count and the
+    // bands agree (the one definition, S3A-05).
+    href: (base, _b, can) => (can.accounting ? `${base}/accounting/allocations?view=coming-due` : null),
   },
   {
     key: 'assistantCoaches',
     label: 'Assistant coaches',
     sub: n => (n === 0 ? 'nothing waiting' : 'awaiting your approval'),
-    href: (base, _b, canOpenRepTeams) => (canOpenRepTeams ? `${base}/rep-teams/assistant-coaches` : null),
+    href: (base, _b, can) => (can.repTeams ? `${base}/rep-teams/assistant-coaches` : null),
   },
 ];
 
@@ -205,9 +215,11 @@ export default function ClubHubKit() {
             ? `${pluralize(teams.active, 'team')} in ${teams.groups} groups · `
             : `${pluralize(teams.active, 'team')} · `
           : '';
-        return `${count}tryouts, rosters, coaches and allocations`;
+        return `${count}tryouts, rosters and coaches`;
       }
-      case 'accounting': return `The ${noun}’s ledgers, its budget and Budget vs. Actual`;
+      // ⚖ Accounting is one page with tabs (Stage 3a, Ask 2): its line names the tabs, as drawn.
+      case 'accounting': return accountingTabs(base, { runsRepTeams: hasModuleEntitlement(currentOrg, 'module_rep_teams') })
+        .filter(t => t.id !== 'overview').map(t => t.label).join(' · ');
       case 'families': return 'Every household on your rosters: who owes, who is missing forms, who cannot be reached';
       case 'public-site': return `Your ${noun}’s page: tagline, contact and links`;
       case 'house-league': return 'Seasons, registrations, the draft, schedules and standings';
@@ -243,7 +255,7 @@ export default function ClubHubKit() {
             <div className={styles.brief}>
               {briefCards.map(c => {
                 const n = brief.counts[c.key] ?? 0;
-                const href = c.href(base, brief, canOpenRepTeams);
+                const href = c.href(base, brief, { repTeams: canOpenRepTeams, accounting: canOpen('module_accounting') });
                 const body = (
                   <>
                     <CoachEyebrow arrow={!!href}>{c.label}</CoachEyebrow>
@@ -276,7 +288,7 @@ export default function ClubHubKit() {
             {programs.map(p => {
               const Icon = PROGRAM_ICON[p.key];
               const waiting = briefProgramCount(brief, p.key);
-              const chip = p.key === 'rep-teams' && waiting > 0
+              const chip = (p.key === 'rep-teams' || p.key === 'accounting') && waiting > 0
                 ? <CoachChip tone="warn">{waiting} waiting</CoachChip>
                 : p.key === 'public-site'
                   ? <CoachChip tone={currentOrg.isPublic ? 'good' : 'warn'}>{currentOrg.isPublic ? 'Online' : 'Offline'}</CoachChip>

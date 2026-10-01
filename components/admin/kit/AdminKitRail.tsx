@@ -69,8 +69,9 @@ function ProgramRow({ href, label, icon: Icon, open, hasPages, count = 0 }: {
       <Icon size={14} aria-hidden />
       <span>{label}</span>
       {/* The morning brief's waiting items for this program (Club Tier Stage 1, specimen 3) — the
-          same number the hub's door and the phone tab show. Hidden while open: its pages carry it. */}
-      {count > 0 && !open && <span className={styles.count} aria-label={`${count} waiting`}>{count > 9 ? '9+' : count}</span>}
+          same number the hub's door and the phone tab show. Hidden while open when its pages carry it;
+          a program with no pages (Accounting, one page with tabs — Stage 3a Ask 2) keeps it inside too. */}
+      {count > 0 && (!open || !hasPages) && <span className={styles.count} aria-label={`${count} waiting`}>{count > 9 ? '9+' : count}</span>}
       {hasPages && <ChevronRight size={13} className={`${styles.chevron}${open ? ` ${styles.chevronOpen}` : ''}`} aria-hidden />}
     </Link>
   );

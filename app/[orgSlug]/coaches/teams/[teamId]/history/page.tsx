@@ -7,7 +7,7 @@ import { BarChart3 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import CoachTabBar from '@/components/coaches/CoachTabBar';
+import HubTabBar from '@/components/shared/HubTabBar';
 import { CoachFigureRows, CoachFigureRow } from '@/components/coaches/CoachFigureRows';
 import SeasonTrendChart from '@/components/charts/SeasonTrendChart';
 import { computeSeasonMomentum } from '@/lib/coach-season-momentum';
@@ -581,7 +581,7 @@ export default function CoachesInsightsPage({
         help={{ module: 'coaches', sectionIds: [help.helpAnchor], fullGuideHref: `/${orgSlug}/coaches/help#${help.helpAnchor}` }}
       />
 
-      <CoachTabBar
+      <HubTabBar
         tabs={visibleTabs.map(t => ({ id: t.id, label: t.label, href: sectionHref(t.id) }))}
         activeId={effectiveSection}
         ariaLabel="Reports"

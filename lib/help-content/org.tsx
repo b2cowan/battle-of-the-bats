@@ -95,7 +95,7 @@ const orgHelp: HelpPageContent = {
               <ul>
                 <li><strong>Owner</strong> — Full access, plus the two things nobody else can hold: <strong>Plan &amp; billing</strong> and <strong>Settings</strong>. Assigned at org creation; ownership can&rsquo;t be transferred through the admin panel.</li>
                 <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and branding. Cannot open <strong>Settings</strong>, <strong>Plan &amp; billing</strong>, or the <strong>audit log</strong> — those stay owner-only — and doesn&rsquo;t see <strong>Families</strong> unless the owner turns it on for them.</li>
-                <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, and allocations to teams. Can see the team names money is allocated to, without a Rep Teams door of their own.</li>
+                <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, what the club bills its teams, and the teams’ payment requests. Can see the team names money is allocated to, without a Rep Teams door of their own.</li>
                 <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot create tournaments, manage registrations, or send communications.</li>
                 <li><strong>League Admin</strong> — Runs the house league: seasons, registrations, teams, and schedules. Can view the member list.</li>
                 <li><strong>League Registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons, schedules, or the member list.</li>

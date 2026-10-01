@@ -13,26 +13,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export const GET = withObservability(async (_req: Request,
-  { params }: { params: Promise<{ allocationId: string }> },) => {
-  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
-
-  const { allocationId } = await params;
-  let detail = await getRepCostAllocationDetail(allocationId, ctx!.org.id);
-  if (!detail) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-
-  const scopedSet = await teamIdsInScope(ctx!);
-  if (scopedSet) {
-    const visibleSplits = detail.splits.filter(s => scopedSet.has(s.teamId));
-    if (visibleSplits.length === 0) return forbidden();
-    detail = { ...detail, splits: visibleSplits };
-  }
-
-  return NextResponse.json(detail);
-}, { route: '/api/admin/rep-teams/allocations/[allocationId]' });
+/* ⚰ GET RETIRED (Club Tier Stage 3a session 2): an allocation is read in Accounting
+   (`GET /api/admin/accounting/allocations/[allocationId]`). PATCH (its description) stays. */
 
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ allocationId: string }> },) => {

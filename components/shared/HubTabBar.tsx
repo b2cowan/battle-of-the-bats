@@ -2,14 +2,21 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
+import styles from './HubTabBar.module.css';
 
 /**
- * The coach portal's hub tab row — one scrollable line of `<Link>` tabs with measured edge
- * arrows. Used by the Money hub (`/accounting`) and the Insights reports portal (`/history`).
+ * THE ONE TAB ROW — one scrollable line of `<Link>` tabs with measured edge arrows. The coaches
+ * portal's hubs (Money, Insights, Development, Lineups, Practice plans, a player's page, the tryout
+ * flow) and the club's Accounting page (Club Tier Stage 3a, Ask 2 option B) all render it.
+ *
+ * ⚖ PROMOTED, NOT COPIED (2026-10-01). It was `components/coaches/CoachTabBar.tsx`, styled from the
+ * portal's 16,000-line stylesheet, which the admin shell does not load. The club's Accounting page
+ * needed the same row — "one idea, one shape": a treasurer who also coaches meets one money frame on
+ * both sides — so the component and its rules moved here (`HubTabBar.module.css`) and every caller
+ * imports this one. Change the row here and both shells follow; never restate it in an admin sheet.
  *
  * ⚠⚠ **A COMPONENT, NOT A SHARED CLASS** (memory: shared-component-beats-shared-class). The
- * classes alone were already shared-able — the Money hub's `.coachTab*` rules are generic — but a
+ * classes alone were already shared-able — the row's rules are generic — but a
  * class stops STYLE drift and does nothing about MARKUP drift, and the markup here is the part
  * carrying the invariants: the arrows are real buttons (they were briefly `pointer-events: none`
  * decoration, which looked clickable and passed the click through to the tab underneath), the
@@ -21,7 +28,7 @@ import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
  * middle-click, copy-link and browser Back all have to work. The caller owns the href — it is the
  * only thing that knows how to preserve its own page's live query state.
  */
-export interface CoachTab<Id extends string> {
+export interface HubTab<Id extends string> {
   id: Id;
   label: string;
   href: string;
@@ -33,14 +40,14 @@ export interface CoachTab<Id extends string> {
   short?: string;
 }
 
-export default function CoachTabBar<Id extends string>({
+export default function HubTabBar<Id extends string>({
   tabs,
   activeId,
   ariaLabel,
   remeasureKey,
   sticky,
 }: {
-  tabs: readonly CoachTab<Id>[];
+  tabs: readonly HubTab<Id>[];
   activeId: Id;
   /** Names the row for a screen reader — "Money", "Reports". */
   ariaLabel: string;
@@ -137,18 +144,18 @@ export default function CoachTabBar<Id extends string>({
 
   return (
     <div
-      className={`${styles.coachTabBarWrap} ${sticky ? styles.coachTabBarSticky : ''}`}
+      className={`${styles.wrap} ${sticky ? styles.sticky : ''}`}
       /* ⚠ A STABLE ID, ONLY WHEN STICKY — the register's own sticky zone measures this element's
          real rendered height (fonts/zoom/content all vary the estimate) rather than trusting a
          guessed CSS constant, which is what let content peek through a gap between the two sticky
-         layers on the actual page. Safe as a page-wide singleton: only one CoachTabBar renders at
+         layers on the actual page. Safe as a page-wide singleton: only one HubTabBar renders at
          a time, and only Money's Transactions tab ever sets `sticky`. */
       id={sticky ? 'coach-tabbar-sticky' : undefined}
     >
       {scroll.left && (
         <button
           type="button"
-          className={`${styles.coachTabScrollBtn} ${styles.coachTabScrollLeft}`}
+          className={`${styles.scrollBtn} ${styles.scrollLeft}`}
           onClick={() => scrollTabs(-1)}
           aria-label="Scroll tabs left"
         >
@@ -158,9 +165,9 @@ export default function CoachTabBar<Id extends string>({
       <nav
         ref={barRef}
         className={[
-          styles.coachTabBar,
-          scroll.left ? styles.coachTabFadeLeft : '',
-          scroll.right ? styles.coachTabFadeRight : '',
+          styles.bar,
+          scroll.left ? styles.fadeLeft : '',
+          scroll.right ? styles.fadeRight : '',
         ].filter(Boolean).join(' ')}
         aria-label={ariaLabel}
       >
@@ -168,12 +175,12 @@ export default function CoachTabBar<Id extends string>({
           <Link
             key={t.id}
             href={t.href}
-            className={`${styles.coachTabBtn} ${activeId === t.id ? styles.coachTabActive : ''}`}
+            className={`${styles.tab} ${activeId === t.id ? styles.active : ''}`}
             aria-current={activeId === t.id ? 'page' : undefined}
             aria-label={t.short ? t.label : undefined}
           >
             {t.short
-              ? <><span className={styles.coachTabLong} aria-hidden>{t.label}</span><span className={styles.coachTabShort} aria-hidden>{t.short}</span></>
+              ? <><span className={styles.long} aria-hidden>{t.label}</span><span className={styles.short} aria-hidden>{t.short}</span></>
               : t.label}
           </Link>
         ))}
@@ -181,7 +188,7 @@ export default function CoachTabBar<Id extends string>({
       {scroll.right && (
         <button
           type="button"
-          className={`${styles.coachTabScrollBtn} ${styles.coachTabScrollRight}`}
+          className={`${styles.scrollBtn} ${styles.scrollRight}`}
           onClick={() => scrollTabs(1)}
           aria-label="Scroll tabs right"
         >

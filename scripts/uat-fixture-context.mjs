@@ -510,8 +510,9 @@ export async function resolveAdminContext() {
     .eq('org_id', club.id).eq('entity_type', 'org').eq('is_archived', false).limit(1).maybeSingle());
   const line = await need('budget line "Diamond permits — city fields"', db.from('org_budget_lines').select('id')
     .eq('org_id', club.id).eq('description', 'Diamond permits — city fields').maybeSingle());
-  const allocation = await need('allocation "Diamond permits — team share"', db.from('rep_cost_allocations').select('id')
-    .eq('org_id', club.id).eq('description', 'Diamond permits — team share').maybeSingle());
+  // The fixture names it for its year ("Diamond fees 2026", Club Tier Stage 3a's money loop).
+  const allocation = await need('allocation "Diamond fees <year>"', db.from('rep_cost_allocations').select('id')
+    .eq('org_id', club.id).like('description', 'Diamond fees %').order('created_at', { ascending: false }).limit(1).maybeSingle());
   // By the seeder's own slug ("uat-rep-club-invitational-<year>"), newest year first — not "the
   // most recent tournament", which would silently re-aim if the club ever gains a second one.
   const clubTournament = await need('the club\'s Invitational', db.from('tournaments').select('id')

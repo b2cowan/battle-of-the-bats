@@ -187,3 +187,15 @@
 /* A plan-gated row says which plan unlocks it — in the chip's amber ink, readable on the card. */
 :global([data-admin-kit]) .menuItemGated .menuItemHint { color: var(--badge-warning-ink); opacity: 1; }
 :global([data-admin-kit]) .divider { background: var(--home-line); }
+
+/* What the export holds, said before it runs (`holds`, Club Tier Stage 3a) — the menu's first lines,
+   not a menu item: nothing to click, so no hover, and a hairline under it. */
+.holds {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.55rem 0.75rem 0.6rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border-2);
+  max-width: 19rem;
+}

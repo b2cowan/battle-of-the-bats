@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
   kitPrograms, kitOrgLinks, kitOrgLockedRows, isKitLinkActive, activeKitSection, kitTournamentLabel,
-  clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY,
+  clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor,
 } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
@@ -140,9 +140,32 @@ describe('the admin kit nav — where you are', () => {
     // and "Teams" — the board the back arrow leads to — does not light as well.
     assert.equal(isKitLinkActive(`${BASE}/rep-teams/teams/t1`, teams), false, 'a team page is lit in its own block, not as Teams');
     assert.equal(isKitLinkActive(`${BASE}/rep-teams/allocations`, teams), false);
-    const budget = kitPrograms({ base: BASE, canUse: c => c === 'module_accounting' })[0].pages[1];
-    assert.equal(isKitLinkActive(`${BASE}/accounting/budget-vs-actual`, budget), false, 'Budget must not light on Budget vs. Actual');
-    assert.equal(isKitLinkActive(`${BASE}/accounting/budget/allocate/l1`, budget), true);
+  });
+
+  it('⚖ Accounting is ONE ROW that never opens; its pages are the tab row (Club Tier Stage 3a, Ask 2 option B)', () => {
+    const [acct] = kitPrograms({ base: BASE, canUse: c => c === 'module_accounting' });
+    assert.equal(acct.key, 'accounting');
+    assert.deepEqual(acct.pages, [], 'no rail pages under Accounting — and so no phone "In Accounting" row');
+    const [rep] = kitPrograms({ base: BASE, canUse: c => c === 'module_rep_teams' });
+    assert.ok(!rep.pages.some(p => /allocations|payment-requests/.test(p.href)), 'the two money pages left Rep Teams');
+    // The tabs: the loop's two only where the club runs rep teams.
+    assert.deepEqual(accountingTabs(BASE, { runsRepTeams: true }).map(t => t.label),
+      ['Overview', 'Ledger', 'Allocations', 'Payment requests', 'Budget', 'Budget vs. Actual']);
+    assert.deepEqual(accountingTabs(BASE, { runsRepTeams: false }).map(t => t.id), ['overview', 'ledger', 'budget', 'budget-vs-actual']);
+    // A tab lights on its own address; a page one level down is no tab (back arrow, no tab row).
+    const REP = { runsRepTeams: true };
+    assert.equal(accountingTabFor(`${BASE}/accounting`, BASE, REP), 'overview');
+    assert.equal(accountingTabFor(`${BASE}/accounting/budget-vs-actual`, BASE, REP), 'budget-vs-actual');
+    assert.equal(accountingTabFor(`${BASE}/accounting/budget`, BASE, REP), 'budget', 'Budget must not light on Budget vs. Actual');
+    for (const down of ['allocations/a1', 'teams/t1', 'payees', 'budget/allocate/l1', 'allocations/new', 'ledger/l1']) {
+      assert.equal(accountingTabFor(`${BASE}/accounting/${down}`, BASE, REP), null, `${down} is one level down`);
+    }
+    // A club with no rep teams has no loop tabs, so their addresses light nothing (/review, 10-01).
+    assert.equal(accountingTabFor(`${BASE}/accounting/allocations`, BASE, REP), 'allocations');
+    assert.equal(accountingTabFor(`${BASE}/accounting/allocations`, BASE, { runsRepTeams: false }), null);
+    assert.equal(accountingTabFor(`${BASE}/accounting/payment-requests`, BASE, { runsRepTeams: false }), null);
+    // No dead tab: every tab is a real page.
+    for (const t of accountingTabs(BASE, { runsRepTeams: true })) assert.ok(routeExists(t.href), `${t.label} → ${t.href}`);
   });
 
   it('knows which group to open', () => {

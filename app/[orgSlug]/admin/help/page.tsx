@@ -67,10 +67,10 @@ export default function AdminHelpHubPage() {
     ] : []),
     ...(canAccounting ? [{
       title: 'Accounting',
-      desc:  'Track revenue, expenses, and ledger entries across tournaments and programs.',
+      desc:  'The club’s books, what it bills its teams, and what they ask of it — one page with tabs.',
       href:  `${helpBase}/accounting`,
       topicCount: 7,
-      keywords: ['ledger', 'budget', 'expense', 'revenue', 'allocation', 'actual'],
+      keywords: ['ledger', 'budget', 'expense', 'revenue', 'allocation', 'actual', 'payment request', 'payee', 'reminders'],
     }] : []),
     ...(canFamilies ? [{
       title: 'Families',
@@ -167,9 +167,10 @@ export default function AdminHelpHubPage() {
     ...(canAccounting ? [{
       title: 'Treasurer',
       steps: [
-        { label: 'Create the right ledger', href: `${helpBase}/accounting#recipe-create-ledger` },
-        { label: 'Add income or expenses', href: `${helpBase}/accounting#recipe-add-income-expense` },
-        { label: 'Transfer money between ledgers', href: `${helpBase}/accounting#recipe-transfer-between-ledgers` },
+        { label: 'Add an entry', href: `${helpBase}/accounting#recipe-add-income-expense` },
+        { label: 'Transfer money between the club’s books', href: `${helpBase}/accounting#recipe-transfer-between-ledgers` },
+        { label: 'Bill the teams for a shared cost', href: `${helpBase}/accounting#allocations` },
+        { label: 'Answer a payment request', href: `${helpBase}/accounting#payment-requests` },
         { label: 'Prepare a board-ready financial report', href: `${helpBase}/accounting#recipe-board-report` },
       ],
     }] : []),

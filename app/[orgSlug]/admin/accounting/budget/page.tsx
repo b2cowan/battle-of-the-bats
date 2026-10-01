@@ -11,7 +11,6 @@ import {
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import styles from './budget.module.css';
@@ -64,10 +63,9 @@ const BLANK_PERIOD: PeriodDraft = { label: '', periodDate: '', amount: '' };
 function blankPeriods(): PeriodDraft[] { return [{ ...BLANK_PERIOD }]; }
 
 export default function OrgBudgetPage() {
-  const { currentOrg, userRole, userCapabilities, loading, canOpen } = useOrg();
+  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'treasurer';
-  const canOpenRepTeams = canOpen('module_rep_teams');
   // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
   const kx = useKitStyle();
   const asterisk = useKitAsterisk();
@@ -529,11 +527,11 @@ export default function OrgBudgetPage() {
                     Allocate to Teams
                   </Link>
                 )}
-                {/* The allocation's page lives under Rep Teams, which a treasurer cannot open (Ask 1:
-                    no Rep Teams door) — a link they would only be bounced from is not shown. */}
-                {line.allocation && canOpenRepTeams && (
+                {/* ⚖ SHOWN AGAIN (Club Tier Stage 3a, Ask 2): the allocation's page lives in Accounting now,
+                    so everyone on this page can open it — the treasurer who made it included. */}
+                {line.allocation && (
                   <Link
-                    href={`${base}/rep-teams/allocations/${line.allocation.id}`}
+                    href={`${base}/accounting/allocations/${line.allocation.id}`}
                     className="btn btn-ghost"
                     style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem', whiteSpace: 'nowrap' }}
                   >
@@ -629,38 +627,12 @@ export default function OrgBudgetPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
-          breadcrumb's "Accounting" is the eyebrow (still a link) beside the organization's name, which
-          was the subtitle; "season planning" describes the page and is not re-homed (F3). */}
-      <AdminPageHeader
-        crumbs={[{ href: `${base}/accounting`, label: 'Accounting' }, { label: currentOrg?.name ?? '' }]}
-        title="Org budget"
-        actions={headerActions}
-        legacy={<>
-      <div className={styles.breadcrumb}>
-        <Link href={`${base}/accounting`}>Accounting</Link>
-        <span>/</span>
-        <span>Org Budget</span>
-      </div>
-
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><DollarSign size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Org Budget</h1>
-            <p className={styles.pageSub}>{currentOrg?.name} — season planning</p>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {headerActions}
-        </div>
-      </div>
-        </>}
-      />
+      {/* ⚖ A TAB OF ACCOUNTING (Club Tier Stage 3a, Ask 2 option B): the page lost only its own header —
+          the Accounting frame titles it and the tab row says which tab is lit. Its actions sit at the end of
+          the season row (a create belongs to the tab's own toolbar, §3.9). 3b redraws the page. */}
 
       {/* Year selector */}
-      <div className={styles.yearRow}>
+      <div className={styles.yearRow} style={{ flexWrap: 'wrap' }}>
         <span>Season year:</span>
         <select
           className={styles.yearSelect}
@@ -672,6 +644,9 @@ export default function OrgBudgetPage() {
             <option key={y} value={y}>{y}</option>
           ))}
         </select>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginLeft: 'auto', flexWrap: 'wrap' }}>
+          {headerActions}
+        </div>
       </div>
 
       {error && <p className={styles.errorText} style={{ marginBottom: '1rem' }}>{error}</p>}

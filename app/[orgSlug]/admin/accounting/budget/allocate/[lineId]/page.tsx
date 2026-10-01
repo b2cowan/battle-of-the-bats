@@ -60,10 +60,9 @@ function computeAmount(method: string, value: string, total: number, splitCount:
 export default function AllocateBudgetLinePage({ params }: { params: Promise<{ lineId: string; orgSlug: string }> }) {
   const { lineId } = use(params);
   const router  = useRouter();
-  const { currentOrg, userRole, userCapabilities, loading, canOpen } = useOrg();
+  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base    = `/${currentOrg?.slug ?? ''}/admin`;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-  const canOpenRepTeams = canOpen('module_rep_teams');
   // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
   const kx = useKitStyle();
   const asterisk = useKitAsterisk();
@@ -347,12 +346,9 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to create allocation');
-      // The allocation's own page lives under Rep Teams. Someone who can't open Rep Teams (a
-      // treasurer, Ask 1) would be bounced from it to the hub, so they return to the budget,
-      // where the line now shows as allocated.
-      router.push(canOpenRepTeams
-        ? `${base}/rep-teams/allocations/${data.allocation.id}`
-        : `${base}/accounting/budget`);
+      // The allocation's own page lives in Accounting since Club Tier Stage 3a (Ask 2): everyone who
+      // can allocate can open it.
+      router.push(`${base}/accounting/allocations/${data.allocation.id}`);
     } catch (e: any) {
       setError(e.message ?? 'Failed to create allocation.');
     } finally {

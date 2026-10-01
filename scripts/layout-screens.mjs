@@ -1392,20 +1392,12 @@ export const SCREENS = [
   // identity check's pinned page clock cannot reach — found by the slice 3 capture (2026-09-27): a
   // "before" at 01:22 UTC and an "after" past local midnight read "56d overdue" then "57d", styling
   // identical. The rows, lane counts and overdue pill are masked; the panel's frame stays checked.
-  { id: 'admin-rep-teams',             area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams`,
-    identityMask: [
-      '[class*="UpcomingPayablesPanel-module"][class*="__laneBody"]',
-      '[class*="UpcomingPayablesPanel-module"][class*="__laneCount"]',
-      '[class*="UpcomingPayablesPanel-module"][class*="__overduePill"]',
-      '[class*="UpcomingPayablesPanel-module"][class*="__tabOverdueDot"]',
-    ] },
-  { id: 'admin-rep-allocations',       area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/allocations` },
-  { id: 'admin-rep-allocation',        area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/allocations/${c.clubAllocationId}` },
-  { id: 'admin-rep-allocation-new',    area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/allocations/new` },
+  // The board's Upcoming bills panel (and its identity masks) left with Club Tier Stage 3a: a team's
+  // bills are read on Accounting › Allocations › Coming due now.
+  { id: 'admin-rep-teams',             area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams` },
   { id: 'admin-rep-assistant-coaches', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/assistant-coaches` },
   { id: 'admin-rep-documents',         area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/documents` },
   { id: 'admin-rep-past',              area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/past` },
-  { id: 'admin-rep-payment-requests',  area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/payment-requests` },
   { id: 'admin-rep-rename-slugs',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/rename-slugs` },
   { id: 'admin-rep-shared-library',    area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/shared-library` },
   // Club Tier Stage 2 · session 3: the TEAM is the unit — its page, its Coaches · Tryouts · Roster ·
@@ -1434,7 +1426,17 @@ export const SCREENS = [
   { id: 'admin-accounting-budget',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget` },
   { id: 'admin-accounting-bva',        area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget-vs-actual` },
   { id: 'admin-accounting-allocate',   area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget/allocate/${c.clubBudgetLineId}` },
-  { id: 'admin-accounting-ledger',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/ledger/${c.clubLedgerId}` },
+  // Club Tier Stage 3a: Accounting is one page with tabs. The Ledger tab IS the book (the Book pill
+  // switches it); Allocations and Payment requests moved here from Rep Teams (the old addresses
+  // forward, so they are no longer screens of their own); a team's account and Payees sit one level down.
+  { id: 'admin-accounting-ledger',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/ledger?book=${c.clubLedgerId}` },
+  { id: 'admin-accounting-payees',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payees` },
+  { id: 'admin-accounting-allocations', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations` },
+  { id: 'admin-accounting-coming-due', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?view=coming-due` },
+  { id: 'admin-accounting-allocation', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations/${c.clubAllocationId}` },
+  { id: 'admin-accounting-allocation-new', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations/new` },
+  { id: 'admin-accounting-payment-requests', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payment-requests` },
+  { id: 'admin-accounting-team',       area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}` },
 
   // ── Families (the Okafor household: a child on two teams) ──
   { id: 'admin-families',              area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families` },

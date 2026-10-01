@@ -240,6 +240,8 @@ export interface AccountRow {
   date: string;
   /** The bill or request this row belongs to. */
   sourceId: string;
+  /** A bill's allocation, so the statement's row opens it (Club Tier Stage 3a session 2). */
+  allocationId?: string;
   installmentId?: string;
   description: string;
   installmentNumber?: number;
@@ -298,14 +300,14 @@ export function teamAccount(
   for (const b of bills) {
     const count = b.installments.length;
     add(b.programYearId, {
-      ...blank, kind: 'billed', date: b.billedOn, sourceId: b.splitId, description: b.allocationDescription,
+      ...blank, kind: 'billed', date: b.billedOn, sourceId: b.splitId, allocationId: b.allocationId, description: b.allocationDescription,
       installmentCount: count, billed: b.amount,
     });
     for (const i of b.installments) {
       const on = clubInstallmentReceivedOn(i);
       if (!on) continue;
       add(b.programYearId, {
-        ...blank, kind: 'received', date: on, sourceId: b.splitId, installmentId: i.id,
+        ...blank, kind: 'received', date: on, sourceId: b.splitId, allocationId: b.allocationId, installmentId: i.id,
         description: b.allocationDescription, installmentNumber: i.installmentNumber, installmentCount: count,
         collected: i.amount, paidMethod: i.paidMethod ?? null, paidReference: i.paidReference ?? null,
         recordedBy: i.paidBy ?? null, daysLate: i.dueDate < on ? daysBetweenDateStrings(i.dueDate, on) : 0,

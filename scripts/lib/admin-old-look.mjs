@@ -46,8 +46,6 @@ const OWNERS = [
   ['components/admin/tournament/', `${T} — whichever stage rebuilds the last screen using the shared tournament header and toolbar`],
   ['app/[orgSlug]/admin/admin-common.module.css', 'whichever redesign stage rebuilds its last user (tournament and club screens share it)'],
   ['app/[orgSlug]/admin/accounting/', 'Club Tier Stage 3 — Accounting'],
-  ['app/[orgSlug]/admin/rep-teams/allocations/', 'Club Tier Stage 3 — allocations'],
-  ['app/[orgSlug]/admin/rep-teams/payment-requests/', 'Club Tier Stage 3 — payment requests'],
   ['app/[orgSlug]/admin/public-site/', 'Club Tier Stage 4 — the public site editor'],
   ['app/[orgSlug]/admin/org/venues/', 'Club Tier Stage 6 — the venue library'],
   ['app/[orgSlug]/admin/house-league/', 'Club Tier Stage 9 — house league'],

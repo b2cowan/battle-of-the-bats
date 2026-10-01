@@ -8530,49 +8530,10 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 
 
 
-/* ── Money hub tab bar (Overview + one tab per section) ───────────────────
-   Same underline-tab idiom as TournamentTopTabs/CoachRecordJumpNav — mono
-   uppercase label, warm-olive underline — but always on (not mobile-only):
-   the whole point is letting a coach hop between Money screens without a
-   trip back through Overview, on desktop as much as on phone. */
-/* The row scrolls when it must, but a hidden scrollbar means the truncation is INVISIBLE —
-   at 960px the 8th tab simply stopped mid-word with nothing saying more existed (reported
-   from a real screenshot). Each edge that has something hidden past it gets a fade AND a
-   real arrow BUTTON that scrolls the row. ⚠ The arrows were briefly `pointer-events: none`
-   decoration — they looked clickable, and the click fell straight through to the tab
-   underneath. An arrow is a control or it is not an arrow. */
-/* ⚠ The row's margins live on the WRAPPER, not on the nav. With them on the nav they
-   collapsed straight through this (padding-less, border-less) wrapper, so the wrapper
-   measured only its content and the absolutely-positioned arrows — inset by those same
-   margins — rendered 8px tall, far under the 44px tap floor. Caught by check:layout. */
-.coachTabBarWrap { position: relative; margin: 0.9rem 0 1.4rem; }
-
-/* ⚠ OPT-IN, AND CURRENTLY UNUSED (reading-order ruling, follow-up to P3 — reversed 2026-08-19).
-   The register briefly set CoachTabBar's `sticky` prop for the Money hub's Transactions tab, but
-   pinning this SHARED nav bar on exactly one of its seven tabs made the one piece of chrome
-   meant to behave identically everywhere freeze on a single tab and nowhere else — a bigger,
-   more visible inconsistency than the register's own toolbar earning a pin for being the one
-   long, scrollable tab. The register now pins only its own toolbar and column headers; this bar
-   pins on no tab today. Left in place as real, documented opt-in infrastructure (shared with
-   Insights' `/history`, per CoachTabBar's own prop doc) for a future screen that genuinely needs
-   it — not dead code, just not currently exercised.
-
-   If it's ever wired up again: docks under the fixed FieldLogicHQ strip AND the team masthead
-   above it — `--coach-topstrip-top` (this shell's fixed top bar, `.coachesShell`) plus
-   `--coach-header-h` (the masthead's own live-measured height, published by `CoachTeamHeader`
-   onto the page's `<main>` ancestor). ⚠⚠ NOT `--coach-top-strip` — that variable belongs to a
-   different shell (CoachPortalShell, the tournament-record route tree) and is undefined on a team
-   page; it was silently falling back to a guessed 48px here before this was found. A solid
-   background is required — without one, rows scrolling underneath would show through this layer
-   too. */
-.coachTabBarSticky {
-  position: sticky;
-  top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px));
-  z-index: 60;
-  background: var(--bg);
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.4rem;
-}
+/* ⚰ The Money hub's tab bar (`.coachTab*`) MOVED 2026-10-01 to `components/shared/HubTabBar.module.css`
+   with its component (`components/shared/HubTabBar.tsx`, was `components/coaches/CoachTabBar.tsx`) —
+   promoted so the club's Accounting page wears the same row (Club Tier Stage 3a, Ask 2 option B). Its
+   history and its warnings moved with it. */
 
 /* ⚰ `.panelToolbar` · `.panelToolbarSticky` · `.panelToolbarActions` (page-level action ruling
    2026-08-13 → 2026-09-16) — the kit's `CoachListToolbar` (components/coaches/kit; owner ruling E)
@@ -8600,120 +8561,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    coach-expenses at 361, so if that finding ever returns, `min-width: 0; flex-wrap: wrap` on the
    toggle inside the toolbar is where to look — on a freshly restarted server. The actions slot's
    phone floor lives in the kit. */
-.coachTabBar {
-  display: flex;
-  gap: 0.15rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.coachTabBar::-webkit-scrollbar { display: none; }
-/* Fades apply per-edge, so an end-of-row never fades against nothing. */
-.coachTabFadeRight {
-  mask-image: linear-gradient(to right, black 0, black calc(100% - 40px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 40px), transparent 100%);
-}
-.coachTabFadeLeft {
-  mask-image: linear-gradient(to right, transparent 0, black 40px);
-  -webkit-mask-image: linear-gradient(to right, transparent 0, black 40px);
-}
-.coachTabFadeLeft.coachTabFadeRight {
-  mask-image: linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%);
-}
-.coachTabScrollBtn {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  cursor: pointer;
-  color: var(--home-olive, var(--logic-lime));
-  z-index: 2;
-}
-.coachTabScrollBtn:hover { color: var(--text-primary); }
-/* ⚠ 44px AT TOUCH WIDTHS (coaching from a phone · stage 6, 2026-09-24). The arrows sat at 34px — a
-   baselined sub-floor control on every hub. Stage 6 · R3 scrolls the row to the tab you are on, which
-   made the LEFT arrow appear on every report and Money tab past the first screenful too; widening the
-   control beat writing thirty new "accepted" entries for it. Touch widths only (the floor is a touch
-   rule, 641–768 included — K-12); a desktop keeps the 34px arrow over its fade. */
-@media (max-width: 768px) {
-  .coachTabScrollBtn { width: var(--tap-min, 44px); }
-}
-.coachTabScrollLeft {
-  left: 0;
-  background: linear-gradient(to right, var(--home-paper, var(--bg)) 55%, transparent);
-}
-.coachTabScrollRight {
-  right: 0;
-  background: linear-gradient(to left, var(--home-paper, var(--bg)) 55%, transparent);
-}
-.coachTabBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  min-height: 44px;
-  padding: 0.55rem 0.85rem;
-  white-space: nowrap;
-  /* ⚠⚠ SENTENCE-WEIGHT SANS, NOT THE UPPERCASE MONO LABEL IT WAS UNTIL 2026-08-28 (type-ladder
-     pass). This bar was 0.72rem/700 uppercase mono in --font-data, which put PRIMARY NAVIGATION
-     at 11.5px — BELOW the 12.5px uppercase column headings of the very tables these tabs
-     navigate to. Both were uppercase, letter-spaced and bold, so nav did not merely lose to a
-     column label, it TIED one, and a tie reads as "these are peers".
-
-     The fix is upward and by TREATMENT, not by shrinking the headings — those were deliberately
-     raised on 2026-08-15 to end a measured legibility defect (headings 2.4x fainter than their
-     own data rows) and that ruling stands. Below ~13px a one-pixel step is invisible, so size
-     cannot separate these two roles at all; case can. Navigation now reads as sentence-case body
-     text and column headings stay uppercase support — different KINDS of thing, no competition.
-
-     ⚠ The tab LABELS are still Title Case as their callers write them ("Budget Plan", "Playing
-     Time") while the tryout flow writes sentence case ("Tryout day", "Build team"). The uppercase
-     transform was hiding that split. Normalising it is a COPY change that also reaches foot
-     links, rail links and help content, so it is deliberately NOT done here — half of it would
-     leave one thing wearing two names, which the spelling ruling forbids. */
-  font-family: var(--font-sans);
-  font-size: var(--type-body);
-  font-weight: 600;
-  color: var(--text-tertiary);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition: color 0.12s ease, border-color 0.12s ease;
-}
-.coachTabBtn:hover { color: var(--text-secondary); }
-.coachTabActive {
-  color: var(--home-olive, var(--logic-lime));
-  border-bottom-color: var(--home-olive, var(--logic-lime));
-}
-/* A tab's short label on a phone (CoachTabBar `short`, 2026-09-13 — the player page's five tabs
-   are the first caller): the long word at every other width. */
-.coachTabLong  { display: inline; }
-.coachTabShort { display: none; }
-@media (max-width: 640px) {
-  .coachTabLong  { display: none; }
-  .coachTabShort { display: inline; }
-}
-
-@media (max-width: 640px) {
-  /* Contained scroll, not full-bleed: unlike TournamentTopTabs (which sits directly
-     under a fixed, viewport-wide header) this tab bar is nested inside .page's own
-     padding — a negative-margin bleed here escaped that padding box and caused the
-     whole document to scroll sideways by a couple pixels (caught by check:layout). */
-  /* Padding tightens on a phone; the SIZE deliberately does not. A phone override of 0.66rem
-     (10.6px) used to live here, and re-adding one now would mint an off-ladder value purely to
-     fit more tabs on screen — but this strip already scrolls, with arrow affordances on both
-     edges, so fitting more was never its job. */
-  .coachTabBtn { padding: 0.5rem 0.6rem; }
-}
 
 /* The grey .backLink that used to live here is RETIRED (page-header ruling 2026-08-11):
    every drill-in back link now uses the one .lineupBackLink treatment. */
@@ -8773,9 +8620,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 .tagComboOpt:hover, .tagComboOptActive { background: rgba(var(--logic-lime-rgb), 0.1); }
 .tagComboOptName { display: inline-flex; align-items: center; gap: 0.45rem; }
-.tagComboDot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
-.tagComboDotOrg { background: rgba(var(--blueprint-blue-rgb), 0.6); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.75); }
-.tagComboDotOwn { background: rgba(var(--logic-lime-rgb), 0.6); border: 1px solid rgba(var(--logic-lime-rgb), 0.75); }
+/* ⚰ `.tagComboDot` · `.tagComboDotOrg` · `.tagComboDotOwn` MOVED 2026-10-01 to
+   `components/shared/FilterPill.module.css` with the filter pills that wear them (Club Tier Stage 3a). */
 .tagComboCount { color: var(--text-tertiary); font-size: var(--type-support); flex-shrink: 0; }
 /* The staff picker's people group (mig 303): a quiet group label, the person mark on a row and on a
    chip that IS someone, and the team's word for them when it differs from their name. */
@@ -9107,145 +8953,10 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    because dropping the element let the "paid" figure slide across — so the one row in the list that
    most wanted to look finished was the one that broke the column. A table cannot make that
    mistake, which is part of why the cards went. */
-/* ── MultiSelectDropdown — a checkbox list in a native <details>, compact enough to sit beside
-   other report controls on one line (register reading-order ruling, follow-up to P3). ────────── */
-.multiSelect { position: relative; }
-.multiSelectSummary {
-  display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; list-style: none;
-  background: var(--white-8); border: 1px solid var(--border-2); color: var(--text-secondary);
-  border-radius: 8px; padding: 0.28rem 0.55rem; font-size: var(--type-support); white-space: nowrap;
-}
-.multiSelectSummary::-webkit-details-marker { display: none; }
-/* ⚠⚠ A REAL TOUCH TARGET FOR THE WHOLE REPORTING FAMILY (check:layout tap-floor, 2026-08-20).
-   31px is comfortable under a mouse and under the 44px floor for a finger, and this one pill is
-   Status, Show, Item, Date, Group by, View and Showing across Transactions, Payables, the payment
-   schedule and Budget vs. Actual — so it was the same finding reported on four screens at three
-   widths, and the reason all four sat permanently red.
-
-   ⚠ THE RED WAS THE REAL COST, more than the millimetres. Four screens that always fail are four
-   screens whose check nobody reads, and they were failing hardest in the release where the money
-   surfaces changed the most. A gate that is expected to be red cannot report a new defect.
-
-   ⚠ Touch widths only — the desktop strip keeps its compact face, because a 44px pill row on a
-   1440px reporting toolbar is bulk with nothing to gain. */
-@media (max-width: 768px) {
-  .multiSelectSummary { min-height: 44px; }
-  /* The rows inside the panel are targets too — a checkbox a finger has to find in a 25px band is
-     the same defect one level down. ⚠ The bare `<input>` inside stays its natural size and is
-     ACCEPTED in the baseline with its reason: the label is the target, it wraps the box, and
-     stretching a checkbox to 44px to satisfy a per-element measurement would make the control
-     worse to look at without making it easier to hit. */
-  .multiSelectOption { min-height: 44px; }
-}
-.multiSelectLabel { color: var(--text-tertiary); }
-.multiSelectValue { font-weight: 600; color: var(--text-primary); }
-.multiSelect[open] .multiSelectSummary { border-color: var(--logic-lime); }
-.multiSelectPanel {
-  position: absolute; top: calc(100% + 4px); left: 0; z-index: 70; min-width: 190px;
-  background: var(--home-card); border: 1px solid var(--border-2); border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35); padding: 0.4rem; max-height: 320px; overflow-y: auto;
-}
-/* ⚠ `body`, NOT `support` — a role correction the type ladder forced into the open (P3,
-   2026-08-28). This row is a thing you READ AND CLICK (SingleSelectDropdown renders it as a
-   <button>, the multi variant as a <label>), which makes it an interactive list item, the same
-   job as a nav tab — not the quiet meta text `support` is for. Snapping its old 0.82rem to the
-   nearest step would have given it `support` and taken the row 30px -> 28px, which the layout
-   sweep caught at 768 as three controls falling further under the tap floor. The floor itself is
-   pre-existing debt carried in the baseline; this at least stops it getting worse, and the size
-   is now decided by what the row IS rather than by which step it happened to sit nearest. */
-.multiSelectOption {
-  display: flex; align-items: center; gap: 0.5rem; padding: 0.32rem 0.4rem; border-radius: 6px;
-  font-size: var(--type-body); color: var(--text-secondary); cursor: pointer; white-space: nowrap;
-}
-.multiSelectOption:hover { background: var(--white-8); }
-/* An option's count, quiet at the row's end — the number its filter chip used to carry. */
-.multiSelectCount { margin-left: auto; padding-left: 0.75rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-/* ⚠ NO `.multiSelectSwatch` HERE, deliberately. The dropdown's optional per-option swatch reuses
-   `.tagComboDot` / `.tagComboDotOrg` / `.tagComboDotOwn` above — the SAME dot the tag picker and
-   the row chips draw. A private swatch rule here was written first and gave org-vs-team a second
-   set of colours to drift from (`/simplify`, 2026-08-25). One meaning, one rule. */
-.multiSelectDivider { height: 1px; background: var(--border-2); margin: 0.3rem 0.2rem; }
-
-/* ── SingleSelectDropdown — the ARRANGEMENT member of the family (Payables Rebuild P3) ──────────
-   Same pill face, a list of picks instead of checkboxes. `multiSelectLead` marks the one control
-   in a strip that chooses an arrangement rather than a narrowing (plan §7): it sits first and
-   carries the accent, so it can never be mistaken for another filter. */
-.multiSelectLead > .multiSelectSummary {
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-}
-.multiSelectLead > .multiSelectSummary .multiSelectLabel { color: var(--logic-lime); }
-.multiSelectPick {
-  width: 100%; border: 0; background: none; text-align: left; font-family: inherit;
-  padding-left: 1.35rem; position: relative;
-}
-/* ⚠ A REAL TOUCH TARGET (check:layout tap-floor, 44px). The shared `.multiSelectOption` row is
-   0.32rem of padding around 0.8rem text — fine for a checkbox a finger brushes, 25px for a button
-   that IS the whole decision. Scoped to the single-select picks so this fixes the control this
-   change introduced without quietly absorbing the sibling checkbox rows' own floor finding, which
-   belongs to the shared-chrome work and is failing on Transactions too. */
-@media (max-width: 768px) {
-  .multiSelectPick { min-height: 44px; align-items: center; }
-}
-.multiSelectPickOn { color: var(--text-primary); font-weight: 600; }
-/* State as a SHAPE, never colour alone — the same dot the date presets use, and the same reason
-   (deutan memory: olive↔danger ΔE 1.0 on the budget cards). */
-.multiSelectPickOn::before {
-  content: ""; position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%);
-  width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime);
-}
-
-/* ── The Date pill (the register strip's FOURTH pill — owner-approved mockup, 2026-08-19) ──
-   Extensions of the multiSelect family above: same pill face, but the panel is a single-select
-   preset menu (buttons, not checkboxes — two windows at once is not a thing) with the custom
-   from/to fields living at the bottom of the SAME panel. Custom is not a mode: editing a field
-   IS choosing it. See `DateRangeDropdown`'s header for the full argument. */
-.dateRangePanel { min-width: 264px; }
-.dateRangeOption {
-  display: flex; width: 100%; align-items: baseline; justify-content: space-between; gap: 1rem;
-  padding: 0.34rem 0.5rem 0.34rem 1.35rem; border: 0; border-radius: 6px; background: none;
-  text-align: left; font-size: var(--type-support); color: var(--text-secondary); cursor: pointer;
-  position: relative; font-family: inherit; white-space: nowrap;
-}
-.dateRangeOption:hover { background: var(--white-8); }
-.dateRangeOption[aria-pressed="true"] { color: var(--text-primary); font-weight: 600; }
-/* The active dot sits in the gutter every option's left padding reserves — the same "state as a
-   shape, never colour alone" rule the budget cards follow (deutan memory: olive↔danger ΔE 1.0). */
-.dateRangeOption[aria-pressed="true"]::before {
-  content: ""; position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%);
-  width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime);
-}
-/* Each preset row shows the dates it resolves to — the list teaches itself, and "Last 60 days"
-   is never a mystery. Tabular figures so seven stacked ranges read as one column. */
-.dateRangeOptionDates { font-size: var(--type-label); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-.dateRangeCustom { padding: 0.25rem 0.5rem 0.35rem; }
-.dateRangeCustomLabel {
-  font-size: var(--type-token); letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--text-tertiary); margin-bottom: 0.35rem; position: relative;
-}
-.dateRangeCustom[data-active] .dateRangeCustomLabel { color: var(--text-primary); padding-left: 0.85rem; }
-.dateRangeCustom[data-active] .dateRangeCustomLabel::before {
-  content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-  width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime);
-}
-.dateRangeCustomRow { display: flex; align-items: center; gap: 0.35rem; }
-.dateRangeInput {
-  background: var(--white-8); border: 1px solid var(--border-2); border-radius: 6px;
-  color: var(--text-secondary); font-size: var(--type-support); padding: 0.22rem 0.35rem;
-  font-family: inherit; min-width: 0; flex: 1;
-}
-.dateRangeCustomSep { color: var(--text-tertiary); }
-.dateRangeHint { font-size: var(--type-label); color: var(--text-tertiary); margin-top: 0.4rem; line-height: 1.45; }
-/* ⚠ THE PHONE TAP FLOOR for the panel's own controls — the same rule `.moneyFilterChip` carries
-   below and for the same reason: these are primary controls on the register, and a NEW control
-   does not get to join the touch-target debt (COACH_TOUCH_TARGET_DEBT_PLAN.md counts every
-   unargued entry). The pill FACE deliberately stays at its three siblings' compact height —
-   matching Show/Status/Item is the strip's consistency, and raising all four is that plan's
-   call to make, not this feature's. */
-@media (max-width: 768px) {
-  .dateRangeOption { min-height: var(--tap-min, 44px); }
-  .dateRangeInput { min-height: var(--tap-min, 44px); }
-}
+/* ⚰ The filter pill family (`.multiSelect*`, `.dateRange*`) MOVED 2026-10-01 to
+   `components/shared/FilterPill.module.css`, promoted so the club's Ledger uses the coach's own controls
+   (Club Tier Stage 3a, Ask 6). Its history and warnings moved with it. A host styles a pill through its
+   `data-pill` attribute, never these class names (a cross-module class selector fails silently). */
 
 .moneyFilterBar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; align-items: center; }
 .moneyFilterChip {
@@ -9662,18 +9373,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   background: rgba(var(--home-blue-rgb), 0.12);
   border-color: rgba(var(--home-blue-rgb), 0.40);
 }
-/* ⚠⚠ THE DOT NEEDS THE SAME RESCUE AS THE CHIP, and for years it did not have it (found by the
-   owner on the P3 walk, 2026-08-26). The block above rescues org CHIPS; `.tagComboDotOrg` rides the
-   very same remapped `--blueprint-blue-rgb` and was simply never listed — so on cream BOTH dots
-   resolved to olive and the org-vs-own distinction the dot exists to carry silently disappeared.
-   It was wrong in the tag picker from the day warm shipped; money centralization P3 then made it
-   load-bearing by moving the tag filter onto these dots AND deleting the colour legend that used to
-   say the same thing in words, which is what finally made it visible.
-   ⚠ Only ORG needs correcting: own-tag olive is already what the remap produces, and is right. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tagComboDotOrg {
-  background: rgba(var(--home-blue-rgb), 0.55);
-  border-color: rgba(var(--home-blue-rgb), 0.75);
-}
+/* ⚰ The org dot's warm rescue (`.tagComboDotOrg`) MOVED 2026-10-01 to `components/shared/FilterPill.module.css`. */
 
 /* Lime-FILL "on"/brand chips: the token remap alone gives an olive fill (banned as a
    fill, E3) under cream text — restore the ratified TRUE lime + dark ink, mirroring
@@ -11158,7 +10858,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* ⚠ `top: 0.75rem` ALONE STUCK THE PANEL BEHIND THE PORTAL'S OWN FIXED CHROME, not just close to
    the top of the viewport: this shell has a fixed top strip AND a sticky per-team masthead above
    any page's content, and every OTHER sticky element that pins below both of them clears the same
-   two live-measured variables (`.teamHeader`, `.sidebar`, `.coachTabBarSticky` above) —
+   two live-measured variables (`.teamHeader`, `.sidebar` above; HubTabBar's `.sticky`) —
    `--coach-topstrip-top` (the fixed strip) plus `--coach-header-h` (the masthead's own measured
    height). A bare `0.75rem` ignored both, so once the page scrolled the panel's head and toggle
    sat UNDER that chrome rather than below it — only whatever fell past the chrome's bottom edge
@@ -11929,7 +11629,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* The Tags dropdown's closed pill (`MultiSelectDropdown`) only reaches the tap floor under 768px —
    here it sits beside a search box that is ALWAYS 44px (the car-park reasoning above), so it would
    read short and mismatched on desktop too. Matched at every width, scoped to this bar alone. */
-.ppDrillFilters .multiSelectSummary { min-height: var(--tap-min, 44px); }
+.ppDrillFilters [data-pill="summary"] { min-height: var(--tap-min, 44px); }
 /* ⚠ RIGHT-ANCHORED, not the shared `.multiSelectPanel`'s default `left: 0`. This bar's Tags
    dropdown is the last control in a row that can be as narrow as the 320px docked library
    (`.ppLibrary`) — `left: 0` on the panel's 190px min-width overshoots the row's own right edge,
@@ -11937,7 +11637,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    spec forces the paired axis off `visible`), so the panel gets hard-CLIPPED at that boundary
    instead of merely reading close to an edge. Scoped to this bar alone: the report toolbars that
    share `.multiSelectPanel` elsewhere have room and expect the left-anchored open. */
-.ppDrillFilters .multiSelectPanel { left: auto; right: 0; }
+.ppDrillFilters [data-pill="panel"] { left: auto; right: 0; }
 
 .ppDrillWrite { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.9rem; min-width: 0; }
 
@@ -12108,7 +11808,7 @@ span.libCardMain { cursor: default; }
      (right for the 320px docked library, where Tags ends the row) hung its menu off the phone's left
      edge (§231 walk, owner 2026-09-25: "the tags dropdown … is opening off screen on mobile").
      Left-anchored here, where the row always wraps. */
-  .ppDrillFilters .multiSelectPanel { left: 0; right: auto; }
+  .ppDrillFilters [data-pill="panel"] { left: 0; right: auto; }
 }
 
 
@@ -15746,15 +15446,8 @@ div.gdRow { cursor: default; }
   border-top: 1px solid var(--home-line, rgba(255, 255, 255, 0.08));
 }
 
-/* Quiet-at-rest filters (owner 2026-09-02): a narrowing pill wears the olive working tint the
-   moment it departs its resting state — twice as visible as before, while resting pills shrink
-   to their name alone. */
-.multiSelectSummary.multiSelectActive {
-  border-color: var(--home-olive, var(--logic-lime));
-  background: var(--home-olive-soft, rgba(255, 255, 255, 0.08));
-  color: var(--home-olive, var(--logic-lime));
-}
-.multiSelectSummary.multiSelectActive .multiSelectValue { color: inherit; font-weight: 650; }
+/* ⚰ The quiet-at-rest pill's active state (`.multiSelectSummary.multiSelectActive`) MOVED 2026-10-01 to
+   `components/shared/FilterPill.module.css`. */
 
 /* The observation log's entry row (owner, §129 F2): the tag DROPDOWN beside Save — a form
    select, never a pill row; the FILTER above it stays the segmented viewToggle. */

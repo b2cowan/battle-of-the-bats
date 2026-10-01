@@ -413,7 +413,7 @@ export async function coachSendInstallment(p: {
         teamName: p.team.name, amount: installment.amount, what: whatInstallment(c), sentOn: input.on,
         how: howItCame(input.method, input.reference),
       }),
-      link: clubMoneyLinks.allocation(p.org.slug, c.allocationId),
+      link: clubMoneyLinks.allocation(p.org.slug, c.allocationId, p.splitId),
       metadata: { installmentId: installment.id, splitId: p.splitId },
     });
   }
@@ -454,7 +454,7 @@ export async function tellClubOfNewRequest(p: {
       teamName: p.team.name, amount: p.request.amount, what: p.request.description,
       toClub: p.request.requestType === 'payment_to_org',
     }),
-    link: clubMoneyLinks.requests(p.org.slug),
+    link: clubMoneyLinks.requests(p.org.slug, p.request.id),
     metadata: { requestId: p.request.id },
   });
 }

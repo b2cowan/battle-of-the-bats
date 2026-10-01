@@ -7,7 +7,7 @@ import {
 } from '@/lib/coach-date-range';
 import { formatEventDateRange } from '@/lib/timezone';
 import useDetailsOutsideClick from './useDetailsOutsideClick';
-import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
+import styles from '../shared/FilterPill.module.css';
 
 /**
  * The Transactions strip's FOURTH pill (owner-approved mockup, 2026-08-19) — the date range,
@@ -37,6 +37,7 @@ export default function DateRangeDropdown({
   onChange,
   restQuiet = false,
   restSelectionId,
+  labels,
 }: {
   selection: DateRangeSelection;
   /** The EFFECTIVE window (the panel resolves presets itself) — shown in the custom fields and,
@@ -53,6 +54,12 @@ export default function DateRangeDropdown({
   /** Quiet-at-rest (owner 2026-09-02): hide the value + no tint while `selection === restSelectionId`. */
   restQuiet?: boolean;
   restSelectionId?: string;
+  /**
+   * A preset's word for THIS book, where the coach's word would be wrong (Club Tier Stage 3a: the club's
+   * book is not one season deep, so its 'season' preset reads "All time"). Opt-in; the window each
+   * preset resolves to is unchanged.
+   */
+  labels?: Partial<Record<DateRangePresetId, string>>;
 }) {
   const ref = useDetailsOutsideClick();
 
@@ -63,9 +70,10 @@ export default function DateRangeDropdown({
     const r = resolveDateRangePreset(p.id, todayKey, seasonBounds);
     return {
       ...p,
+      label: labels?.[p.id] ?? p.label,
       dates: p.id === 'season' ? 'everything' : formatEventDateRange(r.from, r.to, false),
     };
-  }), [todayKey, seasonBounds]);
+  }), [todayKey, seasonBounds, labels]);
 
   function pick(id: DateRangePresetId) {
     onChange({ selection: id });
@@ -74,16 +82,16 @@ export default function DateRangeDropdown({
 
   const summary = selection === 'custom'
     ? formatEventDateRange(from, to, false)
-    : DATE_RANGE_PRESETS.find(p => p.id === selection)?.label ?? formatEventDateRange(from, to, false);
+    : options.find(p => p.id === selection)?.label ?? formatEventDateRange(from, to, false);
 
   return (
     <details ref={ref} className={styles.multiSelect}>
-      <summary className={`${styles.multiSelectSummary} ${restQuiet && selection !== restSelectionId ? styles.multiSelectActive : ''}`}>
+      <summary data-pill="summary" className={`${styles.multiSelectSummary} ${restQuiet && selection !== restSelectionId ? styles.multiSelectActive : ''}`}>
         <span className={styles.multiSelectLabel}>Date</span>
         {!(restQuiet && selection === restSelectionId) && <span className={styles.multiSelectValue}>{summary}</span>}
         <ChevronDown size={14} aria-hidden />
       </summary>
-      <div className={`${styles.multiSelectPanel} ${styles.dateRangePanel}`} role="group" aria-label="Date range">
+      <div data-pill="panel" className={`${styles.multiSelectPanel} ${styles.dateRangePanel}`} role="group" aria-label="Date range">
         {options.map(p => (
           <button
             key={p.id}

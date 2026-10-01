@@ -57,7 +57,7 @@ type ClubBriefDetail = {
    *  end-of-season payout (Ask 5b) — the door card names them. */
   paymentRequests?: { oldestDays: number | null; holdingPayout?: number };
   /** Payments coaches say they've SENT, waiting for the club to confirm (Ask 1). */
-  installmentsDue?: { sent: number };
+  installmentsDue?: { sent: number; overdue: number };
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -172,7 +172,7 @@ export const GET = withObservability(async (req: Request) => {
         try {
           const m = await briefMoneyCounts(org.id, teamIds, today);
           counts.installmentsDue = m.installmentsDue;
-          detail.installmentsDue = { sent: m.installmentsSent };
+          detail.installmentsDue = { sent: m.installmentsSent, overdue: m.installmentsOverdue };
         } catch (e) { fail.error = e; }
       })());
     }

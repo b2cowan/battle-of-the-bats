@@ -1,58 +1,6 @@
 {
-  "generated": "2026-09-30T20:33:24.477Z",
+  "generated": "2026-10-01T14:51:14.313Z",
   "entries": {
-    "admin-hub|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocations|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocations|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocations|361|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-allocation|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation|361|tap-floor|button·Mark Paid": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|input·e.g. 3000.00": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|input·Paste accounting entry ID to link": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|button·Team Splits": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
     "admin-rep-assistant-coaches|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -88,46 +36,6 @@
     "admin-rep-past|361|tap-floor|a·View →": {
       "reason": null,
       "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|button·Pending2": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|button·History": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|button·Approve": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|button·Deny": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|content-overflow|div·15U AAA Request from Org$480.00Tournamen": {
-      "reason": null,
-      "detail": "content spills 8px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-payment-requests|361|content-overflow|p·Submitted Sep 29, 2026": {
-      "reason": "DEFERRED to this page’s redraw: pre-existing debt on Payment requests (not touched by Club Tier Stage 2); the signature carries the fixture’s date, so it re-keys when the test club is rebuilt. Admin Design Continuity Part B · Rep Teams area.",
-      "detail": "content spills 8px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-payment-requests|361|content-overflow|div·UAT Test Team Request from Org$450.00Dia": {
-      "reason": null,
-      "detail": "content spills 16px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-payment-requests|361|content-overflow|p·Diamond permit reimbursement": {
-      "reason": null,
-      "detail": "content spills 16px with overflow-x:visible — no scroller owns it"
     },
     "admin-rep-rename-slugs|361|tap-floor|a·Public site": {
       "reason": null,
@@ -197,58 +105,6 @@
       "reason": null,
       "detail": "35px tall (floor 44)"
     },
-    "admin-hub|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocations|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocations|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocations|390|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-allocation|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation|390|tap-floor|button·Mark Paid": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|input·e.g. 3000.00": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|input·Paste accounting entry ID to link": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|button·Team Splits": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
     "admin-rep-assistant-coaches|390|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -284,30 +140,6 @@
     "admin-rep-past|390|tap-floor|a·View →": {
       "reason": null,
       "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|button·Pending2": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|button·History": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|button·Approve": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|button·Deny": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
     },
     "admin-rep-rename-slugs|390|tap-floor|a·Public site": {
       "reason": null,
@@ -377,58 +209,6 @@
       "reason": null,
       "detail": "35px tall (floor 44)"
     },
-    "admin-hub|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocations|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocations|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocations|768|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-allocation|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation|768|tap-floor|button·Mark Paid": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|input·e.g. 3000.00": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|input·Paste accounting entry ID to link": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|button·Team Splits": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
     "admin-rep-assistant-coaches|768|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -464,30 +244,6 @@
     "admin-rep-past|768|tap-floor|a·View →": {
       "reason": null,
       "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|button·Pending2": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|button·History": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|button·Approve": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|button·Deny": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
     },
     "admin-rep-rename-slugs|768|tap-floor|a·Public site": {
       "reason": null,
@@ -641,35 +397,7 @@
       "reason": "ACCEPTED here, owned elsewhere: the shared ExportMenu split button, short on every admin screen that exports (baselined across the admin). Fixed once at the component, not per screen. Added with Club Tier Stage 2 · session 3’s Roster page.",
       "detail": "29px wide (floor 44) — icon-only control"
     },
-    "admin-rep-teams|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·30d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·60d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·90d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·Allocation Collections2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·Pending Payment Requests": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
     "admin-rep-documents|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
@@ -697,35 +425,7 @@
       "reason": null,
       "detail": "32px tall (floor 44)"
     },
-    "admin-rep-teams|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·30d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·60d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·90d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·Allocation Collections2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·Pending Payment Requests": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
     "admin-rep-documents|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team|390|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
@@ -753,35 +453,7 @@
       "reason": null,
       "detail": "32px tall (floor 44)"
     },
-    "admin-rep-teams|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·30d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·60d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·90d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·Allocation Collections2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·Pending Payment Requests": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
     "admin-rep-documents|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team|768|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
@@ -3325,78 +2997,6 @@
       "reason": null,
       "detail": "content spills 56px with overflow-x:visible — no scroller owns it"
     },
-    "admin-accounting|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting|361|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-accounting|361|tap-floor|button·Apply": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting|361|tap-floor|button·Org sub-ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting|361|tap-floor|a·View Ledger →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-accounting|361|tap-floor|button·Tournament ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting|361|tap-floor|button·Open Ledger": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-accounting|361|tap-floor|button·30-day wave": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting|361|tap-floor|button·7-day wave": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting|361|tap-floor|button·Run now": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting|361|tap-floor|button·+ Add Ledger": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|361|tap-floor|button·Add Line": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "admin-accounting-budget|361|tap-floor|select·2026": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -3404,10 +3004,6 @@
     "admin-accounting-budget|361|tap-floor|button·2 periods": {
       "reason": null,
       "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|tap-floor|a·Allocate to Teams": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
     },
     "admin-accounting-budget|361|tap-floor|button·Edit": {
       "reason": null,
@@ -3429,37 +3025,9 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-accounting-budget|361|tap-floor|a·View Allocation →": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
     "admin-accounting-budget|361|tap-floor|button·1 period": {
       "reason": null,
       "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-bva|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
     },
     "admin-accounting-bva|361|tap-floor|select·2026": {
       "reason": null,
@@ -3477,17 +3045,9 @@
       "reason": null,
       "detail": "15px tall (floor 44)"
     },
-    "admin-accounting-bva|361|tap-floor|button·Show entries (1)": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
     "admin-accounting-bva|361|content-overflow|div·TournamentsEst$3,000.00Alloc$0.00Collect": {
       "reason": null,
       "detail": "content spills 55px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|361|content-overflow|div·FacilitiesEst$6,000.00Alloc$4,000.00Coll": {
-      "reason": null,
-      "detail": "content spills 102px with overflow-x:visible — no scroller owns it"
     },
     "admin-accounting-bva|361|content-overflow|div·OfficialsEst$4,500.00Alloc$3,000.00Colle": {
       "reason": null,
@@ -3497,10 +3057,6 @@
       "reason": null,
       "detail": "content spills 9px with overflow-x:visible — no scroller owns it"
     },
-    "admin-accounting-allocate|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-accounting-allocate|361|tap-floor|a·Accounting": {
       "reason": null,
       "detail": "14px tall (floor 44)"
@@ -3508,10 +3064,6 @@
     "admin-accounting-allocate|361|tap-floor|input·<input>": {
       "reason": null,
       "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocate|361|tap-floor|select·Select team…11U AA13U AAA15U AA15U AAA9U": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
     },
     "admin-accounting-allocate|361|tap-floor|select·Select year…": {
       "reason": null,
@@ -3548,78 +3100,6 @@
     "admin-accounting-allocate|361|content-overflow|select·Lump Sum (single payment)Custom (multipl": {
       "reason": null,
       "detail": "content spills 72px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-ledger|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|tap-floor|button·All": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|tap-floor|button·Posted": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|tap-floor|button·Pending": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|361|tap-floor|button·+ Add Entry": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|tap-floor|button·Add Transfer": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|tap-floor|button·Void this transfer (both sides together)": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|control-width|button·Void this transfer (both sides together)": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|361|tap-floor|button·Edit entry": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|control-width|button·Edit entry": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|361|tap-floor|button·Void entry": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-accounting-ledger|361|control-width|button·Void entry": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|361|type-ladder|table·Date": {
-      "reason": null,
-      "detail": "cells at 12.80px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
     "admin-families|361|tap-floor|a·Public site": {
       "reason": null,
@@ -4493,78 +3973,6 @@
       "reason": null,
       "detail": "content spills 27px with overflow-x:visible — no scroller owns it"
     },
-    "admin-accounting|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting|390|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-accounting|390|tap-floor|button·Apply": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting|390|tap-floor|button·Org sub-ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting|390|tap-floor|a·View Ledger →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-accounting|390|tap-floor|button·Tournament ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting|390|tap-floor|button·Open Ledger": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-accounting|390|tap-floor|button·30-day wave": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting|390|tap-floor|button·7-day wave": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting|390|tap-floor|button·Run now": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting|390|tap-floor|button·+ Add Ledger": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|390|tap-floor|button·Add Line": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "admin-accounting-budget|390|tap-floor|select·2026": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -4572,10 +3980,6 @@
     "admin-accounting-budget|390|tap-floor|button·2 periods": {
       "reason": null,
       "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|tap-floor|a·Allocate to Teams": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
     },
     "admin-accounting-budget|390|tap-floor|button·Edit": {
       "reason": null,
@@ -4597,37 +4001,9 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-accounting-budget|390|tap-floor|a·View Allocation →": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
     "admin-accounting-budget|390|tap-floor|button·1 period": {
       "reason": null,
       "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-bva|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
     },
     "admin-accounting-bva|390|tap-floor|select·2026": {
       "reason": null,
@@ -4645,25 +4021,13 @@
       "reason": null,
       "detail": "15px tall (floor 44)"
     },
-    "admin-accounting-bva|390|tap-floor|button·Show entries (1)": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
     "admin-accounting-bva|390|content-overflow|div·TournamentsEst$3,000.00Alloc$0.00Collect": {
       "reason": null,
       "detail": "content spills 26px with overflow-x:visible — no scroller owns it"
     },
-    "admin-accounting-bva|390|content-overflow|div·FacilitiesEst$6,000.00Alloc$4,000.00Coll": {
-      "reason": null,
-      "detail": "content spills 73px with overflow-x:visible — no scroller owns it"
-    },
     "admin-accounting-bva|390|content-overflow|div·OfficialsEst$4,500.00Alloc$3,000.00Colle": {
       "reason": null,
       "detail": "content spills 38px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-allocate|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
     },
     "admin-accounting-allocate|390|tap-floor|a·Accounting": {
       "reason": null,
@@ -4672,10 +4036,6 @@
     "admin-accounting-allocate|390|tap-floor|input·<input>": {
       "reason": null,
       "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|select·Select team…11U AA13U AAA15U AA15U AAA9U": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
     },
     "admin-accounting-allocate|390|tap-floor|select·Select year…": {
       "reason": null,
@@ -4712,78 +4072,6 @@
     "admin-accounting-allocate|390|content-overflow|select·Lump Sum (single payment)Custom (multipl": {
       "reason": null,
       "detail": "content spills 58px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-ledger|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|tap-floor|button·All": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|tap-floor|button·Posted": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|tap-floor|button·Pending": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|390|tap-floor|button·+ Add Entry": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|tap-floor|button·Add Transfer": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|tap-floor|button·Void this transfer (both sides together)": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|control-width|button·Void this transfer (both sides together)": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|390|tap-floor|button·Edit entry": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|control-width|button·Edit entry": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|390|tap-floor|button·Void entry": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|control-width|button·Void entry": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|390|type-ladder|table·Date": {
-      "reason": null,
-      "detail": "cells at 12.80px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
     "admin-families|390|tap-floor|a·Public site": {
       "reason": null,
@@ -5701,66 +4989,6 @@
       "reason": null,
       "detail": "content spills 11px with overflow-x:visible — no scroller owns it"
     },
-    "admin-accounting|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting|768|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-accounting|768|tap-floor|button·Apply": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting|768|tap-floor|button·Org sub-ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting|768|tap-floor|a·View Ledger →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-accounting|768|tap-floor|button·Tournament ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting|768|tap-floor|button·Open Ledger": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-accounting|768|tap-floor|button·30-day wave": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting|768|tap-floor|button·7-day wave": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting|768|tap-floor|button·Run now": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting|768|tap-floor|button·+ Add Ledger": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-budget|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-budget|768|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-budget|768|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|768|tap-floor|button·Add Line": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
     "admin-accounting-budget|768|tap-floor|select·2026": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -5768,10 +4996,6 @@
     "admin-accounting-budget|768|tap-floor|button·2 periods": {
       "reason": null,
       "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-budget|768|tap-floor|a·Allocate to Teams": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
     },
     "admin-accounting-budget|768|tap-floor|button·Edit": {
       "reason": null,
@@ -5793,37 +5017,9 @@
       "reason": null,
       "detail": "15px tall (floor 44)"
     },
-    "admin-accounting-budget|768|tap-floor|a·View Allocation →": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
     "admin-accounting-budget|768|tap-floor|button·1 period": {
       "reason": null,
       "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|tap-floor|button·Publish to all teams": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|tap-floor|button·Publish to all teams": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting-budget|768|tap-floor|button·Publish to all teams": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting-bva|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-bva|768|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-bva|768|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
     },
     "admin-accounting-bva|768|tap-floor|select·2026": {
       "reason": null,
@@ -5841,22 +5037,6 @@
       "reason": null,
       "detail": "15px tall (floor 44)"
     },
-    "admin-accounting-bva|768|tap-floor|button·Show entries (1)": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|content-overflow|div·Accounting · UAT Rep ClubBudget vs. Actu": {
-      "reason": null,
-      "detail": "content spills 86px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|390|content-overflow|div·Accounting · UAT Rep ClubBudget vs. Actu": {
-      "reason": null,
-      "detail": "content spills 57px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-allocate|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-accounting-allocate|768|tap-floor|a·Accounting": {
       "reason": null,
       "detail": "14px tall (floor 44)"
@@ -5864,10 +5044,6 @@
     "admin-accounting-allocate|768|tap-floor|input·<input>": {
       "reason": null,
       "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|select·Select team…11U AA13U AAA15U AA15U AAA9U": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
     },
     "admin-accounting-allocate|768|tap-floor|select·Select year…": {
       "reason": null,
@@ -5900,74 +5076,6 @@
     "admin-accounting-allocate|768|tap-floor|button·Review": {
       "reason": null,
       "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|tap-floor|button·All": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|tap-floor|button·Posted": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|tap-floor|button·Pending": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|768|tap-floor|button·+ Add Entry": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|tap-floor|button·Add Transfer": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|tap-floor|button·Void this transfer (both sides together)": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|control-width|button·Void this transfer (both sides together)": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|768|tap-floor|button·Edit entry": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|control-width|button·Edit entry": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|768|tap-floor|button·Void entry": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-accounting-ledger|768|control-width|button·Void entry": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-ledger|768|type-ladder|table·Date": {
-      "reason": null,
-      "detail": "cells at 12.80px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
     "admin-families|768|tap-floor|a·Public site": {
       "reason": null,
@@ -6664,10 +5772,6 @@
     "admin-help-tournaments|768|tap-floor|input·Search this guide": {
       "reason": null,
       "detail": "42px tall (floor 44)"
-    },
-    "admin-accounting-ledger|1440|type-ladder|table·Date": {
-      "reason": null,
-      "detail": "cells at 12.80px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
     "admin-public-site|1440|content-overflow|div·Show upcoming tournamentsAuto-display a ": {
       "reason": null,
@@ -10016,114 +9120,6 @@
     "admin-t-preview-schedule|390|contrast|span·Lions Diamond · Blue Pool·rgba(255, 255, 255, 0.4)on17,24,39": {
       "reason": null,
       "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 9px"
-    },
-    "admin-hub-admin|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hub-admin|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hub-admin|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|361|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|361|tap-floor|button·Apply": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|361|tap-floor|button·Org sub-ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|361|tap-floor|a·View Ledger →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|361|tap-floor|button·Tournament ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|361|tap-floor|button·Open Ledger": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|361|tap-floor|button·+ Add Ledger": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|390|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|390|tap-floor|button·Apply": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|390|tap-floor|button·Org sub-ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|390|tap-floor|a·View Ledger →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|390|tap-floor|button·Tournament ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|390|tap-floor|button·Open Ledger": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|390|tap-floor|button·+ Add Ledger": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|768|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|768|tap-floor|button·Apply": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|768|tap-floor|button·Org sub-ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|768|tap-floor|a·View Ledger →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|768|tap-floor|button·Tournament ledger": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|768|tap-floor|button·Open Ledger": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "admin-accounting-treasurer|768|tap-floor|button·+ Add Ledger": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
     },
     "admin-hl-registrations-registrar|361|tap-floor|a·Public site": {
       "reason": null,
@@ -14342,18 +13338,6 @@
       "reason": null,
       "detail": "22px tall (floor 44)"
     },
-    "admin-hub-treasurer|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hub-treasurer|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hub-treasurer|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-org-members-treasurer|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -14413,6 +13397,198 @@
     "admin-org-members-treasurer|768|tap-floor|a·View by team": {
       "reason": null,
       "detail": "15px tall (floor 44)"
+    },
+    "admin-accounting-bva|361|tap-floor|button·Show entries (4)": {
+      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-accounting-bva|361|content-overflow|div·UAT Rep ClubAccountingOverviewLedgerAllo": {
+      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
+      "detail": "content spills 86px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-accounting-bva|361|content-overflow|div·Season year:2026ExportEdit Budget →Org H": {
+      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
+      "detail": "content spills 102px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-accounting-bva|361|content-overflow|div·FacilitiesEst$6,000.00Alloc$6,750.00Coll": {
+      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
+      "detail": "content spills 102px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-accounting-bva|390|tap-floor|button·Show entries (4)": {
+      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-accounting-bva|390|content-overflow|div·UAT Rep ClubAccountingOverviewLedgerAllo": {
+      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
+      "detail": "content spills 57px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-accounting-bva|390|content-overflow|div·Season year:2026ExportEdit Budget →Org H": {
+      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
+      "detail": "content spills 73px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-accounting-bva|390|content-overflow|div·FacilitiesEst$6,000.00Alloc$6,750.00Coll": {
+      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
+      "detail": "content spills 73px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-accounting-bva|768|tap-floor|button·Show entries (4)": {
+      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-accounting-allocate|361|tap-floor|select·Select team…11U AA12U AA13U AAA15U AA15U": {
+      "reason": "The budget allocator's team select, baselined before Stage 3a; the key changed because the rebuilt test club has one more team. Not redrawn in 3a.",
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-accounting-allocate|390|tap-floor|select·Select team…11U AA12U AA13U AAA15U AA15U": {
+      "reason": "The budget allocator's team select, baselined before Stage 3a; the key changed because the rebuilt test club has one more team. Not redrawn in 3a.",
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-accounting-allocate|768|tap-floor|select·Select team…11U AA12U AA13U AAA15U AA15U": {
+      "reason": "The budget allocator's team select, baselined before Stage 3a; the key changed because the rebuilt test club has one more team. Not redrawn in 3a.",
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-accounting-ledger|361|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-ledger|361|control-offscreen|button·Around todaySep 1 – Oct 31": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|361|control-offscreen|button·Last 30 daysSep 1 – Oct 1": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|361|control-offscreen|button·Last 60 daysAug 2 – Oct 1": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|361|control-offscreen|button·Last 90 daysJul 3 – Oct 1": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|361|control-offscreen|button·This monthOct 1–31": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|361|control-offscreen|button·Last monthSep 1–30": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|361|control-offscreen|button·All timeeverything": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|361|control-offscreen|input·From date": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "49px past the right edge (screen 361px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|361|control-offscreen|input·To date": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "189px past the right edge (screen 361px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|390|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-ledger|390|control-offscreen|button·Around todaySep 1 – Oct 31": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|390|control-offscreen|button·Last 30 daysSep 1 – Oct 1": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|390|control-offscreen|button·Last 60 daysAug 2 – Oct 1": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|390|control-offscreen|button·Last 90 daysJul 3 – Oct 1": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|390|control-offscreen|button·This monthOct 1–31": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|390|control-offscreen|button·Last monthSep 1–30": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|390|control-offscreen|button·All timeeverything": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|390|control-offscreen|input·From date": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "20px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|390|control-offscreen|input·To date": {
+      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
+      "detail": "160px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "admin-accounting-ledger|768|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·e.g. Field rental — 2025 season": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·e.g. 3000.00": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Paste accounting entry ID to link": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|button·Team Splits": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·e.g. Field rental — 2025 season": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·e.g. 3000.00": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Paste accounting entry ID to link": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|button·Team Splits": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·e.g. Field rental — 2025 season": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·e.g. 3000.00": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Paste accounting entry ID to link": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|button·Team Splits": {
+      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-accounting-payment-requests|361|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-payment-requests|390|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-payment-requests|768|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
+      "detail": "16px tall (floor 44)"
     }
   }
 }

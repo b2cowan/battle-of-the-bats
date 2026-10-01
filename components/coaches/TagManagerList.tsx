@@ -4,6 +4,7 @@ import { Pencil, Trash2, GitMerge, RotateCcw, User } from 'lucide-react';
 import type { ComboPerson, ComboTag } from '@/components/coaches/TagSearchCombobox';
 import AwardIconPicker from '@/components/coaches/AwardIconPicker';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import pill from '@/components/shared/FilterPill.module.css';
 
 /**
  * THE tag manager's list — rename / merge / delete with team-scoped usage counts, shared rows
@@ -611,7 +612,7 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
               ) : (
                 <>
                   <span className={styles.tagDrawerName}>
-                    <span className={`${styles.tagComboDot} ${styles.tagComboDotOwn}`} aria-hidden />
+                    <span className={`${pill.tagComboDot} ${pill.tagComboDotOwn}`} aria-hidden />
                     <b>{hasIcon && tag.emoji ? `${tag.emoji} ` : ''}{tag.name}</b>
                   </span>
                   <span className={`${styles.tagDrawerUse} ${tag.count === 0 ? styles.tagDrawerUseZero : ''}`}>
@@ -659,7 +660,7 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
             {shared.map(tag => (
               <div key={tag.id} className={styles.tagDrawerRow}>
                 <span className={styles.tagDrawerName}>
-                  <span className={`${styles.tagComboDot} ${styles.tagComboDotOrg}`} aria-hidden />
+                  <span className={`${pill.tagComboDot} ${pill.tagComboDotOrg}`} aria-hidden />
                   <b>{tag.name}</b>
                 </span>
                 <span className={styles.tagDrawerUse}>

@@ -163,9 +163,10 @@ export default function PlatformAdminHelpPage() {
     {
       title: 'Treasurer',
       steps: [
-        { label: 'Create the right ledger', href: '/platform-admin/help/accounting#recipe-create-ledger' },
-        { label: 'Add income or expenses', href: '/platform-admin/help/accounting#recipe-add-income-expense' },
-        { label: 'Transfer money between ledgers', href: '/platform-admin/help/accounting#recipe-transfer-between-ledgers' },
+        { label: 'Add an entry', href: '/platform-admin/help/accounting#recipe-add-income-expense' },
+        { label: 'Transfer money between the club’s books', href: '/platform-admin/help/accounting#recipe-transfer-between-ledgers' },
+        { label: 'Bill the teams for a shared cost', href: '/platform-admin/help/accounting#allocations' },
+        { label: 'Answer a payment request', href: '/platform-admin/help/accounting#payment-requests' },
         { label: 'Prepare a board-ready financial report', href: '/platform-admin/help/accounting#recipe-board-report' },
       ],
     },

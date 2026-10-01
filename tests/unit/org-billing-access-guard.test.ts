@@ -63,6 +63,7 @@ const ALLOWED_SUSPENDED_ORG_FILES: Record<string, string> = {
   'app/[orgSlug]/admin/layout.tsx': 'page layer — HOSTS the billing page; CancellationGuard redirects',
   'app/[orgSlug]/admin/org/layout.tsx': 'page layer — direct parent of the billing page',
   'app/[orgSlug]/admin/rep-teams/layout.tsx': 'page layer — its own module gate redirects out',
+  'app/[orgSlug]/admin/accounting/layout.tsx': 'page layer — its own module gate (canOpenModule, closed on a cancelled org) redirects out',
   'lib/tournament-preview.ts': 'page resolver — opts out only to 404 a cancelled org SERVER-side (it does its own isOrgBillingSuspended check)',
 };
 
@@ -210,6 +211,7 @@ describe('billing rail — a cancelled subscription stops working', () => {
       'app/[orgSlug]/admin/layout.tsx',        // hosts the billing page; must render children
       'app/[orgSlug]/admin/org/layout.tsx',    // direct parent of the billing page
       'app/[orgSlug]/admin/rep-teams/layout.tsx', // its own module gate redirects out
+      'app/[orgSlug]/admin/accounting/layout.tsx', // the same: its module gate redirects out (Club Tier Stage 3a)
     ];
     const HANDLES_SUSPENSION = /isOrgBillingSuspended|suspendedOrgWall|SubscriptionEndedWall/;
 

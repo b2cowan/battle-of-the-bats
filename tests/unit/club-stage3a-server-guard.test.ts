@@ -74,8 +74,6 @@ const R = {
   acctLedgers: 'app/api/admin/accounting/ledgers/route.ts',
   acctLedger: 'app/api/admin/accounting/ledgers/[ledgerId]/route.ts',
   acctAllocateToTeams: 'app/api/admin/accounting/budget-plan/lines/[lineId]/allocate-to-teams/route.ts',
-  oldInstallment: 'app/api/admin/rep-teams/allocations/[allocationId]/splits/[splitId]/installments/[installId]/route.ts',
-  oldRequest: 'app/api/admin/rep-teams/payment-requests/[id]/route.ts',
   oldAllocations: 'app/api/admin/rep-teams/allocations/route.ts',
   oldAllocation: 'app/api/admin/rep-teams/allocations/[allocationId]/route.ts',
   coachInstallment: 'app/api/coaches/[orgSlug]/teams/[teamId]/allocations/[splitId]/installments/[installId]/route.ts',
@@ -121,8 +119,6 @@ describe('ONE rule for who may move club money (Ask 1, C08)', () => {
     [R.acctPayee, /resolveClubMoney\(req, \{ scope: 'books', write: true \}\)/],
     [R.acctPayeeMerge, /resolveClubMoney\(req, \{ scope: 'books', write: true \}\)/],
     [R.acctReminders, /resolveClubMoney\(req, \{ scope: 'loop', write: true \}\)/],
-    [R.oldInstallment, /resolveClubMoney\(req, \{ scope: 'loop', write: true \}\)/],
-    [R.oldRequest, /resolveClubMoney\(req, \{ scope: 'loop', write: true \}\)/],
     [R.acctEntries, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
     [R.acctEntry, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
     [R.acctTransfers, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
@@ -263,7 +259,7 @@ describe('every club money move is ONE database step that refuses a state it did
     assert.doesNotMatch(body, /accounting_entries|rpc\(/);
   });
   it('the routes never write a ledger line themselves any more (no create_accounting_transfer outside its own door)', () => {
-    for (const f of [R.acctInstallment, R.acctRequest, R.oldInstallment, R.oldRequest, R.coachInstallment, 'lib/club-money-moves.ts']) {
+    for (const f of [R.acctInstallment, R.acctRequest, R.coachInstallment, 'lib/club-money-moves.ts']) {
       assert.doesNotMatch(readCode(f), /create_accounting_transfer/, f);
     }
   });

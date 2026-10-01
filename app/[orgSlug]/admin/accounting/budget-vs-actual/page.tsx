@@ -13,7 +13,6 @@ import {
 import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import ExportMenu from '@/components/admin/ExportMenu';
 import FeedbackModal from '@/components/FeedbackModal';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from './bva.module.css';
@@ -413,39 +412,13 @@ export default function OrgBudgetVsActualPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
-          breadcrumb's "Accounting" is the eyebrow (still a link) beside the organization's name; the
-          subtitle's "{year} season" is not re-homed because the season picker directly below says it
-          (F3). The title keeps the report's one name, "Budget vs. Actual" — the rail's and the PDF's. */}
-      <AdminPageHeader
-        crumbs={[{ href: `${base}/accounting`, label: 'Accounting' }, { label: currentOrg?.name ?? '' }]}
-        title="Budget vs. Actual"
-        actions={headerActions}
-        legacy={<>
-      <div className={styles.breadcrumb}>
-        <Link href={`${base}/accounting`}>Accounting</Link>
-        <span>/</span>
-        <span>Budget vs. Actual</span>
-      </div>
-
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><BarChart2 size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Budget vs. Actual</h1>
-            <p className={styles.pageSub}>{currentOrg?.name} — {year} season</p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {headerActions}
-        </div>
-      </div>
-        </>}
-      />
+      {/* ⚖ A TAB OF ACCOUNTING (Club Tier Stage 3a, Ask 2 option B): the page lost only its own header —
+          the Accounting frame titles it and the tab row says which tab is lit. Its actions sit at the end of
+          the season row (a create belongs to the tab's own toolbar, §3.9). 3b redraws the page. */}
 
 
       {/* Year selector */}
-      <div className={styles.yearRow}>
+      <div className={styles.yearRow} style={{ flexWrap: 'wrap' }}>
         <span>Season year:</span>
         <select
           className={styles.yearSelect}
@@ -457,6 +430,9 @@ export default function OrgBudgetVsActualPage() {
             <option key={y} value={y}>{y}</option>
           ))}
         </select>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginLeft: 'auto', flexWrap: 'wrap' }}>
+          {headerActions}
+        </div>
       </div>
 
       {error && <p className={styles.errorText}>{error}</p>}

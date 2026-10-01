@@ -15,7 +15,9 @@
  *     whole row opens (owner 2026-09-29) and ONE chevron closes it — no links or buttons in cells
  *     (owner ruling 2026-09-28);
  *   · at ≤ 640 the table becomes white cards with a corner chevron (it does not fit a phone);
- *   · Upcoming bills is unchanged — Stage 3a redraws it.
+ *   · the Upcoming bills panel LEFT this page (Club Tier Stage 3a, Ask 2): its lanes are Accounting ›
+ *     Allocations › Coming due and Accounting › Payment requests. A team's money with the club is on its
+ *     own page ("With the club"); the board gains a money column with 3b.
  * ⚠ Departure, told at build time: an "Archived" choice joins the group filter. The drawing shows no
  * way to reach an archived team, and its page is where "Bring back" lives (specimen 2).
  */
@@ -29,7 +31,6 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import { CoachListToolbar } from '@/components/coaches/kit';
-import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
   ClubRow, ClubRowBand, ClubRowList, EmptyCard, LoadFailed, PageLoading, RepChip, repKit,
@@ -241,16 +242,6 @@ export default function RepTeamsBoardPage() {
             </ClubRowList>
           </div>
         </>
-      )}
-
-      {/* Unchanged until Stage 3a redraws the club's money loop. */}
-      {!loadError && active.length > 0 && (
-        <div className={repKit.billsGap}>
-          <UpcomingPayablesPanel
-            apiUrl={`/api/admin/rep-teams/upcoming-payables?orgSlug=${encodeURIComponent(orgSlug)}`}
-            reviewQueueUrl={`${base}/payment-requests`}
-          />
-        </div>
       )}
 
       {adding && currentOrg && (

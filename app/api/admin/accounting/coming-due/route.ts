@@ -3,6 +3,8 @@ import { withObservability } from '@/lib/observability';
 import { resolveClubMoney } from '@/lib/club-money-route';
 import { teamIdsInScope } from '@/lib/club-team-route';
 import { comingDue, loadClubLoop } from '@/lib/club-money-reads';
+import { loadHeadCoaches } from '@/lib/club-team-board';
+import { resolvePersonNamer } from '@/lib/db';
 import { COMING_DUE_DAYS } from '@/lib/club-money-figures';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -18,5 +20,30 @@ export const GET = withObservability(async (req: Request) => {
   const { ctx } = r;
   const today = tournamentToday();
   const loop = await loadClubLoop(ctx.org.id, await teamIdsInScope(ctx));
-  return NextResponse.json({ asOf: today, windowDays: COMING_DUE_DAYS, ...comingDue(loop, today) });
+  const due = comingDue(loop, today);
+  // The row's second line: who the club chases (the head coach, or "no head coach yet"), and for a
+  // sent payment who said so — names, never ids.
+  const all = [...Object.values(due.bands), due.later].flatMap(b => b.groups.flatMap(g => g.teams));
+  const [heads, nameOf] = await Promise.all([
+    loadHeadCoaches(ctx.org.id, [...new Set(all.map(t => t.teamId))]),
+    resolvePersonNamer(ctx.org.id, all.map(t => t.sentBy)),
+  ]);
+  const named = (b: typeof due.later) => ({
+    ...b,
+    groups: b.groups.map(g => ({
+      ...g,
+      teams: g.teams.map(t => ({
+        ...t,
+        sentBy: nameOf(t.sentBy),
+        headCoach: (heads.get(t.teamId)?.people ?? []).map(p => p.name ?? p.email).filter((n): n is string => !!n)[0] ?? null,
+      })),
+    })),
+  });
+  return NextResponse.json({
+    asOf: today,
+    windowDays: COMING_DUE_DAYS,
+    bands: { overdue: named(due.bands.overdue), sent: named(due.bands.sent), due_soon: named(due.bands.due_soon) },
+    later: named(due.later),
+    activeTeams: [...loop.teams.values()].filter(t => !t.isArchived).length,
+  });
 }, { route: '/api/admin/accounting/coming-due' });

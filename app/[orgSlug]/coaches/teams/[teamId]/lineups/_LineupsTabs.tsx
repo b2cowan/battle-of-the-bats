@@ -1,5 +1,5 @@
 'use client';
-import CoachTabBar from '@/components/coaches/CoachTabBar';
+import HubTabBar from '@/components/shared/HubTabBar';
 import { lineupsHref, type LineupsSection } from '@/lib/lineups-address';
 
 /**
@@ -13,12 +13,12 @@ import { lineupsHref, type LineupsSection } from '@/lib/lineups-address';
  * control is the portal's word for a VIEW switch on one list (List ⇄ Depth chart, 9-player ⇄
  * everyone bats); two rooms of different content are hub tabs, and every other hub already said
  * so. The two tabs are always offered — viewing templates is a read every coach with the lineups
- * duty holds — so `CoachTabBar`'s one-tab collapse never fires here.
+ * duty holds — so `HubTabBar`'s one-tab collapse never fires here.
  */
 export default function LineupsTabs({ base, active }: { base: string; active: LineupsSection }) {
   const tabs: { id: LineupsSection; label: string; href: string }[] = [
     { id: 'games', label: 'Games', href: lineupsHref(base) },
     { id: 'templates', label: 'Templates', href: lineupsHref(base, 'templates') },
   ];
-  return <CoachTabBar tabs={tabs} activeId={active} ariaLabel="Lineups views" />;
+  return <HubTabBar tabs={tabs} activeId={active} ariaLabel="Lineups views" />;
 }

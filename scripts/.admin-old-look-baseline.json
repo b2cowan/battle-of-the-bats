@@ -1,14 +1,10 @@
 {
-  "app/[orgSlug]/admin/accounting/accounting.module.css": {
-    "kitScope": 71
-  },
   "app/[orgSlug]/admin/accounting/budget-vs-actual/bva.module.css": {
     "kitScope": 61
   },
   "app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx": {
     "kx": 2,
-    "helpers": 1,
-    "legacy": 1
+    "helpers": 1
   },
   "app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx": {
     "kx": 7,
@@ -20,18 +16,7 @@
   },
   "app/[orgSlug]/admin/accounting/budget/page.tsx": {
     "kx": 1,
-    "helpers": 2,
-    "legacy": 1
-  },
-  "app/[orgSlug]/admin/accounting/ledger/[ledgerId]/page.tsx": {
-    "kx": 3,
-    "helpers": 1,
-    "legacy": 1
-  },
-  "app/[orgSlug]/admin/accounting/page.tsx": {
-    "kx": 11,
-    "helpers": 1,
-    "legacy": 1
+    "helpers": 2
   },
   "app/[orgSlug]/admin/admin-common.module.css": {
     "kitScope": 45
@@ -110,26 +95,6 @@
   },
   "app/[orgSlug]/admin/public-site/public-site.module.css": {
     "kitScope": 25
-  },
-  "app/[orgSlug]/admin/rep-teams/allocations/[allocationId]/page.tsx": {
-    "useAdminKit": 1,
-    "kx": 6,
-    "helpers": 1,
-    "legacy": 1
-  },
-  "app/[orgSlug]/admin/rep-teams/allocations/new/page.tsx": {
-    "kx": 5,
-    "helpers": 2,
-    "legacy": 1
-  },
-  "app/[orgSlug]/admin/rep-teams/allocations/page.tsx": {
-    "legacy": 1
-  },
-  "app/[orgSlug]/admin/rep-teams/payment-requests/page.tsx": {
-    "useAdminKit": 2,
-    "kx": 7,
-    "helpers": 2,
-    "legacy": 1
   },
   "app/[orgSlug]/admin/tournaments/archives/archives-admin.module.css": {
     "kitScope": 7

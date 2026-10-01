@@ -424,10 +424,12 @@ describe('practice plans on a phone · stage 2 (S1 · S2 · S4)', () => {
   });
 
   it('§231 walk — on a phone the drill picker\'s Tags menu opens from the LEFT (Tags starts the wrapped line)', () => {
-    const phoneBlock = css.slice(css.indexOf('.ppDrillFilters .scoutSearch { flex-basis: 100%; }'), css.indexOf('}', css.indexOf('.ppDrillFilters .multiSelectPanel { left: 0; right: auto; }')) + 1);
-    assert.match(phoneBlock, /\.ppDrillFilters \.multiSelectPanel \{ left: 0; right: auto; \}/);
+    const phoneBlock = css.slice(css.indexOf('.ppDrillFilters .scoutSearch { flex-basis: 100%; }'), css.indexOf('}', css.indexOf('.ppDrillFilters [data-pill="panel"] { left: 0; right: auto; }')) + 1);
+    // The pill's panel is reached by its data attribute: its class lives in the shared pill module
+    // (promoted 2026-10-01), so a `.multiSelectPanel` selector in this sheet would match nothing.
+    assert.match(phoneBlock, /\.ppDrillFilters \[data-pill="panel"\] \{ left: 0; right: auto; \}/);
     // The desk keeps its right anchor (the 320px docked library, where Tags ends the row).
-    assert.match(css, /\.ppDrillFilters \.multiSelectPanel \{ left: auto; right: 0; \}/);
+    assert.match(css, /\.ppDrillFilters \[data-pill="panel"\] \{ left: auto; right: 0; \}/);
   });
 
   it('S4 — on close, every fresh station still holding nothing goes; a step removes nothing; the collapse brings the block home', () => {

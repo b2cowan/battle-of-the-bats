@@ -206,8 +206,11 @@ export function RepChip({ tone = 'neutral', children }: { tone?: ChipTone; child
  *  `flush` drops its own bottom margin, for a host that spaces its children with `gap` (a window body). */
 export function Callout({
   tone = 'olive', icon, children, role, flush = false,
-}: { tone?: 'olive' | 'bad' | 'warn'; icon?: ReactNode; children: ReactNode; role?: 'alert' | 'status' | 'note'; flush?: boolean }) {
-  const toneClass = tone === 'bad' ? styles.calloutBad : tone === 'warn' ? styles.calloutWarn : '';
+}: {
+  /** `info`: the blue edge — a fact about whose something is ("held by the team", Club Stage 3a). */
+  tone?: 'olive' | 'bad' | 'warn' | 'info'; icon?: ReactNode; children: ReactNode; role?: 'alert' | 'status' | 'note'; flush?: boolean;
+}) {
+  const toneClass = tone === 'bad' ? styles.calloutBad : tone === 'warn' ? styles.calloutWarn : tone === 'info' ? styles.calloutInfo : '';
   return (
     <div className={`${styles.callout}${toneClass ? ` ${toneClass}` : ''}`} role={role} style={flush ? { margin: 0 } : undefined}>
       {icon}

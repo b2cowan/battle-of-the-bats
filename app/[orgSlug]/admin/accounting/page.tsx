@@ -1,552 +1,264 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+/**
+ * Accounting › OVERVIEW (Club Tier Stage 3a, specimen 1's "Overview tab" frame — Ask 2 option B).
+ *
+ *   the four figures  — Income · Expenses · Net position · Pending across every book for a period, AS
+ *                       TODAY until 3b redraws this tab as the board summary (C04: they still add every
+ *                       book together, the teams' included — 3b's arithmetic gate fixes that, not 3a).
+ *   the club's books  — Club, Tournament and House league kinds (the badge knows four kinds, C14), each
+ *                       with its ALL-TIME balance (one balance per book everywhere, C14); a book opens
+ *                       the Ledger tab on it. Add ledger is the section's one create — a club book by
+ *                       name, or a book for a tournament that has none yet (today's one-click "Open
+ *                       ledger", folded in so it is not lost; not drawn — recorded at build).
+ *   held by the teams — each team with what it owes the club and its next due (the club's own
+ *                       records, Ask 5a; the team's cash is the coaches', D1). A team opens its account.
+ *
+ * ⚖ The tournament rail's Accounting door arrives with `?tournamentId=`: when that tournament has a book,
+ * the page forwards to the Ledger tab on it (the old overview scrolled to its card).
+ */
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { DollarSign, X, Bell } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import HelpCallout from '@/components/help/HelpCallout';
-import HelpTooltip from '@/components/help/HelpTooltip';
 import { useTournament } from '@/lib/tournament-context';
-import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import FeedbackModal from '@/components/FeedbackModal';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
-import styles from './accounting.module.css';
+import { LEDGER_KIND_WORD } from '@/lib/club-ledger';
+import { tournamentToday } from '@/lib/timezone';
+import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import {
+  ClubRow, ClubRowList, ClubSection, LoadFailed, RepChip, repKit, useDeferredLoad, useLatestRead, type ChipTone,
+} from '@/components/admin/kit/club/RepKit';
+import { CoachListToolbar } from '@/components/coaches/kit';
+import { FigureCards, day, money, moneyFetch } from '@/components/admin/kit/club/money/MoneyKit';
+import AddLedgerWindow from '@/components/admin/kit/club/money/AddLedgerWindow';
 import type { LedgerSummary } from '@/lib/types';
+import type { LedgerKind } from '@/lib/club-ledger';
 
-function formatCurrency(n: number): string {
-  return new Intl.NumberFormat('en-CA', {
-    style: 'currency', currency: 'CAD', minimumFractionDigits: 2,
-  }).format(n);
+type Summary = LedgerSummary;
+interface TeamRow {
+  teamId: string; teamName: string; isArchived: boolean; outstanding: number;
+  nextDue: { dueDate: string; amount: number } | null;
+  overdue: { count: number; amount: number }; sent: { count: number; amount: number }; requestsWaiting: number;
 }
 
-function defaultDateRange(): { from: string; to: string } {
-  const y = new Date().getFullYear();
+const KIND_TONE: Record<LedgerKind, ChipTone> = { org: 'good', tournament: 'neutral', league_season: 'neutral', team: 'info' };
+
+function yearWindow(today: string) {
+  const y = today.slice(0, 4);
   return { from: `${y}-01-01`, to: `${y}-12-31` };
 }
 
 export default function AccountingOverviewPage() {
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, loading: orgLoading } = useOrg();
   const { tournaments } = useTournament();
-  const base    = `/${currentOrg?.slug ?? ''}/admin`;
-  const isOwner = userRole === 'owner';
-  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
+  const router = useRouter();
+  const search = useSearchParams();
+  const slug = currentOrg?.slug ?? '';
+  const q = `orgSlug=${encodeURIComponent(slug)}`;
+  const base = `/${slug}/admin/accounting`;
+  const runsRepTeams = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_rep_teams');
 
-  const defaults = defaultDateRange();
-  const [dateFrom, setDateFrom] = useState(defaults.from);
-  const [dateTo,   setDateTo]   = useState(defaults.to);
+  const [period, setPeriod] = useState(() => yearWindow(tournamentToday()));
+  const [books, setBooks] = useState<Summary[] | null>(null);
+  const [teams, setTeams] = useState<TeamRow[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [notice, setNotice] = useNotice();
 
-  const [ledgers,  setLedgers]  = useState<LedgerSummary[]>([]);
-  const [fetching, setFetching] = useState(true);
+  const beginRead = useLatestRead();
+  const load = useCallback(async () => {
+    if (!slug) return;
+    const current = beginRead();
+    setFailed(false);
+    const [b, t] = await Promise.all([
+      moneyFetch<{ ledgers?: Summary[] }>(`/api/admin/accounting/ledgers?${q}&from=${period.from}&to=${period.to}`),
+      runsRepTeams ? moneyFetch<{ teams?: TeamRow[] }>(`/api/admin/accounting/teams?${q}`) : Promise.resolve(null),
+    ]).catch(() => [null, null] as const);
+    if (!current()) return;
+    if (!b?.ok) { setFailed(true); return; }
+    setBooks(b.data.ledgers ?? []);
+    setTeams(t?.ok ? t.data.teams ?? [] : null);
+  }, [slug, q, period.from, period.to, runsRepTeams, beginRead]);
+  useDeferredLoad(!orgLoading && !!slug, load);
 
-  const [addOpen,   setAddOpen]   = useState(false);
-  const [newName,   setNewName]   = useState('');
-  const [creating,  setCreating]  = useState(false);
-
-  const [creatingForTournamentId, setCreatingForTournamentId] = useState<string | null>(null);
-
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
-  const [feedbackMsg,  setFeedbackMsg]  = useState('');
-
-  const [sendingDueReminders, setSendingDueReminders] = useState<30 | 7 | null>(null);
-  const [sendingAllocReminders, setSendingAllocReminders] = useState(false);
-
-  // Highlight ledger card linked from the tournament sidebar link
-  const [highlightEntityId, setHighlightEntityId] = useState<string | null>(null);
-  const highlightRef = useRef<HTMLDivElement>(null);
-
+  // The tournament rail's door: straight to that tournament's book, when it has one.
+  const forTournament = search.get('tournamentId');
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setHighlightEntityId(params.get('tournamentId'));
-  }, []);
+    if (!forTournament || !books) return;
+    const book = books.find(s => s.ledger.entityType === 'tournament' && s.ledger.entityId === forTournament);
+    if (book) router.replace(`${base}/ledger?book=${book.ledger.id}`);
+  }, [forTournament, books, router, base]);
 
-  useEffect(() => {
-    if (highlightRef.current) {
-      highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [ledgers]);
+  const clubBooks = useMemo(() => (books ?? []).filter(s => s.ledger.entityType !== 'team'), [books]);
+  const totals = useMemo(() => {
+    const all = books ?? [];
+    return {
+      income: all.reduce((s, l) => s + l.incomeOnly, 0),
+      expenses: all.reduce((s, l) => s + l.expensesOnly, 0),
+      net: all.reduce((s, l) => s + l.netPosted, 0),
+      pendingIn: all.reduce((s, l) => s + l.pendingIncome, 0),
+      pendingOut: all.reduce((s, l) => s + l.pendingExpenses, 0),
+    };
+  }, [books]);
+  const bookIds = new Set(clubBooks.map(s => s.ledger.entityId).filter(Boolean));
+  const tournamentsWithoutBook = tournaments.filter(t => t.status !== 'archived' && !bookIds.has(t.id));
+  const shownTeams = (teams ?? []).filter(t => !t.isArchived || t.outstanding > 0)
+    .sort((a, b) => a.teamName.localeCompare(b.teamName, undefined, { numeric: true }));
 
-  function showFeedback(type: 'success' | 'danger', msg: string) {
-    setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
-  }
+  if (failed) return <LoadFailed title="We couldn’t load the club’s books." onRetry={() => void load()} />;
+  if (!books) return <p className={ck.loading}>Loading…</p>;
 
-  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-
-  const load = useCallback(async (from: string, to: string) => {
-    setFetching(true);
-    try {
-      const qs  = new URLSearchParams({ from, to });
-      if (currentOrg?.slug) qs.set('orgSlug', currentOrg.slug);
-      const res  = await fetch(`/api/admin/accounting/ledgers?${qs}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to load');
-      setLedgers(data.ledgers ?? []);
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to load accounting data.');
-    } finally {
-      setFetching(false);
-    }
-  }, [currentOrg?.slug]);
-
-  useEffect(() => {
-    if (currentOrg) load(defaults.from, defaults.to);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentOrg]);
-
-  async function handleCreateLedger() {
-    const name = newName.trim();
-    if (!name) return;
-    setCreating(true);
-    try {
-      const res = await fetch(`/api/admin/accounting/ledgers${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, entityType: 'org' }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to create ledger');
-      setAddOpen(false);
-      setNewName('');
-      await load(dateFrom, dateTo);
-      showFeedback('success', `Ledger "${name}" created.`);
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to create ledger.');
-    } finally {
-      setCreating(false);
-    }
-  }
-
-  async function handleOpenTournamentLedger(tournamentId: string, tournamentName: string) {
-    setCreatingForTournamentId(tournamentId);
-    try {
-      const res = await fetch(`/api/admin/accounting/ledgers${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tournamentName, entityType: 'tournament', entityId: tournamentId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to create ledger');
-      await load(dateFrom, dateTo);
-      showFeedback('success', `Ledger opened for "${tournamentName}".`);
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to open tournament ledger.');
-    } finally {
-      setCreatingForTournamentId(null);
-    }
-  }
-
-  async function runDueReminders(window: 30 | 7) {
-    setSendingDueReminders(window);
-    try {
-      const res = await fetch(`/api/admin/rep-teams/dues/send-automated-reminders${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ window }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Failed');
-      showFeedback('success', `${window}-day reminders: ${data.emailsSent} email(s) sent across ${data.teamsProcessed} team(s).${data.teamsSkipped ? ` ${data.teamsSkipped} team(s) skipped (reminders disabled by coach).` : ''}`);
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to send reminders.');
-    } finally {
-      setSendingDueReminders(null);
-    }
-  }
-
-  async function runAllocReminders() {
-    setSendingAllocReminders(true);
-    try {
-      const res = await fetch(`/api/admin/rep-teams/allocations/send-reminders${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ daysAhead: 30 }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Failed');
-      showFeedback('success', `Allocation reminders: ${data.installmentsTagged} installment(s) across ${data.emailsSent} email(s) sent.`);
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to send allocation reminders.');
-    } finally {
-      setSendingAllocReminders(false);
-    }
-  }
-
-  if (loading) return <p className={styles.muted}>Loading…</p>;
-
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_accounting')) {
-    return (
-      <div className={styles.accessDenied}>
-        <DollarSign size={32} />
-        <h2>Access Restricted</h2>
-        <p>You don&apos;t have access to the Accounting module. Contact your organization owner to enable it.</p>
-      </div>
-    );
-  }
-
-  // G1: org-level totals exclude inter-ledger transfers (incomeOnly / expensesOnly)
-  const totalIncome   = ledgers.reduce((s, l) => s + l.incomeOnly,    0);
-  const totalExpenses = ledgers.reduce((s, l) => s + l.expensesOnly,  0);
-  const netPosted     = ledgers.reduce((s, l) => s + l.netPosted,     0);
-  const pendingIn     = ledgers.reduce((s, l) => s + l.pendingIncome,  0);
-  const pendingOut    = ledgers.reduce((s, l) => s + l.pendingExpenses, 0);
-
-  // A reminder row. On the kit it may wrap: the portal's body-face buttons are wider than the console
-  // face's, and on a phone the pair no longer fits beside the words (the slice 3 sweep measured a 16px
-  // sideways spill at 361px) — the buttons drop below the description instead.
-  const reminderRow = kx({
-    display: 'flex', alignItems: 'center', gap: '1rem',
-    padding: '0.9rem 1.1rem',
-    background: 'var(--white-5)',
-    border: '1px solid var(--white-8)',
-    borderRadius: '2px',
-  }, { ...KIT_SURFACE.card, flexWrap: 'wrap' });
-
-  // F2: tournaments that don't yet have a ledger
-  const ledgerEntityIds = new Set(ledgers.map(l => l.ledger.entityId).filter(Boolean));
-  const tournamentsWithoutLedger = tournaments.filter(
-    t => t.status !== 'archived' && !ledgerEntityIds.has(t.id)
-  );
+  const bookHref = (id: string) => `${base}/ledger?book=${id}`;
+  const teamHref = (id: string) => `${base}/teams/${id}`;
+  const pending = totals.pendingIn > 0 || totals.pendingOut > 0
+    ? [totals.pendingIn > 0 ? `+${money(totals.pendingIn)}` : null, totals.pendingOut > 0 ? `−${money(totals.pendingOut)}` : null].filter(Boolean).join(' / ')
+    : money(0);
 
   return (
-    <div className={styles.page}>
-      {/* Header — today's as `legacy` while the switch is off. On the kit the organization's name is the
-          eyebrow; "all ledgers" describes the page and is not re-homed (the grid below is the ledgers). */}
-      <AdminPageHeader
-        eyebrow={currentOrg?.name}
-        title="Accounting overview"
-        legacy={
-      <div className={styles.pageHeader}>
-        <div className={styles.headerIcon}><DollarSign size={20} /></div>
-        <div>
-          <h1 className={styles.pageTitle}>Accounting Overview</h1>
-          <p className={styles.pageSub}>{currentOrg?.name} — all ledgers</p>
-        </div>
-      </div>
-        }
-      />
+    <>
+      {notice && <PageNotice notice={notice} />}
 
-      {/* G2: date range filter */}
-      <div className={styles.dateFilterRow}>
-        <span className={styles.dateFilterLabel}>Period</span>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="acc-from">From</label>
-          <input
-            id="acc-from"
-            type="date"
-            className={styles.dateInput}
-            value={dateFrom}
-            onChange={e => setDateFrom(e.target.value)}
-          />
-        </div>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="acc-to">To</label>
-          <input
-            id="acc-to"
-            type="date"
-            className={styles.dateInput}
-            value={dateTo}
-            onChange={e => setDateTo(e.target.value)}
-          />
-        </div>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => load(dateFrom, dateTo)}
-          disabled={fetching}
-        >
-          {fetching ? 'Loading…' : 'Apply'}
-        </button>
-      </div>
+      {/* The four figures, as today (C04 — 3b's). The period is today's From / To. */}
+      <CoachListToolbar lede="Across every book, for the period">
+        <label className={ck.label} htmlFor="acct-from">From</label>
+        <input id="acct-from" type="date" className={ck.input} value={period.from} max={period.to}
+          onChange={e => e.target.value && setPeriod(p => ({ ...p, from: e.target.value }))} />
+        <label className={ck.label} htmlFor="acct-to">To</label>
+        <input id="acct-to" type="date" className={ck.input} value={period.to} min={period.from}
+          onChange={e => e.target.value && setPeriod(p => ({ ...p, to: e.target.value }))} />
+      </CoachListToolbar>
+      <FigureCards items={[
+        { label: 'Income', value: money(totals.income) },
+        { label: 'Expenses', value: money(totals.expenses) },
+        { label: 'Net position', value: money(totals.net) },
+        { label: 'Pending', value: pending },
+      ]} />
 
-      {fetching ? (
-        <p className={styles.muted}>Loading…</p>
-      ) : (
-        <>
-          {/* G1: org totals — income/expenses exclude transfers so they don't double-count */}
-          {ledgers.length > 0 && (
-            <div className={styles.totalsCard}>
-              <div className={styles.totalItem}>
-                <span className={styles.totalLabel}>Total Income</span>
-                <div className={`${styles.totalValue} ${styles.totalValuePos}`}>{formatCurrency(totalIncome)}</div>
-              </div>
-              <div className={styles.totalItem}>
-                <span className={styles.totalLabel}>Total Expenses</span>
-                <div className={`${styles.totalValue} ${styles.totalValueNeg}`}>{formatCurrency(totalExpenses)}</div>
-              </div>
-              <div className={styles.totalItem}>
-                <span className={styles.totalLabel}>Net Position</span>
-                <div className={`${styles.totalValue} ${netPosted > 0 ? styles.totalValuePos : netPosted < 0 ? styles.totalValueNeg : ''}`}>
-                  {formatCurrency(netPosted)}
-                </div>
-              </div>
-              {(pendingIn > 0 || pendingOut > 0) && (
-                <div className={styles.totalItem}>
-                  <span className={styles.totalLabel}>Pending</span>
-                  <div className={styles.totalValue} style={{ color: 'var(--warning-light)' }}>
-                    {pendingIn  > 0 && `+${formatCurrency(pendingIn)}`}
-                    {pendingIn  > 0 && pendingOut > 0 && ' / '}
-                    {pendingOut > 0 && `−${formatCurrency(pendingOut)}`}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+      <ClubSection
+        id="books"
+        title="The club’s books"
+        meta={`${clubBooks.length} ${clubBooks.length === 1 ? 'ledger' : 'ledgers'}`}
+        actions={<button type="button" className="btn btn-outline" onClick={() => setAdding(true)}><Plus size={14} aria-hidden /> Add ledger</button>}
+        list
+      >
+        <BooksTable rows={clubBooks} hrefOf={bookHref} />
+        <div className={repKit.phoneOnly}>
+          <ClubRowList inset label="The club’s books">
+            {clubBooks.map(s => (
+              <ClubRow key={s.ledger.id} as="link" href={bookHref(s.ledger.id)} title={s.ledger.name}
+                caption={`${LEDGER_KIND_WORD[s.ledger.entityType as LedgerKind] ?? 'Club'} · ${money(s.balance)}`} chevron />
+            ))}
+          </ClubRowList>
+        </div>
+      </ClubSection>
 
-          {ledgers.length === 0 ? (
-            <HelpCallout
-              variant="info"
-              title="No ledgers yet"
-              body="The accounting module tracks financial activity for tournaments and your org. Create a tournament ledger when a tournament begins, or an org sub-ledger for non-tournament income and expenses such as sponsorships or general operating costs."
-            />
+      {runsRepTeams && teams && (
+        <ClubSection id="teams" title="Held by the teams" meta={`${shownTeams.length} ${shownTeams.length === 1 ? 'team' : 'teams'}`} list>
+          <p className={`${repKit.notes} ${repKit.sectionBody}`}>Each team’s money is its coaches’. What the club reads here is what the team owes the club.</p>
+          {shownTeams.length === 0 ? (
+            <p className={`${repKit.notes} ${repKit.sectionBody}`}>No team has been billed yet.</p>
           ) : (
-            <div className={styles.ledgerGrid}>
-              {ledgers.map(({ ledger, pendingIncome, pendingExpenses, netPosted: net }) => {
-                const isHighlighted = ledger.entityId === highlightEntityId;
-                return (
-                  <div
-                    key={ledger.id}
-                    ref={isHighlighted ? highlightRef : null}
-                    className={`${styles.ledgerCard} ${isHighlighted ? styles.ledgerCardHighlight : ''}`}
-                  >
-                    <div className={styles.ledgerCardHeader}>
-                      <span className={styles.ledgerName}>{ledger.name}</span>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <span className={`${styles.typeBadge} ${ledger.entityType === 'org' ? styles.typeBadgeOrg : styles.typeBadgeTournament}`}>
-                          {ledger.entityType === 'org' ? 'Org' : 'Tournament'}
-                        </span>
-                        {ledger.entityType === 'org' ? (
-                          <HelpTooltip
-                            title="Org sub-ledger"
-                            body="Tracks org-wide income and expenses not tied to a specific tournament — e.g., sponsorships, grants, or general operating costs."
-                          />
-                        ) : (
-                          <HelpTooltip
-                            title="Tournament ledger"
-                            body="Tracks income and expenses for one specific tournament event — registration fees, diamond rentals, umpire fees, and similar costs."
-                          />
-                        )}
-                      </span>
-                    </div>
-
-                    <div className={`${styles.balanceAmount} ${net > 0 ? styles.balancePos : net < 0 ? styles.balanceNeg : styles.balanceNeutral}`}>
-                      {formatCurrency(net)}
-                    </div>
-                    <div className={styles.balanceLabel}>Net posted balance</div>
-
-                    {(pendingIncome > 0 || pendingExpenses > 0) && (
-                      <div className={styles.pendingRow}>
-                        <span>Pending</span>
-                        <span style={{ color: 'var(--warning-light)' }}>
-                          {pendingIncome  > 0 && `+${formatCurrency(pendingIncome)}`}
-                          {pendingIncome  > 0 && pendingExpenses > 0 && ' / '}
-                          {pendingExpenses > 0 && `−${formatCurrency(pendingExpenses)}`}
-                        </span>
-                      </div>
-                    )}
-
-                    <Link href={`${base}/accounting/ledger/${ledger.id}`} className={styles.viewLink}>
-                      View Ledger →
-                    </Link>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* F2: tournaments without ledgers — offer one-click ledger creation */}
-          {(isOwner || userRole === 'treasurer') && tournamentsWithoutLedger.length > 0 && (
-            <div className={styles.pendingLedgersSection}>
-              <div className={styles.sectionTitle}>Tournaments without a ledger</div>
-              {tournamentsWithoutLedger.map(t => (
-                <div key={t.id} className={styles.pendingLedgerRow}>
-                  <span className={styles.pendingLedgerName}>{t.name}</span>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
-                    disabled={creatingForTournamentId === t.id}
-                    onClick={() => handleOpenTournamentLedger(t.id, t.name)}
-                  >
-                    {creatingForTournamentId === t.id ? 'Opening…' : 'Open Ledger'}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Accounting tools section */}
-          <div style={{ marginTop: '2rem' }}>
-            <div style={kx({
-              fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.06em', color: 'var(--white-30)',
-              marginBottom: '0.75rem',
-            }, KIT_INK.eyebrow)}>
-              Planning Tools
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <Link
-                href={`${base}/accounting/budget`}
-                style={kx({
-                  display: 'flex', alignItems: 'center', gap: '0.65rem',
-                  padding: '0.75rem 1rem',
-                  background: 'var(--white-5)',
-                  border: '1px solid var(--white-8)',
-                  borderRadius: '2px',
-                  color: 'var(--white-80)',
-                  textDecoration: 'none',
-                  fontSize: '0.88rem', fontWeight: 600,
-                  transition: 'background 0.15s, border-color 0.15s',
-                }, KIT_SURFACE.door)}
-              >
-                <DollarSign size={16} style={{ color: 'var(--logic-lime)' }} />
-                Org Budget
-                <span style={kx({ fontSize: '0.75rem', color: 'var(--white-35)', fontWeight: 400 }, KIT_INK.tertiary)}>
-                  Season planning &amp; team allocations
-                </span>
-              </Link>
-              <Link
-                href={`${base}/accounting/budget-vs-actual`}
-                style={kx({
-                  display: 'flex', alignItems: 'center', gap: '0.65rem',
-                  padding: '0.75rem 1rem',
-                  background: 'var(--white-5)',
-                  border: '1px solid var(--white-8)',
-                  borderRadius: '2px',
-                  color: 'var(--white-80)',
-                  textDecoration: 'none',
-                  fontSize: '0.88rem', fontWeight: 600,
-                  transition: 'background 0.15s, border-color 0.15s',
-                }, KIT_SURFACE.door)}
-              >
-                <DollarSign size={16} style={{ color: 'var(--logic-lime)' }} />
-                Budget vs. Actual
-                <span style={kx({ fontSize: '0.75rem', color: 'var(--white-35)', fontWeight: 400 }, KIT_INK.tertiary)}>
-                  Allocation &amp; team collection status
-                </span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Reminders section — shown to exactly who the two reminder routes accept: owner or
-              admin, holding Rep Teams on a plan that carries it. It used to show to treasurers,
-              whom both routes refuse (every press a 403), and hid from admins, whom they accept.
-              The routes decide; the buttons follow them (Club Tier Readiness C03). */}
-          {(isOwner || userRole === 'admin')
-            && hasCapability(userRole ?? '', userCapabilities, 'module_rep_teams')
-            && !!currentOrg && hasModuleEntitlement(currentOrg, 'module_rep_teams') && (
-            <div style={{ marginTop: '2rem' }}>
-              <div style={kx({
-                fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
-                letterSpacing: '0.06em', color: 'var(--white-30)',
-                marginBottom: '0.75rem',
-              }, KIT_INK.eyebrow)}>
-                Automated Reminders
+            <>
+              <TeamsTable rows={shownTeams} hrefOf={teamHref} />
+              <div className={repKit.phoneOnly}>
+                <ClubRowList inset label="Held by the teams">
+                  {shownTeams.map(t => (
+                    <ClubRow key={t.teamId} as="link" href={teamHref(t.teamId)}
+                      title={<>{t.teamName} {t.overdue.count > 0 && <RepChip tone="bad">{money(t.overdue.amount)} overdue</RepChip>}</>}
+                      caption={`${money(t.outstanding)} outstanding${t.nextDue ? ` · next ${day(t.nextDue.dueDate)}` : ''}`} chevron />
+                  ))}
+                </ClubRowList>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                <div style={reminderRow}>
-                  <Bell size={16} style={kx({ color: 'var(--white-40)', flexShrink: 0 }, KIT_INK.tertiary)} />
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontWeight: 600, color: 'var(--white-80)', fontSize: '0.88rem' }}>Dues Reminders</p>
-                    <p style={kx({ margin: 0, fontSize: '0.78rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>
-                      Send 30-day or 7-day reminder emails to guardians for upcoming installments. Respects per-team coach toggle.
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem' }}
-                      disabled={sendingDueReminders !== null}
-                      onClick={() => runDueReminders(30)}
-                    >
-                      {sendingDueReminders === 30 ? 'Sending…' : '30-day wave'}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem' }}
-                      disabled={sendingDueReminders !== null}
-                      onClick={() => runDueReminders(7)}
-                    >
-                      {sendingDueReminders === 7 ? 'Sending…' : '7-day wave'}
-                    </button>
-                  </div>
-                </div>
-
-                <div style={reminderRow}>
-                  <Bell size={16} style={kx({ color: 'var(--white-40)', flexShrink: 0 }, KIT_INK.tertiary)} />
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontWeight: 600, color: 'var(--white-80)', fontSize: '0.88rem' }}>Allocation Reminders</p>
-                    <p style={kx({ margin: 0, fontSize: '0.78rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>
-                      Send a reminder email to you listing all team allocation installments due within the next 30 days.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem', flexShrink: 0 }}
-                    disabled={sendingAllocReminders}
-                    onClick={runAllocReminders}
-                  >
-                    {sendingAllocReminders ? 'Sending…' : 'Run now'}
-                  </button>
-                </div>
-              </div>
-            </div>
+            </>
           )}
-
-          {(isOwner || userRole === 'treasurer') && (
-            <div className={styles.footerRow} style={{ marginTop: '1.5rem' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setAddOpen(true)}>
-                + Add Ledger
-              </button>
-            </div>
-          )}
-        </>
+        </ClubSection>
       )}
+      <p className={repKit.notes}>
+        A book opens the Ledger tab on that book{runsRepTeams ? '; a team opens its account with the club' : ''}.
+      </p>
 
-      {/* Add Ledger modal */}
-      {addOpen && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setAddOpen(false))?.(); }}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add Ledger</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setAddOpen(false)}><X size={16} /></button>
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="acc-new-ledger-name">Ledger Name</label>
-              <input
-                id="acc-new-ledger-name"
-                className={styles.input}
-                type="text"
-                value={newName}
-                onChange={e => setNewName(e.target.value.slice(0, 100))}
-                placeholder="e.g. Fundraising Account"
-                maxLength={100}
-                autoFocus
-              />
-              <p className={styles.hint}>Creates an org-level sub-ledger. Tournament ledgers are created from the Tournaments section above.</p>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className="btn btn-ghost" onClick={() => setAddOpen(false)}>Cancel</button>
-              <button type="button" className="btn btn-primary" onClick={handleCreateLedger} disabled={creating || !newName.trim()}>
-                {creating ? 'Creating…' : 'Create Ledger'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {adding && currentOrg && (
+        <AddLedgerWindow
+          q={q}
+          tournaments={tournamentsWithoutBook.map(t => ({ id: t.id, name: t.name }))}
+          onClose={() => setAdding(false)}
+          onCreated={id => { setAdding(false); router.push(bookHref(id)); }}
+          onFailed={text => setNotice({ tone: 'bad', text })}
+        />
       )}
+    </>
+  );
+}
 
-      <FeedbackModal
-        isOpen={feedbackOpen}
-        onClose={() => setFeedbackOpen(false)}
-        title={feedbackType === 'success' ? 'Done' : 'Error'}
-        message={feedbackMsg}
-        type={feedbackType}
-      />
+/** The club's books at a desk: Ledger · Kind · Balance · the chevron. The whole row opens the book. */
+function BooksTable({ rows, hrefOf }: { rows: Summary[]; hrefOf: (id: string) => string }) {
+  const router = useRouter();
+  return (
+    <div className={repKit.deskOnly}>
+      <table className={repKit.table}>
+        <thead>
+          <tr>
+            <th scope="col">Ledger</th>
+            <th scope="col">Kind</th>
+            <th scope="col" className={repKit.num}>Balance</th>
+            <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(s => {
+            const href = hrefOf(s.ledger.id);
+            const kind = s.ledger.entityType as LedgerKind;
+            return (
+              <tr key={s.ledger.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; router.push(href); }}>
+                <td><Link href={href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{s.ledger.name}</Link></td>
+                <td><RepChip tone={KIND_TONE[kind] ?? 'neutral'}>{LEDGER_KIND_WORD[kind] ?? 'Club'}</RepChip></td>
+                <td className={repKit.num}>{money(s.balance)}</td>
+                <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Held by the teams at a desk: Team · Kind · Outstanding · Next due · the chevron. */
+function TeamsTable({ rows, hrefOf }: { rows: TeamRow[]; hrefOf: (id: string) => string }) {
+  const router = useRouter();
+  return (
+    <div className={repKit.deskOnly}>
+      <table className={repKit.table}>
+        <thead>
+          <tr>
+            <th scope="col">Team</th>
+            <th scope="col">Kind</th>
+            <th scope="col" className={repKit.num}>Outstanding</th>
+            <th scope="col">Next due</th>
+            <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(t => {
+            const href = hrefOf(t.teamId);
+            return (
+              <tr key={t.teamId} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; router.push(href); }}>
+                <td><Link href={href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{t.teamName}</Link></td>
+                <td><RepChip tone="info">Team</RepChip></td>
+                <td className={repKit.num}>{money(t.outstanding)}</td>
+                <td>
+                  {t.overdue.count > 0 ? <RepChip tone="bad">{money(t.overdue.amount)} overdue</RepChip>
+                    : t.nextDue ? <span className={repKit.dim}>{day(t.nextDue.dueDate)} · {money(t.nextDue.amount)}</span>
+                    : <span className={repKit.dim}>—</span>}
+                </td>
+                <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

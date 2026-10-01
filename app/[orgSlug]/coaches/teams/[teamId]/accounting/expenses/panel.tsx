@@ -61,6 +61,7 @@ import {
   type DateRangePresetId, type DateRangeSelection,
 } from '@/lib/coach-date-range';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
+import { CLUB_SENT_WAITING_WORD } from '@/lib/club-money-words';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
@@ -6652,6 +6653,10 @@ function MoneyRecordsPanel({
               tells a coach how stale it is — never "Scheduled", which reads as merely upcoming. */}
           {overdue && <> <span className={`${styles.registerChip} ${styles.registerChipOverdue}`}>Overdue · {r.overdueDays}d</span></>}
           {r.scheduled && !overdue && <> <span className={styles.registerChip}>Scheduled</span></>}
+          {/* ⚖ A payment the team SENT and the club has not confirmed (Club Tier Stage 3a, ruled 2026-09-30):
+              money out on its sent day, Cash on hand follows, and this chip says the club still has to
+              confirm it. The bill's Paid / Left keep meaning "the club has it". */}
+          {r.waitingOnClub && <> <span className={styles.registerChip}>{CLUB_SENT_WAITING_WORD}</span></>}
           {/* ⚠⚠ INCOME AND A REFUND SHARE THE MONEY-IN COLUMN AND ARE OPPOSITES, so the two of them
               — and only the two of them — carry their kind on the row. A $325 grant and a $325
               vendor credit are otherwise identical here, and telling them apart is the one thing

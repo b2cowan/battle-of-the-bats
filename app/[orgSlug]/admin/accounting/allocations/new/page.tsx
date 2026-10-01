@@ -1,15 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { DollarSign, Plus, Trash2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronLeft } from 'lucide-react';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_STEP } from '@/components/admin/kit/kit-inline';
-import styles from '../../rep-teams.module.css';
+import styles from '../../../rep-teams/rep-teams.module.css';
 
 interface ProgramYearOption { id: string; name: string; year: number; status: string; }
 interface TeamOption { id: string; name: string; years: ProgramYearOption[]; }
@@ -59,13 +56,12 @@ function computeAmount(method: string, value: string, total: number): number | n
 
 export default function NewAllocationPage() {
   const router = useRouter();
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, loading } = useOrg();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
-  const asterisk = useKitAsterisk();
+  // The kit's required marker (Admin Design Continuity, retired switch: the kit is always on).
+  const asterisk = KIT_INK.asterisk;
 
   const [step, setStep] = useState(1);
   const [teams, setTeams] = useState<TeamOption[]>([]);
@@ -82,57 +78,26 @@ export default function NewAllocationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  /* ⚖ MOVED UNDER ACCOUNTING (Club Tier Stage 3a, Ask 2): the form is today's, unchanged — but it now
+     reads the teams through Accounting's own list (`team-options`: the teams in the member's groups with
+     their seasons, one read), because a treasurer cannot read the Rep Teams team list it used to call. */
   useEffect(() => {
     if (!currentOrg) return;
-    fetch(`/api/admin/rep-teams/teams${orgQuery}`)
+    fetch(`/api/admin/accounting/team-options${orgQuery}`)
       .then(r => r.json())
       .then(data => {
-        const teamList: TeamOption[] = (data.teams ?? []).map((s: any) => ({
-          id: s.team.id,
-          name: s.team.name,
-          years: [],
-        }));
-        setTeams(teamList);
-        // Fetch program years for each team
-        Promise.all(
-          teamList.map((t: TeamOption) =>
-            fetch(`/api/admin/rep-teams/teams/${t.id}/program-years${orgQuery}`)
-              .then(r => r.json())
-              .then(d => ({ teamId: t.id, years: d.programYears ?? [] })),
-          ),
-        ).then(results => {
-          setTeams(prev =>
-            prev.map(t => {
-              const r = results.find(x => x.teamId === t.id);
-              return r ? { ...t, years: r.years } : t;
-            }),
-          );
-        }).finally(() => setTeamsLoading(false));
+        setTeams((data.teams ?? []).map((t: { id: string; name: string; programYears?: ProgramYearOption[] }) => ({
+          id: t.id, name: t.name, years: t.programYears ?? [],
+        })));
       })
-      .catch(() => setTeamsLoading(false));
+      .catch(() => {})
+      .finally(() => setTeamsLoading(false));
   }, [currentOrg, orgQuery]);
 
   if (loading) return <p className={styles.muted}>Loading…</p>;
 
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
-    return (
-      <div className={styles.accessDenied}>
-        <DollarSign size={32} />
-        <h2>Access Restricted</h2>
-        <p>You don&apos;t have access to this module.</p>
-      </div>
-    );
-  }
-
-  if (userRole !== 'owner' && userRole !== 'treasurer') {
-    return (
-      <div className={styles.accessDenied}>
-        <DollarSign size={32} />
-        <h2>Owner or Treasurer Required</h2>
-        <p>Only owners and treasurers can create cost allocations.</p>
-      </div>
-    );
-  }
+  // The Accounting layout has already asked the one money rule (canMoveClubMoney = who opens
+  // Accounting: owner, treasurer, an admin with Accounting — Stage 3a, Ask 1); the route asks it again.
 
   const total = parseFloat(totalAmount) || 0;
 
@@ -299,7 +264,7 @@ export default function NewAllocationPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to create allocation');
-      router.push(`${base}/rep-teams/allocations/${data.allocation.id}`);
+      router.push(`${base}/accounting/allocations/${data.allocation.id}`);
     } catch (e: any) {
       setError(e.message ?? 'Failed to create allocation.');
     } finally {
@@ -308,56 +273,33 @@ export default function NewAllocationPage() {
   }
 
   // The hand-set inks this page repeats, each wearing the kit's patch while the switch is on.
-  const dimInk = kx({ color: 'var(--white-40)' }, KIT_INK.tertiary);
-  const reviewHead = kx({ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }, KIT_INK.tertiary);
+  const dimInk = KIT_INK.tertiary;
+  const reviewHead = { textAlign: 'left' as const, paddingBottom: '0.3rem', fontWeight: 600, ...KIT_INK.tertiary };
 
   // Row-invariant styles, computed once per render rather than once per row.
-  const reviewNumber = kx({ color: 'var(--white-40)', padding: '0.2rem 0' }, KIT_INK.tertiary);
+  const reviewNumber = { padding: '0.2rem 0', ...KIT_INK.tertiary };
 
   return (
     <div className={styles.page} style={{ maxWidth: 720 }}>
-      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the way
-          up is Cost allocations and "Rep Teams" is the eyebrow (still a link); "Split a shared expense
-          across teams" describes the page and is not re-homed — the steps below are that job (F3). */}
       <AdminPageHeader
-        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
-        title="New cost allocation"
-        backTo={{ href: `${base}/rep-teams/allocations`, label: 'Cost allocations' }}
-        legacy={<>
-      <div className={styles.breadcrumb}>
-        <Link href={`${base}/rep-teams`}>Rep Teams</Link>
-        <span>/</span>
-        <Link href={`${base}/rep-teams/allocations`}>Cost Allocations</Link>
-        <span>/</span>
-        <span>New Allocation</span>
-      </div>
-
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><DollarSign size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>New Cost Allocation</h1>
-            <p className={styles.pageSub}>Split a shared expense across teams</p>
-          </div>
-        </div>
-      </div>
-        </>}
+        crumbs={[{ label: 'Accounting' }, { label: 'Allocations' }]}
+        title="New allocation"
+        backTo={{ href: `${base}/accounting/allocations`, label: 'Allocations' }}
       />
 
       {/* Step indicator */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', alignItems: 'center' }}>
         {[1, 2, 3].map(s => (
           <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={kx({
+            <div style={{
               width: 28, height: 28, borderRadius: '50%',
-              background: step >= s ? 'var(--blueprint-blue)' : 'var(--white-8)',
-              color: step >= s ? '#fff' : 'var(--white-30)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.8rem', fontWeight: 700, flexShrink: 0,
-            }, step >= s ? KIT_STEP.reached : KIT_STEP.ahead)}>
+              ...(step >= s ? KIT_STEP.reached : KIT_STEP.ahead),
+            }}>
               {s}
             </div>
-            <span style={kx({ fontSize: '0.82rem', color: step === s ? 'var(--white-80)' : 'var(--white-30)' }, step === s ? KIT_STEP.current : KIT_STEP.other)}>
+            <span style={{ fontSize: '0.82rem', ...(step === s ? KIT_STEP.current : KIT_STEP.other) }}>
               {s === 1 ? 'Details' : s === 2 ? 'Team Splits' : 'Review'}
             </span>
             {s < 3 && <ChevronRight size={14} style={{ color: 'var(--white-20)' }} />}

@@ -413,7 +413,7 @@ export function AttendancePanel({
                   confident wrong answer, and the note below already says nothing is recorded.
                   ⚠ Reuses the hub's scoreboard recipe (`insightsBand`/`insightsStat`) rather than a
                   second set of tile classes — the portal has ONE stat band, and a report growing its
-                  own would be the drift `CoachTabBar` was extracted to prevent. */}
+                  own would be the drift `HubTabBar` was extracted to prevent. */}
               {settled && hasAnyData && (() => {
                 const t = seasonTotals(rows);
                 return (
