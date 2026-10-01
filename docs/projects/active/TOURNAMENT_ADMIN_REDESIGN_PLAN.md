@@ -1,7 +1,9 @@
 # Tournament admin redesign — implementation plan
 
-> **Status:** BUILD — **Stage 2 (Teams and Communications) COMMITTED 2026-09-30: `f4a4cc79` (Part 0, migration 314 applied to prod the same day) · `12aee778` (Part 1) · `aab3a3f4` (Parts 2–3, after /simplify + /review)** — §6b "Stage 2 — as built"; owner walk §254 open. **The defects pass, F40 (`dbc55916`) and Stage 1 (game day) are on prod
-> 2026-09-30 (Amplify job 274, prod HEAD `3ec661b5`)**; walk §252 still open. The measured walk, the stage ladder and Stage 1 (game day) were drawn on
+> **Status:** BUILD — **Stage 2 (Teams and Communications) COMMITTED 2026-09-30: `f4a4cc79` (Part 0, migration 314 applied to prod the same day) · `12aee778` (Part 1) · `aab3a3f4` (Parts 2–3, after /simplify + /review)** — §6b "Stage 2 — as built"; the §252-walk follow-ups committed `4db0faab` 2026-10-01 (§6b). **Every owner walk
+> so far is closed — §251 and §253 passed; §252 and §254 (with the follow-ups' own walk) closed by the owner
+> 2026-10-01** (ledger §254 records what that walk's ticks did and did not cover). **The defects pass, F40 (`dbc55916`) and Stage 1 (game day) are on prod
+> 2026-09-30 (Amplify job 274, prod HEAD `3ec661b5`)**. The measured walk, the stage ladder and Stage 1 (game day) were drawn on
 > 2026-09-28 and published on the project hub (https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM); Stage 1 was redrawn on
 > 2026-09-29 (hub v3–v5) after a formatting check against the portal's written rules (§11). **Stage 1, asks
 > A1–A11 and the walk's shape questions RULED 2026-09-29, all as recommended** (owner: "I agree with your
@@ -772,7 +774,7 @@ rebuilds (the Teams page and `teams-admin.module.css`, `RegistrationHealthPanel`
 `communication.module.css`), held by `npm run check:old-look` and the strict admin colour gate (Admin Design
 Continuity's closing step made them this program's).
 
-### Stage 2 — as built (2026-09-30; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE2_BUILD_PROMPT.md`; owner walk §254 open)
+### Stage 2 — as built (2026-09-30; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE2_BUILD_PROMPT.md`; owner walk §254 closed 2026-10-01)
 
 **Owner calls at the build's start (2026-09-30, all as recommended):** **P1** — on the Tournament plan Promote /
 Place is a lock line in the record's Decision / Registration block, no row button. **P2** — a pending team that
@@ -882,9 +884,10 @@ Raised by the owner while walking §252, each ruled in the conversation and buil
   Payment · Unpaid lists Storm, Ravens, Comets and Royals under their pools. The scoped layout sweep adds nothing
   (three touch-floor findings it raised at 768 — the Filter button's floor cancelled by its own base rule, the
   search input 2px short inside its field, the kit "?" floored only to 760 — fixed).
-- **Owed:** a QA walk for these follow-ups, and §254's W4 steps 1, 4, 6–10 and 13 describe the screen before them
+- **Walk: closed by the owner 2026-10-01 without one of its own** ("close it all, they are all complete"), together
+  with §252 and §254. §254's W4 as ticked described the screen before these follow-ups in steps 1, 4, 6–10 and 13
   (the "· 1 to review" name, the title's pencil, the head's "Saved", the Team details section, the separate Swap /
-  Select many / Randomize buttons).
+  Select many / Randomize buttons) — the ledger records it.
 - **Words — `/marketing` 2026-10-01: every new word kept as built** — Tools (the Schedule's menu already wears it)
   and its groups Teams · Pools · Setup; Filter, Status, Payment, Group by, Reset filters, "Filter, N on";
   Registration questions (sentence case, as every menu item; its destination page's Title Case heading is older);

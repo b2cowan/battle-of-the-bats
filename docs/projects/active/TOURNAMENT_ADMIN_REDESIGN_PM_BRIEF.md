@@ -1,13 +1,23 @@
 # Tournament admin redesign — PM brief
 
-> **Status:** design. The walk, the stage ladder and Stage 1 (game day) are drawn on the project hub
+> **Status:** build. The walk, the stage ladder and Stage 1 (game day) are drawn on the project hub
 > (https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM), 2026-09-28; Stage 1 redrawn 2026-09-29 after a check
 > against the portal's written formatting rules, and ruled the same day. The defects pass is built and
 > committed (2026-09-29); its owner walk (§251) PASSED the same day, 24 of 24. **Stage 1 (game day) is built and
 > committed (2026-09-30)**, measured against the drawings (within a few pixels on every first-screen figure); its owner
 > walk (§253) PASSED on 2026-09-30, 31 of 31, every step in both looks. Two things differ from the drawings on purpose: the "Running late?"
 > card shows only while there are games left to play (the test event's are all past), and a waiting score's
-> editor offers Finalize until the organizer changes a number. Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
+> editor offers Finalize until the organizer changes a number. **Stage 2 (Teams and Communications) was drawn
+> and ruled on 2026-09-30**, every question as recommended, **and built and committed the same day**: first the
+> email that reached every registered team (it now reaches the accepted teams, and each email's record lists who it
+> reached, from now on), then the form window's named Previous / Next, then Teams and Communications themselves,
+> reviewed before the commit. **On 1 October the owner's notes from walking the pool board (§252) were ruled and
+> built the same day:** one toolbar in every division (the division, Search, Filter and a Tools menu holding Select
+> many, Swap, Randomize and Registration questions), a team's record that opens for reading and edits whole from
+> its pencil, the waiting count as the amber pill, and Export as one button; /marketing kept every new word,
+> including the review's "Enter a full email address to save it.". **The owner closed every walk on 1 October**
+> (§252 and §254, with the follow-ups'), so no walk is open on this project.
+> Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is
 
@@ -43,6 +53,39 @@ takes, and what can go. It runs in stages, and each stage is drawn, ruled by the
 - **A place for what's next.** A "Running late?" door opens today's rain-delay tool, and is where Storm
   Mode will live; a reserved spot marks where the Big Board's "show on a screen" will go. Neither is built
   here.
+
+## What an organizer would see and do differently in Stage 2 (Teams and Communications) — ruled 2026-09-30, build next
+
+- **Teams opens on the teams.** Today, on a phone, no team is on the first screen: the money summary opens by
+  default and pushes the list down to 783px, behind the phone's bottom bar (on the demo's 15-team event, a screen
+  and a half down). After: registration health, money and "registration open" become three one-line rows under an
+  "At a glance" heading, each opening when tapped (closing registration moves inside its row, with a sentence
+  saying what it does), and the first team is at about 469px, with three teams on the first screen. At a desk the
+  first team moves from 687px to about 519px.
+- **A team waiting for a decision is on the screen, with its Accept.** Today, in a division with pools, a new
+  registration isn't shown at all; the organizer reaches it through the health panel, and accepting takes five
+  taps. After: the waiting teams are the first group in their division, each with an Accept button, and Teams
+  opens on the division that has one. Two taps (Accept, then the confirm that says whether the coach is emailed).
+- **Tapping a team opens the team.** Today a small arrow folds details open in the list, with tiny icon buttons
+  and Delete among them. After: the whole row opens the team's page — full screen on a phone — with payment first,
+  a one-tap "Mark paid" as at the gate, details that save as you type, and Delete at the bottom, asking first.
+  Its foot names the previous and next team, so recording a run of payments is "Mark paid, Next" for each team,
+  with no going back to the list and no typing.
+- **One frame, one colour per status, words not letters.** Each pool is a heading inside one list instead of its
+  own card; a team's status is said once, by the group it sits in; payment reads "Paid" or "Owes $475", as at the
+  gate, instead of coloured letters and dollar signs.
+- **Communications says who a message reaches.** One list of messages instead of four tabs. The email line says
+  "18 teams" and the email reaches those 18 (today it says 18 and reaches 22, including a team the organizer
+  rejected — the owner decides whether that is fixed now). Choosing which teams get an email, which Tournament
+  Plus already sells, is drawn as a real choice for Plus and a lock with the plan's name for the free plan — or the
+  owner drops the promise until it's built.
+
+**The owner's five questions for Stage 2, ruled 2026-09-30:** a waiting team's row carries Accept, and a waitlisted
+team's carries Promote only when a spot is open; email targeting is built for Tournament Plus (it is already sold),
+locked with the plan's name on the Tournament plan; the email-to-everyone problem is fixed first, on its own; a
+waiting team shows at the top of its own division; and selecting many teams stays Teams' own until a club screen
+needs the same thing. One small placement is left for the build's first message: what the Tournament plan sees
+where Promote would be.
 
 ## Why it matters
 
@@ -90,3 +133,6 @@ heading and rows together, as the plain team list on the same page already was. 
 - One status word per state across the four game-day screens, passing the one-spelling gate.
 - The first real director runs game day from a phone without asking where a game went (evidence we
   don't have yet: the first real tournament decides whether this held).
+- **Stage 2:** on a phone the first team is on the **first screen** of Teams; a team waiting for a decision is
+  **visible and accepted in two taps**; no Teams control an organizer taps is under 38px tall or under 44px wide as
+  an icon; an announcement's count is the number of teams it reaches.

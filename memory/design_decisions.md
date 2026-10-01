@@ -54,6 +54,30 @@ Money in column is blank**; the em dash stays for "nothing here" everywhere else
 every row of a pair doubles the ink and reads as data.
 **Applies to:** every money table in the product, club and tournament first.
 
+### 2026-09-30 — AN ADMIN RECORD OPENED FROM A LIST NAMES ITS NEIGHBOURS AT ITS FOOT (owner, "go ahead" to the `/design` review of the Tournament admin redesign's Stage 2 drawing — the drawing itself still awaits its ruling)
+
+**Decision:** When a row opens its record full screen (a phone) or as the kit's form window (a desk), the
+record's foot carries **named Previous / Next** with the position between them — "‹ Falcons U11 Girls · 3 of 8 ·
+Ravens U11 Girls ›" ("3 of 8 in U11 Girls" at a desk), in the order of the list it was opened from. **Delete**
+leaves the foot and ends the record's body, alone, red, asking first. First drawn on the tournament Teams record.
+**Rationale:** The coaches portal already answers this (the depth chart's player, register F-43, and the default
+for a new record list); the admin side had not been asked. Without it, recording payments across a division is
+Back → the next row → Mark paid for every team; with it, Mark paid → Next, and the name says where Next goes
+before the tap. A foot holding only Delete put the rarest, most destructive act on the most-reached spot.
+**Applies to:** the admin side's records opened from a list (tournament Teams first; the club and league
+records when their stages draw them). Not a rule for a record opened from a link with no list behind it.
+
+### 2026-09-30 — A PLAN LOCK IS NEVER A DASHED BOX (owner, same "go ahead", same review)
+
+**Decision:** A choice locked by the plan reads as **one plain line** — the padlock, the words, the plan's name
+as a chip — at the 44px floor, opening Plan & billing's panel for that plan (A6's door). No border, no dashed
+edge, no tinted box. This is the form Stage 1's "Running late?" door already uses.
+**Rationale:** A dashed edge already means something here: a record that has LEFT a list, or a projected one
+(register K-24). Borrowing it for a lock gives one mark two meanings, and three dashed boxes in one composer
+block read as nagging, which is the opposite of A6's "show the plan's name, quietly".
+**Applies to:** every plan lock on the admin side and the coaches portal; a lock drawn in a box before this entry
+is drift to straighten when its screen is next touched.
+
 ### 2026-09-29 — CHECK-IN'S FILTER IS THE GATE'S OWN BUCKET BAR: SINGLE CHOICE, "ALL" FIRST AND THE DEFAULT; PAYMENT IS NOT A BUCKET (owner, on the Tournament admin redesign's Stage 1 — asked "should these be a dropdown multi select that defaults to 'all'?", then "I agree, go ahead" to the recommendation)
 
 **Decision:** The tournament organizer's Check-in filter is the gate volunteer's own bucket bar — four equal

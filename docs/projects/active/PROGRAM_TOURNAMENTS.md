@@ -108,7 +108,11 @@ Each stage below is independently decidable. **Nothing proceeds without an expli
 > today's rain-delay tool, and a reserved spot for the Big Board's door). **Stage 1 COMMITTED `890d0aac` 2026-09-30** (its plan's
 > §6 "Stage 1 — as built"; owner walk §253 ✅ PASSED 2026-09-30): the "Running late?" door opens the schedule's rain-delay window
 > through `?tool=rain-delay` — the door Storm Mode's "Declare a delay" takes over; the Big Board's spot is
-> reserved on the drawing only (nothing built).
+> reserved on the drawing only (nothing built). **Stage 2 (Teams and Communications) COMMITTED 2026-09-30** —
+> `f4a4cc79` · `12aee778` · `aab3a3f4`, and the owner's follow-ups from the §252 walk `4db0faab` 2026-10-01 (its
+> plan's §6b; owner walks §252 and §254 closed by the owner 2026-10-01). Its first
+> commit fixed the announcement email that reached every registered team: an untargeted send now reaches the
+> accepted teams, and `announcements.email_recipients` (migration 314, on prod 2026-09-30) keeps who it reached.
 
 ---
 
