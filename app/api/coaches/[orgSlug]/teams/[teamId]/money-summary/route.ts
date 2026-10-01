@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   getRepPlayerDuesSchedules,
-  getRepPlayerDuesInstallments,
+  getRepDuesInstallmentsBySchedules,
   getRepDuesPaymentsByProgramYear,
   getRepDuesCreditsByProgramYear,
   getRepDuesPayoutsByProgramYear,
@@ -125,12 +125,21 @@ export const GET = withObservability(async (_req: Request,
   ]);
 
   // ── Dues ─────────────────────────────────────────────────────────────────
-  const [installmentLists, seasonPayments, seasonCredits, seasonPayouts] = await Promise.all([
-    Promise.all(schedules.map(s => getRepPlayerDuesInstallments(s.id))),
+  /* ONE query for every schedule's installments, not one per family (2026-10-01). This route is
+     also the team Overview's Budget tile now, so it runs on the portal's landing page — a 48-family
+     team was 48 round trips there. Same rows, same `installment_number` order within a schedule;
+     the dues route has read them this way all along. */
+  const [seasonInstallments, seasonPayments, seasonCredits, seasonPayouts] = await Promise.all([
+    getRepDuesInstallmentsBySchedules(schedules.map(s => s.id)),
     getRepDuesPaymentsByProgramYear(programYear.id),
     getRepDuesCreditsByProgramYear(programYear.id),
     getRepDuesPayoutsByProgramYear(programYear.id),
   ]);
+  const installmentsBySchedule = new Map<string, typeof seasonInstallments>();
+  for (const inst of seasonInstallments) {
+    if (!installmentsBySchedule.has(inst.scheduleId)) installmentsBySchedule.set(inst.scheduleId, []);
+    installmentsBySchedule.get(inst.scheduleId)!.push(inst);
+  }
   const paidOutByPlayer = totalsByPlayer(seasonPayouts);
   const paymentsByPlayer = new Map<string, typeof seasonPayments>();
   for (const p of seasonPayments) {
@@ -171,8 +180,8 @@ export const GET = withObservability(async (_req: Request,
   let familiesInCreditCount = 0;
   let familyCreditHeld = 0;
 
-  schedules.forEach((schedule, idx) => {
-    const insts = installmentLists[idx] ?? [];
+  schedules.forEach((schedule) => {
+    const insts = installmentsBySchedule.get(schedule.id) ?? [];
     duesExpected += schedule.totalAmount ?? 0;
     // Paid = payment FACTS (mig 232), capped at the schedule total — same figure as the dues
     // route, the digest and Ask, so the Bills settled card can never disagree with the table.

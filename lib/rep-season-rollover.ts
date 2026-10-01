@@ -378,7 +378,8 @@ export async function startNextRepSeason(params: {
       summary.budget.periodsCopied += carried.periodsCopied;
       summary.budget.failed += carried.failed;
 
-      // Carry the legacy single-number budget envelope too (still read by the /budget summary).
+      // Carry the estimated total too — whenever set it IS the season's plan total
+      // (`computeBudgetTotals`), so a rolled plan without it would change what the season costs.
       if (currentSeason.budgetAmount != null) {
         await updateRepProgramYear(newSeason.id, { budgetAmount: currentSeason.budgetAmount });
       }

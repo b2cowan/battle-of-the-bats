@@ -180,6 +180,35 @@ describe('one arithmetic — the Money hub does not re-derive spend against plan
   });
 });
 
+/* ⚠⚠ AND A FIFTH, FOUND ON PRODUCTION (2026-10-01). The team Overview's Budget tile answered "how
+   much is left?" from its own route — the optional ESTIMATE minus the team's own paid bills. A
+   coach with a 27-line plan and no estimate read "Not set" on the Overview while the Budget Plan
+   read $46,218.30, and a coach WITH an estimate read a different "left" than the hub's headroom,
+   because the tile never counted the club's bill or netted a refund. The tile now reads the hub's
+   payload, and the route that fed it is write-only. Both halves are held here. */
+const TEAM_OVERVIEW = 'app/[orgSlug]/coaches/teams/[teamId]/page.tsx';
+const BUDGET_ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/budget/route.ts';
+
+describe('one arithmetic — the team Overview\'s Budget tile reads the hub', () => {
+  it('fetches money-summary and does not derive its own remaining figure', () => {
+    const src = codeOnly(readFileSync(join(ROOT, TEAM_OVERVIEW), 'utf8'));
+    assert.match(src, /teams\/\$\{teamId\}\/money-summary`/,
+      `${TEAM_OVERVIEW} no longer reads money-summary for the Budget tile — see the note above this test.`);
+    assert.doesNotMatch(src, /budget\.amount\s*-\s*budget\.spent/,
+      'the Budget tile is subtracting for itself again — show the hub\'s `headroom`.');
+    assert.doesNotMatch(src, /budgetAmount/,
+      'the Overview is reading the estimated total on its own — an itemized plan has none, and the '
+      + 'tile read "Not set" over one. Read the hub\'s `budget.effectiveTotal`.');
+  });
+
+  it('the route that used to feed it answers no GET', () => {
+    const src = codeOnly(readFileSync(join(ROOT, BUDGET_ROUTE), 'utf8'));
+    assert.doesNotMatch(src, /export\s+(const|async\s+function)\s+GET\b/,
+      `${BUDGET_ROUTE} answers GET again. A second reply to "what is the budget and how much is `
+      + 'left?" is the defect this guard holds — read money-summary.');
+  });
+});
+
 describe('one arithmetic — the paid stamps have exactly one reader', () => {
   const src = codeOnly(readFileSync(join(ROOT, ROUTE), 'utf8'));
 

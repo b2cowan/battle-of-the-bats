@@ -161,8 +161,13 @@ function formatEventDate(value: string): string {
   return formatInOrgZone(value, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
+// Negatives in brackets, never a minus sign — the coach money rule (owner, 2026-08-14). Only the
+// Budget tile can go below zero: over budget, or money back that outweighs the spend so far.
 function formatMoney(amount: number): string {
-  return amount.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
+  // Rounded first, so 40 cents over reads "$0" rather than "($0)".
+  const whole = Math.round(amount);
+  const abs = Math.abs(whole).toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
+  return whole < 0 ? `(${abs})` : abs;
 }
 
 export default function TeamOverviewPage({
@@ -254,8 +259,9 @@ export default function TeamOverviewPage({
   const [tourOpen, setTourOpen] = useState(false);
   // Paid vs total dues installments → the Dues snapshot mini-gauge.
   const [duesProgress, setDuesProgress] = useState<{ paid: number; total: number } | null>(null);
-  // Season budget vs actual spend → Budget tile.
-  const [budget, setBudget] = useState<{ amount: number | null; spent: number } | null>(null);
+  // Season budget vs actual spend → Budget tile. The Money hub's own three figures (plan total,
+  // spend against it, headroom) — `amount` is null when there is no plan at all.
+  const [budget, setBudget] = useState<{ amount: number | null; spent: number; left: number } | null>(null);
   // Player birthdays in the next 7 days → a small "this week" touch.
   const [birthdays, setBirthdays] = useState<{ name: string; inDays: number }[]>([]);
   // In/Late/Out/No-reply headcount for the next event → Next-up tile.
@@ -316,7 +322,7 @@ export default function TeamOverviewPage({
       const [rosterRes, eventsRes, budgetRes, duesRes] = await Promise.all([
         canRoster ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`) : Promise.resolve(null),
         canSchedule ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`) : Promise.resolve(null),
-        canMoney ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget`) : Promise.resolve(null),
+        canMoney ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-summary`) : Promise.resolve(null),
         canMoney ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`) : Promise.resolve(null),
       ]);
 
@@ -326,8 +332,17 @@ export default function TeamOverviewPage({
 
       const rosterData: { players?: RepRosterPlayer[] } = canRoster ? await rosterRes!.json() : {};
       const eventsData: { events?: RepTeamEvent[] } = canSchedule ? await eventsRes!.json() : {};
-      const budgetData: { budgetAmount?: number | null; totalExpenses?: number } =
-        canMoney && budgetRes!.ok ? await budgetRes!.json() : { budgetAmount: null, totalExpenses: 0 };
+      /* ⚠⚠ THE MONEY HUB'S BUDGET, NOT A COPY OF IT (2026-10-01). This tile read the season budget
+         from `/budget`, which knew only the optional ESTIMATED total — so a coach who planned 27
+         lines and never typed an estimate saw "Not set" here while the Budget Plan read $46,218.30.
+         Its spend was the team's own paid bills alone, while the hub's headroom also counts the
+         club's bill and nets refunds (owner D5): two answers to "how much is left?" one click
+         apart. The plan total (estimate if set, else the lines), the spend against it and the
+         headroom are now read from `money-summary`, the same payload as the Money Overview's
+         Budget card. `headroom` is null exactly when there is no plan to measure against. */
+      const budgetData: { headroom?: number | null; budget?: { effectiveTotal?: number; spentAgainstPlan?: number } } =
+        canMoney && budgetRes!.ok ? await budgetRes!.json() : {};
+      const planTotal = budgetData.headroom == null ? null : (budgetData.budget?.effectiveTotal ?? null);
       const activePlayers = (rosterData.players ?? []).filter(player => player.status === 'active');
       const events = eventsData.events ?? [];
       const games = events.filter(event => GAME_EVENT_TYPES.includes(event.eventType));
@@ -346,9 +361,11 @@ export default function TeamOverviewPage({
         // same false-"done" Batch 2's review removed from the lineup step.
         eventCount: events.filter(e => !isMirroredEvent(e)).length,
         gameCount: games.length,
-        budgetSet: budgetData.budgetAmount != null,
+        budgetSet: planTotal != null,
       });
-      setBudget(canMoney ? { amount: budgetData.budgetAmount ?? null, spent: budgetData.totalExpenses ?? 0 } : null);
+      setBudget(canMoney
+        ? { amount: planTotal, spent: budgetData.budget?.spentAgainstPlan ?? 0, left: budgetData.headroom ?? 0 }
+        : null);
 
       // The next event for the snapshot — the first whose WINDOW has not closed (practices
       // re-evaluation stage 6, R7, 2026-09-18): a practice in progress stays "next" while its run
@@ -1243,21 +1260,23 @@ export default function TeamOverviewPage({
           key, label: 'Budget', icon: Wallet,
           value: setupLoading ? '…'
             : (!budget || budget.amount == null) ? 'Not set'
-              : formatMoney(budget.amount - budget.spent),
+              : formatMoney(budget.left),
           sub: (!budget || budget.amount == null)
             ? 'Track what the season costs'
             : `${formatMoney(budget.spent)} of ${formatMoney(budget.amount)} spent`,
           subIsHint: !budget || budget.amount == null,
           href: moneySectionHref(base, 'budget-vs-actual'),
           tone: (!budget || budget.amount == null) ? 'muted'
-            : budget.spent > budget.amount ? 'danger' : 'default',
+            : budget.left < 0 ? 'danger' : 'default',
+          // Floored at zero: spend against plan nets money back, so a refund that lands before the
+          // bills it offsets can read briefly below nothing — a bar has no honest way to draw that.
           progress: (!setupLoading && budget && budget.amount != null && budget.amount > 0)
             ? {
-                value: Math.min(budget.spent, budget.amount),
+                value: Math.max(0, Math.min(budget.spent, budget.amount)),
                 total: budget.amount,
-                label: `${Math.round((budget.spent / budget.amount) * 100)}%`,
+                label: `${Math.round((Math.max(0, budget.spent) / budget.amount) * 100)}%`,
                 title: `${formatMoney(budget.spent)} spent of ${formatMoney(budget.amount)} budget`,
-                tone: budget.spent > budget.amount ? 'danger' : 'default',
+                tone: budget.left < 0 ? 'danger' : 'default',
               }
             : null,
         };

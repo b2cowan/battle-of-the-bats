@@ -6,16 +6,17 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   updateRepProgramYear,
-  getRepPlayerDuesSchedules,
-  getRepDuesPaymentsByProgramYear,
-  getRepTeamExpenses,
-  getCommitmentStandings,
 } from '@/lib/db';
-import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
-import { expenseTotals } from '@/lib/season-settlement';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
-import { resolveCoachTeamRead } from '@/lib/coach-team-read';
+import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
+
+/* ⚠⚠ WRITE-ONLY, ON PURPOSE (2026-10-01). This route used to answer GET as well — the season's
+   estimated total, dues collected, the team's own paid bills, and a `net` of the three — and its
+   one reader was the team Overview's Budget tile. That reply knew only the ESTIMATE, so a plan
+   built from lines read "Not set", and its spend left out the club's bill and every refund, so the
+   tile disagreed with the Money hub's headroom. The tile now reads `money-summary`, the Money
+   Overview's own payload. ⛔ Do not restore a GET here: a second reply to "what is the budget and
+   how much is left?" is the defect, not a convenience. Read `money-summary`. */
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -38,48 +39,6 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 
   return { ctx, team, assignment, programYear };
 }
-
-export const GET = withObservability(async (_req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
-  const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachTeamRead(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
-  const { capabilities, programYear } = resolved;
-  const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
-  if (denied) return denied;
-
-  // Compute summary stats. Collected = payment FACTS capped per player at their schedule total
-  // (mig 232) — the same figure every other dues reader quotes; the stamp-sum this replaced read
-  // part-payments as $0.
-  const [schedules, seasonPayments] = await Promise.all([
-    getRepPlayerDuesSchedules(programYear.id),
-    getRepDuesPaymentsByProgramYear(programYear.id),
-  ]);
-  const paymentsByPlayer = paymentsTotalByPlayer(seasonPayments);
-  const duesCollected = schedules.reduce(
-    (sum, s) => sum + duesPaidAmount(paymentsByPlayer.get(s.playerId) ?? 0, s.totalAmount), 0);
-
-  // PAID-ONLY, like every other money surface (owner ruling 2026-08-13, thread 1A). This used
-  // to sum face values — logging a $1,600 payable you hadn't paid yet flashed the Overview tile
-  // "over budget" while the Money hub correctly showed the cash unmoved, two screens apart.
-  // Same settled-legs semantics as money-summary and Budget vs. Actual.
-  // ONE definition of what a season has spent (lib/season-settlement.ts `expenseTotals`) — this
-  // was the third hand-copy of the payable-legs branch, and the copies had already begun to
-  // differ: this one had no notion of an out-of-pocket cost at all.
-  const [expenses, standings] = await Promise.all([
-    getRepTeamExpenses(programYear.id),
-    getCommitmentStandings(programYear.id),
-  ]);
-  const totalExpenses = expenseTotals(expenses, standings).paid;
-
-  return NextResponse.json({
-    budgetAmount: programYear.budgetAmount ?? null,
-    duesCollected,
-    totalExpenses,
-    net: (programYear.budgetAmount ?? 0) + duesCollected - totalExpenses,
-    programYear,
-  });
-}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget' });
 
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
