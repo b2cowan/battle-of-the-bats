@@ -21,7 +21,6 @@ const NO_MONTH_INPUT = {
   opening: null,
   openingFrom: null,
   cashOnHand: '$0.00',
-  forward: null,
   budgetUndated: null,
   truncatedMonths: null,
   shortfall: null,

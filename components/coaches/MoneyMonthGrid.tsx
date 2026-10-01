@@ -10,8 +10,8 @@ import {
   buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan, balanceShowsMonth,
   categoryHasFigure, hasUndated, isPayoutCategory, cellPanelSpec, panelRowWords, UNDATED_CELL,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
-  /* ⚠ `scheduledForward` LEFT WITH THE SENTENCE THAT QUOTED IT — the forward derivation is now
-     read inside the notes module, so the grid no longer calls it directly. */
+  /* ⚰ `scheduledForward` is gone altogether (2026-10-01) — it left with the band's Season end
+     tile and the Scheduled sentence that derived it. */
   formatMonthBare, monthYearBands, MONTH_WINDOW, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid,
   monthKeyOf,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine, type GridLineResult,

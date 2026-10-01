@@ -172,7 +172,7 @@ describe('the labels that move with the basis', () => {
   });
 
   it('falls back to the season basis for anything a corrupt preference could hold', () => {
-    // Whole season is the default and stays it: Headroom is quoted against it on five surfaces.
+    // Whole season is the default and stays it: the band and the Money hub quote the whole-season plan.
     assert.equal(normalizeBasis(undefined), 'season');
     assert.equal(normalizeBasis('nonsense'), 'season');
     assert.equal(normalizeBasis(null), 'season');

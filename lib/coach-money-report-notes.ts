@@ -36,17 +36,16 @@
  *
  * **It never formats money and it never does arithmetic.** Every figure arrives pre-formatted from
  * the caller, which already has the report's own formatters and its own sign conventions (`fmt`
- * strips signs because each screen caller prints its own; `fmtSignedAmount` does not). A second
+ * strips signs because each screen caller prints its own). A second
  * formatter here is how one report starts printing one number two ways.
  *
  * Pure: no IO, no React, no Date.
  */
 
 import {
-  buildBandCashFlow, hasUndated, lensReadsSpendingGrid, lensUndated, scheduledForward,
+  buildBandCashFlow, hasUndated, lensReadsSpendingGrid, lensUndated,
   formatMonthLong, type MonthGrid, type MoneyLens,
 } from './coach-budget-months';
-import { fmt as fmtSignedAmount } from './coach-money-summary';
 import type { CompareBasis } from './coach-budget-basis';
 
 /** One run of text inside a note. `bold` is the screen's `<strong>` and the file's bold run. */
@@ -129,10 +128,6 @@ export interface MonthGridNoteInput {
   openingFrom: string | null;
   /** Pre-formatted, for the Scheduled lens's running-balance sentence. */
   cashOnHand: string;
-  /** The Scheduled lens's forward derivation — omitted when nothing is merely "possible", because
-   *  then the Closing balance IS the banner's figure and a derivation explains a gap that is not
-   *  there. All three pre-formatted, `ending` and `headline` SIGNED (a season can end short). */
-  forward: { ending: string; possible: string; headline: string } | null;
   /** Undated plan money under the Budget lens, pre-formatted. `null` = nothing to say. */
   budgetUndated: string | null;
   /** How many months the grid could show, when it had to stop short. `null` = it showed them all. */
@@ -222,21 +217,10 @@ export function monthGridNotes(input: MonthGridNoteInput): ReportNote[] {
       { text: ` — in the Total, in no month, counted as possible rather than arrived. The running balance starts from today’s real money, ${input.cashOnHand}.` },
     ]));
 
-    /* ⚠ THE BANNER'S FIGURE, DERIVED OUT LOUD (owner walk feedback, 2026-09-02: the forward stat
-       linked here and its number appeared nowhere on this screen). The caller passes the same
-       helper's output the banner uses, so the sentence and the headline cannot disagree; it only
-       arrives when the two figures genuinely differ. */
-    if (input.forward) {
-      out.push(note('scheduled-forward', [
-        { text: 'The Closing balance ends the season at ' },
-        { text: input.forward.ending, bold: true },
-        { text: `; take back out the ${input.forward.possible} that’s only possible — the pledges and pending asks under ` },
-        { text: 'No date yet', bold: true },
-        { text: ' — and on what’s certain you end with ' },
-        { text: input.forward.headline, bold: true },
-        { text: ', the banner’s forward figure.' },
-      ]));
-    }
+    /* ⚰ THE FORWARD-FIGURE SENTENCE IS GONE (owner ruling 2026-10-01). It derived the band's
+       "Season end" tile out loud, and that tile left the band: it banked dues still to come but
+       only the spending already billed, so it was never a season end. The basis note above
+       already says what the Closing balance counts and that pledges are only possible. */
   }
 
   if (lens === 'budget') {
@@ -250,11 +234,14 @@ export function monthGridNotes(input: MonthGridNoteInput): ReportNote[] {
   }
 
   /* ⚠ REWRITTEN FOR Q3 (ruled 2026-09-02): Difference compares plan against SPENDING now, which is
-     why it can finally claim Headroom by name. The G1 mockup's copy, verbatim. */
+     why it can claim the band's figure by name. The G1 mockup's copy, except the tie-out clause:
+     it said "it matches Headroom exactly" until Headroom left the band (2026-10-01). The identity
+     is unchanged — plan − spending = the Spent tile's plan less its figure, which
+     `check:money-report` still proves — only the tile it names moved. */
   if (lens === 'difference') {
     out.push(note('basis-difference', [
       { text: 'Difference is your plan against what the season spent', bold: true },
-      { text: ', for months that have already happened — it matches Headroom exactly. A positive figure is good news on both bands: revenue that ' },
+      { text: ', for months that have already happened — on expenses its Total is your plan less the Spent figure above, to the cent. A positive figure is good news on both bands: revenue that ' },
       { text: 'came in ahead', bold: true },
       { text: ', or spending that came in ' },
       { text: 'under', bold: true },
@@ -421,17 +408,12 @@ export function monthGridNotesFor(data: MonthGridNoteSource, lens: MoneyLens): R
     ? hasUndated([data.spendingGrid], lens)
     : hasUndated([data.revenueGrid, expensesBand, data.returnedGrid], lens);
 
-  /* ⚠ NO BALANCE ROWS ON DIFFERENCE OR SEASON SPENDING (owner D1), so no shortfall and no forward
-     derivation there either — the same rule the table itself follows. */
+  /* ⚠ NO BALANCE ROWS ON DIFFERENCE OR SEASON SPENDING (owner D1), so no shortfall there either —
+     the same rule the table itself follows. */
   const cash = lens === 'difference' || lens === 'spending'
     ? null
     : buildBandCashFlow(data.revenueGrid, grid, lens, data.cashOnHand, opening ?? 0, data.returnedGrid);
 
-  /* The banner's own helper, so the sentence and the headline cannot disagree; nothing merely
-     "possible" means the Closing balance IS the banner's figure and the derivation is dropped. */
-  const fwd = lens === 'scheduled' && cash
-    ? scheduledForward(data.revenueGrid, grid, data.returnedGrid, data.cashOnHand, opening)
-    : null;
 
   const budgetUndated = lens === 'budget' && showUndated
     ? lensUndated(grid.totals.undated, lens) + lensUndated(data.revenueGrid.totals.undated, lens)
@@ -442,13 +424,6 @@ export function monthGridNotesFor(data: MonthGridNoteSource, lens: MoneyLens): R
     opening: opening === null ? null : money(opening),
     openingFrom: data.openingBalanceFrom ?? null,
     cashOnHand: money(data.cashOnHand),
-    forward: fwd && fwd.possible > 0.005
-      ? {
-        ending: fmtSignedAmount(fwd.ending),
-        possible: money(fwd.possible),
-        headline: fmtSignedAmount(fwd.headline),
-      }
-      : null,
     budgetUndated: budgetUndated === null ? null : money(budgetUndated),
     truncatedMonths: grid.truncated ? grid.months.length : null,
     shortfall: cash?.shortfall

@@ -12,7 +12,7 @@ import MoneyMonthGrid, { MONEY_LENSES, MONTH_WINDOW, type MoneyLens, type MonthG
 import {
   formatMonthLabel, periodRangeLabel, lensCell, lensTotal, lensUndated, lensReadsSpendingGrid,
   buildBandCashFlow, categoryHasFigure, hasUndated, isPayoutCategory, balanceShowsMonth,
-  bandTotalLabel, revenueGroupLabel, revenueGroupOf, scheduledForward,
+  bandTotalLabel, revenueGroupLabel, revenueGroupOf,
   RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
   type MonthGrid, type MonthCell, type MoneyRowDirection,
 } from '@/lib/coach-budget-months';
@@ -418,7 +418,8 @@ function r2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-/** ⚠ STRIPS THE SIGN — every screen caller prints its own (`fmtVariance`, the headroom's ±). */
+/** ⚠ STRIPS THE SIGN — every screen caller prints its own (`fmtVariance`), and a figure that can
+ *  genuinely go negative (Collected, Cash on hand) uses `fmtSigned` below. */
 function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -1564,12 +1565,13 @@ function CashBridge({ data, onSeeMonths }: { data: BvaData; onSeeMonths: () => v
 }
 
 /**
- * THE MONTHS VIEW'S TIE-OUT TO HEADROOM (owner ruling 2026-09-02).
+ * THE MONTHS VIEW'S TIE-OUT TO THE SPENT TILE (owner ruling 2026-09-02; renamed 2026-10-01 when
+ * Headroom left the band — the figure it ties to was always `totalActual`, which Spent carries).
  *
  * ⚠⚠ IT IS THE CASH BRIDGE WALKED BACKWARDS, AND THAT IS WHY IT EXISTS. The Statement has explained
  * its own gap since 2026-08-24; the Months view — where a treasurer actually goes looking, and where
- * Headroom sits three inches above a Total expenses that disagrees with it — never has. Two figures
- * on one screen that cannot both be right, with nothing on the screen saying they are.
+ * the band's Spent sits three inches above a Total expenses that disagrees with it — never has. Two
+ * figures on one screen that cannot both be right, with nothing on the screen saying they are.
  *
  * ⚠ TWO LINES NOW, NOT THREE. Money paid back to families left `Total expenses` for its own band, so
  * it left this reconciliation with it: what remains are the two genuine differences in BASIS, and
@@ -1579,12 +1581,13 @@ function CashBridge({ data, onSeeMonths }: { data: BvaData; onSeeMonths: () => v
  * ⚠ THE STARTING FIGURE IS READ OFF THE TABLE, never recomputed from the parts. A bridge whose first
  * row disagrees with the row above it is worse than no bridge — it looks like a proof.
  */
-function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
+function SpentBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
   /* ⚠⚠ CASH ONLY, SINCE Q3 (ruled 2026-09-02). The Difference half of this tie-out RETIRED with
      the lens's move to the spending basis: Difference now reads plan − spending, so it lands on
-     Headroom exactly and there is nothing left to reconcile — its basis note says so instead.
-     Season spending never needed one (it IS the headroom figure), and Budget and Scheduled have
-     no actual in them. What remains is the one genuine gap: Cash against what the season spent. */
+     the plan less Spent exactly and there is nothing left to reconcile — its basis note says so
+     instead. Season spending never needed one (it IS the Spent figure), and Budget and Scheduled
+     have no actual in them. What remains is the one genuine gap: Cash against what the season
+     spent. */
   if (lens !== 'actual') return null;
 
   const { familyPaid, moneyBack } = cashAdjustments(data);
@@ -1595,7 +1598,7 @@ function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
      announcing "no difference" is furniture on the narrowest screen in the portal. */
   if (Math.abs(delta) < 0.005) return null;
 
-  /* Cash walks DOWN to the spending figure: Headroom's total is the smaller of the two here. */
+  /* Cash walks DOWN to the spending figure: Spent is the smaller of the two here. */
   const lines = [
     { key: 'back', label: 'money back, counted here as arriving', amount: r2(-moneyBack), subs: [] as Array<{ id: string; label: string; amount: number }> },
     {
@@ -1612,7 +1615,7 @@ function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
       <summary className={styles.bridgeSummary}>
         <ChevronRight size={13} className={styles.bridgeChev} aria-hidden />
         <span>
-          Headroom counts <strong>{fmt(data.totalActual)}</strong> spent — why the difference?
+          Spent counts <strong>{fmt(data.totalActual)}</strong> — why the difference?
         </span>
       </summary>
       <div className={styles.bridgeBody}>
@@ -1645,7 +1648,7 @@ function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
 /**
  * THE MONTHS VIEW'S TIE-OUT ON PLAYER DUES (owner ruling 2026-09-10).
  *
- * ⚠⚠ THE REVENUE TWIN OF `HeadroomBridge`, AND IT EXISTS FOR THE SAME REASON ONE ROW DOWN. The two
+ * ⚠⚠ THE REVENUE TWIN OF `SpentBridge` (`HeadroomBridge` until 2026-10-01), AND IT EXISTS FOR THE SAME REASON ONE ROW DOWN. The two
  * views have differed on dues actual by design since R2–R4 (2026-09-07) — Cash counts what arrived
  * in the account, the Statement counts what each family contributed — and for three days the only
  * thing on either screen saying so was a footnote that named the two ADDITIONS and not the
@@ -2088,19 +2091,14 @@ export function BudgetVsActualPanel({
   const quietReload = useCallback(() => { void load(true); }, [load]);
   useOnMoneyRevisionBump(quietReload);
 
-  /* ══ THE FORWARD STAT (owner D4 + Q2, wording G2 Variant 1, 2026-09-02) ═══════════════════════
-     ⚠⚠ ONE DERIVATION, TWO READERS (`scheduledForward` — walk feedback 2026-09-02). The banner
-     prints the headline; the Months · Scheduled basis note prints the SAME derivation out loud
-     (closing balance, less the possible, equals this figure), because the owner clicked a number
-     that never literally appeared on the screen it opened. Committed dues stay in the headline;
-     pledges and pending club asks are the "possible" clause, never banked — the lib helper's
-     header carries the invariant and its build guard. */
-  const forward = useMemo(() => {
-    if (!data) return null;
-    return scheduledForward(
-      data.revenueGrid, data.monthGrid, data.returnedGrid,
-      data.cashOnHand, data.openingBalance ?? null);
-  }, [data]);
+  /* ⚰ THE FORWARD STAT IS GONE (owner ruling 2026-10-01, mockup of record artifact
+     `9gfCkXKKkhx4MJh9PFt53g`). "Season end" was today's cash PLUS every dues installment still to
+     come LESS only the bills already entered — planned spending that had not become a bill yet was
+     not in it. On a team in October that read $48,743.51 against a plan with $45,188.70 of spending
+     still ahead: income counted on the plan, costs counted on the bills, and the gap between the
+     two bases presented as a forecast. The Months · Scheduled note that derived it out loud went
+     with it. ⚠ Do not bring a season-end forecast back on the Scheduled basis — an honest one is
+     cash + income still planned − spending still planned, and that is its own owner decision. */
 
   const prefsKey = assignment ? `flhq-coach-bva-view:${teamId}:${assignment.programYearId}` : null;
   useEffect(() => {
@@ -2442,15 +2440,27 @@ export function BudgetVsActualPanel({
     return { rows, kinds };
   }
 
-  /** The board-ready PDF opening block (D6.3) — the screen's own figures, no new arithmetic. */
+  /**
+   * The board-ready PDF opening block (D6.3) — the screen's own figures, no new arithmetic.
+   *
+   * ⚠ THE BAND'S FOUR TILES, BY THE BAND'S NAMES (owner ruling 2026-10-01, call 2): a printed copy
+   * reads like the screen the coach exported it from. Cash on hand carries no "as of today" here —
+   * every PDF page is already stamped with the day it was exported, and "today" on paper is
+   * whatever day someone reads it.
+   */
   function pdfIntro(): { label: string; rows: Array<[string, string]> } | undefined {
     if (!data) return undefined;
+    const { revenue } = data.report;
     const rows: Array<[string, string]> = [
       ['Team', assignment?.teamName ?? ''],
       ['Season', assignment?.programYearName ?? ''],
-      ['Headroom', `${data.headroom < 0 ? '-' : '+'}${fmt(data.headroom)} ${data.headroom >= 0 ? 'under' : 'over'} budget — ${fmt(data.totalActual)} spent of ${fmt(data.effectiveBudget)} planned`],
+      ['Collected', revenue.budgeted > 0.005
+        ? `${fmtSigned(revenue.actual)} of ${fmt(revenue.budgeted)} planned`
+        : fmtSigned(revenue.actual)],
+      ['Spent', `${fmt(data.totalActual)} of ${fmt(data.effectiveBudget)} planned`],
     ];
-    if (data.unbudgeted > 0.005) rows.push(['Spent off-plan', fmt(data.unbudgeted)]);
+    if (data.unbudgeted > 0.005) rows.push(['Off-plan', `${fmt(data.unbudgeted)} — nobody budgeted this`]);
+    rows.push(['Cash on hand', fmtSigned(data.cashOnHand)]);
     /* ⚠ "Funded by players" WENT FROM HERE TOO (owner ruling 2026-09-04), and this was the easiest
        half of the deletion to miss. The row left the table and the spreadsheet; this block is the
        PDF's own opening summary, and it quoted the same two figures — so leaving it would have been
@@ -2769,9 +2779,9 @@ export function BudgetVsActualPanel({
               · THE THREE-TILE BANNER WAS THE TABLE'S OWN FOOT. Headroom / Total Budget /
                 Total Actual are the same three figures the `Total expenses` SubtotalRow states
                 at the bottom of the statement — the coach read the arithmetic, scrolled past a
-                card, and met it again. Headroom keeps its size and its colour because it is the
-                one number this page exists to give; budget and actual are the WORKING and now
-                read as such, on the same line.
+                card, and met it again. Headroom kept its size and its colour then, as "the one
+                number this page exists to give" — and left the band on 2026-10-01 for repeating
+                Spent's own two figures (see the band's ruling below).
 
               · THE DUES CARD ANSWERED A DIFFERENT QUESTION, and answered it third. Dues are
                 money IN; this report measures spending against plan. All four of its figures
@@ -2799,17 +2809,33 @@ export function BudgetVsActualPanel({
 
               ⚠ THE OVER-PLANNED WARNING IS NOT A TILE, deliberately. It is a sentence about the
               PLAN disagreeing with itself, not a figure about the season — it rides the band's one
-              note line, which is exactly what that slot is for. */}
+              note line, which is exactly what that slot is for.
+
+              ⚠⚠ COLLECTED · SPENT · OFF-PLAN · CASH ON HAND (owner ruling 2026-10-01, mockup of
+              record artifact `9gfCkXKKkhx4MJh9PFt53g`). In, out, unplanned, held — the four
+              questions a coach opens this tab to ask. Two tiles left, for opposite reasons:
+              · HEADROOM REPEATED ITS NEIGHBOUR. It was plan − spent, the two figures Spent already
+                prints, and its green "under budget" was a verdict the calendar wrote: in October a
+                team is under budget because the season has not happened yet.
+              · SEASON END MIXED TWO BASES (see the ⚰ above `prefsKey`). Cash on hand replaces it
+                with the one money figure that is a FACT rather than a forecast.
+              ⚠ The band no longer carries a verdict colour, and that is accepted, not missed: colour
+              marks a verdict, and Collected / Spent / Cash on hand are totals. Off-plan keeps its
+              amber; Cash on hand goes red only below zero, where it IS one.
+              ⚠ COLLECTED IS THE TABLE'S `Total revenue` ROW, as Spent is `Total expenses` — whole
+              season, from `data.report`, never the To date re-cut, exactly as Spent reads `data`. */}
           <MoneySummaryBand
             ariaLabel="Budget vs. actual summary"
             tiles={[
               {
-                key: 'headroom',
-                label: 'Headroom',
-                figure: `${data.headroom < 0 ? '-' : '+'}${fmt(data.headroom)}`,
-                /* The page's one verdict — the only figure here whose colour IS the reading. */
-                tone: data.headroom >= 0 ? 'good' : 'danger',
-                caption: data.headroom >= 0 ? 'under budget' : 'over budget',
+                key: 'collected',
+                label: 'Collected',
+                figure: fmtSigned(data.report.revenue.actual),
+                /* A plan that expects no income has nothing to be "of" — the caption is omitted
+                   rather than reading "of $0.00 planned". */
+                caption: data.report.revenue.budgeted > 0.005
+                  ? `of ${fmt(data.report.revenue.budgeted)} planned`
+                  : undefined,
               },
               {
                 key: 'spent',
@@ -2829,17 +2855,15 @@ export function BudgetVsActualPanel({
                 hidden: !(data.unbudgeted > 0.005),
               },
               {
-                /* The forward stat (D4, G2 Variant 1). ⚰ It stopped being a LINK on 2026-09-02
-                   (owner: "not sure why we decided that that 1 metric should be a link"); the
-                   Months · Scheduled notes derive this exact figure from the same helper, so the
-                   arithmetic is still findable. Do not re-link it. */
-                key: 'season-end',
-                label: 'Season end',
-                figure: forward ? fmtSigned(forward.headline) : '—',
-                caption: forward && forward.possible > 0.005
-                  ? `plus ${fmt(forward.possible)} possible`
-                  : undefined,
-                hidden: !forward,
+                /* ⚠ THE OVERVIEW'S OWN FIGURE AND NAME — the same `cashOnHand` that
+                   `check:money-report` holds equal to the register, so the two screens cannot
+                   disagree. Plain ink, unlike the Overview's green: here a balance is a total, and
+                   only an overdrawn one is a verdict (owner, call 4 of the mockup). */
+                key: 'cash',
+                label: 'Cash on hand',
+                figure: fmtSigned(data.cashOnHand),
+                tone: data.cashOnHand < -0.005 ? 'danger' : 'plain',
+                caption: 'as of today',
               },
             ]}
             note={data.overPlanned
@@ -2977,7 +3001,7 @@ export function BudgetVsActualPanel({
               {/* ⚠ UNDER THE GRID'S OWN NOTES, not above them. Those notes state what the lens
                   MEANS; this states why two figures on the screen differ. Basis first, then the
                   arithmetic that follows from it. */}
-              <HeadroomBridge data={data} lens={lens} />
+              <SpentBridge data={data} lens={lens} />
               {/* ⚠ EXPENSES FIRST, THEN REVENUE — the order of the table above, so a coach reading
                   down the page meets the two tie-outs in the order they met the bands. */}
               <DuesBridge data={data} lens={lens} onSeeStatement={() => setView('statement')} />

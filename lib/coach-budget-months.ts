@@ -1106,43 +1106,12 @@ export function buildBandCashFlow(
   );
 }
 
-/**
- * The banner's forward stat, and the sentence its destination prints — ONE derivation
- * (owner walk feedback, 2026-09-02: *"this number links to a screen that doesn't even show that
- * number"*). The headline is the Scheduled reading's season-ending balance LESS the "possible"
- * money (a sponsor's pledge, a pending club ask — the two things the product refuses to bank),
- * so the figure a coach clicks never literally appeared on the screen it opened. It does now:
- * the Scheduled basis note states the closing balance, the possible, and the headline they net
- * to — read from THIS function, exactly as the banner is, so the two cannot disagree.
- *
- * ⚠ EVERYTHING BUT DUES IS POSSIBLE, and that is an invariant with a guard, not an assumption: a
- * sponsor's pledge sits under its CATEGORY (owner ruling 2026-09-09 — it was its own group before)
- * and a pending club ask under Money back, both undated; a dues instalment always carries a due
- * date; drives and typed income have no forward records. `check:money-report` claim 2c fails the
- * build if a future revenue source ever puts undated money here — so it cannot be silently banked
- * into the headline.
- */
-export interface ScheduledForward {
-  /** The Scheduled reading's own season-ending balance — the Closing balance's Total cell. */
-  ending: number;
-  /** Pledges + pending club asks: counted in `ending`, never in the headline. */
-  possible: number;
-  /** What the banner prints: `ending − possible` — the season's end on what is CERTAIN. */
-  headline: number;
-}
-export function scheduledForward(
-  revenue: MonthGrid,
-  expenses: MonthGrid,
-  returned: MonthGrid,
-  cashOnHand: number,
-  openingBalance: number | null,
-): ScheduledForward {
-  const flow = buildBandCashFlow(revenue, expenses, 'scheduled', cashOnHand, openingBalance ?? 0, returned);
-  const possible = round2(revenue.categories
-    .filter(c => revenueGroupOf(c.categoryKey) !== 'dues')
-    .reduce((s, c) => s + c.undated.scheduled, 0));
-  return { ending: flow.ending, possible, headline: round2(flow.ending - possible) };
-}
+/* ⚰ `scheduledForward` STOOD HERE and is deleted (owner ruling 2026-10-01). It computed the
+   band's "Season end" — the Scheduled reading's closing balance less the merely possible — and
+   the Months · Scheduled sentence that derived it out loud. Both left with the tile: the figure
+   banked dues still to come but only spending already billed, so a team in October read tens of
+   thousands ahead of its own plan. A season-end forecast, if one returns, is cash + income still
+   planned − spending still planned, and it is its own owner decision. */
 
 // ── lenses ───────────────────────────────────────────────────────────────────
 

@@ -1008,7 +1008,7 @@ test.describe('Money by month @360x740', () => {
     const main = await openMonths(page, 'Difference');
     /* ⚠ The basis note was rewritten for Q3 (Difference compares plan vs SPENDING, 2026-09-02) —
        the old "isn't a saving" clause is gone; the note's load-bearing claim is the tie-out. */
-    await expect(main.getByText(/matches Headroom exactly/i)).toBeVisible();
+    await expect(main.getByText(/your plan less the Spent figure above/i)).toBeVisible();
 
     // The last seeded period is ~3 months out, so the grid always has a month strictly after
     // today's. Its Difference cell must be an em dash — never a flattering "fully under".

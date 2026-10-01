@@ -68,8 +68,12 @@ const MONEY = path.join(ROOT, 'app/[orgSlug]/coaches/teams/[teamId]/accounting')
  */
 const BAND_TABS: Record<string, { tiles: string[]; ruled: string }> = {
   'budget-vs-actual': {
-    tiles: ['headroom', 'spent', 'offplan', 'season-end'],
-    ruled: 'D2 option A, 2026-09-03. `offplan` hides at zero — a well-run team sees three.',
+    tiles: ['collected', 'spent', 'offplan', 'cash'],
+    ruled:
+      'Owner ruling 2026-10-01 (mockup artifact 9gfCkXKKkhx4MJh9PFt53g): in, out, unplanned, held. '
+      + 'Headroom left for repeating Spent (plan − spent, the two figures Spent prints) and Season '
+      + 'end for mixing bases (dues still to come against only the spending already billed). '
+      + '`offplan` hides at zero — a well-run team sees three. (Replaced D2 option A, 2026-09-03.)',
   },
   budget: {
     tiles: ['revenue', 'expenses', 'closing'],

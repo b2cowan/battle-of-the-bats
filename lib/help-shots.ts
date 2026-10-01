@@ -126,7 +126,7 @@ export const HELP_SHOTS: HelpShot[] = [
     readyAfterPrepare: 'table',
     width: 1280,
     size: { w: 1280, h: 1000 },
-    takenAt: '2026-09-08',
+    takenAt: '2026-10-01',
     alt: 'The Budget vs. Actual report in its Months view: budget lines down the side, the season’s months across the top, and View and Showing dropdowns above the grid.',
     caption: 'Budget vs. Actual in its Months view — your lines down the side, the season across the top, and the Showing dropdown changing what every cell holds.',
   },
