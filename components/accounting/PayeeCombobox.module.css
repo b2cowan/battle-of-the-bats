@@ -23,6 +23,17 @@
 .input:focus { border-color: rgba(79,163,224,0.6); }
 .input::placeholder { color: var(--home-dim, rgba(255,255,255,0.3)); }
 .input:disabled { opacity: 0.5; cursor: not-allowed; }
+/* At the admin kit's field size (`kitField`): the same height, hairline and corner as the fields beside it. */
+.root[data-kit-field] .input,
+.selectedRow[data-kit-field] {
+  min-height: 40px;
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+}
+@media (max-width: 768px) {
+  .root[data-kit-field] .input,
+  .selectedRow[data-kit-field] { min-height: var(--tap-min, 44px); }
+}
 
 .chevron {
   position: absolute;

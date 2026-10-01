@@ -310,9 +310,9 @@ function CoachTeamHeaderInner({
           </span>
 
           {publicHref && (
-            <Link href={publicHref} className={styles.teamHeaderFlip}>
+            <Link href={publicHref} className={styles.teamHeaderFlip} aria-label="Public site">
               <ArrowLeftRight size={13} aria-hidden />
-              Public site
+              <span className={styles.teamHeaderFlipWord}>Public site</span>
             </Link>
           )}
 

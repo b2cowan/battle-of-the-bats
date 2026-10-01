@@ -208,7 +208,8 @@ export interface AccountBill {
   allocationId: string;
   allocationDescription: string;
   programYearId: string;
-  /** The day the club billed it (the allocation's creation, in the club's day). */
+  /** The day the club billed it (the allocation's creation, in the club's day). The statement prints the
+   *  earliest of this, the first due date and the first payment (`teamAccount`). */
   billedOn: string;
   amount: number;
   installments: (ClubInstallmentFacts & {
@@ -299,8 +300,14 @@ export function teamAccount(
 
   for (const b of bills) {
     const count = b.installments.length;
+    // A bill is dated by the EARLIEST of its creation, its first due date and its first payment, so it
+    // always reads before the money received against it: an allocation entered after its payments
+    // (a treasurer catching up the books) had dipped the running figure into a credit (/design 2026-10-01).
+    const receivedOns = b.installments.map(i => clubInstallmentReceivedOn(i)).filter((d): d is string => !!d);
+    const billDate = [b.billedOn, ...b.installments.map(i => i.dueDate), ...receivedOns]
+      .filter(Boolean).sort()[0] ?? b.billedOn;
     add(b.programYearId, {
-      ...blank, kind: 'billed', date: b.billedOn, sourceId: b.splitId, allocationId: b.allocationId, description: b.allocationDescription,
+      ...blank, kind: 'billed', date: billDate, sourceId: b.splitId, allocationId: b.allocationId, description: b.allocationDescription,
       installmentCount: count, billed: b.amount,
     });
     for (const i of b.installments) {

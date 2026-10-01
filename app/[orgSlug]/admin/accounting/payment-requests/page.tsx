@@ -205,12 +205,16 @@ function PhoneBand({ label, rows, onOpen }: { label: string; rows: RequestRow[];
       <ClubRowBand>{label}</ClubRowBand>
       {rows.map(r => {
         const out = toClub(r);
+        // A waiting card's one chip: the decision once decided; else how the coach filed it, else its
+        // direction — never a bare dash in a title (/design 2026-10-01).
+        const filed = filedAs(r).word;
         const chip = r.status !== 'pending' ? <StateChip r={r} />
-          : out ? <RepChip>{REQUEST_DIRECTION_WORD.payment_to_org}</RepChip>
-          : <FiledChip r={r} />;
+          : !out && filed ? <FiledChip r={r} />
+          : <RepChip>{out ? REQUEST_DIRECTION_WORD.payment_to_org : REQUEST_DIRECTION_WORD.charge_to_org}</RepChip>;
+        // The payout it holds up reads red here too, as on a desk and in the drawing.
         const caption = r.status === 'pending'
           ? (r.holdingPayout
-            ? `Holding up the payout to families · ${waitedWords(r.waitingDays)}`
+            ? <><span className={moneyKit.holdingInline}>Holding up the payout to families</span> · {waitedWords(r.waitingDays)}</>
             : `${out ? REQUEST_DIRECTION_WORD.payment_to_org : REQUEST_DIRECTION_WORD.charge_to_org} · ${r.description} · ${waitedWords(r.waitingDays)}`)
           : `${out ? REQUEST_DIRECTION_WORD.payment_to_org : REQUEST_DIRECTION_WORD.charge_to_org} · ${r.description}`;
         return (

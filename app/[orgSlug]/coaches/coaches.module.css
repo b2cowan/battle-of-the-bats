@@ -812,6 +812,17 @@
   transition: background 0.12s, color 0.12s;
 }
 .teamHeaderFlip:hover { background: var(--white-5); color: var(--text-primary); }
+/* ⚠ A TOUCH TARGET AT TOUCH WIDTHS (/design 2026-10-01 — the layout sweep measured it 29px tall on every
+   coach screen once the test club had a public site). At ≤ 768 the pill takes the 44px floor; on a phone
+   it is the admin header's round ⇄ — the icon alone, the words kept for a screen reader (aria-label). */
+.teamHeaderFlipWord { display: inline; }
+@media (max-width: 768px) {
+  .teamHeaderFlip { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .teamHeaderFlip { width: var(--tap-min, 44px); padding: 0; justify-content: center; }
+  .teamHeaderFlipWord { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 
 /* ── The page's help "?" — moved here from the page-title band 2026-08-25 ────────────────────────
    LAST in the right slot, after the status stack and after the flip, so the 2026-08-11 clause
@@ -6176,6 +6187,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 /* --on-team-color, not --white: the glyph sits ON a red fill, so it must stay light in
    both themes (warm remaps --white to dark ink, which would vanish on the loss red). */
 .wltPip[data-r="loss"] { background: var(--danger); color: var(--on-team-color); }
+/* Dark: the light glyph on the base red read 3.8:1 — the fill deepens, derived from the same red, so no new
+   token (/design 2026-10-01). Warm's red is already deep enough (its --danger is --home-live). */
+:global(html[data-user-theme="dark"] [data-coach-warm-enabled]) .wltPip[data-r="loss"] {
+  background: color-mix(in srgb, var(--danger) 80%, black);
+}
 .wltPip[data-r="tie"] { background: var(--warning); }
 .wltLast { font-size: var(--type-support); color: var(--text-tertiary); }
 /* Scoring totals + current streak row. */
@@ -11637,7 +11653,11 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    spec forces the paired axis off `visible`), so the panel gets hard-CLIPPED at that boundary
    instead of merely reading close to an edge. Scoped to this bar alone: the report toolbars that
    share `.multiSelectPanel` elsewhere have room and expect the left-anchored open. */
-.ppDrillFilters [data-pill="panel"] { left: auto; right: 0; }
+/* The host's own anchoring WINS over the shared "opens where it fits" (`data-align`, /design 2026-10-01): its
+   clip is the docked library's edge, which a viewport measurement cannot see — and an equal-specificity
+   tie would be settled by bundle order (/review). Both rules name the data-align variant to outrank it. */
+.ppDrillFilters [data-pill="panel"],
+.ppDrillFilters [data-pill="panel"][data-align] { left: auto; right: 0; }
 
 .ppDrillWrite { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.9rem; min-width: 0; }
 
@@ -11808,7 +11828,8 @@ span.libCardMain { cursor: default; }
      (right for the 320px docked library, where Tags ends the row) hung its menu off the phone's left
      edge (§231 walk, owner 2026-09-25: "the tags dropdown … is opening off screen on mobile").
      Left-anchored here, where the row always wraps. */
-  .ppDrillFilters [data-pill="panel"] { left: 0; right: auto; }
+  .ppDrillFilters [data-pill="panel"],
+  .ppDrillFilters [data-pill="panel"][data-align] { left: 0; right: auto; }
 }
 
 

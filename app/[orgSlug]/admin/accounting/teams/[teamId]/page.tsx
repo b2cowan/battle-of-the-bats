@@ -56,7 +56,8 @@ function rowWords(r: AccountRow, teamName: string): { name: string; sub: string 
           .filter(Boolean).join(' · '),
       };
     case 'received_on_request':
-      return { name: `From ${teamName} · ${r.description}`, sub: ['Request', r.paidMethod].filter(Boolean).join(' · ') };
+      // Money the team paid the club outside any bill: received, but it moves no Outstanding — the row says so.
+      return { name: `From ${teamName} · ${r.description}`, sub: ['Request', 'not against a bill', r.paidMethod].filter(Boolean).join(' · ') };
   }
 }
 

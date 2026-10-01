@@ -31,7 +31,7 @@ import {
   ClubRow, ClubRowList, ClubSection, LoadFailed, RepChip, repKit, useDeferredLoad, useLatestRead, type ChipTone,
 } from '@/components/admin/kit/club/RepKit';
 import { CoachListToolbar } from '@/components/coaches/kit';
-import { FigureCards, day, money, moneyFetch } from '@/components/admin/kit/club/money/MoneyKit';
+import { FigureCards, day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import AddLedgerWindow from '@/components/admin/kit/club/money/AddLedgerWindow';
 import type { LedgerSummary } from '@/lib/types';
 import type { LedgerKind } from '@/lib/club-ledger';
@@ -121,13 +121,22 @@ export default function AccountingOverviewPage() {
       {notice && <PageNotice notice={notice} />}
 
       {/* The four figures, as today (C04 — 3b's). The period is today's From / To. */}
+      {/* The period: From and To as ONE compact pair pinned right — the dates at their own width
+          at a desk, two halves of one row on a phone (/design 2026-10-01: loose in the row, each date took
+          the field's full width and the two stacked). */}
       <CoachListToolbar lede="Across every book, for the period">
-        <label className={ck.label} htmlFor="acct-from">From</label>
-        <input id="acct-from" type="date" className={ck.input} value={period.from} max={period.to}
-          onChange={e => e.target.value && setPeriod(p => ({ ...p, from: e.target.value }))} />
-        <label className={ck.label} htmlFor="acct-to">To</label>
-        <input id="acct-to" type="date" className={ck.input} value={period.to} min={period.from}
-          onChange={e => e.target.value && setPeriod(p => ({ ...p, to: e.target.value }))} />
+        <div className={moneyKit.period}>
+          <label className={moneyKit.periodField} htmlFor="acct-from">
+            <span className={ck.label}>From</span>
+            <input id="acct-from" type="date" className={`${ck.input} ${moneyKit.periodInput}`} value={period.from} max={period.to}
+              onChange={e => e.target.value && setPeriod(p => ({ ...p, from: e.target.value }))} />
+          </label>
+          <label className={moneyKit.periodField} htmlFor="acct-to">
+            <span className={ck.label}>To</span>
+            <input id="acct-to" type="date" className={`${ck.input} ${moneyKit.periodInput}`} value={period.to} min={period.from}
+              onChange={e => e.target.value && setPeriod(p => ({ ...p, to: e.target.value }))} />
+          </label>
+        </div>
       </CoachListToolbar>
       <FigureCards items={[
         { label: 'Income', value: money(totals.income) },

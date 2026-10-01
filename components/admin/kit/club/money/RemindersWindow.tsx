@@ -87,8 +87,9 @@ export default function RemindersWindow({ q, orgName, senderName, team, onClose,
       footer={
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Cancel</button>
-          <button type="button" className="btn btn-lime" onClick={() => void send()} disabled={busy || teams.length === 0}>
-            {busy ? 'Sending…' : teams.length === 0 ? 'Nothing to send' : `Send ${pluralize(teams.length, 'reminder')}`}
+          {/* Until the preview arrives the button claims nothing — "Nothing to send" was a guess (/design 2026-10-01). */}
+          <button type="button" className="btn btn-lime" onClick={() => void send()} disabled={busy || !preview || teams.length === 0}>
+            {busy ? 'Sending…' : !preview ? (failed ? 'Send reminders' : 'Loading…') : teams.length === 0 ? 'Nothing to send' : `Send ${pluralize(teams.length, 'reminder')}`}
           </button>
         </>
       }

@@ -28,6 +28,18 @@
    their two columns. Anchored under the grid so it beats the kit's `.big` whatever the bundle order. */
 @media (max-width: 400px) { .figures .figure { font-size: var(--type-title); } }
 
+/* ── The Overview's period: From and To as one compact pair (/design 2026-10-01) — each date at its own
+   width at a desk; on a phone the pair takes the row and each date half of it. Anchored under `.period`
+   so the width beats the kit field's `width: 100%` whatever the bundle order. ── */
+.period { display: flex; align-items: flex-end; gap: 0.6rem; margin-left: auto; }
+.periodField { display: flex; flex-direction: column; gap: 0.25rem; }
+.period .periodInput { width: 10.5rem; }
+@media (max-width: 640px) {
+  .period { flex: 1 1 100%; margin-left: 0; }
+  .periodField { flex: 1 1 0; min-width: 0; }
+  .period .periodInput { width: 100%; }
+}
+
 /* ── The toolbar lede: one quiet sentence at the toolbar's start (an allocation's schedule) ── */
 .lede {
   margin: 0;
@@ -280,6 +292,8 @@
 
 /* A row's second line inside a table cell (a request's who / when, the holding-up line in red). */
 .holding { display: block; margin-top: 0.1rem; font-size: var(--type-support); font-weight: 650; color: var(--danger-light); }
+/* The same words inside a phone card's caption line. */
+.holdingInline { font-weight: 650; color: var(--danger-light); }
 
 /* The reminders' recipient rows, each with what the team owes. */
 .who { font-size: var(--type-support); color: var(--text-tertiary); }

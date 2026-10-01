@@ -154,7 +154,8 @@ export function ReasonQuestion({
 
 /** A page's figure cards (an allocation's four, a team's three): the label, the figure, one fact. */
 export function FigureCards({ items, three = false }: {
-  items: { label: string; value: ReactNode; sub?: ReactNode }[];
+  /** `tone` colours the figure — `bad` for money that is late (an allocation's Overdue, as drawn). */
+  items: { label: string; value: ReactNode; sub?: ReactNode; tone?: 'good' | 'bad' | 'muted' }[];
   three?: boolean;
 }) {
   return (
@@ -162,7 +163,7 @@ export function FigureCards({ items, three = false }: {
       {items.map(i => (
         <CoachCard key={i.label}>
           <CoachEyebrow>{i.label}</CoachEyebrow>
-          <CoachFigure className={styles.figure}>{i.value}</CoachFigure>
+          <CoachFigure className={styles.figure} tone={i.tone}>{i.value}</CoachFigure>
           {i.sub != null && <p className={kit.sub}>{i.sub}</p>}
         </CoachCard>
       ))}

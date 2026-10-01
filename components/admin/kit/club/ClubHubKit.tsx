@@ -40,6 +40,7 @@ import { useClubBrief, briefProgramCount, type BriefKey, type ClubBrief } from '
 import { accountingTabs, type AdminProgramKey } from '@/lib/admin-kit-nav';
 import ck from './ClubKit.module.css';
 import styles from './ClubHub.module.css';
+import frame from '../AdminKitFrame.module.css';
 
 /** The org's own word for itself on its hub: a Club is a club; a League Plus org, a league. */
 function orgNoun(planId: string | undefined): string {
@@ -288,8 +289,11 @@ export default function ClubHubKit() {
             {programs.map(p => {
               const Icon = PROGRAM_ICON[p.key];
               const waiting = briefProgramCount(brief, p.key);
+              // A waiting count is the rail's amber pill — the number, never words (owner ruling 2026-10-01).
               const chip = (p.key === 'rep-teams' || p.key === 'accounting') && waiting > 0
-                ? <CoachChip tone="warn">{waiting} waiting</CoachChip>
+                // The rail's pill, without the rail row's `margin-left: auto` — in the eyebrow's spread row it would
+                // shove the count against the arrow, off where every other card's chip sits (/review 2026-10-01).
+                ? <span className={frame.count} style={{ marginLeft: 0 }} aria-label={`${waiting} waiting`}>{waiting > 9 ? '9+' : waiting}</span>
                 : p.key === 'public-site'
                   ? <CoachChip tone={currentOrg.isPublic ? 'good' : 'warn'}>{currentOrg.isPublic ? 'Online' : 'Offline'}</CoachChip>
                   : undefined;

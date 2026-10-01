@@ -21,6 +21,12 @@ interface Props {
   saveScope?: string;
   /** A door at the list's foot — the club Ledger's "Manage payees" (Club Tier Stage 3a, C01). Opt-in. */
   foot?: ReactNode;
+  /**
+   * Stand at the admin kit's field size beside the kit's own fields (40px, the strong hairline; 44px at
+   * touch widths) — the club Ledger's line window (/design 2026-10-01). Opt-in: the coach's forms keep
+   * today's field.
+   */
+  kitField?: boolean;
 }
 
 export default function PayeeCombobox({
@@ -31,6 +37,7 @@ export default function PayeeCombobox({
   disabled,
   saveScope = 'org',
   foot,
+  kitField = false,
 }: Props) {
   const [inputVal, setInputVal]   = useState('');
   const [results, setResults]     = useState<OrgPayee[]>([]);
@@ -129,7 +136,7 @@ export default function PayeeCombobox({
 
   if (value) {
     return (
-      <div className={styles.selectedRow}>
+      <div className={styles.selectedRow} data-kit-field={kitField || undefined}>
         <span className={styles.selectedName}>{value.displayName}</span>
         {value.payeeId === null && (
           <span className={styles.oneTimeLabel}>one-time</span>
@@ -144,7 +151,7 @@ export default function PayeeCombobox({
   }
 
   return (
-    <div className={styles.root} ref={containerRef}>
+    <div className={styles.root} ref={containerRef} data-kit-field={kitField || undefined}>
       <div className={styles.inputWrap}>
         <input
           className={styles.input}

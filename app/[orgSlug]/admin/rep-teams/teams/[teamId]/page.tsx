@@ -436,7 +436,7 @@ function WithTheClubSection({ money: m, teamName, href }: { money: WithTheClub; 
     m.requestsWaiting > 0 ? `${pluralize(m.requestsWaiting, 'request')} waiting` : 'no request waiting',
   ].filter(Boolean).join(' · ');
   return (
-    <ClubSection id="with-the-club" title="With the club" meta={teamName} list>
+    <ClubSection id="with-the-club" title="With the club" list>
       <ClubRowList inset label={`${teamName} with the club`}>
         <ClubRow as="link" href={href} title={title} caption={caption} chevron />
       </ClubRowList>
@@ -529,7 +529,6 @@ function WhatTheClubSees() {
             <li>Payment requests</li>
             <li>How many families are connected</li>
             <li>A closed season’s record, roster and staff</li>
-            <li>The team’s books, from Stage 3</li>
           </ul>
         </div>
         <div>

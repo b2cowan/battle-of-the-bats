@@ -6,6 +6,7 @@ import {
   ChevronRight, AlertTriangle, CheckCircle2, Undo2,
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOrg } from '@/lib/org-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
@@ -464,9 +465,11 @@ function Filing({ category, item }: { category: string | null; item: string | nu
  * can take it back. Stacks over the bill's room (the floor's top-window rule: Escape and Back close it
  * alone).
  */
-function SentWindow({ installmentNumber, amount, busy, onCancel, onSend }: {
+function SentWindow({ installmentNumber, amount, clubName, busy, onCancel, onSend }: {
   installmentNumber: number;
   amount: number;
+  /** The club, by name, in the window's one consequence line (specimen 7). */
+  clubName: string | null;
   busy: boolean;
   onCancel: () => void;
   onSend: (form: { sentOn: string; method: string; reference: string }) => Promise<void>;
@@ -513,10 +516,12 @@ function SentWindow({ installmentNumber, amount, busy, onCancel, onSend }: {
           <label className={`${styles.field} ${styles.formGridFull}`} htmlFor="sent-ref">
             <span className={styles.label}>Reference</span>
             <input id="sent-ref" className={styles.input} value={reference} maxLength={100} onChange={e => setReference(e.target.value)} />
-            <span className={styles.mutedInline}>The E-Transfer reference or cheque number, so the club can match it.</span>
+            <span className={styles.formHint}>The E-Transfer reference or cheque number, so the club can match it.</span>
           </label>
-          <p className={`${styles.formGridFull} ${styles.mutedInline}`}>
-            The club confirms it when it arrives. Until then it isn’t counted as paid, and you can take it back.
+          {/* The portal's consequence hint (what the form is about to do), naming the club as drawn —
+              /design 2026-10-01: both lines had been body-size paragraphs. */}
+          <p className={`${styles.formGridFull} ${styles.formHint} ${styles.formHintConsequence}`}>
+            <strong>{clubName ?? 'The club'} confirms it when it arrives.</strong> Until then it isn’t counted as paid, and you can take it back.
           </p>
         </div>
         <div className={styles.modalFooter}>
@@ -573,6 +578,9 @@ export function ClubPanel({
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, closedAssignments, loading: ctxLoading } = useCoaches();
+  // The club, by name, for the "We've sent it" window's consequence line. The Club tab only exists for a
+  // team in a club (the money summary's `orgLinked`), so the URL's org IS the club.
+  const { currentOrg } = useOrg();
 
   const sharedRead = useSharedMoneyRead();
   const bumpMoneyRevision = useBumpMoneyRevision();
@@ -2011,6 +2019,7 @@ export function ClubPanel({
           key={sending.inst.id}
           installmentNumber={sending.inst.installmentNumber}
           amount={sending.inst.amount}
+          clubName={currentOrg?.name ?? null}
           busy={isMarking(sending.inst)}
           onCancel={() => setSending(null)}
           onSend={async form => { if (await markSent(sending.split, sending.inst, form)) setSending(null); }}

@@ -344,9 +344,9 @@ ok(`${Y} org budget: 4 lines split by month`);
 const general = await one('general ledger', db.from('accounting_ledgers').insert({ org_id: orgId, entity_type: 'org', entity_id: null, name: `${ORG_NAME} — General` }).select('id').single());
 const teamLedger = await one('team ledger', db.from('accounting_ledgers').insert({ org_id: orgId, entity_type: 'team', entity_id: team['15u-aaa'].id, name: '15U AAA' }).select('id').single());
 const entry = (ledger_id, e) => db.from('accounting_entries').insert({ ledger_id, status: 'posted', created_by: OWNER, ...e });
-die('sponsorship', (await entry(general.id, { entry_date: daysFromNow(-50), description: 'Sponsorship — Maple Hardware', amount: 1500, entry_type: 'income', category: 'Sponsorship', payment_method: 'cheque' })).error);
-die('permit', (await entry(general.id, { entry_date: daysFromNow(-45), description: 'Diamond permits — spring block', amount: 2000, entry_type: 'expense', category: 'Facilities', payment_method: 'etransfer' })).error);
-die('team income', (await entry(teamLedger.id, { entry_date: daysFromNow(-70), description: 'Player fee deposits', amount: 2400, entry_type: 'income', category: 'Player fees', payment_method: 'etransfer' })).error);
+die('sponsorship', (await entry(general.id, { entry_date: daysFromNow(-50), description: 'Sponsorship — Maple Hardware', amount: 1500, entry_type: 'income', category: 'Sponsorship', payment_method: 'Cheque 1042' })).error);
+die('permit', (await entry(general.id, { entry_date: daysFromNow(-45), description: 'Diamond permits — spring block', amount: 2000, entry_type: 'expense', category: 'Facilities', payment_method: 'E-Transfer 5531' })).error);
+die('team income', (await entry(teamLedger.id, { entry_date: daysFromNow(-70), description: 'Player fee deposits', amount: 2400, entry_type: 'income', category: 'Player fees', payment_method: 'E-Transfer' })).error);
 ok('ledgers: General (income + expense) and 15U AAA (income)');
 
 // ── Club Tier Stage 3a — the money loop the §E walks need, written through the REAL one-step moves

@@ -99,11 +99,13 @@ export function RequestWindow({ r, canMove, onAsk, onClose }: {
     >
       {waiting && r.holdingPayout && (
         <Callout tone="bad" role="note" icon={<AlertTriangle size={16} aria-hidden />}>
-          <b>This is holding up {r.teamName}’s end-of-season payout.</b>
-          <span className={moneyKit.who}>{r.askedBy ?? 'The coach'} can’t pay families their share while a request to the club is unanswered.</span>
+          {/* One paragraph at one size, as drawn: the bold sentence, a space, the reason (/design 2026-10-01). */}
+          <b>This is holding up {r.teamName}’s end-of-season payout.</b>{' '}
+          {r.askedBy ?? 'The coach'} can’t pay families their share while a request to the club is unanswered.
         </Callout>
       )}
-      <Quote>{r.notes?.trim() || r.description}</Quote>
+      {/* The coach's own words — only when they wrote some; the request's name is already "For" below. */}
+      {r.notes?.trim() && <Quote>{r.notes.trim()}</Quote>}
       <Facts rows={[
         ['Direction', out ? `${REQUEST_DIRECTION_WORD.payment_to_org} — ${r.teamName} pays the club` : `${REQUEST_DIRECTION_WORD.charge_to_org} — the club pays ${r.teamName}`],
         out ? ['For', r.description] : null,

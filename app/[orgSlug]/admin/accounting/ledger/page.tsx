@@ -206,7 +206,8 @@ export default function LedgerTab() {
             foot={bookFoot}
           />
           <div className={kit.toolbarActions}>
-            {!isPhone && <Link href={payeesHref} className="btn btn-ghost">Payees</Link>}
+            {/* A door, not an action: olive text, as drawn (/design 2026-10-01). */}
+            {!isPhone && <Link href={payeesHref} className={kit.footLink}>Payees</Link>}
             <BookExport q={q} book={ref} window_={window_} rangeWords={rangeWords(range)} total={(counts?.status.posted ?? 0) + (counts?.status.pending ?? 0) + (counts?.status.void ?? 0)} orgSlug={slug} />
             {canMove && !isPhone && (
               <button type="button" className="btn btn-outline" onClick={() => setWin('transfer')}>

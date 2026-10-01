@@ -128,8 +128,8 @@ export default function AllocationsTab() {
     <CoachListToolbar
       actions={
         <>
-          <button type="button" className="btn btn-ghost" onClick={() => setReminding(true)}>
-            <Mail size={14} aria-hidden /> Send reminders
+          <button type="button" className={`btn btn-outline ${ck.iconOnlyPhone}`} onClick={() => setReminding(true)} aria-label="Send reminders">
+            <Mail size={14} aria-hidden /><span className={ck.btnWord}>Send reminders</span>
           </button>
           <AllocationsExport view={view} rows={rows} due={due} orgSlug={slug} />
           <Link href={`${base}/new`} className={`btn btn-lime ${ck.iconOnlyPhone}`} aria-label="New allocation">

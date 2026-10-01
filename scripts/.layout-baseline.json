@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-01T16:10:28.670Z",
+  "generated": "2026-10-01T20:08:07.421Z",
   "entries": {
     "admin-rep-assistant-coaches|361|tap-floor|a·Public site": {
       "reason": null,
@@ -9477,10 +9477,6 @@
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each choice on the handout preview (\"What we’re working on\", the observations, the results, \"Include the full dated result log\") is a <label> carrying the 44px min-height in the component’s own module, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element’s own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20); a 44px native checkbox is the wrong fix.",
       "detail": "16px tall (floor 44)"
     },
-    "coach-history-development-progress|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-history-development-progress-range|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
@@ -9496,10 +9492,6 @@
     "coach-development-handout|390|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each choice on the handout preview (\"What we’re working on\", the observations, the results, \"Include the full dated result log\") is a <label> carrying the 44px min-height in the component’s own module, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element’s own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20); a 44px native checkbox is the wrong fix.",
       "detail": "16px tall (floor 44)"
-    },
-    "coach-history-development-progress|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-history-development-progress-range|390|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
@@ -9644,38 +9636,6 @@
     "coach-player|768|tap-floor|button·SS: Best. Tap to change.": {
       "reason": "Same control; its label changed when the fixture player was filled (stage 5, 2026-09-23). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
       "detail": "30px tall (floor 44)"
-    },
-    "coach-player|768|tap-floor|button·Move 2B up": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-player|768|control-width|button·Move 2B up": {
-      "reason": null,
-      "detail": "26px wide (floor 44) — icon-only control"
-    },
-    "coach-player|768|tap-floor|button·Move 2B down": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-player|768|control-width|button·Move 2B down": {
-      "reason": null,
-      "detail": "26px wide (floor 44) — icon-only control"
-    },
-    "coach-player|768|tap-floor|button·Move SS up": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-player|768|control-width|button·Move SS up": {
-      "reason": null,
-      "detail": "26px wide (floor 44) — icon-only control"
-    },
-    "coach-player|768|tap-floor|button·Move SS down": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-player|768|control-width|button·Move SS down": {
-      "reason": null,
-      "detail": "26px wide (floor 44) — icon-only control"
     },
     "coach-player|768|tap-floor|select·1 — Ace2345": {
       "reason": null,
@@ -10237,17 +10197,9 @@
       "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "22px tall (floor 44)"
     },
-    "coach-budget|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-budget-vs-actual|361|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-bva-activity|361|tap-floor|button·See it by month": {
       "reason": "A text-link door under the By activity table (\"See it by month\") at 19px — pre-existing on a view the sweep first reached 2026-09-06. Register F-22: footnote doors take the touch floor. Own fix.",
@@ -10277,46 +10229,6 @@
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
     },
-    "coach-transactions|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-transactions|361|control-offscreen|button·Around todayAug 7 – Oct 6": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "169px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "coach-transactions|361|control-offscreen|button·Last 30 daysAug 7 – Sep 6": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "169px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "coach-transactions|361|control-offscreen|button·Last 60 daysJul 8 – Sep 6": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "169px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "coach-transactions|361|control-offscreen|button·Last 90 daysJun 8 – Sep 6": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "169px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "coach-transactions|361|control-offscreen|button·This monthSep 1–30": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "169px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "coach-transactions|361|control-offscreen|button·Last monthAug 1–31": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "169px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "coach-transactions|361|control-offscreen|button·Whole seasoneverything": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "169px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "coach-transactions|361|control-offscreen|input·From date": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "21px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "coach-transactions|361|control-offscreen|input·To date": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "161px past the right edge (screen 361px) with no scroller to reveal it"
-    },
     "coach-payables|361|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
@@ -10324,10 +10236,6 @@
     "coach-payables|361|tap-floor|a·Player Dues": {
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
       "detail": "15px tall (floor 44)"
-    },
-    "coach-payables|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-payables-schedule|361|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
@@ -10365,23 +10273,11 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "11px wide (floor 44) — icon-only control"
     },
-    "coach-dues|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-dues-installments|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-fundraisers|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-club|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-results|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
@@ -10445,17 +10341,9 @@
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
       "detail": "22px tall (floor 44)"
     },
-    "coach-budget|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-budget-vs-actual|390|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-bva-activity|390|tap-floor|button·See it by month": {
       "reason": "A text-link door under the By activity table (\"See it by month\") at 19px — pre-existing on a view the sweep first reached 2026-09-06. Register F-22: footnote doors take the touch floor. Own fix.",
@@ -10485,42 +10373,6 @@
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
     },
-    "coach-transactions|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-transactions|390|control-offscreen|button·Around todayAug 7 – Oct 6": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "140px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "coach-transactions|390|control-offscreen|button·Last 30 daysAug 7 – Sep 6": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "140px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "coach-transactions|390|control-offscreen|button·Last 60 daysJul 8 – Sep 6": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "140px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "coach-transactions|390|control-offscreen|button·Last 90 daysJun 8 – Sep 6": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "140px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "coach-transactions|390|control-offscreen|button·This monthSep 1–30": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "140px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "coach-transactions|390|control-offscreen|button·Last monthAug 1–31": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "140px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "coach-transactions|390|control-offscreen|button·Whole seasoneverything": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "140px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "coach-transactions|390|control-offscreen|input·To date": {
-      "reason": "The Ledger Timeline filter deck's KNOWN defect (run order A1, 2026-09-04 — parked for its own session): the date-range options and the From/To fields sit past the right edge with no scroller. ⚠ These keys carry DATES and rot with the calendar; re-accepting them is not a fix. Owned by that session.",
-      "detail": "132px past the right edge (screen 390px) with no scroller to reveal it"
-    },
     "coach-payables|390|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
@@ -10528,10 +10380,6 @@
     "coach-payables|390|tap-floor|a·Player Dues": {
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
       "detail": "15px tall (floor 44)"
-    },
-    "coach-payables|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-payables-schedule|390|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
@@ -10569,23 +10417,11 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "11px wide (floor 44) — icon-only control"
     },
-    "coach-dues|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-dues-installments|390|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-fundraisers|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-club|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-results|390|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
@@ -10745,14 +10581,6 @@
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "34px tall (floor 44)"
     },
-    "coach-transactions|768|tap-floor|button·Export": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-transactions|768|tap-floor|button·Add a bill": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "31px tall (floor 44)"
-    },
     "coach-transactions|768|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
@@ -10761,29 +10589,9 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-transactions|768|content-overflow|div·MoneyRecordImportOverviewBudget PlanPlay": {
-      "reason": "A 7–8px spill of the Money hub toolbar / the register heading row at 768, pre-existing at the tablet band; its signature changed when a tab label did. Not introduced by the table standard (its edits were vertical padding and colour).",
-      "detail": "content spills 7px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-transactions|768|content-overflow|div·ViewTimelineTimelineBillsPayment schedul": {
-      "reason": "A 7–8px spill of the Money hub toolbar / the register heading row at 768, pre-existing at the tablet band; its signature changed when a tab label did. Not introduced by the table standard (its edits were vertical padding and colour).",
-      "detail": "content spills 7px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-transactions|768|content-overflow|div·DateWhatCategoryItemMoney outMoney inBal": {
-      "reason": "A 7–8px spill of the Money hub toolbar / the register heading row at 768, pre-existing at the tablet band; its signature changed when a tab label did. Not introduced by the table standard (its edits were vertical padding and colour).",
-      "detail": "content spills 8px with overflow-x:visible — no scroller owns it"
-    },
     "coach-payables|768|tap-floor|button·Help: Money": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "34px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Export": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Add a bill": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "31px tall (floor 44)"
     },
     "coach-payables|768|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
@@ -10796,10 +10604,6 @@
     "coach-payables|768|control-width|button·Help: Money": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-payables|768|content-overflow|td·4 days overdue · partly paid": {
-      "reason": "A 60px spill at 768 in a status caption whose SIGNATURE carries a date (\"N days overdue\") — pre-existing; the key rots with the calendar. Not a table-standard axis; COACH_TABLET_BAND_PLAN territory.",
-      "detail": "content spills 60px with overflow-x:visible — no scroller owns it"
     },
     "coach-payables-schedule|768|tap-floor|button·Help: Money": {
       "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
@@ -10928,18 +10732,6 @@
     "coach-history-results|768|tap-floor|button·Help: Insights": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "34px tall (floor 44)"
-    },
-    "coach-history-results|768|tap-floor|button·All": {
-      "reason": "A compact filter chip at a desktop/tablet width — the portal-wide decision these chips have always followed (the same control is already accepted this way on coach-development-drills, coach-development-templates, coach-fundraisers and coach-lineups). The PHONE breakpoint enforces the 44px floor and these clear it there. ⚠ Recorded here rather than left red because the Results tab only started rendering chips at all once the UAT fixture gained finished games with tags (2026-08-19) — the control is unchanged, it had simply never been measured on this screen.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-history-results|768|tap-floor|button·Playoffs 1": {
-      "reason": "A compact filter chip at a desktop/tablet width — the portal-wide decision these chips have always followed (the same control is already accepted this way on coach-development-drills, coach-development-templates, coach-fundraisers and coach-lineups). The PHONE breakpoint enforces the 44px floor and these clear it there. ⚠ Recorded here rather than left red because the Results tab only started rendering chips at all once the UAT fixture gained finished games with tags (2026-08-19) — the control is unchanged, it had simply never been measured on this screen.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-history-results|768|tap-floor|button·Rivalry 3": {
-      "reason": "A compact filter chip at a desktop/tablet width — the portal-wide decision these chips have always followed (the same control is already accepted this way on coach-development-drills, coach-development-templates, coach-fundraisers and coach-lineups). The PHONE breakpoint enforces the 44px floor and these clear it there. ⚠ Recorded here rather than left red because the Results tab only started rendering chips at all once the UAT fixture gained finished games with tags (2026-08-19) — the control is unchanged, it had simply never been measured on this screen.",
-      "detail": "30px tall (floor 44)"
     },
     "coach-history-results|768|control-width|button·Help: Insights": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
@@ -12173,22 +11965,6 @@
       "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
       "detail": "34px tall (floor 44)"
     },
-    "coach-history|1440|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
-    },
-    "coach-history|361|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
-    },
-    "coach-history|390|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
-    },
-    "coach-history|768|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
-    },
     "coach-history|768|tap-floor|button·Help: Insights": {
       "reason": null,
       "detail": "34px tall (floor 44)"
@@ -12441,14 +12217,6 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-club-bill|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-club-bill|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-club-bill|768|control-width|button·Help: Money": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
@@ -12509,17 +12277,9 @@
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster\\",
       "detail": "34px tall (floor 44)"
     },
-    "coach-club-bill|768|tap-floor|button·Export": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster\\",
-      "detail": "33px tall (floor 44)"
-    },
     "coach-season-end|768|tap-floor|button·Help: Season's End": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster\\",
       "detail": "34px tall (floor 44)"
-    },
-    "coach-accounting|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-budget-period|361|control-width|button·Show the previous month": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
@@ -12710,20 +12470,8 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-accounting|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ Accepted on the Money OVERVIEW 2026-09-16 (shared style kit build): the same 34px chrome its sibling tabs (Dues, Fundraising, Club) were baselined with at this width; the kit does not touch the tab bar.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-accounting|768|control-width|button·Help: Money": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ Accepted on the Money OVERVIEW 2026-09-16 (shared style kit build): the same 34px chrome its sibling tabs were baselined with at this width; the kit does not touch the help control.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ Accepted on the Insights hub 2026-09-16 (shared style kit build): the same 34px chrome its sibling screens were baselined with; the kit does not touch the tab bar or the help control.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ Accepted on the Insights hub 2026-09-16 (shared style kit build): the same 34px chrome its sibling screens were baselined with; the kit does not touch the tab bar or the help control.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-history|768|control-width|button·Help: Insights": {
@@ -12933,10 +12681,6 @@
     "coach-player-switcher|768|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
       "reason": null,
       "detail": "37px tall (floor 44)"
-    },
-    "coach-history|768|tap-floor|a·#5 Emerson Test has sat the bench most —": {
-      "reason": "The SAME pre-existing debt as the \"#1 Avery Test has sat the bench most\" entry beside it (surfaced 2026-09-16; .insightsCo rows carry a 40px min-height): the fixture's data now names a different player, so the finding's text — and this key — changed. Nothing about the callouts changed (the 2026-09-25 scoreboard work touched only the band above them). The fix stays with the touch-target project (stage 6 ask T, the owner's open call).",
-      "detail": "40px tall (floor 44)"
     },
     "guest-scorekeeper-account|361|tap-floor|button·Close account": {
       "reason": null,
@@ -13414,81 +13158,9 @@
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
       "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-ledger|361|control-offscreen|button·Around todaySep 1 – Oct 31": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|361|control-offscreen|button·Last 30 daysSep 1 – Oct 1": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|361|control-offscreen|button·Last 60 daysAug 2 – Oct 1": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|361|control-offscreen|button·Last 90 daysJul 3 – Oct 1": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|361|control-offscreen|button·This monthOct 1–31": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|361|control-offscreen|button·Last monthSep 1–30": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|361|control-offscreen|button·All timeeverything": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "197px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|361|control-offscreen|input·From date": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "49px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|361|control-offscreen|input·To date": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "189px past the right edge (screen 361px) with no scroller to reveal it"
-    },
     "admin-accounting-ledger|390|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
       "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-ledger|390|control-offscreen|button·Around todaySep 1 – Oct 31": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|390|control-offscreen|button·Last 30 daysSep 1 – Oct 1": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|390|control-offscreen|button·Last 60 daysAug 2 – Oct 1": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|390|control-offscreen|button·Last 90 daysJul 3 – Oct 1": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|390|control-offscreen|button·This monthOct 1–31": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|390|control-offscreen|button·Last monthSep 1–30": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|390|control-offscreen|button·All timeeverything": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "168px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|390|control-offscreen|input·From date": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "20px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "admin-accounting-ledger|390|control-offscreen|input·To date": {
-      "reason": "The shared Date pill's panel hangs from its own pill, so near the strip's right edge it opens past a phone's edge. The coach's Ledger carries the same entries (coach-transactions); reported to the owner 2026-10-01 for ONE fix in the shared pill (both Ledgers move together) rather than a patch on one side. Club Tier Stage 3a.",
-      "detail": "160px past the right edge (screen 390px) with no scroller to reveal it"
     },
     "admin-accounting-ledger|768|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",

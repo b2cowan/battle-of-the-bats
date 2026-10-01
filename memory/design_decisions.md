@@ -7,6 +7,30 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-01 — A DOOR IS OLIVE TEXT; AN ACTION THAT OPENS A WINDOW IS AN OUTLINED BUTTON (owner, "go ahead with all of your recommended fixes" to the `/design` review of Club Tier Stage 3a's money screens)
+
+**Decision:** In a toolbar or a window's foot, a control that **goes somewhere** (Payees, "Open 13U AAA's account") is
+**olive text** — the coaches kit's `footLink`: olive, no box, a 44px tap area, underline on hover. A control that **does
+something by opening a window** (Send reminders, Undo a payment) is an **outlined button at the toolbar's one height**,
+beside its siblings (Transfer, Export); on a phone it is **icon-only** (`iconOnlyPhone`, the mobile admin rule). The
+product's `.btn-ghost` is a **grey FILLED** button, not a quiet one — it is not used for either.
+**Rationale:** the hub v22 drawings drew these as olive text, and the build reached for `.btn-ghost`, which here is a
+filled grey block at its own height: four toolbars ended with three heights and three looks, and a door read heavier
+than the action beside it. Splitting by what the control DOES (go vs act) is the question an implementer can answer.
+**Applies to:** the admin's money pages first (Accounting); any admin toolbar or window foot drawn after it.
+
+### 2026-10-01 — A FILTER PILL'S PANEL OPENS WHERE IT FITS (owner, same "go ahead", same review)
+
+**Decision:** A `<details>` filter pill's panel hangs from the pill's LEFT edge, unless it would run past the screen's
+right edge and fits leftward — then it hangs from the pill's RIGHT edge. One shared behaviour
+(`useDetailsOutsideClick` sets `data-align="end"`; `FilterPill.module.css` draws it), measured on mount, resize,
+open and whenever its row changes (a pill moves without resizing when a sibling is added before it), so a pill that
+already fits never moves. Both Ledgers' Date pill was opening ~200px off a phone.
+**Rationale:** fixing it on the club's Ledger alone (a strip-anchored panel) would have split the club's Ledger from the
+coach's, which it is ruled to match — and it measured at zero width when closed. One home fixes every pill, coach and
+club, at once.
+**Applies to:** every filter pill (`MultiSelectDropdown`, `SingleSelectDropdown`, `DateRangeDropdown`), both portals.
+
 ### 2026-09-30 — THE CLUB'S MONEY BOOK READS EXACTLY LIKE THE COACH'S LEDGER (owner, Club Tier Stage 3a Ask 6, ratified with the hub v22 drawings; recorded 2026-10-01 by the build)
 
 **Decision:** The club's Ledger (Accounting › Ledger) is the coach's Ledger: one book, **oldest first** between a

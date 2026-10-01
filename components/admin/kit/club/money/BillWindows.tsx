@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { Users } from 'lucide-react';
 import KitDialog, { type KitStep } from '../KitDialog';
 import ck from '../ClubKit.module.css';
+import { kit } from '@/components/coaches/kit';
 import { Callout, RepChip, RowAction, repKit } from '../RepKit';
 import { UNLINKED_PAYMENT } from '@/lib/club-money-words';
 import { daysBetweenDateStrings, tournamentToday } from '@/lib/timezone';
@@ -80,7 +81,7 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
       title={bill.teamName}
       onClose={onClose}
       steps={{ ...steps, position, positionWide: `${position} ${bandWord}`, noun: 'team' }}
-      footerStart={<Link href={`${accountingBase}/teams/${bill.teamId}`} className="btn btn-ghost">Open {bill.teamName}’s account</Link>}
+      footerStart={<Link href={`${accountingBase}/teams/${bill.teamId}`} className={kit.footLink}>Open {bill.teamName}’s account</Link>}
       footer={
         <>
           {canMove && owes && bill.headCoaches.length > 0 && <button type="button" className="btn btn-outline" onClick={onRemind}>Remind {bill.teamName}</button>}

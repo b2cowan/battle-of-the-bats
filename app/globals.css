@@ -1063,6 +1063,13 @@ html[data-user-theme="dark"] [data-coach-warm-enabled] {
   --home-live:        var(--danger);
   --home-live-soft:   rgba(var(--danger-rgb), 0.12);
   --home-live-rgb:    var(--danger-rgb);
+  /* A red chip's WORDS on a dark card take the light text red (the -400 tier :root keeps for text on dark).
+     At the base red they read 4.2–4.4:1 on the dark cards — "1 overdue", "Declined", "To club" on the
+     Money screens (/design 2026-10-01, the dark sweep; owner "go ahead"). Fixed at the token, once, so it
+     reaches EVERY red badge's words in Dark, in both portals (the admin shell carries this attribute too):
+     each sits on a dark card or an 8–12% red tint, never on paper (/review checked all of them). Warm sets
+     its own deeper ink, and fills, dots and borders keep the base red. */
+  --badge-danger-ink: var(--danger-light);
   --home-amber:       var(--warning);
   --home-amber-rgb:   var(--warning-rgb);
   --home-blue:        var(--info);

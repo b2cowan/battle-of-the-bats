@@ -36,6 +36,11 @@
   outline: none;
   border-color: var(--blueprint-blue);
 }
+/* A touch target at touch widths, like the fields beside it (/design 2026-10-01 — the layout sweep
+   measured the bill room's "Files under" at 37px). */
+@media (max-width: 768px) {
+  .select, .input { min-height: var(--tap-min, 44px); }
+}
 
 /* The caller-opt-in paper ground (`paperGround` prop — Add-a-bill design pass D3). The bill form
    has ONE grounds story: every field wears the portal's standard input recipe, and this control's

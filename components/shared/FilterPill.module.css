@@ -68,6 +68,9 @@
   background: var(--home-card); border: 1px solid var(--border-2); border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.35); padding: 0.4rem; max-height: 320px; overflow-y: auto;
 }
+/* A pill near the right edge hangs its panel from its RIGHT edge, so it opens on the screen —
+   `useDetailsOutsideClick` measures and sets `data-align` (/design 2026-10-01). */
+.multiSelectPanel[data-align='end'] { left: auto; right: 0; }
 /* ⚠ `body`, NOT `support` — a role correction the type ladder forced into the open (P3,
    2026-08-28). This row is a thing you READ AND CLICK (SingleSelectDropdown renders it as a
    <button>, the multi variant as a <label>), which makes it an interactive list item, the same

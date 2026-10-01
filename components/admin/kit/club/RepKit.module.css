@@ -335,6 +335,10 @@
 .nameCell { display: flex; align-items: center; gap: 0.45rem; }
 /* A name that opens a WINDOW rather than a page (a tryout applicant): a button that reads as the name link. */
 .nameButton { background: none; border: 0; padding: 0; font: inherit; font-size: var(--type-body); text-align: left; cursor: pointer; }
+/* `font: inherit` above also reset the name link's weight, so a name that opens a window read lighter than
+   a name that opens a page (/design 2026-10-01, seen on Allocations and Payment requests; it reaches every
+   name button — Check-in, Payees, Communications, tryouts, documents, tournament Teams). */
+.nameButton.nameLink { font-weight: 650; }
 @media (max-width: 768px) {
   .nameButton { min-height: var(--tap-min, 44px); }
   /* At a touch width the row is the thumb's target; the name keeps the floor for the keyboard's door,

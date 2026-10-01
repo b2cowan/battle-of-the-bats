@@ -23,6 +23,7 @@ import { methodWord } from '@/lib/club-money-words';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
   ClubRow, ClubRowBand, ClubRowList, LoadFailed, PageLoading, RepChip, repKit, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
@@ -143,7 +144,7 @@ export default function AllocationPage({ params }: { params: Promise<{ orgSlug: 
         { label: 'Allocated', value: money(read.allocated), sub: perTeam != null ? `${pluralize(teamCount, 'team')} × ${money(perTeam)}` : pluralize(teamCount, 'team') },
         { label: 'Collected', value: money(f.collected), sub: `${f.receivedCount} of ${pluralize(f.installmentCount, 'installment')}` },
         { label: 'Outstanding', value: money(f.outstanding), sub: pluralize(f.installmentCount - f.receivedCount, 'installment') },
-        { label: 'Overdue', value: money(f.overdue.amount), sub: overdueTeams.length ? overdueTeams.join(', ') : 'Nothing late' },
+        { label: 'Overdue', value: money(f.overdue.amount), sub: overdueTeams.length ? overdueTeams.join(', ') : 'Nothing late', tone: f.overdue.amount > 0 ? 'bad' : undefined },
       ]} />
 
       <CoachListToolbar
@@ -151,8 +152,8 @@ export default function AllocationPage({ params }: { params: Promise<{ orgSlug: 
         actions={
           <>
             {read.canMove && (
-              <button type="button" className="btn btn-ghost" onClick={() => setQuestion({ kind: 'remindAll' })}>
-                <Mail size={14} aria-hidden /> Send reminders
+              <button type="button" className={`btn btn-outline ${ck.iconOnlyPhone}`} onClick={() => setQuestion({ kind: 'remindAll' })} aria-label="Send reminders">
+                <Mail size={14} aria-hidden /><span className={ck.btnWord}>Send reminders</span>
               </button>
             )}
             <AllocationExport read={read} orgSlug={orgSlug} />

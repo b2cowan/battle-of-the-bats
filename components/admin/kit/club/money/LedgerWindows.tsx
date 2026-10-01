@@ -111,6 +111,7 @@ function PayeeField({ id, q, value, onChange, payeesHref, label }: {
         value={value}
         onChange={onChange}
         foot={<Link href={payeesHref} className={ck.link}>Manage payees</Link>}
+        kitField
       />
     </div>
   );

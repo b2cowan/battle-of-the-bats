@@ -137,6 +137,29 @@ describe('a team\'s account with the club (Ask 5a)', () => {
     assert.equal(late.daysLate, 13);
     assert.ok(rows[0].date >= rows[rows.length - 1].date);
   });
+  it('a bill entered AFTER its payments still reads before them — the running figure never dips into credit', () => {
+    // A treasurer catching up the books: the allocation is created Oct 1, its payments are recorded Aug 15 and Sep 15.
+    const caughtUp = teamAccount(
+      [{
+        splitId: 's2', allocationId: 'a2', allocationDescription: 'Diamond fees 2026', programYearId: 'py26',
+        billedOn: '2026-10-01', amount: 1350,
+        installments: [
+          { ...inst({ amount: 450, dueDate: '2026-08-17', paidAt: '2026-10-01T12:00:00Z', paidOn: '2026-08-15' }), id: 'j1', installmentNumber: 1 },
+          { ...inst({ amount: 450, dueDate: '2026-09-16', paidAt: '2026-10-01T12:00:00Z', paidOn: '2026-09-15' }), id: 'j2', installmentNumber: 2 },
+          { ...inst({ amount: 450, dueDate: '2026-10-11' }), id: 'j3', installmentNumber: 3 },
+        ],
+      }],
+      [],
+      ['py26'],
+      TODAY,
+    );
+    const r = caughtUp.seasons[0].rows;
+    const billed = r.find(x => x.kind === 'billed')!;
+    assert.equal(billed.date, '2026-08-15', 'dated by its first payment, the earliest of the three');
+    assert.equal(r[r.length - 1].kind, 'billed', 'the oldest row is the bill');
+    assert.ok(r.every(x => x.outstanding >= 0), 'no row reads as a credit');
+    assert.equal(caughtUp.outstanding, 450);
+  });
 });
 
 describe('a book: one Balance, a true Starting balance, every row (C14)', () => {
