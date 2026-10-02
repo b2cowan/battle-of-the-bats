@@ -140,14 +140,14 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Which game an award is for — project hub</strong><br><small>Drawn 2026-10-01 from a production report · ruled 2026-10-02, all four as recommended · built on dev 2026-10-02 · the walk is on the QA walk tab</small></div>
+  <div class="hubtitle"><strong>Which game an award is for — project hub</strong><br><small>Drawn 2026-10-01 from a production report · ruled 2026-10-02, all four as recommended · committed 2026-10-02 · QA ✅ passed 2026-10-02, both walks · production with the next promote</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Drawn 2026-10-01">Design</li>
     <li class="stage done" title="Ruled 2026-10-02, all four as recommended">Plan</li>
-    <li class="stage current" title="Built on dev 2026-10-02; review and commit owed">Build</li>
-    <li class="stage" title="—">Review</li>
-    <li class="stage" title="—">QA</li>
-    <li class="stage" title="—">Shipped</li>
+    <li class="stage done" title="Built on dev 2026-10-02">Build</li>
+    <li class="stage done" title="/review 2026-10-02, four fixes; committed 2026-10-02">Review</li>
+    <li class="stage done" title="§257 passed 2026-10-02: W1 8/8, W2 6/6">QA</li>
+    <li class="stage current" title="With the next promote to production">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
 </div>
@@ -338,7 +338,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
                 <p class="for">For: <strong>vs Mississauga Majors — Sep 30</strong> <span class="mk" data-k="un" data-note="The game window’s own Give an award is unchanged: it already knows its game.">Unchanged</span></p>
                 <div><div class="lbl">Player<span class="req" aria-hidden="true">*</span></div><div class="sel"><span>#44 Alex Tennant</span><span>▾</span></div></div>
                 <div><div class="lbl">Award<span class="req" aria-hidden="true">*</span></div><div class="tchips"><span class="tchip on">🏆 MVP</span><span class="tchip">👑 Practice MVP</span><span class="tchip new">+ New</span></div></div>
-                <div class="amber" role="status"><span class="ic">!</span><span>Alex Tennant already has 🏆 MVP for “Majors game MVP”, Oct 1.<small>If it’s the same award, close this and remove that one from the Awards page.</small></span><span class="mk" data-k="new" data-note="Appears as soon as the player and award are chosen, when that player already holds that award for an occasion within two days of this one (question 4). It names the other award so the coach can tell a slip from a real second MVP. It never blocks: the exact same game is still refused at Save, as today.">New</span><button class="fl fix" data-finding="F03" data-here="The coach learns of the 7:26 award before saving a second one.">fixes F03</button></div>
+                <div class="amber" role="status"><span class="ic">!</span><span>Alex Tennant already has 🏆 MVP for “Majors game MVP”, Oct 1.<small>If it’s the same award, close this without saving.</small></span><span class="mk" data-k="new" data-note="Appears as soon as the player and award are chosen, when that player already holds that award for an occasion within two days of this one (question 4). It names the other award so the coach can tell a slip from a real second MVP. It never blocks: the exact same game is still refused at Save, as today.">New</span><button class="fl fix" data-finding="F03" data-here="The coach learns of the 7:26 award before saving a second one.">fixes F03</button></div>
                 <div><div class="lbl">Note</div><div class="ta">1000 OBP 2 hits 2 walks 2 innings pitched and 2 defensive plays</div></div>
               </div>
               <div class="gmfoot"><span class="btn">Close</span><span class="btn primary">Save</span></div>
@@ -401,6 +401,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
       <li><strong>The server refuses a date in the future</strong> for a typed occasion (“An award’s date can’t be in the future.”). The window’s Date can’t pick one either.</li>
       <li><strong>The double-check sits between Award and Note</strong>, as drawn, from both doors. The game window passes its game’s own day.</li>
       <li><strong>The review (2026-10-02) changed four things before the commit:</strong> the list is read fresh every time the window opens (read once per visit, a game scored after the first open still said “enter its score first” until a reload); two events on one day list by start time, so a doubleheader opens on the later game; a Date box cleared mid-typing never raises the amber line; a greyed row shows keyboard focus as a quiet outline rather than the “choosable” fill. Left as is: a staff member whose Schedule access is off sees only Something else and The season, because the list is the schedule.</li>
+      <li><strong>From the walk (W1 ✅ 8/8 · W2 ✅ 6/6, 2026-10-02) — two owner calls from W1, both fixed:</strong> the double-check’s second line said “close this and remove that one from the Awards page”, which is two actions and leaves the player with neither award; it now says one thing, “If it’s the same award, close this without saving.” And the line read louder than the fields around it at body size; it is now the portal’s note size, with a smaller mark.</li>
       <li><strong>Proven before the walk:</strong> unit tests for the list, its order and states, the second lines, the predicate (one, two and three days; another player; another award; the award being edited; the nearest and newest) and the sentence; a probe of the window at 1440 and 390, Warm and Dark (the list’s rows, which are visible without scrolling, the Something else date’s limit, and the amber line appearing at one day and going at three); the layout sweep of the Awards page in both themes, no new findings.</li>
     </ul>
     <h2>Findings</h2>
@@ -492,7 +493,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
         <h3>Not in this walk</h3><p>The dropdown (W1). The exact same event is still refused at Save, as before (step 4 shows it once).</p>
       </div>
       <ol class="qasteps">
-        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On the Awards page, tap <b>Give an award</b>. For = <b>Something else</b>, Date = the day after W1 step 7’s practice. Pick the same player and the same award.</p><p class="qasee">An amber line above Note: “<i>Player</i> already has 🏆 MVP for <i>that practice</i>, <i>its day</i>.” and under it “If it’s the same award, close this and remove that one from the Awards page.” <b>Save</b> is still available.</p></div></li>
+        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On the Awards page, tap <b>Give an award</b>. For = <b>Something else</b>, Date = the day after W1 step 7’s practice. Pick the same player and the same award.</p><p class="qasee">An amber line above Note: “<i>Player</i> already has 🏆 MVP for <i>that practice</i>, <i>its day</i>.” and under it “If it’s the same award, close this without saving.” <b>Save</b> is still available.</p></div></li>
         <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Move the Date to three days after the practice. Then back to one day, and choose a different player.</p><p class="qasee">At three days the line goes. Back at one day it returns; with a different player it goes. Close the window without saving.</p></div></li>
         <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Give an award</b> again and leave For on the newest event. Pick the same player and award.</p><p class="qasee">No line, unless the newest event falls within two days of the practice. Close without saving.</p></div></li>
         <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Open the W1 practice in <b>Schedule</b>, tap <b>Give an award</b>, pick the same player and award, and tap <b>Save</b>.</p><p class="qasee">The amber line shows here too, before Save. Save is refused with the sentence you had before (“… already has MVP for this practice.”). Close.</p></div></li>

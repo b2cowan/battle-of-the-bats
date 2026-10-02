@@ -138,7 +138,9 @@ describe('nearDuplicateSentence — what the line says', () => {
   it('a typed occasion is quoted — the coach’s own words', () => {
     const w = nearDuplicateSentence('Alex Tennant', { eventId: null, tournamentLabel: 'Majors game MVP', awardedAt: '2026-10-01', awardType: mvp });
     assert.equal(w.line, 'Alex Tennant already has 🏆 MVP for “Majors game MVP”, Oct 1.');
-    assert.match(w.hint, /remove that one from the Awards page/);
+    assert.equal(w.hint, 'If it’s the same award, close this without saving.');
+    // Never two actions: "close this and remove that one" left the player with neither (§257 W1).
+    assert.doesNotMatch(w.hint, /remove/);
   });
   it('an event reads by its label; a season award as the season', () => {
     assert.equal(

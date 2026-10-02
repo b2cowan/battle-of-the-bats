@@ -306,6 +306,9 @@ export function nearDuplicateSentence(
     : award.tournamentLabel ? `for “${award.tournamentLabel}”` : 'for the season';
   return {
     line: `${playerName} already has ${type} ${what}, ${formatStoredDate(award.awardedAt, { withYear: false })}.`,
-    hint: 'If it’s the same award, close this and remove that one from the Awards page.',
+    // ⚠ ONE action (owner, §257 W1, 2026-10-02): the first wording — "close this and remove that one" —
+    // told the coach to skip this award AND delete the other, which leaves the player with neither.
+    // Same award → don't save it again; two honest awards → just Save.
+    hint: 'If it’s the same award, close this without saving.',
   };
 }

@@ -4,8 +4,9 @@
 source `docs/projects/active/COACH_AWARD_OCCASION_HUB.html`. PM brief: `COACH_AWARD_OCCASION_PM_BRIEF.md`.
 
 **Status:** drawn 2026-10-01; **ruled 2026-10-02** ("I agree with your recommendations, proceed" — all four as
-recommended); **built on dev 2026-10-02** (see *As built*); **/review 2026-10-02**, four fixes before the commit; **committed `55c237ee` 2026-10-02**. Owner QA §257
-next (hub → QA walk: W1 the For dropdown, W2 the double-check).
+recommended); **built on dev 2026-10-02** (see *As built*); **/review 2026-10-02**, four fixes before the commit; **committed `55c237ee` 2026-10-02**. **Owner QA §257 ✅ PASSED
+2026-10-02** — W1 8/8, W2 6/6; two calls from W1 fixed (the double-check names ONE action — "If it’s the same award,
+close this without saving." — and sits at note size). Production with the next promote; no migration.
 
 ## Where it came from
 

@@ -1,7 +1,7 @@
 # Which game an award is for — PM brief
 
 **Hub:** https://claude.ai/artifact/BaSM8ojh6AjMup6VJArCUv · **Plan:** `COACH_AWARD_OCCASION_PLAN.md` ·
-**Status:** drawn 2026-10-01; ruled 2026-10-02, all four as recommended; built on dev, reviewed and committed (`55c237ee`) 2026-10-02; owner QA §257 next (hub → QA walk).
+**Status:** drawn 2026-10-01; ruled 2026-10-02, all four as recommended; built on dev, reviewed and committed (`55c237ee`) 2026-10-02; owner QA §257 ✅ passed 2026-10-02 (both walks). Production with the next promote.
 
 **The problem.** On production, Alex Tennant showed two MVPs for one game. The coach gave the award from
 the Awards page, which can only take typed words, so it was tied to no game and dated the next day; then
