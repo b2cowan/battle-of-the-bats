@@ -104,7 +104,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Ledger Parity — project hub</strong><br><small>RATIFIED 2026-10-02 · every decision as recommended (D1–D7, D7a, D7b) · D3 revised 2026-10-02: names not bold on either Ledger · server committed, screens built on dev 2026-10-02 · QA walks open (§258) · <b>round 3 RULED 2026-10-02 (“looks good, go ahead and build”) and built on dev the same day: Payees as a window, a payee’s record, Tools (screens 10–12); D8a (the club’s Payees) open · W3 rewritten</b></small></div>
+  <div class="hubtitle"><strong>Ledger Parity — project hub</strong><br><small>RATIFIED 2026-10-02 · every decision as recommended (D1–D7, D7a, D7b) · D3 revised 2026-10-02: names not bold on either Ledger · server, screens and round 3 committed 2026-10-02 · <b>QA §258 PASSED 2026-10-02 — all five walks, 48/48</b> · round 3 RULED 2026-10-02 (“looks good, go ahead and build”): Payees as a window, a payee’s record, Tools (screens 10–12) · D8a (the club’s Payees as a window) not drawn · production with the next promote</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Round 1 2026-10-01 · round 2 2026-10-02 · ratified 2026-10-02 · round 3 drawn and ruled 2026-10-02 (D8, D9, D9a, D10; D8a open)">Design</li>
     <li class="stage done" title="Build prompts written 2026-10-02: LEDGER_PARITY_SERVER_PROMPT.md, LEDGER_PARITY_SCREENS_PROMPT.md">Plan</li>
@@ -404,7 +404,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 <section id="hub-qa" class="docpage qa" hidden>
   <div class="eyebrow">Owner QA · §258 · Coaches portal + Club accounting · Ledger Parity</div>
   <h1>The two Ledgers read the same</h1>
-  <p class="sub">Five walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat.</p>
+  <p class="sub"><b>✅ Passed 2026-10-02 — all five walks, 48 of 48.</b> Five walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat.</p>
 
   <div class="qacard">
     <h3>Sign in as</h3>
@@ -430,7 +430,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
       <div class="qacard">
         <h3>What this walk is for</h3><p>The coach’s Ledger read differently from the club’s in five ways nobody chose. Now a row prints the day, the balance lines carry the full dates, every row opens and ends in one arrow, and a row another tab wrote opens a short window that says where it is changed.</p>
         <h3>It passes when</h3><p>Every row opens and its last column is one arrow (Record beside it on an unpaid installment, and nothing else); the dates read as the rule says; a derived row’s window names its tab and opens it; a row you recorded opens its form exactly as before.</p>
-        <h3>Not in this walk</h3><p>The phone (W2), Tools and the Payees page (W3), the club (W4), the payee picker (W5).</p>
+        <h3>Not in this walk</h3><p>The phone (W2), Tools and the Payees window (W3), the club (W4), the payee picker (W5).</p>
       </div>
       <ol class="qasteps">
         <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">Sign in as the coach. Open <b>Money → Ledger</b> (View <b>Timeline</b>; leave Date on <b>Around today</b>).</p><p class="qasee">Row dates read the day only (“Sep 1”, “Oct 1”). The first line reads <b>STARTING BALANCE · <i>date, 2026</i></b> and the last <b>ENDING BALANCE · <i>date, 2026</i></b>. Open the Date pill: those are the two dates it holds.</p></div></li>
@@ -548,14 +548,14 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
       <h2>W5 · The payee picker, as a coach in a club</h2>
       <div class="qacard">
         <h3>What this walk is for</h3><p>Every coach’s picker listed every club payee under “Organization”, with no choice for the club and no word to the coach. Now only the payees the club shares appear, in the club’s blue, under one line that says the club sees payments to them.</p>
-        <h3>It passes when</h3><p>The picker shows Shared by your club (with its line) and Your team’s own; an unshared club payee is absent; the last row is Manage payees…, which opens the team’s Payees page.</p>
+        <h3>It passes when</h3><p>The picker shows Shared by your club (with its line) and Your team’s own; an unshared club payee is absent; the last row is Manage payees…, which opens the team’s Payees window over the form.</p>
         <h3>Not in this walk</h3><p>Sharing itself (W4). Renaming and merging (W3).</p>
       </div>
       <ol class="qasteps">
         <li><input type="checkbox" id="w5s1" aria-label="W5 step 1"><div class="qabody"><span class="qan"></span><p class="qado">As the coach: Ledger → <b>+ Add a bill</b> → <b>More</b> → open the <b>Payee</b> field.</p><p class="qasee">A list with <b>SHARED BY YOUR CLUB</b>, the line “Your club sees payments to these payees.”, and <b>Town of Milton</b> in blue; then <b>YOUR TEAM’S OWN</b> (if the team has any); last row <b>Manage payees…</b>.</p></div></li>
         <li><input type="checkbox" id="w5s2" aria-label="W5 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Type “Mizuno”.</p><p class="qasee">No saved Mizuno payee is offered (the club keeps both to itself); only “Use “Mizuno” as one-time” and “Save “Mizuno” as team payee”. Clear the field.</p></div></li>
         <li><input type="checkbox" id="w5s3" aria-label="W5 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Pick <b>Town of Milton</b>, then clear it.</p><p class="qasee">It fills the field as a saved payee; the × clears it.</p></div></li>
-        <li><input type="checkbox" id="w5s4" aria-label="W5 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Open the field again and tap <b>Manage payees…</b>.</p><p class="qasee">The team’s Payees page opens. <span class="meta">(If the form had typing in it, you are asked before leaving.)</span></p></div></li>
+        <li><input type="checkbox" id="w5s4" aria-label="W5 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Open the field again and tap <b>Manage payees…</b>.</p><p class="qasee">The team’s Payees window opens over the form, the address unchanged; closing it leaves the form as it was, typing kept.</p></div></li>
         <li><input type="checkbox" id="w5s5" aria-label="W5 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Ledger → View <b>By bill</b> → open a bill → its <b>Payee</b> field.</p><p class="qasee">The same two sections, the line, and Manage payees… at the foot.</p></div></li>
       </ol>
       <div class="qaverdict" role="group" aria-label="W5 verdict">
@@ -589,12 +589,12 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <li>Every row opens when clicked, and ends in one arrow. A row that came from Player Dues, Fundraising or Club opens a short window that says where it is changed, with one button to go there.</li>
     <li>Rows show the day (“Oct 1”); the Starting and Ending balance lines carry the full dates of the window.</li>
     <li>On a phone, each row is the same clean card the club’s treasurer sees.</li>
-    <li>A Payees page lets the team rename a payee or merge two spellings into one. It opens from a Tools menu on the Ledger and from the payee picker’s last row.</li>
+    <li>Payees opens as a window over the Ledger, from the Tools menu or the payee picker’s last row (over an open bill, without losing it). A payee reads first: what the team paid it and still owes this season, its entries, a note. Rename it, merge two spellings into one, or delete one nothing names.</li>
     <li>The payee picker shows only the payees the club chose to share, under “Shared by your club”, with one line saying the club sees payments to them.</li>
   </ul>
   <p><strong>For a club treasurer</strong>: the balance lines gain the year; Transfer and Payees move behind a Tools menu; each club payee can be shared with the teams or kept as the club’s own; and a shared payee shows what each team recorded paying it (with Stage 3b).</p>
   <p><strong>Who sees what:</strong> anyone who can read the team’s money can open every row and every window; renaming and merging payees is for those who can enter the team’s money. The club’s own payees stay the club’s to manage.</p>
-  <div class="note"><strong>Round 3, open (2026-10-02).</strong> Proposed after the owner’s §258 questions: Payees opens as a window over the Ledger instead of a page, so a coach never leaves the Ledger or an open bill to tidy a payee; a payee opens to read what the team paid it this season and what is still to pay, as the Ledger’s own rows; and Tools holds the team’s three lists (Payees, Categories &amp; items, Money tags). Screens 10–12.</div>
+  <div class="note"><strong>Round 3 — ruled, built and walked (2026-10-02).</strong> From the owner’s §258 questions: Payees opens as a window over the Ledger instead of a page, so a coach never leaves the Ledger or an open bill to tidy a payee; a payee opens to read what the team paid it this season and what is still to pay, as the Ledger’s own rows; and Tools holds the team’s three lists (Payees, Categories &amp; items, Money tags). Screens 10–12.</div>
   <h2>Why it matters</h2>
   <p>You ruled on 2026-09-30 that the club’s book reads exactly like the coach’s. A side-by-side check found five more differences nobody chose, and in four of them it is the coach’s Ledger, the portal you named the benchmark, that has drifted from the product’s own written rules. A treasurer who also coaches reads the same kind of book two ways today.</p>
   <h2>Customer impact</h2>

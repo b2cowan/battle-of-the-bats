@@ -3,9 +3,10 @@
 Hub (mockup, decisions, plan, QA walks): https://claude.ai/artifact/EQqEd3s4CBLbnrnPuUVAAo · Plan: `LEDGER_PARITY_PLAN.md`
 
 **Where it stands (2026-10-02):** ratified as recommended (D1–D7), with one owner revision (both Ledgers keep the
-coach's regular-weight names). The server half is committed (`ac22a1fe`). The screens are built on dev; the owner
-walks them on the hub's QA tab (Owner QA §258, five walks). Both halves reach production in ONE release, with the
-sharing migration applied minutes before it.
+coach's regular-weight names). The server half is committed (`ac22a1fe`); the screens and round 3 are committed
+(`b0b27612`). **The owner walked all of it on 2026-10-02 — Owner QA §258 passed, five walks, 48 of 48 steps.** Both
+halves reach production in ONE release, with the sharing migration applied minutes before it. Still open: the club's
+Payees as a window (D8a), not drawn.
 
 **Changed at build (said to the owner):** the coach's Opening balance line, which carried a "Change →" button, is
 itself the way to Team settings now (no button in a ledger cell); a recorded row a read-only money assistant opens
@@ -32,7 +33,7 @@ choice and makes it visible.
 **Who sees what:** anyone who can read the team's money can open every row and window; renaming and merging payees
 is for those who can enter the team's money. The club's own payees stay the club's to manage.
 
-**Round 3 — ruled 2026-10-02 and built on dev the same day (hub screens 10–12).** From the owner's questions during
+**Round 3 — ruled, built and walked 2026-10-02 (hub screens 10–12).** From the owner's questions during
 the §258 walk (the club's Payees as a window, D8a, was not drawn and stays open):
 
 - **Payees opens over the Ledger**, not on a page of its own, so a coach never leaves the Ledger, or an open bill they
@@ -41,7 +42,8 @@ the §258 walk (the club's Payees as a window, D8a, was not drawn and stays open
   behind both, in the Ledger's own rows. One pencil edits its name and note.
 - **Tools holds the team's three lists**: Payees, Categories & items and Money tags, so the menu earns its click.
 - **A defect found while drawing:** a bill's window shows its payee as typed when the bill was entered, so a rename or
-  merge never reaches it, and in one case an unrelated edit clears the payee. It is fixed whatever round 3 decides.
+  merge never reaches it, and in one case an unrelated edit clears the payee. Fixed: a bill shows its payee as it is
+  named now.
 
 ## Why it matters
 

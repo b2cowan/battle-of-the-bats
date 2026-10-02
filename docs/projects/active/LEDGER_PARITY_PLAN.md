@@ -5,7 +5,7 @@
 live screens by `.probe/lp/shots.mjs`: BEFORE = the page as it renders; AFTER = the same page with the change applied
 in the DOM). PM brief: `LEDGER_PARITY_PM_BRIEF.md`.
 
-**Status:** RATIFIED 2026-10-02 — owner: "I agree with your recommendations on D1-D7" (D1–D7, D7a, D7b, every one as recommended). Build prompts: `LEDGER_PARITY_SERVER_PROMPT.md` (session 1) then `LEDGER_PARITY_SCREENS_PROMPT.md` (session 2); both reach production in ONE promote. **Session 1 (the server half) built on dev 2026-10-02; mig 316 applied to dev 2026-10-02** — record and the call list for session 2 in § "Session 1 — build record" below. Session 2 (the screens) next.
+**Status:** RATIFIED 2026-10-02 — owner: "I agree with your recommendations on D1-D7" (D1–D7, D7a, D7b, every one as recommended). Build prompts: `LEDGER_PARITY_SERVER_PROMPT.md` (session 1) then `LEDGER_PARITY_SCREENS_PROMPT.md` (session 2); both reach production in ONE promote. **Session 1 (the server half) committed `ac22a1fe` 2026-10-02; mig 316 applied to dev 2026-10-02** — record and the call list for session 2 in § "Session 1 — build record" below. **Session 2 (the screens) and round 3 (D8–D10) committed `b0b27612` 2026-10-02; Owner QA §258 ✅ PASSED 2026-10-02, all five walks (48/48).** Left: D8a (the club's Payees as a window) is not drawn — the owner's call; production waits for the ONE promote (mig 315, then 316, minutes before it).
 
 ## Context
 
