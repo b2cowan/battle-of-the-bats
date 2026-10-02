@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
 import SaveOverQuestion, { SaveOverList, SaveOverMatchLine } from '@/components/coaches/SaveOverQuestion';
+import LineupDrawerHead from '@/components/coaches/LineupDrawerHead';
 import { formatInOrgZone } from '@/lib/timezone';
 import { lineupModeLabel } from '@/lib/lineup-grid';
 import { libraryNameMatch } from '@/lib/rep-drills';
@@ -29,7 +30,7 @@ import styles from './LineupSaveTemplate.module.css';
  * lets one hold the team's own roster. The page leaves them out of what it sends; this says so.
  */
 export default function LineupSaveTemplate({
-  templates, sportPack, shape, hasCallUps, onSave,
+  templates, sportPack, shape, hasCallUps, onSave, onClose,
 }: {
   templates: RepTeamLineupTemplate[];
   sportPack: SportPack;
@@ -38,6 +39,8 @@ export default function LineupSaveTemplate({
   hasCallUps: boolean;
   /** Saves a new template (replace = null) or replaces one. Throws with the message to show. */
   onSave: (name: string, replace: RepTeamLineupTemplate | null) => Promise<void>;
+  /** The drawer's ×. The head is drawn here so it can turn into "‹ Save as template" on the question. */
+  onClose: () => void;
 }) {
   const [name, setName] = useState('');
   const [replacing, setReplacing] = useState<RepTeamLineupTemplate | null>(null);
@@ -68,8 +71,12 @@ export default function LineupSaveTemplate({
     }
   }
 
+  // No desktop × — at ≥901 this is still an anchored popover (see LineupDrawerHead).
+  const head = <LineupDrawerHead title="Save as template" onClose={onClose} onBack={replacing ? backToName : undefined} backDisabled={busy} />;
+
   if (replacing) {
-    return (
+    return (<>
+      {head}
       <div className={shared.lineupTemplateSection}>
         <SaveOverQuestion
           question={`Replace “${replacing.name}”?`}
@@ -80,10 +87,11 @@ export default function LineupSaveTemplate({
           confirmLabel="Replace template" busyLabel="Replacing…" busy={busy} error={error}
           onConfirm={() => void run(replacing)} onBack={backToName} />
       </div>
-    );
+    </>);
   }
 
-  return (
+  return (<>
+    {head}
     <form className={shared.lineupTemplateSection}
       onSubmit={e => { e.preventDefault(); if (match) { setError(''); setReplacing(match); } else if (name.trim()) void run(null); }}>
       <input className={shared.input} value={name} onChange={e => { setName(e.target.value); setError(''); }}
@@ -112,5 +120,5 @@ export default function LineupSaveTemplate({
         </SaveOverList>
       )}
     </form>
-  );
+  </>);
 }

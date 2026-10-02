@@ -53,8 +53,17 @@ describe('D1 — the name decides, and the question stays in the window', () => 
   });
 
   it('a save window is not torn down under its own request — × waits while it saves (review 2026-10-02)', () => {
-    assert.match(editor, /<h3 className=\{styles\.modalTitle\}>Save to my \{noun\}<\/h3>[\s\S]{0,400}aria-label="Close" disabled=\{busy\}/);
-    assert.match(page, /<h3 className=\{styles\.modalTitle\}>Save as template<\/h3>\s*<button type="button" className=\{styles\.modalCloseBtn\} aria-label="Close" disabled=\{busy\}/);
+    const promote = editor.slice(editor.indexOf('function PromoteDialog('), editor.indexOf('function PromoteDialog(') + 12000);
+    assert.match(promote, /className=\{styles\.modalCloseBtn\} aria-label="Close" disabled=\{busy\} onClick=\{onClose\}/);
+    const templateWindow = page.slice(page.indexOf('function SaveAsTemplateDialog('));
+    assert.match(templateWindow, /className=\{styles\.modalCloseBtn\} aria-label="Close" disabled=\{busy\} onClick=\{onClose\}/);
+  });
+
+  it('on the question, Back is the window bar — never a link at the top of the body (owner, 2026-10-02)', () => {
+    const question = stripComments(readSource('components/coaches/SaveOverQuestion.tsx'));
+    assert.doesNotMatch(question, /> Back\b|ChevronLeft|ArrowLeft/, 'the shared question carries no Back of its own');
+    assert.match(page, /\{replacing \? \(\s*<button type="button" className=\{`\$\{styles\.modalBackBtn\} \$\{styles\.modalBackLabelled\}`\}\s*aria-label="Back to Save as template"/);
+    assert.match(editor, /\{updating \? \(\s*<button type="button" className=\{`\$\{styles\.modalBackBtn\} \$\{styles\.modalBackLabelled\}`\}\s*aria-label=\{`Back to Save to my \$\{noun\}`\}/);
   });
 
   it('no window asks with a pop-up', () => {

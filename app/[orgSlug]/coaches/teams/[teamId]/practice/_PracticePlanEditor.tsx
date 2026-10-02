@@ -6,7 +6,7 @@ import {
   type DragEndEvent, type DragOverEvent, type DragStartEvent,
 } from '@dnd-kit/core';
 import {
-  Check, ChevronLeft, ChevronRight, ChevronUp, GripVertical, Library, Pencil, Plus, Repeat, Trash2, Users, X,
+  ArrowLeft, Check, ChevronLeft, ChevronRight, ChevronUp, GripVertical, Library, Pencil, Plus, Repeat, Trash2, Users, X,
 } from 'lucide-react';
 import {
   MAX_BLOCKS, MAX_COACHING_POINTS, MAX_DESCRIPTION_LEN, MAX_GROUPS, MAX_MINUTES, MAX_SHORT_TEXT_LEN,
@@ -2133,7 +2133,13 @@ function PromoteDialog({
       <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`Save to my ${noun}`}
         aria-busy={busy || undefined} className={styles.modal}>
         <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>Save to my {noun}</h3>
+          {/* On the question the bar is a Back that names where it goes (the portal's labelled back). */}
+          {updating ? (
+            <button type="button" className={`${styles.modalBackBtn} ${styles.modalBackLabelled}`}
+              aria-label={`Back to Save to my ${noun}`} disabled={busy} onClick={backToForm}>
+              <ArrowLeft size={20} aria-hidden /><span className={styles.modalBackWord}>Save to my {noun}</span>
+            </button>
+          ) : <h3 className={styles.modalTitle}>Save to my {noun}</h3>}
           {/* Busy-gated like Escape and the backdrop: closed mid-save, the editor would be editable
               again while the save is still landing, and the follow-up (followDrill) would lay the
               plan as it was BEFORE those edits back over them. */}

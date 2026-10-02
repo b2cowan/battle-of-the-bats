@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
-import LineupDrawerHead from '@/components/coaches/LineupDrawerHead';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { ListOrdered, CalendarDays, Undo2, Redo2, MoreHorizontal } from 'lucide-react';
@@ -974,13 +973,13 @@ export default function CoachLineupBuilderPage({
             Deleting, renaming and editing templates live in the Lineups room's Templates tab. */}
         <LineupSheetScrim onClose={() => setSaveTemplateOpen(false)} overNav />
         <div className={`${styles.lineupAutoMenu} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Save as template">
-          <LineupDrawerHead title="Save as template" onClose={() => setSaveTemplateOpen(false)} />
           <LineupSaveTemplate
             templates={templates}
             sportPack={sportPack}
             shape={{ lineupMode, inningCount: lineupInningCount, players: templateRows.length }}
             hasCallUps={templateRows.length < lineupRows.length}
             onSave={saveTemplate}
+            onClose={() => setSaveTemplateOpen(false)}
           />
         </div>
       </>)}

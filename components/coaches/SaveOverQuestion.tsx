@@ -1,6 +1,5 @@
 'use client';
 import type { ReactNode } from 'react';
-import { ChevronLeft } from 'lucide-react';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './SaveOverQuestion.module.css';
 
@@ -12,6 +11,10 @@ import styles from './SaveOverQuestion.module.css';
  * ⚖ A SECOND VIEW INSIDE THE WINDOW, NEVER A POP-UP. A confirm dialog opened from a window is what
  * used to close the lineup's old Templates drawer behind it (Mobile plan §13.6 #5). The caller swaps
  * its form for this, owns the Back step (`useBackStep`) and supplies the window around it.
+ *
+ * ⚖ BACK LIVES IN THE WINDOW'S BAR, NOT HERE (owner, 2026-10-02 — both drawings put it there): the
+ * bar turns into "‹ Save as template" (the portal's labelled back) while this view is up, so the
+ * question sits straight under it. "Keep it" below goes back the same way.
  *
  * ⚖ It NAMES what changes — Now / After — because overwriting is the one thing here no Undo takes
  * back; the confirm is the portal's red button and "Keep it" returns to the form.
@@ -36,13 +39,11 @@ export default function SaveOverQuestion({
   busy: boolean;
   error?: string;
   onConfirm: () => void;
+  /** "Keep it" — back to the form, as the window bar's Back does. */
   onBack: () => void;
 }) {
   return (
     <>
-      <button type="button" className={styles.back} onClick={onBack} disabled={busy}>
-        <ChevronLeft size={17} aria-hidden /> Back
-      </button>
       <div className={styles.question}>
         <strong>{question}</strong>
         <span>{sub}</span>

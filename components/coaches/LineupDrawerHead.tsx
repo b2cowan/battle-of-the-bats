@@ -1,5 +1,5 @@
 'use client';
-import { X } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -37,11 +37,17 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * stylesheet decides it — see `.lineupDrawerOverNav .lineupSetupDrawerClose`.
  */
 export default function LineupDrawerHead({
-  title, onClose, desktopClose,
+  title, onClose, desktopClose, onBack, backDisabled,
 }: {
   /** What this surface is — the thing the scrim has covered up. */
   title: string;
   onClose: () => void;
+  /**
+   * A view with a step behind it (Save as template's "are you sure", 2026-10-02): the title turns
+   * into a Back that names where it goes — "‹ Save as template" — and the view sits under it.
+   */
+  onBack?: () => void;
+  backDisabled?: boolean;
   /** Show the × at ≥901 too. Only a drawer that is a MODAL at that width should ask for it. */
   desktopClose?: boolean;
 }) {
@@ -50,7 +56,11 @@ export default function LineupDrawerHead({
     : styles.lineupSetupDrawerClose;
   return (
     <div className={styles.lineupSetupDrawerHead}>
-      <p className={styles.lineupSheetTitle}>{title}</p>
+      {onBack ? (
+        <button type="button" className={styles.lineupDrawerBack} aria-label={`Back to ${title}`} disabled={backDisabled} onClick={onBack}>
+          <ChevronLeft size={17} aria-hidden /> {title}
+        </button>
+      ) : <p className={styles.lineupSheetTitle}>{title}</p>}
       <button type="button" className={closeClass} aria-label="Close" onClick={onClose}>
         <X size={16} aria-hidden />
       </button>

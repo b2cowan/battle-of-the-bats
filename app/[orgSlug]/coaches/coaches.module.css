@@ -7102,6 +7102,18 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   font-weight: 700;
   color: var(--text-primary);
 }
+/* The head as a Back that names where it goes (Save as template's question, 2026-10-02): the title's
+   own size and weight, in the back's quieter ink. */
+.lineupDrawerBack {
+  display: inline-flex; align-items: center; gap: 0.15rem;
+  min-height: 32px; margin: 0; padding: 0.15rem 0.4rem 0.15rem 0;
+  border: 0; background: none; cursor: pointer;
+  font-size: var(--type-body); font-weight: 700; color: var(--text-secondary);
+}
+.lineupDrawerBack:hover:not(:disabled) { color: var(--text-primary); }
+@media (max-width: 900px) {
+  .lineupDrawerBack { min-height: var(--tap-min, 44px); margin-top: -6px; }
+}
 /* The head row: the title plus a close ×. SHARED by the two builder drawers that carry work —
    Setup & Auto-fill and Templates (2026-09-23) — because a drawer the scrim has cut off from the
    control that opened it has to say what it is, and one that covers the navigation has to offer a

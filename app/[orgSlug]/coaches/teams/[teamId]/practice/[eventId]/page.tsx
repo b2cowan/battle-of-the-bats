@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { BookMarked, Check, ChevronRight, ClipboardList, Library, MoreHorizontal, Pencil, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
+import { ArrowLeft, BookMarked, Check, ChevronRight, ClipboardList, Library, MoreHorizontal, Pencil, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
@@ -1738,7 +1738,14 @@ function SaveAsTemplateDialog({
       <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Save as template"
         aria-busy={busy || undefined} className={`${styles.modal} ${styles.modalScrollBody}`}>
         <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>Save as template</h3>
+          {/* On the question the bar is a Back that names where it goes — the portal's labelled back
+              (on a phone the bare arrow, which takes the × with it, as every sheet's does). */}
+          {replacing ? (
+            <button type="button" className={`${styles.modalBackBtn} ${styles.modalBackLabelled}`}
+              aria-label="Back to Save as template" disabled={busy} onClick={backToName}>
+              <ArrowLeft size={20} aria-hidden /><span className={styles.modalBackWord}>Save as template</span>
+            </button>
+          ) : <h3 className={styles.modalTitle}>Save as template</h3>}
           <button type="button" className={styles.modalCloseBtn} aria-label="Close" disabled={busy} onClick={onClose}>
             <X size={18} />
           </button>

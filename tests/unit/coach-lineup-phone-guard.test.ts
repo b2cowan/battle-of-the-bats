@@ -541,8 +541,13 @@ describe('The two drawer layers — a form covers the nav, a menu sits on top of
     // Templates was given the head D12 gave Setup and this drawer was missed: with the scrim over
     // the square that opened it, nothing on screen said what the surface was. NO `desktopClose` —
     // at ≥901 it is still an anchored popover and must not grow a control it never had.
-    assert.match(builder, /<LineupDrawerHead title="Save as template" onClose=\{\(\) => setSaveTemplateOpen\(false\)\} \/>/,
-      'Save as template names itself and carries the close, without the desktop ×');
+    // Since 2026-10-02 the window draws its own head, so the head can turn into "‹ Save as template"
+    // on the replace question (both drawings put Back in the bar, never at the top of the body).
+    const saveWindow = readCode('components/coaches/LineupSaveTemplate.tsx');
+    assert.match(saveWindow, /<LineupDrawerHead title="Save as template" onClose=\{onClose\} onBack=\{replacing \? backToName : undefined\} backDisabled=\{busy\} \/>/,
+      'Save as template names itself and carries the close, without the desktop ×; on the question its head is Back');
+    assert.match(builder, /<LineupSaveTemplate[\s\S]{0,400}onClose=\{\(\) => setSaveTemplateOpen\(false\)\}/,
+      'the builder hands the window its close');
     // ⚠ ONE HEAD, N CALL SITES — the same reason `LineupSheetScrim` exists. A third copy of this
     // idea already lives in CallUpSheet and has already drifted (its own wrapper, an <h3>, and
     // `modalCloseBtn` + `&times;`); it is deliberately left alone, because unifying it means

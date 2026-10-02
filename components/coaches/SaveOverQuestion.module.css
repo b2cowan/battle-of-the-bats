@@ -15,24 +15,6 @@
   line-height: 1.45;
 }
 
-.back {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.15rem;
-  min-height: 32px;
-  padding: 0.2rem 0.4rem 0.2rem 0;
-  border: 0;
-  background: none;
-  color: var(--text-secondary);
-  font-size: var(--type-body);
-  font-weight: 700;
-  cursor: pointer;
-}
-.back:hover:not(:disabled) { color: var(--text-primary); }
-@media (max-width: 900px) {
-  .back { min-height: var(--tap-min, 44px); }
-}
 .question { display: flex; flex-direction: column; gap: 0.15rem; }
 .question strong { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
 .question span { font-size: var(--type-support); color: var(--text-secondary); }
