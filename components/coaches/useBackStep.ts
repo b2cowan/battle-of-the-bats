@@ -69,6 +69,16 @@ import { addressOf, clickLeavesPage, createPressGate, homeOf, popVerdict, stepOf
  * for the navigation to push over — a dead entry `popVerdict` steps over on the way back, exactly
  * what a link tapped INSIDE the sheet has always left. The rules of the hold, and why each one
  * exists, live with `createPressGate` in `backStep.ts`, where they are unit-tested as event sequences.
+ * ⚠⚠ …AND IT IS READ ON `document`, NEVER `window` (§258 walk, 2026-10-02 — "Open Player Dues just
+ * closes the window and keeps me on the Ledger"). A door INSIDE a floor that closes the floor as it
+ * is clicked is this same tap: the close is the exit, the click is the navigation. But nearly every
+ * floor's panel calls React's `stopPropagation()` on a click (QuestionShell, RoomShell, the month
+ * grid), React delegates from `document` in the App Router, and a React stop is a native stop AT
+ * `document` — so a `window` listener never heard the door, the exit ran `history.back()`, and the
+ * router dropped the navigation mid-traversal. Every door of that shape had been dead since this
+ * hook shipped. On `document` the listener is a SIBLING of React's own, which no `stopPropagation`
+ * can silence; the unsaved-changes guard stops its click in the CAPTURE phase, before the event
+ * reaches the target, so that click still never counts as leaving.
  * ⚠ WHILE HELD, THE ENTRY KEEPS ITS MARKER. A closing step is out of `steps` (Back must not answer to
  * it) but in `closing` until its exit settles, and the `replaceState` wrapper keeps the marker for
  * either — otherwise a router re-stamp inside the hold wiped it, the exit found nothing to consume,
@@ -130,7 +140,8 @@ function registry(): Registry {
 
 /** The press gate's five inputs. Capture phase for the press, its end and the click's START — ahead
  *  of any sheet's own outside-press handler; the BUBBLE phase for "this click left the page", so a
- *  click something stopped on the way down (the unsaved-changes guard) is not counted. */
+ *  click something stopped on the way down (the unsaved-changes guard) is not counted — and on
+ *  `document`, where a panel's React `stopPropagation()` cannot reach it (see the header). */
 function watchPresses(reg: Registry): void {
   const gate = createPressGate({ set: (run, ms) => window.setTimeout(run, ms), clear: h => window.clearTimeout(h as number) });
   reg.gate = gate;
@@ -139,7 +150,7 @@ function watchPresses(reg: Registry): void {
   window.addEventListener('pointerup', () => gate.release(), true);
   window.addEventListener('pointercancel', () => gate.cancel(), true);
   window.addEventListener('click', () => gate.clicked(), true);
-  window.addEventListener('click', event => {
+  document.addEventListener('click', event => {
     const link = (event.target as Element | null)?.closest?.('a[href]');
     // An SVG <a> answers `.href` with an object, not a string — read the attribute instead.
     const href = link instanceof HTMLAnchorElement ? link.href : link?.getAttribute('href') ?? null;

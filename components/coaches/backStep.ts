@@ -96,10 +96,13 @@ export function clickLeavesPage(click: LinkClick, location: { origin: string; pa
  * An exit taken while a press is under way is HELD — through the pointer-down, the release, and the
  * click's whole dispatch — and settles one macrotask after that click with `left` = did the click
  * leave the page. Every rule below is one way the first build of this got it wrong:
- *   · `leaves()` is called from the click's BUBBLE phase on `window`, never its capture: a click that
+ *   · `leaves()` is called from the click's BUBBLE phase on `document`, never its capture: a click that
  *     something stopped on the way down (the unsaved-changes guard, which asks "Leave without
  *     saving?" and keeps the coach on the page) never reaches it, so the entry IS consumed. Read in
  *     the capture phase, the guard's "Stay" left a dead entry the next Back press did nothing on.
+ *     ⚠ `document`, not `window`: a floor's panel stops every click with React's `stopPropagation()`,
+ *     which halts the native event AT `document`, so on `window` a door inside a floor was never
+ *     heard and its exit's `back()` cancelled the door (§258 walk, 2026-10-02).
  *   · The hold starts at the press and lasts until the click — an exit that arrives a beat late,
  *     after the finger has lifted but before its click, is held too, not run bare.
  *   · A new press SETTLES whatever an earlier one left held, as a stay: that press's click never came

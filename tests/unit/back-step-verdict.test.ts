@@ -275,10 +275,15 @@ describe('the hook wires the gate — five listeners, and the marker kept while 
   it('"it left the page" is read in the BUBBLE phase, so a click the unsaved-changes guard stopped does not count', () => {
     const at = hook.indexOf('if (leaves) gate.leaves();');
     assert.ok(at > 0, 'the bubble listener calls gate.leaves()');
-    assert.ok(hook.lastIndexOf("window.addEventListener('click', event => {", at) > 0, 'inside a click listener');
+    assert.ok(hook.lastIndexOf("document.addEventListener('click', event => {", at) > 0, 'inside a click listener');
     // The line that closes that listener — the very next one — carries no capture flag.
     const after = hook.slice(at).split('\n');
     assert.equal(after[1].trim(), '});', 'the listener closes with no third argument — the bubble phase');
+  });
+  it('"it left the page" listens on DOCUMENT, never window — a floor panel\'s React stopPropagation() halts the click AT document (§258 walk, 2026-10-02)', () => {
+    // On window, a door inside a QuestionShell that closed it on click was never heard: the exit ran
+    // history.back() and the router dropped the navigation ("Open Player Dues" just closed the window).
+    assert.doesNotMatch(hook, /window\.addEventListener\('click', event => \{/);
   });
   it('the step\'s exit goes through the gate and consumes only when the tap did not leave', () => {
     assert.match(hook, /reg\.gate!\.exit\(left => \{[\s\S]{0,160}if \(left\) return;\s*const current = stepOf\(window\.history\.state\);\s*if \(current === step\.seq\) \{ window\.history\.back\(\); return; \}/);
