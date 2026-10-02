@@ -285,7 +285,11 @@
      public pages. Sizes are mode-independent (no light-mode override needed). */
   --admin-row-min:    36px;
   --admin-row-pad-y:  0.38rem;
-  --admin-control-h:  28px;
+  /* 38px in BOTH densities since 2026-10-01 (owner, "one button size across the admin, the portal's"):
+     every admin button is the portal's height (the kit button block below), and the tournament
+     toolbars' selects, search and segmented controls read this token — at 28px they would have sat
+     10px under the buttons beside them. Compact density now differs from comfortable in ROWS only. */
+  --admin-control-h:  38px;
   --admin-tap-min:    44px;
 
   /* Public touch floor — minimum hit-area for interactive elements on fan-facing
@@ -1868,12 +1872,25 @@ h1, h2, h3, h4, h5, h6 {
 }
 [data-admin-kit] .btn:where(:not([data-public-preview] *)):hover,
 [data-admin-kit] .btn:where(:not([data-public-preview] *)):active { transform: none; box-shadow: none; }
-[data-admin-kit] .btn-xs:where(:not([data-public-preview] *)) { font-size: var(--type-support); }
+/* ONE BUTTON SIZE ACROSS THE ADMIN — the portal's (owner, 2026-10-01, option A). The admin had three:
+   `.btn` (~43px, the club screens), `.btn-data` (~30px, the tournament screens' page and row actions,
+   and the shared Export) and `.btn-sm`; a club toolbar showed Export at 30px beside Transfer at 43px.
+   Every one is now the portal's button (`.btnPrimary`/`.btnSecondary`: 0.45rem × 0.9rem, the body
+   step) at the admin's one control height, `--admin-control-h` (38px — the tournament toolbars' fields
+   share it, and K-18 already sets it for a control inside a table). ⚠ `:where()` keeps this at (0,1,0)
+   on purpose: it beats the legacy size modifiers above (same weight, later), and a screen's own
+   module class still sizes a button it deliberately draws differently (a module loads after this). */
+:where([data-admin-kit]) .btn:where(:not([data-public-preview] *)) {
+  min-height: var(--admin-control-h);
+  padding: 0.45rem 0.9rem;
+  /* A link wearing `.btn` inherits the body's taller line and measured 39px beside a 38px <button>;
+     one line height makes the minimum, not the words, set the height. */
+  line-height: 1.25;
+}
 [data-admin-kit] .btn-lg:where(:not([data-public-preview] *)) { font-size: var(--type-heading); }
-/* The admin's compact button (`.btn-data`, its standard size for page and row actions) leaves the
-   console face: the body face at the support step, as written (no forced capitals). */
+/* The admin's former compact button (`.btn-data`) leaves the console face — no forced capitals — and,
+   with `.btn-xs`, takes the one size above (it was the support step, 12px). */
 [data-admin-kit] .btn-data:where(:not([data-public-preview] *)) {
-  font-size: var(--type-support);
   letter-spacing: normal;
   text-transform: none;
   border-radius: var(--radius-sm);

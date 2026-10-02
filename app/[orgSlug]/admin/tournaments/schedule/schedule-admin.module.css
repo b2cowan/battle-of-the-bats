@@ -2074,15 +2074,14 @@
   }
 }
 
-/* Desktop: normalize the Row-1 action cluster to one height. The .btn-data
-   buttons render ~22–23px but the ghost dropdown triggers (Auto, Unpublish)
-   come out ~25px, so the cluster looked ragged. Pin every TRIGGER button in the
-   cluster to 28px — but exclude [role=menuitem] (the dropdown rows are multi-line
-   and must keep their content height; a 28px clamp made their text overlap). */
+/* Desktop: normalize the Row-1 action cluster to one height — the admin's one control height
+   (`--admin-control-h`, 38px since 2026-10-01: one button size across the admin, owner option A; it was a
+   28px pin for the old compact buttons). Exclude [role=menuitem] (the dropdown rows are multi-line
+   and must keep their content height; a fixed clamp made their text overlap). */
 @media (min-width: 769px) {
   .scheduleEndGroup :global(button:not([role="menuitem"])) {
-    height: 28px;
-    min-height: 28px;
+    height: var(--admin-control-h);
+    min-height: var(--admin-control-h);
   }
 }
 
@@ -2633,9 +2632,9 @@
   margin-left: auto;
 }
 
-/* Desktop chip height matches the venue filter button (28px) */
+/* Desktop chip height matches the venue filter button — the admin's one control height (2026-10-01). */
 .scheduleStatusFilters > button {
-  min-height: 28px;
+  min-height: var(--admin-control-h);
 }
 
 .scheduleStatusActive.scheduleStatusScheduled {
@@ -2661,7 +2660,7 @@
   justify-content: flex-start;
   gap: 0.4rem;
   width: 100%;
-  height: 28px;
+  height: var(--admin-control-h);
   padding: 0 0.65rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;

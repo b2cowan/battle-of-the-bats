@@ -7,6 +7,25 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-01 — ONE BUTTON SIZE ACROSS THE ADMIN, THE PORTAL'S; A TOOLBAR DOOR IS A BUTTON (owner, "go ahead with A", from a Ledger toolbar where Payees, Export and Transfer were three sizes)
+
+**Decision:** Every admin button — club, tournament, volunteer shells — is the portal's button at ONE height:
+`--admin-control-h` (now **38px in both densities**; compact differs from comfortable in ROWS only), padding
+0.45rem × 0.9rem, the body step. `.btn`, `.btn-sm`, `.btn-xs` and `.btn-data` all resolve to it (kit button block,
+`:where()`-weighted so a screen's own module can still size a button it deliberately draws differently). The
+tournament toolbars' selects, search and segmented controls read the same token, so they rose with the buttons;
+Schedule's hand-pinned 28px cluster, status chips and venue filter now read the token too. **A door in a toolbar is
+the white button** (Payees on the Ledger) — olive text (`kit.footLink`) is the coaches portal's CARD-FOOT door only;
+this NARROWS the morning's "a door is olive text" (a window-foot door, Bill windows' "Open ‹team›'s account", is left
+for the owed window-footer ruling).
+**Rationale:** the admin had three sizes — `.btn` ~43px (club), `.btn-data` ~30px (tournament page and row actions,
+the shared Export) and `.btn-sm` — so a club toolbar showed Export at 30 beside Transfer at 43; the portal's
+buttons are ~38, which is also the admin's K-18 control height. Measured after (`.probe/btn-sweep.mjs`): every
+visible button on 19 club and 14 tournament screens is 38px; the white buttons read in Warm and Dark.
+**Not changed (fields, reported):** the old Budget / Budget vs. Actual year select (32px, 3b redraws those screens),
+the club kit's selects (40px) and the tournament Branding text input (41px).
+**Applies to:** every admin screen. Guarded in `club-stage3a-screens-guard.test.ts`.
+
 ### 2026-10-01 — NO CLUB NAME ABOVE A PAGE TITLE (owner, walking §255 S3W1: *"I don't think we need the org name over the page headers, we already have it in the nav above"*)
 
 **Decision:** An admin page header never repeats the organization's name in its eyebrow — the bar above every admin page

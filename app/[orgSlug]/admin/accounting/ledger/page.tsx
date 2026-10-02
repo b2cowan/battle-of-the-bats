@@ -206,8 +206,13 @@ export default function LedgerTab() {
             foot={bookFoot}
           />
           <div className={kit.toolbarActions}>
-            {/* A door, not an action: olive text, as drawn (/design 2026-10-01). */}
-            {!isPhone && <Link href={payeesHref} className={kit.footLink}>Payees</Link>}
+            {/* A door, drawn as its siblings are: the white button (owner 2026-10-01 — olive text is the
+                coaches portal's CARD-FOOT door, never a toolbar's; its money toolbars draw a door as a button). */}
+            {!isPhone && (
+              <Link href={payeesHref} className="btn btn-outline">
+                <Users size={14} aria-hidden /> Payees
+              </Link>
+            )}
             <BookExport q={q} book={ref} window_={window_} rangeWords={rangeWords(range)} total={(counts?.status.posted ?? 0) + (counts?.status.pending ?? 0) + (counts?.status.void ?? 0)} orgSlug={slug} />
             {canMove && !isPhone && (
               <button type="button" className="btn btn-outline" onClick={() => setWin('transfer')}>

@@ -154,3 +154,25 @@ describe('the club\'s season window counts what the team owes the club (Ask 5b) 
     assert.equal(closeWarning(null, null), null);
   });
 });
+
+describe('one admin button size, the portal’s (owner, 2026-10-01, option A)', () => {
+  const css = readCode('app/globals.css');
+  it('every admin button takes the one control height and the portal’s padding, at a weight a screen module can still override', () => {
+    assert.match(css, /:where\(\[data-admin-kit\]\) \.btn:where\(:not\(\[data-public-preview\] \*\)\) \{\s*min-height: var\(--admin-control-h\);\s*padding: 0\.45rem 0\.9rem;/);
+    // The former compact button no longer shrinks its type (it was the support step on the tournament screens and Export).
+    const dataRule = css.match(/\[data-admin-kit\] \.btn-data:where\(:not\(\[data-public-preview\] \*\)\) \{[^}]*\}/)?.[0] ?? '';
+    assert.ok(dataRule, 'the kit .btn-data rule exists');
+    assert.doesNotMatch(dataRule, /font-size/, '.btn-data is the one size, not the support step');
+    assert.doesNotMatch(css, /\[data-admin-kit\] \.btn-xs[^{]*\{[^}]*font-size: var\(--type-support\)/);
+  });
+  it('the control height is 38px in both densities, so a tournament toolbar’s fields match its buttons', () => {
+    const root = css.match(/--admin-row-pad-y:\s*0\.38rem;[\s\S]*?--admin-control-h:\s*(\d+)px;/)?.[1];
+    assert.equal(root, '38', 'compact density');
+    assert.match(css, /\[data-density="comfortable"\] \{[^}]*--admin-control-h:\s*38px;/);
+  });
+  it('the Ledger’s Payees door is a button like its siblings, not olive text (olive text is a card-foot door)', () => {
+    const ledger = readCode(`${ACCT}/ledger/page.tsx`);
+    assert.match(ledger, /<Link href=\{payeesHref\} className="btn btn-outline">/);
+    assert.doesNotMatch(ledger, /className=\{kit\.footLink\}/);
+  });
+});
