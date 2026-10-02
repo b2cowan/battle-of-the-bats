@@ -1,6 +1,6 @@
 # Save over a practice template, a drill or a circuit — plan
 
-**Status:** drawn 2026-10-02 · D1–D4 ruled by the owner · **D5–D12 ruled as drawn 2026-10-02** ("looks good, go ahead with your recommendations") · built on dev 2026-10-02 (§9) · /simplify and /review run 2026-10-02 · owner QA §260.
+**Status:** drawn 2026-10-02 · D1–D4 ruled by the owner · **D5–D12 ruled as drawn 2026-10-02** ("looks good, go ahead with your recommendations") · built on dev 2026-10-02 (§9) · /simplify and /review run 2026-10-02 · **committed `ff36aacd` 2026-10-02** · owner QA §260.
 **Hub (mockup · brief · plan · decisions · QA):** https://claude.ai/artifact/119bRyzRrt4MKxBDJ82WnE (source `COACH_PRACTICE_SAVE_OVER_HUB.html`).
 **PM brief:** `COACH_PRACTICE_SAVE_OVER_PM_BRIEF.md`.
 **Sibling:** the lineup builder's save-over (`COACH_LINEUP_COPY_FROM_GAME_PLAN.md` §10–§11, D13–D15, committed `0646ba2b`). This applies that design to practice plans.
