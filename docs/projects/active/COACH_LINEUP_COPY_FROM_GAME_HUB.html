@@ -155,6 +155,7 @@ p{margin:0 0 12px}.sub{font-size:14px;color:var(--softink);margin:0}.meta{font-s
 .ph-setup{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-height:52px}
 .ph-setup b{display:block;font-size:15px}.ph-setup small{display:block;font-size:12.5px;color:var(--softink)}
 .ph-drawer.short{max-height:none}
+.specsh{font-size:13px;font:600 11.5px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--softink);margin:0 0 10px}
 /* save-as-template screen (round 2) */
 .svgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:26px 22px;align-items:start}
 .svcard{display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -198,6 +199,22 @@ p{margin:0 0 12px}.sub{font-size:14px;color:var(--softink);margin:0}.meta{font-s
 .ph-tools .ptools.bare{width:44px;height:44px;min-height:44px;padding:0;justify-content:center}
 .tag.closed{background:#eeeee9;border-color:#d3d9cd;color:#5c6658}
 
+/* round 4 — replace a saved template */
+.pbtn-danger{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:9px 14px;border-radius:6px;font-weight:650;background:rgba(158,48,48,.12);color:var(--error);border:1px solid rgba(158,48,48,.25)}
+.pbtn-quiet{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 14px;border-radius:6px;font-weight:650;background:#fff;border:1px solid var(--line2);color:var(--ink)}
+.notewarn{margin:0;font-size:12.5px;line-height:1.45;color:var(--amber);background:var(--amberbg);border-left:3px solid #d9b25c;border-radius:0 6px 6px 0;padding:7px 10px}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:13px}
+.facts dt{color:var(--quiet);font-weight:650}.facts dd{margin:0}
+.tplrows{list-style:none;margin:0 -.85rem;padding:0;border-top:1px solid #e4e7de}
+.tplrows li{border-bottom:1px solid #eeebe3}.tplrows li:last-child{border-bottom:0}
+.tplrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:.55rem .85rem;min-height:48px}
+.tplrow .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.tplrow strong{font-size:14.5px}.tplrow span{font-size:12.5px;color:var(--quiet)}
+.tplrow svg{color:var(--quiet);flex:none}
+.tplrow.hover{background:rgba(36,95,121,.1)}
+.typed{color:var(--ink)!important}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.ph-drawer .pop.ph-inner{border:0;box-shadow:none;padding:0;width:auto;max-width:none;background:none}
+
 /* ── document tabs ── */
 .docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
 .docpage .eyebrow{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--softink)}
@@ -235,13 +252,13 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Copy a lineup from another game · project hub</strong><br><small>Ruled as drawn 2026-10-02 · built, simplified, reviewed and documented 2026-10-02 · QA walk open (three walks)</small></div>
+  <div class="hubtitle"><strong>Copy a lineup from another game · project hub</strong><br><small>Committed f5b020e6 · OQA §259 ✅ passed 22/22 (2026-10-02) · round 4 (replace a saved template, D13–D15) ruled as drawn and built 2026-10-02</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Drawn 2026-10-02 (three rounds); ruled as drawn 2026-10-02">Design</li>
     <li class="stage done" title="Plan written 2026-10-02 alongside the drawing; build record added the same day">Plan</li>
     <li class="stage done" title="Built on dev 2026-10-02">Build</li>
     <li class="stage done" title="/simplify (4 lenses) and /review (high-risk, 5 lenses) 2026-10-02 — three defects fixed">Review</li>
-    <li class="stage current" title="—">QA</li>
+    <li class="stage done" title="OQA §259 ✅ passed 2026-10-02 — 22 of 22, three walks">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
@@ -265,6 +282,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
     <a href="#after">6 · After the copy</a>
     <a href="#row">7 · The phone row</a>
     <a href="#onphone">8 · On a phone</a>
+    <a href="#replace">9 · Replace a template</a>
   </nav>
   <div class="frame" id="frame">
     <header class="appbar"><div class="brand">FieldLogic<span>HQ</span></div><div class="team">Ridge U13 Girls · 2026 season<br><span class="meta">Head coach view · sample data</span></div></header>
@@ -309,6 +327,17 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
     <section class="screen" id="onphone" hidden>
       <div class="cap"><div class="eyebrow">Phone · 390px · true size · round 3</div><h1 tabindex="-1">Tools is a sheet, Copy from is full screen, the nav stays</h1><p>Tools and Copy from are menus: you tap and they act. Under the drawer ruling the bottom nav stays visible below both. Copy from fills everything above the nav (D7). Save as template holds a form, so its short drawer covers the nav.</p></div>
       <div class="phones" id="phones"></div>
+    </section>
+
+    <section class="screen" id="replace" hidden>
+      <div class="cap"><div class="eyebrow">Round 4 · drawn 2026-10-02 · whole screen, specimens and phone</div><h1 tabindex="-1">Save over a template you already have</h1><p>You asked whether a game’s lineup can save over an existing template (D13), with an “are you sure” step (D14). The name decides: a new name saves a new template, a name you already have replaces that one. Your saved templates are listed under the field, and tapping one goes straight to the question. The question sits inside the window, never in a pop-up.</p></div>
+      <div class="prod">
+        <h2 class="specsh">Whole screen · before</h2><div id="b-save-before"></div>
+        <h2 class="specsh" style="margin-top:28px">Whole screen · after</h2><div id="b-save-after"></div>
+        <h2 class="specsh" style="margin-top:28px">The window’s states · true size (340px)</h2>
+        <div class="specs" id="replacespecs"></div>
+      </div>
+      <div class="phones" id="replacephones"></div>
     </section>
 
     <footer class="intent" id="intent"></footer>
@@ -463,6 +492,7 @@ const INTENTS={
   choice:'The question is the confirmation. Each answer performs the copy, and the replace line appears only when there is something to replace. Nothing opens outside the panel, which is what made “Keep current” bounce the coach out (F02).',
   after:'Order and positions means everything, pitcher and call-ups included, and the grid shows last game as it was so the coach edits from it. The rings mark Frances’s three innings at third, the owner’s example. Ella comes across as is, and today’s warning names her (D3).',
   row:'Five squares at 252px leave 76px spare on a 360px phone, so nothing has to move into Setup. The cost is one tap: printing becomes Tools, then Print…, then the poster.',
+  replace:'One field and one button, and the name decides what the button does: a new name saves a new template, and a name you already have turns the button into Replace. The question that follows sits inside the window, naming what the template holds now and what it will hold. Replacing is the one thing here Undo cannot take back, so it gets the red button.',
   onphone:'Tools and Copy from are menus, so the nav stays visible below both. Save as template is a form, so it covers the nav. That is the 2026-09-23 drawer ruling applied as written, and the drawings state it so a ruling “as drawn” covers it.'
 };
 function showScreen(){const ids=[...document.querySelectorAll('.screen')].map(s=>s.id);let id=location.hash.slice(1);if(!ids.includes(id))id='today';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=INTENTS[id]?'<strong>Design intent:</strong> '+INTENTS[id]:'';if(location.hash)document.getElementById(id)?.querySelector('h1')?.focus({preventScroll:true})}
@@ -718,6 +748,37 @@ $('phones').innerHTML=
   phone(phChoice,`<strong>The question.</strong> Back returns to Games, the answers are 68px tall, and the foot repeats which game the copy lands on${mk('new','New','The same second view as on desktop. Each answer performs the copy and closes the sheet.')}.`)+
   phone(phSave,`<strong>Save as template.</strong> A short drawer that covers the nav, because it holds a form${mk('new','New · D8','A form covers the nav (2026-09-23 ruling), so a thumb on the nav cannot lose a half-typed name. Of the three Tools items, only this one covers the nav.')}.`);
 
+/* ── 9 · replace a template (round 4) ── */
+const SAVED=[['Tournament A-lineup','Everyone bats · 7 innings · 11 players · saved Sep 20'],['Rain-day rotation','Everyone bats · 5 innings · 11 players · saved Sep 12'],['League night','Everyone bats · 6 innings · 12 players · saved Sep 3'],['Development day','Everyone bats · 6 innings · 11 players · saved Aug 30']];
+const tplRows=(hover)=>`<ul class="tplrows">${SAVED.map((t,i)=>`<li><button type="button" class="tplrow${hover===i?' hover':''}"><span class="t"><strong>${esc(t[0])}</strong><span>${esc(t[1])}</span></span>${ic('right',16)}</button></li>`).join('')}</ul>`;
+function popReplace(state,cls,opts={}){
+  const cu=opts.callUp?`<p class="popfoot">Call-ups aren’t saved in templates — a template is your own roster’s shape.${mk('new','New · D15','Proposed fix for F07: a lineup with a call-up in it can be saved as a template; the call-up is left out, and this line says so. Today the save is refused.')}${fl('F07','This lineup has a call-up. Today Save would be refused with “Templates can only include active roster players”.',true)}</p>`:'';
+  if(state==='confirm') return `<div class="pop ${cls||''}" style="--popw:340px"><div class="pophead"><button type="button" class="pback">${ic('left',17)} Save as template</button></div>
+    <div class="srcname"><strong>Replace “Tournament A-lineup”?</strong><span>Its order, positions, format and innings become this lineup’s.</span></div>
+    <dl class="facts"><dt>Now</dt><dd>Everyone bats · 7 innings · 11 players · saved Sep 20</dd><dt>After</dt><dd>Everyone bats · 6 innings · 12 players — this lineup</dd></dl>
+    <p class="notewarn">This can’t be undone. Undo takes back changes to the lineup, not to a saved template.</p>
+    <div class="btnrow"><button type="button" class="pbtn-danger">Replace template</button><button type="button" class="pbtn-quiet">Keep it</button></div></div>`;
+  const typed=state==='match';
+  return `<div class="pop ${cls||''}" style="--popw:340px"><div class="pophead">Save as template</div>
+    <label class="pfield" for="tpl-${state}-${cls||'a'}">Template name<input id="tpl-${state}-${cls||'a'}" class="pinput${typed?' typed':''}" value="${typed?'Tournament A-lineup':''}" placeholder="e.g. Gold medal game"></label>
+    ${typed?`<p class="notewarn">You already have a template called this. Saving replaces it.${opts.tags?mk('new','New · D13','When the name matches one you already have (capitals and spaces aside), the button turns into Replace, and this line says so. Today the server refuses the name after you press Save.'):''}</p>`:''}
+    ${cu}
+    ${typed?`<button type="button" class="pbtn-danger">Replace “Tournament A-lineup”…</button>`:`<button type="button" class="psave">Save template</button>`}
+    <span class="psh" style="margin-top:4px">Your templates · tap one to replace it${opts.tags?mk('new','New · D13','Your saved templates, newest first, each with its shape and when it was last saved. Tapping one goes straight to the question below; it never replaces anything by itself.'):''}</span>
+    ${tplRows(opts.hover)}</div>`;
+}
+$('b-save-before').innerHTML=builder({title:'vs Komoka Kings',when:'Sun, Oct 4, 2026 · 9:00 a.m.',strip:NOTSTARTED,v3:true,pop:popSave(''),rows:BLANK});
+$('b-save-after').innerHTML=builder({title:'vs Komoka Kings',when:'Sun, Oct 4, 2026 · 9:00 a.m.',strip:NOTSTARTED,v3:true,pop:popReplace('list','',{tags:true}),rows:BLANK});
+$('replacespecs').innerHTML=`
+  <div class="spec"><h2>A name you already have${mk('new','New · D13','Typed or tapped, a name that matches one of your templates turns the button into Replace. The ellipsis says a question comes next.')}</h2>${popReplace('match','static',{tags:false})}</div>
+  <div class="spec"><h2>Are you sure${mk('new','New · D14','The question, inside the window. It names what the template holds now and what it will hold. Replace template is red because it is the one action here Undo cannot reverse; Keep it and Back leave the template as it was.')}${fl('F02','No pop-up opens over the window, so nothing can read as a tap outside and close it.',true)}</h2>${popReplace('confirm','static')}</div>
+  <div class="spec"><h2>This lineup has a call-up${mk('ask','Your call · D15','Proposed: call-ups are left out of templates, and this line says so. The alternative is to keep refusing the save (today’s behaviour), which never explains why.')}</h2>${popReplace('list','static',{callUp:true})}</div>
+  <div class="spec"><h2>After replacing${mk('re','Restyled','The notice line above the grid, as Save as template writes today, worded for a replace.')}</h2><p class="pnotice" style="margin:0">Replaced “Tournament A-lineup” with this lineup.</p><p class="sub" style="margin-top:8px">At the season’s 50-template limit, Save’s message adds “Replace one of yours instead, or delete one”${fl('F08','Replacing does not add a template, so it still works at the limit.',true)}.</p></div>`;
+const phReplace=state=>`<div class="ph-scrim"></div><div class="ph-drawer short"><span class="grab"></span>${popReplace(state,'static ph-inner').replace('<div class="pophead">Save as template</div>','<div class="pophead"><span>Save as template</span>'+closeBtn+'</div>').replace(/<div class="pophead"><button type="button" class="pback">([\s\S]*?)<\/button><\/div>/,(m,inner)=>'<div class="pophead"><button type="button" class="pback">'+inner+'</button>'+closeBtn+'</div>')}</div>`;
+$('replacephones').innerHTML=
+  phone(phReplace('list'),`<strong>Save as template on a phone.</strong> The same window as a drawer that covers the nav (it is a form), with your templates under the field${mk('new','New · D13','The template rows are 48px tall on a phone; the list scrolls inside the drawer when a team keeps many.')}.`)+
+  phone(phReplace('confirm'),`<strong>The question.</strong> Back returns to the field and the list; × closes without replacing anything${mk('new','New · D14','The same second view as on desktop. The red button is the only way to replace.')}.`);
+
 /* ── explanations behind every highlight ── */
 const FINDINGS={
   F01:{t:'A game’s lineup can only be reused by first making it a template',now:'The builder’s Templates drawer lists saved templates and offers to save this lineup as one. Nothing reads another game’s lineup. Reusing Saturday means opening Saturday’s game, saving a template, opening Sunday’s game and loading it, which leaves a single-use template in the library.',fix:'Tools › Copy from lists the season’s earlier games with a lineup, newest first, beside the templates.'},
@@ -725,6 +786,8 @@ const FINDINGS={
   F03:{t:'The load notice blames the roster for the coach’s own choice',now:'“Skipped N players no longer on the roster” counts every template player who is not in this game’s current lineup, including players the coach took out of this game who are still on the team.',fix:'The copy is as is: rostered players come back. The notice names only players who have left the team.'},
   F04:{t:'The notice asks for a save the page already makes',now:'After loading, the notice reads “review and save when ready”. The lineup autosaves, so there is no save step to take.',fix:'The notice says what was copied and from where, and stops there.'},
   F05:{t:'A seventh square does not fit the phone’s tool row',now:'On a phone the tool row holds six 44px squares 8px apart, which is 304px. A 360px phone has 328px inside its 16px gutters. Round 2’s seventh square needed 356px and ran off the edge.',fix:'Round 3: the in-and-out tools go behind Tools, so the row is five squares in 252px and Clear stays on screen.'},
+  F07:{t:'Saving a template from a game with a call-up fails',now:'Save as template sends every row of the lineup, call-ups included. The server only lets a template hold the team’s own active roster, so a lineup with a call-up in it is refused with “Templates can only include active roster players”, and nothing is saved.',fix:'A template is the season’s shape, so call-ups are left out of it, and the window says so when this lineup has one. The same rule applies to Replace.'},
+  F08:{t:'At the season’s template limit the only way on is to delete one',now:'A team can keep 50 templates a season. At the limit, saving says “Delete one to add another”.',fix:'Replacing an existing template does not add one, so it works at the limit. The limit message names it: “Replace one of yours instead, or delete one”.'},
   F06:{t:'A disk promises a save the page already made',now:'The lineup builder autosaves, and the floating pill says Saving… then Saved and fades. A disk beside Print would read as “save this lineup”.',fix:'Round 3: Save as template is a worded item in the Tools menu, so it needs no icon at all.'}
 };
 const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today',ask:'Your call'};
@@ -748,6 +811,9 @@ const DECISIONS=[
   {id:'D9',date:'2026-10-02',ask:'Which glyph does the Save as template square wear?',ruling:'closed',label:'Closed by D11',why:'A disk was asked for, and the template glyph recommended, because the page autosaves (F06). In the Tools menu it is a worded item, so no glyph is needed.'},
   {id:'D10',date:'2026-10-02',ask:'What makes room for a seventh tool on the phone row?',ruling:'closed',label:'Closed by D11',why:'Moving Clear into Setup was recommended (F05). The owner’s split leaves five squares, so Clear stays where it was placed on 2026-09-22.'},
   {id:'D11',date:'2026-10-02',ask:'Put Copy from, Print and Save as template behind a ⋯ and keep the editing tools on screen?',ruling:'accepted',label:'Ruled · as drawn',why:'Owner proposal, round 3: “the other ones are more for active editing can stay on the screen.” Drawn with the portal’s existing Tools menu (as on the club Ledger) at every width. The row is Call up, Undo, Redo, Clear, Tools, five squares in 252px. The cost is one extra tap to print. Ruled as drawn 2026-10-02 (“looks good, go ahead”) and built the same day.'},
+  {id:'D13',date:'2026-10-02',ask:'Can a game’s lineup save over a template you already have?',ruling:'accepted',label:'Ruled · built',why:'Owner ask after the build: “do we not have the ability to save over an existing template?” It did not: Save as template only made new ones, and an existing name was refused after pressing Save. Drawn (screen 9): the name decides. A new name saves a new template; a name you already have turns the button into Replace; your templates are listed under the field. Ruled “as drawn” 2026-10-02 (“looks good, go ahead with your recommendations”) and built the same day.'},
+  {id:'D14',date:'2026-10-02',ask:'Does replacing a template ask “are you sure”?',ruling:'accepted',label:'Ruled · built',why:'Owner: “including the are you sure”. Replacing cannot be undone, since Undo covers the lineup, not saved templates. The question is a second view inside the window (Back keeps the template), never a pop-up: a pop-up opened from this window is what made the old drawer’s Keep current close it.'},
+  {id:'D15',date:'2026-10-02',ask:'Leave call-ups out of a saved template?',ruling:'accepted',label:'Ruled · built',why:'Found while drawing (F07): saving a template from a game with a call-up fails today. Ruled with the round (“go ahead with your recommendations”): a template is the season’s shape, so call-ups are left out (the order renumbered without them), and the window says so. Applies to Save and Replace alike.'},
   {id:'D12',date:'2026-10-02',ask:'How does Copy from handle long lists? A Games / Templates switch?',ruling:'accepted',label:'Ruled · as drawn',why:'Owner proposal, round 3. Drawn as a Games / Templates switch at the top, each list with the whole panel, scrolling under a fixed title and switch. Games are earlier games only, newest first, in month bands. It opens on Games, or on Templates when no earlier game has a lineup. The three-games-plus-expand list is gone. No search. Ruled as drawn 2026-10-02 and built the same day.'}
 ];
 $('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.id)} · ${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p style="margin:0">${esc(d.why)}</p></div>`).join('');
@@ -762,7 +828,7 @@ $('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div clas
     { id: 'W1', title: 'The Tools menu — editing tools on screen, in-and-out tools behind ⋯', steps: [
       'Open Lineups › @ Probe Rovers. The toolbar right of Setup reads Call up a player · Undo · Redo · Clear (eraser) · ⋯ Tools. There is no Print square and no Templates button.',
       'Click Tools. Three items, each with a one-line hint: Copy from… · Print… · Save as template….',
-      'Print… opens the same print panel as before: Dugout poster with Landscape / Portrait, and the batting order card. Download the poster; it opens as before.',
+      'Print… opens the print panel. The Dugout poster’s Landscape / Portrait switch — and, when the lineup has notes, the notes checkbox — sit with the poster above a line; the batting order card is below the line. Download the poster; it opens as before.',
       '✎ Save as template… opens a window titled Save as template with a name field and Save template. Name it “QA copy-from check” and save. The line above the grid reads Saved “QA copy-from check” as a template., and the template is listed on the Lineups page’s Templates tab.',
       'Phone: the tool row is five squares on one line (Call up, Undo, Redo, Clear, ⋯). ⋯ opens a sheet titled Tools that stops above the bottom nav — the nav stays visible and tappable.',
       'Phone: Save as template… opens a short drawer that covers the bottom nav, with a × at the top. × closes it.',

@@ -7394,8 +7394,15 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .lineupPdfNotesToggle input { cursor: pointer; accent-color: var(--logic-lime); }
 /* The Dugout poster row and its orientation switch — ONE document with a turn (owner D1,
    2026-09-19). The switch is the portal's segChoice, sized down for a menu and inset to the
-   row's text edge so it reads as part of that row, not a third item. */
-.lineupPdfPoster { display: flex; flex-direction: column; gap: 0.15rem; }
+   row's text edge so it reads as part of that row, not a third item.
+   ⚠ AND A HAIRLINE CLOSES THE GROUP (owner, 2026-10-02: "this isn't clear which one portrait vs.
+   landscape applies to"). Inset alone did not bind it: the switch sat the same distance from the
+   poster above it as from the Batting order card below, so it read as belonging to either. The rule
+   under the poster's switch is the same one the notes checkbox already draws above itself. */
+.lineupPdfPoster { display: flex; flex-direction: column; gap: 0.15rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-2); }
+/* Inside the poster's group the notes checkbox needs no rule of its own above it — the group's
+   hairline below is the boundary. Two classes, so it outranks the base rule wherever that is declared. */
+.lineupPdfPoster .lineupPdfNotesToggle { margin-top: 0; padding-top: 0.25rem; border-top: 0; }
 .lineupPdfOrient { margin: 0 0 0.25rem 0.65rem; }
 .lineupPdfOrient .segBtn { padding: 0.3rem 0.7rem; font-size: var(--type-support); white-space: nowrap; }
 /* The menu is a bottom sheet on a phone and a touch surface through the tablet band, so the
@@ -16344,8 +16351,6 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 /* The panel's second caption ("Auto-fill", under the Setup fields it now carries on a phone). */
 .lineupPanelSection { padding-top: 0.4rem; border-top: 1px solid var(--border-2); }
 
-/* D4 · the hint under the list. */
-.lineupScrollHintUnder { margin: 0.6rem 0 0; }
 
 @media (max-width: 640px) {
   /* The controls become ONE column: the Setup row, then the tool row (the 2×2 grid above is the

@@ -37,6 +37,7 @@ import { useMinuteClock } from '@/lib/use-minute-clock';
 import CallUpSheet, { type CallUpPoolRow } from '@/components/coaches/CallUpSheet';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import LineupCopyFrom, { type LineupCopyPick } from '@/components/coaches/LineupCopyFrom';
+import LineupSaveTemplate from '@/components/coaches/LineupSaveTemplate';
 import { copyLineup, type LineupCopySource, type LineupCopyWhat } from '@/lib/lineup-copy';
 import LineupEditor from '../_LineupEditor';
 import styles from '../../../../coaches.module.css';
@@ -140,9 +141,6 @@ export default function CoachLineupBuilderPage({
   const [copyOpen, setCopyOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [templates, setTemplates] = useState<RepTeamLineupTemplate[]>([]);
-  const [newTemplateName, setNewTemplateName] = useState('');
-  const [templateSaving, setTemplateSaving] = useState(false);
-  const [templateError, setTemplateError] = useState('');
   const [lineupNotice, setLineupNotice] = useState('');
   const [lineupSeasonCaps, setLineupSeasonCaps] = useState<LineupSettings | null>(null);
   const [gameRules, setGameRules] = useState({ maxPos: '', pitcher: '', minPlay: '' });
@@ -370,39 +368,42 @@ export default function CoachLineupBuilderPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineupDirty, lineupSaving, lineupRows, lineupNotes, lineupMode, lineupInningCount, gameRules]);
 
-  // ── Template popover handlers ──
+  // ── Save as template (Tools › Save as template…) ──
+  /* ⚠ CALL-UPS ARE LEFT OUT (D15, 2026-10-02). A template is the season's shape, and the server only
+     lets one hold the team's own active roster — so a lineup with a call-up in it used to be refused
+     whole ("Templates can only include active roster players") and nothing was saved. The order is
+     renumbered without them, so a template never carries a gap where a borrowed player batted. */
+  const templateRows = sortLineupRows(lineupRows).filter(row => !isCallUp(row.player));
   function lineupTemplatePayload() {
-    return lineupRows.map(row => ({
-      playerId: row.player.id,
-      battingOrder: lineupMode === 'nine_player' && !row.starter ? null : (Number(row.battingOrder) || null),
-      starter: lineupMode === 'nine_player' ? row.starter : true,
-      inningPositions: row.inningPositions,
-    }));
+    let slot = 0;
+    return templateRows.map(row => {
+      const bats = lineupMode !== 'nine_player' || row.starter;
+      return {
+        playerId: row.player.id,
+        battingOrder: bats ? ++slot : null,
+        starter: lineupMode === 'nine_player' ? row.starter : true,
+        inningPositions: row.inningPositions,
+      };
+    });
   }
-  async function handleSaveTemplate() {
-    const name = newTemplateName.trim();
-    if (!name || lineupRows.length === 0) return;
-    setTemplateSaving(true);
-    setTemplateError('');
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, lineupMode, inningCount: lineupInningCount, entries: lineupTemplatePayload() }),
+  /** Saves a new template, or replaces one the team already has (D13). Throws with the message the
+   *  window shows; on success the window closes and the line above the grid says what happened. */
+  async function saveTemplate(name: string, replace: RepTeamLineupTemplate | null) {
+    const shape = { lineupMode, inningCount: lineupInningCount, entries: lineupTemplatePayload() };
+    const res = replace
+      ? await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates/${replace.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(shape),
+      })
+      : await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, ...shape }),
       });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(d.error ?? 'Could not save template');
-      }
-      setNewTemplateName('');
-      await reloadTemplates();
-      setLineupNotice(`Saved “${name}” as a template.`);
-      setSaveTemplateOpen(false);
-    } catch (e: unknown) {
-      setTemplateError(errorMessage(e, 'Could not save template'));
-    } finally {
-      setTemplateSaving(false);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(d.error ?? (replace ? 'Could not replace the template' : 'Could not save the template'));
     }
+    await reloadTemplates();
+    setLineupNotice(replace ? `Replaced “${replace.name}” with this lineup.` : `Saved “${name}” as a template.`);
+    setSaveTemplateOpen(false);
   }
   /**
    * COPY FROM — put another game's lineup, or a template, onto this game (owner rulings 2026-10-02;
@@ -920,7 +921,7 @@ export default function CoachLineupBuilderPage({
         <CoachToolbarMenuItem label="Print…" hint={`Dugout poster or ${sportPack.orderLabel.toLowerCase()} card`}
           disabled={lineupRows.length === 0} onSelect={() => setLineupPdfOpen(true)} />
         <CoachToolbarMenuItem label="Save as template…" hint="Keep this lineup to reuse on any game"
-          disabled={lineupRows.length === 0} onSelect={() => { setTemplateError(''); setSaveTemplateOpen(true); }} />
+          disabled={lineupRows.length === 0} onSelect={() => setSaveTemplateOpen(true)} />
       </CoachToolbarMenu>
       {copyOpen && event && (
         <LineupCopyFrom
@@ -951,35 +952,36 @@ export default function CoachLineupBuilderPage({
               <button type="button" aria-pressed={posterOrientation === 'landscape'} className={`${styles.segBtn} ${posterOrientation === 'landscape' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('landscape')}>Landscape · wall</button>
               <button type="button" aria-pressed={posterOrientation === 'portrait'} className={`${styles.segBtn} ${posterOrientation === 'portrait' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('portrait')}>Portrait · clipboard</button>
             </div>
+            {/* The notes go on the POSTER, so their checkbox sits in the poster's group with its turn —
+                it used to close the panel under the Batting order card, which it does nothing to. */}
+            {lineupNotes.trim() && (
+              <label className={styles.lineupPdfNotesToggle}>
+                <input type="checkbox" checked={pdfIncludeNotes} onChange={e => setPdfIncludeNotes(e.target.checked)} />
+                <span>Print lineup notes on the poster</span>
+              </label>
+            )}
           </div>
           <button type="button" className={styles.lineupPdfItem} onClick={handleBattingCard}>
             <strong>{sportPack.orderLabel} card</strong>
             <span>Large-type order for the scorekeeper or dugout</span>
           </button>
-          {lineupNotes.trim() && (
-            <label className={styles.lineupPdfNotesToggle}>
-              <input type="checkbox" checked={pdfIncludeNotes} onChange={e => setPdfIncludeNotes(e.target.checked)} />
-              <span>Print lineup notes on the poster</span>
-            </label>
-          )}
         </div>
       </>)}
       {saveTemplateOpen && (<>
         {/* A FORM — a name and a Save — so it covers the bottom nav and its scrim dims the bar
             (owner ruling 2026-09-23). Making a template is a CREATE, so it asks (edit autosaves,
-            create asks, 2026-09-24). Deleting, renaming and editing templates live in the Lineups
-            room's Templates tab, as before. */}
+            create asks, 2026-09-24); replacing one asks twice, inside the window (D13–D14).
+            Deleting, renaming and editing templates live in the Lineups room's Templates tab. */}
         <LineupSheetScrim onClose={() => setSaveTemplateOpen(false)} overNav />
         <div className={`${styles.lineupAutoMenu} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Save as template">
           <LineupDrawerHead title="Save as template" onClose={() => setSaveTemplateOpen(false)} />
-          <form className={styles.lineupTemplateSection} onSubmit={e => { e.preventDefault(); void handleSaveTemplate(); }}>
-            <input className={styles.input} value={newTemplateName} onChange={e => setNewTemplateName(e.target.value)} placeholder="e.g. Gold medal game" maxLength={80} aria-label="Template name" />
-            <p className={styles.lineupAutoNote}>Saves this lineup’s order, positions, format and {sportPack.periodLabelPlural.toLowerCase()}. Templates live on the Lineups page’s Templates tab.</p>
-            <button type="submit" className={styles.btnPrimary} disabled={!newTemplateName.trim() || templateSaving || lineupRows.length === 0}>
-              {templateSaving ? 'Saving…' : 'Save template'}
-            </button>
-            {templateError && <p className={styles.errorText}>{templateError}</p>}
-          </form>
+          <LineupSaveTemplate
+            templates={templates}
+            sportPack={sportPack}
+            shape={{ lineupMode, inningCount: lineupInningCount, players: templateRows.length }}
+            hasCallUps={templateRows.length < lineupRows.length}
+            onSave={saveTemplate}
+          />
         </div>
       </>)}
     </div>

@@ -268,8 +268,44 @@ Print live now (Tools); "what sends it back to Draft" names a copy; search learn
 lineup as last game, tournament weekend, tools menu, where did print go. All sections stay under the
 350-word standard. No help screenshot shows the builder.
 
+**Print panel, owner ask the same day** ("this isn't clear which one portrait vs. landscape applies to"): the poster's turn switch sat as far from the poster as from the Batting order card. A hairline now closes the poster's group (the poster, its turn and — when the lineup has notes — the notes checkbox, which used to sit under the Batting order card it does nothing to); the card stands below the line.
+
 **Gates after both passes:** typecheck clean for this change; focused lint clean; lineup tests 65/65;
 spelling, CSS-module, CSS-selector, date, contrast, token, dictionary and snapshot gates green;
 `check:layout --only=coach-lineup-builder` no new findings; the browser probe re-run after the review
 fixes. (The full unit run's one failure, and the type errors in `accounting/`, are another session's
 in-progress Ledger Parity work.)
+
+## 11. QA, and round 4 (2026-10-02)
+
+**OQA §259 ✅ passed 22/22** — three walks, walked on the UAT Standalone Team; the writing-step
+fingerprint was read before recording (ledger §259).
+
+**Round 4 (drawn, hub screen 9) — save over a template you already have.** Owner: "do we not have the
+ability to save over an existing template?" It did not: Save as template only created, and an existing
+name was refused by the server (409) after pressing Save. The PATCH route the template editor uses
+already takes entries, format and innings, so no server work is needed.
+- **D13 — the name decides.** One field, one button. A new name saves a new template; a name you already
+  have (capitals and spaces aside) turns the button into "Replace “X”…", with a line saying so. Your
+  templates are listed under the field (shape, player count, last saved), and tapping one goes straight
+  to the question.
+- **D14 — "are you sure", inside the window** (owner: "including the are you sure"). A second view: "Replace
+  “X”?", Now / After facts, "This can't be undone. Undo takes back changes to the lineup, not to a saved
+  template.", a red Replace template (`btnDanger`) and Keep it / Back. Never a pop-up (F02's lesson).
+- **D15 (proposed) — call-ups are left out of templates.** Found while drawing (**F07**): Save as template
+  sends every row, call-ups included, and the server accepts only the active roster, so saving from a
+  game with a call-up fails today with "Templates can only include active roster players". Proposed: leave
+  call-ups out and say so in the window; same for Replace.
+- **F08** — at the 50-template season limit Save says "Delete one to add another"; Replace adds nothing, so
+  it still works, and the message will say "Replace one of yours instead, or delete one".
+
+**Round 4 built 2026-10-02** (owner: "looks good, go ahead with your recommendations" — D13, D14 and D15 as
+drawn). `components/coaches/LineupSaveTemplate.tsx` is the window's body: the name match is the server's
+own uniqueness rule (trimmed, case-insensitive); "Replace “X”…" (`btnDanger`) opens the in-window question
+with its own Back step; Replace PATCHes the named template (order, positions, format, innings — its name
+and nothing else kept); call-ups are left out of every save and the order renumbered without them; the
+limit message names Replace. Verified in a browser at 1440 and 390 with writes intercepted (a typed
+"tournament a-lineup " matched "Tournament A-lineup"; the question showed Now/After; one PATCH to that
+template; the notice "Replaced “Tournament A-lineup” with this lineup."). Help: the templates FAQ says how
+to save over one and that call-ups aren't saved. Also removed: the dead `.lineupScrollHintUnder` rule
+(the phone hint it styled was removed on purpose; the guard asserts it stays gone).

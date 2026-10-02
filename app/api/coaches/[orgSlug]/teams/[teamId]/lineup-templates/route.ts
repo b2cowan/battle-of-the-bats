@@ -95,7 +95,7 @@ export const POST = withObservability(async (req: Request,
   const existing = await getRepTeamLineupTemplates(teamId, programYear.id);
   if (existing.length >= MAX_TEMPLATES_PER_SEASON) {
     return NextResponse.json(
-      { error: `You can keep up to ${MAX_TEMPLATES_PER_SEASON} saved templates this season. Delete one to add another.` },
+      { error: `You can keep up to ${MAX_TEMPLATES_PER_SEASON} saved templates this season. Replace one of yours instead, or delete one.` },
       { status: 400 },
     );
   }

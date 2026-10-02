@@ -717,8 +717,25 @@ describe('D2 — the tool row', () => {
     assert.deepEqual(items, ['Copy from…', 'Print…', 'Save as template…']);
     assert.doesNotMatch(control, /aria-label="Print"/, 'Print is no longer a square of its own');
     assert.doesNotMatch(builder, /LayoutTemplate|aria-label="Templates"/, 'nor is Templates');
-    assert.match(control, /<input className=\{styles\.input\} value=\{newTemplateName\}/, 'Save as template is the form');
+    assert.match(control, /<LineupSaveTemplate\b/, 'Save as template is the form (its body is its own component since D13)');
     assert.match(control, /triggerClassName=\{styles\.lineupToolsTrigger\}/, 'the trigger takes the row\'s height, styled beside the row\'s other controls');
+  });
+  it('Save as template can replace one you have — the name decides, and the question stays in the window (D13–D15, 2026-10-02)', () => {
+    const save = readCode('components/coaches/LineupSaveTemplate.tsx');
+    // The name decides: a name the team already has (capitals and spaces aside — the server's own
+    // uniqueness rule) turns the button into Replace, which opens the question rather than saving.
+    assert.match(save, /templates\.find\(t => t\.name\.trim\(\)\.toLowerCase\(\) === name\.trim\(\)\.toLowerCase\(\)\)/);
+    assert.match(save, /className=\{shared\.btnDanger\}>Replace “\{match\.name\}”…<\/button>/, 'the red button names what it replaces');
+    // "Are you sure" is a second view, with its own Back step — never a confirm pop-up, which is what
+    // closed the old Templates drawer behind it (Mobile plan §13.6 #5).
+    assert.match(save, /useBackStep\(!!replacing, backToName\);/);
+    assert.doesNotMatch(save, /useConfirm|confirm\(\{/, 'no pop-up');
+    assert.match(save, /This can’t be undone\. Undo takes back changes to the lineup, not to a saved template\./);
+    // Replacing PATCHes the template it names; a new name POSTs.
+    assert.match(builder, /lineup-templates\/\$\{replace\.id\}`, \{\s*method: 'PATCH'/);
+    // D15: call-ups never reach a template — the server would refuse the whole save.
+    assert.match(builder, /const templateRows = sortLineupRows\(lineupRows\)\.filter\(row => !isCallUp\(row\.player\)\);/);
+    assert.match(builder, /return templateRows\.map\(row => \{/, 'the payload is built from the rows without call-ups');
   });
   it('a copy is ONE undo step, and it takes the copied game rules back too (/review, 2026-10-02)', () => {
     // "Order and positions" brings the source game's rules override across. The undo step used to
