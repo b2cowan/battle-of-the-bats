@@ -12,6 +12,10 @@
    which is exactly the phone behaviour the ruling asks for. Everything here composes with that. */
 
 .room {
+  /* The room's side padding, named once because the scrolling body and the pinned foot both bleed
+     through it by exactly this much (below). The phone's full-screen sheet trims it to 0.9rem — the
+     overlay's own rule sets that padding, so only the name is re-declared there. */
+  --room-pad: 1.5rem;
   background: var(--card-bg);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   border-radius: var(--radius);
@@ -25,7 +29,6 @@
   outline: none;
 }
 .roomWide { max-width: min(1180px, 96vw); }
-
 /* Header: `CoachModalHeader` carries the back/close swap; this only seats the chip beside the name. */
 .titleRow {
   display: inline-flex;
@@ -40,20 +43,20 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  /* ⚠⚠ ROOM FOR A FOCUS RING ON ALL FOUR SIDES, and the horizontal pair is NOT redundant
-     (§135 walk, 2026-09-03). Scrolling this box makes it a clipping box on BOTH axes — CSS
-     promotes the untouched `overflow-x: visible` to `auto` the moment the other axis is not
-     visible — so a control flush with an edge has its ring sliced off. The global ring is a 2px
-     outline at a 2px offset, so it needs 4px of clearance, and the room's own 1.5rem padding
-     cannot supply it: the clip happens at the SCROLL box, inside that padding.
-     The bottom was found first (the last control before the pinned foot) and fixed alone; the
-     RIGHT edge went unnoticed until the drive room's Record door took focus back from a closed
-     Record question and returned wearing three-quarters of a ring.
-     ⚠ THE NEGATIVE MARGIN IS LOAD-BEARING — it hands the 4px back so every child still lines up
-     with the header and the foot. Delete it and the whole body shifts 4px inward on both sides;
-     delete the padding and the ring is clipped again. They only make sense as a pair. */
-  padding-inline: 4px;
-  margin-inline: -4px;
+  /* ⚠⚠ THE SCROLLBAR RUNS DOWN THE ROOM'S EDGE, NOT INSIDE ITS PADDING (owner, §258 walk
+     2026-10-02 — "scroll is inside and not on the edge"; the Question already had this ruling,
+     2026-09-08, in coaches.module.css's `.modalScrollBody`). The body bleeds through the room's
+     whole side padding and hands it back as its own, so every child lines up with the header and
+     the foot exactly as before and the bar reaches the border.
+     ⚠ IT ALSO KEEPS THE FOCUS RING (§135 walk, 2026-09-03). Scrolling this box makes it a clipping
+     box on BOTH axes — CSS promotes the untouched `overflow-x: visible` to `auto` the moment the
+     other axis is not visible — so a control flush with an edge loses its 2px-at-2px ring unless
+     the scroll box has padding of its own. It used to bleed 4px for exactly that; the full padding
+     is the same fix with room to spare.
+     ⚠ THE PAIR IS LOAD-BEARING: delete the margin and the body shifts inward by the padding;
+     delete the padding and the fields touch the bar and lose their rings. */
+  padding-inline: var(--room-pad);
+  margin-inline: calc(-1 * var(--room-pad));
   padding-bottom: 0.25rem;
 }
 
@@ -142,10 +145,15 @@
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  margin: 0.75rem -1.5rem -1.5rem;
-  padding: 0.75rem 1.5rem;
+  margin: 0.75rem calc(-1 * var(--room-pad)) -1.5rem;
+  padding: 0.75rem var(--room-pad);
   border-top: 1px solid var(--home-line, var(--border-2));
   background: var(--card-bg);
+  /* ⚠ THE FOOT TAKES THE ROOM'S CORNERS (owner, §258 walk 2026-10-02 — "corners at the bottom
+     overlap with the round corners behind"). It bleeds to the room's edges with a background of
+     its own, and its square corners painted over the room's rounded ones. The room's border is
+     1px, so the inner curve is 1px tighter than `--radius`. The phone sheet has no radius (below). */
+  border-radius: 0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px);
 }
 .footDoors { display: flex; align-items: center; gap: 0.9rem; min-width: 0; flex: 1 1 auto; }
 /* A shell contract, not one consumer's control: any `alertdialog` a consumer docks in the foot (a
@@ -246,9 +254,9 @@
 }
 
 @media (max-width: 640px) {
-  .room { max-height: none; }
+  .room { max-height: none; --room-pad: 0.9rem; }
   .tiles { grid-template-columns: repeat(2, 1fr); }
   .navLabel { max-width: 7rem; }
-  .foot { margin: 0.75rem -0.9rem 0; padding: 0.75rem 0.9rem calc(0.75rem + env(safe-area-inset-bottom, 0px)); }
+  .foot { margin: 0.75rem calc(-1 * var(--room-pad)) 0; padding: 0.75rem var(--room-pad) calc(0.75rem + env(safe-area-inset-bottom, 0px)); border-radius: 0; }
 }
 
