@@ -23,14 +23,18 @@ import {
 import PracticeGroupsRoom, { type DrawChoice } from '@/components/coaches/PracticeGroupsRoom';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import {
-  blockToDrillInput, detachStationFromDrill, drillToStation, emptyDrillDraft, filterTagged, sortDrillsForPicker,
-  stationToDrillInput,
-  type DrillInput, type RepTeamDrill,
+  MAX_DRILLS_PER_TEAM, MAX_DRILL_NAME_LEN,
+  blockToDrillInput, detachStationFromDrill, drillToStation, emptyDrillDraft, filterTagged, libraryLimitLine, libraryNameMatch,
+  refreshBlockFromDrill, refreshStationFromDrill, sortDrillsForPicker, stationToDrillInput,
+  type DrillInput, type DrillReach, type RepTeamDrill,
 } from '@/lib/rep-drills';
 import {
+  MAX_CIRCUITS_PER_TEAM, MAX_CIRCUIT_NAME_LEN,
   circuitToBlock, pointStationsAtDrills, tickRowsFor, fromDrillsLine, blockToCircuitShape,
   type CircuitInput, type RepTeamCircuit, type TickRow,
 } from '@/lib/rep-circuits';
+import SaveOverQuestion, { SaveOverMatchLine } from '@/components/coaches/SaveOverQuestion';
+import { useBackStep } from '@/components/coaches/useBackStep';
 import TagPicker, { type PickablePerson, type PickableTag } from '@/components/coaches/TagPicker';
 import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
 import type { TagManageConfig } from '@/components/coaches/TagSearchCombobox';
@@ -50,6 +54,7 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { formatInOrgZone } from '@/lib/timezone';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import { practiceStarted } from '@/lib/practice-state';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepAttendanceStatus, RepDevelopmentGoalStatus } from '@/lib/types';
 import styles from '../../../coaches.module.css';
@@ -1944,10 +1949,88 @@ function LibraryPanelRow({
   );
 }
 
+/** One of the team's OWN library items a save window can save over (save-over D1). */
+interface SaveOverTarget {
+  id: string;
+  name: string;
+  /** Its tags now — the picker starts from these once the name matches (D6). */
+  tagIds: string[];
+  /** Its Now line in the question. */
+  now: string;
+}
+
+/** "Stable base, shorter distance · 4 coaching points · Balls · Throwing, Warm-up" — a drill in one
+ *  line, for the save question's Now and After. */
+function drillFactsLine(
+  description: string | null | undefined, points: readonly string[] | null | undefined,
+  kit: readonly string[], tagNames: readonly string[],
+): string {
+  const first = description?.trim().split('\n')[0];
+  const n = points?.length ?? 0;
+  return [
+    first || null,
+    n ? `${n} coaching point${n === 1 ? '' : 's'}` : null,
+    kit.length ? kit.join(', ') : null,
+    tagNames.length ? tagNames.join(', ') : null,
+  ].filter(Boolean).join(' · ') || 'No words written yet';
+}
+
+/** "25 min · 4 stations · Fielding" — the library card's shape line plus the tags, for the save question. */
+function circuitFactsLine(block: PracticePlanBlock, tagNames: readonly string[]): string {
+  return [circuitCardFacts({ block }), tagNames.join(', ')].filter(Boolean).join(' · ');
+}
+
+/** How many of a drill's upcoming places the question names before "and N more". */
+const REACH_SHOWN = 6;
+
+/**
+ * "Upcoming practices pick it up" — what saving over a drill reaches (owner ruling D3, 2026-10-02):
+ * this team's practices that haven't started and still have the drill linked, then its templates
+ * and circuits (D7). The past is named as kept, because that is the first thing a coach wonders.
+ */
+function DrillReachNote({ reach }: { reach: { reach: DrillReach | null } | null }) {
+  const r = reach?.reach;
+  const items = r ? [
+    ...r.practices.map(p => `${formatInOrgZone(p.startsAt, { weekday: 'short', month: 'short', day: 'numeric' })} · ${p.name}`),
+    ...r.templates.map(n => `The template ${n}`),
+    ...r.circuits.map(n => `The circuit ${n}`),
+  ] : [];
+  const more = items.length - REACH_SHOWN;
+  return (
+    <div className={styles.ppSaveReach}>
+      <p className={styles.ppSaveReachHead}>Upcoming practices pick it up</p>
+      {!reach ? <p className={styles.formHint}>Checking…</p>
+        : !r ? <p className={styles.formHint}>Every upcoming practice that uses it.</p>
+        : items.length === 0 ? <p className={styles.formHint}>No upcoming practice uses it yet.</p>
+        : (
+          <ul className={styles.ppSaveReachList}>
+            {items.slice(0, REACH_SHOWN).map((t, i) => <li key={i}>{t}</li>)}
+            {more > 0 && <li>and {more} more</li>}
+          </ul>
+        )}
+      <p className={styles.formHint}>Past practices keep the version they ran.</p>
+    </div>
+  );
+}
+
 /**
  * "Save to my drills…" (D18; a bare written block too since stage 4's L1) and "Save to my
- * circuits…" (stage 4, L9) — ONE dialog, the word by shape. It asks EXACTLY ONE question — the
- * tags — and even that one is optional; a circuit's save asks a second, also optional: the tick.
+ * circuits…" (stage 4, L9) — ONE dialog, the word by shape.
+ *
+ * ⚖ **THE NAME DECIDES** (save-over, owner rulings D1 · D5, 2026-10-02). A Name field, filled in
+ * with the station's name or the block's title: a new name saves a new one, and a name matching one
+ * of the team's OWN drills or circuits (capitals and spaces aside — the database's rule; a club drill
+ * is never matched, D12) turns the button into the red "Update “X”…". That opens the question as a
+ * second view INSIDE this window (`SaveOverQuestion`) with its own Back step — never a pop-up. The
+ * name is also what fixed bug 1 (D4): an untitled block used to promise "Block 3" and send nothing.
+ *
+ * ⚖ **TAGS** (D2 · D6): whatever is picked here is what the saved one carries. Once the name matches,
+ * the picker starts from that item's own tags (until the coach picks), so an Update nobody meant as
+ * a re-tag never wipes them.
+ *
+ * ⚖ **A NEW ONE PAST THE LIMIT IS STOPPED HERE** (D4, bug 2): the window says so and Save stays off,
+ * so a circuit's ticked stations are never made into drills for a circuit that is then refused. An
+ * Update adds nothing, so it works at any limit.
  *
  * Anything more and a coach mid-plan simply won't do it. The sentence names what travels and what
  * does NOT, because that is the one thing that could surprise someone at this moment.
@@ -1968,10 +2051,12 @@ function LibraryPanelRow({
  * when every station was typed.
  */
 function PromoteDialog({
-  kind, name, sentence, tags, onCreateTag, tick, busy, error, onSave, onClose, manage, onManageChanged,
+  kind, defaultName, sentence, tags, onCreateTag, tick, busy, error, onSave, onClose, manage, onManageChanged,
+  targets, limitLine, after, loadReach,
 }: {
   kind: 'drill' | 'circuit';
-  name: string;
+  /** The station's name or the block's title — empty for an untitled block, which then asks (D4). */
+  defaultName: string;
   /** What travels and what stays — the caller's, because a station, a bare block and a circuit
    *  each give a different thing (a block its minutes; a circuit its stations and the groups). */
   sentence: string;
@@ -1981,29 +2066,61 @@ function PromoteDialog({
   tick?: { rows: TickRow[]; fromLine: string | null };
   busy: boolean;
   error: string;
-  /** The tags chosen, and — for a circuit — the ids of the typed stations the coach kept ticked. */
-  onSave: (tagIds: string[], pickedStationIds: string[]) => void;
+  /** The team's OWN active items of this kind — what a typed name can match (D1, D12). */
+  targets: SaveOverTarget[];
+  /** Set when a NEW one would pass the team's limit — said here, and Save stays off (D4). */
+  limitLine: string | null;
+  /** The question's After line, from the tags as picked. */
+  after: (tagIds: string[]) => string;
+  /** A drill's reach (D3) — absent for a circuit, whose update reaches the library only (D10). */
+  loadReach?: (id: string) => Promise<DrillReach | null>;
+  /** The name, the tags chosen, the typed stations kept ticked (a circuit) — and the item being
+   *  saved over, or null for a new one. */
+  onSave: (name: string, tagIds: string[], pickedStationIds: string[], update: SaveOverTarget | null) => void;
   onClose: () => void;
   manage?: TagManageConfig;
   onManageChanged?: () => void;
 }) {
-  const [tagIds, setTagIds] = useState<string[]>([]);
+  const [name, setName] = useState(defaultName);
+  /**
+   * The tags the coach picked, and WHICH item they were picked against (its id, or '' for a new
+   * one). Until the coach picks for the item the name matches now, the tags are that item's own
+   * (D6) — so picks made against "A" never ride along when the name is retyped to match "B".
+   */
+  const [tagPick, setTagPick] = useState<{ for: string; tagIds: string[] } | null>(null);
   /** The typed stations kept ticked (by station id); empty = the master is off. */
   const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set());
   /** True once the master has been pressed — from then on the run of names is a list of rows. */
   const [rowsOpen, setRowsOpen] = useState(false);
+  /** The item the question is about — set by "Update “X”…", cleared by Back / Keep it. */
+  const [updating, setUpdating] = useState<SaveOverTarget | null>(null);
+  const [reach, setReach] = useState<{ id: string; reach: DrillReach | null } | null>(null);
   /* The dialog floor (D9), busy-gated: while the save is in flight the sheet holds, so a write is
      never torn down under its own request. The tag list inside claims its own Escape while open
      (`escapeOwnership.ts`) — it closes itself, not the sheet. */
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogFloor(true, panelRef, { onClose, busy });
+  const backToForm = () => setUpdating(null);
+  useBackStep(!!updating, backToForm);
+  /* The question's reach, read when it opens; a late answer for an item no longer asked about is
+     dropped by the id it carries. */
+  useEffect(() => {
+    if (!updating || !loadReach) return;
+    let live = true;
+    void loadReach(updating.id).then(r => { if (live) setReach({ id: updating.id, reach: r }); });
+    return () => { live = false; };
+  }, [updating, loadReach]);
   const noun = kind === 'drill' ? 'drills' : 'circuits';
+  const match = libraryNameMatch(targets, name);
+  const matchKey = match?.id ?? '';
+  const tagIds = tagPick && tagPick.for === matchKey ? tagPick.tagIds : (match?.tagIds ?? []);
   const rows = tick?.rows ?? [];
   const allPicked = rows.length > 0 && rows.every(r => picked.has(r.station.id));
   const somePicked = rows.some(r => picked.has(r.station.id));
+  const pickedIds = rows.filter(r => picked.has(r.station.id)).map(r => r.station.id);
   /* The master's dash — `indeterminate` is a DOM property, not an attribute, so it is set by hand. */
   const masterRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (masterRef.current) masterRef.current.indeterminate = somePicked && !allPicked; }, [somePicked, allPicked]);
+  useEffect(() => { if (masterRef.current) masterRef.current.indeterminate = somePicked && !allPicked; }, [somePicked, allPicked, updating]);
   function pressMaster() {
     setRowsOpen(true);
     setPicked(allPicked ? new Set() : new Set(rows.map(r => r.station.id)));
@@ -2016,62 +2133,100 @@ function PromoteDialog({
       <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`Save to my ${noun}`}
         aria-busy={busy || undefined} className={styles.modal}>
         <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>Save &ldquo;{name}&rdquo; to your {noun}</h3>
-          <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>
+          <h3 className={styles.modalTitle}>Save to my {noun}</h3>
+          {/* Busy-gated like Escape and the backdrop: closed mid-save, the editor would be editable
+              again while the save is still landing, and the follow-up (followDrill) would lay the
+              plan as it was BEFORE those edits back over them. */}
+          <button type="button" className={styles.modalCloseBtn} aria-label="Close" disabled={busy} onClick={onClose}>
             <X size={18} />
           </button>
         </div>
-        <div className={styles.ppDrillWrite}>
-          <TagPicker
-            label={kind === 'drill' ? "Tags — one question, and it's optional" : 'Tags — optional'}
-            all={tags}
-            selected={tagIds}
-            onChange={setTagIds}
-            onCreate={onCreateTag}
-            manage={manage} onManageChanged={onManageChanged}
-          />
-          {kind === 'circuit' && rows.length > 0 && (
-            <label className={styles.ppTickRow}>
-              <input ref={masterRef} type="checkbox" checked={allPicked} onChange={pressMaster} />
-              <span>
-                Also save {rows.length === 1 ? 'its 1 written station' : `its ${rows.length} written stations`} as drills, with these tags
-                {!rowsOpen && <span className={styles.ppTickNames}> — {rows.map(r => r.station.name.trim()).join(' · ')}</span>}
-              </span>
-            </label>
-          )}
-          {kind === 'circuit' && rowsOpen && rows.length > 0 && (
-            <div className={styles.ppTickRows} role="group" aria-label="Stations to save as drills">
-              {rows.map(({ station, existing }) => (
-                /* The label is the NAME alone; the S2 note is described-by, so a screen reader hears
-                   "Cone weave, checkbox" and then the note — not a sentence-long control name. The
-                   separator is real text (hidden on a phone, where the note drops under the name)
-                   rather than generated content, which some readers voice and others skip. */
-                <div key={station.id} className={`${styles.ppTickRow} ${styles.ppTickSub}`}>
-                  <input id={`tick-${station.id}`} type="checkbox" checked={picked.has(station.id)} onChange={() => toggleRow(station.id)}
-                    aria-describedby={existing ? `tick-note-${station.id}` : undefined} />
+        {updating ? (
+          <div className={styles.ppDrillWrite}>
+            <SaveOverQuestion
+              question={`Update “${updating.name}”?`}
+              sub={kind === 'drill'
+                ? 'Its words, coaching points, equipment and tags become tonight’s.'
+                : 'Its stations, their setup, points and kit, and its tags become this block’s.'}
+              now={updating.now} after={after(tagIds)}
+              confirmLabel={kind === 'drill' ? 'Update drill' : 'Update circuit'} busyLabel="Updating…" busy={busy} error={error}
+              onConfirm={() => onSave(updating.name, tagIds, pickedIds, updating)} onBack={backToForm}>
+              {kind === 'drill'
+                ? <DrillReachNote reach={reach && reach.id === updating.id ? reach : null} />
+                : <p className={styles.formHint}>Practices that already used it keep theirs. The next time you place it, it’s this version.</p>}
+            </SaveOverQuestion>
+          </div>
+        ) : (
+          <>
+            <div className={styles.ppDrillWrite}>
+              <label className={styles.ppField}>
+                <span className={styles.ppFieldLabel}>Name</span>
+                <input className={styles.input} value={name} autoFocus
+                  maxLength={kind === 'drill' ? MAX_DRILL_NAME_LEN : MAX_CIRCUIT_NAME_LEN}
+                  placeholder={kind === 'drill' ? 'What would you call this drill?' : 'What would you call this circuit?'}
+                  onChange={e => setName(e.target.value)} />
+              </label>
+              {match && <SaveOverMatchLine>You already have a {kind} called this. Saving updates it.</SaveOverMatchLine>}
+              {!match && limitLine && <SaveOverMatchLine>{limitLine}</SaveOverMatchLine>}
+              <TagPicker
+                label="Tags — optional"
+                all={tags}
+                selected={tagIds}
+                onChange={next => setTagPick({ for: matchKey, tagIds: next })}
+                onCreate={onCreateTag}
+                manage={manage} onManageChanged={onManageChanged}
+              />
+              {kind === 'circuit' && rows.length > 0 && (
+                <label className={styles.ppTickRow}>
+                  <input ref={masterRef} type="checkbox" checked={allPicked} onChange={pressMaster} />
                   <span>
-                    <label htmlFor={`tick-${station.id}`}>{station.name.trim()}</label>
-                    {existing && (
-                      <>
-                        <span className={styles.ppTickSep} aria-hidden="true"> · </span>
-                        <span id={`tick-note-${station.id}`} className={styles.ppTickNames}>already in {existing.teamId === null ? 'the club’s' : 'your'} drills — the circuit uses that one, with its words</span>
-                      </>
-                    )}
+                    Also save {rows.length === 1 ? 'its 1 written station' : `its ${rows.length} written stations`} as drills, with these tags
+                    {!rowsOpen && <span className={styles.ppTickNames}> — {rows.map(r => r.station.name.trim()).join(' · ')}</span>}
                   </span>
+                </label>
+              )}
+              {kind === 'circuit' && rowsOpen && rows.length > 0 && (
+                <div className={styles.ppTickRows} role="group" aria-label="Stations to save as drills">
+                  {rows.map(({ station, existing }) => (
+                    /* The label is the NAME alone; the S2 note is described-by, so a screen reader hears
+                       "Cone weave, checkbox" and then the note — not a sentence-long control name. The
+                       separator is real text (hidden on a phone, where the note drops under the name)
+                       rather than generated content, which some readers voice and others skip. */
+                    <div key={station.id} className={`${styles.ppTickRow} ${styles.ppTickSub}`}>
+                      <input id={`tick-${station.id}`} type="checkbox" checked={picked.has(station.id)} onChange={() => toggleRow(station.id)}
+                        aria-describedby={existing ? `tick-note-${station.id}` : undefined} />
+                      <span>
+                        <label htmlFor={`tick-${station.id}`}>{station.name.trim()}</label>
+                        {existing && (
+                          <>
+                            <span className={styles.ppTickSep} aria-hidden="true"> · </span>
+                            <span id={`tick-note-${station.id}`} className={styles.ppTickNames}>already in {existing.teamId === null ? 'the club’s' : 'your'} drills — the circuit uses that one, with its words</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+              {kind === 'circuit' && tick?.fromLine && <p className={styles.ppTickFrom}>{tick.fromLine}</p>}
+              <p className={styles.formHint}>{sentence}</p>
+              {error && <p className={styles.errorText}>{error}</p>}
             </div>
-          )}
-          {kind === 'circuit' && tick?.fromLine && <p className={styles.ppTickFrom}>{tick.fromLine}</p>}
-          <p className={styles.formHint}>{sentence}</p>
-          {error && <p className={styles.errorText}>{error}</p>}
-        </div>
-        <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-          <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => onSave(tagIds, rows.filter(r => picked.has(r.station.id)).map(r => r.station.id))}>
-            {busy ? 'Saving…' : `Save to my ${noun}`}
-          </button>
-        </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
+              {match ? (
+                <button type="button" className={styles.btnDanger} disabled={busy} onClick={() => setUpdating(match)}>
+                  Update &ldquo;{match.name}&rdquo;…
+                </button>
+              ) : (
+                <button type="button" className={styles.btnPrimary} disabled={busy || !name.trim() || !!limitLine}
+                  onClick={() => onSave(name.trim(), tagIds, pickedIds, null)}>
+                  {busy ? 'Saving…' : `Save to my ${noun}`}
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -2646,7 +2801,6 @@ function BlockCard({
   const openDoor = (door: BlockDoor) => (door === 'stations' ? onAddStation() : onOpenDoor(door));
   /* The library door by shape (L1 · L9) — see the doors line below. */
   const promoteDoor = (() => {
-    if (block.circuitId) return null;                                   // placed from a circuit — it is one already
     if (stationCount === 0) return block.title.trim() && onPromoteBlock ? { label: 'Save to my drills…', onClick: onPromoteBlock } : null;
     if (stationCount >= 2) return onPromoteCircuit ? { label: 'Save to my circuits…', onClick: onPromoteCircuit } : null;
     return null;                                                        // one station: the station's own door (D1)
@@ -3040,6 +3194,16 @@ interface Props {
   /** Saves a circuit (L9). Absent for a viewer who can't write, and in the circuit editor itself. */
   onCreateCircuit?: (input: CircuitInput) => Promise<{ ok: boolean; error?: string }>;
   /**
+   * SAVE OVER (COACH_PRACTICE_SAVE_OVER_PLAN.md, D1, 2026-10-02) — the plan page's, and only there.
+   * A drill saved over is re-copied by the server into what hasn't happened yet (D3); the resolve
+   * carries the drill as saved, even when that walk fell short, so this page can follow it too.
+   */
+  onUpdateDrill?: (drillId: string, input: DrillInput) => Promise<{ ok: boolean; error?: string; drill?: RepTeamDrill }>;
+  /** What saving over a drill would reach — the question's "Upcoming practices pick it up" (D3). */
+  loadDrillReach?: (drillId: string) => Promise<DrillReach | null>;
+  /** A circuit saved over changes the library only — never a block already placed from it (D10). */
+  onUpdateCircuit?: (circuitId: string, input: { tagIds: string[]; block: PracticePlanBlock }) => Promise<{ ok: boolean; error?: string }>;
+  /**
    * The DOCKED LIBRARY (stage 4, L5) — the plan page's, and only there: `canDock` is the page's
    * width decision (a working column of 1,156px or more), `docked` the coach's remembered choice,
    * and `panelHost` the element beside the sheet the panel renders into (a portal — the page owns
@@ -3138,7 +3302,7 @@ interface Props {
 
 export default function PracticePlanEditor({
   plan, onChange, roster, goals, canViewFocus, attendance, canViewAttendance,
-  drills, onCreateDrill, circuits = [], onCreateCircuit, library, soloBlock = false,
+  drills, onCreateDrill, circuits = [], onCreateCircuit, onUpdateDrill, loadDrillReach, onUpdateCircuit, library, soloBlock = false,
   focusTags = [], onCreateFocusTag, planTagIds, onChangePlanTags,
   staffTags = [], onCreateStaffTag, equipmentTags = [], onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
@@ -3950,21 +4114,56 @@ export default function PracticePlanEditor({
       return stationToDrillInput({ ...station, name: promoteName(block, station), equipment: kitNamesOf(station) }, tagIds);
     }
     // L1: title → name, the words and points, the kit, and the block's MINUTES as "usually".
-    return blockToDrillInput(block, kitNamesOf(block), tagIds);
+    // The kit's ids travel too, as a station's do (`stationToDrillInput`): without them an Update
+    // from a bare block would leave the drill holding only a name snapshot of kit it held by id.
+    return { ...blockToDrillInput(block, kitNamesOf(block), tagIds), equipmentTagIds: block.equipmentTagIds ?? [] };
   }
 
-  async function promoteToDrill(tagIds: string[]) {
-    if (!promoting || promoting.kind === 'circuit' || !onCreateDrill) return;
+  async function promoteToDrill(name: string, tagIds: string[], update: SaveOverTarget | null) {
+    if (promoteBusy || !promoting || promoting.kind === 'circuit') return;
+    const save = update ? onUpdateDrill : onCreateDrill;
+    if (!save) return;
     const block = plan.blocks.find(b => b.id === promoting.blockId);
     const station = promoting.kind === 'station' ? block?.stations?.find(s => s.id === promoting.stationId) ?? null : null;
     if (!block || (promoting.kind === 'station' && !station)) { setPromoting(null); return; }
     setPromoteBusy(true); setPromoteError('');
-    const result = await onCreateDrill(drillInputFor(block, station, tagIds));
+    // An update keeps the drill's own spelling, and — from a station, which has no such number —
+    // its "usually" (a bare block brings its minutes, as its save always has).
+    const input: DrillInput = { ...drillInputFor(block, station, tagIds), name: update ? update.name : name };
+    if (update && station) input.usualMinutes = drills.find(d => d.id === update.id)?.usualMinutes ?? null;
+    const result = update ? await onUpdateDrill!(update.id, input) : await onCreateDrill!(input);
     setPromoteBusy(false);
+    // Followed even when the server's walk fell short (the drill itself is saved) — see followDrill.
+    if (update && result.drill) followDrill(result.drill, station?.id ?? null);
     if (!result.ok) { setPromoteError(result.error ?? 'Could not save that drill.'); return; }
-    // ⚠ Promotion COPIES. Tonight's station or block is deliberately left exactly as it is — it
-    // does not become drill-backed and therefore does not become read-only under the coach's hands.
+    // ⚠ A NEW drill COPIES: tonight's station or block is left exactly as it is — it does not
+    // become drill-backed and so does not turn read-only under the coach's hands. An UPDATE is
+    // different (D9): tonight's station is that drill again, so `followDrill` relinks it.
     setPromoting(null);
+  }
+
+  /**
+   * After a drill is saved over (owner rulings D3 · D9, 2026-10-02): the station it was saved from
+   * rejoins it — it IS that drill now — and, while this practice hasn't started, every other station
+   * on this plan still linked to it takes the new version, exactly as the server has just done to the
+   * team's other upcoming practices. Done HERE as well because this page's autosave writes the whole
+   * plan back: without it the next save would put tonight's old words over the server's walk. A
+   * practice that has started keeps what it ran, apart from the station the coach just saved.
+   */
+  function followDrill(drill: RepTeamDrill, savedStationId: string | null) {
+    const upcoming = !practiceStarted(eventStartsAt, Date.now());
+    let changed = false;
+    const blocks = plan.blocks.map(b => {
+      const relinked = savedStationId && b.stations?.some(s => s.id === savedStationId)
+        ? { ...b, stations: b.stations.map(s => (s.id === savedStationId ? refreshStationFromDrill(s, drill) : s)) }
+        : b;
+      const next = upcoming ? refreshBlockFromDrill(relinked, drill).block : relinked;
+      if (next !== b) changed = true;
+      return next;
+    });
+    // A bare block saved as a drill links nothing, so there may be nothing to follow — and an
+    // unchanged plan must not cost an autosave.
+    if (changed) setBlocks(blocks);
   }
 
   /**
@@ -3981,8 +4180,8 @@ export default function PracticePlanEditor({
    * rows re-open as "already in your drills" and the retry links rather than duplicates. An
    * unticked row is left exactly as typed, linked to nothing.
    */
-  async function promoteToCircuit(tagIds: string[], pickedStationIds: string[]) {
-    if (!promoting || promoting.kind !== 'circuit' || !onCreateCircuit) return;
+  async function promoteToCircuit(name: string, tagIds: string[], pickedStationIds: string[], update: SaveOverTarget | null) {
+    if (promoteBusy || !promoting || promoting.kind !== 'circuit' || !(update ? onUpdateCircuit : onCreateCircuit)) return;
     const block = plan.blocks.find(b => b.id === promoting.blockId);
     if (!block) { setPromoting(null); return; }
     setPromoteBusy(true); setPromoteError('');
@@ -4005,11 +4204,15 @@ export default function PracticePlanEditor({
       }
       shape = pointStationsAtDrills(shape, link);
     }
-    const result = await onCreateCircuit({ name: block.title.trim(), tagIds, block: shape });
+    // The NAME is the window's (D4, bug 1 — never the block's title, which may be empty). An update
+    // keeps the circuit's own name and replaces its shape and tags (D2).
+    const result = update
+      ? await onUpdateCircuit!(update.id, { tagIds, block: shape })
+      : await onCreateCircuit!({ name, tagIds, block: shape });
     setPromoteBusy(false);
     if (!result.ok) { setPromoteError(result.error ?? 'Could not save that circuit.'); return; }
-    // ⚠ Copies. Tonight's block stays exactly as it was — its stations do not become drill-backed
-    // on the page, and it does not become a placed circuit.
+    // ⚠ Copies, either way. Tonight's block stays exactly as it was — its stations do not become
+    // drill-backed on the page, and an update never reaches a block already placed (D10).
     setPromoting(null);
   }
 
@@ -4817,38 +5020,46 @@ export default function PracticePlanEditor({
         if (!block) return null;
         // The block's minutes as "usually", named in the sentence — none for a rest-of-practice block.
         const usually = block.duration.restOfPractice || !block.duration.minutes ? '' : `, and ${block.duration.minutes} min as how long it usually runs`;
-        if (openPromoting.kind === 'station') {
-          const station = block.stations?.find(s => s.id === openPromoting.stationId);
-          if (!station) return null;
+        const names = (ids: readonly string[]) => tagNamesById(ids, focusTags);
+        if (openPromoting.kind === 'station' || openPromoting.kind === 'block') {
+          const station = openPromoting.kind === 'station' ? block.stations?.find(s => s.id === openPromoting.stationId) ?? null : null;
+          if (openPromoting.kind === 'station' ? !station : (block.stations?.length ?? 0) > 0) return null;
+          // The team's OWN active drills — a club drill is never saved over from a team (D12).
+          const own = activeDrills.filter(d => d.teamId !== null);
+          const draft = drillInputFor(block, station, []);
           return (
-            <PromoteDialog kind="drill" name={promoteName(block, station)}
-              sentence="The setup, coaching points and equipment come with it. Who ran it and who was at it stay with tonight’s practice."
+            <PromoteDialog kind="drill" defaultName={station ? promoteName(block, station) : block.title.trim()}
+              sentence={station
+                ? 'The setup, coaching points and equipment come with it. Who ran it and who was at it stay with tonight’s practice.'
+                : `The coaching points and equipment come with it${usually}. Who was at it stays with tonight’s practice.`}
+              targets={own.map(d => ({
+                id: d.id, name: d.name, tagIds: d.tags.map(t => t.id),
+                now: drillFactsLine(d.description, d.coachingPoints, kitNamesOf(d), d.tags.map(t => t.name)),
+              }))}
+              limitLine={own.length >= MAX_DRILLS_PER_TEAM ? libraryLimitLine(MAX_DRILLS_PER_TEAM, 'drills', 'Update', 'Drills') : null}
+              after={tagIds => drillFactsLine(draft.description, draft.coachingPoints, draft.equipment ?? [], names(tagIds))}
+              loadReach={loadDrillReach}
               tags={focusTags} onCreateTag={onCreateFocusTag ?? (async () => null)}
               manage={focusManage} onManageChanged={onFocusTagsChanged}
               busy={promoteBusy} error={promoteError}
-              onSave={tagIds => promoteToDrill(tagIds)} onClose={() => setPromoting(null)} />
-          );
-        }
-        if (openPromoting.kind === 'block') {
-          if ((block.stations?.length ?? 0) > 0) return null;
-          return (
-            <PromoteDialog kind="drill" name={block.title.trim()}
-              sentence={`The coaching points and equipment come with it${usually}. Who was at it stays with tonight’s practice.`}
-              tags={focusTags} onCreateTag={onCreateFocusTag ?? (async () => null)}
-              manage={focusManage} onManageChanged={onFocusTagsChanged}
-              busy={promoteBusy} error={promoteError}
-              onSave={tagIds => promoteToDrill(tagIds)} onClose={() => setPromoting(null)} />
+              onSave={(name, tagIds, _picked, update) => void promoteToDrill(name, tagIds, update)} onClose={() => setPromoting(null)} />
           );
         }
         if ((block.stations?.length ?? 0) < 2) return null;
+        const activeCircuits = circuits.filter(c => c.isActive);
         return (
-          <PromoteDialog kind="circuit" name={block.title.trim() || `Block ${plan.blocks.indexOf(block) + 1}`}
+          <PromoteDialog kind="circuit" defaultName={block.title.trim()}
             sentence={`The stations, their setup, points and kit come with it${usually}. Who runs each station, who’s at it and the groups stay with tonight’s practice.`}
             tick={{ rows: onCreateDrill ? tickRowsFor(block, activeDrills) : [], fromLine: fromDrillsLine(block) }}
+            targets={activeCircuits.map(c => ({
+              id: c.id, name: c.name, tagIds: c.tags.map(t => t.id), now: circuitFactsLine(c.block, c.tags.map(t => t.name)),
+            }))}
+            limitLine={activeCircuits.length >= MAX_CIRCUITS_PER_TEAM ? libraryLimitLine(MAX_CIRCUITS_PER_TEAM, 'circuits', 'Update', 'Circuits') : null}
+            after={tagIds => circuitFactsLine(block, names(tagIds))}
             tags={focusTags} onCreateTag={onCreateFocusTag ?? (async () => null)}
             manage={focusManage} onManageChanged={onFocusTagsChanged}
             busy={promoteBusy} error={promoteError}
-            onSave={promoteToCircuit} onClose={() => setPromoting(null)} />
+            onSave={(name, tagIds, picked, update) => void promoteToCircuit(name, tagIds, picked, update)} onClose={() => setPromoting(null)} />
         );
       })()}
 

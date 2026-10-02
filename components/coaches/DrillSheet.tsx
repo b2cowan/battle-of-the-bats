@@ -32,7 +32,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 export default function DrillSheet({
   draft, isActive = true, isNew, readOnly = false, tags, onCreateTag, equipmentTags, onCreateEquipmentTag,
   focusManage, onFocusTagsChanged, equipmentManage, onEquipmentTagsChanged,
-  busy, error, onChange, onSubmit, onClose, onRetire, onRestore,
+  busy, error, onChange, onSubmit, onClose, onRetire, onRestore, saveNote,
 }: {
   draft: DrillInput;
   isActive?: boolean;
@@ -55,6 +55,12 @@ export default function DrillSheet({
   /** Retire (an active drill) / Restore (a retired one) — absent on a new drill. */
   onRetire?: () => void;
   onRestore?: () => void;
+  /**
+   * What saving reaches, said where Save is (save-over D8, 2026-10-02): an edit to a drill is
+   * re-copied into the team's practices that haven't started, so the sheet says how many. Absent on
+   * a new drill, a club drill, and one no upcoming practice uses.
+   */
+  saveNote?: string | null;
 }) {
   /* The dialog floor (stage 2, D9), busy-gated: Escape closes, Tab stays inside, focus returns to
      the row that opened it; while a save is in flight the sheet holds. */
@@ -114,7 +120,8 @@ export default function DrillSheet({
           {error && <p className={styles.errorText} role="alert">{error}</p>}
         </div>
 
-        <div className={styles.modalFooter}>
+        <div className={`${styles.modalFooter}${saveNote && !locked ? ` ${styles.modalFooterNoted}` : ''}`}>
+          {saveNote && !locked && <p className={styles.modalFooterNote}>{saveNote}</p>}
           {/* Retire lives here now — where the station modal keeps "Delete this station" and the
               goal sheet "Remove goal". Retired, not deleted: every plan that used it keeps reading. */}
           {!isNew && (retired ? onRestore : onRetire) && (

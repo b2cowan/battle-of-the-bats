@@ -218,7 +218,8 @@ export const GET = withObservability(async (_req: Request,
     // matches against and the looking-back list filters by.
     planTagIds,
     focusTags,
-    templates: templates.map(t => ({ id: t.id, name: t.name, plan: t.plan, tags: t.tags })),
+    // `updatedAt` dates each row of Save as template's "Your templates" list and its Replace question.
+    templates: templates.map(t => ({ id: t.id, name: t.name, plan: t.plan, tags: t.tags, updatedAt: t.updatedAt })),
     // The 'staff'/'equipment' libraries (mig 266) — same shape and same reasoning as `focusTags`.
     staffTags,
     equipmentTags,

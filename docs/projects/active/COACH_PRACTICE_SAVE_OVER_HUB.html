@@ -1,0 +1,740 @@
+<title>Practice Save-Over</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* A deliberate single (light) look: these frames draw the warm portal as it ships in light. Every
+   colour is set explicitly, so the page reads the same on either host background. */
+:root{--paper:#f6f3ec;--card:#fff;--ink:#1f271c;--softink:#596153;--quiet:#747b6e;--line:#d6d9cf;--line2:#b9c0b2;--olive:#53691d;--olive2:#e8eddc;--lime:#d9f99d;--blue:#245f79;--amber:#8b5a08;--amberbg:#fff5dc;--error:#9e3030;--grid:rgba(83,105,29,.075);--field:#f6f2ea;--blk:#f5f1e8;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 var(--sans)}
+button,input{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,[role=button]:focus-visible,h1:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1,h2,h3{text-wrap:balance}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--softink);margin:0}.meta{font-size:12px;color:var(--softink)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);font-size:14px;font-weight:650}
+
+/* ── hub chrome ── */
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc;font-size:12.5px}
+.hubtitle{margin-right:auto;min-width:0}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow-x:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--softink);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--softink);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--olive2);color:var(--ink);font-weight:700}
+.frame{width:min(1220px,calc(100% - 40px));margin:22px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210f;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.appbar{background:#fff;border-bottom:1px solid var(--line);padding:13px 26px;display:flex;align-items:center;gap:16px}
+.brand{font-weight:850;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;text-align:right;font-size:13px;color:var(--softink);line-height:1.35}
+.cap{padding:16px 26px 14px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.cap .eyebrow{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--softink)}
+.cap h1{font-size:20px;line-height:1.25;margin:4px 0 4px;letter-spacing:-.2px}
+.cap p{font-size:13.5px;color:var(--softink);margin:0;max-width:80ch}
+.intent{padding:14px 26px;background:#fafbf7;border-top:1px solid var(--line);font-size:12.5px;color:var(--softink)}.intent strong{color:var(--ink)}
+
+/* clickable highlights */
+.mk{display:inline-block;font:800 10px/1.4 var(--sans);letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;cursor:pointer;white-space:nowrap}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}.mk[data-k=ask]{background:#fff1d6;color:#7a4d06;border:1px solid #e3c487}
+.mk:hover{filter:brightness(.95)}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:800 10px/1.4 var(--sans);border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;white-space:nowrap}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;font-weight:700}
+
+/* ── the product drawing: the practice plan, warm portal ── */
+.prod{background-color:#f8f5ee;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:48px 48px;padding:26px 30px 34px}
+.stage-wrap{position:relative;border-radius:10px;overflow:hidden}
+.pp-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pp-back{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:15px;color:var(--olive)}
+.pp-div{width:1px;height:34px;background:var(--line)}
+.pp-tile{width:34px;height:34px;border-radius:8px;background:var(--olive2);border:1px solid #c9d4b3;display:grid;place-items:center;color:var(--olive)}
+.pp-title{font:700 22px/1.1 var(--display);margin:0}
+.pp-bar{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 14px}
+.pp-btn{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 14px;background:#fff;border:1px solid var(--line);border-radius:6px;font-weight:650;font-size:14.5px}
+.pp-btn.r{margin-left:auto}
+.pp-btn.on{border-color:rgba(36,95,121,.55);box-shadow:0 0 0 3px rgba(36,95,121,.12)}
+.plancard{background:#fff;border:1px solid var(--line);border-radius:8px;padding:22px 30px 26px}
+.pc-when{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:2px solid var(--ink)}
+.pc-when b{font:600 14px/1.3 var(--mono)}.pc-when small{display:block;font:500 12px/1.4 var(--mono);color:var(--softink)}
+.pc-when .vs{color:var(--olive);font-weight:650;font-size:13px}
+.pc-tonight{padding:12px 0;border-bottom:1px dashed var(--line);font-size:15px}.pc-tonight b{margin-right:6px}.pc-tonight i{color:var(--softink)}
+.tl{display:grid;grid-template-columns:78px 1fr;margin-top:16px}
+.tl-g{font:500 12px/1.35 var(--mono);color:var(--softink);text-align:right;padding:10px 12px 0 0}
+.tl-c{border-left:2px solid var(--ink);padding:6px 0 10px 14px;min-width:0}
+.tl-row{display:flex;flex-direction:column;gap:2px;padding:6px 4px;border-bottom:1px dotted var(--line)}
+.tl-row b{font-size:15px}.tl-row span{font-size:13.5px;color:var(--softink)}
+.rt{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:4px;background:var(--olive2);color:var(--olive);margin-left:6px;vertical-align:2px}
+.blk{background:var(--blk);border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.blk-head{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--line)}
+.blk-name{flex:1;background:#fff;border:1px solid var(--line2);border-radius:6px;padding:7px 11px;font-weight:650;font-size:14.5px;min-height:36px}
+.blk-name.empty{color:var(--quiet);font-weight:500}
+.blk-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.fh{font:700 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--softink)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--softink)}
+.chip{border:1px solid var(--line2);background:#fff;border-radius:16px;padding:3px 12px;font-size:13px;font-weight:600}
+.chip.on{background:#231f1a;color:#fff;border-color:#231f1a}
+.ta{background:#fff;border:1px solid var(--line2);border-radius:6px;padding:8px 11px;font-size:14px;min-height:38px}
+.blk-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line);font-size:12.5px;font-weight:650;color:var(--olive)}
+.blk-foot .door{display:inline-flex;align-items:center;gap:5px;color:var(--olive)}
+.stn{background:#fff;border:1px solid var(--line);border-radius:7px;padding:9px 12px;display:flex;flex-direction:column;gap:3px}
+.stn-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
+.stn-h b{font-size:14.5px}
+.from{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--olive)}
+.edit1{font-size:12.5px;font-weight:650;color:var(--olive);display:inline-flex;gap:4px;align-items:center}
+.stn p{margin:0;font-size:13.5px;color:var(--softink)}
+.stngrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.prov{margin:0;font-size:12.5px;color:var(--softink)}.prov svg{vertical-align:-2px;margin-right:3px}
+
+/* the window (coach portal modal, true size 520px) */
+.scrim{position:absolute;inset:0;background:rgba(31,39,28,.42);display:flex;align-items:flex-start;justify-content:center;padding:54px 16px 16px}
+.mw{width:520px;max-width:100%;background:#fff;border-radius:10px;box-shadow:0 20px 50px rgba(20,28,18,.28);overflow:hidden;text-align:left}
+.mw.static{box-shadow:0 8px 24px rgba(31,39,28,.12);border:1px solid var(--line)}
+.mw-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 24px 6px}
+.mw-t{font:700 17px/1.25 var(--display);letter-spacing:.1px;margin:0;display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+.mw-x{width:36px;height:36px;border:0;background:none;display:grid;place-items:center;color:var(--softink);padding:0}
+.mw-b{padding:12px 24px 18px;display:flex;flex-direction:column;gap:12px}
+.mw-f{display:flex;justify-content:flex-end;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 24px 16px;border-top:1px solid var(--line)}
+.lbl{font:700 11px/1 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--softink);display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+.fld{display:flex;flex-direction:column;gap:7px}
+.inp{background:var(--field);border:1px solid var(--line2);border-radius:6px;padding:9px 13px;font-size:15px;min-height:40px}
+.inp.hold{color:var(--quiet)}
+.hint{margin:0;font-size:13px;line-height:1.5;color:var(--softink)}
+.tagbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--field);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;min-height:40px;font-size:14px;color:var(--quiet)}
+.tg{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #c9d4b3;color:var(--ink);border-radius:14px;padding:2px 9px;font-size:13px;font-weight:600}
+.tick{display:flex;gap:9px;align-items:flex-start;font-size:13.5px}.tick i{flex:none;width:17px;height:17px;border:1.5px solid var(--line2);border-radius:3px;margin-top:2px;background:#fff}
+.tick span small{color:var(--quiet)}
+.ghost{border:0;background:none;padding:8px 6px;font-weight:550;color:var(--softink)}
+.prim{background:var(--lime);border:0;border-radius:6px;padding:9px 15px;font-weight:700;min-height:40px}
+.prim.off{opacity:.45;cursor:default}
+.danger{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:9px 15px;border-radius:6px;font-weight:650;background:rgba(158,48,48,.12);color:var(--error);border:1px solid rgba(158,48,48,.25)}
+.quietbtn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 15px;border-radius:6px;font-weight:650;background:#fff;border:1px solid var(--line2);color:var(--ink)}
+.notewarn{margin:0;font-size:12.5px;line-height:1.45;color:var(--amber);background:var(--amberbg);border-left:3px solid #d9b25c;border-radius:0 6px 6px 0;padding:7px 10px}
+.err{margin:0;font-size:13px;color:var(--error)}
+.back{display:inline-flex;align-items:center;gap:3px;border:0;background:none;padding:4px 6px 4px 0;font-weight:700;font-size:14px;color:var(--softink);min-height:36px}
+.q{display:flex;flex-direction:column;gap:3px}.q strong{font-size:16px}.q span{font-size:13px;color:var(--softink)}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:13px}
+.facts dt{color:var(--quiet);font-weight:650}.facts dd{margin:0}
+.reach{border:1px solid #e4e7de;border-radius:7px;padding:9px 12px;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.reach h4{margin:0;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--quiet);display:flex;flex-wrap:wrap;align-items:center;gap:2px}
+.reach ul{margin:0;padding:0 0 0 16px}.reach li{margin:1px 0}
+.reach .keep{color:var(--softink)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.tplrows{list-style:none;margin:0 -24px;padding:0;border-top:1px solid #e4e7de}
+.tplrows li{border-bottom:1px solid #eeebe3}.tplrows li:last-child{border-bottom:0}
+.tplrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:.55rem 24px;min-height:48px}
+.tplrow .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.tplrow strong{font-size:14.5px}.tplrow span{font-size:12.5px;color:var(--quiet)}
+.tplrow svg{color:var(--quiet);flex:none}.tplrow.hover{background:rgba(36,95,121,.1)}
+
+/* specimens */
+.specsh{font:600 11.5px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--softink);margin:0 0 10px}
+.specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(520px,100%),1fr));gap:24px;align-items:start}
+.spec{display:flex;flex-direction:column;gap:10px;min-width:0}
+.spec h2{font-size:15px;margin:0;display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+.spec .sub{font-size:13px}
+
+/* the reach diagram (screen 4) */
+.reachmap{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.rcol{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.rcol h3{margin:0;font-size:14px;display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+.ritem{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.4}
+.ritem i{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px}
+.ritem.take i{background:var(--olive)}.ritem.keep i{background:#c3c8bb}
+.ritem small{display:block;color:var(--quiet);font-size:12px}
+.sheet{width:560px;max-width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+
+/* phones */
+.phones{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:26px 16px 30px;background:#f8f5ee}
+.phfig{display:flex;flex-direction:column;gap:10px;width:390px;max-width:100%}
+.ph{position:relative;width:100%;height:780px;border:1px solid #bfc6b5;border-radius:26px;overflow:hidden;background:#f8f5ee}
+.ph-app{background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--softink)}
+.ph-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ph-nav{position:absolute;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr)}
+.ph-nav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:700;color:var(--quiet)}.ph-nav span i{display:block;width:18px;height:18px;border-radius:5px;background:#d8dccf}.ph-nav span.on{color:var(--olive)}.ph-nav span.on i{background:var(--olive)}
+.ph-scrim{position:absolute;inset:0;background:rgba(22,32,24,.45)}
+.ph-drawer{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:18px 18px 0 0;padding:6px 0 18px;display:flex;flex-direction:column;max-height:92%;overflow:auto}
+.ph-drawer .mw{width:auto;box-shadow:none;border-radius:0}
+.ph-drawer .mw-h{padding:8px 16px 4px}.ph-drawer .mw-b{padding:10px 16px 14px}.ph-drawer .mw-f{padding:12px 16px 4px}
+.ph-drawer .tplrows{margin:0 -16px}.ph-drawer .tplrow{padding:.55rem 16px}
+.ph-drawer .danger,.ph-drawer .quietbtn,.ph-drawer .prim{min-height:44px}
+.ph-drawer .mw-x{width:44px;height:44px;border:1px solid var(--line);border-radius:8px}
+.grab{width:40px;height:4px;border-radius:2px;background:#cfd3c8;align-self:center;margin:4px 0 2px;flex:0 0 4px}
+.phcap{font-size:13px;color:var(--softink)}.phcap strong{color:var(--ink)}
+
+/* ── document tabs ── */
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .eyebrow{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--softink)}
+.docpage h1{font-size:27px;line-height:1.2;letter-spacing:-.6px;margin:6px 0 10px}
+.docpage h2{font-size:19px;margin:28px 0 10px}
+.docpage h3{font-size:15px;margin:18px 0 6px}
+.docpage p,.docpage li{max-width:68ch}
+.docpage ul,.docpage ol{padding-left:20px;margin:0 0 12px}.docpage li{margin-bottom:6px}
+.note{padding:12px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.note.ask{border-left-color:var(--amber);background:var(--amberbg)}
+.tablewrap{overflow-x:auto;margin:0 0 16px}
+.dt{border-collapse:collapse;width:100%;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.dt th{font:700 13px/1.2 var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--softink);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+.dt td{padding:10px 12px;border-bottom:1px solid #ece9e1;vertical-align:top}.dt tr:last-child td{border-bottom:0}
+.find{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 12px}
+.find strong{display:block;margin-bottom:4px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:#fff;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:4px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;font-weight:650;border-radius:5px;white-space:nowrap;border:1px solid var(--line);background:var(--olive2)}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.open{background:#fff1d6;border-color:#e3c487}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+
+/* explanation dialog */
+.explain h3{margin:16px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--softink)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:18px}.dialogbody{padding:20px 22px}
+
+@container(max-width:760px){
+  .prod{padding:18px 12px 26px}.appbar{padding:12px 14px}.team{font-size:11px}.cap{padding:14px 16px}
+  .plancard{padding:16px 14px 20px}.tl{grid-template-columns:58px 1fr}.pp-btn.r{margin-left:0}
+  .scrim{padding:24px 8px 8px}
+}
+@media(max-width:620px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.walk{padding:9px 12px}.docpage{padding:22px 18px 36px}.frame{width:calc(100% - 18px);margin:14px auto}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Save over a practice template, a drill or a circuit · project hub</strong><br><small>Ruled as drawn 2026-10-02 (D1–D12) · built on dev 2026-10-02, not yet committed · QA walk ready (tab QA Walk)</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Drawn 2026-10-02; ruled as drawn the same day">Design</li>
+    <li class="stage done" title="Plan written 2026-10-02 alongside the drawing; build record added the same day">Plan</li>
+    <li class="stage done" title="Built on dev 2026-10-02">Build</li>
+    <li class="stage done" title="/simplify (four lenses) and /review (high-risk, five lenses) 2026-10-02 — seven defects fixed">Review</li>
+    <li class="stage" title="Walk written 2026-10-02 — three walks, one job each">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Mockup screens" id="walkNav">
+    <a href="#today">1 · Today</a>
+    <a href="#template">2 · Replace a template</a>
+    <a href="#drill">3 · Update a drill</a>
+    <a href="#reach">4 · What picks it up</a>
+    <a href="#circuit">5 · Update a circuit</a>
+    <a href="#bugs">6 · The two bugs</a>
+    <a href="#onphone">7 · On a phone</a>
+  </nav>
+  <div class="frame" id="frame">
+    <header class="appbar"><div class="brand">FieldLogic<span>HQ</span></div><div class="team">Ridge U13 Girls · 2026 season<br><span class="meta">Head coach view · sample data</span></div></header>
+
+    <section class="screen" id="today">
+      <div class="cap"><div class="eyebrow">Today · how the three saves work now</div><h1 tabindex="-1">Every save makes something new, and a name you already have is refused</h1><p>Practice plans have three saves: <strong>Save as template…</strong> for the whole practice, <strong>Save to my drills…</strong> for one activity, and <strong>Save to my circuits…</strong> for a block of stations. Each one only creates. If you already have something with that name, the save is refused after you press the button, and nothing tells you how to save over it. The circuit save also has the two bugs you asked to have fixed. Click a red flag to read what the code does.</p></div>
+      <div class="prod">
+        <h2 class="specsh">Whole screen · tonight’s practice in Edit</h2><div id="t-page"></div>
+        <h2 class="specsh" style="margin-top:28px">The three windows as they are · true size (520px)</h2>
+        <div class="specs" id="t-specs"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="template" hidden>
+      <div class="cap"><div class="eyebrow">Practice templates · the lineup design, applied</div><h1 tabindex="-1">Replace a practice template you already have</h1><p>This works exactly like the lineup builder’s Save as template from this week. The name decides: a new name saves a new template, and a name you already have turns the button into Replace. Your templates are listed under the field, and tapping one goes straight to the question. The question sits inside the window. The template’s tags become this practice’s tags, because a template has taken the practice’s tags since 2026-09-14 (D2).</p></div>
+      <div class="prod">
+        <h2 class="specsh">Whole screen · after</h2><div id="tp-page"></div>
+        <h2 class="specsh" style="margin-top:28px">The window’s states · true size</h2>
+        <div class="specs" id="tp-specs"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="drill" hidden>
+      <div class="cap"><div class="eyebrow">Drills · save tonight’s version back</div><h1 tabindex="-1">Update a drill from the practice you improved it in</h1><p>The route is the one coaches already know. You tap <strong>Edit just for this practice</strong> on a drill, change the words, then <strong>Save to my drills…</strong>. The window now has a name field, filled in for you. Because the name matches the drill, the button reads Update and the drill’s tags are already picked. The question says what changes and which <strong>upcoming</strong> practices will pick it up. Past practices keep the version they ran (D3).</p></div>
+      <div class="prod">
+        <h2 class="specsh">Whole screen · after</h2><div id="dr-page"></div>
+        <h2 class="specsh" style="margin-top:28px">The window’s states · true size</h2>
+        <div class="specs" id="dr-specs"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="reach" hidden>
+      <div class="cap"><div class="eyebrow">The rule behind D3 · what an updated drill reaches</div><h1 tabindex="-1">Practices that haven’t happened yet pick up the drill. Practices that have keep theirs.</h1><p>A drill on a practice is read-only while it stays linked. That is why updating it loses nothing: there is nothing on that station for the coach to have changed. A station someone tapped Edit just for this practice on belongs to that practice now, so it is left alone. The same rule holds whichever screen the drill is edited from (D8).</p></div>
+      <div class="prod">
+        <h2 class="specsh">Partner throwing is updated on Fri, Oct 2 · what happens to each place it sits</h2>
+        <div class="reachmap" id="reachmap"></div>
+        <h2 class="specsh" style="margin-top:28px">The same rule on the Drills tab · the drill sheet’s foot</h2>
+        <div id="sheetfoot"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="circuit" hidden>
+      <div class="cap"><div class="eyebrow">Circuits · save a placed circuit back</div><h1 tabindex="-1">Update a circuit from the block you placed it in</h1><p>Today a block placed from a circuit has no save door. It reads “Started from Skills circuit · changes here stay here”, and there is no way to take tonight’s better version back. With this change it gets <strong>Save to my circuits…</strong>, and the name, already filled in, turns the button into Update. Practices that already used the circuit keep their copy, because a placed circuit is edited freely in place (D10).</p></div>
+      <div class="prod">
+        <h2 class="specsh">Whole screen · after</h2><div id="ci-page"></div>
+        <h2 class="specsh" style="margin-top:28px">The window’s states · true size</h2>
+        <div class="specs" id="ci-specs"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="bugs" hidden>
+      <div class="cap"><div class="eyebrow">The two bugs (D4)</div><h1 tabindex="-1">A circuit save is checked before anything is saved</h1><p><strong>Bug 1:</strong> on a block with no title, the window says “Save “Block 3” to your circuits”, but the save sends an empty name and is refused. <strong>Bug 2:</strong> when “Also save its stations as drills” is ticked, those drills are made first, and only then is the circuit refused for a name you already have, or for the 60-circuit limit. The fix is to check the name and the limit inside the window, before any drill is made.</p></div>
+      <div class="prod">
+        <h2 class="specsh">Before and after · true size</h2>
+        <div class="specs" id="bg-specs"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="onphone" hidden>
+      <div class="cap"><div class="eyebrow">On a phone</div><h1 tabindex="-1">The same windows as drawers that cover the nav</h1><p>All three windows are forms, so on a phone they cover the bottom nav. That is the 2026-09-23 drawer ruling, stated here so a ruling of “as drawn” covers it. The question replaces the form inside the same drawer, and Back returns to the form.</p></div>
+      <div class="phones" id="phones"></div>
+    </section>
+
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Save over a practice template, a drill or a circuit</h1>
+  <h2>What changes for the coach</h2>
+  <p>Practice plans have three saves: a whole practice as a <strong>template</strong>, one activity as a <strong>drill</strong>, and a block of stations as a <strong>circuit</strong>. Today all three only create. If you already have one with that name, the save is refused after you press the button. With this change, all three can <strong>save over</strong> the one you have, the same way the lineup builder’s Save as template does now:</p>
+  <ul>
+    <li>Each save window has a <strong>name field, already filled in</strong>. A new name saves a new one. A name you already have turns the button into <strong>Replace</strong> (templates) or <strong>Update</strong> (drills, circuits).</li>
+    <li>The button leads to an <strong>are-you-sure inside the window</strong>. It shows what the saved one holds now and what it will hold, then gives a red confirm button and Keep it.</li>
+    <li><strong>Tags are replaced</strong> by the ones being saved. A template takes the practice’s tags. A drill or circuit takes the tags picked in the window, which start as its current tags so nothing is wiped by accident.</li>
+    <li><strong>An updated drill reaches upcoming practices.</strong> Every practice that hasn’t happened yet and still has the drill linked gets the new words. Practices that already happened keep the version they ran. The question names the upcoming practices before you confirm.</li>
+    <li>A block placed from a circuit gets a <strong>Save to my circuits…</strong> door, so tonight’s better version can go back to the circuit.</li>
+  </ul>
+  <p>Two bugs in the circuit save are fixed along the way. A block with no title can be saved, because the window asks for a name. And a name you already have, or the 60-circuit limit, is caught before any drills are made.</p>
+  <h2>Why it matters</h2>
+  <p>Coaches refine the same few activities all season. The natural moment to improve a drill is the practice where they improved it. Today the only way to save that is to retype the drill on the Drills tab, and even then next week’s practices still show the old words. This change makes “tonight’s version is the better one” a single save.</p>
+  <h2>Customer impact</h2>
+  <p>Every coach who uses the practice library. It is most useful mid-season, when templates and drills already exist and get tuned week to week. One rule changes: drills used to be copied into practices and never updated. Upcoming practices now follow the drill, and past ones do not, so the practice record a coach looks back on stays true.</p>
+  <h2>Priority</h2>
+  <p>Medium. The template and circuit saves reuse routes that already exist. The drill update is the one new piece of work: it rewrites the team’s upcoming practices on the server, following a pattern the product already uses for staff and equipment tags.</p>
+  <h2>Open for the owner</h2>
+  <ul>
+    <li>A ruling of “as drawn” on the seven screens.</li>
+    <li>D5–D12, each drawn as recommended. The ones that change most: D7 (templates and circuits holding the drill pick it up too) and D9 (tonight’s station rejoins the drill after Update).</li>
+  </ul>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach improves a drill during a practice and saves it back in one window, without opening the Drills tab.</li>
+    <li>Next week’s practices show the improved drill without anyone touching them, and last week’s practice still reads as it was run.</li>
+    <li>No “You already have a … called …” dead end in any practice save.</li>
+    <li>A circuit save never leaves drills behind for a circuit that was then refused.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Full plan</div>
+  <h1>Save over a practice template, a drill or a circuit</h1>
+  <p class="sub">Source: COACH_PRACTICE_SAVE_OVER_PLAN.md. Drawn 2026-10-02; D1–D4 ruled by the owner, D5–D12 ruled as drawn the same day; built on dev 2026-10-02 (§8).</p>
+
+  <h2>1. Problem</h2>
+  <p>The lineup builder learned this week to save over a template (D13–D15 there). The owner asked for the same on practice plans, drills and circuits. Today each of the three practice saves only creates. A name you already have is refused after the coach presses Save. A drill improved during a practice can only be saved back by retyping it on the Drills tab, and even then no practice that already uses it changes.</p>
+
+  <h2>2. Findings</h2>
+  <div class="find"><strong>F01 — Save as template refuses a name you already have, after the press.</strong>The practice page’s Save as template window POSTs a new template. A name matching one of your active templates (capitals and spaces aside) is refused by the unique index with “You already have a template called …”. The window has no way to save over it.</div>
+  <div class="find"><strong>F02 — Save to my drills refuses a name you already have, and updating a drill means retyping it.</strong>A station whose name is already one of your drills (the usual case after Edit just for this practice) is refused with “You already have a drill called …”. The only edit path is the drill sheet on the Drills tab.</div>
+  <div class="find"><strong>F03 — A block placed from a circuit has no save door.</strong>The block’s door returns nothing when the block came from a circuit (“placed from a circuit — it is one already”). Tonight’s version of a circuit can never go back to the circuit.</div>
+  <div class="find"><strong>F04 — Bug 1: an untitled block cannot be saved as a circuit.</strong>The window is titled with a stand-in (“Save “Block 3” to your circuits”), but the save sends the block’s empty title, and the server answers “Give the circuit a name.” When the tick is on, the stations’ drills were already made before that refusal. Retrying fails the same way, because nothing in the window can supply a name.</div>
+  <div class="find"><strong>F05 — Bug 2: the circuit is checked only after its drills are made.</strong>With “Also save its stations as drills” ticked, each typed station is created as a drill first, and then the circuit is POSTed. A name you already have, or the 60-circuit limit, refuses the circuit after the drills exist. A retry links those drills rather than duplicating them (the existing design), but a coach who gives up is left with drills from a save that “failed”.</div>
+  <div class="find"><strong>F06 — A drill update never reaches a practice.</strong>Rule 3 in the drill library (owner ruling 2026-08-01): “THE DRILL’S WORDS ARE COPIED, NEVER LINKED.” A placed drill copies its words into the plan and keeps the drill’s id only as provenance, so editing the drill changes no practice. The owner revised this on 2026-10-02 (D3): upcoming practices pick up an updated drill, and past ones do not.</div>
+
+  <h2>3. What the coach sees</h2>
+  <ol>
+    <li><strong>Save as template… (practice).</strong> The same window, plus “Your templates · tap one to replace it” under the field, newest first. Each row shows blocks · minutes · when it was saved. A matching name shows “You already have a template called this. Saving replaces it.” and the button becomes red <em>Replace “Hitting night”…</em>. The question: “Replace “Hitting night”?” with Now / After (blocks, minutes, tags, saved date), “Practices already started from it keep theirs.”, “This can’t be undone.”, then <em>Replace template</em> and <em>Keep it</em>. Back returns to the field.</li>
+    <li><strong>Save to my drills… and Save to my circuits…</strong> gain a <strong>Name</strong> field above the tags, filled in with the station’s name or the block’s title (D5). The window’s title becomes “Save to my drills” or “Save to my circuits”. A name matching one of <em>your</em> drills or circuits shows “You already have a drill called this. Saving updates it.”, picks that drill’s tags if you haven’t touched the tags yet (D6), and turns the button into red <em>Update “Partner throwing”…</em>.</li>
+    <li><strong>The drill question</strong> shows Now / After (the first line of what you’re doing, coaching points, equipment, tags), then “Upcoming practices pick it up”, which lists them by date and name, and “Past practices keep the version they ran.” Then come “This can’t be undone.”, <em>Update drill</em> and <em>Keep it</em>.</li>
+    <li><strong>After Update</strong> the window closes. Tonight’s station rejoins the drill (D9): it reads “From your drills” with Edit just for this practice, like any placed drill.</li>
+    <li><strong>A block placed from a circuit</strong> shows <em>Save to my circuits…</em> beside its provenance line (D11). The circuit question shows Now / After (stations, minutes, tags) and “Practices that already used it keep theirs. The next time you place it, it’s this version.” (D10)</li>
+    <li><strong>The Drills tab’s drill sheet</strong> says above Save: “Saving updates the 3 upcoming practices that use it. Past practices keep theirs.” The line is absent when none do (D8).</li>
+  </ol>
+
+  <h2>4. The rules</h2>
+  <h3>4.1 The name decides</h3>
+  <p>Matching uses the database’s own rule: lower-cased and trimmed, against your <strong>active</strong> templates, drills or circuits (a retired name can be reused, by the partial unique indexes). A drill name that matches only a <strong>club</strong> drill saves a new drill of your own, as today. A coach cannot update the club’s set (D12).</p>
+  <h3>4.2 What a save-over replaces</h3>
+  <div class="tablewrap"><table class="dt"><thead><tr><th>Saved thing</th><th>Replaced</th><th>Kept</th></tr></thead><tbody>
+    <tr><td>Practice template</td><td>The plan’s shape (blocks, stations, timings, what it’s about) and the tags, which become this practice’s tags (D2)</td><td>Name (its own spelling), retired state, “started N plans”</td></tr>
+    <tr><td>Drill, from a station</td><td>What you’re doing, what you’re watching for, coaching points, setup, equipment (both forms), and tags as picked (D2, D6)</td><td>Name (its own spelling); <strong>how long it usually runs</strong>, since a station has no such number</td></tr>
+    <tr><td>Drill, from a bare block</td><td>The same, plus “usually” from the block’s minutes, as its save does today</td><td>Name</td></tr>
+    <tr><td>Circuit</td><td>The block’s shape (stations, their setup, points and kit, the rotation’s timing) and tags as picked; people and groups are emptied, as on create</td><td>Name</td></tr>
+  </tbody></table></div>
+  <h3>4.3 What an updated drill reaches (D3, D7)</h3>
+  <ul>
+    <li><strong>Upcoming practices:</strong> this team’s practices that have not started yet. In each one, every station still linked to the drill gets the drill’s words and tag names again. Who runs it, who’s at it, the groups and the just-for-tonight note stay, because those belong to the practice. A linked station is read-only, so nothing the coach did there is lost.</li>
+    <li><strong>Not touched:</strong> practices that have started, in any season; any station that was made “just for this practice”; plans in a closed season.</li>
+    <li><strong>Templates and circuits holding the drill (D7, recommended):</strong> they pick it up too. They are the next practices, not a record, so leaving them stale would place the old words again next week.</li>
+    <li><strong>Retire and restore</strong> reach nothing.</li>
+  </ul>
+  <h3>4.4 Circuits and templates do not reach placed copies (D10)</h3>
+  <p>A placed circuit or a started template is edited freely in place: the coach moves stations, sets leads and draws groups for that practice. Nothing records which parts are the coach’s and which came from the library, so rewriting it would undo their work. Only the next placement or start gets the new version. Drill-linked stations inside those copies still pick up drill updates under 4.3.</p>
+
+  <h2>5. The two bugs (D4)</h2>
+  <ul>
+    <li><strong>Bug 1:</strong> the Name field (D5) replaces the stand-in title. An untitled block opens with an empty field (“What would you call this circuit?”), and Save stays off until a name is typed.</li>
+    <li><strong>Bug 2:</strong> before any drill is made, the window checks three things: the name is not empty; a name you already have has already turned the button into Update; and a new circuit at the 60-circuit limit is stopped with “You keep 60 circuits, the most a team can. Update one of yours, or retire one on the Circuits tab.” Only then are the ticked drills created and the circuit saved. A failure after that point, such as a dropped connection, keeps today’s design: the retry links the drills already made.</li>
+    <li>The drill window gets the same limit line at 200 drills, and Save as template gets it at 60 templates. Replace and Update still work at any limit, since they add nothing.</li>
+  </ul>
+
+  <h2>6. Out of scope</h2>
+  <ul>
+    <li>Pushing a circuit or template update into practices already started from it (D10).</li>
+    <li>A club admin’s edit to a <strong>club</strong> drill reaching every team’s upcoming practices. The same rule may well apply, but it writes across teams from the admin side, so it gets its own step after this one is walked (D12).</li>
+    <li>Linking a station to a <strong>new</strong> drill saved from it. Today’s promote copies and leaves the station as typed, and that stays.</li>
+    <li>An undo for Update or Replace.</li>
+  </ul>
+
+  <h2>7. Build notes</h2>
+  <ul>
+    <li><strong>Practice templates:</strong> the existing PATCH on the plan-template route already accepts <code>plan</code> and <code>tagIds</code>, so Replace sends both. The practice-plan read gains each template’s <code>updatedAt</code> for the list and the facts.</li>
+    <li><strong>Drills:</strong> the drill PATCH validates a whole drill, so Update sends the full drill. <code>usualMinutes</code> is the drill’s own for a station and the block’s for a bare block. A new GET on the drill route answers the question’s list: upcoming practices (date and name) plus template and circuit counts. It is read when the question opens.</li>
+    <li><strong>The walk:</strong> a pure function in the plan module refreshes one plan’s linked stations from a drill, keeping each station’s id, people, groups and note. It is unit-tested, and the server walk and the page both use it. The server walk runs in the same request as the drill PATCH, on the pattern of the staff and equipment tag repoint (<code>rep-practice-plan-tag-repoint.ts</code>): best-effort per row, writing only rows that changed, limited to <code>starts_at &gt; now()</code>.</li>
+    <li><strong>The open page converges:</strong> after Update, the page relinks tonight’s station (D9), runs the same refresh over its in-memory plan, and marks it dirty. The next autosave therefore writes the new words even if an older save was in flight during the walk. A second tab left open on another upcoming practice could still write old words back on its next edit. The plan PUT is last-write-wins, and the tag repoint lives with the same risk. That is named, not fixed here.</li>
+    <li><strong>Circuits:</strong> PATCH on the circuit route (<code>block</code>, <code>tagIds</code>). The door on a placed block is the existing promote door with its circuit guard removed.</li>
+    <li><strong>Dictionary:</strong> <code>rep_team_events.practice_plan</code> says “Written only by updateRepTeamEventPracticePlan”. That is already untrue (the tag repoint writes it) and becomes less true. Update it to name both walks, and revise rule 3 in the drill library’s header to the D3 wording.</li>
+    <li><strong>Shared window:</strong> the lineup’s replace window and these three differ in body. The confirm view (Back, question, Now / After, warning, two buttons) is one pattern, and one small shared component should draw it rather than four copies.</li>
+    <li><strong>Checks:</strong> verify:changed; unit tests for the refresh walk (kept fields, unlinked stations untouched, past untouched) and the name match; the layout sweep on the practice plan screen; the spelling gate. <strong>Help:</strong> the practice-plan articles learn save over, Update, and the upcoming-practices rule.</li>
+  </ul>
+
+  <h2>8. As built (2026-10-02)</h2>
+  <p>Built on dev to the drawings, ruled as drawn. Checked in a real browser as the UAT coach at 1440 and 390, with every write intercepted and a sample drill and circuit added to the page: Save as template lists the team’s templates and asks before replacing; a block saved over its drill reads Update with the question listing two upcoming practices and a template; a station saved back rejoins its drill (“From your drills”); an untitled block’s circuit window opens with an empty name and Save off; a block placed from a circuit has its door and asks before Update.</p>
+  <ul>
+    <li><strong>Departures from the drawing:</strong> the question keeps the window’s own title in the head and puts <em>‹ Back</em> at the top of the body, as the lineup builder’s window does; the drawing put Back in the head. The drill sheet’s line says how many <em>practices</em> an edit reaches; templates and circuits that hold the drill are refreshed too but not counted there.</li>
+    <li><strong>One shared question.</strong> The lineup builder’s “are you sure” and these three now draw from one component, so all four windows ask the same way; the lineup window looks exactly as it did.</li>
+    <li><strong>The walk on the server</strong> runs after a drill is saved, never on a retire. If it falls short, the drill is still saved and the coach is told to save again, which finishes it. A bare block saved over a drill links nothing on the page, so it causes no extra autosave.</li>
+    <li><strong>Found, not fixed:</strong> a rotating block’s “No groups yet · Choose groups…” line puts a menu inside a paragraph, which React reports as invalid nesting in the console. It predates this work.</li>
+    <li><strong>Checks:</strong> typecheck clean; lint clean on every changed file (three earlier warnings unchanged); unit suite 5,545 / 5,545, with 16 new refresh-and-match tests and a 10-test guard on the wiring; verify:changed green (spelling, CSS, dictionary, tokens, dates, contrast); layout sweep of the practice plan, circuit, drills and lineup builder screens: no new findings; help sections all under the length rule.</li>
+    <li><strong>Simplify and review, the same day:</strong> one sentence for the “you keep N …” limit line in all three windows; the lineup window uses the same name match; the drill update reads each saved item the way its own screens do; the Drills tab asks what an edit reaches only once you have edited. Review fixed seven things: the window’s × waits while a save is in flight (closing it mid-save could put an edit made meanwhile at risk); one save at a time; tags picked for one matching item never carry over when the name is retyped to match another; updating a drill from a plain block keeps its kit linked to your equipment list; the Drills tab shows the saved drill when the update to upcoming practices falls short; one shared rule for “has this practice started”; the upcoming list can’t mix up two same-named practices on one day. The security lens found nothing: everything read or written stays within the coach’s own team.</li>
+    <li><strong>Owed:</strong> a dev-server restart before the walk (new files).</li>
+  </ul>
+</section>
+
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens. D1–D4 were ruled before the drawing; D5–D12 were ruled as drawn on 2026-10-02.</p>
+  <div id="decisionRows" style="margin-top:18px"></div>
+</section>
+
+<section id="hub-qa" class="docpage" hidden>
+  <div class="eyebrow">Owner QA walk</div>
+  <h1>Save over · QA walk</h1>
+  <p class="sub">Three walks, one job each, signed off one by one. Tick a step only once you have seen it. A writing step (marked ✎) changes test data, so read the row it wrote before you tick it.</p>
+  <div class="note" style="margin-top:16px"><strong>Sign in as</strong> · URL: http://localhost:3000 · Account: uat-coach@uat-test-org.local · Password: from .env.local · Club / team: UAT Rep Club / <strong>UAT Test Team</strong>. ⚠ The account lands on <strong>UAT Standalone Team</strong>, which has no upcoming practice — switch to UAT Test Team in the team picker at the top left first.<br><strong>Walk on:</strong> <strong>Practice review — next week</strong> (Thu, Oct 8 — the team’s one upcoming practice) and <strong>UAT probe practice</strong> (Thu, Oct 1 — already happened). W2 adds a second upcoming practice; W3’s last step removes everything the walks made.<br><strong>Before walking:</strong> restart the dev server (new files). <strong>Phone steps:</strong> a real phone, or a browser window under 640px wide.</div>
+  <p class="qaprogress" id="qaCount"></p>
+  <div id="qaParts"></div>
+  <button class="button" type="button" id="buildSummary" style="background:var(--lime);border-color:#b9d88c">Build paste-back summary</button>
+  <textarea id="summaryOut" rows="10" readonly hidden style="width:100%;margin-top:14px;font:12px/1.5 ui-monospace,monospace;border:1px solid var(--line);border-radius:8px;padding:12px"></textarea>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+'use strict';
+/* Navigation only — kept apart from the data script so a typo there cannot kill the tabs. */
+const $=id=>document.getElementById(id);
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));try{localStorage.setItem('saveover-hub-tab',which)}catch(e){}}
+document.querySelectorAll('[data-hub]').forEach(b=>b.addEventListener('click',()=>showHub(b.dataset.hub)));
+$('phone').addEventListener('click',()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'});
+const INTENTS={
+  today:'Three saves, one shape: each only creates. A name the coach already has is the most likely name, because it is the drill they just improved, and that name is the one the save refuses.',
+  template:'The lineup builder’s window, word for word where the jobs match. The practice’s tags travel with it, as they have since 2026-09-14, so a replace takes them too (D2). The question names the practices already started from the template so nobody expects them to change.',
+  drill:'The name is already filled in, so the common case asks nothing new: the coach sees Update, the tags they had, and a question that names next week’s practices. Red because nothing can undo it.',
+  reach:'The line is the start time. Before it, a practice is a record of what was run. After it, it is a plan, and a plan should carry the drill as the coach now teaches it.',
+  circuit:'A placed circuit was a dead end: tonight’s improvements had nowhere to go. Now the same door every other block has, filled-in name, Update. Placed copies stay as they are, because the coach edits them freely in place.',
+  bugs:'Both bugs come from saving in the wrong order: the drills first, then a circuit that may be refused. Every check now runs in the window, before anything is written.',
+  onphone:'Forms cover the nav and menus sit above it. All three windows are forms.'
+};
+function showScreen(){const ids=[...document.querySelectorAll('.screen')].map(s=>s.id);let id=location.hash.slice(1);if(!ids.includes(id))id='today';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=INTENTS[id]?'<strong>Design intent:</strong> '+INTENTS[id]:'';if(location.hash)document.getElementById(id)?.querySelector('h1')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',()=>{showHub('mockup');showScreen()});
+showScreen();
+try{const t=localStorage.getItem('saveover-hub-tab');if(t&&HUBS.includes(t)&&!location.hash)showHub(t)}catch(e){}
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').addEventListener('click',()=>$('dialog').close());
+</script>
+
+<script>
+'use strict';
+/* Data + drawings. Prose uses the typographic apostrophe (’) so no string can break the parse. */
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const P={
+  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  left:'<path d="m15 18-6-6 6-6"/>',
+  right:'<path d="m9 18 6-6-6-6"/>',
+  up:'<path d="m18 15-6-6-6 6"/>',
+  trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
+  lib:'<path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/>',
+  pencil:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  play:'<path d="M6 4l14 8-14 8z"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  save:'<path d="M5 3h11l3 3v15H5zM8 3v5h7M8 21v-7h8v7"/>',
+  print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/>',
+  send:'<path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/>',
+  clip:'<path d="M9 2h6v4H9zM8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/>',
+  cal:'<path d="M3 5h18v16H3zM16 3v4M8 3v4M3 10h18"/>'
+};
+const ic=(k,s=18)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
+const mk=(k,label,note)=>`<span class="mk" data-k="${k}" data-note="${esc(note)}">${label}</span>`;
+const fl=(id,here,fix)=>`<button type="button" class="fl${fix?' fix':''}" data-finding="${id}" data-here="${esc(here)}">${fix?'fixes '+id:id}</button>`;
+const tg=n=>`<span class="tg">${esc(n)} ${ic('x',12)}</span>`;
+
+/* ── the practice page ── */
+function page(o){
+  const bar=`<div class="pp-bar"><span class="pp-btn">${ic('play',15)} Run practice</span><span class="pp-btn">${ic('check',15)} Done editing</span><span class="pp-btn${o.tplOpen?' on':''}">${ic('save',15)} Save as template…</span><span class="pp-btn">${ic('print',15)} Print the sheet</span><span class="pp-btn">${ic('send',15)} Send to staff</span><span class="pp-btn r">${ic('lib',15)} Library</span></div>`;
+  const card=`<div class="plancard"><div class="pc-when"><div><b>Thu, Oct 8 · 6:00 p.m.</b><small>75 min planned · ends 7:15 p.m.</small></div><span class="vs">${ic('cal',13)} View on schedule</span></div>
+    <div class="pc-tonight"><b>Tonight:</b><i>Clean throws, then a full rotation through the infield.</i></div>
+    <div class="tl">${o.blocks.map(b=>`<div class="tl-g">${b[0]}<br>${b[1]}</div><div class="tl-c">${b[2]}</div>`).join('')}</div></div>`;
+  const win=o.win?`<div class="scrim">${o.win}</div>`:'';
+  return `<div class="stage-wrap"><div class="pp-top"><span class="pp-back">${ic('left',16)} Practice plans</span><span class="pp-div"></span><span class="pp-tile">${ic('clip',17)}</span><h3 class="pp-title">Thursday practice</h3></div>${bar}${card}${win}</div>`;
+}
+const shut=(t,s,tag)=>`<div class="tl-row"><b>${esc(t)}${tag?`<span class="rt">${tag}</span>`:''}</b><span>${esc(s)}</span></div>`;
+const WARM=['6:00 p.m.','10 min',shut('Dynamic warm-up','Whole team · from your drills')];
+const LIVE=['6:55 p.m.','20 min',shut('Live BP','Whole team · 3 coaching points')];
+const CIRC_SHUT=['6:30 p.m.','25 min',shut('Skills circuit','4 stations · groups rotate every 6 min','Rotation')];
+const THROW_SHUT=['6:10 p.m.','20 min',shut('Partner throwing','Whole team · stable base, shorter distance')];
+function throwOpen(o={}){
+  const linked=o.linked;
+  const stn=linked?`<div class="stn"><div class="stn-h"><span class="from">${ic('lib',12)} From your drills</span><span class="edit1">${ic('pencil',12)} Edit just for this practice</span></div><b>Partner throwing</b><p><strong>What you’re doing:</strong> Stable base, shorter distance. Step through on every throw.</p><p><strong>Watching for:</strong> Glove-side elbow up · Finish to the target · Feet set before the catch · Call the ball</p></div>`
+    :`<div class="fh">What you’re doing</div><div class="ta">Stable base, shorter distance. Step through on every throw.</div><div class="fh">What you’re watching for</div><div class="ta">Glove-side elbow up · Finish to the target · Feet set before the catch · Call the ball</div>`;
+  const door=linked?'':`<span class="door">${ic('lib',12)} Save to my drills…${o.doorTag||''}</span>`;
+  return `<div class="blk"><div class="blk-head"><span class="blk-name">Partner throwing</span>${ic('up',16)}${ic('trash',16)}</div>
+    <div class="blk-body"><div class="fh">Minutes</div><div class="chips"><span class="chip">5</span><span class="chip">10</span><span class="chip">15</span><span class="chip on">20</span><span class="chip">30</span> min · ends 6:30 p.m.</div><div class="fh">Players</div><div style="font-size:14px"><b>Whole team</b> · Choose players… · Split into groups…</div>${stn}${o.after||''}</div>
+    <div class="blk-foot"><span>+ Staff · + Coaching points · + Equipment · + Stations</span>${door}</div></div>`;
+}
+function circOpen(o={}){
+  const st=[['Short hops','Glove out front, give with the ball'],['Backhand','Cross over, field it off the back foot'],['Double-play feeds','Underhand inside 15 feet'],['Fly balls','Drop step, run to the spot']];
+  const title=o.untitled?`<span class="blk-name empty">Block title</span>`:`<span class="blk-name">Skills circuit</span>`;
+  const prov=o.untitled?'':`<p class="prov">${ic('lib',12)} Started from <strong>Skills circuit</strong> · changes here stay here${o.provTag||''}</p>`;
+  return `<div class="blk"><div class="blk-head">${title}${ic('up',16)}${ic('trash',16)}</div>
+    <div class="blk-body">${prov}<div class="fh">Minutes</div><div class="chips"><span class="chip">15</span><span class="chip">20</span><span class="chip on">25</span><span class="chip">30</span> min · groups rotate every 6 min</div>
+    <div class="fh">Stations</div><div class="stngrid">${st.map(s=>`<div class="stn"><b>${s[0]}</b><p>${s[1]}</p></div>`).join('')}</div></div>
+    <div class="blk-foot"><span>+ Staff · + Coaching points · + Stations</span>${o.door===false?'':`<span class="door">${ic('lib',12)} Save to my circuits…${o.doorTag||''}</span>`}</div></div>`;
+}
+
+/* ── the windows ── */
+const xBtn=`<button type="button" class="mw-x" aria-label="Close">${ic('x',18)}</button>`;
+function win({title,body,foot,cls=''}){return `<div class="mw ${cls}"><div class="mw-h"><h4 class="mw-t">${title}</h4>${xBtn}</div><div class="mw-b">${body}</div>${foot?`<div class="mw-f">${foot}</div>`:''}</div>`}
+function confirmWin({back,q,sub,facts,extra='',keep,yes,cls=''}){
+  return `<div class="mw ${cls}"><div class="mw-h"><button type="button" class="back">${ic('left',17)} ${back}</button>${xBtn}</div><div class="mw-b">
+    <div class="q"><strong>${q}</strong><span>${sub}</span></div>
+    <dl class="facts">${facts.map(f=>`<dt>${f[0]}</dt><dd>${f[1]}</dd>`).join('')}</dl>${extra}
+    <p class="notewarn">This can’t be undone.</p>
+    <div class="btnrow"><button type="button" class="danger">${yes}</button><button type="button" class="quietbtn">${keep}</button></div></div></div>`;
+}
+const field=(label,val,ph,tag='')=>`<div class="fld"><span class="lbl">${label}${tag}</span><div class="inp${val?'':' hold'}">${val?esc(val):esc(ph)}</div></div>`;
+
+/* practice template */
+const TPL_HINT=`<p class="hint">Saves the blocks, stations, timings and what this practice is about, as they are now. <strong>It does not change tonight’s practice</strong>, and editing this plan later won’t change the template. Players and staff aren’t saved — the practice supplies those. You can change the template’s name and tags on the Templates tab.</p>`;
+const TEMPLATES=[['Hitting night','6 blocks · 90 min · saved Sep 20'],['Tuesday basics','5 blocks · 75 min · saved Sep 15'],['Rain-day gym','4 blocks · 60 min · saved Sep 3'],['Tournament warm-up','3 blocks · 40 min · saved Aug 28']];
+const tplList=(hover,tag)=>`<span class="lbl" style="margin-top:2px">Your templates · tap one to replace it${tag?mk('new','New · D1','Your active practice templates, newest first, each with its blocks, minutes and when it was last saved. Tapping one fills in its name and goes straight to the question below; it never replaces anything by itself. The same list the lineup window has.'):''}</span><ul class="tplrows">${TEMPLATES.map((t,i)=>`<li><button type="button" class="tplrow${hover===i?' hover':''}"><span class="t"><strong>${t[0]}</strong><span>${t[1]}</span></span>${ic('right',16)}</button></li>`).join('')}</ul>`;
+function tplWin(state,o={}){
+  if(state==='confirm') return confirmWin({cls:o.cls,back:'Save as template',q:'Replace “Hitting night”?',sub:'Its blocks, stations, timings, what it’s about and its tags become this practice’s.',
+    facts:[['Now','6 blocks · 90 min · Hitting, Bunting · saved Sep 20'],['After','4 blocks · 75 min · Throwing, Fielding — this practice'+(o.tags?mk('new','Ruled · D2','The template’s tags become this practice’s tags. The practice’s tags have travelled with a new template since 2026-09-14, so a replace takes them too, and Now / After shows the change before it happens.'):'')]],
+    extra:`<p class="hint">Practices already started from it keep theirs.${o.tags?mk('new','New','A started practice is a copy, edited freely, so a replaced template never reaches it. Said here because it is the first thing a coach would wonder.'):''}</p>`,keep:'Keep it',yes:'Replace template'});
+  if(state==='today') return win({cls:o.cls,title:'Save as template',body:field('Name','Hitting night','')+TPL_HINT+`<p class="err">You already have a template called “Hitting night”.${fl('F01','Pressed Save with a name the team already has. The server refuses it, and the window offers nothing else.')}</p>`,foot:`<button type="button" class="ghost">Cancel</button><button type="button" class="prim">Save template</button>`});
+  const match=state==='match';
+  return win({cls:o.cls,title:'Save as template',
+    body:field('Name',match?'Hitting night':'Thursday practice','')+(match?`<p class="notewarn">You already have a template called this. Saving replaces it.${o.tags?mk('new','New · D1','When the name matches one of your active templates (capitals and spaces aside) the button turns into Replace, and this line says so, before anything is pressed.')+fl('F01','Today this name is refused after Save.',true):''}</p>`:'')+TPL_HINT+tplList(o.hover,o.tags),
+    foot:`<button type="button" class="ghost">Cancel</button>${match?`<button type="button" class="danger">Replace “Hitting night”…</button>`:`<button type="button" class="prim">Save template</button>`}`});
+}
+
+/* drill */
+const DRILL_SENT=`<p class="hint">The setup, coaching points and equipment come with it. Who ran it and who was at it stay with tonight’s practice.</p>`;
+function drillWin(state,o={}){
+  if(state==='today') return win({cls:o.cls,title:'Save “Partner throwing” to your drills',body:`<div class="fld"><span class="lbl">Tags — one question, and it’s optional</span><div class="tagbox">Search your tags…</div></div>${DRILL_SENT}<p class="err">You already have a drill called “Partner throwing”.${fl('F02','Saved a station that was edited just for this practice. Its name is still the drill’s name, so the save is refused.')}</p>`,foot:`<button type="button" class="ghost">Cancel</button><button type="button" class="prim">Save to my drills</button>`});
+  if(state==='confirm') return confirmWin({cls:o.cls,back:'Save to my drills',q:'Update “Partner throwing”?',sub:'Its words, coaching points, equipment and tags become tonight’s.',
+    facts:[['Now','Stable base, longer distance · 3 coaching points · Balls, Cones · Throwing, Warm-up'],['After','Stable base, shorter distance · 4 coaching points · Balls · Throwing, Warm-up']],
+    extra:`<div class="reach"><h4>Upcoming practices pick it up${o.tags?mk('new','Ruled · D3','Every practice that has not started yet and still has this drill linked gets the new words. Listed by date so the coach knows exactly what changes. With none, the line reads “No upcoming practice uses it yet.”'):''}</h4><ul><li>Sat, Oct 10 · Tournament warm-up</li><li>Tue, Oct 13 · Tuesday practice</li><li>and the template Tuesday basics${o.tags?mk('ask','Your call · D7','Recommended: templates and circuits holding the drill pick it up too, because they are next week’s practices, not a record. The alternative is practices only, which would place the old words again the next time the template is started.'):''}</li></ul><span class="keep">Past practices keep the version they ran.${o.tags?mk('new','Ruled · D3','“Existing plans should pick up the updated drill but not past ones.” Past means the practice has started.'):''}</span></div>`,
+    keep:'Keep it',yes:'Update drill'});
+  if(state==='new') return win({cls:o.cls,title:'Save to my drills',body:field('Name','Partner throwing — short','',o.tags?mk('ask','Your call · D5','A name field, filled in with the station’s name. Recommended because the name is what decides between a new drill and an update, and it lets a coach keep the old drill and save tonight’s as a second one. The alternative keeps today’s fixed title and offers Update only when the station’s name matches.'):'')+`<div class="fld"><span class="lbl">Tags — optional</span><div class="tagbox">Search your tags…</div></div>${DRILL_SENT}`,foot:`<button type="button" class="ghost">Cancel</button><button type="button" class="prim">Save to my drills</button>`});
+  return win({cls:o.cls,title:'Save to my drills',
+    body:field('Name','Partner throwing','',o.tags?mk('ask','Your call · D5','Filled in with the station’s name. After Edit just for this practice the station still carries the drill’s name, so the common case arrives here already matched.'):'')+`<p class="notewarn">You already have a drill called this. Saving updates it.${o.tags?mk('new','New · D1','The match uses the database’s own rule: capitals and spaces aside, against your active drills. A name that matches only a club drill saves a drill of your own, as today (D12).')+fl('F02','Today this name is refused after Save.',true):''}</p>
+      <div class="fld"><span class="lbl">Tags — optional${o.tags?mk('ask','Your call · D6','The drill’s current tags are picked as soon as the name matches, unless the coach has already picked some. Whatever is picked here replaces the drill’s tags (D2), so starting empty would wipe them on an Update nobody meant as a re-tag.'):''}</span><div class="tagbox">${tg('Throwing')}${tg('Warm-up')}</div></div>${DRILL_SENT}`,
+    foot:`<button type="button" class="ghost">Cancel</button><button type="button" class="danger">Update “Partner throwing”…</button>`});
+}
+
+/* circuit */
+const CIRC_SENT=`<p class="hint">The stations, their setup, points and kit come with it, and 25 min as how long it usually runs. Who runs each station, who’s at it and the groups stay with tonight’s practice.</p>`;
+const tickRow=`<div class="tick"><i></i><span>Also save its 1 written station as drills, with these tags <small>— Fly balls</small></span></div>`;
+function circWin(state,o={}){
+  if(state==='confirm') return confirmWin({cls:o.cls,back:'Save to my circuits',q:'Update “Skills circuit”?',sub:'Its stations, their setup, points and kit, and its tags become this block’s.',
+    facts:[['Now','4 stations · 20 min · Fielding'],['After','4 stations · 25 min · Fielding, Throwing']],
+    extra:`<p class="hint">Practices that already used it keep theirs. The next time you place it, it’s this version.${o.tags?mk('ask','Your call · D10','Recommended: a placed circuit is edited freely in place (leads, groups, stations moved), so nothing knows which parts are the coach’s and rewriting it would undo their work. Drill-linked stations inside it still follow their drills under D3.'):''}</p>`,
+    keep:'Keep it',yes:'Update circuit'});
+  if(state==='today-untitled') return win({cls:o.cls,title:'Save “Block 3” to your circuits',body:`<div class="fld"><span class="lbl">Tags — optional</span><div class="tagbox">Search your tags…</div></div><div class="tick"><i style="background:var(--olive);border-color:var(--olive)"></i><span>Also save its 4 written stations as drills, with these tags</span></div>${CIRC_SENT}<p class="err">Give the circuit a name.${fl('F04','The block has no title. The window promises “Block 3”, the save sends nothing, and the four ticked drills were already made.')}</p>`,foot:`<button type="button" class="ghost">Cancel</button><button type="button" class="prim">Save to my circuits</button>`});
+  if(state==='today-clash') return win({cls:o.cls,title:'Save “Skills circuit” to your circuits',body:`<div class="fld"><span class="lbl">Tags — optional</span><div class="tagbox">Search your tags…</div></div><div class="tick"><i style="background:var(--olive);border-color:var(--olive)"></i><span>Also save its 4 written stations as drills, with these tags</span></div>${CIRC_SENT}<p class="err">You already have a circuit called “Skills circuit”.${fl('F05','The ticked stations were saved as drills first; the circuit was refused afterwards.')}</p>`,foot:`<button type="button" class="ghost">Cancel</button><button type="button" class="prim">Save to my circuits</button>`});
+  if(state==='untitled') return win({cls:o.cls,title:'Save to my circuits',body:field('Name','','What would you call this circuit?',mk('new','Fixes bug 1 · D4','An untitled block opens with an empty name and a prompt. Save stays off until a name is typed, so nothing (no drill, no circuit) is saved under a name that does not exist.')+fl('F04','Today the window shows “Block 3” and saves an empty name.',true))+`<div class="fld"><span class="lbl">Tags — optional</span><div class="tagbox">Search your tags…</div></div><div class="tick"><i></i><span>Also save its 4 written stations as drills, with these tags <small>— Short hops · Backhand · Double-play feeds · Fly balls</small></span></div>${CIRC_SENT}`,foot:`<button type="button" class="ghost">Cancel</button><button type="button" class="prim off">Save to my circuits</button>`});
+  if(state==='limit') return win({cls:o.cls,title:'Save to my circuits',body:field('Name','Infield rotation','')+`<p class="notewarn">You keep 60 circuits, the most a team can. Update one of yours, or retire one on the Circuits tab.${mk('new','Fixes bug 2 · D4','The limit is checked in the window, before any drill is made. Today the ticked drills are created first and the circuit is refused afterwards. Update still works at the limit, because it adds nothing.')}${fl('F05','Today this refusal comes after the ticked drills already exist.',true)}</p><div class="fld"><span class="lbl">Tags — optional</span><div class="tagbox">${tg('Fielding')}</div></div>${CIRC_SENT}`,foot:`<button type="button" class="ghost">Cancel</button><button type="button" class="prim off">Save to my circuits</button>`});
+  return win({cls:o.cls,title:'Save to my circuits',
+    body:field('Name','Skills circuit','',o.tags?mk('ask','Your call · D5','Filled in with the block’s title, which is the circuit’s name when the block was placed from it.'):'')+`<p class="notewarn">You already have a circuit called this. Saving updates it.${o.tags?mk('new','New · D1','Same rule as drills and templates: capitals and spaces aside, against your active circuits. Checked in the window, so a clash can no longer surface after the ticked drills were made (D4).')+fl('F05','Today a clash is found only after the ticked drills exist.',true):''}</p>
+      <div class="fld"><span class="lbl">Tags — optional${o.tags?mk('ask','Your call · D6','The circuit’s current tags are picked when the name matches; what is picked replaces them (D2).'):''}</span><div class="tagbox">${tg('Fielding')}${tg('Throwing')}</div></div>${tickRow}${CIRC_SENT}`,
+    foot:`<button type="button" class="ghost">Cancel</button><button type="button" class="danger">Update “Skills circuit”…</button>`});
+}
+
+/* ── 1 · today ── */
+$('t-page').innerHTML=page({blocks:[WARM,['6:10 p.m.','20 min',throwOpen({doorTag:fl('F02','Save to my drills… on a station edited just for this practice. Its name is still the drill’s name.')})],['6:30 p.m.','25 min',circOpen({door:false,provTag:fl('F03','This block came from a circuit, so it has no save door at all.')})],LIVE]});
+$('t-specs').innerHTML=`
+  <div class="spec"><h2>Save as template, with a name you already have</h2>${tplWin('today',{cls:'static'})}</div>
+  <div class="spec"><h2>Save to my drills, after Edit just for this practice</h2>${drillWin('today',{cls:'static'})}</div>
+  <div class="spec"><h2>Save to my circuits, on a block with no title</h2>${circWin('today-untitled',{cls:'static'})}</div>
+  <div class="spec"><h2>Save to my circuits, with a name you already have</h2>${circWin('today-clash',{cls:'static'})}<p class="sub">The answer to F06 is not on screen at all. A drill edited on the Drills tab changes no practice${fl('F06','Rule 3 of the drill library, 2026-08-01: the drill’s words are copied, never linked.')}.</p></div>`;
+
+/* ── 2 · template ── */
+$('tp-page').innerHTML=page({tplOpen:true,blocks:[WARM,THROW_SHUT,CIRC_SHUT,LIVE],win:tplWin('list',{tags:true})});
+$('tp-specs').innerHTML=`
+  <div class="spec"><h2>A name you already have${mk('new','New · D1','Typed, or tapped in the list. The button turns red and gains an ellipsis: a question comes next.')}</h2>${tplWin('match',{cls:'static',tags:true})}</div>
+  <div class="spec"><h2>Are you sure${mk('new','New · D1','The question, inside the window, never a pop-up. Back and Keep it leave the template as it was.')}</h2>${tplWin('confirm',{cls:'static',tags:true})}</div>
+  <div class="spec"><h2>After replacing${mk('un','Unchanged','The window closes, as a template save does today. The template is in the picker straight away.')}</h2><p class="sub">The plan is untouched, and the next “Start from a template” lists Hitting night with this practice’s shape. At 60 templates, Save’s message adds “Replace one of yours instead”.</p></div>`;
+
+/* ── 3 · drill ── */
+$('dr-page').innerHTML=page({blocks:[WARM,['6:10 p.m.','20 min',throwOpen({doorTag:mk('re','Restyled','The same door. What changed is the window it opens.')})],CIRC_SHUT,LIVE],win:drillWin('match',{tags:true})});
+$('dr-specs').innerHTML=`
+  <div class="spec"><h2>A new name saves a new drill${mk('ask','Your call · D5','The name field lets a coach keep the original and save tonight’s as its own drill.')}</h2>${drillWin('new',{cls:'static',tags:true})}</div>
+  <div class="spec"><h2>Are you sure${mk('new','New · D1 · D3','Now / After names what changes. The upcoming list names what it reaches. Past practices are named as kept.')}</h2>${drillWin('confirm',{cls:'static',tags:true})}</div>
+  <div class="spec"><h2>After Update · tonight’s station${mk('ask','Your call · D9','Recommended: tonight’s station rejoins the drill. It becomes read-only, as any placed drill is, and follows later updates like every other upcoming practice. The alternative leaves it as typed, so a later edit to the drill skips tonight.')}</h2>${throwOpen({linked:true})}</div>`;
+
+/* ── 4 · reach ── */
+const R=(take,t,s)=>`<div class="ritem ${take?'take':'keep'}"><i></i><span>${t}<small>${s}</small></span></div>`;
+$('reachmap').innerHTML=`
+  <div class="rcol"><h3>Practices that already happened${mk('new','Ruled · D3','Started before the update: keep the version they ran, in any season. Their sheet, their recap and the practice log all read true.')}</h3>${R(false,'Tue, Sep 29 · Tuesday practice','keeps the version it ran')}${R(false,'Thu, Oct 1 · Thursday practice','keeps the version it ran')}</div>
+  <div class="rcol"><h3>Practices that haven’t happened yet${mk('new','Ruled · D3','Every station still linked to the drill gets its words and tag names again. Who runs it, who’s at it, the groups and the just-for-tonight note stay.')}</h3>${R(true,'Thu, Oct 8 · Thursday practice','tonight’s station, saved from here (D9)')}${R(true,'Sat, Oct 10 · Tournament warm-up','picks it up')}${R(true,'Tue, Oct 13 · Tuesday practice','picks it up')}${R(false,'Thu, Oct 15 · Thursday practice','keeps its own: someone tapped Edit just for this practice there')}</div>
+  <div class="rcol"><h3>The library${mk('ask','Your call · D7','Recommended: a template or circuit holding the drill picks it up too, because the next practice is started from it. A club drill is never updated from a team (D12).')}</h3>${R(true,'Template · Tuesday basics','picks it up, so next start is current')}${R(true,'Circuit · Throwing ladder','its Partner throwing station picks it up')}${R(false,'Practices started from those','follow the drill only where it is still linked, like any practice')}</div>`;
+$('sheetfoot').innerHTML=`<div class="sheet"><div class="mw-h"><h4 class="mw-t">Partner throwing</h4>${xBtn}</div><div class="mw-b"><p class="hint">… tags, usually, what you’re doing, what you’re watching for, setup, equipment …</p></div><div class="mw-f" style="justify-content:space-between"><span class="hint" style="flex:1 1 220px">Saving updates the 3 upcoming practices that use it. Past practices keep theirs.${mk('ask','Your call · D8','Recommended: an edit on the Drills tab reaches upcoming practices exactly as an Update does, because it is the same drill. The line is absent when no upcoming practice uses it. The sheet keeps its explicit Save, so nothing spreads while the coach is typing.')}</span><span style="display:flex;gap:14px;align-items:center"><button type="button" class="ghost">Cancel</button><button type="button" class="prim">Save</button></span></div></div>`;
+
+/* ── 5 · circuit ── */
+$('ci-page').innerHTML=page({blocks:[WARM,THROW_SHUT,['6:30 p.m.','25 min',circOpen({doorTag:mk('ask','Your call · D11','New on a placed block. Today the door is hidden there (“it is one already”). Same words as every other block’s door; the name inside decides Update.')})],LIVE],win:circWin('match',{tags:true})});
+$('ci-specs').innerHTML=`
+  <div class="spec"><h2>Are you sure${mk('new','New · D1','The same question as a drill, without an upcoming list: a circuit update reaches the library only.')}</h2>${circWin('confirm',{cls:'static',tags:true})}</div>
+  <div class="spec"><h2>After Update${mk('un','Unchanged','The window closes. The block keeps its provenance line, which is still true: changes made here after the save stay here.')}</h2><p class="sub">The next time Skills circuit is placed, it arrives at 25 minutes with both tags. Saturday’s placed copy keeps its own.</p></div>`;
+
+/* ── 6 · bugs ── */
+$('bg-specs').innerHTML=`
+  <div class="spec"><h2>Bug 1 · before</h2>${circWin('today-untitled',{cls:'static'})}</div>
+  <div class="spec"><h2>Bug 1 · after${mk('new','D4','The name field (D5) replaces the stand-in title.')}</h2>${circWin('untitled',{cls:'static'})}</div>
+  <div class="spec"><h2>Bug 2 · a name you already have, after${mk('new','D4','The clash is found as the name is typed, so the button is already Update before anything is pressed, and no drill is made for a circuit that will be refused.')}</h2>${circWin('match',{cls:'static',tags:true})}</div>
+  <div class="spec"><h2>Bug 2 · the circuit limit, after</h2>${circWin('limit',{cls:'static'})}</div>`;
+
+/* ── 7 · phones ── */
+function phone(drawer,cap){
+  return `<figure class="phfig" style="margin:0"><div class="ph"><div class="ph-app"><strong style="color:var(--ink)">Thursday practice</strong><span>Edit</span></div><div class="ph-body">${shut('Dynamic warm-up','Whole team · from your drills')}${shut('Partner throwing','Whole team · stable base, shorter distance')}${shut('Skills circuit','4 stations · rotate every 6 min','Rotation')}</div>
+    <div class="ph-nav"><span><i></i>Overview</span><span class="on"><i></i>Season</span><span><i></i>Progress</span><span><i></i>Money</span><span><i></i>More</span></div>
+    <div class="ph-scrim"></div><div class="ph-drawer"><span class="grab"></span>${drawer}</div></div><figcaption class="phcap">${cap}</figcaption></figure>`;
+}
+$('phones').innerHTML=
+  phone(tplWin('match'),`<strong>Save as template.</strong> A drawer that covers the nav, the name already matched, your templates under it${mk('new','New · D1','Template rows are 48px tall on a phone and the drawer scrolls when a team keeps many.')}.`)+
+  phone(drillWin('confirm'),`<strong>Update a drill.</strong> The question replaces the form inside the drawer, and Back returns to it${mk('new','New · D1','Both buttons are 44px on a phone.')}.`);
+
+/* ── explanations behind every highlight ── */
+const FINDINGS={
+  F01:{t:'Save as template refuses a name you already have',now:'The window POSTs a new template. A name matching one of your active templates, capitals and spaces aside, is refused by the database’s unique index with “You already have a template called …”. Nothing offers to save over it.',fix:'A matching name turns the button into Replace, with the question inside the window. The template route’s existing PATCH takes the plan and the tags.'},
+  F02:{t:'Save to my drills refuses a name you already have',now:'After Edit just for this practice, the station still carries the drill’s name, so saving it back is refused with “You already have a drill called …”. Updating the drill means retyping it on the Drills tab.',fix:'The window gains a filled-in name. A matching name turns the button into Update, with the drill’s tags picked and a question naming the upcoming practices it reaches.'},
+  F03:{t:'A block placed from a circuit has no save door',now:'The block’s save door is hidden when the block came from a circuit (“placed from a circuit — it is one already”), so tonight’s version can never go back to the circuit.',fix:'The door shows on a placed block too. The name inside is the circuit’s, so it opens on Update.'},
+  F04:{t:'Bug 1: an untitled block cannot be saved as a circuit',now:'The window is titled “Save “Block 3” to your circuits”, but the save sends the empty title and the server answers “Give the circuit a name.” If the tick was on, its drills were made first. A retry fails the same way, because nothing in the window can give a name.',fix:'A Name field. An untitled block opens it empty with a prompt, and Save stays off until there is a name.'},
+  F05:{t:'Bug 2: the circuit is checked only after its drills are made',now:'With the tick on, each typed station is created as a drill, then the circuit is POSTed. A name you already have, or the 60-circuit limit, refuses the circuit after the drills exist.',fix:'The window checks the name and the limit first. A clash is already Update, and the limit stops Save with a line saying what to do. Drills are made only after those checks pass.'},
+  F06:{t:'A drill update never reaches a practice',now:'Rule 3 of the drill library (owner ruling 2026-08-01): the drill’s words are copied into the plan, and the drill’s id is kept only as provenance. Editing a drill changes no practice, past or upcoming.',fix:'Revised by the owner on 2026-10-02 (D3). Updating a drill rewrites its linked stations in practices that have not started, and practices that have started keep theirs.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today',ask:'Your call'};
+const GENERIC={new:'Not in the product today.',re:'Exists today and changes in name, wording or place. The note says what it was.',un:'Exists today and is drawn unchanged, so a build cannot drop it by accident.',ask:'Drawn as recommended but not ruled. The note gives the alternative.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC[k]||'')}</p><p class="sub">${esc(GENERIC[k]||'')}</p></div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan .find strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.parentElement.scrollIntoView({block:'start',behavior:'smooth'});hit.parentElement.style.background='var(--lime)';setTimeout(()=>hit.parentElement.style.background='',2200)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+/* ── Decisions — one row per ruling, appended as they happen ── */
+const DECISIONS=[
+  {id:'D1',date:'2026-10-02',ask:'Can practice templates, drills and circuits save over the one you have, with an are-you-sure?',ruling:'accepted',label:'Ruled · as drawn',why:'Owner, after the lineup save-over: “can you see about doing the same for practice plans, drills, and circuits?” Drawn to the lineup design: the name decides, the button turns into Replace or Update, and the question sits inside the window with Now / After and a red confirm. Ruled as drawn 2026-10-02 and built the same day.'},
+  {id:'D2',date:'2026-10-02',ask:'What happens to the tags when you save over?',ruling:'accepted',label:'Ruled · replaced',why:'Owner: “if you save tags when you save a template, then you replace the tags with the updated ones when you save over a template.” A practice template has carried the practice’s tags since 2026-09-14, so a replace takes the practice’s tags. Drills and circuits pick tags in the window, so those replace theirs.'},
+  {id:'D3',date:'2026-10-02',ask:'Should practices that already use a drill pick up the update?',ruling:'accepted',label:'Ruled · upcoming only',why:'Owner: “yes, existing plans should pickup the updated drill but not past ones.” This revises rule 3 of the drill library (2026-08-01, “copied, never linked”) for practices that have not started. Its reason still holds for the past: a practice that happened reads as it was run.'},
+  {id:'D4',date:'2026-10-02',ask:'Fix the two circuit-save bugs found in the research?',ruling:'accepted',label:'Ruled · fix both',why:'Owner: “fix those 2 bugs as well.” Bug 1: an untitled block saves an empty name. Bug 2: the ticked drills are made before the circuit can be refused. Both are fixed by checking in the window first (screen 6).'},
+  {id:'D5',date:'2026-10-02',ask:'Give Save to my drills and Save to my circuits a name field?',ruling:'accepted',label:'Ruled · yes',why:'Filled in with the station’s name or the block’s title. The name is what decides between new and update, it lets a coach keep the original and save tonight’s as a second drill, and it is the cure for bug 1. The alternative keeps today’s fixed title and offers Update only when the station’s own name matches; saving under a new name would mean renaming the station first. Ruled as drawn 2026-10-02 (“looks good, go ahead with your recommendations”) and built the same day.'},
+  {id:'D6',date:'2026-10-02',ask:'When the name matches, start the tags as the drill’s or circuit’s own?',ruling:'accepted',label:'Ruled · yes',why:'Under D2 the window’s tags replace the saved ones. Starting empty would wipe them on an Update that nobody meant as a re-tag. Picked only if the coach has not touched the tags yet. Ruled as drawn 2026-10-02 (“looks good, go ahead with your recommendations”) and built the same day.'},
+  {id:'D7',date:'2026-10-02',ask:'Do templates and circuits holding a drill pick up its update too?',ruling:'accepted',label:'Ruled · yes',why:'They are not a record. They are where the next practices come from, so leaving them stale places the old words again next week. Alternative: practices only. Ruled as drawn 2026-10-02 (“looks good, go ahead with your recommendations”) and built the same day.'},
+  {id:'D8',date:'2026-10-02',ask:'Does an edit on the Drills tab reach upcoming practices the same way?',ruling:'accepted',label:'Ruled · yes',why:'One drill, one rule: otherwise the same edit reaches next week from one screen and not from another. The drill sheet keeps its explicit Save and says how many upcoming practices it reaches. Ruled as drawn 2026-10-02 (“looks good, go ahead with your recommendations”) and built the same day.'},
+  {id:'D9',date:'2026-10-02',ask:'After Update, does tonight’s station rejoin the drill?',ruling:'accepted',label:'Ruled · yes',why:'Tonight is an upcoming practice too, so it should follow later updates like the rest. The cost: the station turns read-only again, one tap from Edit just for this practice. Alternative: leave it as typed. A NEW drill saved from a station still leaves the station as typed, as today. Ruled as drawn 2026-10-02 (“looks good, go ahead with your recommendations”) and built the same day.'},
+  {id:'D10',date:'2026-10-02',ask:'Should a circuit or template update reach practices already started from it?',ruling:'accepted',label:'Ruled · no',why:'A placed circuit or started template is edited freely in place: leads, groups, stations moved. Nothing records which parts are the coach’s, so a rewrite would undo their work. Drills are different because a linked station is read-only. Only the next placement or start gets the new version. Ruled as drawn 2026-10-02 (“looks good, go ahead with your recommendations”) and built the same day.'},
+  {id:'D11',date:'2026-10-02',ask:'Give a block placed from a circuit the Save to my circuits… door?',ruling:'accepted',label:'Ruled · yes',why:'It is the only way tonight’s version of a circuit can go back to it (F03). The provenance line stays and stays true. Ruled as drawn 2026-10-02 (“looks good, go ahead with your recommendations”) and built the same day.'},
+  {id:'D12',date:'2026-10-02',ask:'Club drills: can a team update one, and does a club edit reach teams’ practices?',ruling:'accepted',label:'Ruled · not now',why:'A coach cannot change the club’s set, so a name matching only a club drill saves a drill of the team’s own, as today. Whether an admin’s edit to a club drill should reach every team’s upcoming practices is a fair question under D3. It writes across teams from the admin side, so it is recommended as its own step after this one is walked. Ruled as drawn 2026-10-02 (“looks good, go ahead with your recommendations”) and built the same day.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.id)} · ${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p style="margin:0">${esc(d.why)}</p></div>`).join('');
+</script>
+<script>
+'use strict';
+/* QA walk — its own script, so a typo here cannot take the tabs or the drawings with it. */
+(function () {
+  const $q = id => document.getElementById(id);
+  const escQ = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const QA_PARTS = [
+    { id: 'W1', title: 'Replace a practice template', steps: [
+      'On UAT Test Team, open Practice plans › Practice review — next week. Save as template… opens a window with Name (the practice’s name), the sentence about what is saved, and “Your templates · tap one to replace it” listing Probe plan template with its minutes, blocks and the day it was saved.',
+      '✎ Name it “QA save-over” and press Save template. Read: the Templates tab lists QA save-over.',
+      '✎ Edit the plan: add a block titled “QA extra”, 10 min. Done editing.',
+      'Save as template… and type “qa save-over” in lower case. A line appears: “You already have a template called this. Saving replaces it.” The button is red and reads Replace “QA save-over”….',
+      'Press it. The window asks Replace “QA save-over”? with Now (one block, saved today) and After (two blocks — this practice), “Practices already started from it keep theirs.” and “This can’t be undone.” Back returns to the field with your name still there.',
+      '✎ Tap QA save-over in the list under the name: the same question. Press Replace template; the window closes.',
+      'Read: Templates tab › QA save-over now has two blocks, QA extra among them.',
+      'Phone: ⋯ › Save as template… opens a drawer that covers the bottom nav; the question replaces the form in the same drawer, and Back returns to it. Dark theme (Account › Theme): the window and the question read clearly.'
+    ] },
+    { id: 'W2', title: 'Update a drill — upcoming practices pick it up, past ones keep theirs', steps: [
+      '✎ Drills tab › New drill: “QA throws”, What you’re doing “Long throws”. Save.',
+      '✎ Schedule: add a practice for any day after Oct 8, named “QA second practice”.',
+      '✎ On Practice review — next week and on QA second practice: Edit › Add a block › a drill from your library › QA throws. Done editing on each.',
+      '✎ On UAT probe practice (Oct 1, already happened): Edit the plan › add QA throws the same way.',
+      'Drills tab › open QA throws. Above Cancel and Save: “Saving updates the 2 upcoming practices that use it. Past practices keep theirs.”',
+      '✎ Change What you’re doing to “Medium throws” and Save. Read: QA second practice’s QA throws block reads Medium throws; UAT probe practice’s still reads Long throws.',
+      '✎ On Practice review — next week: open the QA throws block › Edit just for this practice › change What you’re doing to “Short throws” › Save to my drills…. The window has Name “QA throws”, the line “You already have a drill called this. Saving updates it.”, and a red Update “QA throws”….',
+      'Press it. The question: Update “QA throws”? · Now (Medium throws) · After (Short throws) · Upcoming practices pick it up, naming QA second practice by its date · “Past practices keep the version they ran.” · “This can’t be undone.” · Update drill and Keep it.',
+      '✎ Press Update drill. The window closes and the block reads From your drills, Short throws, read-only, with Edit just for this practice back.',
+      'Read: QA second practice’s block reads Short throws; UAT probe practice’s still reads Long throws; the Drills tab’s QA throws reads Short throws.',
+      'Phone and Dark: the drill window and its question, as in W1-8.'
+    ] },
+    { id: 'W3', title: 'Circuits — save one back, and the two bugs', steps: [
+      '✎ On Practice review — next week: Edit › Add a block and leave its title empty › + Stations, and write two stations, “Short hops” and “Backhand”.',
+      'Bug 1: the block’s foot has Save to my circuits…. The window opens with an empty Name (“What would you call this circuit?”) and Save to my circuits greyed out.',
+      '✎ Type “QA circuit” and save. Read: the Circuits tab lists QA circuit with 2 stations.',
+      'Bug 2: on the same untitled block, Save to my circuits… again and type “QA circuit”. The button is already Update “QA circuit”… before anything is pressed. Tick “Also save its 2 written stations as drills”, then Cancel. Read: the Drills tab has no Short hops or Backhand drill.',
+      '✎ Add a block › From your circuits › QA circuit. The placed block says “Started from QA circuit · changes here stay here”, and its foot now has Save to my circuits….',
+      '✎ Add a third station, “Fly balls”, to the placed block › Save to my circuits…. Name “QA circuit”, red Update “QA circuit”…. Press it: Now 2 stations, After 3 stations, “Practices that already used it keep theirs. The next time you place it, it’s this version.” Press Update circuit.',
+      'Read: the Circuits tab’s QA circuit has 3 stations; the untitled block on the plan still has its 2.',
+      '✎ Clean up: retire QA circuit (Circuits tab), QA throws (Drills tab) and QA save-over (Templates tab); delete the QA blocks from Practice review — next week and UAT probe practice; delete QA second practice from the Schedule.'
+    ] }
+  ];
+  const KEY = 'saveover-qa';
+  let qa = {};
+  try { qa = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { qa = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(qa)); } catch (e) { /* no storage — this page still works */ } };
+  const counts = () => { let checked = 0, total = 0; QA_PARTS.forEach(p => p.steps.forEach((_, i) => { total++; if (qa[p.id + '-' + i]) checked++; })); return { checked, total }; };
+  const paintCount = () => { const c = counts(); $q('qaCount').textContent = 'Checked ' + c.checked + ' of ' + c.total; };
+  function draw() {
+    $q('qaParts').innerHTML = QA_PARTS.map(p => '<div class="decisionrow"><h2 style="margin:0 0 8px;font-size:17px">' + escQ(p.id) + ' · ' + escQ(p.title) + '</h2>' +
+      p.steps.map((s, i) => '<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:14px"><input type="checkbox" data-step="' + p.id + '-' + i + '" ' + (qa[p.id + '-' + i] ? 'checked' : '') + ' style="width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--olive)"><span><strong>' + (i + 1) + '.</strong> ' + escQ(s) + '</span></label>').join('') +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px">Verdict: ' +
+      ['pass', 'issue', 'call'].map(v => '<button type="button" class="button" style="min-height:40px" data-verdict="' + p.id + '" data-value="' + v + '" aria-pressed="' + (qa['verdict-' + p.id] === v) + '">' + (v === 'pass' ? 'Pass' : v === 'issue' ? 'Issue' : 'Needs a call') + (qa['verdict-' + p.id] === v ? ' ✓' : '') + '</button>').join('') + '</div>' +
+      '<label style="display:block;margin-top:10px;font-size:13px">Notes<textarea data-notes="' + p.id + '" rows="2" style="width:100%;margin-top:6px;border:1px solid var(--line2);border-radius:6px;padding:8px">' + escQ(qa['notes-' + p.id] || '') + '</textarea></label></div>').join('');
+    document.querySelectorAll('#qaParts [data-step]').forEach(el => el.addEventListener('change', () => { qa[el.dataset.step] = el.checked; save(); paintCount(); }));
+    document.querySelectorAll('#qaParts [data-verdict]').forEach(el => el.addEventListener('click', () => { qa['verdict-' + el.dataset.verdict] = el.dataset.value; save(); draw(); }));
+    document.querySelectorAll('#qaParts [data-notes]').forEach(el => el.addEventListener('input', () => { qa['notes-' + el.dataset.notes] = el.value; save(); }));
+    paintCount();
+  }
+  draw();
+  $q('buildSummary').addEventListener('click', () => {
+    const c = counts();
+    const lines = ['Save over a practice template, a drill or a circuit — QA summary', 'Checked ' + c.checked + ' of ' + c.total, ''];
+    QA_PARTS.forEach(p => {
+      lines.push(p.id + ' · ' + p.title + ' — verdict: ' + (qa['verdict-' + p.id] || 'unset'));
+      p.steps.forEach((s, i) => lines.push('  [' + (qa[p.id + '-' + i] ? 'x' : ' ') + '] ' + (i + 1) + '. ' + s));
+      if (qa['notes-' + p.id]) lines.push('  Notes: ' + qa['notes-' + p.id]);
+      lines.push('');
+    });
+    const out = $q('summaryOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select();
+  });
+})();
+</script>

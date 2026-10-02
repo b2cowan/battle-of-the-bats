@@ -20,11 +20,15 @@
  *     is exactly when `blockRotates` starts returning true. The carousel is assembled by picking —
  *     there is no second kind of block anywhere in the model.
  *
- *  3. **THE DRILL'S WORDS ARE COPIED, NEVER LINKED** (owner ruling 2026-08-01). `drillToStation`
- *     copies every field into the plan's jsonb and keeps the drill id as provenance only. A plan
- *     therefore never depends on this table to render: editing a drill later cannot rewrite a
- *     practice already written, a retired drill keeps reading for ever, and there is no
- *     dangling-id class of bug of the kind §10.3 refused for staff tags.
+ *  3. **THE DRILL'S WORDS ARE COPIED — AND RE-COPIED INTO WHAT HASN'T HAPPENED YET** (owner rulings
+ *     2026-08-01, revised 2026-10-02 D3). `drillToStation` copies every field into the plan's jsonb
+ *     and keeps the drill id, so a plan never depends on this table to render: a retired drill keeps
+ *     reading for ever, and there is no dangling-id class of bug of the kind §10.3 refused for staff
+ *     tags. What changed on 10-02 is the reach of a SAVE: saving a drill re-copies it into every
+ *     station still linked to it in this team's practices that have NOT started yet, and in its
+ *     templates and circuits (`refreshPlanFromDrill` here; the walk in `rep-drill-refresh.ts`). A
+ *     practice that has started keeps the version it ran — "existing plans should pick up the
+ *     updated drill but not past ones" — so a past plan stays honest about what was coached.
  *
  *  4. **NOTHING IS SEEDED, AND NO CATEGORY IS SUPPLIED.** Every drill and every category is
  *     coach-typed. "Hitting / Fielding / Pitching" is one sport talking to a platform that serves
@@ -34,7 +38,7 @@
  * orders or compares a child, and the library is sorted by NAME — never by use — so the product
  * never quietly tells a coach which of their own ideas is best.
  */
-import { newPracticePlanId, type PracticePlanBlock, type PracticeStation } from './rep-practice-plan';
+import { newPracticePlanId, type PracticePlan, type PracticePlanBlock, type PracticeStation } from './rep-practice-plan';
 import type { RepTeamDrill } from './types';
 
 export type { RepTeamDrill, RepTeamDrillWithUsage } from './types';
@@ -292,6 +296,112 @@ export function blockToDrillInput(
  */
 export function stationIsFromDrill(station: Pick<PracticeStation, 'drillId'>): boolean {
   return !!station.drillId;
+}
+
+/**
+ * The DRILL HALF of a station — every field `drillToStation` writes, and the half the editor renders
+ * read-only while the station stays linked. Everything else on a station (its id, who runs it, who
+ * is at it, its groups, the rotation note, "just for tonight") belongs to the practice.
+ */
+const DRILL_HALF: readonly (keyof PracticeStation)[] = [
+  'name', 'description', 'goal', 'coachingPoints', 'setup', 'equipment', 'equipmentTagIds', 'drillId', 'drillTags',
+];
+
+/**
+ * A station re-copied from its drill: the drill half replaced wholesale, the practice half kept.
+ *
+ * ⚠ Replaced WHOLESALE, never merged: a field the drill no longer has (coaching points emptied, kit
+ * removed) must leave the station too, so the old half is cleared before the drill's is laid on.
+ * The station keeps its own id — the rotation grid and every "who starts here" read key on it.
+ *
+ * Also what relinks a station: a detached station saved back over its drill becomes linked again.
+ */
+export function refreshStationFromDrill(station: PracticeStation, drill: RepTeamDrill): PracticeStation {
+  const practiceHalf: PracticeStation = { ...station };
+  for (const key of DRILL_HALF) delete practiceHalf[key];
+  return { ...practiceHalf, ...drillToStation(drill, () => station.id) };
+}
+
+/**
+ * Re-copy a drill into every station of ONE block still linked to it (owner ruling D3, 2026-10-02).
+ *
+ * A block whose only station is the drill, and whose title is still the drill's PREVIOUS name, takes
+ * the new name too: placing a drill titles its block with the drill's name, so a renamed drill would
+ * otherwise leave every such block wearing the old one. A title the coach changed is theirs.
+ *
+ * Returns the same block when nothing changed, so a caller can skip a write.
+ */
+export function refreshBlockFromDrill(
+  block: PracticePlanBlock,
+  drill: RepTeamDrill,
+  previousName?: string | null,
+): { block: PracticePlanBlock; changed: boolean } {
+  const stations = block.stations;
+  if (!stations?.some(s => s.drillId === drill.id)) return { block, changed: false };
+  let changed = false;
+  const next = stations.map(s => {
+    if (s.drillId !== drill.id) return s;
+    const fresh = refreshStationFromDrill(s, drill);
+    // Only the drill half can move, so only it is compared — never key order or the practice's half.
+    if (DRILL_HALF.every(k => JSON.stringify(fresh[k]) === JSON.stringify(s[k]))) return s;
+    changed = true;
+    return fresh;
+  });
+  const followsRename = stations.length === 1 && previousName != null
+    && previousName.trim() !== drill.name.trim() && block.title.trim() === previousName.trim();
+  if (!changed && !followsRename) return { block, changed: false };
+  return {
+    block: { ...block, ...(followsRename ? { title: drill.name } : {}), stations: next },
+    changed: true,
+  };
+}
+
+/** `refreshBlockFromDrill` over a whole plan — a practice's or a template's. */
+export function refreshPlanFromDrill(
+  plan: PracticePlan,
+  drill: RepTeamDrill,
+  previousName?: string | null,
+): { plan: PracticePlan; changed: boolean } {
+  let changed = false;
+  const blocks = plan.blocks.map(b => {
+    const r = refreshBlockFromDrill(b, drill, previousName);
+    if (r.changed) changed = true;
+    return r.block;
+  });
+  return changed ? { plan: { ...plan, blocks }, changed } : { plan, changed };
+}
+
+/** Does any station in this block still carry the drill? (What "picks it up" counts.) */
+export function blockUsesDrill(block: Pick<PracticePlanBlock, 'stations'>, drillId: string): boolean {
+  return !!block.stations?.some(s => s.drillId === drillId);
+}
+
+/**
+ * What saving a drill would reach (owner ruling D3) — the save window's "Upcoming practices pick it
+ * up" list and the drill sheet's count. Answered by `getDrillReach` (`rep-drill-refresh.ts`).
+ */
+export interface DrillReach {
+  practices: { eventId: string; name: string; startsAt: string }[];
+  templates: string[];
+  circuits: string[];
+}
+
+/**
+ * "You keep 60 circuits, the most a team can. Update one of yours, or retire one on the Circuits tab."
+ * — what a save window says instead of letting a NEW item past the team's limit (save-over D4).
+ * ONE sentence for templates, drills and circuits, so the three can't drift apart.
+ */
+export function libraryLimitLine(max: number, noun: string, verb: 'Replace' | 'Update', tab: string): string {
+  return `You keep ${max} ${noun}, the most a team can. ${verb} one of yours, or retire one on the ${tab} tab.`;
+}
+
+/** The library item a typed name already names, or null — the database's own rule (migs 218 / 221 /
+ *  302): capitals and the outer spaces aside, and only among ACTIVE items, because a retired name is
+ *  free to reuse. What turns a save window's button from Save into Replace or Update. */
+export function libraryNameMatch<T extends { name: string; isActive?: boolean }>(items: readonly T[], name: string): T | null {
+  const key = name.trim().toLowerCase();
+  if (!key) return null;
+  return items.find(i => i.isActive !== false && i.name.trim().toLowerCase() === key) ?? null;
 }
 
 /** The minimum an item must expose to be tag-filtered: drills, plan templates and tagged plans. */

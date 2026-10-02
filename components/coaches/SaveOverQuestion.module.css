@@ -1,0 +1,67 @@
+/* SAVE OVER — the question every library save asks before it overwrites one you have (see
+   SaveOverQuestion.tsx). Moved here from the lineup's Save as template when the practice page's three
+   saves learned the same question (2026-10-02), so all four windows draw it one way. */
+
+/* The line that says a name already exists, and the warning on the question — the portal's white
+   callout with a coloured edge (tinted panels are retired), in the warning ink. */
+.warn {
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+  border-left: 3px solid var(--warning);
+  border-radius: 0 6px 6px 0;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: var(--type-support);
+  line-height: 1.45;
+}
+
+.back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  min-height: 32px;
+  padding: 0.2rem 0.4rem 0.2rem 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+  font-weight: 700;
+  cursor: pointer;
+}
+.back:hover:not(:disabled) { color: var(--text-primary); }
+@media (max-width: 900px) {
+  .back { min-height: var(--tap-min, 44px); }
+}
+.question { display: flex; flex-direction: column; gap: 0.15rem; }
+.question strong { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
+.question span { font-size: var(--type-support); color: var(--text-secondary); }
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  font-size: var(--type-support);
+}
+.facts dt { font-weight: 650; color: var(--text-tertiary); }
+.facts dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+@media (max-width: 900px) {
+  .actions > button { min-height: var(--tap-min, 44px); }
+}
+
+/* "Your templates · tap one to replace it" — the head and the well the rows scroll in (SaveOverList). */
+.listHead {
+  margin: 0.35rem 0 0;
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.list {
+  max-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-top: 1px solid var(--border-2);
+}

@@ -1,10 +1,11 @@
 'use client';
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
+import SaveOverQuestion, { SaveOverList, SaveOverMatchLine } from '@/components/coaches/SaveOverQuestion';
 import { formatInOrgZone } from '@/lib/timezone';
 import { lineupModeLabel } from '@/lib/lineup-grid';
+import { libraryNameMatch } from '@/lib/rep-drills';
 import type { SportPack } from '@/lib/sports';
 import type { RepLineupMode, RepTeamLineupTemplate } from '@/lib/types';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -48,7 +49,7 @@ export default function LineupSaveTemplate({
   const describe = (mode: RepLineupMode, innings: number, players: number) =>
     `${lineupModeLabel(mode)} · ${innings} ${innings === 1 ? period : periods} · ${players} player${players === 1 ? '' : 's'}`;
   const savedOn = (t: RepTeamLineupTemplate) => `saved ${formatInOrgZone(t.updatedAt, { month: 'short', day: 'numeric' })}`;
-  const match = templates.find(t => t.name.trim().toLowerCase() === name.trim().toLowerCase()) ?? null;
+  const match = libraryNameMatch(templates, name);
   const newestFirst = [...templates].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 
   const backToName = () => { setReplacing(null); setError(''); };
@@ -70,25 +71,14 @@ export default function LineupSaveTemplate({
   if (replacing) {
     return (
       <div className={shared.lineupTemplateSection}>
-        <button type="button" className={styles.back} onClick={backToName} disabled={busy}>
-          <ChevronLeft size={17} aria-hidden /> Back
-        </button>
-        <div className={styles.question}>
-          <strong>Replace “{replacing.name}”?</strong>
-          <span>Its order, positions, format and {periods} become this lineup’s.</span>
-        </div>
-        <dl className={styles.facts}>
-          <dt>Now</dt><dd>{describe(replacing.lineupMode, replacing.inningCount, replacing.entries.length)} · {savedOn(replacing)}</dd>
-          <dt>After</dt><dd>{describe(shape.lineupMode, shape.inningCount, shape.players)} — this lineup</dd>
-        </dl>
-        <p className={styles.warn}>This can’t be undone. Undo takes back changes to the lineup, not to a saved template.</p>
-        <div className={styles.actions}>
-          <button type="button" className={shared.btnDanger} disabled={busy} onClick={() => void run(replacing)}>
-            {busy ? 'Replacing…' : 'Replace template'}
-          </button>
-          <button type="button" className={shared.btnSecondary} disabled={busy} onClick={backToName}>Keep it</button>
-        </div>
-        {error && <p className={shared.errorText}>{error}</p>}
+        <SaveOverQuestion
+          question={`Replace “${replacing.name}”?`}
+          sub={`Its order, positions, format and ${periods} become this lineup’s.`}
+          now={`${describe(replacing.lineupMode, replacing.inningCount, replacing.entries.length)} · ${savedOn(replacing)}`}
+          after={`${describe(shape.lineupMode, shape.inningCount, shape.players)} — this lineup`}
+          warning="This can’t be undone. Undo takes back changes to the lineup, not to a saved template."
+          confirmLabel="Replace template" busyLabel="Replacing…" busy={busy} error={error}
+          onConfirm={() => void run(replacing)} onBack={backToName} />
       </div>
     );
   }
@@ -99,7 +89,7 @@ export default function LineupSaveTemplate({
       <input className={shared.input} value={name} onChange={e => { setName(e.target.value); setError(''); }}
         placeholder="e.g. Gold medal game" maxLength={80} aria-label="Template name" />
       {match
-        ? <p className={styles.warn}>You already have a template called this. Saving replaces it.</p>
+        ? <SaveOverMatchLine>You already have a template called this. Saving replaces it.</SaveOverMatchLine>
         : <p className={shared.lineupAutoNote}>Saves this lineup’s order, positions, format and {periods}. Templates live on the Lineups page’s Templates tab.</p>}
       {hasCallUps && <p className={shared.lineupAutoNote}>Call-ups aren’t saved in templates — a template is your own roster’s shape.</p>}
       {match ? (
@@ -111,18 +101,15 @@ export default function LineupSaveTemplate({
       )}
       {error && <p className={shared.errorText}>{error}</p>}
       {newestFirst.length > 0 && (
-        <>
-          <p className={styles.listHead}>Your templates · tap one to replace it</p>
-          <div className={styles.list}>
-            <CoachRowList inset label="Your templates">
-              {newestFirst.map(t => (
-                <CoachRow key={t.id} as="button" title={t.name} door="chevron"
-                  caption={`${describe(t.lineupMode, t.inningCount, t.entries.length)} · ${savedOn(t)}`}
-                  onClick={() => { setError(''); setReplacing(t); }} />
-              ))}
-            </CoachRowList>
-          </div>
-        </>
+        <SaveOverList label="Your templates · tap one to replace it" bleedClassName={styles.bleed}>
+          <CoachRowList inset label="Your templates">
+            {newestFirst.map(t => (
+              <CoachRow key={t.id} as="button" title={t.name} door="chevron"
+                caption={`${describe(t.lineupMode, t.inningCount, t.entries.length)} · ${savedOn(t)}`}
+                onClick={() => { setError(''); setReplacing(t); }} />
+            ))}
+          </CoachRowList>
+        </SaveOverList>
       )}
     </form>
   );

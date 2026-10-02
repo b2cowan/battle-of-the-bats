@@ -1550,11 +1550,12 @@ export interface PracticeStation {
    * PROVENANCE ONLY — which library drill this station was picked from.
    *
    * ⚠ **Nothing renders from this id.** Every word above is COPIED into the plan when the drill is
-   * added, so a plan never depends on `rep_team_drills` to display: editing a drill later cannot
-   * rewrite a practice already written, a retired drill keeps reading for ever, and there is no
-   * dangling-id failure of the kind §10.3 refused for staff tags. The id answers "used 8x", and
-   * it is CLEARED the moment a coach detaches to edit — at which point it is no longer the same
-   * drill, which is the entire point of the read-only rule.
+   * added, so a plan never depends on `rep_team_drills` to display: a retired drill keeps reading
+   * for ever, and there is no dangling-id failure of the kind §10.3 refused for staff tags. The id
+   * answers "used 8x" — and, since save-over D3 (2026-10-02), it is what a saved drill is RE-COPIED
+   * through into practices that haven't started (`refreshPlanFromDrill`); one that has started keeps
+   * what it ran. It is CLEARED the moment a coach detaches to edit — at which point it is no longer
+   * the same drill, which is the entire point of the read-only rule.
    */
   drillId?: string;
   /**

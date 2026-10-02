@@ -93,9 +93,16 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
   const [showRetired, setShowRetired] = useState(false);
 
   /** The sheet: a new drill (`id: null`), or one row's — with whether it is retired, for the foot. */
-  const [editing, setEditing] = useState<{ id: string | null; draft: DrillInput; isActive: boolean; shared: boolean } | null>(null);
+  /** `touched` — the coach has changed something, which is when "Saving updates N…" is worth asking about. */
+  const [editing, setEditing] = useState<{ id: string | null; draft: DrillInput; isActive: boolean; shared: boolean; touched?: boolean } | null>(null);
   const [formBusy, setFormBusy] = useState(false);
   const [formError, setFormError] = useState('');
+  /**
+   * How many upcoming practices the open drill sits in (save-over D8, 2026-10-02) — an edit saved
+   * here reaches them, exactly as an Update from a practice does, so the sheet says so beside Save.
+   * Keyed by the drill it answers for; a late answer for a sheet since closed or changed is ignored.
+   */
+  const [reach, setReach] = useState<{ id: string; practices: number } | null>(null);
 
 
   const load = useCallback(async () => {
@@ -118,6 +125,18 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
     readUrl: `${apiBase}/past-seasons`, rowsKey: 'drills', createUrl: apiBase, bodyOf: row => row.drill, onAdded: load, noun: 'drill',
   });
   useOverlayOpen(!!editing || importer.open);
+  // Read only once the coach has edited — opening a drill to look at it, or to retire it, asks nothing.
+  const openTeamDrillId = editing && editing.id && !editing.shared && editing.isActive && editing.touched ? editing.id : null;
+  useEffect(() => {
+    if (!openTeamDrillId) return;
+    let live = true;
+    void fetch(`${apiBase}/${openTeamDrillId}`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => { if (live && json?.reach) setReach({ id: openTeamDrillId, practices: json.reach.practices.length }); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [apiBase, openTeamDrillId]);
+  const reachCount = reach && reach.id === openTeamDrillId ? reach.practices : 0;
 
   // Memoised because `?? []` mints a NEW array on every render, which would make every memo below
   // it recompute on every keystroke in the search box.
@@ -157,7 +176,13 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editing.draft),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save that drill.');
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        // The drill saved but its upcoming practices fell short (save-over D3): the list shows the
+        // saved drill now, and the sheet stays open saying "Save it again to finish".
+        if (json.drill) void load();
+        throw new Error(json.error ?? 'Could not save that drill.');
+      }
       setEditing(null);
       await load();
     } catch (e) {
@@ -334,11 +359,14 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
           onEquipmentTagsChanged={reloadEquipmentTags}
           busy={formBusy}
           error={formError}
-          onChange={draft => setEditing(e => (e ? { ...e, draft } : e))}
+          onChange={draft => setEditing(e => (e ? { ...e, draft, touched: true } : e))}
           onSubmit={saveDrill}
           onClose={() => setEditing(null)}
           onRetire={canWrite && editing.id && !editing.shared ? () => setActive(editing.id!, false) : undefined}
           onRestore={canWrite && editing.id && !editing.shared ? () => setActive(editing.id!, true) : undefined}
+          saveNote={reachCount > 0
+            ? `Saving updates the ${reachCount === 1 ? 'upcoming practice' : `${reachCount} upcoming practices`} that use${reachCount === 1 ? 's' : ''} it. Past practices keep theirs.`
+            : null}
         />
       )}
 

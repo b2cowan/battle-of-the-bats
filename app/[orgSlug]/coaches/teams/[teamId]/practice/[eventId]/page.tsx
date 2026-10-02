@@ -21,7 +21,7 @@ import { useMinuteClock } from '@/lib/use-minute-clock';
 import { practiceHasPlan, practiceIsRecord, practicePlanState, practiceStarted } from '@/lib/practice-state';
 import {
   computeBlockClocks, copyPracticePlanForReuse, emptyPracticePlan, groupingsFromPractices, isPracticePlanEmpty, levelsForStaffTags,
-  newPracticePlanId, practicePlanLevels,
+  newPracticePlanId, practicePlanLevels, tagNamesById,
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
 import { HowItWent, NoPlanRecord, PracticeScheduleLink, PracticeWhenDoor, PracticeWhenLine } from '@/components/coaches/PracticeSheetChrome';
@@ -29,16 +29,19 @@ import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import {
-  MAX_TEMPLATE_NAME_LEN, templateBlocksLine, templateShapeLabel, templateToPlan,
+  MAX_TEMPLATE_NAME_LEN, MAX_TEMPLATES_PER_TEAM, templateBlocksLine, templateShapeLabel, templateToPlan,
 } from '@/lib/rep-plan-templates';
-import { filterTagged } from '@/lib/rep-drills';
+import { filterTagged, libraryLimitLine, libraryNameMatch } from '@/lib/rep-drills';
+import { useBackStep } from '@/components/coaches/useBackStep';
+import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
+import SaveOverQuestion, { SaveOverList, SaveOverMatchLine } from '@/components/coaches/SaveOverQuestion';
 import { practicePlansHref } from '@/lib/practice-plans-address';
 import { useFocusTags, useStaffTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
 import { FOCUS_TAG_MANAGE, STAFF_TAG_MANAGE, EQUIPMENT_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import PracticePlanEditor, {
   type PracticeFocusGoal, type PracticeRosterPlayer,
 } from '../_PracticePlanEditor';
-import type { DrillInput, RepTeamDrill } from '@/lib/rep-drills';
+import type { DrillInput, DrillReach, RepTeamDrill } from '@/lib/rep-drills';
 import type { CircuitInput, RepTeamCircuit } from '@/lib/rep-circuits';
 import type { PracticeWeekScoutingBridge } from '@/lib/coach-opponent-nudge';
 import type { PickablePerson, PickableTag } from '@/components/coaches/TagPicker';
@@ -76,6 +79,8 @@ type PlanTemplateOption = {
   name: string;
   plan: PracticePlan;
   tags: { id: string; name: string }[];
+  /** When it was last saved — Save as template's list and its Replace question date it by this. */
+  updatedAt: string;
 };
 
 type LoadState = {
@@ -580,6 +585,58 @@ export default function CoachPracticePlanPage({
   }
 
   /**
+   * SAVE OVER a drill (owner rulings D1 · D3, 2026-10-02) — "Update “X”…" in Save to my drills.
+   * The server saves it and re-copies it into the team's practices that haven't started, its
+   * templates and its circuits; the editor follows on this plan (`followDrill`). When that walk
+   * fell short the drill is still saved, so it is folded in AND the coach is told to save again.
+   */
+  async function updateDrill(drillId: string, input: DrillInput): Promise<{ ok: boolean; error?: string; drill?: RepTeamDrill }> {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/drills/${drillId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+      });
+      const json = await res.json().catch(() => ({}));
+      const saved: RepTeamDrill | undefined = json.drill;
+      if (saved) setData(d => (d ? { ...d, drills: d.drills.map(x => (x.id === saved.id ? saved : x)) } : d));
+      if (!res.ok) return { ok: false, error: json.error ?? 'Could not update that drill.', drill: saved };
+      return { ok: true, drill: saved };
+    } catch (e) {
+      return { ok: false, error: errorMessage(e, 'Could not update that drill.') };
+    }
+  }
+
+  /** SAVE OVER a circuit (D1) — the library copy only; no placed block changes (D10). */
+  async function updateCircuit(circuitId: string, input: { tagIds: string[]; block: PracticePlan['blocks'][number] }): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/circuits/${circuitId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: json.error ?? 'Could not update that circuit.' };
+      setData(d => (d ? { ...d, circuits: d.circuits.map(c => (c.id === circuitId ? json.circuit : c)) } : d));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: errorMessage(e, 'Could not update that circuit.') };
+    }
+  }
+
+  /**
+   * What updating a drill would reach — the question's "Upcoming practices pick it up" (D3). This
+   * practice is left out of the list: the coach is looking at it, and the editor follows it itself.
+   * Null when the read fails, which the question words generically rather than blocking the save.
+   */
+  const loadDrillReach = useCallback(async (drillId: string): Promise<DrillReach | null> => {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/drills/${drillId}`);
+      if (!res.ok) return null;
+      const { reach } = (await res.json()) as { reach: DrillReach };
+      return { ...reach, practices: reach.practices.filter(p => p.eventId !== eventId) };
+    } catch {
+      return null;
+    }
+  }, [orgSlug, teamId, eventId]);
+
+  /**
    * ⚠⚠ **THE PAST-SEASON ROWS ARE CACHED, AND THE CACHE BELONGS TO ONE TEAM** (`/review` 2026-08-16).
    *
    * This page does NOT unmount when only the `[teamId]` / `[eventId]` segment changes — App Router
@@ -745,24 +802,42 @@ export default function CoachPracticePlanPage({
    * ⚠ It COPIES. Tonight's plan is left exactly as it is and does NOT become template-backed, so
    * nothing about the practice changes under the coach's hands the moment they save it. Editing
    * this plan later cannot change the template, and editing the template cannot change this plan.
+   *
+   * ⚖ A name the team already has REPLACES that template (save-over D1, 2026-10-02): the plan's
+   * shape and its tags — this practice's, which have travelled with a template since 2026-09-14 (D2)
+   * — overwrite it through the template route's own PATCH. Practices already started from it keep
+   * theirs: a started plan is a copy.
    */
-  async function createTemplate(name: string): Promise<{ ok: boolean; error?: string }> {
+  async function saveTemplate(name: string, replace: PlanTemplateOption | null): Promise<{ ok: boolean; error?: string }> {
+    const fallback = replace ? 'Could not replace that template.' : 'Could not save that template.';
     try {
       // The practice's own tags travel with it, unasked (owner ruling 2026-09-14): the dialog
       // used to re-ask them pre-filled, which was the same question twice — the Templates room
       // is where a template's tags are edited when one should read broader than tonight.
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/plan-templates`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, tagIds: planTagIds, plan }),
-      });
+      const res = replace
+        ? await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/plan-templates/${replace.id}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tagIds: planTagIds, plan }),
+        })
+        : await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/plan-templates`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, tagIds: planTagIds, plan }),
+        });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) return { ok: false, error: json.error ?? 'Could not save that template.' };
+      if (!res.ok) return { ok: false, error: json.error ?? fallback };
       // Fold it into the picker immediately — a coach who saves one and then wonders where it
       // went should find it there, without a reload they have no reason to expect.
-      setData(d => (d ? { ...d, templates: [...d.templates, json.template] } : d));
+      const saved: PlanTemplateOption = {
+        id: json.template.id, name: json.template.name, plan: json.template.plan,
+        tags: json.template.tags ?? [], updatedAt: json.template.updatedAt,
+      };
+      setData(d => (d ? {
+        ...d,
+        templates: replace ? d.templates.map(t => (t.id === replace.id ? saved : t)) : [...d.templates, saved],
+      } : d));
       return { ok: true };
     } catch (e) {
-      return { ok: false, error: errorMessage(e, 'Could not save that template.') };
+      return { ok: false, error: errorMessage(e, fallback) };
     }
   }
 
@@ -1398,6 +1473,9 @@ export default function CoachPracticePlanPage({
                   // Every writing hook rides on `writing` — a writer on a live practice, or one who
                   // opened Edit the plan — so a record mounts the same editor with nothing to press.
                   onCreateCircuit={writing ? createCircuit : undefined}
+                  onUpdateCircuit={writing ? updateCircuit : undefined}
+                  onUpdateDrill={writing ? updateDrill : undefined}
+                  loadDrillReach={writing ? loadDrillReach : undefined}
                   library={writing ? { canDock, docked: isDocked, onDock: dock, panelHost, circuitsHref: practicePlansHref(base, 'circuits') } : undefined}
                   // Absent for a viewer who can't write drills, which removes "Save to my drills…"
                   // entirely rather than offering a control that only exists to refuse.
@@ -1580,12 +1658,20 @@ export default function CoachPracticePlanPage({
       {saveTemplateOpen && (
         <SaveAsTemplateDialog
           defaultName={event?.name ?? ''}
-          onSave={createTemplate}
+          templates={data?.templates ?? []}
+          after={`${templateShapeLabel(plan)}${tagNamesLine(planTagIds, focusTags)} — this practice`}
+          onSave={saveTemplate}
           onClose={() => setSaveTemplateOpen(false)}
         />
       )}
     </div>
   );
+}
+
+/** " · Hitting, Bunting" — tag names after a shape line, or nothing when there are none. */
+function tagNamesLine(ids: readonly string[], vocabulary: readonly { id: string; name: string }[]): string {
+  const names = tagNamesById(ids, vocabulary);
+  return names.length ? ` · ${names.join(', ')}` : '';
 }
 
 /**
@@ -1597,18 +1683,27 @@ export default function CoachPracticePlanPage({
  * mid-typing. Same codebase, opposite rules — the distinguishing fact is whether a human pressed
  * a button.
  *
+ * ⚖ **THE NAME DECIDES** (save-over D1, 2026-10-02 — the lineup builder's window, applied). A name
+ * the team already has turns Save into "Replace “X”…", and the team's templates are listed under
+ * the field, newest first; tapping one goes straight to the question. The question is a second view
+ * INSIDE this window (`SaveOverQuestion`), never a pop-up, with its own Back step.
+ *
  * ⚠ At MODULE level, never inside the page's render body: a component declared in a render body is
  * a new type on every render, so React remounts its subtree and this form would lose focus on
  * every keystroke.
  */
 function SaveAsTemplateDialog({
-  defaultName, onSave, onClose,
+  defaultName, templates, after, onSave, onClose,
 }: {
   defaultName: string;
-  onSave: (name: string) => Promise<{ ok: boolean; error?: string }>;
+  templates: PlanTemplateOption[];
+  /** This practice as the template would hold it — the question's After line. */
+  after: string;
+  onSave: (name: string, replace: PlanTemplateOption | null) => Promise<{ ok: boolean; error?: string }>;
   onClose: () => void;
 }) {
   const [name, setName] = useState(defaultName);
+  const [replacing, setReplacing] = useState<PlanTemplateOption | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   /* The dialog floor (stage 2, D9), busy-gated: Escape closes, never mid-save; the name field's
@@ -1616,14 +1711,26 @@ function SaveAsTemplateDialog({
      took it). */
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogFloor(true, panelRef, { onClose, busy });
+  const backToName = () => { setReplacing(null); setError(''); };
+  useBackStep(!!replacing, backToName);
 
-  async function submit() {
-    if (!name.trim() || busy) return;
+  const match = libraryNameMatch(templates, name);
+  const atLimit = !match && templates.length >= MAX_TEMPLATES_PER_TEAM;
+  const newestFirst = [...templates].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+  const savedOn = (t: PlanTemplateOption) => (t.updatedAt ? ` · saved ${formatInOrgZone(t.updatedAt, { month: 'short', day: 'numeric' })}` : '');
+  const describe = (t: PlanTemplateOption) => `${templateShapeLabel(t.plan)}${tagNamesLine(t.tags.map(x => x.id), t.tags)}${savedOn(t)}`;
+
+  async function run(replace: PlanTemplateOption | null) {
+    if (busy || (!replace && !name.trim())) return;
     setBusy(true); setError('');
-    const result = await onSave(name.trim());
+    const result = await onSave(replace ? replace.name : name.trim(), replace);
     setBusy(false);
     if (!result.ok) { setError(result.error ?? 'Could not save that template.'); return; }
     onClose();
+  }
+  function submit() {
+    if (match) { setError(''); setReplacing(match); return; }
+    if (!atLimit) void run(null);
   }
 
   return (
@@ -1632,36 +1739,66 @@ function SaveAsTemplateDialog({
         aria-busy={busy || undefined} className={`${styles.modal} ${styles.modalScrollBody}`}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>Save as template</h3>
-          <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>
+          <button type="button" className={styles.modalCloseBtn} aria-label="Close" disabled={busy} onClick={onClose}>
             <X size={18} />
           </button>
         </div>
-        <div className={styles.ppDrillWrite}>
-          <label className={styles.ppField}>
-            <span className={styles.ppFieldLabel}>Name</span>
-            <input className={styles.input} value={name} maxLength={MAX_TEMPLATE_NAME_LEN} autoFocus
-              placeholder="What would you call this practice?"
-              onChange={e => setName(e.target.value)} />
-          </label>
-
-          {/* ⚠ Says what does NOT happen, on purpose. A coach saving a template mid-plan needs to
-              know tonight is untouched and that later edits won't leak either way. */}
-          <p className={styles.formHint}>
-            Saves the blocks, stations, timings and what this practice is about, as they are now.{' '}
-            <strong>It does not change tonight&apos;s practice</strong>, and editing this plan later
-            won&apos;t change the template. Players and staff aren&apos;t saved — the practice
-            supplies those. You can change the template&apos;s name and tags on the Templates tab.
-          </p>
-
-          {error && <p className={styles.errorText} role="alert">{error}</p>}
-
-          <div className={styles.modalFooter}>
-            <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-            <button type="button" className={styles.btnPrimary} disabled={busy || !name.trim()} onClick={submit}>
-              {busy ? 'Saving…' : 'Save template'}
-            </button>
+        {replacing ? (
+          <div className={styles.ppDrillWrite}>
+            <SaveOverQuestion
+              question={`Replace “${replacing.name}”?`}
+              sub="Its blocks, stations, timings, what it’s about and its tags become this practice’s."
+              now={describe(replacing)} after={after}
+              confirmLabel="Replace template" busyLabel="Replacing…" busy={busy} error={error}
+              onConfirm={() => void run(replacing)} onBack={backToName}>
+              <p className={styles.formHint}>Practices already started from it keep theirs.</p>
+            </SaveOverQuestion>
           </div>
-        </div>
+        ) : (
+          <form className={styles.ppDrillWrite} onSubmit={e => { e.preventDefault(); submit(); }}>
+            <label className={styles.ppField}>
+              <span className={styles.ppFieldLabel}>Name</span>
+              <input className={styles.input} value={name} maxLength={MAX_TEMPLATE_NAME_LEN} autoFocus
+                placeholder="What would you call this practice?"
+                onChange={e => { setName(e.target.value); setError(''); }} />
+            </label>
+            {match && <SaveOverMatchLine>You already have a template called this. Saving replaces it.</SaveOverMatchLine>}
+            {atLimit && <SaveOverMatchLine>{libraryLimitLine(MAX_TEMPLATES_PER_TEAM, 'templates', 'Replace', 'Templates')}</SaveOverMatchLine>}
+
+            {/* ⚠ Says what does NOT happen, on purpose. A coach saving a template mid-plan needs to
+                know tonight is untouched and that later edits won't leak either way. */}
+            <p className={styles.formHint}>
+              Saves the blocks, stations, timings and what this practice is about, as they are now.{' '}
+              <strong>It does not change tonight&apos;s practice</strong>, and editing this plan later
+              won&apos;t change the template. Players and staff aren&apos;t saved — the practice
+              supplies those. You can change the template&apos;s name and tags on the Templates tab.
+            </p>
+
+            {error && <p className={styles.errorText} role="alert">{error}</p>}
+
+            {newestFirst.length > 0 && (
+              <SaveOverList label="Your templates · tap one to replace it">
+                <CoachRowList inset label="Your templates">
+                  {newestFirst.map(t => (
+                    <CoachRow key={t.id} as="button" title={t.name} door="chevron" caption={describe(t)}
+                      onClick={() => { setName(t.name); setError(''); setReplacing(t); }} />
+                  ))}
+                </CoachRowList>
+              </SaveOverList>
+            )}
+
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
+              {match ? (
+                <button type="submit" className={styles.btnDanger}>Replace “{match.name}”…</button>
+              ) : (
+                <button type="submit" className={styles.btnPrimary} disabled={busy || !name.trim() || atLimit}>
+                  {busy ? 'Saving…' : 'Save template'}
+                </button>
+              )}
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

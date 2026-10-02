@@ -724,7 +724,7 @@ describe('D2 — the tool row', () => {
     const save = readCode('components/coaches/LineupSaveTemplate.tsx');
     // The name decides: a name the team already has (capitals and spaces aside — the server's own
     // uniqueness rule) turns the button into Replace, which opens the question rather than saving.
-    assert.match(save, /templates\.find\(t => t\.name\.trim\(\)\.toLowerCase\(\) === name\.trim\(\)\.toLowerCase\(\)\)/);
+    assert.match(save, /libraryNameMatch\(templates, name\)/);
     assert.match(save, /className=\{shared\.btnDanger\}>Replace “\{match\.name\}”…<\/button>/, 'the red button names what it replaces');
     // "Are you sure" is a second view, with its own Back step — never a confirm pop-up, which is what
     // closed the old Templates drawer behind it (Mobile plan §13.6 #5).

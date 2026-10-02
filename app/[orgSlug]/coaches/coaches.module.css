@@ -8790,6 +8790,11 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 
 /* Delete in the form footer, pushed away from Save so the two are never adjacent (Budget Plan's
    pattern — the quiet danger link opposite the primary action). */
+/* A footer that says what its Save reaches (the drill sheet, save-over D8): the line takes its own
+   row above the buttons, so Retire · Cancel · Save keep theirs. */
+.modalFooterNoted { flex-wrap: wrap; }
+.modalFooterNote { composes: formHint; flex: 1 1 100%; }
+
 .deleteRecordBtn {
   margin-right: auto;
   background: none;
@@ -10905,6 +10910,21 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   .ppTickSub .ppTickNames { display: block; margin-top: 0.1rem; }
   .ppTickSep { display: none; }
 }
+
+/* "Upcoming practices pick it up" — what saving over a drill reaches (save-over D3, 2026-10-02), in
+   the question between Now / After and the warning: a hairline box, never a tinted panel. */
+.ppSaveReach {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border-2); border-radius: 7px;
+}
+.ppSaveReachHead {
+  margin: 0;
+  font-size: var(--type-label); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.ppSaveReachList { margin: 0; padding-left: 1.1rem; font-size: var(--type-support); color: var(--text-primary); }
+.ppSaveReachList li { margin: 0.1rem 0; overflow-wrap: anywhere; }
 
 /* ── THE DOCKED LIBRARY (stage 4, owner ruling L5 — A, 2026-09-16) ──
    The pair: the sheet at stage 1's 816 letter width, a 20px gap, the 320 panel — 1,156 in all,
