@@ -101,23 +101,6 @@
 .chevron { margin-left: auto; opacity: 0.55; flex-shrink: 0; transition: transform 0.2s ease; }
 .chevronOpen { transform: rotate(90deg); }
 
-/* An owner's area, as a non-owner sees it (Club Tier Stage 1, specimens 2–3): a row, not a door —
-   no hover, no pointer — that says whose area it is. The lock and the words carry it; never colour. */
-.locked { cursor: default; }
-.locked:hover { background: none; color: var(--text-tertiary); }
-.lockedNote {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  flex-shrink: 0;
-  font-family: var(--font-data);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--text-tertiary);
-}
-
 /* A waiting count on a door (today's worklist badge), the coach rail's folded-count weight. */
 .count {
   margin-left: auto;
@@ -219,27 +202,8 @@
 /* The coach rail's two warm overrides (its `.sidebar` / `.sidebarItem:hover`), for the same reason:
    a per-theme DIFFERENCE, not a repair. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .item:hover { background: var(--home-olive-soft); color: var(--text-primary); }
-/* …but a locked row is not a door in either theme, so it answers no hover. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .item.locked:hover { background: none; color: var(--text-tertiary); }
-
-/* The More sheet's locked row (Club Tier Stage 1, J10-016): the same owner-only rows the rail shows,
-   as a row that opens nothing. Two classes deep so it outranks the coach sheet's own `.dropItem`. */
-.bar .dropLocked { cursor: default; color: var(--text-tertiary); }
-.bar .dropLocked:hover { background: none; }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bar .dropLocked,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bar .dropLocked:hover { background: none; color: var(--text-tertiary); }
-.dropLockedNote {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  flex-shrink: 0;
-  font-family: var(--font-data);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--text-tertiary);
-}
+/* ⚰ The locked owner-only rows (rail + More sheet) and their no-hover rules — retired 2026-10-01 (owner):
+   the nav lists doors only; the hub's Organization section keeps the locked rows (`ClubKit.rowLocked`). */
 
 /* The phone bar's labels are the coach bar's own `.label`: mixed case in both portals since
    2026-09-27 (owner) — the admin's override that did this here is gone. */

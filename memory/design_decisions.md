@@ -7,6 +7,47 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-01 — NO CLUB NAME ABOVE A PAGE TITLE (owner, walking §255 S3W1: *"I don't think we need the org name over the page headers, we already have it in the nav above"*)
+
+**Decision:** An admin page header never repeats the organization's name in its eyebrow — the bar above every admin page
+already shows it. A page's eyebrow is its trail ("Accounting · Allocations") or nothing (the Stage 3a review's
+"an eyebrow is the page's trail, never a fact"). Removed from Accounting, Rep Teams and House league the same day;
+`club-stage1-screens-guard.test.ts` fails if an admin header puts the name back.
+**And the hub's title** (owner, same day: "go ahead with … the overview title change"): the club hub was titled with the
+club's name, under the same name in the bar, eyebrow "Club". It is now titled **"Overview"** with no eyebrow — the
+rail row's word, and how the coaches portal titles its own overview. Pinned in the same guard.
+
+### 2026-10-01 — EVERY ADMIN ACTION BUTTON IS THE PORTAL'S WHITE BUTTON (owner: "I agree with your recommendation", then "go ahead with the button change", walking §255 S3W1) — BUILT the same day
+
+**Built as:** ONE rule in `app/globals.css`'s kit button block — `.btn-outline` on `[data-admin-kit]` AND
+`[data-coach-warm-enabled]` takes `.btn-secondary`'s tokens, both themes; the warm olive-outline rule is retired.
+Reaches every admin screen (club, tournament, the volunteer shells), the Export trigger (`.btn-outline .btn-data`),
+and the coaches portal's few outline buttons (notice "Got it" / "Review"). Geometry untouched.
+
+**Decision:** An admin action that is not the page's one main action (Add ledger, Send reminders, New payee, the
+tournament screens' outlined buttons) takes the coaches portal's secondary button — white, grey border, dark-grey
+words (`coaches.module.css` `.btnSecondary`; `KIT_BUTTON.secondary` holds the both-theme tokens) — at the admin's own
+control height (K-18). Built ONCE where the admin draws its outlined button, never screen by screen. **Amends the
+entry below:** a door stays olive text; an action is no longer an olive outline.
+**Rationale:** the morning's review weighed the outline only against the grey-filled `.btn-ghost`; the portal's white
+button was never compared. With doors olive too, "go" and "do" shared one colour and differed only by a box; the white
+button gives the split a colour as well, and puts the admin on the benchmark's button.
+**Applies to:** every admin screen, club and tournament (the tournament redesign uses the same button).
+
+### 2026-10-01 — THE NAV LISTS DOORS ONLY; AN OWNER'S AREA IS LOCKED ON THE HUB, NOT IN THE MENU (owner, "yes", asked while walking §255 S3W1: *"why do we remove some navs from view due to access, but leave these 3 as 'locked'?"*)
+
+**Decision:** The admin's desktop rail and the phone's More sheet list only the doors the person can open — for the
+owner's three areas (Audit log, Plan & billing, Settings) exactly as they already did for every program and page. The
+"Owner only" locked rows leave both navs. The club hub's **Organization** section keeps Plan & billing and Settings as
+locked rows for a non-owner, so "is this missing, or just not mine?" is still answered once, where someone surveys the
+club. Guarded: `admin-kit-nav.test.ts` and `club-stage1-screens-guard.test.ts`.
+**Rationale:** the locked rows came from the June invited-admin journey (J10-016: the settings hub's locked card was
+the one graceful owner-only wall). That reason holds for a page someone surveys, not for a menu used every day: three of
+an admin's five Organization rows were permanently dead, the lock label pushed "Plan & billing" onto two lines, and the
+coaches portal (the benchmark) hides what a coach cannot open. J10's real complaint — a bare "Access Denied" when a
+link reaches the page — is answered by the page's own wall, not a nav row.
+**Applies to:** the admin rail and the phone More sheet; amends Club Stage 1 specimens 2–3 for the navs only.
+
 ### 2026-10-01 — A DOOR IS OLIVE TEXT; AN ACTION THAT OPENS A WINDOW IS AN OUTLINED BUTTON (owner, "go ahead with all of your recommended fixes" to the `/design` review of Club Tier Stage 3a's money screens)
 
 **Decision:** In a toolbar or a window's foot, a control that **goes somewhere** (Payees, "Open 13U AAA's account") is

@@ -42,7 +42,8 @@ export default function AccountingFrame({ orgSlug, runsRepTeams, children }: {
   if (!tab) return <>{children}</>;
   return (
     <div className={repKit.page}>
-      <AdminPageHeader eyebrow={currentOrg?.name} title="Accounting" />
+      {/* No eyebrow: the club's name is already in the bar above (owner, 2026-10-01). */}
+      <AdminPageHeader title="Accounting" />
       <HubTabBar tabs={tabs} activeId={tab} ariaLabel="Accounting" />
       {children}
     </div>

@@ -233,7 +233,9 @@ export default function ClubHubKit() {
 
   return (
     <div className={ck.page}>
-      <AdminPageHeader eyebrow={club ? 'Club' : noun === 'league' ? 'League' : 'Organization'} title={currentOrg.name} />
+      {/* "Overview", as the rail row that opens it and as the coaches portal titles its own overview — not
+          the club's name, which the bar directly above already shows (owner, 2026-10-01). No eyebrow. */}
+      <AdminPageHeader title="Overview" />
 
       {hasBriefSection && (
         <section className={ck.section} aria-labelledby="hub-brief">

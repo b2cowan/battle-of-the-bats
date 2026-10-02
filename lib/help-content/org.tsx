@@ -83,7 +83,7 @@ const orgHelp: HelpPageContent = {
                 </tbody>
               </table>
               <p><strong>✓</strong> is full access; a shorter answer is the exact slice that role gets — &ldquo;view&rdquo; opens a program read-only, and &ldquo;if you turn it on&rdquo; means the owner has to grant it by hand (Families is never on by default for anyone but the owner). A row only appears on your own organization once your plan includes that program.</p>
-              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It never opens <strong>Families</strong> on its own, and <strong>Plan &amp; billing</strong>, <strong>Settings</strong> and the <strong>audit log</strong> stay owner-only; an admin sees those as locked rows rather than a surprise &ldquo;access denied.&rdquo;</p>
+              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It never opens <strong>Families</strong> on its own, and <strong>Plan &amp; billing</strong>, <strong>Settings</strong> and the <strong>audit log</strong> stay owner-only. The menu lists only what you can open, so an admin won&rsquo;t find them there; the club&rsquo;s home page shows <strong>Plan &amp; billing</strong> and <strong>Settings</strong> under <strong>Organization</strong> marked <strong>Owner only</strong>, so it&rsquo;s clear they exist and whose they are.</p>
             </>
           ),
         },

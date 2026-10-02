@@ -132,12 +132,13 @@ describe('the hub — a door only where it opens', () => {
     assert.match(hub, /Owner only/);
   });
 
-  it('the phone More sheet shows the same locked rows as the rail — not silently absent (/review 2026-09-26)', () => {
-    const bar = readCode('components/admin/kit/AdminKitBottomNav.tsx');
-    assert.match(bar, /group\('Organization', orgLinks, undefined, orgLockedRows\)/);
-    assert.match(bar, /const lockedRow = \(r: KitLockedRow\) => \{[\s\S]*?<div key=\{r\.key\}[^>]*aria-disabled="true"/,
-      'a locked row is a div that opens nothing, never a Link');
-    assert.match(readCode('components/admin/kit/AdminKitRail.tsx'), /orgLockedRows\.map\(r => <LockedRow/);
+  it('the rail and the phone More sheet list doors only — the locked rows live on the hub alone (owner, 2026-10-01)', () => {
+    // Both navs, together: the 2026-09-26 /review's point (the phone sheet must not tell a different
+    // story from the rail) still holds — now neither carries a locked row.
+    for (const file of ['components/admin/kit/AdminKitRail.tsx', 'components/admin/kit/AdminKitBottomNav.tsx']) {
+      assert.doesNotMatch(readCode(file), /Owner only|LockedRow|lockedRow|orgLockedRows/, `${file} lists an owner's area as a locked row`);
+    }
+    assert.match(readCode('components/admin/kit/AdminKitBottomNav.tsx'), /group\('Organization', orgLinks\)/);
   });
 
   it('the capacity readout sits in the Organization line (v8), and only for a Club with a cap', () => {
@@ -146,5 +147,33 @@ describe('the hub — a door only where it opens', () => {
 
   it('no Founding Season and no first-tournament banner on the hub (D6, G01)', () => {
     assert.doesNotMatch(hub, /Founding|First tournament setup|startup-tasks/);
+  });
+});
+
+describe('a page title carries no club name above it', () => {
+  it('no admin page header puts the organization name in its eyebrow (owner, 2026-10-01)', async () => {
+    // The club's name is already in the bar above every admin page, so a page's eyebrow is its trail
+    // ("Accounting · Allocations") or nothing — never the name again. Accounting, Rep Teams and House
+    // league carried it until the owner, walking §255 S3W1: "we already have it in the nav above".
+    const { readdirSync } = await import('node:fs');
+    const files: string[] = [];
+    const walk = (dir: string) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const rel = `${dir}/${e.name}`;
+        if (e.isDirectory()) walk(rel);
+        else if (rel.endsWith('.tsx')) files.push(rel);
+      }
+    };
+    walk('app/[orgSlug]/admin');
+    walk('components/admin');
+    assert.ok(files.length > 50, 'the walk found the admin screens');
+    const offenders = files.filter(f => /eyebrow=\{\s*(currentOrg\??\.name|orgName)\s*\}/.test(readCode(f)));
+    assert.deepEqual(offenders, [], 'the club name is already in the bar above');
+  });
+
+  it('the hub is titled "Overview", as its rail row and the coaches portal’s overview — never the club’s name', () => {
+    const hub = readCode('components/admin/kit/club/ClubHubKit.tsx');
+    assert.match(hub, /<AdminPageHeader title="Overview" \/>/);
+    assert.doesNotMatch(hub, /title=\{currentOrg\.name\}/);
   });
 });

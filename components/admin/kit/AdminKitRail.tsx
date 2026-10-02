@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ElementType } from 'react';
 import {
-  LayoutGrid, ChevronRight, Plus, Home, Users2, HelpCircle, LogOut, DollarSign, Trophy, Lock,
+  LayoutGrid, ChevronRight, Plus, Home, Users2, HelpCircle, LogOut, DollarSign, Trophy,
 } from 'lucide-react';
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
@@ -77,26 +77,12 @@ function ProgramRow({ href, label, icon: Icon, open, hasPages, count = 0 }: {
   );
 }
 
-/**
- * An owner's area as a non-owner sees it: a LOCKED ROW that says whose it is (specimens 2–3, J10-016)
- * — not a link, so it opens nothing and widens nobody's reach; it replaces a surprise refusal.
- */
-function LockedRow({ label, icon: Icon }: { label: string; icon: ElementType }) {
-  return (
-    <div className={`${styles.item} ${styles.sub} ${styles.locked}`} aria-label={`${label}, owner only`}>
-      <Icon size={13} aria-hidden />
-      <span>{label}</span>
-      <span className={styles.lockedNote}><Lock size={11} aria-hidden /> Owner only</span>
-    </div>
-  );
-}
-
 export default function AdminKitRail() {
   const pathname = usePathname();
   const router = useRouter();
   const nav = useAdminKitNav();
   const {
-    base, orgSlug, programs, alsoOnPlan, brief, orgLinks, orgLockedRows, section, tournamentOnly, isCanceled,
+    base, orgSlug, programs, alsoOnPlan, brief, orgLinks, section, tournamentOnly, isCanceled,
     onTournaments, coachDoor,
   } = nav;
   const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
@@ -187,8 +173,9 @@ export default function AdminKitRail() {
                   : (
                     <>
                       <ProgramRow href={`${base}/org`} label="Organization" icon={ORGANIZATION_ICON} open={section === 'org'} hasPages />
+                      {/* Doors only — an owner's area is not listed for anyone else (owner, 2026-10-01;
+                          the hub's Organization section says whose it is, `lib/admin-kit-nav.ts` ⚰). */}
                       {section === 'org' && orgLinks.map(pageRow)}
-                      {section === 'org' && orgLockedRows.map(r => <LockedRow key={r.key} label={r.label} icon={r.icon} />)}
                     </>
                   )}
               </>

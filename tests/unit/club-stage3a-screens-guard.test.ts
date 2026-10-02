@@ -33,7 +33,8 @@ describe('the frame — Accounting is one page with tabs (Ask 2 option B)', () =
   });
   it('no create in the page header; a page one level down has no tab row', () => {
     const frame = readCode(`${MONEY}/AccountingFrame.tsx`);
-    assert.match(frame, /<AdminPageHeader eyebrow=\{currentOrg\?\.name\} title="Accounting" \/>/);
+    // No actions (no create in the header) and no eyebrow (the club's name is in the bar above, owner 2026-10-01).
+    assert.match(frame, /<AdminPageHeader title="Accounting" \/>/);
     assert.match(frame, /if \(!tab\) return <>\{children\}<\/>;/);
   });
 });

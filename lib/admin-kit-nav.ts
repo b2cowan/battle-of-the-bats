@@ -237,22 +237,12 @@ export function kitOrgLinks({
   return links.filter((l): l is KitLink => Boolean(l));
 }
 
-/**
- * The owner's areas a non-owner still SEES, as locked rows (ratified specimens 2 and 3; the June
- * audit's J10-016: "an owner-only area stays VISIBLE with a lock and says whose it is"). Not doors —
- * a locked row has no link — so they never widen who can open anything; they replace the surprise
- * "Access Denied" (J10-013) with a row that says whose area it is.
- */
-export type KitLockedRow = { key: string; label: string; icon: LucideIcon };
-
-export function kitOrgLockedRows({ role, isCanceled }: { role: string | null | undefined; isCanceled: boolean }): KitLockedRow[] {
-  if (!role || role === 'owner' || isCanceled) return [];
-  return [
-    { key: 'org/audit', label: 'Audit log', icon: ScrollText },
-    { key: 'org/billing', label: 'Plan & billing', icon: CreditCard },
-    { key: 'org/settings', label: 'Settings', icon: Settings },
-  ];
-}
+/* ⚰ The owner's LOCKED ROWS on the rail and the phone's More sheet (Club Stage 1 specimens 2–3,
+   J10-016) — retired 2026-10-01 (owner): the nav lists only doors the person can open, as it already
+   did for every program and page, and as the coaches portal does. The question a locked row answered
+   ("is this missing, or just not mine?") is asked once, so it is answered once — on the club hub's
+   Organization section, which keeps Plan & billing and Settings as locked rows for a non-owner. Do
+   not bring them back to the nav: three of an admin's five Organization rows were permanently dead. */
 
 /** Is this door the page on screen? */
 export function isKitLinkActive(pathname: string, link: KitLink): boolean {

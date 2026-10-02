@@ -218,9 +218,9 @@ export default function HouseLeaguePage() {
   return (
     <div className={styles.page}>
       {/* Today's header as `legacy` while the switch is off. On the kit (F3) the subtitle's organization
-          name becomes the eyebrow; "all seasons" is what the list below already is. */}
+          name goes, and there is no eyebrow: the name is already in the bar above (owner, 2026-10-01);
+          "all seasons" is what the list below already is. */}
       <AdminPageHeader
-        eyebrow={currentOrg?.name}
         title="House league"
         actions={isAdmin ? (
           <button type="button" className="btn btn-primary" onClick={openCreate}>

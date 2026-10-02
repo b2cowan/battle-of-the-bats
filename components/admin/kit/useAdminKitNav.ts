@@ -14,7 +14,7 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, kitOrgLockedRows, activeKitSection, clubProgramOrder } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, activeKitSection, clubProgramOrder } from '@/lib/admin-kit-nav';
 import { kitTournamentGroups } from './kit-tournament-groups';
 import { useClubBrief } from './club/ClubBriefProvider';
 
@@ -58,10 +58,6 @@ export function useAdminKitNav() {
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachDoor = coachDoorFor(useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled), currentOrg?.slug);
 
-  // The owner's areas a non-owner sees as locked rows — on the rail AND in the phone's More sheet
-  // (specimens 2–3, J10-016) — never doors.
-  const orgLockedRows = isTournamentTier(currentOrg?.planId) ? [] : kitOrgLockedRows({ role: userRole, isCanceled });
-
   return {
     pathname,
     orgSlug,
@@ -73,7 +69,6 @@ export function useAdminKitNav() {
     brief: club.brief,
     tournamentOnly,
     orgLinks,
-    orgLockedRows,
     coachDoor,
     tournamentGroups: kitTournamentGroups({ status: currentTournament?.status, isSandbox, role: userRole }),
     section: activeKitSection(pathname, base),

@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
-  kitPrograms, kitOrgLinks, kitOrgLockedRows, isKitLinkActive, activeKitSection, kitTournamentLabel,
+  kitPrograms, kitOrgLinks, isKitLinkActive, activeKitSection, kitTournamentLabel,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor,
 } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
@@ -81,14 +81,17 @@ describe("the admin kit nav — today's gates", () => {
     assert.ok(page?.also?.includes(`${BASE}/org/coaches-portal-links`), 'the old address still lights the row');
   });
 
-  it("a non-owner sees the owner's areas as LOCKED rows, never as doors (specimens 2–3)", () => {
-    const locked = kitOrgLockedRows({ role: 'admin', isCanceled: false });
-    assert.deepEqual(locked.map(r => r.label), ['Audit log', 'Plan & billing', 'Settings']);
-    for (const row of locked) assert.ok(!('href' in row), `${row.label} must not be a link — a locked row opens nothing`);
-    assert.deepEqual(kitOrgLockedRows({ role: 'owner', isCanceled: false }), [], 'the owner has the real doors');
-    assert.deepEqual(kitOrgLockedRows({ role: 'admin', isCanceled: true }), [], 'a cancelled club shows only its way to pay');
-    const doors = new Set(kitOrgLinks({ base: BASE, role: 'admin', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true }).map(l => l.label));
-    for (const row of locked) assert.ok(!doors.has(row.label), `${row.label} is both locked and a door for an admin`);
+  it("the nav lists doors only — an owner's area is simply not there for anyone else (owner, 2026-10-01)", () => {
+    // The locked "Owner only" rows (Club Stage 1 specimens 2–3, J10-016) left the rail and the phone's
+    // More sheet: three of an admin's five Organization rows were permanently dead. The hub's
+    // Organization section still says whose they are (club-stage1-screens-guard).
+    const owner = ['Audit log', 'Plan & billing', 'Settings'];
+    const adminDoors = kitOrgLinks({ base: BASE, role: 'admin', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true }).map(l => l.label);
+    for (const label of owner) assert.ok(!adminDoors.includes(label), `${label} is the owner's — not listed for an admin`);
+    const ownerDoors = kitOrgLinks({ base: BASE, role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true }).map(l => l.label);
+    for (const label of owner) assert.ok(ownerDoors.includes(label), `the owner keeps ${label} as a door`);
+    const nav = readCode('lib/admin-kit-nav.ts');
+    assert.doesNotMatch(nav, /export function kitOrgLockedRows|export type KitLockedRow/, 'the locked-row list must not come back');
   });
 });
 

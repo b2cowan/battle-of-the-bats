@@ -129,8 +129,8 @@ export default function RepTeamsBoardPage() {
   const hasArchived = teams.some(t => t.team.isArchived);
 
   const header = (
+    // No eyebrow: the club's name is already in the bar above (owner, 2026-10-01).
     <AdminPageHeader
-      eyebrow={currentOrg?.name}
       title="Rep Teams"
       actions={canWrite ? (
         <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setAdding(true)} aria-label="Add team">

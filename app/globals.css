@@ -1391,18 +1391,9 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:where(:not([
   filter: none;
 }
 
-/* Warm outline button (.btn-outline) — its text already warms (--primary-light→olive) but its border
-   stays platform navy (--primary is not remapped) and its hover fill is navy-faint. Pair the border to
-   the olive text and use an olive-soft hover wash so it reads as a coherent olive outline on cream. */
-:root [data-guest-kit] .btn-outline:where(:not([data-public-preview] *)),
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:where(:not([data-public-preview] *)) {
-  border-color: var(--home-olive);
-}
-:root [data-guest-kit] .btn-outline:where(:not([data-public-preview] *)):hover,
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:where(:not([data-public-preview] *)):hover {
-  background: var(--home-olive-soft);
-  box-shadow: none;
-}
+/* ⚰ The warm OLIVE outline (.btn-outline: olive border + olive words) — retired 2026-10-01 (owner): on
+   every kit surface `.btn-outline` is now the portal's white secondary button, in both themes. Its one
+   home is the kit's button block below ("`.btn-outline` IS the portal's secondary button"). */
 
 /* Warm ghost button (.btn-ghost) — its base fill is var(--white-10), which the warm gate remaps to
    --home-line, the HAIRLINE. As a fill that produced #E2DDD4 on cream: darker than the bottom nav,
@@ -1905,6 +1896,27 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--home-line-strong);
 }
 [data-admin-kit] .btn-secondary:where(:not([data-public-preview] *)):hover { background: var(--home-olive-soft); color: var(--text-primary); }
+/* `.btn-outline` IS the portal's secondary button too (owner, 2026-10-01: "go ahead with the button
+   change") — an action that is not the page's one main action: Add ledger, Send reminders, New payee,
+   Audit log, the Export trigger, the tournament screens' outlined buttons. It was an OLIVE outline (the
+   morning's /design review weighed it only against the grey-filled `.btn-ghost`); the portal draws that
+   action white with a grey edge, and with doors olive text, "go" and "do" now differ by colour as well
+   as by box. Same tokens as `.btn-secondary` above and `KIT_BUTTON.secondary`; the admin's control
+   height is untouched (K-18). ⚠ The one rule in this block that ALSO keys off `[data-coach-warm-enabled]`:
+   the coaches portal's few outline buttons (notice "Got it" / "Review") are the same button, and
+   leaving them olive would keep two looks for one job. Both themes, no theme gate. */
+[data-admin-kit] .btn-outline:where(:not([data-public-preview] *)),
+[data-coach-warm-enabled] .btn-outline:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--home-line-strong);
+}
+[data-admin-kit] .btn-outline:where(:not([data-public-preview] *)):hover,
+[data-coach-warm-enabled] .btn-outline:where(:not([data-public-preview] *)):hover {
+  background: var(--home-olive-soft);
+  color: var(--text-primary);
+  box-shadow: none;
+}
 /* `.btn-danger` (slice 4c): the LIGHT red as ink, as `KIT_BUTTON.danger` (slice 3) — the base red on
    its own tint measured 4.09:1 on the kit's Dark ground (the bracket editor's Clear bracket). In Warm
    `--danger-light` IS `--home-live`, today's colour there. The tint and edge are the legacy rule's. */
