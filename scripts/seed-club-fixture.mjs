@@ -487,12 +487,15 @@ const payee = async (name) => one(`payee ${name}`, db.from('org_payees').insert(
 const mizuno = await payee('Mizuno Canada');
 const mizunoLtd = await payee('Mizuno Canada Ltd.');
 const town = await payee('Town of Milton');
+// ⚖ Ledger Parity D7 (2026-10-02): one payee the club SHARES with its teams (in every team's picker under
+// "Shared by your club"), the two Mizuno spellings kept as the club's own. The D7a clock starts here.
+die('share Town of Milton', (await db.from('org_payees').update({ shared_with_teams: true, shared_at: new Date().toISOString() }).eq('id', town.id)).error);
 die('gear 1', (await entry(general.id, { entry_date: daysFromNow(-33), description: 'Helmets and catcher gear', amount: 1200, entry_type: 'expense', category: 'Equipment', payment_method: 'Cheque 2201', payee_id: mizuno.id, payee_payer: 'Mizuno Canada', created_by: TREASURER })).error);
 die('gear 2', (await entry(general.id, { entry_date: daysFromNow(-12), description: 'Practice balls', amount: 340, entry_type: 'expense', category: 'Equipment', payment_method: 'Card', payee_id: mizunoLtd.id, payee_payer: 'Mizuno Canada Ltd.', created_by: TREASURER })).error);
 die('permit 2', (await entry(general.id, { entry_date: daysFromNow(-3), description: 'Diamond permit', amount: 1850, entry_type: 'expense', category: 'Facilities', payment_method: 'Cheque 2231', payee_id: town.id, payee_payer: 'Town of Milton', created_by: TREASURER })).error);
 die('pending cheque', (await entry(general.id, { entry_date: daysFromNow(-1), description: 'Umpires’ association fees', amount: 640, entry_type: 'expense', category: 'Officials', payment_method: 'Cheque 2230', status: 'pending', notes: 'Not cleared yet', created_by: TREASURER })).error);
 die('void line', (await entry(general.id, { entry_date: daysFromNow(-6), description: 'Umpire clinic registration', amount: 240, entry_type: 'expense', category: 'Training', payment_method: 'Card', status: 'void', void_reason: 'Entered twice', voided_by: TREASURER, voided_at: new Date(Date.now() - 5 * DAY).toISOString(), created_by: TREASURER })).error);
-ok('books: the tournament\'s own book + a $500.00 float to it · payees "Mizuno Canada" and "Mizuno Canada Ltd." · a pending cheque · a void');
+ok('books: the tournament\'s own book + a $500.00 float to it · payees "Mizuno Canada" and "Mizuno Canada Ltd." (the club\'s own) and "Town of Milton" (shared with teams) · a pending cheque · a void');
 
 // ── House league for the registrar ───────────────────────────────────────────────
 const season = await one('league season', db.from('league_seasons').insert({

@@ -13225,6 +13225,10 @@
     "admin-accounting-payment-requests|768|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
       "detail": "16px tall (floor 44)"
+    },
+    "coach-payables|768|content-overflow|td·Sep 25, 2026": {
+      "reason": "Found, not fixed (Ledger Parity session 2, 2026-10-02): the Bills view's next-payment column at 768 fits \"Sep 1, 2026\" and not a two-digit day — a pre-existing tight column, surfaced only because the walk fixture added the first bill due on a two-digit day (Diamond permit — fall block). Reported to the owner; the Bills view is outside Ledger Parity. Fix: let the column take its content's width at the 641–768 band.",
+      "detail": "content spills 4px with overflow-x:visible — no scroller owns it"
     }
   }
 }

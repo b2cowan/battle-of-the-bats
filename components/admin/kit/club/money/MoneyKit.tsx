@@ -13,6 +13,7 @@ import { useState, type ReactNode } from 'react';
 import KitDialog from '../KitDialog';
 import { CoachCard, CoachEyebrow, CoachFigure, kit } from '@/components/coaches/kit';
 import { fmt } from '@/lib/coach-money-summary';
+import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { formatStoredDate } from '@/lib/timezone';
 import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
 import type { ClubBillChip } from '@/lib/club-money-figures';
@@ -35,27 +36,10 @@ export function installmentsWord(n: number, capital = false): string {
   return capital ? `${w.charAt(0).toUpperCase()}${w.slice(1)}` : w;
 }
 
-/** A money route's answer, read once: the status, and the body whatever it is. */
-export async function moneyFetch<T = Record<string, unknown>>(url: string, init?: RequestInit): Promise<{ ok: boolean; status: number; data: T }> {
-  const res = await fetch(url, { cache: 'no-store', ...init });
-  const data = await res.json().catch(() => ({})) as T;
-  return { ok: res.ok, status: res.status, data };
-}
-
-/** JSON body helper for a PATCH / POST. */
-export const jsonInit = (method: 'POST' | 'PATCH' | 'DELETE', body: unknown): RequestInit => ({
-  method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-});
-
-/**
- * A refused money move, in words: the server's sentence (every 409 `money_state_changed` carries one,
- * from lib/club-money-words.ts), or the fallback. A stale tap is refused in words and the screen
- * re-reads in place (specimen 7's rule, both sides).
- */
-export function refusalText(data: unknown, fallback: string): string {
-  const e = (data as { error?: unknown })?.error;
-  return typeof e === 'string' && e.trim() ? e : fallback;
-}
+/* A money route's answer read once, a JSON body, a refusal in words — `lib/money-fetch.ts` (the coach's
+   Payees page reads its routes the same way, and the admin kit is admin-only). Re-exported for every
+   club caller. */
+export { jsonInit, moneyFetch, refusalText };
 
 /** Did the money change under the caller? (409 `money_state_changed` — refresh in place.) */
 export const isStale = (status: number, data: unknown): boolean =>
@@ -185,19 +169,12 @@ export function Tiles({ items }: { items: { label: string; value: ReactNode }[] 
   );
 }
 
-/** A window's facts: a label on the left, its value on the right (the drawing's record box). */
-export function Facts({ rows }: { rows: ReadonlyArray<readonly [string, ReactNode] | null | false> }) {
-  return (
-    <div className={styles.facts}>
-      {rows.filter((r): r is readonly [string, ReactNode] => !!r).map(([label, value]) => (
-        <div key={label} className={styles.factRow}>
-          <span className={styles.factLabel}>{label}</span>
-          <span className={styles.factValue}>{value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
+/**
+ * A window's facts: a label on the left, its value on the right (the drawing's record box). ⚠ The
+ * shared kit's box (Ledger Parity, 2026-10-02) — the coach's read window draws the same one, so the
+ * recipe lives once, in `components/coaches/kit/Ledger.module.css`.
+ */
+export { RecordFacts as Facts } from '@/components/coaches/kit';
 
 /** A coach's own words, quoted. */
 export const Quote = ({ children }: { children: ReactNode }) => <p className={styles.quote}>“{children}”</p>;

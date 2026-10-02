@@ -5,6 +5,7 @@ import CoachModalHeader from './CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
 import { useDialogFloor } from './useDialogFloor';
+import { RAISED_OVERLAY_Z } from './overlayLayers';
 
 /**
  * THE QUESTION — the one modal chrome a form stands in (List · Room · Question, owner-ruled
@@ -45,6 +46,7 @@ export default function QuestionShell({
   scroll = false,
   wide = false,
   leaveGuard,
+  raised = false,
   children,
 }: {
   open: boolean;
@@ -66,6 +68,8 @@ export default function QuestionShell({
    *  baseline, the message in its own words. Link clicks are intercepted only while the tab is on
    *  screen (see UnsavedChangesGuard's `interceptClicks`). */
   leaveGuard?: { dirty: boolean; message: string; tabActive?: boolean };
+  /** Asked from a window that is itself raised over another (`overlayLayers.ts`) — stand with it. */
+  raised?: boolean;
   children: ReactNode;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -91,6 +95,7 @@ export default function QuestionShell({
     <>
       <div
         className={coach.modalOverlay}
+        style={raised ? { zIndex: RAISED_OVERLAY_Z } : undefined}
         onPointerDown={event => { if (event.target === event.currentTarget) requestClose(); }}
       >
         <div

@@ -32,6 +32,7 @@ export default function SingleSelectDropdown({
   value,
   onChange,
   lead = false,
+  shrink = false,
   foot,
 }: {
   /** Sits to the left of the chosen value — "Group by", "View", "Showing". */
@@ -46,8 +47,14 @@ export default function SingleSelectDropdown({
    */
   lead?: boolean;
   /**
+   * May the pill give way in a tight row — its chosen value ellipsised rather than the row wrapping? The
+   * club Ledger's Book pill, whose book names run long, beside three 44px icons on a phone (Ledger
+   * Parity, 2026-10-02). Opt-in: a View or Group by value is always short.
+   */
+  shrink?: boolean;
+  /**
    * The panel's foot, after a divider: doors that act on the LIST rather than pick from it — the club
-   * Ledger's Book pill ends with "Add ledger" (and, on a phone, Transfer and Payees). Opt-in; no
+   * Ledger's Book pill ends with "Add ledger" (Transfer and Payees moved into its Tools, 2026-10-02). Opt-in; no
    * portal strip passes one.
    */
   foot?: ReactNode;
@@ -56,7 +63,7 @@ export default function SingleSelectDropdown({
   const chosen = options.find(o => o.id === value);
 
   return (
-    <details ref={ref} className={`${styles.multiSelect} ${lead ? styles.multiSelectLead : ''}`}>
+    <details ref={ref} className={`${styles.multiSelect} ${lead ? styles.multiSelectLead : ''}${shrink ? ` ${styles.multiSelectShrink}` : ''}`}>
       <summary data-pill="summary" className={styles.multiSelectSummary}>
         <span className={styles.multiSelectLabel}>{label}</span>
         <span className={styles.multiSelectValue}>{chosen?.label ?? options[0]?.label ?? ''}</span>

@@ -12357,6 +12357,8 @@ function mapRepTeamExpense(r: any): RepTeamExpense {
     paymentMethod: r.payment_method ?? null,
     payeeId: r.payee_id ?? null,
     payeePayer: r.payee_payer ?? null,
+    // The payee's name as it reads NOW — present when the read embedded it (`REP_EXPENSE_SELECT`).
+    payeeName: r.payee?.name ?? null,
     paidByPlayerId: r.paid_by_player_id ?? null,
     accountingEntryId: r.accounting_entry_id ?? null,
     createdBy: r.created_by ?? null,
@@ -12365,10 +12367,24 @@ function mapRepTeamExpense(r: any): RepTeamExpense {
   };
 }
 
-export async function getRepTeamExpenses(programYearId: string): Promise<RepTeamExpense[]> {
+/**
+ * A team expense with its payee's CURRENT name (Ledger Parity D9b, 2026-10-02). `payee_payer` holds the
+ * name as it was typed when the bill was entered, so a rename or a merge (which repoints `payee_id`, never
+ * the text) left every screen printing the old spelling — and a bill pointing at a payee with no typed name
+ * beside it showed an empty Payee. Read the name by the id; `expensePayeeName` falls back to the text only
+ * for a payee that was never chosen from the list.
+ * ⚠ OPT-IN (`withPayeeName`): only the read that feeds the screens printing a payee (the Ledger panel's
+ * `GET …/expenses`) pays for the join; the register, the summary and the settlement never print one.
+ */
+const REP_EXPENSE_WITH_PAYEE = '*, payee:org_payees(name)';
+
+export async function getRepTeamExpenses(
+  programYearId: string,
+  opts: { withPayeeName?: boolean } = {},
+): Promise<RepTeamExpense[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_expenses')
-    .select('*')
+    .select(opts.withPayeeName ? REP_EXPENSE_WITH_PAYEE : '*')
     .eq('program_year_id', programYearId)
     .order('created_at', { ascending: false });
   if (error) throw error;

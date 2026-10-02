@@ -37,10 +37,12 @@
   read the same** — D1 (a ledger row prints the day; the year is said once, on the balance rows), D2 (both portals'
   Starting / Opening / Ending balance rows name their full dates; the club's under-table note goes), D3 (no control
   in a ledger cell on either portal except Record on an unpaid installment; a row another tab wrote opens a read
-  window naming its home), D4 (one phone card for a ledger row), D6 (a rare tool goes behind Tools on both Ledgers;
+  window naming its home; the What at the coach's regular weight on both — the club's loses its bold, owner
+  2026-10-02), D4 (one phone card for a ledger row), D6 (a rare tool goes behind Tools on both Ledgers;
   Payees is not a tab), D7's picker words ("Shared by your club" / "Your team's own" + the notice line).
 - **`docs/agents/design/TABLE_EXCEPTION_REGISTER.md`:** K-01 and K-25 name the coach's Ledger and the club's as ONE
-  recipe; the hub's screen 9 ("What stays different") goes in as the named differences between the two Ledgers, each
+  recipe; K-01 says **the What is at body weight on both Ledgers** (owner 2026-10-02) — so a later pass does not
+  "fix" it to match the club's other tables, whose names are bold; the hub's screen 9 ("What stays different") goes in as the named differences between the two Ledgers, each
   with its reason, so the next comparison starts from it.
 
 ## What to build (by hub screen)
@@ -52,7 +54,8 @@
 - **D2:** the Starting / Opening / Ending balance rows read "Starting balance · Sep 1, 2026" — the window the Date pill
   holds, full date with the year.
 - **D3:** every row opens on a click; the last column is **one chevron**; the name in What is the row's keyboard door
-  and is bold (the club's `nameButton` pattern). Leaves the cell: the pencil (`RowEditButton` — check its other
+  (the club's `nameButton` pattern) **at the coach's regular weight — not bold** (⚖ owner, 2026-10-02, after
+  ratification: the coach's What is the look both Ledgers take; the CLUB drops its bold — screen 3 below). Leaves the cell: the pencil (`RowEditButton` — check its other
   callers before touching the component) and the worded `Link` ("Player Dues →", "Club →", `r.sourceLabel`). Stays:
   **Record** beside the chevron on an unpaid installment (`settle`, ruled 2026-09-04). A typed entry or a bill opens
   exactly as today. **A row another tab wrote opens a read window** (hub screen 4): its facts (amount, category, date,
@@ -92,6 +95,13 @@
 
 - The balance rows carry the year ("Starting balance · Jul 3, 2026"); the note under the table ("Oldest at the top, as
   a bank statement reads…") is removed.
+- **The What is no longer bold** (⚖ owner 2026-10-02: "update the club ledger to match rather than making the coach
+  ledger match"). Today the club's register sets its name button semibold (`Money.module.css` `.what`, 650); it takes
+  the coach's regular weight. The name stays a button (the keyboard door, standard §3.6) — only the weight changes;
+  a void line's name keeps its faint ink. ⚠ Check whether the club's phone card takes its title from the same
+  class: the card's title is NOT part of this ruling (a card's lead cell is its title) — keep it as drawn, and say
+  so in the hand-off if separating them needed a new class. Assert the computed weight in the browser, not the
+  class list (a weight that loses the cascade still carries the class).
 
 ## Help, walks, fixture, sweep
 
@@ -116,7 +126,7 @@
 
 - `verify:changed`, `typecheck`, unit tests (a guard: no ledger cell on either portal holds a control other than
   Record; both portals format a ledger date through one rule; the shared phone card is the only one the two Ledgers
-  render), `check:layout` both themes, `check:css-selectors`, `check:spelling`, `check:old-look`.
+  render; neither register's What is bold), `check:layout` both themes, `check:css-selectors`, `check:spelling`, `check:old-look`.
 - `/simplify`, then `/review` at the **high-risk** tier (money screens, a shared component moved, a visibility change),
   then `/docs`. Offer `/design` for a review pass.
 

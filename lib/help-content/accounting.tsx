@@ -126,12 +126,12 @@ const accountingHelp: HelpPageContent = {
       heading: 'How to transfer money between the club’s books',
       summary: 'Move money from one club book to another without counting it twice.',
       keywords: ['transfer', 'move money', 'ledger transfer', 'double-counting', 'float', 'tournament float'],
-      searchText: 'transfer money between ledgers move funds ledger transfer float tournament float both halves double-counting org totals source destination void a transfer',
+      searchText: 'transfer money between ledgers move funds ledger transfer float tournament float both halves double-counting org totals source destination void a transfer tools menu where is transfer',
       content: (
         <>
           <p>Use a transfer when money moves from one of the club’s books to another — a float to a tournament, money set aside into a reserve.</p>
           <HelpSteps>
-            <li>On the <strong>Ledger</strong> tab, open the book the money leaves, and press <strong>Transfer</strong>. (On a phone, Transfer is in the <strong>Book</strong> pill.)</li>
+            <li>On the <strong>Ledger</strong> tab, open the book the money leaves, then <strong>Tools → Transfer</strong>. (On a phone, Tools is the <strong>⋯</strong> beside Export.)</li>
             <li>Choose the book it goes to.</li>
             <li>Enter the amount, the date and what it’s for.</li>
             <li>Save. Both books show their half of the transfer.</li>
@@ -178,18 +178,18 @@ const accountingHelp: HelpPageContent = {
       group: 'How accounting works',
       id: 'entries',
       heading: 'Reading the Ledger, and correcting a line',
-      summary: 'Oldest first between a starting and an ending balance; filters; editing, voiding, and lines that come from elsewhere.',
-      keywords: ['entry', 'income', 'expense', 'transfer', 'posted', 'pending', 'void', 'edit entry', 'starting balance', 'ending balance', 'book pill', 'filters'],
-      searchText: 'ledger book pill switch books entry income expense transfer posted pending void edit entry saves as you type autosave starting balance ending balance oldest first bank statement running balance money out money in type status category date this month all time filters balance disappears pending line faint void reason audit trail read only line from an allocation request fee where to change it team book team account',
+      summary: 'Oldest first between a starting and an ending balance, each with its date; filters; Tools; editing, voiding, and lines that come from elsewhere.',
+      keywords: ['entry', 'income', 'expense', 'transfer', 'posted', 'pending', 'void', 'edit entry', 'starting balance', 'ending balance', 'book pill', 'filters', 'tools'],
+      searchText: 'ledger book pill switch books entry income expense transfer posted pending void edit entry saves as you type autosave starting balance ending balance oldest first bank statement running balance money out money in type status category date this month all time filters balance disappears balance column gone balance hidden when filtering category untick posted pending line faint void reason audit trail read only line from an allocation request fee where to change it team book team account tools menu payees transfer where did the payees button go where did the transfer button go year on the balance lines row shows only the day phone card',
       content: (
         <>
-          <p>The <strong>Ledger</strong> tab shows one book at a time. The <strong>Book</strong> pill switches books — it opens on the General ledger and shows every book’s balance.</p>
-          <p>The book reads <strong>oldest first</strong>, like a bank statement: a <strong>Starting balance</strong> at the top, every line with its <strong>Money out</strong>, <strong>Money in</strong> and running <strong>Balance</strong>, and an <strong>Ending balance</strong> at the foot. The balance for the whole book also sits at the right of the filters.</p>
+          <p>The <strong>Ledger</strong> tab shows one book at a time. The <strong>Book</strong> pill switches books — it opens on the General ledger and shows every book’s balance. <strong>Tools</strong> (⋯, beside Export) holds the rarer jobs: <a href="#recipe-transfer-between-ledgers">Transfer</a> and <a href="#payees">Payees</a>.</p>
+          <p>The book reads <strong>oldest first</strong>, like a bank statement: a <strong>Starting balance</strong> at the top and an <strong>Ending balance</strong> at the foot, each named with its full date (<em>Starting balance · Jul 3, 2026</em>), and between them every line with its day (<em>Aug 12</em>), its <strong>Money out</strong>, <strong>Money in</strong> and running <strong>Balance</strong>. The balance for the whole book also sits at the right of the filters. On a phone each line is its own card.</p>
           <HelpDefs>
             <HelpDef term="Type">Expenses, income, team allocations, team support, transfers. Narrowing it hides the Balance column, because a running total of only some lines isn’t a balance of anything.</HelpDef>
-            <HelpDef term="Status">Starts on <strong>Posted</strong> and <strong>Pending</strong>. A pending line is faint and keeps the balance before it until it clears. Tick <strong>Void</strong> to see voided lines, each with its reason.</HelpDef>
-            <HelpDef term="Category">One or several of your categories.</HelpDef>
-            <HelpDef term="Date">Starts on <strong>This month</strong>. Pick a preset, your own dates, or <strong>All time</strong>.</HelpDef>
+            <HelpDef term="Status">Starts on <strong>Posted</strong> and <strong>Pending</strong>. A pending line is faint and keeps the balance before it until it clears. Tick <strong>Void</strong> to see voided lines, each with its reason. Untick <strong>Posted</strong> and the Balance column goes too — posted lines are the ones that move it.</HelpDef>
+            <HelpDef term="Category">One or several of your categories. Like Type, it hides the Balance column.</HelpDef>
+            <HelpDef term="Date">Starts on <strong>This month</strong>. Pick a preset, your own dates, or <strong>All time</strong>. The Balance column stays: the starting balance carries everything before your dates.</HelpDef>
           </HelpDefs>
           <p><strong>Every line opens.</strong> A line you typed opens ready to edit, and saves as you type. <strong>Void this line</strong> asks why; the line stays on the book, marked void with your reason and your name, and counts nowhere. A line written by an allocation, a payment request or a house league fee is read-only, and says where to change it — undo the payment, or reverse the approval, and both books follow.</p>
           <p>A team’s own book isn’t on the Ledger. The club reads a team through its <a href="#team-account">account</a>.</p>
@@ -200,17 +200,19 @@ const accountingHelp: HelpPageContent = {
       group: 'How accounting works',
       id: 'payees',
       heading: 'Payees: who the club pays, and who pays it',
-      summary: 'Rename a payee, merge two spellings of one, or delete one no line uses.',
-      keywords: ['payee', 'payees', 'payer', 'vendor', 'merge payees', 'rename payee', 'delete payee', 'two spellings', 'manage payees'],
-      searchText: 'payee payees payer vendor supplier merge payees two spellings duplicate payee rename payee delete payee manage payees paid to paid by last used',
+      summary: 'Rename a payee, merge two spellings of one, delete one no line uses, and choose which ones the club’s teams can use.',
+      keywords: ['payee', 'payees', 'payer', 'vendor', 'merge payees', 'rename payee', 'delete payee', 'two spellings', 'manage payees', 'shared with teams', 'share a payee', 'teams column', 'the club’s own'],
+      searchText: 'payee payees payer vendor supplier merge payees two spellings duplicate payee rename payee delete payee manage payees paid to paid by last used tools menu share a payee with teams shared with teams switch teams column the club’s own which payees can teams use team picker shared by your club club sees payments teams cannot rename stop sharing',
       content: (
         <>
-          <p><strong>Payees</strong> are the names on the Ledger’s <strong>Paid to</strong> and <strong>Paid by</strong> lines. Open the list from the Ledger tab (on a phone, from the <strong>Book</strong> pill), or from <strong>Manage payees</strong> at the foot of the payee picker in any entry.</p>
+          <p><strong>Payees</strong> are the names on the Ledger’s <strong>Paid to</strong> and <strong>Paid by</strong> lines. Open the list from the Ledger’s <strong>Tools → Payees</strong> (on a phone too), or from <strong>Manage payees…</strong>, the last row of the payee picker in any entry.</p>
           <ul>
             <li><strong>Rename</strong> — open a payee and change its name. It saves as you type, and every line that names it follows.</li>
             <li><strong>Merge</strong> — when one supplier has two spellings, open one and choose <strong>Merge into another payee</strong>. Every line moves to the name you keep.</li>
-            <li><strong>Delete</strong> — only a payee no line uses. One that is in use can be merged instead.</li>
+            <li><strong>Delete</strong> — only a payee no line uses, the club’s or a team’s. One that is in use can be merged instead.</li>
+            <li><strong>Share with teams</strong> — in a club that runs teams, the <strong>Teams</strong> column says which payees are <strong>Shared with teams</strong> and which are <strong>The club’s own</strong>. Open a payee and turn on <strong>Shared with teams</strong>: every team can pick it as a payee, can’t rename or merge it, and their payee list tells them the club sees payments to it. Turn it off and it leaves their picker; a team record that already names it keeps the name.</li>
           </ul>
+          <p>A team’s own payees are its coaches’ to manage, in the Payees window on their own Ledger.</p>
         </>
       ),
     },

@@ -274,6 +274,21 @@ async function openScheduleHealth(page) {
   await summary.click();
   await page.locator('details[open] > summary[aria-label^="Collapse"]').first().waitFor({ timeout: 15_000 });
 }
+/** The team's Payees window, from the Ledger's Tools menu (Ledger Parity round 3, D8) — and, with
+ *  `firstPayee`, the first payee opened inside it. Like the import windows, a window that does not appear
+ *  fails the entry rather than measuring the page behind it. The trigger is worded at a desk and the bare
+ *  "⋯" (named by its aria-label) on a phone. */
+async function openPayeesWindow(page, { firstPayee = false } = {}) {
+  await page.locator('button[aria-haspopup="menu"][aria-label="Tools"]:visible')
+    .or(page.locator('button[aria-haspopup="menu"]:visible', { hasText: 'Tools' })).first().click();
+  await page.locator('[role="menu"] [role="menuitem"]:visible', { hasText: 'Payees' }).first().click();
+  const room = page.locator('[role="dialog"][data-room="payees"][data-room-state="loaded"]');
+  await room.waitFor({ state: 'visible', timeout: 15_000 });
+  if (!firstPayee) return;
+  await room.locator('tbody button[aria-haspopup="dialog"]').first().click();
+  await room.getByRole('button', { name: 'Back to Payees' }).waitFor({ state: 'visible', timeout: 15_000 });
+}
+
 /** One of Data tools' import windows, from its item under the Import menu. Unlike the schedule's openers
  *  this never falls back to the page: a locked item says why in a notice instead of opening, and a
  *  picture of the page would then pass as the window, so a window that does not appear fails the entry.
@@ -1050,6 +1065,11 @@ export const SCREENS = [
   { id: 'coach-transactions',      session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=timeline`, ready: 'h1' },
   { id: 'coach-payables',          session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=bills`,    ready: 'h1' },
   { id: 'coach-payables-schedule', session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=due`,      ready: 'h1' },
+  /* The team's Payees — a WINDOW over the Ledger since round 3 (Ledger Parity D8, owner 2026-10-02; the page it
+     replaced was built the same day and never shipped), opened from Tools; and one payee inside it (D9), the
+     record that reads first with its entries as the Ledger's own rows. The id is the page's, kept. */
+  { id: 'coach-payees',            session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=timeline`, ready: 'h1', scope: '[role="dialog"][data-room="payees"]', interact: openPayeesWindow },
+  { id: 'coach-payee',             session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=timeline`, ready: 'h1', scope: '[role="dialog"][data-room="payees"]', interact: (p) => openPayeesWindow(p, { firstPayee: true }) },
   /* ⚠⚠ ONE BILL — AND IT HAD NEVER BEEN SWEPT AT ALL (Payables Rebuild Part B, 2026-08-26).
      Part A shipped this screen as a sub-view of Payables and no entry was added with it, so a whole
      screen — a header, a standing figure, a fields block, an unbounded schedule and a payments list

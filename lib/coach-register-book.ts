@@ -17,6 +17,7 @@ import { incomeCategoryFor } from './coach-cash-strip';
 import { PAYOUT_CATEGORY_NAME, revenueGroupLabel } from './coach-budget-months';
 import { joinNames } from './practice-plan-send';
 import { clubInstallmentLeftTeamOn, clubInstallmentWaitingOnClub } from './club-money-figures';
+import { howItCame } from './club-money-words';
 import type { RepProgramYear } from './types';
 
 /**
@@ -49,6 +50,7 @@ type AllocationInstallmentRow = {
   id: string; split_id: string; installment_number: number;
   amount: number; due_date: string | null; paid_at: string | null;
   sent_at: string | null; sent_on: string | null; paid_on: string | null;
+  sent_method: string | null; sent_reference: string | null; paid_method: string | null; paid_reference: string | null;
 };
 type DuesInstallmentRow = {
   id: string; schedule_id: string; player_id: string | null; installment_number: number;
@@ -107,7 +109,7 @@ export async function loadSeasonRegisterRows(
        decides whether a row is cash. */
     supabaseAdmin
       .from('rep_fundraiser_entries')
-      .select('id, fundraiser_id, player_id, amount_raised, created_at, received_date, rep_fundraisers!inner(name, kind, sponsor_status, program_year_id, budget_item_id, budget_category_id)')
+      .select('id, fundraiser_id, player_id, amount_raised, created_at, received_date, method, rep_fundraisers!inner(name, kind, sponsor_status, program_year_id, budget_item_id, budget_category_id)')
       .eq('rep_fundraisers.program_year_id', programYear.id),
     /* ⚠ The PLEDGE line reads the RECORD, not entries (mig 268) — a pledged sponsor has no
        entries at all, and a part-paid one's outstanding promise is pledged minus arrived. */
@@ -129,7 +131,7 @@ export async function loadSeasonRegisterRows(
        "which statuses does the register admit?" a fact split across two places. */
     supabaseAdmin
       .from('rep_team_payment_requests')
-      .select('id, request_type, amount, description, status, budget_item_id, budget_category_id, reviewed_at, created_at')
+      .select('id, request_type, amount, description, status, budget_item_id, budget_category_id, reviewed_at, created_at, payment_method, paid_method, paid_reference')
       .eq('team_id', teamId)
       .eq('program_year_id', programYear.id),
     supabaseAdmin
@@ -171,6 +173,7 @@ export async function loadSeasonRegisterRows(
     id: string; request_type: string; amount: number; description: string; status: string;
     budget_item_id: string | null; budget_category_id: string | null;
     reviewed_at: string | null; created_at: string;
+    payment_method: string | null; paid_method: string | null; paid_reference: string | null;
   }>;
   /* ⚠ CLUB MONEY FILES ITSELF NOW (mig 250, money redesign P4). These two columns were the reason
      club rows on this book had a blank Category and Item — and, one screen over, the reason NO club
@@ -190,7 +193,7 @@ export async function loadSeasonRegisterRows(
   type FundraisingLine = { budget_item_id: string | null; budget_category_id: string | null };
   type FundraiserEntryRow = {
     id: string; fundraiser_id: string; player_id: string | null; amount_raised: number;
-    created_at: string; received_date: string | null;
+    created_at: string; received_date: string | null; method: string | null;
     rep_fundraisers: (FundraisingLine & { name: string; kind: string | null; sponsor_status: string | null }) | null;
   };
   type SponsorRecordRow = FundraisingLine & {
@@ -225,7 +228,7 @@ export async function loadSeasonRegisterRows(
     splits.length > 0
       ? supabaseAdmin
           .from('rep_allocation_installments')
-          .select('id, split_id, installment_number, amount, due_date, paid_at, sent_at, sent_on, paid_on')
+          .select('id, split_id, installment_number, amount, due_date, paid_at, sent_at, sent_on, paid_on, sent_method, sent_reference, paid_method, paid_reference')
           .in('split_id', splits.map(s => s.id))
       : EMPTY<AllocationInstallmentRow>(),
     schedules.length > 0
@@ -252,7 +255,6 @@ export async function loadSeasonRegisterRows(
       categoryName: category,
       itemName: item,
       moneyIn: 0,
-      sourceLabel: null,
       open: { kind: 'expense' as const, id: e.id },
     };
 
@@ -372,7 +374,6 @@ export async function loadSeasonRegisterRows(
       movesCash: true,
       open: { kind: 'money-in', id: m.id },
       recordPayment: null,
-      sourceLabel: null,
       detail: null,
     });
   }
@@ -400,6 +401,7 @@ export async function loadSeasonRegisterRows(
   const duesRow = (r: {
     id: string; date: string | null; description: string;
     amount: number; direction: 'in' | 'out'; scheduled: boolean; playerId: string;
+    origin: 'dues-payment' | 'dues-payout' | 'dues-installment'; method?: string | null;
   }): RegisterRow => ({
     id: r.id,
     date: r.date,
@@ -417,15 +419,17 @@ export async function loadSeasonRegisterRows(
        the family's PAYMENT on Player Dues — routing it through the money form would write a second,
        unlinked record of money the dues ledger has already accounted for. */
     recordPayment: null,
-    sourceLabel: REGISTER_SOURCE_LABEL.dues,
     detail: playerName.get(r.playerId) ?? null,
     playerName: playerName.get(r.playerId) ?? null,
+    origin: r.origin,
+    paidHow: howItCame(r.method, null),
   });
 
   for (const p of duesPayments) {
     rows.push(duesRow({
       id: `dues-payment-${p.id}`, date: p.receivedDate, description: 'Dues payment',
       amount: p.amount, direction: 'in', scheduled: false, playerId: p.playerId,
+      origin: 'dues-payment', method: p.method,
     }));
   }
   for (const p of duesPayouts) {
@@ -435,6 +439,7 @@ export async function loadSeasonRegisterRows(
     rows.push(duesRow({
       id: `dues-payout-${p.id}`, date: p.paidDate, description: 'Paid back to a family',
       amount: p.amount, direction: 'out', scheduled: false, playerId: p.playerId,
+      origin: 'dues-payout', method: p.method,
     }));
   }
 
@@ -524,7 +529,6 @@ export async function loadSeasonRegisterRows(
       movesCash: true,
       open: { kind: 'workspace', section: 'fundraisers' },
       recordPayment: null,
-      sourceLabel: REGISTER_SOURCE_LABEL.fundraising,
       /* ⚠⚠ THE EXCEPTION SPEAKS; THE NORMAL CASE DOES NOT (owner ruling 2026-09-02, §132 walk:
          *"what's the point of these 'the day the money arrived' notes?"*). This printed on BOTH
          branches, so an ordinary drive entry announced the very thing every other row on this book
@@ -537,6 +541,9 @@ export async function loadSeasonRegisterRows(
          only; the set shrinks to nothing on its own. */
       detail: [who, raw.received_date ? null : 'Recorded on this date'].filter(Boolean).join(' · ') || null,
       playerName: names.length > 0 ? names.join(', ') : null,
+      origin: isSponsor ? 'sponsor' : 'drive',
+      paidHow: howItCame(raw.method, null),
+      ...(raw.received_date ? {} : { datedWhenRecorded: true }),
     });
   }
   /* The PLEDGE line — what a sponsor has promised and not sent, read from the record itself
@@ -561,8 +568,8 @@ export async function loadSeasonRegisterRows(
       movesCash: true,
       open: { kind: 'workspace', section: 'fundraisers' },
       recordPayment: null,
-      sourceLabel: REGISTER_SOURCE_LABEL.fundraising,
       detail: 'Pledged — not arrived yet',
+      origin: 'pledge',
     });
   }
 
@@ -598,11 +605,13 @@ export async function loadSeasonRegisterRows(
            against the club's ledger — routing it through the money form would create a second,
            unlinked record of money the club has already accounted for. */
         recordPayment: null,
-        sourceLabel: REGISTER_SOURCE_LABEL.club,
         /* The waiting words ride the row as its CHIP (`waitingOnClub`, specimen 7: "Sent · waiting for the
            club"), so the detail stays the installment's number. */
         detail: `Installment #${i.installment_number}`,
         ...(waiting ? { waitingOnClub: true } : {}),
+        origin: 'club-installment',
+        installmentNumber: i.installment_number,
+        paidHow: howItCame(i.sent_method, i.sent_reference) ?? howItCame(i.paid_method, i.paid_reference),
       });
     }
   }
@@ -654,10 +663,11 @@ export async function loadSeasonRegisterRows(
       movesCash: true,
       open: { kind: 'workspace', section: 'club' },
       recordPayment: null,
-      sourceLabel: REGISTER_SOURCE_LABEL.club,
       detail: pending
         ? 'Awaiting the club — they may still decline it'
         : incoming ? 'Approved by the club' : 'Paid to the club',
+      origin: 'club-request',
+      paidHow: howItCame(r.paid_method, r.paid_reference) ?? howItCame(r.payment_method, null),
     });
   }
 
@@ -716,6 +726,7 @@ export async function loadSeasonRegisterRows(
           id: `dues-installment-${g.ids[0]}`, date: g.dueDate,
           description: `Installment #${g.installmentNumber}`,
           amount: g.amount, direction: 'in', scheduled: true, playerId: g.playerId,
+          origin: 'dues-installment',
         }));
         continue;
       }
@@ -733,8 +744,8 @@ export async function loadSeasonRegisterRows(
         movesCash: true,
         open: { kind: 'workspace', section: 'dues' },
         recordPayment: null,
-        sourceLabel: REGISTER_SOURCE_LABEL.dues,
         detail: `${g.ids.length} families outstanding`,
+        origin: 'dues-installment',
       });
     }
   }

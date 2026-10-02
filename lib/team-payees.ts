@@ -5,7 +5,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { fetchAll } from './supabase-paging';
 import { orgDayKey } from './timezone';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
-import { teamPayeeFilter, teamPayeeScope, type PayeeScope } from './team-payee-scope';
+import { PAYEE_NOTE_MAX, teamPayeeFilter, teamPayeeScope, type PayeeScope } from './team-payee-scope';
 import type { Organization } from './types';
 
 /**
@@ -22,13 +22,17 @@ import type { Organization } from './types';
  */
 
 type Org = Pick<Organization, 'id' | 'accountKind' | 'planId'>;
-type PayeeRow = { id: string; team_id: string | null; name: string; is_active: boolean; shared_with_teams: boolean };
-const COLS = 'id, team_id, name, is_active, shared_with_teams';
+type PayeeRow = { id: string; team_id: string | null; name: string; notes: string | null; is_active: boolean; shared_with_teams: boolean };
+const COLS = 'id, team_id, name, notes, is_active, shared_with_teams';
 
 /** A payee as a team's picker shows it: `scope` says which group ("Shared by your club" / the team's own). */
 export interface PickerPayee { id: string; teamId: string | null; name: string; scope: PayeeScope }
-/** One of the team's own payees on its Payees page — counts and dates from THIS team's records only. */
-export interface TeamPayee { id: string; name: string; isActive: boolean; uses: number; lastUsed: string | null }
+/**
+ * One of the team's own payees in its Payees window — `uses` counts THIS team's bills that name it, in EVERY
+ * season: it gates Delete (a payee any record names is merged, never deleted). The money a payee shows —
+ * paid, still to pay, last paid — is this season's, read from the Ledger's own rows in the browser (D9a).
+ */
+export interface TeamPayee { id: string; name: string; notes: string | null; isActive: boolean; uses: number; lastUsed: string | null }
 /** A club payee the club shares, as the team's Payees page lists it: read-only, name only (a merge target). */
 export interface SharedPayee { id: string; name: string }
 
@@ -74,7 +78,7 @@ export async function listTeamPayees(org: Org, teamId: string): Promise<{ payees
     const scope = teamPayeeScope(p, teamId, workspace);
     if (scope === 'team') {
       const u = uses.get(p.id);
-      payees.push({ id: p.id, name: p.name, isActive: p.is_active, uses: u?.count ?? 0, lastUsed: u?.last ?? null });
+      payees.push({ id: p.id, name: p.name, notes: p.notes, isActive: p.is_active, uses: u?.count ?? 0, lastUsed: u?.last ?? null });
     } else if (scope === 'club' && p.is_active) {
       shared.push({ id: p.id, name: p.name });
     }
@@ -107,9 +111,26 @@ export async function teamMayNamePayee(org: Org, teamId: string, payeeId: string
   return payeeId === current || (await payeeScopeForTeam(org, teamId, payeeId)) != null;
 }
 
-export async function renameTeamPayee(org: Org, teamId: string, payeeId: string, rawName: unknown): Promise<Moved<{ payee: { id: string; name: string } }>> {
-  const read = readPayeeName(rawName);
-  if ('ok' in read) return read;
+/**
+ * Change one of the team's own payees: its name, its note, or both (the payee window's one pencil edits
+ * both — round 3, D9). A key left out is left alone; a note sent empty clears it.
+ */
+export async function updateTeamPayee(
+  org: Org, teamId: string, payeeId: string, body: { name?: unknown; notes?: unknown },
+): Promise<Moved<{ payee: { id: string; name: string; notes: string | null } }>> {
+  const patch: { name?: string; notes?: string | null } = {};
+  if (body.name !== undefined) {
+    const read = readPayeeName(body.name);
+    if ('ok' in read) return read;
+    patch.name = read.name;
+  }
+  if (body.notes !== undefined) {
+    if (body.notes !== null && typeof body.notes !== 'string') return refused(400, { error: 'A note is text.' });
+    const note = (body.notes ?? '').trim();
+    if (note.length > PAYEE_NOTE_MAX) return refused(400, { error: `Keep the note under ${PAYEE_NOTE_MAX} characters.` });
+    patch.notes = note || null;
+  }
+  if (patch.name === undefined && patch.notes === undefined) return refused(400, { error: 'Nothing to change.' });
   const workspace = isTeamWorkspaceOrg(org);
   const own = teamPayeeFilter(teamId, workspace, 'own');
   const taken = refused(409, { error: 'Another of the team’s payees already has that name. Merge them instead.', code: 'payee_exists' });
@@ -119,17 +140,18 @@ export async function renameTeamPayee(org: Org, teamId: string, payeeId: string,
     // In a club the team's own list is one unique index, which answers a clash itself (23505). A standalone
     // team's own list spans both index scopes (`team_id` null and set), so the clash is checked here,
     // compared as the indexes compare (lower(name)).
-    workspace
+    workspace && patch.name !== undefined
       ? fetchAll<{ id: string; name: string }>((a, b) =>
           supabaseAdmin.from('org_payees').select('id, name').eq('org_id', org.id).or(own).order('id').range(a, b))
       : Promise.resolve([]),
   ]);
   if (notOwn) return notOwn;
-  if (ownNames.some(p => p.id !== payeeId && p.name.toLowerCase() === read.name.toLowerCase())) return taken;
+  const newName = patch.name;
+  if (newName !== undefined && ownNames.some(p => p.id !== payeeId && p.name.toLowerCase() === newName.toLowerCase())) return taken;
 
-  const { data, error } = await supabaseAdmin.from('org_payees').update({ name: read.name })
+  const { data, error } = await supabaseAdmin.from('org_payees').update(patch)
     .eq('id', payeeId).eq('org_id', org.id).or(own)
-    .select('id, name').maybeSingle();
+    .select('id, name, notes').maybeSingle();
   if (error) {
     if ((error as { code?: string }).code === '23505') return taken;
     throw error;

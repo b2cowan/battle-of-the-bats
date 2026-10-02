@@ -101,6 +101,11 @@
   background: rgba(var(--logic-lime-rgb), 0.08);
 }
 .multiSelectLead > .multiSelectSummary .multiSelectLabel { color: var(--logic-lime); }
+/* `shrink` — a pill that gives way in a tight row: its value ellipsised, never the row wrapping (the club
+   Ledger's Book pill on a phone, Ledger Parity 2026-10-02). Its host lets it shrink (`flex-shrink`). */
+.multiSelectShrink { min-width: 0; flex: 0 1 auto; }
+.multiSelectShrink > .multiSelectSummary { max-width: 100%; }
+.multiSelectShrink > .multiSelectSummary .multiSelectValue { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .multiSelectPick {
   width: 100%; border: 0; background: none; text-align: left; font-family: inherit;
   padding-left: 1.35rem; position: relative;

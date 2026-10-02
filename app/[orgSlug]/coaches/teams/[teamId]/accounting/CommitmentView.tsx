@@ -14,6 +14,7 @@ import type { CommitmentStanding } from '@/lib/payable-standing';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
 import styles from '../../../coaches.module.css';
 import { useBumpMoneyRevision } from '@/lib/coach-money-refresh';
+import { expensePayeeName, followPayeeChange, type PayeeChange } from '@/lib/expense-payee';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -167,6 +168,14 @@ interface Props {
    * ⚠ A NAME, not a roster: this page renders values and must not gain a picker.
    */
   playerNameById?: Map<string, string>;
+  /** The payee picker's "Manage payees…" — opens the Payees window OVER this room (Ledger Parity D8). */
+  onManagePayees?: () => void;
+  /**
+   * The newest change made in the Payees window while this room was open (its `seq` changes with each).
+   * A rename or a merge of the payee this bill names is followed here, so the room never holds a payee
+   * that no longer exists — its next save would be refused.
+   */
+  payeeChange?: { seq: number; change: PayeeChange } | null;
   /** The standing figure, the schedule and the payments — the panel's, unchanged by this phase. */
   children: ReactNode;
 }
@@ -194,15 +203,18 @@ function filingLabel(filing: Filing): string {
   return filing ? [filing.categoryName, filing.itemName].filter(Boolean).join(' · ') : '';
 }
 
+/** ⚠ THE PAYEE AS IT IS NAMED NOW (Ledger Parity D9b): read by its id, never only by the text typed when
+ *  the bill was entered — a renamed or merged payee kept its old spelling here, and a bill naming a
+ *  payee with no text beside it showed an empty field and SAVED it empty on the next unrelated edit. */
 function seedPayee(expense: RepTeamExpense): PayeeSelection | null {
-  return expense.payeePayer
-    ? { payeeId: expense.payeeId, payeePayer: expense.payeePayer, displayName: expense.payeePayer }
-    : null;
+  const name = expensePayeeName(expense);
+  return name ? { payeeId: expense.payeeId, payeePayer: expense.payeePayer, displayName: name } : null;
 }
 
 export default function CommitmentView({
   orgSlug, teamId, expense, standing, canWrite, categories, tagLibrary, initialTagIds, onCreateTag,
-  room, footQuestion, onRefusedAfterClose, onSaved, onDeleted, tabActive, playerNameById, children,
+  room, footQuestion, onRefusedAfterClose, onSaved, onDeleted, tabActive, playerNameById, onManagePayees,
+  payeeChange, children,
 }: Props) {
   /* ── The draft. Seeded once per BILL — see the docblock and the change guard below. ── */
   const [name, setName] = useState(expense.description);
@@ -243,6 +255,19 @@ export default function CommitmentView({
     setState('clean');
     setSaveError('');
     setDeleting(false);
+  }
+
+  /* ⚠ A PAYEE CHANGED UNDER THIS ROOM (Ledger Parity D8): the Payees window opened from this room's picker
+     renamed or merged the payee this draft names. The server already moved the bill (a merge repoints it),
+     so the draft follows without saving anything — the name is presentation, and a merged-away id would
+     be refused on the next save. Render-phase, on the change's own sequence number. */
+  const [payeeSeq, setPayeeSeq] = useState(payeeChange?.seq ?? 0);
+  if (payeeChange && payeeChange.seq !== payeeSeq) {
+    setPayeeSeq(payeeChange.seq);
+    // An UPDATER, not a value: should the walk reseed this draft for another bill in the same render, the change
+    // applies to the reseeded payee, never to the previous bill's (/review 2026-10-02).
+    const change = payeeChange.change;
+    setPayee(p => followPayeeChange(p, change));
   }
 
   /* ⚠ THE SIGNATURE COVERS THE WHOLE EDITABLE SET, not just the text — retagging a bill and then
@@ -700,6 +725,7 @@ export default function CommitmentView({
               onChange={touch(setPayee)}
               placeholder="Add who this is paid to"
               saveScope="team"
+              onManage={onManagePayees}
             />
           ) : (
             <span>{payee?.displayName || <span className={styles.commitEmpty}>No payee</span>}</span>

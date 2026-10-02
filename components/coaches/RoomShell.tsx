@@ -7,6 +7,7 @@ import CoachCollapseSection from './CoachCollapseSection';
 import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
 import type { RoomNeighbour } from '@/lib/room-neighbours';
 import { useDialogFloor } from './useDialogFloor';
+import { RAISED_OVERLAY_Z } from './overlayLayers';
 import s from './RoomShell.module.css';
 
 /**
@@ -180,6 +181,18 @@ export interface RoomShellProps {
   sentinel?: string;
   /** `false` while the record is still loading — the sweep waits for `loaded`. */
   loaded?: boolean;
+  /**
+   * A level BEHIND this one in the same window — the Payees list behind one payee (Ledger Parity D8). The
+   * header draws the named back ("← Payees" at a desk, the bare arrow on a phone, `CoachModalHeader
+   * backLabel`) and the phone's Back gesture goes there instead of closing (`useDialogFloor` `onBack`).
+   */
+  back?: { label: string; onBack: () => void };
+  /** One short line under the title ("Your team’s own payee"). */
+  subtitle?: ReactNode;
+  /** One control between the title and the X — the record's edit pencil ↔ ✓ (the 2026-10-01 standard). */
+  headerExtra?: ReactNode;
+  /** Stand above another room or form that is already open — see `overlayLayers.ts`. */
+  raised?: boolean;
 }
 
 export default function RoomShell({
@@ -202,6 +215,10 @@ export default function RoomShell({
   width = 'default',
   sentinel,
   loaded = true,
+  back,
+  subtitle,
+  headerExtra,
+  raised = false,
 }: RoomShellProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -209,6 +226,7 @@ export default function RoomShell({
   useOverlayOpenIfAvailable(open);
   useDialogFloor(open, panelRef, {
     onClose,
+    onBack: back?.onBack,
     busy,
     walk: nav ? { prev: nav.prev?.id ?? null, next: nav.next?.id ?? null, onSelect: nav.onSelect } : null,
     focusKey: recordKey,
@@ -222,6 +240,7 @@ export default function RoomShell({
   return (
     <div
       className={coach.modalOverlay}
+      style={raised ? { zIndex: RAISED_OVERLAY_Z } : undefined}
       onPointerDown={event => { if (event.target === event.currentTarget) requestClose(); }}
     >
       <div
@@ -237,14 +256,20 @@ export default function RoomShell({
         onClick={event => event.stopPropagation()}
       >
         {/* The portal's one modal header (back arrow on a phone, X on a desktop); the status chip
-            rides inside the title so it stays beside the name at every width. */}
+            rides inside the title so it stays beside the name at every width. A level behind this one
+            (`back`) names itself at every width. */}
         <CoachModalHeader
           titleTag="h2"
           title={<span className={s.titleRow}>{title}{status}</span>}
+          subtitle={subtitle}
           onClose={requestClose}
+          onBack={back && !busy ? back.onBack : undefined}
+          backLabel={back?.label}
           closeAriaLabel="Close"
           closeIconSize={18}
-        />
+        >
+          {headerExtra}
+        </CoachModalHeader>
 
         <div className={s.body}>
           {tiles && tiles.length > 0 && (

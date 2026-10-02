@@ -7,6 +7,13 @@
  * the rename SAVES AS YOU TYPE with the fading "Saved" (2026-09-24) — or merges it into another, which
  * asks first and names how many entries move (the two spellings of one payee become one). A payee is
  * never deleted while a line names it; one no line names can go.
+ *
+ * ⚖ SHARED WITH TEAMS (Ledger Parity D7, owner 2026-10-02; Business Decisions Log): a club that runs
+ * teams chooses which of its payees its teams can pick. A Teams column says which ("Shared with teams"
+ * in the club's blue / "The club's own"), and the payee's window carries the switch with what it does.
+ * Only a club with teams draws either (`clubSharesPayees` — the PATCH refuses on the same pure rule). A team's
+ * picker lists a shared payee under "Shared by your club" and tells the coach the club sees payments to
+ * it. ⚠ "What the teams recorded" in that window is Club Tier Stage 3b — NOT built here.
  */
 import { use, useCallback, useRef, useState } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
@@ -17,18 +24,30 @@ import KitDialog from '@/components/admin/kit/club/KitDialog';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
-  ClubRow, ClubRowList, ClubSection, EmptyCard, LoadFailed, PageLoading, SavePill, repKit, useDeferredLoad, useLatestRead,
+  ClubRow, ClubRowList, ClubSection, EmptyCard, LoadFailed, PageLoading, RepChip, SavePill, repKit, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { FormError, TextField, day, jsonInit, moneyFetch, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
 import { pluralize } from '@/lib/utils';
+import { clubSharesPayees } from '@/lib/team-payee-scope';
 
-/** `uses` / `lastUsed` are the club's own entries; `inUse` also answers for a team's records (Ledger Parity D7a). */
-interface Payee { id: string; name: string; notes: string | null; isActive: boolean; uses: number; lastUsed: string | null; inUse: boolean }
+/**
+ * `uses` / `lastUsed` are the club's own entries; `inUse` also answers for a team's records (Ledger Parity D7a);
+ * `sharedWithTeams` puts it in every team's picker (D7).
+ */
+interface Payee {
+  id: string; name: string; notes: string | null; isActive: boolean; uses: number; lastUsed: string | null; inUse: boolean;
+  sharedWithTeams: boolean;
+}
+
+/** The Teams column's two answers — one spelling, the table's and the phone row's. */
+const SHARED_WORD = 'Shared with teams';
+const OWN_WORD = 'The club’s own';
 
 export default function PayeesPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = use(params);
-  const { loading: orgLoading } = useOrg();
+  const { currentOrg, loading: orgLoading } = useOrg();
+  const canShare = !!currentOrg && clubSharesPayees(currentOrg);
   const q = `orgSlug=${encodeURIComponent(orgSlug)}`;
   const ledgerHref = `/${orgSlug}/admin/accounting/ledger`;
   usePageTitle('Payees');
@@ -66,7 +85,7 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
       {notice && <PageNotice notice={notice} />}
       {payees.length === 0 ? (
         <EmptyCard title="No payees yet" action={<button type="button" className="btn btn-lime" onClick={() => setAdding(true)}><Plus size={14} aria-hidden /> New payee</button>}>
-          A payee is saved the first time you pick “Save as org payee” on an entry, or here.
+          A payee is saved the first time you pick “Save as club payee” on an entry, or here.
         </EmptyCard>
       ) : (
         <ClubSection
@@ -82,6 +101,7 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
                   <th scope="col">Payee</th>
                   <th scope="col" className={repKit.num}>Entries</th>
                   <th scope="col">Last used</th>
+                  {canShare && <th scope="col">Teams</th>}
                   <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
                 </tr>
               </thead>
@@ -93,6 +113,7 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
                     </td>
                     <td className={repKit.num}>{p.uses}</td>
                     <td className={repKit.dim}>{p.lastUsed ? day(p.lastUsed) : '—'}</td>
+                    {canShare && <td>{p.sharedWithTeams ? <RepChip tone="info">{SHARED_WORD}</RepChip> : <span className={repKit.dim}>{OWN_WORD}</span>}</td>}
                     <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
                   </tr>
                 ))}
@@ -103,19 +124,22 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
             <ClubRowList inset label="Payees">
               {payees.map(p => (
                 <ClubRow key={p.id} as="button" aria-haspopup="dialog" onClick={() => setOpen(p)} title={p.name}
-                  caption={`${pluralize(p.uses, 'entry', 'entries')}${p.lastUsed ? ` · last ${day(p.lastUsed)}` : ''}`} chevron />
+                  caption={`${pluralize(p.uses, 'entry', 'entries')}${p.lastUsed ? ` · last ${day(p.lastUsed)}` : ''}${canShare && p.sharedWithTeams ? ` · ${SHARED_WORD}` : ''}`} chevron />
               ))}
             </ClubRowList>
           </div>
         </ClubSection>
       )}
-      <p className={repKit.notes}>The club’s payees only: a team’s payees are its coaches’. A payee is never deleted while an entry names it; merge it into another instead.</p>
+      <p className={repKit.notes}>{canShare
+        ? 'The club’s payees. Every team can pick one that’s shared with teams; a team’s own payees stay its coaches’. A payee is never deleted while an entry names it: merge it into another instead.'
+        : 'The club’s payees. A payee is never deleted while an entry names it: merge it into another instead.'}</p>
 
       {open && (
         <PayeeWindow
           key={open.id}
           payee={open}
           others={payees.filter(p => p.id !== open.id)}
+          canShare={canShare}
           q={q}
           onClose={changed => { setOpen(null); if (changed) void load(); }}
           onDone={text => { setOpen(null); setNotice({ tone: 'good', text }); void load(); }}
@@ -130,11 +154,31 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
 }
 
 /** A payee: its name saves as you type; merge asks; delete only when no line names it. */
-function PayeeWindow({ payee, others, q, onClose, onDone }: {
-  payee: Payee; others: Payee[]; q: string; onClose: (changed: boolean) => void; onDone: (text: string) => void;
+function PayeeWindow({ payee, others, canShare, q, onClose, onDone }: {
+  payee: Payee; others: Payee[]; canShare: boolean; q: string; onClose: (changed: boolean) => void; onDone: (text: string) => void;
 }) {
   const [name, setName] = useState(payee.name);
   const [saved, setSaved] = useState(false);
+  const [shared, setShared] = useState(payee.sharedWithTeams);
+  const [sharing, setSharing] = useState(false);
+  const [shareError, setShareError] = useState('');
+  /* ⚖ The switch acts on the tap (an edit, so no Save — 2026-09-24), its own request, never folded into
+     the rename's autosave: a refused rename must not hold the sharing back, and the reverse. Asking for
+     the state it is already in changes nothing on the server (the D7a clock never restarts by accident). */
+  async function share(next: boolean) {
+    if (sharing) return;
+    setSharing(true); setShareError('');
+    try {
+      const r = await moneyFetch<{ payee?: { sharedWithTeams?: boolean } }>(`/api/admin/accounting/payees/${payee.id}?${q}`, jsonInit('PATCH', { sharedWithTeams: next }));
+      if (!r.ok) { setShareError(refusalText(r.data, 'The sharing couldn’t be changed. Please try again.')); return; }
+      setShared(r.data.payee?.sharedWithTeams ?? next);
+      setSaved(true);
+    } catch {
+      setShareError('The sharing couldn’t be changed. Check your connection and try again.');
+    } finally {
+      setSharing(false);
+    }
+  }
   const [asking, setAsking] = useState<'merge' | 'delete' | null>(null);
   const blocked = !name.trim() ? 'Give the payee a name to save it.' : null;
   const write = useCallback(async (signal: AbortSignal) => {
@@ -163,13 +207,27 @@ function PayeeWindow({ payee, others, q, onClose, onDone }: {
         title={payee.name}
         status={<SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} />}
         onClose={() => void close()}
+        busy={sharing}
         footerStart={!payee.inUse
           ? <button type="button" className="btn btn-danger" onClick={() => setAsking('delete')}>Delete this payee</button>
           : others.length > 0 ? <button type="button" className="btn btn-outline" onClick={() => setAsking('merge')}>Merge into another payee</button> : undefined}
         footer={<button type="button" className="btn btn-outline" onClick={() => void close()}>Done</button>}
       >
-        <TextField id="payee-name" label="Name" required value={name} onChange={v => { setName(v); touch(); }} maxLength={200}
-          hint={`Named on ${pluralize(payee.uses, 'entry', 'entries')}. A new name shows on every one of them.`} />
+        <TextField id="payee-name" label="Name" required value={name} onChange={v => { setName(v); touch(); closeRefused.current = false; }} maxLength={200}
+          hint={payee.uses === 0
+            ? 'Named on none of the club’s own entries.'
+            : `Named on ${pluralize(payee.uses, 'entry', 'entries')} of the club’s own. A new name shows wherever it is named.`} />
+        {canShare && (
+          <div className={ck.switchRow}>
+            <div className={ck.switchText}>
+              <span className={ck.switchName} id="payee-shared-label">{SHARED_WORD}</span>
+              <p className={ck.hint}>Every team can pick it as a payee. Teams can’t rename or merge it, and their payee list tells them the club sees payments to it.</p>
+              <FormError>{shareError}</FormError>
+            </div>
+            <button type="button" role="switch" aria-checked={shared} aria-labelledby="payee-shared-label"
+              className={ck.switch} disabled={sharing} onClick={() => void share(!shared)} />
+          </div>
+        )}
         {payee.inUse && others.length > 0 && (
           <p className={ck.hint}>Two spellings of one payee? Merge this one into the other: every entry moves to the one you keep.</p>
         )}

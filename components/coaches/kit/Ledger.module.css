@@ -1,0 +1,156 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE LEDGER'S SHARED PARTS — BOTH PORTALS (Ledger Parity, owner rulings D1–D7, 2026-10-02;
+   hub https://claude.ai/artifact/EQqEd3s4CBLbnrnPuUVAAo).
+
+   The coach's Ledger (Money › Ledger) and the club's (Accounting › Ledger) are ONE recipe (register
+   K-01 / K-25). Each portal keeps its own desk DENSITY rules — restated by value, K-01 — because each
+   shell loads only its own sheet. What lives HERE is what the two must never draw twice:
+
+   · `.name` — the What's name, the row's keyboard door (a real button, standard §3.6), at BODY
+     weight on both Ledgers (⚖ owner 2026-10-02: "I prefer the font styling of the coaches ledger for
+     the what column (i.e. not bold)… update the club ledger to match"). ⚠ Do not "fix" it to the
+     club's other tables, whose names are bold — the ledger's own look, ruled (K-01).
+   · the phone CARD (K-25, D4) — promoted from the club's `Money.module.css`, where it was built
+     2026-10-01 to the standard. Both Ledgers and the club's team-account statement render it. A
+     card's lead cell is its TITLE, so the card sets the name bold again — the title is not part of
+     the What ruling.
+   · the phone's balance lines, plain between the cards — never a card.
+   · a record's facts box and the read window's one sentence (D3: a row another tab wrote opens a
+     READ window — its facts, where it is changed, one door; the frame is each portal's own window).
+
+   ⚠ TOKENS ONLY — the club's folder is held strictly by the admin-kit token check, and this sheet is
+   read on both shells.
+   ⚠ SPECIFICITY: two modules at one specificity resolve by BUNDLE ORDER (the kit's lesson,
+   2026-09-16), and a media query adds none. Each portal's own table rules (`.tableWrap`, `.td`,
+   `repKit.tableFrame`) sit at one class, so the frame rule below is TWO classes deep and every cell
+   rule is a class + an element; the padding and the hairline keep the `!important` the club's
+   recipe already carried, because a register's compact padding is set three deep on the coach's side.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── The What's name: the row's keyboard door, at body weight (both Ledgers, desk and tablet) ── */
+.name {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 400;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+/* At a touch width the ROW is the thumb's target; the name keeps the floor as the keyboard's door. */
+@media (max-width: 768px) {
+  .name { min-height: var(--tap-min, 44px); }
+}
+/* The detail after the name, in the quiet ink, on the same line at a desk. */
+.detail { font-weight: 400; color: var(--text-tertiary); }
+.detailSep { color: var(--text-tertiary); }
+
+/* ── The last column: one chevron, and Record beside it on an unpaid installment (ruled 2026-09-04) ── */
+.goCell { text-align: right; white-space: nowrap; }
+.goInner { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.4rem; vertical-align: middle; }
+.goMark { display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; color: var(--text-tertiary); }
+
+/* ── The phone's balance lines — plain lines between the cards (hidden at a desk, where the table's own
+   balance rows carry them) ── */
+.phoneBal {
+  display: none;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.15rem 0.15rem 0.5rem;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.phoneBalEnd { padding: 0.5rem 0.15rem 0.15rem; color: var(--text-primary); }
+
+/* ── ≤ 640: A CARD PER ENTRY (K-25 — an entry is a record with LABELLED lines). The lead cell is the
+   card's title (no label); the chevron sits in its corner; the whole card opens. ── */
+@media (max-width: 640px) {
+  .phoneBal { display: flex; }
+  .cardsFrame.cardsFrame { border: 0; background: none; overflow: visible; }
+  .cardsFrame table,
+  .cardsFrame tbody,
+  .cardsFrame tr,
+  .cardsFrame td { display: block; width: auto; }
+  .cardsFrame thead { display: none; }
+  /* The table's own balance and "Showing N of M" rows stand down — the phone draws them plainly. */
+  .cardsFrame tr.deskRow { display: none; }
+  .cardsFrame tr {
+    position: relative;
+    border: 1px solid var(--home-line-strong);
+    border-radius: 10px;
+    padding: 0.65rem 2.6rem 0.65rem 0.85rem;
+    margin-bottom: 0.55rem;
+    background: var(--card-bg);
+  }
+  .cardsFrame td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.2rem 0 !important; /* the K-01 cell padding stands down inside a card */
+    border-bottom: 0 !important;
+    text-align: right;
+    font-size: var(--type-support);
+  }
+  .cardsFrame td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    text-align: left;
+    /* Upright on every card: a scheduled row's italics are its FIGURES' signal (with its chip), never
+       the labels' — the club's card has none, and a slanted label was one of D4's findings. */
+    font-style: normal;
+    font-size: var(--type-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
+  }
+  /* A line with nothing to say draws nothing: an empty cell, or a desk's "—" (`data-card-empty`). */
+  .cardsFrame td:empty,
+  .cardsFrame td[data-card-empty] { display: none; }
+  /* The card's title: the name — bold, a card's lead cell is its title — its chips, and the detail
+     under it in the quiet ink. */
+  .cardsFrame td.whatCell { display: block; text-align: left; font-size: var(--type-body); padding-bottom: 0.3rem !important; }
+  .cardsFrame td.whatCell .name { font-weight: 650; }
+  .cardsFrame td.whatCell .detail { display: block; font-size: var(--type-support); margin-top: 0.1rem; }
+  .cardsFrame td.whatCell .detailSep { display: none; }
+  /* The chevron in the card's corner. */
+  .cardsFrame td.goCell { position: absolute; right: 0.8rem; top: 0.85rem; padding: 0 !important; }
+  /* …unless the cell also holds Record (an unpaid installment): then the cell is the card's foot — a
+     full-width button — and only the chevron goes to the corner (the tr is the positioned box). */
+  .cardsFrame td.goCell.goCellAction { position: static; display: block; padding-top: 0.45rem !important; text-align: left; }
+  .cardsFrame td.goCellAction .goInner { display: block; }
+  .cardsFrame td.goCellAction .goMark { position: absolute; right: 0.8rem; top: 0.85rem; }
+  /* A band (a team's season) heads the cards under it, as a label — not a card. */
+  .cardsFrame tr[data-band] { border: 0; background: none; padding: 0.35rem 0.15rem 0.25rem; margin: 0.65rem 0 0.15rem; }
+  .cardsFrame tr[data-band] > td { display: block; padding: 0 !important; background: none !important; border: 0 !important; text-align: left; }
+  /* A closing row (Outstanding on …) reads as the statement's last line, under the cards. */
+  .cardsFrame tr[data-close] { border: 0; background: none; padding: 0.5rem 0.15rem 0; }
+  .cardsFrame tr[data-close] > td { font-weight: 700; color: var(--text-primary); }
+}
+
+/* ── A record's facts (the drawing's record box): a label left, its value right ── */
+.facts {
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--home-paper);
+  padding: 0.55rem 0.8rem;
+  font-size: var(--type-body);
+  margin: 0 0 0.85rem;
+}
+.factRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding: 0.2rem 0;
+}
+.factLabel { color: var(--text-tertiary); flex: none; }
+.factValue { font-weight: 650; text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); overflow-wrap: anywhere; }
+
+/* ── The read window's one sentence: where the line is changed ── */
+.where { margin: 0; font-size: var(--type-support); line-height: 1.5; color: var(--text-secondary); }

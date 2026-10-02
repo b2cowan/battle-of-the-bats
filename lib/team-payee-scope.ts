@@ -10,7 +10,24 @@
  *            by the team; "Shared by your club" in the picker.
  *   null   — anything else: another team's payee, or a club payee the club keeps to itself. The team never sees it.
  */
+import { hasModuleEntitlement, type EntitlementOrg } from './module-entitlements';
+import { isTeamWorkspaceOrg } from './team-workspace-kind';
+import type { Organization } from './types';
+
 export type PayeeScope = 'team' | 'club';
+
+/** A payee's note, as the payee window edits it (round 3, D9) — a few lines, never a document. One number for
+ *  the field's cap and the route's refusal; here because this module is safe to import in the browser. */
+export const PAYEE_NOTE_MAX = 1000;
+
+/**
+ * Can this org share a payee with its teams? A club that runs Rep Teams — never a standalone team's org,
+ * whose payees are all the team's own. The club PATCH refuses on it (`shareRefusal`), and the screens ask it
+ * before drawing the Teams column, the share switch and the Payees tool's "choose which the teams can use".
+ */
+export function clubSharesPayees(org: EntitlementOrg & Pick<Organization, 'accountKind' | 'planId'>): boolean {
+  return !isTeamWorkspaceOrg(org) && hasModuleEntitlement(org, 'module_rep_teams');
+}
 
 export function teamPayeeScope(
   row: { team_id: string | null; shared_with_teams: boolean },

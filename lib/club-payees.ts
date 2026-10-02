@@ -1,9 +1,9 @@
 import 'server-only';
 import { refused, type Moved, type Refused } from './club-money-route';
-import { hasModuleEntitlement, type EntitlementOrg } from './module-entitlements';
+import type { EntitlementOrg } from './module-entitlements';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
-import { isTeamWorkspaceOrg } from './team-workspace-kind';
+import { clubSharesPayees } from './team-payee-scope';
 import type { Organization } from './types';
 
 /**
@@ -114,7 +114,7 @@ type SharingOrg = EntitlementOrg & Pick<Organization, 'id' | 'accountKind' | 'pl
 
 /** Why this share request cannot be made at all — or null. Asked before any write, so a refusal writes nothing. */
 export function shareRefusal(org: SharingOrg, shared: unknown): Refused | null {
-  if (isTeamWorkspaceOrg(org) || !hasModuleEntitlement(org, 'module_rep_teams')) {
+  if (!clubSharesPayees(org)) {
     return refused(403, { error: 'Only a club with teams can share its payees.', code: 'not_allowed' });
   }
   if (typeof shared !== 'boolean') return refused(400, { error: 'Say whether the payee is shared.', code: 'bad_shared' });

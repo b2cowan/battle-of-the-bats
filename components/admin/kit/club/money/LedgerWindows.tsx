@@ -23,13 +23,14 @@ import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { RepChip, SavePill, repKit } from '../RepKit';
 import PayeeCombobox, { type PayeeSelection } from '@/components/accounting/PayeeCombobox';
+import { LedgerLineRead } from '@/components/coaches/kit';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
 import { howItCame } from '@/lib/club-money-words';
 import { tournamentToday } from '@/lib/timezone';
 import type { BookRowOut } from '@/lib/club-ledger-read';
 import {
-  DayField, Facts, FormError, MethodField, ReasonQuestion, TextField, day, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
+  DayField, FormError, MethodField, ReasonQuestion, TextField, day, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
   type MoveResult,
 } from './MoneyKit';
 
@@ -99,7 +100,7 @@ function StatusField({ id, value, onChange }: { id: string; value: 'posted' | 'p
   );
 }
 
-/** The payee picker, with Manage payees at its foot (C01: the two spellings get merged there). */
+/** The payee picker, with "Manage payees…" as its last row (C01: the two spellings get merged there). */
 function PayeeField({ id, q, value, onChange, payeesHref, label }: {
   id: string; q: string; value: PayeeSelection | null; onChange: (v: PayeeSelection | null) => void; payeesHref: string; label: string;
 }) {
@@ -110,7 +111,7 @@ function PayeeField({ id, q, value, onChange, payeesHref, label }: {
         payeesApiUrl={`/api/admin/accounting/payees?${q}`}
         value={value}
         onChange={onChange}
-        foot={<Link href={payeesHref} className={ck.link}>Manage payees</Link>}
+        manageHref={payeesHref}
         kitField
       />
     </div>
@@ -445,7 +446,12 @@ function VoidLineQuestion({ row, book, q, onClose, onDone }: {
   );
 }
 
-/** A line from a source, a transfer half, a void line, or any line on a team's book: read here. */
+/**
+ * A line from a source, a transfer half, a void line, or any line on a team's book: read here. ⚖ Its
+ * BODY is the shared kit's `LedgerLineRead` (Ledger Parity D3, 2026-10-02) — the coach's Ledger opens
+ * a line another tab wrote into the same read shape (facts, where it is changed, one door), so the two
+ * windows cannot drift; the frame stays the admin's `KitDialog`.
+ */
 function ReadLineWindow({ row, book, q, accountingBase, canMove, onChanged, onClose }: {
   row: BookRowOut; book: BookRef; q: string; accountingBase: string; canMove: boolean;
   onChanged: (text: string | null) => void; onClose: () => void;
@@ -477,31 +483,33 @@ function ReadLineWindow({ row, book, q, accountingBase, canMove, onChanged, onCl
           </>
         }
       >
-        {row.status === 'void' && (
-          <p className={moneyKit.lead1}><RepChip>Void</RepChip> {row.voided?.reason ? `“${row.voided.reason}”` : 'No reason was given.'}{row.voided?.by ? ` · ${row.voided.by}` : ''}{row.voided?.at ? `, ${day(row.voided.at)}` : ''}</p>
-        )}
-        <Facts rows={[
-          ['Amount', amount],
-          row.category ? ['Category', row.category] : null,
-          row.detail ? ['How it came', row.detail] : null,
-          ['On', day(row.date)],
-          isTransfer && row.source.kind === 'transfer' && row.source.partnerLedgerName
-            ? ['The other half', `${row.moneyIn != null ? 'Out of' : 'Into'} ${row.source.partnerLedgerName}`] : null,
-          ['Recorded by', `${row.recordedBy ?? 'Someone at the club'}, ${day(row.recordedAt)}`],
-          teamSide ? ['The team’s side', teamSide] : null,
-          row.status === 'pending' ? ['Status', 'Pending — not cleared yet'] : null,
-        ]} />
-        {book.kind === 'team' ? (
-          <p className={ck.hint}>A team’s book is kept by its coaches and is read-only here. Money moves between the club and a team through allocations and payment requests.</p>
-        ) : row.source.kind === 'allocation' ? (
-          <p className={ck.hint}>This line was written when the payment was recorded. To change it, undo the payment on the allocation, and both books follow.</p>
-        ) : row.source.kind === 'request' ? (
-          <p className={ck.hint}>This line was written when the request was decided. To change it, reverse the approval on the request, and both books follow.</p>
-        ) : row.source.kind === 'league_fee' ? (
-          <p className={ck.hint}>This line was written by a house league registration fee. Change it on the registration.</p>
-        ) : isTransfer && row.status !== 'void' && !canVoidBoth ? (
-          <p className={ck.hint}>A transfer is changed by voiding both halves and entering it again.</p>
-        ) : null}
+        <LedgerLineRead
+          lead={row.status === 'void' && (
+            <p className={moneyKit.lead1}><RepChip>Void</RepChip> {row.voided?.reason ? `“${row.voided.reason}”` : 'No reason was given.'}{row.voided?.by ? ` · ${row.voided.by}` : ''}{row.voided?.at ? `, ${day(row.voided.at)}` : ''}</p>
+          )}
+          facts={[
+            ['Amount', amount],
+            row.category ? ['Category', row.category] : null,
+            row.detail ? ['How it came', row.detail] : null,
+            ['On', day(row.date)],
+            isTransfer && row.source.kind === 'transfer' && row.source.partnerLedgerName
+              ? ['The other half', `${row.moneyIn != null ? 'Out of' : 'Into'} ${row.source.partnerLedgerName}`] : null,
+            ['Recorded by', `${row.recordedBy ?? 'Someone at the club'}, ${day(row.recordedAt)}`],
+            teamSide ? ['The team’s side', teamSide] : null,
+            row.status === 'pending' ? ['Status', 'Pending — not cleared yet'] : null,
+          ]}
+          where={book.kind === 'team'
+            ? 'A team’s book is kept by its coaches and is read-only here. Money moves between the club and a team through allocations and payment requests.'
+            : row.source.kind === 'allocation'
+              ? 'This line was written when the payment was recorded. To change it, undo the payment on the allocation, and both books follow.'
+              : row.source.kind === 'request'
+                ? 'This line was written when the request was decided. To change it, reverse the approval on the request, and both books follow.'
+                : row.source.kind === 'league_fee'
+                  ? 'This line was written by a house league registration fee. Change it on the registration.'
+                  : isTransfer && row.status !== 'void' && !canVoidBoth
+                    ? 'A transfer is changed by voiding both halves and entering it again.'
+                    : null}
+        />
       </KitDialog>
       {voiding && row.source.kind === 'transfer' && (
         <VoidTransferQuestion row={row} book={book} q={q}

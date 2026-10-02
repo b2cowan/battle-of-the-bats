@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type 
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Receipt, Plus, AlertTriangle, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { Receipt, Plus, AlertTriangle, Upload, ChevronDown, ChevronRight, Trash2, MoreHorizontal } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { creditKindSentence } from '@/lib/dues-credits';
@@ -27,7 +27,6 @@ import { toKnownCategories } from '@/lib/coach-budget-import';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard, touched, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import RowEditButton from '@/components/coaches/RowEditButton';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
 import {
   installmentStatus, installmentStatuses, installmentLabel, PAYABLE_STATUS_LABEL, PAYABLE_STATUS_ORDER,
@@ -64,7 +63,15 @@ import CoachLoadError from '@/components/coaches/CoachLoadError';
 import { CLUB_SENT_WAITING_WORD } from '@/lib/club-money-words';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
-import { CoachListToolbar, kit } from '@/components/coaches/kit';
+import { CoachListToolbar, kit, ledgerKit } from '@/components/coaches/kit';
+import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import { ledgerBalanceLabel, ledgerRowDate } from '@/lib/ledger-format';
+import LedgerLineWindow from '../LedgerLineWindow';
+import PayeesWindow from '../PayeesWindow';
+import BudgetItemManagerModal from '@/components/coaches/BudgetItemManagerModal';
+import TagManagerDrawer from '@/components/coaches/TagManagerDrawer';
+import { payeeMoneyByPayee } from '@/lib/payee-money';
+import { expensePayeeName, followPayeeChange, type PayeeChange } from '@/lib/expense-payee';
 import type {
   RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer,
   RepTeamMoneyIn, DuesPaymentMethod,
@@ -1150,6 +1157,32 @@ function MoneyRecordsPanel({
      ancestor — no new measurement needed, just the right variable name). Both default to 0px so a
      page with no masthead (or before it mounts) doesn't lose the offset entirely. */
   const registerStickyBase = 'calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px))';
+  /* ⚖ The read window a row opens when it is not the coach's to edit here (Ledger Parity D3): a row another
+     tab wrote, or — for someone who cannot enter money — a row the team recorded. One at a time. */
+  const [readRow, setReadRow] = useState<RegisterBookRow | null>(null);
+  /* ⚠ It CLOSES when its view or tab goes away, never just hides: the hub keeps this panel mounted, so a
+     window left open while the coach switched to Bills or another Money tab came back on its own — and
+     stale — on the way back (/review, 2026-10-02). Adjusted during render, the file's own pattern. */
+  const readVisible = tabActive && !onPayables;
+  const [readWasVisible, setReadWasVisible] = useState(readVisible);
+  if (readVisible !== readWasVisible) {
+    setReadWasVisible(readVisible);
+    if (!readVisible) setReadRow(null);
+  }
+  /* ⚖ THE TEAM'S LISTS OPEN OVER THE LEDGER (Ledger Parity round 3, D8 + D10, owner 2026-10-02). Payees is a
+     window, not a page — from Tools ('tools'), or from the payee picker inside an open bill or the money
+     form ('picker'), where it stands ABOVE that form and closes back to it. Categories & items and Money
+     tags open their existing windows from Tools. ⚠ All three CLOSE when the tab goes away, as the read
+     window does: the hub keeps this panel mounted, and a window that only hid came back stale. */
+  const [payeesFrom, setPayeesFrom] = useState<'tools' | 'picker' | null>(null);
+  const [listOpen, setListOpen] = useState<'categories' | 'tags' | null>(null);
+  /** The newest change made in the Payees window — a bill open under it follows its payee (`CommitmentView`). */
+  const [payeeChange, setPayeeChange] = useState<{ seq: number; change: PayeeChange } | null>(null);
+  const [listsWereVisible, setListsWereVisible] = useState(!!tabActive);
+  if (!!tabActive !== listsWereVisible) {
+    setListsWereVisible(!!tabActive);
+    if (!tabActive) { setPayeesFrom(null); setListOpen(null); }
+  }
   /* ⚠⚠ ONE STICKY ROW, NOT THREE (reversed 2026-08-19, reading-order ruling follow-up). This used
      to stack the Money tab row, this toolbar, and a second controls row as three independent
      sticky layers, each measured and added to the next — three seams, three places for the
@@ -1605,7 +1638,8 @@ function MoneyRecordsPanel({
   const formDirty = touched(form, formBaseline)
     // The schedule is an array, which `touched`'s flat compare cannot reach — see `snapshotEqual`.
     || !snapshotEqual(formPlan, formPlanOpenedWith)
-    || (formPayee?.displayName ?? null) !== (editing?.payeePayer ?? null)
+    // Against the name the form OPENED with — the payee as it reads now (D9b), never the typed text.
+    || (formPayee?.displayName ?? null) !== (editing ? expensePayeeName(editing) : null)
     || formTags.length !== baselineTags.length
     || formTags.some(id => !baselineTags.includes(id))
     // A branch's own answers (which player, which drive, which installment) are work too.
@@ -1743,7 +1777,10 @@ function MoneyRecordsPanel({
     setFormPlan(opening);
     setFormPlanOpenedWith(opening);
     setFormTags(tagsByExpenseId[e.id] ?? []);
-    setFormPayee(e.payeePayer ? { payeeId: e.payeeId, payeePayer: e.payeePayer, displayName: e.payeePayer } : null);
+    /* ⚠ The payee AS IT READS NOW (Ledger Parity D9b): by its id, never only the text typed when the cost was
+       entered — a renamed payee kept its old spelling here, and one with no text showed empty and saved empty. */
+    const payeeName = expensePayeeName(e);
+    setFormPayee(payeeName ? { payeeId: e.payeeId, payeePayer: e.payeePayer, displayName: payeeName } : null);
     setSaveError('');
     setFormOpen(true);
   }
@@ -3042,6 +3079,28 @@ function MoneyRecordsPanel({
   }, [bumpMoneyRevision, load, loadSchedule]);
 
   /**
+   * A payee changed in the Payees window (round 3, D8). The book is re-read, so every row and figure names
+   * the payee as it is now; an open bill follows through `payeeChange`; and the money form's own pick follows
+   * here — a merged-away payee would be refused on save, a renamed one would show its old spelling.
+   */
+  /* ⚠ A RENAME IS RE-READ ONCE THE COACH STOPS, not once per autosave (the bill room's own rule, "re-read
+     once the coach stops, not once per field"): a name typed with pauses saves several times. A merge, a
+     delete or a new payee changes which records name what, so it is re-read at once. */
+  const payeeRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (payeeRefreshTimer.current) clearTimeout(payeeRefreshTimer.current); }, []);
+  const onPayeeChange = useCallback((change: PayeeChange) => {
+    setPayeeChange(prev => ({ seq: (prev?.seq ?? 0) + 1, change }));
+    setFormPayee(p => followPayeeChange(p, change));
+    if (payeeRefreshTimer.current) clearTimeout(payeeRefreshTimer.current);
+    if (change.kind === 'renamed') {
+      payeeRefreshTimer.current = setTimeout(() => { payeeRefreshTimer.current = null; void refreshAfterWrite(); }, 1_200);
+    } else {
+      payeeRefreshTimer.current = null;
+      void refreshAfterWrite();
+    }
+  }, [refreshAfterWrite]);
+
+  /**
    * THE BOOK, AS THE FILTER STRIP IS SHOWING IT — derived once per change of its actual inputs.
    *
    * ⚠ MEMOISED BECAUSE THE MONEY FORM LIVES IN THIS COMPONENT. The modal is an overlay: the register
@@ -3064,10 +3123,16 @@ function MoneyRecordsPanel({
        inviting the question. `balanceIsMeaningful` is the one rule, shared with the export.
        ⚠ THE DATE RANGE IS DELIBERATELY NOT ONE OF ITS INPUTS — narrowing by date hides rows from
        one continuous timeline rather than excluding a category from a sum, so every visible
-       balance stays honest. See `applyDateRange`'s own header for the full argument. */
+       balance stays honest. See `applyDateRange`'s own header for the full argument.
+       ⚖ STATUS COUNTS ONCE ACTUAL IS OFF (owner, §255, 2026-10-02 — found on the club's Ledger, the
+       same rule there). Actual rows are the ones that move the cash; with them hidden, the Opening /
+       Starting line is worked out over the visible rows only and the column stops adding up. An
+       Overdue row never moves the balance and Scheduled rows only continue it past Today, so
+       dropping either keeps it honest. */
     const balanceShown = balanceIsMeaningful(
       selectedKinds.size === 0 ? 'all' : 'expense', selectedItems.size > 0 ? 'x' : '',
       filterTagIds.size > 0 ? 'x' : '',
+      selectedStatus.size > 0 && !selectedStatus.has('actual') ? 'x' : '',
     );
     const matchesKindItem = (r: RegisterBookRow) => {
       if (selectedKinds.size > 0 && !selectedKinds.has(r.kind)) return false;
@@ -4070,6 +4135,12 @@ function MoneyRecordsPanel({
    *  rebuilding two Maps over every expense and arrival on each keystroke is work the form's text
    *  inputs were making this screen do for nothing. */
   const expenseById = useMemo(() => new Map(expenses.map(e => [e.id, e])), [expenses]);
+  /* Each payee's money THIS SEASON, read from the book's own rows (round 3, D9 + D9a): the Payees window
+     and the Ledger can never disagree about one payment. A row names a payee through the bill behind it. */
+  const payeeMoney = useMemo(() => payeeMoneyByPayee(
+    book?.book ?? [],
+    r => (r.open?.kind === 'expense' ? expenseById.get(r.open.id)?.payeeId ?? null : null),
+  ), [book, expenseById]);
   const moneyInById = useMemo(() => new Map(moneyIn.map(m => [m.id, m])), [moneyIn]);
 
   // ?view= — the fold's address for a view of the one book (?view=timeline|bills|due), with the
@@ -6565,17 +6636,31 @@ function MoneyRecordsPanel({
   /**
    * ONE ROW OF THE REGISTER.
    *
-   * ⚠ THE ROW DECIDES ITS OWN DOOR, and there are three. A RECORDED row (a cost, a commitment
-   * piece, income, money back) opens the money form and is fully editable. A DERIVED row — dues,
-   * fundraising, the club — is edited where it was MADE, so it navigates to that workspace instead:
-   * the register is a view, and "one row, one source" holds precisely because it cannot write. A
-   * SCHEDULED money-out row additionally offers Record a payment, pre-aimed at its own piece with
-   * the remainder suggested (P2's door — Mark paid retired with the one-boolean model).
+   * ⚖⚖ EVERY ROW OPENS, AND THE LAST COLUMN IS ONE CHEVRON (Ledger Parity D3, owner 2026-10-02). The
+   * pencil (a second door to what the row already opened) and the worded "Player Dues →" / "Club →"
+   * buttons are GONE from the cell — the written standard allows neither (K-08), and the club's Ledger,
+   * built to it, already read this way. The one control a cell keeps is **Record** beside the chevron on
+   * an unpaid installment (ruled 2026-09-04).
+   *
+   * ⚠ THE ROW STILL DECIDES ITS OWN DOOR, and there are three. A RECORDED row (a cost, a commitment
+   * piece, income, money back) opens the money form, as before. A DERIVED row — dues, fundraising, the
+   * club — is changed where it was MADE, so it opens a READ window naming that place, with one door
+   * there (`LedgerLineWindow`, the club's read shape): the register is a view, and "one row, one source"
+   * holds precisely because it cannot write. A recorded row a READ-ONLY money assistant opens takes the
+   * same read window (its facts, and who can change it) — before, it did not open at all.
+   *
+   * ⚠ THE NAME IS THE ROW'S KEYBOARD DOOR (a real button, standard §3.6) AT THE COACH'S REGULAR WEIGHT
+   * — the look both Ledgers took (owner 2026-10-02: the club dropped its bold). A row is a `<tr onClick>`
+   * no keyboard can reach; the button is. A phone card sets it bold as the card's title (K-25).
    *
    * ⚠ `movesCash` IS NOT COSMETIC. On an out-of-pocket cost the balance stands still, and the row
    * has to say so in words rather than leaving a coach to notice a column that did not add up.
+   *
+   * ⚠ THE ROW IS PIECES, SHARED WITH A PAYEE'S ENTRY ROW (Ledger Parity round 3): the door (`rowDoor`), the
+   * date and What and Category cells, and the chevron cell with Record are drawn once, here; `registerRow` and
+   * `payeeEntryRow` are the two small renderers that assemble them — never one row with a mode switch.
    */
-  function registerRow(r: RegisterBookRow) {
+  function rowDoor(r: RegisterBookRow) {
     const record = r.open?.kind === 'expense' ? expenseById.get(r.open.id) : undefined;
     const arrival = r.open?.kind === 'money-in' ? moneyInById.get(r.open.id) : undefined;
     /**
@@ -6615,78 +6700,131 @@ function MoneyRecordsPanel({
      * ⚠ NOTHING ON THAT PAGE BECOMES A CONTROL FOR THEM — `CommitmentView` renders values, not
      * editors, on exactly this capability. The row is a door, not a permission.
      */
-    const tappable = !!openRecord && (canWriteMoney || !!commitment);
-    const workspaceHref = r.open?.kind === 'workspace'
-      ? moneySectionHref(base, r.open.section, undefined)
-      : null;
+    const opensForm = !!openRecord && (canWriteMoney || !!commitment);
+    /* Every row opens: its form when the coach may edit it here, else the read window (D3). */
+    const openRow = opensForm ? openRecord! : () => setReadRow(r);
     /* The payment door needs the RECORD, for its description and standing. A row whose commitment
        is not in this panel's list shows no button rather than opening a modal with blanks in it. */
     const settle = r.recordPayment && record && canWriteMoney ? r.recordPayment : null;
-    const overdue = r.overdueDays != null;
-    /* ⚠ ONE OF THREE, ALWAYS — the same taxonomy the Status dropdown filters by
-       (`registerStatusOf`), reused here rather than re-deriving the same three mutually
-       exclusive states by hand a second time. */
+    return { record, openRow, settle };
+  }
+
+  /* ⚠ ONE OF THREE, ALWAYS — the same taxonomy the Status dropdown filters by (`registerStatusOf`), reused
+     here rather than re-deriving the same three mutually exclusive states by hand a second time. */
+  function rowClass(r: RegisterBookRow, tappable: boolean) {
     const rowStatus = registerStatusOf(r);
+    return [
+      styles.tr, styles.registerRowCompact, tappable ? styles.rowTappable : '',
+      r.scheduled ? styles.registerRowScheduled : '',
+      rowStatus === 'actual' ? styles.registerRowActual : '',
+      rowStatus === 'overdue' ? styles.registerRowOverdue : '',
+    ].filter(Boolean).join(' ');
+  }
+
+  function rowDateCell(r: RegisterBookRow) {
+    return (
+      <td className={`${styles.td} ${styles.registerDateCell}`} data-label="Date">
+        {/* ⚖ THE DAY, NOT THE YEAR (Ledger Parity D1): the year is said once, on the balance lines.
+            `ledgerRowDate` is `formatStoredDate` — never a hand-roll; this column mixes bare dates
+            with paid stamps held at org noon, and both hand-rolls have printed the wrong day. */}
+        {r.date ? ledgerRowDate(r.date) : <span className={styles.mutedInline}>No date</span>}
+      </td>
+    );
+  }
+
+  /** The What cell: the name (the row's keyboard door, or plain text where the row does not open) and its chips.
+   *  No `data-label` — a card's lead cell is its TITLE and takes no caption (owner + /design, §134 walk). */
+  function rowWhat(r: RegisterBookRow, record: RepTeamExpense | undefined, openRow: (() => void) | null) {
+    const overdue = r.overdueDays != null;
+    return (
+      <td className={`${styles.td} ${ledgerKit.whatCell}`}>
+        {openRow ? (
+          <button type="button" className={ledgerKit.name} aria-haspopup="dialog"
+            onClick={e => { e.stopPropagation(); openRow(); }}>
+            {r.description}
+          </button>
+        ) : <span>{r.description}</span>}
+        {/* ⚠⚠ OVERDUE IS A FACT, NOT A LOCATION (reading-order ruling, follow-up to P3). This row
+            sits at its own true date rather than being bucketed next to Today, so the chip is what
+            tells a coach how stale it is — never "Scheduled", which reads as merely upcoming. */}
+        {overdue && <> <span className={`${styles.registerChip} ${styles.registerChipOverdue}`}>Overdue · {r.overdueDays}d</span></>}
+        {r.scheduled && !overdue && <> <span className={styles.registerChip}>Scheduled</span></>}
+        {/* ⚖ A payment the team SENT and the club has not confirmed (Club Tier Stage 3a, ruled 2026-09-30):
+            money out on its sent day, Cash on hand follows, and this chip says the club still has to
+            confirm it. The bill's Paid / Left keep meaning "the club has it". */}
+        {r.waitingOnClub && <> <span className={styles.registerChip}>{CLUB_SENT_WAITING_WORD}</span></>}
+        {/* ⚠⚠ INCOME AND A REFUND SHARE THE MONEY-IN COLUMN AND ARE OPPOSITES, so the two of them
+            — and only the two of them — carry their kind on the row. A $325 grant and a $325
+            vendor credit are otherwise identical here, and telling them apart is the one thing
+            only the coach can do. Every other kind is already named: an expense by the column it
+            sits in, a derived row by the destination link beside it.
+            ⚠ This is a LIST labelling its rows, which the report still may not do — a refund nets
+            into the row it repaid there, leaving nothing to tag (owner ruling 2026-08-15). */}
+        {(r.kind === 'income' || r.kind === 'refund') && (
+          <> <span className={styles.registerChip}>{REGISTER_KIND_LABEL[r.kind]}</span></>
+        )}
+        {!r.movesCash && <> <span className={styles.registerChip}>No team cash</span></>}
+        {/* ⚠ THE SOURCE BADGE IS GONE (reading-order ruling) — the destination link in the action
+            cell already names where a derived row is from; repeating it here was the row's second
+            wasted line. `detail` folds inline instead of its own line, for the same reason —
+            "Recorded on this date" cost a whole row of height to say almost nothing, but a few of
+            these ("Awaiting the club — they may still decline it") are real information, so the
+            text survives, just compacted onto the one line the row now has. */}
+        {r.detail && <span className={ledgerKit.detail}><span className={ledgerKit.detailSep}> · </span>{r.detail}</span>}
+        {record && tagChips(record.id)}
+      </td>
+    );
+  }
+
+  function rowCategoryCell(r: RegisterBookRow) {
+    /* A desk's dash says "nobody filed this"; a phone card draws no line for it (`data-card-empty`). */
+    return (
+      <td className={styles.td} data-label="Category" data-card-empty={r.categoryName ? undefined : ''} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+        {r.categoryName ?? '—'}
+      </td>
+    );
+  }
+
+  /* ⚖ ONE CHEVRON — and Record beside it on an unpaid installment, the one control a ledger cell keeps (D3; ruled
+     2026-09-04). On a phone card the chevron sits in the corner and Record is the card's full-width foot (K-25). */
+  function rowGo(record: RepTeamExpense | undefined, settle: ReturnType<typeof rowDoor>['settle']) {
+    return (
+      <td className={`${styles.td} ${ledgerKit.goCell}${settle ? ` ${ledgerKit.goCellAction}` : ''}`}>
+        <span className={ledgerKit.goInner}>
+          {settle && (
+            <button
+              type="button"
+              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+              onClick={ev => { ev.stopPropagation(); openRecordPayment(record!, { installmentId: settle.installmentId, amount: settle.amount }); }}
+            >
+              Record
+            </button>
+          )}
+          <span className={ledgerKit.goMark} aria-hidden><ChevronRight size={16} /></span>
+        </span>
+      </td>
+    );
+  }
+
+  function registerRow(r: RegisterBookRow) {
+    const { record, openRow, settle } = rowDoor(r);
+    const overdue = r.overdueDays != null;
     return (
       <tr
         key={r.id}
-        className={[
-          styles.tr, styles.registerRowCompact,
-          tappable ? styles.rowTappable : '',
-          r.scheduled ? styles.registerRowScheduled : '',
-          rowStatus === 'actual' ? styles.registerRowActual : '',
-          rowStatus === 'overdue' ? styles.registerRowOverdue : '',
-        ].filter(Boolean).join(' ')}
-        onClick={tappable ? () => { if (window.getSelection()?.toString()) return; openRecord!(); } : undefined}
+        className={rowClass(r, true)}
+        onClick={() => { if (window.getSelection()?.toString()) return; openRow(); }}
       >
-        <td className={`${styles.td} ${styles.registerDateCell}`} data-label="Date">
-          {/* ⚠ formatStoredDate, never a hand-roll — this column mixes bare dates with paid stamps
-              held at org noon, and both hand-rolls have printed the wrong day already. */}
-          {r.date ? fmtDate(r.date) : <span className={styles.mutedInline}>No date</span>}
-        </td>
-        {/* No `data-label` — a card's lead cell is its TITLE and takes no caption (owner +
-            /design, §134 walk); the labelled cells below caption figures, which is the test. */}
-        <td className={`${styles.td} ${styles.cardStackCell}`}>
-          {r.description}
-          {/* ⚠⚠ OVERDUE IS A FACT, NOT A LOCATION (reading-order ruling, follow-up to P3). This row
-              sits at its own true date rather than being bucketed next to Today, so the chip is what
-              tells a coach how stale it is — never "Scheduled", which reads as merely upcoming. */}
-          {overdue && <> <span className={`${styles.registerChip} ${styles.registerChipOverdue}`}>Overdue · {r.overdueDays}d</span></>}
-          {r.scheduled && !overdue && <> <span className={styles.registerChip}>Scheduled</span></>}
-          {/* ⚖ A payment the team SENT and the club has not confirmed (Club Tier Stage 3a, ruled 2026-09-30):
-              money out on its sent day, Cash on hand follows, and this chip says the club still has to
-              confirm it. The bill's Paid / Left keep meaning "the club has it". */}
-          {r.waitingOnClub && <> <span className={styles.registerChip}>{CLUB_SENT_WAITING_WORD}</span></>}
-          {/* ⚠⚠ INCOME AND A REFUND SHARE THE MONEY-IN COLUMN AND ARE OPPOSITES, so the two of them
-              — and only the two of them — carry their kind on the row. A $325 grant and a $325
-              vendor credit are otherwise identical here, and telling them apart is the one thing
-              only the coach can do. Every other kind is already named: an expense by the column it
-              sits in, a derived row by the destination link beside it.
-              ⚠ This is a LIST labelling its rows, which the report still may not do — a refund nets
-              into the row it repaid there, leaving nothing to tag (owner ruling 2026-08-15). */}
-          {(r.kind === 'income' || r.kind === 'refund') && (
-            <> <span className={styles.registerChip}>{REGISTER_KIND_LABEL[r.kind]}</span></>
-          )}
-          {!r.movesCash && <> <span className={styles.registerChip}>No team cash</span></>}
-          {/* ⚠ THE SOURCE BADGE IS GONE (reading-order ruling) — the destination link in the action
-              cell already names where a derived row is from; repeating it here was the row's second
-              wasted line. `detail` folds inline instead of its own line, for the same reason —
-              "Recorded on this date" cost a whole row of height to say almost nothing, but a few of
-              these ("Awaiting the club — they may still decline it") are real information, so the
-              text survives, just compacted onto the one line the row now has. */}
-          {r.detail && <span className={styles.mutedInline}> · {r.detail}</span>}
-          {record && tagChips(record.id)}
-        </td>
-        <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-          {r.categoryName ?? '—'}
-        </td>
-        <td className={styles.td} data-label="Item" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+        {rowDateCell(r)}
+        {rowWhat(r, record, openRow)}
+        {rowCategoryCell(r)}
+        <td className={styles.td} data-label="Item" data-card-empty={r.itemName ? undefined : ''} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
           {r.itemName ?? '—'}
         </td>
-        <td className={`${styles.td} ${styles.tdNum} ${styles.registerAmt}`} data-label="Money out">
+        <td className={`${styles.td} ${styles.tdNum} ${styles.registerAmt}`} data-label={r.moneyOut ? 'Money out' : undefined}>
           {r.moneyOut ? fmt(r.moneyOut) : ''}
         </td>
-        <td className={`${styles.td} ${styles.tdNum} ${styles.registerAmt} ${r.moneyIn ? styles.registerAmtIn : ''}`} data-label="Money in">
+        <td className={`${styles.td} ${styles.tdNum} ${styles.registerAmt} ${r.moneyIn ? styles.registerAmtIn : ''}`} data-label={r.moneyIn ? 'Money in' : undefined}>
           {r.moneyIn ? fmt(r.moneyIn) : ''}
         </td>
         {showBalance && (
@@ -6701,40 +6839,58 @@ function MoneyRecordsPanel({
             {fmt(r.balance)}
           </td>
         )}
-        <td className={`${styles.td} ${styles.cardActionCell}`}>
-          {settle && (
-            <button
-              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-              onClick={ev => { ev.stopPropagation(); openRecordPayment(record!, { installmentId: settle.installmentId, amount: settle.amount }); }}
-            >
-              Record
-            </button>
-          )}
-          {canWriteMoney && openRecord && !settle && (
-            <RowEditButton label={`Edit ${r.description}`} onClick={openRecord} />
-          )}
-          {workspaceHref && (
-            /* ⚠ A DERIVED ROW NAVIGATES, IT DOES NOT EDIT — and now says WHERE (reading-order
-               ruling): the link names its destination instead of a generic "Open", which is also
-               what lets the redundant source badge above come out. */
-            /* A real control, not a bare inline link: it sits in the same action cell as Mark paid
-               and the row pencil, and a 15px hit target beside two buttons is the row's one
-               affordance a finger cannot find. */
-            <Link
-              href={workspaceHref}
-              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-              /* ⚠ NOWRAP, SCOPED TO THIS LINK ONLY. "Fundraising →" is wider than the old plain
-                 "Open" ever was — without this, the arrow wraps onto its own line and drags the
-                 whole (otherwise-compact) row back up to two lines tall, exactly the height this
-                 pass was built to remove. */
-              style={{ whiteSpace: 'nowrap' }}
-              onClick={ev => ev.stopPropagation()}
-            >
-              {r.sourceLabel ?? 'Open'} →
-            </Link>
-          )}
-        </td>
+        {rowGo(record, settle)}
       </tr>
+    );
+  }
+
+  /**
+   * A payee's entry in the Payees window (round 3, D9): the Ledger's row, without Item or Balance, and one Amount
+   * (only a bill names a payee, so its rows are money out). `interactive: false` while the window stands over an open form — read there, never opened (it would
+   * open a record under, or over, the form being filled in).
+   */
+  function payeeEntryRow(r: RegisterBookRow, interactive: boolean) {
+    const { record, openRow, settle } = rowDoor(r);
+    return (
+      <tr
+        key={r.id}
+        className={rowClass(r, interactive)}
+        onClick={interactive ? () => { if (window.getSelection()?.toString()) return; openRow(); } : undefined}
+      >
+        {rowDateCell(r)}
+        {rowWhat(r, record, interactive ? openRow : null)}
+        {rowCategoryCell(r)}
+        <td className={`${styles.td} ${styles.tdNum} ${styles.registerAmt}`} data-label="Amount">
+          {fmt(r.moneyOut)}
+        </td>
+        {interactive ? rowGo(record, settle) : <td className={`${styles.td} ${ledgerKit.goCell}`} />}
+      </tr>
+    );
+  }
+
+  /**
+   * A payee's entries this season, in the Ledger's own frame (round 3, D9): Date · What · Category · Amount, one
+   * chevron. A row opens what it opens on the Ledger — drawn AFTER the Payees window, so it lands over it and
+   * closing it returns to the payee. While the window stands over an open form (`raised`) the rows are read,
+   * never opened. No sticky header: inside a window the Ledger's dock offsets mean nothing.
+   */
+  function renderPayeeRows(rows: RegisterBookRow[]) {
+    const interactive = payeesFrom !== 'picker';
+    return (
+      <div className={`${styles.tableWrap} ${ledgerKit.cardsFrame} ${styles.registerTableWrap}`}>
+        <table className={`${styles.table} ${styles.registerTable}`}>
+          <thead>
+            <tr>
+              <th className={styles.th}>Date</th>
+              <th className={styles.th}>What</th>
+              <th className={styles.th}>Category</th>
+              <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
+              <th className={styles.th}><span className={styles.srOnly}>Open</span></th>
+            </tr>
+          </thead>
+          <tbody>{rows.map(r => payeeEntryRow(r, interactive))}</tbody>
+        </table>
+      </div>
     );
   }
 
@@ -6742,45 +6898,69 @@ function MoneyRecordsPanel({
    *  not a row of data. Replaces both the old "N rows not shown" gap message (owner call: read
    *  the balance directly, don't make a coach do the arithmetic from a count and a net) and the
    *  Today divider (owner call: unnecessary now that overdue/scheduled rows already carry their
-   *  own status tag — a coach doesn't need a second cue for what day it is). */
+   *  own status tag — a coach doesn't need a second cue for what day it is).
+   *
+   *  ⚖ IT NAMES ITS FULL DATE (Ledger Parity D2, owner 2026-10-02): "Starting balance · Sep 1, 2026",
+   *  "Ending balance · Oct 31, 2026" — the window the Date pill holds. The year lives here and nowhere
+   *  else in the table (a row prints the day, D1). The club's book names its lines the same way. */
   function registerBalanceRow(
     key: string, label: string, balance: number,
     /**
      * The one balance line that has somewhere to go: the season's carried opening balance, whose
      * only correction path is Team settings → Money.
      *
-     * ⚠ THE WORDS AND THE CONTROL ARE SEPARATE, and that is a lesson this table already learned.
-     * The action cell holds real buttons beside "Mark paid" and the row pencil — a sentence in it
-     * wraps and drags every register row back to two lines tall, which is exactly the height the
-     * compact-row pass was built to remove. The explanation goes in the label cell, which spans six
-     * columns and has room for one; the cell at the end gets a short control.
+     * ⚖ THE LINE IS THE DOOR, ENDING IN ONE CHEVRON (Ledger Parity D3 — a ledger cell holds no
+     * control but Record; departure recorded at build, 2026-10-02). It carried a "Change →" button in
+     * its last cell; now the whole line opens Team settings → Money, its words are the keyboard's door,
+     * and the cell holds the chevron every other row ends in. The explanation stays in the label cell,
+     * which spans six columns and has room for it.
      */
     door?: { href: string; note?: string },
   ) {
     return (
       // `.tr .registerRowCompact` too — the same compound selector every data row uses for its
       // font-size/line-height/padding, so this line sits at the identical row height rather than
-      // reverting to the shared (taller) `.td` default.
-      <tr key={key} className={`${styles.tr} ${styles.registerRowCompact} ${styles.registerBalanceRow}`}>
-        <td colSpan={6} className={styles.registerBalanceLabel}>
-          {label}{door?.note ? ` · ${door.note}` : ''}
-        </td>
+      // reverting to the shared (taller) `.td` default. `deskRow`: a phone draws it as a plain line.
+      <tr key={key}
+        className={`${styles.tr} ${styles.registerRowCompact} ${styles.registerBalanceRow} ${ledgerKit.deskRow}${door ? ` ${styles.rowTappable}` : ''}`}
+        onClick={door ? () => { if (window.getSelection()?.toString()) return; router.push(door.href); } : undefined}
+      >
+        <td colSpan={6} className={styles.registerBalanceLabel}>{registerBalanceLabel(label, door)}</td>
         <td className={`${styles.td} ${styles.tdNum} ${styles.registerAmt}`}>{fmt(balance)}</td>
-        <td className={styles.td}>
-          {door && (
-            <Link
-              href={door.href}
-              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-              style={{ whiteSpace: 'nowrap' }}
-              aria-label="Change the season opening balance in Team settings"
-            >
-              Change →
-            </Link>
-          )}
+        <td className={`${styles.td} ${ledgerKit.goCell}`}>
+          {door && <span className={ledgerKit.goMark} aria-hidden><ChevronRight size={16} /></span>}
         </td>
       </tr>
     );
   }
+
+  /** The same line on a phone: plain, between the cards — never a card (K-25, D4). */
+  function registerBalancePhoneLine(label: string, balance: number, end: boolean, door?: { href: string; note?: string }) {
+    return (
+      <div className={`${ledgerKit.phoneBal}${end ? ` ${ledgerKit.phoneBalEnd}` : ''}`}>
+        <span>{registerBalanceLabel(label, door)}</span>
+        <span>{fmt(balance)}</span>
+      </div>
+    );
+  }
+
+  /** A balance line's words — the Opening line's are its door (Team settings → Money), desk and phone alike. */
+  function registerBalanceLabel(label: string, door?: { href: string; note?: string }) {
+    if (!door) return label;
+    return (
+      <Link href={door.href} className={styles.registerBalanceDoor} onClick={e => e.stopPropagation()}>
+        {label}{door.note ? ` · ${door.note}` : ''}
+      </Link>
+    );
+  }
+
+  /* The season's carried opening balance opens the one place it is corrected (Team settings → Money). */
+  const openingDoor = bookOpensSeason
+    ? {
+      href: `${base}/settings#money`,
+      note: book?.openingFrom ? `carried from ${book.openingFrom}` : 'money the team was already holding',
+    }
+    : null;
 
   const summaryHasOrgRows = (schedule ?? []).some(r => r.source === 'org');
 
@@ -7014,6 +7194,27 @@ function MoneyRecordsPanel({
               ? (groupBy === 'due' ? payScheduleExport.length === 0 : filteredActive.length === 0)
               : bookEmpty}
           />
+          {/* ⚖ TOOLS (Ledger Parity D6, owner 2026-10-02): a rare tool goes behind one menu, never a
+              toolbar button and never a tab — a tab is a view of the book you work in; Payees is a list
+              you tidy. The club's Ledger ends the same way. A sheet on a phone, its trigger the bare ⋯.
+              ⚖ AND IT HOLDS THE THREE LISTS A LEDGER ENTRY IS FILED BY (round 3, D10, owner 2026-10-02 —
+              "if the payees is the only thing in the tools dropdown then do we need a tools dropdown?"):
+              each opens its own window OVER the Ledger. Categories & items and Money tags are editors, so
+              they are the money-writer's; Payees reads for everyone. */}
+          <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={15} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools">
+            <CoachToolbarMenuHeading>The team’s lists</CoachToolbarMenuHeading>
+            <CoachToolbarMenuItem label="Payees"
+              hint="Who the team pays, and what each has been paid" onSelect={() => { setListOpen(null); setPayeesFrom('tools'); }} />
+            {canWriteMoney && (
+              <>
+                {/* One of the team's lists at a time — opening one closes another (/review 2026-10-02). */}
+                <CoachToolbarMenuItem label="Categories & items"
+                  hint="What the team’s money is filed under" onSelect={() => { setPayeesFrom(null); setListOpen('categories'); }} />
+                <CoachToolbarMenuItem label="Money tags"
+                  hint="Rename, merge or remove the team’s tags" onSelect={() => { setPayeesFrom(null); setListOpen('tags'); }} />
+              </>
+            )}
+          </CoachToolbarMenu>
           {expenseToolbarActions}
         </div>
         </div>
@@ -7210,6 +7411,38 @@ function MoneyRecordsPanel({
         </div>
       )}
 
+      {/* ⚖ THE TEAM'S LISTS, OVER THE LEDGER (round 3, D8 + D10). ⚠ DRAWN BEFORE EVERY OTHER WINDOW ON
+          PURPOSE: a bill opened from a payee's entries must open OVER the Payees window, so closing it
+          returns to the payee. Opened from a picker INSIDE an open form, it is `raised` above that form. */}
+      <PayeesWindow
+        orgSlug={orgSlug}
+        teamId={teamId}
+        open={!!payeesFrom && !!tabActive}
+        raised={payeesFrom === 'picker'}
+        canWrite={canWriteMoney}
+        money={payeeMoney}
+        renderRows={renderPayeeRows}
+        onClose={() => setPayeesFrom(null)}
+        onChanged={onPayeeChange}
+      />
+      {listOpen === 'categories' && tabActive && (
+        <BudgetItemManagerModal orgSlug={orgSlug} teamId={teamId} categories={categories}
+          onClose={() => setListOpen(null)} onChanged={bumpMoneyRevision} />
+      )}
+      {listOpen === 'tags' && tabActive && (
+        <TagManagerDrawer
+          teamId={teamId}
+          tags={expenseTags}
+          basePath={`/api/coaches/${orgSlug}/teams/${teamId}/expense-tags`}
+          title={MONEY_TAG_MANAGE.title}
+          itemNoun={MONEY_TAG_MANAGE.itemNoun}
+          onClose={() => setListOpen(null)}
+          onChanged={refreshTagLibrary}
+        />
+      )}
+      {readRow && (
+        <LedgerLineWindow row={readRow} base={base} open={readVisible} onClose={() => setReadRow(null)} />
+      )}
       {loading ? (
         <CoachLoading label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />
       ) : error ? (
@@ -7266,7 +7499,13 @@ function MoneyRecordsPanel({
               )}
             </>
           ) : (
-            <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.registerTableWrap}`}>
+            <>
+            {/* The phone's Starting / Opening line, plain above the cards (K-25, D4). */}
+            {showBalance && bookStartingBalance !== null && registerBalancePhoneLine(
+              ledgerBalanceLabel(bookOpensSeason ? 'Opening balance' : 'Starting balance', dateRange.from),
+              bookStartingBalance, false, openingDoor ?? undefined,
+            )}
+            <div className={`${styles.tableWrap} ${ledgerKit.cardsFrame} ${styles.registerTableWrap}`}>
               <table className={`${styles.table} ${styles.registerTable}`}>
                 {/* ⚠ STICKY, DESKTOP ONLY (see the CSS rule's own note on why phone is excluded) —
                     each `<th>` carries its own `position: sticky`, not the `<thead>`, since a
@@ -7306,23 +7545,20 @@ function MoneyRecordsPanel({
                   {showBalance && bookStartingBalance !== null
                     && registerBalanceRow(
                       'starting',
-                      bookOpensSeason ? 'Opening balance' : 'Starting balance',
+                      ledgerBalanceLabel(bookOpensSeason ? 'Opening balance' : 'Starting balance', dateRange.from),
                       bookStartingBalance,
-                      bookOpensSeason
-                        ? {
-                          href: `${base}/settings#money`,
-                          note: book?.openingFrom
-                            ? `carried from ${book.openingFrom}`
-                            : 'money the team was already holding',
-                        }
-                        : undefined,
+                      openingDoor ?? undefined,
                     )}
                   {bookRows.map(r => registerRow(r))}
                   {showBalance && bookStartingBalance !== null && bookRows.length > 0
-                    && registerBalanceRow('ending', 'Ending balance', bookRows[bookRows.length - 1].balance)}
+                    && registerBalanceRow('ending', ledgerBalanceLabel('Ending balance', dateRange.to), bookRows[bookRows.length - 1].balance)}
                 </tbody>
               </table>
             </div>
+            {showBalance && bookStartingBalance !== null && bookRows.length > 0 && registerBalancePhoneLine(
+              ledgerBalanceLabel('Ending balance', dateRange.to), bookRows[bookRows.length - 1].balance, true,
+            )}
+            </>
           )}
         </>
       ) : (
@@ -7509,6 +7745,8 @@ function MoneyRecordsPanel({
           tagLibrary={expenseTags}
           initialTagIds={tagsByExpenseId[drawerExpense.id] ?? []}
           onCreateTag={createMoneyTag}
+          onManagePayees={() => setPayeesFrom('picker')}
+          payeeChange={payeeChange}
           room={{
             onClose: () => setFocusBillId(null),
             status: billRoom.status,
@@ -8265,6 +8503,7 @@ function MoneyRecordsPanel({
                         value={formPayee}
                         onChange={setFormPayee}
                         saveScope="team"
+                        onManage={() => setPayeesFrom('picker')}
                       />
                     </div>
                   </div>

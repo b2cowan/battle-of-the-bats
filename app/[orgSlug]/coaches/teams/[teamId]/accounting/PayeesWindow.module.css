@@ -1,0 +1,77 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   The Payees WINDOW's own few rules (Ledger Parity round 3, D8/D9, 2026-10-02). The frame, table, tiles,
+   buttons and the save word are the portal's (`RoomShell`, `coaches.module.css`, `SaveStatusPill`); this
+   sheet adds only what is the payees': the bold name and the club's blue, the band as a plain line on a
+   phone, the line under the list, the details' note, and the questions' sentences. ⚠ TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* The name is the row's keyboard door, set bold: a list's name column is bold (standard §3.6); only the
+   LEDGER's What is at body weight (K-01). Cosmetics only — its tap box is `rowTapLink`'s, so nothing here
+   sets a margin, a padding or a height. */
+button.name {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 650;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+button.name:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* ⚖ A CLUB'S SHARED PAYEE (D7): the club's blue — the tag legend's own colour for "Shared by your club". */
+button.shared { color: var(--tag-org-fg, var(--home-blue)); }
+
+/* ⚖ ON A PHONE THE FIGURES SIT UNDER THE NAME (owner, 2026-10-02) — the framed card's own line
+   (`cardPhoneLine`), close under the name. The name keeps its 44px tap box (`rowTapLink`, which borrows the
+   row's height with a matching negative margin), so nothing here touches its height. */
+@media (max-width: 640px) {
+  td.leadCell { gap: 0.1rem; }
+  /* A band is a plain line between the rows, never a card of its own (the Ledger's balance lines, K-25).
+     ⚠ `table tr.band.band` outranks the card reflow's `.tableAsCards.cardsFramed tr` (0,2,1) wherever
+     either sheet loads. */
+  table tr.band.band { display: block; border: 0; border-bottom: 0; background: none; padding: 0.85rem 0.15rem 0.3rem; margin: 0; min-height: 0; }
+  table tr.band.band > td { display: block; padding: 0; border: 0; background: none; }
+}
+
+/* The line under the list — what sharing means and the one rule it keeps. */
+.note {
+  margin: 0.6rem 0 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+  max-width: 46rem;
+}
+.notice { margin: 0 0 0.8rem; }
+/* New payee on a phone: the portal's square "+" (house rule 3), so it shares the count's line. */
+@media (max-width: 640px) {
+  .newBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); min-height: var(--tap-min, 44px); padding: 0; justify-content: center; }
+}
+
+/* The record. The pencil sits at the head's end, beside the ✕ (the 2026-10-01 standard). */
+.headEdit { margin-left: auto; }
+.empty { margin: 0.25rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.details { margin-top: 1.25rem; }
+.noteText { white-space: pre-wrap; overflow-wrap: anywhere; }
+.hint {
+  margin: 0.35rem 0 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+
+/* The questions' sentences. */
+.lead { margin: 0 0 0.85rem; font-size: var(--type-body); line-height: 1.5; color: var(--text-primary); }
+.afterField { margin-top: 0.75rem; }
+/* ⚠ The merge question's notice when the payee kept is the club's: merging into it is the consent
+   (session 1's call list) — said in the club's blue so it reads as the club's, never as a warning. */
+.consent {
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--tag-org-fg, var(--home-blue));
+  background: var(--home-paper);
+  font-size: var(--type-support);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+.error { margin: 0 0 0.75rem; }

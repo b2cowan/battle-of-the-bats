@@ -2909,7 +2909,12 @@ export interface RepTeamExpense {
   notes: string | null;
   paymentMethod: string | null;
   payeeId: string | null;
+  /** The payee's name as it was TYPED when the bill was entered — stale after a rename or a merge.
+   *  Print a bill's payee through `expensePayeeName`, never this field. */
   payeePayer: string | null;
+  /** The payee `payeeId` points at, as it is named NOW (Ledger Parity D9b) — null when the read did
+   *  not embed it, or the bill names no listed payee. */
+  payeeName?: string | null;
   /** Out-of-pocket (mig 234, owner Call 5): a family covered this cost directly. Counts in the
    *  budget exactly as a team-paid expense; NO team cash left, so cash figures exclude it; and
    *  the team owes that family, carried as an ordinary `reimbursement` credit. */

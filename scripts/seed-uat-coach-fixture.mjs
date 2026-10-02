@@ -2268,6 +2268,75 @@ if (!existingPr?.length) {
   ok('payment requests already present');
 }
 
+// ── 13a. LEDGER PARITY — what its walks read (owner rulings D1–D7, 2026-10-02) ──
+/**
+ * The walks on the Ledger Parity hub (https://claude.ai/artifact/EQqEd3s4CBLbnrnPuUVAAo, QA tab) need, on THIS
+ * team's Ledger inside today's "Around today" window: a row of every derived kind (Player Dues and the Club
+ * are already there — this adds a drive's hand-in, so Fundraising is too), and an UNPAID installment of the
+ * team's own bill, so a row shows Record beside its chevron. And in a club: one payee the club SHARES and one
+ * it keeps, and the team's OWN spelling of the shared one, named on a bill — the duplicate the team's
+ * Payees window merges INTO the club's.
+ * ⚠ IDEMPOTENT, each piece guarded by its own name, so an existing fixture gains it on a re-run. In an org
+ * with no club payees (a standalone or tournament org) the sharing half is skipped — there is no club.
+ */
+{
+  const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+  const { data: clubPayees, error: cpErr } = await db.from('org_payees')
+    .select('id, name, shared_with_teams').eq('org_id', org.id).is('team_id', null);
+  if (cpErr) console.log(`  ! club payees not read (${cpErr.message})`);
+  const town = (clubPayees ?? []).find(p => p.name === 'Town of Milton');
+  if (town && !town.shared_with_teams) {
+    // The D7a clock starts now: the club sees what teams record against it from here on.
+    const sh = await db.from('org_payees').update({ shared_with_teams: true, shared_at: new Date().toISOString() }).eq('id', town.id);
+    if (sh.error) console.log(`  ! sharing Town of Milton skipped (${sh.error.message})`);
+    else ok('club payee "Town of Milton" shared with teams (Mizuno Canada / Mizuno Canada Ltd. stay the club’s own)');
+  } else if (town) {
+    ok('club payee "Town of Milton" already shared');
+  }
+
+  // The team's own spelling of it — the duplicate to merge.
+  let { data: dupe } = await db.from('org_payees').select('id').eq('org_id', org.id).eq('team_id', team.id).eq('name', 'Milton, Town of').maybeSingle();
+  if (!dupe) {
+    const ins = await db.from('org_payees').insert({ org_id: org.id, team_id: team.id, name: 'Milton, Town of' }).select('id').single();
+    if (ins.error) console.log(`  ! team payee "Milton, Town of" skipped (${ins.error.message})`);
+    else { dupe = ins.data; ok('team payee "Milton, Town of" (the team’s own spelling of the club’s)'); }
+  }
+
+  // An unpaid installment of the team's own bill, a week overdue — Record shows on the default view.
+  const { data: permit } = await db.from('rep_team_expenses').select('id')
+    .eq('team_id', team.id).eq('program_year_id', py.id).eq('description', 'Diamond permit — fall block').maybeSingle();
+  if (!permit) {
+    try {
+      await insertCommitmentWithRecords(db, {
+        row: {
+          org_id: org.id, team_id: team.id, program_year_id: py.id,
+          expense_type: 'tournament_payable', description: 'Diamond permit — fall block',
+          category: cats?.[0]?.name ?? null, payee_id: dupe?.id ?? null,
+        },
+        installments: [{ amount: 275, dueDate: daysAgo(7) }, { amount: 275, dueDate: daysAgo(-21) }],
+      });
+      ok('bill "Diamond permit — fall block": an installment a week overdue (Record), named to "Milton, Town of"');
+    } catch (e) {
+      console.log(`  ! bill "Diamond permit — fall block" skipped (${e instanceof Error ? e.message : e})`);
+    }
+  }
+
+  // A drive's hand-in inside today's window, so Fundraising has a row the read window opens.
+  const { data: drive } = await db.from('rep_fundraisers').select('id')
+    .eq('program_year_id', py.id).eq('kind', 'fundraiser').eq('name', 'Chocolate sale').maybeSingle();
+  if (drive) {
+    const { data: recent } = await db.from('rep_fundraiser_entries').select('id').eq('fundraiser_id', drive.id).gte('received_date', daysAgo(10)).limit(1);
+    if (!recent?.length && ids[0]) {
+      const en = await db.from('rep_fundraiser_entries').insert({
+        fundraiser_id: drive.id, org_id: org.id, team_id: team.id, player_id: ids[0],
+        amount_raised: 120, rebate_percent: 0, rebate_amount: 0, received_date: daysAgo(3), method: 'etransfer',
+      });
+      if (en.error) console.log(`  ! recent drive entry skipped (${en.error.message})`);
+      else ok('drive entry on Chocolate sale three days ago (a Fundraising row in the Ledger’s window)');
+    }
+  }
+}
+
 // ── 13b. A FINISHED season BEHIND the live one — the ROLLED-FORWARD shape ────
 /**
  * ⚠⚠ **THE SHAPE NEITHER TEAM HAD, AND THE ONE THE WHOLE HISTORY PROGRAMME EXISTS FOR** (added

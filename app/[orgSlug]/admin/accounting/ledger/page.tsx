@@ -5,26 +5,29 @@
  *
  *   top deck — what stays put whatever the filters say (owner 2026-09-02): the Book pill first (the
  *              club's books with their balances, Add ledger at its foot; opens on the General ledger),
- *              then Payees, Export, Transfer, and Add entry — lime, the one lime. On a phone: the Book
- *              pill, Export and Add entry as 44px icons; Transfer and Payees move into the Book pill.
+ *              then Export, Tools and Add entry — lime, the one lime. ⚖ TOOLS (Ledger Parity D6, owner
+ *              2026-10-02): a rare tool goes behind Tools, never a toolbar button — "This book" →
+ *              Transfer, "The club's lists" → Payees; the coach's Ledger ends the same way. On a phone:
+ *              the Book pill, Export, Tools (the ⋯ icon, a sheet) and Add entry as 44px icons.
  *   strip    — Type · Status · Category · Date, quiet at rest (Status opens on Posted + Pending; Date on
  *              This month — the club's difference from the coach's Around today), and the book's
- *              Balance at the strip's right edge. A narrowed Type takes the Balance away (a balance of
- *              only the allocations belongs to nothing).
- *   the book — oldest first between a Starting and an Ending balance line (K-04); Date · What ·
+ *              Balance at the strip's right edge. A narrowed Type or Category, or a Status without
+ *              Posted, takes the Balance away (a balance over some of the entries belongs to nothing).
+ *   the book — oldest first between a Starting and an Ending balance line (K-04), each naming its full
+ *              date ("Starting balance · Jul 3, 2026" — D2; a row prints the day, D1); Date · What ·
  *              Category · Money out · Money in · Balance · chevron in K-01 compact rows; the What cell
  *              is the name, then the detail in quiet ink on the same line; no Source column; a pending
  *              line carries its chip and the balance before it, faint; the empty side of the pair blank;
  *              voids off the book until Status asks, then the void-row recipe. A card per entry on a
- *              phone (K-25). Every row opens its line's window.
+ *              phone — the shared kit's ONE card (K-25, D4). Every row opens its line's window; the
+ *              name is its keyboard door at BODY weight (owner 2026-10-02 — the coach's look; D3).
  *
  * A team's book is NOT a Ledger book any more: the club reads a team through its account (Ask 5a), so
  * the Book pill lists the club's own books only, and a team book's old address forwards to the team.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeftRight, ChevronRight, Plus, Users } from 'lucide-react';
+import { ChevronRight, MoreHorizontal, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useTournament } from '@/lib/tournament-context';
@@ -36,7 +39,10 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { LoadFailed, RepChip, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
-import { CoachListToolbar, kit } from '@/components/coaches/kit';
+import { CoachListToolbar, kit, ledgerKit } from '@/components/coaches/kit';
+import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import { ledgerBalanceLabel, ledgerRowDate } from '@/lib/ledger-format';
+import { clubSharesPayees } from '@/lib/team-payee-scope';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import DateRangeDropdown from '@/components/coaches/DateRangeDropdown';
@@ -68,6 +74,7 @@ export default function LedgerTab() {
   const search = useSearchParams();
   const isPhone = useIsPhone();
   const slug = currentOrg?.slug ?? '';
+  const shares = !!currentOrg && clubSharesPayees(currentOrg);
   const q = `orgSlug=${encodeURIComponent(slug)}`;
   const base = `/${slug}/admin/accounting`;
   const payeesHref = `${base}/payees`;
@@ -165,32 +172,23 @@ export default function LedgerTab() {
   const allRefs: BookRef[] = clubBooks.map(b => ({ id: b.ledger.id, name: b.ledger.name, kind: b.ledger.entityType }));
   const canMove = read?.canMove ?? false;
   const rows = read ? [...read.rows, ...more] : [];
-  const showBalance = types.size === 0;
+  /* ⚖ THE BALANCE SHOWS ONLY WHILE EVERY ENTRY THAT MOVES IT IS ON SCREEN (owner, §255, 2026-10-02) —
+     the coach's rule, `balanceIsMeaningful`: every narrowing counts. Type and Category hide entries
+     that move it, so either takes the column (and the Starting / Ending lines and the strip's figure)
+     away; Status takes it only once Posted is off, because a pending or void line never moves the
+     balance. The date window never does: the Starting balance carries everything before it. */
+  const showBalance = types.size === 0 && cats.size === 0 && statuses.has('posted');
   const counts = read?.counts;
   const typeOptions = TYPE_ORDER
     .filter(t => t !== 'house_league_fees' || (counts?.type?.house_league_fees ?? 0) > 0)
     .map(t => ({ id: t, label: `${LINE_TYPE_WORD[t]} (${counts?.type?.[t] ?? 0})` }));
   const pickBook = (id: string) => { setOpen(null); router.replace(`${base}/ledger?book=${id}`); };
 
-  const bookFoot = (
-    <>
-      {canMove && (
-        <button type="button" className={`${pill.multiSelectOption} ${pill.multiSelectPick}`} onClick={() => setWin('ledger')}>
-          <Plus size={14} aria-hidden /> Add ledger
-        </button>
-      )}
-      {isPhone && canMove && (
-        <button type="button" className={`${pill.multiSelectOption} ${pill.multiSelectPick}`} onClick={() => setWin('transfer')}>
-          <ArrowLeftRight size={14} aria-hidden /> Transfer
-        </button>
-      )}
-      {isPhone && (
-        <Link href={payeesHref} className={`${pill.multiSelectOption} ${pill.multiSelectPick}`}>
-          <Users size={14} aria-hidden /> Payees
-        </Link>
-      )}
-    </>
-  );
+  const bookFoot = canMove ? (
+    <button type="button" className={`${pill.multiSelectOption} ${pill.multiSelectPick}`} onClick={() => setWin('ledger')}>
+      <Plus size={14} aria-hidden /> Add ledger
+    </button>
+  ) : undefined;
 
   return (
     <>
@@ -199,6 +197,7 @@ export default function LedgerTab() {
         <div className={moneyKit.deck}>
           <SingleSelectDropdown
             lead
+            shrink
             label="Book"
             options={clubBooks.map(b => ({ id: b.ledger.id, label: b.ledger.name, detail: money(b.balance) }))}
             value={book.ledger.id}
@@ -206,19 +205,22 @@ export default function LedgerTab() {
             foot={bookFoot}
           />
           <div className={kit.toolbarActions}>
-            {/* A door, drawn as its siblings are: the white button (owner 2026-10-01 — olive text is the
-                coaches portal's CARD-FOOT door, never a toolbar's; its money toolbars draw a door as a button). */}
-            {!isPhone && (
-              <Link href={payeesHref} className="btn btn-outline">
-                <Users size={14} aria-hidden /> Payees
-              </Link>
-            )}
             <BookExport q={q} book={ref} window_={window_} rangeWords={rangeWords(range)} total={(counts?.status.posted ?? 0) + (counts?.status.pending ?? 0) + (counts?.status.void ?? 0)} orgSlug={slug} />
-            {canMove && !isPhone && (
-              <button type="button" className="btn btn-outline" onClick={() => setWin('transfer')}>
-                <ArrowLeftRight size={14} aria-hidden /> Transfer
-              </button>
-            )}
+            {/* ⚖ TOOLS (Ledger Parity D6, owner 2026-10-02): the rare tools behind one menu, grouped — the
+                coach's Ledger has the same door. A sheet on a phone, its trigger the bare ⋯. */}
+            <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={15} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools">
+              {canMove && (
+                <>
+                  <CoachToolbarMenuHeading>This book</CoachToolbarMenuHeading>
+                  <CoachToolbarMenuItem label="Transfer"
+                    hint="Move money to another of the club’s books" onSelect={() => setWin('transfer')} />
+                </>
+              )}
+              <CoachToolbarMenuHeading>The club’s lists</CoachToolbarMenuHeading>
+              <CoachToolbarMenuItem label="Payees"
+                hint={shares ? 'Rename, merge, or share with teams' : 'Rename a payee or merge two spellings'}
+                onSelect={() => router.push(payeesHref)} />
+            </CoachToolbarMenu>
             {canMove && (
               <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => setWin('add')} aria-label="Add entry">
                 <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add entry</span>
@@ -303,8 +305,8 @@ function Book({ read, rows, showBalance, onOpen, onMore, loadingMore }: {
 }) {
   const from = read.window.from;
   const to = read.window.to;
-  const startLabel = from ? `Starting balance · ${day(from)}` : 'Starting balance';
-  const endLabel = to ? `Ending balance · ${day(to)}` : 'Ending balance';
+  const startLabel = ledgerBalanceLabel('Starting balance', from);
+  const endLabel = ledgerBalanceLabel('Ending balance', to);
   const cols = showBalance ? 7 : 6;
   if (rows.length === 0 && read.total === 0) {
     return (
@@ -323,8 +325,8 @@ function Book({ read, rows, showBalance, onOpen, onMore, loadingMore }: {
   }
   return (
     <>
-      {showBalance && <div className={moneyKit.phoneBal}><span>{startLabel}</span><span>{money(read.startingBalance)}</span></div>}
-      <div className={`${repKit.tableFrame} ${moneyKit.cardsFrame}`}>
+      {showBalance && <div className={ledgerKit.phoneBal}><span>{startLabel}</span><span>{money(read.startingBalance)}</span></div>}
+      <div className={`${repKit.tableFrame} ${ledgerKit.cardsFrame}`}>
         <table className={`${repKit.table} ${moneyKit.register}`}>
           <thead>
             <tr>
@@ -341,7 +343,7 @@ function Book({ read, rows, showBalance, onOpen, onMore, loadingMore }: {
             {showBalance && <BalanceRow label={startLabel} figure={read.startingBalance} cols={cols} />}
             {rows.map(r => <LineRow key={r.id} row={r} showBalance={showBalance} onOpen={onOpen} />)}
             {read.total > rows.length && (
-              <tr className={moneyKit.moreRow}>
+              <tr className={`${moneyKit.moreRow} ${ledgerKit.deskRow}`}>
                 <td colSpan={cols}>
                   Showing {rows.length} of {read.total} lines ·{' '}
                   <button type="button" className={repKit.inlineLink} onClick={onMore} disabled={loadingMore}>
@@ -360,15 +362,16 @@ function Book({ read, rows, showBalance, onOpen, onMore, loadingMore }: {
           <button type="button" className={repKit.inlineLink} onClick={onMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Show more'}</button>
         </p>
       )}
-      {showBalance && <div className={`${moneyKit.phoneBal} ${moneyKit.phoneBalEnd}`}><span>{endLabel}</span><span>{money(read.endingBalance)}</span></div>}
-      <p className={repKit.notes}>Oldest at the top, as a bank statement reads, so the balance runs down the page to the end of the window.</p>
+      {showBalance && <div className={`${ledgerKit.phoneBal} ${ledgerKit.phoneBalEnd}`}><span>{endLabel}</span><span>{money(read.endingBalance)}</span></div>}
+      {/* ⚰ The note under the table ("Oldest at the top, as a bank statement reads…") is gone (D2): the
+          dated balance lines say what it explained. */}
     </>
   );
 }
 
 function BalanceRow({ label, figure, cols, end = false }: { label: string; figure: number; cols: number; end?: boolean }) {
   return (
-    <tr className={`${moneyKit.balRow}${end ? ` ${moneyKit.balEnd}` : ''}`}>
+    <tr className={`${moneyKit.balRow} ${ledgerKit.deskRow}${end ? ` ${moneyKit.balEnd}` : ''}`}>
       <td colSpan={cols - 2} className={moneyKit.balLabel}>{label}</td>
       <td className={moneyKit.amt}>{money(figure)}</td>
       <td />
@@ -376,7 +379,11 @@ function BalanceRow({ label, figure, cols, end = false }: { label: string; figur
   );
 }
 
-/** One line. The whole row opens its window; the name is the keyboard's door (standard §3.6). */
+/**
+ * One line. The whole row opens its window; the name is the keyboard's door (standard §3.6) at BODY
+ * weight — the shared kit's `ledgerKit.name`, the coach's look (owner 2026-10-02). A phone card sets it
+ * bold again as the card's title.
+ */
 function LineRow({ row, showBalance, onOpen }: { row: BookRowOut; showBalance: boolean; onOpen: (r: BookRowOut) => void }) {
   const isVoid = row.status === 'void';
   const detail = isVoid
@@ -387,14 +394,14 @@ function LineRow({ row, showBalance, onOpen }: { row: BookRowOut; showBalance: b
       className={`${repKit.rowOpens}${isVoid ? ` ${moneyKit.voidRow}` : ''}`}
       onClick={() => { if (window.getSelection()?.toString()) return; onOpen(row); }}
     >
-      <td className={moneyKit.date} data-label="Date">{day(row.date)}</td>
-      <td className={moneyKit.whatCell}>
-        <button type="button" className={`${repKit.nameButton} ${moneyKit.what}`} onClick={e => { e.stopPropagation(); onOpen(row); }} aria-haspopup="dialog">
+      <td className={moneyKit.date} data-label="Date">{ledgerRowDate(row.date)}</td>
+      <td className={ledgerKit.whatCell}>
+        <button type="button" className={`${ledgerKit.name} ${moneyKit.lineName}`} onClick={e => { e.stopPropagation(); onOpen(row); }} aria-haspopup="dialog">
           {row.what}
         </button>
         {row.status === 'pending' && <span className={moneyKit.inlineChip}><RepChip>Pending</RepChip></span>}
         {isVoid && <span className={moneyKit.inlineChip}><RepChip>Void</RepChip></span>}
-        {detail && <span className={moneyKit.detail}><span className={moneyKit.detailSep}> · </span>{detail}</span>}
+        {detail && <span className={ledgerKit.detail}><span className={ledgerKit.detailSep}> · </span>{detail}</span>}
       </td>
       <td className={moneyKit.cat} data-label="Category">{row.category ?? ''}</td>
       <td className={moneyKit.amt} data-label={row.moneyOut != null ? 'Money out' : undefined}>{money(row.moneyOut)}</td>
@@ -405,7 +412,7 @@ function LineRow({ row, showBalance, onOpen }: { row: BookRowOut; showBalance: b
           {money(row.balance)}
         </td>
       )}
-      <td className={`${repKit.go} ${moneyKit.goCell}`}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
+      <td className={`${repKit.go} ${ledgerKit.goCell}`}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
     </tr>
   );
 }

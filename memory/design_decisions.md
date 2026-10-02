@@ -7,6 +7,41 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-02 — THE TWO LEDGERS READ THE SAME (owner: "I agree with your recommendations on D1-D7"; D3's weight revised by the owner the same day) — hub https://claude.ai/artifact/EQqEd3s4CBLbnrnPuUVAAo, plan `docs/projects/active/LEDGER_PARITY_PLAN.md`
+
+**Decision:** the coach's Ledger (Money › Ledger) and the club's (Accounting › Ledger) are ONE recipe:
+- **D1 — a ledger row prints the day** ("Oct 1"); the year is said ONCE, on the balance lines. One rule formats a
+  ledger row's date for both portals.
+- **D2 — the balance lines name their full dates on both portals:** "Starting balance · Sep 1, 2026", "Ending
+  balance · Oct 31, 2026" (and the coach's "Opening balance · …" when the window opens the season) — the window the
+  Date pill holds. The club's under-table note ("Oldest at the top, as a bank statement reads…") is gone: the dated
+  lines say what it explained.
+- **D3 — no control in a ledger cell on either portal except Record on an unpaid installment** (ruled 2026-09-04).
+  Every row opens on a click; the last column is ONE chevron; the name in What is the row's keyboard door (a real
+  button). A row another tab wrote (Player Dues, Fundraising, Club) opens a READ window: its facts, one sentence naming
+  where it is changed, one door there — the club's window for a line another screen wrote, its read shape shared
+  between the portals. **The What is at body weight on both Ledgers** (owner, 2026-10-02, after ratification: "I
+  prefer the font styling of the coaches ledger for the what column (i.e. not bold)… update the club ledger to match")
+  — the club's register dropped its 650; a phone CARD's title stays bold (a card's lead cell is its title).
+- **D4 — one phone card for a ledger row** (register K-25): date top right, the name as the title with its detail
+  under it, labelled lines, one corner chevron; the balance lines plain between the cards, never a card. The recipe
+  lives in the shared kit and both Ledgers render it.
+- **D6 — a rare tool goes behind Tools (⋯) on both Ledgers; Payees is not a tab.** Both toolbars end: [Book | View] ·
+  Export · Tools · [the one lime add]. Club Tools: "This book" → Transfer, "The club's lists" → Payees. Coach Tools:
+  "The team's lists" → Payees. A sheet on a phone. A tab is a view of the book you work in; Payees is a list you tidy.
+- **D7 — the picker's words:** a club's shared payees sit under **"Shared by your club"** (the tag legend's own words,
+  the club's blue) with the line "Your club sees payments to these payees."; the team's own under **"Your team's
+  own"**; **Manage payees…** is the list's last row. A standalone team's picker has no shared section.
+**Rationale:** Ask 6 (2026-09-30) ruled the club's book reads exactly like the coach's; a side-by-side found five
+more differences nobody chose, and in four the coach's Ledger — the benchmark — was the one off the written standard
+(it predates the 09-28 no-controls-in-cells ruling and K-25). A treasurer who also coaches read one kind of book two
+ways. The differences that stay are named, each with its reason, in `TABLE_EXCEPTION_REGISTER.md` under K-01.
+**Applies to:** both Ledgers, both payee pickers, both Payees lists.
+**Round 3, the same day (owner during the §258 walk; plan "Round 3"):** the coach's Payees is a WINDOW over the
+Ledger, not a page (D8); a payee opens as a RECORD — what the team paid it and still owes it, its entries, a note
+(D9); the coach's Tools holds the team's three lists — Payees · Categories & items · Money tags (D10). The club's
+Payees as a window (D8a) was not drawn and is still a page.
+
 ### 2026-10-01 — ONE BUTTON SIZE ACROSS THE ADMIN, THE PORTAL'S; A TOOLBAR DOOR IS A BUTTON (owner, "go ahead with A", from a Ledger toolbar where Payees, Export and Transfer were three sizes)
 
 **Decision:** Every admin button — club, tournament, volunteer shells — is the portal's button at ONE height:

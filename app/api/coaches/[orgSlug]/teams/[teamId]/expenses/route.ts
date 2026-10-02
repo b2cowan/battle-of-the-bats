@@ -55,7 +55,8 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  const expenses = await getRepTeamExpenses(programYear.id);
+  // With each payee's CURRENT name (Ledger Parity D9b): this read feeds every screen that prints a bill's payee.
+  const expenses = await getRepTeamExpenses(programYear.id, { withPayeeName: true });
   // Money-tag library (team + org-shared) for the picker + which tags each expense carries, so the
   // list renders chips and the filter chip-row without a per-expense fetch (mirrors events GET).
   const [expenseTags, tagsByExpenseId, standings] = await Promise.all([

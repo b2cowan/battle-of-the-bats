@@ -57,9 +57,13 @@ describe('the Ledger reads like the coach\'s Ledger (Ask 6), on the coach\'s own
     assert.match(ledger, /filter\(b => b\.ledger\.entityType !== 'team'\)/);
     assert.match(ledger, /router\.replace\(`\$\{base\}\/teams\/\$\{teamBook\.ledger\.entityId\}`\)/, 'a team book\'s old address forwards to the team');
   });
-  it('the Balance leaves when Type narrows; the export holds the whole period', () => {
-    assert.match(ledger, /const showBalance = types\.size === 0;/);
+  it('the Balance leaves once an entry that moves it is hidden — Type, Category, or Status without Posted (§255); the export holds the whole period', () => {
+    assert.match(ledger, /const showBalance = types\.size === 0 && cats\.size === 0 && statuses\.has\('posted'\);/);
     assert.match(ledger, /params\.set\('export', '1'\)/);
+  });
+  it('the coach\'s Ledger holds the same rule: a Status without Actual takes the Balance too (§255)', () => {
+    assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx'),
+      /selectedStatus\.size > 0 && !selectedStatus\.has\('actual'\) \? 'x' : '',/);
   });
 });
 
@@ -170,9 +174,14 @@ describe('one admin button size, the portal’s (owner, 2026-10-01, option A)', 
     assert.equal(root, '38', 'compact density');
     assert.match(css, /\[data-density="comfortable"\] \{[^}]*--admin-control-h:\s*38px;/);
   });
-  it('the Ledger’s Payees door is a button like its siblings, not olive text (olive text is a card-foot door)', () => {
+  it('the Ledger’s Payees door sits behind Tools, never a toolbar button and never olive text (Ledger Parity D6)', () => {
+    // ⚖ Superseded 2026-10-02: the white Payees button (10-01) moved into Tools with Transfer — a rare tool goes
+    // behind one menu on both Ledgers. Still never olive text: that is a card-foot door.
     const ledger = readCode(`${ACCT}/ledger/page.tsx`);
-    assert.match(ledger, /<Link href=\{payeesHref\} className="btn btn-outline">/);
+    assert.match(ledger, /<CoachToolbarMenu label="Tools"/);
+    assert.match(ledger, /label="Payees"[\s\S]{0,200}onSelect=\{\(\) => router\.push\(payeesHref\)\}/);
+    assert.match(ledger, /label="Transfer"/);
+    assert.doesNotMatch(ledger, /<Link href=\{payeesHref\}/, 'no Payees button on the toolbar');
     assert.doesNotMatch(ledger, /className=\{kit\.footLink\}/);
   });
 });

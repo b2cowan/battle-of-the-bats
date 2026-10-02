@@ -84,16 +84,33 @@ table.kept tr:last-child td{border-bottom:0}
 dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
 .dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:18px}.dialogbody{padding:20px 22px}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.qa .qacard{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+.qa .qacard h3{margin:10px 0 4px}.qa .qacard h3:first-child{margin-top:0}.qa dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0 0 8px}.qa dt{color:var(--muted);font-size:13px}.qa dd{margin:0;overflow-wrap:anywhere}
+.qaindex{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.qawcard{text-align:left;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font:inherit;color:inherit;cursor:pointer}
+.qawcard[aria-pressed=true]{border-color:var(--olive);box-shadow:0 0 0 1px var(--olive) inset}
+.qachip{align-self:flex-start;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.qachip[data-s=pass]{background:#e3f3d4;color:#2f5a14}.qachip[data-s=issue]{background:#f6dede;color:var(--error)}.qachip[data-s=call],.qachip[data-s=partial]{background:#f4ecd9;color:var(--warn)}
+.qasteps{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.qasteps li{counter-increment:s;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:start}
+.qasteps li.done{border-color:#7fa85a}.qasteps input[type=checkbox]{width:22px;height:22px;margin:2px 0 0;accent-color:var(--olive)}
+.qabody{display:flex;flex-direction:column;gap:6px;min-width:0}.qan::before{content:"Step " counter(s);font-size:12px;color:var(--muted);font-weight:700}
+.qado,.qasee{margin:0}.qado::before{content:"Do  ";white-space:pre;font-size:12px;font-weight:700;color:var(--blue)}.qasee::before{content:"You should see  ";white-space:pre;font-size:12px;font-weight:700;color:var(--olive)}
+.qaverdict,.qatools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.qaverdict button{min-height:44px;padding:9px 15px;border:1px solid var(--line);border-radius:7px;background:var(--white);font:inherit;cursor:pointer}
+.qaverdict button[data-v=pass][aria-pressed=true]{background:#e3f3d4;border-color:#7fa85a}.qaverdict button[data-v=issue][aria-pressed=true]{background:#f6dede;border-color:var(--error)}.qaverdict button[data-v=call][aria-pressed=true]{background:#f4ecd9;border-color:var(--warn)}
+.qanotes{width:100%;min-height:84px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--white);font:inherit}
+.qaout{margin:8px 0 0;white-space:pre-wrap;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Ledger Parity — project hub</strong><br><small>RATIFIED 2026-10-02 · every decision as recommended (D1–D7, D7a, D7b) · build prompts written</small></div>
+  <div class="hubtitle"><strong>Ledger Parity — project hub</strong><br><small>RATIFIED 2026-10-02 · every decision as recommended (D1–D7, D7a, D7b) · D3 revised 2026-10-02: names not bold on either Ledger · server committed, screens built on dev 2026-10-02 · QA walks open (§258) · <b>round 3 RULED 2026-10-02 (“looks good, go ahead and build”) and built on dev the same day: Payees as a window, a payee’s record, Tools (screens 10–12); D8a (the club’s Payees) open · W3 rewritten</b></small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
-    <li class="stage done" title="Round 1 2026-10-01 · round 2 2026-10-02 · ratified 2026-10-02">Design</li>
-    <li class="stage current" title="Build prompts written 2026-10-02: LEDGER_PARITY_SERVER_PROMPT.md, LEDGER_PARITY_SCREENS_PROMPT.md">Plan</li>
-    <li class="stage" title="—">Build</li>
-    <li class="stage" title="—">Review</li>
-    <li class="stage" title="—">QA</li>
+    <li class="stage done" title="Round 1 2026-10-01 · round 2 2026-10-02 · ratified 2026-10-02 · round 3 drawn and ruled 2026-10-02 (D8, D9, D9a, D10; D8a open)">Design</li>
+    <li class="stage done" title="Build prompts written 2026-10-02: LEDGER_PARITY_SERVER_PROMPT.md, LEDGER_PARITY_SCREENS_PROMPT.md">Plan</li>
+    <li class="stage done" title="Server committed ac22a1fe 2026-10-02; screens built on dev 2026-10-02">Build</li>
+    <li class="stage done" title="/simplify and /review (high-risk tier, five lenses) 2026-10-02; four fixes, all guarded">Review</li>
+    <li class="stage current" title="Owner QA §258 — five walks on the QA Walks tab">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="fitToggle" aria-pressed="false">Fit to width</button></div>
@@ -104,6 +121,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
   <button data-hub="decisions" aria-pressed="false">Decisions</button>
   <button data-hub="brief" aria-pressed="false">PM Brief</button>
   <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="qa" aria-pressed="false">QA Walks</button>
 </nav>
 
 <section id="hub-mockup">
@@ -117,6 +135,9 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <a href="#s-tools">7 · Tools</a>
     <a href="#s-shared">8 · Shared payees</a>
     <a href="#s-kept">9 · What stays different</a>
+    <a href="#s-r3-window">10 · Payees, a window</a>
+    <a href="#s-r3-record">11 · A payee</a>
+    <a href="#s-r3-tools">12 · Tools</a>
   </nav>
   <div class="frame" id="frame">
 
@@ -153,18 +174,19 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
         <div class="scroller"><div class="shot" data-shot="coach-desk-before"><img src="ledger-parity/coach-desk-before.jpg" alt="The coach's Ledger today." width="1440" height="1000"></div></div>
       </div>
       <div class="spec">
-        <div class="spectop"><span class="lbl after">Proposed</span><h3>Coach · Money › Ledger</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D1" data-here="Every row date reads Sep 1, Oct 1.">fixes 1</button><button type="button" class="fl fix" data-finding="D2" data-here="Starting balance · Sep 1, 2026 and Ending balance · Oct 31, 2026 (the window the Date filter opens on today).">fixes 2</button><button type="button" class="fl fix" data-finding="D3" data-here="The pencils and the Player Dues / Club buttons are gone from the last column; every row ends in one arrow and its name is bold.">fixes 3</button><button type="button" class="fl fix" data-finding="D5" data-here="A Payees button beside Export. Round 2 (D6, screen 7) moves it behind Tools.">fixes 5</button></span></div>
-        <div class="scroller"><div class="shot" data-shot="coach-desk-after" data-fix="1"><img src="ledger-parity/coach-desk-after.jpg" alt="The coach's Ledger proposed: dates without the year, dated Starting and Ending balance rows, bold names, one arrow at the end of every row, and a Payees button beside Export." width="1440" height="1000"></div></div>
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>Coach · Money › Ledger</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D1" data-here="Every row date reads Sep 1, Oct 1.">fixes 1</button><button type="button" class="fl fix" data-finding="D2" data-here="Starting balance · Sep 1, 2026 and Ending balance · Oct 31, 2026 (the window the Date filter opens on today).">fixes 2</button><button type="button" class="fl fix" data-finding="D3" data-here="The pencils and the Player Dues / Club buttons are gone from the last column; every row ends in one arrow. The names are drawn bold here; revised 2026-10-02, they keep the coach’s regular weight.">fixes 3</button><button type="button" class="fl fix" data-finding="D5" data-here="A Payees button beside Export. Round 2 (D6, screen 7) moves it behind Tools.">fixes 5</button></span></div>
+        <div class="scroller"><div class="shot" data-shot="coach-desk-after" data-fix="1"><img src="ledger-parity/coach-desk-after.jpg" alt="The coach's Ledger proposed: dates without the year, dated Starting and Ending balance rows, names drawn bold, one arrow at the end of every row, and a Payees button beside Export." width="1440" height="1000"></div></div>
         <p class="caption"><strong>Superseded in round 2:</strong> the Payees button drawn here moves behind a Tools menu (D6, screen 7), which also draws the whole proposed coach Ledger in one frame.</p>
+        <p class="caption"><strong>Revised 2026-10-02 (owner):</strong> the names are drawn bold here. They keep the coach’s regular weight, as they read today, and the club’s Ledger drops its bold to match (screen 3).</p>
         <p class="caption"><strong>Unchanged, on purpose:</strong> the coloured edge on each row (paid, scheduled, overdue), the Item column, the Tags filter and Cash on hand (screen 7 says why). The two italic rows at the top are unpaid installments; on those rows a <strong>Record</strong> button would sit beside the arrow, the one button a ledger row keeps (ruled 2026-09-04). This fixture’s two are the club’s bill and a family’s dues, not one of the team’s own bills, so neither shows one here.</p>
       </div>
     </section>
 
     <!-- 3 · CLUB LEDGER -->
     <section class="screen" id="s-club" hidden>
-      <div class="eyebrow">Screen 3 · decision 2 on the club’s Ledger</div>
-      <h1 tabindex="-1">The club’s Ledger changes in one place</h1>
-      <p class="sub lead">The club’s book already does decisions 1 and 3. It gains the year on its balance rows, so both books state their period the same way, and its note under the table goes, because the dated balance rows now say what it explains.</p>
+      <div class="eyebrow">Screen 3 · decisions 2 and 3 on the club’s Ledger</div>
+      <h1 tabindex="-1">The club’s Ledger changes in two places</h1>
+      <p class="sub lead">The club’s book already does decision 1 and opens its rows as decision 3 asks. It gains the year on its balance rows, so both books state their period the same way, and its note under the table goes, because the dated balance rows now say what it explains. <strong>Revised 2026-10-02 (owner):</strong> its names lose their bold, so both books set the What in the coach’s regular weight.</p>
       <div class="spec">
         <div class="spectop"><span class="lbl before">Today</span><h3>Club · Accounting › Ledger</h3></div>
         <div class="scroller"><div class="shot" data-shot="club-desk-before"><img src="ledger-parity/club-desk-before.jpg" alt="The club's Ledger today." width="1440" height="1000"></div></div>
@@ -172,6 +194,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
       <div class="spec">
         <div class="spectop"><span class="lbl after">Proposed</span><h3>Club · Accounting › Ledger</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D2" data-here="Starting balance · Jul 3, 2026 and Ending balance · Oct 1, 2026. The note under the table (Oldest at the top, as a bank statement reads…) is removed in the build; it is still on this frame.">fixes 2</button></span></div>
         <div class="scroller"><div class="shot" data-shot="club-desk-after" data-fix="1"><img src="ledger-parity/club-desk-after.jpg" alt="The club's Ledger proposed: the Starting and Ending balance rows carry the year." width="1440" height="1000"></div></div>
+        <p class="caption"><strong>Not yet in this frame:</strong> the names here are still bold. Under the 2026-10-02 revision the build sets them in the coach’s regular weight; each name stays a button, so a keyboard still opens the line from it.</p>
       </div>
     </section>
 
@@ -214,6 +237,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
         <div class="spectop"><span class="lbl ref">The page, live on the club</span><h3>Accounting › Ledger › Payees</h3><button type="button" class="fl fix" data-finding="D5" data-here="The club's Payees page: each payee with how many entries name it and when it was last used. A payee opens to rename it or merge it into another; one an entry names is never deleted.">fixes 5</button></div>
         <div class="scroller"><div class="shot"><img src="ledger-parity/club-payees.jpg" alt="The club's Payees page: a back arrow to Ledger, the title Payees, a table of Mizuno Canada, Mizuno Canada Ltd. and Town of Milton with their entry counts and last-used dates, and a New payee button." width="1440" height="1000"></div></div>
         <p class="caption"><strong>The coach’s version:</strong> the same page under Money, its back arrow to <strong>Ledger</strong>, listing the team’s payees only, with the note “The team’s payees only: the club’s are the club’s.” Anyone who can enter the team’s money can rename or merge. On a phone the door sits at the foot of the View menu, as the club’s sits in its Book menu. The payee picker in the money form gains a last row, <strong>Manage payees</strong>. <span class="mk" data-k="new" data-note="A coach has no way to rename or merge a payee today; the only routes a coach can reach list and create them.">New</span></p>
+        <p class="caption"><strong>Round 3 (open, screens 10 and 11):</strong> the coach’s Payees becomes a window over the Ledger rather than a page, and a payee opens as a record of its money.</p>
       </div>
     </section>
 
@@ -228,9 +252,9 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
         <p class="caption"><strong>Transfer moves in too:</strong> it is a rare tool on a club book. The Payees button drawn in round 1, and built on dev 2026-10-01, moves here when this is built.</p>
       </div>
       <div class="spec">
-        <div class="spectop"><span class="lbl after">Proposed</span><h3>Coach · Money › Ledger, the whole proposal in one frame</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D6" data-here="View, Export, Tools, Add a bill. Tools holds Payees, under The team’s lists.">fixes 6</button><button type="button" class="fl fix" data-finding="D1" data-here="Day-only row dates.">fixes 1</button><button type="button" class="fl fix" data-finding="D2" data-here="Starting balance · Sep 1, 2026 and Ending balance · Oct 31, 2026.">fixes 2</button><button type="button" class="fl fix" data-finding="D3" data-here="One arrow on every row; the names bold.">fixes 3</button></span></div>
-        <div class="scroller"><div class="shot" data-shot="coach-tools" data-fix="1"><img src="ledger-parity/coach-tools.jpg" alt="The coach's Ledger proposed in full: View, Export, Tools and Add a bill, with Tools open listing Payees; day-only dates, dated balance rows, bold names and one arrow per row." width="1440" height="1000"></div></div>
-        <p class="caption">The Tools menu is the portal’s own menu (the one Import opens), so it carries a heading per group. It holds one tool today; it is where the next rare coach tool goes rather than a new button.</p>
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>Coach · Money › Ledger, the whole proposal in one frame</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D6" data-here="View, Export, Tools, Add a bill. Tools holds Payees, under The team’s lists.">fixes 6</button><button type="button" class="fl fix" data-finding="D1" data-here="Day-only row dates.">fixes 1</button><button type="button" class="fl fix" data-finding="D2" data-here="Starting balance · Sep 1, 2026 and Ending balance · Oct 31, 2026.">fixes 2</button><button type="button" class="fl fix" data-finding="D3" data-here="One arrow on every row. The names are drawn bold here; revised 2026-10-02, they keep the coach’s regular weight.">fixes 3</button></span></div>
+        <div class="scroller"><div class="shot" data-shot="coach-tools" data-fix="1"><img src="ledger-parity/coach-tools.jpg" alt="The coach's Ledger proposed in full: View, Export, Tools and Add a bill, with Tools open listing Payees; day-only dates, dated balance rows, names drawn bold and one arrow per row." width="1440" height="1000"></div></div>
+        <p class="caption">The Tools menu is the portal’s own menu (the one Import opens), so it carries a heading per group. It holds one tool today; it is where the next rare coach tool goes rather than a new button. <strong>Round 3 (open, screen 12):</strong> the team’s other two lists join it. <strong>Revised 2026-10-02:</strong> the names are drawn bold here; they keep the coach’s regular weight.</p>
       </div>
     </section>
 
@@ -288,6 +312,82 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
       </table></div>
     </section>
 
+    <!-- 10 · ROUND 3 · PAYEES AS A WINDOW (D8) -->
+    <section class="screen" id="s-r3-window" hidden>
+      <div class="eyebrow">Screen 10 · round 3 · decision 8, ruled 2026-10-02, built</div>
+      <h1 tabindex="-1">Payees opens over the Ledger, not on a page of its own</h1>
+      <p class="sub lead">Asked during the §258 walk: <em>“do we need to open a new page for this? wouldn’t a drawer be in line with our portal standard?”</em> Today Tools › Payees, and the payee picker’s <strong>Manage payees…</strong>, leave the Ledger for a page. The picker’s door sits inside the bill window and the Add a bill form, so following it from there drops the form, or asks “Leave without saving?”, which is the trip you refused for tags (2026-09-01). The team’s other two lists already open over the screen you are on. Under decision 8, Payees is a window over the Ledger: the list first, then a payee inside the same window (screen 11).</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Money › Ledger › Payees, a page</h3><span class="aside">built on dev 2026-10-02, not on production; 1440 × 1000, warm theme</span></div>
+        <div class="scroller"><div class="shot" data-shot="r3-payees-before"><img src="ledger-parity/r3-payees-before.jpg" alt="The coach's Payees page today: a back link to Ledger, the title Payees, a table with Milton, Town of, 1 entry, last used Oct 2, a note, and a Shared by your club section listing Town of Milton." width="1440" height="1000"></div></div>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>Payees, a window over the Ledger</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D8" data-here="The Payees window over the Ledger, in the bill window’s frame. Closing it leaves the coach exactly where they were.">fixes 8</button><button type="button" class="fl fix" data-finding="D9" data-here="The columns: Paid, Still to pay and Last paid, this season. Today’s Entries and Last used count bills across every season and date them by when they were entered.">fixes 9</button></span></div>
+        <div class="scroller"><div class="shot" data-shot="r3-payees-after" data-fix="1"><img src="ledger-parity/r3-payees-after.jpg" alt="The Ledger dimmed behind a window titled Payees: 3 payees, paid and still to pay this season, a New payee button, and a table with bands Your team's own (Milton, Town of: $275.00 paid, $550.00 still to pay, last paid Sep 12) and Shared by your club (Ace Pitching Academy $350.00, Sep 4; Town of Milton, nothing), each row ending in an arrow, and a line about what the club sees." width="1440" height="1000"></div></div>
+        <p class="caption"><strong>Examples in this drawing:</strong> Ace Pitching Academy (as in round 2) and a $275.00 payment to Milton, Town of on Sep 12. The test team’s real bill to Milton has nothing paid yet. <span class="mk" data-k="re" data-note="The list is today’s Payees page table, moved into the bill window’s frame. The two groups become band rows in one table instead of a second section under it, so a shared payee opens to its record like any other.">Restyled</span></p>
+        <p class="caption"><strong>From the payee picker</strong>, inside an open bill or the Add a bill form, the same window opens over the form and closes back to it with the typing kept, as Categories &amp; items already does from the Filing picker. <strong>The page goes:</strong> it was built on dev on 2026-10-02 and has not reached production, so nothing a customer uses is removed.</p>
+      </div>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Payees page, 390px</h3><button type="button" class="fl" data-finding="D8" data-here="A page of its own: its back arrow returns to the Ledger.">8</button></div>
+          <div class="scroller"><div class="shot phone"><img src="ledger-parity/r3-payees-phone-before.jpg" alt="The Payees page on a phone today." width="390" height="844"></div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>Payees window, 390px</h3><button type="button" class="fl fix" data-finding="D8" data-here="On a phone the window is the full-screen sheet every money record already uses; its back arrow closes it, and New payee is the portal’s plus.">fixes 8</button></div>
+          <div class="scroller"><div class="shot phone"><img src="ledger-parity/r3-payees-phone-after.jpg" alt="The Payees sheet on a phone: a back arrow and Payees, a plus button, the band Your team's own over a row for Milton, Town of with $275.00 paid · $550.00 to pay on the line under the name, the band Shared by your club over cards for Ace Pitching Academy and Town of Milton, and the club line." width="390" height="844"></div></div>
+        </div>
+      </div>
+      <p class="caption">On a phone each payee is its name with its figures on a line under it (owner, 2026-10-02: “put the subtext under the name on the phone so we aren’t squishing the names”), the framed card the practice libraries already use. Each band is a plain line between the rows, the way the Ledger’s balance lines already are. <button type="button" class="fl" data-finding="D8a" data-here="Asked on screen 10; the club’s side is not drawn in this round.">8a</button> <strong>The club’s Payees</strong> has the same two problems (its picker’s Manage payees… is inside its Add entry window), so the recommendation is the same change there; it is not drawn yet.</p>
+    </section>
+
+    <!-- 11 · ROUND 3 · A PAYEE'S RECORD (D9) -->
+    <section class="screen" id="s-r3-record" hidden>
+      <div class="eyebrow">Screen 11 · round 3 · decision 9, ruled 2026-10-02, built</div>
+      <h1 tabindex="-1">A payee opens to read: what the team paid it, what is still to pay, and the entries behind both</h1>
+      <p class="sub lead">Asked during the §258 walk: <em>“I see entries of 1 but when I click it all I can do is change the name.”</em> A payee stores only a name and a note; there are no contact details to show, and none are proposed. What it can show is its money. Under decision 9 a payee is a record like any other (your 2026-10-01 standard): it opens to read, and one pencil in its head turns the name and note into a form.</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl before">Today</span><h3>A payee, opened from the Payees page</h3></div>
+        <div class="scroller"><div class="shot" data-shot="r3-payee-before"><img src="ledger-parity/r3-payee-before.jpg" alt="Today's payee window: the title Milton, Town of, a Name field ready to type in, a sentence saying it is named on 1 entry, a sentence about merging, and buttons Merge into another payee and Done." width="1440" height="1000"></div></div>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>The payee’s record, inside the Payees window</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D9" data-here="Paid this season, Still to pay and Next due; then this season’s entries as the Ledger’s own rows; then the note.">fixes 9</button><button type="button" class="fl fix" data-finding="D8" data-here="← Payees: the list is one level up, in the same window.">fixes 8</button></span></div>
+        <div class="scroller"><div class="shot" data-shot="r3-payee-after" data-fix="1"><img src="ledger-parity/r3-payee-after.jpg" alt="The payee's record over the Ledger: a back link Payees, the title Milton, Town of with the line Your team's own payee, a pencil and a close button; tiles Paid this season $275.00, Still to pay $550.00 in red, Next due Sep 25 · $275.00; This season · 3 entries as Ledger rows (Sep 12 paid, Sep 25 overdue with Record, Oct 23 due with Record); Details with Note: No note; and a foot with Merge into another payee and 1 of 3 payees, next Ace Pitching Academy." width="1440" height="1000"></div></div>
+        <p class="caption"><strong>The rows are the Ledger’s rows:</strong> the same coloured edge (paid, overdue, due), Record on an unpaid installment, and a click opens what it opens on the Ledger, the bill’s window, with Back returning to the payee. <strong>Merge into another payee</strong> sits in the foot because a bill names this payee; <strong>Delete this payee</strong> takes its place only when nothing does. Prev and Next walk the list. A shared payee opens the same way, without the pencil and the merge, its head saying it is the club’s. <span class="mk" data-k="new" data-note="A payee has never had a record: the team could only rename it or merge it. The frame, tiles, rows and foot are the bill window’s and the Ledger’s own, not new parts.">New</span></p>
+        <p class="caption"><strong>Example in this drawing:</strong> the Sep 12 payment, so the record shows a paid row beside the real overdue and coming installments.</p>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>The payee’s record, 390px</h3><button type="button" class="fl fix" data-finding="D9" data-here="The same record as a full-screen sheet: the back arrow returns to the list, and the rows are the Ledger’s phone cards.">fixes 9</button></div>
+        <div class="scroller"><div class="shot phone"><img src="ledger-parity/r3-payee-phone-after.jpg" alt="The payee's record on a phone: back arrow, Milton, Town of, Your team's own payee, a pencil; the tiles; This season · 3 entries as Ledger phone cards, the overdue one with a Record button; and the foot with Merge into another payee and the walk." width="390" height="844"></div></div>
+      </div>
+      <h2>One more ask, and a defect found while drawing</h2>
+      <ul class="difflist">
+        <li><button type="button" class="n" data-finding="D9a" data-here="Asked on screen 11.">9a</button><span><strong>This season only.</strong> The list and the record count and show this season’s money. A payee kept from year to year shows what this season paid it.</span></li>
+        <li><button type="button" class="n" data-finding="D9b" data-here="Found on the test team’s Diamond permit bill, 2026-10-02.">9b</button><span><strong>The bill window shows the payee as typed, not as it is.</strong> A rename or a merge never reaches it, and a bill with no typed name shows an empty Payee and loses its payee on the next edit there. Fixed regardless of the ruling.</span></li>
+      </ul>
+    </section>
+
+    <!-- 12 · ROUND 3 · TOOLS (D10) -->
+    <section class="screen" id="s-r3-tools" hidden>
+      <div class="eyebrow">Screen 12 · round 3 · decision 10, ruled 2026-10-02, built</div>
+      <h1 tabindex="-1">Tools holds the three lists a Ledger entry is filed by</h1>
+      <p class="sub lead">Asked during the §258 walk: <em>“if the payees is the only thing in the tools dropdown then do we need a tools dropdown?”</em> A menu with one item costs a click for nothing, and the reason rare tools went behind Tools (2026-10-01) was a crowded phone toolbar: a ⋯ and a Payees button take the same space. But a coach also tidies two other lists every Ledger entry is filed by, and reaches them today only from Budget, Team settings or inside a picker. Under decision 10, Tools holds all three.</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Money › Ledger, Tools open</h3></div>
+        <div class="scroller"><div class="shot" data-shot="r3-tools-before"><img src="ledger-parity/r3-tools-before.jpg" alt="The coach's Ledger with Tools open, listing one item: Payees, Rename a payee or merge two spellings." width="1440" height="1000"></div></div>
+      </div>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>Coach · Money › Ledger, Tools open</h3><button type="button" class="fl fix" data-finding="D10" data-here="The team’s lists: Payees, Categories &amp; items, Money tags.">fixes 10</button></div>
+          <div class="scroller"><div class="shot" data-shot="r3-tools-after" data-fix="1"><img src="ledger-parity/r3-tools-after.jpg" alt="The coach's Ledger with Tools open under the heading The team's lists: Payees (Who the team pays, and what each has been paid), Categories &amp; items (What the team's money is filed under), Money tags (Rename, merge or remove the team's tags)." width="1440" height="1000"></div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>The Tools sheet, 390px</h3><button type="button" class="fl fix" data-finding="D10" data-here="The same three, in the sheet the bare ⋯ opens on a phone.">fixes 10</button></div>
+          <div class="scroller"><div class="shot phone"><img src="ledger-parity/r3-tools-phone-after.jpg" alt="The Tools sheet on a phone with the same three items under The team's lists." width="390" height="844"></div></div>
+        </div>
+      </div>
+      <p class="caption"><strong>Each opens its own window over the Ledger:</strong> Categories &amp; items its existing window (the one the Filing picker opens), Money tags its existing side sheet, Payees screen 10’s window. They are two different frames today, and this round does not change that. Their other doors stay. <strong>The alternative:</strong> keep Tools for Payees alone and make it a plain Payees button, one click instead of two, with the two Ledgers’ toolbars then ending differently.</p>
+    </section>
+
     <footer class="intent" id="intent"></footer>
   </div>
 </section>
@@ -296,8 +396,187 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 <section id="hub-decisions" class="docpage" hidden>
   <div class="eyebrow">Rulings</div>
   <h1>Decisions</h1>
-  <p class="sub">Ratified 2026-10-02. Owner: “I agree with your recommendations on D1-D7.” Every ask below was ruled as recommended, D7a and D7b included; the recommendation under each is what gets built.</p>
+  <p class="sub">Ratified 2026-10-02. Owner: “I agree with your recommendations on D1-D7.” Every ask below was ruled as recommended, D7a and D7b included; the recommendation under each is what gets built. One was revised by the owner afterwards: D3, the weight of a row’s name. <strong>Round 3 (D8–D10, 2026-10-02):</strong> three questions the owner asked during the §258 walk, drawn on screens 10–12 and ruled as drawn (“looks good, go ahead and build”), built on dev the same day; the defect found while drawing them (D9b) is fixed. D8a, the club’s side, was not drawn and stays open.</p>
   <div id="decisionRows"></div>
+</section>
+
+<!-- QA WALKS -->
+<section id="hub-qa" class="docpage qa" hidden>
+  <div class="eyebrow">Owner QA · §258 · Coaches portal + Club accounting · Ledger Parity</div>
+  <h1>The two Ledgers read the same</h1>
+  <p class="sub">Five walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat.</p>
+
+  <div class="qacard">
+    <h3>Sign in as</h3>
+    <dl>
+      <dt>Where</dt><dd>http://localhost:3000/auth/login (dev server restarted after the build)</dd>
+      <dt>Coach (W1, W2, W3, W5)</dt><dd>uat-coach@uat-test-org.local (password: <code>UAT_COACH_PASSWORD</code> in <code>.env.local</code>) · <b>UAT Test Team</b>, UAT Rep Club, 2026 Season</dd>
+      <dt>Club (W4)</dt><dd>uat-club-treasurer@uat-rep-club.local (password: <code>UAT_REP_CLUB_TREASURER_PASSWORD</code>) · UAT Rep Club</dd>
+    </dl>
+    <p class="meta"><b>As of 2026-10-02.</b> The test team was given what these walks read on 2026-10-02: the club shares <b>Town of Milton</b> and keeps both Mizuno spellings; the team has its own spelling, <b>Milton, Town of</b>, named on a bill (<b>Diamond permit — fall block</b>, one installment a week overdue); a Chocolate sale hand-in three days ago. If another session has reset the club since, rebuild it (<code>node --env-file=.env.local scripts/seed-club-fixture.mjs --reset</code>, then <code>node --env-file=.env.local scripts/seed-uat-coach-fixture.mjs</code>). Pin names and rules, never counts.</p>
+    <p class="meta"><b>What the walks change:</b> W3 renames a payee and puts the name back, merges the team’s spelling into the club’s (permanent on dev), and adds then deletes one payee. W4 turns one club payee’s sharing on and off again. Every other window is closed without saving.</p>
+  </div>
+
+  <div class="qaindex" role="group" aria-label="Walks">
+    <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · The coach’s Ledger at a desk</b><span class="meta">Dates, one arrow per row, the read window, Record, Tools.</span><span class="qachip" data-chip="w1"></span></button>
+    <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · On a phone</b><span class="meta">The club’s card, the plain balance lines, the Tools sheet.</span><span class="qachip" data-chip="w2"></span></button>
+    <button type="button" class="qawcard" data-walk="w3" aria-pressed="false"><b>W3 · Tools, and the team’s Payees window</b><span class="meta">Round 3: the window, a payee’s record, the three lists, the bill’s payee name. <b>Rewritten 2026-10-02.</b></span><span class="qachip" data-chip="w3"></span></button>
+    <button type="button" class="qawcard" data-walk="w4" aria-pressed="false"><b>W4 · The club’s side</b><span class="meta">Tools, the balance lines, the Teams column, the switch.</span><span class="qachip" data-chip="w4"></span></button>
+    <button type="button" class="qawcard" data-walk="w5" aria-pressed="false"><b>W5 · The payee picker</b><span class="meta">Shared by your club, your own, Manage payees….</span><span class="qachip" data-chip="w5"></span></button>
+  </div>
+
+    <div class="qawalk" id="w1">
+      <h2>W1 · The coach’s Ledger at a desk</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>The coach’s Ledger read differently from the club’s in five ways nobody chose. Now a row prints the day, the balance lines carry the full dates, every row opens and ends in one arrow, and a row another tab wrote opens a short window that says where it is changed.</p>
+        <h3>It passes when</h3><p>Every row opens and its last column is one arrow (Record beside it on an unpaid installment, and nothing else); the dates read as the rule says; a derived row’s window names its tab and opens it; a row you recorded opens its form exactly as before.</p>
+        <h3>Not in this walk</h3><p>The phone (W2), Tools and the Payees page (W3), the club (W4), the payee picker (W5).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">Sign in as the coach. Open <b>Money → Ledger</b> (View <b>Timeline</b>; leave Date on <b>Around today</b>).</p><p class="qasee">Row dates read the day only (“Sep 1”, “Oct 1”). The first line reads <b>STARTING BALANCE · <i>date, 2026</i></b> and the last <b>ENDING BALANCE · <i>date, 2026</i></b>. Open the Date pill: those are the two dates it holds.</p></div></li>
+        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Run your eye down the last column.</p><p class="qasee">Every row ends in one arrow. No pencil and no “Player Dues →” / “Club →” buttons. One row, <b>Diamond permit — fall block — installment 1 of 2</b> (Overdue), also has <b>Record</b> beside its arrow; no other row has a button.</p></div></li>
+        <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Look at the names in the What column.</p><p class="qasee">Regular weight, as before (not bold). The detail after a name (“· Avery Test”) is in the quieter grey.</p></div></li>
+        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Click anywhere on a <b>Dues payment</b> row (not on the name).</p><p class="qasee">A window titled <b>Dues payment · Oct 1</b>: Amount ($… in), Category (Player dues), Family, How it was paid, On. Under the box: “Recorded on Player Dues. Change it there, and the Ledger follows.” Two buttons: <b>Close</b> and <b>Open Player Dues ›</b>.</p></div></li>
+        <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Open Player Dues</b>, then come back to the Ledger.</p><p class="qasee">The Player Dues tab opens. Back on the Ledger, your filters and place are as you left them.</p></div></li>
+        <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Click the <b>Chocolate sale</b> row, then the <b>League registration — shared across teams</b> row.</p><p class="qasee">Chocolate sale: Raised by <i>a player</i>, How it was paid (E-Transfer), “Recorded on Fundraising…”, <b>Open Fundraising</b>. League registration: Installment #2, Due, Status “Overdue by N days”, “The club’s bill, on the Club tab. Pay it there, and the Ledger follows.”, <b>Open Club</b>.</p></div></li>
+        <li><input type="checkbox" id="w1s7" aria-label="W1 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Click <b>Practice balls and tees</b> (a cost you recorded), close it; then click <b>Diamond permit — fall block</b>.</p><p class="qasee">The first opens its money form, editable, exactly as before. The second opens the bill’s own room, as before. Close both without changing anything.</p></div></li>
+        <li><input type="checkbox" id="w1s8" aria-label="W1 step 8"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Record</b> on the Diamond permit row.</p><p class="qasee">The Record a payment form opens, aimed at that installment with its amount suggested. <b>Cancel</b> (don’t save).</p></div></li>
+        <li><input type="checkbox" id="w1s9" aria-label="W1 step 9"><div class="qabody"><span class="qan"></span><p class="qado">Keyboard: press Tab until a row’s name is focused, then Enter.</p><p class="qasee">The same window or form opens as a click does. Escape closes it.</p></div></li>
+        <li><input type="checkbox" id="w1s10" aria-label="W1 step 10"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>⋯ Tools</b> in the toolbar (between Export and Add a bill).</p><p class="qasee">A menu with one heading, <b>THE TEAM’S LISTS</b>, and one item: <b>Payees</b> — “Rename a payee or merge two spellings”. Press Escape.</p></div></li>
+        <li><input type="checkbox" id="w1s11" aria-label="W1 step 11"><div class="qabody"><span class="qan"></span><p class="qado">Set Date to <b>Whole season</b>.</p><p class="qasee">The first line names the season’s first day with its year. <span class="meta">If the team carried money from last season it reads <b>OPENING BALANCE · <i>date</i> · carried from …</b> and the whole line opens Team settings › Money (an arrow at its end, no “Change →” button). If not, it reads Starting balance — tick and note which.</span></p></div></li>
+        <li><input type="checkbox" id="w1s12" aria-label="W1 step 12"><div class="qabody"><span class="qan"></span><p class="qado">Switch to <b>Dark</b> and repeat steps 1, 2 and 4.</p><p class="qasee">Everything reads clearly; the window’s box and its sentence are legible on the dark ground.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W1 verdict">
+        <button type="button" data-w="w1" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w1" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w1" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w1"></span>
+      </div>
+      <label class="meta" for="w1notes">Notes for W1</label>
+      <textarea id="w1notes" class="qanotes" data-notes="w1"></textarea>
+    </div>
+
+    <div class="qawalk" id="w2" hidden>
+      <h2>W2 · The coach’s Ledger on a phone</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>On a phone the coach’s Ledger drew its own card: slanted labels, a full-width button in every card and the starting balance boxed like a row. It now draws the club’s card, from one shared recipe.</p>
+        <h3>It passes when</h3><p>Each entry is one card (date top right, the name as its title, labelled lines, one corner arrow); the balance lines are plain lines between the cards; only an unpaid installment’s card has a button (Record).</p>
+        <h3>Not in this walk</h3><p>The desk (W1). The club’s phone (W4 step 8).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone (or a window about 390 px wide), open <b>Money → Ledger</b>.</p><p class="qasee">The toolbar reads <b>View Timeline · ⋯ · + Add a bill</b> on one line. <b>Starting balance · <i>date, 2026</i></b> is a plain line above the first card, not a box.</p></div></li>
+        <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Look at a <b>Dues payment</b> card.</p><p class="qasee"><b>DATE</b> with the day at the top right, one arrow in the top-right corner, the name in bold as the title, the family under it, then labelled lines (CATEGORY, MONEY IN, BALANCE). No “ITEM —” line where there is no item.</p></div></li>
+        <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Look at an overdue card (League registration, or Diamond permit).</p><p class="qasee">Its labels stand upright (only the figures are slanted). A coloured left edge (red overdue, blue scheduled, green paid) runs down the card.</p></div></li>
+        <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Find the <b>Diamond permit — fall block</b> card.</p><p class="qasee">A full-width <b>Record</b> button is the card’s foot; the arrow stays in the corner. No other card has a button.</p></div></li>
+        <li><input type="checkbox" id="w2s5" aria-label="W2 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Tap a Dues payment card, then <b>Close</b>; tap the Diamond permit card, then close.</p><p class="qasee">The dues card opens the read window (full screen); the Diamond permit opens its room. The page keeps its place.</p></div></li>
+        <li><input type="checkbox" id="w2s6" aria-label="W2 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Scroll to the end.</p><p class="qasee"><b>Ending balance · <i>date, 2026</i></b> is a plain line under the last card.</p></div></li>
+        <li><input type="checkbox" id="w2s7" aria-label="W2 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>⋯</b>.</p><p class="qasee">A sheet titled <b>Tools</b> rises from the bottom with <b>Payees</b>. Tapping outside it closes it without pressing anything underneath.</p></div></li>
+        <li><input type="checkbox" id="w2s8" aria-label="W2 step 8"><div class="qabody"><span class="qan"></span><p class="qado">Repeat steps 2–4 in <b>Dark</b>.</p><p class="qasee">Cards, labels and the coloured edges read clearly.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W2 verdict">
+        <button type="button" data-w="w2" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w2" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w2" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w2"></span>
+      </div>
+      <label class="meta" for="w2notes">Notes for W2</label>
+      <textarea id="w2notes" class="qanotes" data-notes="w2"></textarea>
+    </div>
+
+    <div class="qawalk" id="w3" hidden>
+      <h2>W3 · Tools, and the team’s Payees window</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>Round 3 (ruled 2026-10-02): Payees became a window over the Ledger instead of a page, a payee became a record you read — what the team paid it this season, what is still to pay, the entries behind both — and Tools now holds the team’s three lists. A bug found while drawing is fixed too: a bill’s Payee now shows the payee as it is named today.</p>
+        <h3>It passes when</h3><p>Nothing about Payees ever leaves the Ledger; a payee opens to read, one pencil edits its name and note; its entries are the Ledger’s rows, and one opened from there returns to the payee when closed; opened from a form’s payee picker it sits over the form and closes back to it; rename, merge and delete work as before; the bill window names the payee.</p>
+        <h3>Not in this walk</h3><p>The picker’s own groups (W5). The club’s side of sharing (W4). The club’s Payees, which stays a page for now (D8a, not drawn).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w3s1" aria-label="W3 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On the Ledger, open <b>⋯ Tools</b>.</p><p class="qasee">Under <b>THE TEAM’S LISTS</b>: <b>Payees</b> (“Who the team pays, and what each has been paid”), <b>Categories &amp; items</b> and <b>Money tags</b>.</p></div></li>
+        <li><input type="checkbox" id="w3s2" aria-label="W3 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Choose <b>Payees</b>.</p><p class="qasee">A window over the Ledger (the Ledger dimmed behind it, the address unchanged): <b>Payees</b>, “2 payees · paid and still to pay this season”, <b>+ New payee</b>. A table Payee · Paid · Still to pay · Last paid in two bands: <b>YOUR TEAM’S OWN</b> — <b>Milton, Town of</b>, — · $550.00 · —; <b>SHARED BY YOUR CLUB</b> — <b>Town of Milton</b> in blue, — · — · —. A line under it about what the club sees. No Mizuno payee.</p></div></li>
+        <li><input type="checkbox" id="w3s3" aria-label="W3 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Milton, Town of</b>.</p><p class="qasee">The same window, one level in: <b>← Payees</b>, the name, “Your team’s own payee”, a pencil. Tiles <b>Paid this season $0.00</b> · <b>Still to pay $550.00</b> (red) · <b>Next due Sep 25 · $275.00</b>. <b>THIS SEASON · 2 ENTRIES</b>: the two Diamond permit installments drawn as the Ledger draws them (the overdue one red-edged with <b>Record</b>, the other blue-edged). <b>DETAILS</b> — Note: <i>No note</i>. The foot: <b>Merge into another payee</b>, and “1 of 2 payees” with <b>Town of Milton ›</b>.</p></div></li>
+        <li><input type="checkbox" id="w3s4" aria-label="W3 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Click the <b>Sep 25</b> entry.</p><p class="qasee">The bill’s own window opens over the payee, and its <b>Payee</b> reads <b>Milton, Town of</b> (it was empty before this fix). Close it: you are back on the payee.</p></div></li>
+        <li><input type="checkbox" id="w3s5" aria-label="W3 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Press the <b>pencil</b>. Type a note — “Permit office: book two weeks ahead” — then press <b>✓</b>.</p><p class="qasee">Name and Note become fields (“A new name shows on every bill that names this payee.” under the name); a floating <b>Saved</b> appears and fades. After ✓ the record reads again, the note under Details. Put it back: pencil, clear the note, ✓ — <i>No note</i>.</p></div></li>
+        <li><input type="checkbox" id="w3s6" aria-label="W3 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Pencil again; clear the name completely and press <b>✓</b>. Then type the name back and press ✓.</p><p class="qasee">While the name is empty, ✓ keeps you in the form and a red line under Name says to give the payee a name. Typed back, it saves and reads again.</p></div></li>
+        <li><input type="checkbox" id="w3s7" aria-label="W3 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Town of Milton ›</b> in the foot.</p><p class="qasee">The club’s payee opens the same way: “Shared by your club · only the club can rename it”, <b>no pencil</b>, <b>no Merge</b>, “Nothing recorded for Town of Milton this season.” Press <b>← Payees</b>: the list.</p></div></li>
+        <li><input type="checkbox" id="w3s8" aria-label="W3 step 8"><div class="qabody"><span class="qan"></span><p class="qado">Open Milton, Town of → <b>Merge into another payee</b> → open <b>Keep</b> → choose <b>Town of Milton (the club’s)</b>.</p><p class="qasee">A question over the window: “1 entry moves to Town of Milton, and Milton, Town of is removed.” and, on a blue-edged line, “Town of Milton is shared by your club, so your club will see this entry.” Press <b>Back</b>: the payee again.</p></div></li>
+        <li><input type="checkbox" id="w3s9" aria-label="W3 step 9"><div class="qabody"><span class="qan"></span><p class="qado">Merge for real: Merge into another payee → Keep = Town of Milton → <b>Merge</b>.</p><p class="qasee">The list, with a green line “1 entry moved to Town of Milton. Milton, Town of is gone.” Only <b>SHARED BY YOUR CLUB</b> is left: Town of Milton now — · $550.00 · —. <span class="meta">(Permanent on dev; a fixture re-run makes the team’s spelling again. “1 entry” counts the bill, whose two installments are the two rows.)</span></p></div></li>
+        <li><input type="checkbox" id="w3s10" aria-label="W3 step 10"><div class="qabody"><span class="qan"></span><p class="qado">Close Payees. Open <b>Diamond permit — fall block</b> from the Ledger.</p><p class="qasee">Its Payee reads <b>Town of Milton</b> — the merge reached the bill. Close it.</p></div></li>
+        <li><input type="checkbox" id="w3s11" aria-label="W3 step 11"><div class="qabody"><span class="qan"></span><p class="qado"><b>+ Add a bill</b>; type something in the Notes; open <b>More</b> → the <b>Payee</b> field → <b>Manage payees…</b> (the list’s last row).</p><p class="qasee">The Payees window opens <b>over the form</b>, the address unchanged. Open a payee: its entries are shown but don’t open (no Record, no arrow). Close Payees: the form is still open with your note in it. <b>Cancel</b> the form.</p></div></li>
+        <li><input type="checkbox" id="w3s12" aria-label="W3 step 12"><div class="qabody"><span class="qan"></span><p class="qado">Tools → Payees → <b>+ New payee</b>: add “Walk test payee”. Open it, then <b>Delete this payee</b> → <b>Delete</b>.</p><p class="qasee">A green line “Walk test payee added.” Its record: zero figures, <i>Nothing recorded…</i>, and <b>Delete this payee</b> in the foot (nothing names it). “Delete Walk test payee?” — Keep it / Delete. Deleted: a green line, and it is gone from the list.</p></div></li>
+        <li><input type="checkbox" id="w3s13" aria-label="W3 step 13"><div class="qabody"><span class="qan"></span><p class="qado">Tools → <b>Categories &amp; items</b>, close it; Tools → <b>Money tags</b>, close it.</p><p class="qasee">Each opens its own window over the Ledger — the same ones the form’s pickers open — and closing it leaves you on the Ledger where you were.</p></div></li>
+        <li><input type="checkbox" id="w3s14" aria-label="W3 step 14"><div class="qabody"><span class="qan"></span><p class="qado">Phone (about 390 px): <b>⋯</b> → Payees; open Town of Milton; then use the phone’s <b>Back</b>.</p><p class="qasee">The sheet lists the three under THE TEAM’S LISTS. Payees fills the screen: a band line, then each payee with its figures on a line <b>under</b> the name, no sideways scroll. Back from a payee returns to the list, not to the Ledger.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W3 verdict">
+        <button type="button" data-w="w3" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w3" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w3" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w3"></span>
+      </div>
+      <label class="meta" for="w3notes">Notes for W3</label>
+      <textarea id="w3notes" class="qanotes" data-notes="w3"></textarea>
+    </div>
+
+    <div class="qawalk" id="w4" hidden>
+      <h2>W4 · The club’s side</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>The club’s Ledger gains the year on its balance lines and drops the note that explained them; its names lose their bold, so both books read alike; Transfer and Payees move behind Tools; and each club payee can now be shared with the teams.</p>
+        <h3>It passes when</h3><p>The toolbar is Book · Export · Tools · Add entry; the balance lines carry the year; the names are regular weight; the Payees page shows the Teams column and the share switch, and a switch change shows in the column.</p>
+        <h3>Not in this walk</h3><p>What the teams recorded against a shared payee (Club Tier Stage 3b, not built). The coach’s picker (W5).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w4s1" aria-label="W4 step 1"><div class="qabody"><span class="qan"></span><p class="qado">Sign in as the club’s treasurer. Open <b>Accounting → Ledger</b>.</p><p class="qasee">The toolbar reads <b>Book · Export · ⋯ Tools · + Add entry</b>. No Payees or Transfer buttons.</p></div></li>
+        <li><input type="checkbox" id="w4s2" aria-label="W4 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Tools</b>.</p><p class="qasee"><b>THIS BOOK</b> → Transfer (“Move money to another of the club’s books”); <b>THE CLUB’S LISTS</b> → Payees (“Rename, merge, or share with teams”).</p></div></li>
+        <li><input type="checkbox" id="w4s3" aria-label="W4 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Choose <b>Transfer</b>, then Cancel. Set Date to <b>Last 90 days</b>.</p><p class="qasee">The transfer window opens as before. On the book: rows print the day (“Aug 12”); <b>STARTING BALANCE · JUL …, 2026</b> and <b>ENDING BALANCE · OCT …, 2026</b> carry the year; the note under the table (“Oldest at the top, as a bank statement reads…”) is gone.</p></div></li>
+        <li><input type="checkbox" id="w4s4" aria-label="W4 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Look at the names in What; then Tab to one and press Enter.</p><p class="qasee">Regular weight, the same size as the coach’s (they were bold). The keyboard still opens the line’s window from the name.</p></div></li>
+        <li><input type="checkbox" id="w4s5" aria-label="W4 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Tools → <b>Payees</b>.</p><p class="qasee">A <b>Teams</b> column: Town of Milton <b>SHARED WITH TEAMS</b> (a blue chip); Mizuno Canada and Mizuno Canada Ltd. <b>The club’s own</b>. The note under the table says what sharing does.</p></div></li>
+        <li><input type="checkbox" id="w4s6" aria-label="W4 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Town of Milton</b>.</p><p class="qasee">“Named on 1 entry of the club’s own…”. Below the name: <b>Shared with teams</b> with its switch ON and the hint “Every team can pick it as a payee. Teams can’t rename or merge it, and their picker tells them the club sees payments to it.” <b>Merge into another payee</b> and <b>Done</b> at the foot.</p></div></li>
+        <li><input type="checkbox" id="w4s7" aria-label="W4 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Mizuno Canada</b>, turn its switch ON, press Done. Then open it again, turn it OFF, Done.</p><p class="qasee">After the first Done the Teams column reads Shared with teams; after the second, The club’s own again. <span class="meta">(Leave it off — W5 checks an unshared payee is absent.)</span></p></div></li>
+        <li><input type="checkbox" id="w4s8" aria-label="W4 step 8"><div class="qabody"><span class="qan"></span><p class="qado">Phone (about 390 px): the Ledger, then Tools.</p><p class="qasee">Book, Export, ⋯ and + on one line (a long book name ends in “…”). ⋯ opens a <b>Tools</b> sheet with Transfer and Payees. On Last 90 days each entry is a card like the coach’s (date top right, bold title, labelled lines, corner arrow).</p></div></li>
+        <li><input type="checkbox" id="w4s9" aria-label="W4 step 9"><div class="qabody"><span class="qan"></span><p class="qado"><b>Dark</b>: the Ledger, Tools, and the Payees page.</p><p class="qasee">Chips, the switch and the names read clearly.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W4 verdict">
+        <button type="button" data-w="w4" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w4" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w4" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w4"></span>
+      </div>
+      <label class="meta" for="w4notes">Notes for W4</label>
+      <textarea id="w4notes" class="qanotes" data-notes="w4"></textarea>
+    </div>
+
+    <div class="qawalk" id="w5" hidden>
+      <h2>W5 · The payee picker, as a coach in a club</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>Every coach’s picker listed every club payee under “Organization”, with no choice for the club and no word to the coach. Now only the payees the club shares appear, in the club’s blue, under one line that says the club sees payments to them.</p>
+        <h3>It passes when</h3><p>The picker shows Shared by your club (with its line) and Your team’s own; an unshared club payee is absent; the last row is Manage payees…, which opens the team’s Payees page.</p>
+        <h3>Not in this walk</h3><p>Sharing itself (W4). Renaming and merging (W3).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w5s1" aria-label="W5 step 1"><div class="qabody"><span class="qan"></span><p class="qado">As the coach: Ledger → <b>+ Add a bill</b> → <b>More</b> → open the <b>Payee</b> field.</p><p class="qasee">A list with <b>SHARED BY YOUR CLUB</b>, the line “Your club sees payments to these payees.”, and <b>Town of Milton</b> in blue; then <b>YOUR TEAM’S OWN</b> (if the team has any); last row <b>Manage payees…</b>.</p></div></li>
+        <li><input type="checkbox" id="w5s2" aria-label="W5 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Type “Mizuno”.</p><p class="qasee">No saved Mizuno payee is offered (the club keeps both to itself); only “Use “Mizuno” as one-time” and “Save “Mizuno” as team payee”. Clear the field.</p></div></li>
+        <li><input type="checkbox" id="w5s3" aria-label="W5 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Pick <b>Town of Milton</b>, then clear it.</p><p class="qasee">It fills the field as a saved payee; the × clears it.</p></div></li>
+        <li><input type="checkbox" id="w5s4" aria-label="W5 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Open the field again and tap <b>Manage payees…</b>.</p><p class="qasee">The team’s Payees page opens. <span class="meta">(If the form had typing in it, you are asked before leaving.)</span></p></div></li>
+        <li><input type="checkbox" id="w5s5" aria-label="W5 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Ledger → View <b>By bill</b> → open a bill → its <b>Payee</b> field.</p><p class="qasee">The same two sections, the line, and Manage payees… at the foot.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W5 verdict">
+        <button type="button" data-w="w5" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w5" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w5" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w5"></span>
+      </div>
+      <label class="meta" for="w5notes">Notes for W5</label>
+      <textarea id="w5notes" class="qanotes" data-notes="w5"></textarea>
+    </div>
+
+  <div class="qacard">
+    <h3>Send the results back</h3>
+    <div class="qatools">
+      <button type="button" class="button" id="qaBuildOne">Build summary for this walk</button>
+      <button type="button" class="button" id="qaBuildAll">Build summary for all five walks</button>
+      <button type="button" class="button" id="qaCopy">Copy</button>
+    </div>
+    <pre class="qaout" id="qaOut" aria-live="polite">Tick steps as you walk, press a verdict, then build a summary and paste it into the chat.</pre>
+  </div>
 </section>
 
 <!-- PM BRIEF -->
@@ -315,6 +594,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
   </ul>
   <p><strong>For a club treasurer</strong>: the balance lines gain the year; Transfer and Payees move behind a Tools menu; each club payee can be shared with the teams or kept as the club’s own; and a shared payee shows what each team recorded paying it (with Stage 3b).</p>
   <p><strong>Who sees what:</strong> anyone who can read the team’s money can open every row and every window; renaming and merging payees is for those who can enter the team’s money. The club’s own payees stay the club’s to manage.</p>
+  <div class="note"><strong>Round 3, open (2026-10-02).</strong> Proposed after the owner’s §258 questions: Payees opens as a window over the Ledger instead of a page, so a coach never leaves the Ledger or an open bill to tidy a payee; a payee opens to read what the team paid it this season and what is still to pay, as the Ledger’s own rows; and Tools holds the team’s three lists (Payees, Categories &amp; items, Money tags). Screens 10–12.</div>
   <h2>Why it matters</h2>
   <p>You ruled on 2026-09-30 that the club’s book reads exactly like the coach’s. A side-by-side check found five more differences nobody chose, and in four of them it is the coach’s Ledger, the portal you named the benchmark, that has drifted from the product’s own written rules. A treasurer who also coaches reads the same kind of book two ways today.</p>
   <h2>Customer impact</h2>
@@ -338,11 +618,15 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
   <h2>The decisions</h2>
   <p><strong>D1 — Row dates: the statement convention.</strong> Rows print the day only, on both portals; the year is said once, on the balance rows (D2).</p>
   <p><strong>D2 — The balance rows name their dates.</strong> Both portals: “Starting balance · Sep 1, 2026” and “Ending balance · Oct 31, 2026”. The club’s note under its table goes.</p>
-  <p><strong>D3 — A row opens from anywhere; one arrow.</strong> On the coach’s Ledger every row opens. A typed entry or a bill opens as today. A row another tab wrote opens a read window naming its home, with one button to it: the club’s window for an allocation line, shared rather than copied. The pencil and the worded buttons leave the cell; the name is bold; Record stays beside the arrow on an unpaid installment (ruled 2026-09-04).</p>
+  <p><strong>D3 — A row opens from anywhere; one arrow.</strong> On the coach’s Ledger every row opens. A typed entry or a bill opens as today. A row another tab wrote opens a read window naming its home, with one button to it: the club’s window for an allocation line, shared rather than copied. The pencil and the worded buttons leave the cell; the name keeps the coach’s regular weight, and the club’s Ledger drops its bold to match (revised by the owner 2026-10-02); Record stays beside the arrow on an unpaid installment (ruled 2026-09-04).</p>
   <p><strong>D4 — One phone card.</strong> The coach’s phone card takes the club’s card recipe (register K-25), and the balance lines become plain lines between the cards. The recipe moves to the shared kit so the two cannot drift again.</p>
   <p><strong>D5 — Payees for every team.</strong> A Payees page under the coach’s Money for the team’s own list: rename, merge, never delete one in use. Doors: a Payees button beside Export, the View menu’s foot on a phone, and a last row in the payee picker.</p>
   <p><strong>D6 — Payees behind Tools.</strong> Not a tab. Both Ledgers end with the book or view menu, Export, Tools (⋯), then the lime add. Tools holds Transfer (club) and Payees, grouped; a sheet on a phone. The payee picker’s last row is Manage payees… (the club’s picker already has it).</p>
   <p><strong>D7 — Shared payees.</strong> The club marks a payee Shared with teams; only shared payees reach a team’s picker, under “Shared by your club”, with the notice line. A team can merge its own duplicate into a shared payee. The shared payee’s window shows what each team recorded paying it (Stage 3b). Logged with /strategy 2026-10-02 (it widens Club Tier D1 narrowly). Open: D7a (no retroactive view) and D7b (a payee already used starts shared).</p>
+  <h2>Round 3 — open (2026-10-02)</h2>
+  <p><strong>D8 — Payees, a window.</strong> The Payees page becomes a window over the Ledger in the bill window’s frame: the list, then a payee in the same window behind “← Payees”. From the payee picker inside an open form it opens over the form and closes back to it. D8a asks the same for the club’s Payees (not drawn).</p>
+  <p><strong>D9 — A payee’s record.</strong> Reads first: Paid this season, Still to pay, Next due; this season’s entries as the Ledger’s own rows; the note; one pencil for name and note; Merge (or Delete when unused) in the foot; Prev and Next. The list’s columns become Paid, Still to pay and Last paid. D9a: this season only. D9b, a defect found while drawing: the bill window prints the payee’s typed name, so a rename or merge never reaches it, and a bill with no typed name loses its payee on the next edit there.</p>
+  <p><strong>D10 — Tools holds the team’s lists.</strong> Payees, Categories &amp; items and Money tags, each opening its existing window; the alternative is a plain Payees button.</p>
   <div class="note"><strong>Out of scope.</strong> Everything on screen 7; the club’s side of Stage 3b; the window-footer ruling you still owe; the sizes of either table, which already match.</div>
   <h2>Build notes</h2>
   <ul>
@@ -364,7 +648,7 @@ const $=id=>document.getElementById(id);
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 
 /* hub tabs */
-const HUBS=["mockup","decisions","brief","plan"];
+const HUBS=["mockup","decisions","brief","plan","qa"];
 function showHub(which){HUBS.forEach(h=>{$("hub-"+h).hidden=h!==which});document.querySelectorAll("[data-hub]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.hub===which)))}
 document.querySelectorAll("[data-hub]").forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
 
@@ -384,7 +668,10 @@ const intents={
  "s-payees":"The page already exists for the club; the decision is whether every team gets it for its own list.",
  "s-tools":"A rare tool gets the Tools menu your 2026-10-01 ruling made the place for it, so the two Ledgers end with one toolbar.",
  "s-shared":"Sharing already happens silently; the drawing shows it becoming a choice the club makes and a line the coach can read.",
- "s-kept":"A difference is either written down with its reason or it is a bug; this is the written-down list."};
+ "s-kept":"A difference is either written down with its reason or it is a bug; this is the written-down list.",
+ "s-r3-window":"The team’s lists open over the screen you are on, so tidying one never costs the coach the form or the place they were in.",
+ "s-r3-record":"A number that cannot be opened is a dead end; a payee’s record is where its money can be read, in the Ledger’s own rows.",
+ "s-r3-tools":"A menu earns its click when it holds a set; the three lists every entry is filed by are that set."};
 function showScreen(){const id=(location.hash.slice(1)&&$(location.hash.slice(1))&&$(location.hash.slice(1)).classList.contains("screen"))?location.hash.slice(1):"s-today";document.querySelectorAll(".screen").forEach(el=>el.hidden=el.id!==id);document.querySelectorAll(".walk a").forEach(a=>a.setAttribute("aria-current",a.hash==="#"+id?"page":"false"));$("intent").innerHTML=intents[id]?"<strong>Design intent:</strong> "+esc(intents[id]):"";const h=$(id).querySelector("h1");if(h)h.focus({preventScroll:true})}
 window.addEventListener("hashchange",()=>{showHub("mockup");showScreen()});showScreen();
 
@@ -398,7 +685,7 @@ const FINDINGS={
   fix:"Both portals: “Starting balance · Sep 1, 2026” and “Ending balance · Oct 31, 2026”. The year lives here and nowhere else in the table. The club’s note goes, because the dated rows now say what it explained."},
  "D3":{t:"A row opens from anywhere; one arrow at the end",
   now:"On the club’s Ledger the whole row opens a window and the last column holds one arrow (your no-buttons-in-cells ruling, 2026-09-28). On the coach’s, the last column holds a pencil, which opens the same entry a click on the row already opens, or a worded button such as “Player Dues →” or “Club →” on a row another tab wrote; those rows do not open on a click at all. The written table standard allows neither, and its own rule is that a difference not written down is a bug.",
-  fix:"Every coach row opens on a click, and the last column is one arrow. A typed entry or a bill opens as today. A row another tab wrote opens a short window with its facts, one sentence on where it is changed, and one button to go there (screen 4). The name is bold, as on the club’s. Record stays beside the arrow on an unpaid installment, the one ruled exception (2026-09-04)."},
+  fix:"Every coach row opens on a click, and the last column is one arrow. A typed entry or a bill opens as today. A row another tab wrote opens a short window with its facts, one sentence on where it is changed, and one button to go there (screen 4). The name keeps the coach’s regular weight; the club’s Ledger drops its bold to match (owner, 2026-10-02). Record stays beside the arrow on an unpaid installment, the one ruled exception (2026-09-04)."},
  "D4":{t:"One phone card for a ledger row",
   now:"The coach’s phone card has slanted labels, the date in italics on scheduled rows, a full-width pencil or “Club →” button in every card, and the starting balance in a grey box inside a card. The club’s card, built 2026-10-01 to the standard (register K-25), has the date top right, a bold name with its caption, labelled lines, one corner arrow, and the balance lines as plain lines between cards.",
   fix:"The coach’s cards take the club’s shape, and the card recipe moves to the shared kit so the two portals draw one card. The whole card opens (decision 3); an unpaid installment’s card keeps Record."},
@@ -416,7 +703,25 @@ const FINDINGS={
   fix:"Recommended: the club’s view counts only payments recorded after the picker began saying the club sees them. The alternative, counting history too, gives the club a fuller picture on day one but shows it payments a coach made without the notice."},
  "D7b":{t:"Nothing vanishes from a picker at launch",
   now:"Every club payee is in every team’s picker today. Making sharing a choice would, if everything started unshared, take payees out of pickers mid-season.",
-  fix:"Recommended: at launch, a club payee that any team has already used starts shared; every other club payee starts as the club’s own. The club can unshare any of them afterwards."}
+  fix:"Recommended: at launch, a club payee that any team has already used starts shared; every other club payee starts as the club’s own. The club can unshare any of them afterwards."},
+ "D8":{t:"Payees opens over the Ledger, not on a page of its own",
+  now:"Tools › Payees and the payee picker’s Manage payees… both leave the Ledger for a Payees page. The picker’s door sits inside the bill window and the Add a bill form, so following it from there drops the form or asks “Leave without saving?”. Money tags and Categories & items already open over the screen you are on; Payees is the one list that leaves.",
+  fix:"A window over the Ledger, in the bill window’s frame: the list first (the team’s own, then Shared by your club, with New payee), and a payee opens inside the same window with ← Payees at its top. Back on a phone goes up one level. From the picker inside an open form, the window opens over the form and closes back to it with the typing kept, as Categories & items does from the Filing picker. The Payees page is removed; it never reached production."},
+ "D8a":{t:"The club’s Payees: a window too?",
+  now:"The club’s Payees is a page under its Ledger, and the club’s payee picker has Manage payees… inside its Add entry window, so it leaves an open entry the same way.",
+  fix:"Recommended: the same change on the club’s side, in the admin’s window frame, for the same two reasons. Not drawn in round 3. The alternative is to keep the club’s page and write the difference into screen 9 with its reason."},
+ "D9":{t:"A payee is a record: it reads first and shows its money",
+  now:"A payee opens straight into its name as a field to type in, with nothing to read. The list’s Entries counts the team’s bills that name it across every season, and Last used is the day a bill was entered, not paid. Neither can be opened.",
+  fix:"The payee opens to read (your 2026-10-01 standard): Paid this season, Still to pay and Next due; this season’s entries, paid and still to pay, as the Ledger’s own rows, each opening what it opens on the Ledger; then its note. The pencil in the head turns the name and note into a form, and ✓ puts it back. Merge into another payee sits in the foot; Delete appears only when nothing names it. Prev and Next walk the list. The list’s columns become Paid, Still to pay and Last paid. A shared payee opens the same way, without the pencil and the merge."},
+ "D9a":{t:"This season only",
+  now:"A payee is kept from season to season (the town’s permit office, every year), so the bills that name it span seasons. A finished season is read on its own closed-season page (ruled 2026-08-18), and a live screen that reads past seasons is a decision of its own.",
+  fix:"Recommended: the list and the record count and show this season only. The alternative, every season, answers “what have we paid the town in total”, but it makes a live screen read closed seasons, which the 2026-08-18 ruling keeps on the closed-season page."},
+ "D9b":{t:"A defect: the bill window shows the payee as typed",
+  now:"The bill window fills its Payee field from the name typed when the bill was entered, never from the payee it points at. A rename or a merge (decision 5) therefore never reaches the bill window: it keeps the old spelling. A bill that points at a payee with no typed name beside it shows an empty Payee, and the next edit made in that window (a tag, the filing, the name) saves it with no payee at all. The test team’s Diamond permit bill shows both.",
+  fix:"The bill window, and anything else that prints a bill’s payee, shows the payee’s current name, falling back to the typed name only for a payee that was never chosen from the list. An edit never clears a payee it did not touch. Fixed whatever round 3 decides; it is reported in §258, not asked."},
+ "D10":{t:"Tools holds the team’s three lists",
+  now:"Tools holds one item, Payees, so it costs a click for nothing. A coach reaches Categories & items only from Budget or from the Filing picker, and Money tags only from Team settings or from a picker.",
+  fix:"Tools holds the three lists a Ledger entry is filed by: Payees, Categories & items and Money tags, under “The team’s lists”, each opening its own window over the Ledger. Their other doors stay. The alternative is a plain Payees button in Tools’ place: one click instead of two, with the two Ledgers’ toolbars then ending differently."}
 };
 function modal(title,body){$("dialogtitle").textContent=title;$("dialogbody").innerHTML=body;$("dialog").showModal()}
 $("closeDialog").onclick=()=>$("dialog").close();
@@ -438,7 +743,13 @@ const MARKERS={
  "coach-picker-before":{"D7":{x:727,y:554,w:227,h:25}},
  "coach-picker-after":{"D7":{x:727,y:554,w:227,h:25},"D6":{x:727,y:693,w:227,h:45}},
  "club-payees-shared":{"D7":{x:974,y:248,w:329,h:33,top:1}},
- "club-payee-shared":{"D7":{x:421,y:361,w:598,h:91},"D7r":{x:421,y:451,w:598,h:204}}
+ "club-payee-shared":{"D7":{x:421,y:361,w:598,h:91},"D7r":{x:421,y:451,w:598,h:204}},
+ "r3-payees-before":{"D8":{x:342,y:136,w:83,h:35},"D9":{x:728,y:270,w:198,h:36}},
+ "r3-payees-after":{"D8":{x:225,y:334,w:990,h:28},"D9":{x:226,y:429,w:988,h:33}},
+ "r3-payee-before":{"D9":{x:485,y:458,w:470,h:35}},
+ "r3-payee-after":{"D8":{x:225,y:286,w:81,h:30},"D9":{x:225,y:350,w:990,h:72},"D9t":{x:225,y:462,w:990,h:118}},
+ "r3-tools-before":{"D10":{x:1029,y:293,w:260,h:93}},
+ "r3-tools-after":{"D10":{x:1029,y:293,w:260,h:225}}
 };
 const HERE={
  "coach-desk-before":{"D1":"Sep 10, 2026: every coach row carries the year.","D2":"STARTING BALANCE, with no date; the window’s edges live only in the Date filter.","D3":"A pencil that opens the same entry a click on the row already opens.","D3b":"Player Dues →: this row does not open on a click; the button is its only door.","D5":"Export and Add a bill; no way to reach the team’s payees."},
@@ -450,7 +761,13 @@ const HERE={
  "coach-picker-before":{"D7":"ORGANIZATION: every club payee, no choice, no notice."},
  "coach-picker-after":{"D7":"Shared by your club, and the line saying the club sees these payments.","D6":"Manage payees… at the foot of the list."},
  "club-payees-shared":{"D7":"Teams: Shared with teams, or The club’s own."},
- "club-payee-shared":{"D7":"The switch that shares this payee with every team.","D7r":"What the teams recorded (Stage 3b): who, how much, when, and who has recorded nothing."}
+ "club-payee-shared":{"D7":"The switch that shares this payee with every team.","D7r":"What the teams recorded (Stage 3b): who, how much, when, and who has recorded nothing."},
+ "r3-payees-before":{"D8":"← Ledger: Payees is a page of its own, so reaching it leaves the Ledger.","D9":"Entries 1: the team’s bills that name it, across every season; it cannot be opened."},
+ "r3-payees-after":{"D8":"Payees, a window over the Ledger.","D9":"Paid, Still to pay and Last paid, this season."},
+ "r3-payee-before":{"D9":"The whole window is a name field: there is nothing to read."},
+ "r3-payee-after":{"D8":"← Payees: the list, one level up in the same window.","D9":"Paid this season, Still to pay, Next due.","D9t":"This season’s entries, paid and still to pay, as the Ledger’s own rows."},
+ "r3-tools-before":{"D10":"One item: a menu that costs a click for nothing."},
+ "r3-tools-after":{"D10":"The team’s lists: Payees, Categories & items, Money tags."}
 };
 document.querySelectorAll(".shot[data-shot]").forEach(shot=>{const key=shot.dataset.shot,set=MARKERS[key];if(!set)return;const fix=shot.dataset.fix==="1";
  Object.entries(set).forEach(([k,r])=>{const d=k.replace(/(\d)[a-z]+$/,"$1");const b=document.createElement("button");b.type="button";b.className="pin"+(fix?" fix":"");b.textContent=d.replace(/^D/,"");b.dataset.finding=d;b.dataset.here=(HERE[key]||{})[k]||"";b.setAttribute("aria-label","Decision "+d.replace(/^D/,"")+": "+FINDINGS[d].t);
@@ -462,12 +779,69 @@ const DECISIONS=[
  {date:"2026-10-01 · mockup round 1 · screens 2 and 3",ask:"D1 · Row dates: the day only, the year on the balance rows?",ruling:"accepted",label:"Accepted",why:FINDINGS.D1.now,rec:"Recommended: yes, on both portals. The alternative, the year on every row on both, is unambiguous but costs every row’s date column about 40px to say something the balance rows already say."},
  {date:"2026-10-01 · mockup round 1 · screens 2 and 3",ask:"D2 · The balance rows carry their full dates, on both portals?",ruling:"accepted",label:"Accepted",why:FINDINGS.D2.now,rec:"Recommended: yes, and the club’s note under its table goes."},
  {date:"2026-10-01 · mockup round 1 · screens 2 and 4",ask:"D3 · Coach rows open from anywhere, with one arrow and a read window for rows another tab wrote?",ruling:"accepted",label:"Accepted",why:FINDINGS.D3.now,rec:"Recommended: yes, as drawn, keeping Record beside the arrow on an unpaid installment. The alternative, a derived row that goes straight to its tab with no window, saves a click but hides where the row is going until it has gone."},
+ {date:"2026-10-02 · owner, after ratification",ask:"D3 · Revised: the weight of a row’s name",ruling:"accepted",label:"Revised · owner",why:"Owner, with two screenshots of the coach’s Ledger: “I prefer the font styling of the coaches ledger for the what column (i.e. not bold), can you update the project to update the club ledger to match rather than making the coach ledger match?”",rec:"Built as asked: the coach’s What keeps its regular weight and the club’s Ledger drops its bold. The name stays a button, so a keyboard still opens the line from it. A phone card’s title is not part of this ruling. The frames on screens 2, 3 and 7 still show bold names, and each says so."},
  {date:"2026-10-01 · mockup round 1 · screen 5",ask:"D4 · The coach’s phone card takes the club’s card?",ruling:"accepted",label:"Accepted",why:FINDINGS.D4.now,rec:"Recommended: yes, with the card recipe moved to the shared kit so both portals draw one card."},
  {date:"2026-10-01 · mockup round 1 · screen 6",ask:"D5 · A Payees page for every team’s own list?",ruling:"accepted",label:"Accepted",why:FINDINGS.D5.now,rec:"Recommended: yes, for anyone who can enter the team’s money, including merging a duplicate into one of the club’s shared payees. The club keeps managing the club’s list only."},
  {date:"2026-10-02 · owner · drawn in round 2, screen 7",ask:"D6 · Payees: its own tab, or behind Tools?",ruling:"accepted",label:"Accepted",why:"Owner: “if the club manages its own payees, should we create its own tab (like fundraising) rather than a button in ledger?” Recommended and accepted (“I agree with your recommendations”): not a tab, because a tab is a view of the book you work in and Payees is a list you tidy; behind Tools (⋯) on both Ledgers, with Transfer, under your 2026-10-01 rare-tools ruling; and the picker’s last row, Manage payees…."},
  {date:"2026-10-02 · owner + /strategy · drawn in round 2, screen 8",ask:"D7 · Can a club share payees with its teams, and see who has paid?",ruling:"accepted",label:"Accepted · logged with /strategy",why:"Owner: “can a club present payees to teams to use like they do for their drill library? … a club can at some point see how many teams have made their payment to a specific external instructor.” Accepted as recommended and logged in the Business Decisions Log (2026-10-02): the club chooses which payees are shared; the club sees only what teams recorded paying those payees, never a team’s own payees or other spending; the coach’s picker says so; it is not proof of payment; where the club bills the teams, Allocations already answers who has paid. The report lands with Stage 3b. Found while drawing: every club payee is already in every team’s picker today, silently, so this narrows and labels what exists."},
  {date:"2026-10-02 · round 2, screen 8",ask:"D7a · The club’s view counts only payments recorded after coaches were told?",ruling:"accepted",label:"Accepted",why:FINDINGS.D7a.now,rec:FINDINGS.D7a.fix},
- {date:"2026-10-02 · round 2, screen 8",ask:"D7b · At launch, a club payee any team already used starts shared?",ruling:"accepted",label:"Accepted",why:FINDINGS.D7b.now,rec:FINDINGS.D7b.fix}
+ {date:"2026-10-02 · round 2, screen 8",ask:"D7b · At launch, a club payee any team already used starts shared?",ruling:"accepted",label:"Accepted",why:FINDINGS.D7b.now,rec:FINDINGS.D7b.fix},
+ {date:"2026-10-02 · owner, §258 walk · drawn in round 3, screen 10",ask:"D8 · Payees opens as a window over the Ledger, not a page?",ruling:"accepted",label:"Accepted · built 2026-10-02",why:"Owner: “do we need to open a new page for this? wouldn’t a drawer be in line with our portal standard for this type of information?” "+FINDINGS.D8.now,rec:"Recommended: yes. "+FINDINGS.D8.fix},
+ {date:"2026-10-02 · round 3, screen 11 · found while drawing",ask:"D9b · Defect: the bill window printed the payee as typed",ruling:"accepted",label:"Fixed on dev 2026-10-02",why:FINDINGS.D9b.now,rec:FINDINGS.D9b.fix},
+ {date:"2026-10-02 · round 3, screen 10 (not drawn)",ask:"D8a · The club’s Payees becomes a window too?",ruling:"open",label:"Open · round 3",why:FINDINGS.D8a.now,rec:FINDINGS.D8a.fix},
+ {date:"2026-10-02 · owner, §258 walk · drawn in round 3, screen 11",ask:"D9 · A payee opens as a record that reads first and shows its money?",ruling:"accepted",label:"Accepted · built 2026-10-02",why:"Owner: “I see entries of 1 but when I click it all I can do is change the name, is there nothing else in payees that we could present to the user that is relevant (i.e. a list of completed and scheduled transactions, any other payee details)?” "+FINDINGS.D9.now,rec:"Recommended: yes, as drawn. A payee stores only a name and a note, so no contact fields are proposed. For the two payee records to read the same, the club’s payee window needs the same record of the club’s own entries; recommended with Stage 3b, which already adds the teams’ report to that window. "+FINDINGS.D9.fix},
+ {date:"2026-10-02 · round 3, screen 11",ask:"D9a · A payee’s money is this season’s only?",ruling:"accepted",label:"Accepted · built 2026-10-02",why:FINDINGS.D9a.now,rec:FINDINGS.D9a.fix},
+ {date:"2026-10-02 · owner, §258 walk · drawn in round 3, screen 12",ask:"D10 · Tools holds the team’s three lists, or Payees becomes a plain button?",ruling:"accepted",label:"Accepted · built 2026-10-02",why:"Owner: “for the coach, if the payees is the only thing in the tools dropdown then do we need a tools dropdown or we can save a click by just having a payees button?” "+FINDINGS.D10.now,rec:"Recommended: Tools holds all three. "+FINDINGS.D10.fix}
 ];
 $("decisionRows").innerHTML=DECISIONS.map(d=>"<div class=\"decisionrow\"><div class=\"dhead\"><strong>"+esc(d.ask)+"</strong><span class=\"tag "+d.ruling+"\">"+esc(d.label)+"</span></div><p class=\"meta\">"+esc(d.date)+"</p><p>"+esc(d.why)+"</p>"+(d.rec?"<p class=\"rec\">"+esc(d.rec)+"</p>":"")+"</div>").join("");
+(function () {
+  var KEY = 'ledger-parity-walk-258-v1';
+  var WALKS = ['w1', 'w2', 'w3', 'w4', 'w5'];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: 'w1' };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') state = Object.assign(state, p); } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var TITLES = { w1: 'W1 · The coach’s Ledger at a desk', w2: 'W2 · The coach’s Ledger on a phone', w3: 'W3 · Tools, and the team’s Payees window', w4: 'W4 · The club’s side', w5: 'W5 · The payee picker, as a coach in a club' };
+  var LABEL = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+  function boxes(w) { return Array.prototype.slice.call(document.querySelectorAll('#' + w + ' input[type="checkbox"]')); }
+  function count(w) { var b = boxes(w); return { n: b.filter(function (x) { return state.ticks[x.id]; }).length, of: b.length }; }
+  function render() {
+    WALKS.forEach(function (w) {
+      boxes(w).forEach(function (b) { b.checked = !!state.ticks[b.id]; b.closest('li').classList.toggle('done', b.checked); });
+      var c = count(w);
+      document.querySelector('[data-prog="' + w + '"]').textContent = c.n + ' of ' + c.of + ' ticked';
+      document.querySelectorAll('.qaverdict button[data-w="' + w + '"]').forEach(function (btn) { btn.setAttribute('aria-pressed', String(state.verdict[w] === btn.getAttribute('data-v'))); });
+      var chip = document.querySelector('[data-chip="' + w + '"]'), v = state.verdict[w], text = 'Not started', st = '';
+      if (v === 'pass' && c.n < c.of) { text = 'Passed · only ' + c.n + ' of ' + c.of + ' ticked'; st = 'partial'; }
+      else if (v === 'pass') { text = 'Passed'; st = 'pass'; }
+      else if (v === 'issue') { text = 'Issue'; st = 'issue'; }
+      else if (v === 'call') { text = 'Needs a call'; st = 'call'; }
+      else if (c.n > 0) { text = 'In progress · ' + c.n + ' of ' + c.of; }
+      chip.textContent = text; chip.setAttribute('data-s', st);
+      var ta = document.querySelector('[data-notes="' + w + '"]'); if (document.activeElement !== ta) ta.value = state.notes[w] || '';
+      document.getElementById(w).hidden = state.open !== w;
+      document.querySelector('.qawcard[data-walk="' + w + '"]').setAttribute('aria-pressed', String(state.open === w));
+    });
+  }
+  document.getElementById('hub-qa').addEventListener('change', function (e) { var t = e.target; if (t && t.type === 'checkbox') { state.ticks[t.id] = t.checked; save(); render(); } });
+  document.querySelectorAll('#hub-qa textarea[data-notes]').forEach(function (ta) { ta.addEventListener('input', function () { state.notes[ta.getAttribute('data-notes')] = ta.value; save(); }); });
+  document.querySelectorAll('#hub-qa .qaverdict button').forEach(function (btn) { btn.addEventListener('click', function () { var w = btn.getAttribute('data-w'), v = btn.getAttribute('data-v'); state.verdict[w] = state.verdict[w] === v ? null : v; save(); render(); }); });
+  document.querySelectorAll('#hub-qa .qawcard').forEach(function (c) { c.addEventListener('click', function () { state.open = c.getAttribute('data-walk'); save(); render(); }); });
+  function summary(w) {
+    var c = count(w);
+    var lines = [TITLES[w] + ' — ' + (state.verdict[w] ? '[' + LABEL[state.verdict[w]] + ']' : '[no verdict]') + ' ' + c.n + '/' + c.of];
+    var un = boxes(w).filter(function (b) { return !state.ticks[b.id]; }).map(function (b) { return b.id.replace(w + 's', ''); });
+    if (un.length) lines.push('  not ticked: step ' + un.join(', '));
+    if (state.notes[w]) lines.push('  notes: ' + state.notes[w].trim());
+    return lines.join('\n');
+  }
+  var out = document.getElementById('qaOut');
+  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = '§258 Ledger Parity\n' + summary(state.open); });
+  document.getElementById('qaBuildAll').addEventListener('click', function () {
+    var n = 0, of = 0; WALKS.forEach(function (w) { var c = count(w); n += c.n; of += c.of; });
+    out.textContent = '§258 Ledger Parity — checked ' + n + ' of ' + of + '\n' + WALKS.map(summary).join('\n');
+  });
+  function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+  document.getElementById('qaCopy').addEventListener('click', function () { var text = out.textContent; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(selectOut); else selectOut(); });
+  render();
+})();
 </script>

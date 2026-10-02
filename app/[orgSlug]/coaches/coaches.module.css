@@ -9129,13 +9129,18 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    Timeline may be tighter than every other table, and on this axis only — its ink, hairline,
    heading, hover and chrome follow the standard. The value is the density token so nobody can
    mint a fourth height. */
-.registerRowCompact.tr td {
-  padding-top: var(--table-pad-register); /* table-exception: K-01 */
-  padding-bottom: var(--table-pad-register);
-  padding-left: 0.6rem;
-  padding-right: 0.6rem;
-  font-size: var(--type-support);
-  line-height: 1.25;
+/* ⚠ A TABLE'S DENSITY, NOT A CARD'S (Ledger Parity D4, 2026-10-02): at ≤ 640 the register is the shared
+   kit's phone card (K-25, `components/coaches/kit/Ledger.module.css`), which owns its cells' padding and
+   type — so this rule stands at the table widths only, and the two never tie on specificity. */
+@media (min-width: 641px) {
+  .registerRowCompact.tr td {
+    padding-top: var(--table-pad-register); /* table-exception: K-01 */
+    padding-bottom: var(--table-pad-register);
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+    font-size: var(--type-support);
+    line-height: 1.25;
+  }
 }
 .registerRowCompact .registerChip { padding: 0.02rem 0.32rem; font-size: var(--type-token); }
 /* ⚠ DESKTOP ONLY. The action button/link is a shared class (Mark paid, Edit, elsewhere in the
@@ -9181,7 +9186,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    `.tableWrap` happened to scroll past rather than at the top of the viewport. The register's
    columns are compact/fixed-width enough to never need horizontal scroll on a real desktop width,
    so this opts the register out of the scrolling wrapper entirely rather than trying to keep
-   sticky correct inside a nested scrollport. Mobile is untouched — `.tableAsCards` already hides
+   sticky correct inside a nested scrollport. Mobile is untouched — the shared phone card (`ledgerKit.cardsFrame`) already hides
    `<thead>` below 640px, so there's no sticky header there to have this problem. */
 @media (min-width: 641px) {
   .registerTableWrap {
@@ -9198,8 +9203,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    2026-08-19. ⚠⚠ TWO ROUNDS OF THIS RENDERED WRONG BEFORE IT WORKED — see `.registerTableWrap`
    just above for the second bug (the sticky ancestor), and `registerStickyBase` in panel.tsx for
    the first (the offset base). Neither was this rule.
-   Nothing extra needed for phone: `.tableAsCards` already sets `display: none` on `<thead>` at
-   that breakpoint, so there is no sticky header left to conflict with there. */
+   Nothing extra needed for phone: the shared phone card (`ledgerKit.cardsFrame`, K-25) sets
+   `display: none` on `<thead>` at that breakpoint, so there is no sticky header left to conflict with. */
 .registerTheadSticky th {
   position: sticky;
   top: var(--register-thead-top, 160px);
@@ -9215,17 +9220,27 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    ⚠ A hairline under every row is the standard's answer to "track one row across eight columns";
    the table-recipe guard now fails the build on any table rule that names an undefined token. */
 
-/* ⚠ A FIXED COLUMN, NOT A RAGGED EDGE — "Club →", "Player Dues →" and "Fundraising →" are all
-   different lengths, which left the table's right edge jumping around row to row. A real
-   spreadsheet's columns don't reflow with their content; this one doesn't either now. */
-.registerTable td.cardActionCell {
-  width: 130px;
-  text-align: right;
+/* ⚰ THE 130px ACTION COLUMN IS GONE (Ledger Parity D3, 2026-10-02). It existed so "Club →", "Player Dues →"
+   and "Fundraising →" — three widths of worded button — did not make the table's right edge ragged. The
+   cell holds one chevron now (and Record beside it on an unpaid installment), the shared kit's `goCell`.
+
+   ⚖ THE OPENING BALANCE LINE IS ITS OWN DOOR (D3 — no control in a ledger cell but Record): its words open
+   Team settings → Money, where the carry is corrected, and the line ends in the chevron every row ends in.
+   It reads as the line's own label — the uppercase support type — not as a link. */
+.registerBalanceDoor { color: inherit; text-decoration: none; }
+.registerBalanceDoor:hover { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 768px) {
+  .registerBalanceDoor { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
 }
-.registerTable td.cardActionCell > a,
-.registerTable td.cardActionCell > button {
-  width: 100%;
-  justify-content: center;
+/* ⚖ THE COLOURED EDGE ON A CARD (kept difference, K-01's list): at ≤ 640 the row is the shared phone card,
+   and the edge moves from the first cell (a labelled line inside the card) to the card's own left side. */
+@media (max-width: 640px) {
+  .registerTable tr.registerRowActual > td:first-child,
+  .registerTable tr.registerRowScheduled > td:first-child,
+  .registerTable tr.registerRowOverdue > td:first-child { box-shadow: none; }
+  .registerTable tr.registerRowActual { box-shadow: inset 3px 0 0 0 var(--success); }
+  .registerTable tr.registerRowScheduled { box-shadow: inset 3px 0 0 0 var(--info); }
+  .registerTable tr.registerRowOverdue { box-shadow: inset 3px 0 0 0 var(--danger-light); }
 }
 
 /* ⚖ CASH ON HAND, NOW INLINE — replaces the old dedicated banner (reading-order ruling). Flagged

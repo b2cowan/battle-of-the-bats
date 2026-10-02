@@ -97,14 +97,16 @@ describe('every team read and write goes through the rule', () => {
 
   it('a club payee is never renamed, merged or deleted by a team; writes re-assert the team\'s scope', () => {
     assert.match(functionBody(code, 'refuseUnlessOwn'), /scope === 'team' \? null : scope === 'club' \? CLUB_ONLY : NOT_FOUND/);
-    const rename = functionBody(code, 'renameTeamPayee');
+    // The payee window's one pencil edits the name AND the note (round 3, D9) — one write, scope re-asserted.
+    const rename = functionBody(code, 'updateTeamPayee');
     const del = functionBody(code, 'deleteTeamPayee');
-    for (const [fn, body] of [['renameTeamPayee', rename], ['deleteTeamPayee', del]]) {
+    for (const [fn, body] of [['updateTeamPayee', rename], ['deleteTeamPayee', del]]) {
       assert.match(body, /refuseUnlessOwn\(org, teamId, payeeId\)/, fn);
       assert.match(body, /if \(notOwn\) return notOwn;/, fn);
     }
     assert.match(rename, /const own = teamPayeeFilter\(teamId, workspace, 'own'\)/);
-    assert.match(rename, /\.update\(\{ name: read\.name \}\)\s*\.eq\('id', payeeId\)\.eq\('org_id', org\.id\)\.or\(own\)/, 'rename re-asserts scope in the write');
+    assert.match(rename, /\.update\(patch\)\s*\.eq\('id', payeeId\)\.eq\('org_id', org\.id\)\.or\(own\)/, 'the update re-asserts scope in the write');
+    assert.match(rename, /if \(patch\.name === undefined && patch\.notes === undefined\) return refused\(400/, 'an empty update is refused, never a no-op write');
     assert.match(del, /\.delete\(\)\s*\.eq\('id', payeeId\)\.eq\('org_id', org\.id\)\.or\(teamPayeeFilter\(teamId, isTeamWorkspaceOrg\(org\), 'own'\)\)/, 'delete re-asserts scope in the write');
     assert.match(functionBody(code, 'mergeTeamPayee'), /rpc\('team_payee_merge'/);
     assert.match(del, /if \(!data\?\.length\) return NOT_FOUND;/, 'a delete that matched nothing is not a success');
@@ -165,7 +167,13 @@ describe('the club is shown its own lines only (D7a)', () => {
     const share = functionBody(code, 'setClubPayeeShared');
     assert.match(share, /const refusal = shareRefusal\(org, shared\);\s*if \(refusal\) return refusal;/);
     assert.match(share, /\.eq\('shared_with_teams', !on\)/);
-    assert.match(functionBody(code, 'shareRefusal'), /if \(isTeamWorkspaceOrg\(org\) \|\| !hasModuleEntitlement\(org, 'module_rep_teams'\)\)/);
+    // ONE rule for "may this club share?" — the PATCH refuses on it and the screens ask it (Ledger Parity, session 2).
+    assert.match(functionBody(code, 'shareRefusal'), /if \(!clubSharesPayees\(org\)\)/);
+    const scope = readCode('lib/team-payee-scope.ts');
+    assert.match(functionBody(scope, 'clubSharesPayees'), /return !isTeamWorkspaceOrg\(org\) && hasModuleEntitlement\(org, 'module_rep_teams'\);/);
+    for (const screen of ['app/[orgSlug]/admin/accounting/payees/page.tsx', 'app/[orgSlug]/admin/accounting/ledger/page.tsx']) {
+      assert.match(readCode(screen), /clubSharesPayees\(currentOrg\)/, `${screen}: the screen asks the PATCH's own rule`);
+    }
     const route = readCode('app/api/admin/accounting/payees/[payeeId]/route.ts');
     assert.match(route, /resolveClubMoney\(req, \{ scope: 'books', write: true \}\)/);
     assert.match(route, /setClubPayeeShared\(r\.ctx\.org, payeeId,/);

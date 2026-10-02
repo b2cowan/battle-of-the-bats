@@ -17,3 +17,6 @@ export { default as CoachBar, type CoachBarSegment, type CoachBarLegendItem } fr
 export { default as CoachListToolbar } from './CoachListToolbar';
 export { default as CoachRail, type CoachRailRowSpec, type CoachRailGroupSpec, type CoachRailDot } from './CoachRail';
 export { default as kit } from './CoachKit.module.css';
+/* THE LEDGER'S SHARED PARTS — both portals render them (Ledger Parity, 2026-10-02): the What's name,
+   the one phone card (K-25), the phone's balance lines, a record's facts box, the read window's body. */
+export { ledgerKit, RecordFacts, LedgerLineRead, type RecordFact } from './Ledger';

@@ -40,6 +40,7 @@ import { clubInstallmentState } from './club-money-figures';
 import { CLUB_SENT_WAITING_WORD } from './club-money-words';
 import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
 import type { CommitmentStanding } from './payable-standing';
+import { expensePayeeName } from './expense-payee';
 
 export type MoneyExportFormat = 'xlsx' | 'csv' | 'pdf';
 
@@ -755,7 +756,8 @@ export function expenseRows(
        twice would otherwise export as "fully settled, nothing owing" with the extra dollar
        invisible; saying it out loud is what lets a coach find it against a bank statement. */
     stillOwing: standing ? (standing.over > 0 ? -standing.over : standing.remaining) : '',
-    payee: e.payeePayer ?? '',
+    // The payee as it is named now (Ledger Parity D9b) — a renamed or merged payee exports its new name.
+    payee: expensePayeeName(e) ?? '',
     // Names, not ids, and joined the way the row shows them. A tag the library no longer holds
     // is dropped rather than exported as a bare id.
     tags: (tagsByExpenseId[e.id] ?? [])

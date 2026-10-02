@@ -197,8 +197,6 @@ export interface RegisterRow {
   /** Present only on a SCHEDULED money-out row. Opens Record a payment pre-aimed at this piece,
    *  suggesting its REMAINDER — the coach's override of the application rule (R3), not a lock. */
   recordPayment: { expenseId: string; installmentId: string | null; amount: number } | null;
-  /** The workspace chip on a derived row; null on a recorded one. */
-  sourceLabel: string | null;
   /** A second line under the description — a player's name, the families a sponsor credited, a due
    *  note, why a date is what it is. */
   detail: string | null;
@@ -210,7 +208,31 @@ export interface RegisterRow {
    * can carry it.
    */
   waitingOnClub?: boolean;
+  /**
+   * ⚖ WHERE A DERIVED ROW WAS WRITTEN, AND HOW THE MONEY MOVED (Ledger Parity D3, owner 2026-10-02).
+   * A row another tab wrote opens a READ window on the Ledger — its facts, one sentence naming
+   * where it is changed, one door there. `origin` picks the sentence (a payment is "recorded", a
+   * promise is "pledged", an installment is "due"); `paidHow` is the "How it was paid" fact
+   * ("E-Transfer", "Cheque 1188"), in the method list's one spelling. Present on derived rows only
+   * — a recorded row opens its own form, which already says both — and read by nothing that sums.
+   */
+  origin?: RegisterOrigin;
+  paidHow?: string | null;
+  /** A club bill's installment, by number — the read window's "Installment #2" (only a club installment row carries it). */
+  installmentNumber?: number;
+  /**
+   * The row is dated the day it was TYPED, not the day the money arrived — a legacy drive entry from before
+   * mig 261 carried no arrival day. The row's detail says "Recorded on this date"; the read window labels its
+   * date "Recorded on" for the same reason (/review, 2026-10-02: the window had dropped the caveat).
+   */
+  datedWhenRecorded?: boolean;
 }
+
+/** Which record a DERIVED row came from — the read window's sentence (Ledger Parity D3). */
+export type RegisterOrigin =
+  | 'dues-payment' | 'dues-payout' | 'dues-installment'
+  | 'drive' | 'sponsor' | 'pledge'
+  | 'club-installment' | 'club-request';
 
 /** A row with the balance standing after it. */
 export interface RegisterBookRow extends RegisterRow {

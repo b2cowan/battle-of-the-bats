@@ -206,8 +206,8 @@
   border-color: var(--home-olive, rgba(79,163,224,0.6));
 }
 
-/* A door at the list's foot (`foot`, Club Tier Stage 3a: "Manage payees") — under a hairline, and a real
-   tap target on a touch screen. */
+/* The list's last row, "Manage payees…" (`manageHref` — Club Tier Stage 3a C01; Ledger Parity D6 on the coach's
+   picker) — under a hairline, and a real tap target on a touch screen. */
 .foot {
   display: flex;
   align-items: center;
@@ -217,3 +217,28 @@
   font-size: var(--type-support);
 }
 @media (max-width: 768px) { .foot { min-height: var(--tap-min, 44px); } }
+/* The door's words: the olive a door wears, bold, filling the row so the whole row is the target. */
+.manage {
+  flex: 1;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  font-weight: 650;
+  color: var(--home-olive, var(--blueprint-blue));
+  text-decoration: none;
+}
+.manage:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* The door as a button (the coach's, which opens the Payees window over the form — D8): the link's look. */
+.manageBtn { margin: 0; padding: 0; border: 0; background: none; font: inherit; font-weight: 650; text-align: left; cursor: pointer; }
+
+/* ⚖ A CLUB'S SHARED PAYEE, in the team's picker (Ledger Parity D7): the club's blue — the tag legend's own
+   colour for "Shared by your club" — with the one line under the heading saying the club sees payments to
+   them. `--tag-org-fg` is the coaches shell's org-tag ink (warm: the home blue). */
+.optionShared { color: var(--tag-org-fg, var(--home-blue)); }
+.sectionNote {
+  margin: 0;
+  padding: 0 0.85rem 0.25rem;
+  font-size: var(--type-support);
+  line-height: 1.4;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+}

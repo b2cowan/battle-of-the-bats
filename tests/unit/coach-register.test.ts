@@ -34,7 +34,6 @@ function row(over: Partial<RegisterRow> & { id: string }): RegisterRow {
     movesCash: true,
     open: null,
     recordPayment: null,
-    sourceLabel: null,
     detail: null,
     ...over,
   };

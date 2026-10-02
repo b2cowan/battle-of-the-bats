@@ -21,6 +21,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { Callout, LoadFailed, PageLoading, RepChip, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { FigureCards, day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
+import { ledgerKit } from '@/components/coaches/kit';
 import { howItCame } from '@/lib/club-money-words';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import { pluralize } from '@/lib/utils';
@@ -132,7 +133,7 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
         <p className={repKit.notes}>The club hasn’t billed {team.name} or paid it on a request yet.</p>
       ) : (
         <>
-          <div className={`${repKit.tableFrame} ${moneyKit.cardsFrame}`}>
+          <div className={`${repKit.tableFrame} ${ledgerKit.cardsFrame}`}>
             <table className={repKit.table}>
               <thead>
                 <tr>
@@ -178,7 +179,7 @@ function SeasonRows({ label, rows, teamName, hrefOf, onOpen }: {
           <tr key={`${r.kind}-${r.sourceId}-${r.installmentId ?? ''}-${i}`} className={href ? repKit.rowOpens : undefined}
             onClick={href ? () => { if (window.getSelection()?.toString()) return; onOpen(href); } : undefined}>
             <td className={repKit.dim} data-label="Date">{day(r.date)}</td>
-            <td className={moneyKit.whatCell}>
+            <td className={ledgerKit.whatCell}>
               {href
                 ? <Link href={href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{w.name}</Link>
                 : <span className={moneyKit.what}>{w.name}</span>}
@@ -188,7 +189,7 @@ function SeasonRows({ label, rows, teamName, hrefOf, onOpen }: {
             <td className={repKit.num} data-label={r.collected || r.receivedOnRequest ? 'Collected' : undefined}>{r.collected ? money(r.collected) : r.receivedOnRequest ? money(r.receivedOnRequest) : ''}</td>
             <td className={repKit.num} data-label={r.paidToTeam ? 'Paid to the team' : undefined}>{r.paidToTeam ? money(r.paidToTeam) : ''}</td>
             <td className={repKit.num} data-label="Outstanding">{money(r.outstanding)}</td>
-            <td className={`${repKit.go} ${moneyKit.goCell}`}>{href && <span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span>}</td>
+            <td className={`${repKit.go} ${ledgerKit.goCell}`}>{href && <span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span>}</td>
           </tr>
         );
       })}

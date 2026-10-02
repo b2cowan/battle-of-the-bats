@@ -1,12 +1,25 @@
 'use client';
-import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { X, ChevronDown } from 'lucide-react';
 import type { OrgPayee } from '@/lib/types';
 import styles from './PayeeCombobox.module.css';
 import { useDismissable } from '@/lib/overlay-hooks';
 
-/** What either search sends: the club's (every club payee) and a team's (`PickerPayee`, lib/team-payees.ts). */
-type ListedPayee = Pick<OrgPayee, 'id' | 'teamId' | 'name'>;
+/**
+ * What either search sends: the club's (every club payee) and a team's (`PickerPayee`, lib/team-payees.ts),
+ * whose rows carry `scope` — 'club' for a payee the club SHARED, 'team' for the team's own.
+ */
+type ListedPayee = Pick<OrgPayee, 'id' | 'teamId' | 'name'> & { scope?: 'club' | 'team' };
+
+/**
+ * ⚖ THE TEAM PICKER'S WORDS (Ledger Parity D7, owner 2026-10-02): the club's shared payees under the tag
+ * legend's own words, in the club's blue, with the one line that tells a coach what sharing means; the
+ * team's own under its own heading. One home, so the Payees page and the picker cannot say it two ways.
+ */
+export const SHARED_PAYEES_HEADING = 'Shared by your club';
+export const SHARED_PAYEES_NOTICE = 'Your club sees payments to these payees.';
+export const OWN_PAYEES_HEADING = 'Your team’s own';
 
 export interface PayeeSelection {
   payeeId: string | null;
@@ -20,10 +33,21 @@ interface Props {
   onChange: (v: PayeeSelection | null) => void;
   placeholder?: string;
   disabled?: boolean;
-  /** Label shown on the "save" action button. E.g. "team" → "Save as team payee". Defaults to "org". */
+  /** Label shown on the "save" action button. E.g. "team" → "Save as team payee". Defaults to "club" — the club's own
+   *  pickers (one word, "club", never "org": /marketing 2026-10-02). */
   saveScope?: string;
-  /** A door at the list's foot — the club Ledger's "Manage payees" (Club Tier Stage 3a, C01). Opt-in. */
-  foot?: ReactNode;
+  /**
+   * The list's last row, "Manage payees…" — the door to the Payees page (Club Tier Stage 3a C01 on the club's
+   * Ledger; Ledger Parity D6 on the coach's). Opt-in; one spelling for both portals, held here.
+   */
+  manageHref?: string;
+  /**
+   * The same last row as a BUTTON that opens the Payees window over the form (Ledger Parity D8, owner
+   * 2026-10-02): the coach's Payees is a window over the Ledger, and this picker sits inside the bill window
+   * and the Add a bill form, so a link here left an open form — the trip refused for tags. Wins over
+   * `manageHref` when both are given.
+   */
+  onManage?: () => void;
   /**
    * Stand at the admin kit's field size beside the kit's own fields (40px, the strong hairline; 44px at
    * touch widths) — the club Ledger's line window (/design 2026-10-01). Opt-in: the coach's forms keep
@@ -38,8 +62,9 @@ export default function PayeeCombobox({
   onChange,
   placeholder = 'Search or enter payee…',
   disabled,
-  saveScope = 'org',
-  foot,
+  saveScope = 'club',
+  manageHref,
+  onManage,
   kitField = false,
 }: Props) {
   const [inputVal, setInputVal]   = useState('');
@@ -133,9 +158,13 @@ export default function PayeeCombobox({
   const trimmed    = inputVal.trim();
   const exactMatch = results.find(p => p.name.toLowerCase() === trimmed.toLowerCase());
 
-  // Split results into org-wide and team-scoped for labeled sections
-  const orgWide    = results.filter(p => p.teamId === null);
-  const teamScoped = results.filter(p => p.teamId !== null);
+  /* The sections. ⚠ A TEAM'S SEARCH IS GROUPED BY `scope`, NEVER BY `teamId` (Ledger Parity session 1's call
+     list): in a standalone team's org every row is the team's own even with `teamId: null`, and grouping
+     by teamId would file them under the club. The club's own search carries no scope and keeps its two
+     headings unchanged. */
+  const scoped     = results.some(p => p.scope);
+  const sharedRows = scoped ? results.filter(p => p.scope === 'club') : results.filter(p => p.teamId === null);
+  const ownRows    = scoped ? results.filter(p => p.scope !== 'club') : results.filter(p => p.teamId !== null);
 
   if (value) {
     return (
@@ -175,21 +204,22 @@ export default function PayeeCombobox({
 
       {open && (
         <div className={styles.dropdown}>
-          {orgWide.length > 0 && (
+          {sharedRows.length > 0 && (
             <div className={styles.section}>
-              <p className={styles.sectionLabel}>Organization</p>
-              {orgWide.map(p => (
-                <button key={p.id} type="button" className={styles.option} onMouseDown={() => selectSaved(p)}>
+              <p className={styles.sectionLabel}>{scoped ? SHARED_PAYEES_HEADING : 'Organization'}</p>
+              {scoped && <p className={styles.sectionNote}>{SHARED_PAYEES_NOTICE}</p>}
+              {sharedRows.map(p => (
+                <button key={p.id} type="button" className={`${styles.option}${scoped ? ` ${styles.optionShared}` : ''}`} onMouseDown={() => selectSaved(p)}>
                   {p.name}
                 </button>
               ))}
             </div>
           )}
 
-          {teamScoped.length > 0 && (
+          {ownRows.length > 0 && (
             <div className={styles.section}>
-              <p className={styles.sectionLabel}>This team</p>
-              {teamScoped.map(p => (
+              <p className={styles.sectionLabel}>{scoped ? OWN_PAYEES_HEADING : 'This team'}</p>
+              {ownRows.map(p => (
                 <button key={p.id} type="button" className={styles.option} onMouseDown={() => selectSaved(p)}>
                   {p.name}
                 </button>
@@ -217,7 +247,17 @@ export default function PayeeCombobox({
           {!trimmed && results.length === 0 && (
             <p className={styles.empty}>Type to search or enter a new payee name</p>
           )}
-          {foot != null && <div className={styles.foot}>{foot}</div>}
+          {(onManage || manageHref) && (
+            <div className={styles.foot}>
+              {/* onMouseDown keeps the input from blurring first, as every option above does. */}
+              {onManage ? (
+                <button type="button" className={`${styles.manage} ${styles.manageBtn}`} onMouseDown={e => e.preventDefault()}
+                  onClick={() => { setOpen(false); onManage(); }}>Manage payees…</button>
+              ) : (
+                <Link href={manageHref!} className={styles.manage} onMouseDown={e => e.preventDefault()}>Manage payees…</Link>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
