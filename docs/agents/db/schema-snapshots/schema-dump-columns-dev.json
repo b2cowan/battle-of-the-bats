@@ -6534,6 +6534,24 @@
     "ordinal_position": 8
   },
   {
+    "table_name": "org_payees",
+    "column_name": "shared_with_teams",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "org_payees",
+    "column_name": "shared_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
     "table_name": "org_people",
     "column_name": "id",
     "data_type": "uuid",

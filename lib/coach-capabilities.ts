@@ -871,6 +871,9 @@ export function denyUnless(
       });
 }
 
+/** The one answer a coach without money access gets, on a read or a write door alike. */
+export const NO_MONEY_ACCESS = 'You do not have access to team finances. Ask the head coach to grant it.';
+
 /**
  * "You named a team — do you coach it, and may you touch its money?" — the two questions every
  * money WRITE door in the coach API asks before it does anything.
@@ -907,7 +910,7 @@ export function denyUnlessTeamMoneyWrite(
   }
   return denyUnless(
     assignments.some((a) => a.teamId === team && canWriteMoney(a.capabilities)),
-    'You do not have access to team finances. Ask the head coach to grant it.',
+    NO_MONEY_ACCESS,
   );
 }
 

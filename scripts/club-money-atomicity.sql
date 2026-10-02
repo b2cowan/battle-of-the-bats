@@ -10,6 +10,8 @@ DECLARE
   v_user uuid; v_org uuid; v_team uuid; v_py uuid; v_alloc uuid; v_split uuid;
   v_i1 uuid; v_i2 uuid; v_i3 uuid; v_i4 uuid; v_r1 uuid; v_r2 uuid;
   v_general uuid; v_book2 uuid; v_team_ledger uuid; v_p1 uuid; v_p2 uuid;
+  v_corg uuid; v_ct1 uuid; v_cpy1 uuid; v_ct2 uuid; v_cpy2 uuid; v_worg uuid; v_wteam uuid;
+  v_own1 uuid; v_own2 uuid; v_other uuid; v_shared uuid; v_unshared uuid;
   r jsonb; n integer; t uuid; t2 uuid;
 BEGIN
   {{MUTATIONS}}
@@ -165,6 +167,112 @@ BEGIN
   IF r->>'code' IS DISTINCT FROM 'just_sent' THEN RAISE EXCEPTION 'FAIL T11: the single-team claim ignored a wave that reached the team: %', r; END IF;
   SELECT count(*) INTO n FROM rep_allocation_reminder_waves WHERE org_id = v_org;
   IF n <> 1 THEN RAISE EXCEPTION 'FAIL T11: % waves claimed for one send', n; END IF;
+
+  -- ════ Ledger Parity (mig 316): shared payees and a team's own merge ════
+  SELECT t1.org_id, t1.id, py1.id, t2.id, py2.id INTO v_corg, v_ct1, v_cpy1, v_ct2, v_cpy2
+    FROM rep_teams t1 JOIN rep_program_years py1 ON py1.team_id = t1.id
+    JOIN rep_teams t2 ON t2.org_id = t1.org_id AND t2.id <> t1.id
+    JOIN rep_program_years py2 ON py2.team_id = t2.id
+    JOIN organizations o ON o.id = t1.org_id
+   WHERE o.account_kind IS DISTINCT FROM 'team_workspace' AND o.plan_id IS DISTINCT FROM 'team'
+   ORDER BY t1.created_at, t2.created_at LIMIT 1;
+  SELECT t0.org_id, t0.id INTO v_worg, v_wteam
+    FROM rep_teams t0 JOIN organizations o ON o.id = t0.org_id
+   WHERE o.account_kind = 'team_workspace' OR o.plan_id = 'team'
+   ORDER BY t0.created_at LIMIT 1;
+  IF v_ct2 IS NULL OR v_wteam IS NULL THEN
+    RAISE EXCEPTION 'FAIL: dev needs a club with two teams in season and one standalone team to test payees on'; END IF;
+
+  -- ── T12 · only a club payee is shared, and a shared one always carries its stamp ──
+  BEGIN
+    INSERT INTO org_payees (org_id, team_id, name, shared_with_teams, shared_at)
+    VALUES (v_corg, v_ct1, 'ATOMICITY team shared', true, now());
+    RAISE EXCEPTION 'FAIL T12: a team''s own payee was shared';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+  BEGIN
+    INSERT INTO org_payees (org_id, name, shared_with_teams) VALUES (v_corg, 'ATOMICITY no stamp', true);
+    RAISE EXCEPTION 'FAIL T12: a payee was shared with no shared_at';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  INSERT INTO org_payees (org_id, team_id, name) VALUES (v_corg, v_ct1, 'ATOMICITY Ace Pitching') RETURNING id INTO v_own1;
+  INSERT INTO org_payees (org_id, team_id, name) VALUES (v_corg, v_ct1, 'ATOMICITY Ace Pitching Inc') RETURNING id INTO v_own2;
+  INSERT INTO org_payees (org_id, team_id, name) VALUES (v_corg, v_ct2, 'ATOMICITY Other team''s') RETURNING id INTO v_other;
+  INSERT INTO org_payees (org_id, name, shared_with_teams, shared_at)
+  VALUES (v_corg, 'ATOMICITY Ace Pitching Academy', true, now() - interval '2 days') RETURNING id INTO v_shared;
+  INSERT INTO org_payees (org_id, name) VALUES (v_corg, 'ATOMICITY Club private') RETURNING id INTO v_unshared;
+  INSERT INTO rep_team_expenses (program_year_id, team_id, org_id, expense_type, description, amount, payee_id)
+  VALUES (v_cpy1, v_ct1, v_corg, 'expense', 'Pitching lesson', 120, v_own2),
+         (v_cpy1, v_ct1, v_corg, 'expense', 'Pitching lesson', 120, v_own2);
+
+  -- ── T13 · a team merges its own duplicate into its own: this team's records move, the duplicate goes ──
+  r := team_payee_merge(v_corg, v_ct1, v_own2, v_own1);
+  IF NOT coalesce((r->>'ok')::boolean, false) OR (r->>'moved')::int <> 2 THEN RAISE EXCEPTION 'FAIL T13: own merge: %', r; END IF;
+  IF EXISTS (SELECT 1 FROM org_payees WHERE id = v_own2) THEN RAISE EXCEPTION 'FAIL T13: the merged payee is still there'; END IF;
+  SELECT count(*) INTO n FROM rep_team_expenses WHERE payee_id = v_own1 AND team_id = v_ct1;
+  IF n <> 2 THEN RAISE EXCEPTION 'FAIL T13: % of 2 records moved to the payee kept', n; END IF;
+
+  -- ── T14 · what a team may NOT merge: never the club's, never into what it cannot see ──
+  r := team_payee_merge(v_corg, v_ct1, v_own1, v_own1);
+  IF r->>'code' IS DISTINCT FROM 'same_payee' THEN RAISE EXCEPTION 'FAIL T14: a payee merged into itself: %', r; END IF;
+  r := team_payee_merge(v_corg, v_ct1, v_shared, v_own1);
+  IF r->>'code' IS DISTINCT FROM 'not_allowed' THEN RAISE EXCEPTION 'FAIL T14: a team merged away a shared club payee: %', r; END IF;
+  r := team_payee_merge(v_corg, v_ct1, v_unshared, v_own1);
+  IF r->>'code' IS DISTINCT FROM 'not_found' THEN RAISE EXCEPTION 'FAIL T14: a team merged away an unshared club payee: %', r; END IF;
+  r := team_payee_merge(v_corg, v_ct1, v_other, v_own1);
+  IF r->>'code' IS DISTINCT FROM 'not_found' THEN RAISE EXCEPTION 'FAIL T14: a team merged away another team''s payee: %', r; END IF;
+  r := team_payee_merge(v_corg, v_ct1, v_own1, v_unshared);
+  IF r->>'code' IS DISTINCT FROM 'not_found' THEN RAISE EXCEPTION 'FAIL T14: a team merged into an unshared club payee: %', r; END IF;
+  r := team_payee_merge(v_corg, v_ct1, v_own1, v_other);
+  IF r->>'code' IS DISTINCT FROM 'not_found' THEN RAISE EXCEPTION 'FAIL T14: a team merged into another team''s payee: %', r; END IF;
+  r := team_payee_merge(v_corg, v_ct2, v_own1, v_other);
+  IF r->>'code' IS DISTINCT FROM 'not_found' THEN RAISE EXCEPTION 'FAIL T14: another team merged this team''s payee: %', r; END IF;
+  r := team_payee_merge(v_worg, v_ct1, v_own1, v_shared);
+  IF r->>'code' IS DISTINCT FROM 'not_found' THEN RAISE EXCEPTION 'FAIL T14: a team was merged from another org: %', r; END IF;
+  IF NOT EXISTS (SELECT 1 FROM org_payees WHERE id = v_own1) THEN RAISE EXCEPTION 'FAIL T14: a refused merge removed the payee'; END IF;
+
+  -- ── T15 · a record outside this team naming the payee refuses the merge, and nothing moves ──
+  INSERT INTO rep_team_expenses (program_year_id, team_id, org_id, expense_type, description, amount, payee_id)
+  VALUES (v_cpy2, v_ct2, v_corg, 'expense', 'Named across teams', 10, v_own1) RETURNING id INTO t;
+  BEGIN
+    r := team_payee_merge(v_corg, v_ct1, v_own1, v_shared);
+  EXCEPTION WHEN foreign_key_violation THEN
+    -- Without the check the merge reaches the delete and the FK stops it: a raw error the coach sees as a crash.
+    RAISE EXCEPTION 'FAIL T15: the merge reached the delete over another team''s record (FK error, not a refusal)';
+  END;
+  IF r->>'code' IS DISTINCT FROM 'named_elsewhere' THEN RAISE EXCEPTION 'FAIL T15: merge went ahead over another team''s record: %', r; END IF;
+  SELECT count(*) INTO n FROM rep_team_expenses WHERE payee_id = v_own1;
+  IF n <> 3 THEN RAISE EXCEPTION 'FAIL T15: a refused merge moved records (% still name it, not 3)', n; END IF;
+  DELETE FROM rep_team_expenses WHERE id = t;
+
+  -- ── T16 · a team merges its own into the club's SHARED payee; the club's payee is untouched ──
+  r := team_payee_merge(v_corg, v_ct1, v_own1, v_shared);
+  IF NOT coalesce((r->>'ok')::boolean, false) OR (r->>'moved')::int <> 2 THEN RAISE EXCEPTION 'FAIL T16: merge into shared: %', r; END IF;
+  SELECT count(*) INTO n FROM org_payees WHERE id = v_shared AND team_id IS NULL AND shared_with_teams;
+  IF n <> 1 THEN RAISE EXCEPTION 'FAIL T16: the shared club payee changed'; END IF;
+
+  -- ── T17 · a standalone team: its org's `team_id IS NULL` payees are its own ──
+  INSERT INTO org_payees (org_id, name) VALUES (v_worg, 'ATOMICITY Workspace own') RETURNING id INTO v_p1;
+  INSERT INTO org_payees (org_id, team_id, name) VALUES (v_worg, v_wteam, 'ATOMICITY Workspace own 2') RETURNING id INTO v_p2;
+  r := team_payee_merge(v_worg, v_wteam, v_p1, v_p2);
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T17: a standalone team could not merge its own payee: %', r; END IF;
+
+  -- ── T18 · the club's merge keeps sharing honest: shared if either was, with the LATER stamp ──
+  INSERT INTO org_payees (org_id, name, shared_with_teams, shared_at)
+  VALUES (v_corg, 'ATOMICITY Diamond A', true, now() - interval '9 days') RETURNING id INTO v_p1;
+  INSERT INTO org_payees (org_id, name) VALUES (v_corg, 'ATOMICITY Diamond B') RETURNING id INTO v_p2;
+  INSERT INTO rep_team_expenses (program_year_id, team_id, org_id, expense_type, description, amount, payee_id)
+  VALUES (v_cpy1, v_ct1, v_corg, 'expense', 'Diamond rental', 80, v_p1);
+  r := club_payee_merge(v_corg, v_p1, v_p2);
+  IF NOT (r->>'ok')::boolean OR (r->>'entries')::int <> 0 OR (r->>'expenses')::int <> 1 THEN RAISE EXCEPTION 'FAIL T18: club merge: %', r; END IF;
+  IF NOT EXISTS (SELECT 1 FROM org_payees WHERE id = v_p2 AND shared_with_teams AND shared_at < now() - interval '8 days') THEN
+    RAISE EXCEPTION 'FAIL T18: the payee kept lost the sharing it absorbed'; END IF;
+  INSERT INTO org_payees (org_id, name, shared_with_teams, shared_at)
+  VALUES (v_corg, 'ATOMICITY Diamond C', true, now() - interval '1 day') RETURNING id INTO v_p1;
+  r := club_payee_merge(v_corg, v_p1, v_p2);
+  IF NOT EXISTS (SELECT 1 FROM org_payees WHERE id = v_p2 AND shared_with_teams AND shared_at > now() - interval '2 days') THEN
+    RAISE EXCEPTION 'FAIL T18: the payee kept did not take the LATER stamp — earlier payments would count'; END IF;
 
   RAISE EXCEPTION 'CLUB_MONEY_ATOMICITY_PASSED';
 END

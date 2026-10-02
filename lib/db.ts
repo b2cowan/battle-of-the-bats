@@ -14056,6 +14056,8 @@ function mapOrgPayee(r: any): OrgPayee {
     name:      r.name,
     notes:     r.notes ?? null,
     isActive:  r.is_active,
+    sharedWithTeams: r.shared_with_teams === true,
+    sharedAt:  r.shared_at ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
   };
@@ -14110,22 +14112,21 @@ export async function listPaymentMethodUsage(
   return [...counts.entries()].map(([name, count]) => ({ name, count }));
 }
 
-export async function searchOrgPayees(orgId: string, q: string, teamId?: string | null): Promise<OrgPayee[]> {
-  // Returns org-wide payees + (if teamId provided) that team's scoped payees
+/**
+ * THE CLUB'S picker search — every club payee (`team_id IS NULL`), shared with teams or not: the club's own
+ * books may name any of them. ⚠ Never a team's: a team's picker is `searchTeamPayees` (lib/team-payees.ts),
+ * which sees only the club payees the club SHARED plus the team's own (Ledger Parity D7). Before mig 316 this
+ * took a team id and listed every club payee to every coach.
+ */
+export async function searchOrgPayees(orgId: string, q: string): Promise<OrgPayee[]> {
   let query = supabaseAdmin
     .from('org_payees')
     .select('*')
     .eq('org_id', orgId)
+    .is('team_id', null)
     .eq('is_active', true)
-    .order('team_id', { ascending: true, nullsFirst: true })
     .order('name', { ascending: true })
     .limit(30);
-
-  if (teamId) {
-    query = query.or(`team_id.is.null,team_id.eq.${teamId}`);
-  } else {
-    query = query.is('team_id', null);
-  }
 
   if (q.trim()) query = query.ilike('name', `%${q.trim()}%`);
   const { data, error } = await query;

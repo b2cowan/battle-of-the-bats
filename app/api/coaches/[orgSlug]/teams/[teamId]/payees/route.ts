@@ -1,54 +1,41 @@
-import { refuseWithoutLiveSeat } from '@/lib/coach-season-refusal';
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, searchOrgPayees, createOrgPayee } from '@/lib/db';
+import { createOrgPayee } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { NO_MONEY_ACCESS, canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
+import { listTeamPayees, searchTeamPayees } from '@/lib/team-payees';
 
-async function resolveCoachContext(orgSlug: string, teamId: string) {
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return { error: unauthorized() };
-  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
-
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx.org.id) {
-    return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
-  }
-
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: await refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId) };
-
-  const programYear = await getActiveRepProgramYear(teamId);
-  if (!programYear) {
-    return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  }
-
-  return { ctx, team, assignment };
-}
-
+/**
+ * GET ?q=      — the team's payee picker: the club's SHARED payees (`scope: 'club'`) + the team's own
+ *                (`scope: 'team'`); a standalone team's every payee is its own (Ledger Parity D7, mig 316).
+ * GET ?all=1   — the team's Payees page (D5): `{ payees, shared }` — its own payees with uses and last used
+ *                from THIS team's records only, and the shared club payees by name (read-only; merge targets).
+ * POST { name, notes? } — a new payee, always the team's own.
+ */
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
+  const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
+  if ('error' in resolved) return resolved.error;
   const { ctx, assignment } = resolved;
-  const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  const denied = denyUnless(canViewMoney(assignment.capabilities), NO_MONEY_ACCESS);
   if (denied) return denied;
 
-  const q = new URL(req.url).searchParams.get('q') ?? '';
-  // Returns org-wide payees + this team's scoped payees
-  const payees = await searchOrgPayees(ctx.org.id, q, teamId);
+  const url = new URL(req.url);
+  if (url.searchParams.get('all') === '1') {
+    return NextResponse.json(await listTeamPayees(ctx.org, teamId));
+  }
+  const payees = await searchTeamPayees(ctx.org, teamId, url.searchParams.get('q') ?? '');
   return NextResponse.json({ payees });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/payees' });
 
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
+  const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
+  if ('error' in resolved) return resolved.error;
   const { ctx, assignment } = resolved;
-  const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  const denied = denyUnless(canWriteMoney(assignment.capabilities), NO_MONEY_ACCESS);
   if (denied) return denied;
 
   const body = await req.json();

@@ -3,6 +3,7 @@
   "accepted": {
     "check:changed:rep_team_payment_requests.rep_team_payment_requests_status_check": "(status = ANY (ARRAY['pending'::text, 'approved'::text, 'denied'::text, 'reversed'::text])) :: (status = ANY (ARRAY['pending'::text, 'approved'::text, 'denied'::text]))",
     "check:only-dev:accounting_entries.accounting_entries_void_reason_length_check": "",
+    "check:only-dev:org_payees.org_payees_sharing_check": "",
     "check:only-dev:rep_allocation_installments.rep_allocation_installments_paid_method_check": "",
     "check:only-dev:rep_allocation_installments.rep_allocation_installments_sent_is_whole_check": "",
     "check:only-dev:rep_allocation_installments.rep_allocation_installments_sent_method_check": "",
@@ -17,6 +18,8 @@
     "column:only-dev:accounting_entries.void_reason": "",
     "column:only-dev:accounting_entries.voided_at": "",
     "column:only-dev:accounting_entries.voided_by": "",
+    "column:only-dev:org_payees.shared_at": "",
+    "column:only-dev:org_payees.shared_with_teams": "",
     "column:only-dev:rep_allocation_installments.paid_method": "",
     "column:only-dev:rep_allocation_installments.paid_on": "",
     "column:only-dev:rep_allocation_installments.paid_reference": "",

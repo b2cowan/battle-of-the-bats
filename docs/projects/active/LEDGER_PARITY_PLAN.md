@@ -5,7 +5,7 @@
 live screens by `.probe/lp/shots.mjs`: BEFORE = the page as it renders; AFTER = the same page with the change applied
 in the DOM). PM brief: `LEDGER_PARITY_PM_BRIEF.md`.
 
-**Status:** RATIFIED 2026-10-02 — owner: "I agree with your recommendations on D1-D7" (D1–D7, D7a, D7b, every one as recommended). Build prompts: `LEDGER_PARITY_SERVER_PROMPT.md` (session 1) then `LEDGER_PARITY_SCREENS_PROMPT.md` (session 2); both reach production in ONE promote. Nothing built.
+**Status:** RATIFIED 2026-10-02 — owner: "I agree with your recommendations on D1-D7" (D1–D7, D7a, D7b, every one as recommended). Build prompts: `LEDGER_PARITY_SERVER_PROMPT.md` (session 1) then `LEDGER_PARITY_SCREENS_PROMPT.md` (session 2); both reach production in ONE promote. **Session 1 (the server half) built on dev 2026-10-02; mig 316 applied to dev 2026-10-02** — record and the call list for session 2 in § "Session 1 — build record" below. Session 2 (the screens) next.
 
 ## Context
 
@@ -66,6 +66,107 @@ Explore pass) and measured in the browser (`.probe/ledger-cmp.mjs`):
   **Stage 3b** scope. **Open:** D7a — count only payments recorded after the notice shipped (recommended; needs the
   share/notice timestamp); D7b — at launch a club payee any team has used starts shared (recommended; data step).
   Migration: the shared flag (+ shared-at timestamp) on `org_payees` → DATA_DICTIONARY + snapshots.
+
+## Session 1 — build record (2026-10-02, the server half: D5 data + routes, D7, D7a, D7b)
+
+**What a person sees now:** a coach on a club team finds only the payees the club shares plus the team's own in the
+payee picker (still under today's "Organization" / "This team" headings); nothing else is visible until session 2.
+A standalone coach: no change. A club treasurer: no change on screen except that the Payees list's Entries and
+Last used now count the club's own entries only.
+
+**Three findings acted on (said to the owner before the work):**
+1. **The picker narrowing alone was cosmetic** — the expense POST/PATCH accepted ANY `payeeId` (an unshared club
+   payee, another team's, another org's). Both now refuse a payee the team cannot see (400 `payee_not_allowed`); an
+   edit keeps the payee a record already names even after the club unshares it.
+2. **The coach route with no team (`/api/coaches/[orgSlug]/payees`) is deleted** — nothing called it; in a club it
+   listed every club payee to a coach and let a coach create a payee in the CLUB's list.
+3. **The club's Payees counts were NOT the club's own** (the prompt said "stays") — `uses` / `lastUsed` and a merge's
+   `moved` counted team expenses too, which shows the club team activity from before any sharing (against D7a). Now
+   the club's `accounting_entries` only; a new `inUse` (any record names it) drives Delete vs Merge, so a payee only
+   teams used still cannot be deleted.
+
+**D7b counts (read-only, 2026-10-02):** dev — 6 club payees in 2 orgs (`dev-club-org`, `uat-rep-club`), **0 start
+shared**, 6 stay the club's own, 0 standalone-org payees; prod — **no payees at all** (0 rows in `org_payees`), so the
+launch step changes nothing there today. Neither database has a record naming another team's or another org's payee
+(0 / 0 / 0). Re-count on prod at apply time (the verify block in MANUAL_PROD_STEPS) and record it here.
+
+**Rollout (⚠ binding):** mig 316 to prod AFTER mig 315 and minutes BEFORE the ONE promote that carries sessions 1
+and 2 together — `shared_at` is the D7a clock and must never start before a coach's picker shows "Your club sees
+payments to these payees" (session 2). Those minutes are an accepted gap. Never promote session 1's code alone.
+Recorded in `supabase/migrations/MANUAL_PROD_STEPS.json` beside the migration.
+
+**/simplify + /review (high-risk, 2026-10-02):** cleanups applied (the rule's database filter lives beside the rule;
+one counting fold, one name check, one money-access sentence; fewer round trips). /review — 4 lenses (security,
+correctness, data/contract, concurrency + blast radius): no cross-team, coach→club or read-only-coach write found.
+**Fixed:** (1) a club PATCH carrying both `name` and `sharedWithTeams` could save the share and then refuse the rename
+— every check now runs first, then the rename, then the share; (2) mig 316 now refuses to run before mig 315;
+(3) the delete refusal for a payee only a team's record names carried `uses: 0` — it carries no count now.
+**Known, not fixed (recorded):** in a standalone org two simultaneous renames into the two index scopes could leave
+two of the team's payees with one name (no index spans both; no such rows exist on either database); mig 313's team
+move words only a unique-name clash, so a shared row in a standalone org would fail it raw (unreachable: nothing
+shares there); the club's `inUse` stays true for a payee a team still names after the club unshares it — a yes/no,
+needed because the delete is refused anyway (owner to confirm, see the hand-off).
+
+**Proof:** `npm run check:club-money-atomicity -- --mutate` on dev — T12–T18 (sharing CHECK, own merge, every refusal,
+named-elsewhere, merge into shared, standalone org, club merge keeps the LATER stamp), all 16 mutations killed;
+`tests/unit/team-payees.test.ts` (the one rule, every read/write through it, the routes' gates, the expense check,
+the club's own-lines-only counts, the migration's shape).
+
+### The call list for session 2
+
+Every response body below is JSON; a refusal is `{ error, code? }` — `error` is the sentence to show as written.
+
+**Team picker — `GET /api/coaches/{org}/teams/{team}/payees?q=`** (money-read) → `{ payees: PickerPayee[] }`,
+`PickerPayee = { id, teamId, name, scope: 'club' | 'team' }`, club rows first, 30 max, active only.
+⚠ **Group by `scope`, never by `teamId`:** in a standalone org every row is `scope: 'team'` even with `teamId: null`
+(today's `PayeeCombobox` groups by `teamId` and would file those under "Organization"). `'club'` → "Shared by your
+club" + "Your club sees payments to these payees."; `'team'` → the team's own.
+**New payee — `POST …/payees` `{ name, notes? }`** (money-write) → 201 `{ payee }`, always the team's own; 409 when the
+team already has the name. Unchanged.
+
+**Team Payees page — `GET …/payees?all=1`** (money-read) → `{ payees: TeamPayee[], shared: SharedPayee[] }`.
+`TeamPayee = { id, name, isActive, uses, lastUsed }` — `uses` and `lastUsed` (a `YYYY-MM-DD` day) from THIS team's
+records only. `SharedPayee = { id, name }` — the club's shared payees, read-only, the merge question's "listed first,
+marked as the club's" targets; no counts by design. A standalone team's `shared` is always `[]`.
+
+**Rename — `PATCH …/payees/{payee}` `{ name }`** (money-write) → `{ payee: { id, name } }`. Refusals:
+400 `name_required` "Give the payee a name." · 400 `bad_name` "Keep the name to 200 characters." ·
+403 `not_allowed` "This is the club’s payee: only the club can change it. To use one name, merge your own payee into
+it." · 404 (another team's / unshared club / gone) · 409 `payee_exists` "Another of the team’s payees already has that
+name. Merge them instead."
+
+**Merge — `POST …/payees/{payee}/merge` `{ intoPayeeId }`** (money-write) → `{ moved, into }` — `moved` = this team's
+records repointed. ⚠ The body key is the club's own (`intoPayeeId`, not the prompt's `{ into }`) so one screen can serve
+both portals. Refusals: 400 `into_required` "Choose the payee to keep." · 400 `same_payee` "Choose a different payee
+to keep." · 403 `not_allowed` (the payee being merged away is a shared club payee — the CLUBS sentence above) · 404
+(anything the team cannot see — never confirms it exists) · 409 `named_elsewhere` "Another record outside this team
+names this payee, so it can’t be merged here." ⚠ **When `into` is a club payee the merge question must carry the
+notice** — the team's records join what the club sees (recorded on/after the share), and choosing it is the consent.
+
+**Delete — `DELETE …/payees/{payee}`** (money-write) → `{ deleted: true }`. Refusals: 403 `not_allowed` · 404 ·
+409 `payee_in_use` "This payee is named on N records. Merge it into another payee instead." (+ `uses`), or "A record
+still names this payee. Merge it into another payee instead." (no `uses` — something outside the team names it).
+
+**Expense saves** (`POST …/expenses`, `PATCH …/expenses/{id}`): 400 `payee_not_allowed` "Choose a payee from the list."
+when `payeeId` is not the team's own or a shared club payee (PATCH: only when it CHANGES).
+
+Every team route uses the live-season gate (`resolveLiveCoachTeamContext`): with no live season the answer is the
+coded 409 season-closed refusal (the picker route returned a bare 404 before).
+
+**Club Payees list — `GET /api/admin/accounting/payees?orgSlug=&all=1`** → `{ payees: ClubPayee[] }`,
+`ClubPayee = { id, name, notes, isActive, uses, lastUsed, inUse, sharedWithTeams }` — `uses` / `lastUsed` the club's
+own entries; `inUse` any record (a team's too) names it — **Delete shows only when `!inUse`** (built in this session:
+the page's door and its merge hint read `inUse`); `sharedWithTeams` → the Teams column ("Shared with teams" / "The
+club’s own").
+**Club share switch — `PATCH /api/admin/accounting/payees/{payee}?orgSlug=` `{ sharedWithTeams: boolean }`** (and/or
+`{ name }`; the club's Accounting holders) → `{ payee: { id, name?, sharedWithTeams? } }`. Asking for the state it
+is already in changes nothing (never restarts the clock). Refusals: 400 `nothing_to_change` · 400 `bad_shared` ·
+403 `not_allowed` "Only a club with teams can share its payees." (a standalone team's org, or no Rep Teams) · 404.
+With both keys, every check runs before any write and a refused request changes nothing (the rename runs first —
+its 409 `payee_exists` leaves the sharing untouched).
+**Club merge** `moved` is now the club's own entries only (team records move too, uncounted). **Club delete** of a
+payee only a team's record names: 409 `payee_in_use` "A team’s records name this payee. Merge it into another payee
+instead." (no count).
 
 ## Kept differences (to record in TABLE_EXCEPTION_REGISTER.md at build)
 

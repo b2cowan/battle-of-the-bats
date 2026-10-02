@@ -798,6 +798,10 @@ export interface OrgPayee {
   name: string;
   notes: string | null;
   isActive: boolean;
+  /** A club payee the club shares with its teams (mig 316, Ledger Parity D7) — only these reach a club team's picker. */
+  sharedWithTeams: boolean;
+  /** When it was last shared; null while unshared. Stage 3b counts a team's payment only from here (D7a). */
+  sharedAt: string | null;
   createdBy: string | null;
   createdAt: string;
 }

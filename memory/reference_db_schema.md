@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-01 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-02 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-01
+# DB Schema Reference — 2026-10-02
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -468,7 +468,7 @@ id (uuid), budget_line_id (uuid) → org_budget_lines.id NOT NULL, period_label 
 - Indexes: org_budget_periods_line_idx
 
 ### org_payees
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, notes, is_active (boolean), created_by (uuid), created_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, notes, is_active (boolean), created_by (uuid), created_at, shared_with_teams (boolean), shared_at
 - Indexes: idx_org_payees_org_id, idx_org_payees_org_name, idx_org_payees_team_id, idx_org_payees_team_name
 
 ## Module: Stripe / Billing

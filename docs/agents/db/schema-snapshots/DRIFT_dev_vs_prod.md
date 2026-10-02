@@ -1,16 +1,16 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-10-01 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-10-02 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 54 divergence(s)** across dev/prod.
+**⚠️ 57 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 1 | 0 | — |
-| Columns | 30 | 0 | 0 |
+| Columns | 32 | 0 | 0 |
 | Indexes | 2 | 0 | 0 |
 | Constraints | 8 | 0 | — |
-| RLS / CHECK | 12 | 0 | 0 (RLS state) |
+| RLS / CHECK | 13 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (1)
@@ -20,10 +20,12 @@
 _none_
 
 ## Columns
-### Only in DEV (30)
+### Only in DEV (32)
 - `accounting_entries.void_reason`
 - `accounting_entries.voided_at`
 - `accounting_entries.voided_by`
+- `org_payees.shared_at`
+- `org_payees.shared_with_teams`
 - `rep_allocation_installments.paid_method`
 - `rep_allocation_installments.paid_on`
 - `rep_allocation_installments.paid_reference`
@@ -87,8 +89,9 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (12)
+### CHECK only in DEV (13)
 - `accounting_entries.accounting_entries_void_reason_length_check`
+- `org_payees.org_payees_sharing_check`
 - `rep_allocation_installments.rep_allocation_installments_paid_method_check`
 - `rep_allocation_installments.rep_allocation_installments_sent_is_whole_check`
 - `rep_allocation_installments.rep_allocation_installments_sent_method_check`

@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-01",
-  "total": 54,
+  "generated": "2026-10-02",
+  "total": 57,
   "counts": {
     "tables": 1,
-    "columns": 30,
+    "columns": 32,
     "indexes": 2,
     "constraints": 8,
-    "rls": 13
+    "rls": 14
   },
   "items": [
     {
@@ -15,6 +15,10 @@
     },
     {
       "key": "check:only-dev:accounting_entries.accounting_entries_void_reason_length_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_payees.org_payees_sharing_check",
       "sig": ""
     },
     {
@@ -71,6 +75,14 @@
     },
     {
       "key": "column:only-dev:accounting_entries.voided_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_payees.shared_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_payees.shared_with_teams",
       "sig": ""
     },
     {

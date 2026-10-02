@@ -23,7 +23,8 @@ import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { FormError, TextField, day, jsonInit, moneyFetch, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
 import { pluralize } from '@/lib/utils';
 
-interface Payee { id: string; name: string; notes: string | null; isActive: boolean; uses: number; lastUsed: string | null }
+/** `uses` / `lastUsed` are the club's own entries; `inUse` also answers for a team's records (Ledger Parity D7a). */
+interface Payee { id: string; name: string; notes: string | null; isActive: boolean; uses: number; lastUsed: string | null; inUse: boolean }
 
 export default function PayeesPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = use(params);
@@ -162,14 +163,14 @@ function PayeeWindow({ payee, others, q, onClose, onDone }: {
         title={payee.name}
         status={<SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} />}
         onClose={() => void close()}
-        footerStart={payee.uses === 0
+        footerStart={!payee.inUse
           ? <button type="button" className="btn btn-danger" onClick={() => setAsking('delete')}>Delete this payee</button>
           : others.length > 0 ? <button type="button" className="btn btn-outline" onClick={() => setAsking('merge')}>Merge into another payee</button> : undefined}
         footer={<button type="button" className="btn btn-outline" onClick={() => void close()}>Done</button>}
       >
         <TextField id="payee-name" label="Name" required value={name} onChange={v => { setName(v); touch(); }} maxLength={200}
           hint={`Named on ${pluralize(payee.uses, 'entry', 'entries')}. A new name shows on every one of them.`} />
-        {payee.uses > 0 && others.length > 0 && (
+        {payee.inUse && others.length > 0 && (
           <p className={ck.hint}>Two spellings of one payee? Merge this one into the other: every entry moves to the one you keep.</p>
         )}
       </KitDialog>

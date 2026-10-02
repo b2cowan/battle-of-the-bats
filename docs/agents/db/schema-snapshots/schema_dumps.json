@@ -6536,6 +6536,24 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_payees",
+        "pos": 9,
+        "column_name": "shared_with_teams",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "org_payees",
+        "pos": 10,
+        "column_name": "shared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_people",
         "pos": 1,
         "column_name": "id",
@@ -28367,6 +28385,12 @@
         "table_name": "org_payees",
         "detail": "org_payees_name_check",
         "check_clause": "((char_length(TRIM(BOTH FROM name)) > 0) AND (char_length(name) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payees",
+        "detail": "org_payees_sharing_check",
+        "check_clause": "(((NOT shared_with_teams) AND (shared_at IS NULL)) OR (shared_with_teams AND (shared_at IS NOT NULL) AND (team_id IS NULL)))"
       },
       {
         "kind": "RLS",

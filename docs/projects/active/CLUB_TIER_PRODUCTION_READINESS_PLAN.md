@@ -763,6 +763,27 @@ scope; org day for entry dates; General-ledger creation race; ledger summaries p
 > when) — never a team's own payees or other spending; the coach's picker says so. **The report is 3b scope**, beside
 > the other per-team reads; the sharing and the merge-into-the-club's ride with Ledger Parity (D7,
 > `LEDGER_PARITY_PLAN.md`).
+>
+> **The 3b shared-payee report, defined (Ledger Parity session 1, 2026-10-02 — written, not built; the data shipped in
+> mig 316).** For ONE shared club payee P (`org_payees.team_id IS NULL AND shared_with_teams`, stamp `S = shared_at`):
+> - **Rows:** every `rep_payable_payments` row `pp` whose commitment `e = rep_team_expenses(pp.expense_id)` names P
+>   (`e.payee_id = P`, `e.org_id` = the club), where **`pp.created_at >= S` AND `e.created_at >= S`** — shown as
+>   **team** (`rep_teams.name` via `pp.team_id`), **amount** (`pp.amount`), **date** (`pp.paid_date`). Since mig 255
+>   every cost, plain or payable, is paid through `rep_payable_payments` (undo deletes the row), so a row there IS
+>   "recorded paid"; an out-of-pocket payment (`paid_by_player_id` set, no ledger line) is still a payment to P and
+>   counts.
+> - **"Recorded" is the insert time, `created_at`, never `paid_date`** — a coach types `paid_date` and can backdate it
+>   past the notice; `created_at` is when the team actually recorded it. **Both** stamps must be on or after S: the
+>   payment's (D7a: recorded after the notice) and the commitment's (the payee was CHOSEN after the notice — a bill
+>   picked under the old silent "Organization" heading and paid later stays out; D7a: "never surfaces
+>   retroactively"). This errs toward NOT counting: a pre-notice commitment re-pointed to P by an edit stays out; one
+>   recorded after S and merged into P by its team (the merge question must carry the notice — Ledger Parity session
+>   2) counts. A club merge keeps the LATER stamp (mig 316), so a merged payee never reaches back.
+> - **"Nothing recorded (n)":** the club's teams with no row — 3b decides which teams are listed (active teams in
+>   the club's current budget year is the likely answer) and whether rows are limited to that year.
+> - **Words:** labelled as what each team **recorded**, never proof of payment (BUSINESS_DECISIONS 2026-10-02 §2).
+> - **Never:** a team's own payees, an unshared payee, a payment recorded before S, or any team figure on the club's
+>   Payees list (its Entries / Last used are the club's own lines only since mig 316).
 
 **3b — Budget, Budget vs. Actual, the whole-club summary.** Rulings D2 applied. Mockups: Org
 Budget (Allocated/Collected columns, many allocations per line, remainder allocatable, periods

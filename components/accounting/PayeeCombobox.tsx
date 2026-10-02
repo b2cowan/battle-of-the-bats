@@ -5,6 +5,9 @@ import type { OrgPayee } from '@/lib/types';
 import styles from './PayeeCombobox.module.css';
 import { useDismissable } from '@/lib/overlay-hooks';
 
+/** What either search sends: the club's (every club payee) and a team's (`PickerPayee`, lib/team-payees.ts). */
+type ListedPayee = Pick<OrgPayee, 'id' | 'teamId' | 'name'>;
+
 export interface PayeeSelection {
   payeeId: string | null;
   payeePayer: string | null;
@@ -40,7 +43,7 @@ export default function PayeeCombobox({
   kitField = false,
 }: Props) {
   const [inputVal, setInputVal]   = useState('');
-  const [results, setResults]     = useState<OrgPayee[]>([]);
+  const [results, setResults]     = useState<ListedPayee[]>([]);
   const [open, setOpen]           = useState(false);
   const [saving, setSaving]       = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -78,7 +81,7 @@ export default function PayeeCombobox({
     search(inputVal);
   }
 
-  function selectSaved(payee: OrgPayee) {
+  function selectSaved(payee: ListedPayee) {
     onChange({ payeeId: payee.id, payeePayer: null, displayName: payee.name });
     setInputVal('');
     setOpen(false);

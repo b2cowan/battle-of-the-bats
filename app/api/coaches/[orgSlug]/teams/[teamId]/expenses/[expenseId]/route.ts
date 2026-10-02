@@ -16,6 +16,7 @@ import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { whyPaidDateIsRefused, asMoneyAmount, parseInstallmentPlan } from '@/lib/expense-ledger';
 import { tournamentToday } from '@/lib/timezone';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
+import { teamMayNamePayee } from '@/lib/team-payees';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 
@@ -128,6 +129,10 @@ export const PATCH = withObservability(async (req: Request,
   if (body.payeeId !== undefined || body.payeePayer !== undefined) {
     fields.payeeId = typeof body.payeeId === 'string' && body.payeeId ? body.payeeId : null;
     fields.payeePayer = typeof body.payeePayer === 'string' ? body.payeePayer.trim() || null : null;
+    // Only a payee this team can see — or the one the record already names (Ledger Parity D7, mig 316).
+    if (fields.payeeId && !(await teamMayNamePayee(ctx!.org, team.id, fields.payeeId, expense.payeeId))) {
+      return NextResponse.json({ error: 'Choose a payee from the list.', code: 'payee_not_allowed' }, { status: 400 });
+    }
   }
 
   /* ── The figures: editable, including after they have posted (owner ruling 2026-08-16) ────────

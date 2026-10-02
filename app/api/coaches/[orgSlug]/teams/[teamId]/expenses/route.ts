@@ -22,6 +22,7 @@ import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
+import { teamMayNamePayee } from '@/lib/team-payees';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -136,8 +137,14 @@ export const POST = withObservability(async (req: Request,
      ⚠ WHETHER IT WAS BUDGETED IS NOT RECORDED HERE, OR ANYWHERE. It is derived by asking whether a
      budget line exists for the same category and item, which is what let the old "Not in the
      budget" declaration be deleted outright. See lib/coach-budget-items.ts. */
-  const linked = await resolveBudgetItem(budgetItemId, ctx!.org.id, team.id, team.sport);
+  /* WHO IT WAS PAID TO (Ledger Parity D7, mig 316) — only a payee THIS team can see: its own, or one the club
+     shares (`teamMayNamePayee`). Asked beside the item lookup; neither depends on the other. */
+  const [linked, payeeAllowed] = await Promise.all([
+    resolveBudgetItem(budgetItemId, ctx!.org.id, team.id, team.sport),
+    !payeeId || (typeof payeeId === 'string' && teamMayNamePayee(ctx!.org, team.id, payeeId)),
+  ]);
   if (!linked.ok) return NextResponse.json({ error: linked.error }, { status: 400 });
+  if (!payeeAllowed) return NextResponse.json({ error: 'Choose a payee from the list.', code: 'payee_not_allowed' }, { status: 400 });
   /* ⚠ REQUIRED ON A NEW COST, and enforced HERE as well as on the form. The form is a courtesy — a
      stale tab, a replay or a direct caller all arrive here — and an unclassified cost is the exact
      "Not itemized" row this change exists to stop producing. ⚠ ONLY ON CREATE: an EDIT may legally
