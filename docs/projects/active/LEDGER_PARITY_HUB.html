@@ -1,0 +1,473 @@
+<title>Ledger Parity</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:24px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:4px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 11px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+@media(max-width:700px){.walk{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap}.walk a{flex:none}}
+
+.frame{width:min(1520px,calc(100% - 32px));margin:20px auto;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a}
+.screen{padding:24px 28px 30px;scroll-margin-top:70px}
+.screen .lead{max-width:860px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:13px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+@media(max-width:700px){.screen{padding:18px 12px 24px}}
+
+/* a specimen: a real screen at TRUE SIZE (1 css px = 1 product px), in its own sideways scroller */
+.spec{margin:22px 0 6px}
+.spectop{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}
+.spectop h3{margin:0;font-size:15px}
+.lbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.lbl.before{background:#e9e4da;color:#4a4235}.lbl.after{background:#dff0c2;color:#2b3f12}.lbl.ref{background:#e3edf2;color:#1d4a5e}
+.aside{font-size:12.5px;color:var(--muted)}
+.scroller{overflow-x:auto;border:1px solid #c6cebc;border-radius:10px;background:#dfe3d6;-webkit-overflow-scrolling:touch}
+.shot{position:relative;width:1440px;line-height:0}
+.shot.phone{width:390px}
+.shot img{display:block;width:100%;height:auto}
+.fit .shot:not(.phone){width:100%}
+.caption{font-size:13px;color:var(--muted);margin:8px 2px 0;max-width:900px}
+.caption strong{color:var(--ink)}
+.pair{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+.pair>div{max-width:100%}
+.pair .scroller{display:inline-block;max-width:100%}
+
+/* the numbered markers on a screen (each opens its decision) */
+.pin{position:absolute;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--error);color:#fff;font:800 13px/22px system-ui,sans-serif;text-align:center;padding:0;box-shadow:0 2px 6px #0004;cursor:pointer;line-height:22px}
+.pin.fix{background:var(--olive)}
+.pin:hover{transform:scale(1.08)}
+.pin::after{content:"";position:absolute;inset:-9px}
+
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-size:10.5px;font-weight:800;border-radius:4px;padding:3px 7px;letter-spacing:.4px;vertical-align:middle;line-height:1.4;min-height:24px}
+.fl.fix{background:var(--olive)}
+.fl:hover{filter:brightness(1.1)}
+.chiprow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+
+.difflist{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px}
+.difflist li{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.difflist .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--error);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;border:0;cursor:pointer}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:12px 0 18px;background:#fff}
+table.kept{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+table.kept th,table.kept td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.kept th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:#fafbf7}
+table.kept tr:last-child td{border-bottom:0}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage ul,.docpage ol{padding-left:22px}.docpage li{margin:0 0 7px}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 16px 36px}}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.open{background:#edf5f8;border-color:#b6cfdb}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+.rec{font-size:13px;background:#f3f7ee;border:1px solid #cfe0bd;border-radius:6px;padding:8px 10px;margin:8px 0 0}
+
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:18px}.dialogbody{padding:20px 22px}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Ledger Parity — project hub</strong><br><small>RATIFIED 2026-10-02 · every decision as recommended (D1–D7, D7a, D7b) · build prompts written</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Round 1 2026-10-01 · round 2 2026-10-02 · ratified 2026-10-02">Design</li>
+    <li class="stage current" title="Build prompts written 2026-10-02: LEDGER_PARITY_SERVER_PROMPT.md, LEDGER_PARITY_SCREENS_PROMPT.md">Plan</li>
+    <li class="stage" title="—">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="fitToggle" aria-pressed="false">Fit to width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Mockup screens" id="walkNav">
+    <a href="#s-today">1 · Both today</a>
+    <a href="#s-coach">2 · Coach Ledger</a>
+    <a href="#s-club">3 · Club Ledger</a>
+    <a href="#s-window">4 · A row from another tab</a>
+    <a href="#s-phone">5 · Phone</a>
+    <a href="#s-payees">6 · Payees</a>
+    <a href="#s-tools">7 · Tools</a>
+    <a href="#s-shared">8 · Shared payees</a>
+    <a href="#s-kept">9 · What stays different</a>
+  </nav>
+  <div class="frame" id="frame">
+
+    <!-- 1 · BOTH TODAY -->
+    <section class="screen" id="s-today">
+      <div class="eyebrow">Screen 1 · the two Ledgers as they are</div>
+      <h1 tabindex="-1">Two Ledgers that were ruled to read alike</h1>
+      <p class="sub lead">On 2026-09-30 you ruled that the club’s book reads exactly like the coach’s Ledger, with two deliberate differences. Laid side by side, five more differences show up that nobody decided. Each numbered marker opens what the screen does today and what the proposal changes.</p>
+      <ul class="difflist" aria-label="The five undecided differences">
+        <li><button type="button" class="n" data-finding="D1" data-here="Listed on screen 1.">1</button><span><strong>Row dates.</strong> “Sep 1, 2026” on the coach’s, “Aug 12” on the club’s.</span></li>
+        <li><button type="button" class="n" data-finding="D2" data-here="Listed on screen 1.">2</button><span><strong>Balance rows.</strong> The club’s say which day they stand on; the coach’s don’t.</span></li>
+        <li><button type="button" class="n" data-finding="D3" data-here="Listed on screen 1.">3</button><span><strong>How a row opens.</strong> One arrow on the club’s; a pencil or a worded button on the coach’s.</span></li>
+        <li><button type="button" class="n" data-finding="D4" data-here="Listed on screen 1.">4</button><span><strong>Phone cards.</strong> Two different card layouts for the same kind of row.</span></li>
+        <li><button type="button" class="n" data-finding="D5" data-here="Listed on screen 1.">5</button><span><strong>Payees.</strong> The club can tidy its payee list; a team can’t tidy its own.</span></li>
+      </ul>
+      <div class="spec">
+        <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Money › Ledger</h3><span class="aside">UAT Test Team, 1440 × 1000, warm theme, live 2026-10-01</span></div>
+        <div class="scroller"><div class="shot" data-shot="coach-desk-before"><img src="ledger-parity/coach-desk-before.jpg" alt="The coaches portal Money hub on the Ledger tab: a register with dates such as Sep 1, 2026, a Starting balance row with no date, and a last column of pencil buttons and worded buttons such as Player Dues and Club." width="1440" height="1000"></div></div>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl before">Today</span><h3>Club · Accounting › Ledger</h3><span class="aside">UAT Rep Club General ledger, Date set to Last 90 days, 1440 × 1000, live 2026-10-01</span></div>
+        <div class="scroller"><div class="shot" data-shot="club-desk-before"><img src="ledger-parity/club-desk-before.jpg" alt="The club admin's Accounting page on the Ledger tab: dates such as Aug 12, a Starting balance · Jul 3 row, bold names, and one arrow at the end of every row." width="1440" height="1000"></div></div>
+      </div>
+      <p class="caption"><strong>Sizes are the same.</strong> Measured at one window width, both tables print 12px text and 28–29px rows. The club’s page is about 70px narrower, so its longer descriptions wrap to two lines more often. Nothing in this project changes either size.</p>
+    </section>
+
+    <!-- 2 · COACH LEDGER -->
+    <section class="screen" id="s-coach" hidden>
+      <div class="eyebrow">Screen 2 · decisions 1, 2, 3 and 5 on the coach’s Ledger</div>
+      <h1 tabindex="-1">The coach’s Ledger, before and after</h1>
+      <p class="sub lead">The after frame is the live page with the four changes applied in it, so nothing here is redrawn by hand. Green markers show where each change lands.</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Money › Ledger</h3></div>
+        <div class="scroller"><div class="shot" data-shot="coach-desk-before"><img src="ledger-parity/coach-desk-before.jpg" alt="The coach's Ledger today." width="1440" height="1000"></div></div>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>Coach · Money › Ledger</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D1" data-here="Every row date reads Sep 1, Oct 1.">fixes 1</button><button type="button" class="fl fix" data-finding="D2" data-here="Starting balance · Sep 1, 2026 and Ending balance · Oct 31, 2026 (the window the Date filter opens on today).">fixes 2</button><button type="button" class="fl fix" data-finding="D3" data-here="The pencils and the Player Dues / Club buttons are gone from the last column; every row ends in one arrow and its name is bold.">fixes 3</button><button type="button" class="fl fix" data-finding="D5" data-here="A Payees button beside Export. Round 2 (D6, screen 7) moves it behind Tools.">fixes 5</button></span></div>
+        <div class="scroller"><div class="shot" data-shot="coach-desk-after" data-fix="1"><img src="ledger-parity/coach-desk-after.jpg" alt="The coach's Ledger proposed: dates without the year, dated Starting and Ending balance rows, bold names, one arrow at the end of every row, and a Payees button beside Export." width="1440" height="1000"></div></div>
+        <p class="caption"><strong>Superseded in round 2:</strong> the Payees button drawn here moves behind a Tools menu (D6, screen 7), which also draws the whole proposed coach Ledger in one frame.</p>
+        <p class="caption"><strong>Unchanged, on purpose:</strong> the coloured edge on each row (paid, scheduled, overdue), the Item column, the Tags filter and Cash on hand (screen 7 says why). The two italic rows at the top are unpaid installments; on those rows a <strong>Record</strong> button would sit beside the arrow, the one button a ledger row keeps (ruled 2026-09-04). This fixture’s two are the club’s bill and a family’s dues, not one of the team’s own bills, so neither shows one here.</p>
+      </div>
+    </section>
+
+    <!-- 3 · CLUB LEDGER -->
+    <section class="screen" id="s-club" hidden>
+      <div class="eyebrow">Screen 3 · decision 2 on the club’s Ledger</div>
+      <h1 tabindex="-1">The club’s Ledger changes in one place</h1>
+      <p class="sub lead">The club’s book already does decisions 1 and 3. It gains the year on its balance rows, so both books state their period the same way, and its note under the table goes, because the dated balance rows now say what it explains.</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl before">Today</span><h3>Club · Accounting › Ledger</h3></div>
+        <div class="scroller"><div class="shot" data-shot="club-desk-before"><img src="ledger-parity/club-desk-before.jpg" alt="The club's Ledger today." width="1440" height="1000"></div></div>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>Club · Accounting › Ledger</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D2" data-here="Starting balance · Jul 3, 2026 and Ending balance · Oct 1, 2026. The note under the table (Oldest at the top, as a bank statement reads…) is removed in the build; it is still on this frame.">fixes 2</button></span></div>
+        <div class="scroller"><div class="shot" data-shot="club-desk-after" data-fix="1"><img src="ledger-parity/club-desk-after.jpg" alt="The club's Ledger proposed: the Starting and Ending balance rows carry the year." width="1440" height="1000"></div></div>
+      </div>
+    </section>
+
+    <!-- 4 · A ROW FROM ANOTHER TAB -->
+    <section class="screen" id="s-window" hidden>
+      <div class="eyebrow">Screen 4 · decision 3, what a click opens</div>
+      <h1 tabindex="-1">A row that came from another tab opens a window that says where it lives</h1>
+      <p class="sub lead">On the coach’s Ledger, a dues payment, money a fundraiser brought in or a payment to the club is written by another tab. Today those rows don’t open at all; a worded button in the last cell takes you to that tab. Under decision 3 the row itself opens, and what it opens is the window the club already shows for a line another screen wrote.</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl ref">The pattern, live on the club</span><h3>A line an allocation wrote</h3><button type="button" class="fl fix" data-finding="D3" data-here="The club's window for an allocation line: the facts, one sentence on where it is changed, and one button to go there.">fixes 3</button></div>
+        <div class="scroller"><div class="shot"><img src="ledger-parity/club-line-window.jpg" alt="A window over the club's Ledger titled Allocation received · 15U AAA · Diamond fees 2026, 1 of 3, listing Amount, Category, How it came, On, Recorded by and The team's side, a sentence saying the line was written when the payment was recorded and how to change it, and buttons Close and Open the allocation." width="1440" height="1000"></div></div>
+        <p class="caption"><strong>The coach’s version, row by row:</strong> a <em>Dues payment · Avery Test</em> row opens “Dues payment · Oct 1”, with the amount, category, the family and how it was paid, the sentence “Recorded on Player Dues. Change it there, and the Ledger follows.” and the button <strong>Open Player Dues</strong>. A fundraiser’s row names Fundraising; a payment to the club names Club. A typed entry or a bill opens exactly as it does today. <span class="mk" data-k="new" data-note="The coach's portal has no read window for a ledger row today: a derived row is a link to its tab. The window is new to the coach and is the club's existing window, shared rather than copied.">New</span></p>
+      </div>
+    </section>
+
+    <!-- 5 · PHONE -->
+    <section class="screen" id="s-phone" hidden>
+      <div class="eyebrow">Screen 5 · decision 4 on a phone</div>
+      <h1 tabindex="-1">One card for a ledger row, on both phones</h1>
+      <p class="sub lead">The coach’s phone card is the older of the two. The club’s was built on 2026-10-01 to the written standard (a card per entry, register K-25). Under decision 4 the coach’s cards take the club’s shape, so the right-hand frame is the target layout.</p>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Ledger, 390px</h3><button type="button" class="fl" data-finding="D4" data-here="Slanted labels, the date in italics, a full-width Club button inside the card, and the starting balance in a grey box inside a card.">4</button></div>
+          <div class="scroller"><div class="shot phone"><img src="ledger-parity/coach-phone-before.jpg" alt="The coach's Ledger on a phone: a card with italic DATE label, the row text, an Overdue chip, labelled lines, and a large Club button." width="390" height="844"></div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl ref">The target shape, live on the club</span><h3>Club · Ledger, 390px</h3><button type="button" class="fl fix" data-finding="D4" data-here="Date top right, the bold name with its caption under it, labelled lines, one corner arrow, and the balance lines as plain lines between the cards.">fixes 4</button></div>
+          <div class="scroller"><div class="shot phone"><img src="ledger-parity/club-phone.jpg" alt="The club's Ledger on a phone: a plain Starting balance line, then cards with the date top right, a bold name, a caption, labelled lines and a corner arrow." width="390" height="844"></div></div>
+        </div>
+      </div>
+      <p class="caption">The first club card is grey only because the capture’s pointer rested on it. On the coach’s card, an unpaid installment keeps its <strong>Record</strong> button, the one button a ledger row keeps.</p>
+    </section>
+
+    <!-- 6 · PAYEES -->
+    <section class="screen" id="s-payees" hidden>
+      <div class="eyebrow">Screen 6 · decision 5</div>
+      <h1 tabindex="-1">Every team can tidy its own payees</h1>
+      <p class="sub lead">Each team has its own payee list. A coach can add a payee while entering money and can never rename or merge one. The club got this page in Stage 3a for its own list. Under decision 5 the coach’s Money gets the same page for the team’s list, opened from Tools (D6, screen 7). <strong>Corrected in round 2:</strong> in a club, a coach’s picker also lists every one of the club’s payees today, under “Organization”; decision 7 (screen 8) changes that.</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl ref">The page, live on the club</span><h3>Accounting › Ledger › Payees</h3><button type="button" class="fl fix" data-finding="D5" data-here="The club's Payees page: each payee with how many entries name it and when it was last used. A payee opens to rename it or merge it into another; one an entry names is never deleted.">fixes 5</button></div>
+        <div class="scroller"><div class="shot"><img src="ledger-parity/club-payees.jpg" alt="The club's Payees page: a back arrow to Ledger, the title Payees, a table of Mizuno Canada, Mizuno Canada Ltd. and Town of Milton with their entry counts and last-used dates, and a New payee button." width="1440" height="1000"></div></div>
+        <p class="caption"><strong>The coach’s version:</strong> the same page under Money, its back arrow to <strong>Ledger</strong>, listing the team’s payees only, with the note “The team’s payees only: the club’s are the club’s.” Anyone who can enter the team’s money can rename or merge. On a phone the door sits at the foot of the View menu, as the club’s sits in its Book menu. The payee picker in the money form gains a last row, <strong>Manage payees</strong>. <span class="mk" data-k="new" data-note="A coach has no way to rename or merge a payee today; the only routes a coach can reach list and create them.">New</span></p>
+      </div>
+    </section>
+
+    <!-- 7 · TOOLS (D6) -->
+    <section class="screen" id="s-tools" hidden>
+      <div class="eyebrow">Screen 7 · decision 6, where Payees lives</div>
+      <h1 tabindex="-1">Payees sits behind Tools, and at the foot of the payee picker</h1>
+      <p class="sub lead">A tab is a view of the book you work in (ruled 2026-09-30); Payees is a list you tidy a few times a season, so it is not a tab. The 2026-10-01 ruling puts rare tools behind <strong>Tools (⋯)</strong>. Both Ledgers end with the same toolbar: the book or view menu, Export, Tools, then the one lime add. The payee picker’s last row, <strong>Manage payees…</strong>, is the other door, where a duplicate is noticed (screen 8 draws it).</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>Club · Accounting › Ledger, Tools open</h3><button type="button" class="fl fix" data-finding="D6" data-here="Tools holds Transfer (this book) and Payees (the club’s lists). The Payees and Transfer buttons leave the toolbar.">fixes 6</button></div>
+        <div class="scroller"><div class="shot" data-shot="club-tools" data-fix="1"><img src="ledger-parity/club-tools.jpg" alt="The club's Ledger toolbar reading Book, Export, Tools and Add entry, with the Tools menu open listing Transfer under This book and Payees under The club's lists." width="1440" height="1000"></div></div>
+        <p class="caption"><strong>Transfer moves in too:</strong> it is a rare tool on a club book. The Payees button drawn in round 1, and built on dev 2026-10-01, moves here when this is built.</p>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>Coach · Money › Ledger, the whole proposal in one frame</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D6" data-here="View, Export, Tools, Add a bill. Tools holds Payees, under The team’s lists.">fixes 6</button><button type="button" class="fl fix" data-finding="D1" data-here="Day-only row dates.">fixes 1</button><button type="button" class="fl fix" data-finding="D2" data-here="Starting balance · Sep 1, 2026 and Ending balance · Oct 31, 2026.">fixes 2</button><button type="button" class="fl fix" data-finding="D3" data-here="One arrow on every row; the names bold.">fixes 3</button></span></div>
+        <div class="scroller"><div class="shot" data-shot="coach-tools" data-fix="1"><img src="ledger-parity/coach-tools.jpg" alt="The coach's Ledger proposed in full: View, Export, Tools and Add a bill, with Tools open listing Payees; day-only dates, dated balance rows, bold names and one arrow per row." width="1440" height="1000"></div></div>
+        <p class="caption">The Tools menu is the portal’s own menu (the one Import opens), so it carries a heading per group. It holds one tool today; it is where the next rare coach tool goes rather than a new button.</p>
+      </div>
+    </section>
+
+    <!-- 8 · SHARED PAYEES (D7) -->
+    <section class="screen" id="s-shared" hidden>
+      <div class="eyebrow">Screen 8 · decision 7, shared payees</div>
+      <h1 tabindex="-1">The club chooses which payees its teams use, and sees what the teams recorded paying them</h1>
+      <p class="sub lead">Found while drawing: in a club, every coach’s picker already lists <strong>every</strong> club payee, under “Organization”, with no choice for the club and no notice to the coach. Decision 7 makes sharing a choice and makes it visible. It was logged with /strategy on 2026-10-02 because it widens what a club can see of a team’s money.</p>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Add a bill › Payee</h3><button type="button" class="fl" data-finding="D7" data-here="ORGANIZATION lists all three of the club’s payees, including the two spellings of Mizuno, with nothing telling the coach whose they are or who sees the payment.">7</button></div>
+          <div class="scroller"><div class="shot" data-shot="coach-picker-before"><img src="ledger-parity/coach-picker-before.jpg" alt="The coach's Add a bill form with the payee picker open, listing Organization: Mizuno Canada, Mizuno Canada Ltd., Town of Milton." width="1440" height="1000"></div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>Coach · Add a bill › Payee</h3><span class="chiprow"><button type="button" class="fl fix" data-finding="D7" data-here="Shared by your club: only the payees the club chose, in the club’s blue, under one line saying the club sees payments to them.">fixes 7</button><button type="button" class="fl fix" data-finding="D6" data-here="Manage payees… as the list’s last row.">fixes 6</button></span></div>
+          <div class="scroller"><div class="shot" data-shot="coach-picker-after" data-fix="1"><img src="ledger-parity/coach-picker-after.jpg" alt="The same picker proposed: Shared by your club, with the line Your club sees payments to these payees, Ace Pitching Academy and Town of Milton in blue, and Manage payees as the last row." width="1440" height="1000"></div></div>
+        </div>
+      </div>
+      <p class="caption">“Shared by your club” is the form’s own word for the club’s colour, already in the tag legend under the picker. Ace Pitching Academy is an example payee added for the drawing.</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>Club · Accounting › Payees</h3><button type="button" class="fl fix" data-finding="D7" data-here="A Teams column: Shared with teams, or The club’s own.">fixes 7</button></div>
+        <div class="scroller"><div class="shot" data-shot="club-payees-shared" data-fix="1"><img src="ledger-parity/club-payees-shared.jpg" alt="The club's Payees list with a Teams column: Ace Pitching Academy and Town of Milton marked Shared with teams; the two Mizuno payees marked The club's own." width="1440" height="1000"></div></div>
+        <p class="caption">The note under the table changes with it: today it says “The club’s payees only: a team’s payees are its coaches’.”</p>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>A shared payee’s window</h3><span class="mk" data-k="new" data-note="The report is Stage 3b scope, beside the club’s other per-team reads; the switch and the sharing ride with this project.">3b report</span></div>
+        <div class="scroller"><div class="shot" data-shot="club-payee-shared" data-fix="1"><img src="ledger-parity/club-payee-shared.jpg" alt="A payee window for Ace Pitching Academy: the name, a Shared with teams switch turned on with its explanation, and What the teams recorded: 9U AA $350.00 Sep 4, 11U AA $350.00 Sep 9, then Nothing recorded for the other seven teams, and a note that it is what each team recorded, not proof of payment." width="1440" height="1000"></div></div>
+        <p class="caption">Team names are the test club’s nine teams; the two amounts are examples. A team <strong>merges its own duplicate into the club’s</strong> on its Payees page (decision 5): the payee it keeps can be one of the club’s shared payees, listed first and marked as the club’s.</p>
+      </div>
+      <h2>Two transition rules to decide</h2>
+      <ul class="difflist">
+        <li><button type="button" class="n" data-finding="D7a" data-here="Asked on screen 8.">7a</button><span><strong>No retroactive view.</strong> The club sees only payments recorded after the picker began saying the club sees them. Payments made under today’s silent “Organization” heading never surface.</span></li>
+        <li><button type="button" class="n" data-finding="D7b" data-here="Asked on screen 8.">7b</button><span><strong>Nothing vanishes at launch.</strong> A club payee that any team has already used starts shared; every other club payee starts as the club’s own.</span></li>
+      </ul>
+    </section>
+
+    <!-- 9 · WHAT STAYS DIFFERENT -->
+    <section class="screen" id="s-kept" hidden>
+      <div class="eyebrow">Screen 9 · differences that stay, each with its reason</div>
+      <h1 tabindex="-1">What stays different, and why</h1>
+      <p class="sub lead">The table standard’s rule is that a difference between two tables is either written down with its reason or it is a bug. These are the ones with a reason; the build records them in the exception register so the next comparison starts from this list.</p>
+      <div class="tablewrap"><table class="kept">
+        <thead><tr><th>Difference</th><th>Coach</th><th>Club</th><th>Why it stays</th></tr></thead>
+        <tbody>
+          <tr><td>The figure at the strip’s edge</td><td>Cash on hand</td><td>Balance</td><td>Ruled 2026-09-30: a club book’s balance is not the club’s cash.</td></tr>
+          <tr><td>The Date filter opens on</td><td>Around today</td><td>This month</td><td>Ruled 2026-09-30: a club book carries no money still to come, and a treasurer works by the month.</td></tr>
+          <tr><td>Item column, Tags filter</td><td>Yes</td><td>No</td><td>A club entry carries no budget item and no tags. Whether it should is Stage 3b’s question (C09).</td></tr>
+          <tr><td>The menu left of the toolbar</td><td>View (three views of one book)</td><td>Book (several books)</td><td>Different jobs: a team has one book; a club has several.</td></tr>
+          <tr><td>Transfer</td><td>No</td><td>Yes</td><td>Transfer moves money between the club’s own books. A team has one book.</td></tr>
+          <tr><td>Page header</td><td>Icon, “Money”, Record and Import</td><td>“Accounting”, no icon, no buttons</td><td>Each portal’s header rule: the coach’s hub header carries the hub’s own doors; the admin’s draws no icon and keeps a create in the tab’s toolbar.</td></tr>
+          <tr><td>Coloured edge on a row</td><td>Paid, scheduled, overdue</td><td>None</td><td>A coach’s row can be scheduled or overdue. A club line is posted, pending or void, and pending carries its own chip.</td></tr>
+          <tr><td>“No team cash” chip</td><td>Yes</td><td>No</td><td>A family paying a team bill directly. The club’s book has no such line.</td></tr>
+          <tr><td>Page width</td><td>About 1200px</td><td>About 1090px</td><td>Each portal’s page width. The club’s longer descriptions wrap a little more often.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<!-- DECISIONS -->
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">Ratified 2026-10-02. Owner: “I agree with your recommendations on D1-D7.” Every ask below was ruled as recommended, D7a and D7b included; the recommendation under each is what gets built.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<!-- PM BRIEF -->
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Ledger Parity</h1>
+  <h2>What changes</h2>
+  <p><strong>For a coach</strong>, on Money › Ledger:</p>
+  <ul>
+    <li>Every row opens when clicked, and ends in one arrow. A row that came from Player Dues, Fundraising or Club opens a short window that says where it is changed, with one button to go there.</li>
+    <li>Rows show the day (“Oct 1”); the Starting and Ending balance lines carry the full dates of the window.</li>
+    <li>On a phone, each row is the same clean card the club’s treasurer sees.</li>
+    <li>A Payees page lets the team rename a payee or merge two spellings into one. It opens from a Tools menu on the Ledger and from the payee picker’s last row.</li>
+    <li>The payee picker shows only the payees the club chose to share, under “Shared by your club”, with one line saying the club sees payments to them.</li>
+  </ul>
+  <p><strong>For a club treasurer</strong>: the balance lines gain the year; Transfer and Payees move behind a Tools menu; each club payee can be shared with the teams or kept as the club’s own; and a shared payee shows what each team recorded paying it (with Stage 3b).</p>
+  <p><strong>Who sees what:</strong> anyone who can read the team’s money can open every row and every window; renaming and merging payees is for those who can enter the team’s money. The club’s own payees stay the club’s to manage.</p>
+  <h2>Why it matters</h2>
+  <p>You ruled on 2026-09-30 that the club’s book reads exactly like the coach’s. A side-by-side check found five more differences nobody chose, and in four of them it is the coach’s Ledger, the portal you named the benchmark, that has drifted from the product’s own written rules. A treasurer who also coaches reads the same kind of book two ways today.</p>
+  <h2>Customer impact</h2>
+  <p>Every team that uses Money sees decisions 1 to 4 on its most-used money screen; club treasurers see one small change. Without decision 5, a duplicate payee on a team’s books stays a duplicate forever, splitting its spending in two on every report that groups by payee.</p>
+  <h2>Priority</h2>
+  <p>Medium. Recommended after the §255 walks close and before Stage 3b, which adds per-team figures to the club’s side and would otherwise build on two different ledgers.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A screen-by-screen comparison of the two Ledgers finds no difference outside the list on screen 7.</li>
+    <li>No ledger row on either portal carries a button except Record on an unpaid installment.</li>
+    <li>A team with two spellings of one payee can merge them in under a minute, and its reports then show one payee.</li>
+  </ul>
+</section>
+
+<!-- FULL PLAN -->
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>Ledger Parity — plan</h1>
+  <h2>Problem and context</h2>
+  <p>The club’s Ledger (Club Tier Stage 3a, ruled 2026-09-30, Ask 6) was built to read exactly like the coach’s, with two deliberate differences: the figure is called Balance, and the Date filter opens on This month. A comparison of the two screens on 2026-10-01, read from the code and measured in the browser, found five more differences with no recorded reason. The plan source is <code>docs/projects/active/LEDGER_PARITY_PLAN.md</code>.</p>
+  <h2>The decisions</h2>
+  <p><strong>D1 — Row dates: the statement convention.</strong> Rows print the day only, on both portals; the year is said once, on the balance rows (D2).</p>
+  <p><strong>D2 — The balance rows name their dates.</strong> Both portals: “Starting balance · Sep 1, 2026” and “Ending balance · Oct 31, 2026”. The club’s note under its table goes.</p>
+  <p><strong>D3 — A row opens from anywhere; one arrow.</strong> On the coach’s Ledger every row opens. A typed entry or a bill opens as today. A row another tab wrote opens a read window naming its home, with one button to it: the club’s window for an allocation line, shared rather than copied. The pencil and the worded buttons leave the cell; the name is bold; Record stays beside the arrow on an unpaid installment (ruled 2026-09-04).</p>
+  <p><strong>D4 — One phone card.</strong> The coach’s phone card takes the club’s card recipe (register K-25), and the balance lines become plain lines between the cards. The recipe moves to the shared kit so the two cannot drift again.</p>
+  <p><strong>D5 — Payees for every team.</strong> A Payees page under the coach’s Money for the team’s own list: rename, merge, never delete one in use. Doors: a Payees button beside Export, the View menu’s foot on a phone, and a last row in the payee picker.</p>
+  <p><strong>D6 — Payees behind Tools.</strong> Not a tab. Both Ledgers end with the book or view menu, Export, Tools (⋯), then the lime add. Tools holds Transfer (club) and Payees, grouped; a sheet on a phone. The payee picker’s last row is Manage payees… (the club’s picker already has it).</p>
+  <p><strong>D7 — Shared payees.</strong> The club marks a payee Shared with teams; only shared payees reach a team’s picker, under “Shared by your club”, with the notice line. A team can merge its own duplicate into a shared payee. The shared payee’s window shows what each team recorded paying it (Stage 3b). Logged with /strategy 2026-10-02 (it widens Club Tier D1 narrowly). Open: D7a (no retroactive view) and D7b (a payee already used starts shared).</p>
+  <div class="note"><strong>Out of scope.</strong> Everything on screen 7; the club’s side of Stage 3b; the window-footer ruling you still owe; the sizes of either table, which already match.</div>
+  <h2>Build notes</h2>
+  <ul>
+    <li>D1 and D2 are one date rule each, in one place per portal; the coach’s register and its Starting / Opening / Ending lines read the window the Date filter already holds.</li>
+    <li>D3: the read window for a derived row reads only what the row already carries (amount, category, date, who, method) and names its tab. It shows for read-only money assistants too: it reads, and its door is a link they can already follow.</li>
+    <li>D5: the team-scoped payee routes are new (list with entry counts, rename, merge), gated on the team’s money-write permission; merging repoints every entry that names the payee in one database step. The club already has that step for its own list (migration 315), so the build either widens it to a team’s list or adds its twin. That is a migration, and the data dictionary changes with it.</li>
+    <li>Guards: no ledger cell on either portal holds a button other than Record; both portals format a ledger date through one rule; the shared phone card is the only phone card the two Ledgers render.</li>
+    <li>Help: the coach’s Ledger articles (opening a row, the dates, Payees) and the club’s Ledger article (the note), by <code>/docs</code>. Demo tours: check any stop that points at a row’s pencil or worded button.</li>
+  </ul>
+  <h2>Rollout</h2>
+  <p>One build, D1 to D5 together, behind no flag. One migration if D5 needs a team-scope merge step; it goes to production before the promote that carries the page. A QA walk on this hub when it is built.</p>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+
+/* hub tabs */
+const HUBS=["mockup","decisions","brief","plan"];
+function showHub(which){HUBS.forEach(h=>{$("hub-"+h).hidden=h!==which});document.querySelectorAll("[data-hub]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.hub===which)))}
+document.querySelectorAll("[data-hub]").forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+/* true size (default) or fit to width; remembered per viewer */
+function setFit(on){$("frame").classList.toggle("fit",on);$("fitToggle").setAttribute("aria-pressed",String(on));$("fitToggle").textContent=on?"True size":"Fit to width";try{localStorage.setItem("ledger-parity-fit",on?"1":"0")}catch(e){}}
+$("fitToggle").onclick=()=>setFit(!$("frame").classList.contains("fit"));
+let fit=false;try{fit=localStorage.getItem("ledger-parity-fit")==="1"}catch(e){}
+setFit(fit);
+
+/* screen router */
+const intents={
+ "s-today":"Both Ledgers exactly as they render today, at true size, so every later frame can be read against them.",
+ "s-coach":"Four of the five decisions land on the coach’s Ledger; drawing them on the live page shows their combined effect on one screen.",
+ "s-club":"The club’s book already matches on dates and on how a row opens; it changes only where both portals must agree.",
+ "s-window":"Decision 3 removes the only door on rows another tab wrote, so what a click opens has to be shown, not described.",
+ "s-phone":"The phone is where the two Ledgers differ most, and the club’s card is the one already built to the standard.",
+ "s-payees":"The page already exists for the club; the decision is whether every team gets it for its own list.",
+ "s-tools":"A rare tool gets the Tools menu your 2026-10-01 ruling made the place for it, so the two Ledgers end with one toolbar.",
+ "s-shared":"Sharing already happens silently; the drawing shows it becoming a choice the club makes and a line the coach can read.",
+ "s-kept":"A difference is either written down with its reason or it is a bug; this is the written-down list."};
+function showScreen(){const id=(location.hash.slice(1)&&$(location.hash.slice(1))&&$(location.hash.slice(1)).classList.contains("screen"))?location.hash.slice(1):"s-today";document.querySelectorAll(".screen").forEach(el=>el.hidden=el.id!==id);document.querySelectorAll(".walk a").forEach(a=>a.setAttribute("aria-current",a.hash==="#"+id?"page":"false"));$("intent").innerHTML=intents[id]?"<strong>Design intent:</strong> "+esc(intents[id]):"";const h=$(id).querySelector("h1");if(h)h.focus({preventScroll:true})}
+window.addEventListener("hashchange",()=>{showHub("mockup");showScreen()});showScreen();
+
+/* the decisions behind every marker */
+const FINDINGS={
+ "D1":{t:"Row dates: the statement convention",
+  now:"The coach’s Ledger prints the year on every row (“Sep 1, 2026”), which is the date tool’s default. The club’s prints the day only (“Aug 12”), as the rest of the club’s screens do. Neither was chosen against the other.",
+  fix:"Both print the day only on a row. The year is stated once, on the balance rows (decision 2), the way a bank statement states its period at the top and bottom. A window that crosses New Year still reads in order, because rows run oldest first between two dated lines."},
+ "D2":{t:"The balance rows name their dates",
+  now:"The club’s Starting and Ending balance rows say which day they stand on (“Starting balance · Jul 3”), without the year, and a note under the table explains the order. The coach’s say only “Starting balance” and “Ending balance”, so the window’s edges live only in the Date filter.",
+  fix:"Both portals: “Starting balance · Sep 1, 2026” and “Ending balance · Oct 31, 2026”. The year lives here and nowhere else in the table. The club’s note goes, because the dated rows now say what it explained."},
+ "D3":{t:"A row opens from anywhere; one arrow at the end",
+  now:"On the club’s Ledger the whole row opens a window and the last column holds one arrow (your no-buttons-in-cells ruling, 2026-09-28). On the coach’s, the last column holds a pencil, which opens the same entry a click on the row already opens, or a worded button such as “Player Dues →” or “Club →” on a row another tab wrote; those rows do not open on a click at all. The written table standard allows neither, and its own rule is that a difference not written down is a bug.",
+  fix:"Every coach row opens on a click, and the last column is one arrow. A typed entry or a bill opens as today. A row another tab wrote opens a short window with its facts, one sentence on where it is changed, and one button to go there (screen 4). The name is bold, as on the club’s. Record stays beside the arrow on an unpaid installment, the one ruled exception (2026-09-04)."},
+ "D4":{t:"One phone card for a ledger row",
+  now:"The coach’s phone card has slanted labels, the date in italics on scheduled rows, a full-width pencil or “Club →” button in every card, and the starting balance in a grey box inside a card. The club’s card, built 2026-10-01 to the standard (register K-25), has the date top right, a bold name with its caption, labelled lines, one corner arrow, and the balance lines as plain lines between cards.",
+  fix:"The coach’s cards take the club’s shape, and the card recipe moves to the shared kit so the two portals draw one card. The whole card opens (decision 3); an unpaid installment’s card keeps Record."},
+ "D5":{t:"Every team can tidy its own payees",
+  now:"Each team has its own payee list. A coach can add a payee while entering money but cannot rename or merge one, so “Mizuno Canada” and “Mizuno Canada Ltd.” stay two payees on the team’s books, and any report by payee splits their spending in two. The club’s Payees page (Stage 3a) manages the club’s own list only. (In a club, the club’s payees also show in every team’s picker today: decision 7.)",
+  fix:"The coach’s Money gets the same Payees page for the team’s list: each payee with its entry count and last use, rename, merge (into one of the club’s shared payees too), and never a delete while an entry names it. Its doors are decision 6’s. Anyone who can enter the team’s money can use it."},
+ "D6":{t:"Payees lives behind Tools, not in a tab or a toolbar button",
+  now:"Round 1 drew Payees as a white button beside Export on both Ledgers (the club’s is built on dev). On the club’s Ledger, Transfer is a button too. Neither is used more than a few times a season.",
+  fix:"Both Ledgers end with one toolbar: the book or view menu, Export, Tools (⋯), then the lime add. Tools holds Transfer (club only) and Payees, grouped under headings; on a phone it is a sheet. The payee picker’s last row is Manage payees…. Not a tab: a tab is a view of the book you work in, and Payees is a list you tidy."},
+ "D7":{t:"The club chooses which payees its teams use, and sees what they recorded paying them",
+  now:"In a club, every coach’s payee picker lists every one of the club’s payees under “Organization”, with no choice for the club and no notice to the coach. The club cannot see what any team paid a vendor.",
+  fix:"The club marks a payee Shared with teams; only those appear in a team’s picker, under “Shared by your club”, with one line saying the club sees payments to them. A team can use one but never rename or merge it, and can merge its own duplicate into it. In the payee’s window the club sees what each team recorded paying it, which teams have recorded nothing, and that this is not proof of payment (the report is Stage 3b). Where the club pays the vendor and bills the teams, Allocations already answers who has paid."},
+ "D7a":{t:"No retroactive view",
+  now:"Teams may already have recorded payments to a club payee under today’s silent “Organization” heading, never told the club would see them.",
+  fix:"Recommended: the club’s view counts only payments recorded after the picker began saying the club sees them. The alternative, counting history too, gives the club a fuller picture on day one but shows it payments a coach made without the notice."},
+ "D7b":{t:"Nothing vanishes from a picker at launch",
+  now:"Every club payee is in every team’s picker today. Making sharing a choice would, if everything started unshared, take payees out of pickers mid-season.",
+  fix:"Recommended: at launch, a club payee that any team has already used starts shared; every other club payee starts as the club’s own. The club can unshare any of them afterwards."}
+};
+function modal(title,body){$("dialogtitle").textContent=title;$("dialogbody").innerHTML=body;$("dialog").showModal()}
+$("closeDialog").onclick=()=>$("dialog").close();
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal("Decision "+id.replace(/^D/,"")+" · "+f.t,"<div class=\"explain\"><h3>What the screen does today</h3><p>"+esc(f.now)+"</p>"+(here?"<h3>Where you are looking</h3><p class=\"here\">"+esc(here)+"</p>":"")+"<h3>What the proposal does</h3><p>"+esc(f.fix)+"</p><p><button class=\"button\" type=\"button\" data-goto=\"decisions\">See the ask on the Decisions tab →</button></p></div>")}
+const KIND={new:"New",re:"Restyled from today",un:"Unchanged from today"};
+function explainTag(el){modal(KIND[el.dataset.k]||"Tag","<div class=\"explain\"><p>"+esc(el.dataset.note||"")+"</p></div>")}
+document.querySelectorAll(".mk").forEach(el=>{el.setAttribute("role","button");el.tabIndex=0;el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();explainTag(el)}})});
+document.addEventListener("click",e=>{const tag=e.target.closest(".mk");if(tag){e.preventDefault();explainTag(tag);return}const el=e.target.closest("button");if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.goto){$("dialog").close();showHub(el.dataset.goto);window.scrollTo(0,0)}});
+
+/* markers on the live frames — positions measured on the page at capture (1440 × 1000 css px) */
+const W=1440,H=1000;
+const MARKERS={
+ "coach-desk-before":{"D1":{x:253,y:451,w:93,h:28},"D2":{x:253,y:385,w:944,h:25},"D3":{x:1277,y:604,w:130,h:47},"D3b":{x:1277,y:451,w:130,h:28},"D5":{x:1194,y:254,w:95,h:33}},
+ "coach-desk-after":{"D1":{x:253,y:437,w:57,h:27},"D2":{x:253,y:385,w:944,h:25},"D3":{x:1277,y:437,w:130,h:27},"D5":{x:1078,y:254,w:100,h:33}},
+ "club-desk-before":{"D1":{x:273,y:395,w:67,h:29},"D2":{x:273,y:370,w:943,h:25},"D3":{x:1315,y:395,w:44,h:29},"D5":{x:910,y:234,w:100,h:38}},
+ "club-desk-after":{"D2":{x:273,y:370,w:943,h:25}},
+ "club-tools":{"D6":{x:1124,y:234,w:109,h:38,top:1}},
+ "coach-tools":{"D6":{x:1173,y:254,w:108,h:33,top:1}},
+ "coach-picker-before":{"D7":{x:727,y:554,w:227,h:25}},
+ "coach-picker-after":{"D7":{x:727,y:554,w:227,h:25},"D6":{x:727,y:693,w:227,h:45}},
+ "club-payees-shared":{"D7":{x:974,y:248,w:329,h:33,top:1}},
+ "club-payee-shared":{"D7":{x:421,y:361,w:598,h:91},"D7r":{x:421,y:451,w:598,h:204}}
+};
+const HERE={
+ "coach-desk-before":{"D1":"Sep 10, 2026: every coach row carries the year.","D2":"STARTING BALANCE, with no date; the window’s edges live only in the Date filter.","D3":"A pencil that opens the same entry a click on the row already opens.","D3b":"Player Dues →: this row does not open on a click; the button is its only door.","D5":"Export and Add a bill; no way to reach the team’s payees."},
+ "coach-desk-after":{"D1":"Sep 10: the day only.","D2":"Starting balance · Sep 1, 2026.","D3":"One arrow; the whole row opens.","D5":"Payees, beside Export."},
+ "club-desk-before":{"D1":"Aug 12: the day only.","D2":"Starting balance · Jul 3: dated, without the year.","D3":"One arrow; the whole row opens a window.","D5":"Payees: the club’s own list."},
+ "club-desk-after":{"D2":"Starting balance · Jul 3, 2026."},
+ "club-tools":{"D6":"Tools, between Export and Add entry; Transfer and Payees inside."},
+ "coach-tools":{"D6":"Tools, between Export and Add a bill; Payees inside."},
+ "coach-picker-before":{"D7":"ORGANIZATION: every club payee, no choice, no notice."},
+ "coach-picker-after":{"D7":"Shared by your club, and the line saying the club sees these payments.","D6":"Manage payees… at the foot of the list."},
+ "club-payees-shared":{"D7":"Teams: Shared with teams, or The club’s own."},
+ "club-payee-shared":{"D7":"The switch that shares this payee with every team.","D7r":"What the teams recorded (Stage 3b): who, how much, when, and who has recorded nothing."}
+};
+document.querySelectorAll(".shot[data-shot]").forEach(shot=>{const key=shot.dataset.shot,set=MARKERS[key];if(!set)return;const fix=shot.dataset.fix==="1";
+ Object.entries(set).forEach(([k,r])=>{const d=k.replace(/(\d)[a-z]+$/,"$1");const b=document.createElement("button");b.type="button";b.className="pin"+(fix?" fix":"");b.textContent=d.replace(/^D/,"");b.dataset.finding=d;b.dataset.here=(HERE[key]||{})[k]||"";b.setAttribute("aria-label","Decision "+d.replace(/^D/,"")+": "+FINDINGS[d].t);
+  /* left of its element, except the last column's (decision 3), which sits just right of the cell so it never covers a figure */
+  const left=r.top?Math.min(W-28,r.x+r.w-14):(d==="D3"?Math.min(W-28,r.x+r.w+3):Math.max(2,r.x-30)),top=r.top?Math.max(2,r.y-20):r.y+r.h/2-13;b.style.left=(left/W*100)+"%";b.style.top=(top/H*100)+"%";shot.appendChild(b)})});
+
+/* Decisions */
+const DECISIONS=[
+ {date:"2026-10-01 · mockup round 1 · screens 2 and 3",ask:"D1 · Row dates: the day only, the year on the balance rows?",ruling:"accepted",label:"Accepted",why:FINDINGS.D1.now,rec:"Recommended: yes, on both portals. The alternative, the year on every row on both, is unambiguous but costs every row’s date column about 40px to say something the balance rows already say."},
+ {date:"2026-10-01 · mockup round 1 · screens 2 and 3",ask:"D2 · The balance rows carry their full dates, on both portals?",ruling:"accepted",label:"Accepted",why:FINDINGS.D2.now,rec:"Recommended: yes, and the club’s note under its table goes."},
+ {date:"2026-10-01 · mockup round 1 · screens 2 and 4",ask:"D3 · Coach rows open from anywhere, with one arrow and a read window for rows another tab wrote?",ruling:"accepted",label:"Accepted",why:FINDINGS.D3.now,rec:"Recommended: yes, as drawn, keeping Record beside the arrow on an unpaid installment. The alternative, a derived row that goes straight to its tab with no window, saves a click but hides where the row is going until it has gone."},
+ {date:"2026-10-01 · mockup round 1 · screen 5",ask:"D4 · The coach’s phone card takes the club’s card?",ruling:"accepted",label:"Accepted",why:FINDINGS.D4.now,rec:"Recommended: yes, with the card recipe moved to the shared kit so both portals draw one card."},
+ {date:"2026-10-01 · mockup round 1 · screen 6",ask:"D5 · A Payees page for every team’s own list?",ruling:"accepted",label:"Accepted",why:FINDINGS.D5.now,rec:"Recommended: yes, for anyone who can enter the team’s money, including merging a duplicate into one of the club’s shared payees. The club keeps managing the club’s list only."},
+ {date:"2026-10-02 · owner · drawn in round 2, screen 7",ask:"D6 · Payees: its own tab, or behind Tools?",ruling:"accepted",label:"Accepted",why:"Owner: “if the club manages its own payees, should we create its own tab (like fundraising) rather than a button in ledger?” Recommended and accepted (“I agree with your recommendations”): not a tab, because a tab is a view of the book you work in and Payees is a list you tidy; behind Tools (⋯) on both Ledgers, with Transfer, under your 2026-10-01 rare-tools ruling; and the picker’s last row, Manage payees…."},
+ {date:"2026-10-02 · owner + /strategy · drawn in round 2, screen 8",ask:"D7 · Can a club share payees with its teams, and see who has paid?",ruling:"accepted",label:"Accepted · logged with /strategy",why:"Owner: “can a club present payees to teams to use like they do for their drill library? … a club can at some point see how many teams have made their payment to a specific external instructor.” Accepted as recommended and logged in the Business Decisions Log (2026-10-02): the club chooses which payees are shared; the club sees only what teams recorded paying those payees, never a team’s own payees or other spending; the coach’s picker says so; it is not proof of payment; where the club bills the teams, Allocations already answers who has paid. The report lands with Stage 3b. Found while drawing: every club payee is already in every team’s picker today, silently, so this narrows and labels what exists."},
+ {date:"2026-10-02 · round 2, screen 8",ask:"D7a · The club’s view counts only payments recorded after coaches were told?",ruling:"accepted",label:"Accepted",why:FINDINGS.D7a.now,rec:FINDINGS.D7a.fix},
+ {date:"2026-10-02 · round 2, screen 8",ask:"D7b · At launch, a club payee any team already used starts shared?",ruling:"accepted",label:"Accepted",why:FINDINGS.D7b.now,rec:FINDINGS.D7b.fix}
+];
+$("decisionRows").innerHTML=DECISIONS.map(d=>"<div class=\"decisionrow\"><div class=\"dhead\"><strong>"+esc(d.ask)+"</strong><span class=\"tag "+d.ruling+"\">"+esc(d.label)+"</span></div><p class=\"meta\">"+esc(d.date)+"</p><p>"+esc(d.why)+"</p>"+(d.rec?"<p class=\"rec\">"+esc(d.rec)+"</p>":"")+"</div>").join("");
+</script>

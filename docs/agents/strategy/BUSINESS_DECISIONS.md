@@ -8,6 +8,33 @@
 
 ---
 
+### 2026-10-02 — A club can SHARE payees with its teams, and sees what its teams recorded paying to THOSE payees — nothing else of a team's spending
+**Status:** Decided (owner, 2026-10-02 — *"I agree with your recommendations, go ahead with strategy"*, on the Ledger Parity discussion; D7 on hub https://claude.ai/artifact/EQqEd3s4CBLbnrnPuUVAAo). **Nothing built**; the D6/D7 drawings are in review.
+
+**⚠ Today's behaviour, found while drawing (2026-10-02) — the decision NARROWS it:** in a club, every coach's payee picker already lists **all** of the club's payees (heading "Organization", above "This team"), with no choice for the club and no notice to the coach; a coach's new payee is saved to the team's own list. So "sharing" exists today, wholesale and silent. This decision makes it a **choice** and makes it **visible**.
+
+**Decision:**
+1. **Shared payees.** On a Club org, whoever holds the club's accounting (owner, treasurer, an admin with Accounting) chooses which of the club's payees are **shared with teams** — an external instructor, a facility. Only those appear in a team's payee picker, labelled as the club's (above the team's own), **usable but never renamed, merged or deleted by a team**; the rest stay the club's own. A team **merges its own duplicate into the club's shared payee**, so its past entries point at it too.
+2. **The club's view is narrow.** The club sees payments its teams **recorded** to payees **the club shared** — which teams, how much, when. **Never** a team's own payees, never any other team spending. It is shown as what each team recorded, **not proof of payment**.
+3. **Transparency in place of a second switch.** When a coach picks a shared payee, the picker says the club sees payments to it. Choosing the club's payee **is** the coach's consent, per payment; a coach who does not want the club to see a payment records it against their own payee. ⚠ A deliberate difference from the Club Shared Book (2026-08-04: an admin switch **and** a head-coach opt-in): that feature sends a team's private notes to **other teams**; this sends a payment line the coach chose to attach to **the club's own payee** to the club that arranged the vendor and already reads the team's per-team figures (D1).
+4. **Where the club pays the vendor and bills the teams, Allocations already answers "who has paid"** (Coming due, reminders, Received). The shared-payee view is for a vendor each team pays directly.
+6. **The two transition rules — DECIDED 2026-10-02** (owner: *"I agree with your recommendations on D1-D7"*, hub D7a/D7b): (a) the club's view counts only payments a team recorded **after** the picker began telling coaches the club sees them — a payment recorded under today's silent "Organization" heading never surfaces retroactively; (b) at launch, a club payee that any team has already used **starts shared**, so nothing a coach relies on vanishes from a picker mid-season; every other club payee starts unshared.
+5. **Packaging:** rides existing Club entitlements — sharing on the club's Accounting › Payees, the report in Accounting. **No price, band, SKU or feature-key change.** A standalone Premium Coaches Portal team has no club, so it keeps its own payees only — the ladder working as designed (drill-library precedent, 2026-08-01).
+
+**Rationale:** A club that arranges a shared vendor (an instructor, a diamond) needs to know which teams have paid without chasing each coach, and one shared name is what makes the answer countable — two spellings across twelve teams cannot be added up. Keeping the view to the club's own shared payees preserves D1's principle (team money is the coach's record; the club reads summaries), and makes the coach's choice of payee the visible, per-payment consent. Commercially it is a concrete reason Club is the plan that **coordinates** its teams' spending, compounding with every team on the plan. ⚠ **Pre-revenue hypothesis:** no customer has asked for it yet; the owner's own example is an external instructor paid team by team.
+
+**Affects:** **Club Tier structural decision D1** (2026-09-25, `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §5 — not in this log) is **widened narrowly**; Club Tier **Stage 3b** gains the shared-payee report beside the other per-team reads; **Ledger Parity** D5 (a Payees page for every team) gains merge-into-the-club's and D7; the club's Accounting › Payees gains the share switch; `PLAN_PRICING_FACTS.md` gains a Club inclusion line **at build, in the build's unit of work** (not before — the Facts doc never advertises what is not built).
+
+**Handoff:**
+HANDOFF → `/plan` — Ledger Parity: D6 (where Payees lives) and D7 (shared payees) drawn on the hub and added to `LEDGER_PARITY_PLAN.md` (this session). Club Tier plan: D1 note + the shared-payee report added to Stage 3b's scope (this session).
+HANDOFF → `/billing` — none now. At build, confirm the share switch and the report are reachable only on a Club org through the existing Accounting / rep-teams gates; add a feature key only if the build finds a non-Club org can reach either.
+HANDOFF → `/marketing` — at ship only: the picker's one sentence telling a coach the club sees payments to a shared payee, and the help wording. The Club card may then say clubs can share vendors with every team and see who has paid; **never imply the club sees a team's books or its other spending.**
+HANDOFF → `/docs` — at ship: the coach's payee picker and Payees page; the club's Payees page and the report.
+
+**Supersedes:** nothing in this log. **Amends** Club Tier D1 (2026-09-25), which lives in the Club Tier plan.
+
+---
+
 ### 2026-09-28 — The coach bridge: a coach's own team joins a club whole, the second "yes" moves it, and the coach's own subscription stops at once with no refund — every word says only "won't be charged again"
 **Status:** Decided (owner, 2026-09-28 — Club readiness Stage 2, Ask 2 *"finish it"*, ratified with the Stage 2 drawings (hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 v15); the billing clause in the owner's words: *"we don't need to refund them, they just don't need to get charged in the future, so we can leave it as cancel now with no refund, make sure the messaging doesn't mention refunds and focuses on how they will simply not get charged in the future"*). **Built on dev 2026-09-29** (`CLUB_TIER_STAGE2_TRANSFER_PROMPT.md`; migration 313 prod-owed); **not released**.
 **Decision:**
