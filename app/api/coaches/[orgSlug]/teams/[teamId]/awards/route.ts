@@ -13,7 +13,7 @@ import { denyUnless, canManageAwards } from '@/lib/coach-capabilities';
 import { tournamentToday, orgDayKey } from '@/lib/timezone';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
-import { describeAwardOccasion, awardEventKind, awardUnlockState } from '@/lib/rep-award-occasion';
+import { AWARD_FOR_WORDS, describeAwardOccasion, awardEventKind, awardUnlockState } from '@/lib/rep-award-occasion';
 import { formatPlayerFirstLast } from '@/lib/player-name';
 
 async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
@@ -129,7 +129,11 @@ export const POST = withObservability(async (req: Request,
   } else {
     tournamentLabel = typeof body.tournamentLabel === 'string' ? body.tournamentLabel.trim().slice(0, 80) || null : null;
     const requested = typeof body.awardedAt === 'string' ? body.awardedAt : '';
-    awardedAt = /^\d{4}-\d{2}-\d{2}$/.test(requested) ? requested : tournamentToday();
+    const today = tournamentToday();
+    awardedAt = /^\d{4}-\d{2}-\d{2}$/.test(requested) ? requested : today;
+    // The Give window's Date (Which game an award is for, 2026-10-02) can be set BACK to the day an
+    // occasion happened, never forward — an award for something that has not happened yet.
+    if (awardedAt > today) return NextResponse.json({ error: AWARD_FOR_WORDS.futureDate }, { status: 400 });
   }
 
   const note = typeof body.note === 'string' ? body.note.trim().slice(0, 200) || null : null;

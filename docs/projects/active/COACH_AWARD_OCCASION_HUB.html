@@ -1,0 +1,647 @@
+<title>Which Game an Award Is For</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,[role=button]:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:24px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0;max-width:72ch}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.hubactions button[aria-pressed=true]{background:var(--lime);color:#1c2417;border-color:var(--lime)}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 32px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a}
+.screen{padding:26px 32px 32px}
+.head{margin-bottom:18px}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:13px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+
+/* the window specimens are 500px (desk) or 390px (phone): side by side wherever they fit, stacked when they don't */
+.pair{display:flex;flex-direction:row;flex-wrap:wrap;gap:22px 28px}
+.side{min-width:0}
+.sidehead{display:flex;align-items:baseline;gap:10px;margin:0 0 8px;flex-wrap:wrap}
+.sidehead strong{font-size:13px;letter-spacing:1.2px;text-transform:uppercase}
+.scrollx{overflow-x:auto;padding-bottom:6px}
+.caption{font-size:13px;color:var(--muted);margin:14px 0 0;max-width:70ch}.caption strong{color:var(--ink)}
+
+/* clickable highlights (template rule 8) */
+.mk{display:inline-block;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:800 10px/1.4 system-ui,sans-serif;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;font-weight:700}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+.explain p{font-size:14px}.explain h3{margin:14px 0 4px;font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}.explain .here{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.explain .actions{margin-top:14px}
+
+/* what happened */
+.story{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:6px 0 18px}
+.step{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.step .time{font:700 13px/1 system-ui,sans-serif;color:var(--olive);letter-spacing:.4px}
+.step p{margin:6px 0 0;font-size:14px}
+.step .rec{margin-top:10px;font-size:13px;background:var(--soft);border-radius:6px;padding:8px 10px;color:var(--ink)}
+.facts{font-size:14px;margin:0 0 14px;padding-left:20px}.facts li{margin:0 0 6px}
+
+/* docs */
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage ul,.docpage ol{padding-left:22px;margin:0 0 14px}.docpage li{margin:0 0 6px}
+.docpage code{font:13px ui-monospace,Consolas,monospace;background:var(--soft);padding:1px 5px;border-radius:4px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.open{background:#f4ecd9;border-color:#e0c98a}
+.decisionrow .rec{font-size:14px;background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:8px 0 0}
+
+/* ================= THE PRODUCT (warm coaches portal tokens) ================= */
+.app{--p:#F8F4ED;--c:#FFFFFF;--i:#241E15;--is:#4A4235;--d:#615A54;--l:rgba(70,55,30,.12);--ls:rgba(70,55,30,.22);--o:#57651E;--os:rgba(87,101,30,.10);--r:#B03A22;--a:#8A5A12;--as:rgba(184,132,26,.12);font:15px/1.45 Inter,system-ui,sans-serif;color:var(--i)}
+.vp{background:#b9b3a8;border-radius:10px;position:relative}
+.vp.gmd{width:500px;padding:22px}
+.vp.gmp{width:390px;border-radius:26px;border:8px solid #1d1a15;padding:14px 0 0}
+.gm{background:var(--c);border-radius:12px;border:1px solid var(--l);box-shadow:0 8px 28px rgba(36,30,21,.14)}
+.vp.gmp .gm{border-radius:14px 14px 0 0}
+.gmhead{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--l)}
+.gmhead strong{font:700 22px/1 'Barlow Condensed',sans-serif}
+.x{font-size:22px;color:var(--is);line-height:1}
+.gmbody{padding:16px 22px;display:flex;flex-direction:column;gap:16px}
+.vp.gmp .gmhead,.vp.gmp .gmbody,.vp.gmp .gmfoot{padding-left:16px;padding-right:16px}
+.lbl{font:700 13px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--is);margin:0 0 8px}
+.lbl .req{color:var(--is);margin-left:2px}
+.for{font-size:14px;color:var(--d);margin:0}.for strong{color:var(--i)}
+.sel{border:1px solid var(--ls);border-radius:6px;padding:10px 12px;font-size:15px;background:var(--c);display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px}
+.sel .two{display:flex;flex-direction:column;line-height:1.3}.sel .two small{color:var(--d);font-size:13px}
+.sel.open{border-color:var(--o);box-shadow:0 0 0 2px var(--os)}
+.inp{border:1px solid var(--ls);border-radius:6px;padding:10px 12px;font-size:15px;background:var(--c);min-height:44px}
+.inp.ph{color:#8a837b}
+.tchips{display:flex;gap:8px;flex-wrap:wrap}
+.tchip{border:1px solid var(--ls);border-radius:999px;padding:7px 12px;font-size:14px;background:var(--c)}
+.tchip.on{background:var(--os);border-color:rgba(87,101,30,.55);font-weight:600}
+.tchip.new{border-style:dashed;color:var(--o)}
+.mlink{color:var(--o);font-size:14px;text-decoration:underline;text-underline-offset:3px}
+.ta{border:1px solid var(--ls);border-radius:6px;padding:10px 12px;font-size:14px;color:var(--i);min-height:70px}
+.ta.ph{color:#8a837b}
+.hint{font-size:13px;color:var(--d);margin:6px 0 0}
+.err{color:var(--r);font-size:14px;margin:0}
+.gmfoot{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--l)}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;border:1px solid var(--ls);border-radius:6px;background:var(--c);color:var(--i);padding:8px 14px;font-weight:600;font-size:15px}
+.btn.primary{background:#57651E;color:#fff;border-color:#57651E}
+/* the For list, open */
+.list{border:1px solid var(--ls);border-radius:8px;background:var(--c);box-shadow:0 10px 26px rgba(36,30,21,.16);margin-top:6px;overflow:hidden}
+.opt{display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 12px;border-bottom:1px solid var(--l);font-size:15px}
+.opt .two{display:flex;flex-direction:column;line-height:1.3;margin-right:auto}.opt .two small{color:var(--d);font-size:13px}
+.opt.on{background:var(--os)}.opt .tick{color:var(--o);font-weight:700;width:16px}
+.opt.off{color:var(--d)}.opt.off .two small{color:var(--a);font-weight:600}
+.opt.more{justify-content:center;color:var(--d);font-size:13px;min-height:40px}
+.optsep{height:6px;background:#F4F1EC;border-bottom:1px solid var(--l)}
+/* the double-check */
+.amber{display:flex;gap:10px;align-items:flex-start;background:var(--as);border:1px solid rgba(138,90,18,.28);border-left:3px solid var(--a);border-radius:6px;padding:10px 12px;font-size:14px;color:var(--i)}
+.amber .ic{color:var(--a);font-weight:800}
+.amber small{display:block;color:var(--is);font-size:13px;margin-top:3px}
+/* leaderboard specimen */
+.lb{background:var(--p);border:1px solid var(--l);border-radius:10px;padding:14px 16px}
+.lbrow{display:flex;align-items:center;gap:14px;background:var(--c);border:1px solid var(--l);border-radius:8px;padding:10px 14px;font-size:15px}
+.lbrow .nm{margin-right:auto;font-weight:600}
+.pillx{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--ls);border-radius:6px;padding:4px 10px;font-weight:700;font-size:14px;background:#F4F1EC}
+
+.qa .qacard{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+.qa .qacard h3{margin:10px 0 4px}.qa .qacard h3:first-child{margin-top:0}.qa dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0 0 8px}.qa dt{color:var(--muted);font-size:13px}.qa dd{margin:0;overflow-wrap:anywhere}
+.qaindex{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.qawcard{text-align:left;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.qawcard[aria-pressed=true]{border-color:var(--olive);box-shadow:0 0 0 1px var(--olive) inset}
+.qachip{align-self:flex-start;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.qachip[data-s=pass]{background:#e3f3d4;color:#2f5a14}.qachip[data-s=issue]{background:#f6dede;color:var(--error)}.qachip[data-s=call],.qachip[data-s=partial]{background:#f4ecd9;color:var(--warn)}
+.qasteps{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.qasteps li{counter-increment:s;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:start}
+.qasteps li.done{border-color:#7fa85a}.qasteps input[type=checkbox]{width:22px;height:22px;margin:2px 0 0;accent-color:var(--olive)}
+.qabody{display:flex;flex-direction:column;gap:6px;min-width:0}.qan::before{content:"Step " counter(s);font-size:12px;color:var(--muted);font-weight:700}
+.qado,.qasee{margin:0}.qado::before{content:"Do  ";white-space:pre;font-size:12px;font-weight:700;color:var(--blue)}.qasee::before{content:"You should see  ";white-space:pre;font-size:12px;font-weight:700;color:var(--olive)}
+.qaverdict,.qatools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.qaverdict button{min-height:44px;padding:9px 15px;border:1px solid var(--line);border-radius:7px;background:var(--white)}
+.qaverdict button[data-v=pass][aria-pressed=true]{background:#e3f3d4;border-color:#7fa85a}.qaverdict button[data-v=issue][aria-pressed=true]{background:#f6dede;border-color:var(--error)}.qaverdict button[data-v=call][aria-pressed=true]{background:#f4ecd9;border-color:var(--warn)}
+.qanotes{width:100%;min-height:84px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--white)}
+.qaout{margin:8px 0 0;white-space:pre-wrap;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px}
+@media(max-width:640px){.qaindex{grid-template-columns:1fr}}
+@media(max-width:700px){.screen{padding:20px 16px 26px}.hubbar{padding:11px 16px;gap:8px}.hubtabs{padding:0 16px}.walk{padding:8px 16px}.docpage{padding:22px 18px 36px}h1{font-size:23px}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Which game an award is for — project hub</strong><br><small>Drawn 2026-10-01 from a production report · ruled 2026-10-02, all four as recommended · built on dev 2026-10-02 · the walk is on the QA walk tab</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Drawn 2026-10-01">Design</li>
+    <li class="stage done" title="Ruled 2026-10-02, all four as recommended">Plan</li>
+    <li class="stage current" title="Built on dev 2026-10-02; review and commit owed">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="walk" aria-pressed="false">QA walk</button>
+</nav>
+
+<!-- ============================== MOCKUP ============================== -->
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Mockup screens">
+    <a href="#happened">1 · What happened</a>
+    <a href="#give">2 · Giving from the Awards page</a>
+    <a href="#list">3 · Choosing what it’s for</a>
+    <a href="#else">4 · Something not on the schedule</a>
+    <a href="#check">5 · A second award, said before Save</a>
+  </nav>
+
+  <div class="frame" id="frame">
+
+    <!-- ---------- 1 · WHAT HAPPENED ---------- -->
+    <section class="screen" id="happened">
+      <div class="head">
+        <div class="eyebrow">Production · Milton Bats U13 Purple · 1 October 2026</div>
+        <h1 tabindex="-1">One MVP, given twice, through two doors</h1>
+        <p class="sub">The coach meant one award: Alex Tennant’s MVP for the Sep 30 game against Mississauga. The product stored two, because the Awards page can’t say which game an award is for. Nothing was duplicated by the system, and nothing has been changed on production.</p>
+      </div>
+      <div class="story">
+        <div class="step"><div class="time">7:26 a.m.</div><p>On the Awards page the coach taps <strong>Give an award</strong>. The window has no way to pick the game, only a free-text box. They type “Majors game MVP”.<button class="fl" data-finding="F01" data-here="The coach typed “Majors game MVP” into the only box the window has. It names the game in words, so nothing ties the award to the game.">F01</button></p><div class="rec">Saved: MVP · “Majors game MVP” · <strong>dated Oct 1</strong>, the day it was given<button class="fl" data-finding="F04" data-here="The game was Sep 30. An award with typed words gets the day it was given, Oct 1, and the window has no date to change.">F04</button></div></div>
+        <div class="step"><div class="time">7:28 a.m.</div><p>The coach opens the game and enters the 14–3 score. Until a game has its score it can’t carry an award, so this game wasn’t available a moment ago either.<button class="fl" data-finding="F02" data-here="At 7:26 the game had no score yet. Even from the game itself, Give an award was locked behind “Enter a final score to unlock awards for this game.”">F02</button></p></div>
+        <div class="step"><div class="time">7:29 a.m.</div><p>From the game, the coach gives Alex the MVP again, retyping the note. Nothing mentions the award given three minutes earlier.<button class="fl" data-finding="F03" data-here="Same player, same award, one day apart, three minutes after the first. The window said nothing, because the two awards are different occasions to the once-per-game rule.">F03</button></p><div class="rec">Saved: MVP · vs Mississauga Majors · <strong>dated Sep 30</strong></div></div>
+      </div>
+      <div class="pair row">
+        <div class="side">
+          <div class="sidehead"><strong>What the leaderboard shows</strong></div>
+          <div class="app lb" style="max-width:520px">
+            <div class="lbrow"><span>1</span><span class="nm">Alex Tennant</span><span class="pillx">🏆 2× MVP</span><span>2</span></div>
+          </div>
+          <p class="caption">Both rows are real records, so every count reads two: the leaderboard, Alex’s profile, Season Wrapped’s most awarded.</p>
+        </div>
+        <div class="side" style="max-width:520px">
+          <div class="sidehead"><strong>Why the double-award rule didn’t stop it</strong></div>
+          <p class="sub">A player holds an award once per occasion (your 11 September ruling). An occasion is either a game on the schedule, or typed words on a date. “vs Mississauga Majors, Sep 30” and “Majors game MVP, Oct 1” are two different occasions, so the rule let both through.</p>
+          <p class="sub" style="margin-top:10px"><strong>Today’s fix for Alex:</strong> the coach opens the Oct 1 award and taps the bin. That needs nothing built.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 2 · GIVE FROM THE AWARDS PAGE ---------- -->
+    <section class="screen" id="give" hidden>
+      <div class="head">
+        <div class="eyebrow">Insights › Awards › Give an award</div>
+        <h1 tabindex="-1">The window asks which game, instead of asking for words</h1>
+        <p class="sub">The same window, opened from the Awards page. Only its first field changes: a dropdown of your season’s events replaces the free-text box. The game window’s own Give an award doesn’t change, because it already knows its game.</p>
+      </div>
+      <div class="pair">
+        <div class="side">
+          <div class="sidehead"><strong>Today</strong><span class="meta">what the coach saw at 7:26 a.m.</span></div>
+          <div class="scrollx"><div class="vp app" data-gm tabindex="0" aria-label="Today: Give an award from the Awards page">
+            <div class="gm">
+              <div class="gmhead"><strong>Give an award</strong><span class="x">×</span></div>
+              <div class="gmbody">
+                <div><div class="lbl">Tournament or occasion<button class="fl" data-finding="F01" data-here="The only way to say what the award is for, from the Awards page, is to type it. A game typed as words is not the game.">F01</button><button class="fl" data-finding="F04" data-here="There is no date: the award is dated the day you give it.">F04</button></div><div class="inp">Majors game MVP</div></div>
+                <div><div class="lbl">Player</div><div class="sel"><span>#44 Alex Tennant</span><span>▾</span></div></div>
+                <div><div class="lbl">Award</div><div class="tchips"><span class="tchip on">🏆 MVP</span><span class="tchip">👑 Practice MVP</span><span class="tchip new">+ New</span></div><p style="margin:8px 0 0"><span class="mlink">Manage awards…</span></p></div>
+                <div><div class="lbl">Note</div><div class="ta">OBP 1000 with 2 hits 2 walks, 2 innings pitched and 2 good defensive plays</div></div>
+              </div>
+              <div class="gmfoot"><span class="btn">Close</span><span class="btn primary">Save</span></div>
+            </div>
+          </div></div>
+        </div>
+        <div class="side">
+          <div class="sidehead"><strong>Proposed</strong><span class="meta">the same coach, the same morning</span></div>
+          <div class="scrollx"><div class="vp app" data-gm tabindex="0" aria-label="Proposed: Give an award from the Awards page">
+            <div class="gm">
+              <div class="gmhead"><strong>Give an award</strong><span class="x">×</span></div>
+              <div class="gmbody">
+                <div><div class="lbl">For <span class="mk" data-k="new" data-note="A dropdown of your season’s events, newest first: the games that have their score, the practices, team events and tournaments that have started. It opens on the newest one, the game you most likely mean (question 2). It ends with “Something else” for an occasion not on the schedule, and “The season” for a recognition that isn’t about one event.">New</span><button class="fl fix" data-finding="F01" data-here="The award is tied to the game itself, the same as giving it from the game window.">fixes F01</button><button class="fl fix" data-finding="F04" data-here="A game carries its own date, so the award is dated Sep 30, not the day you gave it.">fixes F04</button></div><div class="sel"><span class="two"><span>vs Mississauga Majors</span><small>Wed Sep 30 · W 14–3</small></span><span>▾</span></div></div>
+                <div><div class="lbl">Player<span class="req" aria-hidden="true">*</span> <span class="mk" data-k="re" data-note="Required today without saying so: Save refuses without a player. It gets the plain asterisk your forms use for the few required fields (ruling of 26 August). The picker is unchanged.">Restyled</span></div><div class="sel"><span>#44 Alex Tennant</span><span>▾</span></div></div>
+                <div><div class="lbl">Award<span class="req" aria-hidden="true">*</span> <span class="mk" data-k="re" data-note="The same award chips, + New and Manage awards… door. Only the asterisk is added, as for Player.">Restyled</span></div><div class="tchips"><span class="tchip on">🏆 MVP</span><span class="tchip">👑 Practice MVP</span><span class="tchip new">+ New</span></div><p style="margin:8px 0 0"><span class="mlink">Manage awards…</span></p></div>
+                <div><div class="lbl">Note <span class="mk" data-k="un" data-note="Unchanged. Its grey example follows what the award is for, as it already does from a game.">Unchanged</span></div><div class="ta">OBP 1000 with 2 hits 2 walks, 2 innings pitched and 2 good defensive plays</div></div>
+              </div>
+              <div class="gmfoot"><span class="btn">Close</span><span class="btn primary">Save</span></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <p class="caption"><strong>Editing an award keeps its “For” fixed</strong>, as today (your ruling on Awards Part A): a wrong game is remove and give again. The dropdown appears only when giving a new award from the Awards page.</p>
+    </section>
+
+    <!-- ---------- 3 · THE LIST, OPEN ---------- -->
+    <section class="screen" id="list" hidden>
+      <div class="head">
+        <div class="eyebrow">The “For” dropdown, open</div>
+        <h1 tabindex="-1">Your season, newest first, and a reason for anything you can’t pick</h1>
+        <p class="sub">Events that have happened, newest at the top, each with its day and a game’s result. A game still waiting for its score is listed where it falls, greyed, with the reason. Events that haven’t happened aren’t listed. The two choices that aren’t one event sit at the foot.</p>
+      </div>
+      <div class="pair">
+        <div class="side">
+          <div class="sidehead"><strong>Proposed</strong><span class="meta">the first rows are your real Sep 28 practice and Sep 30 game; earlier rows are examples</span></div>
+          <div class="scrollx"><div class="vp app" data-gm tabindex="0" aria-label="Proposed: the For dropdown open">
+            <div class="gm">
+              <div class="gmhead"><strong>Give an award</strong><span class="x">×</span></div>
+              <div class="gmbody">
+                <div><div class="lbl">For</div><div class="sel open"><span class="two"><span>vs Mississauga Majors</span><small>Wed Sep 30 · W 14–3</small></span><span>▴</span></div>
+                  <div class="list" role="presentation">
+                    <div class="opt on"><span class="tick">✓</span><span class="two"><span>vs Mississauga Majors</span><small>Wed Sep 30 · W 14–3</small></span></div>
+                    <div class="opt"><span class="tick"></span><span class="two"><span>Practice</span><small>Mon Sep 28</small></span></div>
+                    <div class="opt off"><span class="tick"></span><span class="two"><span>vs Oakville A’s</span><small>Sun Sep 27 · enter its score first</small></span><span class="mk" data-k="new" data-note="A game that has happened but has no score yet can’t carry an award (unchanged rule). Instead of leaving it off the list, which is what made the 7:26 coach type the game in words, it is listed where it falls, greyed and not choosable, saying why. The score is entered on the game in Schedule, as today. Question 3 asks whether you’d rather it were left off.">New</span><button class="fl fix" data-finding="F02" data-here="The coach sees the game is there and what it needs, instead of concluding it can’t be done from here.">fixes F02</button></div>
+                    <div class="opt"><span class="tick"></span><span class="two"><span>vs Burlington Bandits</span><small>Sat Sep 26 · W 9–4</small></span></div>
+                    <div class="opt"><span class="tick"></span><span class="two"><span>Milton Fall Classic</span><small>Sep 19–21 · tournament</small></span></div>
+                    <div class="opt more">Earlier in the season ▾</div>
+                    <div class="optsep"></div>
+                    <div class="opt"><span class="tick"></span><span class="two"><span>Something else</span><small>A tournament or occasion not on your schedule</small></span></div>
+                    <div class="opt"><span class="tick"></span><span class="two"><span>The season</span><small>Not about one event</small></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <p class="caption"><strong>Why a dropdown and not the chip row:</strong> your forms pick one value from a list with a dropdown (ruling of 22 August). A plain browser select can’t show a game’s day and result under its name, or a greyed row with a reason, so this is a dropdown the portal draws itself, as the budget item picker already is in the money forms.</p>
+    </section>
+
+    <!-- ---------- 4 · SOMETHING ELSE ---------- -->
+    <section class="screen" id="else" hidden>
+      <div class="head">
+        <div class="eyebrow">For › Something else</div>
+        <h1 tabindex="-1">Words for an occasion, and the day it happened</h1>
+        <p class="sub">A tournament you didn’t put on the schedule, a banquet, a skills night: choosing Something else opens the free-text box you have today, plus the date it happened, which today is always the day you give it.</p>
+      </div>
+      <div class="pair">
+        <div class="side">
+          <div class="sidehead"><strong>Proposed</strong></div>
+          <div class="scrollx"><div class="vp app" data-gm tabindex="0" aria-label="Proposed: Something else chosen">
+            <div class="gm">
+              <div class="gmhead"><strong>Give an award</strong><span class="x">×</span></div>
+              <div class="gmbody">
+                <div><div class="lbl">For</div><div class="sel"><span>Something else</span><span>▾</span></div></div>
+                <div><div class="lbl">Occasion <span class="mk" data-k="re" data-note="Today’s free-text box, kept for what isn’t on the schedule. Leaving it blank now means choosing “The season” instead, so the box only appears when it means something.">Restyled</span></div><div class="inp ph">e.g. Milton Slo-Pitch Classic</div></div>
+                <div><div class="lbl">Date<span class="req" aria-hidden="true">*</span> <span class="mk" data-k="new" data-note="The day the occasion happened. It opens on today and can be set back. Today the award always gets the day it was given, which is why the 7:26 award reads Oct 1.">New</span><button class="fl fix" data-finding="F04" data-here="An occasion not on the schedule can still carry the day it happened.">fixes F04</button></div><div class="inp">Thu Oct 1, 2026</div></div>
+                <div><div class="lbl">Player<span class="req" aria-hidden="true">*</span></div><div class="sel"><span>Choose a player…</span><span>▾</span></div></div>
+                <div><div class="lbl">Award<span class="req" aria-hidden="true">*</span></div><div class="tchips"><span class="tchip">🏆 MVP</span><span class="tchip">👑 Practice MVP</span><span class="tchip new">+ New</span></div></div>
+                <div><div class="lbl">Note</div><div class="ta ph">e.g. Best sportsmanship all weekend</div></div>
+              </div>
+              <div class="gmfoot"><span class="btn">Close</span><span class="btn primary">Save</span></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <p class="caption"><strong>The season</strong> needs neither box: the award is a season recognition, dated the day you give it, as a blank “Tournament or occasion” is today.</p>
+    </section>
+
+    <!-- ---------- 5 · THE DOUBLE-CHECK ---------- -->
+    <section class="screen" id="check" hidden>
+      <div class="head">
+        <div class="eyebrow">Give an award · from the game or from the Awards page</div>
+        <h1 tabindex="-1">A second award of the same kind is said before Save</h1>
+        <p class="sub">When the player already has the same award for an occasion within two days of this one, the window says so in a quiet line above Save. Save still works: a tournament weekend can honestly hold two MVPs for one player. It lives in the one shared window, so it speaks from either door.</p>
+      </div>
+      <div class="pair">
+        <div class="side">
+          <div class="sidehead"><strong>Today</strong><span class="meta">7:29 a.m., from the game</span></div>
+          <div class="scrollx"><div class="vp app" data-gm tabindex="0" aria-label="Today: giving the MVP from the game">
+            <div class="gm">
+              <div class="gmhead"><strong>Give an award</strong><span class="x">×</span></div>
+              <div class="gmbody">
+                <p class="for">For: <strong>vs Mississauga Majors — Sep 30</strong></p>
+                <div><div class="lbl">Player</div><div class="sel"><span>#44 Alex Tennant</span><span>▾</span></div></div>
+                <div><div class="lbl">Award</div><div class="tchips"><span class="tchip on">🏆 MVP</span><span class="tchip">👑 Practice MVP</span><span class="tchip new">+ New</span></div></div>
+                <div><div class="lbl">Note</div><div class="ta">1000 OBP 2 hits 2 walks 2 innings pitched and 2 defensive plays</div></div>
+              </div>
+              <div class="gmfoot"><span class="btn">Close</span><span class="btn primary">Save</span><button class="fl" data-finding="F03" data-here="Alex already has an MVP from three minutes ago, for “Majors game MVP”, Oct 1. Nothing in this window says so.">F03</button></div>
+            </div>
+          </div></div>
+        </div>
+        <div class="side">
+          <div class="sidehead"><strong>Proposed</strong><span class="meta">the same moment</span></div>
+          <div class="scrollx"><div class="vp app" data-gm tabindex="0" aria-label="Proposed: the double-check line">
+            <div class="gm">
+              <div class="gmhead"><strong>Give an award</strong><span class="x">×</span></div>
+              <div class="gmbody">
+                <p class="for">For: <strong>vs Mississauga Majors — Sep 30</strong> <span class="mk" data-k="un" data-note="The game window’s own Give an award is unchanged: it already knows its game.">Unchanged</span></p>
+                <div><div class="lbl">Player<span class="req" aria-hidden="true">*</span></div><div class="sel"><span>#44 Alex Tennant</span><span>▾</span></div></div>
+                <div><div class="lbl">Award<span class="req" aria-hidden="true">*</span></div><div class="tchips"><span class="tchip on">🏆 MVP</span><span class="tchip">👑 Practice MVP</span><span class="tchip new">+ New</span></div></div>
+                <div class="amber" role="status"><span class="ic">!</span><span>Alex Tennant already has 🏆 MVP for “Majors game MVP”, Oct 1.<small>If it’s the same award, close this and remove that one from the Awards page.</small></span><span class="mk" data-k="new" data-note="Appears as soon as the player and award are chosen, when that player already holds that award for an occasion within two days of this one (question 4). It names the other award so the coach can tell a slip from a real second MVP. It never blocks: the exact same game is still refused at Save, as today.">New</span><button class="fl fix" data-finding="F03" data-here="The coach learns of the 7:26 award before saving a second one.">fixes F03</button></div>
+                <div><div class="lbl">Note</div><div class="ta">1000 OBP 2 hits 2 walks 2 innings pitched and 2 defensive plays</div></div>
+              </div>
+              <div class="gmfoot"><span class="btn">Close</span><span class="btn primary">Save</span></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <p class="caption"><strong>Unchanged:</strong> giving the same award to the same player for the exact same game is still refused at Save, with today’s sentence: “Alex Tennant already has MVP for this game.” The new line covers what that rule can’t see: a near neighbour, which is how Alex got two.</p>
+    </section>
+
+    <div class="intent" id="intent"></div>
+  </div>
+</section>
+
+<!-- ============================== PM BRIEF ============================== -->
+<section id="hub-brief" class="hubsection" hidden>
+  <div class="docpage">
+    <p class="eyebrow">PM brief · drawn 2026-10-01 · ruled and built 2026-10-02</p>
+    <h1>Which game an award is for</h1>
+    <p class="note">Started from a production report: Alex Tennant (Milton Bats U13 Purple) showed two MVPs for one game. The coach gave the award twice through two doors; the product kept both. Nothing has been changed on production.</p>
+    <h2>The problem</h2>
+    <ul>
+      <li>From the Awards page, Give an award can’t say which game. A coach types the game’s name, and the award is tied to nothing and dated the day it was given.</li>
+      <li>A game without its score can’t carry an award, and nothing on the Awards page says so. The coach works around it with words.</li>
+      <li>Nothing notices a second award of the same kind to the same player a day apart, so a slip doubles every count: the leaderboard, the player’s profile, Season Wrapped.</li>
+    </ul>
+    <h2>The proposal</h2>
+    <ul>
+      <li><strong>A “For” dropdown</strong> on the Awards page’s Give window: the season’s events that have happened, newest first, each with its day and a game’s result. It opens on the newest one. “Something else” keeps the free-text box and adds the date it happened; “The season” covers recognitions that aren’t about one event.</li>
+      <li><strong>A game waiting for its score</strong> is listed, greyed, with “enter its score first”.</li>
+      <li><strong>A quiet double-check</strong> in the one shared window, from either door: “Alex Tennant already has MVP for … , Oct 1.” It never blocks.</li>
+    </ul>
+    <h2>Who sees it</h2>
+    <p>Coaches who can give awards (head coaches, and assistants given a record duty), on the Awards page and in a game’s window. Families and the club see only the results: awards tied to the right game, counted once.</p>
+    <h2>Why it matters</h2>
+    <p>Awards are what families screenshot and what Season Wrapped celebrates. A doubled MVP is the kind of error a parent notices first, and today the product leads coaches into it.</p>
+    <h2>Success looks like</h2>
+    <ul>
+      <li>An award given from the Awards page for last night’s game is tied to that game and dated its day, in two taps.</li>
+      <li>A coach who gives the same award twice by mistake is told before saving the second.</li>
+      <li>No new duplicate pairs like Alex’s on production after release (the check on 1 October found this one).</li>
+    </ul>
+    <h2>Priority and size</h2>
+    <p>Small: one window, no database change, no new screen. Suggested after the open walks; it touches nothing the club money work touches.</p>
+  </div>
+</section>
+
+<!-- ============================== FULL PLAN ============================== -->
+<section id="hub-plan" class="hubsection" hidden>
+  <div class="docpage">
+    <p class="eyebrow">Full plan · ruled 2026-10-02 · built on dev 2026-10-02</p>
+    <h1>Which game an award is for — plan</h1>
+    <p class="note">Plan of record: all four questions ruled as recommended (2026-10-02). Built on dev the same day; /review and the commit are owed, then the walk (QA walk tab, §257).</p>
+    <h2>As built — what differs from the drawing</h2>
+    <ul>
+      <li><strong>The dropdown is the portal’s existing sub-lined dropdown</strong> (the one the money forms and the staff sheet use), not a new one. It floats over the window instead of opening inside it, because opening a field must not resize the window (an earlier walk rejected that on sight). It gained one ability every caller can use: a row listed but not choosable, saying why.</li>
+      <li><strong>“Earlier in the season” is a band, not a ▾ row.</strong> The list shows the four newest events, then <em>Other</em> (Something else, The season), then <em>Earlier in the season</em> with the rest, all in one scrolling list. Four, because four events, the Other band and its two answers fill the list exactly: at six, Something else and The season opened below the fold.</li>
+      <li><strong>The closed field</strong> shows an event’s day and result after a dot (“UAT probe practice · Thu Oct 1”); Something else and The season read alone.</li>
+      <li><strong>The Awards page reads the schedule when Give first opens</strong>, only up to now (it had not loaded events before). If that read fails, the dropdown still offers Something else and The season, which is how an award was given before.</li>
+      <li><strong>The server refuses a date in the future</strong> for a typed occasion (“An award’s date can’t be in the future.”). The window’s Date can’t pick one either.</li>
+      <li><strong>The double-check sits between Award and Note</strong>, as drawn, from both doors. The game window passes its game’s own day.</li>
+      <li><strong>The review (2026-10-02) changed four things before the commit:</strong> the list is read fresh every time the window opens (read once per visit, a game scored after the first open still said “enter its score first” until a reload); two events on one day list by start time, so a doubleheader opens on the later game; a Date box cleared mid-typing never raises the amber line; a greyed row shows keyboard focus as a quiet outline rather than the “choosable” fill. Left as is: a staff member whose Schedule access is off sees only Something else and The season, because the list is the schedule.</li>
+      <li><strong>Proven before the walk:</strong> unit tests for the list, its order and states, the second lines, the predicate (one, two and three days; another player; another award; the award being edited; the nearest and newest) and the sentence; a probe of the window at 1440 and 390, Warm and Dark (the list’s rows, which are visible without scrolling, the Something else date’s limit, and the amber line appearing at one day and going at three); the layout sweep of the Awards page in both themes, no new findings.</li>
+    </ul>
+    <h2>Findings</h2>
+    <h3>F01 — The Awards page can’t say which game</h3>
+    <p>The shared Give window, opened from the Awards page, shows only a free-text “Tournament or occasion” box. The award is stored with that text and no game. The game window passes its game; the Awards page has nothing to pass.</p>
+    <h3>F02 — A game without its score is invisible from the Awards page</h3>
+    <p>A game can carry an award only once both scores are entered (the unlock rule shared with the server). From a game’s window the coach sees “Enter a final score to unlock awards for this game.”; from the Awards page there is no list of games at all, so nothing says it.</p>
+    <h3>F03 — Nothing notices a near-duplicate</h3>
+    <p>Once per occasion is enforced (two unique indexes plus the same check in the give and edit routes), but an occasion is a game, or words plus a date. The same award to the same player for a typed occasion and for the game it means are two occasions.</p>
+    <h3>F04 — Typed occasions are always dated the day given</h3>
+    <p>The window has no date; the route defaults it to today. An award for last night’s game, typed as words, reads tomorrow’s date.</p>
+    <h2>Approach</h2>
+    <ul>
+      <li><strong>One window, one more input.</strong> The Give window gains the team’s events and existing awards from its two callers (the Awards page and the game window both already load them). The “For” dropdown shows only for a new award without a game (the Awards page); the game window and edit mode are unchanged.</li>
+      <li><strong>The list is one pure function</strong> beside the unlock rule: events that have happened, newest first, each with its unlock state and label (the existing occasion label: “vs Mississauga Majors”, a practice’s or tournament’s name). Unit-tested.</li>
+      <li><strong>The double-check is one pure predicate</strong> beside the once-per-occasion one: same player, same award type, occasion days within two days, excluding the award being edited. It reads the awards the window already holds; no new request.</li>
+      <li><strong>The server already accepts</strong> a game for an award and refuses an unscored one; a typed occasion’s date becomes the posted date instead of the default. No migration.</li>
+      <li><strong>Words</strong> in the occasion module, one home: the dropdown’s two foot choices, “enter its score first”, the double-check sentence.</li>
+    </ul>
+    <h2>Checks</h2>
+    <ul>
+      <li>Unit: the list’s order and states; the near-duplicate predicate (one day apart, three days apart, the same award being edited, a different player, a different award).</li>
+      <li>Layout sweep on the Awards page and the game window, both themes; /review; help article on giving awards (/docs).</li>
+      <li>QA walk on this hub once built.</li>
+    </ul>
+    <h2>Not in this project</h2>
+    <ul>
+      <li>Removing Alex’s Oct 1 award: the coach does it with the bin icon; or, on your say-so, it is removed on production.</li>
+      <li>Changing which game an existing award is for (still remove and give again).</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================== DECISIONS ============================== -->
+<section id="hub-walk" class="hubsection" hidden>
+  <div class="docpage qa">
+    <p class="eyebrow">Owner QA · §257 · Coaches portal · Awards</p>
+    <h1>Which game an award is for</h1>
+    <p class="sub">Two walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat.</p>
+
+    <div class="qacard">
+      <h3>Sign in as · both walks</h3>
+      <dl>
+        <dt>Where</dt><dd>http://localhost:3000/auth/login (dev server running)</dd>
+        <dt>Email</dt><dd>uat-coach@uat-test-org.local (password: <code>UAT_COACH_PASSWORD</code> in <code>.env.local</code>)</dd>
+        <dt>Team</dt><dd>UAT Test Team · UAT Rep Club · 2026 Season</dd>
+      </dl>
+      <p class="meta"><b>As of 2026-10-02.</b> Event names below are what the test team held that day; another session can add or reset events. The pass condition is always the rule the step names (newest first, greyed with its reason, dated by the game), never a particular name.</p>
+      <p class="meta"><b>What the walks change:</b> W1 step 7 gives one real award (and creates an MVP award if the team has none); W2 step 6 removes both. Nothing else is saved.</p>
+    </div>
+
+    <div class="qaindex" role="group" aria-label="Walks">
+      <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · Say which game, from the Awards page</b><span class="meta">The For dropdown: newest first, a game without its score greyed, Something else with a date, The season.</span><span class="qachip" data-chip="w1"></span></button>
+      <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · Told before giving it twice</b><span class="meta">The quiet amber line, from both doors, that never blocks Save.</span><span class="qachip" data-chip="w2"></span></button>
+    </div>
+
+    <div class="qawalk" id="w1">
+      <h2>W1 · Say which game, from the Awards page</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>Alex’s two MVPs started here: this window could only take typed words, so a game was given as words and dated the next day. Now it asks which event the award is for, and the answer ties the award to that event and its day.</p>
+        <h3>It passes when</h3><p>The list holds only what has happened, newest first, opening on the newest one that can carry an award; a game without its score is listed but can’t be chosen; an award given for an event lands on that event, dated by it.</p>
+        <h3>Not in this walk</h3><p>The double-check line (W2). Editing an award, which is unchanged: an award’s event still can’t be changed.</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Insights → Awards</b> and tap <b>Give an award</b>.</p><p class="qasee"><b>For</b> sits at the top and already names an event: the newest one that has happened and can carry an award (on 2026-10-02, “UAT probe practice · Thu Oct 1”). Its day follows a dot, in grey.</p></div></li>
+        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>For</b>.</p><p class="qasee">The list floats over the window (the window doesn’t grow). Newest first, each with its day; a scored game also shows its result (“W 8–2”, “L 1–2”, “T 3–3”). Four events, then an <b>OTHER</b> band with <b>Something else</b> and <b>The season</b>, all without scrolling. Scroll the list: <b>EARLIER IN THE SEASON</b> holds the rest.</p></div></li>
+        <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Find a game that has happened but has no score (on 2026-10-02, “vs Probe Rovers · Fri Oct 2”) and tap it.</p><p class="qasee">It is greyed and says “enter its score first”. Tapping it does nothing; the list stays open. <span class="meta">(If the team has no such game that day, tick and note “none to test”.)</span></p></div></li>
+        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Look for the team’s next game (the header’s <b>Next</b>) and any cancelled event.</p><p class="qasee">Neither is in the list. Only what has already started appears.</p></div></li>
+        <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Choose <b>Something else</b>. Open the <b>Date</b> picker.</p><p class="qasee">The field reads just “Something else”. <b>Occasion</b> and <b>Date *</b> appear beside each other (stacked on a phone). Date opens on today, and no day after today can be picked.</p></div></li>
+        <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Choose <b>The season</b>, then press <b>Escape</b> with the list open.</p><p class="qasee">Occasion and Date go away. Escape closes only the list, never the window.</p></div></li>
+        <li><input type="checkbox" id="w1s7" aria-label="W1 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Give one for real: For = an older practice (e.g. “Team practice 5 · Fri May 29”), pick a player, choose an award (if the team has none, tap <b>+ New</b> and add <b>MVP</b>), and Save.</p><p class="qasee">The window closes. In <b>Full history</b> the award is dated <b>the practice’s day</b>, not today, and says it was for that practice. Open that practice in <b>Schedule</b>: the award is under <b>Awards given</b>. <span class="meta">(Saves one award; removed in W2 step 6.)</span></p></div></li>
+        <li><input type="checkbox" id="w1s8" aria-label="W1 step 8"><div class="qabody"><span class="qan"></span><p class="qado">Repeat steps 1–2 on a phone (or about 390 px wide), then once in <b>Dark</b>.</p><p class="qasee">The list fits the screen width and reads clearly; the greyed game is still visibly greyed in Dark.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W1 verdict">
+        <button type="button" data-w="w1" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w1" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w1" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w1"></span>
+      </div>
+      <label class="meta" for="w1notes">Notes for W1</label>
+      <textarea id="w1notes" class="qanotes" data-notes="w1"></textarea>
+    </div>
+
+    <div class="qawalk" id="w2" hidden>
+      <h2>W2 · Told before giving it twice</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>The second MVP was given three minutes after the first, and nothing said so. Now, when the player already holds the same award for an occasion within two days either side, an amber line above Note names it. It never blocks: a tournament weekend can honestly hold two.</p>
+        <h3>It passes when</h3><p>The line appears for the same player and award within two days, from the Awards page and from the game, goes away at three days or for anyone else, and Save still works.</p>
+        <h3>Not in this walk</h3><p>The dropdown (W1). The exact same event is still refused at Save, as before (step 4 shows it once).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On the Awards page, tap <b>Give an award</b>. For = <b>Something else</b>, Date = the day after W1 step 7’s practice. Pick the same player and the same award.</p><p class="qasee">An amber line above Note: “<i>Player</i> already has 🏆 MVP for <i>that practice</i>, <i>its day</i>.” and under it “If it’s the same award, close this and remove that one from the Awards page.” <b>Save</b> is still available.</p></div></li>
+        <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Move the Date to three days after the practice. Then back to one day, and choose a different player.</p><p class="qasee">At three days the line goes. Back at one day it returns; with a different player it goes. Close the window without saving.</p></div></li>
+        <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Give an award</b> again and leave For on the newest event. Pick the same player and award.</p><p class="qasee">No line, unless the newest event falls within two days of the practice. Close without saving.</p></div></li>
+        <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Open the W1 practice in <b>Schedule</b>, tap <b>Give an award</b>, pick the same player and award, and tap <b>Save</b>.</p><p class="qasee">The amber line shows here too, before Save. Save is refused with the sentence you had before (“… already has MVP for this practice.”). Close.</p></div></li>
+        <li><input type="checkbox" id="w2s5" aria-label="W2 step 5"><div class="qabody"><span class="qan"></span><p class="qado">On the Awards page, open the W1 award’s <b>pencil</b> (on a phone, tap its row, then the pencil).</p><p class="qasee">Editing it never warns about itself: no amber line.</p></div></li>
+        <li><input type="checkbox" id="w2s6" aria-label="W2 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Clean up: remove the W1 award with its <b>bin</b>. If you added MVP in W1, open <b>Manage awards…</b> and delete it.</p><p class="qasee">The award is gone from Full history and from the practice. An award type nobody holds deletes outright.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W2 verdict">
+        <button type="button" data-w="w2" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w2" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w2" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w2"></span>
+      </div>
+      <label class="meta" for="w2notes">Notes for W2</label>
+      <textarea id="w2notes" class="qanotes" data-notes="w2"></textarea>
+    </div>
+
+    <div class="qacard">
+      <h3>Send the results back</h3>
+      <div class="qatools">
+        <button type="button" class="button" id="qaBuildOne">Build summary for this walk</button>
+        <button type="button" class="button" id="qaBuildAll">Build summary for both walks</button>
+        <button type="button" class="button" id="qaCopy">Copy</button>
+      </div>
+      <pre class="qaout" id="qaOut" aria-live="polite">Tick steps as you walk, press a verdict, then build a summary and paste it into the chat.</pre>
+    </div>
+  </div>
+</section>
+
+<section id="hub-decisions" class="hubsection" hidden>
+  <div class="docpage">
+    <p class="eyebrow">Decisions · the four questions</p>
+    <h1>What was ruled</h1>
+    <p class="sub" style="margin-bottom:18px">Ruled 2026-10-02: “I agree with your recommendations, proceed.” All four as recommended.</p>
+    <div id="decisionRows"></div>
+  </div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const HUBS = ['mockup', 'brief', 'plan', 'decisions', 'walk'];
+function showHub(which) { HUBS.forEach(h => { const s = $('hub-' + h); if (s) s.hidden = h !== which; }); document.querySelectorAll('[data-hub]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hub === which))); }
+document.querySelectorAll('[data-hub]').forEach(b => b.onclick = () => showHub(b.dataset.hub));
+
+function frameGive() { const phone = $('frame').classList.contains('phone'); document.querySelectorAll('[data-gm]').forEach(v => { v.classList.toggle('gmd', !phone); v.classList.toggle('gmp', phone); }); }
+$('phone').onclick = () => { const on = $('frame').classList.toggle('phone'); $('phone').setAttribute('aria-pressed', String(on)); $('phone').textContent = on ? 'Desktop width' : 'Phone width'; frameGive(); };
+frameGive();
+
+const intents = {
+  happened: "show the production case first, because it is the reason for every change after it. Each red flag opens what the product did at that moment.",
+  give: "change one field, in the one shared window, and leave the game window alone. The proposal is drawn as the same coach on the same morning, so the difference is the whole story.",
+  list: "make the common case one tap (the newest event is already chosen) and make the case that sent the coach to free text, a game without its score, visible with its reason.",
+  "else": "keep the free-text box for what isn’t on the schedule, and give it the date it was missing.",
+  check: "say the near-duplicate before Save without ever blocking it. The exact same game stays refused; a tournament weekend’s two honest MVPs still save."
+};
+function showScreen() {
+  const id = (location.hash.slice(1) || 'happened');
+  const known = intents[id] ? id : 'happened';
+  document.querySelectorAll('.screen').forEach(el => el.hidden = el.id !== known);
+  document.querySelectorAll('.walk a').forEach(a => a.setAttribute('aria-current', a.hash === '#' + known ? 'page' : 'false'));
+  $('intent').innerHTML = '<strong>Design intent:</strong> ' + esc(intents[known]);
+  showHub('mockup');
+}
+window.addEventListener('hashchange', showScreen); showScreen();
+
+function modal(title, body) { $('dialogtitle').textContent = title; $('dialogbody').innerHTML = body; $('dialog').showModal(); }
+$('closeDialog').onclick = () => $('dialog').close();
+
+const FINDINGS = {
+  F01: { t: "The Awards page can’t say which game", now: "Opened from the Awards page, the Give window offers only a free-text “Tournament or occasion” box. The award is stored with those words and no game; the game window is the only door that ties an award to a game.", fix: "A “For” dropdown of the season’s events replaces the box, opening on the newest. Choosing a game ties the award to it, exactly as giving it from the game does." },
+  F02: { t: "A game without its score is invisible from the Awards page", now: "A game can carry an award only once both scores are in. The game window says “Enter a final score to unlock awards for this game.”; the Awards page has no games to show at all, so the coach can’t tell why the game isn’t there.", fix: "The game is listed where it falls, greyed, with “enter its score first”. The rule is unchanged; it is now visible." },
+  F03: { t: "Nothing notices a near-duplicate", now: "Once per occasion is enforced in the database and in the give and edit routes. An occasion is a game, or words plus a date, so a typed award and the game it means are two occasions, and both save without a word.", fix: "When the player already holds that award for an occasion within two days, the window says so above Save, naming the other award. It never blocks." },
+  F04: { t: "A typed occasion is always dated the day it’s given", now: "The window has no date, and the server dates such an award today. “Majors game MVP”, given the morning after, reads Oct 1.", fix: "Choosing a game dates the award by the game. “Something else” adds a Date field that opens on today and can be set back." }
+};
+function explainFinding(id, here) {
+  const f = FINDINGS[id]; if (!f) return;
+  modal(id + ' · ' + f.t, '<div class="explain"><h3>What the product does today</h3><p>' + esc(f.now) + '</p>' + (here ? '<h3>Where you are looking</h3><p class="here">' + esc(here) + '</p>' : '') + '<h3>What the proposal does</h3><p>' + esc(f.fix) + '</p><div class="actions"><button class="button" type="button" data-plan="' + id + '">Read it in the plan →</button></div></div>');
+}
+function jumpToFinding(id) { $('dialog').close(); showHub('plan'); const hit = [...document.querySelectorAll('#hub-plan h3')].find(n => n.textContent.trim().startsWith(id + ' —')); if (hit) { hit.scrollIntoView({ block: 'start', behavior: 'smooth' }); hit.style.background = 'var(--lime)'; setTimeout(() => { hit.style.background = ''; }, 2500); } }
+const KIND = { new: 'New', re: 'Restyled from today', un: 'Unchanged from today' };
+const GENERIC = { new: 'Not in the product today.', re: 'Exists today and changes in wording or look.', un: 'Exists today and is drawn unchanged, so a build cannot drop it by accident.' };
+function explainTag(el) { const k = el.dataset.k; modal(KIND[k] || 'Tag', '<div class="explain"><p>' + esc(el.dataset.note || GENERIC[k] || '') + '</p>' + (el.dataset.note ? '<p class="meta">' + esc(GENERIC[k]) + '</p>' : '') + '</div>'); }
+document.querySelectorAll('.mk').forEach(el => { el.title = 'Click to read what this refers to'; el.setAttribute('role', 'button'); el.tabIndex = 0; el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); explainTag(el); } }); });
+document.addEventListener('click', e => {
+  const tag = e.target.closest('.mk'); if (tag) { e.preventDefault(); e.stopPropagation(); explainTag(tag); return; }
+  const el = e.target.closest('button'); if (!el) return;
+  if (el.dataset.finding) { e.preventDefault(); explainFinding(el.dataset.finding, el.dataset.here); return; }
+  if (el.dataset.plan) jumpToFinding(el.dataset.plan);
+});
+
+const DECISIONS = [
+  { n: 1, ask: "From the Awards page, does “For” become a dropdown of the season’s events?", label: "Accepted", ruling: "accepted",
+    rec: "Yes: the season’s events that have happened, newest first, then “Something else” (the free-text box plus the date it happened) and “The season”. The alternative, keeping the box and only adding a date, fixes the date but still leaves the award tied to no game, so it still never shows on the game and still escapes the once-per-game rule." },
+  { n: 2, ask: "What does “For” open on?", label: "Accepted", ruling: "accepted",
+    rec: "The newest event that can carry an award. The common case, last night’s game, is then zero taps, and the choice is printed at the top of the window where a wrong one is seen. The alternative is nothing chosen and a required pick, one more tap every time, which protects a coach giving a season award from tying it to a game. The double-check (question 4) and the visible choice cover most of that risk." },
+  { n: 3, ask: "A game that has happened but has no score: listed greyed with a reason, or left off?", label: "Accepted", ruling: "accepted",
+    rec: "Listed, greyed, “enter its score first”. Leaving it off is exactly what sent the 7:26 coach to type the game in words. The score is still entered on the game in Schedule; the dropdown only says why." },
+  { n: 4, ask: "The double-check: a quiet line before Save, and how near is “near”?", label: "Accepted", ruling: "accepted",
+    rec: "A quiet line above Save, never blocking, when the same player already holds the same award for an occasion within two days either side. Two days catches a game and its morning-after award, and a tournament weekend’s two honest MVPs still save. The alternative, a question after tapping Save (“Give another?”), interrupts every legitimate second award." }
+];
+(function () {
+  var KEY = 'award-occasion-walk-257-v1';
+  var state = { ticks: {}, verdict: {}, notes: {}, open: 'w1' };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') state = Object.assign(state, p); } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var TITLES = { w1: 'W1 · Say which game, from the Awards page', w2: 'W2 · Told before giving it twice' };
+  var LABEL = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+  function boxes(w) { return Array.prototype.slice.call(document.querySelectorAll('#' + w + ' input[type="checkbox"]')); }
+  function count(w) { var b = boxes(w); return { n: b.filter(function (x) { return state.ticks[x.id]; }).length, of: b.length }; }
+  function render() {
+    ['w1', 'w2'].forEach(function (w) {
+      boxes(w).forEach(function (b) { b.checked = !!state.ticks[b.id]; b.closest('li').classList.toggle('done', b.checked); });
+      var c = count(w);
+      document.querySelector('[data-prog="' + w + '"]').textContent = c.n + ' of ' + c.of + ' ticked';
+      document.querySelectorAll('.qaverdict button[data-w="' + w + '"]').forEach(function (btn) { btn.setAttribute('aria-pressed', String(state.verdict[w] === btn.getAttribute('data-v'))); });
+      var chip = document.querySelector('[data-chip="' + w + '"]'), v = state.verdict[w], text = 'Not started', st = '';
+      if (v === 'pass' && c.n < c.of) { text = 'Passed · only ' + c.n + ' of ' + c.of + ' ticked'; st = 'partial'; }
+      else if (v === 'pass') { text = 'Passed'; st = 'pass'; }
+      else if (v === 'issue') { text = 'Issue'; st = 'issue'; }
+      else if (v === 'call') { text = 'Needs a call'; st = 'call'; }
+      else if (c.n > 0) { text = 'In progress · ' + c.n + ' of ' + c.of; }
+      chip.textContent = text; chip.setAttribute('data-s', st);
+      var ta = document.querySelector('[data-notes="' + w + '"]'); if (document.activeElement !== ta) ta.value = state.notes[w] || '';
+      $(w).hidden = state.open !== w;
+      document.querySelector('.qawcard[data-walk="' + w + '"]').setAttribute('aria-pressed', String(state.open === w));
+    });
+  }
+  $('hub-walk').addEventListener('change', function (e) { var t = e.target; if (t && t.type === 'checkbox') { state.ticks[t.id] = t.checked; save(); render(); } });
+  document.querySelectorAll('textarea[data-notes]').forEach(function (ta) { ta.addEventListener('input', function () { state.notes[ta.getAttribute('data-notes')] = ta.value; save(); }); });
+  document.querySelectorAll('.qaverdict button').forEach(function (btn) { btn.addEventListener('click', function () { var w = btn.getAttribute('data-w'), v = btn.getAttribute('data-v'); state.verdict[w] = state.verdict[w] === v ? null : v; save(); render(); }); });
+  document.querySelectorAll('.qawcard').forEach(function (c) { c.addEventListener('click', function () { state.open = c.getAttribute('data-walk'); save(); render(); }); });
+  function summary(w) {
+    var c = count(w);
+    var lines = [TITLES[w] + ' — ' + (state.verdict[w] ? '[' + LABEL[state.verdict[w]] + ']' : '[no verdict]') + ' ' + c.n + '/' + c.of];
+    var un = boxes(w).filter(function (b) { return !state.ticks[b.id]; }).map(function (b) { return b.id.replace(w + 's', ''); });
+    if (un.length) lines.push('  not ticked: step ' + un.join(', '));
+    if (state.notes[w]) lines.push('  notes: ' + state.notes[w].trim());
+    return lines.join('\n');
+  }
+  var out = $('qaOut');
+  $('qaBuildOne').addEventListener('click', function () { out.textContent = '§257 Which game an award is for\n' + summary(state.open); });
+  $('qaBuildAll').addEventListener('click', function () { var a = count('w1'), b = count('w2'); out.textContent = '§257 Which game an award is for — checked ' + (a.n + b.n) + ' of ' + (a.of + b.of) + '\n' + summary('w1') + '\n' + summary('w2'); });
+  function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+  $('qaCopy').addEventListener('click', function () { var text = out.textContent; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(selectOut); else selectOut(); });
+  render();
+})();
+$('decisionRows').innerHTML = DECISIONS.map(d => '<div class="decisionrow"><div class="dhead"><strong>' + d.n + ' · ' + esc(d.ask) + '</strong><span class="tag ' + d.ruling + '">' + esc(d.label) + '</span></div><p class="rec"><strong>Ruled as recommended:</strong> ' + esc(d.rec) + '</p></div>').join('');
+</script>

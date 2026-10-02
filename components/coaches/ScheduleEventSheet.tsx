@@ -1183,7 +1183,9 @@ export default function ScheduleEventSheet({
             // The event's own label ("vs Oakville A's", "Practice") on its org-zone day — the UTC slice
             // read a day late for anything starting at 8 p.m. Eastern or later.
             label: `${awardOccasionLabel(ev, null)} — ${shortDate(orgDayKey(ev.startsAt))}`,
+            day: orgDayKey(ev.startsAt),
           }}
+          existingAwards={teamAwards}
           editing={editingAward}
           onClose={() => { setGiveAwardOpen(false); setEditingAward(null); }}
           onChanged={onAwardsChanged}

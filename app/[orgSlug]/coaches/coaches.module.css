@@ -5331,6 +5331,37 @@ a.oneChip:hover { border-color: currentColor; }
 .foldHeadsUp p { margin: 0; }
 .foldHeadsUp p + p { margin-top: 0.25rem; }
 
+/* The Give window's double-check (Which game an award is for, ruling 4, 2026-10-02): the player
+   already holds this award for an occasion within two days. A quiet amber line, never a block. ⚠ THE
+   INK STAYS PRIMARY on the amber tint — amber-on-amber fails the rendered contrast sweep on the
+   warm paper ground (the fold panel's lesson above). */
+.awardNear {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--home-radius-sm, 9px);
+  background: rgba(var(--home-amber-rgb, 161, 98, 7), 0.10);
+  border: 1px solid rgba(var(--home-amber-rgb, 161, 98, 7), 0.28);
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  line-height: 1.4;
+}
+.awardNear small { display: block; margin-top: 0.15rem; font-size: var(--type-support); color: var(--text-secondary); }
+.awardNearIcon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: var(--warning);
+  color: var(--bg-card, var(--bg));
+  font-size: var(--type-support);
+  font-weight: 800;
+}
+
 /* Award icon picker (Coach Tags & Player Awards Phase 2) — trigger button + choice grid,
    reused by the award-type manager and the give-award form's "+ New" inline create row. */
 .awardEmojiPickBtn {
@@ -15183,6 +15214,15 @@ div.gdRow { cursor: default; }
   background: color-mix(in srgb, var(--home-olive, var(--logic-lime)) 10%, transparent);
   outline: none;
 }
+/* An answer listed but not choosable (SublinedChoice `disabled`) — the award window's game still
+   waiting for its score. Its sub-line says why; the name drops to the sub-line's ink so the row reads
+   as unavailable without an opacity that would take the reason under the contrast floor. */
+.convWhatOpt[aria-disabled="true"] { cursor: not-allowed; }
+.convWhatOpt[aria-disabled="true"]:hover { background: none; }
+/* Keyboard focus still has to SHOW (a screen reader user reaches the row for its reason), but not as
+   the olive fill that says "this one is choosable" — a quiet outline instead (/review 2026-10-02). */
+.convWhatOpt[aria-disabled="true"]:focus-visible { background: none; outline: 2px solid var(--text-tertiary); outline-offset: -2px; }
+.convWhatOpt[aria-disabled="true"] .convWhatOptName { color: var(--text-tertiary); font-weight: 500; }
 .convWhatOptName { display: block; font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
 .convWhatOptSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); margin-top: 0.05rem; }
 .convWhatOptLive {

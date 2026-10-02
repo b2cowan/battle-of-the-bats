@@ -12,9 +12,9 @@ import styles from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import type { RepPlayerAward, RepTeamAwardType } from '@/lib/types';
+import type { RepPlayerAward, RepTeamAwardType, RepTeamEvent } from '@/lib/types';
 import { formatStoredDate } from '@/lib/timezone';
-import { awardTypeLabel } from '@/lib/rep-award-occasion';
+import { awardForOptions, awardTypeLabel, type AwardForOption } from '@/lib/rep-award-occasion';
 
 /** "Apr 28" — the house formatter, never the browser's locale (the certificate's own lesson). */
 const shortDate = (a: RepPlayerAward) => formatStoredDate(a.awardedAt, { withYear: false });
@@ -75,6 +75,30 @@ export function AwardsPanel({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState('');
   const [noSeason, setNoSeason] = useState(false);
+  /**
+   * The Give window's "For" list (Which game an award is for, 2026-10-02): the season's events that
+   * have happened. null = reading. A read that fails leaves the list empty, so the window still
+   * offers "Something else" and "The season" — the way an award was given before, never a dead end.
+   * ⚠ READ FRESH ON EVERY OPEN, never kept for the visit (/review 2026-10-02): the usual sequence is
+   * "enter the score, then give the award", and a list kept from an earlier open still showed that
+   * game greyed with "enter its score first" until a reload. The run counter drops a slower, older
+   * read so it can never land over a newer one. ⚠ A staff member whose Schedule access is Off is
+   * refused the read: they get the two answers that name no event — the list IS the schedule.
+   */
+  const [forEvents, setForEvents] = useState<AwardForOption[] | null>(null);
+  const forRun = useRef(0);
+  const openGive = useCallback(() => {
+    setEditingAward(null);
+    setGiveOpen(true);
+    const run = ++forRun.current;
+    const land = (list: AwardForOption[]) => { if (forRun.current === run) setForEvents(list); };
+    setForEvents(null);
+    // `to` = now: only what has started can carry an award, so the future never travels.
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events?to=${encodeURIComponent(new Date().toISOString())}`)
+      .then(r => (r.ok ? r.json() : { events: [] }))
+      .then((d: { events?: RepTeamEvent[] }) => land(awardForOptions(d.events ?? [], Date.now())))
+      .catch(() => land([]));
+  }, [orgSlug, teamId]);
 
   /**
    * ⚠ The key carries the season, and every write is guarded against a stale run — the switcher
@@ -284,7 +308,7 @@ export function AwardsPanel({
                 Give sits alone at the right. */}
           <CoachListToolbar
             actions={players.length > 0 && (
-              <button className={`${styles.btnSecondary} ${styles.tapFloor}`} onClick={() => { setEditingAward(null); setGiveOpen(true); }}>🏆 Give an award</button>
+              <button className={`${styles.btnSecondary} ${styles.tapFloor}`} onClick={openGive}>🏆 Give an award</button>
             )}
           >
             {/* A rosterless team gets a reason, not a blank player picker (WI-7). */}
@@ -489,9 +513,12 @@ export function AwardsPanel({
             ? {
                 id: editingAward.eventId,
                 eventType: editingAward.eventType ?? null,
-                label: `${editingAward.occasionLabel ?? 'This event'} — ${new Date(`${editingAward.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}`,
+                label: `${editingAward.occasionLabel ?? 'This event'} — ${shortDate(editingAward)}`,
+                day: editingAward.awardedAt,
               }
             : null}
+          forEvents={forEvents}
+          existingAwards={awards}
           editing={editingAward}
           onClose={() => { setGiveOpen(false); setEditingAward(null); }}
           onChanged={() => { void load(); }}

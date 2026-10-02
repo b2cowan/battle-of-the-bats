@@ -57,6 +57,13 @@ export interface SublinedOption<T extends string> {
    * (D9, 2026-09-18): "Best 3" · "Never" · "At cap" · "Doesn't pitch".
    */
   trail?: { text: string; tone?: 'good' | 'warn' | 'bad' | 'quiet' };
+  /**
+   * Listed where it falls but not choosable — its `sub` says why (the award window's game still
+   * waiting for its score, "enter its score first", 2026-10-02). Leaving such a row OFF the list is
+   * what sent a coach to type the game in words instead. `aria-disabled`, not `disabled`, so a screen
+   * reader still reaches it and reads the reason.
+   */
+  disabled?: boolean;
 }
 
 export default function SublinedChoice<T extends string>({
@@ -214,8 +221,9 @@ export default function SublinedChoice<T extends string>({
                     type="button"
                     role="option"
                     aria-selected={value === o.value}
+                    aria-disabled={o.disabled || undefined}
                     className={styles.convWhatOpt}
-                    onClick={() => { onChange(o.value); setOpen(false); }}
+                    onClick={() => { if (o.disabled) return; onChange(o.value); setOpen(false); }}
                   >
                     <span>
                       <span className={styles.convWhatOptName}>{o.name}</span>
