@@ -105,7 +105,7 @@ D8, D9, D9a, D10; D9b fixed. D8a (the club's side) was not drawn and stays open.
   we need a tools dropdown?" Proposed: Payees · Categories & items · Money tags under "The team's lists", each opening
   its existing window (two frames today; not unified here). Alternative: a plain Payees button.
 
-### Round 3 — build record (2026-10-02)
+### Round 3 — build record (2026-10-02, committed `b0b27612` with session 2)
 
 - **Window:** `accounting/PayeesWindow.tsx` (+ `.module.css`) — ONE `RoomShell` whose props switch by level (list ↔
   payee), so the overlay never remounts between them; questions (new · merge · delete) carried over from the deleted
