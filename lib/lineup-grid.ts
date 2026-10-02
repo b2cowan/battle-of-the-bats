@@ -1,7 +1,9 @@
 // Shared, pure lineup-grid helpers used by BOTH the game lineup builder and the standalone template
 // builder (via the shared LineupEditor). No I/O, no React, no CSS — just the row model + ordering.
 import type { RepRosterPlayer, RepLineupMode } from '@/lib/types';
-import { playerDisplayName } from '@/lib/coach-roster-name';
+// Relative, not '@/': the unit-test runner resolves relative imports only, and lib/lineup-copy.ts
+// (Copy from) is tested through these helpers.
+import { playerDisplayName } from './coach-roster-name';
 
 // Cell options for a per-inning position select. '' = unassigned (not persisted).
 export const LINEUP_POSITIONS = ['', 'P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'DH', 'EH', 'Bench'];
@@ -29,6 +31,11 @@ export interface LineupSeedEntry {
 export function heatStyle(count: number) {
   if (!count) return undefined;
   return { background: `rgba(var(--logic-lime-rgb), ${Math.min(0.55, 0.1 + count * 0.09)})` };
+}
+
+/** The format's words, wherever a lineup's shape is named ("9 player ball · 7 innings"). */
+export function lineupModeLabel(mode: RepLineupMode): string {
+  return mode === 'nine_player' ? '9 player ball' : 'Everyone bats';
 }
 
 export function sortLineupRows(rows: LineupPlayerRow[]) {

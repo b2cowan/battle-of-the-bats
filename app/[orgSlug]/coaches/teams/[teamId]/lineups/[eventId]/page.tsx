@@ -6,10 +6,9 @@ import { useDismissable } from '@/lib/overlay-hooks';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
 import LineupDrawerHead from '@/components/coaches/LineupDrawerHead';
-import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
-import { ListOrdered, CalendarDays, Undo2, Redo2, Printer, LayoutTemplate } from 'lucide-react';
+import { ListOrdered, CalendarDays, Undo2, Redo2, MoreHorizontal } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -36,6 +35,9 @@ import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { sideWord } from '@/lib/coach-tournament-games';
 import { useMinuteClock } from '@/lib/use-minute-clock';
 import CallUpSheet, { type CallUpPoolRow } from '@/components/coaches/CallUpSheet';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import LineupCopyFrom, { type LineupCopyPick } from '@/components/coaches/LineupCopyFrom';
+import { copyLineup, type LineupCopySource, type LineupCopyWhat } from '@/lib/lineup-copy';
 import LineupEditor from '../_LineupEditor';
 import styles from '../../../../coaches.module.css';
 import type {
@@ -67,6 +69,18 @@ function fmtYear(iso: string) {
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
+// A saved per-game rules override as the Setup panel's three fields — read on load and by a copy.
+function gameRulesFrom(ro: LineupRulesOverride | null | undefined) {
+  return {
+    maxPos: ro?.maxInningsPerPosition != null ? String(ro.maxInningsPerPosition) : '',
+    pitcher: ro?.pitcherMaxInnings != null ? String(ro.pitcherMaxInnings) : '',
+    minPlay: ro?.minInningsPerPlayer != null ? String(ro.minInningsPerPlayer) : '',
+  };
+}
+// "Emma Ross" · "Emma Ross and Kai Lee" · "Emma Ross, Kai Lee and Ava Brennan" — for the copy's notice.
+function joinNames(names: string[]) {
+  return names.length <= 2 ? names.join(' and ') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
 
 // The poster's turn is a PER-DEVICE preference, not a per-lineup fact: a clipboard coach picks
 // portrait once and never sees landscape again unless they ask (owner decision D1, 2026-09-19).
@@ -86,9 +100,6 @@ export default function CoachLineupBuilderPage({
   const { orgSlug, teamId, eventId } = use(paramsPromise);
   const searchParams = useSearchParams();
   const { assignments, loading: ctxLoading } = useCoaches();
-  // The phone's tool row (stage 3 · D2) differs from the desktop's toolbar in structure, so the DOM
-  // decides; the editor beneath makes the same call for its own forms.
-  const isPhone = useIsPhone();
   const { currentOrg } = useOrg();
   const confirm = useConfirm();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -124,7 +135,10 @@ export default function CoachLineupBuilderPage({
     setPosterOrientation(next);
     try { localStorage.setItem(POSTER_ORIENTATION_KEY, next); } catch { /* no storage — this print still uses the choice */ }
   }
-  const [templatesOpen, setTemplatesOpen] = useState(false);
+  // The Tools menu's three panels (owner rulings 2026-10-02): Copy from, Save as template, and Print
+  // (`lineupPdfOpen`, above). One open at a time; the menu itself is CoachToolbarMenu's own state.
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [templates, setTemplates] = useState<RepTeamLineupTemplate[]>([]);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [templateSaving, setTemplateSaving] = useState(false);
@@ -149,7 +163,13 @@ export default function CoachLineupBuilderPage({
   const [readyError, setReadyError] = useState('');
   const nowMs = useMinuteClock();
   const gameStarted = !!event && gameHasStarted(event, nowMs);
+  // ⚠ THE LINE ABOVE THE GRID ENDS ON THE COACH'S NEXT EDIT, NOT ON THE NEXT SAVE (Copy from,
+  // 2026-10-02). Every edit passes through here. The save path used to clear it instead, and the
+  // save that an action's OWN edit triggers landed ~1s later — so "Copied the order and positions
+  // from …" (and the call-up it names) vanished before it could be read. An action that posts a line
+  // does so after its edit, so its line survives; the coach's next change takes it away.
   function markLineupDirty() {
+    setLineupNotice('');
     setLineupDirty(true);
     if (!gameStarted) setLineupStatus('draft');
   }
@@ -173,29 +193,33 @@ export default function CoachLineupBuilderPage({
   const [callUpError, setCallUpError] = useState('');
 
   // ── Undo/redo — snapshots of the editable lineup state (notes excluded on purpose). ──
-  type LineupSnap = { rows: LineupPlayerRow[]; mode: RepLineupMode; innings: number };
+  // `rules` rides a step ONLY when the action changed the game's rules — Copy from's "Order and
+  // positions" brings the source's override across, so its one Undo must take that back too. Every
+  // other step leaves the rules out, exactly as before: undoing a position never reverts a rules edit.
+  type LineupSnap = { rows: LineupPlayerRow[]; mode: RepLineupMode; innings: number; rules?: typeof gameRules };
   const [lineupHistory, setLineupHistory] = useState<{ undo: LineupSnap[]; redo: LineupSnap[] }>({ undo: [], redo: [] });
-  const lineupSnap = (): LineupSnap => ({ rows: lineupRows, mode: lineupMode, innings: lineupInningCount });
-  function pushLineupUndo() {
-    setLineupHistory(h => ({ undo: [...h.undo, lineupSnap()].slice(-60), redo: [] }));
+  const lineupSnap = (withRules = false): LineupSnap => ({ rows: lineupRows, mode: lineupMode, innings: lineupInningCount, ...(withRules ? { rules: gameRules } : {}) });
+  function pushLineupUndo(withRules = false) {
+    setLineupHistory(h => ({ undo: [...h.undo, lineupSnap(withRules)].slice(-60), redo: [] }));
   }
   function applyLineupSnap(s: LineupSnap) {
     setLineupRows(s.rows);
     setLineupMode(s.mode);
     setLineupInningCount(s.innings);
+    if (s.rules) setGameRules(s.rules);
     markLineupDirty();
   }
   function undoLineup() {
     if (lineupHistory.undo.length === 0) return;
     const prev = lineupHistory.undo[lineupHistory.undo.length - 1];
-    const cur = lineupSnap();
+    const cur = lineupSnap(!!prev.rules);
     applyLineupSnap(prev);
     setLineupHistory(h => ({ undo: h.undo.slice(0, -1), redo: [...h.redo, cur] }));
   }
   function redoLineup() {
     if (lineupHistory.redo.length === 0) return;
     const next = lineupHistory.redo[lineupHistory.redo.length - 1];
-    const cur = lineupSnap();
+    const cur = lineupSnap(!!next.rules);
     applyLineupSnap(next);
     setLineupHistory(h => ({ undo: [...h.undo, cur], redo: h.redo.slice(0, -1) }));
   }
@@ -291,12 +315,7 @@ export default function CoachLineupBuilderPage({
       setLineupInningCount(data.lineup?.inningCount ?? sportPack.defaultPeriodCount);
       setLineupNotes(data.lineup?.notes ?? '');
       setLineupSeasonCaps(data.programYear?.lineupSettings ?? null);
-      const ro = data.lineup?.rulesOverride ?? null;
-      setGameRules({
-        maxPos: ro?.maxInningsPerPosition != null ? String(ro.maxInningsPerPosition) : '',
-        pitcher: ro?.pitcherMaxInnings != null ? String(ro.pitcherMaxInnings) : '',
-        minPlay: ro?.minInningsPerPlayer != null ? String(ro.minInningsPerPlayer) : '',
-      });
+      setGameRules(gameRulesFrom(data.lineup?.rulesOverride));
       setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(seedPlayers, entries, mode)), mode));
       setLineupHistory({ undo: [], redo: [] });
       setLineupStatus(data.lineup?.status ?? 'draft');
@@ -314,35 +333,34 @@ export default function CoachLineupBuilderPage({
     if (!ctxLoading && canLineups) void Promise.resolve().then(load);
   }, [ctxLoading, canLineups, load]);
 
-  // Close the Templates / Print popovers on an outside tap or Escape (the auto-fill popover is
-  // self-managed inside LineupEditor).
-  // Two popovers, two boundaries, one dismiss — a tap outside BOTH closes both.
-  const templatesRef = useRef<HTMLDivElement>(null);
-  const pdfRef = useRef<HTMLDivElement>(null);
-  useDismissable(
-    templatesOpen || lineupPdfOpen,
-    [templatesRef, pdfRef],
-    () => { setTemplatesOpen(false); setLineupPdfOpen(false); },
-  );
+  // Close the Tools panels on an outside tap or Escape (the auto-fill popover is self-managed inside
+  // LineupEditor). All three hang off the ONE Tools wrap, so one boundary covers them — and every
+  // scrim renders inside it, so a tap on a scrim never reads as "outside" and presses what is under it.
+  const toolsRef = useRef<HTMLDivElement>(null);
+  function closeToolPanels() { setCopyOpen(false); setSaveTemplateOpen(false); setLineupPdfOpen(false); }
+  useDismissable(copyOpen || saveTemplateOpen || lineupPdfOpen, toolsRef, closeToolPanels);
   /* ⚠ BACK CLOSES THE DRAWER, IT DOES NOT LEAVE THE PAGE (owner, 2026-09-22 — “when I hit
      back it brings me to the lineup list and not the lineup I am editing”). These panels predate
      §219 and never registered a level, which was survivable while they were small popovers and is
      not now they are full-width modal drawers: a coach who opens one and reaches for the back
      gesture loses the lineup. One step each, so Back — the gesture or the button — goes up ONE
      level to the page behind, and the drawer's own exits consume it. */
-  useBackStep(templatesOpen, () => setTemplatesOpen(false));
+  useBackStep(copyOpen, () => setCopyOpen(false));
+  useBackStep(saveTemplateOpen, () => setSaveTemplateOpen(false));
   useBackStep(lineupPdfOpen, () => setLineupPdfOpen(false));
-  /* ⚠ TEMPLATES IS A FORM, SO THE BAR GOES AWAY RATHER THAN BEING PAINTED OVER (2026-09-23; the
+  /* ⚠ SAVE AS TEMPLATE IS A FORM, SO THE BAR GOES AWAY RATHER THAN BEING PAINTED OVER (2026-09-23,
+     written for the Templates drawer that held this form until Copy from, 2026-10-02; the
      reasoning lives with the editor's two, in `_LineupEditor.tsx`). Covering the nav with a
      z-index defends the thumb only — the tabs stayed in the tab order and the accessibility tree
      underneath, so "a coach leaves mid-edit by hitting Schedule" survived by keyboard on a
      surface just declared modal. `useOverlayOpen` is the portal's own July mechanism for this:
      the bar hides itself and the page behind locks.
-     ⚠ PRINT IS NOT HERE AND MUST NOT BE — it is a MENU, and the live bar is its way out.
+     ⚠ PRINT AND COPY FROM ARE NOT HERE AND MUST NOT BE — they are MENUS (you tap and they act), and
+     the live bar is their way out.
      ⚠ Nav breakpoint, not the content one: above 900 the bar is already `display: none` (no hole
      to close) and this drawer is an ordinary anchored popover that must not lock the page. */
   const isPhoneNav = useIsPhoneNav();
-  useOverlayOpen(templatesOpen && isPhoneNav);
+  useOverlayOpen(saveTemplateOpen && isPhoneNav);
 
   // Auto-save the lineup ~0.9s after the last change (debounced) — no Save button.
   useEffect(() => {
@@ -379,36 +397,104 @@ export default function CoachLineupBuilderPage({
       setNewTemplateName('');
       await reloadTemplates();
       setLineupNotice(`Saved “${name}” as a template.`);
-      setTemplatesOpen(false);
+      setSaveTemplateOpen(false);
     } catch (e: unknown) {
       setTemplateError(errorMessage(e, 'Could not save template'));
     } finally {
       setTemplateSaving(false);
     }
   }
-  async function applyTemplate(t: RepTeamLineupTemplate) {
-    const hasAny = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
-    if (hasAny && !(await confirm({
-      title: 'Start from template?',
-      message: `Replace the current lineup with “${t.name}”? Unsaved changes will be lost.`,
-      confirmText: 'Load template', cancelText: 'Keep current', tone: 'warning',
-    }))) return;
-    const byId = new Map(t.entries.map(e => [e.playerId, e]));
-    const rosterIds = new Set(lineupRows.map(r => r.player.id));
-    const skipped = t.entries.filter(e => !rosterIds.has(e.playerId)).length;
-    pushLineupUndo();
-    setLineupMode(t.lineupMode);
-    setLineupInningCount(t.inningCount);
-    setLineupRows(rows => renumberBattingOrder(sortLineupRows(rows.map(row => {
-      const e = byId.get(row.player.id);
-      if (e) return { ...row, starter: e.starter, battingOrder: e.battingOrder != null ? String(e.battingOrder) : '', inningPositions: { ...e.inningPositions } };
-      return { ...row, starter: t.lineupMode === 'everyone_bats', battingOrder: '', inningPositions: {} };
-    })), t.lineupMode));
+  /**
+   * COPY FROM — put another game's lineup, or a template, onto this game (owner rulings 2026-10-02;
+   * docs/projects/active/COACH_LINEUP_COPY_FROM_GAME_PLAN.md). The panel finds the source and asks
+   * "Batting order" or "Order and positions"; this does the copy. The rules — who comes across, in
+   * what order, with which positions — are `copyLineup`'s, shared by both sources and unit-tested.
+   *
+   * ⚠⚠ A COPIED CALL-UP IS LINKED TO THIS GAME *BEFORE* THE ROWS LAND (D5). A call-up belongs to one
+   * game, and the server refuses a lineup row for a player who is neither rostered nor called up to
+   * it. Rows landing first would hand the autosave a PUT it cannot win — the refused-save loop
+   * `removeCallUpFromGame` documents. Undo afterwards puts the lineup back and leaves the call-up on
+   * the game, out of the order, where the existing remove control takes them off.
+   *
+   * ⚠ This replaced "Start from template?" — a confirm mounted outside the drawer, whose "Keep current"
+   * also read as a tap outside and closed the drawer (Mobile plan §13.6 #5). The panel's question is
+   * the confirmation now, and one Undo reverses the copy.
+   */
+  /* ⚠ ONE COPY AT A TIME (/review, 2026-10-02). Reopening Tools mid-copy closes the panel but not the
+     copy, so a second one could start while the first was still linking a call-up — and each read the
+     same snapshot of this game's call-ups. A second answer while one is under way is refused, and the
+     panel says so. */
+  const copyingRef = useRef(false);
+  async function copyIntoLineup(pick: LineupCopyPick, what: LineupCopyWhat) {
+    if (copyingRef.current) throw new Error('Another copy is still finishing. Try again in a moment.');
+    copyingRef.current = true;
+    try {
+      await copyNow(pick, what);
+    } finally {
+      copyingRef.current = false;
+    }
+  }
+  async function copyNow(pick: LineupCopyPick, what: LineupCopyWhat) {
+    const roster = attendanceRows.map(r => r.player);
+    let gameCallUps = callUps;
+    const broughtUp: RepRosterPlayer[] = [];
+    const leftOut: RepRosterPlayer[] = [];
+    if (pick.kind === 'game') {
+      const inSource = new Set(pick.entries.map(e => e.playerId));
+      const rosterIds = new Set(roster.map(p => p.id));
+      const needed = pick.callUps.filter(p => inSource.has(p.id) && !rosterIds.has(p.id) && !gameCallUps.some(c => c.id === p.id));
+      if (needed.length > 0) {
+        // A call-up sheet GET still in flight read the list BEFORE these links — drop its answer.
+        callUpSeq.current += 1;
+        // Linked together: each add is one insert for one player, and its own response says whether
+        // that player is on the game now — read per player, never one response's list as the truth.
+        const linked = await Promise.all(needed.map(async p => {
+          try {
+            const res = await fetch(callUpsBase, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playerId: p.id }) });
+            const d: { callUps?: RepRosterPlayer[] } = await res.json().catch(() => ({}));
+            return res.ok ? d.callUps ?? [] : null;
+          } catch {
+            return null;
+          }
+        }));
+        needed.forEach((p, i) => {
+          const row = linked[i]?.find(c => c.id === p.id);
+          if (row) broughtUp.push(row); else leftOut.push(p);
+        });
+        gameCallUps = [...gameCallUps, ...broughtUp];
+        // Merged INTO the list as it is now, never set from the snapshot this copy started with — a
+        // call-up taken off the game meanwhile must stay off.
+        setCallUps(list => [...list, ...broughtUp.filter(b => !list.some(c => c.id === b.id))]);
+      }
+    }
+
+    const source: LineupCopySource = pick.kind === 'game'
+      ? { lineupMode: pick.lineupMode, inningCount: pick.inningCount, entries: pick.entries }
+      : { lineupMode: pick.template.lineupMode, inningCount: pick.template.inningCount, entries: pick.template.entries };
+    const admissible = new Map([...roster, ...gameCallUps].map(p => [p.id, p]));
+    const copyArgs = { currentMode: lineupMode, currentInnings: lineupInningCount, source, what, admissible };
+    const plan = copyLineup({ current: lineupRows, ...copyArgs });
+
+    const bringsRules = what === 'everything' && pick.kind === 'game';
+    pushLineupUndo(bringsRules);
+    setLineupMode(plan.lineupMode);
+    setLineupInningCount(plan.inningCount);
+    // Mapped again from the rows as they are NOW — the links above were awaited.
+    setLineupRows(rows => copyLineup({ current: rows, ...copyArgs }).rows);
+    if (bringsRules) setGameRules(gameRulesFrom(pick.rulesOverride));
     markLineupDirty();
-    setTemplatesOpen(false);
-    setLineupNotice(skipped > 0
-      ? `Loaded “${t.name}” — skipped ${skipped} player${skipped === 1 ? '' : 's'} no longer on the roster.`
-      : `Loaded “${t.name}” — review and save when ready.`);
+
+    // What happened, and nothing more — the page saves by itself, so there is no "save when ready".
+    const leftOutIds = new Set(leftOut.map(p => p.id));
+    const departed = plan.skippedPlayerIds.filter(id => !leftOutIds.has(id)).length;
+    const from = pick.kind === 'game' ? `${pick.label} (${pick.dayLabel})` : `“${pick.template.name}”`;
+    setLineupNotice([
+      what === 'everything' ? `Copied the order and positions from ${from}.` : `Copied the batting order from ${from}.`,
+      broughtUp.length ? `${joinNames(broughtUp.map(playerName))} ${broughtUp.length === 1 ? 'is' : 'are'} called up for this game too.` : '',
+      leftOut.length ? `${joinNames(leftOut.map(playerName))} couldn’t be called up for this game and ${leftOut.length === 1 ? 'was' : 'were'} left out.` : '',
+      departed ? `${departed} ${departed === 1 ? 'player is' : 'players are'} no longer on the team and ${departed === 1 ? 'was' : 'were'} left out.` : '',
+    ].filter(Boolean).join(' '));
+    setCopyOpen(false);
   }
 
   // Reconcile actions for the attendance-mismatch banner — lineup-side only, dedup in the updater.
@@ -629,7 +715,6 @@ export default function CoachLineupBuilderPage({
         // take its word so the strip never shows a status the row does not hold.
         if (saved.lineup?.status) { setLineupStatus(saved.lineup.status); setLineupReadyAt(saved.lineup.readyAt ?? null); }
       }
-      setLineupNotice('');
       return true;
     } catch (e: unknown) {
       setLineupError(errorMessage(e, 'Lineup save failed'));
@@ -805,123 +890,99 @@ export default function CoachLineupBuilderPage({
   // which is why counting them earned less than the 300px it cost. Attendance is still edited on
   // the Schedule; this page has only ever read it.
 
-  // The Templates popover, injected into the editor's controls row via `controlsExtra`.
-  // On a phone the trigger is a fourth `footerIconBtn` (stage 3 · D2) — a glyph BUTTON opening
-  // exactly this panel, NOT a `CoachToolbarMenu`: the panel is a FORM (an input and a save
-  // button) and nothing in it is checked (a lineup does not remember its template).
-  // ⚠ NO DELETE HERE (owner, 2026-09-22). This panel does exactly two things — start FROM a saved
-  // template, save this lineup AS one. Deleting, renaming, editing and applying a template all live
-  // in the Templates tab of the Lineups room (`_LineupTemplatesView`), which is where the help
-  // already sends coaches. A destructive glyph pinned to the edge of the row you are trying to TAP
-  // is a mis-tap waiting to happen, and on a phone the row IS the tap target.
-  const templatesControl = (
-    <div className={styles.lineupAutoWrap} ref={templatesRef}>
-      {isPhone ? (
-        <button type="button" className={styles.footerIconBtn} aria-label="Templates" title="Templates" disabled={lineupRows.length === 0}
-          onClick={() => { setTemplatesOpen(v => !v); setTemplateError(''); setLineupPdfOpen(false); }} aria-expanded={templatesOpen}>
-          <LayoutTemplate size={18} />
-        </button>
-      ) : (
-        <button type="button" className={styles.btnSecondary} disabled={lineupRows.length === 0}
-          onClick={() => { setTemplatesOpen(v => !v); setTemplateError(''); setLineupPdfOpen(false); }} aria-expanded={templatesOpen}>
-          Templates ▾
-        </button>
-      )}
-      {templatesOpen && (<>
-        {/* A FORM — it holds a name field and a Save (owner ruling 2026-09-23) — so it covers the
-            bottom nav and its scrim dims the bar. `.lineupDrawerOverNav` carries the reasoning. */}
-        <LineupSheetScrim onClose={() => setTemplatesOpen(false)} overNav />
-        <div className={`${styles.lineupAutoMenu} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Templates">
-          {/* THE HEAD D12 GAVE SETUP AND THIS DRAWER WAS MISSED (2026-09-23). Once the scrim
-              covers the square that opened it, nothing on screen said what this surface was; and
-              now that it covers the navigation it needs a way out that is not a 12px strip of
-              scrim. NO `desktopClose`: at ≥901 this is still a small anchored popover whose way
-              out is "click anywhere else", and it must not grow a control it never had. */}
-          <LineupDrawerHead title="Templates" onClose={() => setTemplatesOpen(false)} />
-          <div className={styles.lineupTemplateSection}>
-            <span className={styles.lineupTemplateHead}>Start from a saved template</span>
-            {templates.length === 0 ? (
-              <p className={styles.lineupAutoNote}>No saved templates yet — build a lineup, then save it below.</p>
-            ) : (
-              <ul className={styles.lineupTemplateList}>
-                {templates.map(t => (
-                  <li key={t.id} className={styles.lineupTemplateRow}>
-                    <button type="button" className={styles.lineupTemplateLoad} onClick={() => applyTemplate(t)}>
-                      <strong>{t.name}</strong>
-                      <span>{t.lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {t.inningCount} {sportPack.periodLabelPlural.toLowerCase()}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div className={styles.lineupTemplateSection}>
-            <span className={styles.lineupTemplateHead}>Save current lineup as a template</span>
-            <input className={styles.input} value={newTemplateName} onChange={e => setNewTemplateName(e.target.value)} placeholder="e.g. Gold medal game" maxLength={80} aria-label="New template name" />
-            <button type="button" className={styles.btnPrimary} disabled={!newTemplateName.trim() || templateSaving || lineupRows.length === 0} onClick={handleSaveTemplate}>
-              {templateSaving ? 'Saving…' : 'Save as template'}
-            </button>
-            {templateError && <p className={styles.errorText}>{templateError}</p>}
-          </div>
-        </div>
-      </>)}
-    </div>
-  );
-
-  // Undo / Redo / Print + Templates — ALL of the editor's surface-specific extras, together in the
-  // toolbar (owner, 2026-09-18). Undo/Redo/Print used to live in a bar docked to the viewport; that
-  // bar is retired (the same "a docked bar is only earned by real content" ruling the practice plan
-  // and the schedule's attendance list already followed on 2026-09-14) now that these three become
-  // ordinary toolbar buttons and the save word floats as the same pill every other coach screen
-  // uses. Print reuses the auto-fill/Templates popover recipe (`lineupAutoWrap`/`lineupAutoMenu`)
-  // rather than a bar-specific menu of its own.
-  // On a phone these are squares in ONE flex row (stage 3 · D2, owner ruling — B: after the Setup
-  // row, directly above the list): tools, not header actions — they act on the grid and the page
-  // creates nothing, so the page-actions guard's `actions: null` stays true. The ROW itself is
-  // built by the editor, which adds its own Clear as the last square (owner, 2026-09-22) — these
-  // four are handed over bare.
+  // UNDO · REDO — the page's half of the tool row. The EDITOR composes the row (stage 3 · D2, owner
+  // 2026-09-22): Call up, these two, its own Clear, then Tools (`controlsTrailing`). Tools, not header
+  // actions — they act on the grid and the page creates nothing, so the page-actions guard's
+  // `actions: null` stays true. (Undo/Redo once lived in a bar docked to the viewport; that bar is
+  // retired — "a docked bar is only earned by real content", 2026-09-14.)
   const lineupTools = (
     <>
       <button type="button" className={styles.footerIconBtn} aria-label="Undo" title="Undo" disabled={lineupHistory.undo.length === 0} onClick={undoLineup}><Undo2 size={18} /></button>
       <button type="button" className={styles.footerIconBtn} aria-label="Redo" title="Redo" disabled={lineupHistory.redo.length === 0} onClick={redoLineup}><Redo2 size={18} /></button>
-      <div className={styles.lineupAutoWrap} ref={pdfRef}>
-        <button type="button" className={styles.footerIconBtn} aria-label="Print" title="Print" disabled={lineupRows.length === 0}
-          onClick={() => { setLineupPdfOpen(v => !v); setTemplatesOpen(false); }} aria-expanded={lineupPdfOpen}>
-          <Printer size={18} />
-        </button>
-        {lineupPdfOpen && (<>
-          <LineupSheetScrim onClose={() => setLineupPdfOpen(false)} />
-          <div className={styles.lineupAutoMenu}>
-            {/* ONE document with a turn, not two documents (owner D1, 2026-09-19): the row prints,
-                the switch beneath it picks the sheet's orientation and remembers it on this device.
-                The portal's own segmented control (segChoice) as a pair of pressed/unpressed toggle
-                buttons — two Tab stops that read their state, no arrow-key contract. It sits BESIDE
-                the row's button rather than inside it — a button cannot hold buttons. */}
-            <div className={styles.lineupPdfPoster}>
-              <button type="button" className={styles.lineupPdfItem} onClick={handleLineupPoster}>
-                <strong>Dugout poster</strong>
-                <span>Positions by {sportPack.periodLabel.toLowerCase()} — blank cells to pen in at the field</span>
-              </button>
-              <div className={`${styles.segChoice} ${styles.lineupPdfOrient}`} role="group" aria-label="Poster orientation">
-                <button type="button" aria-pressed={posterOrientation === 'landscape'} className={`${styles.segBtn} ${posterOrientation === 'landscape' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('landscape')}>Landscape · wall</button>
-                <button type="button" aria-pressed={posterOrientation === 'portrait'} className={`${styles.segBtn} ${posterOrientation === 'portrait' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('portrait')}>Portrait · clipboard</button>
-              </div>
-            </div>
-            <button type="button" className={styles.lineupPdfItem} onClick={handleBattingCard}>
-              <strong>{sportPack.orderLabel} card</strong>
-              <span>Large-type order for the scorekeeper or dugout</span>
-            </button>
-            {lineupNotes.trim() && (
-              <label className={styles.lineupPdfNotesToggle}>
-                <input type="checkbox" checked={pdfIncludeNotes} onChange={e => setPdfIncludeNotes(e.target.checked)} />
-                <span>Print lineup notes on the poster</span>
-              </label>
-            )}
-          </div>
-        </>)}
-      </div>
-      {templatesControl}
     </>
+  );
+
+  /* ⋯ TOOLS — what takes a lineup IN or OUT (owner ruling D11, 2026-10-02): Copy from, Print and Save
+     as template. What changes the grid while you build — Call up, Undo, Redo, Clear — stays on screen.
+     It is the portal's own toolbar menu, the club Ledger's Tools: a worded trigger on the desktop and
+     a bare ⋯ on a phone opening a sheet. Picking an item closes the menu and opens that item's panel
+     here, hung off the same wrap, so one dismiss boundary covers all three.
+     ⚠ It is also what fits the phone. The row was six 44px squares (304px); a seventh would not fit
+     a 360px phone's 328px. Five is 252px.
+     ⚠ Print… is one tap deeper than its old square — the accepted cost of the split.
+     ⚠ THE LAYERS (2026-09-23 ruling): Copy from and Print are MENUS — you tap and they act — so the
+     bar stays live beneath them. Save as template holds a name field, a FORM, so it covers the bar. */
+  const toolsControl = (
+    <div className={styles.lineupAutoWrap} ref={toolsRef}>
+      <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={16} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools"
+        triggerClassName={styles.lineupToolsTrigger} onOpenChange={open => { if (open) closeToolPanels(); }}>
+        <CoachToolbarMenuItem label="Copy from…" hint="A previous game’s lineup or a saved template" onSelect={() => setCopyOpen(true)} />
+        <CoachToolbarMenuItem label="Print…" hint={`Dugout poster or ${sportPack.orderLabel.toLowerCase()} card`}
+          disabled={lineupRows.length === 0} onSelect={() => setLineupPdfOpen(true)} />
+        <CoachToolbarMenuItem label="Save as template…" hint="Keep this lineup to reuse on any game"
+          disabled={lineupRows.length === 0} onSelect={() => { setTemplateError(''); setSaveTemplateOpen(true); }} />
+      </CoachToolbarMenu>
+      {copyOpen && event && (
+        <LineupCopyFrom
+          orgSlug={orgSlug}
+          teamId={teamId}
+          event={event}
+          sportPack={sportPack}
+          templates={templates}
+          hasPositions={lineupRows.some(r => Object.values(r.inningPositions).some(Boolean))}
+          onCopy={copyIntoLineup}
+          onClose={() => setCopyOpen(false)}
+        />
+      )}
+      {lineupPdfOpen && (<>
+        <LineupSheetScrim onClose={() => setLineupPdfOpen(false)} />
+        <div className={styles.lineupAutoMenu}>
+          {/* ONE document with a turn, not two documents (owner D1, 2026-09-19): the row prints,
+              the switch beneath it picks the sheet's orientation and remembers it on this device.
+              The portal's own segmented control (segChoice) as a pair of pressed/unpressed toggle
+              buttons — two Tab stops that read their state, no arrow-key contract. It sits BESIDE
+              the row's button rather than inside it — a button cannot hold buttons. */}
+          <div className={styles.lineupPdfPoster}>
+            <button type="button" className={styles.lineupPdfItem} onClick={handleLineupPoster}>
+              <strong>Dugout poster</strong>
+              <span>Positions by {sportPack.periodLabel.toLowerCase()} — blank cells to pen in at the field</span>
+            </button>
+            <div className={`${styles.segChoice} ${styles.lineupPdfOrient}`} role="group" aria-label="Poster orientation">
+              <button type="button" aria-pressed={posterOrientation === 'landscape'} className={`${styles.segBtn} ${posterOrientation === 'landscape' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('landscape')}>Landscape · wall</button>
+              <button type="button" aria-pressed={posterOrientation === 'portrait'} className={`${styles.segBtn} ${posterOrientation === 'portrait' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('portrait')}>Portrait · clipboard</button>
+            </div>
+          </div>
+          <button type="button" className={styles.lineupPdfItem} onClick={handleBattingCard}>
+            <strong>{sportPack.orderLabel} card</strong>
+            <span>Large-type order for the scorekeeper or dugout</span>
+          </button>
+          {lineupNotes.trim() && (
+            <label className={styles.lineupPdfNotesToggle}>
+              <input type="checkbox" checked={pdfIncludeNotes} onChange={e => setPdfIncludeNotes(e.target.checked)} />
+              <span>Print lineup notes on the poster</span>
+            </label>
+          )}
+        </div>
+      </>)}
+      {saveTemplateOpen && (<>
+        {/* A FORM — a name and a Save — so it covers the bottom nav and its scrim dims the bar
+            (owner ruling 2026-09-23). Making a template is a CREATE, so it asks (edit autosaves,
+            create asks, 2026-09-24). Deleting, renaming and editing templates live in the Lineups
+            room's Templates tab, as before. */}
+        <LineupSheetScrim onClose={() => setSaveTemplateOpen(false)} overNav />
+        <div className={`${styles.lineupAutoMenu} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Save as template">
+          <LineupDrawerHead title="Save as template" onClose={() => setSaveTemplateOpen(false)} />
+          <form className={styles.lineupTemplateSection} onSubmit={e => { e.preventDefault(); void handleSaveTemplate(); }}>
+            <input className={styles.input} value={newTemplateName} onChange={e => setNewTemplateName(e.target.value)} placeholder="e.g. Gold medal game" maxLength={80} aria-label="Template name" />
+            <p className={styles.lineupAutoNote}>Saves this lineup’s order, positions, format and {sportPack.periodLabelPlural.toLowerCase()}. Templates live on the Lineups page’s Templates tab.</p>
+            <button type="submit" className={styles.btnPrimary} disabled={!newTemplateName.trim() || templateSaving || lineupRows.length === 0}>
+              {templateSaving ? 'Saving…' : 'Save template'}
+            </button>
+            {templateError && <p className={styles.errorText}>{templateError}</p>}
+          </form>
+        </div>
+      </>)}
+    </div>
   );
 
   return (
@@ -956,6 +1017,7 @@ export default function CoachLineupBuilderPage({
             onNotice={setLineupNotice}
             notice={lineupNotice}
             controlsExtra={lineupTools}
+            controlsTrailing={toolsControl}
             attendance={{
               comingNotInLineup: comingNotInLineup.map(r => r.player),
               outButInLineup: outButInLineup.map(r => r.player),

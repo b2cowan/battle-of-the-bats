@@ -15,6 +15,7 @@ import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import type { SportPack } from '@/lib/sports';
 import { formatInOrgZone, formatOrgDayMonth } from '@/lib/timezone';
 import { lineupTemplateHref } from '@/lib/lineups-address';
+import { lineupModeLabel } from '@/lib/lineup-grid';
 import LineupsTabs from './_LineupsTabs';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamLineupTemplate, RepRosterPlayer, RepTeamLineupEntry } from '@/lib/types';
@@ -308,7 +309,7 @@ export default function LineupTemplatesView({
                   key={t.id}
                   as="static"
                   title={<Link href={lineupTemplateHref(base, t.id)} className={`${styles.lineupTplName} ${styles.rowTapLink}`}>{t.name}</Link>}
-                  caption={`${t.lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · ${t.inningCount} ${sportPack.periodLabelPlural.toLowerCase()} · ${t.entries.length} player${t.entries.length === 1 ? '' : 's'}`}
+                  caption={`${lineupModeLabel(t.lineupMode)} · ${t.inningCount} ${sportPack.periodLabelPlural.toLowerCase()} · ${t.entries.length} player${t.entries.length === 1 ? '' : 's'}`}
                   trail={
                     <div className={styles.lineupTplActions}>
                       <button type="button" className={styles.btnSecondary} disabled={games.length === 0} title={games.length === 0 ? 'Add a game first' : undefined} onClick={() => { setNotice(''); setApplyTemplate(t); }}>

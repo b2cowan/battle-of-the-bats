@@ -1,0 +1,136 @@
+/* COPY FROM — the lineup builder's panel (owner rulings 2026-10-02; see LineupCopyFrom.tsx).
+   It wears the builder's own `.lineupAutoMenu` (an anchored popover above 900, the bottom drawer at
+   ≤900) and only adds what is its own here.
+   ⚠ EVERY OVERRIDE OF `.lineupAutoMenu` IS TWO CLASSES. That rule lives in another module at one
+   class, and two modules at equal specificity resolve by BUNDLE ORDER — an override that wins on one
+   route and silently loses on another. Doubling the class settles it whatever the order. */
+
+/* Above 900 a little wider than the builder's other popovers: every row here is two lines. */
+@media (min-width: 901px) {
+  .panel.panel { width: 360px; }
+}
+
+/* ≤640: FULL SCREEN ABOVE THE NAV (D7). It is a menu, so the bottom nav stays visible and tappable
+   below it — `bottom` is still `.lineupAutoMenu`'s `var(--coach-foot-clear)`; only the top moves.
+   The list scrolls inside; the title and the switch stay put. No grab line: nothing is left to drag. */
+@media (max-width: 640px) {
+  .panel.panel {
+    top: 0;
+    max-height: none;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 1px solid var(--border-2);
+    border-radius: 0;
+    box-shadow: none;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 0;
+  }
+  .panel.panel::before { display: none; }
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+/* Which game the copy lands on — only where the builder is out of sight (the full-screen phone). */
+.sub,
+.into { display: none; }
+@media (max-width: 640px) {
+  .sub { display: block; margin: 0.15rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+  .into { display: block; margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+}
+
+/* The way out. Above 900 a popover's way out is "click anywhere else", so it shows no ×; wherever
+   the panel is a drawer it shows one at the portal's 44px floor. */
+.close {
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.close:hover { color: var(--text-primary); }
+@media (max-width: 900px) {
+  .close { display: inline-flex; }
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  min-height: 32px;
+  padding: 0.2rem 0.4rem 0.2rem 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+  font-weight: 700;
+  cursor: pointer;
+}
+.back:hover:not(:disabled) { color: var(--text-primary); }
+@media (max-width: 900px) {
+  .back { min-height: var(--tap-min, 44px); }
+}
+
+/* The list under the switch — the only part that scrolls. */
+.list {
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0 -0.85rem -0.85rem;
+  border-top: 1px solid var(--border-2);
+}
+@media (max-width: 640px) {
+  .list { flex: 1 1 auto; min-height: 0; max-height: none; margin: 0 -16px; padding-bottom: 12px; }
+}
+/* A month's band stays pinned while its games scroll under it. The band is the shared row list's
+   own (`CoachRowBand`, already on the paper tone); only the pinning is this scroller's, so it is
+   written against the list here — class + attribute, which outranks the band's one class. */
+.list [data-row-band] { position: sticky; top: 0; z-index: 1; }
+.empty {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+
+/* The question. */
+.source { display: flex; flex-direction: column; gap: 0.1rem; }
+.source strong { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
+.source span { font-size: var(--type-label); color: var(--text-tertiary); }
+.question {
+  margin: 0.15rem 0 0;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .option:hover:not(:disabled) { border-color: var(--home-olive, var(--logic-lime)); background: var(--home-olive-soft, rgba(255, 255, 255, 0.06)); }
+}
+.option:disabled { opacity: 0.55; cursor: default; }
+.option strong { font-size: var(--type-body); font-weight: 700; }
+.option span { font-size: var(--type-support); line-height: 1.4; color: var(--text-secondary); }
+@media (max-width: 640px) {
+  .option { min-height: 68px; }
+}

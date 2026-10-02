@@ -34,13 +34,16 @@ import type { RepRosterPlayer } from '../../lib/types.ts';
  *      returns this to Draft" moves into the Lineup check's subtitle on a phone, but ONLY when
  *      that check is reachable, so it is never deleted — one flag drives both ends.
  *
- *   D2 **UNDO · REDO · PRINT · TEMPLATES · CLEAR ARE ONE ROW OF `footerIconBtn` SQUARES** with
- *      `aria-label`s; Templates is a glyph BUTTON with `aria-expanded` opening today's panel (a
- *      form), not a `role="menu"`. Tools, not header actions: the page-actions guard's builder
- *      entry stays `actions: null`. The builder page hands its four over BARE and the EDITOR
- *      composes the row (owner, 2026-09-22), because the fifth square is the editor's own Clear
- *      and it has to sit INSIDE the row — the stranded text link under the grid is gone at every
+ *   D2 **CALL UP · UNDO · REDO · CLEAR · ⋯ TOOLS ARE ONE ROW** — `footerIconBtn` squares with
+ *      `aria-label`s, then the portal's toolbar menu. Tools, not header actions: the page-actions
+ *      guard's builder entry stays `actions: null`. The builder page hands Undo · Redo over BARE
+ *      and Tools as the trailing slot; the EDITOR composes the row (owner, 2026-09-22), because its
+ *      own Clear has to sit INSIDE the row — the stranded text link under the grid is gone at every
  *      width, and `.lineupClearBtn` with it.
+ *      ⚖ **2026-10-02 (Copy from, owner ruling D11): Print and Templates left the row.** What
+ *      changes the grid while you build stays a square; what takes a lineup IN or OUT — Copy from,
+ *      Print, Save as template — sits behind ⋯ Tools, the club Ledger's menu. Six squares (304px)
+ *      had no room for a seventh on a 360px phone (328px); five is 252px.
  *
  *   D5 **ONE INNING AT A TIME.** The phone's list renders INSIDE the same `SortableContext` with
  *      the D8 sensors; the position pill is a `<button aria-haspopup="dialog">` with no chevron
@@ -79,6 +82,7 @@ const list = readCode(LIST);
 const sheet = readCode(SHEET);
 const scrimCmp = readCode('components/coaches/LineupSheetScrim.tsx');
 const head = readCode('components/coaches/LineupDrawerHead.tsx');
+const copyFrom = readCode('components/coaches/LineupCopyFrom.tsx');
 const css = stripComments(readSource(STYLES));
 const listCss = stripComments(readSource(LIST_STYLES));
 
@@ -148,7 +152,9 @@ describe('D1 — the Setup row and its panel', () => {
   });
   it('the title reads lineupMode + inningCount; the caption the auto-fill setting', () => {
     const row = between(editor, 'className={styles.lineupSetupRow}', '</button>', 'the setup row');
-    assert.match(row, /<strong>\{lineupMode === 'nine_player' \? '9 player ball' : 'Everyone bats'\} · \{inningCount\} \{sportPack\.periodLabelPlural\.toLowerCase\(\)\}<\/strong>/);
+    // The format's words come from `lineupModeLabel` (lib/lineup-grid) since Copy from (2026-10-02):
+    // the builder, the Templates tab and Copy from named it with three hand-copied ternaries.
+    assert.match(row, /<strong>\{lineupModeLabel\(lineupMode\)\} · \{inningCount\} \{sportPack\.periodLabelPlural\.toLowerCase\(\)\}<\/strong>/);
     assert.match(row, /<small>Auto-fill · \{autoFillLabel\}<\/small>/);
   });
   it('the panel is the one auto-fill panel — title, Format · Innings, the mode, then Generate with Reshuffle quiet beneath (D12 · B)', () => {
@@ -227,10 +233,20 @@ describe('D1 — the Setup row and its panel', () => {
     // ⚠ The row sheet's ref belongs to the WRAPPER, never to the panel — putting it back on the
     // panel is exactly the shape that shipped the defect.
     assert.ok(!editor.includes('<div ref={rowSheetRef} className='), 'the row sheet ref is the wrapper, not the panel');
-    for (const [name, ref] of [['Templates', 'ref={templatesRef}'], ['Print', 'ref={pdfRef}']] as const) {
-      const scrimAt = builder.indexOf('<LineupSheetScrim onClose=', builder.indexOf(ref));
-      assert.notEqual(scrimAt, -1, `${name}: its scrim must come after its dismissable's ref`);
+    // The builder's three Tools panels hang off ONE wrap with ONE dismiss boundary (Copy from,
+    // 2026-10-02); every scrim — Print's, Save as template's, and Copy from's inside its component —
+    // must render after that wrap opens.
+    const toolsAt = builder.indexOf('ref={toolsRef}');
+    assert.notEqual(toolsAt, -1, 'the Tools wrap carries the dismissable ref');
+    for (const [name, at] of [
+      ['Print', builder.indexOf('<LineupSheetScrim onClose={() => setLineupPdfOpen(false)} />')],
+      ['Save as template', builder.indexOf('<LineupSheetScrim onClose={() => setSaveTemplateOpen(false)} overNav />')],
+      ['Copy from', builder.indexOf('<LineupCopyFrom')],
+    ] as const) {
+      assert.notEqual(at, -1, `${name}: missing`);
+      assert.ok(at > toolsAt, `${name}: its scrim must come after the Tools wrap's ref`);
     }
+    assert.match(builder, /useDismissable\(copyOpen \|\| saveTemplateOpen \|\| lineupPdfOpen, toolsRef, closeToolPanels\);/);
   });
   it('D12 · every panel that opens on a phone carries a scrim, and a MENU scrim never dims the bar', () => {
     // The desktop renders nothing: the class is display:none until the bottom nav exists, so no
@@ -249,7 +265,8 @@ describe('D1 — the Setup row and its panel', () => {
     assert.ok(css.includes('.lineupSheetScrim {\n    background: rgba(36, 30, 21, 0.28);'),
       'and the warm remap matches it too — warm is the portal default');
     // D13: all of the builder's phone panels, not just Setup. Two live in the editor (the Setup &
-    // Auto-fill drawer, the row-actions drawer) and two on the builder page (Templates, Print).
+    // Auto-fill drawer, the row-actions drawer) and on the builder page (Print, Save as template —
+    // and Copy from, whose scrim lives in its own component since 2026-10-02).
     // Converting only one would sharpen the inconsistency.
     // ⚠ ONE COMPONENT, N CALL SITES. They were copied <div>s once, and the copy had already
     // drifted (the warm colour above). The class is now spelled exactly once, in the component.
@@ -260,7 +277,8 @@ describe('D1 — the Setup row and its panel', () => {
     // its own). A fourth call site that looked like these three until one of them changed is
     // exactly what this count exists to prevent.
     assert.equal(editor.split('<LineupSheetScrim onClose=').length - 1, 3, 'the editor’s three drawers');
-    assert.equal(builder.split('<LineupSheetScrim onClose=').length - 1, 2, 'Templates and Print');
+    assert.equal(builder.split('<LineupSheetScrim onClose=').length - 1, 2, 'Print and Save as template');
+    assert.equal(copyFrom.split('<LineupSheetScrim onClose=').length - 1, 1, 'Copy from');
     assert.equal(scrimCmp.split('styles.lineupSheetScrim').length - 1, 1, 'the class has exactly one home');
     assert.ok(scrimCmp.includes('aria-hidden="true"'), 'and the markup cannot drift either');
   });
@@ -434,8 +452,9 @@ describe('D1 — the Setup row and its panel', () => {
  * nothing on screen warned the coach that the bar was still live. No layout sweep, linter or type
  * check can see this — it is a z-index and a `bottom` agreeing with each other or not.
  *
- * Three of the builder's five drawers hold work (Setup & Auto-fill, Templates, Call up a player)
- * and two are menus (Print, the row-actions sheet). The split is asserted BOTH WAYS on purpose:
+ * Three of the builder's six drawers hold work (Setup & Auto-fill, Save as template, Call up a
+ * player) and three are menus (Print, Copy from, the row-actions sheet). Save as template took the
+ * Templates drawer's place with Copy from (2026-10-02), which is a MENU — tap and it acts. The split is asserted BOTH WAYS on purpose:
  * a sixth drawer added without a decision fails this, whichever side it lands on.
  * ══════════════════════════════════════════════════════════════════════════════════════════
  */
@@ -461,8 +480,8 @@ describe('The two drawer layers — a form covers the nav, a menu sits on top of
     assert.ok(!css.includes('.lineupSetupDrawer.lineupDrawerOverNav'), 'never re-scoped to one drawer by name');
     assert.equal(css.split('calc(14px + env(safe-area-inset-bottom, 0px))').length - 1, 1,
       'the formula is spelled exactly ONCE — two copies is how the foot and the container drift apart');
-    // ⚠ Templates opens a confirm ("Start from template?") from INSIDE the drawer. At 400 that
-    // would have tied with `.modalOverlay` and been settled by DOM order; 390 cannot tie.
+    // ⚠ A drawer may open a confirm from INSIDE itself. At 400 that would tie with `.modalOverlay`
+    // and be settled by DOM order; 390 cannot tie.
     assert.ok(!over.includes('z-index: 400'), 'a dialog opened FROM the drawer must still land on top of it');
   });
   it('the scrim travels with the drawer — a raised drawer over a bar-height scrim leaves the nav LIT in front of the dim', () => {
@@ -472,13 +491,13 @@ describe('The two drawer layers — a form covers the nav, a menu sits on top of
     assert.match(scrimCmp, /overNav\?: boolean/);
     assert.ok(scrimCmp.includes('styles.lineupDrawerOverNav'), 'the scrim wears the same class its drawer does');
   });
-  it('THE SPLIT: the three drawers that hold work cover the nav; the two menus do not', () => {
+  it('THE SPLIT: the three drawers that hold work cover the nav; the three menus do not', () => {
     // Every over-nav drawer and its scrim, named. A drawer whose scrim does not agree with it is
     // the failure mode this pairs up.
     const forms: [string, string, string][] = [
       ['Setup & Auto-fill', editor, 'onClose={closePanelToRow} overNav'],
       ['Call up a player', editor, 'onClose={callUps.onCloseSheet} overNav'],
-      ['Templates', builder, 'onClose={() => setTemplatesOpen(false)} overNav'],
+      ['Save as template', builder, 'onClose={() => setSaveTemplateOpen(false)} overNav'],
     ];
     for (const [name, source, scrim] of forms) {
       assert.ok(source.includes(`<LineupSheetScrim ${scrim} />`), `${name}: its scrim must be raised with it`);
@@ -486,11 +505,15 @@ describe('The two drawer layers — a form covers the nav, a menu sits on top of
     // The panels themselves.
     assert.ok(editor.includes('${styles.lineupSetupDrawer} ${styles.lineupDrawerOverNav}'), 'Setup wears the modifier');
     assert.ok(editor.includes('${styles.lineupAutoMenu} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Call up a player"'), 'Call-up wears it');
-    assert.ok(builder.includes('${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Templates"'), 'Templates wears it, and names itself');
+    assert.ok(builder.includes('${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Save as template"'), 'Save as template wears it, and names itself');
     // ⚠ AND THE OTHER WAY ROUND. Print and the row-actions sheet act-and-close; raising them would
     // take the bar away from a coach who only meant to look at a list.
     assert.ok(editor.includes('<LineupSheetScrim onClose={() => setRowActionsFor(null)} />'), 'the row menu is a MENU — no overNav');
     assert.ok(builder.includes('<LineupSheetScrim onClose={() => setLineupPdfOpen(false)} />'), 'Print is a MENU — no overNav');
+    // Copy from is a MENU too (D7, 2026-10-02): you tap and it acts. Full screen at ≤640, but ABOVE
+    // the bar — it never takes the nav-covering modifier.
+    assert.ok(copyFrom.includes('<LineupSheetScrim onClose={onClose} />'), 'Copy from is a MENU — no overNav');
+    assert.ok(!copyFrom.includes('lineupDrawerOverNav'), 'and its panel never covers the bar');
     // The count is the guard: three raised, two not, five in total.
     assert.equal((editor + builder).split(' overNav />').length - 1, 3, 'exactly three drawers cover the nav');
   });
@@ -518,8 +541,8 @@ describe('The two drawer layers — a form covers the nav, a menu sits on top of
     // Templates was given the head D12 gave Setup and this drawer was missed: with the scrim over
     // the square that opened it, nothing on screen said what the surface was. NO `desktopClose` —
     // at ≥901 it is still an anchored popover and must not grow a control it never had.
-    assert.match(builder, /<LineupDrawerHead title="Templates" onClose=\{\(\) => setTemplatesOpen\(false\)\} \/>/,
-      'Templates names itself and carries the close, without the desktop ×');
+    assert.match(builder, /<LineupDrawerHead title="Save as template" onClose=\{\(\) => setSaveTemplateOpen\(false\)\} \/>/,
+      'Save as template names itself and carries the close, without the desktop ×');
     // ⚠ ONE HEAD, N CALL SITES — the same reason `LineupSheetScrim` exists. A third copy of this
     // idea already lives in CallUpSheet and has already drifted (its own wrapper, an <h3>, and
     // `modalCloseBtn` + `&times;`); it is deliberately left alone, because unifying it means
@@ -543,9 +566,10 @@ describe('The two drawer layers — a form covers the nav, a menu sits on top of
     // there which must not lock the page behind them.
     assert.ok(editor.includes('useOverlayOpen(autoFillOpen && isPhoneNav);'), 'Setup enrols');
     assert.ok(editor.includes('useOverlayOpen(!!callUps?.sheetOpen && isPhoneNav);'), 'the call-up sheet enrols');
-    assert.ok(builder.includes('useOverlayOpen(templatesOpen && isPhoneNav);'), 'Templates enrols');
+    assert.ok(builder.includes('useOverlayOpen(saveTemplateOpen && isPhoneNav);'), 'Save as template enrols');
     // ⚠ AND THE MENUS DO NOT. Print and the row sheet keep a live bar — it is their way out.
     assert.ok(!builder.includes('useOverlayOpen(lineupPdfOpen'), 'Print is a MENU — it must not hide the bar');
+    assert.ok(!builder.includes('useOverlayOpen(copyOpen') && !copyFrom.includes('useOverlayOpen('), 'Copy from is a MENU — same');
     assert.ok(!editor.includes('useOverlayOpen(rowActionsFor'), 'the row menu is a MENU — same');
     // Three enrolments, exactly — the same count as the drawers that cover the nav.
     assert.equal((editor + builder).split('useOverlayOpen(').length - 1, 3, 'three forms, three enrolments');
@@ -556,7 +580,9 @@ describe('The two drawer layers — a form covers the nav, a menu sits on top of
       'useBackStep(autoFillOpen, () => closePanelToRow());',
       'useBackStep(!!callUps?.sheetOpen, () => callUps?.onCloseSheet());',
     ]) assert.ok(editor.includes(call), `missing back step: ${call}`);
-    assert.ok(builder.includes('useBackStep(templatesOpen, () => setTemplatesOpen(false));'));
+    assert.ok(builder.includes('useBackStep(saveTemplateOpen, () => setSaveTemplateOpen(false));'));
+    assert.ok(builder.includes('useBackStep(copyOpen, () => setCopyOpen(false));'));
+    assert.ok(copyFrom.includes('useBackStep(!!chosen, '), 'Copy from\'s question is a level of its own — Back returns to the list');
   });
 });
 
@@ -657,15 +683,12 @@ describe('D14 — the status row on a phone', () => {
 });
 
 describe('D2 — the tool row', () => {
-  it('Undo · Redo · Print · Templates are exactly four footerIconBtn with aria-labels, handed over BARE', () => {
+  it('Undo · Redo are the page\'s two footerIconBtn, handed over BARE; Tools trails the editor\'s Clear', () => {
     const tools = between(builder, 'const lineupTools = (', '\n  );', 'the tools');
-    const templates = between(builder, 'const templatesControl = (', '\n  );', 'templates');
-    const labels = [...(tools + templates).matchAll(/className=\{styles\.footerIconBtn\} aria-label="([^"]+)"/g)].map(m => m[1]);
-    assert.deepEqual(labels, ['Undo', 'Redo', 'Print', 'Templates']);
-    assert.match(tools, /\{templatesControl\}\s*<\/>/, 'Templates is the fourth, last');
-    assert.match(builder, /controlsExtra=\{lineupTools\}/, 'handed over bare — the EDITOR builds the row');
+    const labels = [...tools.matchAll(/className=\{styles\.footerIconBtn\} aria-label="([^"]+)"/g)].map(m => m[1]);
+    assert.deepEqual(labels, ['Undo', 'Redo']);
+    assert.match(builder, /controlsExtra=\{lineupTools\}\s*controlsTrailing=\{toolsControl\}/, 'handed over bare — the EDITOR builds the row');
     assert.doesNotMatch(builder, /toolbarExtras/, 'the page no longer wraps them');
-    assert.match(builder, /const isPhone = useIsPhone\(\);/);
   });
   it('CLEAR is the editor\'s fifth square, INSIDE the row at every width — the text link is gone', () => {
     const button = between(editor, 'const clearButton = (', '\n  );', 'the clear tool');
@@ -677,8 +700,8 @@ describe('D2 — the tool row', () => {
     // … : <>…</>`) — the desktop's four tools sat bare in the toolbar, left-packed after Setup. The
     // wrapper is unconditional now, and the CSS pushes it to the row's right edge above the phone
     // column instead of a JS fork changing what renders.
-    assert.match(editor, /<div className=\{styles\.lineupToolRow\}>\s*\{callUps && \(/, 'Call-up opens the row now (it joined later that day); Undo/Redo/Print/Templates/Clear still close it');
-    assert.match(editor, /\{controlsExtra\}\{clearButton\}\s*<\/div>\s*<\/div>/);
+    assert.match(editor, /<div className=\{styles\.lineupToolRow\}>\s*\{callUps && \(/, 'Call-up opens the row (it joined 2026-09-23); Undo · Redo · Clear · Tools close it');
+    assert.match(editor, /\{controlsExtra\}\{clearButton\}\{controlsTrailing\}\s*<\/div>\s*<\/div>/, 'Clear, then the trailing Tools');
     assert.doesNotMatch(editor, /isPhone \? <div className=\{styles\.lineupToolRow\}/, 'no JS fork left — one wrapper, every width');
     assert.match(between(css, '.lineupToolRow {', '}', 'the tool row'), /margin-left: auto/,
       'the CSS pushes it right in the row layout; harmless in the phone column, which stretches it full width');
@@ -686,13 +709,38 @@ describe('D2 — the tool row', () => {
     assert.doesNotMatch(editor, /lineupClearBtn/, 'the stranded text link is gone');
     assert.doesNotMatch(css, /lineupClearBtn/, 'and so is its rule');
   });
-  it('Templates is a glyph BUTTON with aria-expanded opening today\'s panel — not a role="menu"', () => {
-    const control = between(builder, 'const templatesControl = (', '\n  );', 'templates');
-    assert.match(control, /className=\{styles\.footerIconBtn\} aria-label="Templates"[\s\S]*?aria-expanded=\{templatesOpen\}>\s*<LayoutTemplate/);
-    assert.match(control, /<LayoutTemplate size=\{18\} \/>/);
-    assert.match(control, /<input className=\{styles\.input\} value=\{newTemplateName\}/, 'the panel is a form');
-    assert.doesNotMatch(control, /role="menu"/);
-    assert.doesNotMatch(control, /CoachToolbarMenu/);
+  it('⋯ Tools is the portal\'s toolbar menu: Copy from, Print and Save as template, in that order (D11, 2026-10-02)', () => {
+    const control = between(builder, 'const toolsControl = (', '\n  );', 'tools');
+    assert.match(control, /<CoachToolbarMenu label="Tools" icon=\{<MoreHorizontal size=\{16\} aria-hidden \/>\}\s*collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools"/,
+      'the club Ledger\'s Tools: a worded trigger on the desktop, a bare ⋯ opening a sheet on a phone');
+    const items = [...control.matchAll(/<CoachToolbarMenuItem label="([^"]+)"/g)].map(m => m[1]);
+    assert.deepEqual(items, ['Copy from…', 'Print…', 'Save as template…']);
+    assert.doesNotMatch(control, /aria-label="Print"/, 'Print is no longer a square of its own');
+    assert.doesNotMatch(builder, /LayoutTemplate|aria-label="Templates"/, 'nor is Templates');
+    assert.match(control, /<input className=\{styles\.input\} value=\{newTemplateName\}/, 'Save as template is the form');
+    assert.match(control, /triggerClassName=\{styles\.lineupToolsTrigger\}/, 'the trigger takes the row\'s height, styled beside the row\'s other controls');
+  });
+  it('a copy is ONE undo step, and it takes the copied game rules back too (/review, 2026-10-02)', () => {
+    // "Order and positions" brings the source game's rules override across. The undo step used to
+    // hold rows, format and innings only, so Undo left the copied rules behind and the next autosave
+    // wrote them — while the panel promised "Undo brings it back".
+    assert.match(builder, /type LineupSnap = \{ rows: LineupPlayerRow\[\]; mode: RepLineupMode; innings: number; rules\?: typeof gameRules \};/);
+    assert.match(builder, /if \(s\.rules\) setGameRules\(s\.rules\);/, 'a step that carries rules restores them');
+    assert.match(builder, /const cur = lineupSnap\(!!prev\.rules\);/, 'and Redo gets them back');
+    assert.match(builder, /pushLineupUndo\(bringsRules\);/, 'the copy pushes its step with the rules when it brings rules');
+    assert.match(builder, /function markLineupDirty\(\) \{\s*setLineupNotice\(''\);/, 'the line above the grid ends on the next EDIT, not on a save');
+  });
+  it('Copy from is full screen at ≤640 — ABOVE the nav, which it leaves alone (D7, 2026-10-02)', () => {
+    const copyCss = stripComments(readSource('components/coaches/LineupCopyFrom.module.css'));
+    const phone = phoneBlocks(copyCss);
+    const panel = between(phone, '.panel.panel {', '}', 'the full-screen panel');
+    assert.match(panel, /top: 0;/, 'it reaches the top of the screen');
+    assert.doesNotMatch(panel, /(^|\n)\s*bottom:/, 'and keeps .lineupAutoMenu\'s bottom — the bar\'s top — so the nav stays');
+    assert.match(phone, /\.panel\.panel::before \{ display: none; \}/, 'no grab line on a full screen');
+    // Two classes on every override: `.lineupAutoMenu` lives in another module at one class, and
+    // equal specificity across modules resolves by bundle order.
+    assert.doesNotMatch(copyCss, /(^|\n)\s*\.panel \{/, 'never a single-class override of the shared panel');
+    assert.match(copyFrom, /className=\{`\$\{shared\.lineupAutoMenu\} \$\{styles\.panel\}`\} role="dialog" aria-label="Copy from"/);
   });
   it('Print keeps its preflight', () => {
     assert.match(builder, /if \(!\(await confirmPrintIfOpen\(\)\)\) return;/);

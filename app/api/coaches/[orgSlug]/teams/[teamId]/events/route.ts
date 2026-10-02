@@ -101,6 +101,8 @@ export const GET = withObservability(async (req: Request,
   // D11: beside the badge, how many innings still need a decision — a Ready lineup may carry open
   // innings the coach means to fill at the field, and the hub's chip says so ("Ready · 3 open").
   const lineupOpenInningsByEvent = lineupReadiness?.openInningsByEvent ?? null;
+  // Each lineup's inning count — the builder's Copy from list reads it ("Sat, Oct 3 · 3:15 p.m. · 7 innings").
+  const lineupInningsByEvent = lineupReadiness?.inningsByEvent ?? null;
   // Tags: the team's game-tag library (for the chip picker) + which tags each returned event
   // already carries (for chip display without a per-event fetch). Both gate on the same
   // `schedule` capability already required for this whole route.
@@ -127,6 +129,7 @@ export const GET = withObservability(async (req: Request,
     arrivalDefaults: { game: team.arrivalBeforeGameMin, practice: team.arrivalBeforePracticeMin },
     ...(lineupStatusByEvent ? { lineupStatusByEvent } : {}),
     ...(lineupOpenInningsByEvent ? { lineupOpenInningsByEvent } : {}),
+    ...(lineupInningsByEvent ? { lineupInningsByEvent } : {}),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events' });
 

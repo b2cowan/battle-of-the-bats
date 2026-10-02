@@ -7328,6 +7328,18 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 @media (max-width: 900px) {
   .footerIconBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
 }
+/* The lineup builder's ⋯ Tools trigger (Copy from, 2026-10-02) — a `CoachToolbarMenu`, given the
+   row's height: 40px beside the desktop squares, the 44px floor where they take it (≤900), and a bare
+   44px square at ≤640, where its word and chevron go (`bareOnPhone`). Two classes, because the
+   menu's own `.trigger` lives in another module at one class and equal specificity across modules
+   resolves by bundle order. */
+.lineupToolsTrigger.lineupToolsTrigger { min-height: 40px; }
+@media (max-width: 900px) {
+  .lineupToolsTrigger.lineupToolsTrigger { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .lineupToolsTrigger.lineupToolsTrigger { width: var(--tap-min, 44px); height: var(--tap-min, 44px); padding: 0; justify-content: center; }
+}
 
 /* Auto-save status (replaces the Save button) — quiet "Saving…/Saved" or a retry. */
 .saveStatus {
@@ -7424,38 +7436,10 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .lineupRowSheetCancel { justify-content: center; color: var(--text-tertiary); border-top: 1px solid var(--border-2); border-radius: 0; margin-top: 0.2rem; }
 .lineupRowSheetItem:focus-visible, .lineupRowSheetCancel:focus-visible { outline: 3px solid rgba(var(--blueprint-blue-rgb), 0.35); outline-offset: -3px; }
 
-/* Lineup templates menu (Save as / Start from) */
+/* The Save as template window's form (Tools › Save as template…). ⚰ The Templates drawer's list
+   rules (head, list, row, load) went with the drawer when Copy from replaced it (2026-10-02) — the
+   lists now live in `components/coaches/LineupCopyFrom.module.css`. */
 .lineupTemplateSection { display: flex; flex-direction: column; gap: 0.45rem; }
-.lineupTemplateSection + .lineupTemplateSection {
-  padding-top: 0.6rem;
-  border-top: 1px solid var(--border-2);
-}
-.lineupTemplateHead {
-  font-size: var(--type-label);
-  font-weight: 700;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.lineupTemplateList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; max-height: 190px; overflow-y: auto; }
-.lineupTemplateRow { display: flex; align-items: stretch; gap: 0.3rem; }
-.lineupTemplateLoad {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  text-align: left;
-  padding: 0.4rem 0.55rem;
-  background: none;
-  border: none;
-  border-radius: 7px;
-  cursor: pointer;
-  color: var(--text-primary);
-  min-width: 0;
-}
-.lineupTemplateLoad:hover { background: rgba(var(--blueprint-blue-rgb), 0.12); }
-.lineupTemplateLoad strong { font-size: var(--type-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lineupTemplateLoad span { font-size: var(--type-label); color: var(--text-tertiary); }
 
 /* Inline notice (e.g. "Loaded template …") above the lineup grid */
 .lineupNotice {
@@ -8145,6 +8129,13 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
     padding-inline: 0.9rem;
     min-height: 2.5rem; /* matches the row's shared 40px control height, see the note above `.lineupControls .btnPrimary` */
   }
+}
+/* …and 44px wherever its row-mates are (641–900: the squares take the floor at ≤900). At 40 it was the
+   one short control in the row there — the odd height the owner flagged on 2026-09-23 — and under
+   the tap floor at 768, named "pre-existing, not fixed" in the stage-6 review (Mobile plan §13.6 #6).
+   The layout sweep measured it the day Tools shortened the row (Copy from, 2026-10-02). */
+@media (min-width: 641px) and (max-width: 900px) {
+  .lineupCallUpBtn { min-height: var(--tap-min, 44px); }
 }
 /* ⚠ HOUSE RULE 3, ONE MORE TIME (owner, 2026-09-23, from a live phone screenshot): "on mobile can
    we make it just the '+' next to undo/redo?" — the same "words become symbols, the aria-label

@@ -6740,16 +6740,17 @@ export async function getRepTeamLineupAttendanceMismatchEventIds(programYearId: 
 // queries + in-memory analysis) so list surfaces can badge every game without per-game probes.
 // Beside the badge, the count of innings still needing a decision (D11): a Ready lineup may carry
 // open innings the coach means to fill at the field, and the chip says so ("Ready · 3 open").
+// And each lineup's inning count, which the builder's Copy from list prints beside every game.
 export async function getRepTeamLineupReadinessByEvent(
   programYearId: string,
   fieldPositions: string[],
-): Promise<{ statusByEvent: Record<string, LineupBadge>; openInningsByEvent: Record<string, number> }> {
+): Promise<{ statusByEvent: Record<string, LineupBadge>; openInningsByEvent: Record<string, number>; inningsByEvent: Record<string, number> }> {
   const { data: lineups, error: lErr } = await supabaseAdmin
     .from('rep_team_lineups')
     .select('id, event_id, inning_count, status')
     .eq('program_year_id', programYearId);
   if (lErr) throw lErr;
-  if (!lineups || lineups.length === 0) return { statusByEvent: {}, openInningsByEvent: {} };
+  if (!lineups || lineups.length === 0) return { statusByEvent: {}, openInningsByEvent: {}, inningsByEvent: {} };
 
   const { data: entries, error: eErr } = await supabaseAdmin
     .from('rep_team_lineup_entries')
@@ -6769,13 +6770,15 @@ export async function getRepTeamLineupReadinessByEvent(
 
   const statusByEvent: Record<string, LineupBadge> = {};
   const openInningsByEvent: Record<string, number> = {};
+  const inningsByEvent: Record<string, number> = {};
   for (const l of lineups) {
     const rows = entriesByLineup.get(l.id as string) ?? [];
     const analysis = analyzeLineup(rows, l.inning_count as number, fieldPositions);
     statusByEvent[l.event_id as string] = deriveLineupBadge(analysis, (l.status as 'draft' | 'ready') ?? 'draft');
     openInningsByEvent[l.event_id as string] = inningsNeedingDecision(analysis).length;
+    inningsByEvent[l.event_id as string] = l.inning_count as number;
   }
-  return { statusByEvent, openInningsByEvent };
+  return { statusByEvent, openInningsByEvent, inningsByEvent };
 }
 
 // The dedicated "mark ready" write path — the ONLY place status ever becomes 'ready'. The caller

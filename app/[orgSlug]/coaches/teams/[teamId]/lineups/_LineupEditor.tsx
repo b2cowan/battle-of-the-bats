@@ -30,7 +30,7 @@ import { playerPositionPrefs } from '@/lib/lineup-profile';
 import { resolveLineupCaps, normalizeRulesOverride } from '@/lib/lineup-caps';
 import { playerDisplayName, isCallUp, CALL_UP_LABEL } from '@/lib/coach-roster-name';
 import {
-  LINEUP_POSITIONS, POSITION_ORDER, heatStyle, renumberBattingOrder,
+  LINEUP_POSITIONS, POSITION_ORDER, heatStyle, renumberBattingOrder, lineupModeLabel,
   type LineupPlayerRow,
 } from '@/lib/lineup-grid';
 import type { getSportPack } from '@/lib/sports';
@@ -177,8 +177,14 @@ export interface LineupEditorProps {
   onBeforeMutate?: () => void;
   /** Transient feedback (auto-fill / reshuffle result). */
   onNotice?: (msg: string) => void;
-  /** Slot for surface-specific controls (e.g. the game builder's Templates popover). */
+  /** Slot for surface-specific controls (the game builder's Undo · Redo), before the editor's Clear. */
   controlsExtra?: React.ReactNode;
+  /**
+   * Slot AFTER the editor's Clear — the game builder's ⋯ Tools (Copy from · Print · Save as template,
+   * owner ruling D11, 2026-10-02), which closes the row: the editing tools first, then the menu that
+   * takes a lineup in or out.
+   */
+  controlsTrailing?: React.ReactNode;
   /** A message to show above the grid (parent-owned, e.g. template-load result). */
   notice?: string;
   /**
@@ -248,7 +254,7 @@ export default function LineupEditor(props: LineupEditorProps) {
   const {
     roster, rows, onRowsChange, lineupMode, onLineupModeChange, inningCount, onInningCountChange,
     sportPack, seasonCaps, gameRules, onGameRulesChange, defaultPolicy = 'balanced',
-    addLabel, notInHeading, onBeforeMutate, onNotice, controlsExtra, notice, readyState, attendance,
+    addLabel, notInHeading, onBeforeMutate, onNotice, controlsExtra, controlsTrailing, notice, readyState, attendance,
     callUps, notesSlot,
   } = props;
   const confirm = useConfirm();
@@ -1143,7 +1149,7 @@ export default function LineupEditor(props: LineupEditorProps) {
               <button ref={setupRowRef} type="button" className={styles.lineupSetupRow} aria-expanded={autoFillOpen} aria-controls={SETUP_PANEL_ID}
                 onClick={() => setAutoFillOpen(v => !v)}>
                 <span className={styles.lineupSetupRowText}>
-                  <strong>{lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {inningCount} {sportPack.periodLabelPlural.toLowerCase()}</strong>
+                  <strong>{lineupModeLabel(lineupMode)} · {inningCount} {sportPack.periodLabelPlural.toLowerCase()}</strong>
                   <small>Auto-fill · {autoFillLabel}</small>
                 </span>
                 <ChevronDown size={18} aria-hidden className={styles.lineupSetupRowChev} />
@@ -1172,7 +1178,7 @@ export default function LineupEditor(props: LineupEditorProps) {
               {autoFillPanel}
             </>)}
           </div>
-          {/* The host's tools (Undo · Redo · Print · Templates), the editor's own Clear, and Call-up
+          {/* The host's tools (Undo · Redo, then ⋯ Tools after Clear — 2026-10-02), the editor's own Clear, and Call-up
               are ONE row of squares, pushed to the row's right edge in the desktop/tablet layout
               (owner, 2026-09-23) so the left reads as "what you're building" and the right as
               "history and output" — the same row on a phone just wraps beneath instead.
@@ -1211,7 +1217,7 @@ export default function LineupEditor(props: LineupEditorProps) {
                 </>)}
               </div>
             )}
-            {controlsExtra}{clearButton}
+            {controlsExtra}{clearButton}{controlsTrailing}
           </div>
         </div>
 

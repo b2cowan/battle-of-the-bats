@@ -1,0 +1,822 @@
+<title>Copy From a Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* A deliberate single (light) look: these frames draw the warm portal as it ships in light. Every
+   colour is set explicitly, so the page reads the same on either host background. */
+:root{--paper:#f6f3ec;--card:#fff;--ink:#1f271c;--softink:#596153;--quiet:#747b6e;--line:#d6d9cf;--line2:#b9c0b2;--olive:#53691d;--olive2:#e8eddc;--lime:#d9f99d;--blue:#245f79;--amber:#8b5a08;--amberbg:#fff5dc;--error:#9e3030;--grid:rgba(83,105,29,.075);
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 var(--sans)}
+button,input{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,[role=button]:focus-visible,h1:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1,h2,h3{text-wrap:balance}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--softink);margin:0}.meta{font-size:12px;color:var(--softink)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);font-size:14px;font-weight:650}
+
+/* ── hub chrome ── */
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc;font-size:12.5px}
+.hubtitle{margin-right:auto;min-width:0}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow-x:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--softink);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--softink);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--olive2);color:var(--ink);font-weight:700}
+.frame{width:min(1220px,calc(100% - 40px));margin:22px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210f;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.appbar{background:#fff;border-bottom:1px solid var(--line);padding:13px 26px;display:flex;align-items:center;gap:16px}
+.brand{font-weight:850;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;text-align:right;font-size:13px;color:var(--softink);line-height:1.35}
+.cap{padding:16px 26px 14px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.cap .eyebrow{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--softink)}
+.cap h1{font-size:20px;line-height:1.25;margin:4px 0 4px;letter-spacing:-.2px}
+.cap p{font-size:13.5px;color:var(--softink);margin:0;max-width:78ch}
+.intent{padding:14px 26px;background:#fafbf7;border-top:1px solid var(--line);font-size:12.5px;color:var(--softink)}.intent strong{color:var(--ink)}
+
+/* clickable highlights */
+.mk{display:inline-block;font:800 10px/1.4 var(--sans);letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;cursor:pointer;white-space:nowrap}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}.mk[data-k=ask]{background:#fff1d6;color:#7a4d06;border:1px solid #e3c487}
+.mk:hover{filter:brightness(.95)}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:800 10px/1.4 var(--sans);border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;white-space:nowrap}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;font-weight:700}
+.tagrow{display:flex;flex-wrap:wrap;gap:6px 4px;align-items:center;margin:0 0 8px;font-size:12px;color:var(--softink)}
+.tagrow .mk,.tagrow .fl{margin-left:0}
+
+/* ── the product drawing: the lineup builder, warm portal ── */
+.prod{background-color:#f8f5ee;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:48px 48px;padding:26px 30px 34px}
+.pb-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pb-back{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:16px;color:var(--ink)}
+.pb-div{width:1px;height:40px;background:var(--line)}
+.pb-tile{width:42px;height:42px;border-radius:10px;background:var(--olive2);border:1px solid #c9d4b3;display:grid;place-items:center;color:var(--olive)}
+.pb-title{font:700 27px/1.1 var(--display);margin:0;letter-spacing:.1px}
+.pb-when{margin:14px 0 0;color:var(--softink);font-size:16px;display:flex;gap:6px 16px;flex-wrap:wrap;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.pb-sched{color:var(--olive);display:inline-flex;gap:6px;align-items:center}
+.pb-seg{display:inline-flex;margin:18px 0;border:1px solid var(--line2);border-radius:6px;overflow:hidden;background:#fff}
+.pb-seg span{padding:9px 22px;font-weight:600;font-size:16px;color:var(--softink)}
+.pb-seg span.on{background:#231f1a;color:#fff;font-weight:700}
+.pstrip{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;background:#fff;border:1px solid var(--line2);border-radius:8px;padding:9px 12px;min-height:58px}
+.pstrip.warn{border-color:#dcbf86}
+.pmark{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;background:#f6ecd6;color:var(--amber)}
+.pstrip.quiet .pmark{background:#f1f2ee;color:var(--quiet)}
+.plabel{font:800 12.5px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+.pstrip.quiet .plabel{color:var(--softink)}
+.pdetail{font-size:15px;flex:1 1 320px;min-width:0}
+.preview{font-weight:700;font-size:15px;display:inline-flex;gap:2px;align-items:center}
+.pready{background:var(--lime);border:0;border-radius:6px;padding:10px 18px;font-weight:700;font-size:16px;min-height:44px}
+.pb-tools{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:26px 0 16px}
+.pcap{display:block;font:600 12.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--softink);margin:0 0 8px 2px}
+.pcard{display:flex;align-items:center;gap:22px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px 10px 16px;min-height:62px}
+.pcard b{display:block;font-size:17px;font-weight:650}.pcard small{display:block;color:var(--softink);font-size:14px}
+.pb-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pb-callup{display:inline-flex;gap:8px;align-items:center;min-height:48px;padding:0 18px;border:1px dashed #b89a6a;background:#f5ecdc;border-radius:7px;color:#6b4a12;font-weight:700;font-size:15px}
+.pb-ib{width:48px;height:48px;display:grid;place-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:0}
+.pb-ib[disabled]{color:#aab0a3;background:#f7f6f2;cursor:default}
+.pb-tbtn{min-height:48px;padding:0 18px;background:#fff;border:1px solid var(--line);border-radius:8px;font-weight:700;font-size:16px;display:inline-flex;align-items:center;gap:8px}
+.pb-tbtn.open{border-color:rgba(36,95,121,.55);box-shadow:0 0 0 3px rgba(36,95,121,.12)}
+.anchor{position:relative;display:inline-flex;align-items:center}
+.pop{position:absolute;right:0;top:calc(100% + 6px);z-index:5;width:var(--popw,340px);display:flex;flex-direction:column;gap:.6rem;padding:.85rem;background:#fff;border:1px solid rgba(36,95,121,.35);border-radius:10px;box-shadow:0 14px 34px rgba(31,39,28,.16);text-align:left}
+.pop.static{position:static;box-shadow:0 8px 24px rgba(31,39,28,.10);max-width:100%}
+.pophead{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:750;font-size:16px}
+.psec{display:flex;flex-direction:column;gap:.45rem}.psec+.psec{padding-top:.6rem;border-top:1px solid #e4e7de}
+.psh{font-size:11.5px;font-weight:700;color:var(--quiet);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.prow{width:100%;display:flex;flex-direction:column;gap:.1rem;text-align:left;padding:.45rem .55rem;background:none;border:0;border-radius:7px}
+.prow:hover,.prow.hover{background:rgba(36,95,121,.1)}
+.prow strong{font-size:15px;font-weight:700}.prow span{font-size:12.5px;color:var(--quiet)}
+.pmore{align-self:flex-start;border:0;background:none;color:var(--olive);font-weight:700;font-size:13px;padding:4px .55rem;min-height:32px;display:inline-flex;align-items:center;gap:2px}
+.pinput{border:1px solid var(--line2);border-radius:6px;padding:9px 11px;font-size:15px;color:var(--quiet);background:#fff}
+.psave{background:var(--lime);border:0;border-radius:6px;padding:9px 14px;font-weight:700;opacity:.5;cursor:default}
+.pback{display:inline-flex;align-items:center;gap:2px;border:0;background:none;padding:6px 6px 6px 0;font-weight:700;font-size:14px;color:var(--softink);min-height:36px}
+.srcname{display:flex;flex-direction:column;gap:2px}.srcname strong{font-size:16px}.srcname span{font-size:12.5px;color:var(--quiet)}
+.popq{margin:2px 0 0;font-size:13.5px;font-weight:650;color:var(--softink)}
+.opt{display:flex;flex-direction:column;gap:3px;text-align:left;width:100%;padding:11px 13px;background:#fff;border:1px solid var(--line2);border-radius:8px;min-height:44px}
+.opt strong{font-size:15px;display:flex;align-items:center;flex-wrap:wrap}.opt span{font-size:13px;color:var(--softink);line-height:1.4}
+.opt:hover{border-color:var(--olive);background:#f7f9f1}
+.popfoot{margin:0;font-size:12.5px;color:var(--quiet)}
+.pnotice{margin:0 0 8px;font-size:14px;color:var(--olive);font-weight:600}
+.gwrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+.pg{border-collapse:collapse;width:100%;min-width:980px}
+.pg th{font:700 14px/1 var(--display);letter-spacing:.05em;text-transform:uppercase;text-align:left;padding:14px 10px;border-bottom:1px solid var(--line)}
+.pg th.c-in{text-align:center;font-size:15px}.pg th small{display:block;margin-top:7px;font:700 12.5px/1 var(--display);color:var(--olive);letter-spacing:.04em}
+.pg td{padding:8px 10px;border-bottom:1px solid #ece9e1;vertical-align:middle;height:56px}
+.pg tbody tr:last-child td{border-bottom:0}
+.c-bat{width:76px;white-space:nowrap;color:var(--softink);font-size:16px}
+.grip{color:#9aa093;margin-right:12px;vertical-align:-3px;display:inline-flex}
+.c-pl b{font-size:16.5px;font-weight:700}
+.c-x{width:34px;color:var(--softink)}
+.pg td.c-in{width:94px;text-align:center}
+.sel{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;width:72px;height:38px;padding:0 8px 0 12px;border:1px solid var(--line2);border-radius:6px;font-size:15px;background:#fff}
+.sel.bench{color:var(--quiet);font-size:13.5px}.sel.empty{color:var(--softink)}
+.sel.hl{border-color:var(--olive);box-shadow:0 0 0 3px var(--lime)}
+.cu{margin-left:8px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:#f6ead2;color:var(--amber);vertical-align:2px}
+
+/* specimens (screen 3) */
+.specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:22px;align-items:start}
+.spec{display:flex;flex-direction:column;gap:10px}
+.spec h2{font-size:15px;margin:0}
+.spec .pop{width:100%;max-width:340px}.spec .pop.wide{max-width:360px}
+.ruler{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--softink)}
+.ruler i{display:block;height:6px;border:1px solid var(--olive);border-top:0;width:340px;max-width:100%}
+
+/* phones (screen 5) */
+.phones{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:26px 16px 30px;background:#f8f5ee}
+.phfig{display:flex;flex-direction:column;gap:10px;width:390px;max-width:100%}
+.ph{position:relative;width:100%;height:780px;border:1px solid #bfc6b5;border-radius:26px;overflow:hidden;background:#f8f5ee}
+.ph-app{background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--softink)}
+.ph-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.ph-title{font:700 23px/1.1 var(--display);margin:6px 0 0}
+.ph-tools{display:flex;gap:6px;flex-wrap:wrap}
+.ph-tools .pb-ib{width:44px;height:44px}
+.ph-tools .pb-callup{min-height:44px;padding:0 12px;font-size:14px}
+.ph-nav{position:absolute;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr)}
+.ph-nav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:700;color:var(--quiet)}.ph-nav span i{display:block;width:18px;height:18px;border-radius:5px;background:#d8dccf}.ph-nav span.on{color:var(--olive)}.ph-nav span.on i{background:var(--olive)}
+.ph-scrim{position:absolute;inset:0;background:rgba(22,32,24,.45)}
+.ph-drawer{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:18px 18px 0 0;padding:8px 16px 22px;display:flex;flex-direction:column;gap:.7rem;max-height:84%;overflow:auto}
+.ph-drawer .prow{padding:.6rem .55rem;min-height:52px}
+.ph-drawer .pmore{min-height:44px}
+.ph-drawer .opt{min-height:64px}
+.grab{width:40px;height:4px;border-radius:2px;background:#cfd3c8;align-self:center;margin:2px 0 2px;flex:0 0 4px}
+.ph-close{width:44px;height:44px;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center;background:#fff;padding:0}
+.phcap{font-size:13px;color:var(--softink)}.phcap strong{color:var(--ink)}
+
+/* phone full-screen sheet (round 2) — stops at the nav's top edge: it is a menu, so the bar stays */
+.ph-full{position:absolute;top:0;left:0;right:0;bottom:72px;background:#fff;display:flex;flex-direction:column;gap:.75rem;padding:14px 16px 18px;overflow:hidden;border-bottom:1px solid var(--line)}
+.fullhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.fulltitle{font-weight:750;font-size:19px;line-height:1.2}.fullsub{font-size:13px;color:var(--quiet);margin-top:2px}
+.ph-full .prow{padding:.65rem .55rem;min-height:56px}.ph-full .opt{min-height:68px}.ph-full .pmore{min-height:44px}
+.ph-rowstub{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;min-height:52px;font-size:14px}
+.ph-rowstub b{font-size:15px}.ph-rowstub .h{width:36px;height:36px;border:1px solid var(--line2);border-radius:7px;display:grid;place-items:center;font-weight:800;color:var(--softink)}
+.ph-setup{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-height:52px}
+.ph-setup b{display:block;font-size:15px}.ph-setup small{display:block;font-size:12.5px;color:var(--softink)}
+.ph-drawer.short{max-height:none}
+/* save-as-template screen (round 2) */
+.svgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:26px 22px;align-items:start}
+.svcard{display:flex;flex-direction:column;gap:10px;min-width:0}
+.svcard h2{font-size:15px;margin:0;display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+.glyphs{display:flex;gap:18px;flex-wrap:wrap}
+.glyph{display:flex;flex-direction:column;gap:8px;align-items:flex-start;max-width:200px;font-size:12.5px;color:var(--softink)}
+.glyph .pb-ib{width:44px;height:44px}
+.glyph b{color:var(--ink);font-size:13px}
+.rowbox{width:328px;max-width:100%;border:1px dashed var(--line2);border-radius:8px;padding:8px 0;position:relative;overflow:visible;background:#fbfaf6}
+.rowbox.bad{border-color:var(--error)}
+.rowline{display:flex;gap:8px;align-items:center;padding:0;width:max-content}
+.rowline .pb-ib,.rowline .sqcall{width:44px;height:44px;flex:0 0 44px}
+.sqcall{display:grid;place-items:center;border:1px dashed #b89a6a;background:#f5ecdc;border-radius:8px;color:#6b4a12}
+.rowline .over{outline:2px solid var(--error);outline-offset:1px}
+.rowmeta{font:600 12px/1.4 var(--mono);color:var(--softink)}.rowmeta.bad{color:var(--error)}.rowmeta.ok{color:var(--olive)}
+.setuppanel{width:340px;max-width:100%;background:#fff;border:1px solid rgba(36,95,121,.35);border-radius:10px;padding:.85rem;display:flex;flex-direction:column;gap:.55rem}
+.sheetrow{display:flex;flex-direction:column;gap:2px;text-align:left;width:100%;border:0;border-top:1px solid #e4e7de;background:none;padding:.6rem .2rem;min-height:44px}
+.sheetrow strong{font-size:14.5px;display:flex;align-items:center;flex-wrap:wrap}.sheetrow span{font-size:12.5px;color:var(--quiet)}
+.sheetrow.danger strong{color:var(--error)}
+.btn2{border:1px solid var(--line2);background:#fff;border-radius:6px;padding:9px 14px;font-weight:650;min-height:40px}
+.pfield{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:650;color:var(--softink)}
+.psave.on{opacity:1;cursor:pointer}
+
+/* round 3 — Tools ⋯ and the Games / Templates switch */
+.ptools{min-height:48px;padding:0 14px;background:#fff;border:1px solid var(--line);border-radius:8px;font-weight:700;font-size:16px;display:inline-flex;align-items:center;gap:8px}
+.ptools.open{border-color:rgba(36,95,121,.55);box-shadow:0 0 0 3px rgba(36,95,121,.12)}
+.tmenu{--popw:300px}
+.titem{display:flex;flex-direction:column;gap:2px;text-align:left;width:100%;padding:.55rem .6rem;border:0;border-radius:7px;background:none;min-height:44px}
+.titem:hover,.titem.hover{background:rgba(36,95,121,.1)}
+.titem strong{font-size:15px;font-weight:700;display:flex;align-items:center;flex-wrap:wrap}.titem span{font-size:12.5px;color:var(--quiet)}
+.pseg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line2);border-radius:7px;overflow:hidden;background:#fff}
+.pseg span{padding:8px 10px;text-align:center;font-weight:650;font-size:14px;color:var(--softink);min-height:38px;display:flex;align-items:center;justify-content:center}
+.pseg span.on{background:#231f1a;color:#fff;font-weight:700}
+.plistscroll{max-height:318px;overflow:auto;margin:0 -.85rem -.85rem;border-top:1px solid #e4e7de;border-radius:0 0 10px 10px}
+.plistscroll .plist{padding:0 .5rem .5rem}
+.band{position:sticky;top:0;z-index:1;font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--softink);padding:.6rem 1rem .4rem;background:#faf8f3;border-bottom:1px solid #eeebe3}
+.pempty{font-size:13.5px;color:var(--softink);padding:.9rem 1rem;margin:0}
+.ph-full .plistscroll{max-height:none;flex:1;min-height:0;margin:0 -16px -18px;border-radius:0}
+.ph-scrim.menu{bottom:72px}.ph-drawer.menu{bottom:72px;border-bottom:1px solid var(--line)}
+.ph-drawer .titem{min-height:56px}
+.ph-tools .ptools.bare{width:44px;height:44px;min-height:44px;padding:0;justify-content:center}
+.tag.closed{background:#eeeee9;border-color:#d3d9cd;color:#5c6658}
+
+/* ── document tabs ── */
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .eyebrow{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--softink)}
+.docpage h1{font-size:27px;line-height:1.2;letter-spacing:-.6px;margin:6px 0 10px}
+.docpage h2{font-size:19px;margin:28px 0 10px}
+.docpage h3{font-size:15px;margin:18px 0 6px}
+.docpage p,.docpage li{max-width:68ch}
+.docpage ul,.docpage ol{padding-left:20px;margin:0 0 12px}.docpage li{margin-bottom:6px}
+.note{padding:12px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.note.ask{border-left-color:var(--amber);background:var(--amberbg)}
+.tablewrap{overflow-x:auto;margin:0 0 16px}
+.dt{border-collapse:collapse;width:100%;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.dt th{font:700 13px/1.2 var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--softink);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+.dt td{padding:10px 12px;border-bottom:1px solid #ece9e1;vertical-align:top}.dt tr:last-child td{border-bottom:0}
+.find{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 12px}
+.find strong{display:block;margin-bottom:4px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:#fff;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:4px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;font-weight:650;border-radius:5px;white-space:nowrap;border:1px solid var(--line);background:var(--olive2)}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.open{background:#fff1d6;border-color:#e3c487}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+
+/* explanation dialog */
+.explain h3{margin:16px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--softink)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:18px}.dialogbody{padding:20px 22px}
+
+@container(max-width:760px){
+  .prod{padding:18px 14px 26px}.appbar{padding:12px 14px}.team{font-size:11px}.cap{padding:14px 16px}
+  .pb-tools{flex-direction:column;align-items:stretch}
+  .anchor{flex-wrap:wrap}.pop{position:static;width:100%;margin-top:8px}
+  .pdetail{flex-basis:100%}
+}
+@media(max-width:620px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.walk{padding:9px 12px}.docpage{padding:22px 18px 36px}.frame{width:calc(100% - 18px);margin:14px auto}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Copy a lineup from another game · project hub</strong><br><small>Ruled as drawn 2026-10-02 · built, simplified, reviewed and documented 2026-10-02 · QA walk open (three walks)</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Drawn 2026-10-02 (three rounds); ruled as drawn 2026-10-02">Design</li>
+    <li class="stage done" title="Plan written 2026-10-02 alongside the drawing; build record added the same day">Plan</li>
+    <li class="stage done" title="Built on dev 2026-10-02">Build</li>
+    <li class="stage done" title="/simplify (4 lenses) and /review (high-risk, 5 lenses) 2026-10-02 — three defects fixed">Review</li>
+    <li class="stage current" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Mockup screens" id="walkNav">
+    <a href="#today">1 · Today</a>
+    <a href="#tools">2 · Tools ⋯</a>
+    <a href="#copyfrom">3 · Copy from</a>
+    <a href="#lists">4 · Long lists</a>
+    <a href="#choice">5 · What comes across</a>
+    <a href="#after">6 · After the copy</a>
+    <a href="#row">7 · The phone row</a>
+    <a href="#onphone">8 · On a phone</a>
+  </nav>
+  <div class="frame" id="frame">
+    <header class="appbar"><div class="brand">FieldLogic<span>HQ</span></div><div class="team">Ridge U13 Girls · 2026 season<br><span class="meta">Head coach view · sample data</span></div></header>
+
+    <section class="screen" id="today">
+      <div class="cap"><div class="eyebrow">Whole screen · before</div><h1 tabindex="-1">Sunday morning, and Saturday’s lineup is out of reach</h1><p>The coach opens Sunday’s 9:00 a.m. game and wants yesterday’s lineup back. The only drawer that reuses anything lists saved templates. Saturday’s game is not in it.</p></div>
+      <div class="prod" id="b-today"></div>
+    </section>
+
+    <section class="screen" id="tools" hidden>
+      <div class="cap"><div class="eyebrow">Whole screen · after · round 3</div><h1 tabindex="-1">Editing tools stay out; in-and-out tools go behind Tools</h1><p>Your split (D11): Call up, Undo, Redo and Clear change the grid while you build, so they stay on screen. Copy from, Print and Save as template take a lineup in or out, so they sit behind one Tools menu. It is the same ⋯ Tools the club Ledger already uses.</p></div>
+      <div class="prod" id="b-tools"></div>
+    </section>
+
+    <section class="screen" id="copyfrom" hidden>
+      <div class="cap"><div class="eyebrow">Whole screen · after · round 3</div><h1 tabindex="-1">Copy from: one switch, one list at a time</h1><p>Choosing Copy from in Tools opens its own panel in the same place. A Games / Templates switch at the top gives each list the whole panel (D12). It opens on Games, newest first, and the list scrolls inside the panel while the title and switch stay put.</p></div>
+      <div class="prod" id="b-copy"></div>
+    </section>
+
+    <section class="screen" id="lists" hidden>
+      <div class="cap"><div class="eyebrow">Panel specimens · true size (360px)</div><h1 tabindex="-1">What a long season looks like, and an empty one</h1><p>Fifteen games here; a rep season can run to sixty. Month bands stay pinned as the list scrolls. Only games before this one are listed, because this is copying from a previous game. Templates get the whole panel when the switch is on Templates.</p></div>
+      <div class="prod"><div class="specs" id="listspecs"></div></div>
+    </section>
+
+    <section class="screen" id="choice" hidden>
+      <div class="cap"><div class="eyebrow">Panel specimens · true size (340px)</div><h1 tabindex="-1">Pick a source, then pick what comes across</h1><p>Choosing a game or a template turns the panel into one question with two answers. Each answer does the copy, so the question also serves as the confirmation, and no dialog opens on top of the panel. Back returns to the list on the same switch.</p></div>
+      <div class="prod">
+        <div class="specs" id="specs"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="after" hidden>
+      <div class="cap"><div class="eyebrow">Whole screen · after choosing Order and positions</div><h1 tabindex="-1">Saturday’s lineup, as it was, on Sunday’s game</h1><p>Everything comes across, the pitcher and Emma the call-up included (D2, D5). Last game’s positions are on screen, so the coach can see that Frances had three innings at third and move her. Ella, marked Out for Sunday, is copied as is, and the warning that exists today flags her (D3).</p></div>
+      <div class="prod" id="b-after"></div>
+    </section>
+
+    <section class="screen" id="row" hidden>
+      <div class="cap"><div class="eyebrow">Specimens · true size · round 3</div><h1 tabindex="-1">The phone row fits again, and Save as template is words</h1><p>Five squares fit a 360px phone with room to spare, so Clear stays where you put it on Sept 22 (D10 closed). Inside a worded menu, Save as template needs no icon, so the disk question is gone too (D9 closed). Print… opens today’s print panel, unchanged.</p></div>
+      <div class="prod"><div class="svgrid" id="svgrid"></div></div>
+    </section>
+
+    <section class="screen" id="onphone" hidden>
+      <div class="cap"><div class="eyebrow">Phone · 390px · true size · round 3</div><h1 tabindex="-1">Tools is a sheet, Copy from is full screen, the nav stays</h1><p>Tools and Copy from are menus: you tap and they act. Under the drawer ruling the bottom nav stays visible below both. Copy from fills everything above the nav (D7). Save as template holds a form, so its short drawer covers the nav.</p></div>
+      <div class="phones" id="phones"></div>
+    </section>
+
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Copy a lineup from another game</h1>
+  <h2>What changes for the coach</h2>
+  <p>The lineup builder gets a <strong>Tools ⋯</strong> menu holding three things: <strong>Copy from</strong>, <strong>Print</strong> and <strong>Save as template</strong>. The tools a coach uses while building (Call up, Undo, Redo, Clear) stay on screen.</p>
+  <p><strong>Copy from</strong> opens a panel with a <strong>Games / Templates</strong> switch. Games lists the season’s earlier games that have a lineup, newest first, in month bands. A coach picks one (or a template) and chooses what to bring across:</p>
+  <ul>
+    <li><strong>Batting order</strong>: the same order as that game. Positions already on this game stay put.</li>
+    <li><strong>Order and positions</strong>: the whole lineup as it was, pitcher included. The coach sees who played where last game and moves players from there. (“Frances had three innings at third, so give her some outfield.”)</li>
+  </ul>
+  <p>The copy lands in one step and one Undo takes it back. A player marked Out still comes across, and today’s warning flags them. A call-up in the copied lineup comes across too, called up for this game. Templates offer the same two choices. On a phone, Copy from fills the screen above the bottom nav.</p>
+  <h2>Why it matters</h2>
+  <p>Tournament weekends are when coaches reuse a lineup most. Today the only way to reuse Saturday’s lineup on Sunday is to save it as a template first. That takes four screens and leaves a throwaway template behind every weekend. This change puts the coach’s real habit, “same as last game”, two taps from the grid.</p>
+  <h2>Customer impact</h2>
+  <p>Every coach on the lineups feature, at least once per tournament weekend and often between back-to-back league games. The toolbar also gets calmer: four editing tools and one menu instead of six squares. The cost is one extra tap to print.</p>
+  <h2>Priority</h2>
+  <p>Small and contained. It reuses the builder’s save path and warnings and the portal’s existing Tools menu, and touches no data model. It also retires a known small defect: answering “Keep current” bounced the coach out of the Templates drawer.</p>
+  <h2>Open for the owner</h2>
+  <ul>
+    <li>A ruling of “as drawn” on round 3: the Tools menu, the Games / Templates switch, earlier games only, and Print one tap deeper.</li>
+  </ul>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach copies Saturday’s lineup to Sunday’s game from the builder without making a template.</li>
+    <li>Fewer single-use templates get created around tournament weekends.</li>
+    <li>No support question about a missing call-up, a vanished player, or where Print went.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Full plan</div>
+  <h1>Copy a lineup from another game</h1>
+  <p class="sub">Source: COACH_LINEUP_COPY_FROM_GAME_PLAN.md. Drawn 2026-10-02; rounds 2 and 3 the same day. D1–D8, D11 and D12 ruled; D9 and D10 closed by D11; “as drawn” owed on round 3.</p>
+
+  <h2>1. Problem</h2>
+  <p>A coach who wants Sunday’s lineup to match Saturday’s has one route today: open Saturday’s game, save it as a template, open Sunday’s game, load the template. Tournament weekends are when coaches reuse a lineup most, and every one of them leaves a template behind that nobody uses again.</p>
+
+  <h2>2. Findings</h2>
+  <div class="find"><strong>F01 — A game’s lineup can only be reused by first making it a template.</strong>The builder’s Templates drawer lists saved templates and offers to save this lineup as one. Nothing reads another game’s lineup. The workaround costs four screens and leaves a throwaway template in the library.</div>
+  <div class="find"><strong>F02 — “Keep current” bounces the coach out of the drawer.</strong>This defect predates this project (Mobile Experience plan §13.6 #5, on the owner-calls TODO line). Loading a template over a lineup with positions opens a confirm dialog outside the drawer. Answering “Keep current” also counts as a tap outside, which closes the drawer. The proposal replaces that confirm with a step inside the panel.</div>
+  <div class="find"><strong>F03 — The template-load notice blames the roster for a choice the coach made.</strong>“Skipped N players no longer on the roster” counts every template player who is not in this game’s current lineup, including players the coach took out of this game. The copy brings rostered players across, and the notice names only players who have left the team.</div>
+  <div class="find"><strong>F04 — The notice asks the coach to save a page that saves itself.</strong>“Loaded “X” — review and save when ready.” The lineup autosaves. The new notice says what happened and nothing more.</div>
+  <div class="find"><strong>F05 — A seventh square does not fit the phone’s tool row.</strong>Round 2 asked for a Save square beside Print. On a phone the row holds six 44px squares 8px apart, 304px. A 360px phone has 328px inside its 16px gutters, so seven squares (356px) break it. <em>Closed by D11:</em> the row becomes Call up, Undo, Redo, Clear and Tools, five squares in 252px.</div>
+  <div class="find"><strong>F06 — A disk promises a save the page already made.</strong>The builder autosaves through the floating pill, so a disk beside Print would read as “save this lineup”. <em>Closed by D11:</em> Save as template is a worded item in the Tools menu, so it needs no icon.</div>
+
+  <h2>3. What the coach sees</h2>
+  <ol>
+    <li><strong>The toolbar</strong> (D11): Setup, then Call up a player, Undo, Redo, Clear and <strong>⋯ Tools</strong>. Tools is the portal’s existing menu: a worded button on desktop and a bare ⋯ on a phone, opening a sheet titled Tools. It holds three items, each with a one-line hint: <strong>Copy from…</strong> (“A previous game’s lineup or a saved template”), <strong>Print…</strong> (“Dugout poster or batting order card”) and <strong>Save as template…</strong> (“Keep this lineup to reuse on any game”).</li>
+    <li><strong>Copy from</strong> opens its own panel where the menu was: a title, a <strong>Games / Templates</strong> switch (D12), and the chosen list scrolling under them. On a phone (≤640) it fills the screen above the bottom nav, with “Into vs Komoka Kings · Sun, Oct 4” under the title (D7). At 641–900 it is a bottom drawer, and on desktop an anchored panel.</li>
+    <li><strong>Choosing a source</strong> asks one question in the same panel: Batting order, or Order and positions, with Back to the list. When this lineup already has positions, one line says “This replaces the lineup on this game. Undo brings it back.”</li>
+    <li><strong>After the copy</strong> the panel closes, and the notice above the grid says what was copied and from where. One Undo reverses it. Before game time the lineup returns to Draft, like any edit.</li>
+    <li><strong>Print…</strong> opens today’s print panel unchanged: the poster with its Landscape / Portrait turn, and the batting order card. That is one tap more than today.</li>
+    <li><strong>Save as template…</strong> opens a small window with a name field and a Save template button. Making a template is a create, so it asks. On a phone it is a short drawer that covers the nav, because it is a form.</li>
+    <li><strong>No prompt on a blank lineup</strong> (D4).</li>
+  </ol>
+
+  <h2>4. The rules</h2>
+  <h3>4.1 Order and positions copies everything (D2)</h3>
+  <p>It copies the batting order, who starts (nine-player), every inning’s positions <strong>including the pitcher</strong>, the format, the innings, and the game’s rule changes from Setup. <strong>Assumed, confirm on review:</strong> the game’s notes and each player’s note on that game are not copied, because both are about that day.</p>
+  <h3>4.2 Batting order only</h3>
+  <p>This game’s format, innings and rules stay. Players take the source game’s order. Players on this game who did not bat in the source go to the bottom in their current order. Each player’s positions on this game stay with them. In nine-player ball, who starts comes across when both games are nine-player; otherwise this game’s format decides.</p>
+  <h3>4.3 Who comes across: as is (D3, D5)</h3>
+  <div class="tablewrap"><table class="dt"><thead><tr><th>Player</th><th>What happens</th></tr></thead><tbody>
+    <tr><td>In the source, on the roster</td><td>Comes across, even if the coach had taken them out of this game’s lineup</td></tr>
+    <tr><td>In this game’s lineup, not in the source</td><td>Stays, at the bottom of the order, with no positions; the check reports them undecided</td></tr>
+    <tr><td>Marked Out for this game</td><td>Copied as is. The status line and the Lineup check already warn and carry their one-tap fix.</td></tr>
+    <tr><td>Left the team</td><td>Skipped, and named in the notice</td></tr>
+    <tr><td>A call-up in the copied lineup</td><td>Comes across, called up for this game too, in either mode, and named in the notice</td></tr>
+  </tbody></table></div>
+  <div class="note"><strong>How a call-up comes across.</strong> A lineup cannot hold a player who is neither rostered nor called up to that game, so the copy calls them up for this game first, then lands the rows. Undo puts the lineup back but leaves the call-up on the game, out of the order, where the existing remove control takes them off.</div>
+  <h3>4.4 Templates get the same choice (D6)</h3>
+  <p>Loading a template goes through the same two-way step. This retires F02.</p>
+
+  <h2>5. The lists (D12)</h2>
+  <ul>
+    <li><strong>Games:</strong> this live season’s games that started before this one and have a saved lineup, not cancelled, newest first, banded by month (the band stays pinned as the list scrolls). Each row reads opponent, then the date and start time written out, then the innings. Later games are not listed.</li>
+    <li><strong>Templates:</strong> every saved template, as today, name first and then format and innings.</li>
+    <li><strong>The switch opens on Games,</strong> unless no earlier game has a lineup and a template exists, in which case it opens on Templates.</li>
+    <li><strong>Empty:</strong> “No earlier game has a lineup yet.” · “No saved templates yet. Save one from Tools › Save as template.”</li>
+    <li><strong>No search.</strong> The game a coach wants is nearly always in the top rows. Add search only if long lists turn out to be a real problem.</li>
+  </ul>
+
+  <h2>6. Out of scope</h2>
+  <ul>
+    <li>A prompt on a blank lineup (ruled out, D4).</li>
+    <li>“Copy to next game” from the games list.</li>
+    <li>Continuing the order where the last game ended. Nothing records who batted last.</li>
+    <li>Copying from a later game, or across seasons.</li>
+  </ul>
+
+  <h2>7. As built (2026-10-02)</h2>
+  <p>Built on dev to the round-3 drawings. Checked in a real browser as the UAT coach at 1440, 390 and 360, warm and dark (copy writes intercepted, nothing saved): the row reads Call up, Undo, Redo, Clear, Tools (five 44px squares, 252px, on a phone); the menu lists the three items with their hints; Copy from opens on Games with month bands; at 390 and 360 it fills the screen to the top of the nav, which stays visible; the question loads the source’s format and innings; Order and positions lands the source’s grid and innings, and the Copied… line outlives the copy’s own autosave.</p>
+  <ul>
+    <li><strong>Departures from the drawing:</strong> the month bands use the builder’s own uppercase label rather than the hub’s monospace; the panel’s “Into …” line shows on a phone only, as drawn there.</li>
+    <li><strong>Fixed on the way:</strong> “Call up a player” was 40px between 641 and 900px, the one short control in the row (named “pre-existing, not fixed” in the stage-6 review). It takes 44px there now, like its row-mates.</li>
+    <li><strong>Found, not fixed:</strong> the Setup panel’s “Game rules ▾” link is 16px tall at 768 (the layout sweep’s setup screen). It predates this work and is not part of it.</li>
+    <li><strong>Simplify and review, the same day:</strong> the lists became the portal’s shared row list (so rows carry the standard chevron); the line above the grid now ends on your next edit, not the next save, for every message; review fixed three things — Undo after a full copy now takes the copied game rules back too, a second copy can’t start while one is still finishing, and the panel never sticks on “Copying…”. Help: a new topic, Copying a lineup from another game, and a new FAQ.</li>
+    <li><strong>Checks:</strong> typecheck clean; lint clean on every changed file; unit suite 5,506 / 5,506 (eleven new copy-rule tests; the lineup phone guard re-pinned to the new row); spelling, CSS-module, CSS-selector, date and contrast gates green; layout sweep of the builder: no new findings.</li>
+  </ul>
+
+  <h2>8. Build notes</h2>
+  <ul>
+    <li><strong>Tools is the portal’s existing toolbar menu</strong> (the one the club Ledger uses): a worded trigger on desktop, a bare ⋯ on a phone opening a sheet titled Tools. It is a menu, so on a phone it stops at the nav’s top edge.</li>
+    <li><strong>No new write path.</strong> The copy maps rows on the page and the ordinary autosave writes them. A call-up is linked with the existing call-up add, awaited before the rows land.</li>
+    <li><strong>Reads.</strong> The games list comes from the events read the Lineups room already uses, fetched when Copy from opens. The source lineup comes from the existing per-game lineup read. Both are sequence-guarded.</li>
+    <li><strong>One pure mapping function</strong> serves game and template sources, unit-tested for order only, order and positions, missing, extra and departed players, a call-up, nine-player and everyone bats, and a different inning count.</li>
+    <li><strong>Guards move with the change.</strong> The lineup phone guard pins today’s row and its drawers. The row becomes Call up, Undo, Redo, Clear and Tools. Print, Templates (now Copy from) and the template form move behind Tools. Copy from is a menu that is full screen at ≤640, and the Save window covers the nav. Update each pin rather than deleting it.</li>
+    <li><strong>Checks:</strong> verify:changed; the layout sweep on the lineup builder at 361, 390, 768 and 1440; the spelling gate.</li>
+    <li><strong>Help:</strong> the Lineups article gets “Copy a lineup from another game” and learns where Print and Save as template went.</li>
+  </ul>
+</section>
+
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows" style="margin-top:18px"></div>
+</section>
+
+<section id="hub-qa" class="docpage" hidden>
+  <div class="eyebrow">Owner QA walk</div>
+  <h1>Copy a lineup from another game · QA walk</h1>
+  <p class="sub">Three walks, one job each, signed off one by one. Tick a step only once you have seen it. A writing step (marked ✎) changes test data, so read the row it wrote before you tick it.</p>
+  <div class="note" style="margin-top:16px"><strong>Sign in as</strong> · URL: http://localhost:3000 · Account: uat-coach@uat-test-org.local · Password: from .env.local · Club / team: UAT Rep Club / <strong>UAT Test Team</strong>.<br><strong>Walk on:</strong> the game <strong>@ Probe Rovers</strong> (the fixture’s “UAT probe game · no lineup”, five days out — the latest game on the Lineups page). Its lineup is the one these walks write. Afterwards the coach fixture’s next seed clears it again (<code>node --env-file=.env.local scripts/seed-uat-coach-fixture.mjs</code>).<br><strong>Phone steps:</strong> a real phone, or a browser window under 640px wide.</div>
+  <p class="qaprogress" id="qaCount"></p>
+  <div id="qaParts"></div>
+  <button class="button" type="button" id="buildSummary" style="background:var(--lime);border-color:#b9d88c">Build paste-back summary</button>
+  <textarea id="summaryOut" rows="10" readonly hidden style="width:100%;margin-top:14px;font:12px/1.5 ui-monospace,monospace;border:1px solid var(--line);border-radius:8px;padding:12px"></textarea>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+'use strict';
+/* Navigation only — kept apart from the data script so a typo there cannot kill the tabs. */
+const $=id=>document.getElementById(id);
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));try{localStorage.setItem('copyfrom-hub-tab',which)}catch(e){}}
+document.querySelectorAll('[data-hub]').forEach(b=>b.addEventListener('click',()=>showHub(b.dataset.hub)));
+$('phone').addEventListener('click',()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'});
+const INTENTS={
+  today:'Today’s drawer reuses templates only. Reusing Saturday means saving it as a template on Saturday’s game, then loading it here. The blank lineup already carries Ella, who is marked Out, because a new lineup starts from the whole roster.',
+  tools:'The toolbar splits by job. What changes the grid while you build stays one tap away. What takes the lineup in or out goes behind one worded menu, the same ⋯ Tools the club Ledger uses. Because the menu is words, Save as template needs no icon.',
+  copyfrom:'Copy from opens where the menu was. The switch gives each list the whole panel instead of stacking templates under a growing list of games. Only the list scrolls; the title and the switch stay put.',
+  lists:'Newest first puts last weekend at the top, where the coach almost always wants it. Month bands give a long season landmarks without a search box. The switch falls back to Templates only when no earlier game has a lineup.',
+  choice:'The question is the confirmation. Each answer performs the copy, and the replace line appears only when there is something to replace. Nothing opens outside the panel, which is what made “Keep current” bounce the coach out (F02).',
+  after:'Order and positions means everything, pitcher and call-ups included, and the grid shows last game as it was so the coach edits from it. The rings mark Frances’s three innings at third, the owner’s example. Ella comes across as is, and today’s warning names her (D3).',
+  row:'Five squares at 252px leave 76px spare on a 360px phone, so nothing has to move into Setup. The cost is one tap: printing becomes Tools, then Print…, then the poster.',
+  onphone:'Tools and Copy from are menus, so the nav stays visible below both. Save as template is a form, so it covers the nav. That is the 2026-09-23 drawer ruling applied as written, and the drawings state it so a ruling “as drawn” covers it.'
+};
+function showScreen(){const ids=[...document.querySelectorAll('.screen')].map(s=>s.id);let id=location.hash.slice(1);if(!ids.includes(id))id='today';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=INTENTS[id]?'<strong>Design intent:</strong> '+INTENTS[id]:'';if(location.hash)document.getElementById(id)?.querySelector('h1')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',()=>{showHub('mockup');showScreen()});
+showScreen();
+try{const t=localStorage.getItem('copyfrom-hub-tab');if(t&&HUBS.includes(t)&&!location.hash)showHub(t)}catch(e){}
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').addEventListener('click',()=>$('dialog').close());
+</script>
+
+<script>
+'use strict';
+/* Data + drawings. Prose uses the typographic apostrophe (’) so no string can break the parse. */
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const P={
+  back:'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  list:'<path d="M10 12h11"/><path d="M10 18h11"/><path d="M10 6h11"/><path d="M4 10h2"/><path d="M4 6h1v4"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>',
+  cal:'<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+  userplus:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>',
+  undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  redo:'<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
+  print:'<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="8" rx="1"/>',
+  eraser:'<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/>',
+  copy:'<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  save:'<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
+  layout:'<rect width="18" height="7" x="3" y="3" rx="1"/><rect width="9" height="7" x="3" y="14" rx="1"/><rect width="5" height="7" x="16" y="14" rx="1"/>',
+  more:'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  warn:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  dash:'<circle cx="12" cy="12" r="8" stroke-dasharray="3 3.3"/>',
+  down:'<path d="m6 9 6 6 6-6"/>',right:'<path d="m9 18 6-6-6-6"/>',left:'<path d="m15 18-6-6 6-6"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  grip:'<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>'
+};
+const ic=(k,s=18)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
+const mk=(k,label,note)=>`<span class="mk" data-k="${k}" data-note="${esc(note)}">${label}</span>`;
+const fl=(id,here,fix)=>`<button type="button" class="fl${fix?' fix':''}" data-finding="${id}" data-here="${esc(here)}">${fix?'fixes '+id:id}</button>`;
+
+/* Saturday’s lineup (the source): 9 on the field, 3 on the bench every inning; nobody sits more than twice. */
+const SAT=[
+  ['34','Brynn Figueroa',['C','C','C','Bench','C','C','C']],
+  ['14','Charlotte Doucette',['CF','CF','CF','CF','Bench','CF','CF']],
+  ['5','Sydney Wilson',['P','P','P','Bench','1B','1B','SS']],
+  ['8','Frances Okafor',['3B','3B','3B','Bench','LF','Bench','RF']],
+  ['22','Maya Lindqvist',['SS','SS','Bench','SS','SS','Bench','3B']],
+  ['3','Ava Brennan',['1B','1B','Bench','P','P','P','Bench']],
+  ['11','Zoe Tremblay',['2B','Bench','2B','2B','Bench','2B','2B']],
+  ['17','Harper Nakamura',['LF','Bench','LF','C','Bench','3B','1B']],
+  ['9','Ella Chen',['RF','Bench','RF','3B','3B','Bench','LF']],
+  ['19','Nora Patel',['Bench','2B','SS','LF','2B','SS','Bench']],
+  ['6','Lily Moreau',['Bench','LF','1B','1B','RF','LF','Bench']],
+  ['27','Emma Ross',['Bench','RF','Bench','RF','CF','RF','P'],true]
+];
+/* Sunday before anything is chosen: the whole roster, no positions. Emma was a call-up on Saturday only. */
+const BLANK=SAT.filter(r=>!r[3]).slice().sort((a,b)=>a[1].split(' ')[1].localeCompare(b[1].split(' ')[1])).map(r=>[r[0],r[1],Array(7).fill('—')]);
+
+/* The season’s earlier games with a lineup, newest first (Oct 3 2026 is a Saturday). */
+const GAMES=[
+  ['October','vs Lucan Ilderton','Sat, Oct 3 · 3:15 p.m. · 7 innings'],
+  ['October','@ Strathroy Blaze','Sat, Oct 3 · 10:30 a.m. · 7 innings'],
+  ['October','vs Mount Brydges','Thu, Oct 1 · 6:30 p.m. · 6 innings'],
+  ['September','@ Komoka Kings','Tue, Sep 29 · 6:30 p.m. · 6 innings'],
+  ['September','vs Delaware Thunder','Sun, Sep 27 · 1:00 p.m. · 7 innings'],
+  ['September','vs Exeter Hawks','Sat, Sep 26 · 4:45 p.m. · 7 innings'],
+  ['September','@ Ilderton Storm','Sat, Sep 26 · 11:00 a.m. · 7 innings'],
+  ['September','vs Dorchester Diamonds','Thu, Sep 24 · 6:30 p.m. · 6 innings'],
+  ['September','@ Thorndale Thunder','Tue, Sep 22 · 6:30 p.m. · 6 innings'],
+  ['September','vs St. Thomas Stars','Sat, Sep 19 · 2:00 p.m. · 7 innings'],
+  ['September','vs Aylmer Express','Thu, Sep 17 · 6:30 p.m. · 6 innings'],
+  ['September','@ Ingersoll Ice','Tue, Sep 15 · 6:30 p.m. · 6 innings'],
+  ['September','vs Parkhill Panthers','Sat, Sep 12 · 12:30 p.m. · 7 innings'],
+  ['August','@ Woodstock Wolves','Sat, Aug 29 · 3:00 p.m. · 7 innings'],
+  ['August','vs Tillsonburg Titans','Thu, Aug 27 · 6:30 p.m. · 6 innings']
+];
+const TEMPLATES=[['Tournament A-lineup','Everyone bats · 7 innings'],['Rain-day rotation','Everyone bats · 5 innings'],['League night','Everyone bats · 6 innings'],['Development day','Everyone bats · 6 innings']];
+
+function grid(rows,{cov=false,hl=null}={}){
+  const head=`<tr><th class="c-bat">Bat</th><th class="c-pl">Player</th><th class="c-x"></th>${[1,2,3,4,5,6,7].map(i=>`<th class="c-in">${i}${cov?'<small>9/9</small>':''}</th>`).join('')}</tr>`;
+  const body=rows.map((r,n)=>`<tr><td class="c-bat"><span class="grip">${ic('grip',16)}</span>${n+1}</td><td class="c-pl"><b>#${r[0]} ${esc(r[1])}</b>${r[3]?'<span class="cu">Call-up</span>':''}</td><td class="c-x">${ic('x',16)}</td>${r[2].map((p,i)=>`<td class="c-in"><span class="sel${p==='—'?' empty':''}${p==='Bench'?' bench':''}${hl&&hl(r,i)?' hl':''}">${p}${ic('down',15)}</span></td>`).join('')}</tr>`).join('');
+  return `<div class="gwrap"><table class="pg"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+}
+function strip(s){
+  return `<div class="pstrip ${s.kind}"><span class="pmark">${ic(s.kind==='quiet'?'dash':'warn',17)}</span><span class="plabel">${s.label}</span><span class="pdetail">${s.detail}</span>${s.review?`<span class="preview">Review ${ic('right',16)}</span>`:''}${s.ready?'<button type="button" class="pready">Mark ready</button>':''}</div>`;
+}
+/* v3 = the round-3 toolbar: Call up · Undo · Redo · Clear · ⋯ Tools. Otherwise today’s toolbar. */
+function builder(o){
+  const today=`<button type="button" class="pb-ib" aria-label="Print">${ic('print',19)}</button>
+      <div class="anchor"><button type="button" class="pb-tbtn${o.pop?' open':''}">Templates ${ic('down',16)}</button>${o.pop||''}</div>
+      <button type="button" class="pb-ib" aria-label="Clear">${ic('eraser',19)}</button>`;
+  const v3=`<button type="button" class="pb-ib" aria-label="Clear positions" title="Clear positions">${ic('eraser',19)}</button>${o.clearTag||''}
+      <div class="anchor"><button type="button" class="ptools${o.pop?' open':''}">${ic('more',18)} Tools ${ic('down',15)}</button>${o.toolsTag||''}${o.pop||''}</div>`;
+  return `<div class="pb-top"><span class="pb-back">${ic('back',18)} All lineups</span><span class="pb-div"></span><span class="pb-tile">${ic('list',20)}</span><div class="pb-title">${o.title}</div></div>
+  <div class="pb-when"><span>${o.when}</span><span class="pb-sched">${ic('cal',15)} View on schedule</span></div>
+  <div class="pb-seg"><span class="on">Lineup</span><span>Playing time</span></div>
+  ${o.stripTag||''}${strip(o.strip)}
+  <div class="pb-tools">
+    <div><span class="pcap">Setup</span><div class="pcard"><div><b>Everyone bats · 7 innings</b><small>Auto-fill · Competitive</small></div>${ic('down',20)}</div></div>
+    <div class="pb-right">
+      <button type="button" class="pb-callup">${ic('userplus',17)} Call up a player</button>
+      <button type="button" class="pb-ib" disabled aria-label="Undo">${ic('undo',19)}</button>
+      <button type="button" class="pb-ib" disabled aria-label="Redo">${ic('redo',19)}</button>
+      ${o.v3?v3:today}
+    </div>
+  </div>
+  ${o.notice||''}${o.gridTag||''}${grid(o.rows,o.gridOpts||{})}`;
+}
+
+/* ── panels ── */
+const rows=(list,hover)=>`<ul class="plist">${list.map((g,i)=>`<li><button type="button" class="prow${hover===i?' hover':''}"><strong>${esc(g[0])}</strong><span>${esc(g[1])}</span></button></li>`).join('')}</ul>`;
+function gameList(list,hover){
+  let out='',month='';
+  list.forEach((g,i)=>{if(g[0]!==month){if(month)out+='</ul>';month=g[0];out+=`<div class="band">${esc(month)}</div><ul class="plist">`}out+=`<li><button type="button" class="prow${hover===i?' hover':''}"><strong>${esc(g[1])}</strong><span>${esc(g[2])}</span></button></li>`});
+  return out+(month?'</ul>':'');
+}
+const seg=on=>`<div class="pseg" role="group" aria-label="Copy from"><span class="${on==='games'?'on':''}">Games</span><span class="${on==='templates'?'on':''}">Templates</span></div>`;
+
+function popToday(){
+  return `<div class="pop"><div class="pophead">Templates${fl('F01','This drawer lists saved templates only. Saturday’s games, played yesterday, are not in it, so the coach has to go back to Saturday’s game and save it as a template first.')}</div>
+    <div class="psec"><span class="psh">Start from a saved template</span>${rows(TEMPLATES.slice(0,2),0)}
+      <div class="tagrow">After a tap here: ${fl('F02','On a lineup that already has positions, this opens “Start from template?”. Answering Keep current also closes this drawer.')}${fl('F03','The notice after loading counts players the coach took out of this game as “no longer on the roster”.')}${fl('F04','The notice after loading ends “review and save when ready” on a page that saves by itself.')}</div></div>
+    <div class="psec"><span class="psh">Save current lineup as a template</span><span class="pinput">e.g. Gold medal game</span><button type="button" class="psave" disabled>Save as template</button></div></div>`;
+}
+const TOOL_ITEMS=[
+  ['Copy from…','A previous game’s lineup or a saved template','new','New · D11','Opens the Copy from panel (screen 3). It replaces the Templates button, which loaded templates and saved them.'],
+  ['Print…','Dugout poster or batting order card','re','Moved · D11','The Print square, moved into Tools. It opens today’s print panel, unchanged, which makes printing one tap longer than today.'],
+  ['Save as template…','Keep this lineup to reuse on any game','new','New · D8 · D11','Was the form at the foot of the Templates drawer. It opens a small Save as template window. As a worded item it needs no icon, which closes the disk question (D9).']
+];
+function popTools(tags,hover){
+  return `<div class="pop tmenu">${TOOL_ITEMS.map((t,i)=>`<button type="button" class="titem${hover===i?' hover':''}"><strong>${t[0]}${tags?mk(t[2],t[3],t[4]):''}</strong><span>${t[1]}</span></button>`).join('')}</div>`;
+}
+function popCopy(tab,{cls='',tags=false,hover=null,list=null,empty=null}={}){
+  const body=empty?`<p class="pempty">${empty}</p>`:tab==='games'?gameList(list||GAMES,hover):`<ul class="plist" style="padding-top:.4rem">${(list||TEMPLATES).map((g,i)=>`<li><button type="button" class="prow${hover===i?' hover':''}"><strong>${esc(g[0])}</strong><span>${esc(g[1])}</span></button></li>`).join('')}</ul>`;
+  return `<div class="pop ${cls}" style="--popw:360px">
+    <div class="pophead"><span>Copy from${tags?mk('re','Restyled','Was the Templates drawer. It now opens from Tools and only brings a lineup in.'):''}</span></div>
+    <div>${seg(tab)}${tags?`<div class="tagrow" style="margin:6px 0 0">${mk('new','New · D12','A Games / Templates switch gives each list the whole panel, so a long season never pushes the templates out of reach. It opens on Games, and on Templates only when no earlier game has a lineup.')}${fl('F01','Saturday’s two games are the first two rows. No template is needed.',true)}</div>`:''}</div>
+    <div class="plistscroll">${body}</div></div>`;
+}
+function popChoice(src,sub,foot,cls){
+  const isGame=src.startsWith('vs')||src.startsWith('@');
+  return `<div class="pop ${cls||''}"><div class="pophead"><button type="button" class="pback">${ic('left',17)} ${isGame?'Games':'Templates'}</button></div>
+    <div class="srcname"><strong>${esc(src)}</strong><span>${esc(sub)}</span></div>
+    <p class="popq">What should come across?</p>
+    <button type="button" class="opt"><strong>Batting order</strong><span>The same order as that ${isGame?'game':'template'}. Positions already on this game stay with each player.</span></button>
+    <button type="button" class="opt"><strong>Order and positions</strong><span>The whole lineup as it was: the order, every inning’s positions, the format and the innings.</span></button>
+    ${foot?'<p class="popfoot">This replaces the lineup on this game. Undo brings it back.</p>':''}</div>`;
+}
+const popSave=cls=>`<div class="pop ${cls||''}" style="max-width:340px"><div class="pophead">Save as template</div>
+  <label class="pfield" for="tplname">Template name<input id="tplname" class="pinput" style="color:var(--ink)" value="Fall Classic A-lineup"></label>
+  <p class="popfoot">Saves this lineup’s order, positions, format and innings. Templates live on the Lineups page’s Templates tab.</p>
+  <button type="button" class="psave on">Save template</button></div>`;
+const popPrint=`<div class="pop static" style="max-width:340px">
+  <button type="button" class="titem"><strong>Dugout poster</strong><span>Positions by inning — blank cells to pen in at the field</span></button>
+  <div class="pseg" style="margin:0 .6rem"><span>Landscape · wall</span><span class="on">Portrait · clipboard</span></div>
+  <button type="button" class="titem"><strong>Batting order card</strong><span>Large-type order for the scorekeeper or dugout</span></button></div>`;
+
+/* ── 1 · today ── */
+$('b-today').innerHTML=builder({
+  title:'vs Komoka Kings',when:'Sun, Oct 4, 2026 · 9:00 a.m.',
+  strip:{kind:'quiet',label:'Not started',detail:'Choose positions or Auto-fill to begin · Ella Chen is marked Out but still in the lineup'},
+  pop:popToday(),rows:BLANK
+});
+/* ── 2 · tools ── */
+const NOTSTARTED={kind:'quiet',label:'Not started',detail:'Choose positions or Auto-fill to begin · Ella Chen is marked Out but still in the lineup'};
+$('b-tools').innerHTML=builder({
+  title:'vs Komoka Kings',when:'Sun, Oct 4, 2026 · 9:00 a.m.',strip:NOTSTARTED,v3:true,
+  clearTag:mk('un','Unchanged · stays','Clear positions stays on the toolbar. It changes the grid while you build, so under your split it is an editing tool (D11). That closes D10, which would have moved it into Setup.'),
+  toolsTag:mk('new','New · D11','The portal’s existing toolbar menu, the same ⋯ Tools the club Ledger uses: a worded button on desktop and a bare ⋯ on a phone. Each item has a one-line hint. Clicking an item closes the menu and opens that item’s own panel here.'),
+  pop:popTools(true,0),rows:BLANK
+});
+/* ── 3 · copy from ── */
+$('b-copy').innerHTML=builder({
+  title:'vs Komoka Kings',when:'Sun, Oct 4, 2026 · 9:00 a.m.',strip:NOTSTARTED,v3:true,
+  pop:popCopy('games',{tags:true,hover:0}),rows:BLANK
+});
+/* ── 4 · long lists ── */
+$('listspecs').innerHTML=`
+  <div class="spec"><h2>Games, scrolled to September${mk('new','New · D12','Fifteen earlier games, newest first. The month band stays pinned while its games scroll under it. Later games are not listed: this is copying from a previous game.')}</h2>
+    <div class="ruler"><i style="--popw:360px"></i>360px</div>
+    ${popCopy('games',{cls:'static wide',list:GAMES.slice(3,11)})}</div>
+  <div class="spec"><h2>Templates${mk('re','Restyled','Every saved template, as today, now with the panel to itself.')}</h2>
+    <div class="ruler"><i style="--popw:360px"></i>360px</div>
+    ${popCopy('templates',{cls:'static wide'})}</div>
+  <div class="spec"><h2>Nothing to copy yet${mk('new','New','Each list says plainly when it is empty. The switch opens on Templates only when no earlier game has a lineup and a template exists.')}</h2>
+    ${popCopy('games',{cls:'static wide',empty:'No earlier game has a lineup yet.'})}
+    ${popCopy('templates',{cls:'static wide',empty:'No saved templates yet. Save one from Tools › Save as template.'})}</div>`;
+/* ── 5 · choice ── */
+$('specs').innerHTML=`
+  <div class="spec"><h2>From a game, on a blank lineup${mk('new','New','The second view of the same panel. Back returns to the list on the same switch. There is no separate confirm, because each answer performs the copy.')}${fl('F02','The question sits inside the panel. No dialog opens outside it, so nothing can read as a tap outside and close the panel.',true)}</h2>
+    <div class="ruler"><i></i>340px</div>
+    ${popChoice('vs Lucan Ilderton','Sat, Oct 3 · 3:15 p.m. · Everyone bats · 7 innings',false,'static')}
+    <p class="sub">No replace line: there is nothing on this lineup to replace.</p></div>
+  <div class="spec"><h2>From a template, over a lineup with positions${mk('new','Ruled · D6','Templates get the same two choices, just the order or the whole lineup (owner, 2026-10-02).')}</h2>
+    <div class="ruler"><i></i>340px</div>
+    ${popChoice('Tournament A-lineup','Template · Everyone bats · 7 innings',true,'static')}
+    <p class="sub">The replace line appears only when this lineup already has positions${mk('new','New','It replaces today’s “Start from template?” dialog. Undo has always been able to reverse a load, and now the coach is told so.')}</p></div>`;
+/* ── 6 · after ── */
+$('b-after').innerHTML=builder({
+  title:'vs Komoka Kings',when:'Sun, Oct 4, 2026 · 9:00 a.m.',v3:true,
+  stripTag:`<div class="tagrow">${mk('un','Unchanged','The warning that exists today. D3: Ella is copied as is, and this line plus the Lineup check behind Review flag her, with their one-tap fix.')}</div>`,
+  strip:{kind:'warn',label:'Draft',detail:'Every role is covered — mark it ready when you’re confident in it · Ella Chen is marked Out but still in the lineup',review:true,ready:true},
+  notice:`<p class="pnotice">Copied the order and positions from vs Lucan Ilderton (Sat, Oct 3). Emma Ross is called up for this game too.${mk('re','Restyled','The notice line exists today. It now says what was copied and from where, and stops there, because the page saves by itself.')}${fl('F04','No “review and save when ready”.',true)}${fl('F03','Had anyone left the team, this line would name them. Players the coach took out of this game come back, because the copy is as is.',true)}${mk('new','Ruled · D5','Call-ups in the copied lineup come across (owner, 2026-10-02). Emma was called up for Saturday only, so the copy calls her up for this game first, then lands the rows, and this sentence says so.')}</p>`,
+  gridTag:`<div class="tagrow">${mk('un','Unchanged','The grid itself is unchanged. It now holds Saturday’s lineup exactly, pitcher included (D2), so the coach decides from what happened last game.')}<span>Ringed: Frances, third base in innings 1–3 last game (the owner’s example)</span></div>`,
+  rows:SAT,gridOpts:{cov:true,hl:(r,i)=>r[1]==='Frances Okafor'&&i<3}
+});
+/* ── 7 · the phone row ── */
+const sq=(k,cls)=>`<span class="pb-ib${cls?' '+cls:''}">${ic(k,18)}</span>`;
+const callSq=()=>`<span class="sqcall">${ic('userplus',17)}</span>`;
+$('svgrid').innerHTML=`
+  <div class="svcard" style="grid-column:1/-1"><h2>The phone row at 360px${mk('new','Ruled · D11','Your split. Five squares: Call up, Undo, Redo, Clear, Tools. Nothing moves into Setup, so D10 is closed.')}</h2>
+    <p class="sub" style="max-width:70ch">Each dashed box is 328px, the width inside a 360px phone’s 16px gutters, drawn at true size. Squares are 44px, 8px apart.</p>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:6px">
+      <div><div class="rowbox"><div class="rowline">${callSq()}${sq('undo')}${sq('redo')}${sq('print')}${sq('layout')}${sq('eraser')}</div></div><span class="rowmeta ok">Today · Call up · Undo · Redo · Print · Templates · Clear · 304px ✓</span></div>
+      <div><div class="rowbox bad"><div class="rowline">${callSq()}${sq('undo')}${sq('redo')}${sq('print')}${sq('save')}${sq('copy','over')}${sq('eraser','over')}</div></div><span class="rowmeta bad">Round 2 · a seventh square · 356px, 28px past the edge ✗ ${fl('F05','The last two squares run past the 328px edge at 360px.')}</span></div>
+      <div><div class="rowbox"><div class="rowline">${callSq()}${sq('undo')}${sq('redo')}${sq('eraser')}${sq('more')}</div></div><span class="rowmeta ok">Round 3 · Call up · Undo · Redo · Clear · Tools · 252px, 76px spare ✓ ${fl('F05','Five squares: the in-and-out tools moved behind Tools.',true)}</span></div>
+    </div></div>
+  <div class="svcard"><h2>Save as template…${mk('new','New · D8','A small window opened from Tools: a name field and a Save template button. Making a template is a create, so it asks (owner ruling: edit autosaves, create asks).')}${fl('F06','A worded menu item, so no disk and no icon question.',true)}</h2>
+    ${popSave('static')}
+    <p class="sub">Afterwards the notice reads: Saved “Fall Classic A-lineup” as a template.</p></div>
+  <div class="svcard"><h2>Print…${mk('un','Unchanged','Today’s print panel, opened from Tools instead of its own square. Its contents do not change: the poster with its turn, and the batting order card.')}</h2>
+    ${popPrint}
+    <p class="sub">The cost of the split: printing is Tools, then Print…, then the poster. That is one tap more than today.</p></div>`;
+/* ── 8 · phones ── */
+function phone(overlay,cap){
+  return `<div class="phfig"><div class="ph">
+    <div class="ph-app"><strong style="color:var(--ink)">FieldLogic<span style="color:var(--olive)">HQ</span></strong><span>Ridge U13 Girls</span></div>
+    <div class="ph-body"><span class="pb-back" style="font-size:14px">${ic('back',16)} All lineups</span><div class="ph-title">vs Komoka Kings</div><span class="sub">Sun, Oct 4 · 9:00 a.m.</span>
+      ${strip({kind:'quiet',label:'Not started',detail:'Choose positions or Auto-fill to begin'})}
+      <div class="ph-setup"><div><b>Everyone bats · 7 innings</b><small>Auto-fill · Competitive</small></div>${ic('down',18)}</div>
+      <div class="ph-tools"><span class="sqcall">${ic('userplus',17)}</span><button type="button" class="pb-ib" disabled aria-label="Undo">${ic('undo',18)}</button><button type="button" class="pb-ib" disabled aria-label="Redo">${ic('redo',18)}</button><button type="button" class="pb-ib" aria-label="Clear positions">${ic('eraser',18)}</button><button type="button" class="ptools bare" aria-label="Tools">${ic('more',18)}</button></div>
+      ${BLANK.slice(0,4).map((r,i)=>`<div class="ph-rowstub"><span class="h">${i+1}</span><b>#${r[0]} ${esc(r[1])}</b></div>`).join('')}
+    </div>
+    <div class="ph-nav"><span class="on"><i></i>Team</span><span><i></i>Schedule</span><span><i></i>Roster</span><span><i></i>Money</span><span><i></i>More</span></div>
+    ${overlay}
+  </div><p class="phcap">${cap}</p></div>`;
+}
+const closeBtn=`<button type="button" class="ph-close" aria-label="Close">${ic('x',18)}</button>`;
+const phTools=`<div class="ph-scrim menu"></div><div class="ph-drawer menu"><span class="grab"></span><div class="pophead"><span>Tools</span>${closeBtn}</div>${TOOL_ITEMS.map(t=>`<button type="button" class="titem"><strong>${t[0]}</strong><span>${t[1]}</span></button>`).join('')}</div>`;
+const phCopy=tab=>`<div class="ph-full"><div class="fullhead"><div><div class="fulltitle">Copy from</div><div class="fullsub">Into vs Komoka Kings · Sun, Oct 4</div></div>${closeBtn}</div>${seg(tab)}<div class="plistscroll">${tab==='games'?gameList(GAMES):`<ul class="plist" style="padding-top:.4rem">${TEMPLATES.map(g=>`<li><button type="button" class="prow"><strong>${esc(g[0])}</strong><span>${esc(g[1])}</span></button></li>`).join('')}</ul>`}</div></div>`;
+const phChoice=`<div class="ph-full"><div class="fullhead"><button type="button" class="pback">${ic('left',17)} Games</button>${closeBtn}</div>
+  <div class="srcname"><strong>vs Lucan Ilderton</strong><span>Sat, Oct 3 · 3:15 p.m. · Everyone bats · 7 innings</span></div>
+  <p class="popq">What should come across?</p>
+  <button type="button" class="opt"><strong>Batting order</strong><span>The same order as that game. Positions already on this game stay with each player.</span></button>
+  <button type="button" class="opt"><strong>Order and positions</strong><span>The whole lineup as it was: the order, every inning’s positions, the format and the innings.</span></button>
+  <p class="popfoot">Copying into vs Komoka Kings · Sun, Oct 4</p></div>`;
+const phSave=`<div class="ph-scrim"></div><div class="ph-drawer short"><span class="grab"></span>
+  <div class="pophead"><span>Save as template</span>${closeBtn}</div>
+  <label class="pfield" for="tplname-ph">Template name<input id="tplname-ph" class="pinput" style="color:var(--ink);min-height:44px" value="Fall Classic A-lineup"></label>
+  <p class="popfoot">Saves this lineup’s order, positions, format and innings. Templates live on the Lineups page’s Templates tab.</p>
+  <button type="button" class="psave on" style="min-height:44px">Save template</button></div>`;
+$('phones').innerHTML=
+  phone(phTools,`<strong>Tools.</strong> The bare ⋯ at the end of the row opens a sheet that stops at the nav${mk('new','New · D11','The portal’s Tools sheet, as on the club Ledger. It is a menu, so the nav stays visible and undimmed (2026-09-23 drawer ruling). Tapping an item closes the sheet and opens that item.')}. The row is Call up, Undo, Redo, Clear, Tools.`)+
+  phone(phCopy('games'),`<strong>Copy from · Games.</strong> Everything above the nav${mk('new','New · D7 · D12','Full screen at phone width, as you asked, stopping at the nav because Copy from is a menu. The switch and the title stay put while the list scrolls. The sub-line names the game being copied into, because the builder is out of sight.')}. Month bands stay pinned as the list scrolls; rows are 56px tall.`)+
+  phone(phCopy('templates'),`<strong>Copy from · Templates.</strong> The same sheet with the switch on Templates${mk('new','New · D12','Templates get the whole sheet rather than sitting under a long list of games.')}.`)+
+  phone(phChoice,`<strong>The question.</strong> Back returns to Games, the answers are 68px tall, and the foot repeats which game the copy lands on${mk('new','New','The same second view as on desktop. Each answer performs the copy and closes the sheet.')}.`)+
+  phone(phSave,`<strong>Save as template.</strong> A short drawer that covers the nav, because it holds a form${mk('new','New · D8','A form covers the nav (2026-09-23 ruling), so a thumb on the nav cannot lose a half-typed name. Of the three Tools items, only this one covers the nav.')}.`);
+
+/* ── explanations behind every highlight ── */
+const FINDINGS={
+  F01:{t:'A game’s lineup can only be reused by first making it a template',now:'The builder’s Templates drawer lists saved templates and offers to save this lineup as one. Nothing reads another game’s lineup. Reusing Saturday means opening Saturday’s game, saving a template, opening Sunday’s game and loading it, which leaves a single-use template in the library.',fix:'Tools › Copy from lists the season’s earlier games with a lineup, newest first, beside the templates.'},
+  F02:{t:'“Keep current” bounces the coach out of the drawer',now:'Loading a template over a lineup with positions opens “Start from template?” outside the drawer. Answering Keep current also counts as a tap outside, which closes the drawer. This is on the owner-calls TODO line from the phone review.',fix:'The confirm is replaced by the second view inside the panel, so no dialog opens outside it.'},
+  F03:{t:'The load notice blames the roster for the coach’s own choice',now:'“Skipped N players no longer on the roster” counts every template player who is not in this game’s current lineup, including players the coach took out of this game who are still on the team.',fix:'The copy is as is: rostered players come back. The notice names only players who have left the team.'},
+  F04:{t:'The notice asks for a save the page already makes',now:'After loading, the notice reads “review and save when ready”. The lineup autosaves, so there is no save step to take.',fix:'The notice says what was copied and from where, and stops there.'},
+  F05:{t:'A seventh square does not fit the phone’s tool row',now:'On a phone the tool row holds six 44px squares 8px apart, which is 304px. A 360px phone has 328px inside its 16px gutters. Round 2’s seventh square needed 356px and ran off the edge.',fix:'Round 3: the in-and-out tools go behind Tools, so the row is five squares in 252px and Clear stays on screen.'},
+  F06:{t:'A disk promises a save the page already made',now:'The lineup builder autosaves, and the floating pill says Saving… then Saved and fades. A disk beside Print would read as “save this lineup”.',fix:'Round 3: Save as template is a worded item in the Tools menu, so it needs no icon at all.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today',ask:'Your call'};
+const GENERIC={new:'Not in the product today.',re:'Exists today and changes in name, wording or place. The note says what it was.',un:'Exists today and is drawn unchanged, so a build cannot drop it by accident.',ask:'Drawn as recommended but not ruled. The note gives the alternative.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC[k]||'')}</p><p class="sub">${esc(GENERIC[k]||'')}</p></div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan .find strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.parentElement.scrollIntoView({block:'start',behavior:'smooth'});hit.parentElement.style.background='var(--lime)';setTimeout(()=>hit.parentElement.style.background='',2200)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+/* ── Decisions — one row per ruling, appended as they happen ── */
+const DECISIONS=[
+  {id:'D1',date:'2026-10-02',ask:'What is the button called?',ruling:'accepted',label:'Ruled · Copy from',why:'“Copy from”. It says what the coach is doing and covers both games and templates. Since round 3 it is an item in Tools. The Lineups room’s Templates tab keeps its name.'},
+  {id:'D2',date:'2026-10-02',ask:'Should Order and positions leave the pitcher open?',ruling:'accepted',label:'Ruled · copies everything',why:'Order and positions is everything, pitcher included. Removing the pitcher is the coach’s decision, and doing it without them knowing would make a disjointed experience; they can reconfigure afterwards. Seeing last game’s positions also helps them move players: “Frances played three innings at third, so let’s give her some outfield reps this game.”'},
+  {id:'D3',date:'2026-10-02',ask:'Leave out players marked Out for this game?',ruling:'accepted',label:'Ruled · copy as is',why:'Copy as is. The existing warning (“… is marked Out but still in the lineup”) keeps flagging them once the copy lands.'},
+  {id:'D4',date:'2026-10-02',ask:'Prompt the coach on a blank lineup?',ruling:'rejected',label:'Ruled · no prompt',why:'No prompt. The option waits where templates do.'},
+  {id:'D5',date:'2026-10-02',ask:'A call-up on the source game: bring them or leave them?',ruling:'accepted',label:'Ruled · bring them',why:'“Call-ups should be included if they were in the lineup we are copying from.” The copy calls them up for this game first, then lands the rows, and the notice names them, in either mode.'},
+  {id:'D6',date:'2026-10-02',ask:'Do templates get the same two choices?',ruling:'accepted',label:'Ruled · yes',why:'Agreed. Loading a template asks Batting order or Order and positions, the same as a game. This retires F02.'},
+  {id:'D7',date:'2026-10-02',ask:'On a phone, should Copy from be full screen?',ruling:'accepted',label:'Ruled · full screen',why:'Owner ask, round 2. Drawn from the top of the screen to the top of the nav: Copy from is a menu, and under the 2026-09-23 drawer ruling a menu leaves the nav visible. At 641–900px it is a bottom drawer.'},
+  {id:'D8',date:'2026-10-02',ask:'Take Save as template out of Copy from?',ruling:'accepted',label:'Ruled · yes',why:'Owner ask, round 2: a panel called Copy from should only bring a lineup in. Round 2 drew it as a square beside Print; round 3 (D11) puts it in Tools instead. Either way it opens a small window with a name field and a Save button.'},
+  {id:'D9',date:'2026-10-02',ask:'Which glyph does the Save as template square wear?',ruling:'closed',label:'Closed by D11',why:'A disk was asked for, and the template glyph recommended, because the page autosaves (F06). In the Tools menu it is a worded item, so no glyph is needed.'},
+  {id:'D10',date:'2026-10-02',ask:'What makes room for a seventh tool on the phone row?',ruling:'closed',label:'Closed by D11',why:'Moving Clear into Setup was recommended (F05). The owner’s split leaves five squares, so Clear stays where it was placed on 2026-09-22.'},
+  {id:'D11',date:'2026-10-02',ask:'Put Copy from, Print and Save as template behind a ⋯ and keep the editing tools on screen?',ruling:'accepted',label:'Ruled · as drawn',why:'Owner proposal, round 3: “the other ones are more for active editing can stay on the screen.” Drawn with the portal’s existing Tools menu (as on the club Ledger) at every width. The row is Call up, Undo, Redo, Clear, Tools, five squares in 252px. The cost is one extra tap to print. Ruled as drawn 2026-10-02 (“looks good, go ahead”) and built the same day.'},
+  {id:'D12',date:'2026-10-02',ask:'How does Copy from handle long lists? A Games / Templates switch?',ruling:'accepted',label:'Ruled · as drawn',why:'Owner proposal, round 3. Drawn as a Games / Templates switch at the top, each list with the whole panel, scrolling under a fixed title and switch. Games are earlier games only, newest first, in month bands. It opens on Games, or on Templates when no earlier game has a lineup. The three-games-plus-expand list is gone. No search. Ruled as drawn 2026-10-02 and built the same day.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.id)} · ${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p style="margin:0">${esc(d.why)}</p></div>`).join('');
+</script>
+<script>
+'use strict';
+/* QA walk — its own script, so a typo here cannot take the tabs or the drawings with it. */
+(function () {
+  const $q = id => document.getElementById(id);
+  const escQ = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const QA_PARTS = [
+    { id: 'W1', title: 'The Tools menu — editing tools on screen, in-and-out tools behind ⋯', steps: [
+      'Open Lineups › @ Probe Rovers. The toolbar right of Setup reads Call up a player · Undo · Redo · Clear (eraser) · ⋯ Tools. There is no Print square and no Templates button.',
+      'Click Tools. Three items, each with a one-line hint: Copy from… · Print… · Save as template….',
+      'Print… opens the same print panel as before: Dugout poster with Landscape / Portrait, and the batting order card. Download the poster; it opens as before.',
+      '✎ Save as template… opens a window titled Save as template with a name field and Save template. Name it “QA copy-from check” and save. The line above the grid reads Saved “QA copy-from check” as a template., and the template is listed on the Lineups page’s Templates tab.',
+      'Phone: the tool row is five squares on one line (Call up, Undo, Redo, Clear, ⋯). ⋯ opens a sheet titled Tools that stops above the bottom nav — the nav stays visible and tappable.',
+      'Phone: Save as template… opens a short drawer that covers the bottom nav, with a × at the top. × closes it.',
+      'Dark theme (Account › Theme): the Tools menu and the Save window read clearly.'
+    ] },
+    { id: 'W2', title: 'Copy from a game — Batting order, then Order and positions', steps: [
+      'Tools › Copy from…. A panel titled Copy from opens with a Games / Templates switch, on Games. Games are listed newest first under month labels, each row reading opponent, then date · time · innings. Only games before @ Probe Rovers are listed, and only games that have a lineup.',
+      'Switch to Templates: your saved templates are listed (including “QA copy-from check”). Switch back to Games.',
+      '✎ Before copying, set two positions by hand on @ Probe Rovers (say Frankie Test at C in inning 1, Gray Test at P in inning 1).',
+      'Tools › Copy from… › pick vs Probe Rovers. The panel asks “What should come across?” with Batting order and Order and positions, and says This replaces the lineup on this game. Undo brings it back.',
+      '✎ Choose Batting order. The order now matches vs Probe Rovers’ order; Frankie still has C and Gray still has P in inning 1; Setup still shows this game’s format and innings. The line above the grid reads Copied the batting order from vs Probe Rovers (…).',
+      'Undo (↶) once: the lineup is back exactly as it was before the copy.',
+      '✎ Tools › Copy from… › vs Probe Rovers › Order and positions. The grid now shows vs Probe Rovers’ positions in every inning, the pitcher included; Setup shows that game’s format and innings; the status line reads Draft. The line reads Copied the order and positions from vs Probe Rovers (…).',
+      'Wait a few seconds (the save pill shows Saved): the Copied… line is still there. Change one position: on the next save the line goes.',
+      'Back / Escape: with the question open, Back returns to the Games list; Escape or a click outside closes the panel.',
+      'Phone: Copy from fills the screen above the bottom nav, with “Into @ Probe Rovers · …” under the title and a ×. The nav stays visible. Rows and both answers are comfortable to tap.'
+    ] },
+    { id: 'W3', title: 'A template, and a call-up, come across', steps: [
+      '✎ Tools › Copy from… › Templates › “QA copy-from check” › Batting order. The order follows the template; this game’s positions stay with each player; the line reads Copied the batting order from “QA copy-from check”.',
+      '✎ Give an earlier game a call-up: open vs Probe Rovers, Call up a player, pick any saved call-up (or add one), and leave them in its lineup.',
+      '✎ Back on @ Probe Rovers: Tools › Copy from… › vs Probe Rovers › Order and positions. The called-up player is in the lineup with the Call-up tag, and the line adds “… is called up for this game too.”',
+      '✎ Undo once: the lineup goes back; the called-up player stays on this game under Call-ups, out of the order. Take them off this game with the call-up’s remove control.',
+      '✎ Clean up: delete “QA copy-from check” on the Lineups page’s Templates tab, and take the call-up off vs Probe Rovers.'
+    ] }
+  ];
+  const KEY = 'copyfrom-qa';
+  let qa = {};
+  try { qa = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { qa = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(qa)); } catch (e) { /* no storage — this page still works */ } };
+  const counts = () => { let checked = 0, total = 0; QA_PARTS.forEach(p => p.steps.forEach((_, i) => { total++; if (qa[p.id + '-' + i]) checked++; })); return { checked, total }; };
+  const paintCount = () => { const c = counts(); $q('qaCount').textContent = 'Checked ' + c.checked + ' of ' + c.total; };
+  function draw() {
+    $q('qaParts').innerHTML = QA_PARTS.map(p => '<div class="decisionrow"><h2 style="margin:0 0 8px;font-size:17px">' + escQ(p.id) + ' · ' + escQ(p.title) + '</h2>' +
+      p.steps.map((s, i) => '<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:14px"><input type="checkbox" data-step="' + p.id + '-' + i + '" ' + (qa[p.id + '-' + i] ? 'checked' : '') + ' style="width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--olive)"><span><strong>' + (i + 1) + '.</strong> ' + escQ(s) + '</span></label>').join('') +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px">Verdict: ' +
+      ['pass', 'issue', 'call'].map(v => '<button type="button" class="button" style="min-height:40px" data-verdict="' + p.id + '" data-value="' + v + '" aria-pressed="' + (qa['verdict-' + p.id] === v) + '">' + (v === 'pass' ? 'Pass' : v === 'issue' ? 'Issue' : 'Needs a call') + (qa['verdict-' + p.id] === v ? ' ✓' : '') + '</button>').join('') + '</div>' +
+      '<label style="display:block;margin-top:10px;font-size:13px">Notes<textarea data-notes="' + p.id + '" rows="2" style="width:100%;margin-top:6px;border:1px solid var(--line2);border-radius:6px;padding:8px">' + escQ(qa['notes-' + p.id] || '') + '</textarea></label></div>').join('');
+    document.querySelectorAll('#qaParts [data-step]').forEach(el => el.addEventListener('change', () => { qa[el.dataset.step] = el.checked; save(); paintCount(); }));
+    document.querySelectorAll('#qaParts [data-verdict]').forEach(el => el.addEventListener('click', () => { qa['verdict-' + el.dataset.verdict] = el.dataset.value; save(); draw(); }));
+    document.querySelectorAll('#qaParts [data-notes]').forEach(el => el.addEventListener('input', () => { qa['notes-' + el.dataset.notes] = el.value; save(); }));
+    paintCount();
+  }
+  draw();
+  $q('buildSummary').addEventListener('click', () => {
+    const c = counts();
+    const lines = ['Copy a lineup from another game — QA summary', 'Checked ' + c.checked + ' of ' + c.total, ''];
+    QA_PARTS.forEach(p => {
+      lines.push(p.id + ' · ' + p.title + ' — verdict: ' + (qa['verdict-' + p.id] || 'unset'));
+      p.steps.forEach((s, i) => lines.push('  [' + (qa[p.id + '-' + i] ? 'x' : ' ') + '] ' + (i + 1) + '. ' + s));
+      if (qa['notes-' + p.id]) lines.push('  Notes: ' + qa['notes-' + p.id]);
+      lines.push('');
+    });
+    const out = $q('summaryOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select();
+  });
+})();
+</script>
+
