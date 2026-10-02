@@ -4,7 +4,7 @@
 source `docs/projects/active/COACH_AWARD_OCCASION_HUB.html`. PM brief: `COACH_AWARD_OCCASION_PM_BRIEF.md`.
 
 **Status:** drawn 2026-10-01; **ruled 2026-10-02** ("I agree with your recommendations, proceed" — all four as
-recommended); **built on dev 2026-10-02** (see *As built*); **/review 2026-10-02**, four fixes before the commit. Owner QA §257
+recommended); **built on dev 2026-10-02** (see *As built*); **/review 2026-10-02**, four fixes before the commit; **committed `55c237ee` 2026-10-02**. Owner QA §257
 next (hub → QA walk: W1 the For dropdown, W2 the double-check).
 
 ## Where it came from
