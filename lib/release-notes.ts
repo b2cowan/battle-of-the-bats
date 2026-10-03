@@ -44,6 +44,72 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-10-02',
+    title: 'Reuse a lineup from another game, your payees in one window, and a clearer Ledger',
+    highlights: [
+      {
+        category: 'new',
+        text: 'In the lineup builder, Copy from reuses another game\'s lineup or one of your templates. Bring across just the batting order, or the order and positions. Copy from, Print and Save as template now sit under Tools, and Save as template can replace one you already have (it asks first).',
+      },
+      {
+        category: 'new',
+        text: 'Save over a practice template, a drill or a circuit by saving it under the same name. It asks first, and your upcoming practices pick up an updated drill.',
+      },
+      {
+        category: 'new',
+        text: "Give an award now asks which game or event it's for, listing the season's events newest first. A game still waiting for its score says so. If the award looks like one you've already given, you'll see which one before you save.",
+      },
+      {
+        category: 'new',
+        text: "Money → Ledger → Tools → Payees opens all your payees in one window. Open a payee to see what you've paid them this season, what's still to pay and what's next due, with their entries underneath. Rename, merge or delete your team's payees from there.",
+      },
+      {
+        category: 'improved',
+        text: 'The Ledger is easier to read. Each row shows its day, the opening and closing balance lines carry their full dates, and less-used tools sit under Tools. Open any row to read it; a dues or fundraising row tells you where to change it.',
+      },
+      {
+        category: 'improved',
+        text: "On a phone, the Ledger's filters sit behind one Filter button that counts what you've changed, with Reset to put them back, so more of the screen shows your entries.",
+      },
+      {
+        category: 'improved',
+        text: "The Ledger's Balance column shows only while every entry that changes it is on screen. Filter some out and it steps aside, so the running total you see always adds up.",
+      },
+      {
+        category: 'improved',
+        text: "Budget vs. Actual opens on four figures: Collected, Spent, Off-plan and Cash on hand. Headroom and Season end are gone. Headroom repeated Spent, and Season end set dues still to come against only the bills entered so far, which could overstate what you'd have left.",
+      },
+      {
+        category: 'improved',
+        text: 'In the Ledger, dues payments show "Player dues" as their Category and a family refund shows "Dues credits paid out", instead of a dash.',
+      },
+      {
+        category: 'improved',
+        text: 'Tournament Teams has one toolbar in every division, with less-used actions under Tools. A team opens to read and switches to editing as a whole, teams waiting on your decision show as a count, and Export is one button.',
+      },
+      {
+        category: 'improved',
+        text: "Teams and Communications now match the rest of your admin. A record's window names the previous and next record and where you are in the list.",
+      },
+      {
+        category: 'improved',
+        text: "Admin menus now list only the pages you can open, and page titles no longer repeat your organization's name.",
+      },
+      {
+        category: 'fixed',
+        text: "An announcement to your teams now emails your accepted teams only, as the composer says. It had also reached teams you'd rejected, waitlisted or not yet decided on. Emailing teams in other statuses is part of choosing your audience on Tournament Plus, and each email now keeps a list of who it reached.",
+      },
+      {
+        category: 'fixed',
+        text: 'Your team Overview\'s Budget tile now shows your budget when you built it line by line. It had read "Not set".',
+      },
+      {
+        category: 'fixed',
+        text: "Smaller fixes: phones keep their own fading scrollbar, a window's scrollbar runs down its edge, a link inside a window (like Open Player Dues) takes you there, and a payee's or bill's Next due shows the amount with its date underneath.",
+      },
+    ],
+  },
+  {
     date: '2026-09-30',
     title: 'One tap to any score on game day, tidier lists on your phone, and fundraising named in your ledger',
     highlights: [
