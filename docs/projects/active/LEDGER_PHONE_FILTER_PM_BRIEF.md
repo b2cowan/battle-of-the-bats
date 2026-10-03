@@ -1,6 +1,6 @@
 # Ledger Phone Filter — PM brief
 
-**Status:** decisions D1–D7 accepted 2026-10-02; building. Hub: https://claude.ai/artifact/9MkS5tTMA7RvytnUXCsVdx
+**Status:** decisions D1–D7 accepted 2026-10-02; committed `687187cf` 2026-10-02; owner QA §261 next. Hub: https://claude.ai/artifact/9MkS5tTMA7RvytnUXCsVdx
 
 ## What changes
 On a phone, the Ledger's filters move behind one **Filter** button: Type, Status, Item, Date and Tags on a team's

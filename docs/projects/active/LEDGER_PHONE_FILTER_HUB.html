@@ -105,13 +105,13 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Ledger Phone Filter — project hub</strong><br><small>On a phone, both Ledgers’ filters behind one Filter button · D1–D7 accepted 2026-10-02 · built on dev 2026-10-02 · owner QA §261 on the QA Walk tab</small></div>
+  <div class="hubtitle"><strong>Ledger Phone Filter — project hub</strong><br><small>On a phone, both Ledgers’ filters behind one Filter button · D1–D7 accepted 2026-10-02 · committed 687187cf 2026-10-02 · owner QA §261 on the QA Walk tab</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Round 1 drawn 2026-10-02 from the live coach and club Ledgers; D1–D7 accepted 2026-10-02">Design</li>
     <li class="stage done" title="LEDGER_PHONE_FILTER_PLAN.md + PM brief, 2026-10-02">Plan</li>
     <li class="stage done" title="Built on dev 2026-10-02: 13/13 browser checks, guard test, npm run verify:changed clean">Build</li>
-    <li class="stage current" title="—">Review</li>
-    <li class="stage" title="—">QA</li>
+    <li class="stage done" title="/simplify (four lenses) and /review (high-risk tier, four lenses, five fixes) 2026-10-02; /docs 2026-10-02; committed 687187cf">Review</li>
+    <li class="stage current" title="Owner QA §261 — two walks on the QA Walk tab">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="themeToggle" aria-pressed="true">Showing dark · switch to warm</button></div>
@@ -356,7 +356,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 <section id="hub-brief" class="docpage" hidden>
   <div class="eyebrow">PM Brief · round 1</div>
   <h1>The Ledger’s filters, on a phone</h1>
-  <div class="note">Status: D1–D7 accepted 2026-10-02; built on dev 2026-10-02; owner QA §261 on the QA Walk tab.</div>
+  <div class="note">Status: D1–D7 accepted 2026-10-02; committed 687187cf 2026-10-02; owner QA §261 on the QA Walk tab.</div>
   <h2>What changes</h2>
   <p>On a phone, the Ledger’s filters (Type, Status, Item, Date, Tags on a team; Type, Status, Category, Date on the club) move behind one Filter button. The button opens a sheet listing each filter and what it is set to; tapping one opens its choices. The button lights up with a count when anything is narrowed. Cash on hand (Balance, for the club) moves up beside the button. A desktop keeps the pills.</p>
   <h2>Why it matters</h2>
@@ -399,7 +399,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <li>Departure: an unused style rule for the old filter bar was deleted. Only a comment removed in this change had still named it, and the repo’s dead-class check caught it.</li>
     <li>A row lists up to three chosen options by name, without their counts; more reads “N selected”.</li>
     <li>Proof: type check clean; lint clean on every new and changed component; a new guard test (six checks, one per ruling) and the two Ledger guards pass; the full changed-files check passes (5,556 unit tests); a browser run on dev, 13 of 13 (screen 7).</li>
-    <li>Not done: /simplify, /review and the help guides (offered), and the commit.</li>
+    <li>/simplify (four lenses) and /review (high-risk tier, four lenses) 2026-10-02: five fixes before the commit (the sheet is modal to a screen reader; the shared focus return reads its button when the frame runs; a stale selection reads in the pill’s words; the count is hidden from a screen reader; disabled on any element). /docs the same day: one phone paragraph in each Ledger help article. Committed 687187cf 2026-10-02.</li>
   </ul>
   <h2>Rollout</h2>
   <p>No migration, no data change; the date range is remembered in the browser exactly as before. Ships with the next promote.</p>

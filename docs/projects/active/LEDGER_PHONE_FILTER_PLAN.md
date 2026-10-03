@@ -108,7 +108,8 @@ puts its filters behind one button (`decision_one_toolbar_rare_tools_behind_tool
   reset filters / where did the filters go. `check:spelling` ✓. `measure:help`: the club section stays under 350
   words. Found, not fixed: the coach Ledger answer is 2,763 words — long before this change, a restructure not a sync.
   No help screenshot shows the Ledger, so none was re-taken.
-- **Not done:** the commit, and owner QA §261.
+- **Committed `687187cf` 2026-10-02** from a private index (the coach panel's "Next due" hunk and other sessions'
+  TODO / QA-ledger lines stayed in the tree). Next: owner QA §261.
 
 ## Verification
 
