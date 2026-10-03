@@ -179,6 +179,8 @@ Last used now count the club's own entries only.
 shared**, 6 stay the club's own, 0 standalone-org payees; prod — **no payees at all** (0 rows in `org_payees`), so the
 launch step changes nothing there today. Neither database has a record naming another team's or another org's payee
 (0 / 0 / 0). Re-count on prod at apply time (the verify block in MANUAL_PROD_STEPS) and record it here.
+**Applied to prod 2026-10-02 (after 315, minutes before the promote): 0 shared of 0 club payees** — the launch step
+changed nothing on prod, as counted; every verify in MANUAL_PROD_STEPS passed.
 
 **Rollout (⚠ binding):** mig 316 to prod AFTER mig 315 and minutes BEFORE the ONE promote that carries sessions 1
 and 2 together — `shared_at` is the D7a clock and must never start before a coach's picker shows "Your club sees
