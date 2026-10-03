@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
-import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
+import { rescueFocusTo, useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import LineupSheetScrim from './LineupSheetScrim';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -197,16 +197,10 @@ export function CoachToolbarMenu({
    * So: wait a frame, and act **only if nobody else claimed focus.** A dialog that focuses itself
    * wins. A control the coach clicked wins. A trigger that has since become disabled is skipped
    * rather than focused-then-blurred. What is left is the case that was actually broken — nothing
-   * took focus at all — and only there does the trigger take it back.
+   * took focus at all — and only there does the trigger take it back. (The mechanism is
+   * `rescueFocusTo` in `lib/overlay-hooks`, shared with the Ledgers' phone Filter sheet.)
    */
-  const rescueFocus = useCallback(() => {
-    window.requestAnimationFrame(() => {
-      // `<body>` is the browser's "nowhere left" fallback; anything else is a real destination.
-      if (document.activeElement && document.activeElement !== document.body) return;
-      const trigger = triggerRef.current;
-      if (trigger && !trigger.disabled) trigger.focus({ preventScroll: true });
-    });
-  }, []);
+  const rescueFocus = useCallback(() => rescueFocusTo(triggerRef), []);
 
   useDismissable(open, rootRef, () => { setOpen(false); rescueFocus(); });
 

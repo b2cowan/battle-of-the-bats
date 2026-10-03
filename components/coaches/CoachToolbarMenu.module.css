@@ -207,7 +207,11 @@
    two answer different questions — that one is a page panel at the NAV breakpoint, this one a menu
    panel at the CONTENT breakpoint — and merging them would have meant editing a file another
    session was holding. If a THIRD caller wants this shape, promote it to one class rather than
-   writing a fourth copy. */
+   writing a fourth copy.
+   ⚠ SECOND CONSUMER OF THESE CLASSES (not a copy): `FilterGroup`'s phone sheet (Ledger Phone Filter,
+   2026-10-02) wears `.panel` + `.drawer` + `.drawerTitle` + `.item` directly, so a change here moves the
+   Ledgers' Filter sheet too. It is the third drawer SHAPE in the portal — the promotion above is now due,
+   with `.lineupAutoMenu` in the same unit of work. */
 @media (max-width: 640px) {
   .drawer {
     position: fixed;

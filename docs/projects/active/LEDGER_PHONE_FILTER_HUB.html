@@ -1,0 +1,637 @@
+<title>Ledger Phone Filter</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--ground:#e7e9e1;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:24px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:4px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 11px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+@media(max-width:700px){.walk{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap}.walk a{flex:none}}
+
+.frame{width:min(1240px,calc(100% - 32px));margin:20px auto;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a}
+.screen{padding:24px 28px 30px;scroll-margin-top:70px}
+.screen .lead{max-width:860px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+@media(max-width:700px){.screen{padding:18px 12px 24px}}
+
+.spec{margin:22px 0 6px;max-width:100%}
+.spectop{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}
+.spectop h3{margin:0;font-size:15px}
+.lbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.lbl.before{background:#e9e4da;color:#4a4235}.lbl.after{background:#dff0c2;color:#2b3f12}.lbl.alt{background:#e3edf2;color:#1d4a5e}
+.scroller{overflow-x:auto;border:1px solid #c6cebc;border-radius:10px;background:#dfe3d6;-webkit-overflow-scrolling:touch;display:inline-block;max-width:100%;vertical-align:top}
+.shot{position:relative;width:390px;line-height:0}
+.shot img{display:block;width:390px;height:auto}
+.caption{font-size:13px;color:var(--muted);margin:8px 2px 0;max-width:390px}
+.caption strong{color:var(--ink)}
+.pair{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.pair>div{max-width:100%}
+
+.pin{position:absolute;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--error);color:#fff;font:800 13px/22px system-ui,sans-serif;text-align:center;padding:0;box-shadow:0 2px 6px #0004;cursor:pointer}
+.pin.fix{background:var(--olive)}.pin.alt{background:var(--blue)}
+.pin::after{content:"";position:absolute;inset:-9px}
+.zone{position:absolute;pointer-events:none;border:2px dashed var(--error);border-radius:6px}
+.zone.fix{border-color:#5f8a2e}.zone.list{border-color:var(--blue)}
+.zonetag{position:absolute;font:800 11px/1.3 system-ui,sans-serif;letter-spacing:.4px;color:#fff;background:var(--error);border:0;border-radius:4px;padding:4px 7px;cursor:pointer;box-shadow:0 2px 6px #0003;white-space:nowrap}
+.zonetag.fix{background:var(--olive)}.zonetag.list{background:var(--blue)}
+
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-size:10.5px;font-weight:800;border-radius:4px;padding:3px 7px;letter-spacing:.4px;vertical-align:middle;line-height:1.4;min-height:24px}
+.fl.fix{background:var(--olive)}.fl.alt{background:var(--blue)}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer;border:1px solid}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border-color:#b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border-color:#b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border-color:#d3d9cd}
+
+.figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin:16px 0 4px;max-width:900px}
+.fig{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.fig .k{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.fig .v{font-size:20px;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.fig .v s{color:var(--muted);font-weight:500;font-size:15px;text-decoration-thickness:1px}
+.fig .n{font-size:12.5px;color:var(--muted)}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:12px 0 18px;background:#fff}
+table.kept{border-collapse:collapse;width:100%;font-size:13.5px;min-width:600px}
+table.kept th,table.kept td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.kept th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:#fafbf7}
+table.kept tr:last-child td{border-bottom:0}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage ul,.docpage ol{padding-left:22px}.docpage li{margin:0 0 7px}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 16px 36px}}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px;scroll-margin-top:20px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.decisionrow h3{margin:0;font-size:16px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.open{background:#edf5f8;border-color:#b6cfdb}.tag.accepted{background:#e3f3d4;border-color:#b9d88c}
+.rec{font-size:13.5px;background:#f3f7ee;border:1px solid #cfe0bd;border-radius:6px;padding:8px 10px;margin:8px 0 0}
+.altx{font-size:13.5px;color:var(--muted);margin:8px 0 0}
+
+.explain h3{margin:16px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:18px}.dialogbody{padding:6px 22px 20px}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.docpage table.kept{min-width:0}
+.qa .qacard{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+.qa .qacard h3{margin:10px 0 4px}.qa .qacard h3:first-child{margin-top:0}.qa dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0 0 8px}.qa dt{color:var(--muted);font-size:13px}.qa dd{margin:0;overflow-wrap:anywhere}
+.qaindex{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.qawcard{text-align:left;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font:inherit;color:inherit;cursor:pointer}
+.qawcard[aria-pressed=true]{border-color:var(--olive);box-shadow:0 0 0 1px var(--olive) inset}
+.qachip{align-self:flex-start;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.qachip[data-s=pass]{background:#e3f3d4;color:#2f5a14}.qachip[data-s=issue]{background:#f6dede;color:var(--error)}.qachip[data-s=call],.qachip[data-s=partial]{background:#f4ecd9;color:var(--warn)}
+.qasteps{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.qasteps li{counter-increment:s;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:start}
+.qasteps li.done{border-color:#7fa85a}.qasteps input[type=checkbox]{width:22px;height:22px;margin:2px 0 0;accent-color:var(--olive)}
+.qabody{display:flex;flex-direction:column;gap:6px;min-width:0}.qan::before{content:"Step " counter(s);font-size:12px;color:var(--muted);font-weight:700}
+.qado,.qasee{margin:0}.qado::before{content:"Do  ";white-space:pre;font-size:12px;font-weight:700;color:var(--blue)}.qasee::before{content:"You should see  ";white-space:pre;font-size:12px;font-weight:700;color:var(--olive)}
+.qaverdict,.qatools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.qaverdict button{min-height:44px;padding:9px 15px;border:1px solid var(--line);border-radius:7px;background:var(--white);font:inherit;cursor:pointer}
+.qaverdict button[data-v=pass][aria-pressed=true]{background:#e3f3d4;border-color:#7fa85a}.qaverdict button[data-v=issue][aria-pressed=true]{background:#f6dede;border-color:var(--error)}.qaverdict button[data-v=call][aria-pressed=true]{background:#f4ecd9;border-color:var(--warn)}
+.qanotes{width:100%;min-height:84px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--white);font:inherit}
+.qaout{margin:8px 0 0;white-space:pre-wrap;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Ledger Phone Filter — project hub</strong><br><small>On a phone, both Ledgers’ filters behind one Filter button · D1–D7 accepted 2026-10-02 · built on dev 2026-10-02 · owner QA §261 on the QA Walk tab</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Round 1 drawn 2026-10-02 from the live coach and club Ledgers; D1–D7 accepted 2026-10-02">Design</li>
+    <li class="stage done" title="LEDGER_PHONE_FILTER_PLAN.md + PM brief, 2026-10-02">Plan</li>
+    <li class="stage done" title="Built on dev 2026-10-02: 13/13 browser checks, guard test, npm run verify:changed clean">Build</li>
+    <li class="stage current" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="themeToggle" aria-pressed="true">Showing dark · switch to warm</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Screens">
+    <a href="#s-toolbar" aria-current="page">1 · The toolbar</a>
+    <a href="#s-scroll">2 · While scrolling</a>
+    <a href="#s-sheet">3 · The Filter sheet</a>
+    <a href="#s-shapes">4 · The other shape</a>
+    <a href="#s-club">5 · The club’s Ledger</a>
+    <a href="#s-kept">6 · What stays</a>
+    <a href="#s-built">7 · As built</a>
+  </nav>
+  <div class="frame">
+
+    <!-- 1 · THE TOOLBAR -->
+    <section class="screen" id="s-toolbar">
+      <div class="eyebrow">Screen 1 · decisions 1, 3 and 4</div>
+      <h1 tabindex="-1">Five filters become one Filter button</h1>
+      <p class="sub lead">The coach’s Ledger at 390px, with Date set to Whole season as in your screenshot. Every frame is the live page, captured at true size; the right-hand frames are the same page with the change applied. Each numbered marker opens its decision.</p>
+      <div class="figures">
+        <div class="fig"><div class="k">Filter rows</div><div class="v"><s>3 lines</s> 1 line</div><div class="n">The filter row and Cash on hand go from 133px to 54px</div></div>
+        <div class="fig"><div class="k">Taps to change a filter</div><div class="v"><s>2</s> 3</div><div class="n">Filter, the filter’s row, the choice. One more than today (decision 2)</div></div>
+      </div>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Ledger, 390px</h3></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="coach-before" src="ledger-phone-filter/coach-before-dark.jpg" alt="The coach's Ledger on a phone today: View, the Tools button and Add a bill, then Type, Status and Item on one line, Date set to Whole season and Tags on a second, and Cash on hand on a third." width="390" height="844">
+            <button type="button" class="pin" style="left:296px;top:259px" data-d="D1" data-here="Five filters take two lines here, and Cash on hand takes a third. At 390px the whole toolbar is 207px tall, and it stays pinned while the coach scrolls (screen 2).">1</button>
+            <button type="button" class="pin" style="left:160px;top:291px" data-d="D4" data-here="Date is on Whole season. It is remembered for this team, so the coach finds it like this the next time they open the Ledger.">4</button>
+          </div></div>
+          <p class="caption">Lit pills are the ones moved from where they rest. Status rests on Actual + Overdue, so it reads quiet.</p>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>Coach · Ledger, 390px</h3></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="coach-after" src="ledger-phone-filter/coach-after-dark.jpg" alt="The proposed Ledger: the same top line, then one line holding a lit Filter 1 button on the left and Cash on hand on the right." width="390" height="844">
+            <button type="button" class="pin fix" style="left:160px;top:219px" data-d="D1" data-here="One line: the Filter button on the left, Cash on hand on the right. The line above (View, Tools, Add a bill) is unchanged.">1</button>
+            <button type="button" class="pin fix" style="left:84px;top:229px" data-d="D3" data-here="The button lights up and reads 1, because one filter (Date) is away from where it rests. With every filter at rest it reads a quiet Filter, as on the club’s Ledger in screen 5.">3</button>
+          </div></div>
+          <p class="caption"><strong>Filter</strong><span class="mk" data-k="new" data-note="New on a phone. It wears the same pill as View and the five filters, and lights up the same way when anything is narrowed. It opens the sheet in screen 3.">New</span> <strong>Cash on hand</strong><span class="mk" data-k="re" data-note="Moved up a line, onto the Filter line. Same figure and the same rule as today: a narrowed Type takes it away and the date never does.">Moved</span> <strong>View · Tools · Add a bill</strong><span class="mk" data-k="un" data-note="The top line is untouched. Tools keeps its three lists (Payees, Categories and items, Money tags).">Unchanged</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · WHILE SCROLLING -->
+    <section class="screen" id="s-scroll" hidden>
+      <div class="eyebrow">Screen 2 · decision 1</div>
+      <h1 tabindex="-1">The toolbar stays pinned while the coach scrolls</h1>
+      <p class="sub lead">Both frames scrolled 760px down the same Ledger. The Ledger toolbar sticks under the team bar at every width, so on a phone its height is taken from the list for as long as the coach is reading. This is the reason the change is worth making.</p>
+      <div class="figures">
+        <div class="fig"><div class="k">Pinned toolbar</div><div class="v"><s>207px</s> 128px</div><div class="n">At rest (Date on Around today) it is 179px today</div></div>
+        <div class="fig"><div class="k">List you can read</div><div class="v"><s>520px</s> 599px</div><div class="n">Between the toolbar and the phone bar: 79px, about 15% more</div></div>
+      </div>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Scrolled, 390px</h3></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="coach-before-scrolled" src="ledger-phone-filter/coach-before-scrolled-dark.jpg" alt="The Ledger today, scrolled: the View line, two lines of filters and Cash on hand stay pinned at the top over the cards." width="390" height="844">
+            <div class="zone" style="left:14px;top:47px;width:362px;height:203px"></div>
+            <button type="button" class="zonetag" style="left:20px;top:226px" data-d="D1" data-here="207px of the screen stays pinned: the View line, two lines of filters and Cash on hand. With the team bar above it, 252px of an 844px phone never moves.">Pinned 207px</button>
+            <div class="zone list" style="left:14px;top:256px;width:362px;height:512px"></div>
+            <button type="button" class="zonetag list" style="left:20px;top:742px" data-d="D1" data-here="The list the coach is reading: 520px between the pinned toolbar and the phone bar.">List 520px</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>Scrolled, 390px</h3></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="coach-after-scrolled" src="ledger-phone-filter/coach-after-scrolled-dark.jpg" alt="The proposed Ledger, scrolled: only the View line and the Filter and Cash on hand line stay pinned, and more of the cards show." width="390" height="844">
+            <div class="zone fix" style="left:14px;top:47px;width:362px;height:124px"></div>
+            <button type="button" class="zonetag fix" style="left:110px;top:158px" data-d="D1" data-here="128px pinned: the View line, and one line for Filter and Cash on hand.">Pinned 128px</button>
+            <div class="zone list" style="left:14px;top:177px;width:362px;height:591px"></div>
+            <button type="button" class="zonetag list" style="left:20px;top:742px" data-d="D1" data-here="599px of list: 79px more than today, about one more line of a card on every screen.">List 599px</button>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · THE FILTER SHEET -->
+    <section class="screen" id="s-sheet" hidden>
+      <div class="eyebrow">Screen 3 · decisions 2, 4, 6 and 7</div>
+      <h1 tabindex="-1">Filter opens a sheet: one row per filter, each saying what it is set to</h1>
+      <p class="sub lead">The same sheet Tools opens today, with the same handle, title and rows. Each row says what that filter is set to, so the whole state reads at a glance, as the five pills did. Tapping a row opens its choices in place, the same checkboxes the pill shows today. The list behind updates as you tick.</p>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>The sheet, closed rows</h3></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="coach-sheet-rows" src="ledger-phone-filter/coach-sheet-rows-dark.jpg" alt="A bottom sheet titled Filter with five rows: Type All, Status Actual and Overdue, Item Every budget item, Date Whole season in the lit colour, Tags Every tag, and Reset filters at the foot." width="390" height="844">
+            <button type="button" class="pin fix" style="left:250px;top:463px" data-d="D2" data-here="One row per filter, its name and what it is set to. The rows use the Tools sheet’s own row (a name over a quiet line).">2</button>
+            <button type="button" class="pin fix" style="left:250px;top:612px" data-d="D4" data-here="Date reads Whole season in the lit colour: the one filter away from where it rests, the same one the button counts.">4</button>
+            <button type="button" class="pin fix" style="left:250px;top:723px" data-d="D6" data-here="Reset filters, shown only because something is on. It puts every filter back where it rests.">6</button>
+            <button type="button" class="pin fix" style="left:182px;top:403px" data-d="D7" data-here="No Done button: tap outside the sheet to close it, as Tools closes today.">7</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>Type opened in place</h3></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="coach-sheet-type" src="ledger-phone-filter/coach-sheet-type-dark.jpg" alt="The same sheet with the Type row opened: its checkboxes All, Expenses, Income, Refunds, from Dues, from Fundraising and from Club sit under it, and the other four rows follow." width="390" height="844">
+            <button type="button" class="pin fix" style="left:300px;top:200px" data-d="D2" data-here="Type opened in place: the same seven choices the Type pill shows today. One row opens at a time; opening Status closes Type.">2</button>
+          </div></div>
+          <p class="caption">The sheet grows to fit the open row. The longest one (Item, on a team with many budget items) scrolls inside the sheet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · THE OTHER SHAPE -->
+    <section class="screen" id="s-shapes" hidden>
+      <div class="eyebrow">Screen 4 · decision 2, the alternative</div>
+      <h1 tabindex="-1">The other shape: every choice open at once</h1>
+      <p class="sub lead">This is how the tournament Teams filter menu is laid out: each filter’s name as a heading, with all its choices under it. It saves a tap, but with five filters the sheet runs 1,562px, about two screens of scrolling. And nothing in it says at a glance what is narrowed. Drawn so you can compare the two.</p>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl alt">Alternative</span><h3>Every choice open, first screen</h3></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="coach-sheet-all" src="ledger-phone-filter/coach-sheet-all-dark.jpg" alt="A full-height sheet titled Filter with every filter's checkboxes listed under headings: Type, Status and the start of Item fill the first screen." width="390" height="844">
+            <button type="button" class="pin alt" style="left:300px;top:58px" data-d="D2" data-here="Type, Status and the first two Item choices fill the first screen. Date (seven ranges and a custom range) and Tags are below. 1,562px in all.">2</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Recommended</span><h3>One row per filter</h3></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="coach-sheet-rows" src="ledger-phone-filter/coach-sheet-rows-dark.jpg" alt="The recommended sheet again for comparison: five rows each saying what the filter is set to." width="390" height="844">
+            <button type="button" class="pin fix" style="left:250px;top:463px" data-d="D2" data-here="The recommended shape, for comparison: 361px, the whole state in five lines.">2</button>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · THE CLUB -->
+    <section class="screen" id="s-club" hidden>
+      <div class="eyebrow">Screen 5 · decision 5</div>
+      <h1 tabindex="-1">The club’s Ledger gets the same button</h1>
+      <p class="sub lead">The club’s Ledger has four filters (Type, Status, Category, Date). At 390px they fit one line, but Balance sits on a line of its own, and its toolbar does not stay pinned. So the club gains less: one line, not three. It changes anyway so the two Ledgers keep working the same way. The UAT club’s book has nothing in October, so its list is empty in both frames.</p>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Club · Ledger, 390px</h3></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="club-before" src="ledger-phone-filter/club-before-dark.jpg" alt="The club's Ledger on a phone today: Book, Export, Tools and the plus button, then Type, Status, Category and Date on one line and Balance on its own line." width="390" height="844">
+            <button type="button" class="pin" style="left:150px;top:292px" data-d="D5" data-here="Four filters fill the line, so Balance drops to a line of its own. With any filter lit (Date on Whole season, say) the filters take two lines.">5</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>Club · Ledger, 390px</h3></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="club-after" src="ledger-phone-filter/club-after-dark.jpg" alt="The proposed club Ledger: a quiet Filter button on the left and Balance on the right, on one line." width="390" height="844">
+            <button type="button" class="pin fix" style="left:72px;top:231px" data-d="D3" data-here="Every filter at rest, so the button reads a quiet Filter with no number. This is what a coach sees the first time they open the Ledger, too.">3</button>
+            <button type="button" class="pin fix" style="left:300px;top:222px" data-d="D5" data-here="One line: Filter and Balance. The sheet is the same as the coach’s, listing the club’s four filters.">5</button>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · WHAT STAYS -->
+    <section class="screen" id="s-kept" hidden>
+      <div class="eyebrow">Screen 6</div>
+      <h1 tabindex="-1">What stays the same</h1>
+      <p class="sub lead">The change is how the filters are reached on a phone. What they do does not change.</p>
+      <div class="tablewrap"><table class="kept">
+        <thead><tr><th>Thing</th><th>On a phone after the change</th><th>Why it stays</th></tr></thead>
+        <tbody>
+          <tr><td>A desktop or tablet</td><td>Unchanged: the five pills, on both Ledgers</td><td>They fit one line there, and seeing every filter at a glance is why they became pills (decision 1)</td></tr>
+          <tr><td>The filters themselves</td><td>The same choices, the same counts, the same resting states</td><td>The sheet shows the pills’ own choices; only the way in changes</td></tr>
+          <tr><td>View, Tools, Add a bill</td><td>Unchanged, on the top line</td><td>View is how the list is arranged, not a narrowing, so it stays out of Filter</td></tr>
+          <tr><td>Cash on hand</td><td>Same figure, same rule, one line higher</td><td>A narrowed Type still takes it away; the date never does</td></tr>
+          <tr><td>Export</td><td>Exports what is showing, filters included</td><td>Unchanged on both Ledgers</td></tr>
+          <tr><td>The Bills and Payment schedule views</td><td>Their own filters (Status, Item, Tags) go behind the same button; Open all / Fold all stays beside it</td><td>One toolbar in every view: the button stays put when the coach switches views</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 7 · AS BUILT -->
+    <section class="screen" id="s-built" hidden>
+      <div class="eyebrow">Screen 7 · as built, 2026-10-02</div>
+      <h1 tabindex="-1">As built: the live screens after the change</h1>
+      <p class="sub lead">Captured from the dev server after the build, at 390px in Warm, driven by touch. Set to rest, then Date on Whole season and Scheduled ticked, as in the walk. Thirteen checks passed in the same run: the pills hidden and one button shown, Cash on hand and Open all on the button’s line, the five rows and their values, the count, Reset back to rest, a tap on the dim pressing nothing, Escape returning to the button, a two-line toolbar at 360px, and both desks unchanged.</p>
+      <div class="figures">
+        <div class="fig"><div class="k">Coach toolbar, 390 and 360</div><div class="v"><s>179px</s> 128px</div><div class="n">At rest; two lines at both widths</div></div>
+        <div class="fig"><div class="k">Coach toolbar, desk</div><div class="v">104px</div><div class="n">Unchanged: the five pills on one line</div></div>
+      </div>
+      <div class="pair">
+        <div class="spec"><div class="spectop"><span class="lbl after">Built</span><h3>Coach · at rest</h3></div><div class="scroller"><div class="shot"><img src="ledger-phone-filter/built-coach-phone.png" alt="The coach Ledger as built: View, Tools and Add a bill on the top line; a quiet Filter button and Cash on hand on the second." width="390" height="844"></div></div></div>
+        <div class="spec"><div class="spectop"><span class="lbl after">Built</span><h3>Coach · the sheet</h3></div><div class="scroller"><div class="shot"><img src="ledger-phone-filter/built-coach-sheet.png" alt="The Filter sheet as built: Type All, Status Actual and Overdue, Item Every budget item, Date Around today, Tags Every tag." width="390" height="844"></div></div></div>
+        <div class="spec"><div class="spectop"><span class="lbl after">Built</span><h3>Coach · two filters on</h3></div><div class="scroller"><div class="shot"><img src="ledger-phone-filter/built-coach-status-open.png" alt="The sheet with Status open and Scheduled ticked, Status and Date in the lit colour, and Reset filters at the foot." width="390" height="844"></div></div></div>
+        <div class="spec"><div class="spectop"><span class="lbl after">Built</span><h3>Coach · By bill view</h3></div><div class="scroller"><div class="shot"><img src="ledger-phone-filter/built-coach-bills-sheet.png" alt="The By bill view sheet: Status and Tags (this team has no budget items on its bills, so Item is absent, as its pill is)." width="390" height="844"></div></div></div>
+        <div class="spec"><div class="spectop"><span class="lbl after">Built</span><h3>Club · at rest</h3></div><div class="scroller"><div class="shot"><img src="ledger-phone-filter/built-club-phone.png" alt="The club Ledger as built: a quiet Filter button and Balance on one line under the Book line." width="390" height="844"></div></div></div>
+        <div class="spec"><div class="spectop"><span class="lbl after">Built</span><h3>Club · the sheet</h3></div><div class="scroller"><div class="shot"><img src="ledger-phone-filter/built-club-sheet.png" alt="The club sheet: Type, Status, Category and Date rows." width="390" height="844"></div></div></div>
+      </div>
+      <p class="caption" style="max-width:860px">The light blue on a tapped control is the phone’s own tap flash, caught by the capture; it fades, and no control in the app suppresses it.</p>
+    </section>
+
+  </div>
+</section>
+
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Decisions · round 1 · 2026-10-02</div>
+  <h1>Seven decisions, all accepted as recommended</h1>
+  <p class="sub">Owner, 2026-10-02: “I agree with your recommendations, go ahead.” Each marker on the Mockup tab opens its decision here.</p>
+
+  <div class="decisionrow" id="D1"><div class="dhead"><h3>D1 · One Filter button on a phone; a desktop keeps its five pills</h3><span class="tag accepted">Accepted 2026-10-02</span></div>
+    <p>Below the phone width the five filter pills on the coach’s Ledger go behind one Filter button, which opens a sheet. A desktop or tablet keeps the pills.</p>
+    <p class="rec"><strong>Recommended.</strong> The toolbar stays pinned while the coach scrolls, so on a 390px phone the filters cost 207px of every screen. A single Filter button was drawn and declined for this Ledger before, at desktop size. The reasons were a tap between the coach and every filter, and the filters’ state hidden behind a count. Both still hold on a desktop, where five pills fit one line. On a phone, three pinned lines cost more than the extra tap. The tournament Teams page already uses one Filter button, and the Ledger’s own Tools button already turns into a sheet on a phone.</p>
+    <p class="altx">Alternative: the Filter button at every width, as on tournament Teams. Not recommended: a treasurer reconciling at a desk benefits from seeing every filter.</p></div>
+
+  <div class="decisionrow" id="D2"><div class="dhead"><h3>D2 · The sheet’s shape: one row per filter, opening in place</h3><span class="tag accepted">Accepted 2026-10-02</span></div>
+    <p>The sheet lists the filters as rows, each with what it is set to (“Status · Actual, Overdue”). Tapping a row opens its choices under it; one row is open at a time.</p>
+    <p class="rec"><strong>Recommended.</strong> The rows show the whole state in five lines (361px), which is what the pills did on the toolbar. The cost is one more tap: Filter, the row, the choice.</p>
+    <p class="altx">Alternative (screen 4): every filter’s choices open under a heading, as tournament Teams does with its two short filters. It saves a tap, but with five filters it runs 1,562px, about two screens, and the state is spread across all of it.</p></div>
+
+  <div class="decisionrow" id="D3"><div class="dhead"><h3>D3 · The button counts filters moved from where they rest</h3><span class="tag accepted">Accepted 2026-10-02</span></div>
+    <p>The button lights up and shows a number only for filters away from their resting state. Status resting on Actual + Overdue is not counted; Date on Whole season is. A Ledger opened fresh reads a quiet Filter.</p>
+    <p class="rec"><strong>Recommended.</strong> It is the rule the pills already follow: a pill lights up only when it narrows something new. Counting Status at rest would make every Ledger read “Filter 1” on its first visit, and the number would mean nothing.</p></div>
+
+  <div class="decisionrow" id="D4"><div class="dhead"><h3>D4 · The date stays remembered for each team</h3><span class="tag accepted">Accepted 2026-10-02</span></div>
+    <p>As today, a chosen date range (not a custom one) is remembered for the team, so the coach can come back to a Ledger already on Whole season.</p>
+    <p class="rec"><strong>Recommended.</strong> On tournament Teams, filters behind the button are not remembered. That ruling’s reason was that a filter turns the board into a list and nothing on screen says why. That does not apply here: the lit “Filter 1” says the list is narrowed, and the sheet says by what.</p>
+    <p class="altx">Alternative: on a phone, the Ledger always opens with every filter at rest. Simpler, but a coach who works on Whole season sets it again on every visit, and a desktop and a phone would remember differently.</p></div>
+
+  <div class="decisionrow" id="D5"><div class="dhead"><h3>D5 · The club’s Ledger gets the same, in the same change</h3><span class="tag accepted">Accepted 2026-10-02</span></div>
+    <p>The club’s Ledger takes the same button and sheet on a phone, listing its own four filters.</p>
+    <p class="rec"><strong>Recommended.</strong> The two Ledgers were just agreed to read the same, and changing only the coach’s would undo that. The club gains less (one line, and its toolbar is not pinned), but the cost is small: the pills and the sheet are shared between the two.</p></div>
+
+  <div class="decisionrow" id="D6"><div class="dhead"><h3>D6 · Reset filters at the foot of the sheet, only when something is on</h3><span class="tag accepted">Accepted 2026-10-02</span></div>
+    <p>A “Reset filters” row closes the sheet’s list, shown only while the button is lit. It puts every filter back where it rests: Status to Actual + Overdue, Date to Around today. It does not clear everything to “All”.</p>
+    <p class="rec"><strong>Recommended.</strong> Same words and the same rule as tournament Teams. Resetting to the resting state keeps Scheduled out by default, which was decided deliberately for this Ledger.</p></div>
+
+  <div class="decisionrow" id="D7"><div class="dhead"><h3>D7 · No Done button: the sheet closes like Tools</h3><span class="tag accepted">Accepted 2026-10-02</span></div>
+    <p>Ticking a choice changes the list behind the sheet straight away. The coach closes the sheet by tapping outside it, as with Tools today.</p>
+    <p class="rec"><strong>Recommended,</strong> so the portal keeps one way of closing a sheet. Risk: with a long filter open, the sheet nearly fills the screen and the list behind cannot be seen. If that feels lost in the walk, the fix is a Done row at the foot, added to both sheets.</p></div>
+</section>
+
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">PM Brief · round 1</div>
+  <h1>The Ledger’s filters, on a phone</h1>
+  <div class="note">Status: D1–D7 accepted 2026-10-02; built on dev 2026-10-02; owner QA §261 on the QA Walk tab.</div>
+  <h2>What changes</h2>
+  <p>On a phone, the Ledger’s filters (Type, Status, Item, Date, Tags on a team; Type, Status, Category, Date on the club) move behind one Filter button. The button opens a sheet listing each filter and what it is set to; tapping one opens its choices. The button lights up with a count when anything is narrowed. Cash on hand (Balance, for the club) moves up beside the button. A desktop keeps the pills.</p>
+  <h2>Why it matters</h2>
+  <p>The coach’s Ledger toolbar stays pinned while the coach scrolls. On a phone it is two or three lines of filters tall, so a coach reading the season’s money sees the list through a slot. The change gives the list 79px more on every screen at 390px (520px to 599px).</p>
+  <h2>Who it affects</h2>
+  <ul>
+    <li>Head coaches, money assistants and read-only staff on a phone: the same filters, one tap further away.</li>
+    <li>Club owners and treasurers on a phone: the same change on the club’s Ledger.</li>
+    <li>Nobody at a desk: unchanged.</li>
+  </ul>
+  <h2>Trade-off</h2>
+  <p>Changing a filter takes three taps instead of two, and which filters are on now shows as a number on the button rather than as lit pills. Both were the reasons a single Filter button was turned down for the desktop. On a phone, the space they cost while scrolling outweighs them.</p>
+  <h2>Priority</h2>
+  <p>Polish, not a blocker: nothing is broken today. It is a small change, because the five pills and the Tools sheet already exist and are shared by both Ledgers.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>At 360px and 390px the coach’s Ledger toolbar is two lines (View line, Filter line) in every view, with any filter on.</li>
+    <li>Every filter a pill offers today can be reached and changed from the sheet, with the same counts.</li>
+    <li>A coach can tell a narrowed Ledger from an unfiltered one without opening the sheet.</li>
+    <li>A desktop shows no change on either Ledger.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Full plan</div>
+  <h1>Ledger Phone Filter, the plan</h1>
+  <p class="sub">The source of record is LEDGER_PHONE_FILTER_PLAN.md beside this hub; this tab carries its decisions and its build record.</p>
+  <h2>Problem</h2>
+  <p>On a phone the coach’s Ledger showed its five filter pills on two lines and Cash on hand on a third, inside a toolbar that stays pinned at every width: 207px of a 390px phone with Date on Whole season, 179px at rest. The club’s Ledger has four pills that fit one line, but its Balance dropped to a line of its own.</p>
+  <h2>Design</h2>
+  <ul>
+    <li><b>One shared Filter group</b> wraps a toolbar’s narrowing filters. Both forms are on the page and the screen width decides: the pills on a desk, the Filter button on a phone, so a phone never flashes the desk layout first.</li>
+    <li><b>The same filter, two forms.</b> On a desk a filter is the pill it always was, and it tells the group whether it is away from its resting choice and how to go back. In the sheet the same filter draws itself as a row with its value and its own choices. Filters outside a group (Budget, Budget vs. Actual, Player Dues, Awards, the practice library) are unchanged.</li>
+    <li><b>The sheet</b> is the Tools sheet’s own frame. Checkboxes and dates do not close it. Tapping outside or Escape does, and leaving it with Tab does too.</li>
+    <li><b>Coach’s Ledger:</b> Timeline groups Type, Status, Item, Date and Tags; By bill and Payment schedule group Status, Item and Tags, with Open all beside the button. <b>Club’s Ledger:</b> Type, Status, Category and Date; Balance joins the Filter line.</li>
+  </ul>
+  <h2>Build record (2026-10-02)</h2>
+  <ul>
+    <li>New: the shared Filter group and its stylesheet; the multi-choice and date filters each gained the sheet row. Both Ledgers wrap their filters. The club’s phone rule that put Balance on its own line is gone.</li>
+    <li>Departure: an unused style rule for the old filter bar was deleted. Only a comment removed in this change had still named it, and the repo’s dead-class check caught it.</li>
+    <li>A row lists up to three chosen options by name, without their counts; more reads “N selected”.</li>
+    <li>Proof: type check clean; lint clean on every new and changed component; a new guard test (six checks, one per ruling) and the two Ledger guards pass; the full changed-files check passes (5,556 unit tests); a browser run on dev, 13 of 13 (screen 7).</li>
+    <li>Not done: /simplify, /review and the help guides (offered), and the commit.</li>
+  </ul>
+  <h2>Rollout</h2>
+  <p>No migration, no data change; the date range is remembered in the browser exactly as before. Ships with the next promote.</p>
+</section>
+
+<section id="hub-qa" class="docpage qa" hidden>
+  <div class="eyebrow">Owner QA · §261 · Coaches portal + Club accounting · Ledger Phone Filter</div>
+  <h1>On a phone, the Ledger’s filters are one button</h1>
+  <p class="sub">Two walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat.</p>
+  <div class="qacard">
+    <h3>Sign in as</h3>
+    <dl>
+      <dt>Where</dt><dd>http://localhost:3000/auth/login</dd>
+      <dt>Coach (W1, W2 step 5)</dt><dd>uat-coach@uat-test-org.local (password: <code>UAT_COACH_PASSWORD</code> in <code>.env.local</code>) · <b>UAT Test Team</b>, UAT Rep Club. The account may land on another team: switch first.</dd>
+      <dt>Club (W2)</dt><dd>uat-club-treasurer@uat-rep-club.local (password: <code>UAT_REP_CLUB_TREASURER_PASSWORD</code>) · UAT Rep Club</dd>
+    </dl>
+    <p class="meta"><b>What the walks change:</b> nothing in the database. The coach’s chosen date range is remembered in your browser, as it always was; both walks end by pressing Reset filters.</p>
+    <p class="meta"><b>Phone:</b> a real phone, or a browser window about 390px wide (the change applies at 640px and below).</p>
+  </div>
+  <div class="qaindex" role="group" aria-label="Walks">
+    <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · The coach’s Ledger on a phone</b><span class="meta">The button, the sheet, the count, Reset, every view.</span><span class="qachip" data-chip="w1"></span></button>
+    <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · The club’s phone, and both desks unchanged</b><span class="meta">The same sheet on the club; pills where there is room.</span><span class="qachip" data-chip="w2"></span></button>
+  </div>
+    <div class="qawalk" id="w1">
+      <h2>W1 · The coach’s Ledger on a phone</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>On a phone the coach’s five filter pills took two pinned lines and pushed Cash on hand to a third. They are now one Filter button that opens a sheet: one row per filter, each saying what it is set to.</p>
+        <h3>It passes when</h3><p>The toolbar is two lines on every view; the sheet shows every filter with its value; the button counts only filters you changed; Reset puts them back to their resting choices; a tap outside closes the sheet and presses nothing.</p>
+        <h3>Not in this walk</h3><p>The club’s Ledger and the desks (W2).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone (or a window about 390px wide), sign in as the coach, switch to <b>UAT Test Team</b> and open <b>Money → Ledger</b> (View <b>Timeline</b>).</p><p class="qasee">Two lines above the list: <b>View Timeline · ⋯ · + Add a bill</b>, then a quiet <b>Filter ▾</b> on the left and <b>Cash on hand</b> on the right. No Type, Status, Item, Date or Tags pills. <span class="meta">If Filter shows a number, a filter is still set from earlier: open it and press Reset filters first.</span></p></div></li>
+        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Filter</b>.</p><p class="qasee">A sheet rises from above the bottom bar, titled <b>FILTER</b>, with five rows, each saying what it is set to: Type <b>All</b> · Status <b>Actual, Overdue</b> · Item <b>Every budget item</b> · Date <b>Around today</b> · Tags <b>Every tag</b>. No Reset filters line. The list is dimmed above it.</p></div></li>
+        <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Date</b>, then <b>Whole season</b>.</p><p class="qasee">The Date row folds shut and reads <b>Whole season</b> in the lit (olive) colour. The sheet stays open. The button behind reads <b>Filter 1</b> and is lit. <b>Reset filters</b> appears at the foot.</p></div></li>
+        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Status</b> and tick <b>Scheduled</b>.</p><p class="qasee">The Status row stays open with its three choices, each with its count in brackets. It reads <b>Actual, Overdue, Scheduled</b> in the lit colour, and the button reads <b>Filter 2</b>.</p></div></li>
+        <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Tap the dimmed list above the sheet.</p><p class="qasee">The sheet closes and nothing under your tap opens. The list now starts with the season’s first line (<b>Opening balance</b> or <b>Starting balance</b>) and includes scheduled entries.</p></div></li>
+        <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Scroll down the Ledger.</p><p class="qasee">Only the two toolbar lines stay pinned at the top; the cards scroll under them.</p></div></li>
+        <li><input type="checkbox" id="w1s7" aria-label="W1 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Leave for <b>Schedule</b>, then come back to <b>Money → Ledger</b>.</p><p class="qasee">The button reads <b>Filter 1</b>: the date range is remembered for the team, as it always was, and Status is back on its resting choice (it never was remembered). Open the sheet: Date reads Whole season, Status Actual, Overdue.</p></div></li>
+        <li><input type="checkbox" id="w1s8" aria-label="W1 step 8"><div class="qabody"><span class="qan"></span><p class="qado">In the sheet, press <b>Reset filters</b>.</p><p class="qasee">The sheet closes and the button reads a quiet <b>Filter</b>. Open it again: Status is back on <b>Actual, Overdue</b> and Date on <b>Around today</b> (their resting choices, not “All”). Close it.</p></div></li>
+        <li><input type="checkbox" id="w1s9" aria-label="W1 step 9"><div class="qabody"><span class="qan"></span><p class="qado">Switch View to <b>By bill</b>.</p><p class="qasee">The second line reads <b>Filter</b> on the left and <b>Open all</b> (or Fold all) beside it. The sheet lists <b>Status</b> and <b>Tags</b> (and <b>Item</b> if the team’s bills have budget items). Switch View back to <b>Timeline</b>: the Ledger remembers the view too.</p></div></li>
+        <li><input type="checkbox" id="w1s10" aria-label="W1 step 10"><div class="qabody"><span class="qan"></span><p class="qado">Switch to <b>Dark</b> and repeat steps 1 to 3.</p><p class="qasee">Everything reads clearly; the lit Filter button and the lit row value stand out on the dark ground. Reset filters before you finish.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W1 verdict">
+        <button type="button" data-w="w1" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w1" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w1" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w1"></span>
+      </div>
+      <label class="meta" for="w1notes">Notes for W1</label>
+      <textarea id="w1notes" class="qanotes" data-notes="w1"></textarea>
+    </div>
+    <div class="qawalk" id="w2" hidden>
+      <h2>W2 · The club’s phone, and both desks unchanged</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>The club’s Ledger gets the same button and sheet, with Balance on its line. On a desk neither Ledger changes.</p>
+        <h3>It passes when</h3><p>The club’s phone toolbar shows Filter and Balance on one line and the sheet lists its four filters; both desks show their pills exactly as before.</p>
+        <h3>Not in this walk</h3><p>The coach’s phone (W1).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone, sign in as the club treasurer and open <b>Accounting → Ledger</b>.</p><p class="qasee">Under the Book line: a quiet <b>Filter ▾</b> on the left and <b>Balance</b> on the right, on one line. No Type, Status, Category or Date pills.</p></div></li>
+        <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Filter</b>.</p><p class="qasee">The same sheet, titled <b>FILTER</b>: Type <b>Every type</b> · Status <b>Posted, Pending</b> · Category <b>Every category</b> (when the book has categories) · Date <b>This month</b>.</p></div></li>
+        <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Date</b>, choose <b>All time</b>, then press <b>Reset filters</b>.</p><p class="qasee">Choosing All time folds the row, lights it and makes the button read <b>Filter 1</b>. Reset puts Date back on <b>This month</b>, closes the sheet, and the button reads a quiet <b>Filter</b>.</p></div></li>
+        <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="qabody"><span class="qan"></span><p class="qado">On a desk (a wide window), open the club’s <b>Accounting → Ledger</b>.</p><p class="qasee">The four pills (Type, Status, Category, Date) and Balance, exactly as before. No Filter button.</p></div></li>
+        <li><input type="checkbox" id="w2s5" aria-label="W2 step 5"><div class="qabody"><span class="qan"></span><p class="qado">On a desk, sign in as the coach and open <b>Money → Ledger</b>; open the <b>Status</b> pill.</p><p class="qasee">The five pills on one line with Cash on hand at the right, exactly as before; Status opens its checkbox list under the pill. No Filter button.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W2 verdict">
+        <button type="button" data-w="w2" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w2" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w2" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w2"></span>
+      </div>
+      <label class="meta" for="w2notes">Notes for W2</label>
+      <textarea id="w2notes" class="qanotes" data-notes="w2"></textarea>
+    </div>
+  <div class="qacard">
+    <h3>Send the results back</h3>
+    <div class="qatools">
+      <button type="button" class="button" id="qaBuildOne">Build summary for this walk</button>
+      <button type="button" class="button" id="qaBuildAll">Build summary for both walks</button>
+      <button type="button" class="button" id="qaCopy">Copy</button>
+    </div>
+    <pre class="qaout" id="qaOut" aria-live="polite">Tick steps as you walk, press a verdict, then build a summary and paste it into the chat.</pre>
+  </div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody explain" id="dialogbody"></div></dialog>
+
+<script>
+/* Navigation: the hub tabs, the screen walk, and the dark/warm switch. Kept apart from the explanations
+   below so a slip in one cannot take the other down. */
+(function () {
+  var tabs = document.querySelectorAll('.hubtabs button');
+  function showHub(name) {
+    tabs.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.hub === name)); });
+    ['mockup', 'decisions', 'brief', 'plan', 'qa'].forEach(function (n) { document.getElementById('hub-' + n).hidden = n !== name; });
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { showHub(b.dataset.hub); window.scrollTo(0, 0); }); });
+  window.__showHub = showHub;
+
+  var links = document.querySelectorAll('.walk a');
+  var screens = document.querySelectorAll('#hub-mockup .screen');
+  function showScreen(id, focus) {
+    if (!document.getElementById(id)) id = 's-toolbar';
+    screens.forEach(function (s) { s.hidden = s.id !== id; });
+    links.forEach(function (a) { if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    if (focus) { var h = document.querySelector('#' + id + ' h1'); if (h) h.focus({ preventScroll: true }); }
+  }
+  links.forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var id = a.getAttribute('href').slice(1);
+      showHub('mockup'); showScreen(id, true);
+      try { history.replaceState(null, '', '#' + id); } catch (err) {}
+    });
+  });
+  var start = (location.hash || '').slice(1);
+  if (/^s-/.test(start)) showScreen(start, false);
+  else if (['decisions', 'brief', 'plan', 'qa'].indexOf(start) >= 0) showHub(start);
+
+  var theme = 'dark';
+  try { theme = localStorage.getItem('lpf-theme') || 'dark'; } catch (err) {}
+  var toggle = document.getElementById('themeToggle');
+  function applyTheme(t) {
+    theme = t;
+    document.querySelectorAll('img[data-shot]').forEach(function (img) { img.src = 'ledger-phone-filter/' + img.dataset.shot + '-' + t + '.jpg'; });
+    toggle.textContent = t === 'dark' ? 'Showing dark · switch to warm' : 'Showing warm · switch to dark';
+    toggle.setAttribute('aria-pressed', String(t === 'dark'));
+    try { localStorage.setItem('lpf-theme', t); } catch (err) {}
+  }
+  toggle.addEventListener('click', function () { applyTheme(theme === 'dark' ? 'warm' : 'dark'); });
+  if (theme !== 'dark') applyTheme(theme);
+})();
+</script>
+<script>
+/* Explanations: every marker and tag opens what it points at. The words live in the page itself
+   (the Decisions tab and each marker's data-here), so nothing here is prose. */
+(function () {
+  var dialog = document.getElementById('dialog');
+  var title = document.getElementById('dialogtitle');
+  var body = document.getElementById('dialogbody');
+  document.getElementById('closeDialog').addEventListener('click', function () { dialog.close(); });
+  dialog.addEventListener('click', function (e) { if (e.target === dialog) dialog.close(); });
+  function section(head, text, cls) {
+    var h = document.createElement('h3'); h.textContent = head;
+    var p = document.createElement('p'); p.textContent = text; if (cls) p.className = cls;
+    body.appendChild(h); body.appendChild(p);
+  }
+  function openDecision(id, here) {
+    var row = document.getElementById(id);
+    if (!row) return;
+    body.textContent = '';
+    title.textContent = row.querySelector('h3').textContent;
+    if (here) section('Where you are looking', here, 'here');
+    section('The proposal', row.querySelector('p').textContent);
+    var rec = row.querySelector('.rec'); if (rec) section('Recommendation', rec.textContent);
+    var alt = row.querySelector('.altx'); if (alt) section('The alternative', alt.textContent);
+    var go = document.createElement('button');
+    go.type = 'button'; go.className = 'button'; go.textContent = 'Open it on the Decisions tab';
+    go.addEventListener('click', function () { dialog.close(); window.__showHub('decisions'); row.scrollIntoView(); });
+    body.appendChild(go);
+    dialog.showModal();
+  }
+  var KIND = { new: 'New', re: 'Moved', un: 'Unchanged' };
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-d]');
+    if (t) { e.preventDefault(); openDecision(t.dataset.d, t.dataset.here); return; }
+    var mk = e.target.closest('.mk');
+    if (mk) {
+      e.preventDefault();
+      body.textContent = '';
+      title.textContent = (KIND[mk.dataset.k] || 'Note') + ' · ' + (mk.previousElementSibling ? mk.previousElementSibling.textContent : '');
+      section('What this is', mk.dataset.note);
+      dialog.showModal();
+    }
+  });
+  document.querySelectorAll('.mk').forEach(function (mk) {
+    mk.setAttribute('role', 'button'); mk.tabIndex = 0;
+    mk.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mk.click(); } });
+  });
+})();
+</script>
+<script>
+/* QA walk: ticks, verdicts and notes kept in this browser; a summary to paste back. */
+(function () {
+  var KEY = 'ledger-phone-filter-walk-261-v1';
+  var WALKS = ['w1', 'w2'];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: 'w1' };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') state = Object.assign(state, p); } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var TITLES = {};
+  WALKS.forEach(function (w) { TITLES[w] = document.querySelector('#' + w + ' h2').textContent; });
+  var LABEL = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+  function boxes(w) { return Array.prototype.slice.call(document.querySelectorAll('#' + w + ' input[type="checkbox"]')); }
+  function count(w) { var b = boxes(w); return { n: b.filter(function (x) { return state.ticks[x.id]; }).length, of: b.length }; }
+  function render() {
+    WALKS.forEach(function (w) {
+      boxes(w).forEach(function (b) { b.checked = !!state.ticks[b.id]; b.closest('li').classList.toggle('done', b.checked); });
+      var c = count(w);
+      document.querySelector('[data-prog="' + w + '"]').textContent = c.n + ' of ' + c.of + ' ticked';
+      document.querySelectorAll('.qaverdict button[data-w="' + w + '"]').forEach(function (btn) { btn.setAttribute('aria-pressed', String(state.verdict[w] === btn.getAttribute('data-v'))); });
+      var chip = document.querySelector('[data-chip="' + w + '"]'), v = state.verdict[w], text = 'Not started', st = '';
+      if (v === 'pass' && c.n < c.of) { text = 'Passed · only ' + c.n + ' of ' + c.of + ' ticked'; st = 'partial'; }
+      else if (v === 'pass') { text = 'Passed'; st = 'pass'; }
+      else if (v === 'issue') { text = 'Issue'; st = 'issue'; }
+      else if (v === 'call') { text = 'Needs a call'; st = 'call'; }
+      else if (c.n > 0) { text = 'In progress · ' + c.n + ' of ' + c.of; }
+      chip.textContent = text; chip.setAttribute('data-s', st);
+      var ta = document.querySelector('[data-notes="' + w + '"]'); if (document.activeElement !== ta) ta.value = state.notes[w] || '';
+      document.getElementById(w).hidden = state.open !== w;
+      document.querySelector('.qawcard[data-walk="' + w + '"]').setAttribute('aria-pressed', String(state.open === w));
+    });
+  }
+  document.getElementById('hub-qa').addEventListener('change', function (e) { var t = e.target; if (t && t.type === 'checkbox') { state.ticks[t.id] = t.checked; save(); render(); } });
+  document.querySelectorAll('#hub-qa textarea[data-notes]').forEach(function (ta) { ta.addEventListener('input', function () { state.notes[ta.getAttribute('data-notes')] = ta.value; save(); }); });
+  document.querySelectorAll('#hub-qa .qaverdict button').forEach(function (btn) { btn.addEventListener('click', function () { var w = btn.getAttribute('data-w'), v = btn.getAttribute('data-v'); state.verdict[w] = state.verdict[w] === v ? null : v; save(); render(); }); });
+  document.querySelectorAll('#hub-qa .qawcard').forEach(function (c) { c.addEventListener('click', function () { state.open = c.getAttribute('data-walk'); save(); render(); }); });
+  function summary(w) {
+    var c = count(w);
+    var lines = [TITLES[w] + ' — ' + (state.verdict[w] ? '[' + LABEL[state.verdict[w]] + ']' : '[no verdict]') + ' ' + c.n + '/' + c.of];
+    var un = boxes(w).filter(function (b) { return !state.ticks[b.id]; }).map(function (b) { return b.id.replace(w + 's', ''); });
+    if (un.length) lines.push('  not ticked: step ' + un.join(', '));
+    if (state.notes[w]) lines.push('  notes: ' + state.notes[w].trim());
+    return lines.join('\n');
+  }
+  var out = document.getElementById('qaOut');
+  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = '§261 Ledger Phone Filter\n' + summary(state.open); });
+  document.getElementById('qaBuildAll').addEventListener('click', function () {
+    var n = 0, of = 0; WALKS.forEach(function (w) { var c = count(w); n += c.n; of += c.of; });
+    out.textContent = '§261 Ledger Phone Filter — checked ' + n + ' of ' + of + '\n' + WALKS.map(summary).join('\n');
+  });
+  function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+  document.getElementById('qaCopy').addEventListener('click', function () { var text = out.textContent; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(selectOut); else selectOut(); });
+  render();
+})();
+</script>

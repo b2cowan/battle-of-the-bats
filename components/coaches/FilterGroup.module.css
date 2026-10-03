@@ -1,0 +1,44 @@
+/* FilterGroup — a strip's narrowing pills on a desk, one Filter button and a sheet on a phone (Ledger Phone
+   Filter, owner rulings D1–D7, 2026-10-02). The sheet itself is CoachToolbarMenu's drawer (E1) and its rows
+   are that menu's item; this sheet holds only what those do not.
+
+   ⚠ The band is ≤640 in CSS here and in JS (`useIsPhone`) for the sheet — the same two guards the drawer
+   recipe carries, for the same reason. */
+
+/* The desk form: the pills sit in the host's strip as its own flex items. */
+.pills { display: contents; }
+.phone { display: none; }
+@media (max-width: 640px) {
+  .pills { display: none; }
+  .phone { display: inline-flex; position: relative; }
+}
+
+/* The trigger wears the pill's own face (`.multiSelectSummary`, and `.multiSelectActive` while anything is
+   on), so it reads as the five pills it stands for. A <button> needs the font the <summary> inherited. */
+.trigger { font-family: inherit; line-height: inherit; }
+/* The count in the data face — tournament Teams' Filter button reads the same way. */
+.trigger .count { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+
+/* A row of the sheet: the menu item's face (`.item` / `.itemText` / `.itemHint`), the chevron at its end. */
+.rowText { flex: 1; }
+.chevron { flex-shrink: 0; color: var(--text-secondary); transition: transform 0.15s ease; }
+.chevronOpen { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }
+/* ⚠ TWO classes on purpose: `.itemHint` (CoachToolbarMenu.module.css) sets the hint's colour at one class,
+   and two modules at equal specificity resolve by BUNDLE ORDER, not by intent. */
+.row .lit { color: var(--home-olive, var(--logic-lime)); font-weight: 650; }
+
+/* A row's own choices, opened in place: the pill's panel content, at the panel's own rhythm. */
+.choices {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.25rem 0.5rem 0.35rem;
+}
+
+/* Reset filters — a quiet verb under a hairline, at the foot of the list. */
+.foot {
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--home-line, var(--white-10));
+}
+.foot .reset { color: var(--text-secondary); }

@@ -55,6 +55,7 @@ import {
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import DateRangeDropdown from '@/components/coaches/DateRangeDropdown';
+import FilterGroup from '@/components/coaches/FilterGroup';
 import {
   AROUND_WINDOW_DAYS, computeSeasonBounds, isDateRangePresetId, resolveDateRangePreset,
   type DateRangePresetId, type DateRangeSelection,
@@ -7227,38 +7228,44 @@ function MoneyRecordsPanel({
 
              ⚠ `Group by` SITS FIRST AND IS LABELLED AS AN ARRANGEMENT (plan §7), so it can never
              read as another narrowing. Status and Item are the narrowings, and they wear the same
-             pill as their Transactions siblings — one control shape across the reports. */
+             pill as their Transactions siblings — one control shape across the reports.
+
+             ⚖ ON A PHONE THE NARROWINGS GO BEHIND ONE FILTER BUTTON (Ledger Phone Filter D1, owner
+             2026-10-02) — the same button on every view, so switching views never moves it. Open all /
+             Fold all is a verb, not a filter, so it stays beside the button. */
           <>
             {/* ⚠ `Group by` became two of the View pill's three options (fold, 2026-08-28) — same
                 first slot, same arrangement framing, one option wider. */}
-            {/* ⚠⚠ COUNTS ARE OF WHAT IS THERE, taken BEFORE this selection narrows further — the
-                rule the old Overdue chip followed. Otherwise the numbers report themselves back
-                once picked and every unticked option reads zero.
-                ⚠ THEY OVERLAP, and that is correct: a late part-paid piece is counted under both
-                Overdue and Partly paid (`installmentStatuses`, owner ruling 2026-08-20), so the
-                four numbers sum to more than the rows on screen. */}
-            <MultiSelectDropdown
-              restQuiet restSelection={PAY_STATUS_REST}
-              label="Status"
-              options={PAYABLE_STATUS_ORDER.map(id => ({
-                id, label: `${PAYABLE_STATUS_LABEL[id]} (${payStatusCounts[id]})`,
-              }))}
-              selected={payStatus}
-              onChange={next => setPayStatus(next as Set<PayableRowStatus>)}
-            />
-            {payItemNames.length > 0 && (
+            <FilterGroup key="bills">
+              {/* ⚠⚠ COUNTS ARE OF WHAT IS THERE, taken BEFORE this selection narrows further — the
+                  rule the old Overdue chip followed. Otherwise the numbers report themselves back
+                  once picked and every unticked option reads zero.
+                  ⚠ THEY OVERLAP, and that is correct: a late part-paid piece is counted under both
+                  Overdue and Partly paid (`installmentStatuses`, owner ruling 2026-08-20), so the
+                  four numbers sum to more than the rows on screen. */}
               <MultiSelectDropdown
-                restQuiet
-                label="Item"
-                options={payItemNames.map(n => ({ id: n, label: n }))}
-                selected={payItems}
-                onChange={setPayItems}
-                allLabel="Every budget item"
+                restQuiet restSelection={PAY_STATUS_REST}
+                label="Status"
+                options={PAYABLE_STATUS_ORDER.map(id => ({
+                  id, label: `${PAYABLE_STATUS_LABEL[id]} (${payStatusCounts[id]})`,
+                }))}
+                selected={payStatus}
+                onChange={next => setPayStatus(next as Set<PayableRowStatus>)}
               />
-            )}
-            {/* ⚠ A NARROWING, so it sits with Status and Item — never before `Group by`, which is
-                the arrangement (plan §7) and keeps the first slot on both faces. */}
-            {tagFilterPill}
+              {payItemNames.length > 0 && (
+                <MultiSelectDropdown
+                  restQuiet
+                  label="Item"
+                  options={payItemNames.map(n => ({ id: n, label: n }))}
+                  selected={payItems}
+                  onChange={setPayItems}
+                  allLabel="Every budget item"
+                />
+              )}
+              {/* ⚠ A NARROWING, so it sits with Status and Item — never before `Group by`, which is
+                  the arrangement (plan §7) and keeps the first slot on both faces. */}
+              {tagFilterPill}
+            </FilterGroup>
             {/* ⚠ ONE TOGGLE, TWO LABELS — it reads "Open all" only because bills arrive folded, and
                 the identical button reads "Fold all" the moment anything is open (and always, on
                 the due-date arrangement, whose periods arrive open). Removing the one you happen to
@@ -7289,8 +7296,12 @@ function MoneyRecordsPanel({
              and Money in as a second tab row; the register is ONE book, so the strip narrows what
              is on it instead of choosing between two lists. That is what lets a running balance
              exist at all — neither of the old lists could carry one, because half the money was
-             always on the other. */
-          <>
+             always on the other.
+
+             ⚖ ON A PHONE ALL FIVE GO BEHIND ONE FILTER BUTTON (Ledger Phone Filter D1–D7, owner
+             2026-10-02): this toolbar is sticky, and at 390px two lines of pills plus Cash on hand pinned
+             207px of every screen. A desk keeps the pills — they fit one line there. */
+          <FilterGroup key="timeline">
             {/* ⚠ A DROPDOWN, NOT SEVEN PILLS (owner call — "fit like QuickBooks/Excel"; seven type
                 chips plus Overdue plus the item picker plus a date range no longer fit one line as
                 pills). Multi-select: pick more than one kind at once (Expenses + Refunds, say). */}
@@ -7321,18 +7332,9 @@ function MoneyRecordsPanel({
               selected={selectedStatus}
               onChange={next => setSelectedStatus(next as Set<RegisterStatus>)}
             />
-          </>
-        )}
-        {/* ⚠ THE PAYABLES TAG CONTROL NO LONGER OWNS A ROW OF ITS OWN — it is `tagFilterPill`,
-            standing with Group by / Status / Item in the row above. It was a second `.moneyFilterBar`
-            here purely because a chip row could not fit beside them. */}
-        {/* ⚠ MERGED IN (reversed 2026-08-19, reading-order ruling follow-up) — this used to be a
-            second sticky row of its own, stacked below this toolbar. Two rows of filters never
-            needed to be two ROWS OF STICKY CHROME; they share this one now, wrapping onto a
-            second line on a narrow screen exactly like `.moneyFilterBar` above already does,
-            instead of needing its own measured sticky boundary. */}
-        {!onPayables && (
-          <div style={{ display: 'contents' }}>
+            {/* ⚠ MERGED IN (reversed 2026-08-19, reading-order ruling follow-up) — Item, Date and Tags were
+                a second sticky row of their own. Two rows of filters never needed to be two ROWS OF STICKY
+                CHROME; they share this one, wrapping onto a second line on a narrow desk. */}
             {/* ⚠ MULTI-SELECT, DEFAULT "ALL" (owner call, matching the type filter). Narrow to
                 one or several budget words at once rather than one at a time. */}
             {registerItemNames.length > 0 && (
@@ -7366,7 +7368,7 @@ function MoneyRecordsPanel({
                 reason the chips went — a tag row beside four dropdowns read as a different KIND
                 of control for what is the same act of narrowing. */}
             {tagFilterPill}
-          </div>
+          </FilterGroup>
         )}
 
           {/* ⚖ CASH ON HAND rides the FILTER STRIP's right edge (owner amendment 2026-09-02,

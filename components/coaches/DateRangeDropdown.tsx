@@ -7,6 +7,7 @@ import {
 } from '@/lib/coach-date-range';
 import { formatEventDateRange } from '@/lib/timezone';
 import useDetailsOutsideClick from './useDetailsOutsideClick';
+import { FilterSheetRow, useFilterGroupMember } from './FilterGroup';
 import styles from '../shared/FilterPill.module.css';
 
 /**
@@ -61,8 +62,6 @@ export default function DateRangeDropdown({
    */
   labels?: Partial<Record<DateRangePresetId, string>>;
 }) {
-  const ref = useDetailsOutsideClick();
-
   /* Resolved once per actual input change, not per host render — this pill sits on a panel that
      re-renders per keystroke of unrelated forms (its own memo comments say so), and unlike its
      sibling pills' static labels, these seven rows are computed. */
@@ -75,69 +74,91 @@ export default function DateRangeDropdown({
     };
   }), [todayKey, seasonBounds, labels]);
 
+  /* Inside a `FilterGroup` (the Ledgers' phone Filter sheet): off its resting window counts on the Filter
+     button, and Reset goes back to that window — never to "Whole season" (Ledger Phone Filter D3, D6). */
+  const restPreset = DATE_RANGE_PRESETS.find(p => p.id === restSelectionId)?.id;
+  const narrowed = restPreset !== undefined && selection !== restPreset;
+  const atRest = restQuiet && !narrowed;
+  const group = useFilterGroupMember('Date', narrowed, () => { if (restPreset) onChange({ selection: restPreset }); });
+  const ref = useDetailsOutsideClick(group?.mode !== 'row');
+  const inSheet = group?.mode === 'row';
+
+  /* A pick closes what it was picked from: the pill's panel, or in the sheet the Date row — so the row's
+     value is the first thing the coach reads after choosing. */
   function pick(id: DateRangePresetId) {
     onChange({ selection: id });
-    if (ref.current) ref.current.open = false;
+    if (group?.mode === 'row') group.setOpenKey(null);
+    else if (ref.current) ref.current.open = false;
   }
 
   const summary = selection === 'custom'
     ? formatEventDateRange(from, to, false)
     : options.find(p => p.id === selection)?.label ?? formatEventDateRange(from, to, false);
 
+  const choices = (
+    <>
+      {options.map(p => (
+        <button
+          key={p.id}
+          type="button"
+          className={styles.dateRangeOption}
+          aria-pressed={selection === p.id}
+          onClick={() => pick(p.id)}
+        >
+          <span>{p.label}</span>
+          <span className={styles.dateRangeOptionDates}>{p.dates}</span>
+        </button>
+      ))}
+      <div className={styles.multiSelectDivider} />
+      <div className={styles.dateRangeCustom} data-active={selection === 'custom' || undefined}>
+        <div className={styles.dateRangeCustomLabel}>Custom range</div>
+        {/* ⚠ `min`/`max` only STYLE the native widget — they block neither a typed nor even a
+            picked inverted pair (/review). Editing one end past the other drags the other end
+            along, so "to before from" is unrepresentable and the book can never silently empty
+            itself behind a stray starting-balance line. */}
+        <div className={styles.dateRangeCustomRow}>
+          <input
+            type="date"
+            className={styles.dateRangeInput}
+            value={from}
+            max={to}
+            onChange={ev => {
+              const v = ev.target.value;
+              if (v) onChange({ selection: 'custom', from: v, to: v > to ? v : to });
+            }}
+            aria-label="From date"
+          />
+          <span className={styles.dateRangeCustomSep} aria-hidden>–</span>
+          <input
+            type="date"
+            className={styles.dateRangeInput}
+            value={to}
+            min={from}
+            onChange={ev => {
+              const v = ev.target.value;
+              if (v) onChange({ selection: 'custom', from: v < from ? v : from, to: v });
+            }}
+            aria-label="To date"
+          />
+        </div>
+        <div className={styles.dateRangeHint}>
+          {inSheet ? 'Edit either date to use your own range.' : 'Edit either date and the pill switches to your range.'}
+        </div>
+      </div>
+    </>
+  );
+
+  if (inSheet) return <FilterSheetRow name="Date" value={summary} lit={narrowed}>{choices}</FilterSheetRow>;
+
   return (
     <details ref={ref} className={styles.multiSelect}>
-      <summary data-pill="summary" className={`${styles.multiSelectSummary} ${restQuiet && selection !== restSelectionId ? styles.multiSelectActive : ''}`}>
+      <summary data-pill="summary" className={`${styles.multiSelectSummary} ${restQuiet && !atRest ? styles.multiSelectActive : ''}`}>
         <span className={styles.multiSelectLabel}>Date</span>
-        {!(restQuiet && selection === restSelectionId) && <span className={styles.multiSelectValue}>{summary}</span>}
+        {!atRest && <span className={styles.multiSelectValue}>{summary}</span>}
         <ChevronDown size={14} aria-hidden />
       </summary>
       <div data-pill="panel" className={`${styles.multiSelectPanel} ${styles.dateRangePanel}`} role="group" aria-label="Date range">
-        {options.map(p => (
-          <button
-            key={p.id}
-            type="button"
-            className={styles.dateRangeOption}
-            aria-pressed={selection === p.id}
-            onClick={() => pick(p.id)}
-          >
-            <span>{p.label}</span>
-            <span className={styles.dateRangeOptionDates}>{p.dates}</span>
-          </button>
-        ))}
-        <div className={styles.multiSelectDivider} />
-        <div className={styles.dateRangeCustom} data-active={selection === 'custom' || undefined}>
-          <div className={styles.dateRangeCustomLabel}>Custom range</div>
-          {/* ⚠ `min`/`max` only STYLE the native widget — they block neither a typed nor even a
-              picked inverted pair (/review). Editing one end past the other drags the other end
-              along, so "to before from" is unrepresentable and the book can never silently empty
-              itself behind a stray starting-balance line. */}
-          <div className={styles.dateRangeCustomRow}>
-            <input
-              type="date"
-              className={styles.dateRangeInput}
-              value={from}
-              max={to}
-              onChange={ev => {
-                const v = ev.target.value;
-                if (v) onChange({ selection: 'custom', from: v, to: v > to ? v : to });
-              }}
-              aria-label="From date"
-            />
-            <span className={styles.dateRangeCustomSep} aria-hidden>–</span>
-            <input
-              type="date"
-              className={styles.dateRangeInput}
-              value={to}
-              min={from}
-              onChange={ev => {
-                const v = ev.target.value;
-                if (v) onChange({ selection: 'custom', from: v < from ? v : from, to: v });
-              }}
-              aria-label="To date"
-            />
-          </div>
-          <div className={styles.dateRangeHint}>Edit either date and the pill switches to your range.</div>
-        </div>
+        {choices}
       </div>
     </details>
   );

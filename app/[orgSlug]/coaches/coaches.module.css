@@ -9021,7 +9021,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    (Club Tier Stage 3a, Ask 6). Its history and warnings moved with it. A host styles a pill through its
    `data-pill` attribute, never these class names (a cross-module class selector fails silently). */
 
-.moneyFilterBar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; align-items: center; }
+/* ⚰ `.moneyFilterBar` is gone (2026-10-02): no element had worn it since the Ledger's filters became one
+   strip of pills — only an old comment still named it, and that comment went with Ledger Phone Filter. */
 .moneyFilterChip {
   background: var(--white-8); border: 1px solid var(--border-2); color: var(--text-tertiary);
   border-radius: 999px; padding: 0.25rem 0.6rem; font-size: var(--type-support); cursor: pointer;

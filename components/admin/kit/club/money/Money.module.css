@@ -77,8 +77,9 @@
   padding-top: 0.55rem;
   margin-top: 0.1rem;
   border-top: 1px solid var(--home-line);
-}/* The book's Balance at the strip's right edge (where the coach's Cash on hand sits). On a phone it
-   keeps the right edge of its OWN line when the pills wrap (specimen 1's phone). */
+}/* The book's Balance at the strip's right edge (where the coach's Cash on hand sits). On a phone the
+   pills are one Filter button (Ledger Phone Filter D5, owner 2026-10-02), so Balance shares its line —
+   the line of its own it used to take at ≤640 is gone with the four pills that pushed it there. */
 .balance {
   margin-left: auto;
   display: flex;
@@ -89,9 +90,6 @@
   white-space: nowrap;
 }
 .balance b { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-olive); }
-@media (max-width: 640px) {
-  .balance { flex-basis: 100%; justify-content: flex-end; }
-}
 
 /* ── The register (K-01): compact rows, the support step; the What cell is the name, then the detail
    in quiet ink on the same line ── */

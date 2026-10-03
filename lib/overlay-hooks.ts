@@ -48,6 +48,25 @@ import { claimEscape } from '@/components/coaches/escapeOwnership';
  * focus to its trigger on Escape only). Both are additive with backwards-compatible defaults — every
  * prior call site keeps its exact behaviour and none of them changed.
  */
+/**
+ * Hand focus back to a panel's trigger after the panel closed with focus inside it — ONE frame later, and
+ * only if nothing else claimed focus (a dialog that focuses itself, a control the user clicked) and the
+ * trigger is not disabled by then. A synchronous `.focus()` was tried twice and lost both times (to the
+ * browser's own blur on a pointerdown; to a trigger disabled on the very next commit) — the whole story is
+ * at `CoachToolbarMenu`'s `rescueFocus`, the first caller. Shared so a fix lands once.
+ * ⚠ It takes the REF and reads it inside the frame (/review 2026-10-02): the trigger is whatever the ref
+ * holds when the frame runs, never a node captured a frame earlier.
+ */
+export function rescueFocusTo(ref: RefObject<HTMLElement | null>) {
+  window.requestAnimationFrame(() => {
+    // `<body>` is the browser's "nowhere left" fallback; anything else is a real destination.
+    if (document.activeElement && document.activeElement !== document.body) return;
+    const target = ref.current;
+    if (!target || (target as HTMLElement & { disabled?: boolean }).disabled) return;
+    target.focus({ preventScroll: true });
+  });
+}
+
 export function useDismissable(
   open: boolean,
   /**

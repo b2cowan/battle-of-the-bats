@@ -179,8 +179,8 @@ const accountingHelp: HelpPageContent = {
       id: 'entries',
       heading: 'Reading the Ledger, and correcting a line',
       summary: 'Oldest first between a starting and an ending balance, each with its date; filters; Tools; editing, voiding, and lines that come from elsewhere.',
-      keywords: ['entry', 'income', 'expense', 'transfer', 'posted', 'pending', 'void', 'edit entry', 'starting balance', 'ending balance', 'book pill', 'filters', 'tools'],
-      searchText: 'ledger book pill switch books entry income expense transfer posted pending void edit entry saves as you type autosave starting balance ending balance oldest first bank statement running balance money out money in type status category date this month all time filters balance disappears balance column gone balance hidden when filtering category untick posted pending line faint void reason audit trail read only line from an allocation request fee where to change it team book team account tools menu payees transfer where did the payees button go where did the transfer button go year on the balance lines row shows only the day phone card',
+      keywords: ['entry', 'income', 'expense', 'transfer', 'posted', 'pending', 'void', 'edit entry', 'starting balance', 'ending balance', 'book pill', 'filters', 'tools', 'filter button', 'reset filters'],
+      searchText: 'ledger book pill switch books entry income expense transfer posted pending void edit entry saves as you type autosave starting balance ending balance oldest first bank statement running balance money out money in type status category date this month all time filters balance disappears balance column gone balance hidden when filtering category untick posted pending line faint void reason audit trail read only line from an allocation request fee where to change it team book team account tools menu payees transfer where did the payees button go where did the transfer button go year on the balance lines row shows only the day phone card filter button phone filter sheet filters on a phone where did the filters go reset filters',
       content: (
         <>
           <p>The <strong>Ledger</strong> tab shows one book at a time. The <strong>Book</strong> pill switches books — it opens on the General ledger and shows every book’s balance. <strong>Tools</strong> (⋯, beside Export) holds the rarer jobs: <a href="#recipe-transfer-between-ledgers">Transfer</a> and <a href="#payees">Payees</a>.</p>
@@ -191,6 +191,7 @@ const accountingHelp: HelpPageContent = {
             <HelpDef term="Category">One or several of your categories. Like Type, it hides the Balance column.</HelpDef>
             <HelpDef term="Date">Starts on <strong>This month</strong>. Pick a preset, your own dates, or <strong>All time</strong>. The Balance column stays: the starting balance carries everything before your dates.</HelpDef>
           </HelpDefs>
+          <p><strong>On a phone the filters sit behind one Filter button</strong>, beside the balance. It opens a sheet showing what each filter is set to. A number on the button counts the ones you’ve changed; <strong>Reset filters</strong> puts them back.</p>
           <p><strong>Every line opens.</strong> A line you typed opens ready to edit, and saves as you type. <strong>Void this line</strong> asks why; the line stays on the book, marked void with your reason and your name, and counts nowhere. A line written by an allocation, a payment request or a house league fee is read-only, and says where to change it — undo the payment, or reverse the approval, and both books follow.</p>
           <p>A team’s own book isn’t on the Ledger. The club reads a team through its <a href="#team-account">account</a>.</p>
         </>

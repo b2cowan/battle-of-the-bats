@@ -1,7 +1,12 @@
 'use client';
 import { ChevronDown } from 'lucide-react';
 import useDetailsOutsideClick from './useDetailsOutsideClick';
+import { FilterSheetRow, useFilterGroupMember } from './FilterGroup';
 import styles from '../shared/FilterPill.module.css';
+
+/** An option's name without the count a caller wrote into its label ("Actual (23)" → "Actual"): a sheet
+ *  row says what is chosen, and the counts are read where they are chosen. */
+const bareLabel = (label: string) => label.replace(/\s*\(\d+\)$/, '');
 
 /**
  * A checkbox list inside a native `<details>` disclosure — the compact-toolbar counterpart to a
@@ -64,11 +69,15 @@ export default function MultiSelectDropdown({
   restQuiet?: boolean;
   restSelection?: ReadonlySet<string>;
 }) {
-  const ref = useDetailsOutsideClick();
-
-  const atRest = restQuiet && (restSelection
-    ? selected.size === restSelection.size && [...selected].every(id => restSelection.has(id))
-    : selected.size === 0);
+  /* Off its rest: the pill's tint below, and — inside a `FilterGroup` (the Ledgers' phone Filter sheet) — a
+     count on the Filter button, with Reset putting it back to rest: a seeded subset where there is one,
+     never "All" (Ledger Phone Filter D3, D6). */
+  const narrowed = restSelection
+    ? !(selected.size === restSelection.size && [...selected].every(id => restSelection.has(id)))
+    : selected.size > 0;
+  const atRest = restQuiet && !narrowed;
+  const group = useFilterGroupMember(label, narrowed, () => onChange(new Set(restSelection ?? [])));
+  const ref = useDetailsOutsideClick(group?.mode !== 'row');
 
   const summary = selected.size === 0 ? allLabel
     : selected.size === 1 ? (options.find(o => selected.has(o.id))?.label ?? allLabel)
@@ -80,6 +89,38 @@ export default function MultiSelectDropdown({
     onChange(next);
   }
 
+  const choices = (
+    <>
+      <label className={styles.multiSelectOption}>
+        <input type="checkbox" checked={selected.size === 0} onChange={() => onChange(new Set())} />
+        {allLabel}
+      </label>
+      <div className={styles.multiSelectDivider} />
+      {options.map(o => (
+        <label key={o.id} className={styles.multiSelectOption}>
+          <input type="checkbox" checked={selected.has(o.id)} onChange={() => toggle(o.id)} />
+          {o.swatch && (
+            <span
+              className={`${styles.tagComboDot} ${o.swatch === 'org' ? styles.tagComboDotOrg : styles.tagComboDotOwn}`}
+              aria-hidden
+            />
+          )}
+          {o.label}
+          {o.count != null && <span className={styles.multiSelectCount}>{o.count}</span>}
+        </label>
+      ))}
+    </>
+  );
+
+  if (group?.mode === 'row') {
+    // A row always says what it is set to — the sheet is where a coach reads the whole state at once (D2).
+    const chosen = options.filter(o => selected.has(o.id)).map(o => bareLabel(o.label));
+    const value = selected.size === 0 ? allLabel
+      : chosen.length === selected.size && chosen.length <= 3 ? chosen.join(', ')
+      : summary;
+    return <FilterSheetRow name={label} value={value} lit={narrowed}>{choices}</FilterSheetRow>;
+  }
+
   return (
     <details ref={ref} className={styles.multiSelect}>
       <summary data-pill="summary" className={`${styles.multiSelectSummary} ${restQuiet && !atRest ? styles.multiSelectActive : ''}`}>
@@ -88,24 +129,7 @@ export default function MultiSelectDropdown({
         <ChevronDown size={14} aria-hidden />
       </summary>
       <div data-pill="panel" className={styles.multiSelectPanel} role="group" aria-label={label}>
-        <label className={styles.multiSelectOption}>
-          <input type="checkbox" checked={selected.size === 0} onChange={() => onChange(new Set())} />
-          {allLabel}
-        </label>
-        <div className={styles.multiSelectDivider} />
-        {options.map(o => (
-          <label key={o.id} className={styles.multiSelectOption}>
-            <input type="checkbox" checked={selected.has(o.id)} onChange={() => toggle(o.id)} />
-            {o.swatch && (
-              <span
-                className={`${styles.tagComboDot} ${o.swatch === 'org' ? styles.tagComboDotOrg : styles.tagComboDotOwn}`}
-                aria-hidden
-              />
-            )}
-            {o.label}
-            {o.count != null && <span className={styles.multiSelectCount}>{o.count}</span>}
-          </label>
-        ))}
+        {choices}
       </div>
     </details>
   );

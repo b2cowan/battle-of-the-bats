@@ -24,19 +24,26 @@ import { useEffect, useRef } from 'react';
  */
 const EDGE = 8;
 
-export default function useDetailsOutsideClick() {
+/**
+ * `enabled` — ask only where the answer is used (`useIsPhone`'s own rule): a pill drawn as a ROW of the
+ * Ledgers' phone Filter sheet is not a `<details>`, so it opens no document listener and fits no panel.
+ * Fixed for the life of a pill: an element is either in the strip or in the sheet.
+ */
+export default function useDetailsOutsideClick(enabled = true) {
   const ref = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     function onDocClick(ev: MouseEvent) {
       const el = ref.current;
       if (el && el.open && !el.contains(ev.target as Node)) el.open = false;
     }
     document.addEventListener('click', onDocClick);
     return () => document.removeEventListener('click', onDocClick);
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
+    if (!enabled) return;
     const details = ref.current;
     const panel = details?.querySelector<HTMLElement>(':scope > [data-pill="panel"]');
     if (!details || !panel) return;
@@ -70,7 +77,7 @@ export default function useDetailsOutsideClick() {
       ro.disconnect();
       mo.disconnect();
     };
-  }, []);
+  }, [enabled]);
 
   return ref;
 }

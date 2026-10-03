@@ -46,6 +46,7 @@ import { clubSharesPayees } from '@/lib/team-payee-scope';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import DateRangeDropdown from '@/components/coaches/DateRangeDropdown';
+import FilterGroup from '@/components/coaches/FilterGroup';
 import pill from '@/components/shared/FilterPill.module.css';
 import { day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import { AddEntryWindow, LineWindow, TransferWindow, type BookRef } from '@/components/admin/kit/club/money/LedgerWindows';
@@ -229,30 +230,34 @@ export default function LedgerTab() {
           </div>
         </div>
         <div className={moneyKit.strip}>
-          <MultiSelectDropdown restQuiet label="Type" options={typeOptions} selected={types} onChange={setTypes} allLabel="Every type" />
-          <MultiSelectDropdown
-            restQuiet restSelection={STATUS_REST}
-            label="Status"
-            options={STATUS_ORDER.map(s => ({ id: s, label: `${STATUS_WORD[s]} (${counts?.status[s] ?? 0})` }))}
-            selected={statuses}
-            onChange={next => setStatuses(next.size ? next : new Set(STATUS_REST))}
-          />
-          {(read?.categories.length ?? 0) > 0 && (
-            <MultiSelectDropdown restQuiet label="Category" options={(read?.categories ?? []).map(c => ({ id: c, label: c }))}
-              selected={cats} onChange={setCats} allLabel="Every category" />
-          )}
-          <DateRangeDropdown
-            restQuiet restSelectionId="thisMonth"
-            selection={range.selection}
-            from={range.from} to={range.to}
-            todayKey={today}
-            seasonBounds={bounds}
-            labels={DATE_LABELS}
-            onChange={next => {
-              if (next.selection === 'custom') setRange(next);
-              else { const r = resolveDateRangePreset(next.selection, today, bounds); setRange({ selection: next.selection, from: r.from, to: r.to }); }
-            }}
-          />
+          {/* ⚖ ON A PHONE THE FILTERS GO BEHIND ONE FILTER BUTTON, as on the coach's Ledger (Ledger Phone Filter D5,
+              owner 2026-10-02), and Balance comes up beside it. A desk keeps the pills. */}
+          <FilterGroup>
+            <MultiSelectDropdown restQuiet label="Type" options={typeOptions} selected={types} onChange={setTypes} allLabel="Every type" />
+            <MultiSelectDropdown
+              restQuiet restSelection={STATUS_REST}
+              label="Status"
+              options={STATUS_ORDER.map(s => ({ id: s, label: `${STATUS_WORD[s]} (${counts?.status[s] ?? 0})` }))}
+              selected={statuses}
+              onChange={next => setStatuses(next.size ? next : new Set(STATUS_REST))}
+            />
+            {(read?.categories.length ?? 0) > 0 && (
+              <MultiSelectDropdown restQuiet label="Category" options={(read?.categories ?? []).map(c => ({ id: c, label: c }))}
+                selected={cats} onChange={setCats} allLabel="Every category" />
+            )}
+            <DateRangeDropdown
+              restQuiet restSelectionId="thisMonth"
+              selection={range.selection}
+              from={range.from} to={range.to}
+              todayKey={today}
+              seasonBounds={bounds}
+              labels={DATE_LABELS}
+              onChange={next => {
+                if (next.selection === 'custom') setRange(next);
+                else { const r = resolveDateRangePreset(next.selection, today, bounds); setRange({ selection: next.selection, from: r.from, to: r.to }); }
+              }}
+            />
+          </FilterGroup>
           {showBalance && read && (
             <span className={moneyKit.balance}>Balance <b>{money(read.balance)}</b></span>
           )}
