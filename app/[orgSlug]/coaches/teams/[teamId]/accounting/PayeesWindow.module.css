@@ -22,6 +22,18 @@ button.name:hover { text-decoration: underline; text-underline-offset: 3px; }
 /* ⚖ A CLUB'S SHARED PAYEE (D7): the club's blue — the tag legend's own colour for "Shared by your club". */
 button.shared { color: var(--tag-org-fg, var(--home-blue)); }
 
+/* ⚖ A BAND IS ON THE PAPER TONE, RULED ABOVE AND BELOW (table standard §5's band row — the feed's day
+   header, `.rowListBand`). The money band this borrows (`.payBandCell`) paints `--home-card`, which IS the
+   card in both skins, so the column headings, the two bands and the rows all read alike (owner,
+   2026-10-02: "hard to see what is a header vs. a row"). Here, not on `.payBandCell`: the Bills view's
+   phone strip relies on that card ground standing off the page. ⚠ `.band.band` (0,2,2) outranks
+   `.payBandRow > .payBandCell` (0,2,0); the phone's plain line below is (0,2,3) and still wins there. */
+tr.band.band > td {
+  background: var(--home-paper, var(--surface-2));
+  border-top: 1px solid var(--home-line, var(--border-2));
+  border-bottom: 1px solid var(--home-line, var(--border-2));
+}
+
 /* ⚖ ON A PHONE THE FIGURES SIT UNDER THE NAME (owner, 2026-10-02) — the framed card's own line
    (`cardPhoneLine`), close under the name. The name keeps its 44px tap box (`rowTapLink`, which borrows the
    row's height with a matching negative margin), so nothing here touches its height. */
@@ -48,11 +60,23 @@ button.shared { color: var(--tag-org-fg, var(--home-blue)); }
   .newBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); min-height: var(--tap-min, 44px); padding: 0; justify-content: center; }
 }
 
-/* The record. The pencil sits at the head's end, beside the ✕ (the 2026-10-01 standard). */
-.headEdit { margin-left: auto; }
+/* The record. The pencil sits at the head's end, beside the ✕ (the 2026-10-01 standard).
+   ⚠ ITS SLOT GROWS; IT DOES NOT TAKE `margin-left: auto`. A head with a named back already gives the ✕
+   `margin-left: auto`, and two auto margins SPLIT the slack — the pencil stood halfway between the title
+   and the ✕ (owner, §258 walk 2026-10-02). A growing slot leaves the ✕'s margin nothing to take. The
+   negative margins make the 44px box occupy the ✕'s 26px, so its glyph lines up with the ✕'s (and a
+   phone's ←) whether the head is top-aligned (a subtitle under the title) or centred (none). */
+.headEnd { flex: 1 1 auto; display: flex; justify-content: flex-end; margin-block: -0.55rem; }
 .empty { margin: 0.25rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
 .details { margin-top: 1.25rem; }
-.noteText { white-space: pre-wrap; overflow-wrap: anywhere; }
+.noteText {
+  margin: 0.25rem 0 0;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .hint {
   margin: 0.35rem 0 0;
   font-size: var(--type-support);

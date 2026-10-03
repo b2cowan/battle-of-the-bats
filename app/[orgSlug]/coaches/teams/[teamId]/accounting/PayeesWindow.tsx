@@ -115,11 +115,15 @@ export default function PayeesWindow({ orgSlug, teamId, open, raised, canWrite, 
     }
   }, [api]);
   // A frame later, so the read's first state write is not the effect's own (react-hooks/set-state-in-effect).
+  /* ⚠ AND AGAIN WHENEVER THE LEDGER RE-READS (`money` is rebuilt only then). A bill opened from a payee's
+     entries can take that payee off itself in the bill's own window; the figures follow the Ledger at once,
+     but `uses` — which decides Merge or Delete — is this list's, and stayed at the old count: a payee
+     nothing named any more still offered Merge, never Delete (owner, §258 walk 2026-10-02). */
   useEffect(() => {
     if (!open) return;
     const frame = window.requestAnimationFrame(() => { void load(); });
     return () => window.cancelAnimationFrame(frame);
-  }, [open, load]);
+  }, [open, load, money]);
 
   // Memoised: the panel this sits in re-renders on every keystroke of its money form.
   const listed: Listed[] = useMemo(() => (data ? [
@@ -269,7 +273,8 @@ export default function PayeesWindow({ orgSlug, teamId, open, raised, canWrite, 
     const tiles: RoomTile[] = [
       { label: 'Paid this season', value: formatMoney(m.paid) },
       { label: 'Still to pay', value: formatMoney(m.toPay), tone: m.overdue ? 'danger' as const : undefined },
-      { label: 'Next due', value: m.nextDue ? `${m.nextDue.date ? ledgerRowDate(m.nextDue.date) : 'No date'} · ${formatMoney(m.nextDue.amount)}` : '—' },
+      { label: 'Next due', value: m.nextDue ? formatMoney(m.nextDue.amount) : '—',
+        sub: m.nextDue ? (m.nextDue.date ? ledgerRowDate(m.nextDue.date) : 'No date') : undefined },
     ];
     const canMerge = current.uses > 0 && (ownRows.length > 1 || sharedRows.length > 0);
     roomProps = {
@@ -279,23 +284,30 @@ export default function PayeesWindow({ orgSlug, teamId, open, raised, canWrite, 
         : sharedRows.length > 0 ? 'Your team’s own payee' : undefined,
       back: { label: 'Payees', onBack: () => void toList() },
       headerExtra: mayEdit ? (
-        /* ONE button whose glyph flips, so focus stays on it (the practice plan's and the award's toggle). */
-        <button type="button" className={`${styles.ppIconBtn} ${own.headEdit}`} aria-label={editing ? 'Done editing' : 'Edit this payee'}
-          onClick={() => void toggleEdit()}>
-          {editing ? <Check size={18} aria-hidden /> : <Pencil size={18} aria-hidden />}
-        </button>
+        /* ONE button whose glyph flips, so focus stays on it (the practice plan's and the award's toggle),
+           beside the ✕ — its slot takes the head's slack (`.headEnd`). */
+        <span className={own.headEnd}>
+          <button type="button" className={styles.ppIconBtn} aria-label={editing ? 'Done editing' : 'Edit this payee'}
+            onClick={() => void toggleEdit()}>
+            {editing ? <Check size={18} aria-hidden /> : <Pencil size={18} aria-hidden />}
+          </button>
+        </span>
       ) : undefined,
       tiles,
       children: (
         <>
           {deleteError && <p className={`${styles.errorText} ${own.error}`} role="alert">{deleteError}</p>}
-          <p className={styles.payDrawerLabel}>This season · {pluralize(m.rows.length, 'entry', 'entries')}</p>
+          {/* The count only when there is one — "0 entries" over "Nothing recorded…" said it twice. */}
+          <p className={styles.payDrawerLabel}>This season{m.rows.length > 0 && ` · ${pluralize(m.rows.length, 'entry', 'entries')}`}</p>
           {m.rows.length > 0 ? renderRows(m.rows) : <p className={own.empty}>Nothing recorded for {current.name} this season.</p>}
         </>
       ),
       fields: (
         <div className={own.details}>
-          <p className={styles.payDrawerLabel}>Details</p>
+          {/* Reading, the note is one fact under its own label, like "This season" above it — never a
+              "Details" heading over a one-row label lane (the lane is a FORM's, and its label sat below a
+              plain-text value; owner, §258 walk 2026-10-02). Editing, "Details" heads the two fields. */}
+          <p className={styles.payDrawerLabel}>{editing ? 'Details' : 'Note'}</p>
           {editing ? (
             <>
               <div className={styles.field}>
@@ -316,11 +328,10 @@ export default function PayeesWindow({ orgSlug, teamId, open, raised, canWrite, 
               </div>
               <SaveStatusPill saving={saving} dirty={dirty} error={saveError || null} onRetry={() => void handleSave()} />
             </>
+          ) : current.notes ? (
+            <p className={own.noteText}>{current.notes}</p>
           ) : (
-            <dl className={styles.commitFields}>
-              <dt>Note</dt>
-              <dd>{current.notes ? <span className={own.noteText}>{current.notes}</span> : <span className={styles.commitEmpty}>No note</span>}</dd>
-            </dl>
+            <p className={own.empty}>No note.</p>
           )}
         </div>
       ),
@@ -429,7 +440,10 @@ function ListRow({ p, m, onOpen }: { p: Listed; m: PayeeMoney | undefined; onOpe
       <td className={`${styles.td} ${styles.tdNum} ${styles.cardDesktopCell}`}>{dash(paid)}</td>
       <td className={`${styles.td} ${styles.tdNum} ${styles.cardDesktopCell}`}>{dash(toPay)}</td>
       <td className={`${styles.td} ${styles.tdDate} ${styles.cardDesktopCell}`}>{m?.lastPaid ? ledgerRowDate(m.lastPaid) : '—'}</td>
-      <td className={`${styles.td} ${styles.cardActionCorner}`}>
+      {/* The Ledger's own chevron cell, at the width of its chevron: right-aligned on the row's edge, the
+          slack left to the name (owner, 2026-10-02: a left-aligned chevron in a wide last column sat
+          ~130px in from the edge). */}
+      <td className={`${styles.td} ${styles.tdShrink} ${ledgerKit.goCell} ${styles.cardActionCorner}`}>
         <span className={ledgerKit.goMark} aria-hidden><ChevronRight size={16} /></span>
       </td>
     </tr>

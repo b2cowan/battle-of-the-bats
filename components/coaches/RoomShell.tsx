@@ -52,6 +52,10 @@ export interface RoomTile {
   label: string;
   value: ReactNode;
   tone?: RoomTone;
+  /** One quiet line under the figure — the DATE a "Next due" amount falls on. The figure is the tile's
+   *  answer; "Sep 25, 2026 · $275.00" as one value wrapped onto two lines in a quarter-width tile (owner,
+   *  2026-10-02). The club's own figure cards draw the same pair the same way. */
+  sub?: ReactNode;
 }
 
 export interface RoomNav {
@@ -278,6 +282,7 @@ export default function RoomShell({
                 <div key={tile.label} className={s.tile}>
                   <span className={s.tileLabel}>{tile.label}</span>
                   <span className={s.tileValue} data-tone={tile.tone}>{tile.value}</span>
+                  {tile.sub && <span className={s.tileSub}>{tile.sub}</span>}
                 </div>
               ))}
             </div>

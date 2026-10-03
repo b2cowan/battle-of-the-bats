@@ -1016,7 +1016,7 @@ export function ClubPanel({
         value: fmt(figures.outstanding),
         tone: figures.overdue > 0 ? 'danger' : figures.outstanding > 0.005 ? 'warn' : undefined,
       },
-      { label: 'Next due', value: nextDue ? `${fmtDate(nextDue.dueDate)} · ${fmt(nextDue.amount)}` : 'Paid off' },
+      { label: 'Next due', value: nextDue ? fmt(nextDue.amount) : 'Paid off', sub: nextDue ? fmtDate(nextDue.dueDate) : undefined },
     ];
     /* The walk is the list as the coach sees it — unless an action taken IN the room (paying the
        last overdue piece under "Needs attention", filing under "Not filed") has just moved this

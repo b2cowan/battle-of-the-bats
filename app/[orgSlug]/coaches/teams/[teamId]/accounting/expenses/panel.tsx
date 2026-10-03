@@ -3878,7 +3878,8 @@ function MoneyRecordsPanel({
            Two rooms describing one condition two ways is the drift the one-word rule exists to
            stop, and the club room got here first. */
         label: 'Next due',
-        value: nextDue ? `${fmtDate(nextDue.dueDate)} · ${fmt(nextDue.remaining)}` : 'Paid off',
+        value: nextDue ? fmt(nextDue.remaining) : 'Paid off',
+        sub: nextDue ? fmtDate(nextDue.dueDate) : undefined,
       },
     ];
     /* ⚠ THE CHIP COUNTS PIECES, NEVER DOLLARS — "2 of 3 paid" is the mockup's own words, and the
