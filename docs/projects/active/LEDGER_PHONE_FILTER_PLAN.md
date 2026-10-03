@@ -1,5 +1,7 @@
 # Ledger Phone Filter — plan
 
+**On production 2026-10-02** — Amplify job 275 (prod HEAD `5070661d`, tag `release/2026-10-02`); the release record holds the detail.
+
 **Hub (mockup · decisions · brief):** https://claude.ai/artifact/9MkS5tTMA7RvytnUXCsVdx — source
 `LEDGER_PHONE_FILTER_HUB.html`, frames in `ledger-phone-filter/` (captured on the live Ledgers by
 `.probe/lf/shots.mjs`). PM brief: `LEDGER_PHONE_FILTER_PM_BRIEF.md`.

@@ -1,5 +1,7 @@
 # Save over a practice template, a drill or a circuit — plan
 
+**On production 2026-10-02** — Amplify job 275 (prod HEAD `5070661d`, tag `release/2026-10-02`); the release record holds the detail.
+
 **Status:** drawn 2026-10-02 · D1–D4 ruled by the owner · **D5–D12 ruled as drawn 2026-10-02** ("looks good, go ahead with your recommendations") · built on dev 2026-10-02 (§9) · /simplify and /review run 2026-10-02 · **committed `ff36aacd` 2026-10-02** · owner QA §260.
 **Hub (mockup · brief · plan · decisions · QA):** https://claude.ai/artifact/119bRyzRrt4MKxBDJ82WnE (source `COACH_PRACTICE_SAVE_OVER_HUB.html`).
 **PM brief:** `COACH_PRACTICE_SAVE_OVER_PM_BRIEF.md`.

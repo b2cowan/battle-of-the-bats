@@ -1,5 +1,7 @@
 # Ledger Parity — plan
 
+**On production 2026-10-02** — Amplify job 275 (prod HEAD `5070661d`, tag `release/2026-10-02`); the release record holds the detail.
+
 **Hub (mockup, decisions, brief, plan):** https://claude.ai/artifact/EQqEd3s4CBLbnrnPuUVAAo — source
 `docs/projects/active/LEDGER_PARITY_HUB.html`, frames in `docs/projects/active/ledger-parity/` (captured from the
 live screens by `.probe/lp/shots.mjs`: BEFORE = the page as it renders; AFTER = the same page with the change applied

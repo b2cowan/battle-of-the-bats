@@ -1,5 +1,7 @@
 # Which game an award is for — plan
 
+**On production 2026-10-02** — Amplify job 275 (prod HEAD `5070661d`, tag `release/2026-10-02`); the release record holds the detail.
+
 **Hub (mockup · brief · plan · decisions on one URL):** https://claude.ai/artifact/BaSM8ojh6AjMup6VJArCUv —
 source `docs/projects/active/COACH_AWARD_OCCASION_HUB.html`. PM brief: `COACH_AWARD_OCCASION_PM_BRIEF.md`.
 

@@ -1,5 +1,7 @@
 # Copy a lineup from another game — plan
 
+**On production 2026-10-02** — Amplify job 275 (prod HEAD `5070661d`, tag `release/2026-10-02`); the release record holds the detail.
+
 **Hub (mockup · brief · plan · decisions, one artifact):** `docs/projects/active/COACH_LINEUP_COPY_FROM_GAME_HUB.html`
 (https://claude.ai/artifact/1MsdQnRrdVz63UrWztuEDK)
 **PM brief:** `docs/projects/active/COACH_LINEUP_COPY_FROM_GAME_PM_BRIEF.md`
