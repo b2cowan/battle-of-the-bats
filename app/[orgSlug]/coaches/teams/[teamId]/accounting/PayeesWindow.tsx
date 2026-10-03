@@ -152,8 +152,12 @@ export default function PayeesWindow({ orgSlug, teamId, open, raised, canWrite, 
     const saved = body.payee as { id: string; name: string; notes: string | null };
     const renamed = saved.name !== savedNameRef.current;
     setData(d => d && { ...d, payees: d.payees.map(p => (p.id === saved.id ? { ...p, name: saved.name, notes: saved.notes } : p)) });
+    /* ⚠ AND A READ STARTED AFTER IT. The list also re-reads when the Ledger does (above), and a rename re-reads
+       the Ledger — so a read sent while the NEXT save (the note typed just after) was in flight could land after
+       it and put the old note back on screen. The newest read wins (`seq`), and this one began after the save. */
+    void load();
     if (renamed) onChanged({ kind: 'renamed', id: saved.id, name: saved.name });
-  }, [api, openId, name, notes, onChanged, savedNameRef]);
+  }, [api, openId, name, notes, onChanged, savedNameRef, load]);
   // Held while a question about this payee is up, so it never writes under Merge or Delete.
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: editing && mayEdit, loading: question !== null, sig: `${name.trim()}\n${notes.trim()}`, blocked, write,

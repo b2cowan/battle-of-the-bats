@@ -146,6 +146,17 @@ D8, D9, D9a, D10; D9b fixed. D8a (the club's side) was not drawn and stays open.
 - **Departure, said here:** in the list the name keeps the bold the page had (a list's name column, standard §3.6),
   and a read-only money assistant can now OPEN a payee and read it (the page let them open nothing).
 
+### After §258 passed — the owner's Payees comments (2026-10-02, committed `3212e73a`, pushed to dev)
+- Next due = the amount, its date a `sub` line under it (`RoomTile.sub`, new) — payee window, club bill room, team
+  bill room. The pencil's slot grows (`.headEnd`) instead of a second `margin-left: auto`. Reading, the note is one
+  line under "Note"; "· 0 entries" dropped. The list re-reads on every Ledger re-read (`money` in the load effect),
+  so `uses` follows a bill that stopped naming the payee (Delete, not Merge). Chevron in the Ledger's `goCell`;
+  band rows on the paper tone.
+- **/review 2026-10-02** (standard, two lenses): one low defect fixed in the follow-up commit — the Ledger-driven
+  re-read could land after the next autosave and put the old note back; each successful save now starts its own
+  read (`seq` keeps the newest). Advisory: the fundraiser rooms' composite tiles. The layout sweep could not run
+  (no coach screen rendered for its sign-in, untouched ones included). Detail and the re-check: OQA §258.
+
 ## Session 1 — build record (2026-10-02, the server half: D5 data + routes, D7, D7a, D7b)
 
 **What a person sees now:** a coach on a club team finds only the payees the club shares plus the team's own in the
