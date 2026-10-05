@@ -109,7 +109,7 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
             </div>
             <div className={moneyKit.lineEnd}>
               {i.state === 'received' && <RepChip tone="good">Received</RepChip>}
-              {i.state === 'sent' && <RepChip tone="info">Sent · confirm</RepChip>}
+              {i.state === 'sent' && <RepChip tone="info">Sent</RepChip>}
               {i.state === 'overdue' && <RepChip tone="bad">{i.daysLate} {i.daysLate === 1 ? 'day' : 'days'} late</RepChip>}
               {i.state === 'upcoming' && <span className={moneyKit.lineQuiet}>{inDays(i.dueDate, asOf)}</span>}
               {canMove && i.state === 'sent' && <RowAction onClick={() => onRecord(i, 'confirm')}>Confirm received</RowAction>}

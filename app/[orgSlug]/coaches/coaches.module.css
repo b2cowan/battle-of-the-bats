@@ -14334,27 +14334,13 @@ div.gdRow { cursor: default; }
 }
 .listRowChevron { color: var(--text-tertiary); flex-shrink: 0; }
 
-/* ⚖ THE UNDO ON A PAID INSTALMENT — quiet on purpose (owner, §134 walk 2026-09-03). Taking a club
-   payment back is a CORRECTION, not a destruction: it voids the transfer on both ledgers, leaves it
-   visible in the audit trail, and recording it paid again is one tap. So it wears neither
-   `btnDanger` (which would promise a one-way door) nor `btnSecondary` (which would give it the
-   same weight as "Record as paid" on the row above and turn a settled line into a busy one). It
-   sits at the tertiary ink every other read-only mark on this table uses, and comes forward on
-   hover — present when looked for, silent when not.
-   ⚠ THE TAP FLOOR STILL APPLIES: it is a real control on a table row at a field, the least
-   forgiving tap in the product, and `inline-flex` is what makes `min-height` bite on it (the trap
-   `.compactAction` and `.listRowToggle` both record). */
-.undoPaidBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-.undoPaidBtn:hover:not(:disabled) { color: var(--text-primary); }
-@media (max-width: 768px) {
-  .undoPaidBtn { min-height: var(--tap-min, 44px); }
-}
+/* ⚰ `.undoPaidBtn` STOOD HERE (owner, §134 walk 2026-09-03): "Take it back" as a grey support-size
+   link with an undo glyph, quiet because it sat on a SETTLED (paid) line and a secondary button
+   would have made that line busy. Since Club Tier Stage 3a it sits only on a line the team SENT and
+   the club has not confirmed — an open line, not a settled one — so that reason went, and the owner
+   found it too small to read (S3W3, 2026-10-05). It is now the row's `btnSecondary compactAction`,
+   the same shape as "We've sent it" in the same column. Still never `btnDanger`: taking it back is a
+   correction, not a one-way door. */
 /* ⚠⚠ THE ROW'S DOOR TO ITS ROOM — A REAL BUTTON, AND THEREFORE A REAL TAP TARGET.
    The chevron became a `<button>` on 2026-09-02 so a keyboard or screen-reader coach could open the
    record at all; `check:layout` immediately measured it at 19px against the 44px floor, which is

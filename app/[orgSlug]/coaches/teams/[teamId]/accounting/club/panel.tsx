@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, use, type ReactNode 
 import { newMoneyInWordNote } from '@/lib/coach-budget-totals';
 import {
   Building2, ArrowUpRight, ArrowDownLeft, Plus, Trash2, Clock,
-  ChevronRight, AlertTriangle, CheckCircle2, Undo2,
+  ChevronRight, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
@@ -117,6 +117,25 @@ function fmt(n: number) {
    have already printed the wrong day on three screens in this portal. */
 function fmtDate(s: string | null | undefined) {
   return formatStoredDate(s);
+}
+
+/**
+ * A bill installment's Note column: what explains its status, or null (owner, S3W3 2026-10-05).
+ * The status is ONE chip in its own column; this sat under it and ran the width of the cell, so the
+ * chip and its sentence never lined up. A paid row says how the money came and that the club has it
+ * (Ask 1's "Paid"); an unpaid one the club took back carries the club's reason (Ask 3). A sent row has
+ * no note — its chip already says when it left and who it is waiting on.
+ */
+function installmentNote(inst: RepAllocationInstallment): string | null {
+  if (inst.paidAt) {
+    const how = howItCame(inst.paidMethod, inst.paidReference);
+    return `${how ? `${how} · ` : ''}the club has it`;
+  }
+  if (clubInstallmentLeftTeamOn(inst)) return null;
+  if (inst.undoneReason) {
+    return `The club undid a payment${inst.undoneAt ? ` on ${fmtDate(inst.undoneAt)}` : ''}: “${inst.undoneReason}”`;
+  }
+  return null;
 }
 
 /**
@@ -489,7 +508,10 @@ function SentWindow({ installmentNumber, amount, clubName, busy, onCancel, onSen
     if (busy || firing.current) return;
     if (!sentOn) { setError('Give the day it went.'); return; }
     if (sentOn > today) { setError('The day it went can’t be in the future.'); return; }
-    if (!method) { setError('Choose how it was sent.'); return; }
+    /* ⚖ HOW IS OPTIONAL (owner, S3W3 2026-10-05: "it seems like the only place on the app where this is
+       a required field"). The coach is TELLING the club, not writing its book: the club picks the method
+       when it confirms (its window opens with the coach's choice, or blank). The server always took
+       none, and blank reads "not recorded", as on a sponsor's arrival — never a guess. */
     setError('');
     firing.current = true;
     try { await onSend({ sentOn, method, reference }); } finally { firing.current = false; }
@@ -507,9 +529,9 @@ function SentWindow({ installmentNumber, amount, clubName, busy, onCancel, onSen
             <input id="sent-on" type="date" className={styles.input} value={sentOn} max={today} onChange={e => setSentOn(e.target.value)} />
           </label>
           <label className={styles.field} htmlFor="sent-how">
-            <span className={styles.label}>How<span aria-hidden> *</span></span>
+            <span className={styles.label}>How</span>
             <select id="sent-how" className={styles.select} value={method} onChange={e => setMethod(e.target.value)}>
-              <option value="">Choose…</option>
+              <option value="">— not recorded —</option>
               {DUES_PAYMENT_METHODS.map(m => <option key={m} value={m}>{DUES_PAYMENT_METHOD_LABEL[m]}</option>)}
             </select>
           </label>
@@ -605,6 +627,11 @@ export function ClubPanel({
      that then agreed the payment had gone through. A mark now stays until the installment READS paid
      (`isMarking` below) and is only cleared by hand on failure. Same cure as `ClubFilingControl`. */
   const [marking, setMarking] = useState<Record<string, boolean>>({});
+  /* A "Take it back" in flight, by installment — its OWN flag, never `marking` (owner, S3W3 2026-10-05:
+     the button read "↶ …" and did nothing). A send's mark outlives the send by design and the take-back
+     button read it raw, so every installment the coach had just sent showed Take it back busy and
+     disabled until the page reloaded. */
+  const [takingBack, setTakingBack] = useState<Record<string, boolean>>({});
   /** The installment the "We've sent it" window is open on (Club Tier Stage 3a, specimen 7). */
   const [sending, setSending] = useState<{ split: AllocationSplit; inst: RepAllocationInstallment } | null>(null);
   /** The room's filing control is mid-write — part of the room's busy gate, not the control's alone. */
@@ -781,6 +808,13 @@ export function ClubPanel({
       setError(''); // a winning load that succeeded means there is no error any more — see the convention
       const fetchedSplits: AllocationSplit[] = allocData.splits ?? [];
       setSplits(fetchedSplits);
+      /* A send's mark SETTLES HERE, by value: the first winning read with the installment out of the
+         team's hands drops it. Left standing, it came back to life the moment the row went the other
+         way (taken back, or undone by the club) and held "We've sent it" at "…". */
+      const left = new Set(fetchedSplits.flatMap(s => s.installments.filter(i => clubInstallmentLeftTeamOn(i)).map(i => i.id)));
+      setMarking(prev => (Object.keys(prev).some(id => left.has(id))
+        ? Object.fromEntries(Object.entries(prev).filter(([id]) => !left.has(id)))
+        : prev));
       setRequests(reqData.requests ?? []);
       setIsReadOnly(!!allocData.isReadOnly);
       setSeasonName(allocData.programYearName ?? '');
@@ -874,13 +908,8 @@ export function ClubPanel({
     return byId;
   }, [splits, today]);
 
-  /** Every installment the loaded list says has LEFT the team — sent or received — what settles a
-   *  mark (see `marking`). Since Club Tier Stage 3a the coach's tap records SENT; the club confirms. */
-  const paidIds = useMemo(
-    () => new Set(splits.flatMap(s => s.installments.filter(i => clubInstallmentLeftTeamOn(i)).map(i => i.id))),
-    [splits],
-  );
-  /** A write on this installment is in flight AND the list has not yet read it back as paid. */
+  /** A write on this installment is in flight AND the list has not yet read it back as sent. Since
+   *  Club Tier Stage 3a the coach's tap records SENT; the club confirms. */
   const isMarking = useCallback(
     (inst: RepAllocationInstallment) => !!marking[inst.id] && !clubInstallmentLeftTeamOn(inst),
     [marking],
@@ -1024,7 +1053,10 @@ export function ClubPanel({
        working instead of collapsing to "0 of N" on the very record on screen (`/review`). */
     const walkList = shownSplits.some(s => s.id === openSplit.id) ? shownSplits : splits;
     const walk = roomNeighbours(walkList, openSplit.id, s => s.id, s => s.allocationDescription);
-    return { figures, tiles, walk };
+    /* The Note column shows only on a bill with something to say — a new bill's three unpaid
+       installments would otherwise sit beside an empty heading. */
+    const hasNotes = openSplit.installments.some(i => installmentNote(i) != null);
+    return { figures, tiles, walk, hasNotes };
   }, [openSplit, splitFigures, shownSplits, splits]);
 
   // ── Writes ───────────────────────────────────────────────────────────────
@@ -1046,11 +1078,8 @@ export function ClubPanel({
     inst: RepAllocationInstallment,
     form: { sentOn: string; method: string; reference: string },
   ): Promise<boolean> {
-    // Marks that have since read back as sent are dropped on the way in, so the map never grows.
-    setMarking(prev => ({
-      ...Object.fromEntries(Object.entries(prev).filter(([id, on]) => on && !paidIds.has(id))),
-      [inst.id]: true,
-    }));
+    // Marks that have read back as sent are dropped by the load that reads them (`load`).
+    setMarking(prev => ({ ...prev, [inst.id]: true }));
     setActionError('');
     const release = () => setMarking(prev => ({ ...prev, [inst.id]: false }));
     try {
@@ -1111,9 +1140,9 @@ export function ClubPanel({
    * half-typed budget word down with it.
    */
   async function undoPaid(split: AllocationSplit, inst: RepAllocationInstallment) {
-    setMarking(prev => ({ ...prev, [inst.id]: true }));
+    setTakingBack(prev => ({ ...prev, [inst.id]: true }));
     setActionError('');
-    const release = () => setMarking(prev => ({ ...prev, [inst.id]: false }));
+    const release = () => setTakingBack(prev => ({ ...prev, [inst.id]: false }));
     try {
       const res = await fetch(
         `/api/coaches/${orgSlug}/teams/${teamId}/allocations/${split.id}/installments/${inst.id}`,
@@ -1884,6 +1913,7 @@ export function ClubPanel({
                     <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
                     <th className={styles.th}>Due date</th>
                     <th className={styles.th}>Status</th>
+                    {billRoom.hasNotes && <th className={styles.th}>Note</th>}
                     <th className={styles.th} aria-label="Row actions" />
                   </tr>
                 </thead>
@@ -1892,25 +1922,24 @@ export function ClubPanel({
                     const overdue = clubInstallmentState(inst, today) === 'overdue';
                     const sentOn = inst.paidAt ? null : clubInstallmentLeftTeamOn(inst);
                     const paidOn = clubInstallmentReceivedOn(inst);
-                    const paidHow = howItCame(inst.paidMethod, inst.paidReference);
+                    const note = installmentNote(inst);
                     return (
                       <tr key={inst.id} className={styles.tr}>
                         <td className={styles.td} data-label="Installment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
                         <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(inst.amount)}</td>
-                        <td className={styles.td} data-label="Due date" style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
+                        {/* ⚖ A STATUS ONCE (owner, S3W3 2026-10-05): the date is plain ink on every row. It
+                            was red with a warning mark when overdue, which said "overdue" twice more beside
+                            the chip. The Dues ledger keeps its red date because it has no chip. */}
+                        <td className={`${styles.td} ${styles.tdDate}`} data-label="Due date" style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
                           {fmtDate(inst.dueDate)}
-                          {overdue && <AlertTriangle size={12} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}
                         </td>
                         <td className={styles.td} data-label="Status">
                           {inst.paidAt ? (
                             /* ⚖ "Paid" means ONE thing since Club Tier Stage 3a: the club has it — with how it
-                               came beside it (specimen 7). The coach keeps the word Paid; "Received" would
-                               read here as money the TEAM received. */
-                            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.1rem' }}>
-                              <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--success-light)' }}>
-                                <CheckCircle2 size={13} /> Paid {fmtDate(paidOn ?? inst.paidAt)}
-                              </span>
-                              <span className={styles.mutedInline}>{paidHow ? `${paidHow} · ` : ''}the club has it</span>
+                               came in the Note beside it (specimen 7). The coach keeps the word Paid;
+                               "Received" would read here as money the TEAM received. */
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--success-light)', whiteSpace: 'nowrap' }}>
+                              <CheckCircle2 size={13} /> Paid {fmtDate(paidOn ?? inst.paidAt)}
                             </span>
                           ) : sentOn ? (
                             /* Club Tier Stage 3a (specimen 7's words): the team sent it; the club has not
@@ -1920,26 +1949,26 @@ export function ClubPanel({
                             /* ⚠ `badgeOverdue`, NOT `badgeCompleted` — this row said "Overdue" in the
                                AMBER of a completed season while every other overdue mark in the
                                portal says it in red. */
-                            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.1rem' }}>
-                              <span className={`${styles.badge} ${overdue ? styles.badgeOverdue : styles.badgeDraft}`}>
-                                {overdue ? 'Overdue' : 'Unpaid'}
-                              </span>
-                              {/* The club took a payment back: its reason, on the installment (Ask 3). */}
-                              {inst.undoneReason && (
-                                <span className={styles.mutedInline}>
-                                  The club undid a payment{inst.undoneAt ? ` on ${fmtDate(inst.undoneAt)}` : ''}: “{inst.undoneReason}”
-                                </span>
-                              )}
+                            <span className={`${styles.badge} ${overdue ? styles.badgeOverdue : styles.badgeDraft}`}>
+                              {overdue ? 'Overdue' : 'Unpaid'}
                             </span>
                           )}
                         </td>
-                        <td className={`${styles.td} ${styles.cardActionCell}`}>
+                        {/* `cardStackCell`: on a phone a sentence reads under its label, not squeezed beside it. */}
+                        {billRoom.hasNotes && (
+                          <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Note">
+                            {note && <span className={styles.mutedInline}>{note}</span>}
+                          </td>
+                        )}
+                        <td className={`${styles.td} ${styles.tdShrink} ${styles.cardActionCell}`}>
                           {/* ⚖ A PAYMENT CAN BE TAKEN BACK (owner, §134 walk). This was the only
                               money a coach records with no way home — a dues payment, a payout and
                               a credit all have a remove — and it is also the fastest write in the
                               portal, so the wrong row was one tap away and permanent.
-                              ⚠ IT IS A QUIET GHOST BUTTON, NOT A DANGER ONE. Undoing is a
-                              correction, not a destruction: it voids the transfer on BOTH ledgers
+                              ⚠ IT IS THE ROW'S WHITE SECONDARY BUTTON, NOT A DANGER ONE — the same
+                              shape as "We've sent it" in this column (owner, S3W3 2026-10-05: a
+                              grey support-size link with an icon read as two stray glyphs, "↶ …",
+                              while it was busy). Undoing is a correction, not a destruction: it voids the transfer on BOTH ledgers
                               and leaves it visible in the audit trail, and recording it paid again
                               is one tap. Dressing it in red would tell a coach they were about to
                               do something they cannot take back, which is the opposite of true.
@@ -1949,12 +1978,12 @@ export function ClubPanel({
                           {sentOn && canWriteMoney && (
                             <button
                               type="button"
-                              className={`${styles.linkBtn} ${styles.undoPaidBtn}`}
-                              disabled={!!marking[inst.id]}
+                              className={`${styles.btnSecondary} ${styles.compactAction}`}
+                              disabled={!!takingBack[inst.id]}
                               onClick={() => undoPaid(openSplit, inst)}
                               aria-label={`Take back the ${fmt(inst.amount)} payment on installment ${inst.installmentNumber}`}
                             >
-                              <Undo2 size={13} aria-hidden /> {marking[inst.id] ? '…' : 'Take it back'}
+                              {takingBack[inst.id] ? '…' : 'Take it back'}
                             </button>
                           )}
                           {!inst.paidAt && !sentOn && canWriteMoney && (
