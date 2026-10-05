@@ -1,0 +1,762 @@
+<title>Filter Counts</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--ground:#e7e9e1;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:26px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:4px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 11px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+@media(max-width:700px){.walk{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap}.walk a{flex:none}}
+
+.frame{width:min(1240px,calc(100% - 32px));margin:20px auto;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a}
+.screen{padding:24px 28px 30px;scroll-margin-top:70px}
+.screen .lead{max-width:860px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+@media(max-width:700px){.screen{padding:18px 12px 24px}}
+
+.callout{max-width:860px;background:var(--white);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:14px 16px;margin:16px 0}
+.callout h3{margin:0 0 6px}.callout p:last-child,.callout ul:last-child{margin-bottom:0}.callout ul{padding-left:20px;margin:0 0 10px}.callout li{margin:0 0 6px}
+
+.spec{margin:22px 0 6px;max-width:100%}
+.spectop{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}
+.spectop h3{margin:0;font-size:15px}
+.lbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.lbl.before{background:#e9e4da;color:#4a4235}.lbl.after{background:#dff0c2;color:#2b3f12}.lbl.alt{background:#e3edf2;color:#1d4a5e}
+.scroller{overflow-x:auto;border:1px solid #c6cebc;border-radius:10px;background:#dfe3d6;-webkit-overflow-scrolling:touch;display:inline-block;max-width:100%;vertical-align:top}
+.shot{position:relative;line-height:0}
+.shot img{display:block;height:auto}
+.win{overflow:hidden}
+.caption{font-size:13px;color:var(--muted);margin:8px 2px 0;max-width:700px}
+.caption strong{color:var(--ink)}
+.pair{display:flex;flex-wrap:wrap;gap:20px 28px;align-items:flex-start}
+.pair>div{max-width:100%}
+
+.pin{position:absolute;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--error);color:#fff;font:800 13px/22px system-ui,sans-serif;text-align:center;padding:0;box-shadow:0 2px 6px #0004;cursor:pointer}
+.pin.fix{background:var(--olive)}.pin.alt{background:var(--blue)}
+.pin::after{content:"";position:absolute;inset:-9px}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer;border:1px solid}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border-color:#b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border-color:#b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border-color:#d3d9cd}
+
+.matrix{display:grid;grid-template-columns:150px repeat(2,minmax(0,380px));gap:12px 18px;align-items:start;margin:12px 0 26px;max-width:100%}
+.matrix .rowhead{font-size:13px;font-weight:700;padding-top:8px}
+.matrix .rowhead span{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+.matrix .colhead{font-size:12px;font-weight:700;letter-spacing:.4px;color:var(--muted)}
+.matrix .cell .scroller{display:block}
+.matrix .cell .said{font-size:12.5px;color:var(--muted);margin:6px 2px 0}
+.matrix .cell .said b{color:var(--ink);font-weight:650}
+@media(max-width:900px){.matrix{grid-template-columns:minmax(0,1fr)}.matrix .colhead{display:none}.matrix .rowhead{padding-top:14px;border-top:1px solid var(--line)}}
+
+.figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin:16px 0 4px;max-width:900px}
+.fig{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.fig .k{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.fig .v{font-size:20px;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.fig .v s{color:var(--muted);font-weight:500;font-size:15px;text-decoration-thickness:1px}
+.fig .n{font-size:12.5px;color:var(--muted)}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:12px 0 18px;background:#fff}
+table.kept{border-collapse:collapse;width:100%;font-size:13.5px;min-width:760px}
+table.kept th,table.kept td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.kept th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:#fafbf7}
+table.kept tr:last-child td{border-bottom:0}
+table.kept td.n{font-variant-numeric:tabular-nums}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage ul,.docpage ol{padding-left:22px}.docpage li{margin:0 0 7px}
+.docpage code{font-size:12.5px;background:var(--soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 16px 36px}}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px;scroll-margin-top:20px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.decisionrow h3{margin:0;font-size:16px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.open{background:#edf5f8;border-color:#b6cfdb}.tag.accepted{background:#e3f3d4;border-color:#b9d88c}
+.rec{font-size:13.5px;background:#f3f7ee;border:1px solid #cfe0bd;border-radius:6px;padding:8px 10px;margin:8px 0 0}
+.altx{font-size:13.5px;color:var(--muted);margin:8px 0 0}
+
+.explain h3{margin:16px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:18px}.dialogbody{padding:6px 22px 20px}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.qa .qacard{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+.qa .qacard h3{margin:10px 0 4px}.qa .qacard h3:first-child{margin-top:0}.qa dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0 0 8px}.qa dt{color:var(--muted);font-size:13px}.qa dd{margin:0;overflow-wrap:anywhere}
+.qaindex{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.qawcard{text-align:left;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font:inherit;color:inherit;cursor:pointer}
+.qawcard[aria-pressed=true]{border-color:var(--olive);box-shadow:0 0 0 1px var(--olive) inset}
+.qachip{align-self:flex-start;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.qachip[data-s=pass]{background:#e3f3d4;color:#2f5a14}.qachip[data-s=issue]{background:#f6dede;color:var(--error)}.qachip[data-s=call],.qachip[data-s=partial]{background:#f4ecd9;color:var(--warn)}
+.qasteps{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.qasteps li{counter-increment:s;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:start}
+.qasteps li.done{border-color:#7fa85a}.qasteps input[type=checkbox]{width:22px;height:22px;margin:2px 0 0;accent-color:var(--olive)}
+.qabody{display:flex;flex-direction:column;gap:6px;min-width:0}.qan::before{content:"Step " counter(s);font-size:12px;color:var(--muted);font-weight:700}
+.qado,.qasee{margin:0}.qado::before{content:"Do  ";white-space:pre;font-size:12px;font-weight:700;color:var(--blue)}.qasee::before{content:"You should see  ";white-space:pre;font-size:12px;font-weight:700;color:var(--olive)}
+.qaverdict,.qatools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.qaverdict button{min-height:44px;padding:9px 15px;border:1px solid var(--line);border-radius:7px;background:var(--white);font:inherit;cursor:pointer}
+.qaverdict button[data-v=pass][aria-pressed=true]{background:#e3f3d4;border-color:#7fa85a}.qaverdict button[data-v=issue][aria-pressed=true]{background:#f6dede;border-color:var(--error)}.qaverdict button[data-v=call][aria-pressed=true]{background:#f4ecd9;border-color:var(--warn)}
+.qanotes{width:100%;min-height:84px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--white);font:inherit}
+.qaout{margin:8px 0 0;white-space:pre-wrap;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Filter Counts — project hub</strong><br><small>How a filter’s choices show their counts, on a desk and on a phone · drawn 2026-10-03 from the live coach and club Ledgers · D1–D6 accepted 2026-10-05 · built on dev 2026-10-05 · owner QA §263 passed 2026-10-05, 18/18 · committed fda3074d 2026-10-05</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Round 1 drawn 2026-10-03 on the live coach and club Ledgers; D1–D6 accepted 2026-10-05">Design</li>
+    <li class="stage done" title="FILTER_COUNTS_PLAN.md + PM brief, 2026-10-05">Plan</li>
+    <li class="stage done" title="Built on dev 2026-10-05: 15/15 browser checks, guard test, npm run verify:changed clean">Build</li>
+    <li class="stage done" title="/simplify (four lenses, six fixes) and /review (high-risk tier, four lenses, one fix, two refuted) 2026-10-05">Review</li>
+    <li class="stage done" title="Owner QA §263 PASSED 2026-10-05, 18/18 (all three walks)">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="themeToggle" aria-pressed="false">Showing warm · switch to dark</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Plan notes</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Screens">
+    <a href="#s-question" aria-current="page">1 · Two wordings, one cause</a>
+    <a href="#s-where">2 · Where the count lives</a>
+    <a href="#s-pill">3 · What a narrowed pill says</a>
+    <a href="#s-whole">4 · The whole screen</a>
+    <a href="#s-phone">5 · On a phone</a>
+    <a href="#s-club">6 · What the club’s numbers count</a>
+    <a href="#s-surfaces">7 · Every surface it touches</a>
+  </nav>
+  <div class="frame">
+
+    <!-- 1 · THE QUESTION -->
+    <section class="screen" id="s-question">
+      <div class="eyebrow">Screen 1 · decisions 1, 2 and 3</div>
+      <h1 tabindex="-1">One state, two wordings, and one cause</h1>
+      <p class="sub lead">The coach’s Ledger with Status narrowed to Actual and Scheduled. Every frame on this hub is the live page captured at true size; a “proposed” frame is the same page with the change applied in place, using the product’s own styles. Each numbered marker opens its decision.</p>
+
+      <div class="callout">
+        <h3>Before the options: the question is a little wider than the wording</h3>
+        <ul>
+          <li><strong>The two wordings have one cause.</strong> Five filters write the count into each choice’s <em>name</em> (“Actual (23)”). Everything that repeats the name then repeats the count, which is why a closed pill reads “Status · Actual (23)”, and why the phone sheet had to cut the count back off to say “Actual, Overdue”. Take the count out of the name and most of the wording question answers itself.</li>
+          <li><strong>The club’s numbers do not mean what the coach’s mean.</strong> On the coach’s Ledger a count says how many rows ticking that choice would show. On the club’s it counts the whole date window: it ignores the other filters and includes voided lines. “Expenses (7)” lists five rows. Moving that number to a nicer spot without fixing it would move a wrong number (screen 6, decision 5).</li>
+          <li><strong>Desk and phone already differ at rest, on purpose.</strong> A desk pill at rest shows only its name (ruled 2026-09-02); a phone row always says what it is set to (ruled 2026-10-02). So “must they read identically” is really “should they use the same words whenever both say something”. I recommend yes.</li>
+        </ul>
+      </div>
+
+      <div class="pair">
+        <div>
+          <div class="spec">
+            <div class="spectop"><span class="lbl before">Today</span><h3>Desk · two choices</h3></div>
+            <div class="scroller"><div class="shot" style="width:700px">
+              <img data-shot="dcs-two-A" src="filter-counts/dcs-two-A-warm.jpg" alt="The coach's Ledger filter row on a desk: Type, then a lit Status pill reading 2 selected, then Item, Date and Tags." width="700" height="130">
+              <button type="button" class="pin" style="left:238px;top:34px" data-d="D2" data-here="Status narrowed to Actual and Scheduled. The pill says how many choices are ticked, not which ones; to find out, the coach opens it.">2</button>
+            </div></div>
+          </div>
+          <div class="spec">
+            <div class="spectop"><span class="lbl before">Today</span><h3>Desk · one choice</h3></div>
+            <div class="scroller"><div class="shot" style="width:700px">
+              <img data-shot="dcs-one-A" src="filter-counts/dcs-one-A-warm.jpg" alt="The same row with Status narrowed to Actual alone: the pill reads Status Actual (23)." width="700" height="130">
+              <button type="button" class="pin" style="left:243px;top:34px" data-d="D1" data-here="Status narrowed to Actual alone. The pill shows the choice’s name, and because the count is written into the name, the count comes with it: Actual (23).">1</button>
+            </div></div>
+            <p class="caption">With one choice the count shows in the pill; with two it is gone. The count’s presence depends on how many are ticked.</p>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Phone · the same two choices</h3></div>
+          <div class="scroller"><div class="shot" style="width:390px">
+            <img data-shot="pcs-two" src="filter-counts/pcs-two-warm.jpg" alt="The coach's Ledger Filter sheet on a phone: rows for Type, Status reading Actual, Scheduled, Item, Date and Tags." width="390" height="844">
+            <button type="button" class="pin" style="left:330px;top:516px" data-d="D3" data-here="The phone row names both choices, without their counts. The desk pill for the same state says “2 selected”.">3</button>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · WHERE THE COUNT LIVES -->
+    <section class="screen" id="s-where" hidden>
+      <div class="eyebrow">Screen 2 · decision 1</div>
+      <h1 tabindex="-1">Where the count lives: in the name, or at the row’s end</h1>
+      <p class="sub lead">Option B moves each count out of the choice’s name to the end of its row, quiet and lined up, which is exactly how the Awards report’s filter already draws it. The numbers themselves do not change.</p>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Status</h3></div>
+          <div class="scroller"><div class="shot" style="width:700px">
+            <img data-shot="dcs-open-A" src="filter-counts/dcs-open-A-warm.jpg" alt="The Status list open on a desk: All, then Actual (23), Overdue (3) and Scheduled (9), the counts in brackets after each name." width="700" height="276">
+            <button type="button" class="pin" style="left:286px;top:150px" data-d="D1" data-here="Actual (23), Overdue (3), Scheduled (9): each count sits after a name of a different length, so the numbers do not line up, and the count is part of what the pill repeats when the list closes.">1</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed · B and C</span><h3>Coach · Status</h3></div>
+          <div class="scroller"><div class="shot" style="width:700px">
+            <img data-shot="dcs-open-B" src="filter-counts/dcs-open-B-warm.jpg" alt="The same list with each count at the end of its row: Actual 23, Overdue 3, Scheduled 9, the numbers in a quiet column." width="700" height="276">
+            <button type="button" class="pin fix" style="left:286px;top:150px" data-d="D1" data-here="The same three numbers, at each row’s end in the quiet ink, lined up. This is the Awards filter’s own style, so nothing new is drawn.">1</button>
+          </div></div>
+          <p class="caption"><span class="mk" data-k="re" data-note="The count was written into the choice’s name, “Actual (23)”. It moves to the row’s end as its own quiet number. Same number, same rule (rows that ticking it would show).">Restyled</span> the count · <span class="mk" data-k="un" data-note="The list, its order, the All row and the ticks are as today.">Unchanged</span> the list</p>
+        </div>
+      </div>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Club · Type (Date on All time)</h3></div>
+          <div class="scroller"><div class="shot" style="width:700px">
+            <img data-shot="dct-open-A" src="filter-counts/dct-open-A-warm.jpg" alt="The club's Type list open: Every type ticked, then Expenses (7), Income (1), Team allocations (5), Team support (3) and Transfers (1)." width="700" height="338">
+            <button type="button" class="pin" style="left:212px;top:148px" data-d="D1" data-here="The club’s Type list carries counts; the coach’s Type list does not. Both Ledgers were ruled to read alike, so whatever is decided here applies to both.">1</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed · B and C</span><h3>Club · Type</h3></div>
+          <div class="scroller"><div class="shot" style="width:700px">
+            <img data-shot="dct-open-B" src="filter-counts/dct-open-B-warm.jpg" alt="The club's Type list with each count at the row's end." width="700" height="338">
+            <button type="button" class="pin fix" style="left:212px;top:148px" data-d="D5" data-here="Placement only. The numbers here are still the club’s window counts, which screen 6 shows are not what ticking a choice lists. Decision 5 fixes what they count.">5</button>
+          </div></div>
+        </div>
+      </div>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Bills · Status</h3></div>
+          <div class="scroller"><div class="shot" style="width:700px">
+            <img data-shot="dbs-open-A" src="filter-counts/dbs-open-A-warm.jpg" alt="The Bills view's Status list: Outstanding (4), Overdue (2), Partly paid (0), Paid (7)." width="700" height="301">
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl alt">The cost of B</span><h3>Coach · Bills · Status</h3></div>
+          <div class="scroller"><div class="shot" style="width:700px">
+            <img data-shot="dbs-open-B" src="filter-counts/dbs-open-B-warm.jpg" alt="The same list with the counts in a column at the right: 4, 2, 0, 7." width="700" height="301">
+            <button type="button" class="pin alt" style="left:212px;top:206px" data-d="D1" data-here="A lined-up column of numbers invites adding them up. On Bills, a part-paid bill that is late counts under both Overdue and Partly paid (ruled 2026-08-20), so the column can add up to more than the rows. It is just as true in brackets today; a column makes it more tempting to check. The All row deliberately carries no total, and B keeps it that way.">1</button>
+          </div></div>
+          <p class="caption">Here Partly paid happens to be 0, so the overlap does not show; on a team with a late part-paid bill the four numbers add up to more than the bills listed.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · WHAT A NARROWED PILL SAYS -->
+    <section class="screen" id="s-pill" hidden>
+      <div class="eyebrow">Screen 3 · decision 2</div>
+      <h1 tabindex="-1">What a narrowed pill says</h1>
+      <p class="sub lead">Closed pills only. <strong>A</strong> is today. <strong>B</strong> drops the count from the pill but keeps “2 selected”. <strong>C</strong> names the choices, up to three, in the words the phone sheet already uses; four or more still reads “4 selected”. Each frame is the left part of the desk toolbar at true size.</p>
+
+      <h2>Coach · Status</h2>
+      <div class="matrix">
+        <div></div><div class="colhead">Today (A)</div><div class="colhead">Proposed</div>
+        <div class="rowhead">One choice<span>Actual</span></div>
+        <div class="cell"><div class="scroller"><div class="shot win" style="width:380px"><img data-shot="dcs-one-A" src="filter-counts/dcs-one-A-warm.jpg" alt="Status Actual (23)." width="700" height="130" style="width:700px;max-width:none"></div></div><p class="said">A: <b>Status · Actual (23)</b></p></div>
+        <div class="cell"><div class="scroller"><div class="shot win" style="width:380px"><img data-shot="dcs-one-B" src="filter-counts/dcs-one-B-warm.jpg" alt="Status Actual." width="700" height="130" style="width:700px;max-width:none"><button type="button" class="pin fix" style="left:214px;top:34px" data-d="D2" data-here="One choice reads its name alone. The 23 is in the open list, at the row’s end, where the coach chose it.">2</button></div></div><p class="said">B and C: <b>Status · Actual</b> <span class="mk" data-k="re" data-note="Was “Status · Actual (23)”. The count leaves the pill; it stays in the open list.">Restyled</span></p></div>
+        <div class="rowhead">Two choices<span>Actual, Scheduled</span></div>
+        <div class="cell"><div class="scroller"><div class="shot win" style="width:380px"><img data-shot="dcs-two-A" src="filter-counts/dcs-two-A-warm.jpg" alt="Status 2 selected." width="700" height="130" style="width:700px;max-width:none"></div></div><p class="said">A and B: <b>Status · 2 selected</b></p></div>
+        <div class="cell"><div class="scroller"><div class="shot win" style="width:380px"><img data-shot="dcs-two-C" src="filter-counts/dcs-two-C-warm.jpg" alt="Status Actual, Scheduled." width="700" height="130" style="width:700px;max-width:none"><button type="button" class="pin fix" style="left:284px;top:34px" data-d="D2" data-here="C names both choices, in the phone row’s words. 46px wider than “2 selected”.">2</button></div></div><p class="said">C: <b>Status · Actual, Scheduled</b> <span class="mk" data-k="re" data-note="Was “2 selected”. Names up to three choices, as the phone sheet’s row already does; four or more still reads “4 selected”.">Restyled</span></p></div>
+      </div>
+
+      <h2>Club · Type</h2>
+      <div class="matrix">
+        <div></div><div class="colhead">Today (A)</div><div class="colhead">Proposed</div>
+        <div class="rowhead">One choice<span>Expenses</span></div>
+        <div class="cell"><div class="scroller"><div class="shot win" style="width:380px"><img data-shot="dct-one-A" src="filter-counts/dct-one-A-warm.jpg" alt="Type Expenses (7)." width="700" height="114" style="width:700px;max-width:none"></div></div><p class="said">A: <b>Type · Expenses (7)</b></p></div>
+        <div class="cell"><div class="scroller"><div class="shot win" style="width:380px"><img data-shot="dct-one-B" src="filter-counts/dct-one-B-warm.jpg" alt="Type Expenses." width="700" height="114" style="width:700px;max-width:none"></div></div><p class="said">B and C: <b>Type · Expenses</b> <span class="mk" data-k="re" data-note="Was “Type · Expenses (7)”, a count that screen 6 shows lists five rows.">Restyled</span></p></div>
+        <div class="rowhead">Three choices<span>the longest names on either Ledger</span></div>
+        <div class="cell"><div class="scroller"><div class="shot win" style="width:380px"><img data-shot="dct-three-A" src="filter-counts/dct-three-A-warm.jpg" alt="Type 3 selected." width="700" height="114" style="width:700px;max-width:none"></div></div><p class="said">A and B: <b>Type · 3 selected</b></p></div>
+        <div class="cell"><div class="scroller"><div class="shot win" style="width:380px"><img data-shot="dct-three-C" src="filter-counts/dct-three-C-warm.jpg" alt="Type Expenses, Income, Team allocations." width="700" height="114" style="width:700px;max-width:none"><button type="button" class="pin alt" style="left:306px;top:30px" data-d="D2" data-here="The worst case on either Ledger: three long names make a 286px pill, 152px wider than “3 selected”. It still fits the club’s filter line at 1280. If that is too wide, the alternative is “Expenses, Income +1”.">2</button></div></div><p class="said">C: <b>Type · Expenses, Income, Team allocations</b></p></div>
+      </div>
+    </section>
+
+    <!-- 4 · THE WHOLE SCREEN -->
+    <section class="screen" id="s-whole" hidden>
+      <div class="eyebrow">Screen 4 · decision 2, its cost</div>
+      <h1 tabindex="-1">The whole screen, with three filters narrowed</h1>
+      <p class="sub lead">The coach’s Ledger on a 1024px desk (the narrowest desk, where the sidebar still shows) with Type, Status and Tags all narrowed. Option C’s names make the pills wider; the question is whether the filter line still fits on one line.</p>
+      <div class="figures">
+        <div class="fig"><div class="k">Filter line height</div><div class="v">104px → 104px</div><div class="n">Still one line of pills at 1024 and at 1280</div></div>
+        <div class="fig"><div class="k">Pill widths</div><div class="v">+51 · +46 · −19</div><div class="n">Type, Status and Tags. Tags gets narrower: “Spring classic (2)” loses its count</div></div>
+        <div class="fig"><div class="k">Room left at 1024</div><div class="v">51px</div><div class="n">The line is 740px; the pills reach 689px</div></div>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Ledger · 1024</h3></div>
+        <div class="scroller"><div class="shot" style="width:1024px">
+          <img data-shot="dwhole-1024-A" src="filter-counts/dwhole-1024-A-warm.jpg" alt="The coach's Ledger at 1024px with Type reading 2 selected, Status 2 selected and Tags Spring classic (2), then the tagged total and three rows." width="1024" height="900">
+          <button type="button" class="pin" style="left:395px;top:277px" data-d="D2" data-here="Two of the three narrowed pills say “2 selected”. The tagged total under them names Spring classic in words; the pills above do not say what they are narrowed to.">2</button>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed · C</span><h3>Coach · Ledger · 1024</h3></div>
+        <div class="scroller"><div class="shot" style="width:1024px">
+          <img data-shot="dwhole-1024-C" src="filter-counts/dwhole-1024-C-warm.jpg" alt="The same screen with the pills reading Type Expenses, Refunds, Status Actual, Scheduled and Tags Spring classic, all on one line." width="1024" height="900">
+          <button type="button" class="pin fix" style="left:640px;top:277px" data-d="D2" data-here="Type · Expenses, Refunds; Status · Actual, Scheduled; Tags · Spring classic. The screen reads its own state without opening anything, on one line.">2</button>
+        </div></div>
+        <p class="caption"><span class="mk" data-k="un" data-note="The list, the tagged total and the toolbar’s first line are as today. Only the three pills’ words change.">Unchanged</span> everything below the filter line.</p>
+      </div>
+    </section>
+
+    <!-- 5 · ON A PHONE -->
+    <section class="screen" id="s-phone" hidden>
+      <div class="eyebrow">Screen 5 · decisions 1, 3 and 6</div>
+      <h1 tabindex="-1">On a phone: the sheet’s rows keep their words; the choices move their counts</h1>
+      <p class="sub lead">The Filter sheet with Status opened (coach) and Type opened (club). The row values already name the choices without counts, so only the open choices change.</p>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Status opened</h3></div>
+          <div class="scroller"><div class="shot" style="width:390px">
+            <img data-shot="pcs-A" src="filter-counts/pcs-A-warm.jpg" alt="The coach's Filter sheet: Type All, Status Actual, Overdue opened to show All, Actual (23), Overdue (3), Scheduled (9), then Item, Date and Tags." width="390" height="844">
+            <button type="button" class="pin" style="left:300px;top:466px" data-d="D1" data-here="The choices are the desk list’s own rows, so they carry “(23)” in the name, while the row above them, “Actual, Overdue”, has had the counts cut off.">1</button>
+            <button type="button" class="pin alt" style="left:300px;top:322px" data-d="D6" data-here="The coach’s Type reads “All”. The club’s Type reads “Every type”, as every other filter on both Ledgers does (Every budget item, Every tag, Every category).">6</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed · B and C</span><h3>Coach · Status opened</h3></div>
+          <div class="scroller"><div class="shot" style="width:390px">
+            <img data-shot="pcs-B" src="filter-counts/pcs-B-warm.jpg" alt="The same sheet with each count at the end of its row: Actual 23, Overdue 3, Scheduled 9." width="390" height="844">
+            <button type="button" class="pin fix" style="left:300px;top:466px" data-d="D3" data-here="The choices read as the desk list does, count at the end. The row above (“Actual, Overdue”) and the desk pill (option C) now use the same words for the same state.">3</button>
+          </div></div>
+          <p class="caption"><span class="mk" data-k="re" data-note="The counts move to the end of each choice, matching the desk list.">Restyled</span> the choices · <span class="mk" data-k="un" data-note="The sheet, its rows, their values and Reset filters are exactly as built on 2026-10-02.">Unchanged</span> the sheet</p>
+        </div>
+      </div>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Club · Type opened</h3></div>
+          <div class="scroller"><div class="shot" style="width:390px">
+            <img data-shot="pct-A" src="filter-counts/pct-A-warm.jpg" alt="The club's Filter sheet with Type opened: Every type, Expenses (7), Income (1), Team allocations (5), Team support (3), Transfers (1)." width="390" height="844">
+            <button type="button" class="pin alt" style="left:300px;top:291px" data-d="D6" data-here="“Every type” here; “All” on the coach’s Type. One word for one state is a standing rule.">6</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed · B and C</span><h3>Club · Type opened</h3></div>
+          <div class="scroller"><div class="shot" style="width:390px">
+            <img data-shot="pct-B" src="filter-counts/pct-B-warm.jpg" alt="The same sheet with the counts at the row ends." width="390" height="844">
+            <button type="button" class="pin fix" style="left:300px;top:384px" data-d="D5" data-here="Placement fixed here; what the number counts is decision 5.">5</button>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · WHAT THE CLUB'S NUMBERS COUNT -->
+    <section class="screen" id="s-club" hidden>
+      <div class="eyebrow">Screen 6 · decision 5 · found while drawing</div>
+      <h1 tabindex="-1">The club’s numbers count something else</h1>
+      <p class="sub lead">On the coach’s Ledger each number is a promise about the list: tick it and that many rows show, given the other filters (owner ruling 2026-08-26). The club’s Ledger counts every line in the date window instead, before any other filter and including voided lines, which the book hides until Status asks for them.</p>
+      <div class="figures">
+        <div class="fig"><div class="k">Expenses</div><div class="v">7 → 5 rows</div><div class="n">Two voided expenses are counted but not listed</div></div>
+        <div class="fig"><div class="k">Status with Expenses on</div><div class="v">12 · 1 · 4</div><div class="n">Posted, Pending, Void for the whole book, not for expenses</div></div>
+        <div class="fig"><div class="k">Ticking “All” on Status</div><div class="v">Void stays hidden</div><div class="n">It puts back Posted and Pending</div></div>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl before">Today</span><h3>Club · Type set to Expenses (7), Date on All time</h3></div>
+        <div class="scroller"><div class="shot" style="width:1000px">
+          <img data-shot="dcl-expenses" src="filter-counts/dcl-expenses-warm.jpg" alt="The club's Ledger with Type set to Expenses (7): the pill reads Expenses (7) and the list beside the open panel holds five expense rows." width="1000" height="311">
+          <button type="button" class="pin" style="left:150px;top:36px" data-d="D5" data-here="The pill says 7; the list holds 5. The other two are voided expenses, counted by the window but hidden by Status, which rests on Posted and Pending.">5</button>
+          <button type="button" class="pin" style="left:900px;top:190px" data-d="D5" data-here="Five rows: Diamond permits — spring block, Helmets and catcher gear, Practice balls, Diamond permit, Umpires’ association fees (pending).">5</button>
+        </div></div>
+      </div>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Club · Status at rest</h3></div>
+          <div class="scroller"><div class="shot" style="width:700px">
+            <img data-shot="dcl-status-rest" src="filter-counts/dcl-status-rest-warm.jpg" alt="The club's Status list at rest: All unticked, Posted (12) and Pending (1) ticked, Void (4) unticked." width="700" height="273">
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Club · Status after ticking All</h3></div>
+          <div class="scroller"><div class="shot" style="width:700px">
+            <img data-shot="dcl-status-all" src="filter-counts/dcl-status-all-warm.jpg" alt="After ticking All: the list looks the same, All unticked, Posted and Pending ticked, Void unticked." width="700" height="273">
+            <button type="button" class="pin" style="left:286px;top:104px" data-d="D5" data-here="Ticking All puts the list back to Posted and Pending. All never ticks, and the four voided lines stay hidden. A treasurer asking for everything does not get it.">5</button>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · EVERY SURFACE -->
+    <section class="screen" id="s-surfaces" hidden>
+      <div class="eyebrow">Screen 7 · decisions 4 and 6 · what a build would touch</div>
+      <h1 tabindex="-1">Every surface the ruling would change</h1>
+      <p class="sub lead">Six filters write their counts into the choice names, one already puts them at the row’s end, and five have no counts. Option C changes how every multi-choice pill reads when narrowed, so all twelve are listed.</p>
+      <div class="tablewrap"><table class="kept">
+        <thead><tr><th>Surface</th><th>Counts today</th><th>Where the count goes (D1)</th><th>Narrowed pill (D2, option C)</th><th>Other</th></tr></thead>
+        <tbody>
+          <tr><td>Coach Ledger · Timeline · Status</td><td>In the name</td><td>Row’s end</td><td>Names up to three</td><td>—</td></tr>
+          <tr><td>Coach Ledger · Bills and Payment schedule · Status</td><td>In the name</td><td>Row’s end</td><td>Names up to three</td><td>Numbers overlap on purpose (Partly paid)</td></tr>
+          <tr><td>Coach Ledger · Tags (every view)</td><td>In the name</td><td>Row’s end</td><td>Names up to three</td><td>—</td></tr>
+          <tr><td>Coach Ledger · Type</td><td>None</td><td>—</td><td>Names up to three</td><td>“All” → “Every type” (D6)</td></tr>
+          <tr><td>Coach Ledger · Item</td><td>None</td><td>—</td><td>Names up to three</td><td>—</td></tr>
+          <tr><td>Club Ledger · Type</td><td>In the name</td><td>Row’s end</td><td>Names up to three</td><td>What it counts (D5)</td></tr>
+          <tr><td>Club Ledger · Status</td><td>In the name</td><td>Row’s end</td><td>Names up to three</td><td>What it counts, and “All” (D5)</td></tr>
+          <tr><td>Club Ledger · Category</td><td>None</td><td>—</td><td>Names up to three</td><td>—</td></tr>
+          <tr><td>Club · Payment requests · Team</td><td>None</td><td>—</td><td>Names up to three</td><td>—</td></tr>
+          <tr><td>Practice library · Tags (Drills, Templates, Circuits, the picker and the panel beside a plan)</td><td>In the name</td><td>Row’s end (D4)</td><td>Names up to three</td><td>One control, five places</td></tr>
+          <tr><td>Insights · Awards · Award</td><td>Row’s end already</td><td>Unchanged</td><td>Names up to three (D4)</td><td>—</td></tr>
+          <tr><td>The phone Filter sheet’s rows</td><td>Cut off</td><td>—</td><td>Unchanged words</td><td>Nothing left to cut off</td></tr>
+        </tbody>
+      </table></div>
+      <p class="sub" style="max-width:860px">Also touched: the coach’s Ledger help answer and its search terms, which quote “2 selected” and explain the overlapping counts. Not touched: the date pills and the single-choice pills (View, Book, Group by), which have no counts and name their one choice already.</p>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Practice library · Drills · Tags</h3></div>
+          <div class="scroller"><div class="shot" style="width:988px">
+            <img data-shot="dlib-A" src="filter-counts/dlib-A-warm.jpg" alt="The Drills tab's search box and Tags pill, open: All, No tags (2)." width="988" height="176">
+            <button type="button" class="pin" style="left:750px;top:124px" data-d="D4" data-here="The practice library’s Tags list writes its counts into the names too: “No tags (2)”, and each tag the same way. The test team has no tagged drills, so only “No tags” shows.">4</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>Practice library · Drills · Tags</h3></div>
+          <div class="scroller"><div class="shot" style="width:988px">
+            <img data-shot="dlib-B" src="filter-counts/dlib-B-warm.jpg" alt="The same Tags list with the count at the row's end: No tags 2." width="988" height="176">
+          </div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Decisions · round 1 · drawn 2026-10-03 · ruled 2026-10-05</div>
+  <h1>Six decisions, all accepted as recommended</h1>
+  <p class="sub">Owner, 2026-10-05: “I agree with all of your recommendations.” Each marker on the Mockup tab opens its decision here.</p>
+
+  <div class="decisionrow" id="D1"><div class="dhead"><h3>D1 · Where the count lives: at the end of its row, not in the name</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>Every filter that shows counts shows them as a quiet number at the end of each choice’s row, in the open list on a desk and in the phone sheet alike. The count is no longer part of the choice’s name, so nothing that repeats the name repeats the count.</p>
+    <p class="rec"><strong>Recommended.</strong> The count is there to help a coach choose, so it belongs where they choose. Lined up at the row’s end it reads faster than brackets after names of different lengths. The Awards filter already does this, so it is one style, not a new one. The cost: a lined-up column invites adding up, and on Bills the numbers overlap on purpose (a late part-paid bill counts twice). The All row keeps no total, so nothing on screen claims they should sum.</p>
+    <p class="altx">Alternative: keep the count in the name (today, A). It keeps the closed pill’s “(23)”, which tells a coach how many rows they are looking at, but the list itself shows that, and the phone sheet would keep cutting the count off.</p></div>
+
+  <div class="decisionrow" id="D2"><div class="dhead"><h3>D2 · A narrowed pill names its choices, up to three</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>A pill narrowed to one, two or three choices names them: “Status · Actual, Scheduled”. Four or more reads “4 selected”. This is the rule the phone sheet’s rows already follow, now used on the desk pill too (option C). A pill at rest still shows only its name.</p>
+    <p class="rec"><strong>Recommended.</strong> “2 selected” tells the coach that Status is narrowed, not how; to find out they open the pill. Names answer it in place. The cost is width, measured on the live page: a pill grows 46 to 51px for two names and 152px in the worst case (three long club types). With three filters narrowed at 1024px the coach’s filter line still fits one line, with 51px to spare.</p>
+    <p class="altx">Alternatives: B, the pill names a single choice and keeps “2 selected” for more (no width cost, still unreadable at two); or names with a tail, “Expenses, Income +1”, which caps the width but names fewer.</p></div>
+
+  <div class="decisionrow" id="D3"><div class="dhead"><h3>D3 · Desk and phone use the same words whenever both say something</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>A narrowed desk pill and the matching phone row read identically (“Actual, Scheduled”), and a choice reads identically in both lists (“Actual … 23”). The one difference stays: at rest the desk pill shows only its name, while the phone row always says what it is set to.</p>
+    <p class="rec"><strong>Recommended.</strong> One spelling for one state is already a standing rule for words; this extends it to how a state is summed up. The difference at rest is deliberate on both sides: a quiet pill keeps a desk toolbar calm (ruled 2026-09-02), and the phone sheet is where a coach reads the whole state at once (ruled 2026-10-02). With D1 and D2 the two readings are one function, so they cannot drift apart again.</p>
+    <p class="altx">Alternative: let each keep its own rule (today). Cheaper, and it is how the two drifted apart within a day of the phone sheet shipping.</p></div>
+
+  <div class="decisionrow" id="D4"><div class="dhead"><h3>D4 · Awards and the practice library follow the same rule</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>The practice library’s Tags filter moves its counts to the row’s end (one control, used on the Drills, Templates and Circuits tabs, the picker and the panel beside a plan). The Awards filter already does; under D2 its narrowed pill names its awards too.</p>
+    <p class="rec"><strong>Recommended.</strong> It is the same control everywhere, so leaving one surface on the old style keeps two looks for one thing. The practice library was not on the list this project started from; it was found by searching for every filter that writes a count into a name.</p>
+    <p class="altx">Alternative: change the Ledgers only and leave the library for when its screens are next worked on. Practice screens are being worked on in parallel, so this is a fair choice if the timing matters more.</p></div>
+
+  <div class="decisionrow" id="D5"><div class="dhead"><h3>D5 · The club’s numbers count what ticking them would show, and “All” means all</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>On the club’s Ledger each count becomes what the coach’s already is: the rows you would see if you ticked that choice, with the other filters as they are, and a voided line counted only where Void is shown. Ticking All on Status shows everything, voided lines included.</p>
+    <p class="rec"><strong>Recommended, in the same build as D1.</strong> Today “Expenses (7)” lists five rows, and Status shows whole-book numbers while Type is narrowed, so the numbers stop being a promise about the list. Moving them without fixing them would move a wrong number. “All” on Status currently snaps back to Posted and Pending, so a treasurer asking for every line, the case an auditor asks about, never gets the voided ones that way.</p>
+    <p class="altx">Alternative: fix the numbers on their own, later. They are wrong regardless of where they sit, so this is a defect either way; the only question is whether it rides with this build.</p></div>
+
+  <div class="decisionrow" id="D6"><div class="dhead"><h3>D6 · The coach’s Type reads “Every type”, not “All”</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>The coach’s Type filter at rest reads “Every type”, matching the club’s Type and every other filter on both Ledgers (Every budget item, Every tag, Every category). Status keeps “All”, on both Ledgers.</p>
+    <p class="rec"><strong>Recommended.</strong> One word for one state is a standing rule, and the phone sheet now shows the two Ledgers’ Type rows side by side in a coach’s and a treasurer’s hands. A one-word change.</p>
+    <p class="altx">Alternative: leave it. It is the smallest of the six and could ride with whichever build touches the coach’s Type next.</p></div>
+</section>
+
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Filter Counts</h1>
+  <h2>What changes for a coach or treasurer</h2>
+  <p>When a filter list is open, each choice’s count sits at the end of its row in a quiet column, on a desk and on a phone, the way the Awards filter already shows it. When a filter is narrowed, its pill names what it is narrowed to (“Status · Actual, Scheduled”) instead of “2 selected”, in the same words the phone’s Filter sheet uses. On the club’s Ledger, the counts start meaning what they mean on the coach’s: tick a choice and that many rows show. “All” on the club’s Status shows every line, voided ones included.</p>
+  <h2>Why it matters</h2>
+  <p>Today one state reads two ways (“2 selected” on a desk, “Actual, Scheduled” on a phone), and a desk pill only says which choice is on when exactly one is. On the club’s Ledger the numbers disagree with the list under them (“Expenses (7)” above five rows), which undermines the screen a treasurer reconciles from.</p>
+  <h2>Customer impact</h2>
+  <p>Every coach who filters their Ledger, and every club treasurer. Small per visit, but these are the money screens, where a number that does not match the list costs trust. Nothing is added or removed; words and one placement change, and the club’s numbers are corrected.</p>
+  <h2>Priority</h2>
+  <p>Low effort, moderate value. The club’s count defect is the urgent part: it is live on the club’s Ledger, which is still before customers.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A narrowed filter can be read without opening it, at every width.</li>
+    <li>The desk pill, the phone row and the open list never show the same state in different words.</li>
+    <li>On both Ledgers, ticking a choice shows exactly the number of rows it promised.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Plan notes · for the build session</div>
+  <h1>Filter Counts — what a build would change</h1>
+  <div class="note">Mockups only so far; no product code changed. These notes are a starting point for the plan, written from the code as it stood on 2026-10-03.</div>
+  <h2>The shared control</h2>
+  <ul>
+    <li><code>components/coaches/MultiSelectDropdown.tsx</code> already supports a per-option <code>count</code> (drawn by <code>.multiSelectCount</code> in <code>components/shared/FilterPill.module.css</code>). D1 = pass <code>count</code> at the call sites and stop writing <code>(n)</code> into labels; then <code>bareLabel</code> has nothing to strip and goes.</li>
+    <li>D2/D3 = one summary function for the pill and the sheet row (today the row has its own: up to three names, else “N selected”). The pill’s <code>restQuiet</code> behaviour is unchanged.</li>
+  </ul>
+  <h2>Call sites (D1)</h2>
+  <ul>
+    <li>Coach Ledger, <code>app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx</code>: Timeline Status, Bills/Payment schedule Status, and the Tags options built in <code>tagFacts</code> (the comment there says counts ride the label “one family, one look” — that reasoning flips with D1).</li>
+    <li>Club Ledger, <code>app/[orgSlug]/admin/accounting/ledger/page.tsx</code>: Type and Status.</li>
+    <li>Practice library, <code>components/coaches/LibraryRow.tsx</code> <code>LibraryFilterBar</code> (D4).</li>
+    <li>Awards, <code>.../history/awards/panel.tsx</code>: already passes <code>count</code>.</li>
+  </ul>
+  <h2>The club’s numbers (D5)</h2>
+  <ul>
+    <li><code>lib/club-ledger-read.ts</code>: <code>typeCounts</code> are taken over every line in the window (all statuses, any category); <code>counts.status</code> comes from <code>bookWindow</code> in <code>lib/club-money-figures.ts</code> before Type and Category apply. Match the coach’s rule: each facet counted over the rows the other facets admit, voided lines only where Void is in the status set.</li>
+    <li>The page’s Status <code>onChange</code> maps an empty selection back to the rest set, and the route reads an empty status as the rest set, so “All” cannot be expressed. Send all three statuses for All.</li>
+  </ul>
+  <h2>Copy (D6) and help</h2>
+  <ul>
+    <li>Coach Type pill: <code>allLabel="Every type"</code>.</li>
+    <li>The coach’s Ledger help answer and its keywords quote “2 selected” and explain the overlapping counts (<code>lib/help-content/coaches.tsx</code>, the money section). Run <code>/docs</code> after the build.</li>
+  </ul>
+  <h2>Formatting check (the portal’s written rules)</h2>
+  <ul>
+    <li>Figures sit right and tabular (the table standard’s rule for numbers); the count uses the Awards count’s quiet ink, so no new style is drawn.</li>
+    <li>One spelling for one state (the 2026-08-24 rule) is the basis of D3 and D6.</li>
+    <li>A lit pill keeps the olive working tint (quiet at rest, 2026-09-02); nothing here changes the tint or the pill’s height and tap floor.</li>
+  </ul>
+  <h2>Guards and checks</h2>
+  <ul>
+    <li><code>tests/unit/ledger-phone-filter-guard.test.ts</code> pins the sheet; check whether it asserts the row summary before changing it.</li>
+    <li>A unit test for the club facet counts (Expenses with voided expenses in the window).</li>
+    <li>Probe recipe: <code>.probe/fc/shots.mjs</code> (desk 1280/1024, phone 390, warm and dark).</li>
+  </ul>
+</section>
+
+<section id="hub-qa" class="docpage qa" hidden>
+  <div class="eyebrow">Owner QA · §263 · Coaches portal + Club accounting · Filter Counts</div>
+  <h1>A filter’s count at its row’s end; a narrowed filter names its choices</h1>
+  <p class="sub">Three walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat.</p>
+  <div class="qacard">
+    <h3>Sign in as</h3>
+    <dl>
+      <dt>Where</dt><dd>http://localhost:3000/auth/login (restart the dev server first: this build added new files)</dd>
+      <dt>Coach (W1, W2, W3 step 6)</dt><dd>uat-coach@uat-test-org.local (password: <code>UAT_COACH_PASSWORD</code> in <code>.env.local</code>) · <b>UAT Test Team</b>, UAT Rep Club. The account may land on another team: switch first.</dd>
+      <dt>Club (W3)</dt><dd>uat-club-treasurer@uat-rep-club.local (password: <code>UAT_REP_CLUB_TREASURER_PASSWORD</code>) · UAT Rep Club</dd>
+    </dl>
+    <p class="meta"><b>What the walks change:</b> nothing in the database. Filters are not remembered except the coach’s date range, as before.</p>
+  </div>
+  <div class="qaindex" role="group" aria-label="Walks">
+    <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · The coach’s Ledger on a desk</b><span class="meta">Counts at the row end, names in the pill, Every type.</span><span class="qachip" data-chip="w1"></span></button>
+    <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · The coach’s Ledger on a phone</b><span class="meta">The sheet uses the pill’s words.</span><span class="qachip" data-chip="w2"></span></button>
+    <button type="button" class="qawcard" data-walk="w3" aria-pressed="false"><b>W3 · The club’s Ledger, and the practice library</b><span class="meta">Numbers that match the list; All means all.</span><span class="qachip" data-chip="w3"></span></button>
+  </div>
+    <div class="qawalk" id="w1">
+      <h2>W1 · The coach’s Ledger on a desk</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>On a desk, a filter’s choices show their counts at the end of each row, and a narrowed filter names what it is set to instead of “2 selected”.</p>
+        <h3>It passes when</h3><p>Every count sits at its row’s end with no brackets; a narrowed pill names its choices; Type reads Every type at rest; the filter line stays one line.</p>
+        <h3>Not in this walk</h3><p>The phone (W2) and the club (W3).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a desk, sign in as the coach, switch to <b>UAT Test Team</b> and open <b>Money → Ledger</b> (View <b>Timeline</b>).</p><p class="qasee">The filter line reads <b>Type · Status · Item · Date · Tags</b>, each showing only its name (none is narrowed yet).</p></div></li>
+        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Status</b>.</p><p class="qasee">All, then Actual, Overdue and Scheduled, each with its number at the <b>end of its row</b> in a quiet colour, the numbers lined up. No brackets after the names. Actual and Overdue are ticked.</p></div></li>
+        <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Untick <b>Overdue</b>, then close the list.</p><p class="qasee">The pill reads <b>Status · Actual</b>, lit, with no number in it.</p></div></li>
+        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Open Status again and tick <b>Scheduled</b>.</p><p class="qasee">The pill reads <b>Status · Actual, Scheduled</b> (it used to read “2 selected”).</p></div></li>
+        <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Type</b>.</p><p class="qasee">The first choice reads <b>Every type</b> (it used to read All).</p></div></li>
+        <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Tick <b>Expenses</b> and <b>Refunds</b>, close the list, and narrow <b>Tags</b> to one tag.</p><p class="qasee">Type reads <b>Type · Expenses, Refunds</b> and Tags names its tag. All five filters are still on one line. In a narrow window a long value ends in “…” rather than spilling past the line.</p></div></li>
+        <li><input type="checkbox" id="w1s7" aria-label="W1 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Switch View to <b>Bills</b> and open <b>Status</b>.</p><p class="qasee">Outstanding, Overdue, Partly paid and Paid, each with its number at the row’s end. (A late part-paid bill counts under Overdue and Partly paid, so the numbers can add up to more than the bills listed — as before.)</p></div></li>
+        <li><input type="checkbox" id="w1s8" aria-label="W1 step 8"><div class="qabody"><span class="qan"></span><p class="qado">Open the Ledger’s help (the ? at the top) and find the Timeline’s filters.</p><p class="qasee">A sentence says each choice shows how many lines ticking it would show, and that a narrowed dropdown names what it is set to. Then switch back to Timeline and put the filters back (re-tick Actual and Overdue; clear Type and Tags).</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W1 verdict">
+        <button type="button" data-w="w1" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w1" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w1" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w1"></span>
+      </div>
+      <label class="meta" for="w1notes">Notes for W1</label>
+      <textarea id="w1notes" class="qanotes" data-notes="w1"></textarea>
+    </div>
+    <div class="qawalk" id="w2" hidden>
+      <h2>W2 · The coach’s Ledger on a phone</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>The phone’s Filter sheet uses the same words as the desk pill, and its open choices show their counts the same way.</p>
+        <h3>It passes when</h3><p>The sheet’s rows read Every type and Actual, Overdue at rest; open choices carry their number at the row’s end; a narrowed row reads the same words as the desk pill.</p>
+        <h3>Not in this walk</h3><p>The desk (W1) and the club (W3).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone (or a window about 390px wide), sign in as the coach on <b>UAT Test Team</b>, open <b>Money → Ledger</b> and tap <b>Filter</b>.</p><p class="qasee">The rows read Type <b>Every type</b> · Status <b>Actual, Overdue</b> · Item · Date · Tags.</p></div></li>
+        <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Status</b>.</p><p class="qasee">Its choices open in place, each with its number at the end of its row; no brackets.</p></div></li>
+        <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Untick <b>Overdue</b> and tick <b>Scheduled</b>.</p><p class="qasee">The Status row reads <b>Actual, Scheduled</b> in the lit colour — the same words the desk pill uses in W1 step 4.</p></div></li>
+        <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Reset filters</b>.</p><p class="qasee">The sheet closes and the button reads a quiet Filter; opened again, Status reads Actual, Overdue.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W2 verdict">
+        <button type="button" data-w="w2" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w2" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w2" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w2"></span>
+      </div>
+      <label class="meta" for="w2notes">Notes for W2</label>
+      <textarea id="w2notes" class="qanotes" data-notes="w2"></textarea>
+    </div>
+    <div class="qawalk" id="w3" hidden>
+      <h2>W3 · The club’s Ledger, and the practice library</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>On the club’s Ledger every number beside a choice is what ticking it would list, and All on Status shows every line, voided ones included. The practice library’s Tags follows the same style.</p>
+        <h3>It passes when</h3><p>The number beside a Type equals the lines it lists; Status’s numbers follow the other filters; All ticks and shows voided lines; the export still covers every entry in the period; the library’s counts sit at the row’s end.</p>
+        <h3>Not in this walk</h3><p>The coach’s Ledger (W1, W2).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w3s1" aria-label="W3 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a desk, sign in as the club treasurer, open <b>Accounting → Ledger</b> and set <b>Date</b> to <b>All time</b>.</p><p class="qasee">Type, Status and Category show only their names; Date reads All time.</p></div></li>
+        <li><input type="checkbox" id="w3s2" aria-label="W3 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Type</b>, note the number beside <b>Expenses</b>, then tick Expenses.</p><p class="qasee">Each choice’s number is at its row’s end. The list now holds <b>exactly as many lines as that number</b> (before this change the number also counted voided expenses the list hid).</p></div></li>
+        <li><input type="checkbox" id="w3s3" aria-label="W3 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Status</b>.</p><p class="qasee">Posted and Pending’s numbers add up to the lines listed; Void’s number is how many voided expenses there are.</p></div></li>
+        <li><input type="checkbox" id="w3s4" aria-label="W3 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Tick <b>All</b>.</p><p class="qasee">All ticks. The voided expenses appear, struck through with a VOID chip, and the list holds Posted + Pending + Void lines. The pill reads <b>Status · All</b>, lit.</p></div></li>
+        <li><input type="checkbox" id="w3s5" aria-label="W3 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Export</b>.</p><p class="qasee">It still says <b>Every entry in the period, not just what is on screen</b>, with the same number of entries whatever the filters say. Close it and put Type and Status back.</p></div></li>
+        <li><input type="checkbox" id="w3s6" aria-label="W3 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Sign in as the coach and open <b>Practice plans → Drills</b>; open <b>Tags</b>.</p><p class="qasee">Each tag (and No tags) carries its number at the row’s end; no brackets.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W3 verdict">
+        <button type="button" data-w="w3" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w3" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w3" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w3"></span>
+      </div>
+      <label class="meta" for="w3notes">Notes for W3</label>
+      <textarea id="w3notes" class="qanotes" data-notes="w3"></textarea>
+    </div>
+  <div class="qacard">
+    <h3>Paste-back</h3>
+    <div class="qatools"><button type="button" class="button" id="qaBuildOne">Summary of this walk</button><button type="button" class="button" id="qaBuildAll">Summary of all three</button><button type="button" class="button" id="qaCopy">Copy</button></div>
+    <pre class="qaout" id="qaOut" aria-live="polite"></pre>
+  </div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody explain" id="dialogbody"></div></dialog>
+
+<script>
+/* Navigation: the hub tabs, the screen walk, and the warm/dark switch. Kept apart from the explanations
+   below so a slip in one cannot take the other down. */
+(function () {
+  var HUBS = ['mockup', 'decisions', 'brief', 'plan', 'qa'];
+  var tabs = document.querySelectorAll('.hubtabs button');
+  function showHub(name) {
+    tabs.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.hub === name)); });
+    HUBS.forEach(function (n) { document.getElementById('hub-' + n).hidden = n !== name; });
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { showHub(b.dataset.hub); window.scrollTo(0, 0); }); });
+  window.__showHub = showHub;
+
+  var links = document.querySelectorAll('.walk a');
+  var screens = document.querySelectorAll('#hub-mockup .screen');
+  function showScreen(id, focus) {
+    if (!document.getElementById(id)) id = 's-question';
+    screens.forEach(function (s) { s.hidden = s.id !== id; });
+    links.forEach(function (a) { if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    if (focus) { var h = document.querySelector('#' + id + ' h1'); if (h) h.focus({ preventScroll: true }); }
+  }
+  links.forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var id = a.getAttribute('href').slice(1);
+      showHub('mockup'); showScreen(id, true);
+      try { history.replaceState(null, '', '#' + id); } catch (err) {}
+    });
+  });
+  var start = (location.hash || '').slice(1);
+  if (/^s-/.test(start)) showScreen(start, false);
+  else if (HUBS.indexOf(start) > 0) showHub(start);
+
+  var theme = 'warm';
+  try { theme = localStorage.getItem('fc-theme') || 'warm'; } catch (err) {}
+  var toggle = document.getElementById('themeToggle');
+  function applyTheme(t) {
+    theme = t;
+    document.querySelectorAll('img[data-shot]').forEach(function (img) { img.src = 'filter-counts/' + img.dataset.shot + '-' + t + '.jpg'; });
+    toggle.textContent = t === 'dark' ? 'Showing dark · switch to warm' : 'Showing warm · switch to dark';
+    toggle.setAttribute('aria-pressed', String(t === 'dark'));
+    try { localStorage.setItem('fc-theme', t); } catch (err) {}
+  }
+  toggle.addEventListener('click', function () { applyTheme(theme === 'dark' ? 'warm' : 'dark'); });
+  if (theme !== 'warm') applyTheme(theme);
+})();
+</script>
+<script>
+/* Explanations: every marker and tag opens what it points at. The words live in the page itself
+   (the Decisions tab and each marker's data-here), so nothing here is prose. */
+(function () {
+  var dialog = document.getElementById('dialog');
+  var title = document.getElementById('dialogtitle');
+  var body = document.getElementById('dialogbody');
+  document.getElementById('closeDialog').addEventListener('click', function () { dialog.close(); });
+  dialog.addEventListener('click', function (e) { if (e.target === dialog) dialog.close(); });
+  function section(head, text, cls) {
+    var h = document.createElement('h3'); h.textContent = head;
+    var p = document.createElement('p'); p.textContent = text; if (cls) p.className = cls;
+    body.appendChild(h); body.appendChild(p);
+  }
+  function openDecision(id, here) {
+    var row = document.getElementById(id);
+    if (!row) return;
+    body.textContent = '';
+    title.textContent = row.querySelector('h3').textContent;
+    if (here) section('Where you are looking', here, 'here');
+    section('The proposal', row.querySelector('p').textContent);
+    var rec = row.querySelector('.rec'); if (rec) section('Recommendation', rec.textContent);
+    var alt = row.querySelector('.altx'); if (alt) section('The alternative', alt.textContent);
+    var go = document.createElement('button');
+    go.type = 'button'; go.className = 'button'; go.textContent = 'Open it on the Decisions tab';
+    go.addEventListener('click', function () { dialog.close(); window.__showHub('decisions'); row.scrollIntoView(); });
+    body.appendChild(go);
+    dialog.showModal();
+  }
+  var KIND = { new: 'New', re: 'Restyled', un: 'Unchanged' };
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-d]');
+    if (t) { e.preventDefault(); openDecision(t.dataset.d, t.dataset.here); return; }
+    var mk = e.target.closest('.mk');
+    if (mk) {
+      e.preventDefault();
+      body.textContent = '';
+      title.textContent = KIND[mk.dataset.k] || 'Note';
+      section('What this is', mk.dataset.note);
+      dialog.showModal();
+    }
+  });
+  document.querySelectorAll('.mk').forEach(function (mk) {
+    mk.setAttribute('role', 'button'); mk.tabIndex = 0;
+    mk.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mk.click(); } });
+  });
+})();
+</script>
+<script>
+/* QA walk: ticks, verdicts and notes kept in this browser; a summary to paste back. */
+(function () {
+  var KEY = 'filter-counts-walk-263-v1';
+  var WALKS = ['w1', 'w2', 'w3'];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: 'w1' };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') state = Object.assign(state, p); } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var TITLES = {};
+  WALKS.forEach(function (w) { TITLES[w] = document.querySelector('#' + w + ' h2').textContent; });
+  var LABEL = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+  function boxes(w) { return Array.prototype.slice.call(document.querySelectorAll('#' + w + ' input[type="checkbox"]')); }
+  function count(w) { var b = boxes(w); return { n: b.filter(function (x) { return state.ticks[x.id]; }).length, of: b.length }; }
+  function render() {
+    WALKS.forEach(function (w) {
+      boxes(w).forEach(function (b) { b.checked = !!state.ticks[b.id]; b.closest('li').classList.toggle('done', b.checked); });
+      var c = count(w);
+      document.querySelector('[data-prog="' + w + '"]').textContent = c.n + ' of ' + c.of + ' ticked';
+      document.querySelectorAll('.qaverdict button[data-w="' + w + '"]').forEach(function (btn) { btn.setAttribute('aria-pressed', String(state.verdict[w] === btn.getAttribute('data-v'))); });
+      var chip = document.querySelector('[data-chip="' + w + '"]'), v = state.verdict[w], text = 'Not started', st = '';
+      if (v === 'pass' && c.n < c.of) { text = 'Passed · only ' + c.n + ' of ' + c.of + ' ticked'; st = 'partial'; }
+      else if (v === 'pass') { text = 'Passed'; st = 'pass'; }
+      else if (v === 'issue') { text = 'Issue'; st = 'issue'; }
+      else if (v === 'call') { text = 'Needs a call'; st = 'call'; }
+      else if (c.n > 0) { text = 'In progress · ' + c.n + ' of ' + c.of; }
+      chip.textContent = text; chip.setAttribute('data-s', st);
+      var ta = document.querySelector('[data-notes="' + w + '"]'); if (document.activeElement !== ta) ta.value = state.notes[w] || '';
+      document.getElementById(w).hidden = state.open !== w;
+      document.querySelector('.qawcard[data-walk="' + w + '"]').setAttribute('aria-pressed', String(state.open === w));
+    });
+  }
+  document.getElementById('hub-qa').addEventListener('change', function (e) { var t = e.target; if (t && t.type === 'checkbox') { state.ticks[t.id] = t.checked; save(); render(); } });
+  document.querySelectorAll('#hub-qa textarea[data-notes]').forEach(function (ta) { ta.addEventListener('input', function () { state.notes[ta.getAttribute('data-notes')] = ta.value; save(); }); });
+  document.querySelectorAll('#hub-qa .qaverdict button').forEach(function (btn) { btn.addEventListener('click', function () { var w = btn.getAttribute('data-w'), v = btn.getAttribute('data-v'); state.verdict[w] = state.verdict[w] === v ? null : v; save(); render(); }); });
+  document.querySelectorAll('#hub-qa .qawcard').forEach(function (c) { c.addEventListener('click', function () { state.open = c.getAttribute('data-walk'); save(); render(); }); });
+  function summary(w) {
+    var c = count(w);
+    var lines = [TITLES[w] + ' — ' + (state.verdict[w] ? '[' + LABEL[state.verdict[w]] + ']' : '[no verdict]') + ' ' + c.n + '/' + c.of];
+    var un = boxes(w).filter(function (b) { return !state.ticks[b.id]; }).map(function (b) { return b.id.replace(w + 's', ''); });
+    if (un.length) lines.push('  not ticked: step ' + un.join(', '));
+    if (state.notes[w]) lines.push('  notes: ' + state.notes[w].trim());
+    return lines.join('\n');
+  }
+  var out = document.getElementById('qaOut');
+  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = '§263 Filter Counts\n' + summary(state.open); });
+  document.getElementById('qaBuildAll').addEventListener('click', function () {
+    var n = 0, of = 0; WALKS.forEach(function (w) { var c = count(w); n += c.n; of += c.of; });
+    out.textContent = '§263 Filter Counts — checked ' + n + ' of ' + of + '\n' + WALKS.map(summary).join('\n');
+  });
+  function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+  document.getElementById('qaCopy').addEventListener('click', function () { var text = out.textContent; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(selectOut); else selectOut(); });
+  render();
+})();
+</script>

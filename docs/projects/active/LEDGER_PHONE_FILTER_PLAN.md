@@ -111,7 +111,7 @@ puts its filters behind one button (`decision_one_toolbar_rare_tools_behind_tool
   words. Found, not fixed: the coach Ledger answer is 2,763 words — long before this change, a restructure not a sync.
   No help screenshot shows the Ledger, so none was re-taken.
 - **Committed `687187cf` 2026-10-02** from a private index (the coach panel's "Next due" hunk and other sessions'
-  TODO / QA-ledger lines stayed in the tree). Next: owner QA §261.
+  TODO / QA-ledger lines stayed in the tree). On prod 2026-10-02 (Amplify job 275). **Owner QA §261 ✅ PASSED 2026-10-05, 15/15** (both walks; walked against the Filter Counts wording, W1 steps 2 and 4 reworded 2026-10-05).
 
 ## Verification
 

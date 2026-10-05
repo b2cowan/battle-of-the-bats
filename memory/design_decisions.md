@@ -7,6 +7,39 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-05 — A FILTER'S COUNT SITS AT ITS ROW'S END; A NARROWED PILL NAMES ITS CHOICES (owner: "I agree with all of your recommendations") — hub https://claude.ai/artifact/EFWMUeiC3sLkn4CQaBqzrw, plan `docs/projects/active/FILTER_COUNTS_PLAN.md`
+
+**Decision:** (D1) a multi-choice filter's counts are a quiet number at the END of each choice's row (the Awards
+filter's style), on a desk and in the phone sheet — never written into the choice's name. (D2) a narrowed pill names
+its choices, up to three ("Status · Actual, Scheduled"); four or more read "4 selected"; at rest a pill still shows
+only its name (2026-09-02). (D3) the desk pill and the phone sheet's row use the SAME words whenever both show a value.
+(D4) the practice library's Tags and the Awards filter follow the same rule. (D5) every count is what ticking that
+choice would list, given the other filters (the coach's 2026-08-26 rule) — the club Ledger's too, voided lines counted
+only where Void is shown — and "All" means all. (D6) the coach's Type at rest reads "Every type".
+**Rationale:** the two wordings ("Actual (23)" on a desk, "Actual, Overdue" on a phone) had one cause: the count was
+part of the NAME, so everything repeating the name repeated the count and the phone had to cut it back off. "2 selected"
+says a filter is narrowed, not how. Measured: naming costs ~50px a pill; three narrowed filters still fit one line at
+1024px. The club's counts were a census of the date window ("Expenses (7)" listed 5 rows) — moving a wrong number is not
+a fix. **Applies to:** every `MultiSelectDropdown` (both Ledgers, payment requests, Awards, the practice library).
+
+### 2026-10-05 — PHONE SHEETS: ONE FRAME, TWO LAYERS SORTED BY ONE TEST, THREE HEADS (owner: "I agree with all of your recommendations") — hub https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, plan `docs/projects/active/SHEET_FRAME_PLAN.md`
+
+**Decision:** (D1) every phone sheet is one of two layers, sorted by the 2026-09-23 ruling's OWN REASON — **"would a
+stray tap on the bar lose something?"** No → MENU layer: on top of the bar, bar live, not modal (this includes sheets
+that stay open but save each tap: the Ledger Filter sheet, game-day Who's here). Yes → FORM layer: covers the bar, takes
+it out of reach of thumb, keyboard and screen reader, a × is required, the keyboard stays inside, modal (the game-day
+Note joins). (D2) three heads: a small-capitals label for a menu; a sentence title + 44px × for a form (a tall menu may
+keep a ×); a record head (name + context line) for a sheet about one record. (D3) kept on purpose: the two layers,
+record heads, More's tiles and colour, Copy from filling the screen, RSVP over the event window, the Award sheet
+switching layer, no Done on the Ledger Filter sheet; everything else in the inventory is drift to move. (D4) the club
+admin's `BottomSheet` stays its own component (takes 18px corners + the portal dim when next touched); Done-or-not on a
+filter sheet is its own ruling. (D5) the Schedule's view menu and Add event become drawers on a phone. (D6) five steps,
+each its own build and walk; the lineup builder last.
+**Rationale:** 16 bottom sheets from four recipes had drifted in titles (seven styles), the dim (the game-day sheets
+wore the dark theme's on warm) and in two rulings that never reached every sheet; "acts and closes / you type and
+commit" could not sort sheets that stay open but save every tap. Full-screen windows (rooms, the event window, tags,
+help) are pages, not sheets, and stay out.
+
 ### 2026-10-02 — THE TWO LEDGERS READ THE SAME (owner: "I agree with your recommendations on D1-D7"; D3's weight revised by the owner the same day) — hub https://claude.ai/artifact/EQqEd3s4CBLbnrnPuUVAAo, plan `docs/projects/active/LEDGER_PARITY_PLAN.md`
 
 **Decision:** the coach's Ledger (Money › Ledger) and the club's (Accounting › Ledger) are ONE recipe:

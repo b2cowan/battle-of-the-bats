@@ -105,14 +105,14 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Ledger Phone Filter — project hub</strong><br><small>On a phone, both Ledgers’ filters behind one Filter button · D1–D7 accepted 2026-10-02 · committed 687187cf 2026-10-02 · owner QA §261 on the QA Walk tab</small></div>
+  <div class="hubtitle"><strong>Ledger Phone Filter — project hub</strong><br><small>On a phone, both Ledgers’ filters behind one Filter button · D1–D7 accepted 2026-10-02 · committed 687187cf 2026-10-02 · on prod 2026-10-02 · owner QA §261 passed 2026-10-05, 15/15</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Round 1 drawn 2026-10-02 from the live coach and club Ledgers; D1–D7 accepted 2026-10-02">Design</li>
     <li class="stage done" title="LEDGER_PHONE_FILTER_PLAN.md + PM brief, 2026-10-02">Plan</li>
     <li class="stage done" title="Built on dev 2026-10-02: 13/13 browser checks, guard test, npm run verify:changed clean">Build</li>
     <li class="stage done" title="/simplify (four lenses) and /review (high-risk tier, four lenses, five fixes) 2026-10-02; /docs 2026-10-02; committed 687187cf">Review</li>
-    <li class="stage current" title="Owner QA §261 — two walks on the QA Walk tab">QA</li>
-    <li class="stage" title="—">Shipped</li>
+    <li class="stage done" title="Owner QA §261 PASSED 2026-10-05, 15/15 (both walks)">QA</li>
+    <li class="stage done" title="On prod 2026-10-02 (Amplify job 275)">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="themeToggle" aria-pressed="true">Showing dark · switch to warm</button></div>
 </div>
@@ -356,7 +356,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 <section id="hub-brief" class="docpage" hidden>
   <div class="eyebrow">PM Brief · round 1</div>
   <h1>The Ledger’s filters, on a phone</h1>
-  <div class="note">Status: D1–D7 accepted 2026-10-02; committed 687187cf 2026-10-02; owner QA §261 on the QA Walk tab.</div>
+  <div class="note">Status: D1–D7 accepted 2026-10-02; committed 687187cf 2026-10-02; on prod 2026-10-02; owner QA §261 passed 2026-10-05, 15/15.</div>
   <h2>What changes</h2>
   <p>On a phone, the Ledger’s filters (Type, Status, Item, Date, Tags on a team; Type, Status, Category, Date on the club) move behind one Filter button. The button opens a sheet listing each filter and what it is set to; tapping one opens its choices. The button lights up with a count when anything is narrowed. Cash on hand (Balance, for the club) moves up beside the button. A desktop keeps the pills.</p>
   <h2>Why it matters</h2>
@@ -432,9 +432,9 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
       </div>
       <ol class="qasteps">
         <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone (or a window about 390px wide), sign in as the coach, switch to <b>UAT Test Team</b> and open <b>Money → Ledger</b> (View <b>Timeline</b>).</p><p class="qasee">Two lines above the list: <b>View Timeline · ⋯ · + Add a bill</b>, then a quiet <b>Filter ▾</b> on the left and <b>Cash on hand</b> on the right. No Type, Status, Item, Date or Tags pills. <span class="meta">If Filter shows a number, a filter is still set from earlier: open it and press Reset filters first.</span></p></div></li>
-        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Filter</b>.</p><p class="qasee">A sheet rises from above the bottom bar, titled <b>FILTER</b>, with five rows, each saying what it is set to: Type <b>All</b> · Status <b>Actual, Overdue</b> · Item <b>Every budget item</b> · Date <b>Around today</b> · Tags <b>Every tag</b>. No Reset filters line. The list is dimmed above it.</p></div></li>
+        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Filter</b>.</p><p class="qasee">A sheet rises from above the bottom bar, titled <b>FILTER</b>, with five rows, each saying what it is set to: Type <b>Every type</b> · Status <b>Actual, Overdue</b> · Item <b>Every budget item</b> · Date <b>Around today</b> · Tags <b>Every tag</b>. No Reset filters line. The list is dimmed above it.</p></div></li>
         <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Date</b>, then <b>Whole season</b>.</p><p class="qasee">The Date row folds shut and reads <b>Whole season</b> in the lit (olive) colour. The sheet stays open. The button behind reads <b>Filter 1</b> and is lit. <b>Reset filters</b> appears at the foot.</p></div></li>
-        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Status</b> and tick <b>Scheduled</b>.</p><p class="qasee">The Status row stays open with its three choices, each with its count in brackets. It reads <b>Actual, Overdue, Scheduled</b> in the lit colour, and the button reads <b>Filter 2</b>.</p></div></li>
+        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Status</b> and tick <b>Scheduled</b>.</p><p class="qasee">The Status row stays open with its three choices, each with its count at the end of its row (Filter Counts, 2026-10-05). It reads <b>Actual, Overdue, Scheduled</b> in the lit colour, and the button reads <b>Filter 2</b>.</p></div></li>
         <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Tap the dimmed list above the sheet.</p><p class="qasee">The sheet closes and nothing under your tap opens. The list now starts with the season’s first line (<b>Opening balance</b> or <b>Starting balance</b>) and includes scheduled entries.</p></div></li>
         <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Scroll down the Ledger.</p><p class="qasee">Only the two toolbar lines stay pinned at the top; the cards scroll under them.</p></div></li>
         <li><input type="checkbox" id="w1s7" aria-label="W1 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Leave for <b>Schedule</b>, then come back to <b>Money → Ledger</b>.</p><p class="qasee">The button reads <b>Filter 1</b>: the date range is remembered for the team, as it always was, and Status is back on its resting choice (it never was remembered). Open the sheet: Date reads Whole season, Status Actual, Overdue.</p></div></li>

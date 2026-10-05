@@ -1,0 +1,2522 @@
+{
+ "tools-warm": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 537,
+   "w": 390,
+   "h": 235,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 8px 14px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Tools",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Tools"
+  },
+  "label": "Tools menu"
+ },
+ "filter-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "Filter",
+  "rect": {
+   "x": 0,
+   "y": 470,
+   "w": 390,
+   "h": 302,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 8px 14px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Filter",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Filter"
+  },
+  "label": "Filter sheet"
+ },
+ "view-warm": {
+  "found": false,
+  "escape": {
+   "closed": true,
+   "focus": "Change view · List"
+  },
+  "label": "Schedule view menu"
+ },
+ "addevent-warm": {
+  "found": false,
+  "escape": {
+   "closed": true,
+   "focus": "Add Event"
+  },
+  "label": "Add event menu"
+ },
+ "setup-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Lineup setup",
+  "rect": {
+   "x": 0,
+   "y": 289,
+   "w": 390,
+   "h": 555,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "6px 14px 0px",
+  "z": 390,
+  "maxHeight": "832px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Lineup setup",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "p"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 844,
+   "z": 389,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Everyone bats · 6 inningsAuto-"
+  },
+  "label": "Lineup setup"
+ },
+ "lineuptools-warm": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 569,
+   "w": 390,
+   "h": 203,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 8px 14px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Tools",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Tools"
+  },
+  "label": "Lineup Tools"
+ },
+ "print-warm": {
+  "found": true,
+  "role": "—",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 553,
+   "w": 390,
+   "h": 219,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 14px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": null,
+  "close": null,
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Tools"
+  },
+  "label": "Lineup print"
+ },
+ "templates-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Save as template",
+  "rect": {
+   "x": 0,
+   "y": 520,
+   "w": 390,
+   "h": 324,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "6px 14px 14px",
+  "z": 390,
+  "maxHeight": "832px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Save as template",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "p"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 844,
+   "z": 389,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Tools"
+  },
+  "label": "Lineup templates"
+ },
+ "copyfrom-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Copy from",
+  "rect": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 772,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "0px",
+  "padding": "12px 16px 0px",
+  "z": 260,
+  "maxHeight": "none",
+  "shadow": "none",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Copy from",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "p"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "an inner list, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "nothing"
+  },
+  "label": "Copy from"
+ },
+ "callup-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Call up a player",
+  "rect": {
+   "x": 0,
+   "y": 330,
+   "w": 390,
+   "h": 514,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "6px 14px 0px",
+  "z": 390,
+  "maxHeight": "832px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Call up a player",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Barlow Condensed",
+   "tag": "h3"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 844,
+   "z": 389,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Call up a player"
+  },
+  "label": "Call up a player"
+ },
+ "rowmenu-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Options for #1 Avery Test",
+  "rect": {
+   "x": 0,
+   "y": 490,
+   "w": 390,
+   "h": 282,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "5.6px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "#1 Avery Test",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "strong"
+  },
+  "close": {
+   "label": "Cancel",
+   "w": 377,
+   "h": 48
+  },
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "#1 Avery Test, batting 1. Hold"
+  },
+  "label": "Player row menu"
+ },
+ "position-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "#1 Avery Test (labelledby)",
+  "rect": {
+   "x": 0,
+   "y": 279,
+   "w": 390,
+   "h": 493,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 18px",
+  "z": 270,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (a button)",
+  "title": null,
+  "close": {
+   "label": "Close",
+   "w": 360,
+   "h": 44
+  },
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Inning 1 position for #1 Avery"
+  },
+  "label": "Position picker"
+ },
+ "more-warm": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 279,
+   "w": 390,
+   "h": 494,
+   "bottom": 773
+  },
+  "gapBelow": 71,
+  "radius": "18px",
+  "padding": "6px 14px 10px",
+  "z": 300,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (a mark)",
+  "title": null,
+  "close": null,
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "More"
+  },
+  "label": "More"
+ },
+ "team-warm": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "Your teams",
+  "rect": {
+   "x": 0,
+   "y": 612,
+   "w": 390,
+   "h": 160,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 10px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (a mark)",
+  "title": {
+   "text": "Your teams",
+   "size": "10px",
+   "weight": "700",
+   "upper": true,
+   "family": "IBM Plex Mono",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "UAT Test Team"
+  },
+  "label": "Team switcher"
+ },
+ "player-warm": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "Players",
+  "rect": {
+   "x": 0,
+   "y": 93,
+   "w": 390,
+   "h": 679,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 10px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (a mark)",
+  "title": {
+   "text": "Players",
+   "size": "10px",
+   "weight": "700",
+   "upper": true,
+   "family": "IBM Plex Mono",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Devon Test"
+  },
+  "label": "Player switcher"
+ },
+ "event-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "UAT probe practice",
+  "rect": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "0px",
+  "padding": "24px 14.4px 0px",
+  "z": 400,
+  "maxHeight": "844px",
+  "shadow": "none",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "none",
+  "title": {
+   "text": "Practice",
+   "size": "16px",
+   "weight": "400",
+   "upper": false,
+   "family": "Inter",
+   "tag": "div"
+  },
+  "close": {
+   "label": "Back",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(0, 0, 0, 0.6)",
+   "bottom": 844,
+   "z": 400,
+   "insideSheetRoot": false
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, not contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Oct 1 · 3:21 p.m.UAT probe pra"
+  },
+  "label": "Event sheet"
+ },
+ "rsvp-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "#1 Avery Test (labelledby)",
+  "rect": {
+   "x": 0,
+   "y": 453,
+   "w": 390,
+   "h": 391,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "6px 14px 18px",
+  "z": 410,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (a button)",
+  "title": null,
+  "close": {
+   "label": "Close",
+   "w": 360,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(0, 0, 0, 0.6)",
+   "bottom": 844,
+   "z": 400,
+   "insideSheetRoot": false
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "#1 Avery Test · In · set atten"
+  },
+  "label": "RSVP"
+ },
+ "room-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "Add a bill",
+  "rect": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "0px",
+  "padding": "24px 14.4px 0px",
+  "z": 400,
+  "maxHeight": "844px",
+  "shadow": "none",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "none",
+  "title": {
+   "text": "Add a billMoney the team owes but hasn’t",
+   "size": "16px",
+   "weight": "400",
+   "upper": false,
+   "family": "Inter",
+   "tag": "div"
+  },
+  "close": {
+   "label": "Back",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(0, 0, 0, 0.6)",
+   "bottom": 844,
+   "z": 400,
+   "insideSheetRoot": false
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "an inner list, not contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Add a bill"
+  },
+  "label": "Room window (Add a bill)"
+ },
+ "gamehere-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Who’s here",
+  "rect": {
+   "x": 0,
+   "y": 164,
+   "w": 390,
+   "h": 608,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "8.8px 14.4px 17.6px",
+  "z": 260,
+  "maxHeight": "607.68px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 36×4 (a mark)",
+  "title": {
+   "text": "Who’s here",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "b"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 844,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, not contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Who’s here"
+  },
+  "label": "Game day · Who’s here"
+ },
+ "gamenote-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Note a moment",
+  "rect": {
+   "x": 0,
+   "y": 435,
+   "w": 390,
+   "h": 337,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "8.8px 14.4px 17.6px",
+  "z": 260,
+  "maxHeight": "607.68px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 36×4 (a mark)",
+  "title": {
+   "text": "Note",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "b"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 844,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, not contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Note"
+  },
+  "label": "Game day · Note"
+ },
+ "help-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "Lineup builder",
+  "rect": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "0px",
+  "padding": "0px",
+  "z": 701,
+  "maxHeight": "none",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "none",
+  "title": {
+   "text": "Help · on this pageLineup builder",
+   "size": "16px",
+   "weight": "400",
+   "upper": false,
+   "family": "Inter",
+   "tag": "div"
+  },
+  "close": {
+   "label": "Close help",
+   "w": 30,
+   "h": 30
+  },
+  "scrim": {
+   "color": "rgba(0, 0, 0, 0.6)",
+   "bottom": 844,
+   "z": 700,
+   "insideSheetRoot": false
+  },
+  "nav": "covered by the sheet",
+  "scroll": "an inner list, not contained",
+  "portal": true,
+  "escape": {
+   "closed": true,
+   "focus": "Help: Lineup builder"
+  },
+  "label": "Help drawer"
+ },
+ "notif-warm": {
+  "found": false,
+  "error": "locator.tap: Timeout 30000ms exceeded.",
+  "label": "Notification reader"
+ },
+ "adminfilter-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "Filter",
+  "rect": {
+   "x": 0,
+   "y": 491,
+   "w": 390,
+   "h": 353,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "12px",
+  "padding": "0px 0px 16px",
+  "z": 600,
+  "maxHeight": "720px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 36×4 (a mark)",
+  "title": {
+   "text": "Registration status",
+   "size": "11px",
+   "weight": "700",
+   "upper": true,
+   "family": "IBM Plex Mono",
+   "tag": "div"
+  },
+  "close": {
+   "label": "Done",
+   "w": 348,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.34)",
+   "bottom": 844,
+   "z": 600,
+   "insideSheetRoot": false
+  },
+  "nav": "covered by the sheet",
+  "scroll": "an inner list, not contained",
+  "portal": true,
+  "escape": {
+   "closed": true,
+   "focus": "nothing"
+  },
+  "label": "Tournament Teams filter (admin sheet)"
+ },
+ "tags-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "Money tags",
+  "rect": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "0px",
+  "padding": "17.6px 17.6px 20px",
+  "z": 510,
+  "maxHeight": "none",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "none",
+  "title": {
+   "text": "Money tags",
+   "size": "20px",
+   "weight": "800",
+   "upper": false,
+   "family": "Barlow Condensed",
+   "tag": "h3"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(0, 0, 0, 0.35)",
+   "bottom": 844,
+   "z": 500,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "an inner list, not contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "nothing"
+  },
+  "label": "Tag manager (side sheet)"
+ },
+ "tools-dark": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 537,
+   "w": 390,
+   "h": 235,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 8px 14px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Tools",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Tools"
+  },
+  "label": "Tools menu"
+ },
+ "filter-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "Filter",
+  "rect": {
+   "x": 0,
+   "y": 470,
+   "w": 390,
+   "h": 302,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 8px 14px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Filter",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Filter"
+  },
+  "label": "Filter sheet"
+ },
+ "view-dark": {
+  "found": false,
+  "escape": {
+   "closed": true,
+   "focus": "Change view · List"
+  },
+  "label": "Schedule view menu"
+ },
+ "addevent-dark": {
+  "found": false,
+  "escape": {
+   "closed": true,
+   "focus": "Add Event"
+  },
+  "label": "Add event menu"
+ },
+ "setup-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Lineup setup",
+  "rect": {
+   "x": 0,
+   "y": 289,
+   "w": 390,
+   "h": 555,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "6px 14px 0px",
+  "z": 390,
+  "maxHeight": "832px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Lineup setup",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "p"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 844,
+   "z": 389,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Everyone bats · 6 inningsAuto-"
+  },
+  "label": "Lineup setup"
+ },
+ "lineuptools-dark": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 569,
+   "w": 390,
+   "h": 203,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 8px 14px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Tools",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Tools"
+  },
+  "label": "Lineup Tools"
+ },
+ "print-dark": {
+  "found": true,
+  "role": "—",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 553,
+   "w": 390,
+   "h": 219,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 14px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": null,
+  "close": null,
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Tools"
+  },
+  "label": "Lineup print"
+ },
+ "templates-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Save as template",
+  "rect": {
+   "x": 0,
+   "y": 520,
+   "w": 390,
+   "h": 324,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "6px 14px 14px",
+  "z": 390,
+  "maxHeight": "832px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Save as template",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "p"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 844,
+   "z": 389,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Tools"
+  },
+  "label": "Lineup templates"
+ },
+ "copyfrom-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Copy from",
+  "rect": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 772,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "0px",
+  "padding": "12px 16px 0px",
+  "z": 260,
+  "maxHeight": "none",
+  "shadow": "none",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Copy from",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "p"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "an inner list, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "nothing"
+  },
+  "label": "Copy from"
+ },
+ "callup-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Call up a player",
+  "rect": {
+   "x": 0,
+   "y": 330,
+   "w": 390,
+   "h": 514,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "6px 14px 0px",
+  "z": 390,
+  "maxHeight": "832px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Call up a player",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Barlow Condensed",
+   "tag": "h3"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 844,
+   "z": 389,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Call up a player"
+  },
+  "label": "Call up a player"
+ },
+ "rowmenu-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Options for #1 Avery Test",
+  "rect": {
+   "x": 0,
+   "y": 490,
+   "w": 390,
+   "h": 282,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "5.6px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "#1 Avery Test",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "strong"
+  },
+  "close": {
+   "label": "Cancel",
+   "w": 377,
+   "h": 48
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "#1 Avery Test, batting 1. Hold"
+  },
+  "label": "Player row menu"
+ },
+ "position-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "#1 Avery Test (labelledby)",
+  "rect": {
+   "x": 0,
+   "y": 279,
+   "w": 390,
+   "h": 493,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 18px",
+  "z": 270,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(13, 17, 26)",
+  "grab": "line 38×4 (a button)",
+  "title": null,
+  "close": {
+   "label": "Close",
+   "w": 360,
+   "h": 44
+  },
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Inning 1 position for #1 Avery"
+  },
+  "label": "Position picker"
+ },
+ "more-dark": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 279,
+   "w": 390,
+   "h": 494,
+   "bottom": 773
+  },
+  "gapBelow": 71,
+  "radius": "18px",
+  "padding": "6px 14px 10px",
+  "z": 300,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(13, 17, 26)",
+  "grab": "line 38×4 (a mark)",
+  "title": null,
+  "close": null,
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "More"
+  },
+  "label": "More"
+ },
+ "team-dark": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "Your teams",
+  "rect": {
+   "x": 0,
+   "y": 612,
+   "w": 390,
+   "h": 160,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 10px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(13, 17, 26)",
+  "grab": "line 38×4 (a mark)",
+  "title": {
+   "text": "Your teams",
+   "size": "10px",
+   "weight": "700",
+   "upper": true,
+   "family": "IBM Plex Mono",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "UAT Test Team"
+  },
+  "label": "Team switcher"
+ },
+ "player-dark": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "Players",
+  "rect": {
+   "x": 0,
+   "y": 93,
+   "w": 390,
+   "h": 679,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 10px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(13, 17, 26)",
+  "grab": "line 38×4 (a mark)",
+  "title": {
+   "text": "Players",
+   "size": "10px",
+   "weight": "700",
+   "upper": true,
+   "family": "IBM Plex Mono",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Devon Test"
+  },
+  "label": "Player switcher"
+ },
+ "event-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "UAT probe practice",
+  "rect": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "0px",
+  "padding": "24px 14.4px 0px",
+  "z": 400,
+  "maxHeight": "844px",
+  "shadow": "none",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "none",
+  "title": {
+   "text": "Practice",
+   "size": "16px",
+   "weight": "400",
+   "upper": false,
+   "family": "Inter",
+   "tag": "div"
+  },
+  "close": {
+   "label": "Back",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(0, 0, 0, 0.6)",
+   "bottom": 844,
+   "z": 400,
+   "insideSheetRoot": false
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, not contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Oct 1 · 3:21 p.m.UAT probe pra"
+  },
+  "label": "Event sheet"
+ },
+ "rsvp-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "#1 Avery Test (labelledby)",
+  "rect": {
+   "x": 0,
+   "y": 453,
+   "w": 390,
+   "h": 391,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "6px 14px 18px",
+  "z": 410,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(13, 17, 26)",
+  "grab": "line 38×4 (a button)",
+  "title": null,
+  "close": {
+   "label": "Close",
+   "w": 360,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(0, 0, 0, 0.6)",
+   "bottom": 844,
+   "z": 400,
+   "insideSheetRoot": false
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "#1 Avery Test · In · set atten"
+  },
+  "label": "RSVP"
+ },
+ "tags-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "Money tags",
+  "rect": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "0px",
+  "padding": "17.6px 17.6px 20px",
+  "z": 510,
+  "maxHeight": "none",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "none",
+  "title": {
+   "text": "Money tags",
+   "size": "20px",
+   "weight": "800",
+   "upper": false,
+   "family": "Barlow Condensed",
+   "tag": "h3"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(0, 0, 0, 0.35)",
+   "bottom": 844,
+   "z": 500,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "an inner list, not contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "nothing"
+  },
+  "label": "Tag manager (side sheet)"
+ },
+ "room-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "Add a bill",
+  "rect": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "0px",
+  "padding": "24px 14.4px 0px",
+  "z": 400,
+  "maxHeight": "844px",
+  "shadow": "none",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "none",
+  "title": {
+   "text": "Add a billMoney the team owes but hasn’t",
+   "size": "16px",
+   "weight": "400",
+   "upper": false,
+   "family": "Inter",
+   "tag": "div"
+  },
+  "close": {
+   "label": "Back",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(0, 0, 0, 0.6)",
+   "bottom": 844,
+   "z": 400,
+   "insideSheetRoot": false
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "an inner list, not contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Add a bill"
+  },
+  "label": "Room window (Add a bill)"
+ },
+ "gamehere-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Who’s here",
+  "rect": {
+   "x": 0,
+   "y": 164,
+   "w": 390,
+   "h": 608,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "8.8px 14.4px 17.6px",
+  "z": 260,
+  "maxHeight": "607.68px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 36×4 (a mark)",
+  "title": {
+   "text": "Who’s here",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "b"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 844,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, not contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Who’s here"
+  },
+  "label": "Game day · Who’s here"
+ },
+ "gamenote-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Note a moment",
+  "rect": {
+   "x": 0,
+   "y": 435,
+   "w": 390,
+   "h": 337,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "8.8px 14.4px 17.6px",
+  "z": 260,
+  "maxHeight": "607.68px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 36×4 (a mark)",
+  "title": {
+   "text": "Note",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "b"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 844,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, not contained",
+  "portal": false,
+  "escape": {
+   "closed": true,
+   "focus": "Note"
+  },
+  "label": "Game day · Note"
+ },
+ "help-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "Lineup builder",
+  "rect": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "0px",
+  "padding": "0px",
+  "z": 701,
+  "maxHeight": "none",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "none",
+  "title": {
+   "text": "Help · on this pageLineup builder",
+   "size": "16px",
+   "weight": "400",
+   "upper": false,
+   "family": "Inter",
+   "tag": "div"
+  },
+  "close": {
+   "label": "Close help",
+   "w": 30,
+   "h": 30
+  },
+  "scrim": {
+   "color": "rgba(0, 0, 0, 0.6)",
+   "bottom": 844,
+   "z": 700,
+   "insideSheetRoot": false
+  },
+  "nav": "covered by the sheet",
+  "scroll": "an inner list, not contained",
+  "portal": true,
+  "escape": {
+   "closed": true,
+   "focus": "Help: Lineup builder"
+  },
+  "label": "Help drawer"
+ },
+ "notif-dark": {
+  "found": false,
+  "error": "locator.tap: Timeout 30000ms exceeded.",
+  "label": "Notification reader"
+ },
+ "adminfilter-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "true",
+  "name": "Filter",
+  "rect": {
+   "x": 0,
+   "y": 491,
+   "w": 390,
+   "h": 353,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "12px",
+  "padding": "0px 0px 16px",
+  "z": 600,
+  "maxHeight": "720px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 36×4 (a mark)",
+  "title": {
+   "text": "Registration status",
+   "size": "11px",
+   "weight": "700",
+   "upper": true,
+   "family": "IBM Plex Mono",
+   "tag": "div"
+  },
+  "close": {
+   "label": "Done",
+   "w": 348,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.55)",
+   "bottom": 844,
+   "z": 600,
+   "insideSheetRoot": false
+  },
+  "nav": "covered by the sheet",
+  "scroll": "an inner list, not contained",
+  "portal": true,
+  "escape": {
+   "closed": true,
+   "focus": "nothing"
+  },
+  "label": "Tournament Teams filter (admin sheet)"
+ },
+ "gamenote-P-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Note a moment",
+  "rect": {
+   "x": 0,
+   "y": 507,
+   "w": 390,
+   "h": 337,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "8.8px 14.4px 17.6px",
+  "z": 390,
+  "maxHeight": "832px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 36×4 (a mark)",
+  "title": {
+   "text": "Note",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "b"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 844,
+   "z": 389,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, not contained",
+  "portal": false
+ },
+ "gamehere-P-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Who’s here",
+  "rect": {
+   "x": 0,
+   "y": 12,
+   "w": 390,
+   "h": 760,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "8.8px 14.4px 17.6px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 36×4 (a mark)",
+  "title": {
+   "text": "Who’s here",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "b"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "team-P-warm": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "Your teams",
+  "rect": {
+   "x": 0,
+   "y": 616,
+   "w": 390,
+   "h": 156,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 10px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (a mark)",
+  "title": {
+   "text": "Your teams",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "player-P-warm": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "Players",
+  "rect": {
+   "x": 0,
+   "y": 92,
+   "w": 390,
+   "h": 680,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 10px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (a mark)",
+  "title": null,
+  "close": null,
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "print-P-warm": {
+  "found": true,
+  "role": "—",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 519,
+   "w": 390,
+   "h": 253,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 14px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Print",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "callup-P-warm": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Call up a player",
+  "rect": {
+   "x": 0,
+   "y": 330,
+   "w": 390,
+   "h": 514,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "6px 14px 0px",
+  "z": 390,
+  "maxHeight": "832px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Call up a player",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Barlow Condensed",
+   "tag": "h3"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 844,
+   "z": 389,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "addevent-P-warm": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 498,
+   "w": 390,
+   "h": 274,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 8px 14px",
+  "z": 260,
+  "maxHeight": "721px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Add event",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "view-P-warm": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 586,
+   "w": 390,
+   "h": 186,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 8px 14px",
+  "z": 260,
+  "maxHeight": "721px",
+  "shadow": "yes",
+  "bg": "rgb(255, 255, 255)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "View",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(36, 30, 21, 0.28)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "gamenote-P-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Note a moment",
+  "rect": {
+   "x": 0,
+   "y": 507,
+   "w": 390,
+   "h": 337,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "8.8px 14.4px 17.6px",
+  "z": 390,
+  "maxHeight": "832px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 36×4 (a mark)",
+  "title": {
+   "text": "Note",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "b"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 844,
+   "z": 389,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, not contained",
+  "portal": false
+ },
+ "gamehere-P-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Who’s here",
+  "rect": {
+   "x": 0,
+   "y": 12,
+   "w": 390,
+   "h": 760,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "8.8px 14.4px 17.6px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 36×4 (a mark)",
+  "title": {
+   "text": "Who’s here",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Inter",
+   "tag": "b"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "team-P-dark": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "Your teams",
+  "rect": {
+   "x": 0,
+   "y": 616,
+   "w": 390,
+   "h": 156,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 10px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(13, 17, 26)",
+  "grab": "line 38×4 (a mark)",
+  "title": {
+   "text": "Your teams",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "player-P-dark": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "Players",
+  "rect": {
+   "x": 0,
+   "y": 92,
+   "w": 390,
+   "h": 680,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 10px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(13, 17, 26)",
+  "grab": "line 38×4 (a mark)",
+  "title": null,
+  "close": null,
+  "scrim": null,
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "print-P-dark": {
+  "found": true,
+  "role": "—",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 519,
+   "w": 390,
+   "h": 253,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 14px 14px",
+  "z": 260,
+  "maxHeight": "760px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Print",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "callup-P-dark": {
+  "found": true,
+  "role": "dialog",
+  "ariaModal": "—",
+  "name": "Call up a player",
+  "rect": {
+   "x": 0,
+   "y": 330,
+   "w": 390,
+   "h": 514,
+   "bottom": 844
+  },
+  "gapBelow": 0,
+  "radius": "18px",
+  "padding": "6px 14px 0px",
+  "z": 390,
+  "maxHeight": "832px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Call up a player",
+   "size": "14px",
+   "weight": "700",
+   "upper": false,
+   "family": "Barlow Condensed",
+   "tag": "h3"
+  },
+  "close": {
+   "label": "Close",
+   "w": 44,
+   "h": 44
+  },
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 844,
+   "z": 389,
+   "insideSheetRoot": true
+  },
+  "nav": "hidden (out of tab order)",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "addevent-P-dark": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 498,
+   "w": 390,
+   "h": 274,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 8px 14px",
+  "z": 260,
+  "maxHeight": "721px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "Add event",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ },
+ "view-P-dark": {
+  "found": true,
+  "role": "menu",
+  "ariaModal": "—",
+  "name": "—",
+  "rect": {
+   "x": 0,
+   "y": 586,
+   "w": 390,
+   "h": 186,
+   "bottom": 772
+  },
+  "gapBelow": 72,
+  "radius": "18px",
+  "padding": "6px 8px 14px",
+  "z": 260,
+  "maxHeight": "721px",
+  "shadow": "yes",
+  "bg": "rgb(17, 24, 39)",
+  "grab": "line 38×4 (drawn)",
+  "title": {
+   "text": "View",
+   "size": "12px",
+   "weight": "700",
+   "upper": true,
+   "family": "Barlow Condensed",
+   "tag": "div"
+  },
+  "close": null,
+  "scrim": {
+   "color": "rgba(13, 17, 26, 0.45)",
+   "bottom": 772,
+   "z": 259,
+   "insideSheetRoot": true
+  },
+  "nav": "visible, tappable",
+  "scroll": "the sheet, contained",
+  "portal": false
+ }
+}

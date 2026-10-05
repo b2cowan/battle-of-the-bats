@@ -1,0 +1,618 @@
+<title>Sheet Frame</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--ground:#e7e9e1;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:26px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:4px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 11px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+@media(max-width:700px){.walk{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap}.walk a{flex:none}}
+
+.frame{width:min(1240px,calc(100% - 32px));margin:20px auto;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a}
+.screen{padding:24px 28px 30px;scroll-margin-top:70px}
+.screen .lead{max-width:860px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+@media(max-width:700px){.screen{padding:18px 12px 24px}}
+
+.callout{max-width:880px;background:var(--white);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:14px 16px;margin:16px 0}
+.callout h3{margin:0 0 6px}.callout ul{padding-left:20px;margin:0}.callout li{margin:0 0 6px}
+
+.family{margin:26px 0 8px}
+.family h2{margin:0 0 4px}
+.family .sub{max-width:860px}
+.strip{display:flex;gap:18px;overflow-x:auto;padding:12px 2px 14px;-webkit-overflow-scrolling:touch}
+.tile{flex:none;width:390px;max-width:100%}
+.tile .shot{border:1px solid #c6cebc;border-radius:10px;overflow:hidden}
+.tile h3{margin:10px 0 2px;font-size:14px}
+.tile .facts{font-size:12.5px;color:var(--muted);margin:0}
+.tile .facts b{color:var(--ink);font-weight:650}
+
+.spec{margin:22px 0 6px;max-width:100%}
+.spectop{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}
+.spectop h3{margin:0;font-size:15px}
+.lbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.lbl.before{background:#e9e4da;color:#4a4235}.lbl.after{background:#dff0c2;color:#2b3f12}.lbl.alt{background:#e3edf2;color:#1d4a5e}
+.scroller{overflow-x:auto;border:1px solid #c6cebc;border-radius:10px;background:#dfe3d6;-webkit-overflow-scrolling:touch;display:inline-block;max-width:100%;vertical-align:top}
+.shot{position:relative;line-height:0;width:390px}
+.shot img{display:block;width:390px;height:auto}
+.caption{font-size:13px;color:var(--muted);margin:8px 2px 0;max-width:390px}
+.caption strong{color:var(--ink)}
+.pair{display:flex;flex-wrap:wrap;gap:20px 28px;align-items:flex-start}
+.pair>div{max-width:100%}
+.move{border-top:1px solid var(--line);margin-top:26px;padding-top:6px}
+.move>p{max-width:860px}
+
+.pin{position:absolute;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--error);color:#fff;font:800 13px/22px system-ui,sans-serif;text-align:center;padding:0;box-shadow:0 2px 6px #0004;cursor:pointer}
+.pin.fix{background:var(--olive)}.pin.alt{background:var(--blue)}
+.pin::after{content:"";position:absolute;inset:-9px}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:4px;line-height:1.4;cursor:pointer;border:1px solid}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border-color:#b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border-color:#b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border-color:#d3d9cd}
+.mk[data-k=keep]{background:#e3f3d4;color:#2f5a14;border-color:#b9d88c}.mk[data-k=drift]{background:#f6dede;color:var(--error);border-color:#e0a9a9}.mk[data-k=out]{background:#f4ecd9;color:var(--warn);border-color:#e0c98a}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:12px 0 18px;background:#fff}
+table.kept{border-collapse:collapse;width:100%;font-size:12.5px;min-width:1180px}
+table.kept th,table.kept td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.kept th{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:#fafbf7;position:sticky;top:0}
+table.kept tr.band td{background:#f2f4ec;font-weight:700;font-size:12px;letter-spacing:.3px}
+table.kept td.bad{color:var(--error);font-weight:600}
+table.kept tr:last-child td{border-bottom:0}
+
+.frameparts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin:14px 0;max-width:1000px}
+.part{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13.5px}
+.part h3{margin:0 0 4px;font-size:14px}
+.part p{margin:0;color:var(--muted)}
+
+.steps{list-style:none;margin:14px 0;padding:0;display:flex;flex-direction:column;gap:12px;max-width:900px;counter-reset:st}
+.steps li{counter-increment:st;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px 14px 56px;position:relative}
+.steps li::before{content:counter(st);position:absolute;left:16px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--olive);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+.steps li.out::before{content:"—";background:#b7aa86}
+.steps h3{margin:0 0 4px;font-size:15px}
+.steps p{margin:0 0 4px;font-size:13.5px}
+.steps .notice{color:var(--muted)}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage ul,.docpage ol{padding-left:22px}.docpage li{margin:0 0 7px}
+.docpage code{font-size:12.5px;background:var(--soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 16px 36px}}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px;scroll-margin-top:20px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.decisionrow h3{margin:0;font-size:16px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.open{background:#edf5f8;border-color:#b6cfdb}
+.rec{font-size:13.5px;background:#f3f7ee;border:1px solid #cfe0bd;border-radius:6px;padding:8px 10px;margin:8px 0 0}
+.altx{font-size:13.5px;color:var(--muted);margin:8px 0 0}
+
+.explain h3{margin:16px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:18px}.dialogbody{padding:6px 22px 20px}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Sheet Frame — project hub</strong><br><small>One shared frame for the portal’s phone sheets · inventory of 23 live sheets and the proposal, drawn 2026-10-03 at 390px · D1–D6 accepted 2026-10-05 · five build steps, each from its own prompt</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Round 1 drawn 2026-10-03: 23 sheets opened live at 390px, warm and dark; D1–D6 accepted 2026-10-05">Design</li>
+    <li class="stage current" title="SHEET_FRAME_PLAN.md + PM brief + build prompt, 2026-10-05">Plan</li>
+    <li class="stage" title="—">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="themeToggle" aria-pressed="false">Showing warm · switch to dark</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Plan notes</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Screens">
+    <a href="#s-inventory" aria-current="page">1 · Every sheet today</a>
+    <a href="#s-table">2 · What differs</a>
+    <a href="#s-frame">3 · The frame</a>
+    <a href="#s-moves">4 · What moves</a>
+    <a href="#s-out">5 · What stays out</a>
+    <a href="#s-order">6 · The order</a>
+  </nav>
+  <div class="frame">
+
+    <!-- 1 · INVENTORY -->
+    <section class="screen" id="s-inventory">
+      <div class="eyebrow">Screen 1 · the inventory</div>
+      <h1 tabindex="-1">Every sheet a coach can open on a phone today</h1>
+      <p class="sub lead">Each sheet opened on the live portal at 390px and captured at true size; the facts under each are read off the page, not the stylesheet. Rows scroll sideways. Three more exist that the test team has no data to open (screen 2 lists them from the code).</p>
+
+      <div class="callout">
+        <h3>Before the proposal: what the inventory actually says</h3>
+        <ul>
+          <li><strong>It is many sheets but few shapes.</strong> 16 rise from the bottom of the coaches portal, from four recipes (the Tools drawer, the lineup builder’s drawers, the More sheet, the game-day console’s own); the club admin has a fifth. Two menus are still popover cards, and four surfaces are full-screen windows, which are not sheets. The corners, grab line and height already match almost everywhere; the drift is in titles, the dim, and two rulings that did not reach every sheet.</li>
+          <li><strong>The 23 September rule does not sort the newest sheets.</strong> A menu “acts and closes”, a form “you type, you commit”. The Filter sheet and Who’s here stay open but apply each tap at once, so neither fits. The ruling’s own reason sorts them: <em>would a stray tap on the bar lose something?</em> By that test they are menus (as built), and the game-day Note, which holds a half-typed note, is a form that is not built as one.</li>
+          <li><strong>The real gains are behaviour, not paint.</strong> Two sheets tell a screen reader they are modal while the bar stays tappable; three forms that cover the bar do not keep the keyboard inside (the open half recorded on 23 September). One frame is where those get fixed once.</li>
+        </ul>
+      </div>
+
+      <div class="family">
+        <h2>The Tools drawer</h2>
+        <p class="sub">The 22 September drawer (E1). Sits on top of the bar, which stays visible and tappable.</p>
+        <div class="strip">
+          <div class="tile"><div class="shot"><img data-shot="tools" src="sheet-frame/tools-warm.jpg" alt="The Ledger's Tools menu as a sheet above the bottom bar." width="390" height="844"></div><h3>Tools menu · Ledger <span class="mk" data-k="keep" data-note="The drawer recipe ruled on 2026-09-22 (E1): flush to the bar, 18px top corners, a grab line, the page dimmed, a small title because the dim covers the button that opened it. The base of the proposed frame.">On purpose</span></h3><p class="facts">Above the bar · title <b>TOOLS</b> (small capitals) · no close button · Escape returns to Tools</p></div>
+          <div class="tile"><div class="shot"><img data-shot="filter" src="sheet-frame/filter-warm.jpg" alt="The Ledger's Filter sheet above the bar." width="390" height="844"></div><h3>Filter sheet · Ledger <span class="mk" data-k="drift" data-note="Shape on purpose (2026-10-02, no Done; closes like Tools). One drift: it tells a screen reader it is modal while the bar under it stays tappable.">Drift</span></h3><p class="facts">Above the bar · title <b>FILTER</b> · no close button · marked modal while the bar is live</p></div>
+          <div class="tile"><div class="shot"><img data-shot="lineuptools" src="sheet-frame/lineuptools-warm.jpg" alt="The lineup builder's Tools menu above the bar." width="390" height="844"></div><h3>Tools menu · lineup builder <span class="mk" data-k="keep" data-note="The same Tools drawer.">On purpose</span></h3><p class="facts">Above the bar · title <b>TOOLS</b></p></div>
+        </div>
+      </div>
+
+      <div class="family">
+        <h2>The lineup builder’s drawers</h2>
+        <p class="sub">The 22 and 23 September drawers (D12, D13 and the menu/form ruling). Forms cover the bar; menus sit on it.</p>
+        <div class="strip">
+          <div class="tile"><div class="shot"><img data-shot="setup" src="sheet-frame/setup-warm.jpg" alt="Lineup setup covering the bar, with a title and a close button." width="390" height="844"></div><h3>Lineup setup <span class="mk" data-k="keep" data-note="A form: covers the bar and takes it out of reach (2026-09-23), with a titled head and a 44px ×. Not yet done: the keyboard can still leave it, the open half recorded that day.">On purpose</span></h3><p class="facts">Covers the bar · title <b>Lineup setup</b> + × · keyboard not kept inside</p></div>
+          <div class="tile"><div class="shot"><img data-shot="templates" src="sheet-frame/templates-warm.jpg" alt="Save as template covering the bar." width="390" height="844"></div><h3>Save as template <span class="mk" data-k="keep" data-note="A form, as ruled.">On purpose</span></h3><p class="facts">Covers the bar · title + ×</p></div>
+          <div class="tile"><div class="shot"><img data-shot="callup" src="sheet-frame/callup-warm.jpg" alt="Call up a player covering the bar." width="390" height="844"></div><h3>Call up a player <span class="mk" data-k="drift" data-note="A form, as ruled. Its head is its own third copy (a heading in the display face) rather than the shared head the other two forms use; the builder’s own code notes it was left out on purpose at the time.">Drift</span></h3><p class="facts">Covers the bar · its own heading style + ×</p></div>
+          <div class="tile"><div class="shot"><img data-shot="print" src="sheet-frame/print-warm.jpg" alt="The Print drawer above the bar, with no title." width="390" height="844"></div><h3>Print <span class="mk" data-k="drift" data-note="A menu above the bar, as ruled, but with no title and no role: once the dim covers Tools, nothing on screen says what this sheet is, which is the reason the other drawers were given titles.">Drift</span></h3><p class="facts">Above the bar · <b>no title</b> · no role for a screen reader</p></div>
+          <div class="tile"><div class="shot"><img data-shot="copyfrom" src="sheet-frame/copyfrom-warm.jpg" alt="Copy from filling the screen above the bar." width="390" height="844"></div><h3>Copy from <span class="mk" data-k="keep" data-note="A menu that fills the screen above the bar on a phone, ruled 2026-10-02 (D7). One drift: Escape leaves the keyboard focus on nothing, because the Tools menu that opened it has closed.">On purpose</span></h3><p class="facts">Above the bar, full height · title + × · Escape leaves focus nowhere</p></div>
+          <div class="tile"><div class="shot"><img data-shot="rowmenu" src="sheet-frame/rowmenu-warm.jpg" alt="A player row's menu above the bar, headed by the player's name." width="390" height="844"></div><h3>Player row menu <span class="mk" data-k="keep" data-note="A menu about one record: its head is the player and their batting slot, not a title.">On purpose</span></h3><p class="facts">Above the bar · record head (<b>#1 Avery Test</b>) · Cancel</p></div>
+        </div>
+      </div>
+
+      <div class="family">
+        <h2>The More sheet and the sheets built on it</h2>
+        <p class="sub">The bottom bar’s own sheet (2026-09-20), reused by five others.</p>
+        <div class="strip">
+          <div class="tile"><div class="shot"><img data-shot="more" src="sheet-frame/more-warm.jpg" alt="The More sheet above the bar, with tiles." width="390" height="844"></div><h3>More <span class="mk" data-k="keep" data-note="The bar’s own sheet, with its tiles (2026-09-20). Its trigger stays visible under it, so it needs no title.">On purpose</span></h3><p class="facts">Above the bar · tiles, no title</p></div>
+          <div class="tile"><div class="shot"><img data-shot="team" src="sheet-frame/team-warm.jpg" alt="The team switcher above the bar, headed YOUR TEAMS in small mono capitals." width="390" height="844"></div><h3>Team switcher <span class="mk" data-k="drift" data-note="A menu, as it should be, but titled in a third style (the small mono section label). In dark it wears the bar’s colour, inherited from the More sheet it reuses.">Drift</span></h3><p class="facts">Above the bar · title <b>YOUR TEAMS</b> in mono · dark surface = the bar’s</p></div>
+          <div class="tile"><div class="shot"><img data-shot="player" src="sheet-frame/player-warm.jpg" alt="The player switcher above the bar." width="390" height="844"></div><h3>Player switcher <span class="mk" data-k="drift" data-note="Same as the team switcher.">Drift</span></h3><p class="facts">Above the bar · title <b>PLAYERS</b> in mono</p></div>
+          <div class="tile"><div class="shot"><img data-shot="position" src="sheet-frame/position-warm.jpg" alt="The position picker above the bar, headed by the player's name." width="390" height="844"></div><h3>Position picker <span class="mk" data-k="drift" data-note="A menu about one record, with the accessibility floor (Escape, focus kept and returned). One drift: it is marked modal while the bar stays tappable.">Drift</span></h3><p class="facts">Above the bar · record head · Close button · marked modal while the bar is live</p></div>
+          <div class="tile"><div class="shot"><img data-shot="rsvp" src="sheet-frame/rsvp-warm.jpg" alt="A player's RSVP sheet over the attendance window." width="390" height="844"></div><h3>RSVP <span class="mk" data-k="keep" data-note="Opens over the full-screen event window, where the bar is already hidden, and stacks its own floor over the window’s (2026-09 stage 2, C3).">On purpose</span></h3><p class="facts">Over the event window · record head · Close button</p></div>
+        </div>
+      </div>
+
+      <div class="family">
+        <h2>The game-day console</h2>
+        <p class="sub">Ruled drawers “the same shape as the position sheet and the More sheet” on 22 September, a day before the menu/form rule.</p>
+        <div class="strip">
+          <div class="tile"><div class="shot"><img data-shot="gamehere" src="sheet-frame/gamehere-warm.jpg" alt="Who's here above the bar during a game." width="390" height="844"></div><h3>Who’s here <span class="mk" data-k="drift" data-note="A live list: each tap saves at once, nothing to lose, so above the bar is right. Drift: the dim is the dark theme’s on warm too, the height stops at 72% with no recorded reason, the list’s scroll can drag the page behind, and the bar’s height is copied by hand.">Drift</span></h3><p class="facts">Above the bar · dark dim on warm · 72% high</p></div>
+          <div class="tile"><div class="shot"><img data-shot="gamenote" src="sheet-frame/gamenote-warm.jpg" alt="The Note sheet above a live bar, with a text box and Save note." width="390" height="844"></div><h3>Note <span class="mk" data-k="drift" data-note="A form: you type, then Save note. It sits above a live bar, so a thumb on Schedule mid-game leaves with the note half written, unwarned, which is exactly what the 2026-09-23 ruling exists to stop.">Drift</span></h3><p class="facts">Above a live bar while holding typed work</p></div>
+        </div>
+      </div>
+
+      <div class="family">
+        <h2>Not sheets on a phone</h2>
+        <p class="sub">Two menus that stay popover cards, and four full-screen windows.</p>
+        <div class="strip">
+          <div class="tile"><div class="shot"><img data-shot="view" src="sheet-frame/view-warm.jpg" alt="The Schedule's view menu as a small card under its button." width="390" height="844"></div><h3>Schedule · view menu <span class="mk" data-k="drift" data-note="A popover card hanging from a button at the top of the screen. The 2026-09-22 drawer ruling called a popover under a 44px square the wrong surface on a phone; these two were not moved.">Drift</span></h3><p class="facts">Popover card at the top of the screen</p></div>
+          <div class="tile"><div class="shot"><img data-shot="addevent" src="sheet-frame/addevent-warm.jpg" alt="The Schedule's Add event menu as a card under the plus button." width="390" height="844"></div><h3>Schedule · Add event <span class="mk" data-k="drift" data-note="Same as the view menu.">Drift</span></h3><p class="facts">Popover card at the top of the screen</p></div>
+          <div class="tile"><div class="shot"><img data-shot="room" src="sheet-frame/room-warm.jpg" alt="Add a bill as a full-screen window." width="390" height="844"></div><h3>Room window · Add a bill <span class="mk" data-k="out" data-note="A full-screen window with Back and a Save foot: a page, not a sheet. Stays out of the frame.">Window</span></h3><p class="facts">Full screen · Back · bar hidden</p></div>
+          <div class="tile"><div class="shot"><img data-shot="event" src="sheet-frame/event-warm.jpg" alt="An event opened from the Schedule as a full-screen window." width="390" height="844"></div><h3>Event window <span class="mk" data-k="out" data-note="A full-screen window. Stays out of the frame.">Window</span></h3><p class="facts">Full screen · Back</p></div>
+          <div class="tile"><div class="shot"><img data-shot="tags" src="sheet-frame/tags-warm.jpg" alt="Money tags as a full-screen window on a phone." width="390" height="844"></div><h3>Tag manager <span class="mk" data-k="out" data-note="A side sheet on a desk, full screen on a phone; ruled the portal’s only side sheet. Stays out. Escape leaves focus nowhere.">Window</span></h3><p class="facts">Full screen · × and Done</p></div>
+          <div class="tile"><div class="shot"><img data-shot="help" src="sheet-frame/help-warm.jpg" alt="The help drawer as a full-screen window, with a small close button." width="390" height="844"></div><h3>Help <span class="mk" data-k="out" data-note="A full-screen window. Defect found: its close button is 30px square on a phone, under the 44px tap floor.">Window</span></h3><p class="facts">Full screen · <b>× is 30px</b></p></div>
+          <div class="tile"><div class="shot"><img data-shot="adminfilter" src="sheet-frame/adminfilter-warm.jpg" alt="The tournament Teams filter as the club admin's sheet, with a Done button." width="390" height="844"></div><h3>Club admin sheet · tournament Teams filter <span class="mk" data-k="out" data-note="The club and tournament admin’s own sheet, also used on two public pages. Decision 4.">Own sheet</span></h3><p class="facts">12px corners · section labels · Done</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · WHAT DIFFERS -->
+    <section class="screen" id="s-table" hidden>
+      <div class="eyebrow">Screen 2 · decision 3</div>
+      <h1 tabindex="-1">What differs, and which differences are on purpose</h1>
+      <p class="sub lead">Read off the live page at 390px. Shared by every sheet that rises from the bottom (not repeated below): 18px top corners, a grab line of about 38 by 4px, a shadow, and Escape closes it. Red cells are drift.</p>
+      <div class="tablewrap"><table class="kept">
+        <thead><tr><th>Sheet</th><th>The bar</th><th>Title</th><th>Close</th><th>Dim (warm · dark)</th><th>Height</th><th>Screen reader</th><th>Focus after Escape</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr class="band"><td colspan="9">Tools drawer recipe</td></tr>
+          <tr><td>Tools menu (Ledger, Budget, practice, club)</td><td>Live under it</td><td>Small capitals label</td><td>—</td><td>Portal dim · portal dim</td><td>Up to the bar − 12px</td><td>Menu</td><td>Back to Tools</td><td>On purpose (E1)</td></tr>
+          <tr><td>Filter sheet (both Ledgers)</td><td>Live under it</td><td>Small capitals label</td><td>—</td><td>Portal dim</td><td>Up to the bar − 12px</td><td class="bad">Dialog, marked modal</td><td>Back to Filter</td><td>Shape on purpose (2026-10-02); the modal claim is drift</td></tr>
+          <tr class="band"><td colspan="9">Lineup builder recipe</td></tr>
+          <tr><td>Lineup setup</td><td>Covered, out of reach</td><td>Sentence title</td><td>× 44px</td><td>Portal dim, over the bar</td><td>Screen − 12px</td><td class="bad">Dialog, not marked modal; keyboard can leave</td><td>Back to its button</td><td>On purpose (2026-09-23 form); keyboard half open</td></tr>
+          <tr><td>Save as template</td><td>Covered</td><td>Sentence title</td><td>× 44px</td><td>Portal dim, over the bar</td><td>Screen − 12px</td><td class="bad">Same</td><td>Back to Tools</td><td>On purpose; keyboard half open</td></tr>
+          <tr><td>Call up a player</td><td>Covered</td><td class="bad">Its own heading (display face)</td><td>× 44px</td><td>Portal dim, over the bar</td><td>Screen − 12px</td><td class="bad">Same</td><td>Back to its button</td><td>Head is a third copy</td></tr>
+          <tr><td>Print</td><td>Live under it</td><td class="bad">None</td><td>—</td><td>Portal dim</td><td>Up to the bar − 12px</td><td class="bad">No role</td><td>Back to Tools</td><td>Missing title and role</td></tr>
+          <tr><td>Copy from</td><td>Live under it</td><td>Sentence title</td><td>× 44px</td><td>Portal dim</td><td>Fills to the bar (square corners)</td><td>Dialog</td><td class="bad">Nowhere</td><td>Full height on purpose (2026-10-02 D7)</td></tr>
+          <tr><td>Player row menu</td><td>Live under it</td><td>Record head</td><td>Cancel</td><td>Portal dim</td><td>Up to the bar − 12px</td><td>Dialog</td><td>Back to the row</td><td>On purpose</td></tr>
+          <tr class="band"><td colspan="9">More sheet recipe</td></tr>
+          <tr><td>More</td><td>Live (it is the bar’s sheet)</td><td>None (tiles)</td><td>—</td><td>Portal dim</td><td>Up to the bar − 12px</td><td>Menu</td><td>Back to More</td><td>On purpose (2026-09-20)</td></tr>
+          <tr><td>Team switcher · Player switcher</td><td>Live under it</td><td class="bad">Mono section label</td><td>—</td><td>Portal dim</td><td>Up to the bar − 12px</td><td>Menu</td><td>Back to the name</td><td>Title style; dark surface is the bar’s colour</td></tr>
+          <tr><td>Position picker</td><td>Live under it</td><td>Record head</td><td>Close button</td><td>Portal dim</td><td>Up to the bar − 12px</td><td class="bad">Dialog, marked modal</td><td>Back to the position</td><td>On purpose, except the modal claim</td></tr>
+          <tr><td>RSVP</td><td>Over the event window</td><td>Record head</td><td>Close button</td><td>The window’s</td><td>Up to the bar − 12px</td><td>Dialog, modal</td><td>Back to the player</td><td>On purpose</td></tr>
+          <tr class="band"><td colspan="9">Game-day console recipe</td></tr>
+          <tr><td>Who’s here</td><td>Live under it</td><td>Sentence title</td><td>× 44px</td><td class="bad">Dark dim · dark dim</td><td class="bad">72% of the screen</td><td>Dialog</td><td>Back to its button</td><td>Dim, height, scroll and the bar’s height copied by hand</td></tr>
+          <tr><td>Note</td><td class="bad">Live under a form</td><td>Sentence title</td><td>× 44px</td><td class="bad">Dark dim · dark dim</td><td class="bad">72%</td><td>Dialog</td><td>Back to Note</td><td>A form above a live bar (2026-09-23)</td></tr>
+          <tr class="band"><td colspan="9">Popover menus</td></tr>
+          <tr><td>Schedule view menu · Add event</td><td>Live</td><td>None</td><td>—</td><td>None</td><td>A card</td><td>Menu</td><td>Back to the button</td><td class="bad">Still popovers on a phone (E1)</td></tr>
+          <tr class="band"><td colspan="9">Read from the code only (no test data to open them)</td></tr>
+          <tr><td>Notification reader</td><td>Live under it</td><td>Heading</td><td>—</td><td>Portal dim</td><td>Up to the bar − 12px</td><td>Dialog, modal</td><td>—</td><td>More recipe</td></tr>
+          <tr><td>Award sheet</td><td>Live while reading, covered while editing</td><td>None (named for screen readers)</td><td>—</td><td>Portal dim</td><td>—</td><td>Dialog, modal</td><td>—</td><td>On purpose: the one sheet that switches layer live</td></tr>
+          <tr><td>Schedule day list (several events on one day)</td><td class="bad">Covered</td><td>Heading</td><td>× </td><td>Window dim</td><td>80%</td><td>—</td><td>—</td><td>A menu that covers the bar</td></tr>
+          <tr class="band"><td colspan="9">Out of the frame</td></tr>
+          <tr><td>Room windows, event window, tag manager, help</td><td>Covered</td><td>Page titles</td><td>Back or ×</td><td>Black</td><td>Full screen</td><td>Dialog, modal</td><td>Mostly back; tag manager nowhere</td><td>Windows, not sheets. Help’s × is 30px</td></tr>
+          <tr><td>Club admin sheet</td><td>No coach bar there</td><td>Section labels</td><td>Done</td><td>Its own (.34 · .55)</td><td>720px</td><td>Dialog, modal</td><td class="bad">Nowhere</td><td>Decision 4</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 3 · THE FRAME -->
+    <section class="screen" id="s-frame" hidden>
+      <div class="eyebrow">Screen 3 · decisions 1 and 2</div>
+      <h1 tabindex="-1">The frame: one sheet, two layers, three heads</h1>
+      <p class="sub lead">Nothing new to draw: the two references below are today’s Tools menu and today’s Lineup setup, which already follow the rulings. The frame makes them one component and gives every other sheet their rules.</p>
+      <div class="frameparts">
+        <div class="part"><h3>Shared by every sheet</h3><p>Full width, 18px top corners, the grab line, the portal’s dim (warm and dark), the card surface, a height cap, the sheet scrolls without dragging the page, Escape and a tap on the dim close it, focus goes back to what opened it.</p></div>
+        <div class="part"><h3>Menu layer · nothing to lose</h3><p>Sits on top of the bar, which stays visible and tappable. Not modal. Tools, Filter, the switchers, Print, Copy from, the record sheets, Who’s here.</p></div>
+        <div class="part"><h3>Form layer · work in hand</h3><p>Covers the bar and takes it out of reach for a thumb, a keyboard and a screen reader. A × is required. The keyboard stays inside. Setup, Save as template, Call up, the game-day Note, the Award sheet while editing.</p></div>
+        <div class="part"><h3>Three heads</h3><p>A small-capitals label for a menu; a sentence title with × for a form (a tall menu may keep its ×); a record head (a name and a context line) when the sheet is about one player.</p></div>
+      </div>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl alt">Menu layer · reference</span><h3>Tools menu</h3><span class="mk" data-k="un" data-note="The Tools drawer as it is today. The frame is promoted from it.">Unchanged</span></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="tools" src="sheet-frame/tools-warm.jpg" alt="The Tools menu above the bar." width="390" height="844">
+            <button type="button" class="pin alt" style="left:320px;top:560px" data-d="D2" data-here="The menu head: a small-capitals label. It is there because the dim covers the button that opened the sheet.">2</button>
+            <button type="button" class="pin alt" style="left:182px;top:784px" data-d="D1" data-here="The bar stays visible and tappable: it is the way out of a menu opened by mistake, and leaving loses nothing.">1</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl alt">Form layer · reference</span><h3>Lineup setup</h3><span class="mk" data-k="un" data-note="Lineup setup as it is today, except that the frame would keep the keyboard inside it (the open half of 2026-09-23).">Unchanged</span></div>
+          <div class="scroller"><div class="shot">
+            <img data-shot="setup" src="sheet-frame/setup-warm.jpg" alt="Lineup setup covering the bar." width="390" height="844">
+            <button type="button" class="pin alt" style="left:300px;top:300px" data-d="D2" data-here="The form head: a sentence title and a 44px ×. A surface that covers the bar earns an explicit way out (2026-09-23).">2</button>
+            <button type="button" class="pin alt" style="left:182px;top:808px" data-d="D1" data-here="The sheet runs to the bottom of the screen and the bar is hidden from a thumb, a keyboard and a screen reader: a stray tap cannot leave with the setup half done.">1</button>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · WHAT MOVES -->
+    <section class="screen" id="s-moves" hidden>
+      <div class="eyebrow">Screen 4 · what a coach would notice</div>
+      <h1 tabindex="-1">What moves when each sheet joins the frame</h1>
+      <p class="sub lead">Eight sheets change in a way a coach can see. Each “proposed” frame is the live sheet with the change applied in place. Every sheet not shown here moves onto the frame with no visible change.</p>
+
+      <div class="move">
+        <h2>Game day · Note becomes a form</h2>
+        <p>A coach writing a note mid-game sees the bar go dim under the sheet. A stray tap on Schedule can no longer leave with the note half written; the × or the dim closes it.</p>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="gamenote" src="sheet-frame/gamenote-warm.jpg" alt="Note above a live bar." width="390" height="844">
+              <button type="button" class="pin" style="left:330px;top:446px" data-d="D1" data-here="A text box and Save note, above a bar that is still live.">1</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><span class="mk" data-k="re" data-note="The sheet comes down over the bar and the dim covers the bar too; the bar leaves the tab order. Same title, same ×, same fields.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="gamenote-P" src="sheet-frame/gamenote-P-warm.jpg" alt="Note covering the bar, the bar hidden under the dim." width="390" height="844">
+              <button type="button" class="pin fix" style="left:330px;top:518px" data-d="D1" data-here="The form layer: covers the bar, the warm dim, the keyboard kept inside.">1</button></div></div></div>
+        </div>
+      </div>
+
+      <div class="move">
+        <h2>Game day · Who’s here keeps its layer, takes the portal’s dim and height</h2>
+        <p>On warm the dim behind it turns from the dark theme’s grey to the warm one every other sheet uses. The list can grow to the frame’s height, so about two more players show before scrolling, and scrolling the list no longer drags the game behind it. If you want the game kept in view above it, say so and the cap stays at 72%.</p>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="gamehere" src="sheet-frame/gamehere-warm.jpg" alt="Who's here at 72% height over a cool grey dim." width="390" height="844">
+              <button type="button" class="pin" style="left:300px;top:120px" data-d="D3" data-here="The dim is the dark theme’s on warm, and the sheet stops at 72% of the screen; neither has a recorded reason.">3</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><span class="mk" data-k="re" data-note="The portal’s dim (warm remap), the frame’s height cap and contained scrolling. Same rows, same ×, still above a live bar: each tap saves at once, so nothing is lost by leaving.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="gamehere-P" src="sheet-frame/gamehere-P-warm.jpg" alt="Who's here taller, over the warm dim." width="390" height="844">
+              <button type="button" class="pin fix" style="left:300px;top:40px" data-d="D3" data-here="The frame’s cap: up to the bar, less 12px.">3</button></div></div></div>
+        </div>
+      </div>
+
+      <div class="move">
+        <h2>Team and player switchers · the menu’s title</h2>
+        <p>“Your teams” and “Players” read in the sheet-title style the Tools and Filter sheets use, instead of the small mono label. Barely noticeable; it removes a third title style.</p>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="team" src="sheet-frame/team-warm.jpg" alt="Team switcher titled YOUR TEAMS in small mono." width="390" height="844">
+              <button type="button" class="pin" style="left:330px;top:620px" data-d="D2" data-here="The small mono section label, a third title style.">2</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><span class="mk" data-k="re" data-note="The label takes the menu head’s style.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="team-P" src="sheet-frame/team-P-warm.jpg" alt="Team switcher titled YOUR TEAMS in the sheet-title style." width="390" height="844">
+              <button type="button" class="pin fix" style="left:330px;top:624px" data-d="D2" data-here="The menu head, as on Tools and Filter.">2</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><h3>Player switcher</h3><span class="mk" data-k="re" data-note="The same change on the player switcher.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="player-P" src="sheet-frame/player-P-warm.jpg" alt="Player switcher titled PLAYERS in the sheet-title style." width="390" height="844"></div></div></div>
+        </div>
+      </div>
+
+      <div class="move">
+        <h2>Print · gains a title</h2>
+        <p>The sheet says what it is once the dim has covered the Tools button.</p>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="print" src="sheet-frame/print-warm.jpg" alt="Print with no title." width="390" height="844">
+              <button type="button" class="pin" style="left:330px;top:566px" data-d="D2" data-here="No title, and no role for a screen reader.">2</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><span class="mk" data-k="new" data-note="A PRINT label, the menu head.">New</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="print-P" src="sheet-frame/print-P-warm.jpg" alt="Print titled PRINT." width="390" height="844">
+              <button type="button" class="pin fix" style="left:330px;top:530px" data-d="D2" data-here="The menu head.">2</button></div></div></div>
+        </div>
+      </div>
+
+      <div class="move">
+        <h2>Call up a player · the shared form head</h2>
+        <p>The title matches Lineup setup and Save as template, the two forms beside it.</p>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="callup" src="sheet-frame/callup-warm.jpg" alt="Call up a player with its own heading style." width="390" height="844">
+              <button type="button" class="pin" style="left:250px;top:336px" data-d="D2" data-here="Its own heading in the display face, a third copy of the form head.">2</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><span class="mk" data-k="re" data-note="The heading takes the shared form head’s title style. The × is unchanged.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="callup-P" src="sheet-frame/callup-P-warm.jpg" alt="Call up a player with the shared form title." width="390" height="844">
+              <button type="button" class="pin fix" style="left:250px;top:336px" data-d="D2" data-here="The form head, as on Lineup setup.">2</button></div></div></div>
+        </div>
+      </div>
+
+      <div class="move">
+        <h2>Schedule · Add event and the view menu become drawers</h2>
+        <p>Both menus rise from the bottom with the dim behind them, within thumb reach, titled; today they hang from buttons at the top of the screen.</p>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span><h3>Add event</h3></div>
+            <div class="scroller"><div class="shot"><img data-shot="addevent" src="sheet-frame/addevent-warm.jpg" alt="Add event as a card at the top right." width="390" height="844">
+              <button type="button" class="pin" style="left:120px;top:90px" data-d="D5" data-here="A popover card under the plus button, at the top of the screen.">5</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><h3>Add event</h3><span class="mk" data-k="re" data-note="The same menu, its items unchanged, as the Tools drawer: a menu-layer sheet titled ADD EVENT.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="addevent-P" src="sheet-frame/addevent-P-warm.jpg" alt="Add event as a drawer above the bar." width="390" height="844">
+              <button type="button" class="pin fix" style="left:330px;top:508px" data-d="D5" data-here="A menu sheet above the bar.">5</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><h3>View menu</h3><span class="mk" data-k="re" data-note="The same change on the view menu (List, Week, Month).">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="view-P" src="sheet-frame/view-P-warm.jpg" alt="The view menu as a drawer above the bar." width="390" height="844"></div></div></div>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:22px;max-width:860px"><span class="mk" data-k="un" data-note="Tools menus, the Filter sheet, Lineup setup, Save as template, Copy from, the player row menu, More, the position picker, RSVP, the notification reader and the Award sheet look the same after the move. Their gains are behaviour: modal only on the form layer, the keyboard kept inside a form, focus returned after Escape.">Unchanged to the eye</span> every other sheet.</p>
+    </section>
+
+    <!-- 5 · WHAT STAYS OUT -->
+    <section class="screen" id="s-out" hidden>
+      <div class="eyebrow">Screen 5 · decisions 3 and 4 · where merging costs more than it saves</div>
+      <h1 tabindex="-1">What stays out of the frame</h1>
+      <p class="sub lead">Three groups would cost more to merge than they would give back.</p>
+      <div class="frameparts">
+        <div class="part"><h3>Full-screen windows</h3><p>Room windows, the event window, the tag manager and help are pages a coach works in, with Back or Save. Making them sheets would change what they are. Help’s × is 30px on a phone, under the 44px floor: a defect, reported here, not fixed.</p></div>
+        <div class="part"><h3>The More sheet’s container</h3><p>It is part of the bar (its tiles, its colour, its place in the bar’s stacking). It keeps its own container and already matches the frame’s shape.</p></div>
+        <div class="part"><h3>The club admin’s sheet</h3><p>The club and tournament admin’s own sheet, opened above everything, also used on two public pages. Merging would make those depend on the coaches portal. Decision 4.</p></div>
+      </div>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Club admin · tournament Teams filter</h3></div>
+          <div class="scroller"><div class="shot"><img data-shot="adminfilter" src="sheet-frame/adminfilter-warm.jpg" alt="The admin sheet: section labels, segmented choices and a Done button." width="390" height="844">
+            <button type="button" class="pin alt" style="left:330px;top:500px" data-d="D4" data-here="12px corners, a darker dim (.34 on warm), section labels instead of a title, and a Done button.">4</button></div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Coach · Ledger filter</h3></div>
+          <div class="scroller"><div class="shot"><img data-shot="filter" src="sheet-frame/filter-warm.jpg" alt="The Ledger Filter sheet: rows with values, no Done." width="390" height="844">
+            <button type="button" class="pin alt" style="left:330px;top:480px" data-d="D4" data-here="18px corners, the portal’s dim, a FILTER title, and no Done (ruled 2026-10-02: it closes like Tools).">4</button></div></div>
+          <p class="caption">Two filter sheets in one product, ruled a week apart: one has Done, one does not.</p>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Help</h3></div>
+          <div class="scroller"><div class="shot"><img data-shot="help" src="sheet-frame/help-warm.jpg" alt="Help as a full-screen window." width="390" height="844">
+            <button type="button" class="pin" style="left:330px;top:44px" data-d="D3" data-here="The close button is 30 by 30px on a phone, under the 44px tap floor. A defect, reported, not fixed here.">3</button></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · THE ORDER -->
+    <section class="screen" id="s-order" hidden>
+      <div class="eyebrow">Screen 6 · decision 6</div>
+      <h1 tabindex="-1">The order: five small steps, the lineup builder last</h1>
+      <p class="sub lead">Each step ships and is walked on its own. Lineup and practice screens are being worked on in parallel, so the builder’s drawers move last and the practice “⋯” only through the shared Tools drawer.</p>
+      <p><button type="button" class="button" data-d="D6" data-here="The five steps on this screen, each its own build and walk.">Open decision 6 · the order</button></p>
+      <ol class="steps">
+        <li><h3>Promote the frame from the Tools drawer</h3><p>Every Tools menu (Ledger, Budget, practice, club Ledger, tournament Teams) and the Filter sheet. The Filter sheet stops claiming to be modal.</p><p class="notice">A coach notices nothing. The drawer’s stylesheet already says this promotion is due.</p></li>
+        <li><h3>The small menus</h3><p>Team and player switchers (title), Print (title and role), the Schedule’s view menu and Add event (drawers, if decision 5 is yes).</p><p class="notice">A coach notices the two Schedule menus rising from the bottom; the rest is barely visible.</p></li>
+        <li><h3>Game day</h3><p>Note becomes a form; Who’s here takes the dim, height and scroll rule; the hand-copied bar height goes.</p><p class="notice">A coach notices Note covering the bar mid-game. It is the screen used under the most pressure, so it gets its own walk.</p></li>
+        <li><h3>The record sheets</h3><p>Position picker, RSVP, player row menu, notification reader, Award sheet: onto the frame, looks unchanged; the modal claim follows the layer.</p><p class="notice">Nothing visible.</p></li>
+        <li><h3>The lineup builder’s drawers</h3><p>Setup, Save as template, Call up, Copy from. They already follow the rulings; Call up takes the shared head, the three forms keep the keyboard inside (the 23 September open half), Copy from hands focus back.</p><p class="notice">A coach notices Call up’s title. Last, because the builder is being worked on in parallel.</p></li>
+        <li class="out"><h3>Out of the frame</h3><p>Full-screen windows, the More sheet’s own container, and the club admin’s sheet (decision 4).</p></li>
+      </ol>
+    </section>
+  </div>
+</section>
+
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Decisions · round 1 · drawn 2026-10-03 · ruled 2026-10-05</div>
+  <h1>Six decisions, all accepted as recommended</h1>
+  <p class="sub">Owner, 2026-10-05: “I agree with all of your recommendations.” Each marker on the Mockup tab opens its decision here.</p>
+
+  <div class="decisionrow" id="D1"><div class="dhead"><h3>D1 · Two layers, sorted by one test: would a stray tap on the bar lose something?</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>Every sheet is one of two layers. Menu layer (nothing to lose): sits on top of the bar, the bar stays live, not modal. Form layer (work in hand): covers the bar, takes it out of reach of a thumb, a keyboard and a screen reader, a × is required, the keyboard stays inside. The test replaces “acts and closes” versus “you type and commit” with the 23 September ruling’s own reason.</p>
+    <p class="rec"><strong>Recommended.</strong> It keeps the ruling and sorts the sheets it did not foresee: the Filter sheet and Who’s here stay open but save every tap, so they are menus (as built); the game-day Note holds a half-typed note, so it is a form (not as built, and the one visible change it causes). It also settles the screen reader: only a form is modal, so the Filter sheet and position picker stop claiming to be.</p>
+    <p class="altx">Alternative: three named variants (menu, live panel, form). More names for two geometries; the live panel would sit exactly where a menu does.</p></div>
+
+  <div class="decisionrow" id="D2"><div class="dhead"><h3>D2 · Three heads: a label for menus, a title with × for forms, a record head for one player</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>A menu’s head is the small-capitals label Tools and Filter carry. A form’s head is the sentence title with a 44px × that Lineup setup carries; a tall menu may keep a ×. A sheet about one record (position, RSVP, the player row) keeps its name and context line. Seven title styles become these three.</p>
+    <p class="rec"><strong>Recommended.</strong> Each head matches a rule already made: the label because the dim covers what opened the sheet (E1), the × because covering the bar earns a way out (2026-09-23), the record head because a sheet about Avery should say Avery. Visible changes: the switchers’ mono label, Print’s missing title, Call up’s own heading.</p>
+    <p class="altx">Alternative: one head everywhere, the portal’s 16px sentence heading. One look, but it restyles every menu, including the two drawers just ruled.</p></div>
+
+  <div class="decisionrow" id="D3"><div class="dhead"><h3>D3 · What stays different on purpose, and what is drift</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>Kept on purpose: the two layers; the record heads; More’s tiles and colour; Copy from filling the screen; RSVP stacked over the event window; the Award sheet switching layer as it edits; the Ledger Filter sheet with no Done. Drift, to move: the game-day Note above a live bar; the game-day dim on warm, its 72% height, its scroll and its hand-copied bar height; the switchers’ title; Print’s missing title and role; Call up’s head; the modal claim on menu-layer sheets; forms that let the keyboard out; focus lost after Escape on Copy from; the Schedule day list covering the bar.</p>
+    <p class="rec"><strong>Recommended as listed.</strong> Every kept item has a ruling behind it; no drift item does. The one judgement call is Who’s here’s height: nothing records why it stops at 72%, but if you want the game visible above it, it keeps 72%.</p>
+    <p class="altx">Alternative: keep the game-day console as its own recipe and fix only Note’s layer and the dim. Smaller, but leaves a fourth recipe to drift again.</p></div>
+
+  <div class="decisionrow" id="D4"><div class="dhead"><h3>D4 · The club admin’s sheet keeps its own component</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>The club and tournament admin’s sheet does not join the frame. When its screens are next worked on, it takes the frame’s look (18px corners, the portal’s dim); whether a filter sheet has Done gets its own ruling.</p>
+    <p class="rec"><strong>Recommended.</strong> It opens above everything on purpose (the admin has no coach bar), and two public pages use it, so merging would make the admin and the public site depend on the coaches portal for a look that differs by two numbers. The real question is behaviour: the tournament Teams filter has Done, the Ledger filter was ruled not to, a week apart. That deserves a ruling, not a merge.</p>
+    <p class="altx">Alternative: one sheet everywhere, admin and public included. One component, but it crosses three shells and touches public pages for a small visual gain.</p></div>
+
+  <div class="decisionrow" id="D5"><div class="dhead"><h3>D5 · The Schedule’s view menu and Add event become drawers on a phone</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>On a phone both menus rise from the bottom as menu-layer sheets with a title and the dim, like every other menu.</p>
+    <p class="rec"><strong>Recommended.</strong> The 22 September drawer ruling called a popover under a 44px square the wrong surface on a phone; these two are the last ones. Both sit at the top of the screen, the hardest place to reach with a thumb.</p>
+    <p class="altx">Alternative: leave them as cards. They open next to the button that opened them, which is a fair reading too, and Add event is one of the screens a coach uses most.</p></div>
+
+  <div class="decisionrow" id="D6"><div class="dhead"><h3>D6 · Five small steps, the lineup builder last</h3><span class="tag accepted">Accepted 2026-10-05</span></div>
+    <p>The frame is promoted from the Tools drawer first (nothing visible), then the small menus, then game day, then the record sheets, then the lineup builder’s drawers. Each step is its own build and walk.</p>
+    <p class="rec"><strong>Recommended.</strong> Lineup and practice screens are being worked on in parallel, and the builder’s drawers already follow the rulings, so they gain least and collide most. Game day gets its own walk because it is used under the most pressure.</p>
+    <p class="altx">Alternative: one sweep. Faster to finish, one walk instead of five, but it would land on screens another session is changing.</p></div>
+</section>
+
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Sheet Frame</h1>
+  <h2>What changes for a coach</h2>
+  <p>Very little on screen, on purpose. A coach writing a game-day note sees the bottom bar go dim under it, so a stray tap cannot lose the note. The Schedule’s Add event and view menus rise from the bottom like every other menu. Print, the team switcher and Call up get the same kind of title as their neighbours. On the warm theme, the game-day sheets dim the screen the same way every other sheet does. Behind the scenes, every sheet behaves the same way for a keyboard and a screen reader.</p>
+  <h2>Why it matters</h2>
+  <p>A coach can open 16 sheets on a phone, built from four recipes, beside two popover menus and four full-screen windows. Two rulings about how sheets behave reached some of them and not others, so the same gesture does different things on different screens. One shared frame makes the rulings hold everywhere and stops new sheets drifting.</p>
+  <h2>Customer impact</h2>
+  <p>Every coach on a phone. The most visible gain is on game day, the screen used under the most pressure. The least visible, and the most important for accessibility, is that a screen reader is told the truth about what it can reach.</p>
+  <h2>Priority</h2>
+  <p>Medium. Step 1 is already due by the drawer’s own notes; game day is the step with real user value; the lineup builder can wait for the work in flight there.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>Every sheet that holds unsaved work covers the bar; every other sheet leaves it live.</li>
+    <li>Three title styles, one dim per theme, one height rule, across every sheet.</li>
+    <li>Escape returns focus to what opened the sheet, everywhere.</li>
+    <li>A new sheet is built from the frame, with nothing to copy.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Plan notes · for the build session</div>
+  <h1>Sheet Frame — what a build would change</h1>
+  <div class="note">Mockups only so far; no product code changed. Facts are from the live page at 390px on 2026-10-03 (warm and dark) and from the code that day.</div>
+  <h2>The recipes today</h2>
+  <ul>
+    <li><strong>Tools drawer:</strong> <code>components/coaches/CoachToolbarMenu.module.css</code> <code>.drawer</code> / <code>.drawerTitle</code> (≤640, <code>bottom: var(--coach-foot-clear)</code>, z 260); second consumer <code>components/coaches/FilterGroup.tsx</code>. The stylesheet’s own comment says the promotion to one class is due, with <code>.lineupAutoMenu</code>.</li>
+    <li><strong>Builder drawers:</strong> <code>.lineupAutoMenu</code> + <code>.lineupDrawerOverNav</code> in <code>app/[orgSlug]/coaches/coaches.module.css</code> (≤900), <code>components/coaches/LineupSheetScrim.tsx</code> (<code>overNav</code>), <code>components/coaches/LineupDrawerHead.tsx</code>. <code>CallUpSheet</code> carries its own head (noted in <code>LineupDrawerHead</code>).</li>
+    <li><strong>More sheet:</strong> <code>components/coaches/CoachesBottomNav.module.css</code> <code>.sheetAnchor</code> / <code>.sheetScrim</code> / <code>.dropdown</code> / <code>.sheetGrab</code>; reused by the team and player switchers, the position picker, RSVP, the notification reader and the Award sheet.</li>
+    <li><strong>Game day:</strong> <code>.gdSheet</code> in <code>coaches.module.css</code> (≤900): <code>bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom))</code> is the hand-copied arithmetic the drawer comment warns against; <code>max-height: 72dvh</code>; its scrim has no warm remap.</li>
+    <li><strong>Schedule menus:</strong> <code>CoachToolbarMenu</code> without <code>drawerOnPhone</code> in <code>schedule/page.tsx</code>.</li>
+    <li><strong>Out:</strong> <code>components/coaches/RoomShell.tsx</code>, <code>ScheduleEventSheet</code> (full screen at ≤640 via <code>.modalOverlay</code>), <code>TagManagerDrawer</code>, <code>components/help/HelpDrawer.tsx</code> (portal; × 30px), <code>components/admin/BottomSheet.tsx</code> (portal, z 600; also <code>FollowAccountNudge</code>, <code>UnfollowConfirmSheet</code>).</li>
+  </ul>
+  <h2>Behaviour to settle once, in the frame</h2>
+  <ul>
+    <li><code>aria-modal</code> only on the form layer (today: the Filter sheet and position picker claim it with the bar live; the three builder forms do not).</li>
+    <li>The form layer enrols <code>useOverlayOpen</code> (gated on the nav breakpoint) and keeps focus inside: <code>useDialogFloor</code>, which also calls <code>useBackStep</code>, so the §219 back-step guard moves with it (the open half recorded with the 2026-09-23 ruling).</li>
+    <li>The scrim renders inside the dismiss boundary; the drawer renders in-tree so it inherits <code>--coach-foot-clear</code>.</li>
+    <li>Focus returns to the opener after Escape (lost today on Copy from, the tag manager, the admin sheet).</li>
+  </ul>
+  <h2>Guards that pin today’s sheets</h2>
+  <ul>
+    <li><code>tests/unit/coach-lineup-phone-guard.test.ts</code> (the two drawer layers, scrim call-site counts, the Tools signature), <code>ledger-parity-screens-guard</code>, <code>coach-practice-week-phone-guard</code>, <code>practice-vocabulary-guard</code>, and the two that reference <code>sheetScrim</code> (<code>coach-first-screen-guard</code>, <code>coach-people-phone-guard</code>).</li>
+  </ul>
+  <h2>Defects found while drawing (reported, not fixed)</h2>
+  <ul>
+    <li>Game-day Note: a form above a live bar (2026-09-23 ruling).</li>
+    <li>Game-day sheets: the dark dim on warm; the bar height copied by hand.</li>
+    <li>Help drawer: × 30px on a phone (44px floor).</li>
+    <li>Filter sheet and position picker marked modal while the bar is live.</li>
+    <li>Print drawer: no title, no role.</li>
+    <li>Escape leaves focus nowhere on Copy from, the tag manager and the admin sheet.</li>
+    <li>The Schedule day list (several events on one day) covers the bar although it is a menu (read from the code; no test data).</li>
+  </ul>
+  <h2>Formatting check (the portal’s written rules)</h2>
+  <ul>
+    <li>Nothing new is drawn: every proposed frame uses an existing class (the drawer, the drawer title, the shared form head, the portal dim). The 44px tap floor holds for every × in the frame; Help’s 30px × is outside it and reported.</li>
+  </ul>
+  <h2>Capture recipe</h2>
+  <ul>
+    <li><code>.probe/fc/sheets.mjs</code> (every sheet, measured), <code>.probe/fc/sheets-p.mjs</code> (the proposals), <code>.probe/fc/sheet-lib.js</code> (what is measured). Touch at 390, warm and dark.</li>
+  </ul>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody explain" id="dialogbody"></div></dialog>
+
+<script>
+/* Navigation: the hub tabs, the screen walk, and the warm/dark switch. Kept apart from the explanations
+   below so a slip in one cannot take the other down. */
+(function () {
+  var HUBS = ['mockup', 'decisions', 'brief', 'plan'];
+  var tabs = document.querySelectorAll('.hubtabs button');
+  function showHub(name) {
+    tabs.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.hub === name)); });
+    HUBS.forEach(function (n) { document.getElementById('hub-' + n).hidden = n !== name; });
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { showHub(b.dataset.hub); window.scrollTo(0, 0); }); });
+  window.__showHub = showHub;
+
+  var links = document.querySelectorAll('.walk a');
+  var screens = document.querySelectorAll('#hub-mockup .screen');
+  function showScreen(id, focus) {
+    if (!document.getElementById(id)) id = 's-inventory';
+    screens.forEach(function (s) { s.hidden = s.id !== id; });
+    links.forEach(function (a) { if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    if (focus) { var h = document.querySelector('#' + id + ' h1'); if (h) h.focus({ preventScroll: true }); }
+  }
+  links.forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var id = a.getAttribute('href').slice(1);
+      showHub('mockup'); showScreen(id, true);
+      try { history.replaceState(null, '', '#' + id); } catch (err) {}
+    });
+  });
+  var start = (location.hash || '').slice(1);
+  if (/^s-/.test(start)) showScreen(start, false);
+  else if (HUBS.indexOf(start) > 0) showHub(start);
+
+  var theme = 'warm';
+  try { theme = localStorage.getItem('sf-theme') || 'warm'; } catch (err) {}
+  var toggle = document.getElementById('themeToggle');
+  function applyTheme(t) {
+    theme = t;
+    document.querySelectorAll('img[data-shot]').forEach(function (img) { img.src = 'sheet-frame/' + img.dataset.shot + '-' + t + '.jpg'; });
+    toggle.textContent = t === 'dark' ? 'Showing dark · switch to warm' : 'Showing warm · switch to dark';
+    toggle.setAttribute('aria-pressed', String(t === 'dark'));
+    try { localStorage.setItem('sf-theme', t); } catch (err) {}
+  }
+  toggle.addEventListener('click', function () { applyTheme(theme === 'dark' ? 'warm' : 'dark'); });
+  if (theme !== 'warm') applyTheme(theme);
+})();
+</script>
+<script>
+/* Explanations: every marker and tag opens what it points at. The words live in the page itself
+   (the Decisions tab, each marker's data-here and each tag's data-note), so nothing here is prose. */
+(function () {
+  var dialog = document.getElementById('dialog');
+  var title = document.getElementById('dialogtitle');
+  var body = document.getElementById('dialogbody');
+  document.getElementById('closeDialog').addEventListener('click', function () { dialog.close(); });
+  dialog.addEventListener('click', function (e) { if (e.target === dialog) dialog.close(); });
+  function section(head, text, cls) {
+    var h = document.createElement('h3'); h.textContent = head;
+    var p = document.createElement('p'); p.textContent = text; if (cls) p.className = cls;
+    body.appendChild(h); body.appendChild(p);
+  }
+  function openDecision(id, here) {
+    var row = document.getElementById(id);
+    if (!row) return;
+    body.textContent = '';
+    title.textContent = row.querySelector('h3').textContent;
+    if (here) section('Where you are looking', here, 'here');
+    section('The proposal', row.querySelector('p').textContent);
+    var rec = row.querySelector('.rec'); if (rec) section('Recommendation', rec.textContent);
+    var alt = row.querySelector('.altx'); if (alt) section('The alternative', alt.textContent);
+    var go = document.createElement('button');
+    go.type = 'button'; go.className = 'button'; go.textContent = 'Open it on the Decisions tab';
+    go.addEventListener('click', function () { dialog.close(); window.__showHub('decisions'); row.scrollIntoView(); });
+    body.appendChild(go);
+    dialog.showModal();
+  }
+  var KIND = { new: 'New', re: 'Restyled', un: 'Unchanged', keep: 'On purpose', drift: 'Drift', out: 'Out of the frame' };
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-d]');
+    if (t) { e.preventDefault(); openDecision(t.dataset.d, t.dataset.here); return; }
+    var mk = e.target.closest('.mk');
+    if (mk) {
+      e.preventDefault();
+      body.textContent = '';
+      var host = mk.closest('h3, .spectop');
+      var name = host ? (host.querySelector('h3') || host).childNodes[0] : null;
+      title.textContent = (KIND[mk.dataset.k] || 'Note') + (name && name.nodeValue && name.nodeValue.trim() ? ' · ' + name.nodeValue.trim() : '');
+      section('What this is', mk.dataset.note);
+      dialog.showModal();
+    }
+  });
+  document.querySelectorAll('.mk').forEach(function (mk) {
+    mk.setAttribute('role', 'button'); mk.tabIndex = 0;
+    mk.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mk.click(); } });
+  });
+})();
+</script>
