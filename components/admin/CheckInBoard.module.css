@@ -126,12 +126,12 @@
 .searchToggle:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 @media (min-width: 641px) {
   .selectField { flex: 0 0 auto; }
-  .select { width: auto; min-width: 11.5rem; min-height: 38px; font-size: var(--type-support); }
+  .select { width: auto; min-width: 11.5rem; min-height: var(--admin-control-h); font-size: var(--type-support); }
   .searchToggle { display: none; }
   .searchWrap, .searchWrap[data-open] { display: flex; flex: 1 1 14rem; max-width: 22rem; }
-  .search { min-height: 38px; font-size: var(--type-support); }
+  .search { min-height: var(--admin-control-h); font-size: var(--type-support); }
 }
-/* A tablet is touched: the floor reaches 768; the desk's 38px starts above it. */
+/* A tablet is touched: the floor reaches 768; the desk's control height starts above it. */
 @media (min-width: 641px) and (max-width: 768px) {
   .select, .search { min-height: var(--tap-min, 44px); }
 }

@@ -59,7 +59,7 @@
 }
 
 .tabButton {
-  min-height: 38px;
+  min-height: var(--admin-control-h);
   padding: 0.45rem 0.8rem;
   border: 1px solid transparent;
   border-radius: 2px;

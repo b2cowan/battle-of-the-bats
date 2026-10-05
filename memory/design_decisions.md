@@ -40,6 +40,22 @@ wore the dark theme's on warm) and in two rulings that never reached every sheet
 commit" could not sort sheets that stay open but save every tap. Full-screen windows (rooms, the event window, tags,
 help) are pages, not sheets, and stay out.
 
+### 2026-10-03 — ONE CONTROL HEIGHT, THE PORTAL'S BUTTON: 34px ON A COMPUTER (owner: "looks good, go for it. I agree with your recommendations") — hub https://claude.ai/artifact/GFfHZkFRiXAxxybnAiGrWd, plan `docs/projects/active/ADMIN_CONTROL_HEIGHT_PLAN.md`
+
+**Decision:** (1) every admin button and toolbar field — club, tournament, volunteer — is **34px** on a computer
+(compact density, ≥769px); below 769px and in comfortable density the admin keeps 38, so no phone, tablet or touch
+size moves. (2) The portal's buttons get a 34px floor on a computer, so its lime and white buttons are one height.
+(3) Filter pills (30) and status/lens chips (32) keep their own heights: they choose what a list shows, they are not
+actions. A FORM field (inside a window or a form) is not a toolbar control and keeps its 40.
+**Rationale:** the 2026-10-01 entry below set 38 "because the portal's buttons are ~38". Measured, they are 33.4
+(white) and 31.4 (lime, no border) — the portal had no desktop height floor at all — so 38 was the admin's own field
+height wearing the portal's name, and the first portal component borrowed into an admin toolbar (the club Ledger's
+Tools) sat 4.6px short. The owner asked the question from a screenshot; the answer was drawn from REAL screens with the
+proposal applied in-browser, true size. ⚠ General form: before matching A to B, MEASURE B — a remembered number for
+the benchmark is exactly as untrustworthy as any other remembered number.
+**Supersedes:** the HEIGHT in the 2026-10-01 entry below (its one-size-across-the-admin rule, padding, type and
+"a toolbar door is a button" all stand).
+
 ### 2026-10-02 — THE TWO LEDGERS READ THE SAME (owner: "I agree with your recommendations on D1-D7"; D3's weight revised by the owner the same day) — hub https://claude.ai/artifact/EQqEd3s4CBLbnrnPuUVAAo, plan `docs/projects/active/LEDGER_PARITY_PLAN.md`
 
 **Decision:** the coach's Ledger (Money › Ledger) and the club's (Accounting › Ledger) are ONE recipe:
@@ -76,6 +92,9 @@ Ledger, not a page (D8); a payee opens as a RECORD — what the team paid it and
 Payees as a window (D8a) was not drawn and is still a page.
 
 ### 2026-10-01 — ONE BUTTON SIZE ACROSS THE ADMIN, THE PORTAL'S; A TOOLBAR DOOR IS A BUTTON (owner, "go ahead with A", from a Ledger toolbar where Payees, Export and Transfer were three sizes)
+
+⚖ **The 38px HEIGHT below is superseded 2026-10-03 (34px on a computer — see that entry): its premise, "the portal's
+buttons are ~38", measured false.** Everything else here stands.
 
 **Decision:** Every admin button — club, tournament, volunteer shells — is the portal's button at ONE height:
 `--admin-control-h` (now **38px in both densities**; compact differs from comfortable in ROWS only), padding

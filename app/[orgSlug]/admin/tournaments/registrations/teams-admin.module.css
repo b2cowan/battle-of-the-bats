@@ -60,8 +60,8 @@
 .divisionField { position: relative; flex: none; width: 16.25rem; min-width: 0; }
 .divisionSelect {
   width: 100%;
-  min-height: 38px;
-  padding: 0.4rem 2rem 0.4rem 0.75rem;
+  min-height: var(--admin-control-h);
+  padding: 0 2rem 0 0.75rem;
   border: 1px solid var(--home-line-strong);
   border-radius: 8px;
   background-color: var(--home-card);
@@ -85,7 +85,7 @@
 .divisionField > .divisionPanel { right: 0; min-width: 0; }
 .deskFilters { display: flex; align-items: center; gap: 0.5rem; min-width: 0; flex-wrap: wrap; }
 .toolbarSpacer { flex: 1 1 auto; }
-/* A toolbar tool — worded at a desk (38px, K-18), a 44×44 icon on a phone (K-18 never covered width).
+/* A toolbar tool — worded at a desk (the admin's control height, K-18), a 44×44 icon on a phone (K-18 never covered width).
    Two classes deep on purpose: the Tools trigger is `CoachToolbarMenu`'s button wearing this class, and
    its own `.trigger` (one class, another module) would otherwise win or lose by bundle order. */
 .toolbar .tool {
@@ -93,7 +93,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  min-height: 38px;
+  min-height: var(--admin-control-h);
   padding: 0 0.75rem;
   border: 1px solid var(--home-line-strong);
   border-radius: 8px;
@@ -118,7 +118,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  min-height: 38px;
+  min-height: var(--admin-control-h);
   min-width: 13rem;
   padding: 0 0.6rem;
   /* The outline is an inset shadow, not a border, so the input inside takes the field's whole height
@@ -178,7 +178,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  min-height: 38px;
+  min-height: var(--admin-control-h);
   padding: 0 0.7rem;
   border: 1px solid var(--home-line-strong);
   border-radius: 8px;
@@ -296,7 +296,7 @@
 .modeDone {
   display: inline-flex;
   align-items: center;
-  min-height: 38px;
+  min-height: var(--admin-control-h);
   padding: 0 0.9rem;
   text-decoration: none;
   border: 1px solid var(--home-line-strong);
@@ -521,7 +521,7 @@ button.glanceTile:disabled { cursor: default; opacity: 1; }
 .bulkGap { flex: 0 0 0.4rem; }
 .bulkBtn {
   flex: 0 1 auto;
-  min-height: 38px;
+  min-height: var(--admin-control-h);
   padding: 0 0.8rem;
   border: 1px solid rgba(var(--home-olive-rgb), 0.45);
   border-radius: 8px;
@@ -596,7 +596,7 @@ button.glanceTile:disabled { cursor: default; opacity: 1; }
   .recordFields { grid-template-columns: minmax(0, 1fr); }
 }
 .recordDelete {
-  min-height: 38px;
+  min-height: var(--admin-control-h);
   padding: 0;
   border: 0;
   background: none;
@@ -615,7 +615,7 @@ button.glanceTile:disabled { cursor: default; opacity: 1; }
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  min-height: 38px;
+  min-height: var(--admin-control-h);
   padding: 0 0.7rem;
   border: 1px solid var(--home-line-strong);
   border-radius: 8px;

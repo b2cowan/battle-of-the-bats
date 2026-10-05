@@ -32,7 +32,7 @@
 .deskFilters { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
 .field { display: inline-flex; min-width: 0; }
 .select {
-  min-height: 38px;
+  min-height: var(--admin-control-h);
   min-width: 11.5rem;
   padding: 0 2rem 0 0.75rem;
   border: 1px solid var(--home-line-strong);
@@ -48,7 +48,7 @@
 .searchIcon { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
 .searchInput {
   width: 100%;
-  min-height: 38px;
+  min-height: var(--admin-control-h);
   padding: 0 0.85rem 0 2.1rem;
   border: 1px solid var(--home-line-strong);
   border-radius: 7px;
@@ -75,7 +75,7 @@
 }
 .viewButton[data-narrowed] { border-color: var(--home-olive); color: var(--home-olive); }
 .viewButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
-/* A tablet is touched: the floor reaches 768 (the sweep's touch widths), the desk's 38px above it. */
+/* A tablet is touched: the floor reaches 768 (the sweep's touch widths), the desk's control height above it. */
 @media (max-width: 768px) {
   .select, .searchInput, .lensPill { min-height: var(--tap-min, 44px); }
 }
@@ -174,7 +174,7 @@
 .editorActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.75rem; }
 /* Weighted past the shared `.btn` padding (and its kit twin) so Save, Forfeit… and Discard share one
    line at 390, as drawn. */
-.editor .editorActions .editorBtn { min-height: 38px; padding-inline: 0.85rem; }
+.editor .editorActions .editorBtn { min-height: var(--admin-control-h); padding-inline: 0.85rem; }
 /* Save score (or Finalize, on a score not yet changed) — the screen's one lime, the widest control. */
 .editor .editorActions .editorPrimary { flex: 1 1 auto; justify-content: center; gap: 0.35rem; }
 /* Forfeit and Revert score keep their red (§245). */

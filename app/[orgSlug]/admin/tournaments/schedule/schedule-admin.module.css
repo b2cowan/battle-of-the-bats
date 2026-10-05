@@ -2075,8 +2075,8 @@
 }
 
 /* Desktop: normalize the Row-1 action cluster to one height — the admin's one control height
-   (`--admin-control-h`, 38px since 2026-10-01: one button size across the admin, owner option A; it was a
-   28px pin for the old compact buttons). Exclude [role=menuitem] (the dropdown rows are multi-line
+   (`--admin-control-h` — one button size across the admin, owner 2026-10-01; 34px on a computer since
+   2026-10-03, the portal's button; it was a 28px pin for the old compact buttons). Exclude [role=menuitem] (the dropdown rows are multi-line
    and must keep their content height; a fixed clamp made their text overlap). */
 @media (min-width: 769px) {
   .scheduleEndGroup :global(button:not([role="menuitem"])) {

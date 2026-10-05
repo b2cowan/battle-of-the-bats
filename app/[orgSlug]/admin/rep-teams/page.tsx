@@ -166,7 +166,7 @@ export default function RepTeamsBoardPage() {
               )}
               {(groups.length > 0 || hasArchived) && (
                 <select
-                  className={ck.select}
+                  className={`${ck.select} ${ck.toolbarSelect}`}
                   value={filter}
                   onChange={e => setFilter(e.target.value)}
                   aria-label="Show teams in"

@@ -8417,6 +8417,16 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 .btnSecondary:hover { background: var(--home-olive-soft, rgba(255,255,255,0.11)); }
 
+/* One control height (owner, 2026-10-03): on a computer the portal's two buttons are ONE height, 34px.
+   The lime has no border, so it sat 2px under the white beside it (31.4 vs 33.4) — and the admin's
+   buttons and toolbar fields are the same 34 (`--admin-control-h` at ≥769px), so one number holds across
+   the product. A FLOOR AT NO WEIGHT (`:where`): any variant that sizes itself — a 44px touch row, a
+   `min-height: 0` door — still wins whatever the bundle order. `.compactAction` is the dense in-row
+   size (the Ledger's Record, 18px) and stays out. ≥769px only: a phone keeps its own floors. */
+@media (min-width: 769px) {
+  :where(.btnPrimary:not(.compactAction), .btnSecondary:not(.compactAction)) { min-height: 34px; }
+}
+
 .btnGhost {
   display: inline-flex; align-items: center; gap: 0.35rem;
   background: none; border: none; color: var(--text-tertiary);

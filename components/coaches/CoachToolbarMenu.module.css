@@ -34,6 +34,14 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* One control height (owner, 2026-10-03): the worded triggers take the portal buttons' 34px floor on a
+   computer — the same floor `.btnPrimary`/`.btnSecondary` carry, and the admin's control height there —
+   so a trigger borrowed into an admin toolbar (the club Ledger's Tools) sits level with its neighbours.
+   At no weight, so a caller's `triggerClassName` still sizes its own; the chip and the 44px glyph are
+   their own sizes. */
+@media (min-width: 769px) {
+  :where(.trigger:not(.triggerChip):not(.triggerGlyph)) { min-height: 34px; }
+}
 
 .panel {
   position: absolute;

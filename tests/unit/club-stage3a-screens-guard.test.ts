@@ -169,10 +169,31 @@ describe('one admin button size, the portal’s (owner, 2026-10-01, option A)', 
     assert.doesNotMatch(dataRule, /font-size/, '.btn-data is the one size, not the support step');
     assert.doesNotMatch(css, /\[data-admin-kit\] \.btn-xs[^{]*\{[^}]*font-size: var\(--type-support\)/);
   });
-  it('the control height is 38px in both densities, so a tournament toolbar’s fields match its buttons', () => {
+  // ⚖ The HEIGHT is superseded (owner, 2026-10-03, "One control height"): the 10-01 38px rested on "the portal's
+  // buttons are ~38", which measured 33.4 (white) and 31.4 (lime). One number now holds across the product.
+  it('one control height, the portal’s button: 34px on a computer, 38 below 769px and in comfortable density', () => {
     const root = css.match(/--admin-row-pad-y:\s*0\.38rem;[\s\S]*?--admin-control-h:\s*(\d+)px;/)?.[1];
-    assert.equal(root, '38', 'compact density');
+    assert.equal(root, '38', 'the default — a phone or a tablet — keeps 38, so no touch size moved');
     assert.match(css, /\[data-density="comfortable"\] \{[^}]*--admin-control-h:\s*38px;/);
+    assert.match(css, /@media \(min-width: 769px\) \{\s*:root:not\(\[data-density="comfortable"\]\) \{ --admin-control-h: 34px; \}/);
+  });
+  it('the portal’s buttons take the same 34px on a computer, at no weight, so the lime and white match and any sized variant still wins', () => {
+    const coach = readCode('app/[orgSlug]/coaches/coaches.module.css');
+    const menu = readCode('components/coaches/CoachToolbarMenu.module.css');
+    assert.match(coach, /@media \(min-width: 769px\) \{\s*:where\(\.btnPrimary:not\(\.compactAction\), \.btnSecondary:not\(\.compactAction\)\) \{ min-height: 34px; \}/);
+    assert.match(menu, /@media \(min-width: 769px\) \{\s*:where\(\.trigger:not\(\.triggerChip\):not\(\.triggerGlyph\)\) \{ min-height: 34px; \}/);
+  });
+  it('a tournament toolbar control reads the shared height instead of a hand-written 38', () => {
+    const T = 'app/[orgSlug]/admin/tournaments';
+    for (const f of ['communication/communication.module.css', 'settings/settings-access.module.css']) {
+      assert.doesNotMatch(readCode(`${T}/${f}`), /min-height:\s*38px/, f);
+    }
+    // Two named exceptions, neither a control: a health issue is a LIST ROW, and the Results lens pill is a
+    // chip — chips keep their own height (ruling 3).
+    const teams = readCode(`${T}/registrations/teams-admin.module.css`).replace(/\.regHealthIssue \{[^}]*\}/, '');
+    assert.doesNotMatch(teams, /min-height:\s*38px/, 'teams-admin');
+    const results = readCode(`${T}/results/results-admin.module.css`).replace('.lensPill { min-height: 38px; }', '');
+    assert.doesNotMatch(results, /min-height:\s*38px/, 'results-admin');
   });
   it('the Ledger’s Payees door sits behind Tools, never a toolbar button and never olive text (Ledger Parity D6)', () => {
     // ⚖ Superseded 2026-10-02: the white Payees button (10-01) moved into Tools with Transfer — a rare tool goes

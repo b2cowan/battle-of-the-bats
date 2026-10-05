@@ -190,6 +190,13 @@ button.row:hover, a.row:hover { background: var(--home-olive-soft); }
   font-size: var(--type-body);
 }
 .textarea { min-height: 5rem; resize: vertical; }
+/* A select standing in a TOOLBAR, not a form: the admin's one control height, so it sits level with the
+   buttons beside it (owner, 2026-10-03, "One control height"). A form field keeps the 40 above — the
+   portal's form fields are 40–42 too; a toolbar control is a different job. ≥769px only, like the
+   height itself: on a phone it keeps the 40 it had. */
+@media (min-width: 769px) {
+  .toolbarSelect { min-height: var(--admin-control-h); padding-block: 0; }
+}
 .input:focus,
 .select:focus,
 .textarea:focus { outline: none; border-color: var(--home-olive); }

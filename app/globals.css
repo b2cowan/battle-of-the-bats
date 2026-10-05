@@ -285,10 +285,10 @@
      public pages. Sizes are mode-independent (no light-mode override needed). */
   --admin-row-min:    36px;
   --admin-row-pad-y:  0.38rem;
-  /* 38px in BOTH densities since 2026-10-01 (owner, "one button size across the admin, the portal's"):
-     every admin button is the portal's height (the kit button block below), and the tournament
-     toolbars' selects, search and segmented controls read this token — at 28px they would have sat
-     10px under the buttons beside them. Compact density now differs from comfortable in ROWS only. */
+  /* The admin's ONE control height: every admin button (the kit button block below) and the tournament
+     toolbars' selects, search and segmented controls read it, so a toolbar is one height. 38 here is the
+     touch value — a phone, a tablet, comfortable density. On a computer it is 34, the portal's button
+     (the "One control height" block after the comfortable density, owner 2026-10-03). */
   --admin-control-h:  38px;
   --admin-tap-min:    44px;
 
@@ -339,6 +339,17 @@
   --admin-row-min:    44px;
   --admin-row-pad-y:  0.6rem;
   --admin-control-h:  38px;
+}
+
+/* One control height, the portal's button (owner, 2026-10-03 — supersedes the 2026-10-01 38px). On a
+   computer every admin button and toolbar field is 34px: the height the coaches portal's buttons are
+   floored at (`coaches.module.css`, after `.btnSecondary`), so one number holds across the product.
+   The 38 had rested on "the portal's buttons are ~38"; measured, they were 33.4 (white) and 31.4
+   (lime), and the first portal control borrowed into an admin toolbar (the club Ledger's Tools) sat
+   4.6px short. Compact density at ≥769px ONLY: below that, and in comfortable (touch) density, the
+   token stays 38, so no phone, tablet or touch size moved. */
+@media (min-width: 769px) {
+  :root:not([data-density="comfortable"]) { --admin-control-h: 34px; }
 }
 
 /* ─── Light Mode Token Overrides ────────────────────────────────────────────── */
@@ -1876,8 +1887,9 @@ h1, h2, h3, h4, h5, h6 {
    `.btn` (~43px, the club screens), `.btn-data` (~30px, the tournament screens' page and row actions,
    and the shared Export) and `.btn-sm`; a club toolbar showed Export at 30px beside Transfer at 43px.
    Every one is now the portal's button (`.btnPrimary`/`.btnSecondary`: 0.45rem × 0.9rem, the body
-   step) at the admin's one control height, `--admin-control-h` (38px — the tournament toolbars' fields
-   share it, and K-18 already sets it for a control inside a table). ⚠ `:where()` keeps this at (0,1,0)
+   step) at the admin's one control height, `--admin-control-h` (34px on a computer since 2026-10-03, the
+   portal's button; the tournament toolbars' fields share it, and K-18 sets it for a control inside a
+   table). ⚠ `:where()` keeps this at (0,1,0)
    on purpose: it beats the legacy size modifiers above (same weight, later), and a screen's own
    module class still sizes a button it deliberately draws differently (a module loads after this). */
 :where([data-admin-kit]) .btn:where(:not([data-public-preview] *)) {
