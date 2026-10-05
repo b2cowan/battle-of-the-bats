@@ -5,7 +5,7 @@ PM Brief · Plan notes): https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, sour
 frames and measured facts in `sheet-frame/` (`facts.json`). PM brief `SHEET_FRAME_PM_BRIEF.md`. Build prompt
 `SHEET_FRAME_BUILD_PROMPT.md` (one step per chat). Ruling recorded in `memory/design_decisions.md` (2026-10-05).
 **Step 1 built 2026-10-05, committed `9ab32b23`; ✅ owner QA §264 PASSED 9/9 2026-10-05** (see *Build record*).
-**Step 2 built on dev 2026-10-05; owner QA §266 open** (hub tab QA Walk). Steps 3–5 to build.
+**Step 2 built 2026-10-05, committed `91986b7c`; owner QA §266 open** (hub tab QA Walk). Steps 3–5 to build.
 
 ## The rulings
 
