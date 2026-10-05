@@ -6,8 +6,8 @@ import { bookInScope } from './club-team-route';
 import { bookWindow, type BookLineFacts } from './club-money-figures';
 import { howItCame, installmentLineWords, requestLineWords } from './club-money-words';
 import {
-  SOURCE_MODULE, isSourcedLine, isTransfer, lineCategoryWord, lineType,
-  type ExportableLine, type LedgerKind, type LineType,
+  SOURCE_MODULE, isSourcedLine, isTransfer, ledgerOptionCounts, lineCategoryWord, lineType,
+  type ExportableLine, type LedgerKind, type LineStatus, type LineType,
 } from './club-ledger';
 
 /**
@@ -18,7 +18,8 @@ import {
  *   · a date window, with a Starting balance (everything before it) so the running balance is true
  *     from the first row, and an Ending balance;
  *   · the Balance ALL-TIME — one scope, so the Overview and the Ledger never print two balances;
- *   · Status (posted · pending · void) with the counts of what is in the window before narrowing;
+ *   · Status (posted · pending · void) and Type, each choice counted as what ticking it would list
+ *     (`ledgerOptionCounts`), beside the window's census the export reads;
  *   · Type and Category filters (the club's own categories, never the teams');
  *   · each line on the PAGE worded from its source where it has one, who recorded it, and what may be
  *     done with it on the ledger (the line window's door).
@@ -29,7 +30,7 @@ import {
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-export type LineStatus = 'posted' | 'pending' | 'void';
+export type { LineStatus };
 
 interface BookLine extends BookLineFacts {
   description: string;
@@ -85,7 +86,11 @@ export interface BookRead {
   startingBalance: number;
   endingBalance: number;
   window: { from: string | null; to: string | null };
+  /** The WINDOW's census, before any filter: the export menu's "every entry in the period" and which Types are
+   *  offered at all. Never the numbers beside the choices — those are `optionCounts`. */
   counts: { status: Record<LineStatus, number>; type: Partial<Record<LineType, number>> };
+  /** What ticking each Status / Type choice would list, given the other filters (`ledgerOptionCounts`). */
+  optionCounts: { status: Partial<Record<LineStatus, number>>; type: Partial<Record<LineType, number>> };
   categories: string[];
   total: number;
   offset: number;
@@ -281,14 +286,16 @@ export async function readBook(
   ]);
 
   const win = bookWindow(all, { from: opts.from ?? null, to: opts.to ?? null });
-  const typed = win.rows.map(r => ({ ...r, type: lineType(r.line), category: lineCategoryWord(r.line) }));
+  const typed = win.rows.map(r => ({ ...r, status: r.line.status, type: lineType(r.line), category: lineCategoryWord(r.line) }));
   const typeCounts: Partial<Record<LineType, number>> = {};
   for (const r of typed) typeCounts[r.type] = (typeCounts[r.type] ?? 0) + 1;
 
+  /* An absent status is the book's resting pair — a contract for any caller that does not say. The Ledger page
+     always says (its "All" sends all three, Filter Counts D5), so this default is not the page's "All". */
   const status = new Set<LineStatus>(opts.status?.length ? opts.status : ['posted', 'pending']);
   const types = opts.types?.length ? new Set(opts.types) : null;
   const cats = opts.categories?.length ? new Set(opts.categories) : null;
-  const narrowed = typed.filter(r => status.has(r.line.status)
+  const narrowed = typed.filter(r => status.has(r.status)
     && (!types || types.has(r.type))
     && (!cats || (r.category !== null && cats.has(r.category))));
 
@@ -305,6 +312,7 @@ export async function readBook(
     endingBalance: win.endingBalance,
     window: { from: opts.from ?? null, to: opts.to ?? null },
     counts: { status: win.counts, type: typeCounts },
+    optionCounts: ledgerOptionCounts(typed, { status, types, categories: cats }),
     categories,
     total: narrowed.length,
     offset,

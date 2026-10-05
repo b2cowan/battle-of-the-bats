@@ -277,8 +277,9 @@ export function LibraryFilterBar({ items, noun, query, tagFilter, onQuery, onTag
     const all = collectTags(items as readonly Taggable[]);
     const counts = new Map(all.map(t => [t.id, items.filter(d => d.tags.some(x => x.id === t.id)).length]));
     const untagged = items.filter(d => d.tags.length === 0).length;
-    const opts = all.map(t => ({ id: t.id, label: `${t.name} (${counts.get(t.id) ?? 0})` }));
-    if (untagged > 0) opts.push({ id: UNTAGGED_FILTER, label: `No tags (${untagged})` });
+    // The count at the row's end, never in the name (Filter Counts D1/D4, owner 2026-10-05).
+    const opts = all.map(t => ({ id: t.id, label: t.name, count: counts.get(t.id) ?? 0 }));
+    if (untagged > 0) opts.push({ id: UNTAGGED_FILTER, label: 'No tags', count: untagged });
     return opts;
   }, [items]);
   return (

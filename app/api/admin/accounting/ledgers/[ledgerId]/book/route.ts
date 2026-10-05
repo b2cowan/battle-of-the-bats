@@ -19,7 +19,8 @@ const list = (v: string | null) => (v ? v.split(',').map(s => s.trim()).filter(B
  * The Ledger tab's read (Ask 6, C14): one book, oldest first, a Starting balance before the window
  * and an Ending balance at its end, the book's Balance ALL-TIME, each line worded with its source,
  * who recorded it and what may be done with it. Status opens on Posted + Pending (voids off the book
- * until asked); counts are of what is in the window before narrowing. Paged (`limit` ≤ 500) out of a
+ * until asked); `counts` are the window's census (the export's "every entry"), `optionCounts` what ticking each
+ * Status / Type choice would list given the other filters (Filter Counts D5). Paged (`limit` ≤ 500) out of a
  * walk over every row — no 1,000-row cap.
  *
  * `&export=1` — the whole window, every status and type: one signed Amount, voids kept and marked

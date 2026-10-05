@@ -1015,7 +1015,7 @@ function MoneyRecordsPanel({
   /* ⚠⚠ SEEDED WITH TWO OF FOUR, NEVER EMPTY — `MultiSelectDropdown`'s own rule is "empty means all",
      which here would open the screen on a season of settled history rather than on what is owed.
      `PAYABLE_STATUS_DEFAULT` is the shared call (same reasoning as the register's Status default),
-     and it makes the control read "2 selected" rather than "All" over a list that is not all. */
+     and it makes the control name its two choices rather than read "All" over a list that is not all. */
   const [payStatus, setPayStatus] = useState<Set<PayableRowStatus>>(
     () => new Set(PAYABLE_STATUS_DEFAULT));
   const [payItems, setPayItems] = useState<Set<string>>(new Set());
@@ -3734,16 +3734,17 @@ function MoneyRecordsPanel({
       .sort((a, b) => a.name.localeCompare(b.name));
     return {
       used,
-      /* ⚠ COUNTS RIDE THE OPTION LABEL, the convention Status already uses ("Overdue (2)") — one
-         family, one look. `?? 0` is load-bearing rather than defensive, and more so since the count
-         became a row count: a tag selected on the other face, or one every visible row has been
-         filtered away from, is deliberately still offered and must read "(0)", never
-         "(undefined)".
+      /* ⚖ THE COUNT RIDES BESIDE THE NAME, never in it (Filter Counts D1, owner 2026-10-05) — the convention
+         every filter now shares, Status included: at the row's end, so the pill and the phone sheet's row,
+         which repeat the name, never repeat the count. `?? 0` is load-bearing rather than defensive, and
+         more so since the count became a row count: a tag selected on the other face, or one every visible
+         row has been filtered away from, is deliberately still offered and must read 0, never blank.
          ⚠ `swatch` is the org/team distinction the row chips already draw; it is a NAMED ROLE, not
          a colour, so the dropdown's own stylesheet owns which token paints it. */
       options: used.map(t => ({
         id: t.id,
-        label: `${t.name} (${counts.get(t.id) ?? 0})`,
+        label: t.name,
+        count: counts.get(t.id) ?? 0,
         swatch: t.teamId === null ? ('org' as const) : ('own' as const),
       })),
       /* "Summer Classic" · "Summer Classic or Fall Cup" · "A, B or C". OR, not AND — the pill
@@ -7248,7 +7249,7 @@ function MoneyRecordsPanel({
                 restQuiet restSelection={PAY_STATUS_REST}
                 label="Status"
                 options={PAYABLE_STATUS_ORDER.map(id => ({
-                  id, label: `${PAYABLE_STATUS_LABEL[id]} (${payStatusCounts[id]})`,
+                  id, label: PAYABLE_STATUS_LABEL[id], count: payStatusCounts[id],
                 }))}
                 selected={payStatus}
                 onChange={next => setPayStatus(next as Set<PayableRowStatus>)}
@@ -7312,6 +7313,8 @@ function MoneyRecordsPanel({
               options={registerFilters.filter(f => f.id !== 'all').map(f => ({ id: f.id, label: f.label }))}
               selected={selectedKinds}
               onChange={next => setSelectedKinds(next as Set<RegisterKind>)}
+              /* The word every other filter on both Ledgers uses at rest (Filter Counts D6, 2026-10-05). */
+              allLabel="Every type"
             />
             {/* ⚠⚠ A STATUS DROPDOWN, NOT TWO SEPARATE PILLS (owner call, 2026-08-19 — folds the old
                 "Overdue" chip and "Include scheduled" toggle into one control, matching the same
@@ -7322,13 +7325,13 @@ function MoneyRecordsPanel({
                 "on by default" for Scheduled a second time). `MultiSelectDropdown`'s own rule is
                 "empty means all," but that would flip Scheduled back on by default — a call this
                 project already made deliberately once. Seeding two of three keeps that default
-                intact; the dropdown reads "2 selected" rather than "All" until a coach changes it,
+                intact; the dropdown names "Actual, Overdue" rather than "All" until a coach changes it,
                 which is an honest description of a real, considered starting narrowing. */}
             <MultiSelectDropdown
               restQuiet restSelection={REGISTER_STATUS_REST}
               label="Status"
               options={REGISTER_STATUS_ORDER.map(id => ({
-                id, label: `${REGISTER_STATUS_LABEL[id]} (${statusCounts[id]})`,
+                id, label: REGISTER_STATUS_LABEL[id], count: statusCounts[id],
               }))}
               selected={selectedStatus}
               onChange={next => setSelectedStatus(next as Set<RegisterStatus>)}

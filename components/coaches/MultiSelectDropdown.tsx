@@ -2,11 +2,8 @@
 import { ChevronDown } from 'lucide-react';
 import useDetailsOutsideClick from './useDetailsOutsideClick';
 import { FilterSheetRow, useFilterGroupMember } from './FilterGroup';
+import { filterSummary } from '@/lib/filter-summary';
 import styles from '../shared/FilterPill.module.css';
-
-/** An option's name without the count a caller wrote into its label ("Actual (23)" → "Actual"): a sheet
- *  row says what is chosen, and the counts are read where they are chosen. */
-const bareLabel = (label: string) => label.replace(/\s*\(\d+\)$/, '');
 
 /**
  * A checkbox list inside a native `<details>` disclosure — the compact-toolbar counterpart to a
@@ -50,8 +47,11 @@ export default function MultiSelectDropdown({
    */
   options: readonly {
     id: string; label: string; swatch?: 'org' | 'own';
-    /** How many records carry this option — quiet, at the row's end ("MVP · 3"). The Awards
-     *  report's filter keeps the count its chips showed (§14.13 of the phone plan, 2026-09-25). */
+    /**
+     * How many rows ticking this option would show — quiet, at the row's end. ⚖ THE ONE PLACE A COUNT GOES (Filter
+     * Counts D1, owner 2026-10-05): never written into `label`, because everything that repeats the name (the pill,
+     * the phone sheet's row) would repeat the count with it. The Awards filter drew it this way first.
+     */
     count?: number;
   }[];
   /** Empty = every option, i.e. "All". */
@@ -79,9 +79,8 @@ export default function MultiSelectDropdown({
   const group = useFilterGroupMember(label, narrowed, () => onChange(new Set(restSelection ?? [])));
   const ref = useDetailsOutsideClick(group?.mode !== 'row');
 
-  const summary = selected.size === 0 ? allLabel
-    : selected.size === 1 ? (options.find(o => selected.has(o.id))?.label ?? allLabel)
-    : `${selected.size} selected`;
+  /* One wording for the pill and the phone sheet's row: the choices by name, up to three (Filter Counts D2/D3). */
+  const summary = filterSummary(options, selected, allLabel);
 
   function toggle(id: string) {
     const next = new Set(selected);
@@ -113,12 +112,9 @@ export default function MultiSelectDropdown({
   );
 
   if (group?.mode === 'row') {
-    // A row always says what it is set to — the sheet is where a coach reads the whole state at once (D2).
-    const chosen = options.filter(o => selected.has(o.id)).map(o => bareLabel(o.label));
-    const value = selected.size === 0 ? allLabel
-      : chosen.length === selected.size && chosen.length <= 3 ? chosen.join(', ')
-      : summary;
-    return <FilterSheetRow name={label} value={value} lit={narrowed}>{choices}</FilterSheetRow>;
+    // A row always says what it is set to — the sheet is where a coach reads the whole state at once (Ledger Phone
+    // Filter D2) — in the pill's own words.
+    return <FilterSheetRow name={label} value={summary} lit={narrowed}>{choices}</FilterSheetRow>;
   }
 
   return (

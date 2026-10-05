@@ -343,7 +343,7 @@ export const PAYABLE_STATUS_ORDER: readonly PayableRowStatus[] =
 /**
  * ⚠⚠ THE DEFAULT IS TWO OF FOUR, NOT EMPTY. `MultiSelectDropdown`'s own rule is "empty means all",
  * which here would open the screen on a season of settled history rather than on what is owed.
- * Seeding two keeps the considered default and makes the control read "2 selected" — an honest
+ * Seeding two keeps the considered default and makes the control name its two choices — an honest
  * description of a real narrowing, rather than "All" over a list that is not all.
  * Same call, same reasoning, as the Transactions register's Status default.
  */

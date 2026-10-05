@@ -36,6 +36,9 @@ export const LEDGER_KIND_WORD: Record<LedgerKind, string> = {
 
 export type LineType = 'expense' | 'income' | 'team_allocations' | 'team_support' | 'transfer' | 'house_league_fees';
 
+/** A line's status on the book. Void is off the book until a Status filter asks for it. */
+export type LineStatus = 'posted' | 'pending' | 'void';
+
 export const LINE_TYPE_WORD: Record<LineType, string> = {
   expense: 'Expenses',
   income: 'Income',
@@ -84,6 +87,32 @@ export function isSourcedLine(l: LineFacts, referenced = false): boolean {
 
 /** The line's category, in words (a loop key reads as the club's word; a typed one as typed). */
 export const lineCategoryWord = (l: Pick<LineFacts, 'category'>) => categoryWord(l.category);
+
+/**
+ * The numbers beside the Ledger's Status and Type choices: what ticking that choice would LIST, given the other
+ * filters as they are (Filter Counts D5, owner 2026-10-05 — the coach's rule since 2026-08-26, "the count is a
+ * promise about the list").
+ *
+ * ⚠ It used to be a census of the date window: every status and category behind each Type, every type behind each
+ * Status. "Expenses (7)" then listed five rows — the other two were voided expenses, counted but hidden — and Status
+ * read whole-book numbers while Type was narrowed. Each facet is now counted over the rows the OTHER facets admit,
+ * so a voided line counts toward a Type only while Void is shown, and the Void choice's own number is the voided
+ * lines that would join the list.
+ */
+export function ledgerOptionCounts(
+  rows: readonly { status: LineStatus; type: LineType; category: string | null }[],
+  filters: { status: ReadonlySet<LineStatus>; types: ReadonlySet<LineType> | null; categories: ReadonlySet<string> | null },
+): { status: Partial<Record<LineStatus, number>>; type: Partial<Record<LineType, number>> } {
+  const status: Partial<Record<LineStatus, number>> = {};
+  const type: Partial<Record<LineType, number>> = {};
+  for (const r of rows) {
+    const inCategory = !filters.categories || (r.category !== null && filters.categories.has(r.category));
+    if (!inCategory) continue;
+    if (!filters.types || filters.types.has(r.type)) status[r.status] = (status[r.status] ?? 0) + 1;
+    if (filters.status.has(r.status)) type[r.type] = (type[r.type] ?? 0) + 1;
+  }
+  return { status, type };
+}
 
 // ── The export (C14: the whole period, signed, voids marked and left out of the totals) ────────
 

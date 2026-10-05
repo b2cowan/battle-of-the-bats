@@ -1192,9 +1192,10 @@ test.describe('The one owed-money list (Payables Rebuild P3 + the 2026-08-28 fol
        COLUMN HEADER too, so a bare text match is ambiguous and this line had rotted into a strict-
        mode violation the day that column arrived. */
     await main.locator('[class*="multiSelectLabel"]', { hasText: 'Status' }).first().click();
-    await main.getByRole('checkbox', { name: /^Paid \(/ }).check();
-    await main.getByRole('checkbox', { name: /^Outstanding \(/ }).uncheck();
-    await main.getByRole('checkbox', { name: /^Overdue \(/ }).uncheck();
+    // The count sits at the row's end now, not in brackets in the name (Filter Counts D1, 2026-10-05): "Paid 7".
+    await main.getByRole('checkbox', { name: /^Paid\s*\d/ }).check();
+    await main.getByRole('checkbox', { name: /^Outstanding\s*\d/ }).uncheck();
+    await main.getByRole('checkbox', { name: /^Overdue\s*\d/ }).uncheck();
     await page.keyboard.press('Escape');
 
     /* ⚠⚠⚠ THIS STEP IS RED, IT HAS BEEN RED SINCE BEFORE PHASE C, AND THE CAUSE IS THE FIXTURE

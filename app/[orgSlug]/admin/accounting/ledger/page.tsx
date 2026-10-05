@@ -57,6 +57,8 @@ import type { LedgerSummary } from '@/lib/types';
 const PAGE = 500;
 const STATUS_REST: ReadonlySet<string> = new Set(['posted', 'pending']);
 const STATUS_ORDER: LineStatus[] = ['posted', 'pending', 'void'];
+/** "All" on Status — every line, voided ones included (Filter Counts D5, 2026-10-05). */
+const STATUS_ALL: ReadonlySet<string> = new Set(STATUS_ORDER);
 const STATUS_WORD: Record<LineStatus, string> = { posted: 'Posted', pending: 'Pending', void: 'Void' };
 /** Tournament fees keep a place in the Type list for Stage 7 (C18) — the option does not render until then. */
 const TYPE_ORDER: LineType[] = ['expense', 'income', 'team_allocations', 'team_support', 'transfer', 'house_league_fees'];
@@ -85,7 +87,11 @@ export default function LedgerTab() {
   const [books, setBooks] = useState<LedgerSummary[] | null>(null);
   const [booksFailed, setBooksFailed] = useState(false);
   const [types, setTypes] = useState<Set<string>>(() => new Set());
-  const [statuses, setStatuses] = useState<Set<string>>(() => new Set(STATUS_REST));
+  /* ⚖ "ALL" MEANS ALL (Filter Counts D5, owner 2026-10-05). The pill's own rule is "empty = All"; this used to map
+     an empty pick back to Posted + Pending, so ticking All left the voided lines hidden and All never ticked. The
+     pick is kept as picked; the statuses the book reads are derived from it. */
+  const [pickedStatuses, setPickedStatuses] = useState<Set<string>>(() => new Set(STATUS_REST));
+  const statuses = pickedStatuses.size ? pickedStatuses : STATUS_ALL;
   const [cats, setCats] = useState<Set<string>>(() => new Set());
   const [range, setRange] = useState<{ selection: DateRangeSelection; from: string; to: string }>(() => {
     const r = resolveDateRangePreset('thisMonth', today, bounds);
@@ -129,7 +135,7 @@ export default function LedgerTab() {
     const params = new URLSearchParams({ orgSlug: slug, offset: String(offset), limit: String(PAGE) });
     if (window_.from) params.set('from', window_.from);
     if (window_.to) params.set('to', window_.to);
-    params.set('status', [...(statuses.size ? statuses : STATUS_REST)].join(','));
+    params.set('status', [...statuses].join(','));
     if (types.size) params.set('type', [...types].join(','));
     if (cats.size) params.set('category', [...cats].join(','));
     return `/api/admin/accounting/ledgers/${bookId}/book?${params}`;
@@ -180,9 +186,12 @@ export default function LedgerTab() {
      balance. The date window never does: the Starting balance carries everything before it. */
   const showBalance = types.size === 0 && cats.size === 0 && statuses.has('posted');
   const counts = read?.counts;
+  /* The window's census decides which Types are OFFERED; the number beside each choice is what ticking it would
+     list (Filter Counts D1 + D5): at the row's end, never in the name. */
+  const optionCounts = read?.optionCounts;
   const typeOptions = TYPE_ORDER
     .filter(t => t !== 'house_league_fees' || (counts?.type?.house_league_fees ?? 0) > 0)
-    .map(t => ({ id: t, label: `${LINE_TYPE_WORD[t]} (${counts?.type?.[t] ?? 0})` }));
+    .map(t => ({ id: t, label: LINE_TYPE_WORD[t], count: optionCounts?.type?.[t] ?? 0 }));
   const pickBook = (id: string) => { setOpen(null); router.replace(`${base}/ledger?book=${id}`); };
 
   const bookFoot = canMove ? (
@@ -237,9 +246,9 @@ export default function LedgerTab() {
             <MultiSelectDropdown
               restQuiet restSelection={STATUS_REST}
               label="Status"
-              options={STATUS_ORDER.map(s => ({ id: s, label: `${STATUS_WORD[s]} (${counts?.status[s] ?? 0})` }))}
-              selected={statuses}
-              onChange={next => setStatuses(next.size ? next : new Set(STATUS_REST))}
+              options={STATUS_ORDER.map(s => ({ id: s, label: STATUS_WORD[s], count: optionCounts?.status?.[s] ?? 0 }))}
+              selected={pickedStatuses}
+              onChange={setPickedStatuses}
             />
             {(read?.categories.length ?? 0) > 0 && (
               <MultiSelectDropdown restQuiet label="Category" options={(read?.categories ?? []).map(c => ({ id: c, label: c }))}
