@@ -20,7 +20,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { Callout, LoadFailed, PageLoading, RepChip, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
-import { FigureCards, day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
+import { FigureCards, day, daysLateWords, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import { ledgerKit } from '@/components/coaches/kit';
 import { howItCame } from '@/lib/club-money-words';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
@@ -47,7 +47,7 @@ function rowWords(r: AccountRow, teamName: string): { name: string; sub: string 
     case 'received':
       return {
         name: `Received · ${r.description}${of(r)}`,
-        sub: [howItCame(r.paidMethod, r.paidReference), r.daysLate ? `${r.daysLate} ${r.daysLate === 1 ? 'day' : 'days'} late` : null, r.recordedBy]
+        sub: [howItCame(r.paidMethod, r.paidReference), r.daysLate ? daysLateWords(r.daysLate) : null, r.recordedBy]
           .filter(Boolean).join(' · ') || null,
       };
     case 'paid_to_team':

@@ -184,6 +184,14 @@ export const Quote = ({ children }: { children: ReactNode }) => <p className={st
  * its count (red — only the club can chase it), Sent · confirm (blue — waiting on the club), Due and the
  * date (amber), First due (quiet), Paid in full (olive). The chip key is the server's (`clubBillChip`).
  */
+/** "1 day late" / "15 days late" — ONE wording for how late an installment is, wherever the club's screens say it. */
+export const daysLateWords = (days: number) => `${days} ${days === 1 ? 'day' : 'days'} late`;
+
+/** The red chip that says it: an allocation's team row, Coming due's overdue row, a team's bill. */
+export function LateChip({ days }: { days: number }) {
+  return <RepChip tone="bad">{daysLateWords(days)}</RepChip>;
+}
+
 export function BillChip({ chip, overdueCount, sentCount, nextDue, daysLate, firstDue }: {
   chip: ClubBillChip;
   overdueCount: number;
@@ -195,7 +203,7 @@ export function BillChip({ chip, overdueCount, sentCount, nextDue, daysLate, fir
 }) {
   switch (chip) {
     case 'overdue':
-      return <RepChip tone="bad">{daysLate != null && daysLate > 0 ? `${daysLate} ${daysLate === 1 ? 'day' : 'days'} late` : `${overdueCount} overdue`}</RepChip>;
+      return <RepChip tone="bad">{daysLate != null && daysLate > 0 ? daysLateWords(daysLate) : `${overdueCount} overdue`}</RepChip>;
     case 'sent':
       return <RepChip tone="info">{sentCount && sentCount > 1 ? `${sentCount} sent · confirm` : 'Sent · confirm'}</RepChip>;
     case 'due_soon':

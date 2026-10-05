@@ -91,6 +91,15 @@
 }
 .balance b { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-olive); }
 
+/* A Filter group on a one-line toolbar (Allocations › Coming due's Due, S3W3 round 2, owner 2026-10-05). On a
+   desk the box steps aside, so its pill sits beside View as a toolbar item of its own. ≤ 640 the group is one
+   Filter button, and there is no room for it beside View and the three 44px icons (View would keep about
+   110px), so it takes a line of its own under them, as the Ledger's Filter has its own line. */
+.filterLine { display: contents; }
+@media (max-width: 640px) {
+  .filterLine { display: flex; order: 3; flex-basis: 100%; }
+}
+
 /* ── The register (K-01): compact rows, the support step; the What cell is the name, then the detail
    in quiet ink on the same line ── */
 .register td {

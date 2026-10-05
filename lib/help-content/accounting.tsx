@@ -237,8 +237,8 @@ const accountingHelp: HelpPageContent = {
       id: 'allocations',
       heading: 'Allocations: billing the teams',
       summary: 'Split a shared cost across teams in installments, see what is coming due, and record what arrives.',
-      keywords: ['allocation', 'allocations', 'cost allocation', 'rep team', 'shared costs', 'installments', 'coming due', 'record received', 'confirm received', 'undo a payment', 'sent waiting for you to confirm'],
-      searchText: 'cost allocation allocations rep team shared costs diamond fees insurance association fees installment schedule new allocation details team splits review by allocation coming due overdue sent waiting for you to confirm due in the next 14 days later show all needs you on track record received confirm received received on how it came reference e-transfer cheque undo a payment returned by the bank reason general ledger voided due again coaches told remind this team open the team account where did allocations go rep teams allocations moved',
+      keywords: ['allocation', 'allocations', 'cost allocation', 'rep team', 'shared costs', 'installments', 'coming due', 'due filter', 'record received', 'confirm received', 'undo a payment', 'sent waiting for you to confirm'],
+      searchText: 'cost allocation allocations rep team shared costs diamond fees insurance association fees installment schedule new allocation details team splits review by allocation coming due overdue days late sent waiting for you to confirm due in the next 14 days later due filter next 30 days rest of the season where did show all go head coach filter button on a phone needs you on track record received confirm received received on how it came reference e-transfer cheque undo a payment returned by the bank reason general ledger voided due again coaches told remind this team open the team account where did allocations go rep teams allocations moved',
       content: (
         <p>An <strong>allocation</strong> splits a shared cost — diamond fees, insurance, association dues — across the teams you choose, each share in installments with due dates. The Allocations tab is where you bill the teams, watch what is coming due, and record what arrives.</p>
       ),
@@ -258,13 +258,14 @@ const accountingHelp: HelpPageContent = {
           title: 'What is coming due',
           content: (
             <>
-              <p>The <strong>View</strong> pill on the Allocations tab reads the bills two ways. <strong>By allocation</strong> lists each allocation with what was allocated, collected and still outstanding. <strong>Coming due</strong> lists every team’s installments by when they need you:</p>
+              <p>The <strong>View</strong> pill on the Allocations tab reads the bills two ways. <strong>By allocation</strong> lists each allocation with what was allocated, collected and still outstanding. <strong>Coming due</strong> lists every team’s installments by when they need you, each team with its head coach under its name:</p>
               <HelpDefs>
-                <HelpDef term="Overdue">Past its due date and not received, with the total.</HelpDef>
-                <HelpDef term="Sent · waiting for you to confirm">The team’s coach says they’ve sent it. Nothing counts until you confirm it arrived.</HelpDef>
-                <HelpDef term="Due in the next 14 days">Coming up soon.</HelpDef>
-                <HelpDef term="Later">Everything after that — one <strong>Show all</strong> away.</HelpDef>
+                <HelpDef term="Overdue">Past its due date and not received, with the total. Each row says how many days late it is, beside its due date.</HelpDef>
+                <HelpDef term="Sent · waiting for you to confirm">The team’s coach says they’ve sent it — the day, how, and the reference are under the installment. Nothing counts until you confirm it arrived.</HelpDef>
+                <HelpDef term="Due in the next 14 days">Coming up soon — the same 14 days the Overview counts.</HelpDef>
+                <HelpDef term="Later">What falls due after that, when the <strong>Due</strong> pill looks further ahead.</HelpDef>
               </HelpDefs>
+              <p>The <strong>Due</strong> pill beside View sets how far ahead Coming due looks: <strong>Next 14 days</strong> (where it opens), <strong>Next 30 days</strong>, or <strong>Rest of the season</strong>. Each choice shows the dates it covers. Overdue and sent installments always show, whatever you pick, and the 14-day group never changes; a wider window adds a <strong>Later</strong> group at the foot. Export writes what the window shows. On a phone, Due is behind the <strong>Filter</strong> button.</p>
               <p>Open an allocation to see its four figures and its teams, in two bands: <strong>Needs you</strong> and <strong>On track</strong>. A team opens its bill: what it was billed, collected and still owes, and each installment with its state. <strong>Previous</strong> and <strong>Next</strong> walk you from team to team.</p>
             </>
           ),

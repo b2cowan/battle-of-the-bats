@@ -28,7 +28,7 @@ import {
   ClubRow, ClubRowBand, ClubRowList, LoadFailed, PageLoading, RepChip, repKit, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import { CoachListToolbar } from '@/components/coaches/kit';
-import { FigureCards, day, installmentsWord, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
+import { FigureCards, LateChip, day, installmentsWord, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import { BillRoom, RecordWindow, UndoWindow, type BillInstallment, type TeamBill } from '@/components/admin/kit/club/money/BillWindows';
 import RemindersWindow from '@/components/admin/kit/club/money/RemindersWindow';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
@@ -236,7 +236,7 @@ function stateChip(t: TeamBill) {
   if (t.band !== 'needs_you') return <span className={repKit.dim}>—</span>;
   if (t.figures.overdue.count > 0) {
     const days = t.installments.filter(i => i.state === 'overdue').reduce((m, i) => Math.max(m, i.daysLate), 0);
-    return <RepChip tone="bad">{days} {days === 1 ? 'day' : 'days'} late</RepChip>;
+    return <LateChip days={days} />;
   }
   return <RepChip tone="info">Sent · confirm</RepChip>;
 }

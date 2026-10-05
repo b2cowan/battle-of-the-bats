@@ -748,9 +748,33 @@ dialog.truesize::backdrop{background:#16201899}
 .s3a .recbox p{margin:6px 0;font-size:14px}
 .s3a .recbox ol{margin:6px 0;padding-left:20px;font-size:14px}
 .s3a .recbox li{margin:0 0 6px}
+/* ══ Walk S3W3, 2026-10-05: Coming due, round 2. The caption under a cell's name, a chip beside a date,
+   the Due pill drawn with its menu open (the coach's filter menu: a white sheet under the pill, the
+   picked row olive with a tick, each choice with the dates it covers), and the phone's Filter sheet (the
+   Ledger's, rulings D1-D7: rows that open in place, Reset filters at the foot, stopping at the bar). ══ */
+#s3a-due2 .wm .cap2{margin-top:1px;font-size:12.5px;line-height:1.35;color:var(--w-dim)}
+#s3a-due2 .wm .duechip{margin-left:8px;vertical-align:1px}
+#s3a-due2 .wm .pillwrap{position:relative;display:inline-flex}
+#s3a-due2 .wm .qmenu{position:absolute;left:0;top:calc(100% + 4px);z-index:3;display:flex;flex-direction:column;min-width:300px;padding:4px;background:var(--w-card);border:1px solid var(--w-strong);border-radius:8px;box-shadow:0 12px 30px rgba(36,30,21,.16)}
+#s3a-due2 .wm .qmenu .o{display:flex;align-items:center;gap:8px;min-height:40px;padding:6px 10px;border-radius:6px;font-size:13px;color:var(--w-ink);white-space:nowrap}
+#s3a-due2 .wm .qmenu .o .d{margin-left:auto;padding-left:18px;font-size:12px;color:var(--w-dim)}
+#s3a-due2 .wm .qmenu .o.on{background:var(--w-olsoft);font-weight:650}
+#s3a-due2 .wm .tk{display:inline-block;width:14px;height:14px;flex:none;color:var(--w-olive)}
+#s3a-due2 .wm .phone .strip{margin:8px 0 10px}
+#s3a-due2 .wm .fscrim{position:absolute;left:0;right:0;top:0;bottom:72px;background:var(--w-scrim)}
+#s3a-due2 .wm .fsheet{position:absolute;left:0;right:0;bottom:72px;background:var(--w-card);border-top:1px solid var(--w-line);border-radius:16px 16px 0 0;box-shadow:0 -8px 30px rgba(36,30,21,.18);padding:4px 0 6px}
+#s3a-due2 .wm .fst{font:700 10.5px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--w-dim);padding:14px 16px 6px}
+#s3a-due2 .wm .frow{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 16px;font-size:15px;font-weight:600;color:var(--w-ink)}
+#s3a-due2 .wm .frow .fv{margin-left:auto;font-size:14px;font-weight:600;color:var(--w-olive)}
+#s3a-due2 .wm .frow .i{width:16px;height:16px;color:var(--w-dim)}
+#s3a-due2 .wm .fopts{padding:0 8px 6px}
+#s3a-due2 .wm .fopts .o{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border-radius:8px;font-size:14px;color:var(--w-ink)}
+#s3a-due2 .wm .fopts .o .d{margin-left:auto;font-size:12px;color:var(--w-dim)}
+#s3a-due2 .wm .fopts .o.sel{background:var(--w-olsoft);font-weight:650}
+#s3a-due2 .wm .ffoot{display:flex;align-items:center;gap:10px;min-height:46px;margin-top:2px;padding:0 16px;border-top:1px solid var(--w-line);font-size:14px;font-weight:600;color:var(--w-soft)}
 </style>
 <div class="hubbar">
-  <div class="hubtitle"><strong>Club Tier Production Readiness — project hub</strong><br><small>Stage 0 walked and passed 2026-09-25 · Stage 1 committed 2026-09-26, walks §243 and §244 passed 2026-09-27 · Stage 2 drawn and ratified 2026-09-28, built 2026-09-29, its ten walks (§249, §250) passed 2026-09-29 · Stage 3a (club money) drawn and ratified 2026-09-30 (every ask as recommended; Accounting becomes one page with tabs), its server and its screens committed 2026-10-01; six walks (§255): S3W1 passed 2026-10-01, S3W3 passed 2026-10-05, four open · permits in scope, the release waits for them</small></div>
+  <div class="hubtitle"><strong>Club Tier Production Readiness — project hub</strong><br><small>Stage 0 walked and passed 2026-09-25 · Stage 1 committed 2026-09-26, walks §243 and §244 passed 2026-09-27 · Stage 2 drawn and ratified 2026-09-28, built 2026-09-29, its ten walks (§249, §250) passed 2026-09-29 · Stage 3a (club money) drawn and ratified 2026-09-30 (every ask as recommended; Accounting becomes one page with tabs), its server and its screens committed 2026-10-01; six walks (§255): S3W1 passed 2026-10-01, S3W3 passed 2026-10-05, four open · permits in scope, the release waits for them · S3W3 round 2 (Coming due: a Due filter, each state said once) drawn, ruled and built 2026-10-05</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage current" title="Stage 3a mockups drawn and ratified 2026-09-30; build prompts written. Stage 2 mockups drawn 2026-09-28, checked against the Coaches Portal benchmark and ratified the same day (all eight asks ruled; Ask 3: no rep registrar) (Stage 1 ratified 2026-09-25)">Design</li>
     <li class="stage done" title="Planned 2026-09-25 — CLUB_TIER_PRODUCTION_READINESS_PLAN.md">Plan</li>
@@ -852,6 +876,7 @@ dialog.truesize::backdrop{background:#16201899}
       <a href="#s3a-status">Where the money rows stand</a>
       <a href="#s3a-ledger">1 · A ledger</a>
       <a href="#s3a-allocs">2 · Allocations</a>
+      <a href="#s3a-due2">2a · Coming due, S3W3</a>
       <a href="#s3a-alloc">3 · An allocation</a>
       <a href="#s3a-requests">4 · Payment requests</a>
       <a href="#s3a-home">5 · Rail or tabs</a>
@@ -3820,6 +3845,212 @@ dialog.truesize::backdrop{background:#16201899}
       </section>
 
 
+      <!-- ═══════════════ STAGE 3a · WALK S3W3 · COMING DUE, ROUND 2 (2026-10-05) ═══════════════ -->
+      <section class="screen s3a" id="s3a-due2" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 3a · walk S3W3 · Coming due, round 2 · whole screen, desktop and phone</div>
+          <h1 tabindex="-1">Coming due: a Due filter in place of “Show all”, and each state said once</h1>
+          <p class="sub">Walking Allocations on 2026-10-05, you asked why what falls due later is a small “Show all” link under the table when the Ledger narrows its dates with a filter at the top, and whether the type and sizing match the app. The sizes all come from the app’s type scale, and the chips are the Ledger’s. Four things don’t match. “Show all” is a filter written as a footnote, it can’t be undone, and it spells an installment differently from the table. The state chip repeats the band above it. The head coach sits under the installment instead of the team. And By allocation keeps a note explaining how its rows open.</p>
+          <div class="flagrow">On this screen:
+            <button class="fl h" data-finding="W3-01" data-here="The sentence and link under the table.">W3-01</button>
+            <button class="fl m" data-finding="W3-02" data-here="The State column, under bands that already name the state.">W3-02</button>
+            <button class="fl m" data-finding="W3-03" data-here="The grey line under each installment.">W3-03</button>
+            <button class="fl m" data-finding="W3-04" data-here="By allocation, under its table. Not drawn here; nothing else on that view changes.">W3-04</button>
+          </div>
+        </div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Before · as built</span><h2>Accounting › Allocations › Coming due, as Priya sees it</h2><span class="aside">Today’s build, drawn with this hub’s Northfield figures on Sep 30.</span></div>
+          <div class="scroller"><div class="desk xl wm std">
+            <div class="wstrip"><span class="wmark">Field<b>Logic</b>HQ</span><span class="sp"></span><span class="belldot"><svg class="i"><use href="#i-bell"/></svg></span><span class="avatar">PN</span></div>
+            <div class="wshell">
+              <nav class="wside" aria-label="Rail as built">
+                <span class="wnav"><svg class="i"><use href="#i-grid"/></svg>Overview</span>
+                <div class="wgrp">Programs</div>
+                <span class="wnav on"><svg class="i"><use href="#i-dollar"/></svg>Accounting<span class="cnt">3</span></span>
+                <div class="wgrp">Organization</div>
+                <span class="wnav"><svg class="i"><use href="#i-building"/></svg>Organization<svg class="i ch"><use href="#i-chev"/></svg></span>
+              </nav>
+              <div class="wmain">
+                <div class="wpagehead"><div><div class="wtitle">Accounting</div></div></div>
+                <div class="mtabs"><span class="tab">Overview</span><span class="tab">Ledger</span><span class="tab on">Allocations</span><span class="tab">Payment requests</span><span class="tab">Budget</span><span class="tab">Budget vs. Actual</span></div>
+                <div class="tbar"><span class="qp lead">View <b>Coming due</b><svg class="i"><use href="#i-chevd"/></svg></span><div class="acts"><span class="wbtn"><svg class="i s"><use href="#i-mail"/></svg>Send reminders</span><span class="wbtn"><svg class="i s"><use href="#i-download"/></svg>Export</span><span class="wbtn lime"><svg class="i s"><use href="#i-plus"/></svg>New allocation</span></div></div>
+                <div class="wtable"><table>
+                  <thead><tr><th style="width:18%">Team</th><th style="width:34%">Installment</th><th style="width:15%">Due</th><th class="num" style="width:12%">Amount</th><th style="width:15%">State</th><th class="go" aria-label="Open"></th></tr></thead>
+                  <tbody>
+                    <tr class="band"><td colspan="6">Overdue · 2 · $900.00</td></tr>
+                    <tr><td><span class="nm"><a>10U A</a></span></td><td>Diamond fees 2026, 2 of 3<div class="cap2">No head coach yet</div></td><td>Sep 15</td><td class="num amt">$450.00</td><td><span class="chip bad">15 days late</span></td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                    <tr><td><span class="nm"><a>16U Girls</a></span></td><td>Diamond fees 2026, 2 of 3<div class="cap2">Chris Taylor, head coach <button class="fl m" data-finding="W3-03" data-here="The team’s head coach, printed under the installment’s name.">W3-03</button></div></td><td>Sep 15</td><td class="num amt">$450.00</td><td><span class="chip bad">15 days late</span></td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                    <tr class="band"><td colspan="6">Sent · waiting for you to confirm · 1</td></tr>
+                    <tr><td><span class="nm"><a>12U Girls</a></span></td><td>Diamond fees 2026, 3 of 3<div class="cap2">Maya Singh says it went Sep 29 · E-Transfer 88213</div></td><td>Oct 15</td><td class="num amt">$450.00</td><td><span class="chip blue">Sent · confirm</span> <button class="fl m" data-finding="W3-02" data-here="The band above already says “Sent · waiting for you to confirm”.">W3-02</button></td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                    <tr class="band"><td colspan="6">Due in the next 14 days · 9 · $3,240.00</td></tr>
+                    <tr><td><span class="nm"><a>All 9 teams</a></span></td><td>Insurance 2026</td><td>Oct 1 · tomorrow</td><td class="num amt">$3,240.00</td><td><span class="chip warn">Due tomorrow</span> <button class="fl m" data-finding="W3-02" data-here="Said three times: the band, the Due column (“Oct 1 · tomorrow”) and this chip.">W3-02</button></td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                  </tbody>
+                </table></div>
+                <p class="wsm" style="margin-top:8px;max-width:70ch">Later this season: Diamond fees 2026 3 of 3, Uniform order — Girls 1 of 2, Uniform order — Girls 2 of 2. <span class="wlink">Show all</span> <button class="fl h" data-finding="W3-01" data-here="A filter written as a footnote. One click adds a Later band and nothing takes it away. “3 of 3” here, “, 3 of 3” in the table.">W3-01</button></p>
+              </div>
+            </div>
+          </div></div>
+          <p class="speccap">Two separate questions are drawn on this screen. Where the window lives (W3-01) is the one you asked about. The other three (W3-02 to W3-04) are what the formatting check found.</p>
+        </div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · proposed</span><h2>The same view: a Due filter beside View, at rest</h2><span class="aside">Round 2: on the toolbar’s one line, not a row under it.</span>
+            <span class="fixrow"><button class="fl fix" data-finding="W3-01">fixes W3-01</button><button class="fl fix" data-finding="W3-02">fixes W3-02</button><button class="fl fix" data-finding="W3-03">fixes W3-03</button></span></div>
+          <div class="coltags">Changes:
+            <span>Due filter<span class="mk" data-k="new" data-note="The Ledger’s filter pill, on the toolbar’s one line right after View (owner, 2026-10-05: beside View, not under it). One line is the table standard’s toolbar; the Ledger’s second row is its own exception, earned by four filters and a balance, and this list has one filter. Quiet at rest: only the word Due shows while it is on Next 14 days, as the Ledger’s Date shows only its label at rest. The band names the window (“Due in the next 14 days”), so the window is never unstated. Three choices, each with the real dates it covers: Next 14 days (the default, and the Overview’s own window, so the band and the Overview’s count agree), Next 30 days, Rest of the season. Overdue and Sent always show, whatever is picked. No From/To fields: every question this list answers looks forward, and those three cover it.">New</span></span>
+            <span>Team<span class="mk" data-k="re" data-note="The head coach moves under the team’s name, because it describes the team. A row shared by several teams (“All 9 teams”) has no single head coach and shows none, as today.">Restyled</span></span>
+            <span>Due<span class="mk" data-k="re" data-note="An overdue row carries its red chip here, after the date: how many days late appears nowhere else, so it is the one chip that adds information. Every other row shows the date alone.">Restyled</span></span>
+            <span>State<span class="mk" data-k="re" data-note="The column goes. Each band already names the state of every row under it (Overdue, Sent and waiting for you, Due in the next 14 days), so the chips said it a second time, and a third on a due-soon row whose Due cell already reads “Oct 1 · tomorrow”. The table standard says a status once.">Removed</span></span>
+            <span>Sent note<span class="mk" data-k="re" data-note="Stays under the installment, because it is about the payment. When the head coach sent it, the name is not repeated (“Sent Sep 29 · E-Transfer 88213”); when someone else on the team did, it names them (“Jordan Lee sent it Sep 29 · E-Transfer 88213”). On a phone the row has no head-coach line to lean on, so its one-line caption always names who sent it (“Maya Singh sent it Sep 29 · …”), corrected in the 2026-10-05 review.">Restyled</span></span>
+          </div>
+          <div class="scroller" id="s3a-d2-after"><div class="desk xl wm std">
+            <div class="wstrip"><span class="wmark">Field<b>Logic</b>HQ</span><span class="sp"></span><span class="belldot"><svg class="i"><use href="#i-bell"/></svg></span><span class="avatar">PN</span></div>
+            <div class="wshell">
+              <nav class="wside" aria-label="Rail, proposed">
+                <span class="wnav"><svg class="i"><use href="#i-grid"/></svg>Overview</span>
+                <div class="wgrp">Programs</div>
+                <span class="wnav on"><svg class="i"><use href="#i-dollar"/></svg>Accounting<span class="cnt">3</span></span>
+                <div class="wgrp">Organization</div>
+                <span class="wnav"><svg class="i"><use href="#i-building"/></svg>Organization<svg class="i ch"><use href="#i-chev"/></svg></span>
+              </nav>
+              <div class="wmain">
+                <div class="wpagehead"><div><div class="wtitle">Accounting</div></div></div>
+                <div class="mtabs"><span class="tab">Overview</span><span class="tab">Ledger</span><span class="tab on">Allocations</span><span class="tab">Payment requests</span><span class="tab">Budget</span><span class="tab">Budget vs. Actual</span></div>
+                <div class="tbar"><span class="qp lead">View <b>Coming due</b><svg class="i"><use href="#i-chevd"/></svg></span><span class="qp">Due<svg class="i"><use href="#i-chevd"/></svg></span><div class="acts"><span class="wbtn"><svg class="i s"><use href="#i-mail"/></svg>Send reminders</span><span class="wbtn"><svg class="i s"><use href="#i-download"/></svg>Export</span><span class="wbtn lime"><svg class="i s"><use href="#i-plus"/></svg>New allocation</span></div></div>
+                <div class="wtable"><table>
+                  <thead><tr><th style="width:24%">Team</th><th style="width:36%">Installment</th><th style="width:22%">Due</th><th class="num" style="width:13%">Amount</th><th class="go" aria-label="Open"></th></tr></thead>
+                  <tbody>
+                    <tr class="band"><td colspan="5">Overdue · 2 · $900.00</td></tr>
+                    <tr><td><span class="nm"><a>10U A</a></span><div class="cap2">No head coach yet</div></td><td>Diamond fees 2026, 2 of 3</td><td>Sep 15<span class="chip bad duechip">15 days late</span></td><td class="num amt">$450.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                    <tr><td><span class="nm"><a>16U Girls</a></span><div class="cap2">Chris Taylor, head coach</div></td><td>Diamond fees 2026, 2 of 3</td><td>Sep 15<span class="chip bad duechip">15 days late</span></td><td class="num amt">$450.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                    <tr class="band"><td colspan="5">Sent · waiting for you to confirm · 1</td></tr>
+                    <tr><td><span class="nm"><a>12U Girls</a></span><div class="cap2">Maya Singh, head coach</div></td><td>Diamond fees 2026, 3 of 3<div class="cap2">Sent Sep 29 · E-Transfer 88213</div></td><td>Oct 15</td><td class="num amt">$450.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                    <tr class="band"><td colspan="5">Due in the next 14 days · 9 · $3,240.00</td></tr>
+                    <tr><td><span class="nm"><a>All 9 teams</a></span></td><td>Insurance 2026</td><td>Oct 1 · tomorrow</td><td class="num amt">$3,240.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                  </tbody>
+                </table></div>
+              </div>
+            </div>
+          </div></div>
+          <p class="speccap"><strong>What the build must not drop:</strong> the three bands and their totals, the whole-row door to each team’s bill, Send reminders, Export and New allocation, and the 14-day default the Overview counts by. <strong>The export writes what the window shows</strong>, as every export in the product writes what is on screen; today it always includes the Later rows.</p>
+        </div>
+        <div class="spec darkcopy" data-src="s3a-d2-after" data-title="The same view, dark theme"></div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · proposed</span><h2>The Due menu open, set to Rest of the season</h2><span class="aside">Only the main column is drawn, with room left under the menu so the table stays readable.</span></div>
+          <div class="scroller" id="s3a-d2-menu"><div class="wm std" style="width:1110px;padding:22px 30px 26px">
+            <div class="tbar" style="margin-bottom:142px"><span class="qp lead">View <b>Coming due</b><svg class="i"><use href="#i-chevd"/></svg></span><span class="pillwrap"><span class="qp set">Due <b>Rest of the season</b><svg class="i"><use href="#i-chevd"/></svg></span>
+              <span class="qmenu" aria-hidden="true">
+                <span class="o"><span class="tk"></span>Next 14 days<span class="d">Sep 30 to Oct 14</span></span>
+                <span class="o"><span class="tk"></span>Next 30 days<span class="d">Sep 30 to Oct 30</span></span>
+                <span class="o on"><svg class="i tk"><use href="#i-check"/></svg>Rest of the season<span class="d">to Nov 15</span></span>
+              </span></span><span class="mk" data-k="new" data-note="Picked, the pill turns olive and shows its value, as every filter in the portal does once it narrows. Each choice shows the real dates it covers, as the Ledger’s Date menu does, so the list teaches itself. Rest of the season runs to the last installment any allocation has scheduled. Overdue and Sent are not dates in this menu: they always show.">New</span><div class="acts"><span class="wbtn"><svg class="i s"><use href="#i-mail"/></svg>Send reminders</span><span class="wbtn"><svg class="i s"><use href="#i-download"/></svg>Export</span><span class="wbtn lime"><svg class="i s"><use href="#i-plus"/></svg>New allocation</span></div></div>
+            <div class="wtable"><table>
+              <thead><tr><th style="width:24%">Team</th><th style="width:36%">Installment</th><th style="width:22%">Due</th><th class="num" style="width:13%">Amount</th><th class="go" aria-label="Open"></th></tr></thead>
+              <tbody>
+                <tr class="band"><td colspan="5">Overdue · 2 · $900.00</td></tr>
+                <tr><td><span class="nm"><a>10U A</a></span><div class="cap2">No head coach yet</div></td><td>Diamond fees 2026, 2 of 3</td><td>Sep 15<span class="chip bad duechip">15 days late</span></td><td class="num amt">$450.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                <tr><td><span class="nm"><a>16U Girls</a></span><div class="cap2">Chris Taylor, head coach</div></td><td>Diamond fees 2026, 2 of 3</td><td>Sep 15<span class="chip bad duechip">15 days late</span></td><td class="num amt">$450.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                <tr class="band"><td colspan="5">Sent · waiting for you to confirm · 1</td></tr>
+                <tr><td><span class="nm"><a>12U Girls</a></span><div class="cap2">Maya Singh, head coach</div></td><td>Diamond fees 2026, 3 of 3<div class="cap2">Sent Sep 29 · E-Transfer 88213</div></td><td>Oct 15</td><td class="num amt">$450.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                <tr class="band"><td colspan="5">Due in the next 14 days · 9 · $3,240.00</td></tr>
+                <tr><td><span class="nm"><a>All 9 teams</a></span></td><td>Insurance 2026</td><td>Oct 1 · tomorrow</td><td class="num amt">$3,240.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                <tr class="band"><td colspan="5">Later this season · 3 · $6,300.00</td></tr>
+                <tr><td><span class="nm"><a>8 teams</a></span></td><td>Diamond fees 2026, 3 of 3</td><td>Oct 15</td><td class="num amt">$3,600.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                <tr><td><span class="nm"><a>12U Girls, 14U Girls, 16U Girls</a></span></td><td>Uniform order — Girls, 1 of 2</td><td>Oct 15</td><td class="num amt">$1,350.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+                <tr><td><span class="nm"><a>12U Girls, 14U Girls, 16U Girls</a></span></td><td>Uniform order — Girls, 2 of 2</td><td>Nov 15</td><td class="num amt">$1,350.00</td><td class="go"><svg class="i"><use href="#i-chev"/></svg></td></tr>
+              </tbody>
+            </table></div>
+            <p class="wsm" style="margin-top:8px;max-width:78ch">The first three bands never change with the window. A wider window adds one band at the foot: <b>Later this season</b> here, or <b>Later, through Oct 30</b> on Next 30 days (the two Oct 15 rows, $4,950.00).<span class="mk" data-k="new" data-note="Why the 14-day band stays when the window widens: it is the Overview’s figure, and a treasurer who sees “4 due soon” on the Overview should find exactly those four here, whatever window this page was left on. The wider window adds what falls after it, in its own band, with its count and total in the band’s words (the Stage 3a band rule). The rows are the same rows Show all reveals today, spelled as the table spells them.">New</span></p>
+          </div></div>
+        </div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · proposed</span><h2>Coming due on a phone, at true size</h2><span class="aside">Open the hub on your phone for this one.</span></div>
+          <div class="row2" id="s3a-d2-phonerow">
+            <div class="phonecol"><div class="phonebox">
+              <div class="phone wm std" id="s3a-d2-ph">
+                <div class="pstatus" style="color:var(--w-soft)"><span>9:41</span><span>●●● ▮</span></div>
+                <div class="pscroll">
+                  <div class="phead"><div><div class="wtitle">Accounting</div></div></div>
+                  <div class="mtabs"><b class="edge l"><svg class="i" style="transform:rotate(180deg)"><use href="#i-chev"/></svg></b><span class="tab" style="margin-left:-58px">Overview</span><span class="tab">Ledger</span><span class="tab on">Allocations</span><span class="tab">Payment requests</span><span class="tab">Budget</span><span class="tab">Budget vs. Actual</span><b class="edge r"><svg class="i"><use href="#i-chev"/></svg></b></div>
+                  <div class="deck"><span class="qp lead" style="flex:1;justify-content:space-between">View <b style="margin-right:auto">Coming due</b><svg class="i"><use href="#i-chevd"/></svg></span><span class="wbtn icon" title="Send reminders" aria-label="Send reminders"><svg class="i"><use href="#i-mail"/></svg></span><span class="wbtn icon" title="Export" aria-label="Export"><svg class="i"><use href="#i-download"/></svg></span><span class="wbtn icon lime" title="New allocation" aria-label="New allocation"><svg class="i"><use href="#i-plus"/></svg></span></div>
+                  <div class="strip"><span class="qp">Filter<svg class="i"><use href="#i-chevd"/></svg></span></div>
+                  <div class="pframe">
+                    <div class="pband2">Overdue · 2 · $900.00</div>
+                    <div class="pr2"><div class="t">10U A <span class="chip bad">15 days late</span></div><div class="c">Diamond fees 2026, 2 of 3 · Sep 15 · $450.00 · No head coach yet</div><svg class="i cg"><use href="#i-chev"/></svg></div>
+                    <div class="pr2"><div class="t">16U Girls <span class="chip bad">15 days late</span></div><div class="c">Diamond fees 2026, 2 of 3 · Sep 15 · $450.00 · Chris Taylor, head coach</div><svg class="i cg"><use href="#i-chev"/></svg></div>
+                    <div class="pband2">Sent · waiting for you to confirm · 1</div>
+                    <div class="pr2"><div class="t">12U Girls</div><div class="c">Diamond fees 2026, 3 of 3 · Oct 15 · $450.00 · Maya Singh sent it Sep 29 · E-Transfer 88213</div><svg class="i cg"><use href="#i-chev"/></svg></div>
+                    <div class="pband2">Due in the next 14 days · 9 · $3,240.00</div>
+                    <div class="pr2"><div class="t">All 9 teams</div><div class="c">Insurance 2026 · Oct 1 · tomorrow · $3,240.00</div><svg class="i cg"><use href="#i-chev"/></svg></div>
+                  </div>
+                </div>
+                <div class="pbar">
+                  <span class="ptab"><svg class="i"><use href="#i-grid"/></svg>Overview</span>
+                  <span class="ptab on"><svg class="i"><use href="#i-dollar"/></svg>Accounting<span class="pc">3</span></span>
+                  <span class="ptab"><svg class="i"><use href="#i-more"/></svg>More</span>
+                </div>
+              </div>
+              <span class="ref44"><i></i>44 px</span>
+            </div><button class="tsbtn" type="button" data-truesize="s3a-d2-ph">Open at true size</button>
+            <p class="meta" style="max-width:390px">At rest. View keeps its place on the top line; Due is behind the Filter button on the line under it, where the Ledger’s phone puts its own.<span class="mk" data-k="re" data-note="The Ledger’s phone Filter (rulings D1–D7, 2026-10-02): at phone width the narrowing pills go behind ONE Filter button, which opens a bottom sheet. The top line is today’s, unchanged: the View pill with Send reminders, Export and New allocation as 44 px icons. A Filter button there would leave View about 110 px, too narrow for “View · Coming due”, so the button takes the line under it, as on the Ledger, where it shares its line with the Balance. Quiet at rest (Due on Next 14 days is its rest); olive with a count once Due is moved off it. Each row keeps today’s shape, and only an overdue row carries a chip.">Restyled</span> <span class="mk" data-k="un" data-note="Owner, 2026-10-05, asked for BOTH View and Due behind the button. Drawn with View left out, and put to you as CD1b. The Ledger’s Filter holds narrowings only, by its own rule: the arrangement stays in the top line. View is the arrangement (it swaps which list you are reading, By allocation or Coming due), so behind the button the phone would no longer say which view is on, and the button’s count would light up for a switch of view rather than a narrowing. It would also be the one phone list whose arrangement hides.">View stays out</span></p>
+            </div>
+
+            <div class="phonecol"><div class="phonebox">
+              <div class="phone wm std" id="s3a-d2-ph-sheet">
+                <div class="pstatus" style="color:var(--w-soft)"><span>9:41</span><span>●●● ▮</span></div>
+                <div class="pscroll">
+                  <div class="phead"><div><div class="wtitle">Accounting</div></div></div>
+                  <div class="mtabs"><b class="edge l"><svg class="i" style="transform:rotate(180deg)"><use href="#i-chev"/></svg></b><span class="tab" style="margin-left:-58px">Overview</span><span class="tab">Ledger</span><span class="tab on">Allocations</span><span class="tab">Payment requests</span><span class="tab">Budget</span><span class="tab">Budget vs. Actual</span><b class="edge r"><svg class="i"><use href="#i-chev"/></svg></b></div>
+                  <div class="deck"><span class="qp lead" style="flex:1;justify-content:space-between">View <b style="margin-right:auto">Coming due</b><svg class="i"><use href="#i-chevd"/></svg></span><span class="wbtn icon" title="Send reminders" aria-label="Send reminders"><svg class="i"><use href="#i-mail"/></svg></span><span class="wbtn icon" title="Export" aria-label="Export"><svg class="i"><use href="#i-download"/></svg></span><span class="wbtn icon lime" title="New allocation" aria-label="New allocation"><svg class="i"><use href="#i-plus"/></svg></span></div>
+                  <div class="strip"><span class="qp set">Filter <b>1</b><svg class="i"><use href="#i-chevd"/></svg></span></div>
+                  <div class="pframe">
+                    <div class="pband2">Overdue · 2 · $900.00</div>
+                    <div class="pr2"><div class="t">10U A <span class="chip bad">15 days late</span></div><div class="c">Diamond fees 2026, 2 of 3 · Sep 15 · $450.00 · No head coach yet</div><svg class="i cg"><use href="#i-chev"/></svg></div>
+                    <div class="pr2"><div class="t">16U Girls <span class="chip bad">15 days late</span></div><div class="c">Diamond fees 2026, 2 of 3 · Sep 15 · $450.00 · Chris Taylor, head coach</div><svg class="i cg"><use href="#i-chev"/></svg></div>
+                  </div>
+                </div>
+                <div class="fscrim"></div>
+                <div class="fsheet">
+                  <div class="fst">Filter</div>
+                  <div class="frow on"><span class="fl1">Due</span><span class="fv">Rest of the season</span><svg class="i" style="transform:rotate(180deg)"><use href="#i-chevd"/></svg></div>
+                  <div class="fopts">
+                    <div class="o"><span class="tk"></span>Next 14 days<span class="d">Sep 30 to Oct 14</span></div>
+                    <div class="o"><span class="tk"></span>Next 30 days<span class="d">Sep 30 to Oct 30</span></div>
+                    <div class="o sel"><svg class="i tk"><use href="#i-check"/></svg>Rest of the season<span class="d">to Nov 15</span></div>
+                  </div>
+                  <div class="ffoot"><svg class="i s"><use href="#i-x"/></svg>Reset filters</div>
+                </div>
+                <div class="pbar">
+                  <span class="ptab"><svg class="i"><use href="#i-grid"/></svg>Overview</span>
+                  <span class="ptab on"><svg class="i"><use href="#i-dollar"/></svg>Accounting<span class="pc">3</span></span>
+                  <span class="ptab"><svg class="i"><use href="#i-more"/></svg>More</span>
+                </div>
+              </div>
+              <span class="ref44"><i></i>44 px</span>
+            </div><button class="tsbtn" type="button" data-truesize="s3a-d2-ph-sheet">Open at true size</button>
+            <p class="meta" style="max-width:390px">The Filter sheet open, Due moved to Rest of the season.<span class="mk" data-k="re" data-note="The Ledger’s Filter sheet, unchanged: a sheet titled Filter rising from the bottom and stopping at the top of the phone bar, which stays visible (the Tools sheet’s form: like a menu, it never covers the bar). One row per filter with what it is set to; tapping a row opens its choices in place, each with the dates it covers. Picking one updates the list behind the sheet (no Done button); tapping outside closes it. Reset filters shows only while something is off its rest, and puts Due back to Next 14 days, never to everything. Behind the sheet the button already reads Filter 1, in olive.">Restyled</span></p>
+            </div>
+          </div>
+        </div>
+        <div class="spec darkcopy" data-src="s3a-d2-phonerow" data-title="The same view on a phone, dark theme"></div>
+
+        <div class="recbox">
+          <p><strong>Ruled 2026-10-05: every recommendation below</strong> (owner: “I agree with your recommendations”), and built on dev the same day. Each is a row on the Decisions tab.</p>
+          <ol>
+            <li><strong>CD1 · The Due filter replaces “Show all”.</strong> On the toolbar’s one line, right after View (round 2, your note). Next 14 days (default) · Next 30 days · Rest of the season. Overdue and Sent always show. The export writes what the window shows. <em>Recommended.</em></li>
+            <li><strong>CD1b · On a phone, Due goes behind the Filter button and View stays out.</strong> You asked for both behind it. The Ledger’s Filter holds narrowings only; View swaps which list you read, so behind the button the phone wouldn’t say which view is on, and the count would light up for a switch of view. <em>Recommended: Due only.</em></li>
+            <li><strong>CD1a · It shows in Coming due only.</strong> This is an exception to “one toolbar in every view”: By allocation lists allocations, and an allocation spans months, so a due window has nothing to narrow there. Shown in both views, By allocation would need a different default, or a paid-in-full allocation would vanish from it by default. <em>Recommended: Coming due only.</em></li>
+            <li><strong>CD2 · Each state said once.</strong> The State column goes; the red days-late chip moves beside an overdue row’s date. <em>Recommended.</em></li>
+            <li><strong>CD3 · The head coach under the team.</strong> The sent note stays under the installment and drops the name when the head coach sent it. <em>Recommended.</em></li>
+            <li><strong>CD4 · The note under By allocation goes</strong> (“A row opens its allocation from anywhere on it; the name is the link.”). Not drawn: nothing else on that view changes. <em>Recommended.</em></li>
+          </ol>
+          <p class="meta">Kept deliberately, from the same check: bold team names (the 2026-10-02 Ledger ruling names Allocations as keeping them) and two-line rows (the table standard sizes a row by what it holds).</p>
+        </div>
+      </section>
+
       <!-- ═══════════════ STAGE 3a SPECIMEN 3 — AN ALLOCATION ═══════════════ -->
       <section class="screen s3a" id="s3a-alloc" hidden>
         <div class="shead">
@@ -5237,7 +5468,7 @@ const WALKS=[
   where:'Desktop browser, two windows: the treasurer in one, a coach in the other. The last step at phone width.',
   steps:[
    {who:'Avery · treasurer',do:'Accounting → Allocations.',see:'Two allocations: “Diamond fees 2026” across five teams and “Umpire fees 2026” across two, each with Allocated · Collected · Outstanding and one chip saying where it stands. Under each name, its schedule in words — “Three installments · …”.'},
-   {do:'View → Coming due.',see:'Bands, each counting its rows: Overdue, with its total — 15U AA, 11U AA and 12U AA; Sent · waiting for you to confirm — 13U AAA’s 2 of 3, sent by Priya Nair; Due in the next 14 days — the third installment. Show all adds what falls due later: the Umpire fees.'},
+   {do:'View → Coming due.',see:'Bands, each counting its rows: Overdue, with its total — 15U AA, 11U AA and 12U AA; Sent · waiting for you to confirm — 13U AAA’s 2 of 3, sent by Priya Nair; Due in the next 14 days — the third installment. No State column: an overdue row says how many days late beside its date, and each team has its head coach under its name. Due → Rest of the season adds a “Later this season” band (the Umpire fees) and leaves the first three as they were; at phone width Due is behind Filter, under View.'},
    {do:'Open Diamond fees 2026.',see:'Four figures across the top, a line saying what it is and when it falls due, and the teams in two bands: Needs you (15U AA, 11U AA, 12U AA and 13U AAA) and On track (15U AAA).'},
    {do:'Open 13U AAA.',see:'A window titled 13U AAA: four tiles (Billed, Collected, Outstanding, Next due), then each installment — 1 Received, with how and who; 2 “Sent” with Confirm received; 3 with “In … days” and Record received. Previous and Next at the foot name the teams either side; Open 13U AAA’s account sits at the left.'},
    {do:'Confirm received on installment 2.',see:'The window is filled in from Priya’s note — “Priya Nair recorded … sent on …” — with the day, E-Transfer and the reference already there. Confirm: a line says it was received, installment 2 reads Received, and 13U AAA moves to On track.'},
@@ -5779,6 +6010,7 @@ const INTENTS={
   's3a-home':'<strong>Design intent:</strong> the treasurer’s daily work lives in the treasurer’s program, and the frame follows what the pages are: views of one book, so one Accounting page with tabs, the way the coach’s Money is. The rail stays one row, every money page is one tap from every other on a phone, and a team still leads to its money.',
   's3a-remind':'<strong>Design intent:</strong> a reminder goes to the team that owes, overdue included, and the club sees exactly who gets one, and who can’t, before anything is sent.',
   's3a-coach':'<strong>Design intent:</strong> the coach says it is sent and the club says it arrived. The coach is told whenever the club acts, and because the coach’s figures are worked out from the bill itself, a club undo can never leave them showing money the server no longer agrees with.',
+  's3a-due2':'<strong>Design intent:</strong> Coming due is the treasurer’s to-do list. What they must act on stays in view whichever window is picked; the window only decides how far ahead they look, from one filter beside View (on a phone, behind the Ledger’s Filter button).',
   's3a-format':'<strong>Design intent:</strong> the Coaches Portal is the benchmark, and its Register is the benchmark for money. Every Stage 3a drawing was checked against the written rules first, and the two table parts the rules don’t cover yet are asks, shared with the tournament redesign.',
   's3a-build':'<strong>Design intent:</strong> what the Stage 3a build must do that has no screen, and what 3b, 3c and Stage 7 own, listed so none of it is lost between the drawings.',
 };
@@ -5929,6 +6161,30 @@ DECISIONS.unshift(
   {date:"2026-09-30 · Stage 3a mockups · specimen 7 · S3A-02",ask:"Ask 5c · Money notifications, both ways",ruling:"accepted",label:"Accepted",why:"Ratified 2026-09-30 (hub v22). Owner: “I agree with your recommendations, go ahead and write up the build prompt.” No money event exists today. Recommended, each shipping with its event (the Stage 1 rule): to the coach and the team's money staff — the club received a payment, undid one, approved, declined or reversed a request (with the reason); in the coach's “Your club” group. To the club's accounting people — a coach says a payment is sent, a new request, a request holding up a payout; in the Accounting rows Stage 1 placed. Bell and email as each person's settings say."},
   {date:"2026-09-30 · Stage 3a mockups · formatting check · shared with the tournament redesign",ask:"Ask 5d · Three table parts for the product-wide standard",ruling:"accepted",label:"Accepted",why:"Ratified 2026-09-30 (hub v22). Owner: “I agree with your recommendations, go ahead and write up the build prompt.” Not in the written rules yet, and the tournament redesign draws money tables too. Recommended: (1) a void row — off the book until the Status filter asks for it, then in place, struck through in the faintest ink, a VOID chip, the reason as its detail, no balance, counted nowhere; (2) a band row may carry a total in its words (“Overdue · 2 · $900.00”), never as a figure column; (3) the empty side of a paired Money out / Money in column is blank, as the coach's Ledger already draws it, where the standard's “nothing here” em dash would double the ink. All three are recorded on the standard and adopted by both programs before either builds one."},
   {date:"2026-09-30 · Stage 3a redraw · specimen 1 · after you asked whether the coach's money screens were checked",ask:"Ask 6 · Does the club's ledger read exactly like the coach's Ledger?",ruling:"accepted",label:"Accepted",why:"Ratified 2026-09-30 (hub v22). Owner: “I agree with your recommendations, go ahead and write up the build prompt.” They hadn't been checked as a whole: the first drawing took the Register's column words and nothing else. Redrawn to the coach's Ledger, and recommended as drawn: oldest at the top between a Starting balance and an Ending balance line (the first drawing ran newest first); Money out, then Money in (it had them the other way); no Source column, because the row's words say where a line came from and the Type filter narrows by it (the coach's Ledger took its own source badge out for that reason); the toolbar in two decks, what stays put on top and four quiet filter pills below (Type, Status, Category, Date); the book's Balance at the strip's right edge where the coach's Cash on hand sits, in place of three figure cards; compact register rows, extending register exception K-01 to the club's book; pending money as a Status option and a chip on the line; voided lines off the book until Status asks for them. Two deliberate differences from the coach: the date pill opens on This month rather than Around today (a club book carries no money still to come, and a treasurer works by the month), and the figure is called Balance, not Cash on hand (a club book's balance is not the club's cash). There is no Today line on either side: the coach's Ledger removed it, because a line that isn't settled carries its own chip."}
+);
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
+})();
+</script>
+<script>
+/* ══ WALK S3W3 · COMING DUE, ROUND 2 (added 2026-10-05). The four findings the formatting check of
+   Coming due turned up, and the five open asks they raise. Reads the hub script's globals (FINDINGS,
+   DECISIONS, $, esc). Strings are double-quoted and carry no straight apostrophe (the hub-script parse
+   trap). ══ */
+(function(){
+'use strict';
+Object.assign(FINDINGS,{
+  "W3-01":{t:"“Show all” is a filter written as a footnote",now:"Read 2026-10-05. What falls due after the next 14 days is one sentence under the table, naming up to three installments and ending in a “Show all” link. Clicking it adds a Later band, and nothing takes it away short of leaving the page. The sentence writes an installment without the comma the table uses (“Uniform order — Girls 1 of 2” beside “Diamond fees 2026, 2 of 3”), so names that already hold a dash run together. Every other filter on Accounting sits in the toolbar.",fix:"CD1: a Due filter in the strip under the toolbar, the Ledger’s pill. Next 14 days (the default, the Overview’s own window), Next 30 days, Rest of the season. Overdue and Sent always show. The sentence and the link go, and the export writes what the window shows."},
+  "W3-02":{t:"The state is said two or three times",now:"Read 2026-10-05. Under the band “Due in the next 14 days”, a row reads “Oct 1 · tomorrow” in the Due column and DUE TOMORROW in its chip. Under “Sent · waiting for you to confirm”, the chip reads SENT · CONFIRM. The table standard says a status once.",fix:"CD2: the State column goes. An overdue row keeps its red chip, beside its due date, because how many days late appears nowhere else. Sent and due-soon rows carry no chip; their band says it."},
+  "W3-03":{t:"The head coach sits under the installment",now:"Read 2026-10-05. “Chris Taylor, head coach” and “No head coach yet” describe the team, and are printed under the installment’s name in the second column.",fix:"CD3: the head coach goes under the team’s name. The sent note stays under the installment, and leaves out the name when the head coach is the one who sent it."},
+  "W3-04":{t:"By allocation explains how its rows open",now:"Read 2026-10-05. Under the By allocation table: “A row opens its allocation from anywhere on it; the name is the link.” Every list in the product opens this way, and the Ledger removed its own note under the table in Ledger Parity (D2).",fix:"CD4: the note goes. Nothing else on By allocation changes."}
+});
+DECISIONS.unshift(
+  {date:"2026-10-05 · walk S3W3 · Coming due, round 2 · ruled and built 2026-10-05 (owner: “I agree with your recommendations”)",ask:"CD1 · A Due filter in place of “Show all” on Coming due",ruling:"accepted",label:"Accepted · built",why:"Owner, walking Coming due: “why do we have show all as a small link at the bottom? wouldn’t a date range picker at the top be more consistent with our app, like we use with the ledger?” Yes to the place, not to the Ledger’s picker as it is: its presets look back (Last 30 days, Last month), and this list only looks forward. Recommended: a Due pill on the toolbar’s one line, right after View (owner, round 2: beside View, not in a row under it), quiet at rest, with three windows (Next 14 days, the default; Next 30 days; Rest of the season), each showing its dates. Overdue and Sent always show, because an owed payment must never drop out of sight for a date choice; the coach’s Ledger keeps overdue rows outside its date range for the same reason. The 14-day band never changes, so it keeps matching the Overview; a wider window adds a Later band. The export writes what the window shows."},
+  {date:"2026-10-05 · walk S3W3 · Coming due, round 2",ask:"CD1b · On a phone, Due goes behind the Filter button and View stays out",ruling:"accepted",label:"Accepted · built",why:"Owner, on round 2: “on the phone can we put both behind a filters button like we have for the ledger?” Yes for Due: at phone width it goes behind the Ledger’s one Filter button and its sheet (rulings D1–D7, 2026-10-02), on the line under View, as the Ledger’s Filter has its own line. Pushed back on View. The Ledger’s Filter holds narrowings only, by its own rule: the arrangement stays in the top line. View is the arrangement, swapping which list you read (By allocation or Coming due), so behind the button the phone would no longer say which view is on, the button’s count would light up for a switch of view rather than a narrowing, and Allocations would be the one phone list whose arrangement hides. Recommended: Due only. The cost of either: one more tap to reach Due than a pill on that line would take."},
+  {date:"2026-10-05 · walk S3W3 · Coming due, round 2",ask:"CD1a · The Due filter shows in Coming due only",ruling:"accepted",label:"Accepted · built",why:"The one-toolbar ruling (2026-10-01) keeps a screen’s toolbar the same in every view, so nobody loses a tool by switching views. This is an exception to rule on: By allocation lists allocations, and an allocation spans months, so a due window has nothing to narrow there. Shown in both views, By allocation would keep only allocations with an installment in the window, and it would then need a different default from Coming due, or a paid-in-full allocation would vanish from the list by default. Recommended: Coming due only."},
+  {date:"2026-10-05 · walk S3W3 · Coming due, round 2",ask:"CD2 · Coming due says each state once: the State column goes",ruling:"accepted",label:"Accepted · built",why:"Found checking the screen against the table standard. Each band already names its rows’ state, so the chips repeated it, three times on a due-soon row (the band, “Oct 1 · tomorrow”, DUE TOMORROW). Recommended: the column goes, and an overdue row carries its red days-late chip beside its due date, the one chip that adds something."},
+  {date:"2026-10-05 · walk S3W3 · Coming due, round 2",ask:"CD3 · The head coach line moves under the team",ruling:"accepted",label:"Accepted · built",why:"Found in the same check. The head coach describes the team and was printed under the installment. Recommended: under the team’s name; the sent note (day and reference) stays under the installment and leaves out the name when the head coach sent it."},
+  {date:"2026-10-05 · walk S3W3 · Coming due, round 2",ask:"CD4 · The note under By allocation goes",ruling:"accepted",label:"Accepted · built",why:"Found in the same check. “A row opens its allocation from anywhere on it; the name is the link.” explains what every list in the product does; the Ledger removed its own note under the table in Ledger Parity (D2). Kept, from the same check: bold team names (the 2026-10-02 Ledger ruling names Allocations as keeping them) and two-line rows (the table standard sizes a row by what it holds)."}
 );
 $('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
 })();

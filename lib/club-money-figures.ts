@@ -195,6 +195,32 @@ export function comingDueBand(
   return null;
 }
 
+/**
+ * COMING DUE'S WINDOW (S3W3 round 2, owner 2026-10-05): the Due filter on Allocations › Coming due. Overdue,
+ * Sent and the 14-day band never move with it — the 14 days are the Overview's own count, and an owed payment
+ * never drops out of sight for a date choice. A wider window only adds a "Later" band at the foot, out of the
+ * groups due AFTER the 14 days: through `today + 30` for Next 30 days, all of them for Rest of the season.
+ * Counted the way `comingDue` counts every band — a team's installment each — so its words and the export agree.
+ */
+export type ComingDueWindow = 'soon' | 'month' | 'season';
+export const COMING_DUE_MONTH_DAYS = 30;
+
+/** The last day a window reaches, inclusive (as the 14 days include the 14th): null = the rest of the season. */
+export function comingDueWindowEnd(today: string, window: ComingDueWindow): string | null {
+  if (window === 'season') return null;
+  return addCalendarDays(today, window === 'month' ? COMING_DUE_MONTH_DAYS : COMING_DUE_DAYS);
+}
+
+export function comingDueLater<G extends { dueDate: string; amount: number; teams: readonly unknown[] }>(
+  later: readonly G[],
+  today: string,
+  window: ComingDueWindow,
+): { groups: G[]; count: number; amount: number; through: string | null } {
+  const end = comingDueWindowEnd(today, window);
+  const groups = window === 'soon' ? [] : later.filter(g => end == null || g.dueDate <= end);
+  return { groups, count: groups.reduce((n, g) => n + g.teams.length, 0), amount: sumMoney(groups), through: window === 'month' ? end : null };
+}
+
 /** Reminders remind about the overdue and the due-soon — never what the team has already sent. */
 export function remindsAbout(i: Pick<ClubInstallmentFacts, 'dueDate' | 'paidAt' | 'sentAt'>, today: string): boolean {
   const band = comingDueBand(i, today);

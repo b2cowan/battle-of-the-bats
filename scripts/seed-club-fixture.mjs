@@ -354,7 +354,7 @@ ok('ledgers: General (income + expense) and 15U AAA (income)');
 //   · Diamond fees ${Y} (three installments) — 15U AA and 12U AA OVERDUE (12U AA has no head coach, so a
 //     reminder can't reach it); 13U AAA's coach says #2 is SENT (waiting for the club to confirm); 11U AA's
 //     #1 RECEIVED and then UNDONE with a reason; 15U AAA on track. #3 falls due inside the 14-day window.
-//   · Umpire fees — one installment each, later this season (Coming due's "Show all").
+//   · Umpire fees — one installment each, later this season (Coming due's Due → Rest of the season).
 //   · Payment requests in every state: two WAITING (one To club, one From club — no team here has dues
 //     outstanding, so both read "holding up the payout"), approved, declined, and approved-then-REVERSED.
 const METHOD_WORD = { etransfer: 'E-Transfer', cheque: 'Cheque', cash: 'Cash', card: 'Card', other: 'Other' };

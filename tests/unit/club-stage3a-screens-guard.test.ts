@@ -185,3 +185,36 @@ describe('one admin button size, the portal’s (owner, 2026-10-01, option A)', 
     assert.doesNotMatch(ledger, /className=\{kit\.footLink\}/);
   });
 });
+
+describe('Coming due, round 2 (walk S3W3, owner 2026-10-05: CD1–CD4)', () => {
+  const allocs = readCode(`${ACCT}/allocations/page.tsx`);
+  it('CD1 — the Due window is a pill beside View, in Coming due only, quiet on the 14 days; "Show all" is gone', () => {
+    assert.match(allocs, /view === 'coming-due' && \([\s\S]{0,120}<FilterGroup>[\s\S]{0,120}<SingleSelectDropdown\s+restQuiet restValue="soon"\s+label="Due"/);
+    assert.doesNotMatch(allocs, /Show all/);
+    assert.doesNotMatch(allocs, /showLater/);
+  });
+  it('CD1 — the export writes the bands the window shows, from the same list the screen draws', () => {
+    assert.match(allocs, /body: comingDueBands\(due, dueWindow\)\.flatMap/);
+    assert.match(allocs, /comingDueBands\(due, dueWindow\)\.filter\(x => x\.b\.groups\.length > 0\)/);
+  });
+  it('CD1b — on a phone View stays out of the Filter sheet: only Due is inside the group', () => {
+    const group = allocs.slice(allocs.indexOf('<FilterGroup>'), allocs.indexOf('</FilterGroup>'));
+    assert.equal((group.match(/<SingleSelectDropdown/g) ?? []).length, 1);
+    assert.doesNotMatch(group, /label="View"/);
+  });
+  it('CD2 — no State column: five columns, and the only chip is how many days late', () => {
+    assert.match(allocs, /<td colSpan=\{5\}>\{label\}<\/td>/);
+    assert.doesNotMatch(allocs, /Sent · confirm/);
+    assert.doesNotMatch(allocs, /tone="warn"/);
+  });
+  it('CD3 — the head coach sits under the team; the sent note does not repeat the head coach', () => {
+    assert.match(allocs, /\{r\.teamCaption && <span className=\{repKit\.cellSub\}>\{r\.teamCaption\}<\/span>\}/);
+    assert.match(allocs, /t\.sentBy && \(named \|\| t\.sentBy !== t\.headCoach\) \? `\$\{t\.sentBy\} sent it/);
+    // The phone's one-line caption has no head-coach line to lean on, so its note always names the sender.
+    assert.match(allocs, /phoneNote: band === 'sent' \? sentNote\(t, true\) : null/);
+    assert.match(allocs, /const after = r\.phoneNote \?\? r\.teamCaption;/);
+  });
+  it('CD4 — By allocation carries no note explaining how its rows open', () => {
+    assert.doesNotMatch(allocs, />A row opens its allocation from anywhere on it/);
+  });
+});

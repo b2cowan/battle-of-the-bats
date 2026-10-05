@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import {
   COMING_DUE_DAYS, bookBalance, bookWindow, clubBillChip, clubBillFigures, clubInstallmentDaysLate,
   clubInstallmentLeftTeamOn, clubInstallmentReceivedOn, clubInstallmentState, clubInstallmentWaitingOnClub,
-  comingDueBand, remindsAbout, signedAmount, teamAccount, type BookLineFacts, type ClubInstallmentFacts,
+  comingDueBand, comingDueLater, comingDueWindowEnd, remindsAbout, signedAmount, teamAccount, type BookLineFacts, type ClubInstallmentFacts,
 } from '../../lib/club-money-figures.ts';
 import { LEDGER_KIND_WORD, isSourcedLine, ledgerExportRows, lineType } from '../../lib/club-ledger.ts';
 
@@ -97,6 +97,38 @@ describe('ONE definition per figure (S3A-05, C06, J4-019)', () => {
   it('sums in cents (no float drift across many installments)', () => {
     const many = Array.from({ length: 30 }, () => inst({ amount: 0.1, paidAt: 'x' }));
     assert.equal(clubBillFigures(many, TODAY).collected, 3);
+  });
+});
+
+describe('Coming due\'s Due window (S3W3 round 2, owner 2026-10-05)', () => {
+  // After the 14 days: Diamond fees 3 of 3 for 8 teams and the Girls' uniforms 1 of 2 on Oct 15, 2 of 2 on Nov 15.
+  const later = [
+    { dueDate: '2026-10-15', amount: 3600, teams: Array(8).fill(0) },
+    { dueDate: '2026-10-15', amount: 1350, teams: [0, 0, 0] },
+    { dueDate: '2026-11-15', amount: 1350, teams: [0, 0, 0] },
+  ];
+  it('Next 14 days adds nothing: the 14-day band is the Overview\'s count and never moves', () => {
+    assert.deepEqual(comingDueLater(later, TODAY, 'soon'), { groups: [], count: 0, amount: 0, through: null });
+  });
+  it('Next 30 days adds what falls due through today + 30, counted a team\'s installment each', () => {
+    const w = comingDueLater(later, TODAY, 'month');
+    assert.equal(w.through, '2026-10-30');
+    assert.equal(w.groups.length, 2);
+    assert.equal(w.count, 11);
+    assert.equal(w.amount, 4950);
+  });
+  it('the 30th day itself is inside the window, as the 14th is inside the 14 days', () => {
+    assert.equal(comingDueLater([{ dueDate: '2026-10-30', amount: 10, teams: [0] }], TODAY, 'month').count, 1);
+    assert.equal(comingDueLater([{ dueDate: '2026-10-31', amount: 10, teams: [0] }], TODAY, 'month').count, 0);
+  });
+  it('each window ends on one definition: the 14th day, the 30th, or never (the menu, the band and the empty line share it)', () => {
+    assert.equal(comingDueWindowEnd(TODAY, 'soon'), '2026-10-14');
+    assert.equal(comingDueWindowEnd(TODAY, 'month'), '2026-10-30');
+    assert.equal(comingDueWindowEnd(TODAY, 'season'), null);
+  });
+  it('Rest of the season adds every later group', () => {
+    const w = comingDueLater(later, TODAY, 'season');
+    assert.deepEqual([w.groups.length, w.count, w.amount, w.through], [3, 14, 6300, null]);
   });
 });
 

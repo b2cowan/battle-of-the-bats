@@ -19,11 +19,11 @@ import ck from '../ClubKit.module.css';
 import { Callout, RepChip, repKit } from '../RepKit';
 import { reminderEmailLines, reminderEmailSubject } from '@/lib/club-money-words';
 import { pluralize } from '@/lib/utils';
-import { FormError, day, jsonInit, money, moneyFetch, moneyKit, refusalText } from './MoneyKit';
+import { FormError, day, daysLateWords, jsonInit, money, moneyFetch, moneyKit, refusalText } from './MoneyKit';
 import type { ReminderPreview, ReminderLine } from '@/lib/club-money-reminders';
 
 const lineWords = (l: ReminderLine) =>
-  `${l.allocation}${l.of > 1 ? `, ${l.number} of ${l.of}` : ''} · ${money(l.amount)} · ${l.daysLate > 0 ? `${l.daysLate} ${l.daysLate === 1 ? 'day' : 'days'} late` : day(l.dueDate)}`;
+  `${l.allocation}${l.of > 1 ? `, ${l.number} of ${l.of}` : ''} · ${money(l.amount)} · ${l.daysLate > 0 ? daysLateWords(l.daysLate) : day(l.dueDate)}`;
 
 export default function RemindersWindow({ q, orgName, senderName, team, onClose, onSent }: {
   q: string;
