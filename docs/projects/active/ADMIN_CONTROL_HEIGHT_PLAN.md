@@ -85,3 +85,4 @@ old Budget year picker (32, redrawn in Stage 3b).
   the *Game day* link (`ScheduleCalendarViews` `gdEntryBtn`) is rgba(16,19,10) on rgb(17,24,39),
   1.06:1. Time-dependent (shows only near a game). Reported, not fixed.
 - **Owner QA:** ledger §262, walk on the hub's QA Walk tab.
+- **Committed `d9302f6f` 2026-10-05** (at the owner's ask, so Sheet Frame step 1 could build on the shared Tools stylesheet).
