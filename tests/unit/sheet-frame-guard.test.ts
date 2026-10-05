@@ -16,9 +16,14 @@ import { cssRule, readCode, splitPhoneCss } from './_source-code.ts';
  *   · Step 1 (2026-10-05): the frame is promoted from the Tools drawer; the Tools menu (every
  *     `drawerOnPhone` caller) and the Ledgers' Filter sheet render through it; the Filter sheet stops
  *     claiming `aria-modal`; the admin shell declares the bar, so the club's sheets stop hanging mid-page.
+ *   · Step 2 (2026-10-05): the small menus — the team and player switchers move onto the frame (its
+ *     label, its card surface in dark, a dim that hands focus back to the name); Print names itself (the
+ *     frame's label worn on its own, a dialog role, focus in and back to Tools); the Schedule's view menu
+ *     and Add event become drawers on a phone (D5); a menu of choices answers the arrow keys.
  *
- * What it cannot see is the rendered sheet — `.probe/sf1/capture.mjs` measured all ten step-1 sheets
- * before and after at 390 (touch), warm and dark, and diffed their computed styles and pixels.
+ * What it cannot see is the rendered sheet — `.probe/sf1/capture.mjs` (step 1, ten sheets) and
+ * `.probe/sf2/capture.mjs` (step 2, five sheets and two Tools sheets as the regression check) measured
+ * them before and after at 390 (touch), warm and dark, and diffed their computed styles and pixels.
  * ══════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -29,8 +34,8 @@ const filter = readCode('components/coaches/FilterGroup.tsx');
 
 /** Every sheet on the frame so far, and the one line that renders it. */
 const CONSUMERS = [
-  { who: 'Tools menu', src: menu, ref: 'panelRef', role: 'menu', onClose: 'dismiss' },
-  { who: 'Filter sheet', src: filter, ref: 'sheetRef', role: 'dialog', onClose: '() => { close(); rescueFocusTo(triggerRef); }' },
+  { who: 'Tools menu', src: menu, ref: 'panelRef', role: 'menu', onClose: '() => setOpen(false)', opener: 'triggerRef' },
+  { who: 'Filter sheet', src: filter, ref: 'sheetRef', role: 'dialog', onClose: 'close', opener: 'triggerRef' },
 ] as const;
 const frameLine = (src: string, ref: string): string => {
   const at = src.indexOf(`<SheetFrame ref={${ref}}`);
@@ -70,10 +75,15 @@ describe('step 1 · the frame is ONE place', () => {
 describe('step 1 · the dim travels with the sheet, inside the dismiss boundary', () => {
   it('the frame renders the portal dim, then the sheet, as siblings — never portalled', () => {
     const body = frame.slice(frame.indexOf('return ('));
-    const dim = body.indexOf('<LineupSheetScrim onClose={onClose} />');
+    const dim = body.indexOf('<LineupSheetScrim onClose={() => { onClose(); rescueFocusTo(opener); }} />');
     const sheet = body.indexOf('<div ref={ref} className={styles.sheet}');
     assert.ok(dim > 0 && sheet > dim, 'the dim, then the sheet');
     assert.doesNotMatch(frame, /createPortal/, 'in-tree, so the sheet inherits --coach-foot-clear');
+  });
+
+  it('the frame owns the dim’s hand-back: a tap on it returns focus to the REQUIRED opener (step 2 /simplify)', () => {
+    // Three of five step-2 sheets had written the close and forgotten the hand-back when it was the caller's job.
+    assert.match(frame, /\n {2}opener: RefObject<HTMLElement \| null>;/, 'required — no sheet can leave it out');
   });
 
   for (const c of CONSUMERS) {
@@ -84,7 +94,7 @@ describe('step 1 · the dim travels with the sheet, inside the dismiss boundary'
       assert.match(c.src, /useDismissable\((open|sheetOpen), rootRef, /, 'and rootRef is what the hook watches');
       assert.doesNotMatch(c.src, /<LineupSheetScrim/, 'no dim of its own — the frame brings it');
       const line = frameLine(c.src, c.ref);
-      assert.ok(line.includes(`onClose={${c.onClose}}`), 'the dim closes and hands focus back to the opener');
+      assert.ok(line.includes(`onClose={${c.onClose}} opener={${c.opener}}`), 'the dim closes; the frame hands focus back to the opener');
       assert.ok(line.includes(`role="${c.role}"`), c.role === 'dialog' ? 'a dialog: checkboxes and dates, a pick does not close it' : 'a menu');
       assert.doesNotMatch(c.src, /aria-modal=/, 'the menu layer is never modal (D1)');
     });
@@ -131,5 +141,69 @@ describe('step 1 · every shell that hosts a framed sheet declares the bar, once
     const teams = readCode('app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css');
     assert.doesNotMatch(teams, /--coach-foot-clear:/, 'Teams declared the same sum per page until step 1');
     assert.match(cssRule(splitPhoneCss(teams).phone, '.bulkDock'), /bottom: var\(--coach-foot-clear\);/, 'its docked bulk bar reads the token too');
+  });
+});
+
+describe('step 2 · the small menus', () => {
+  const team = readCode('components/coaches/CoachTeamSwitchSheet.tsx');
+  const player = readCode('components/coaches/CoachPlayerSwitchSheet.tsx');
+  const header = readCode('components/coaches/CoachTeamHeader.tsx');
+  const playerPage = readCode('app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx');
+  const schedule = readCode('app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx');
+  const builder = readCode('app/[orgSlug]/coaches/teams/[teamId]/lineups/[eventId]/page.tsx');
+
+  it('the menu label has ONE home: the frame wears SheetLabel, and nothing restates its small capitals', () => {
+    assert.match(frame, /export function SheetLabel\(\{ children \}: \{ children: ReactNode \}\) \{\s*return <div className=\{styles\.label\}>\{children\}<\/div>;/);
+    assert.match(frame, /\{label && <SheetLabel>\{label\}<\/SheetLabel>\}/, 'the frame’s own head is the same component');
+  });
+
+  for (const s of [
+    { who: 'team switcher', src: team, label: 'Your teams' },
+    { who: 'player switcher', src: player, label: 'Players' },
+  ]) {
+    it(`the ${s.who} wears the frame: the menu label, the card surface, a dim that hands focus back to the name`, () => {
+      // Until step 2 it was the More sheet's container re-anchored outside the nav: a hand-copied bar height,
+      // the mono section label (a third head style), and in dark the BAR'S colour.
+      assert.ok(s.src.includes(`<SheetFrame ref={panelRef} label="${s.label}" onClose={onClose} opener={opener} role="menu" aria-label="${s.label}"`),
+        'through the frame, labelled; a tap on the dim closes and the frame hands focus back to the name (it went to <body>)');
+      assert.doesNotMatch(s.src, /sheet\.(sheetAnchor|sheetScrim|dropdown|sheetGrab|dropSectionLabel)\b/, 'no part of the More sheet’s container');
+      assert.doesNotMatch(s.src, /aria-modal=|useOverlayOpen/, 'a menu: never modal, and it never hides the bar it sits on (D1)');
+    });
+  }
+
+  it('both hosts render the switcher inside the boundary their dismiss hook watches, and name the opener', () => {
+    assert.match(header, /useDismissable\(switchOpen, \[switchRef, switchSheetRef\], closeSwitch,/);
+    assert.match(header, /<div ref=\{switchSheetRef\} style=\{\{ display: 'contents' \}\}>\s*<CoachTeamSwitchSheet[\s\S]*?opener=\{switchButtonRef\}/);
+    assert.match(playerPage, /useDismissable\(sheetOpen, \[nameButtonRef, sheetRef\], closeSheet,/);
+    assert.match(playerPage, /<div ref=\{sheetRef\} style=\{\{ display: 'contents' \}\}>\s*<CoachPlayerSwitchSheet[\s\S]*?opener=\{nameButtonRef\}/);
+  });
+
+  it('D5 · the Schedule’s view menu and Add event rise from the bar on a phone, titled', () => {
+    const tag = (from: string) => { const at = schedule.indexOf(from); assert.notEqual(at, -1, from); return schedule.slice(at, schedule.indexOf('>', schedule.indexOf('\n', at))); };
+    assert.match(tag('<CoachToolbarMenu label={`Change view'), /drawerOnPhone drawerTitle="View"/, 'the view menu');
+    const add = schedule.slice(schedule.indexOf('label="Add Event"'), schedule.indexOf('{ADD_MENU.map'));
+    assert.match(add, /drawerOnPhone\s+drawerTitle="Add event"/, 'Add event');
+  });
+
+  it('Print names itself: the menu label, a dialog role, never modal — focus in on open, back to Tools on Escape and on the dim', () => {
+    assert.match(builder, /<LineupSheetScrim onClose=\{closePrint\} \/>\s*<div ref=\{printRef\} className=\{styles\.lineupAutoMenu\} role="dialog" aria-label="Print">\s*<SheetLabel>Print<\/SheetLabel>/);
+    assert.match(builder, /function closePrint\(\) \{ setLineupPdfOpen\(false\); rescueFocusTo\(toolsTriggerRef\); \}/);
+    assert.match(builder, /if \(lineupPdfOpen\) printRef\.current\?\.querySelector<HTMLElement>\('button'\)\?\.focus\(\{ preventScroll: true \}\);/, 'a dialog that never takes focus is never announced');
+    // Escape went to <body> on every Tools panel (Copy from's was booked for step 5; it is the same line).
+    assert.match(builder, /function escapeToolPanels\(\) \{ closeToolPanels\(\); rescueFocusTo\(toolsTriggerRef\); \}/);
+    assert.match(builder, /useDismissable\(copyOpen \|\| saveTemplateOpen \|\| lineupPdfOpen, toolsRef, closeToolPanels, escapeToolPanels\);/);
+    // The Tools menu LENDS its button — never a query into its markup (step 2 /simplify).
+    assert.match(builder, /triggerRef=\{toolsTriggerRef\}/);
+    assert.match(menu, /const triggerRef = triggerRefProp \?\? ownTriggerRef;/);
+    assert.doesNotMatch(builder, /aria-haspopup="menu"\]/, 'no reaching into the menu by attribute');
+    const print = builder.slice(builder.indexOf('<div ref={printRef}'), builder.indexOf('\n', builder.indexOf('<div ref={printRef}')));
+    assert.doesNotMatch(print, /aria-modal|lineupDrawerOverNav/, 'the menu layer: never modal, never over the bar (D1)');
+  });
+
+  it('a menu of CHOICES answers the arrow keys, and opens on the one in force', () => {
+    // `checked` rows are `menuitemradio`; the list read `menuitem` alone, so the Schedule's view menu had no stops.
+    assert.ok(menu.includes(`querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled]), [role="menuitemradio"]:not([disabled])')`));
+    assert.match(menu, /const chosen = list\.find\(el => el\.getAttribute\('aria-checked'\) === 'true'\);/);
+    assert.match(menu, /\(openOnRef\.current === 'last' \? list\[list\.length - 1\] : chosen \?\? list\[0\]\)\?\.focus/);
   });
 });

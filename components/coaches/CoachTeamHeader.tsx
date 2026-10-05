@@ -368,8 +368,8 @@ function CoachTeamHeaderInner({
         header is a stacking context (`z-index: 40`), and a fixed sheet inside it would sit under
         anything the page paints above 40 — the autosave pill (250), the console's own sheet — so
         the scrim could not cover them and an error pill could intercept a tap on the sheet's corner
-        (/review 2026-09-21). Out here the anchor's own z-index (260: over the pill, under the bar)
-        decides. `display: contents` so the host adds no box to `.coachesMain` (the header's
+        (/review 2026-09-21). Out here the sheet frame's own z-index (260: over the pill, under the
+        bar) decides. `display: contents` so the host adds no box to `.coachesMain` (the header's
         margins and the page line's still meet). Gated on `canSwitch` as well as `switchOpen`: a
         viewport crossing 900 while the sheet is open swaps the button for plain text, and the sheet
         must go with it rather than stay open with no trigger. */}
@@ -381,6 +381,7 @@ function CoachTeamHeaderInner({
           assignments={assignments}
           closedAssignments={closedAssignments}
           onClose={closeSwitch}
+          opener={switchButtonRef}
         />
       </div>
     )}

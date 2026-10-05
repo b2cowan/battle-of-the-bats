@@ -184,7 +184,7 @@ export default function FilterGroup({ children }: { children: ReactNode }) {
              not a menu: it holds checkboxes and date fields, and picking a choice does not close it. Tab leaving the
              sheet closes it (onBlur above), so focus never sits behind it; a tap on the dim hands focus back to the
              button, as the Tools sheets do. */
-          <SheetFrame ref={sheetRef} label={FILTER} onClose={() => { close(); rescueFocusTo(triggerRef); }} role="dialog" aria-label={FILTER}>
+          <SheetFrame ref={sheetRef} label={FILTER} onClose={close} opener={triggerRef} role="dialog" aria-label={FILTER}>
             <FilterGroupContext.Provider value={rowApi}>{children}</FilterGroupContext.Provider>
             {/* D6: only while something is on, and back to REST — Status to its resting pair, the date to its
                 resting window — never to "All". */}

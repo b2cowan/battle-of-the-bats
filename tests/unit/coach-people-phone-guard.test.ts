@@ -129,9 +129,12 @@ describe('F2 · the name is the switcher; the sheet is the team sheet\'s twin', 
   it('the <select> survives above 640 only', () => {
     assert.match(page, /const switchPlayer = !isPhone && roster\.length > 1 \? \(/);
   });
-  it('reuses the shared sheet container — a third caller, never a fourth container', () => {
+  it('the team sheet\'s twin: the More sheet\'s rows, no stylesheet of its own', () => {
+    // Sheet Frame step 2 (2026-10-05): both switchers sit on the portal's sheet frame — its container, dim,
+    // label, the dim inside the host's dismiss boundary and the focus hand-back are held by
+    // `sheet-frame-guard.test.ts`. This guard keeps F2's own decision: one row density with the team sheet.
     assert.match(readSource(SHEET), /import sheet from '\.\/CoachesBottomNav\.module\.css';/);
-    for (const cls of ['sheetAnchor', 'sheetScrim', 'dropdown', 'sheetGrab', 'dropItem', 'dropActive']) {
+    for (const cls of ['dropItem', 'dropActive']) {
       assert.match(sheet, new RegExp(`sheet\\.${cls}\\b`), `uses .${cls}`);
       assert.match(readCode(TEAM_SHEET), new RegExp(`sheet\\.${cls}\\b`), `the team sheet uses .${cls} too`);
     }
@@ -151,11 +154,6 @@ describe('F2 · the name is the switcher; the sheet is the team sheet\'s twin', 
   it('a row keeps the tab the coach was reading and the way back', () => {
     assert.match(page, /const playerHref = \(id: string\) => playerTabHref\(`\$\{base\}\/roster\/\$\{id\}`, tab, \{ returnTo \}\);/);
     assert.match(page, /hrefFor=\{playerHref\}/);
-  });
-  it('the scrim is inside the dismiss boundary (a tap on it closes without pressing what is beneath)', () => {
-    assert.match(page, /useDismissable\(sheetOpen, \[nameButtonRef, sheetRef\], closeSheet,/);
-    assert.match(page, /<div ref=\{sheetRef\} style=\{\{ display: 'contents' \}\}>\s*<CoachPlayerSwitchSheet/);
-    assert.match(sheet, /<div className=\{sheet\.sheetScrim\} aria-hidden onClick=\{onClose\} \/>/);
   });
   it('lists ACTIVE players only (a call-up or a departed player is never a row)', () => {
     assert.match(readCode(ROUTE), /roster: rosterRows\.filter\(p => p\.status === 'active'\)/);

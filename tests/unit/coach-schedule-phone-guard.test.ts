@@ -108,7 +108,8 @@ describe('C1 — the list is the scroller and opens on today', () => {
   });
   it('the view control renders BOTH forms — the kit toolbar\'s toggle and the glyph menu — and CSS decides', () => {
     assert.match(page, /<CoachListToolbar actions=\{scheduleExport\} className=\{styles\.scheduleToolbarWide\}>\s*<div className=\{styles\.viewToggle\}>/, 'the ≥641 form: the toggle inside the kit toolbar');
-    assert.match(page, /<span className=\{styles\.viewMenuPhone\}>\s*<CoachToolbarMenu label=\{`Change view · \$\{VIEW_WORD\[view\]\}`\} icon=\{<ViewGlyph size=\{20\} aria-hidden \/>\} variant="glyph">/, 'the ≤640 form: a glyph-only menu named for assistive tech, wearing the CURRENT view\'s glyph');
+    // Its panel rises from the bar as a drawer titled VIEW since Sheet Frame step 2 (D5, 2026-10-05).
+    assert.match(page, /<span className=\{styles\.viewMenuPhone\}>\s*<CoachToolbarMenu label=\{`Change view · \$\{VIEW_WORD\[view\]\}`\} icon=\{<ViewGlyph size=\{20\} aria-hidden \/>\} variant="glyph"\s+drawerOnPhone drawerTitle="View">/, 'the ≤640 form: a glyph-only menu named for assistive tech, wearing the CURRENT view\'s glyph');
     assert.match(page, /checked=\{view === v\}/, 'the rows are radio items with the current one ticked');
     assert.match(phoneCss, /\.viewMenuPhone \{ display: inline-flex; \}/);
     assert.match(phoneCss, /\.schedulePage \.scheduleToolbarWide \{ display: none; \}/);

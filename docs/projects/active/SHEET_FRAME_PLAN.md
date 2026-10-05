@@ -4,7 +4,8 @@
 PM Brief · Plan notes): https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, source `docs/projects/active/SHEET_FRAME_HUB.html`,
 frames and measured facts in `sheet-frame/` (`facts.json`). PM brief `SHEET_FRAME_PM_BRIEF.md`. Build prompt
 `SHEET_FRAME_BUILD_PROMPT.md` (one step per chat). Ruling recorded in `memory/design_decisions.md` (2026-10-05).
-**Step 1 built 2026-10-05, committed `9ab32b23`** (see *Build record*; owner QA §264). Steps 2–5 to build.
+**Step 1 built 2026-10-05, committed `9ab32b23`; ✅ owner QA §264 PASSED 9/9 2026-10-05** (see *Build record*).
+**Step 2 built on dev 2026-10-05; owner QA §266 open** (hub tab QA Walk). Steps 3–5 to build.
 
 ## The rulings
 
@@ -45,12 +46,14 @@ form 390 over the bar, under `.modalOverlay` 400.
 5. **The lineup builder's drawers — last.** Setup, Save as template, Call up, Copy from, Print's geometry: one frame
    with the rest. Call up takes the shared form head (`LineupDrawerHead`) instead of its own `<h3>`; the three forms
    keep the keyboard inside (`useDialogFloor` — it also calls `useBackStep`, so the §219 back-step guard moves with it;
-   the open half recorded with the 2026-09-23 ruling); Copy from returns focus to Tools.
+   the open half recorded with the 2026-09-23 ruling); Copy from returns focus to Tools (**done in step 2** for Escape —
+   the three Tools panels share one Escape line; step 5 checks Copy from's own × and pick).
 
 **Out of the frame:** full-screen windows (`RoomShell` rooms, `ScheduleEventSheet`, `TagManagerDrawer`,
 `HelpDrawer`); the More sheet's own container; the club admin's `BottomSheet` (D4). The Schedule day list
 (`.daySheetOverlay`, several events on one day) is a menu that covers the bar — sort it in step 2 or 4 if it can be
-opened on test data.
+opened on test data. (Step 2: the UAT team has no day with two events, so it could not be opened without writing one —
+left for step 4.)
 
 ## Guards that pin today's sheets (keep them green or move their assertions with the step)
 
@@ -68,9 +71,11 @@ rule, no hand-copied bar height, `aria-modal` only on the form layer.
 | Game-day Note is a form above a live bar | 3 |
 | Game-day dim is the dark one on warm; the bar height copied by hand | 3 |
 | Filter sheet and position picker `aria-modal` while the bar is live | 1 (Filter: built), 4 |
-| Print has no title and no role | 2 |
+| Print has no title and no role | 2 (built) |
 | Three builder forms let the keyboard out (2026-09-23 open half) | 5 |
-| Escape leaves focus nowhere: Copy from, tag manager, admin sheet | 5 (Copy from); the other two are out of the frame — report |
+| Escape leaves focus nowhere: Copy from, tag manager, admin sheet | 2 (Copy from, built — one Escape line serves the three Tools panels); the other two are out of the frame — report |
+| Switchers and Print: a tap on the dim leaves focus nowhere — found capturing step 2 | 2 (built) |
+| A menu of choices (Schedule view menu, practice library Sort) answers no arrow key and leaves focus on its trigger — found capturing step 2 | 2 (built) |
 | Help's × is 30px on a phone | out of the frame — report to Help's owner |
 | Club Ledger Tools + Filter and Allocations Filter hang under their toolbar, no dim (the admin never declared `--coach-foot-clear`) — found capturing step 1 | 1 (built) |
 | Filter sheet: a tap on the dim leaves focus nowhere — found capturing step 1 | 1 (built) |
@@ -130,8 +135,8 @@ the frame worn alone, focus back on a dim tap, no `aria-modal` in the menu layer
 pin today's sheets* green (260 tests). `npm run typecheck` clean; focused lint clean; `npm run verify:changed`
 exit 0 (5,598 tests).
 
-**Owner QA §264** — hub tab QA Walk: W1 the club's sheets rise from the bar (6) · W2 the coach's sheets did not
-change (3). Writes nothing.
+**Owner QA §264 ✅ PASSED 2026-10-05, 9/9** — hub tab QA Walk: W1 the club's sheets rise from the bar (6/6) · W2 the
+coach's sheets did not change (3/3). Writes nothing.
 
 **/simplify (four lenses) and /review (standard tier; correctness + blast-radius lenses), 2026-10-05.** Applied:
 - Teams' own `--coach-foot-clear` declaration deleted (the shell's is the one home; its comment had become false) and
@@ -160,3 +165,101 @@ plus three admin samples after a restart: the coach screens' findings were all D
 was re-signed in Dark at 08:09, before this session) and re-ran clean in warm ("No new layout findings"); the house
 league Teams page's tap-floor findings (player rows 32px, Export 38px at 768) are on elements nothing in this diff
 reaches — pre-existing, reported.
+
+### Step 2 — the small menus (built on dev 2026-10-05; owner QA §266)
+
+**Before building.** Parallel work checked: no commit since step 1 on this step's files; the call-ups session's
+uncommitted edits are in `lib/export/pdf.ts` and its guard (not the builder page); a notifications session is editing
+`CoachNotificationReader` (a step-4 sheet, untouched here). The dev server's render workers had died again
+("Jest worker encountered 2 child process exceptions"); stopped, `.next` cleared, restarted. Before-captures
+(`.probe/sf2/capture.mjs`, copied from step 1's with focus-on-open recorded) found three things the plan did not list:
+a tap on the dim left focus on `<body>` on both switchers and on Print; Print never took focus when it opened; and the
+Schedule's view menu answered no arrow key and left focus on its trigger.
+
+**Disagreement raised, and the call made.** The plan says the switchers take "the menu label" and "the card surface";
+the hub's drawing restyled the label in place, inside the More sheet's container (and its dark drawing kept the bar's
+colour). No step names moving the switchers' container, so restyling in place would have left them the last menus on a
+recipe that hand-copies the bar's height. Built: the switchers move ONTO the frame. Cost, not drawn on the hub and shown
+true size on the QA tab: the frame's 8px inset (the More sheet's is 14px) moves the label and rows ~6px nearer the edge
+(the tint 6px wider each side), the grab line sits 4px higher, and the More sheet's slide-up and scroll fades go (the
+Tools sheets have neither). The owner can still choose restyle-in-place on the walk.
+
+**Built.**
+- `SheetFrame.tsx` exports `SheetLabel` — the menu head (D2) on its own, which the frame now renders too. One home for
+  the small capitals; Print wears it until step 5 moves Print's container.
+- `CoachTeamSwitchSheet` / `CoachPlayerSwitchSheet`: `<SheetFrame label="Your teams" | "Players" role="menu" aria-label=…>`
+  with the More sheet's rows (`.dropItem` / `.dropActive` / `.dropItemMeta`, one row density with More). Gone:
+  `.sheetAnchor` (the hand-copied `--bottom-nav-height` sum), `.sheetScrim`, `.dropdown`, `.sheetGrab`,
+  `.dropSectionLabel`. A new `opener` prop: the dim closes and calls `rescueFocusTo(opener)`; the hosts pass
+  `switchButtonRef` / `nameButtonRef` and keep their dismiss boundaries unchanged (the frame renders inside them).
+  `.sheetAnchor` stays for the four step-4 sheets; its comments no longer name the team switcher.
+- Print (lineup builder): `role="dialog" aria-label="Print"` and `<SheetLabel>Print</SheetLabel>` at every width (on a
+  computer Copy from and Save as template beside it already carry heads). Focus lands on Dugout poster when it opens
+  (`printRef` effect — a dialog that never takes focus is never announced). `closePrint` (the dim) and
+  `escapeToolPanels` (the three Tools panels' Escape, via `useDismissable`'s `onEscape`) hand focus back to Tools
+  through `rescueFocusTo`. The hook's own Escape restored `<body>`: the Tools menu item that opened the panel had
+  unmounted in the same commit. **Copy from's Escape is fixed by the same line** (step 5's item, closed early).
+- Schedule (D5): the view menu `drawerOnPhone drawerTitle="View"`, Add event `drawerOnPhone drawerTitle="Add event"`.
+  The view trigger renders only at ≤640, so on a phone it is always the drawer; Add event keeps its card at ≥641, and
+  the empty state's door opens the same drawer.
+- `CoachToolbarMenu`: `items()` roves `menuitem` AND `menuitemradio` (a `checked` row is a radio item, so the view menu
+  and the practice library's Sort had no stops), and a menu of choices opens on the ticked row.
+
+**Proved.** `.probe/sf2/capture.mjs` + `diff.mjs`, at 390 touch, warm and dark: the coach Ledger's and the lineup
+builder's Tools sheets **pixel-identical, every computed style identical** (the shared menu change moved nothing);
+Add event and View land exactly where the hub drew them (top 498 / height 274; 586 / 186); team 614/158 and Print
+523/249 (drawn 616/156 and 519/253); focus on open — team: first row, player: Devon Test, Print: Dugout poster, View:
+List (it stayed on the trigger), Add event: Tournament; a dim tap hands focus back to the opener on all five (it went to
+`<body>` on three). `.probe/sf2/desk-print.mjs` (1280): PRINT heads the popover, Escape → Tools.
+`.probe/sf2/keys.mjs` walked W3: Tab inside Print reaches the orientation switch; Escape on Print and on Copy from →
+Tools; the view menu at 600px opens on List, ↓ → Week, Escape → the view symbol.
+
+**Checks.** `sheet-frame-guard` grew step 2 (one label home; both switchers through the frame with focus back to the
+opener and no More-container part; the hosts' boundaries; D5's two drawers; Print's role, label, focus and Escape; the
+radio roving). Moved with the step: `coach-first-screen-guard` and `coach-people-phone-guard` (the switchers' container
+is the frame, rows the More sheet's), `coach-lineup-phone-guard` (Print's dim is `closePrint`; Escape is
+`escapeToolPanels`; "no Print square" now looks for a BUTTON named Print), `coach-schedule-phone-guard` (the view
+menu's drawer). Nine sheet guards 236/236. `npm run typecheck` clean; focused lint 0 errors (4 warnings on untouched
+lines); `npm run verify:changed` exit 0 (5,628 tests). `check:layout --only=` the four schedule entries, both switchers,
+the player page and the lineup builder, `--theme=warm`: no new findings; 8 baseline entries on the player page at 768
+(position-reorder buttons, not this step) no longer reproduce — not pruned.
+
+**Not done, reported.** The Schedule day list (`.daySheetOverlay`) could not be opened on the UAT data (no day with two
+events) — left for step 4. Help's 30px × and the tag manager's / admin sheet's lost Escape focus stay out of the frame.
+
+**/simplify (four lenses: reuse, simplification, efficiency, altitude), 2026-10-05.** Applied:
+- **The frame owns the dim's hand-back** (altitude + simplification, independently): `SheetFrame` takes a REQUIRED
+  `opener` and its dim runs `onClose(); rescueFocusTo(opener)`. Every consumer drops the hand-written tail — the Tools
+  menu (`onClose={() => setOpen(false)} opener={triggerRef}`; `dismiss` still serves `useDismissable` and a pick),
+  `FilterGroup` (`onClose={close} opener={triggerRef}`), both switchers. Required, because three of five step-2 sheets
+  had written the close and forgotten the hand-back; step 4 adds five more consumers.
+- **The Tools menu lends its button** (reuse + altitude): `CoachToolbarMenu` takes an optional `triggerRef`
+  (`triggerRefProp ?? ownTriggerRef`); the lineup builder passes `toolsTriggerRef` and drops the
+  `querySelector('button[aria-haspopup="menu"]')` that read the menu's markup.
+- **One owner per assertion** (simplification): the switchers' frame, missing More-container parts, hosts' boundaries
+  and opener live in `sheet-frame-guard` alone; `coach-first-screen-guard` and `coach-people-phone-guard` keep their
+  own rulings (the rows are the More sheet's) and point there — the step-1 pattern.
+- Skipped: a shared "focus the first control on open" helper (reuse) — the four copies pick different targets (first
+  row, the current player, the first button), so a helper would add a layer for one line each. Efficiency: nothing
+  material (`useDismissable` holds its callbacks in refs; `items()` runs on an open menu only).
+
+Re-proved after the pass: all eight sheets (the five step-2 sheets, the Ledger Filter, two Tools sheets) re-captured
+against the build — **pixel-identical, every computed style, focus-on-open, Escape and dim-tap result identical**;
+the Filter sheet's dim still hands focus to Filter through the frame; `.probe/sf2/keys.mjs` W3 unchanged. Guards
+236/236, typecheck clean, focused lint clean.
+
+**/review (standard tier; correctness, state/timing and blast-radius lenses), 2026-10-05.** Gate: `verify:changed`
+exit 0 (5,628 tests), typecheck and focused lint clean; `check:layout` ran on the build (no new findings) and the
+simplify pass was proved pixel-identical, so it was not re-run. **No finding in the step's change set confirmed.**
+Blast radius: all four `SheetFrame` consumers pass `opener`; the two `checked` menus (Schedule view, the practice
+library's Sort) sit in no focus-trapped host; the switcher rows read no `.dropdown`/`.sheetAnchor` variable; the layout
+sweep's `#coach-team-sheet` / `#coach-player-sheet` / `menuitemradio` selectors, demo tours and help content are
+unaffected. Reported, not fixed (all Low, all pre-existing in kind):
+- A coach who opens Add event from the EMPTY schedule's own button and taps the dim gets focus on the header's +, not
+  that button (Escape returns to it). The popover's click-away did the same before step 2.
+- The view menu's trigger is hidden above 640: rotating a phone with the menu open hides it while it stays open, and
+  rotating back shows it again — now with the dim. The popover did the same before.
+- `CoachTeamHeader`: `switchOpen` is not gated by `canSwitch` (the player page's twin is), so crossing 900 with the team
+  sheet open leaves its dismiss listeners armed until the next Escape, which they answer. Fix: fold `canSwitch` in.
+- Copy from's × and dim, and Save as template's dim, still drop focus to `<body>` — step 5.
+- Advisory: ↑ on a closed choice menu opens on the last row, not the ticked one (the menu-button pattern; kept).

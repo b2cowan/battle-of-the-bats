@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { rescueFocusTo, useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -64,6 +64,7 @@ export function CoachToolbarMenu({
   open: openProp,
   onOpenChange,
   triggerClassName = '',
+  triggerRef: triggerRefProp,
   children,
 }: {
   /** The button's words — a plain string, so it is also the accessible name. */
@@ -106,8 +107,9 @@ export function CoachToolbarMenu({
    * ⚠ **AT ≤640 THE PANEL IS A DRAWER, NOT A POPOVER** (phone re-evaluation stage 4 · E1, owner
    * 2026-09-22). It rises from the bottom nav's top with a grab line and dims the page behind it —
    * the form stage 3 · D13 settled for every phone panel in the portal the same morning. Pass this
-   * wherever the trigger is a phone control whose menu is a list of things to DO; leave it off for a
-   * desktop-shaped toolbar, and off for the `chip` variant, whose panel belongs beside its pill.
+   * wherever the trigger is a phone control whose menu is a list of things to DO — or of choices to
+   * pick between (the Schedule's view menu joined with Add event, Sheet Frame D5, 2026-10-05); leave it
+   * off for a desktop-shaped toolbar, and off for the `chip` variant, whose panel belongs beside its pill.
    *
    * ⚠⚠ **THE SCRIM RENDERS INSIDE `rootRef` — THE ELEMENT `useDismissable` WATCHES — AND THAT IS A
    * FIX, NOT A TIDY-UP.** A scrim rendered as a SIBLING of the watched element makes the dismiss
@@ -157,6 +159,13 @@ export function CoachToolbarMenu({
    * specificity, so the caller's rule must out-specify `.triggerChip` (e.g. qualify it by its table).
    */
   triggerClassName?: string;
+  /**
+   * The trigger button's ref, for a caller that hands focus back to it after something the menu opened
+   * (the lineup builder's Print, Copy from and Save as template panels return focus to Tools; Sheet
+   * Frame step 2). Given, the menu uses it as its own; left out, the menu keeps its own. Read the button
+   * through this rather than querying the menu's markup.
+   */
+  triggerRef?: RefObject<HTMLButtonElement | null>;
   children: ReactNode;
 }) {
   const [openSelf, setOpenSelf] = useState(false);
@@ -171,7 +180,8 @@ export function CoachToolbarMenu({
   }, [controlled, onOpenChange, open]);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const ownTriggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = triggerRefProp ?? ownTriggerRef;
   /** Which end the next open lands on — set by Up on a closed trigger, reset after every open. */
   const openOnRef = useRef<'first' | 'last'>('first');
 
@@ -203,15 +213,20 @@ export function CoachToolbarMenu({
    * took focus at all — and only there does the trigger take it back. (The mechanism is
    * `rescueFocusTo` in `lib/overlay-hooks`, shared with the Ledgers' phone Filter sheet.)
    */
-  const rescueFocus = useCallback(() => rescueFocusTo(triggerRef), []);
-  /** Close, then the safety net — every way out of the menu but Tab (which hands focus back itself). */
+  const rescueFocus = useCallback(() => rescueFocusTo(triggerRef), [triggerRef]);
+  /** Close, then the safety net — every way out of the menu but Tab (which hands focus back itself) and the
+   *  sheet's dim (whose hand-back is the frame's own: `opener`). */
   const dismiss = useCallback(() => { setOpen(false); rescueFocus(); }, [setOpen, rescueFocus]);
 
   useDismissable(open, rootRef, dismiss);
 
-  /** The items a keyboard may land on. Disabled rows are not focus stops. */
+  /** The items a keyboard may land on. Disabled rows are not focus stops.
+   *  ⚠ BOTH ROLES. A `checked` row is a `menuitemradio`, and until Sheet Frame step 2 (2026-10-05) this
+   *  read `menuitem` alone — so a menu made of choices (the Schedule's List · Week · Month, the practice
+   *  library's Sort) had NO stops: focus stayed on the trigger when it opened and the arrow keys moved
+   *  nothing. Measured live before the fix, not reasoned. */
   const items = useCallback(
-    () => Array.from(panelRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? []),
+    () => Array.from(panelRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled]), [role="menuitemradio"]:not([disabled])') ?? []),
     [],
   );
 
@@ -275,10 +290,13 @@ export function CoachToolbarMenu({
      focused item goes with it, and focus fell to `<body>`, where the arrow keys (heard on the root) do
      nothing. Found by /review 2026-10-05 (Sheet Frame step 1); before the frame, one element changed
      its class and kept its focus. */
+  /* A menu of CHOICES opens on the one in force (the view you are in), as a native select does; a menu of
+     things to do opens on its first row. Up on a closed trigger still lands on the last. */
   useEffect(() => {
     if (!open) return;
     const list = items();
-    (openOnRef.current === 'last' ? list[list.length - 1] : list[0])?.focus({ preventScroll: true });
+    const chosen = list.find(el => el.getAttribute('aria-checked') === 'true');
+    (openOnRef.current === 'last' ? list[list.length - 1] : chosen ?? list[0])?.focus({ preventScroll: true });
     openOnRef.current = 'first';
   }, [open, asDrawer, items]);
 
@@ -324,7 +342,7 @@ export function CoachToolbarMenu({
       {/* ⚠ Inside `rootRef`, the element `useDismissable` watches — the frame brings its dim with it (see
           `SheetFrame`, and `drawerOnPhone` above for the defect a dim outside it caused). */}
       {open && (asDrawer ? (
-        <SheetFrame ref={panelRef} label={drawerTitle} onClose={dismiss} role="menu" onClick={pickCloses}>
+        <SheetFrame ref={panelRef} label={drawerTitle} onClose={() => setOpen(false)} opener={triggerRef} role="menu" onClick={pickCloses}>
           {children}
         </SheetFrame>
       ) : (

@@ -755,9 +755,14 @@ export default function CoachesSchedulePage({
           stylesheet at ≤640 only; the kit toolbar's toggle beneath is the ≥641 form (the server
           renders both, CSS decides). Not a create: house rule 4 is about the one create, which
           keeps its corner. Roster's List / Depth chart toggle stays a toggle — two options do not
-          earn a menu. */}
+          earn a menu.
+          ⚠ A DRAWER, NOT A POPOVER (Sheet Frame D5, owner 2026-10-05): the card that hung from this
+          44px square at the top of the screen rises from the bar like every other phone menu, titled
+          VIEW because the dim covers the square that opened it. This trigger only renders at ≤640, so
+          on a phone it is always the drawer. */}
       <span className={styles.viewMenuPhone}>
-        <CoachToolbarMenu label={`Change view · ${VIEW_WORD[view]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph">
+        <CoachToolbarMenu label={`Change view · ${VIEW_WORD[view]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph"
+          drawerOnPhone drawerTitle="View">
           {VIEW_MODES.map(v => {
             const Glyph = VIEW_GLYPH[v];
             return <CoachToolbarMenuItem key={v} icon={<Glyph size={16} aria-hidden />} label={VIEW_WORD[v]} checked={view === v} onSelect={() => setView(v)} />;
@@ -786,6 +791,11 @@ export default function CoachesSchedulePage({
           /* And the chevron goes with them (stage 2 · C1, owner 2026-09-21): the lime square is the
              add door on every list in the portal; the six-type menu is unchanged behind it. */
           bareOnPhone
+          /* And on a phone the six types rise from the bar as a drawer (Sheet Frame D5, owner
+             2026-10-05), titled because the dim covers the square that opened it; ≥641 keeps the card
+             under the button. The empty state's door opens the same drawer. */
+          drawerOnPhone
+          drawerTitle="Add event"
           /* Controlled, because the empty state's own "Add Event" opens THIS menu — see the prop's
              note. Every other caller in the portal leaves the menu to own its state. */
           open={addTypeMenuOpen}

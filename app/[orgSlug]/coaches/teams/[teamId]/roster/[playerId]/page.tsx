@@ -1304,7 +1304,7 @@ export default function PlayerDetailPage({
       {canWriteRoster && <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />}
 
       {/* THE ROSTER SHEET (stage 5 · F2). `display: contents` so the boundary adds no box to the
-          page; the sheet positions itself against its own fixed anchor at the bar's top edge. */}
+          page; the sheet is the portal's sheet frame, fixed at the bar's top edge (Sheet Frame step 2). */}
       {sheetOpen && (
         <div ref={sheetRef} style={{ display: 'contents' }}>
           <CoachPlayerSwitchSheet
@@ -1312,6 +1312,7 @@ export default function PlayerDetailPage({
             currentPlayerId={playerId}
             hrefFor={playerHref}
             onClose={closeSheet}
+            opener={nameButtonRef}
           />
         </div>
       )}

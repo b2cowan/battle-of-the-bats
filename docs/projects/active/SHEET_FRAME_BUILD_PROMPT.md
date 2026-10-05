@@ -64,8 +64,14 @@ context line) for a sheet about one record.
 - The guards in the plan stay green or move their assertions with the step; `tests/unit/sheet-frame-guard.test.ts`
   gains this step's checks.
 - `npm run typecheck`, focused lint, `npm run verify:changed` clean; the after-captures measured.
+- `check:layout`: it runs in the SESSION's theme, and the UAT coach login may be saved in Dark — dark findings then
+  read as new against the warm baseline. Re-run any screen it flags with `--theme=warm` before calling a finding
+  yours. A diff touching a shell stylesheet widens `--changed` to ~250 screens and can trip the memory floor — scope
+  it with `--only=<the screens your step touches>`.
 - Offer `/simplify` (a new shared frame is a new abstraction) then `/review`; offer `/docs` if a coach-visible step
   changed a flow.
-- The plan's Build record, the hub (stage strip and a QA Walk tab for a visible step, same file path, republished),
+- The plan's Build record, the hub (stage strip and a QA Walk tab for a visible step, same file path, republished —
+  the tab holds step 1's §264, PASSED: replace its walks with your step's own section and keep a one-line record of
+  §264 above it; give your walks a new storage key so old ticks do not carry over),
   TODO.md and an Owner QA Ledger section are updated. Commit only when the owner says so.
 - Hand back in product-owner words: what changed for a coach, what was proved, anything found and not fixed.

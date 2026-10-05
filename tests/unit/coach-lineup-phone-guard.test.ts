@@ -239,14 +239,15 @@ describe('D1 — the Setup row and its panel', () => {
     const toolsAt = builder.indexOf('ref={toolsRef}');
     assert.notEqual(toolsAt, -1, 'the Tools wrap carries the dismissable ref');
     for (const [name, at] of [
-      ['Print', builder.indexOf('<LineupSheetScrim onClose={() => setLineupPdfOpen(false)} />')],
+      ['Print', builder.indexOf('<LineupSheetScrim onClose={closePrint} />')],
       ['Save as template', builder.indexOf('<LineupSheetScrim onClose={() => setSaveTemplateOpen(false)} overNav />')],
       ['Copy from', builder.indexOf('<LineupCopyFrom')],
     ] as const) {
       assert.notEqual(at, -1, `${name}: missing`);
       assert.ok(at > toolsAt, `${name}: its scrim must come after the Tools wrap's ref`);
     }
-    assert.match(builder, /useDismissable\(copyOpen \|\| saveTemplateOpen \|\| lineupPdfOpen, toolsRef, closeToolPanels\);/);
+    // Escape closes and hands focus back to Tools, the button that opened all three (Sheet Frame step 2).
+    assert.match(builder, /useDismissable\(copyOpen \|\| saveTemplateOpen \|\| lineupPdfOpen, toolsRef, closeToolPanels, escapeToolPanels\);/);
   });
   it('D12 · every panel that opens on a phone carries a scrim, and a MENU scrim never dims the bar', () => {
     // The desktop renders nothing: the class is display:none until the bottom nav exists, so no
@@ -509,7 +510,7 @@ describe('The two drawer layers — a form covers the nav, a menu sits on top of
     // ⚠ AND THE OTHER WAY ROUND. Print and the row-actions sheet act-and-close; raising them would
     // take the bar away from a coach who only meant to look at a list.
     assert.ok(editor.includes('<LineupSheetScrim onClose={() => setRowActionsFor(null)} />'), 'the row menu is a MENU — no overNav');
-    assert.ok(builder.includes('<LineupSheetScrim onClose={() => setLineupPdfOpen(false)} />'), 'Print is a MENU — no overNav');
+    assert.ok(builder.includes('<LineupSheetScrim onClose={closePrint} />'), 'Print is a MENU — no overNav');
     // Copy from is a MENU too (D7, 2026-10-02): you tap and it acts. Full screen at ≤640, but ABOVE
     // the bar — it never takes the nav-covering modifier.
     assert.ok(copyFrom.includes('<LineupSheetScrim onClose={onClose} />'), 'Copy from is a MENU — no overNav');
@@ -720,7 +721,8 @@ describe('D2 — the tool row', () => {
       'the club Ledger\'s Tools: a worded trigger on the desktop, a bare ⋯ opening a sheet on a phone');
     const items = [...control.matchAll(/<CoachToolbarMenuItem label="([^"]+)"/g)].map(m => m[1]);
     assert.deepEqual(items, ['Copy from…', 'Print…', 'Save as template…']);
-    assert.doesNotMatch(control, /aria-label="Print"/, 'Print is no longer a square of its own');
+    // A BUTTON named Print — the panel itself names itself "Print" since Sheet Frame step 2 (2026-10-05).
+    assert.doesNotMatch(control, /<button[^>]*aria-label="Print"/, 'Print is no longer a square of its own');
     assert.doesNotMatch(builder, /LayoutTemplate|aria-label="Templates"/, 'nor is Templates');
     assert.match(control, /<LineupSaveTemplate\b/, 'Save as template is the form (its body is its own component since D13)');
     assert.match(control, /triggerClassName=\{styles\.lineupToolsTrigger\}/, 'the trigger takes the row\'s height, styled beside the row\'s other controls');

@@ -2,9 +2,10 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useDismissable } from '@/lib/overlay-hooks';
+import { rescueFocusTo, useDismissable } from '@/lib/overlay-hooks';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
+import { SheetLabel } from '@/components/coaches/SheetFrame';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { ListOrdered, CalendarDays, Undo2, Redo2, MoreHorizontal } from 'lucide-react';
@@ -335,7 +336,23 @@ export default function CoachLineupBuilderPage({
   // scrim renders inside it, so a tap on a scrim never reads as "outside" and presses what is under it.
   const toolsRef = useRef<HTMLDivElement>(null);
   function closeToolPanels() { setCopyOpen(false); setSaveTemplateOpen(false); setLineupPdfOpen(false); }
-  useDismissable(copyOpen || saveTemplateOpen || lineupPdfOpen, toolsRef, closeToolPanels);
+  /* ⚠ AND THEN WHERE? — back to TOOLS, the button that opened all three (Sheet Frame step 2, 2026-10-05).
+     A panel closes with focus inside it (or on a dim, which a tap blurs), so focus fell to `<body>`; the
+     hook's own Escape restores whatever held focus when the panel OPENED, which is `<body>` too — the
+     Tools menu's item that opened it unmounted in the same commit. Measured before: a tap on Print's dim
+     left focus nowhere (the inventory found the same for Escape on Copy from). `rescueFocusTo` yields to
+     anything that took focus on its own. The Tools menu lends its button through `triggerRef`. */
+  const toolsTriggerRef = useRef<HTMLButtonElement>(null);
+  function escapeToolPanels() { closeToolPanels(); rescueFocusTo(toolsTriggerRef); }
+  useDismissable(copyOpen || saveTemplateOpen || lineupPdfOpen, toolsRef, closeToolPanels, escapeToolPanels);
+  /* PRINT IS A DIALOG THAT NAMES ITSELF (Sheet Frame step 2, D2): the keyboard lands on its first choice
+     when it opens, as the Filter sheet's does — a panel announced as a dialog that never takes focus is
+     never announced at all. Not modal: it is a menu-layer sheet, the bar stays live beneath it (D1). */
+  const printRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (lineupPdfOpen) printRef.current?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
+  }, [lineupPdfOpen]);
+  function closePrint() { setLineupPdfOpen(false); rescueFocusTo(toolsTriggerRef); }
   /* ⚠ BACK CLOSES THE DRAWER, IT DOES NOT LEAVE THE PAGE (owner, 2026-09-22 — “when I hit
      back it brings me to the lineup list and not the lineup I am editing”). These panels predate
      §219 and never registered a level, which was survivable while they were small popovers and is
@@ -915,7 +932,7 @@ export default function CoachLineupBuilderPage({
   const toolsControl = (
     <div className={styles.lineupAutoWrap} ref={toolsRef}>
       <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={16} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools"
-        triggerClassName={styles.lineupToolsTrigger} onOpenChange={open => { if (open) closeToolPanels(); }}>
+        triggerRef={toolsTriggerRef} triggerClassName={styles.lineupToolsTrigger} onOpenChange={open => { if (open) closeToolPanels(); }}>
         <CoachToolbarMenuItem label="Copy from…" hint="A previous game’s lineup or a saved template" onSelect={() => setCopyOpen(true)} />
         <CoachToolbarMenuItem label="Print…" hint={`Dugout poster or ${sportPack.orderLabel.toLowerCase()} card`}
           disabled={lineupRows.length === 0} onSelect={() => setLineupPdfOpen(true)} />
@@ -934,9 +951,13 @@ export default function CoachLineupBuilderPage({
           onClose={() => setCopyOpen(false)}
         />
       )}
+      {/* Print is titled PRINT at every width (Sheet Frame step 2, D2): on a phone the dim covers Tools, and
+          on a computer Tools is not what this panel is — Copy from and Save as template beside it already
+          say what they are. The frame's menu LABEL, worn on its own until step 5 moves this container. */}
       {lineupPdfOpen && (<>
-        <LineupSheetScrim onClose={() => setLineupPdfOpen(false)} />
-        <div className={styles.lineupAutoMenu}>
+        <LineupSheetScrim onClose={closePrint} />
+        <div ref={printRef} className={styles.lineupAutoMenu} role="dialog" aria-label="Print">
+          <SheetLabel>Print</SheetLabel>
           {/* ONE document with a turn, not two documents (owner D1, 2026-09-19): the row prints,
               the switch beneath it picks the sheet's orientation and remembers it on this device.
               The portal's own segmented control (segChoice) as a pair of pressed/unpressed toggle

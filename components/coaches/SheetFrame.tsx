@@ -1,5 +1,6 @@
 'use client';
-import type { HTMLAttributes, ReactNode, Ref } from 'react';
+import type { HTMLAttributes, ReactNode, Ref, RefObject } from 'react';
+import { rescueFocusTo } from '@/lib/overlay-hooks';
 import LineupSheetScrim from './LineupSheetScrim';
 import styles from './SheetFrame.module.css';
 
@@ -28,25 +29,39 @@ import styles from './SheetFrame.module.css';
  * second class would be settled by bundle order), and a caller's inline geometry is the drift this
  * component exists to stop.
  *
- * The frame is PRESENTATION. Escape, a click elsewhere and where focus goes afterwards stay with the caller,
- * whose dismiss boundary holds its trigger as well as this sheet; `onClose` is the dim's tap — and it owes
- * the same answer to "and then where?" (hand focus back to the opener when nothing else took it).
+ * Escape and a click elsewhere stay with the caller, whose dismiss boundary holds its trigger as well as this
+ * sheet. The DIM is the frame's, so its answer to "and then where?" is the frame's too: a tap on it blurs
+ * whatever held focus, and the frame hands focus back to `opener` when nothing else took it. It is a
+ * required prop because it is the contract every sheet owes (plan: "focus returns to what opened it") — the
+ * step-2 captures found three of five sheets had written the close and forgotten the hand-back.
  */
-export default function SheetFrame({ label, onClose, ref, children, ...sheet }: Omit<HTMLAttributes<HTMLDivElement>, 'aria-modal' | 'className' | 'style' | 'children'> & {
+export default function SheetFrame({ label, onClose, opener, ref, children, ...sheet }: Omit<HTMLAttributes<HTMLDivElement>, 'aria-modal' | 'className' | 'style' | 'children'> & {
   /** The menu label (D2): small capitals at the head, because the dim hides the row that opened it. */
   label?: string;
-  /** A tap on the dim. */
+  /** A tap on the dim: close the sheet. The frame returns focus afterwards. */
   onClose: () => void;
+  /** What opened the sheet — where focus goes back after a tap on the dim. Read when the net runs. */
+  opener: RefObject<HTMLElement | null>;
   ref?: Ref<HTMLDivElement>;
   children: ReactNode;
 }) {
   return (
     <>
-      <LineupSheetScrim onClose={onClose} />
+      <LineupSheetScrim onClose={() => { onClose(); rescueFocusTo(opener); }} />
       <div ref={ref} className={styles.sheet} {...sheet} aria-modal={undefined}>
-        {label && <div className={styles.label}>{label}</div>}
+        {label && <SheetLabel>{label}</SheetLabel>}
         {children}
       </div>
     </>
   );
+}
+
+/**
+ * The menu LABEL (D2) on its own, for a menu-layer sheet that does not wear the frame YET — the lineup
+ * builder's Print panel, whose container is shared with its desktop popover and moves with the builder's
+ * other drawers in step 5 (Sheet Frame step 2, 2026-10-05). One head, one home: wear this rather than
+ * copying the small capitals into a second stylesheet. Shown at every width it is rendered at.
+ */
+export function SheetLabel({ children }: { children: ReactNode }) {
+  return <div className={styles.label}>{children}</div>;
 }

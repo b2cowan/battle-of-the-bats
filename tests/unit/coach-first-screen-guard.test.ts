@@ -61,10 +61,12 @@ describe('B1 — the team name is the switcher\'s door', () => {
     assert.ok(masthead.includes('<CoachTeamSwitchSheet'), 'the button opens the team sheet');
   });
 
-  it('the sheet is the More sheet\'s own container and rows, not a second copy', () => {
-    assert.ok(sheet.includes("from './CoachesBottomNav.module.css'"), 'one sheet stylesheet — the nav module\'s');
-    for (const cls of ['sheet.sheetAnchor', 'sheet.sheetScrim', 'sheet.dropdown', 'sheet.dropItem', 'sheet.dropItemMeta']) {
-      assert.ok(sheet.includes(cls), `the sheet draws with the nav module\'s \`${cls.slice(6)}\``);
+  it('the sheet\'s rows are the More sheet\'s rows, not a second copy', () => {
+    // Sheet Frame step 2 (2026-10-05): the container, dim, label and focus hand-back are `SheetFrame`'s, held
+    // by `sheet-frame-guard.test.ts`; this guard keeps B1's own decisions about the rows.
+    assert.ok(sheet.includes("from './CoachesBottomNav.module.css'"), 'one row stylesheet — the nav module\'s');
+    for (const cls of ['sheet.dropItem', 'sheet.dropActive', 'sheet.dropItemMeta']) {
+      assert.ok(sheet.includes(cls), `the rows draw with the nav module\'s \`${cls.slice(6)}\``);
     }
     assert.ok(sheet.includes("aria-current={active ? 'true' : undefined}"), 'the current team is marked, not linked as a door');
     assert.ok(sheet.includes('/season-end'), 'a team with no live season opens Season\'s End');
