@@ -1,0 +1,1229 @@
+<title>Notifications Open in Place</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap">
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--ground:#e7e9e1;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,[role=button]:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:26px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:4px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 11px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+@media(max-width:700px){.walk{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap}.walk a{flex:none}}
+
+.frame{width:min(1360px,calc(100% - 32px));margin:20px auto;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a}
+.screen{padding:24px 28px 30px;scroll-margin-top:70px}
+.screen .lead{max-width:860px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+@media(max-width:700px){.screen{padding:18px 12px 24px}}
+
+.callout{max-width:860px;background:var(--white);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:14px 16px;margin:16px 0}
+.callout.good{border-left-color:var(--olive)}.callout.round{border-left-color:var(--blue)}
+.callout h3{margin:0 0 6px}.callout p:last-child,.callout ul:last-child{margin-bottom:0}.callout ul{padding-left:20px;margin:0 0 10px}.callout li{margin:0 0 6px}
+
+.spec{margin:22px 0 6px;max-width:100%}
+.spectop{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}
+.spectop h3{margin:0;font-size:15px}
+.lbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.lbl.before{background:#e9e4da;color:#4a4235}.lbl.after{background:#dff0c2;color:#2b3f12}.lbl.alt{background:#e3edf2;color:#1d4a5e}
+.scroller{overflow-x:auto;border:1px solid #c6cebc;border-radius:10px;background:#dfe3d6;-webkit-overflow-scrolling:touch;display:inline-block;max-width:100%;vertical-align:top}
+.caption{font-size:13px;color:var(--muted);margin:8px 2px 0;max-width:760px}
+.caption strong{color:var(--ink)}
+.pair{display:flex;flex-wrap:wrap;gap:20px 28px;align-items:flex-start}
+.pair>div{max-width:100%}
+.bench{display:flex;flex-wrap:wrap;gap:22px 30px;align-items:flex-start;padding:22px 26px 26px 26px;background:#dfe3d6}
+.bench>figure{margin:0;display:flex;flex-direction:column;gap:8px}
+.bench figcaption{font-size:12.5px;color:var(--muted);max-width:440px}
+.bench figcaption b{color:var(--ink)}
+
+.pin{position:absolute;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--error);color:#fff;font:800 13px/22px system-ui,sans-serif;text-align:center;padding:0;box-shadow:0 2px 6px #0004;cursor:pointer;z-index:20}
+.pin.fix{background:var(--olive)}.pin.alt{background:var(--blue)}
+.pin::after{content:"";position:absolute;inset:-9px}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer;border:1px solid}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border-color:#b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border-color:#b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border-color:#d3d9cd}.mk[data-k=gone]{background:#f6dede;color:#7a2424;border-color:#e2b5b5}
+
+.figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px;margin:16px 0 4px;max-width:1000px}
+.fig{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.fig .k{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.fig .v{font-size:20px;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.fig .n{font-size:12.5px;color:var(--muted)}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:12px 0 18px;background:#fff}
+table.kept{border-collapse:collapse;width:100%;font-size:13.5px;min-width:760px}
+table.kept th,table.kept td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.kept th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:#fafbf7}
+table.kept tr:last-child td{border-bottom:0}
+table.kept td b{font-weight:650}
+table.kept .q{color:var(--muted)}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage ul,.docpage ol{padding-left:22px}.docpage li{margin:0 0 7px}
+.docpage code{font-size:12.5px;background:var(--soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 16px 36px}}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px;scroll-margin-top:20px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.decisionrow h3{margin:0;font-size:16px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.open{background:#edf5f8;border-color:#b6cfdb}.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.r2{background:#fff6e0;border-color:#e8d39a}
+.rec{font-size:13.5px;background:#f3f7ee;border:1px solid #cfe0bd;border-radius:6px;padding:8px 10px;margin:8px 0 0}
+.altx{font-size:13.5px;color:var(--muted);margin:8px 0 0}
+.copyback{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:18px 0}
+.copyback pre{white-space:pre-wrap;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px;margin:10px 0 0}
+
+.explain h3{margin:16px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:18px}.dialogbody{padding:6px 22px 20px}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* ── PRODUCT SPECIMENS — the warm portal's own tokens (app/globals.css, the warm block) and the
+      bell's own measurements (components/notifications/notifications.module.css), at true size. ── */
+.fx{--p-paper:#F8F4ED;--p-card:#fff;--p-ink:#241E15;--p-soft:#4A4235;--p-dim:#615A54;--p-line:rgba(70,55,30,.12);--p-line2:rgba(70,55,30,.20);--p-olive:#57651E;--p-olive-a:rgba(87,101,30,.35);--p-amber:#835006;--p-live:#B03A22;font-family:Inter,system-ui,sans-serif;color:var(--p-ink);line-height:1.4;font-size:16px}
+
+/* the bell's panel (today, and round 1's option A) */
+.np{position:relative;width:320px;background:var(--p-card);border:1px solid var(--p-olive-a);border-radius:8px;box-shadow:0 10px 30px rgba(70,55,30,.18);display:flex;flex-direction:column;text-align:left}
+.np-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(87,101,30,.2);min-height:42px}
+.np-title{font:700 11.5px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--p-soft)}
+.np-back{display:inline-flex;align-items:center;gap:4px;font:700 11.5px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--p-olive);margin:-6px -6px;padding:6px;border-radius:5px}
+.np-back svg{width:15px;height:15px}
+.np-filter{padding:7px 16px;border-bottom:1px solid rgba(87,101,30,.15)}
+.seg{display:inline-flex;gap:2px;padding:2px;background:rgba(70,55,30,.05);border-radius:6px}
+.seg b{font:700 10.2px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--p-dim);padding:6px 11px;border-radius:4px}
+.seg b.on{background:var(--p-olive-a);color:var(--p-ink)}
+.np-sec{display:flex;align-items:baseline;gap:6px;padding:10px 16px 6px;font:700 10.2px/1.2 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--p-amber)}
+.np-sec .hint{margin-left:auto;font:500 11.5px/1.2 Inter,sans-serif;letter-spacing:0;text-transform:none;color:var(--p-dim)}
+.np-date{padding:9px 16px 4px;font:700 9.9px/1.2 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--p-dim)}
+.np-row{position:relative;display:flex;align-items:flex-start;gap:10px;padding:11px 16px;border-bottom:1px solid var(--p-line)}
+.np-row.unread{background:rgba(87,101,30,.06)}
+.np-row.act{box-shadow:inset 2px 0 0 var(--p-amber)}
+.np-row.hover{background:rgba(87,101,30,.12)}
+.np-row.sel{background:rgba(87,101,30,.14);box-shadow:inset 3px 0 0 var(--p-olive)}
+.np-ic{font-size:16px;line-height:1.2;flex-shrink:0;margin-top:1px}
+.np-c{flex:1;min-width:0}
+.np-t{font-size:13.1px;font-weight:600;line-height:1.35;color:var(--p-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 3px}
+.np-row.read .np-t{font-weight:400;color:var(--p-soft)}
+.np-row.sel .np-t{font-weight:600;color:var(--p-ink)}
+.np-b{font-size:12px;color:var(--p-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 3px}
+.np-meta{display:flex;align-items:center;gap:10px}
+.np-time{font:400 10.9px/1.3 'IBM Plex Mono',monospace;color:var(--p-dim);margin:0}
+.np-clear{display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border:1px solid var(--p-line2);border-radius:999px;background:#fff;font:700 9.9px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--p-soft)}
+.np-dot{width:6px;height:6px;border-radius:50%;background:var(--p-olive);flex-shrink:0;margin-top:5px}
+.np-chev{color:var(--p-dim);flex-shrink:0;margin-top:2px;width:14px;height:14px}
+.np-foot{display:flex;justify-content:center;gap:20px;padding:8px 16px;border-top:1px solid rgba(87,101,30,.2);font-size:11.5px;color:var(--p-dim)}
+.np-foot span{display:inline-flex;align-items:center;gap:5px}
+.np-foot svg{width:12px;height:12px}
+.cursor{position:absolute;width:18px;height:22px;z-index:15;pointer-events:none}
+
+/* the message — ONE block, worn by the drawer's pane, a phone sheet, and a page's dialog */
+.msg{padding:14px 16px 16px}
+.msg-eye{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;margin:0;font:700 11px/1.45 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--p-dim)}
+.msg-eye .ic{font-size:15px;letter-spacing:0}
+.msg-eye .st{font:500 12px/1.45 Inter,sans-serif;letter-spacing:0;text-transform:none}
+.msg-t{margin:8px 0 0;font-size:16px;font-weight:700;line-height:1.3;color:var(--p-ink);text-wrap:balance}
+.msg-b{margin:8px 0 0;font-size:14px;line-height:1.55;color:var(--p-soft)}
+.msg-members{list-style:none;margin:8px 0 0;padding:0}
+.msg-members li{padding:9px 0;border-top:1px solid var(--p-line)}
+.msg-members li:first-child{border-top:0;padding-top:2px}
+.msg-members .mt{margin:0;font-size:14px;font-weight:600}
+.msg-members .mb{margin:2px 0 0;font-size:13.5px;color:var(--p-soft)}
+.msg-members .mtime{margin:2px 0 0;font:400 11px 'IBM Plex Mono',monospace;color:var(--p-dim)}
+.msg-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.btn-go{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 14px;border-radius:7px;background:var(--p-olive);color:#fff;font:600 13.5px/1 Inter,sans-serif;border:0;white-space:nowrap}
+.btn-go svg{width:15px;height:15px}
+.btn-2{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 14px;border-radius:7px;background:#fff;color:var(--p-soft);font:600 13.5px/1 Inter,sans-serif;border:1px solid var(--p-line2);white-space:nowrap}
+.btn-2 svg{width:14px;height:14px}
+.np .msg-acts .btn-go{flex:1 1 100%}
+.np .msg-acts .btn-2{flex:0 0 auto}
+
+/* the whole screen behind: the club's Payment requests, as in the owner's screenshot */
+.pg{position:relative;width:1200px;height:700px;overflow:hidden;background-color:var(--p-paper);background-image:linear-gradient(rgba(70,55,30,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(70,55,30,.045) 1px,transparent 1px);background-size:48px 48px}
+.pg.w1280{width:1280px;height:720px}
+.pg.w1024{width:1024px;height:720px}
+.pg-strip{position:absolute;left:0;right:0;top:0;height:48px;background:#fff;border-bottom:1px solid var(--p-line);display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:0 20px;z-index:2}
+.pg-ico{position:relative;width:34px;height:34px;display:grid;place-items:center;color:var(--p-ink);border-radius:4px}
+.pg-ico.on{background:rgba(70,55,30,.08)}
+.pg-ico svg{width:21px;height:21px}
+.pg-badge{position:absolute;top:0;right:0;min-width:16px;height:16px;border-radius:8px;background:var(--p-live);color:#fff;font:700 9.6px/16px 'IBM Plex Mono',monospace;text-align:center;padding:0 4px}
+.pg-rail{position:absolute;left:0;top:48px;bottom:0;width:52px;background:#fff;border-right:1px solid var(--p-line)}
+.pg-rail i{position:absolute;left:14px;top:74px;width:24px;height:24px;border-radius:50%;border:1.5px solid #c9a14a;font:700 11px/21px Inter,sans-serif;font-style:normal;text-align:center;color:var(--p-soft)}
+.pg-head{position:absolute;left:52px;right:0;top:48px;height:60px;background:#fff;border-bottom:1px solid var(--p-line);padding:0 40px;display:flex;align-items:center;font-size:24px;font-weight:700;letter-spacing:-.3px}
+.pg-main{position:absolute;left:52px;right:0;top:108px;bottom:0;padding:26px 40px}
+.pg-h1{font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:0 0 16px}
+.pg-tabs{display:flex;gap:2px;border-bottom:1px solid var(--p-line2);white-space:nowrap}
+.pg-tabs span{padding:10px 16px 12px;font-size:16px;font-weight:500;color:var(--p-soft)}
+.pg-tabs span.on{color:var(--p-olive);font-weight:600;box-shadow:inset 0 -3px 0 var(--p-olive)}
+.pg-filter{margin:18px 0 16px;display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border:1px solid var(--p-line2);border-radius:8px;background:#fff;font-size:14px;color:var(--p-soft)}
+.pg-table{background:#fff;border:1px solid var(--p-line2);border-radius:10px;overflow:hidden}
+.pg-tr{display:grid;grid-template-columns:160px minmax(0,1fr) 140px 116px 96px 96px 18px;align-items:center;gap:0 12px;padding:0 20px;border-bottom:1px solid var(--p-line);min-height:68px}
+.pg.w1024 .pg-tr{grid-template-columns:120px minmax(0,1fr) 124px 100px 86px 80px 14px}
+.pg-th{min-height:40px;font:600 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.pg-group{padding:11px 20px;font:600 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;background:#f6f2e9;border-bottom:1px solid var(--p-line)}
+.pg-team{font-weight:600;font-size:16px}
+.pg-req{font-size:15px;line-height:1.35;min-width:0}
+.pg-req small{display:block;font-size:13.5px;color:var(--p-live);font-weight:600;margin-top:3px}
+.pg-req small.q{color:var(--p-dim);font-weight:400}
+.pg-chip{justify-self:start;display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border:1px solid var(--p-line2);border-radius:999px;background:#f6f2e9;font:700 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--p-soft);white-space:nowrap}
+.pg-amt{text-align:right;font-size:16px;font-variant-numeric:tabular-nums}
+.pg-age{font-size:16px;color:var(--p-soft);padding-left:10px}
+.pg-chev{color:var(--p-dim);font-size:18px}
+.pg-scrim{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:5}
+.pg-scrim.light{background:rgba(36,30,21,.32)}
+.at-bell{position:absolute;top:54px;right:16px;z-index:8}
+.at-centre{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:480px;z-index:8;background:#fff;border:1px solid rgba(87,101,30,.3);border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.at-centre .msg{padding:18px 22px 20px}
+.at-centre .msg-acts{justify-content:flex-end}
+.at-drawer{position:absolute;top:48px;right:0;bottom:0;width:420px;z-index:8;background:#fff;border-left:1px solid var(--p-line2);box-shadow:-12px 0 36px rgba(36,30,21,.18);display:flex;flex-direction:column}
+.at-drawer .dh{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--p-line)}
+.at-drawer .dh b{font:700 20px/1 'Barlow Condensed',sans-serif}
+.at-drawer .dh span{font-size:20px;color:var(--p-dim)}
+.at-drawer .msg{flex:1;padding:18px 22px}
+.at-drawer .df{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--p-line);background:#faf8f3}
+
+/* ── ROUND 2 · the split drawer: the list on the right, a notification opens to its left ── */
+.dw{position:absolute;top:48px;right:0;bottom:0;z-index:8;display:flex;background:#fff;border-left:1px solid var(--p-line2);box-shadow:-14px 0 40px rgba(36,30,21,.16)}
+.dw-list{position:relative;width:380px;flex-shrink:0;display:flex;flex-direction:column;min-height:0}
+.dw-msg{position:relative;width:440px;flex-shrink:0;border-right:1px solid var(--p-line2);background:#fff}
+.dw-msg.solo{border:1px solid var(--p-line2);box-shadow:0 6px 18px rgba(36,30,21,.08)}
+.dw-head{display:flex;align-items:center;gap:4px;min-height:58px;padding:0 12px 0 20px;border-bottom:1px solid var(--p-line)}
+.dw-head .t{font:700 22px/1 'Barlow Condensed',sans-serif;margin-right:auto}
+.dw-x{width:34px;height:34px;display:grid;place-items:center;border-radius:7px;color:var(--p-soft)}
+.dw-x svg{width:18px;height:18px}
+.dw-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 20px;border-bottom:1px solid var(--p-line)}
+.dw-tools .seg b{padding:10px 13px}
+.dw-body{flex:1;min-height:0;overflow:hidden}
+.dw .np-row,.dw-list .np-row{padding:12px 20px}
+.dw-list .np-sec,.dw-list .np-date{padding-left:20px;padding-right:20px}
+.dw-more{display:flex;justify-content:center;padding:14px 20px}
+.dw-msg .msg{padding:20px 24px 24px}
+.dw-msg .msg-eye{padding-right:40px}
+.dw-msg .msg-t{font-size:18px}
+.dw-msg .msg-b{font-size:14.5px}
+.dw-msg>.dw-x{position:absolute;top:12px;right:12px}
+
+/* ── ROUND 3 · three verbs: read (on open), Done (Needs attention), Delete (the trash) ── */
+.np-clear svg{width:11px;height:11px;margin-right:4px}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;flex:0 0 auto;border-radius:7px;border:1px solid var(--p-line2);background:#fff;color:var(--p-soft)}
+.icon-btn svg{width:16px;height:16px}
+.msg-acts .push{margin-left:auto}
+.np-trash{position:absolute;right:14px;top:10px;width:28px;height:28px;display:grid;place-items:center;border-radius:6px;background:#fff;border:1px solid var(--p-line2);color:var(--p-soft);z-index:2}
+.np-trash svg{width:14px;height:14px}
+.np-row.hover .np-c{padding-right:30px}
+.undo{display:inline-flex;align-items:center;gap:16px;min-height:40px;padding:0 8px 0 18px;border-radius:999px;background:var(--p-ink);color:#fff;font:500 13.5px/1 Inter,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.undo b{display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font-weight:600}
+.verbs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px;margin:14px 0 6px;max-width:1000px}
+.verb{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.verb .w{display:flex;align-items:center;gap:8px;margin:0 0 6px}
+.verb .w .np-clear,.verb .w .icon-btn{pointer-events:none}
+.verb p{font-size:13.5px;margin:0 0 6px}
+.verb p.q{color:var(--muted);margin:0}
+
+/* phone: the Notifications page under More, and the reader sheet above the bar */
+.ph{position:relative;width:390px;height:780px;overflow:hidden;background:var(--p-paper)}
+.ph-main{position:absolute;left:0;right:0;top:0;bottom:72px;overflow:hidden}
+.ph-title{display:flex;align-items:center;gap:6px;padding:18px 12px 10px 16px}
+.ph-title b{font:700 26px/1.1 'Barlow Condensed',sans-serif;margin-right:auto}
+.ph-tools{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid var(--p-line2);border-radius:999px;background:#fff;font-size:14px;color:var(--p-soft)}
+.chip.on{background:rgba(87,101,30,.14);border-color:rgba(87,101,30,.4);color:var(--p-ink);font-weight:600}
+.chip i{font-style:normal;font:700 11px/1 'IBM Plex Mono',monospace;color:#fff;background:var(--p-amber);border-radius:9px;padding:3px 6px}
+.ph .seg b{padding:15px 14px}
+.ph-list{background:#fff;border-top:1px solid var(--p-line2)}
+.pr{position:relative;display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--p-line)}
+.pr.act{box-shadow:inset 2px 0 0 var(--p-amber)}
+.pr.unread{background:rgba(87,101,30,.06)}
+.pr .t{margin:0;font-size:14.5px;font-weight:600;line-height:1.35}
+.pr .b{margin:3px 0 0;font-size:13.5px;line-height:1.45;color:var(--p-dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pr .m{display:flex;align-items:center;gap:10px;margin-top:6px}
+.pr .np-clear{min-height:44px;padding:0 16px}
+.ph-bar{position:absolute;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid var(--p-line2);display:grid;grid-template-columns:repeat(4,1fr);align-items:center;text-align:center;font-size:11px;color:var(--p-dim);z-index:7}
+.ph-bar span{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ph-bar svg{width:22px;height:22px}
+.ph-bar .on{color:var(--p-olive);font-weight:700}
+.ph-scrim{position:absolute;left:0;right:0;top:0;bottom:72px;background:rgba(36,30,21,.35);z-index:5}
+.ph-sheet{position:absolute;left:8px;right:8px;bottom:84px;z-index:6;background:#fff;border:1px solid var(--p-line2);border-radius:16px;box-shadow:0 -8px 32px rgba(36,30,21,.25);padding:4px 20px 16px}
+.ph-sheet .grab{display:flex;justify-content:center;align-items:center;height:44px;margin:-4px 0 0}
+.ph-sheet .grab span{width:40px;height:4px;border-radius:2px;background:var(--p-line2)}
+.ph-sheet .msg{padding:0}
+.ph-sheet .msg-acts .btn-go{flex:1 1 100%;min-height:48px}
+.ph-sheet .msg-acts .btn-2{flex:1 1 0;min-height:44px}
+/* ── QA walk (the same instrument as the other hubs) ── */
+.qa .qacard{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+.qa .qacard h3{margin:10px 0 4px}.qa .qacard h3:first-child{margin-top:0}.qa dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0 0 8px}.qa dt{color:var(--muted);font-size:13px}.qa dd{margin:0;overflow-wrap:anywhere}
+.qaindex{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.qawcard{text-align:left;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font:inherit;color:inherit;cursor:pointer}
+.qawcard[aria-pressed=true]{border-color:var(--olive);box-shadow:0 0 0 1px var(--olive) inset}
+.qachip{align-self:flex-start;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.qachip[data-s=pass]{background:#e3f3d4;color:#2f5a14}.qachip[data-s=issue]{background:#f6dede;color:var(--error)}.qachip[data-s=call],.qachip[data-s=partial]{background:#f4ecd9;color:var(--warn)}
+.qasteps{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.qasteps li{counter-increment:s;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:start}
+.qasteps li.done{border-color:#7fa85a}.qasteps input[type=checkbox]{width:22px;height:22px;margin:2px 0 0;accent-color:var(--olive)}
+.qabody{display:flex;flex-direction:column;gap:6px;min-width:0}.qan::before{content:"Step " counter(s);font-size:12px;color:var(--muted);font-weight:700}
+.qado,.qasee{margin:0}.qado::before{content:"Do  ";white-space:pre;font-size:12px;font-weight:700;color:var(--blue)}.qasee::before{content:"You should see  ";white-space:pre;font-size:12px;font-weight:700;color:var(--olive)}
+.qaverdict,.qatools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.qaverdict button{min-height:44px;padding:9px 15px;border:1px solid var(--line);border-radius:7px;background:var(--white);font:inherit;cursor:pointer}
+.qaverdict button[data-v=pass][aria-pressed=true]{background:#e3f3d4;border-color:#7fa85a}.qaverdict button[data-v=issue][aria-pressed=true]{background:#f6dede;border-color:var(--error)}.qaverdict button[data-v=call][aria-pressed=true]{background:#f4ecd9;border-color:var(--warn)}
+.qanotes{width:100%;min-height:84px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--white);font:inherit}
+.qaout{margin:8px 0 0;white-space:pre-wrap;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Notifications Open in Place — project hub</strong><br><small>A click on a notification opens it where you are, with the whole message and a button that says where it goes · round 1 drawn 2026-10-05 from the bell on the club’s Payment requests screen · round 2 drawn 2026-10-05: the split drawer (the owner’s idea), with the phone corrected · round 3 drawn 2026-10-05: Clear becomes Done, a trash to delete, Mark all read means all · D1–D9 accepted 2026-10-05 (“looks good”) · plan, PM brief and a three-step build prompt written 2026-10-05</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Three rounds drawn 2026-10-05; D1–D9 accepted 2026-10-05">Design</li>
+    <li class="stage done" title="NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md + PM brief + BUILD_PROMPT.md (three steps, one chat each), 2026-10-05">Plan</li>
+    <li class="stage current" title="Step 1 (the rules: Done, Mark all read means all, Delete with Undo, the admin button words) built 2026-10-05, Q1–Q3 ruled in the session; /simplify + /review run, committed a9829568 2026-10-05; owner QA §265. Steps 2 (the drawer) and 3 (the admin page) to build">Build · step 1 of 3</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Plan notes</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk · step 1</button>
+</nav>
+
+<!-- Icons drawn once, used everywhere -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-checks" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L7 17l-5-5"/><path d="M22 10l-7.5 7.5L13 16"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V21H3z"/><path d="M9 21v-6h6v6"/></symbol>
+  <symbol id="i-team" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></symbol>
+  <symbol id="i-money" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-cursor" viewBox="0 0 18 22"><path d="M1 1l0 17 4.5-4 3 7 3-1.4-3-6.8 6.2-.3z" fill="#111" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/></symbol>
+</svg>
+
+<!-- The club's Payment requests screen, as in the owner's screenshot; cloned behind every whole-screen frame -->
+<template id="tpl-page">
+  <div class="pg-strip">
+    <span class="pg-ico" data-bell><svg><use href="#i-bell"/></svg><span class="pg-badge">1</span></span>
+    <span class="pg-ico"><svg><use href="#i-user"/></svg></span>
+  </div>
+  <div class="pg-rail"><i>3</i></div>
+  <div class="pg-head">UAT Rep Club</div>
+  <div class="pg-main">
+    <div class="pg-h1">Accounting</div>
+    <div class="pg-tabs"><span>Overview</span><span>Ledger</span><span>Allocations</span><span class="on">Payment requests</span><span>Budget</span><span>Budget vs. Actual</span></div>
+    <div class="pg-filter">Team <svg width="14" height="14"><use href="#i-right" transform="rotate(90 7 7)"/></svg></div>
+    <div class="pg-table">
+      <div class="pg-tr pg-th"><span>Team</span><span>Request</span><span>Direction</span><span>Filed as</span><span style="text-align:right">Amount</span><span style="padding-left:10px">Waiting</span><span></span></div>
+      <div class="pg-group">Waiting on you · 3 · $1,110.00</div>
+      <div class="pg-tr"><span class="pg-team">13U AAA</span><span class="pg-req">Tournament refund — the club’s share<small>Holding up 13U AAA’s end-of-season payout to families</small></span><span class="pg-chip">↗ To club</span><span>—</span><span class="pg-amt">$180.00</span><span class="pg-age">13 days</span><span class="pg-chev">›</span></div>
+      <div class="pg-tr"><span class="pg-team">15U AAA</span><span class="pg-req">Tournament entry — Burlington Classic<small>Holding up 15U AAA’s end-of-season payout to families</small></span><span class="pg-chip">↙ From club</span><span class="pg-chip">Money back</span><span class="pg-amt">$480.00</span><span class="pg-age">13 days</span><span class="pg-chev">›</span></div>
+      <div class="pg-tr"><span class="pg-team">UAT Test Team</span><span class="pg-req">Diamond permit reimbursement<small class="q">UAT Coach · Oct 1</small></span><span class="pg-chip">↙ From club</span><span>—</span><span class="pg-amt">$450.00</span><span class="pg-age">4 days</span><span class="pg-chev">›</span></div>
+      <div class="pg-group">Decided · 6</div>
+      <div class="pg-tr"><span class="pg-team">UAT Test Team</span><span class="pg-req">Extra practice jerseys<small class="q">Declined Oct 1 · “Outside the approved equipment budget.”</small></span><span class="pg-chip">↙ From club</span><span>—</span><span class="pg-amt">$90.00</span><span class="pg-chip">Declined</span><span class="pg-chev">›</span></div>
+    </div>
+  </div>
+</template>
+
+<!-- The bell's list, as it is today (round 1); cloned wherever the bell's panel is drawn -->
+<template id="tpl-list">
+  <div class="np-head"><span class="np-title">Notifications</span></div>
+  <div class="np-filter"><span class="seg"><b class="on">Unread</b><b>All</b></span></div>
+  <div class="np-sec"><span>Needs attention</span><span>2</span></div>
+  <div class="np-row act read" data-r="1">
+    <span class="np-ic">⏳</span>
+    <div class="np-c">
+      <p class="np-t">A request from 15U AAA is holding up their payout to families</p>
+      <p class="np-b">Their coach can’t pay families their end-of-season share until you answer it.</p>
+      <div class="np-meta"><span class="np-time">just now</span><span class="np-clear">Clear</span></div>
+    </div>
+  </div>
+  <div class="np-row act unread" data-r="2">
+    <span class="np-ic">📤</span>
+    <div class="np-c">
+      <p class="np-t">11U AA says they sent $450.00</p>
+      <p class="np-b">Diamond fees 2026, 1 of 3 · sent Oct 5 · e-Transfer 8842. Confirm it when it arrives.</p>
+      <div class="np-meta"><span class="np-time">3h ago</span><span class="np-clear">Clear</span></div>
+    </div>
+    <span class="np-dot"></span>
+  </div>
+  <div class="np-foot"><span><svg><use href="#i-list"/></svg>See all</span><span><svg><use href="#i-gear"/></svg>Notification settings</span></div>
+</template>
+
+<!-- ROUND 2 · the drawer's list (All selected, so the whole shape shows) -->
+<template id="tpl-dwlist">
+  <div class="dw-head"><span class="t">Notifications</span><span class="dw-x" title="Notification settings"><svg><use href="#i-gear"/></svg></span><span class="dw-x" title="Close"><svg><use href="#i-x"/></svg></span></div>
+  <div class="dw-tools"><span class="seg"><b>Unread</b><b class="on">All</b></span><span class="btn-2"><svg><use href="#i-checks"/></svg>Mark all read</span></div>
+  <div class="dw-body">
+    <div class="np-sec"><span>Needs attention</span><span>2</span><span class="hint">stays until you mark it Done</span></div>
+    <div class="np-row act read" data-r="1">
+      <span class="np-ic">⏳</span>
+      <div class="np-c">
+        <p class="np-t">A request from 15U AAA is holding up their payout to families</p>
+        <p class="np-b">Their coach can’t pay families their end-of-season share until you answer it.</p>
+        <div class="np-meta"><span class="np-time">just now</span><span class="np-clear"><svg><use href="#i-check"/></svg>Done</span></div>
+      </div>
+    </div>
+    <div class="np-row act unread" data-r="2">
+      <span class="np-ic">📤</span>
+      <div class="np-c">
+        <p class="np-t">11U AA says they sent $450.00</p>
+        <p class="np-b">Diamond fees 2026, 1 of 3 · sent Oct 5 · e-Transfer 8842. Confirm it when it arrives.</p>
+        <div class="np-meta"><span class="np-time">3h ago</span><span class="np-clear"><svg><use href="#i-check"/></svg>Done</span></div>
+      </div>
+      <span class="np-dot"></span>
+    </div>
+    <div class="np-date">Today</div>
+    <div class="np-row unread" data-r="3">
+      <span class="np-ic">📋</span>
+      <div class="np-c"><p class="np-t">3 new registrations</p><p class="np-time">2h ago</p></div>
+      <svg class="np-chev"><use href="#i-right"/></svg>
+      <span class="np-dot"></span>
+    </div>
+    <div class="np-date">Yesterday</div>
+    <div class="np-row read" data-r="4">
+      <span class="np-ic">🧑‍🏫</span>
+      <div class="np-c"><p class="np-t">A coach joined 13U AAA</p><p class="np-b">Sam Patel accepted your invitation and joined 13U AAA as an assistant coach.</p><p class="np-time">7:05 p.m.</p></div>
+    </div>
+    <div class="np-date">Earlier</div>
+    <div class="np-row read" data-r="5">
+      <span class="np-ic">🧾</span>
+      <div class="np-c"><p class="np-t">13U AAA filed a $180.00 request</p><p class="np-b">To club · Tournament refund — the club’s share</p><p class="np-time">Sep 22</p></div>
+    </div>
+    <div class="dw-more"><span class="btn-2">Load more</span></div>
+  </div>
+</template>
+
+<!-- The opened message: the holding-up notice. ONE block; every frame wears it -->
+<template id="tpl-msg-hold">
+  <p class="msg-eye"><span class="ic">⏳</span><span>A request is holding up a team’s payout</span><span class="st">· Sun, Oct 5 · 2:14 p.m.</span></p>
+  <h2 class="msg-t">A request from 15U AAA is holding up their payout to families</h2>
+  <p class="msg-b">Their coach can’t pay families their end-of-season share until you answer it.</p>
+</template>
+
+<!-- ROUND 2 · the drawer's message pane, holding the notice above -->
+<template id="tpl-pane-hold">
+  <span class="dw-x" title="Close this notification"><svg><use href="#i-x"/></svg></span>
+  <div class="msg">
+    <div data-msg="hold"></div>
+    <div class="msg-acts"><span class="btn-go">Open the request <svg><use href="#i-arrow"/></svg></span><span class="btn-2"><svg><use href="#i-check"/></svg>Done</span><span class="icon-btn push" title="Delete"><svg><use href="#i-trash"/></svg></span></div>
+  </div>
+</template>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Screens">
+    <a href="#s-today" aria-current="page">1 · Today</a>
+    <a href="#s-rest">2 · The drawer</a>
+    <a href="#s-open">3 · A notification opened</a>
+    <a href="#s-1024">4 · At 1024</a>
+    <a href="#s-phone">5 · On a phone</a>
+    <a href="#s-says">6 · What it says and does</a>
+    <a href="#s-every">7 · Every place it opens</a>
+    <a href="#s-round1">8 · Round 1 · A, B, C</a>
+  </nav>
+  <div class="frame">
+
+    <!-- 1 · TODAY -->
+    <section class="screen" id="s-today">
+      <div class="eyebrow">Screen 1 · what the bell does now</div>
+      <h1 tabindex="-1">A click leaves for a page, and nothing says which</h1>
+      <p class="sub lead">The club’s Payment requests screen in a 1200px window with the bell open, redrawn from your screenshot at true size. The panel is 320px wide; your browser was zoomed, which is why it looked bigger. Each numbered marker opens its decision.</p>
+
+      <div class="callout round">
+        <h3>Round 3: what changed</h3>
+        <ul>
+          <li><strong>Clear becomes Done</strong> (decision 8). It does not become “Mark read”, because the two are different: reading a notification is not handling it. Your first notification here has no unread dot, so it is already read, and it is still in Needs attention because 15U AAA’s request is still waiting. A “Mark read” button would do nothing on it.</li>
+          <li><strong>A trash deletes a notification</strong> (decision 3, reversed). Round 1 argued that deleting a money notice loses the record of what a team told the club. That was wrong: the payment and the request keep those facts on their own pages, and each person has their own copy of a notification, so deleting yours removes nobody else’s. Nothing ever deletes old notifications today, so without a trash the list only grows.</li>
+          <li><strong>Mark all read now means all</strong> (decision 9). Today it skips Needs attention, so an unread decision stays unread after you press it.</li>
+          <li>Every drawer, pane and phone frame below now shows Done and the trash. Screen 6 sets out the three actions side by side.</li>
+        </ul>
+      </div>
+
+      <div class="callout round">
+        <h3>Round 2: what changed</h3>
+        <ul>
+          <li><strong>Your split drawer is drawn</strong> (screens 2 to 4) and is now the recommendation for decision 2. On a computer the bell opens a drawer on the right holding the list, and a notification opens in a second pane to the left of it. Round 1’s options A, B and C moved to screen 8 for comparison.</li>
+          <li><strong>A correction: neither portal has a bell on a phone.</strong> Below 900px the top strip is hidden in both the admin and the coach portal, and notifications are reached through More, then Notifications. Round 1’s phone screen drew a bell that doesn’t exist. So the drawer is for computers only. On a phone, the Notifications page is where people read, which makes decision 5 more important than round 1 said (screen 5).</li>
+          <li><strong>A correction from version 2:</strong> round 1 argued against a drawer by citing the 09-23 drawer ruling. That ruling is about whether a phone sheet covers the bottom bar; it says nothing about a side drawer on a computer.</li>
+          <li><strong>Two new decisions:</strong> D6, the drawer is the whole list, so “See all” leaves the bell; and D7, two panes wherever the drawer opens.</li>
+        </ul>
+      </div>
+
+      <div class="callout">
+        <h3>What the code does today, and the part of your ask that already exists</h3>
+        <ul>
+          <li><strong>A click marks the row read and loads its page.</strong> The row never says which page. Both rows in your screenshot go to Accounting. The first goes to Payment requests, which is the page you were already on, so the click reloads the screen in front of you and looks like it did nothing.</li>
+          <li><strong>Every row is cut to one line of title and one line of message.</strong> The bell has nowhere to read the rest. The money notices are the longest, and they are the ones a treasurer opens the bell for.</li>
+          <li><strong>A reader already exists, on the coach’s notifications page.</strong> On 09-25 you ruled that a tap there opens the notification: the whole message, the day and time, one button named for where it goes, Clear, and Close. Opening it marks it read (QA §234 passed). That build left the bell and the club’s “See all” page alone, on the reasoning that the bell is a one-line glance. Your screenshot shows that reasoning failing.</li>
+          <li><strong>Two of the actions you first listed don’t exist, and I recommend leaving them out:</strong> Delete, and a separate Mark as read. Opening a notification already marks it read. Decision 3 explains why.</li>
+        </ul>
+      </div>
+
+      <div class="spec">
+        <div class="spectop"><span class="lbl before">Today</span><h3>Club · Accounting · Payment requests · bell open · 1200px</h3></div>
+        <div class="scroller"><div class="fx pg" data-page>
+          <div class="at-bell"><div class="np" data-list></div></div>
+          <button type="button" class="pin" style="left:851px;top:170px" data-d="D1" data-here="Cut at “is holding up their pay…”. The rest of the sentence is on no screen. The page it links to shows the request, not this sentence.">1</button>
+          <button type="button" class="pin" style="left:851px;top:206px" data-d="D4" data-here="This row links to Payment requests, the page already behind it. A click reloads the screen you are on. The notice is about one request (15U AAA’s), but the link goes to the whole list.">4</button>
+          <button type="button" class="pin" style="left:851px;top:282px" data-d="D1" data-here="“Diamond fees 2026, 1 of 3 · sent Oct 5 · …”. The method and the instruction, “Confirm it when it arrives”, are cut off. A click goes to the Diamond fees allocation, and the row doesn’t say so.">1</button>
+        </div></div>
+        <p class="caption">The rows are drawn with the bell’s own measurements: 13px title and 12px message, each cut to one line, with Clear on the time line of a Needs-attention row.</p>
+      </div>
+    </section>
+
+    <!-- 2 · THE DRAWER AT REST -->
+    <section class="screen" id="s-rest" hidden>
+      <div class="eyebrow">Screen 2 · round 2 · decisions 2 and 6 · recommended</div>
+      <h1 tabindex="-1">The bell opens a drawer holding the whole list</h1>
+      <p class="sub lead">A 380px drawer on the right, under the top strip, the full height of the window. It carries everything the “See all” page does: Unread and All, Mark all read, the list by day, and Load more at the end. The settings gear moves into its header. The page behind is dimmed lightly; a click on it closes the drawer.</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed · round 2</span><h3>Club · Payment requests · the bell clicked · 1280px</h3></div>
+        <div class="scroller"><div class="fx pg w1280" data-page>
+          <div class="pg-scrim light" style="top:48px"></div>
+          <div class="dw"><div class="dw-list" data-dwlist data-hover></div></div>
+          <button type="button" class="pin fix" style="left:1186px;top:52px" data-d="D6" data-here="Notification settings, as a gear in the drawer’s header, beside the ×. It was a link in the bell’s footer; the coach’s page already uses this gear.">6</button>
+          <button type="button" class="pin fix" style="left:1126px;top:108px" data-d="D9" data-here="Mark all read, beside Unread and All. Today it skips the Needs-attention notifications: the unread “11U AA says they sent $450.00” stays unread after you press it. Round 3 makes “all” mean all; Needs attention still keeps each one until you mark it Done.">9</button>
+          <button type="button" class="pin fix" style="left:887px;top:205px" data-d="D1" data-here="A click on a row opens the notification beside the list (screen 3). The row’s own Done still works without opening it.">1</button>
+          <button type="button" class="pin fix" style="left:1086px;top:247px" data-d="D8" data-here="Done, where the row said Clear. Same action: you are finished with this one, and it leaves Needs attention. This notification is already read (no dot) and still needs you, which is why the button can’t be “Mark read”.">8</button>
+          <button type="button" class="pin fix" style="left:1252px;top:228px" data-d="D3" data-here="The trash appears on the row under the pointer, or with the keyboard on it. Delete removes the notification from your list only; a note at the drawer’s foot offers Undo for a few seconds.">3</button>
+          <button type="button" class="pin fix" style="left:1016px;top:690px" data-d="D6" data-here="Load more, at the end of the list, as on the full page. With this the drawer reads the whole history, so the bell no longer needs a “See all” link.">6</button>
+          <button type="button" class="pin fix" style="left:420px;top:420px" data-d="D2" data-here="The page is dimmed lightly so the drawer reads as on top. A click here closes the drawer, as a click outside the bell does today.">2</button>
+        </div></div>
+        <p class="caption"><span class="mk" data-k="new" data-note="The drawer replaces the bell’s 320px panel on a computer. Same rows, same Needs-attention section, at 380px and the window’s full height.">New</span> the drawer · <span class="mk" data-k="re" data-note="Notification settings moves from the bell’s footer to a gear in the drawer’s header. Load more comes from the full page.">Restyled</span> settings and Load more · <span class="mk" data-k="gone" data-note="The “See all” link. The drawer is the whole list, so a link to a page holding the same list would be a second place to read it. The pages stay for phones (decision 6).">Removed</span> “See all” · <span class="mk" data-k="re" data-note="Round 3: the row’s Clear is renamed Done, with a check. Same action. Decision 8.">Restyled</span> Clear becomes Done · <span class="mk" data-k="new" data-note="Round 3: a trash on the row under the pointer, and in every opened notification. Decision 3.">New</span> the trash · <span class="mk" data-k="un" data-note="The rows, their one-line cut, the Needs-attention section, the day headings and the bundled rows are as in the bell today.">Unchanged</span> the rows</p>
+      </div>
+    </section>
+
+    <!-- 3 · A NOTIFICATION OPENED -->
+    <section class="screen" id="s-open" hidden>
+      <div class="eyebrow">Screen 3 · round 2 · decisions 1, 2, 3 and 4 · recommended</div>
+      <h1 tabindex="-1">A notification opens beside the list</h1>
+      <p class="sub lead">A click on a row opens a 440px pane to the left of the list, and the drawer grows to 820px. The row you are reading is highlighted. A click on another row swaps the message. × on the message closes it and the drawer goes back to the list alone.</p>
+      <div class="figures">
+        <div class="fig"><div class="k">To read one whole</div><div class="v">1 click</div><div class="n">Today it can’t be read whole in the bell</div></div>
+        <div class="fig"><div class="k">To read the next one</div><div class="v">1 click</div><div class="n">The list stays beside the message (round 1’s A: Back, then the row)</div></div>
+        <div class="fig"><div class="k">To reach the request</div><div class="v">2 clicks</div><div class="n">Today 1, to a page the row never names</div></div>
+        <div class="fig"><div class="k">Page left showing</div><div class="v">460 of 1280px</div><div class="n">Dimmed, behind the open message</div></div>
+      </div>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed · round 2</span><h3>Club · Payment requests · the first notification opened · 1280px</h3></div>
+        <div class="scroller"><div class="fx pg w1280" data-page>
+          <div class="pg-scrim light" style="top:48px"></div>
+          <div class="dw"><div class="dw-msg" data-pane="hold"></div><div class="dw-list" data-dwlist data-sel></div></div>
+          <button type="button" class="pin fix" style="left:447px;top:118px" data-d="D1" data-here="The whole title and message, the kind of notification, and the day and time it arrived, in the same words and order as the reader on the coach’s notifications page. Opening it marks it read.">1</button>
+          <button type="button" class="pin fix" style="left:447px;top:228px" data-d="D4" data-here="The button says where it goes before you click it. Because this notice is about one request, it opens that request on Payment requests, not just the list. The drawer closes as the page opens.">4</button>
+          <button type="button" class="pin fix" style="left:766px;top:228px" data-d="D8" data-here="Done (today’s Clear): you are finished with this one. It leaves Needs attention and the message closes. Opening it already marked it read, so there is no Mark read button.">8</button>
+          <button type="button" class="pin fix" style="left:830px;top:262px" data-d="D3" data-here="Delete, kept apart at the right as a destructive action. It removes this notification from your list only; the request itself, and everyone else’s copy, are untouched. Undo is offered for a few seconds.">3</button>
+          <button type="button" class="pin fix" style="left:836px;top:52px" data-d="D3" data-here="× closes this notification and the drawer goes back to the list alone. Escape does the same; a second Escape closes the drawer.">3</button>
+          <button type="button" class="pin fix" style="left:887px;top:205px" data-d="D2" data-here="The row you are reading stays in the list, highlighted. A click on any other row swaps the message in place. A row read during this visit stays in the list until the drawer closes, even under Unread.">2</button>
+          <button type="button" class="pin fix" style="left:200px;top:420px" data-d="D2" data-here="With a message open, 460 of 1280px of the page still shows, dimmed. A click on it closes the drawer.">2</button>
+        </div></div>
+        <p class="caption"><span class="mk" data-k="new" data-note="The message pane: the coach page’s reader, as a pane beside the list. Same block, same words, same order.">New</span> the message pane · <span class="mk" data-k="new" data-note="The selected row: the olive tint and edge the portal uses for a chosen item.">New</span> the selected row</p>
+      </div>
+
+      <h2>Three kinds of notification, opened (true size)</h2>
+      <div class="scroller" style="display:block"><div class="fx bench">
+        <figure>
+          <div class="dw-msg solo">
+            <span class="dw-x"><svg><use href="#i-x"/></svg></span>
+            <div class="msg">
+              <div data-msg="hold"></div>
+              <div class="msg-acts"><span class="btn-go">Open the request <svg><use href="#i-arrow"/></svg></span><span class="btn-2"><svg><use href="#i-check"/></svg>Done</span><span class="icon-btn push" title="Delete"><svg><use href="#i-trash"/></svg></span></div>
+            </div>
+          </div>
+          <figcaption><b>Needs attention.</b> Open the request, mark it Done, or delete it. Until it is Done it stays in Needs attention, read or not.</figcaption>
+        </figure>
+        <figure>
+          <div class="dw-msg solo">
+            <span class="dw-x"><svg><use href="#i-x"/></svg></span>
+            <div class="msg">
+              <p class="msg-eye"><span class="ic">🧑‍🏫</span><span>Coach joined from your invitation</span><span class="st">· Sat, Oct 4 · 7:05 p.m.</span></p>
+              <h2 class="msg-t">A coach joined 13U AAA</h2>
+              <p class="msg-b">Sam Patel accepted your invitation and joined 13U AAA as an assistant coach.</p>
+              <div class="msg-acts"><span class="btn-go">Open the team <svg><use href="#i-arrow"/></svg></span><span class="icon-btn push" title="Delete"><svg><use href="#i-trash"/></svg></span></div>
+            </div>
+          </div>
+          <figcaption><b>Activity.</b> No Done, because it never sat in Needs attention. Opening it marks it read; the trash removes it.</figcaption>
+        </figure>
+        <figure>
+          <div class="dw-msg solo">
+            <span class="dw-x"><svg><use href="#i-x"/></svg></span>
+            <div class="msg">
+              <p class="msg-eye"><span class="ic">📋</span><span>New registration</span><span class="st">· Sun, Oct 5 · 1:40 p.m.</span></p>
+              <h2 class="msg-t">3 new registrations</h2>
+              <ul class="msg-members">
+                <li><p class="mt">New registration: Burlington Bulls</p><p class="mb">13U · Added manually</p><p class="mtime">Sun, Oct 5 · 1:40 p.m.</p></li>
+                <li><p class="mt">New registration: Oakville Oaks</p><p class="mb">13U · Paid online</p><p class="mtime">Sun, Oct 5 · 11:02 a.m.</p></li>
+                <li><p class="mt">New registration: Milton Mustangs</p><p class="mb">15U · Paid online</p><p class="mtime">Sun, Oct 5 · 9:15 a.m.</p></li>
+              </ul>
+              <div class="msg-acts"><span class="btn-go">Open Registrations <svg><use href="#i-arrow"/></svg></span><span class="icon-btn push" title="Delete"><svg><use href="#i-trash"/></svg></span></div>
+            </div>
+          </div>
+          <figcaption><b>A bundle</b> (the “3 new registrations” row) opens as its members, as on the coach’s page. Today a click marks all three read and leaves.</figcaption>
+        </figure>
+      </div></div>
+    </section>
+
+    <!-- 4 · AT 1024 -->
+    <section class="screen" id="s-1024" hidden>
+      <div class="eyebrow">Screen 4 · round 2 · decision 7 · the narrowest computer</div>
+      <h1 tabindex="-1">At 1024px the open drawer covers nearly everything</h1>
+      <p class="sub lead">The drawer opens on any window wider than 900px, the point where the top strip and its bell appear. At 1024px, the size of a small laptop or a tablet held sideways, a message and the list together leave about 200px of the page, most of it the sidebar.</p>
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed · round 2</span><h3>Club · Payment requests · the first notification opened · 1024px</h3></div>
+        <div class="scroller"><div class="fx pg w1024" data-page>
+          <div class="pg-scrim light" style="top:48px"></div>
+          <div class="dw"><div class="dw-msg" data-pane="hold"></div><div class="dw-list" data-dwlist data-sel></div></div>
+          <button type="button" class="pin alt" style="left:110px;top:360px" data-d="D7" data-here="About 200px of the page is left, dimmed, and most of it is the sidebar. While the drawer is open you are reading notifications, and its button takes you to the page anyway, so I recommend keeping two panes here. The alternative is a message that covers the list at this width, with a back arrow.">7</button>
+          <button type="button" class="pin fix" style="left:631px;top:205px" data-d="D2" data-here="The list keeps its 380px and its highlighted row at every width.">2</button>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- 5 · ON A PHONE -->
+    <section class="screen" id="s-phone" hidden>
+      <div class="eyebrow">Screen 5 · decision 5 · corrected in round 2</div>
+      <h1 tabindex="-1">On a phone there is no bell, so the Notifications page has to open them</h1>
+      <p class="sub lead">Below 900px neither portal shows its top strip. An admin reaches notifications through More, then Notifications, a full page. A tap on a row there still loads an unnamed page. The coach’s page has opened the reader as a sheet since 09-25; the admin’s page gets the same sheet. These frames are drawn, not captured: the page’s exact rows may differ slightly.</p>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Today</span><h3>Admin on a phone · More › Notifications · 390px</h3></div>
+          <div class="scroller"><div class="fx ph" data-phone>
+            <button type="button" class="pin" style="left:4px;top:226px" data-d="D5" data-here="On the admin’s Notifications page a tap marks the row read and loads its page, as the bell does today. On a phone this page is the only place an admin can read a notification, and the rows are cut to two lines.">5</button>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>The first notification tapped · 390px</h3></div>
+          <div class="scroller"><div class="fx ph" data-phone data-proposed>
+            <div class="ph-scrim"></div>
+            <div class="ph-sheet">
+              <div class="grab"><span></span></div>
+              <div class="msg">
+                <div data-msg="hold"></div>
+                <div class="msg-acts"><span class="btn-go">Open the request <svg><use href="#i-arrow"/></svg></span><span class="btn-2"><svg><use href="#i-check"/></svg>Done</span><span class="btn-2">Close</span><span class="icon-btn" title="Delete"><svg><use href="#i-trash"/></svg></span></div>
+              </div>
+            </div>
+            <button type="button" class="pin fix" style="left:4px;top:440px" data-d="D5" data-here="The coach’s reader sheet, in the admin’s styling: it rises above the bottom bar, which stays visible and tappable (a menu, by the 09-23 drawer ruling). Open the request, Done, Close, and the trash; the phone’s Back closes it too.">5</button>
+          </div></div>
+          <p class="caption"><span class="mk" data-k="new" data-note="The admin’s Notifications page gets the reader sheet the coach’s page has had since 09-25, built on the portal’s shared sheet frame.">New</span> the admin’s reader sheet · <span class="mk" data-k="un" data-note="The coach’s Notifications page on a phone already opens this sheet. Nothing changes there.">Unchanged</span> the coach’s phone</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · WHAT IT SAYS AND DOES -->
+    <section class="screen" id="s-says" hidden>
+      <div class="eyebrow">Screen 6 · decisions 3, 4, 8 and 9 · the actions · round 3</div>
+      <h1 tabindex="-1">Three different things you can do to a notification: read it, mark it Done, delete it</h1>
+      <p class="sub lead">Each one answers a different question, so each gets its own word. An opened notification also has one button forward, named for the place it opens, and a way to close: × on the drawer’s pane, Close on a phone.</p>
+
+      <div class="verbs fx">
+        <div class="verb">
+          <div class="w"><span class="np-dot" style="margin:0"></span><b>Read</b></div>
+          <p><strong>“Have I seen it?”</strong> Happens by itself when you open a notification. The unread dot goes, and the bell’s count drops. Mark all read does it to the whole list at once.</p>
+          <p class="q">Where: automatic on open · Mark all read in the drawer’s toolbar</p>
+        </div>
+        <div class="verb">
+          <div class="w"><span class="np-clear"><svg><use href="#i-check"/></svg>Done</span></div>
+          <p><strong>“Have I dealt with it?”</strong> Only on Needs attention. Takes it out of Needs attention; it stays in your list below, read. One at a time on purpose: there is no “all done”.</p>
+          <p class="q">Where: on the row, and in the opened notification · today’s word is Clear</p>
+        </div>
+        <div class="verb">
+          <div class="w"><span class="icon-btn"><svg><use href="#i-trash"/></svg></span><b>Delete</b></div>
+          <p><strong>“Do I want it at all?”</strong> Any notification. Gone from your list; the request or payment it was about is untouched, and so is everyone else’s copy. Undo for a few seconds, no “are you sure?”.</p>
+          <p class="q">Where: on the row under the pointer, and in the opened notification</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <h3>Why Done, and not Mark read (decision 8)</h3>
+        <ul>
+          <li><strong>Reading is not handling.</strong> In your screenshot the first notification has no unread dot: it is already read. It is still in Needs attention because 15U AAA’s request is still waiting for an answer. A button called Mark read would do nothing on it, and on an unread one it would suggest that reading a decision deals with it.</li>
+          <li><strong>Clear was the wrong word too, once a trash exists.</strong> It was named on 09-06, when nothing could be deleted. Beside a trash can, “Clear” reads as the same thing. “Done” says what it does: you are finished with this one.</li>
+          <li>Done renames the word everywhere it appears: the bell’s rows, the coach’s and the admin’s Notifications pages, the opened notification, the Needs-attention line “stays until you mark it Done”, and the help articles.</li>
+        </ul>
+      </div>
+
+      <div class="callout">
+        <h3>Mark all read means all (decision 9)</h3>
+        <p>Today “Mark all read” leaves every Needs-attention notification unread. In the drawer on screen 2, “11U AA says they sent $450.00” keeps its dot after you press it, which is what made the two buttons look like they overlap. Round 3 makes it mark everything read, reversing your 09-03 rule (decision 9 has why). Needs attention is unaffected, because a notification only leaves it when you mark it Done. The cost: the bell’s red count no longer stays up for a decision you have marked read but not dealt with. The amber Needs-attention count in the drawer still shows it.</p>
+      </div>
+
+      <div class="callout good">
+        <h3>A delete, and its Undo</h3>
+        <p>No confirmation: the notification goes at once, and a note at the drawer’s foot (or above a phone’s bottom bar) offers Undo for a few seconds.</p>
+        <div class="fx" style="margin-top:4px"><span class="undo">Notification deleted <b>Undo</b></span></div>
+      </div>
+
+      <div class="callout">
+        <h3>Still left out (decision 3)</h3>
+        <ul>
+          <li><strong>A Mark read button:</strong> opening a notification marks it read, so the button would do nothing.</li>
+          <li><strong>Mark unread</strong> (to come back to something later): Needs attention already keeps anything that needs you until you mark it Done. I would add it only if it turns out to be missed.</li>
+        </ul>
+      </div>
+
+      <h2>What the button says (decision 4)</h2>
+      <div class="tablewrap"><table class="kept">
+        <thead><tr><th>Notification</th><th>Today’s click</th><th>The button</th><th>Where it lands</th></tr></thead>
+        <tbody>
+          <tr><td><b>A request from 15U AAA is holding up their payout to families</b></td><td class="q">Loads Payment requests, unnamed</td><td>Open the request</td><td>That request, opened, when there is one. “Open Payment requests” when several are holding the payout.</td></tr>
+          <tr><td><b>11U AA says they sent $450.00</b></td><td class="q">Loads the allocation with 11U AA’s bill open, unnamed</td><td>Open the bill</td><td>Diamond fees 2026, 11U AA’s bill open (as today)</td></tr>
+          <tr><td><b>15U AAA filed a $480.00 request</b></td><td class="q">Loads Payment requests, unnamed</td><td>Open the request</td><td>That request, opened</td></tr>
+          <tr><td><b>3 new registrations</b> (a bundle)</td><td class="q">Marks all three read, loads Registrations</td><td>Open Registrations</td><td>That tournament’s registrations (as today)</td></tr>
+          <tr><td><b>A coach joined 13U AAA</b></td><td class="q">Loads the team, unnamed</td><td>Open the team</td><td>13U AAA in Rep teams (as today)</td></tr>
+          <tr><td><b>A chat message</b></td><td class="q">Loads Chat</td><td>Open Chat</td><td>As today (the name already exists)</td></tr>
+          <tr><td><b>Coach · Weekly team insights</b></td><td class="q">Coach page: opens the reader</td><td>Open Insights</td><td>Unchanged, built 09-25</td></tr>
+        </tbody>
+      </table></div>
+      <p class="sub" style="max-width:860px">The button’s words come from the address it opens, in the words of the screen it lands on, as the coach’s names do. Today that list knows only coach pages, so every club and tournament page would read “Open in admin”, which tells someone already in admin nothing. The build adds the admin pages. One change goes past the reader: the holding-up notice will carry the request when there is exactly one, so it can open that request instead of the whole list.</p>
+    </section>
+
+    <!-- 7 · EVERY PLACE -->
+    <section class="screen" id="s-every" hidden>
+      <div class="eyebrow">Screen 7 · decisions 5 and 6 · every place a notification is opened</div>
+      <h1 tabindex="-1">One notification opens the same way wherever you click it</h1>
+      <p class="sub lead">There are five places a notification can be clicked. After this change every one of them opens it first, and a page is always the second, named step. A computer reads notifications in the drawer; a phone reads them on the Notifications page.</p>
+      <div class="tablewrap"><table class="kept">
+        <thead><tr><th>Where</th><th>Today</th><th>Proposed</th></tr></thead>
+        <tbody>
+          <tr><td><b>Club and tournament admin on a computer · the bell</b> (your screenshot)</td><td class="q">A click loads the page; “See all” goes to the full page</td><td>The drawer: the whole list, and a notification opens beside it (D2, D6)</td></tr>
+          <tr><td><b>Coach on a computer · the bell</b></td><td class="q">A click loads the page; “See all” goes to the full page</td><td>The same drawer</td></tr>
+          <tr><td><b>Admin on a phone · More › Notifications</b></td><td class="q">A tap loads the page</td><td>A tap opens the reader sheet (D5)</td></tr>
+          <tr><td><b>Coach on a phone · More › Notifications</b></td><td class="q">Opens the reader sheet (built 09-25)</td><td>Unchanged</td></tr>
+          <tr><td><b>Either Notifications page on a computer</b>, reached by its address, an old link or a help article</td><td class="q">Coach: opens the reader dialog. Admin: a click loads the page</td><td>Both open the reader dialog. Nothing on a computer links to the page any more (D6)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout good">
+        <h3>One message, three frames</h3>
+        <p>On a computer the message is a pane beside the list in the drawer. On a phone it is a sheet above the bottom bar. On a full page reached from a computer it is a dialog. The kind, the day and time, the title, the message, the buttons and their order are the same block in all three. Only the frame around it differs, so they can’t drift apart.</p>
+      </div>
+    </section>
+
+    <!-- 8 · ROUND 1 OPTIONS -->
+    <section class="screen" id="s-round1" hidden>
+      <div class="eyebrow">Screen 8 · round 1’s options for decision 2, kept for comparison</div>
+      <h1 tabindex="-1">Round 1: A, B and C</h1>
+      <p class="sub lead">Drawn before the split drawer, at a 1200px window. A was round 1’s recommendation. All three use the same message block as the split drawer.</p>
+
+      <h2>A · The bell’s panel turns to the message</h2>
+      <div class="spec">
+        <div class="scroller"><div class="fx pg" data-page>
+          <div class="at-bell"><div class="np">
+            <div class="np-head"><span class="np-back"><svg><use href="#i-left"/></svg>Notifications</span></div>
+            <div class="msg">
+              <div data-msg="hold"></div>
+              <div class="msg-acts"><span class="btn-go">Open the request <svg><use href="#i-arrow"/></svg></span><span class="btn-2">Clear</span></div>
+            </div>
+            <div class="np-foot"><span><svg><use href="#i-list"/></svg>See all</span><span><svg><use href="#i-gear"/></svg>Notification settings</span></div>
+          </div></div>
+          <button type="button" class="pin alt" style="left:851px;top:66px" data-d="D2" data-here="Round 1’s A: the 320px panel turns to the message, and “‹ Notifications” goes back to the list. It covers far less of the page than the split drawer, but every next notification costs a Back.">2</button>
+        </div></div>
+        <p class="caption"><strong>Against the split drawer:</strong> A leaves most of the page visible, but you go back to the list between notifications, and the message has 320px instead of 440px.</p>
+      </div>
+
+      <h2>B · A dialog in the middle of the screen</h2>
+      <div class="spec">
+        <div class="scroller"><div class="fx pg" data-page>
+          <div class="pg-scrim"></div>
+          <div class="at-centre">
+            <div class="msg">
+              <div data-msg="hold"></div>
+              <div class="msg-acts"><span class="btn-2">Clear</span><span class="btn-2">Close</span><span class="btn-go">Open the request <svg><use href="#i-arrow"/></svg></span></div>
+            </div>
+          </div>
+          <button type="button" class="pin alt" style="left:1104px;top:10px" data-d="D2" data-here="The bell closed to make room for the dialog. To read the next notification you open the bell again: three clicks a notification.">2</button>
+          <button type="button" class="pin alt" style="left:300px;top:470px" data-d="D2" data-here="The scrim covers the Payment requests list, which is the thing the notification is about.">2</button>
+        </div></div>
+        <p class="caption">This is the 09-25 reader exactly as it opens on the coach’s notifications page on a computer. It is still how a notifications page opens a message on a computer (screen 7).</p>
+      </div>
+
+      <h2>C · A drawer holding only the message</h2>
+      <div class="spec">
+        <div class="scroller"><div class="fx pg" data-page>
+          <div class="pg-scrim light" style="top:48px"></div>
+          <div class="at-drawer">
+            <div class="dh"><b>Notification</b><span>✕</span></div>
+            <div class="msg"><div data-msg="hold"></div></div>
+            <div class="df"><span class="btn-2">Clear</span><span class="btn-go">Open the request <svg><use href="#i-arrow"/></svg></span></div>
+          </div>
+          <button type="button" class="pin alt" style="left:767px;top:320px" data-d="D2" data-here="Two lines of message in a 650px-tall panel, and the list is gone: to read the next notification you open the bell again. The split drawer is this drawer with the list kept beside it.">2</button>
+        </div></div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Decisions · round 1 drawn 2026-10-05 · round 2 drawn 2026-10-05</div>
+  <h1>Nine decisions, all accepted</h1>
+  <p class="sub">Owner, 2026-10-05, on round 3: “looks good” — all nine as recommended. Each marker on the Mockup tab opens its decision here. Round 2 changed D2, D3 and D5, and added D6 and D7. Round 3 changed D3 and added D8 and D9.</p>
+
+  <div class="decisionrow" id="D1"><div class="dhead"><h3>D1 · A click opens the notification instead of leaving</h3><div class="tags"><span class="tag accepted">Accepted 2026-10-05</span></div></div>
+    <p>A click on a notification opens it: the kind, the day and time, the whole title and message. It marks the notification read and stays where you are. Going to the page is a second click on a button that names the page.</p>
+    <p class="rec"><strong>Recommended.</strong> This is the rule you set for the coach’s notifications page on 09-25, and the reason carries over: you can read a notification without leaving where you are. The cost is one more click to reach the page. For a notification you only needed to read, it saves you a trip and a trip back.</p>
+    <p class="altx">Alternative: keep a click going straight to the page, let each row run to two lines, and show the page’s name on hover. That’s cheaper, but the bell still can’t show a long message, and a hover title isn’t a label you can see.</p></div>
+
+  <div class="decisionrow" id="D2"><div class="dhead"><h3>D2 · On a computer the bell opens a drawer, and a notification opens beside the list</h3><div class="tags"><span class="tag r2">Changed in round 2</span><span class="tag accepted">Accepted 2026-10-05</span></div></div>
+    <p>The bell opens a 380px drawer on the right, under the top strip, the full height of the window, holding the list. A click on a notification opens a 440px pane to the left of the list, the drawer grows to 820px, and the row you are reading is highlighted. A click on another row swaps the message. × on the message closes it and the drawer goes back to the list alone. × on the drawer, Escape, or a click on the dimmed page closes everything; Escape closes the message first. A row read during this visit stays in the list until the drawer closes, even under Unread.</p>
+    <p class="rec"><strong>Recommended (your idea).</strong> The list never leaves while you read, so working down Needs attention is one click per notification, and you can always see which one you are on. The message gets 440px, wider than any other option. The cost is how much of the page it covers with a message open: two thirds of a 1280 window (screen 3), and all but about 200px of a 1024 one (screen 4). While the drawer is open you are dealing with notifications, and its button takes you to the page anyway.</p>
+    <p class="altx">Alternatives (screen 8): A, the bell’s 320px panel turns to the message with a back arrow, which covers far less of the page and costs a Back between notifications; B, a dialog in the middle of the screen; C, a drawer holding only the message.</p></div>
+
+  <div class="decisionrow" id="D3"><div class="dhead"><h3>D3 · The opened notification has Open [the place], Done, Delete, and a way to close</h3><div class="tags"><span class="tag r2">Changed in round 3</span><span class="tag accepted">Accepted 2026-10-05</span></div></div>
+    <p>One button forward, named for the place. Done appears only on a Needs-attention notification (decision 8). A trash deletes any notification: on the row under the pointer, and in the opened notification, set apart at the right. Delete removes it from your own list only, at once, with Undo offered for a few seconds and no “are you sure?”. The way out is × on the drawer’s pane, or Close on a phone. There is no Mark read button.</p>
+    <p class="rec"><strong>Recommended (your ask, reversing round 1).</strong> Round 1 said deleting a money notice would lose the record of what a team told the club. That was wrong: the payment and the request keep those facts on their own pages, and each person has their own copy of a notification, so deleting yours removes nobody else’s. Nothing ever deletes old notifications today, so without a trash the list under All only grows. Undo instead of a confirmation keeps a slip cheap without asking every time. A Mark read button would do nothing, because opening already marks it read.</p>
+    <p class="altx">Alternatives: no trash (round 1’s answer), where the list grows without end; or a trash only in the opened notification, not on the row, which is one click slower and harder to find.</p></div>
+
+  <div class="decisionrow" id="D4"><div class="dhead"><h3>D4 · The button names the page in that screen’s own words, and opens the record</h3><div class="tags"><span class="tag accepted">Accepted 2026-10-05</span></div></div>
+    <p>“Open the request”, “Open the bill”, “Open Registrations”, “Open the team”: each uses the words of the tab or record it opens. When a notification is about one record, the button opens that record and not just its list. The holding-up notice will carry its request when there is exactly one.</p>
+    <p class="rec"><strong>Recommended.</strong> This answers your second complaint directly: you know where you are going before you click. Today the names exist only for coach pages, so every club and tournament page would read “Open in admin”, which tells someone already in admin nothing. A notice about one request that lands on a list of nine makes you find the request yourself.</p>
+    <p class="altx">Alternative: a plain “Open” button with the page’s name in small print under it. That’s less to build, but the label is the part you actually read.</p></div>
+
+  <div class="decisionrow" id="D5"><div class="dhead"><h3>D5 · The admin’s Notifications page opens notifications too</h3><div class="tags"><span class="tag r2">Changed in round 2</span><span class="tag accepted">Accepted 2026-10-05</span></div></div>
+    <p>On the admin’s Notifications page, a tap opens the notification: as a sheet above the bottom bar on a phone (the coach’s 09-25 sheet in the admin’s styling), and as a dialog if the page is opened on a computer.</p>
+    <p class="rec"><strong>Recommended, and more important than round 1 said.</strong> Neither portal has a bell on a phone, so for an admin on a phone this page is the only place to read a notification, and a tap on it still loads an unnamed page. The coach’s page already does this, so the work is giving it the admin’s styling.</p>
+    <p class="altx">Alternative: leave it for later. Admins on a phone keep today’s problem until then.</p></div>
+
+  <div class="decisionrow" id="D6"><div class="dhead"><h3>D6 · On a computer the drawer is the whole list, and “See all” leaves the bell</h3><div class="tags"><span class="tag r2">New in round 2</span><span class="tag accepted">Accepted 2026-10-05</span></div></div>
+    <p>The drawer carries what the full page has: Unread and All, Mark all read when there is unread activity, the list by day, Load more at the end, and the settings gear in its header. The “See all” link goes. The two Notifications pages stay, because they are where a phone reads notifications and an old link or help article still lands on one. The drawer leaves out the page’s All / Needs attention / Activity chips (see the alternative).</p>
+    <p class="rec"><strong>Recommended.</strong> With a full-height list and a message beside it, the drawer does everything the page does, so a link to the page would be a second place on a computer to read the same list. Keeping the pages costs nothing, since nothing on a computer links to them any more.</p>
+    <p class="altx">Alternative: bring the three chips into the drawer as a second toolbar row. In a full-height drawer Needs attention is always pinned on top and Activity follows by day, so I left them out. If you use them on the page, they can come along.</p></div>
+
+  <div class="decisionrow" id="D7"><div class="dhead"><h3>D7 · Two panes wherever the drawer opens</h3><div class="tags"><span class="tag r2">New in round 2</span><span class="tag accepted">Accepted 2026-10-05</span></div></div>
+    <p>The drawer exists only above 900px, where the top strip and its bell appear. At every width above that, a notification opens beside the list.</p>
+    <p class="rec"><strong>Recommended.</strong> One behaviour on every computer. At 1024px the page behind becomes a sliver (screen 4), which is acceptable while you are reading notifications.</p>
+    <p class="altx">Alternative: below about 1150px, the message covers the list instead of sitting beside it, with a back arrow (round 1’s A, inside the drawer). That keeps more of the page visible on a small laptop, and costs a second behaviour to learn.</p></div>
+
+  <div class="decisionrow" id="D8"><div class="dhead"><h3>D8 · Clear becomes Done, everywhere</h3><div class="tags"><span class="tag r2">New in round 3</span><span class="tag accepted">Accepted 2026-10-05</span></div></div>
+    <p>The Needs-attention action keeps what it does (you are finished with this one, and it leaves Needs attention) and changes its word from Clear to Done, with a check. The new word goes everywhere the old one was: the rows, both Notifications pages, the opened notification, the line “stays until you mark it Done”, and the help articles.</p>
+    <p class="rec"><strong>Recommended.</strong> You asked whether it should read “Mark read”. It can’t: reading isn’t handling. Your first notification is already read and still needs you, because 15U AAA’s request is still waiting. And once a trash exists, “Clear” beside it reads as the same thing. “Done” says what it does.</p>
+    <p class="altx">Alternatives: “Dismiss”, which describes the mechanics but sounds like turning a request down; or keep “Clear”, the word since 09-06, which is the cheapest and the one that confused you.</p></div>
+
+  <div class="decisionrow" id="D9"><div class="dhead"><h3>D9 · Mark all read marks everything read</h3><div class="tags"><span class="tag r2">New in round 3</span><span class="tag accepted">Accepted 2026-10-05</span></div></div>
+    <p>Mark all read marks every notification read, Needs attention included. Each Needs-attention notification still stays there until you mark it Done, so one press can’t empty your decisions.</p>
+    <p class="rec"><strong>Recommended. This reverses your 09-03 ruling</strong> (“Mark all read leaves Needs attention alone”). Its reason was that one tap must not make an unhandled decision look handled, and on 09-03 that was true: reading a notification took it out of Needs attention. Since 09-06 only Clear (Done) takes one out, so marking read can no longer empty your decisions. What the old rule still does is keep the unread dot, which is why “11U AA says they sent $450.00” stays unread after you press Mark all read, and “all” doesn’t mean all. The cost: the bell’s red count no longer stays up for a decision you have marked read but not dealt with; the amber Needs-attention count in the drawer still shows it.</p>
+    <p class="altx">Alternative: keep today’s rule and rename the button “Mark activity read”, which is accurate but a mouthful.</p></div>
+
+  <div class="copyback">
+    <strong>Ruled 2026-10-05:</strong>
+    <pre>D1 yes · D2 split drawer · D3 yes · D4 yes · D5 yes · D6 yes · D7 yes · D8 Done · D9 yes</pre>
+  </div>
+  <div class="copyback">
+    <strong>Ruled 2026-10-05 in the step 1 build</strong> (all as recommended, on the drawing https://claude.ai/artifact/UH3XitdqBKmBPRX7PN61mB):
+    <pre>Q1 the Undo note on a page sits centred under the page’s column, 12px above a phone’s bottom bar (not the save pill’s corner)
+Q2 a tournament registration notice reads “Open Teams”, not “Open Registrations”: that page is Teams in its nav and its own title (a house league’s page is Registrations and keeps the word)
+Q3 a score notice reads “Open the game”: its link opens that game’s score editor (“Open Results” when no game is named)</pre>
+  </div>
+</section>
+
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief · round 3</div>
+  <h1>Notifications Open in Place</h1>
+  <h2>What changes</h2>
+  <p>On a computer, the bell opens a drawer on the right holding the whole list of notifications. Clicking one opens it beside the list: what kind it is, the day and time it arrived, the full title and message, and a button that says where it goes, such as “Open the request”. Needs-attention notifications also have Clear. Clicking another notification swaps the message; the list never goes away. Opening a notification marks it read. The drawer replaces the bell’s “See all” link, because it holds everything that page did.</p>
+  <p>On a phone, where neither portal has a bell, the Notifications page under More opens a notification as a sheet above the bottom bar. Coaches have had this since September 25; admins get it now.</p>
+  <p>Three actions, each with its own word: a notification is <strong>read</strong> when you open it (or press Mark all read, which now really marks all); a Needs-attention notification is <strong>Done</strong> when you have dealt with it (the button that used to say Clear); and the <strong>trash</strong> deletes any notification from your own list, with Undo for a few seconds.</p>
+  <h2>Why it matters</h2>
+  <p>Today the bell cuts every notification to one line, and a click leaves for a page it never names, sometimes the page you are already on. The notifications that matter most, the club’s money decisions, are the longest, so they are the ones most cut off. A treasurer either clicks blind or ignores the bell.</p>
+  <h2>Who it affects</h2>
+  <p>Every club treasurer and tournament admin, and every coach on a computer. Admins on a phone get the reader sheet. Coaches on a phone see no change. The reader behaves the same for every role; Clear appears only on Needs-attention notifications, as today.</p>
+  <h2>Tradeoffs</h2>
+  <ul>
+    <li>With a message open the drawer covers most of the page: two thirds of a 1280 window, nearly all of a 1024 one. While it’s open you are reading notifications, and its button takes you to the page.</li>
+    <li>Reaching the page takes two clicks instead of one. In return you know where you are going, and you can read without going.</li>
+    <li>Delete has an Undo for a few seconds, then it is gone from your list for good. The request or payment it was about is never touched.</li>
+    <li>Mark all read no longer keeps the bell’s red count up for an unread decision; the amber Needs-attention count still shows it.</li>
+    <li>Coaches see a word change: Clear becomes Done on their Notifications page too.</li>
+    <li>It is a bigger build than turning the bell’s panel to the message: a new drawer in both portals, two panes, and the full page’s controls brought into it.</li>
+  </ul>
+  <h2>Priority</h2>
+  <p>Medium. The club money notifications are new, they are the main reason a treasurer opens the bell, and the club tier is in the run-up to customers.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>Any notification can be read whole without leaving the screen you are on, on a computer or a phone.</li>
+    <li>You can read one notification after another without going back to the list.</li>
+    <li>Every onward button says where it goes before you click it. None reads “Open in admin” to an admin.</li>
+    <li>A notification about one record opens that record.</li>
+    <li>The same notification opens the same way for coaches and admins.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Plan notes · round 3 · for the build session</div>
+  <h1>Notifications Open in Place — what a build would change</h1>
+  <div class="note">Superseded by the plan of record, <code>docs/projects/active/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md</code> (with its PM brief and <code>NOTIFICATIONS_OPEN_IN_PLACE_BUILD_PROMPT.md</code>, three steps, one chat each), written 2026-10-05 after D1–D9 were accepted. Where these notes and the plan differ, the plan wins: Delete’s Undo is a deferred delete, no migration.</div>
+  <h2>Where the bell exists</h2>
+  <ul>
+    <li>The bell is mounted only by <code>AdminTopStrip</code> and <code>CoachTopStrip</code>, and both strips are hidden at ≤900px (the admin shell zeroes <code>--admin-topstrip-h</code>; the coach strip is <code>display:none</code>). Phones reach <code>/{org}/admin/notifications</code> through <code>AdminKitBottomNav</code>’s More sheet and <code>/{org}/coaches/notifications</code> through the coach More sheet. So the drawer is computer-only, and the panel’s ≤900 rules in <code>notifications.module.css</code> are dead code that goes with the panel.</li>
+  </ul>
+  <h2>The drawer (D2, D6, D7)</h2>
+  <ul>
+    <li>Replace <code>NotificationPanel</code> with a drawer (e.g. <code>NotificationDrawer</code>) opened by <code>NotificationBell</code>: fixed, top = the strip’s height (+ the sandbox banner term the panel already carries), right 0, bottom 0; 380px list; 440px message pane to its left when one is open. Light scrim below the strip; a click on it closes.</li>
+    <li>Feed: use <code>useNotificationFeed</code> (pagination, Load more, the unread filter, the Needs-attention zone, <code>markSeen</code>) instead of the panel’s own fetch of 40, so the drawer and the pages read one source.</li>
+    <li>Selection: <code>open: ActivityEntry | null</code>; a row click calls <code>markSeen</code> then opens; a bundle opens as members; the selected row carries the highlight and <code>aria-current</code>. A seen-this-visit set keeps rows visible under Unread until the drawer closes.</li>
+    <li>Keyboard and focus: the drawer is <code>role="dialog"</code>, labelled; focus moves to the message title on open and back to the row on ×; Escape closes the message, then the drawer (the bell’s <code>useDismissable</code> claims Escape today — the message must take the first press). Boundary for outside clicks = bell + drawer, as now.</li>
+    <li>Theme: the panel is portaled to <code>body</code> with <code>coachWarmAttr</code> for the coach; check how the admin’s warm tokens reach a body-portaled surface (<code>KitDialog</code> deliberately renders in-tree for that reason).</li>
+    <li>Remove the <code>seeAllHref</code> footer link; the settings link becomes a gear in the drawer’s header (keep the <code>?back=</code> return the strips build).</li>
+  </ul>
+  <h2>One message block (D1, D3)</h2>
+  <ul>
+    <li>Lift the content of <code>components/coaches/CoachNotificationReader.tsx</code> (eyebrow with <code>iconFor</code> + <code>NOTIFICATION_EVENT_LABELS</code> + <code>notificationStamp</code>, title, body or bundle members, actions) into one shared block, e.g. <code>components/notifications/NotificationMessage.tsx</code>, worn by the drawer’s pane, the coach sheet/dialog, and the admin page’s frame. Keep the stamp un-uppercased (the “P.M.” trap).</li>
+    <li>Clear in the message: clears, closes the message, the row leaves Needs attention. Keep the clear rollback on a failed request.</li>
+    <li>The onward control stays a plain <code>&lt;a href&gt;</code> (full load, R8 deferred), with the 09-25 keepalive on mark-read.</li>
+  </ul>
+  <h2>The admin’s Notifications page (D5)</h2>
+  <ul>
+    <li><code>NotificationsPageContent</code> passes <code>onOpen</code> to <code>NotificationFeedBody</code> (the prop exists; only the coach page passes it) and renders the shared block in a phone sheet (menu layer) and a computer dialog. Build the sheet on the Sheet Frame project’s shared menu-layer frame if that step has landed.</li>
+  </ul>
+  <h2>Done, Delete, Mark all read (D3, D8, D9 · round 3)</h2>
+  <ul>
+    <li><strong>Done (D8)</strong> is a prose rename only: every customer-visible “Clear” in the notification surfaces (the bell/drawer rows, <code>NotificationFeedBody</code> rows, <code>CoachNotificationReader</code>, the aria-labels “Clear … from Needs attention”), the zone hint “stays until you clear it” → “stays until you mark it Done”, the bell tour, and the help articles that mention Needs attention (coach ×7, org ×3, families ×1, platform-admin ×1), including <code>keywords</code>/<code>searchText</code>. The API action <code>clear</code> and the column <code>cleared_at</code> stay: identifiers, not prose.</li>
+    <li><strong>Delete (D3)</strong>: a new API action, own rows only (<code>.eq('user_id', user.id)</code>, as mark-read). Notification rows are per recipient (<code>notify()</code> writes one per user), so a delete touches nobody else’s copy, and nothing today purges old rows. For Undo, prefer a <code>deleted_at</code> stamp (migration + DATA_DICTIONARY + snapshots; every read filters it: the list, the unread count, the Load more cursor, the bell’s Realtime count) so Undo is an un-stamp; the alternative is a client-deferred hard delete flushed with keepalive on leave. Decide in the plan. The trash shows on row hover and on keyboard focus (never hover-only for a keyboard), and in the message pane and phone sheet.</li>
+    <li><strong>Mark all read (D9)</strong>: drop <code>ACT_EXCLUDE_IN</code> in <code>app/api/notifications/route.ts</code> and the <code>ACT_EVENT_TYPES</code> skip in both clients’ optimistic updates; <code>anyActivityUnread</code> becomes “any unread”. Rewrite the route’s comment: its claim that the skip is “load-bearing” since 09-06 is wrong, because the zone is computed on <code>cleared_at</code> and read state cannot empty it. Keep a guard that mark-all never writes <code>cleared_at</code>.</li>
+    <li><strong>Follow-up, its own project:</strong> a Needs-attention notification could mark itself Done when its work is done (answering 15U AAA’s request marks its holding notice Done; confirming a payment marks the “says they sent” notice Done). That would leave Done for the ones you want to wave off.</li>
+  </ul>
+  <h2>Destination words (D4)</h2>
+  <ul>
+    <li><code>notificationDestination(link)</code> in <code>lib/notification-view.ts</code> knows coach team pages and Chat, and falls back to “Open in admin”. Add admin pages from the link: payment requests (with <code>?request=</code> → “Open the request”, without → “Open Payment requests”), allocations (with <code>?bill=</code> → “Open the bill”, without → “Open the allocation”), tournaments/registrations → “Open Registrations”, tournaments/results → “Open Results”, rep-teams/teams/{id} → “Open the team”, and the rest of the admin link shapes found by grepping <code>link:</code> in <code>notify()</code> callers. Pin the words to the admin nav’s labels in a test, as <code>coach-nav-groups.test.ts</code> does for the coach.</li>
+    <li>Keep “Open in admin” only as the fallback for a coach who received an admin notice (the parked recipient-scoping bug from the 09-03 review; its own ticket).</li>
+    <li><code>lib/club-money-moves.ts</code> holding-payout notice: pass the request id to <code>clubMoneyLinks.requests</code> when exactly one request is held. Check <code>team_request_filed</code> passes its id too.</li>
+  </ul>
+  <h2>Formatting check (the portal’s written rules)</h2>
+  <ul>
+    <li>The clock is the house spelling, “2:14 p.m.”, via <code>notificationStamp</code>/<code>formatTime</code>.</li>
+    <li>Admin controls are 34px on a computer (control-height ruling 10-03); the phone sheet’s controls 44px, the onward button 48px, as the coach sheet.</li>
+    <li>On a phone the reader is a menu-layer sheet (drawer ruling 09-23: it holds nothing typed, so the bottom bar stays tappable under it).</li>
+    <li>The selected row uses the portal’s olive tint and edge for a chosen item; Needs attention keeps its amber edge when not selected.</li>
+  </ul>
+  <h2>Guards, checks and docs</h2>
+  <ul>
+    <li><code>tests/unit/notification-reader.test.ts</code>: admin destination words; a guard that a bell row opens rather than navigates; a guard that no computer surface links to the Notifications pages.</li>
+    <li>Rendered layout gate for the drawer at 1280 and 1024, warm and dark, with a long message (the coach weekly review) to prove the pane scrolls on its own.</li>
+    <li>Help: the bell tour, the notifications FAQ (coach and org help) and every mention of “See all” change. Run <code>/docs</code> after the build.</li>
+    <li>Demos: both demo orgs have no notification rows, so the drawer is empty there; a shop-window matter for <code>/demos</code>, not this build.</li>
+    <li>Out of scope: client-side navigation on tap (R8), recipient scoping, Mark unread.</li>
+  </ul>
+</section>
+
+<section id="hub-qa" class="docpage qa" hidden>
+  <div class="eyebrow">Owner QA · §265 · Coaches Portal + Club accounting · Notifications Open in Place step 1</div>
+  <h1>Read, Done and Delete: three words for three things</h1>
+  <p class="sub">Step 1 changes the rules under every notification surface; the drawer is step 2. Three walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat.</p>
+  <div class="qacard">
+    <h3>Sign in as</h3>
+    <dl>
+      <dt>Where</dt><dd>http://localhost:3000/auth/login (restart the dev server first: this step added files and changed shared modules)</dd>
+      <dt>Coach (W1, W2)</dt><dd>uat-coach@uat-test-org.local (password: <code>UAT_COACH_PASSWORD</code> in <code>.env.local</code>), then go straight to <b>http://localhost:3000/uat-test-org/coaches/notifications</b>. UAT Test Org is where this account holds the notifications the walk needs, including three in Needs attention.</dd>
+      <dt>Club (W3)</dt><dd>uat-club-treasurer@uat-rep-club.local (password: <code>UAT_REP_CLUB_TREASURER_PASSWORD</code>) · UAT Rep Club, on a computer.</dd>
+    </dl>
+    <p class="meta"><b>What the walks change on dev (not put back):</b> two of the coach’s “Your week in review” notifications are deleted, “Team marked no-show” is marked Done, and every notification of the coach’s in UAT Test Org and of the treasurer’s in UAT Rep Club ends up read. Walk W1 before W2 if you can: W1 uses the unread dots.</p>
+  </div>
+  <div class="qaindex" role="group" aria-label="Walks">
+    <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · A coach reads, finishes and deletes, on a computer</b><span class="meta">Done, the trash and Undo, Mark all read.</span><span class="qachip" data-chip="w1"></span></button>
+    <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · The same on a phone</b><span class="meta">The trash in the sheet; the note above the bar.</span><span class="qachip" data-chip="w2"></span></button>
+    <button type="button" class="qawcard" data-walk="w3" aria-pressed="false"><b>W3 · The club treasurer’s bell</b><span class="meta">Done in the bell; Mark all read means all.</span><span class="qachip" data-chip="w3"></span></button>
+  </div>
+
+    <div class="qawalk" id="w1">
+      <h2>W1 · A coach reads, finishes and deletes, on a computer</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>On the coach’s Notifications page the three words do three different things: opening a notification reads it, Done takes one out of Needs attention, and the trash deletes it, with a few seconds to Undo. Mark all read reads everything and finishes nothing.</p>
+        <h3>It passes when</h3><p>No “Clear” appears anywhere; an opened notification’s buttons read Open · Done · Close · trash, left to right; a delete leaves the note centred under the list and Undo brings the row back; a delete sticks after a reload and after leaving the page; Mark all read leaves no dot but keeps the pinned rows pinned.</p>
+        <h3>Not in this walk</h3><p>The phone (W2), the club’s bell (W3), and the drawer, which is step 2. The club pages’ button names (“Open the request”, “Open Teams”) first show in step 2; a coach still reads “Open in admin”, as ruled.</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">In a window wider than 900px, sign in as the coach and open <b>/uat-test-org/coaches/notifications</b>.</p><p class="qasee"><b>Needs attention</b> is pinned at the top with <b>Assistant coach invite awaiting approval</b>, <b>Team marked no-show</b> and <b>Payment failed</b>, each with a <b>Done</b> button; the line beside the heading reads <b>stays until you mark it Done</b>. No button anywhere says Clear.</p></div></li>
+        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Click <b>Payment failed</b>.</p><p class="qasee">A dialog with the kind, the day and the clock, the title and the message, then the buttons left to right: <b>Open in admin →</b>, <b>✓ Done</b>, <b>Close</b>, and a square <b>trash</b> on its own at the far right. (Before this step, the onward button sat last.) Press Close: the row stays in Needs attention, its dot gone.</p></div></li>
+        <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Below, in the list, click <b>Assistant coach joined</b>.</p><p class="qasee"><b>Open Settings →</b>, <b>Close</b> and the trash. No Done: this one was never in Needs attention. Press Close.</p></div></li>
+        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Click any <b>Your week in review — UAT Test Team</b> and press the <b>trash</b>.</p><p class="qasee">No question. The dialog closes, that review is gone from the list, and a dark pill, <b>Notification deleted · Undo</b>, sits centred under the list’s column at the bottom of the window. Because the rail is on the left, that is right of the window’s middle. It is not in a corner.</p></div></li>
+        <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Undo</b> within six seconds.</p><p class="qasee">The review is back where it was, read (no dot), and the pill is gone.</p></div></li>
+        <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Press the trash on that review again, wait ten seconds, then reload the page.</p><p class="qasee">The pill goes by itself after about six seconds. After the reload, the review is still gone.</p></div></li>
+        <li><input type="checkbox" id="w1s7" aria-label="W1 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Delete another week in review, and within six seconds click the <b>gear</b> at the top (Notification settings). Then use <b>← Back to your Coaches Portal</b>.</p><p class="qasee">Back on Notifications, that review is gone too: leaving the page sent the delete rather than dropping it.</p></div></li>
+        <li><input type="checkbox" id="w1s8" aria-label="W1 step 8"><div class="qabody"><span class="qan"></span><p class="qado">With the keyboard only: Tab to <b>Rain delay — all 4:00 p.m. games pushed 45 minutes</b>, press Enter, Tab to the trash, press Enter. Then press Enter again.</p><p class="qasee">After the delete, focus is on the pill’s <b>Undo</b> (outlined), so the second Enter brings the row back. Pressing Tab then moves on through the list; focus does not jump back to the top of the page.</p></div></li>
+        <li><input type="checkbox" id="w1s9" aria-label="W1 step 9"><div class="qabody"><span class="qan"></span><p class="qado">On <b>Team marked no-show</b>, press the row’s own <b>Done</b>.</p><p class="qasee">It leaves Needs attention and appears in the list below under its day, read. Needs attention now holds two.</p></div></li>
+        <li><input type="checkbox" id="w1s10" aria-label="W1 step 10"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Mark all read</b>, then reload the page.</p><p class="qasee">Every unread dot is gone, <b>Assistant coach invite awaiting approval</b>’s included, and it is <b>still pinned under Needs attention</b> with its Done button: reading is not finishing. Mark all read has gone (nothing left to read). After the reload the bell at the top right shows no red number.</p></div></li>
+        <li><input type="checkbox" id="w1s11" aria-label="W1 step 11"><div class="qabody"><span class="qan"></span><p class="qado">Press the page’s <b>?</b> (help).</p><p class="qasee">The notifications part says Needs-attention rows <b>stay until you mark them Done</b>, that <b>Mark all read</b> marks everything read but leaves them pinned, and that the <b>trash</b> deletes a notification from your list with <b>Undo</b> for a few seconds.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W1 verdict">
+        <button type="button" data-w="w1" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w1" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w1" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w1"></span>
+      </div>
+      <label class="meta" for="w1notes">Notes for W1</label>
+      <textarea id="w1notes" class="qanotes" data-notes="w1"></textarea>
+    </div>
+
+    <div class="qawalk" id="w2" hidden>
+      <h2>W2 · The same on a phone</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>On a phone the opened notification is a sheet above the bottom bar. Its trash sits with Close at thumb size, and the Undo note sits just above the bar without covering it.</p>
+        <h3>It passes when</h3><p>The trash is a thumb-sized square at the end of the row under the onward button; after a delete the pill is centred just above the bar and the bar stays fully visible; Undo works with a thumb; in Dark the pill is light on the dark page.</p>
+        <h3>Not in this walk</h3><p>Done and Mark all read (W1 covered both; they are the same code on a phone).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone (or a window about 390px wide), as the coach, open <b>/uat-test-org/coaches/notifications</b> and tap a <b>Your week in review</b>.</p><p class="qasee">A sheet rises above the bottom bar. <b>Open Insights →</b> spans the sheet; below it <b>Close</b> and a square <b>trash</b> at the end, both thumb-sized. The bar stays visible under the sheet.</p></div></li>
+        <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap the <b>trash</b>.</p><p class="qasee">The sheet closes and the review is gone. <b>Notification deleted · Undo</b> sits centred just above the bottom bar; the bar is fully visible and nothing on it is covered.</p></div></li>
+        <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Undo</b>.</p><p class="qasee">The review is back where it was, read.</p></div></li>
+        <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>http://localhost:3000/account/appearance</b>, choose <b>Dark</b>, come back to the Notifications page, and repeat steps 1 and 2, then Undo.</p><p class="qasee">The pill is light with dark words over the dark page, still centred above the bar. Switch back to Warm afterwards if that is how you keep it.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W2 verdict">
+        <button type="button" data-w="w2" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w2" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w2" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w2"></span>
+      </div>
+      <label class="meta" for="w2notes">Notes for W2</label>
+      <textarea id="w2notes" class="qanotes" data-notes="w2"></textarea>
+    </div>
+
+    <div class="qawalk" id="w3" hidden>
+      <h2>W3 · The club treasurer’s bell</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>In the club’s bell, a money notice that needs an answer says Done, not Clear, and Mark all read now reads it too. It still waits in Needs attention until someone marks it Done.</p>
+        <h3>It passes when</h3><p>Both money notices show Done; after Mark all read neither has a dot and both are still under Needs attention, before and after a reload; the help says the same.</p>
+        <h3>Not in this walk</h3><p>A click on a bell row still loads the page, as before: the drawer is step 2. The holding-up notice opening its one request is checked by a test, not walked: dev’s only one was sent before this change.</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w3s1" aria-label="W3 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a computer, sign in as the treasurer, open <b>/uat-rep-club/admin</b> and click the <b>bell</b> at the top right.</p><p class="qasee">Under <b>Needs attention</b>: <b>11U AA says they sent $450.00</b> with an unread dot, and <b>A request from 15U AAA is holding up their payout to families</b> without one. Each has a <b>Done</b> button; nothing says Clear.</p></div></li>
+        <li><input type="checkbox" id="w3s2" aria-label="W3 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Mark all read</b>.</p><p class="qasee">The dot on the $450.00 notice goes, both notices stay under Needs attention with Done, Mark all read goes, and the bell’s red number goes. (Before this step, Mark all read left that dot on.)</p></div></li>
+        <li><input type="checkbox" id="w3s3" aria-label="W3 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Reload the page and open the bell again.</p><p class="qasee">The same: nothing unread, and both notices are still under Needs attention. Mark all read did not mark either of them Done.</p></div></li>
+        <li><input type="checkbox" id="w3s4" aria-label="W3 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Open Help and search <b>mark all read</b>.</p><p class="qasee">The notifications article says Needs-attention rows <b>stay until you mark them Done</b>, and that Mark all read <b>marks them read too, but they stay pinned until you mark them Done</b>.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W3 verdict">
+        <button type="button" data-w="w3" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w3" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w3" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w3"></span>
+      </div>
+      <label class="meta" for="w3notes">Notes for W3</label>
+      <textarea id="w3notes" class="qanotes" data-notes="w3"></textarea>
+    </div>
+
+  <div class="qacard">
+    <h3>Paste-back</h3>
+    <div class="qatools"><button type="button" class="button" id="qaBuildOne">Summary of this walk</button><button type="button" class="button" id="qaBuildAll">Summary of all three</button><button type="button" class="button" id="qaCopy">Copy</button></div>
+    <pre class="qaout" id="qaOut" aria-live="polite"></pre>
+  </div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody explain" id="dialogbody"></div></dialog>
+
+<!-- The admin's Notifications page on a phone (drawn, not captured); cloned into each phone frame -->
+<template id="tpl-phone">
+  <div class="ph-main">
+    <div class="ph-title"><b>Notifications</b><span class="dw-x"><svg><use href="#i-gear"/></svg></span></div>
+    <div class="ph-tools"><span class="chip on">All</span><span class="chip">Needs attention <i>2</i></span><span class="chip">Activity</span><span class="seg"><b class="on">Unread</b><b>All</b></span></div>
+    <div class="ph-list">
+      <div class="np-sec" style="background:var(--p-paper)"><span>Needs attention</span><span>2</span><span class="hint" data-hint>stays until you clear it</span></div>
+      <div class="pr act"><span class="np-ic">⏳</span><div class="np-c"><p class="t">A request from 15U AAA is holding up their payout to families</p><p class="b">Their coach can’t pay families their end-of-season share until you answer it.</p><div class="m"><span class="np-time">just now</span><span class="np-clear" data-done>Clear</span></div></div></div>
+      <div class="pr act unread"><span class="np-ic">📤</span><div class="np-c"><p class="t">11U AA says they sent $450.00</p><p class="b">Diamond fees 2026, 1 of 3 · sent Oct 5 · e-Transfer 8842. Confirm it when it arrives.</p><div class="m"><span class="np-time">3h ago</span><span class="np-clear" data-done>Clear</span></div></div><span class="np-dot"></span></div>
+      <div class="np-date" style="background:var(--p-paper)">Today</div>
+      <div class="pr unread"><span class="np-ic">📋</span><div class="np-c"><p class="t">3 new registrations</p><div class="m"><span class="np-time">2h ago</span></div></div><span class="np-dot"></span></div>
+    </div>
+  </div>
+  <div class="ph-bar">
+    <span><svg><use href="#i-home"/></svg>Home</span>
+    <span><svg><use href="#i-team"/></svg>Rep teams</span>
+    <span><svg><use href="#i-money"/></svg>Accounting</span>
+    <span class="on"><svg><use href="#i-more"/></svg>More</span>
+  </div>
+</template>
+
+<script>
+/* Specimens: clone the page, the lists, the phone page, the message panes and the opened message
+   into every frame that asks for them. Order matters: panes before the message slots they hold. */
+(function () {
+  function tpl(id) { return document.getElementById(id).content.cloneNode(true); }
+  function cursorOn(row) {
+    row.classList.add('hover');
+    var c = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    c.setAttribute('class', 'cursor'); c.setAttribute('viewBox', '0 0 18 22');
+    c.style.left = '170px'; c.style.top = '22px';
+    var u = document.createElementNS('http://www.w3.org/2000/svg', 'use'); u.setAttribute('href', '#i-cursor');
+    c.appendChild(u); row.appendChild(c);
+    /* Round 3: the trash shows on the row under the pointer (and on keyboard focus). */
+    var t = document.createElement('span'); t.className = 'np-trash'; t.title = 'Delete';
+    t.innerHTML = '<svg><use href="#i-trash"/></svg>';
+    row.appendChild(t);
+  }
+  document.querySelectorAll('[data-page]').forEach(function (pg) {
+    pg.insertBefore(tpl('tpl-page'), pg.firstChild);
+    if (pg.querySelector('.at-bell, .dw')) { var b = pg.querySelector('[data-bell]'); if (b) b.classList.add('on'); }
+  });
+  document.querySelectorAll('[data-list]').forEach(function (np) {
+    np.appendChild(tpl('tpl-list'));
+  });
+  document.querySelectorAll('[data-dwlist]').forEach(function (dl) {
+    dl.appendChild(tpl('tpl-dwlist'));
+    var first = dl.querySelector('[data-r="1"]');
+    if (dl.hasAttribute('data-sel')) first.classList.add('sel');
+    if (dl.hasAttribute('data-hover')) cursorOn(first);
+  });
+  document.querySelectorAll('[data-phone]').forEach(function (ph) {
+    ph.insertBefore(tpl('tpl-phone'), ph.firstChild);
+    if (ph.hasAttribute('data-proposed')) {
+      ph.querySelectorAll('[data-done]').forEach(function (d) { d.innerHTML = '<svg><use href="#i-check"/></svg>Done'; });
+      ph.querySelectorAll('[data-hint]').forEach(function (h) { h.textContent = 'stays until you mark it Done'; });
+    }
+  });
+  document.querySelectorAll('[data-pane="hold"]').forEach(function (pane) {
+    pane.appendChild(tpl('tpl-pane-hold'));
+  });
+  document.querySelectorAll('[data-msg="hold"]').forEach(function (slot) {
+    slot.replaceWith(tpl('tpl-msg-hold'));
+  });
+})();
+</script>
+<script>
+/* Navigation: the hub tabs and the screen walk. */
+(function () {
+  var HUBS = ['mockup', 'decisions', 'brief', 'plan', 'qa'];
+  var tabs = document.querySelectorAll('.hubtabs button');
+  function showHub(name) {
+    tabs.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.hub === name)); });
+    HUBS.forEach(function (n) { document.getElementById('hub-' + n).hidden = n !== name; });
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { showHub(b.dataset.hub); window.scrollTo(0, 0); }); });
+  window.__showHub = showHub;
+
+  var links = document.querySelectorAll('.walk a');
+  var screens = document.querySelectorAll('#hub-mockup .screen');
+  function showScreen(id, focus) {
+    if (!document.getElementById(id)) id = 's-today';
+    screens.forEach(function (s) { s.hidden = s.id !== id; });
+    links.forEach(function (a) { if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    if (focus) { var h = document.querySelector('#' + id + ' h1'); if (h) h.focus({ preventScroll: true }); }
+  }
+  links.forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var id = a.getAttribute('href').slice(1);
+      showHub('mockup'); showScreen(id, true);
+      try { history.replaceState(null, '', '#' + id); } catch (err) {}
+    });
+  });
+  var start = (location.hash || '').slice(1);
+  if (/^s-/.test(start)) showScreen(start, false);
+  else if (HUBS.indexOf(start) > 0) showHub(start);
+})();
+</script>
+<script>
+/* Explanations: every marker and tag opens what it points at. The words live in the page itself
+   (the Decisions tab and each marker's data-here). */
+(function () {
+  var dialog = document.getElementById('dialog');
+  var title = document.getElementById('dialogtitle');
+  var body = document.getElementById('dialogbody');
+  document.getElementById('closeDialog').addEventListener('click', function () { dialog.close(); });
+  dialog.addEventListener('click', function (e) { if (e.target === dialog) dialog.close(); });
+  function section(head, text, cls) {
+    var h = document.createElement('h3'); h.textContent = head;
+    var p = document.createElement('p'); p.textContent = text; if (cls) p.className = cls;
+    body.appendChild(h); body.appendChild(p);
+  }
+  function openDecision(id, here) {
+    var row = document.getElementById(id);
+    if (!row) return;
+    body.textContent = '';
+    title.textContent = row.querySelector('h3').textContent;
+    if (here) section('Where you are looking', here, 'here');
+    section('The proposal', row.querySelector('p').textContent);
+    var rec = row.querySelector('.rec'); if (rec) section('Recommendation', rec.textContent);
+    var alt = row.querySelector('.altx'); if (alt) section('The alternative', alt.textContent);
+    var go = document.createElement('button');
+    go.type = 'button'; go.className = 'button'; go.textContent = 'Open it on the Decisions tab';
+    go.addEventListener('click', function () { dialog.close(); window.__showHub('decisions'); row.scrollIntoView(); });
+    body.appendChild(go);
+    dialog.showModal();
+  }
+  var KIND = { new: 'New', re: 'Restyled', un: 'Unchanged', gone: 'Removed' };
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-d]');
+    if (t) { e.preventDefault(); openDecision(t.dataset.d, t.dataset.here); return; }
+    var mk = e.target.closest('.mk');
+    if (mk) {
+      e.preventDefault();
+      body.textContent = '';
+      title.textContent = KIND[mk.dataset.k] || 'Note';
+      section('What this is', mk.dataset.note);
+      dialog.showModal();
+    }
+  });
+  document.querySelectorAll('.mk').forEach(function (mk) {
+    mk.setAttribute('role', 'button'); mk.tabIndex = 0;
+    mk.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mk.click(); } });
+  });
+})();
+</script>
+<script>
+(function () {
+  var KEY = 'notif-open-place-walk-265-v1';
+  var WALKS = ['w1', 'w2', 'w3'];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: 'w1' };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') state = Object.assign(state, p); } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var TITLES = {};
+  WALKS.forEach(function (w) { TITLES[w] = document.querySelector('#' + w + ' h2').textContent; });
+  var LABEL = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+  function boxes(w) { return Array.prototype.slice.call(document.querySelectorAll('#' + w + ' input[type="checkbox"]')); }
+  function count(w) { var b = boxes(w); return { n: b.filter(function (x) { return state.ticks[x.id]; }).length, of: b.length }; }
+  function render() {
+    WALKS.forEach(function (w) {
+      boxes(w).forEach(function (b) { b.checked = !!state.ticks[b.id]; b.closest('li').classList.toggle('done', b.checked); });
+      var c = count(w);
+      document.querySelector('[data-prog="' + w + '"]').textContent = c.n + ' of ' + c.of + ' ticked';
+      document.querySelectorAll('.qaverdict button[data-w="' + w + '"]').forEach(function (btn) { btn.setAttribute('aria-pressed', String(state.verdict[w] === btn.getAttribute('data-v'))); });
+      var chip = document.querySelector('[data-chip="' + w + '"]'), v = state.verdict[w], text = 'Not started', st = '';
+      if (v === 'pass' && c.n < c.of) { text = 'Passed · only ' + c.n + ' of ' + c.of + ' ticked'; st = 'partial'; }
+      else if (v === 'pass') { text = 'Passed'; st = 'pass'; }
+      else if (v === 'issue') { text = 'Issue'; st = 'issue'; }
+      else if (v === 'call') { text = 'Needs a call'; st = 'call'; }
+      else if (c.n > 0) { text = 'In progress · ' + c.n + ' of ' + c.of; }
+      chip.textContent = text; chip.setAttribute('data-s', st);
+      var ta = document.querySelector('[data-notes="' + w + '"]'); if (document.activeElement !== ta) ta.value = state.notes[w] || '';
+      document.getElementById(w).hidden = state.open !== w;
+      document.querySelector('.qawcard[data-walk="' + w + '"]').setAttribute('aria-pressed', String(state.open === w));
+    });
+  }
+  document.getElementById('hub-qa').addEventListener('change', function (e) { var t = e.target; if (t && t.type === 'checkbox') { state.ticks[t.id] = t.checked; save(); render(); } });
+  document.querySelectorAll('#hub-qa textarea[data-notes]').forEach(function (ta) { ta.addEventListener('input', function () { state.notes[ta.getAttribute('data-notes')] = ta.value; save(); }); });
+  document.querySelectorAll('#hub-qa .qaverdict button').forEach(function (btn) { btn.addEventListener('click', function () { var w = btn.getAttribute('data-w'), v = btn.getAttribute('data-v'); state.verdict[w] = state.verdict[w] === v ? null : v; save(); render(); }); });
+  document.querySelectorAll('#hub-qa .qawcard').forEach(function (c) { c.addEventListener('click', function () { state.open = c.getAttribute('data-walk'); save(); render(); }); });
+  function summary(w) {
+    var c = count(w);
+    var lines = [TITLES[w] + ' — ' + (state.verdict[w] ? '[' + LABEL[state.verdict[w]] + ']' : '[no verdict]') + ' ' + c.n + '/' + c.of];
+    var un = boxes(w).filter(function (b) { return !state.ticks[b.id]; }).map(function (b) { return b.id.replace(w + 's', ''); });
+    if (un.length) lines.push('  not ticked: step ' + un.join(', '));
+    if (state.notes[w]) lines.push('  notes: ' + state.notes[w].trim());
+    return lines.join('\n');
+  }
+  var out = document.getElementById('qaOut');
+  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = '§265 Notifications Open in Place step 1\n' + summary(state.open); });
+  document.getElementById('qaBuildAll').addEventListener('click', function () {
+    var n = 0, of = 0; WALKS.forEach(function (w) { var c = count(w); n += c.n; of += c.of; });
+    out.textContent = '§265 Notifications Open in Place step 1 — checked ' + n + ' of ' + of + '\n' + WALKS.map(summary).join('\n');
+  });
+  function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+  document.getElementById('qaCopy').addEventListener('click', function () { var text = out.textContent; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(selectOut); else selectOut(); });
+  render();
+})();
+</script>

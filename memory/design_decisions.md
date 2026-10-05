@@ -7,6 +7,25 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-05 — A NOTIFICATION OPENS WHERE YOU ARE; READ, DONE AND DELETE ARE THREE WORDS FOR THREE THINGS (owner: "looks good" on round 3, all nine as recommended) — hub https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, plan `docs/projects/active/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md`
+
+**Decision:** (D1) a click on a notification OPENS it (kind, day + clock, whole message) and marks it read; the page is a
+second, named click. (D2) on a computer the bell opens a DRAWER holding the list (380px, full height); a notification
+opens in a 440px pane to the LEFT of the list, selected row highlighted (the owner's own idea, from his banking app).
+(D3) an opened notification has Open [the place] · Done (Needs attention only) · a trash (own copy only, Undo, no
+confirmation) · close; no Mark read button. (D4) the button names the page in that screen's words and lands on the
+record. (D5) the admin's Notifications page opens them too (menu-layer sheet on a phone). (D6) the drawer IS the list on
+a computer; "See all" leaves the bell; the pages stay for phones. (D7) two panes at every width > 900. (D8) **Clear
+becomes Done** everywhere a customer reads it. (D9) Mark all read marks EVERYTHING read — reverses the 09-03 rule.
+**Rationale:** the bell cut every row to one line and a click left for an unnamed page (the screenshot's first row
+reloaded the page he was on). The reader already existed (coach page, 09-25) and was kept off the bell on the premise
+"the bell is a glance", which the money notices broke. **Read ≠ handled:** the 15U AAA notice was READ and still in Needs
+attention, so "Mark read" (the owner's first suggestion) would have done nothing; "Clear" beside a trash reads as delete.
+The 09-03 mark-all skip protected decisions only while reading moved a row out of Needs attention; since 09-06 only
+`cleared_at` does. Round 1's "a delete loses the money record" was WRONG (the bill and request hold the facts; rows are
+per recipient; nothing purges them). ⚠ **There is no bell on a phone in either portal** (both top strips hide ≤ 900);
+round 1 drew one. **Applies to:** both bells, both Notifications pages, the coach reader, help.
+
 ### 2026-10-05 — A FILTER'S COUNT SITS AT ITS ROW'S END; A NARROWED PILL NAMES ITS CHOICES (owner: "I agree with all of your recommendations") — hub https://claude.ai/artifact/EFWMUeiC3sLkn4CQaBqzrw, plan `docs/projects/active/FILTER_COUNTS_PLAN.md`
 
 **Decision:** (D1) a multi-choice filter's counts are a quiet number at the END of each choice's row (the Awards
