@@ -31,13 +31,17 @@ context line) for a sheet about one record.
 
 1. **Disagree out loud** if the code says something the plan does not; argue from what the code does. Every fact in the
    plan is a lead to verify.
-2. **Check for parallel work on your step's files** (`git status`, `git log --since=<last week> -- <files>`). On
-   2026-10-05 another session had uncommitted edits to `components/coaches/CoachToolbarMenu.module.css` and
-   `coaches.module.css` (One control height) — step 1 waits until that has landed; and a call-ups session was editing
-   the lineup builder's Call up sheet and its guard — step 5 waits for that too. Never touch a file you did not change.
-3. **Capture before.** Copy `.probe/fc/sheets.mjs` + `sheet-lib.js` (they measure each sheet live: corners, layer,
-   dim, height, role, `aria-modal`, Escape and focus) into `.probe/<your-dir>/` and capture every sheet your step
-   touches at 390 (touch), warm and dark. Re-sign stale logins with
+2. **Check for parallel work on your step's files** (`git status`, `git log --since=<last week> -- <files>`). One
+   control height (the uncommitted `CoachToolbarMenu.module.css` / `coaches.module.css` edits step 1 waited for) was
+   committed `d9302f6f` 2026-10-05. On 2026-10-05 a call-ups session was editing the lineup builder's Call up sheet,
+   its guard and the lineup PDF — step 5 waits for that. Never touch a file you did not change.
+3. **Capture before.** Step 1's probe is the one to copy: `.probe/sf1/capture.mjs` (opens each sheet live at 390
+   touch, records the hub's facts via `.probe/fc/sheet-lib.js`, a computed-style fingerprint of the sheet and every
+   row inside it, a pixel clip, then Escape and a tap on the dim) and `.probe/sf1/diff.mjs` (before vs after, style
+   and pixels). ⚠ `sheet-lib.js` guesses a sheet's title from class names (`[class*="itle"]`), so it misreads the
+   frame's `.label` — trust the fingerprint and the pixels, not `facts.title`. Capture every sheet your step touches,
+   warm and dark. The shared frame is `components/coaches/SheetFrame.tsx` (menu layer; the form layer is step 3's to
+   add). Re-sign stale logins with
    `npx playwright test --config playwright.config.ts --project=auth-setup -g "coach|org-owner"`.
 4. **Present the step's plan** in product-owner words (what a coach sees change, if anything) and a task list. If the
    step needs something the hub never drew, draw it first (an Artifact, true size) and ask; otherwise proceed.

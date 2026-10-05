@@ -1,0 +1,82 @@
+/* ═══ THE SHEET FRAME — one frame for the portal's phone sheets (Sheet Frame, owner rulings D1–D6,
+   2026-10-05; hub https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, plan
+   docs/projects/active/SHEET_FRAME_PLAN.md). Promoted in step 1 from the Tools menu's drawer
+   (`CoachToolbarMenu`'s `drawerOnPhone`, phone re-evaluation stage 4 · E1, 2026-09-22), whose second
+   consumer — the Ledgers' Filter sheet — had been wearing that menu's classes directly. ═══
+
+   Full width, flush to the bar's top, 18px top corners, a grab line, the card surface, the page dimmed
+   behind it (the dim is `LineupSheetScrim`, which `SheetFrame` renders beside the sheet), and a height
+   cap with the scroll contained, so a long list never drags the page behind it.
+
+   ⚠ THE MENU LAYER ONLY, SO FAR. D1 sorts every sheet by one test — "would a stray tap on the bar lose
+   something?" A sheet that loses nothing (a list of things to do; a filter that saves each tap) sits ON
+   TOP of the bar: under it in z (260, the nav is 300), the bar lit and live. The FORM layer — over the
+   bar, modal, the keyboard kept inside — joins with its first consumer, the game day's Note (step 3);
+   until then the lineup builder's `.lineupDrawerOverNav` is the only one.
+
+   ⚠ `--coach-foot-clear` IS THE BAR PLUS THE HOME INDICATOR. `.coachesShell` declares it, and
+   `.adminShell` declares it for the admin pages that borrow a portal sheet (the club's Ledger and
+   Allocations, the tournament's Teams). The sheet renders IN-TREE, never through a portal, so it
+   inherits the token; outside both shells the declaration is missing and the sheet would sit wherever it
+   happened to be — which is exactly what the club's three sheets did until step 1 (they hung under their
+   toolbar, undimmed). Do NOT hand-copy the arithmetic here, and do NOT add the safe-area inset again:
+   the token already holds it, and counting it twice floats the sheet off the bar. Do NOT raise the menu
+   layer above the nav either — the clearance is geometric, and anything above the nav also outranks the
+   sheets that open over it (the game-day console tried 301 and buried 68px of its own sheet).
+
+   ⚠ THE FRAME CARRIES ITS WHOLE SURFACE, AND THAT IS WHY A SHEET WEARS THIS CLASS ALONE. The Tools drawer
+   used to be `.panel` + `.drawer` — two classes in one stylesheet, where source order let the second
+   win. Split across two CSS modules at equal specificity, the winner is decided by BUNDLE ORDER (the
+   repo's known trap), so a framed sheet does not wear the popover's `.panel` at all.
+
+   ⚠ THE BAND. A caller decides WHEN its sheet is a sheet (the Tools menu and the Filter sheet: ≤640, by
+   `useIsPhone`). The media query is the belt: written inside the bar's own breakpoint, every declaration
+   here is inert on a computer even if a caller hands the class over at the wrong width. */
+@media (max-width: 900px) {
+  .sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--coach-foot-clear);
+    max-height: calc(100dvh - var(--coach-foot-clear) - 12px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 260;   /* under the nav (300), over the autosave pill (250) — the portal's sheet value */
+    padding: 6px 8px 14px;
+    background: var(--home-card, var(--bg-2));
+    border: 1px solid var(--home-line-strong, var(--white-15));
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+    overflow-wrap: anywhere;
+  }
+  /* The grab line, as a STICKY pseudo-element rather than a button: it stays at the head of the sheet
+     while the rows scroll under it, and it adds no tab stop — which matters, because a `role="menu"` has
+     exactly ONE tab stop and the arrow keys rove the rows. (The dim is the tap target for dismissing.) */
+  .sheet::before {
+    content: '';
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    width: 38px;
+    height: 4px;
+    margin: 0 auto 8px;
+    border-radius: 2px;
+    background: var(--border-2);
+  }
+}
+
+/* The menu LABEL (D2) — once the dim covers the row that opened the sheet, nothing on screen says what
+   this surface is. Small capitals in the secondary ink: a menu's head. (A form takes a sentence title and
+   a 44px ×; a sheet about one record takes the record's name — steps 3–5.) */
+.label {
+  margin: 0 0 0.1rem;
+  padding: 0 0.6rem;
+  font-family: var(--font-display);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}

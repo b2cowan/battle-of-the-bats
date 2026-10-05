@@ -10,13 +10,9 @@
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 .teamsPage { min-width: 0; }
-/* The Tools sheet is the coaches portal's ⋯ menu (`CoachToolbarMenu`, the practice plan's E1 form),
-   reused: on a phone it and its scrim stop at `--coach-foot-clear`, which the coach shell declares as
-   its nav plus the home indicator. The admin has no coach shell, so this page says what that sum is
-   here — the admin's bar, its context strip and the home indicator, the docked bulk bar's own sum. */
-@media (max-width: 640px) {
-  .teamsPage { --coach-foot-clear: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + var(--admin-strip-h, 0px)); }
-}
+/* The Tools sheet is the coaches portal's sheet frame (`CoachToolbarMenu`'s drawer); on a phone it, its dim and the
+   docked bulk bar below stop at `--coach-foot-clear`, which the admin shell declares (admin.module.css: the bar, the
+   context strip, the home indicator). This page declared its own copy until Sheet Frame step 1 (2026-10-05). */
 
 /* Money owed, in Check-in's ink (T5): the amber of money owed, never a status colour. */
 .owes { color: var(--warning-light); font-weight: 650; }
@@ -548,7 +544,7 @@ button.glanceTile:disabled { cursor: default; opacity: 1; }
     position: fixed;
     left: 0;
     right: 0;
-    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + var(--admin-strip-h, 0px));
+    bottom: var(--coach-foot-clear);
     z-index: 250;
     padding: 0.5rem 0.75rem 0.6rem;
     background: var(--card-bg);

@@ -82,6 +82,12 @@
        collapses every offset that reads it (incl. the shell's own padding-top) back to
        today's exact mobile geometry. */
     --admin-topstrip-h: 0px;
+    /* The portal's sheets borrowed into the admin (the Tools ⋯ and the Filter sheet — the club's Ledger and
+       Allocations, the tournament's Teams) rise from the bar's top at `--coach-foot-clear`, which the coach
+       shell declares for itself. This is the admin's answer to the same question: its bar (the coach bar's own
+       stylesheet, so the same height), the context strip above it when one shows, and the home indicator.
+       Without it the club's sheets hung under their toolbar, undimmed (Sheet Frame step 1, 2026-10-05). */
+    --coach-foot-clear: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + var(--admin-strip-h, 0px));
     flex-direction: column;
     /* App-shell pattern: lock to viewport height so adminMain's overflow-y:auto
        handles all scrolling. Prevents body-scroll / overscroll into empty flex

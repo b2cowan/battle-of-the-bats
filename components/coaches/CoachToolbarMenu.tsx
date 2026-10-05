@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Check, ChevronDown } from 'lucide-react';
 import { rescueFocusTo, useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import LineupSheetScrim from './LineupSheetScrim';
+import SheetFrame from './SheetFrame';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './CoachToolbarMenu.module.css';
 
@@ -122,14 +122,17 @@ export function CoachToolbarMenu({
    * on whether an overlay appeared. The first probe next door reported "no fall-through" and was
    * wrong, because the fall-through pressed a button, and a button opens nothing.
    *
-   * The band is ≤640 in JS as well as in CSS (`useIsPhone`), so the 641–900 popover — and the
-   * sibling ≤900 drawer recipe the builder's own panels use — are both left exactly as they are.
+   * The band is ≤640 in JS (`useIsPhone`), so the 641–900 popover — and the sibling ≤900 drawer
+   * recipe the builder's own panels use — are both left exactly as they are.
+   *
+   * ⚠ The drawer IS the portal's sheet frame (`SheetFrame`, Sheet Frame step 1, 2026-10-05) — the frame
+   * was promoted from this drawer, so every caller's sheet moved with it and no caller changed.
    */
   drawerOnPhone?: boolean;
   /**
-   * What the drawer calls itself — drawn only in drawer mode, and only because the scrim hides the
-   * row that opened it (D12 gave the builder's drawers a title for the same reason). A desktop
-   * popover hanging off a visible "⋯" needs none, which is why this is not a `heading` child.
+   * What the drawer calls itself — the frame's menu label, drawn only in drawer mode, and only because
+   * the scrim hides the row that opened it (D12 gave the builder's drawers a title for the same reason).
+   * A desktop popover hanging off a visible "⋯" needs none, which is why this is not a `heading` child.
    */
   drawerTitle?: string;
   /**
@@ -201,8 +204,10 @@ export function CoachToolbarMenu({
    * `rescueFocusTo` in `lib/overlay-hooks`, shared with the Ledgers' phone Filter sheet.)
    */
   const rescueFocus = useCallback(() => rescueFocusTo(triggerRef), []);
+  /** Close, then the safety net — every way out of the menu but Tab (which hands focus back itself). */
+  const dismiss = useCallback(() => { setOpen(false); rescueFocus(); }, [setOpen, rescueFocus]);
 
-  useDismissable(open, rootRef, () => { setOpen(false); rescueFocus(); });
+  useDismissable(open, rootRef, dismiss);
 
   /** The items a keyboard may land on. Disabled rows are not focus stops. */
   const items = useCallback(
@@ -216,13 +221,6 @@ export function CoachToolbarMenu({
     const wrapped = ((index % list.length) + list.length) % list.length;
     list[wrapped].focus({ preventScroll: true });
   }, [items]);
-
-  useEffect(() => {
-    if (!open) return;
-    const list = items();
-    (openOnRef.current === 'last' ? list[list.length - 1] : list[0])?.focus({ preventScroll: true });
-    openOnRef.current = 'first';
-  }, [open, items]);
 
   /* One handler on the ROOT, so it hears the trigger and the panel alike — the panel is a child of
      this element, which is also what lets `useDismissable` take a single boundary ref. */
@@ -256,20 +254,44 @@ export function CoachToolbarMenu({
   // when a caller actually needs one.
   // A glyph trigger's menu is a short list of one-word choices (List · Week · Month) — 160 wide,
   // the drawing's number; the worded triggers keep the room their hints need.
-  const panelStyle = useAnchoredMenu(open, rootRef, panelRef, {
-    minWidth: variant === 'glyph' ? 160 : 260,
-    narrowMinWidth: variant === 'glyph' ? 160 : 200,
-    align: 'end',
-  });
-  /* The drawer is a phone presentation of the SAME panel (E1). `useAnchoredMenu` still runs — a
-     hook cannot be conditional, and the popover must be placed the instant the width crosses back —
-     but its measured `top`/`left` are INLINE styles and would beat the drawer's own `position:
-     fixed` from the stylesheet, so drawer mode simply does not wear them. */
   /* ⚠ Asked only when this menu can actually USE the answer. This component is rendered once per
      CHIP on the practice-plan editor and the groups room, so an unconditional subscription opened a
      matchMedia listener per player for a drawer those callers never request (/review, 2026-09-22). */
   const isPhone = useIsPhone(drawerOnPhone);
   const asDrawer = drawerOnPhone && isPhone;
+  /* The drawer is a phone presentation of the SAME panel (E1). `useAnchoredMenu` is still called — a
+     hook cannot be conditional — but it PLACES only the popover: in drawer mode its measured
+     `top`/`left` would be thrown away (inline, they would also beat the frame's `position: fixed`),
+     and its scroll listener re-measured on every scroll of a long sheet. It places the popover the
+     instant the width crosses back, because its open argument flips then. */
+  const panelStyle = useAnchoredMenu(open && !asDrawer, rootRef, panelRef, {
+    minWidth: variant === 'glyph' ? 160 : 260,
+    narrowMinWidth: variant === 'glyph' ? 160 : 200,
+    align: 'end',
+  });
+
+  /* Focus moves into the panel on open (see the component doc) — and AGAIN when the width crosses 640
+     while it is open: the sheet and the popover are different elements, so the panel remounts, the
+     focused item goes with it, and focus fell to `<body>`, where the arrow keys (heard on the root) do
+     nothing. Found by /review 2026-10-05 (Sheet Frame step 1); before the frame, one element changed
+     its class and kept its focus. */
+  useEffect(() => {
+    if (!open) return;
+    const list = items();
+    (openOnRef.current === 'last' ? list[list.length - 1] : list[0])?.focus({ preventScroll: true });
+    openOnRef.current = 'first';
+  }, [open, asDrawer, items]);
+
+  /* One place decides that picking something closes the menu — popover and sheet alike — so no item has
+     to remember to, including an item that goes on to open a dialog, which wants this menu gone before
+     it appears.
+     ⚠ Picking an item unmounts the item, so focus fell to `<body>` — a keyboard user landed OUTSIDE the
+     dialog they had just opened, and these dialogs carry no focus trap, so the next Tab walked the page
+     BEHIND them. `rescueFocus` is the answer, and it yields to a dialog that focuses itself rather than
+     competing with it (see its own note above). */
+  const pickCloses = (event: React.MouseEvent) => {
+    if ((event.target as HTMLElement).closest('button')) dismiss();
+  };
 
   return (
     /* ⚠ `data-escape-owner` WHILE OPEN — the other half of the Escape contract (`escapeOwnership.ts`).
@@ -299,33 +321,17 @@ export function CoachToolbarMenu({
         {variant === 'glyph' ? null : collapseOnPhone ? <span className={shared.headerBtnLabel}>{label}</span> : label}
         {variant !== 'chip' && variant !== 'glyph' && <ChevronDown size={14} aria-hidden />}
       </button>
-      {/* ⚠ INSIDE `rootRef`, which is the element `useDismissable` watches — see `drawerOnPhone`
-          above for the defect a sibling scrim caused next door, and why a mouse never shows it. */}
-      {open && asDrawer && <LineupSheetScrim onClose={() => { setOpen(false); rescueFocus(); }} />}
-      {open && (
-        <div
-          ref={panelRef}
-          className={`${styles.panel}${asDrawer ? ` ${styles.drawer}` : ''}`}
-          style={asDrawer ? undefined : panelStyle}
-          role="menu"
-          // One place decides that picking something closes the menu, so no item has to remember
-          // to — including an item that goes on to open a dialog, which wants this menu gone
-          // before it appears.
-          //
-          // ⚠ Picking an item unmounts the item, so focus fell to `<body>` — a keyboard user landed
-          // OUTSIDE the dialog they had just opened, and these dialogs carry no focus trap, so the
-          // next Tab walked the page BEHIND them. `rescueFocus` is the answer, and it yields to a
-          // dialog that focuses itself rather than competing with it (see its own note above).
-          onClick={event => {
-            if (!(event.target as HTMLElement).closest('button')) return;
-            setOpen(false);
-            rescueFocus();
-          }}
-        >
-          {asDrawer && drawerTitle && <div className={styles.drawerTitle}>{drawerTitle}</div>}
+      {/* ⚠ Inside `rootRef`, the element `useDismissable` watches — the frame brings its dim with it (see
+          `SheetFrame`, and `drawerOnPhone` above for the defect a dim outside it caused). */}
+      {open && (asDrawer ? (
+        <SheetFrame ref={panelRef} label={drawerTitle} onClose={dismiss} role="menu" onClick={pickCloses}>
+          {children}
+        </SheetFrame>
+      ) : (
+        <div ref={panelRef} className={styles.panel} style={panelStyle} role="menu" onClick={pickCloses}>
           {children}
         </div>
-      )}
+      ))}
     </div>
   );
 }

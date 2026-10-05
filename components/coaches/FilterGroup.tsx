@@ -6,7 +6,7 @@ import {
 import { ChevronDown, X } from 'lucide-react';
 import { rescueFocusTo, useDismissable } from '@/lib/overlay-hooks';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import LineupSheetScrim from './LineupSheetScrim';
+import SheetFrame from './SheetFrame';
 import pill from '../shared/FilterPill.module.css';
 import menu from './CoachToolbarMenu.module.css';
 import styles from './FilterGroup.module.css';
@@ -160,8 +160,8 @@ export default function FilterGroup({ children }: { children: ReactNode }) {
       <div className={styles.pills}>
         <FilterGroupContext.Provider value={pillApi}>{children}</FilterGroupContext.Provider>
       </div>
-      {/* ⚠ The scrim renders INSIDE `rootRef`, the element `useDismissable` watches — a sibling scrim let a
-          touch dismissal fall through to the control underneath (CoachToolbarMenu's `drawerOnPhone`). */}
+      {/* ⚠ Inside `rootRef`, the element `useDismissable` watches — the frame brings its dim with it (see
+          `SheetFrame`). */}
       <div ref={rootRef} className={styles.phone} onBlur={onBlur} data-escape-owner={sheetOpen ? '' : undefined}>
         <button
           ref={triggerRef}
@@ -176,14 +176,15 @@ export default function FilterGroup({ children }: { children: ReactNode }) {
           {count > 0 && <span className={`${pill.multiSelectValue} ${styles.count}`} aria-hidden>{count}</span>}
           <ChevronDown size={14} aria-hidden />
         </button>
-        {sheetOpen && <LineupSheetScrim onClose={close} />}
         {sheetOpen && (
-          /* The Tools sheet's own drawer (E1) — not a menu: it holds checkboxes and date fields, so it is a
-             dialog, and picking a choice does not close it (D7: the list updates behind it). Modal, as every
-             scrim-backed dialog in the portal is: the page behind is dimmed AND out of a screen reader's reach;
-             Tab leaving the sheet closes it (onBlur above), so focus never sits behind it. */
-          <div ref={sheetRef} className={`${menu.panel} ${menu.drawer}`} role="dialog" aria-modal="true" aria-label={FILTER}>
-            <div className={menu.drawerTitle}>{FILTER}</div>
+          /* The portal's sheet frame, in the MENU layer (Sheet Frame D1, 2026-10-05): a stray tap on the bar loses
+             nothing here — each choice applies as it is made (D7: the list updates behind it) — so the bar stays
+             live and the sheet is NOT modal. (It was, on the ground that every dimmed sheet in the portal is; none of
+             the menu-layer sheets is, and this one has no close button for a screen reader to leave by.) A dialog,
+             not a menu: it holds checkboxes and date fields, and picking a choice does not close it. Tab leaving the
+             sheet closes it (onBlur above), so focus never sits behind it; a tap on the dim hands focus back to the
+             button, as the Tools sheets do. */
+          <SheetFrame ref={sheetRef} label={FILTER} onClose={() => { close(); rescueFocusTo(triggerRef); }} role="dialog" aria-label={FILTER}>
             <FilterGroupContext.Provider value={rowApi}>{children}</FilterGroupContext.Provider>
             {/* D6: only while something is on, and back to REST — Status to its resting pair, the date to its
                 resting window — never to "All". */}
@@ -199,7 +200,7 @@ export default function FilterGroup({ children }: { children: ReactNode }) {
                 </button>
               </div>
             )}
-          </div>
+          </SheetFrame>
         )}
       </div>
     </>

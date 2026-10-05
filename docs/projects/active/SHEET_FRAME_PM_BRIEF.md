@@ -2,6 +2,12 @@
 
 **Ruled 2026-10-05** (all six recommendations accepted). Hub: https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc
 
+**Step 1 built on dev 2026-10-05** — the shared frame exists, and every "⋯ / Tools" sheet and both Ledgers' Filter
+sheets come from it. A coach sees no change (proved by before-and-after captures of every sheet). One club fix rode
+along, approved by the owner: on the club's Ledger and Allocations, the Tools and Filter sheets hung half-way down the
+page with nothing dimmed behind them; they now rise from the bottom bar and dim the page, like the coach's. Owner QA
+§264.
+
 ## What changes for a coach
 
 Very little on screen, on purpose:

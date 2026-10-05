@@ -50,7 +50,6 @@ const read = (rel: string) => stripComments(readSource(rel));
 
 const PLAN_PAGE = 'app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx';
 const MENU = 'components/coaches/CoachToolbarMenu.tsx';
-const MENU_CSS = 'components/coaches/CoachToolbarMenu.module.css';
 const GRID = 'components/coaches/SessionRecordGrid.tsx';
 const SESSION_PAGE = 'app/[orgSlug]/coaches/teams/[teamId]/development/sessions/[sessionId]/page.tsx';
 const DIALOG = 'components/coaches/RecordObservationDialog.tsx';
@@ -63,7 +62,6 @@ const OBSERVATION_HOST = 'components/coaches/observation-sheet-host.ts';
 describe('E1 — the practice plan toolbar is one row, and the "⋯" opens a drawer', () => {
   const page = read(PLAN_PAGE);
   const menu = read(MENU);
-  const menuCss = readSource(MENU_CSS);
 
   it('the phone branch is the portal\'s 44px glyph trigger, and its panel is a drawer with a title', () => {
     assert.ok(page.includes('variant="glyph"'), 'the "⋯" is the shared 44px glyph square, not a new control');
@@ -102,24 +100,14 @@ describe('E1 — the practice plan toolbar is one row, and the "⋯" opens a dra
     // ⚠ The defect this pins was reproduced next door on 2026-09-22 under TOUCH emulation: a scrim
     // rendered as a SIBLING let the dismiss hook's pointerdown unmount the overlay, and the click
     // that followed pressed the button underneath — it marked a lineup READY, a state with no
-    // product path back. A mouse passed that test every single time. The ORDER in the source is the
-    // whole assertion: the scrim must sit inside `rootRef`'s element, above the panel.
+    // product path back. A mouse passed that test every single time.
+    // ⚖ Since Sheet Frame step 1 (2026-10-05) the drawer is the portal's sheet frame, which brings the scrim with
+    // it — so the frame's place inside the root is the scrim's place. The frame itself (the scrim behind the sheet,
+    // the token, z 260, nothing portalled, no second copy of the drawer) is pinned in sheet-frame-guard.
     const root = menu.indexOf('<div ref={rootRef}');
-    const scrim = menu.indexOf('<LineupSheetScrim');
-    const panel = menu.indexOf('ref={panelRef}');
-    assert.ok(root >= 0 && scrim > root, 'the scrim is inside the watched root element');
-    assert.ok(scrim < panel, 'and behind the panel');
+    assert.ok(root >= 0 && menu.indexOf('<SheetFrame ref={panelRef}') > root, 'the frame (and its scrim) is inside the watched root element');
     assert.ok(menu.includes('useDismissable(open, rootRef'), 'rootRef is what the dismiss hook watches');
     assert.ok(!menu.includes('createPortal'), 'nothing here is portalled — the drawer inherits --coach-foot-clear in-tree');
-  });
-
-  it('the drawer clears the nav with the TOKEN, takes no inset of its own, and never outranks the nav', () => {
-    const drawer = menuCss.slice(menuCss.indexOf('.drawer {'));
-    assert.ok(drawer.includes('bottom: var(--coach-foot-clear)'), 'the token, never hand-copied arithmetic');
-    assert.ok(!/\.drawer \{[^}]*safe-area-inset-bottom/.test(menuCss), 'no second helping of the home-indicator inset');
-    assert.ok(drawer.includes('z-index: 260'), 'the portal\'s sheet value — over the save pill (250), UNDER the nav (300)');
-    assert.ok(!/z-index:\s*3\d\d/.test(menuCss), 'nothing here rises above the nav: that buried the console\'s own sheets');
-    assert.ok(menuCss.includes('@media (max-width: 640px)'), 'and every drawer declaration is inert on a mouse');
   });
 });
 

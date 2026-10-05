@@ -102,14 +102,32 @@ table.kept tr:last-child td{border-bottom:0}
 dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
 .dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:18px}.dialogbody{padding:6px 22px 20px}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.qa .qacard{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+.qa .qacard h3{margin:10px 0 4px}.qa .qacard h3:first-child{margin-top:0}.qa dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0 0 8px}.qa dt{color:var(--muted);font-size:13px}.qa dd{margin:0;overflow-wrap:anywhere}
+.qaindex{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.qawcard{text-align:left;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font:inherit;color:inherit;cursor:pointer}
+.qawcard[aria-pressed=true]{border-color:var(--olive);box-shadow:0 0 0 1px var(--olive) inset}
+.qachip{align-self:flex-start;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.qachip[data-s=pass]{background:#e3f3d4;color:#2f5a14}.qachip[data-s=issue]{background:#f6dede;color:var(--error)}.qachip[data-s=call],.qachip[data-s=partial]{background:#f4ecd9;color:var(--warn)}
+.qasteps{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.qasteps li{counter-increment:s;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:start}
+.qasteps li.done{border-color:#7fa85a}.qasteps input[type=checkbox]{width:22px;height:22px;margin:2px 0 0;accent-color:var(--olive)}
+.qabody{display:flex;flex-direction:column;gap:6px;min-width:0}.qan::before{content:"Step " counter(s);font-size:12px;color:var(--muted);font-weight:700}
+.qado,.qasee{margin:0}.qado::before{content:"Do  ";white-space:pre;font-size:12px;font-weight:700;color:var(--blue)}.qasee::before{content:"You should see  ";white-space:pre;font-size:12px;font-weight:700;color:var(--olive)}
+.qaverdict,.qatools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.qaverdict button{min-height:44px;padding:9px 15px;border:1px solid var(--line);border-radius:7px;background:var(--white);font:inherit;cursor:pointer}
+.qaverdict button[data-v=pass][aria-pressed=true]{background:#e3f3d4;border-color:#7fa85a}.qaverdict button[data-v=issue][aria-pressed=true]{background:#f6dede;border-color:var(--error)}.qaverdict button[data-v=call][aria-pressed=true]{background:#f4ecd9;border-color:var(--warn)}
+.qanotes{width:100%;min-height:84px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--white);font:inherit}
+.qaout{margin:8px 0 0;white-space:pre-wrap;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px}
+.qa .pair{margin:6px 0 4px}.qa .shot,.qa .shot img{width:300px;max-width:100%}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Sheet Frame — project hub</strong><br><small>One shared frame for the portal’s phone sheets · inventory of 23 live sheets and the proposal, drawn 2026-10-03 at 390px · D1–D6 accepted 2026-10-05 · five build steps, each from its own prompt</small></div>
+  <div class="hubtitle"><strong>Sheet Frame — project hub</strong><br><small>One shared frame for the portal’s phone sheets · inventory of 23 live sheets and the proposal, drawn 2026-10-03 at 390px · D1–D6 accepted 2026-10-05 · five build steps, each from its own prompt · <b>step 1 of 5 built 2026-10-05</b></small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Round 1 drawn 2026-10-03: 23 sheets opened live at 390px, warm and dark; D1–D6 accepted 2026-10-05">Design</li>
-    <li class="stage current" title="SHEET_FRAME_PLAN.md + PM brief + build prompt, 2026-10-05">Plan</li>
-    <li class="stage" title="—">Build</li>
+    <li class="stage done" title="SHEET_FRAME_PLAN.md + PM brief + build prompt, 2026-10-05">Plan</li>
+    <li class="stage current" title="Step 1 of 5 built on dev 2026-10-05: the frame promoted from the Tools drawer; every Tools sheet and both Ledgers' Filter sheets on it; the club's three sheets fixed. Owner QA §264 on the QA Walk tab. Steps 2–5 to build.">Build · step 1 of 5</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -122,6 +140,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
   <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
   <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
   <button type="button" data-hub="plan" aria-pressed="false">Plan notes</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
 </nav>
 
 <section id="hub-mockup">
@@ -476,7 +495,15 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 <section id="hub-plan" class="docpage" hidden>
   <div class="eyebrow">Plan notes · for the build session</div>
   <h1>Sheet Frame — what a build would change</h1>
-  <div class="note">Mockups only so far; no product code changed. Facts are from the live page at 390px on 2026-10-03 (warm and dark) and from the code that day.</div>
+  <div class="note">Step 1 of 5 built on dev 2026-10-05 (record below; the full record is the plan’s <em>Build record</em>). The recipes and defects further down are the 2026-10-03 drawing, from the live page at 390px and the code that day.</div>
+  <h2>Step 1 — built 2026-10-05</h2>
+  <ul>
+    <li><strong>The frame:</strong> <code>components/coaches/SheetFrame.tsx</code> (the dim and the sheet together; its props refuse <code>aria-modal</code>, <code>className</code> and <code>style</code>) + <code>SheetFrame.module.css</code> (<code>.sheet</code>, its grab line, <code>.label</code>; belted at ≤900, the bar’s breakpoint). Menu layer only; the form layer joins with the game-day Note (step 3).</li>
+    <li><strong>Moved onto it:</strong> <code>CoachToolbarMenu</code>’s drawer (every <code>drawerOnPhone</code> caller — coach Ledger, Budget, practice plan, Groups, lineup builder Tools, club Ledger, tournament Teams — with no caller changed) and <code>FilterGroup</code>’s sheet (coach and club Ledgers, club Allocations). The drawer block left <code>CoachToolbarMenu.module.css</code>. In sheet mode the menu wears the frame’s class alone, not <code>.panel</code> + a drawer class: split across two modules, equal specificity resolves by bundle order.</li>
+    <li><strong>Behaviour:</strong> the Filter sheet drops <code>aria-modal</code> (menu layer; no close button to leave by); a tap on its dim now returns focus to the Filter button (it went nowhere).</li>
+    <li><strong>Club fix (owner-approved in the step):</strong> <code>.adminShell</code> declares <code>--coach-foot-clear</code> at ≤900 (bar + context strip + home indicator). Without it the club Ledger’s Tools and Filter and Allocations’ Filter hung under their toolbar with no dim, live since 2026-10-02.</li>
+    <li><strong>Proved:</strong> <code>.probe/sf1/capture.mjs</code> + <code>diff.mjs</code>, ten sheets × warm/dark at 390 touch: the seven coach and tournament sheets pixel-identical and every node’s computed style identical; the club’s three moved as one block onto the bar, nothing restyled. Guards: <code>tests/unit/sheet-frame-guard.test.ts</code> (new), <code>ledger-phone-filter-guard</code> and <code>coach-practice-week-phone-guard</code> moved with it.</li>
+  </ul>
   <h2>The recipes today</h2>
   <ul>
     <li><strong>Tools drawer:</strong> <code>components/coaches/CoachToolbarMenu.module.css</code> <code>.drawer</code> / <code>.drawerTitle</code> (≤640, <code>bottom: var(--coach-foot-clear)</code>, z 260); second consumer <code>components/coaches/FilterGroup.tsx</code>. The stylesheet’s own comment says the promotion to one class is due, with <code>.lineupAutoMenu</code>.</li>
@@ -502,7 +529,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <li>Game-day Note: a form above a live bar (2026-09-23 ruling).</li>
     <li>Game-day sheets: the dark dim on warm; the bar height copied by hand.</li>
     <li>Help drawer: × 30px on a phone (44px floor).</li>
-    <li>Filter sheet and position picker marked modal while the bar is live.</li>
+    <li>Filter sheet and position picker marked modal while the bar is live. <em>(Filter sheet: fixed in step 1.)</em></li>
     <li>Print drawer: no title, no role.</li>
     <li>Escape leaves focus nowhere on Copy from, the tag manager and the admin sheet.</li>
     <li>The Schedule day list (several events on one day) covers the bar although it is a menu (read from the code; no test data).</li>
@@ -517,13 +544,101 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
   </ul>
 </section>
 
+<section id="hub-qa" class="docpage qa" hidden>
+  <div class="eyebrow">Owner QA · §264 · Coaches portal + Club accounting · Sheet Frame step 1</div>
+  <h1>One frame for the sheets; the club’s sheets rise from the bar</h1>
+  <p class="sub">Two walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat.</p>
+  <div class="qacard">
+    <h3>What changed in step 1</h3>
+    <p>Every “⋯ / Tools” sheet and both Ledgers’ Filter sheets now come from one shared frame. For a coach nothing looks different: ten sheets were captured before and after at phone size, in warm and dark, and compared style by style and pixel by pixel. One thing does look different, on the club’s side: the Tools and Filter sheets on the club’s <b>Ledger</b> and <b>Allocations</b> hung half-way down the page with nothing dimmed behind them. They now rise from the bottom bar and dim the page, like the coach’s.</p>
+    <div class="pair">
+      <div class="spec"><div class="spectop"><span class="lbl before">Before</span><h3>Club Ledger · Tools</h3></div>
+        <div class="scroller"><div class="shot"><img data-shot="s1-clubtools-before" src="sheet-frame/s1-clubtools-before-warm.jpg" alt="The club Ledger's Tools sheet hanging under the toolbar, the page not dimmed." width="390" height="844"></div></div></div>
+      <div class="spec"><div class="spectop"><span class="lbl after">After</span><h3>Club Ledger · Tools</h3></div>
+        <div class="scroller"><div class="shot"><img data-shot="s1-clubtools-after" src="sheet-frame/s1-clubtools-after-warm.jpg" alt="The club Ledger's Tools sheet rising from the bottom bar, the page dimmed." width="390" height="844"></div></div></div>
+    </div>
+    <div class="pair">
+      <div class="spec"><div class="spectop"><span class="lbl before">Before</span><h3>Club Ledger · Filter</h3></div>
+        <div class="scroller"><div class="shot"><img data-shot="s1-clubfilter-before" src="sheet-frame/s1-clubfilter-before-warm.jpg" alt="The club Ledger's Filter sheet hanging mid-page." width="390" height="844"></div></div></div>
+      <div class="spec"><div class="spectop"><span class="lbl after">After</span><h3>Club Ledger · Filter</h3></div>
+        <div class="scroller"><div class="shot"><img data-shot="s1-clubfilter-after" src="sheet-frame/s1-clubfilter-after-warm.jpg" alt="The club Ledger's Filter sheet rising from the bar." width="390" height="844"></div></div></div>
+      <div class="spec"><div class="spectop"><span class="lbl after">After</span><h3>Allocations · Coming due · Filter</h3></div>
+        <div class="scroller"><div class="shot"><img data-shot="s1-clubgrants-after" src="sheet-frame/s1-clubgrants-after-warm.jpg" alt="The Allocations Filter sheet with its one Due row, rising from the bar." width="390" height="844"></div></div></div>
+    </div>
+    <p class="meta">Not visible, and not in the walks: the Filter sheet no longer tells a screen reader it is modal (the bar under it stays live, and it has no close button to leave by), and a tap on the dim behind it hands the keyboard back to the Filter button, as the Tools sheets already did.</p>
+  </div>
+  <div class="qacard">
+    <h3>Sign in as</h3>
+    <dl>
+      <dt>Where</dt><dd>http://localhost:3000/auth/login, on a phone or a browser window narrowed under 640px (restart the dev server first: this build added new files)</dd>
+      <dt>Club (W1)</dt><dd>uat-club-owner@uat-rep-club.local (password: <code>UAT_REP_CLUB_OWNER_PASSWORD</code> in <code>.env.local</code>) · UAT Rep Club</dd>
+      <dt>Coach (W2)</dt><dd>uat-coach@uat-test-org.local (password: <code>UAT_COACH_PASSWORD</code>) · <b>UAT Test Team</b>, UAT Rep Club. The account may land on another team: switch first.</dd>
+    </dl>
+    <p class="meta"><b>What the walks change:</b> nothing in the database. Both walks put any filter they touch back with Reset filters.</p>
+  </div>
+  <div class="qaindex" role="group" aria-label="Walks">
+    <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · The club’s sheets rise from the bar</b><span class="meta">Ledger Tools and Filter, Allocations Filter, warm and dark.</span><span class="qachip" data-chip="w1"></span></button>
+    <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · The coach’s sheets did not change</b><span class="meta">A quick look at three of them.</span><span class="qachip" data-chip="w2"></span></button>
+  </div>
+    <div class="qawalk" id="w1">
+      <h2>W1 · The club’s sheets rise from the bar</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>On a phone, the club’s Tools and Filter sheets rise from the top of the bottom bar with the page dimmed behind them, the way the coach’s do.</p>
+        <h3>It passes when</h3><p>Every sheet sits on the bar (not under the toolbar), the page above it is dimmed, the bar itself stays lit, and a tap on the dim closes the sheet without pressing anything behind it.</p>
+        <h3>Not in this walk</h3><p>The coach’s sheets (W2). A desk, where the Tools menu is still a dropdown under its button.</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone, sign in as the club owner, open <b>Accounting → Ledger</b> and tap the <b>⋯</b> square beside Export.</p><p class="qasee">A sheet rises from the top of the bottom bar: a grab line, <b>TOOLS</b> in small capitals, then <b>This book · Transfer</b> and <b>The club’s lists · Payees</b>. The page above it is dimmed; the bottom bar is not. (It used to hang just under the toolbar with nothing dimmed.)</p></div></li>
+        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap the dimmed page above the sheet, over one of the entries.</p><p class="qasee">The sheet closes, and the entry you tapped over does not open.</p></div></li>
+        <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Filter</b>.</p><p class="qasee">The Filter sheet rises from the bar: <b>FILTER</b>, then <b>Type · Every type</b>, <b>Status · Posted, Pending</b>, <b>Category · Every category</b> and <b>Date · This month</b>, with the page dimmed above it.</p></div></li>
+        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Status</b> and untick <b>Pending</b>; then tap <b>Reset filters</b> at the foot of the sheet.</p><p class="qasee">The sheet stays open while you untick, and the list behind it narrows. Reset filters closes the sheet, and the button reads <b>Filter</b> with no number.</p></div></li>
+        <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Open the <b>Allocations</b> tab, set View to <b>Coming due</b>, and tap <b>Filter</b>.</p><p class="qasee">A small sheet rises from the bar with <b>FILTER</b> and one row, <b>Due</b>, and the page is dimmed above it. Tap the dim to close it.</p></div></li>
+        <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Switch to <b>Dark</b> (account menu → Appearance), go back to the <b>Ledger</b> and tap <b>⋯</b> again.</p><p class="qasee">The same sheet, on the bar, in the dark card colour over a dark dim. Switch back to Warm afterwards.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W1 verdict">
+        <button type="button" data-w="w1" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w1" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w1" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w1"></span>
+      </div>
+      <label class="meta" for="w1notes">Notes for W1</label>
+      <textarea id="w1notes" class="qanotes" data-notes="w1"></textarea>
+    </div>
+    <div class="qawalk" id="w2" hidden>
+      <h2>W2 · The coach’s sheets did not change</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>A quick look that the coach’s sheets, now built from the shared frame, look and behave exactly as before. (All ten were compared before and after by a probe; this is the human check.)</p>
+        <h3>It passes when</h3><p>Each sheet rises from the bar with its label, the page dims, the bar stays lit, and a tap on the dim closes it.</p>
+        <h3>Not in this walk</h3><p>The club (W1).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone, sign in as the coach on <b>UAT Test Team</b>, open <b>Money → Ledger</b> and tap the <b>⋯</b> square.</p><p class="qasee">The Tools sheet, as before: on the bar, <b>TOOLS</b>, the page dimmed, the bar lit. Tap the dim; it closes.</p></div></li>
+        <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Filter</b>, open <b>Status</b>, untick one choice, then tap <b>Reset filters</b>.</p><p class="qasee">The Filter sheet, as before: on the bar, <b>FILTER</b>, it stays open while you change a choice, and Reset filters closes it and clears the button’s number.</p></div></li>
+        <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Practices</b>, open <b>UAT probe practice</b>, and tap the <b>⋯</b> square beside Run practice.</p><p class="qasee">The sheet titled <b>PRACTICE PLAN</b>, on the bar, as before. Tap the dim to close it.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W2 verdict">
+        <button type="button" data-w="w2" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w2" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w2" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w2"></span>
+      </div>
+      <label class="meta" for="w2notes">Notes for W2</label>
+      <textarea id="w2notes" class="qanotes" data-notes="w2"></textarea>
+    </div>
+  <div class="qacard">
+    <h3>Paste-back</h3>
+    <div class="qatools"><button type="button" class="button" id="qaBuildOne">Summary of this walk</button><button type="button" class="button" id="qaBuildAll">Summary of both</button><button type="button" class="button" id="qaCopy">Copy</button></div>
+    <pre class="qaout" id="qaOut" aria-live="polite"></pre>
+  </div>
+</section>
+
 <dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody explain" id="dialogbody"></div></dialog>
 
 <script>
 /* Navigation: the hub tabs, the screen walk, and the warm/dark switch. Kept apart from the explanations
    below so a slip in one cannot take the other down. */
 (function () {
-  var HUBS = ['mockup', 'decisions', 'brief', 'plan'];
+  var HUBS = ['mockup', 'decisions', 'brief', 'plan', 'qa'];
   var tabs = document.querySelectorAll('.hubtabs button');
   function showHub(name) {
     tabs.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.hub === name)); });
@@ -614,5 +729,59 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     mk.setAttribute('role', 'button'); mk.tabIndex = 0;
     mk.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mk.click(); } });
   });
+})();
+</script>
+<script>
+/* QA walk: ticks, verdicts and notes kept in this browser; a summary to paste back. */
+(function () {
+  var KEY = 'sheet-frame-walk-264-v1';
+  var WALKS = ['w1', 'w2'];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: 'w1' };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') state = Object.assign(state, p); } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var TITLES = {};
+  WALKS.forEach(function (w) { TITLES[w] = document.querySelector('#' + w + ' h2').textContent; });
+  var LABEL = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+  function boxes(w) { return Array.prototype.slice.call(document.querySelectorAll('#' + w + ' input[type="checkbox"]')); }
+  function count(w) { var b = boxes(w); return { n: b.filter(function (x) { return state.ticks[x.id]; }).length, of: b.length }; }
+  function render() {
+    WALKS.forEach(function (w) {
+      boxes(w).forEach(function (b) { b.checked = !!state.ticks[b.id]; b.closest('li').classList.toggle('done', b.checked); });
+      var c = count(w);
+      document.querySelector('[data-prog="' + w + '"]').textContent = c.n + ' of ' + c.of + ' ticked';
+      document.querySelectorAll('.qaverdict button[data-w="' + w + '"]').forEach(function (btn) { btn.setAttribute('aria-pressed', String(state.verdict[w] === btn.getAttribute('data-v'))); });
+      var chip = document.querySelector('[data-chip="' + w + '"]'), v = state.verdict[w], text = 'Not started', st = '';
+      if (v === 'pass' && c.n < c.of) { text = 'Passed · only ' + c.n + ' of ' + c.of + ' ticked'; st = 'partial'; }
+      else if (v === 'pass') { text = 'Passed'; st = 'pass'; }
+      else if (v === 'issue') { text = 'Issue'; st = 'issue'; }
+      else if (v === 'call') { text = 'Needs a call'; st = 'call'; }
+      else if (c.n > 0) { text = 'In progress · ' + c.n + ' of ' + c.of; }
+      chip.textContent = text; chip.setAttribute('data-s', st);
+      var ta = document.querySelector('[data-notes="' + w + '"]'); if (document.activeElement !== ta) ta.value = state.notes[w] || '';
+      document.getElementById(w).hidden = state.open !== w;
+      document.querySelector('.qawcard[data-walk="' + w + '"]').setAttribute('aria-pressed', String(state.open === w));
+    });
+  }
+  document.getElementById('hub-qa').addEventListener('change', function (e) { var t = e.target; if (t && t.type === 'checkbox') { state.ticks[t.id] = t.checked; save(); render(); } });
+  document.querySelectorAll('#hub-qa textarea[data-notes]').forEach(function (ta) { ta.addEventListener('input', function () { state.notes[ta.getAttribute('data-notes')] = ta.value; save(); }); });
+  document.querySelectorAll('#hub-qa .qaverdict button').forEach(function (btn) { btn.addEventListener('click', function () { var w = btn.getAttribute('data-w'), v = btn.getAttribute('data-v'); state.verdict[w] = state.verdict[w] === v ? null : v; save(); render(); }); });
+  document.querySelectorAll('#hub-qa .qawcard').forEach(function (c) { c.addEventListener('click', function () { state.open = c.getAttribute('data-walk'); save(); render(); }); });
+  function summary(w) {
+    var c = count(w);
+    var lines = [TITLES[w] + ' — ' + (state.verdict[w] ? '[' + LABEL[state.verdict[w]] + ']' : '[no verdict]') + ' ' + c.n + '/' + c.of];
+    var un = boxes(w).filter(function (b) { return !state.ticks[b.id]; }).map(function (b) { return b.id.replace(w + 's', ''); });
+    if (un.length) lines.push('  not ticked: step ' + un.join(', '));
+    if (state.notes[w]) lines.push('  notes: ' + state.notes[w].trim());
+    return lines.join('\n');
+  }
+  var out = document.getElementById('qaOut');
+  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = '§264 Sheet Frame step 1\n' + summary(state.open); });
+  document.getElementById('qaBuildAll').addEventListener('click', function () {
+    var n = 0, of = 0; WALKS.forEach(function (w) { var c = count(w); n += c.n; of += c.of; });
+    out.textContent = '§264 Sheet Frame step 1 — checked ' + n + ' of ' + of + '\n' + WALKS.map(summary).join('\n');
+  });
+  function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+  document.getElementById('qaCopy').addEventListener('click', function () { var text = out.textContent; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(selectOut); else selectOut(); });
+  render();
 })();
 </script>

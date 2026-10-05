@@ -109,3 +109,21 @@ export function splitPhoneCss(css: string): { phone: string; rest: string } {
   }
   return { phone: inside.join('\n'), rest: rest + css.slice(last) };
 }
+
+/**
+ * The declaration body of the FIRST rule whose selector is exactly `selector` — at the start of a line,
+ * indented or not, so a rule inside an `@media` block is found too. Brace depth is counted, so a nested
+ * block cannot cut it short. (Earlier guards carry their own `rule` / `block` copies; new guards import
+ * this one.)
+ */
+export function cssRule(css: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const m = new RegExp(`(^|\\n)[ \\t]*${escaped}\\s*\\{`).exec(css);
+  if (!m) throw new Error(`no \`${selector} {\` rule in the stylesheet the guard reads`);
+  const start = m.index + m[0].length;
+  let depth = 1;
+  let i = start;
+  for (; i < css.length && depth > 0; i++) { if (css[i] === '{') depth++; else if (css[i] === '}') depth--; }
+  if (depth !== 0) throw new Error(`\`${selector} {\` never closes in the stylesheet the guard reads`);
+  return css.slice(start, i - 1);
+}

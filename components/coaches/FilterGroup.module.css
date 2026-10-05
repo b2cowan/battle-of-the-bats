@@ -1,9 +1,9 @@
 /* FilterGroup — a strip's narrowing pills on a desk, one Filter button and a sheet on a phone (Ledger Phone
-   Filter, owner rulings D1–D7, 2026-10-02). The sheet itself is CoachToolbarMenu's drawer (E1) and its rows
-   are that menu's item; this sheet holds only what those do not.
+   Filter, owner rulings D1–D7, 2026-10-02). The sheet itself is the portal's sheet frame (`SheetFrame`, Sheet
+   Frame step 1, 2026-10-05) and its rows are CoachToolbarMenu's item; this sheet holds only what those do not.
 
-   ⚠ The band is ≤640 in CSS here and in JS (`useIsPhone`) for the sheet — the same two guards the drawer
-   recipe carries, for the same reason. */
+   ⚠ The band is ≤640 here in CSS (the button) and in JS (`useIsPhone`, the sheet); the frame's own belt is the
+   bar's breakpoint, so it never widens this one. */
 
 /* The desk form: the pills sit in the host's strip as its own flex items. */
 .pills { display: contents; }

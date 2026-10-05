@@ -101,10 +101,14 @@ describe('Ledger Phone Filter — one Filter button on a phone, the pills on a d
   it('D7 and the sheet’s frame: a dialog that a pick does not close, its scrim inside the dismiss boundary', () => {
     assert.match(group, /role="dialog"/);
     assert.doesNotMatch(group, /role="menu"/, 'checkboxes and date fields are not menu items');
-    assert.match(group, /<div ref=\{rootRef\}[\s\S]*?<LineupSheetScrim onClose=\{close\} \/>/, 'the scrim renders inside the watched root');
     assert.match(group, /useDismissable\(sheetOpen, rootRef, close\);/, 'Escape returns focus through the hook’s own default');
-    assert.match(group, /close\(\); rescueFocusTo\(triggerRef\);/, 'Reset returns focus through the shared rescue (the ref, read in the frame)');
-    assert.match(group, /role="dialog" aria-modal="true"/, 'a scrim-backed dialog is modal, as every other in the portal');
-    assert.match(group, /className=\{`\$\{menu\.panel\} \$\{menu\.drawer\}`\}/, 'the Tools sheet’s own drawer, not a copy');
+    // ⚠ Pinned on Reset's OWN line: since step 1 the frame's dim closes with the same two calls, earlier in the
+    // file, so a bare `close(); rescueFocusTo(…)` would match the dim and let Reset stop handing focus back (/review).
+    assert.match(group, /resets\.current\.forEach\(reset => reset\(\)\); close\(\); rescueFocusTo\(triggerRef\);/,
+      'Reset returns focus through the shared rescue (the ref, read in the frame)');
+    // ⚖ The sheet's FRAME is the portal's sheet frame since Sheet Frame step 1 (2026-10-05) — inside the watched
+    // root, its dim with it, NOT modal (D1: a stray tap on the bar loses nothing here, and a screen reader held
+    // inside a sheet with no close button would have no way out), a tap on the dim handing focus back to the
+    // button. All pinned in sheet-frame-guard.
   });
 });
