@@ -1,9 +1,10 @@
 'use client';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { BellOff, CheckCheck, ChevronRight } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
 import { iconFor, notificationTime, BUNDLE_NOUN, groupActivityItems, type ActivityEntry } from '@/lib/notification-view';
 import type { NotificationFeed, ZoneFilter } from './useNotificationFeed';
+import NotificationUndoNote from './NotificationUndoNote';
 import styles from './notifications-page.module.css';
 
 /**
@@ -105,6 +106,8 @@ export default function NotificationFeedBody({
     reload, loadMore, markRead, bundleClick, clearRow,
     needsAttention, activityGroups, showNeeds, showActivity, groupedAt,
   } = feed;
+  // Where focus lands when the Undo note leaves while holding it (a delete's row is gone).
+  const listRef = useRef<HTMLDivElement>(null);
 
   // A tap opens the reader where the frame has one, and marks read + goes where it does not.
   const openOne = (n: AppNotification) => (onOpen ? onOpen({ kind: 'item', notification: n }) : markRead(n));
@@ -129,8 +132,9 @@ export default function NotificationFeedBody({
           <p className={styles.itemTitle}>{n.title}</p>
           {n.body && <p className={`${styles.itemBody}${CLAMPED_ON_A_PHONE.has(n.eventType) ? ` ${styles.itemBodyClamp}` : ''}`}>{n.body}</p>}
           {isAct ? (
-            /* Clear rides the meta line rather than the row's right edge: it costs no width, so a
-               two-line body never squeezes to make room for it (mockup 9427bc24, plate 04-C). Both
+            /* Done (the customer's word for clear since 2026-10-05, D8) rides the meta line rather
+               than the row's right edge: it costs no width, so a two-line body never squeezes to
+               make room for it (mockup 9427bc24, plate 04-C). Both
                handlers stop propagation — the row itself is a button that opens the notification,
                and finishing with something is not the same gesture as opening it. */
             <div className={styles.meta}>
@@ -138,11 +142,11 @@ export default function NotificationFeedBody({
               <button
                 type="button"
                 className={styles.clearBtn}
-                aria-label={`Clear “${n.title}” from Needs attention`}
+                aria-label={`Mark “${n.title}” done`}
                 onClick={e => { e.stopPropagation(); clearRow(n); }}
                 onKeyDown={e => e.stopPropagation()}
               >
-                Clear
+                Done
               </button>
             </div>
           ) : (
@@ -238,7 +242,7 @@ export default function NotificationFeedBody({
         </div>
       </div>}
 
-      <div className={styles.list}>
+      <div ref={listRef} tabIndex={-1} className={styles.list}>
         {loading ? (
           <p className={styles.loadingRow}>Loading…</p>
         ) : error ? (
@@ -264,7 +268,7 @@ export default function NotificationFeedBody({
                   {/* The zone's promise, in the zone. Visible on phones since 2026-09-06 — removing
                       the filter pills is what made room for it, which is why those two changes
                       shipped together rather than as separate tidy-ups. */}
-                  <span className={styles.sectionHint}>stays until you clear it</span>
+                  <span className={styles.sectionHint}>stays until you mark it Done</span>
                 </div>
                 {needsAttention.map(n => row(n, true))}
               </>
@@ -290,6 +294,9 @@ export default function NotificationFeedBody({
           </button>
         </div>
       )}
+
+      {/* "Notification deleted · Undo" (D3) — centred under this column, at the window's foot. */}
+      <NotificationUndoNote feed={feed} returnFocusTo={() => listRef.current?.focus()} />
     </>
   );
 }

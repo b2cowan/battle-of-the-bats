@@ -111,6 +111,7 @@ const SCOPES = {
       'components/rep-teams/TryoutScorerSurface.module.css',
       'components/notifications/notifications.module.css',
       'components/notifications/notifications-page.module.css',
+      'components/notifications/NotificationUndoNote.module.css',
       'components/notifications/EnablePushBanner.module.css',
     ],
     excludeSegments: new Set(),

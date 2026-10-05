@@ -87,6 +87,23 @@ export function functionBody(code: string, name: string): string {
 }
 
 /**
+ * The body of ONE hook-bound callback — `const name = useCallback(` (or `useMemo(`) — up to the
+ * next statement at ITS OWN indentation: the indentation is read from the declaration, never
+ * assumed, for the reason `functionBody` gives above. Its own closing `}, [deps]);` line does not
+ * end it. (Promoted 2026-10-05 from notification-open-in-place-guard, whose first copy hard-coded
+ * two spaces.)
+ */
+export function callbackBody(code: string, name: string): string {
+  const start = code.search(new RegExp(`const ${name} = use(?:Callback|Memo)\\(`));
+  if (start < 0) throw new Error(`${name} is gone — the guard reads it`);
+  const lineStart = code.lastIndexOf('\n', start) + 1;
+  const indent = code.slice(lineStart, start).match(/^\s*/)?.[0] ?? '';
+  const rest = code.slice(start);
+  const end = rest.search(new RegExp(`\\n${indent}(?![\\s})\\]])`));
+  return end > 0 ? rest.slice(0, end) : rest;
+}
+
+/**
  * A stylesheet split at its `@media (max-width: 640px)` blocks: `phone` is their bodies, joined — what
  * a phone-only rule must live inside — and `rest` is everything else, what a desk reads. Brace depth
  * is counted, so a nested block cannot end the query early. (Earlier guards carry their own copy of

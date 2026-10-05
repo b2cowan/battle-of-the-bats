@@ -202,6 +202,10 @@ export function notificationStamp(iso: string): string {
   return `${day} · ${clockOf(d)}`;
 }
 
+/** The most rows one delete request may name (the API refuses more); the feed sends larger deletes —
+ *  an opened bundle — in batches of this size. */
+export const NOTIFICATION_DELETE_MAX_IDS = 200;
+
 /** Every notification an entry stands for — one row's own, or a bundle's members (newest first). */
 export function entryMembers(entry: ActivityEntry): AppNotification[] {
   return entry.kind === 'bundle' ? entry.members : [entry.notification];
@@ -237,17 +241,65 @@ export const COACH_TEAM_PAGE: Record<string, string> = {
 const PRACTICE_LIBRARIES: ReadonlySet<string> = new Set(['templates', 'circuits']);
 
 /**
- * The reader's onward button, named for where it goes: "Open Insights", "Open the practice plan",
- * "Open Chat". Null when the notification has no link (the reader then offers only Close).
+ * The admin pages a notification opens, in the ADMIN'S OWN WORDS (owner ruling 2026-10-05, D4: "the
+ * button names the page in that screen's own words and lands on the record"). One entry per link
+ * shape a sender writes; `notificationDestination` maps the path onto these.
+ * ⚠ PINNED TO THE ADMIN NAV, like COACH_TEAM_PAGE: `notification-open-in-place-guard.test.ts` reads
+ * the Accounting tabs, the tournament nav, the Organization links and the Bring-in page's title and
+ * fails when a word here stops matching the page it names.
+ * ⚠ A tournament's registrations page is TEAMS — its nav entry and its own title both say so — and
+ * a house league's is Registrations. Same folder name, two different screens.
+ */
+export const ADMIN_PAGE = {
+  paymentRequests:     'Payment requests',
+  tournamentTeams:     'Teams',
+  results:             'Results',
+  checkIn:             'Check-in',
+  leagueRegistrations: 'Registrations',
+  billing:             'Plan & billing',
+  repTeams:            'Rep Teams',
+  bringIn:             'Bring in a coach’s team',
+} as const;
+
+/** An admin path (everything after `/{org}/admin`) as its button, or null for a page not named here. */
+function adminDestination(rest: string, query: URLSearchParams): string | null {
+  const opens = (key: string) => Boolean(query.get(key));
+  // A link that carries one record lands on it open, so the button names the RECORD.
+  if (/^\/accounting\/payment-requests\/?$/.test(rest)) {
+    return opens('request') ? 'Open the request' : `Open ${ADMIN_PAGE.paymentRequests}`;
+  }
+  if (/^\/accounting\/allocations\/[^/]+\/?$/.test(rest)) return opens('bill') ? 'Open the bill' : 'Open the allocation';
+  if (/^\/tournaments\/registrations\/?$/.test(rest)) return `Open ${ADMIN_PAGE.tournamentTeams}`;
+  // `?gameId=` opens that game's score editor on arrival (Tournament admin redesign, G3).
+  if (/^\/tournaments\/results\/?$/.test(rest)) return opens('gameId') ? 'Open the game' : `Open ${ADMIN_PAGE.results}`;
+  if (/^\/tournaments\/check-in\/?$/.test(rest)) return `Open ${ADMIN_PAGE.checkIn}`;
+  if (/^\/house-league\/seasons\/[^/]+\/registrations\/?$/.test(rest)) return `Open ${ADMIN_PAGE.leagueRegistrations}`;
+  if (/^\/org\/billing\/?$/.test(rest)) return `Open ${ADMIN_PAGE.billing}`;
+  if (/^\/rep-teams\/?$/.test(rest)) return `Open ${ADMIN_PAGE.repTeams}`;
+  if (/^\/rep-teams\/bring-in\/?$/.test(rest)) return `Open ${ADMIN_PAGE.bringIn}`;
+  if (/^\/rep-teams\/teams\/[^/]+\/coaches\/?$/.test(rest)) return 'Open the team’s coaches';
+  if (/^\/rep-teams\/teams\/[^/]+\/?$/.test(rest)) return 'Open the team';
+  return null;
+}
+
+/**
+ * The onward button, named for where it goes: "Open Insights", "Open the practice plan", "Open
+ * Chat", "Open the request". Null when the notification has no link (only Close is offered).
  * ⚠ Named from the LINK, not the event type: 23 kinds of notification point at far fewer places,
  * and a label keyed on the kind would be one more table to keep true every time a sender changes
  * its link. An unknown place still gets a working button — "Open" — never a guessed name.
- * ⚠ `/admin/` links reach a coach through the parked recipient-scoping bug (notifications review
- * D4): the button says so plainly rather than dressing an admin page up as a coach one.
+ * ⚠ `portal` is WHO IS READING, and it is required on purpose. In the admin an admin link names its
+ * page (D4). In the coach portal an `/admin/` link reached the coach through the parked
+ * recipient-scoping bug (notifications review D4, its own ticket), so it says "Open in admin"
+ * plainly rather than dressing an admin page up as one the coach can surely open.
  */
-export function notificationDestination(link: string | null | undefined): string | null {
+export function notificationDestination(
+  link: string | null | undefined,
+  portal: 'coach' | 'admin',
+): string | null {
   if (!link) return null;
-  const path = link.split(/[?#]/)[0];
+  const [beforeHash] = link.split('#');
+  const [path, queryString = ''] = beforeHash.split('?');
   const team = /\/coaches\/teams\/[^/]+(?:\/([^/]+))?(\/[^/]+)?/.exec(path);
   if (team) {
     const segment = team[1] ?? '';
@@ -258,6 +310,10 @@ export function notificationDestination(link: string | null | undefined): string
     return page ? `Open ${page}` : 'Open';
   }
   if (/^\/chat(\/|$)/.test(path) || /\/coaches\/chat(\/|$)/.test(path)) return 'Open Chat';
-  if (/^\/[^/]+\/admin(\/|$)/.test(path)) return 'Open in admin';
+  const admin = /^\/[^/]+\/admin(\/.*)?$/.exec(path);
+  if (admin) {
+    if (portal === 'coach') return 'Open in admin';
+    return adminDestination(admin[1] ?? '', new URLSearchParams(queryString)) ?? 'Open';
+  }
   return 'Open';
 }

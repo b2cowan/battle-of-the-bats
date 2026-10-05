@@ -30,7 +30,7 @@ export default function NotificationsPageContent({ settingsHref }: { settingsHre
           <Settings size={14} /> Notification settings
         </Link>
       )}
-      {feed.anyActivityUnread && (
+      {feed.anyUnread && (
         <button type="button" className={styles.markAllBtn} onClick={feed.markAllRead}>
           <CheckCheck size={15} /> Mark all read
         </button>

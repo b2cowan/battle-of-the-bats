@@ -81,8 +81,9 @@
 }
 .memberTime { margin: 3px 0 0; font-family: var(--font-data); font-size: var(--type-support, 0.75rem); color: var(--text-tertiary); }
 
-/* The way on, then the ways out. On a phone the onward button spans the sheet at the thumb's
-   reach; Clear and Close share the row beneath. */
+/* The way on, then Done and Close, then the trash set apart at the end (D3, 2026-10-05). On a phone
+   the onward button spans the sheet at the thumb's reach; Done, Close and the trash share the row
+   beneath, the trash a square at the tap floor. */
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -96,12 +97,20 @@
   min-height: 48px;
   text-decoration: none;
 }
+.trash.trash {
+  flex: 0 0 auto;
+  width: var(--tap-min, 44px);
+  margin-left: auto;
+  padding: 0;
+}
 
 /* ABOVE THE NAV BREAKPOINT the nav module draws nothing (its sheet rules are ≤900), so the same
    panel is a small centered dialog — the RSVP sheet's answer, for the same reason. The anchor
    becomes a zero-height box at the screen's foot (a full-screen fixed element is CHROME to the
    rendered sweep); the scrim rises from it over the viewport and the panel is centred against it.
-   The footer reads left to right as the portal's dialogs do: the ways out, then the way on. */
+   ⚖ The footer keeps the PHONE's order — the way on first, the trash last and apart — because the
+   message is one block in every frame (hub screen 7, 2026-10-05); the portal's other dialogs put the
+   way on last. Buttons at the portal's computer height, 34px (One control height, 2026-10-03). */
 @media (min-width: 901px) {
   .floor.floor {
     position: fixed;
@@ -133,7 +142,7 @@
     border-radius: var(--radius);
   }
   .grabBtn { display: none; }
-  .actions { justify-content: flex-end; }
-  .actions > button { flex: 0 0 auto; min-height: 0; }
-  .go.go { flex: 0 0 auto; min-height: 0; order: 1; }
+  .actions > button { flex: 0 0 auto; min-height: 34px; }
+  .go.go { flex: 0 0 auto; min-height: 34px; }
+  .trash.trash { width: 34px; }
 }

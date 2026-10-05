@@ -507,7 +507,9 @@ export async function tellClubIfRequestsHoldPayout(p: {
       org: p.org, teamId: p.team.id, teamGroupId: p.team.groupId, actorUserId: p.userId,
       event: 'team_request_holding_payout',
       ...CLUB_MONEY_NOTICE.holdingPayout({ teamName: p.team.name, count: rows.length }),
-      link: clubMoneyLinks.requests(p.org.slug),
+      // ONE request holding it → the notice opens that request, as a new request's notice does; the
+      // list only when several are (owner ruling 2026-10-05, D4 — "lands on the record").
+      link: clubMoneyLinks.requests(p.org.slug, rows.length === 1 ? rows[0].id : undefined),
       metadata: { requestIds: (stamped ?? []).map((r: { id: string }) => r.id) },
     });
   }

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useId, useRef } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Check, Trash2 } from 'lucide-react';
 import type { AppNotification, NotificationEventType } from '@/lib/types';
 import { NOTIFICATION_EVENT_LABELS, notificationCategory } from '@/lib/notification-labels';
 import {
@@ -32,6 +32,12 @@ import own from './CoachNotificationReader.module.css';
  * Above the nav breakpoint the nav module draws nothing, so the same panel is a small centered
  * dialog (the RSVP sheet's answer, same reason).
  *
+ * ⚖ OPEN · DONE · CLOSE · DELETE, in that order in every frame (owner ruling 2026-10-05, D3 + D8 —
+ * "Notifications Open in Place"): the way on, named for its page; Done (the old Clear) only on a
+ * Needs-attention row; Close; and the trash, set apart at the end, which deletes the coach's own
+ * copy with an Undo note and no question. The same buttons in the same order as the bell's drawer
+ * pane, so the two cannot drift; on a computer that puts the way on FIRST, not last.
+ *
  * It stands on `useDialogFloor`: Escape, the Tab trap, focus back to the row on close, and the
  * phone's Back gesture closes the reader rather than leaving the page ("Back goes up ONE level").
  *
@@ -44,12 +50,15 @@ export default function CoachNotificationReader({
   entry,
   onClose,
   onClear,
+  onDelete,
 }: {
   /** What was opened — one notification, or a same-day bundle of one kind. */
   entry: ActivityEntry;
   onClose: () => void;
-  /** Take a Needs-attention row off the list (the row's own Clear, offered here too). */
+  /** Take a Needs-attention row off the list — Done (the row's own Done, offered here too). */
   onClear: (n: AppNotification) => void;
+  /** Delete what is open — the notification, or every member of a bundle (D3). */
+  onDelete: (members: AppNotification[]) => void;
 }) {
   const anchorRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -78,12 +87,12 @@ export default function CoachNotificationReader({
   const members = entryMembers(entry);
   const lead = members[0];
   const link = members.find(m => m.link)?.link ?? null;
-  const goLabel = notificationDestination(link);
+  const goLabel = notificationDestination(link, 'coach');
   const kind = NOTIFICATION_EVENT_LABELS[lead.eventType as NotificationEventType] ?? 'Notification';
   const title = entry.kind === 'bundle'
     ? `${members.length} ${BUNDLE_NOUN[entry.eventType] ?? 'notifications'}`
     : lead.title;
-  // Only a single Needs-attention row can be cleared — the same rule as the row's own Clear.
+  // Only a single Needs-attention row can be marked Done — the same rule as the row's own Done.
   const clearable = entry.kind === 'item' && notificationCategory(lead.eventType) === 'act' && !lead.clearedAt;
 
   return (
@@ -135,13 +144,22 @@ export default function CoachNotificationReader({
             <button
               type="button"
               className={shared.btnSecondary}
-              aria-label={`Clear “${lead.title}” from Needs attention`}
+              aria-label={`Mark “${lead.title}” done`}
               onClick={() => onClear(lead)}
             >
-              Clear
+              <Check size={14} aria-hidden /> Done
             </button>
           )}
           <button type="button" className={shared.btnSecondary} onClick={onClose}>Close</button>
+          <button
+            type="button"
+            className={`${shared.btnSecondary} ${own.trash}`}
+            aria-label={`Delete “${title}”`}
+            title="Delete"
+            onClick={() => onDelete(members)}
+          >
+            <Trash2 size={16} aria-hidden />
+          </button>
         </div>
       </div>
     </div>

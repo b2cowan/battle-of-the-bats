@@ -47,12 +47,17 @@ import feedStyles from '@/components/notifications/notifications-page.module.css
  * message and one button on to its page; opening it marks it read, so a coach can read one and
  * close it without leaving here. The admin feed keeps its tap (mark read and go). The desktop
  * bell's panel is a glance with "See all" and keeps going straight to the page, too.
+ *
+ * ⚖ READ, DONE, DELETE (owner ruling 2026-10-05, "Notifications Open in Place" D3/D8/D9): opening
+ * reads; Done (the old Clear) takes a row out of Needs attention; the reader's trash deletes the
+ * coach's own copy, with "Notification deleted · Undo" centred at the foot for a few seconds.
+ * Mark all read marks everything read, Needs attention included — it never marks anything Done.
  */
 export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string }) {
   const { currentOrg } = useOrg();
   usePageTitle('Notifications');
   const feed = useNotificationFeed(currentOrg?.id);
-  const { items, unreadOnly, setUnreadOnly, markSeen, clearRow } = feed;
+  const { items, unreadOnly, setUnreadOnly, markSeen, clearRow, deleteRows } = feed;
   const [reading, setReading] = useState<ActivityEntry | null>(null);
 
   function openEntry(entry: ActivityEntry) {
@@ -92,7 +97,7 @@ export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string })
         onOpen={openEntry}
         toolbar={
           <CoachListToolbar
-            actions={feed.anyActivityUnread ? (
+            actions={feed.anyUnread ? (
               <button type="button" className={styles.btnSecondary} onClick={feed.markAllRead} aria-label="Mark all read">
                 <CheckCheck size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Mark all read</span>
               </button>
@@ -123,6 +128,9 @@ export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string })
              before opening marked it read, and Clear's rollback restores the row it is handed — a
              failed Clear would have put an already-read notification back to unread. */
           onClear={n => { void clearRow(items.find(x => x.id === n.id) ?? n); setReading(null); }}
+          /* Delete closes the reader and leaves the Undo note (D3, 2026-10-05). The feed swaps in the
+             LIVE rows itself, so an Undo brings back the read row, not this unread snapshot. */
+          onDelete={members => { deleteRows(members); setReading(null); }}
         />
       )}
     </div>

@@ -1,0 +1,62 @@
+/* NotificationUndoNote — "Notification deleted · Undo" (owner ruling 2026-10-05, D3; placed centred,
+   Q1 = A). The pill is the hub's drawing (screen 6): an INVERTED pill — the page's ink as its ground,
+   the card's colour as its words — so it reads as a passing message over any list, in either theme
+   (warm: ink on paper; dark: a light pill on the dark ground). In-tree, so the warm skin reaches it. */
+
+/* A zero-size marker in the page column: the note measures the column through its parent. */
+.anchor { height: 0; }
+
+/* The fixed line the pill sits on. `left` is the column's centre, set inline once measured; until
+   then (and if measuring never runs) it is the window's centre. It never takes a tap itself. */
+.region {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  z-index: 250;   /* the save pill's layer: under the bottom nav (300) and its sheets */
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  width: max-content;
+  max-width: calc(100vw - 1.5rem);
+  pointer-events: none;
+}
+
+.note {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2.5rem;
+  padding: 0 0.5rem 0 1.125rem;
+  border-radius: 999px;
+  background: var(--text-primary);
+  color: var(--card-bg);
+  font-size: var(--type-body, 0.875rem);
+  font-weight: 500;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.undo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card-bg) 14%, transparent);
+  color: var(--card-bg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.undo:hover { background: color-mix(in srgb, var(--card-bg) 24%, transparent); }
+.undo:focus-visible { outline: 2px solid var(--card-bg); outline-offset: 2px; }
+
+/* On a phone: 12px above the bottom bar (the gap the reader sheet keeps), and Undo at the 44px tap
+   floor — the pill grows to hold it (the drawing's 40px pill predates the floor). */
+@media (max-width: 900px) {
+  .region { bottom: calc(var(--coach-foot-clear, 0px) + 0.75rem); }
+  .note { min-height: 3rem; padding: 0 0.125rem 0 1.125rem; }
+  .undo { min-height: var(--tap-min, 44px); padding: 0 1rem; }
+}

@@ -3,7 +3,8 @@ import { getAuthenticatedUser } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { AppNotification } from '@/lib/types';
-import { NOTIFICATION_CATEGORY, ACT_EVENT_TYPES } from '@/lib/notification-labels';
+import { NOTIFICATION_CATEGORY } from '@/lib/notification-labels';
+import { NOTIFICATION_DELETE_MAX_IDS } from '@/lib/notification-view';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -18,14 +19,8 @@ const BELL_EXCLUDE_IN = BELL_EXCLUDED_EVENTS.length > 0
   ? `(${BELL_EXCLUDED_EVENTS.map(e => `"${e}"`).join(',')})`
   : null;
 
-// "Mark all read" marks ACTIVITY only (owner ruling 2026-09-03, D3): the "Needs attention" rows are
-// a triage list, so one tap must not make an unhandled decision look handled. ⚠ D3 is now LOAD-
-// BEARING rather than merely tidy — since 2026-09-06 those rows leave the zone on `cleared_at`,
-// not on read, so a mark-all that touched them would be the only way to silently empty a list of
-// unmade decisions. Same source as both clients' optimistic updates (ACT_EVENT_TYPES).
-const ACT_EXCLUDE_IN = ACT_EVENT_TYPES.size > 0
-  ? `(${[...ACT_EVENT_TYPES].map(e => `"${e}"`).join(',')})`
-  : null;
+// Every id must be a uuid, so a malformed one is a 400 here rather than a failed cast (a 500) below.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -101,7 +96,7 @@ export const GET = withObservability(async (req: Request) => {
   });
 }, { route: '/api/notifications' });
 
-// ── POST — mark-read | mark-all-read | clear ─────────────────────────────────
+// ── POST — mark-read | mark-all-read | clear | delete ────────────────────────
 
 export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
@@ -128,25 +123,49 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ success: true });
   }
 
-  // ── mark-all-read ──────────────────────────────────────────────────────────
+  // ── mark-all-read — EVERYTHING, Needs attention included (owner ruling 2026-10-05, D9) ─────
+  // Reverses the 2026-09-03 rule that left Needs-attention rows unread. Its reason ended on 09-06,
+  // when a row stopped leaving the zone on read: only `cleared_at` (Done) moves it out now, so
+  // reading a decision no longer makes it look handled. ⚠ THE LINE THAT STILL HOLDS: this must never
+  // write `cleared_at`. Read is "seen", Done is "dealt with" — a mark-all that wrote Done would empty
+  // the triage list in one gesture, which is exactly what the zone exists to prevent.
   if (body.action === 'mark-all-read') {
     if (!body.orgId) return NextResponse.json({ error: 'Missing orgId.' }, { status: 400 });
 
-    let markAll = supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('notifications')
       .update({ read_at: now })
       .eq('user_id', user.id)
       .eq('org_id', body.orgId)
       .is('read_at', null);
-    // Needs-attention rows are left entirely alone — not read, and certainly not cleared (D3).
-    if (ACT_EXCLUDE_IN) markAll = markAll.not('event_type', 'in', ACT_EXCLUDE_IN);
-    const { error } = await markAll;
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   }
 
-  // ── clear — "I am finished with this one" (mig 278) ────────────────────────
+  // ── delete — "I do not want it at all" (owner ruling 2026-10-05, D3) ────────
+  // Removes the caller's OWN copy. Rows are written one per recipient (`notify()`), so nobody else's
+  // copy is touched, and the request or payment a notice was about keeps its facts on its own page.
+  // Nothing references a notification row. The client sends this only after its Undo window ends,
+  // so a delete that never arrives leaves the row where it was — the benign failure, and the reason
+  // no soft-delete column was added.
+  if (body.action === 'delete') {
+    const ids: unknown[] = Array.isArray(body.ids) ? body.ids : body.id ? [body.id] : [];
+    if (ids.length === 0 || ids.length > NOTIFICATION_DELETE_MAX_IDS || !ids.every(id => typeof id === 'string' && UUID_RE.test(id))) {
+      return NextResponse.json({ error: 'Missing or invalid ids.' }, { status: 400 });
+    }
+
+    const { error } = await supabaseAdmin
+      .from('notifications')
+      .delete()
+      .in('id', ids as string[])
+      .eq('user_id', user.id); // safety: only own notifications
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // ── clear — "I am finished with this one" (mig 278) — the customer's word is DONE (D8) ──────
   // The only writer of cleared_at. Deliberately per-row: there is no clear-all, because the
   // whole point of the zone is that emptying it is a series of decisions, not one gesture.
   if (body.action === 'clear') {

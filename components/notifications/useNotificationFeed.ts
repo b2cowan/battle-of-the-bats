@@ -1,8 +1,8 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AppNotification } from '@/lib/types';
-import { notificationCategory, ACT_EVENT_TYPES } from '@/lib/notification-labels';
-import { DAY_ORDER, dayBucket } from '@/lib/notification-view';
+import { notificationCategory } from '@/lib/notification-labels';
+import { DAY_ORDER, dayBucket, NOTIFICATION_DELETE_MAX_IDS } from '@/lib/notification-view';
 
 /**
  * useNotificationFeed — the "See all" page's state, in one place, so two shells can wear it.
@@ -18,7 +18,16 @@ import { DAY_ORDER, dayBucket } from '@/lib/notification-view';
 
 export const FEED_PAGE_SIZE = 40;
 
+/** How long a deleted notification can be brought back (owner ruling 2026-10-05, D3: "Undo for a
+ *  few seconds, no confirmation"). The delete is sent when this ends — never before. */
+export const UNDO_WINDOW_MS = 6000;
+
 export type ZoneFilter = 'all' | 'needs' | 'activity';
+
+/** Newest first — the order the server lists them in, restored after an Undo. */
+function byNewest(a: AppNotification, b: AppNotification): number {
+  return Date.parse(b.createdAt) - Date.parse(a.createdAt);
+}
 
 function postAction(body: Record<string, unknown>) {
   return fetch('/api/notifications', {
@@ -42,6 +51,21 @@ export function useNotificationFeed(orgId: string | undefined) {
   const [error,       setError]       = useState(false);
   const [unreadOnly,  setUnreadOnly]  = useState(false); // archive view defaults to All
   const [filter,      setFilter]      = useState<ZoneFilter>('all');
+  // The delete waiting out its Undo window — what the "Notification deleted · Undo" note shows.
+  const [pendingDelete, setPendingDelete] = useState<AppNotification[] | null>(null);
+  const pendingRef = useRef<{ members: AppNotification[]; timer: ReturnType<typeof setTimeout> } | null>(null);
+  // Where the server's last page ended — Load more's cursor. Kept apart from `items` because a delete
+  // takes rows out of `items`: read off the list, the cursor moved, and once every loaded row was
+  // deleted there was no row left to read it from and Load more did nothing (/review 2026-10-05).
+  const cursorRef = useRef<string | null>(null);
+
+  // A row deleted but not yet sent stays gone when the list is fetched again inside its window.
+  const withoutPending = useCallback((rows: AppNotification[]) => {
+    const p = pendingRef.current;
+    if (!p) return rows;
+    const gone = new Set(p.members.map(m => m.id));
+    return rows.filter(r => !gone.has(r.id));
+  }, []);
 
   // ── Load (initial, and the Try-again retry) ─────────────────────────────────
   const load = useCallback(async () => {
@@ -52,36 +76,40 @@ export function useNotificationFeed(orgId: string | undefined) {
       const res = await fetch(`/api/notifications?orgId=${orgId}&limit=${FEED_PAGE_SIZE}`);
       if (!res.ok) throw new Error(`notifications ${res.status}`);
       const data = await res.json();
-      setItems(data.notifications ?? []);
+      const rows: AppNotification[] = data.notifications ?? [];
+      cursorRef.current = rows.length > 0 ? rows[rows.length - 1].createdAt : null;
+      setItems(withoutPending(rows));
       setHasMore(Boolean(data.hasMore));
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [orgId]);
+  }, [orgId, withoutPending]);
 
   useEffect(() => { load(); }, [load]);
 
   // ── Load more (older rows via the created_at cursor) ─────────────────────────
   const loadMore = useCallback(async () => {
-    if (!orgId || loadingMore || items.length === 0) return;
+    const oldest = cursorRef.current;
+    if (!orgId || loadingMore || !oldest) return;
     setLoadingMore(true);
     try {
-      const oldest = items[items.length - 1].createdAt;
       const res  = await fetch(
         `/api/notifications?orgId=${orgId}&limit=${FEED_PAGE_SIZE}&before=${encodeURIComponent(oldest)}`,
       );
       if (!res.ok) throw new Error(`notifications ${res.status}`);
       const data = await res.json();
-      setItems(prev => [...prev, ...(data.notifications ?? [])]);
+      const rows: AppNotification[] = data.notifications ?? [];
+      if (rows.length > 0) cursorRef.current = rows[rows.length - 1].createdAt;
+      setItems(prev => [...prev, ...withoutPending(rows)]);
       setHasMore(Boolean(data.hasMore));
     } catch {
       /* the rows already on screen stay; the button stays too, so the coach can try again */
     } finally {
       setLoadingMore(false);
     }
-  }, [orgId, loadingMore, items]);
+  }, [orgId, loadingMore, withoutPending]);
 
   // ── Mark read WITHOUT leaving (the coach reader, owner ruling 2026-09-25) ────────
   // Opening a notification in the reader reads it; going on to its page is a second, separate
@@ -109,6 +137,8 @@ export function useNotificationFeed(orgId: string | undefined) {
   }, [markSeen]);
 
   // ── Clear — "I am finished with this one" (2026-09-06, mockup 9427bc24) ──────
+  // The customer's word is DONE (owner ruling 2026-10-05, D8: beside a trash, "Clear" read as
+  // delete); the action and `cleared_at` keep their names.
   // The ONLY thing that takes a row out of "Needs attention". Opening one no longer does, which
   // is the whole change: the zone used to answer "have you looked at it?" while its heading
   // promised "have you dealt with it?". Also stamps read, because a row you are finished with
@@ -133,17 +163,77 @@ export function useNotificationFeed(orgId: string | undefined) {
     }
   }, []);
 
-  // ── Mark all read — ACTIVITY only (D3, 2026-09-03) ───────────────────────────
-  // Needs-attention rows are a triage list; one tap must not make an unhandled decision look
-  // handled. The server applies the same exclusion, from the same set. ⚠ Since rows now leave the
-  // zone on cleared_at, this exclusion is the only thing standing between "Mark all read" and
-  // silently emptying a list of unmade decisions — it must never learn to write cleared_at.
+  // ── Mark all read — EVERYTHING (owner ruling 2026-10-05, D9) ────────────────
+  // Needs attention included: a row leaves that zone on Done (`cleared_at`), never on read, so
+  // reading it hides nothing. ⚠ It must never touch `clearedAt` — read is "seen", Done is "dealt
+  // with", and a mark-all that wrote Done would empty the triage list in one gesture. The server
+  // applies the same rule.
   const markAllRead = useCallback(async () => {
     if (!orgId) return;
     const now = new Date().toISOString();
-    setItems(prev => prev.map(x => (x.readAt || ACT_EVENT_TYPES.has(x.eventType) ? x : { ...x, readAt: now })));
+    setItems(prev => prev.map(x => (x.readAt ? x : { ...x, readAt: now })));
     await postAction({ action: 'mark-all-read', orgId });
   }, [orgId]);
+
+  // ── Delete — "I do not want it at all" (owner ruling 2026-10-05, D3) ────────
+  // No confirmation: the rows leave at once, the note offers Undo for UNDO_WINDOW_MS, and the
+  // request goes when the window ends — or at once, with `keepalive`, when the surface closes or the
+  // page unloads (below). A second delete inside the window sends the first one straight away: one
+  // Undo at a time, for the last thing deleted. A lost request leaves the row where it was, which is
+  // harmless, so there is no rollback (contrast Clear above, whose loss is NOT harmless).
+  /** Ends the Undo window and hands back what was waiting in it (null when nothing was). */
+  const takePending = useCallback(() => {
+    const p = pendingRef.current;
+    if (!p) return null;
+    clearTimeout(p.timer);
+    pendingRef.current = null;
+    setPendingDelete(null);
+    return p;
+  }, []);
+
+  // In batches the route accepts: an opened bundle can hold more rows than one request may name, and
+  // a refused delete is NOT benign — the rows are already gone from the list (/review 2026-10-05).
+  const sendPendingDelete = useCallback(() => {
+    const p = takePending();
+    if (!p) return;
+    const ids = p.members.map(m => m.id);
+    for (let i = 0; i < ids.length; i += NOTIFICATION_DELETE_MAX_IDS) {
+      void postAction({ action: 'delete', ids: ids.slice(i, i + NOTIFICATION_DELETE_MAX_IDS) });
+    }
+  }, [takePending]);
+
+  const deleteRows = useCallback((members: AppNotification[]) => {
+    if (members.length === 0) return;
+    sendPendingDelete();
+    const ids = new Set(members.map(m => m.id));
+    // The LIVE rows, not the caller's copy: an opened notification was read after it was handed
+    // over, and an Undo must bring back the read row, not the unread snapshot.
+    const removed = members.map(m => items.find(x => x.id === m.id) ?? m);
+    setItems(prev => prev.filter(x => !ids.has(x.id)));
+    pendingRef.current = { members: removed, timer: setTimeout(sendPendingDelete, UNDO_WINDOW_MS) };
+    setPendingDelete(removed);
+  }, [items, sendPendingDelete]);
+
+  const undoDelete = useCallback(() => {
+    const p = takePending();
+    if (!p) return;
+    setItems(prev => {
+      const back = new Set(p.members.map(m => m.id));
+      return [...prev.filter(x => !back.has(x.id)), ...p.members].sort(byNewest);
+    });
+  }, [takePending]);
+
+  // A delete never waits on a surface that is going away: leaving the page (the onward button is a
+  // full-document load), unmounting the feed, or switching organization (an Undo must never bring one
+  // org's notification into another's list) sends it now. `postAction` is `keepalive`, so the
+  // browser lets it finish after the page is gone.
+  useEffect(() => {
+    window.addEventListener('pagehide', sendPendingDelete);
+    return () => {
+      window.removeEventListener('pagehide', sendPendingDelete);
+      sendPendingDelete();
+    };
+  }, [orgId, sendPendingDelete]);
 
   // ── Derive the view — same zones as the dropdown ─────────────────────────────
   const view = useMemo(() => {
@@ -172,9 +262,10 @@ export function useNotificationFeed(orgId: string | undefined) {
     const showActivity = (filter === 'all' || filter === 'activity') && activityGroups.length > 0;
     // The chip's count is the zone's own length now that the zone ignores the read filter.
     const needsCount = needsAttention.length;
-    // "Mark all read" appears only when it would do something: an unread row outside Needs attention.
-    const anyActivityUnread = items.some(n => !n.readAt && !ACT_EVENT_TYPES.has(n.eventType));
-    return { needsAttention, activityGroups, showNeeds, showActivity, needsCount, anyActivityUnread, groupedAt: now };
+    // "Mark all read" appears only when it would do something: any unread row (D9 — Needs attention
+    // included, since it now marks those too).
+    const anyUnread = items.some(n => !n.readAt);
+    return { needsAttention, activityGroups, showNeeds, showActivity, needsCount, anyUnread, groupedAt: now };
   }, [items, unreadOnly, filter]);
 
   const isEmpty = !loading && !error && !view.showNeeds && !view.showActivity;
@@ -183,6 +274,7 @@ export function useNotificationFeed(orgId: string | undefined) {
     items, loading, loadingMore, hasMore, error, isEmpty,
     unreadOnly, setUnreadOnly, filter, setFilter,
     reload: load, loadMore, markRead, markSeen, bundleClick, markAllRead, clearRow,
+    deleteRows, undoDelete, pendingDelete,
     ...view,
   };
 }

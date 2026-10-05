@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { CheckCheck, BellOff, Settings, ChevronRight, List } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
-import { notificationCategory, ACT_EVENT_TYPES } from '@/lib/notification-labels';
+import { notificationCategory } from '@/lib/notification-labels';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import {
   iconFor, notificationTime, DAY_ORDER, dayBucket, BUNDLE_NOUN, groupActivityItems,
@@ -83,7 +83,8 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
     }
   }
 
-  // Clear — "I am finished with this one" (2026-09-06, mockup 9427bc24). The only thing that takes
+  // Clear — "I am finished with this one" (2026-09-06, mockup 9427bc24); the customer's word is DONE
+  // (owner ruling 2026-10-05, D8). The only thing that takes
   // a row out of "Needs attention"; opening one no longer does. The bell carries the same button as
   // the "See all" page on purpose — the two surfaces share a zone, so a row a coach can only
   // dispatch on one of them would be the same drift lib/notification-view exists to prevent.
@@ -114,19 +115,16 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
     }
   }
 
-  // "Mark all read" marks ACTIVITY only (D3, 2026-09-03): Needs-attention rows are left entirely
-  // alone. The server applies the same rule (app/api/notifications), so this optimistic pass and
-  // the badge count it pushes up agree with what a reload would show. ⚠ Since rows now leave the
-  // zone on cleared_at, this exclusion is the only thing between one tap and an emptied list of
-  // unmade decisions — it must never learn to write cleared_at.
+  // "Mark all read" marks EVERYTHING read (owner ruling 2026-10-05, D9), Needs attention included:
+  // a row leaves that zone on Done (`cleared_at`), never on read. The server applies the same rule,
+  // so this optimistic pass and the badge count it pushes up (zero) agree with a reload. ⚠ It must
+  // never touch `clearedAt` — read is "seen", Done is "dealt with".
   async function handleMarkAllRead() {
     if (markingAll) return;
     setMarkingAll(true);
     const now = new Date().toISOString();
-    setNotifications(prev => prev.map(n =>
-      n.readAt || ACT_EVENT_TYPES.has(n.eventType) ? n : { ...n, readAt: now },
-    ));
-    onUnreadChange(notifications.filter(n => !n.readAt && ACT_EVENT_TYPES.has(n.eventType)).length);
+    setNotifications(prev => prev.map(n => (n.readAt ? n : { ...n, readAt: now })));
+    onUnreadChange(0);
 
     await fetch('/api/notifications', {
       method:  'POST',
@@ -159,8 +157,8 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
     if (link) { onClose(); window.location.href = link; }
   }
 
-  // The button appears only when it would DO something: an unread row outside Needs attention.
-  const anyActivityUnread = notifications.some(n => !n.readAt && !ACT_EVENT_TYPES.has(n.eventType));
+  // The button appears only when it would DO something: any unread row (D9).
+  const canMarkAllRead = notifications.some(n => !n.readAt);
 
   // ── P1 zones — "Needs attention" (UNCLEARED act items) pinned above a date-grouped Activity
   //    feed (everything else). Each row appears in exactly one zone.
@@ -204,7 +202,7 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
           <p className={styles.notifTitle}>{n.title}</p>
           {n.body && <p className={styles.notifBody}>{n.body}</p>}
           {isAct ? (
-            /* Clear rides the meta line so it costs the title and body no width — the panel's rows
+            /* Done rides the meta line so it costs the title and body no width — the panel's rows
                already truncate to one line each and cannot give any up. Both handlers stop
                propagation: the row is a button that OPENS the notification, and being finished
                with something is a different gesture from opening it. */
@@ -213,11 +211,11 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
               <button
                 type="button"
                 className={styles.clearBtn}
-                aria-label={`Clear “${n.title}” from Needs attention`}
+                aria-label={`Mark “${n.title}” done`}
                 onClick={e => { e.stopPropagation(); handleClear(n); }}
                 onKeyDown={e => e.stopPropagation()}
               >
-                Clear
+                Done
               </button>
             </div>
           ) : (
@@ -282,7 +280,7 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
     >
       <div className={styles.panelHeader}>
         <p className={styles.panelTitle}>Notifications</p>
-        {anyActivityUnread && (
+        {canMarkAllRead && (
           <button
             className={styles.markAllBtn}
             onClick={handleMarkAllRead}
