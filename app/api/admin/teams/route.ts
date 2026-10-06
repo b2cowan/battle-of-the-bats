@@ -11,10 +11,11 @@ import { resolveTournamentContactEmail } from '@/lib/db';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { captureError, withObservability } from '@/lib/observability';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
+import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 
 function tournamentLockedResponse() {
   return new Response(
-    JSON.stringify({ error: 'This tournament is completed and locked. Set the status to Active in Event Settings to make changes.' }),
+    JSON.stringify({ error: LOCKED_RESULTS }),
     { status: 409, headers: { 'Content-Type': 'application/json' } },
   );
 }

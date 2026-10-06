@@ -18,6 +18,9 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
 import { isProvinceCode } from '@/lib/canadian-provinces';
 import { withObservability } from '@/lib/observability';
+import { playedCounts } from '@/lib/event-recap';
+import { fetchAllIn } from '@/lib/supabase-paging';
+import { slotsInUseRefusal } from '@/lib/tournament-status-words';
 
 function isDateValue(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -304,6 +307,55 @@ export const GET = withObservability(async (req: Request) => {
     }
   }
 
+  // ?counts=1 — the Tournaments list and Past tournaments (Tournament admin redesign Stage 4): each event's
+  // accepted teams and divisions, and its teams that played / games played by the recap's one rule
+  // (lib/event-recap `playedCounts`). Asked for by those two pages only; the tournament context's read,
+  // on every admin page, never pays for it.
+  if (new URL(req.url).searchParams.get('counts') === '1' && rows.length > 0) {
+    const ids = rows.map(r => r.id);
+    // Every row, page by page: a club's history passes a select's silent 1,000-row stop (lib/supabase-paging).
+    type GameRow = { tournament_id: string; status: string | null; home_team_id: string | null; away_team_id: string | null };
+    let teamRows: Array<{ tournament_id: string }>;
+    let gameRows: GameRow[];
+    let divisionRows: Array<{ tournament_id: string }>;
+    try {
+      [teamRows, gameRows, divisionRows] = await Promise.all([
+        fetchAllIn<{ tournament_id: string }>(ids, (chunk, from, to) =>
+          supabaseAdmin.from('teams').select('tournament_id').in('tournament_id', chunk).eq('status', 'accepted').order('id').range(from, to)),
+        fetchAllIn<GameRow>(ids, (chunk, from, to) =>
+          supabaseAdmin.from('games').select('tournament_id, status, home_team_id, away_team_id').in('tournament_id', chunk).in('status', ['completed', 'forfeit']).order('id').range(from, to)),
+        fetchAllIn<{ tournament_id: string }>(ids, (chunk, from, to) =>
+          supabaseAdmin.from('divisions').select('tournament_id').in('tournament_id', chunk).order('id').range(from, to)),
+      ]);
+    } catch (failed) {
+      return Response.json({ error: failed instanceof Error ? failed.message : 'Couldn’t read the counts.' }, { status: 500 });
+    }
+    const tally = (list: Array<{ tournament_id: string }>) => {
+      const m = new Map<string, number>();
+      for (const r of list) m.set(r.tournament_id, (m.get(r.tournament_id) ?? 0) + 1);
+      return m;
+    };
+    const accepted = tally(teamRows);
+    const divisionCounts = tally(divisionRows);
+    const gamesBy = new Map<string, Array<{ status: string | null; homeTeamId: string | null; awayTeamId: string | null }>>();
+    for (const g of gameRows) {
+      const list = gamesBy.get(g.tournament_id) ?? [];
+      list.push({ status: g.status, homeTeamId: g.home_team_id, awayTeamId: g.away_team_id });
+      gamesBy.set(g.tournament_id, list);
+    }
+    return Response.json(rows.map(r => {
+      const played = playedCounts(gamesBy.get(r.id) ?? []);
+      return {
+        ...r,
+        first_game_started: started.has(r.id),
+        accepted_teams: accepted.get(r.id) ?? 0,
+        division_count: divisionCounts.get(r.id) ?? 0,
+        teams_played: played.teamsPlayed,
+        games_played: played.gamesPlayed,
+      };
+    }));
+  }
+
   return Response.json(rows.map(r => ({ ...r, first_game_started: started.has(r.id) })));
 }, { route: '/api/admin/tournaments' });
 
@@ -339,6 +391,15 @@ export const POST = withObservability(async (req: Request) => {
       const newStatus: TournamentStatus = data.status;
       let completionNotificationTournament: CompletionNotificationTournament | null = null;
 
+      const { data: current, error: currentError } = await supabase
+        .from('tournaments')
+        .select('status, slug')
+        .eq('id', id)
+        .eq('org_id', ctx.org.id)
+        .maybeSingle<{ status: TournamentStatus | null; slug: string | null }>();
+      if (currentError) throw currentError;
+      if (!current) return Response.json({ error: 'Tournament not found.' }, { status: 404 });
+
       if (newStatus !== 'archived') {
         const { count, error: limitError } = await supabase
           .from('tournaments')
@@ -351,12 +412,41 @@ export const POST = withObservability(async (req: Request) => {
 
         const limit: number = ctx.org.tournamentLimit;
         if (limit < 9999 && (count ?? 0) >= limit) {
-          return new Response(
-            JSON.stringify({
-              error: `Your plan allows ${limit} tournament slot${limit === 1 ? '' : 's'}. Archive another tournament before moving this one to ${newStatus}.`,
-            }),
-            { status: 403, headers: { 'Content-Type': 'application/json' } }
-          );
+          return Response.json({ error: slotsInUseRefusal(limit) }, { status: 403 });
+        }
+      }
+
+      // Bringing an archived event back: another live event may have taken its public link while it was
+      // away (the database allows one non-archived link per club — tournaments_org_slug_live_unique — and
+      // would refuse with its own error). Said in words, with the way out (Stage 4, the event's record).
+      if (current.status === 'archived' && newStatus !== 'archived' && current.slug) {
+        const { data: holder, error: holderError } = await supabase
+          .from('tournaments')
+          .select('name')
+          .eq('org_id', ctx.org.id)
+          .eq('slug', current.slug)
+          .neq('status', 'archived')
+          .neq('id', id)
+          .limit(1)
+          .maybeSingle<{ name: string }>();
+        if (holderError) throw holderError;
+        if (holder) {
+          return Response.json({ error: `Its public link is now used by ${holder.name}. Change this event’s public link in Details before you bring it back.` }, { status: 409 });
+        }
+      }
+
+      // A sealed event's results were sealed as final: it never goes back to Active or Draft, from any
+      // status (Stage 4 — the old list froze a sealed event's status menu; this keeps the rule wherever the
+      // change is asked from, and on every route there: completed → draft → active, archived → active).
+      // Archive and Bring back (completed ⇄ archived) leave its results as sealed, so they stay open.
+      if (newStatus === 'active' || newStatus === 'draft') {
+        const { count: sealedCount, error: sealedError } = await supabase
+          .from('tournament_archives')
+          .select('id', { count: 'exact', head: true })
+          .eq('tournament_id', id);
+        if (sealedError) throw sealedError;
+        if ((sealedCount ?? 0) > 0) {
+          return Response.json({ error: 'Its results are sealed, so it can’t be reopened.' }, { status: 409 });
         }
       }
 
@@ -412,6 +502,10 @@ export const POST = withObservability(async (req: Request) => {
         .eq('id', id)
         .eq('org_id', ctx.org.id);
 
+      // Its link taken in the instant after the check above (tournaments_org_slug_live_unique).
+      if (error?.code === '23505') {
+        return Response.json({ error: 'Another tournament already uses this public link. Change this event’s public link in Details before you bring it back.' }, { status: 409 });
+      }
       if (error) throw error;
 
       if (

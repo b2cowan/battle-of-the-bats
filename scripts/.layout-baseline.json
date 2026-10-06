@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-01T20:08:07.421Z",
+  "generated": "2026-10-06T23:36:27.601Z",
   "entries": {
     "admin-rep-assistant-coaches|361|tap-floor|a·Public site": {
       "reason": null,
@@ -2957,30 +2957,6 @@
       "reason": null,
       "detail": "content spills 41px with overflow-x:visible — no scroller owns it"
     },
-    "admin-org-tournaments|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-org-tournaments|361|tap-floor|button·How statuses work": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-org-tournaments|361|tap-floor|select·DraftLiveCompletedArchived": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-org-tournaments|361|tap-floor|button·Create a new draft using this tournament": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-org-tournaments|361|tap-floor|a·Preview the public tournament site": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-org-tournaments|361|tap-floor|button·Edit tournament details": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
     "admin-rep-team-history-year|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -3865,30 +3841,6 @@
       "reason": null,
       "detail": "content spills 12px with overflow-x:visible — no scroller owns it"
     },
-    "admin-org-tournaments|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-org-tournaments|390|tap-floor|button·How statuses work": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-org-tournaments|390|tap-floor|select·DraftLiveCompletedArchived": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-org-tournaments|390|tap-floor|button·Create a new draft using this tournament": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-org-tournaments|390|tap-floor|a·Preview the public tournament site": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-org-tournaments|390|tap-floor|button·Edit tournament details": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
     "admin-rep-team-history-year|390|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -4752,38 +4704,6 @@
     "admin-org-coach-links|768|tap-floor|button·Send Invite": {
       "reason": null,
       "detail": "37px tall (floor 44)"
-    },
-    "admin-org-tournaments|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-org-tournaments|768|tap-floor|button·How statuses work": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "admin-org-tournaments|768|tap-floor|select·DraftLiveCompletedArchived": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-org-tournaments|768|tap-floor|button·Create a new draft using this tournament": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-org-tournaments|768|tap-floor|a·Preview the public tournament site": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-org-tournaments|768|control-width|a·Preview the public tournament site": {
-      "reason": null,
-      "detail": "39px wide (floor 44) — icon-only control"
-    },
-    "admin-org-tournaments|768|tap-floor|button·Edit tournament details": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-org-tournaments|768|control-width|button·Edit tournament details": {
-      "reason": null,
-      "detail": "39px wide (floor 44) — icon-only control"
     },
     "admin-rep-team-history-year|768|tap-floor|a·Public site": {
       "reason": null,
@@ -5713,26 +5633,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-manage|361|tap-floor|button·How statuses work": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-t-manage|361|tap-floor|select·DraftLiveCompletedArchived": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-t-manage|361|tap-floor|button·Create a new draft using this tournament": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-t-manage|361|tap-floor|a·Preview the public tournament site": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-t-manage|361|tap-floor|button·Edit tournament details": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
     "admin-t-manage|361|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -6389,10 +6289,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-summary|361|tap-floor|a·See what League Plus and Club include →": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
     "admin-t-summary|361|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -6676,26 +6572,6 @@
     "admin-t-divisions|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-manage|390|tap-floor|button·How statuses work": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-t-manage|390|tap-floor|select·DraftLiveCompletedArchived": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-t-manage|390|tap-floor|button·Create a new draft using this tournament": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-t-manage|390|tap-floor|a·Preview the public tournament site": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-t-manage|390|tap-floor|button·Edit tournament details": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
     },
     "admin-t-manage|390|tap-floor|a·2 games to finalize": {
       "reason": null,
@@ -7345,10 +7221,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-summary|390|tap-floor|a·See what League Plus and Club include →": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
     "admin-t-summary|390|tap-floor|a·2 games to finalize": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -7900,34 +7772,6 @@
     "admin-t-manage|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
       "detail": "38px tall (floor 44)"
-    },
-    "admin-t-manage|768|tap-floor|button·How statuses work": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "admin-t-manage|768|tap-floor|select·DraftLiveCompletedArchived": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-t-manage|768|tap-floor|button·Create a new draft using this tournament": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-t-manage|768|tap-floor|a·Preview the public tournament site": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-t-manage|768|control-width|a·Preview the public tournament site": {
-      "reason": null,
-      "detail": "39px wide (floor 44) — icon-only control"
-    },
-    "admin-t-manage|768|tap-floor|button·Edit tournament details": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-t-manage|768|control-width|button·Edit tournament details": {
-      "reason": null,
-      "detail": "39px wide (floor 44) — icon-only control"
     },
     "admin-t-manage|768|tap-floor|a·2 games to finalize": {
       "reason": null,
@@ -8612,26 +8456,6 @@
     "admin-t-summary|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
       "detail": "38px tall (floor 44)"
-    },
-    "admin-t-summary|768|tap-floor|button·Copy standings link": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-t-summary|768|tap-floor|a·Public standings": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-t-summary|768|tap-floor|button·Print": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-t-summary|768|tap-floor|button·Reuse this setup": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-t-summary|768|tap-floor|a·See what League Plus and Club include →": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
     },
     "admin-t-summary|768|tap-floor|a·2 games to finalize": {
       "reason": null,

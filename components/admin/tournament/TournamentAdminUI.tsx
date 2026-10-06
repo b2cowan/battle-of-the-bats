@@ -8,6 +8,7 @@ import type { HelpRequest } from '@/components/help/help-drawer-context';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
+import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import styles from './TournamentAdminUI.module.css';
 
 type Option<T extends string> = {
@@ -70,7 +71,8 @@ export function TournamentAdminHeader({
   const lockedCopy = (
     <>
       <Lock size={13} aria-hidden />
-      <span>This tournament is completed — all data is read-only. Change the status to <strong>Active</strong> in Event Settings to make edits.</span>
+      {/* The one "completed and locked" sentence (Stage 4): the way back is the record's Reopen. */}
+      <span>{LOCKED_RESULTS}</span>
     </>
   );
   if (kit) {

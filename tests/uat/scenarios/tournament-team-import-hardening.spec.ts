@@ -440,7 +440,7 @@ test.describe.serial('Tournament team import route hardening', () => {
     await setTournamentStatus(state.tournamentId, 'completed');
     const lockedPreview = await previewTeam(ownerPage, state, cleanCsv);
     expect(lockedPreview.status).toBe(409);
-    expect(errorText(lockedPreview)).toContain('completed and locked');
+    expect(errorText(lockedPreview)).toContain('its results are locked');
     await setTournamentStatus(state.tournamentId, 'active');
 
     const lockBatchId = await insertImportBatch({
@@ -454,7 +454,7 @@ test.describe.serial('Tournament team import route hardening', () => {
       tournamentId: state.tournamentId,
     });
     expect(lockedCommit.status).toBe(409);
-    expect(errorText(lockedCommit)).toContain('completed and locked');
+    expect(errorText(lockedCommit)).toContain('its results are locked');
     await setTournamentStatus(state.tournamentId, 'active');
 
     const wrongActorBatchId = await insertImportBatch({

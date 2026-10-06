@@ -54,15 +54,6 @@
   "app/[orgSlug]/admin/onboarding/page.tsx": {
     "useAdminKit": 1
   },
-  "app/[orgSlug]/admin/org/tournaments/page.tsx": {
-    "useAdminKit": 1,
-    "kx": 3,
-    "helpers": 1,
-    "legacy": 1
-  },
-  "app/[orgSlug]/admin/org/tournaments/tournaments-admin.module.css": {
-    "kitScope": 49
-  },
   "app/[orgSlug]/admin/org/venues/page.tsx": {
     "useAdminKit": 1,
     "legacy": 1
@@ -76,15 +67,6 @@
   },
   "app/[orgSlug]/admin/public-site/public-site.module.css": {
     "kitScope": 25
-  },
-  "app/[orgSlug]/admin/tournaments/archives/archives-admin.module.css": {
-    "kitScope": 7
-  },
-  "app/[orgSlug]/admin/tournaments/archives/page.tsx": {
-    "useAdminKit": 1,
-    "kx": 4,
-    "helpers": 1,
-    "legacy": 1
   },
   "app/[orgSlug]/admin/tournaments/branding/branding.module.css": {
     "kitScope": 71
@@ -101,10 +83,10 @@
     "helpers": 2
   },
   "app/[orgSlug]/admin/tournaments/dashboard/dashboard.module.css": {
-    "kitScope": 207
+    "kitScope": 192
   },
   "app/[orgSlug]/admin/tournaments/dashboard/page.tsx": {
-    "kx": 35,
+    "kx": 23,
     "helpers": 2
   },
   "app/[orgSlug]/admin/tournaments/divisions/admin-page.module.css": {
@@ -195,13 +177,6 @@
   "app/[orgSlug]/admin/tournaments/staff-kit/staff-kit.module.css": {
     "kitScope": 10
   },
-  "app/[orgSlug]/admin/tournaments/summary/page.tsx": {
-    "useAdminKit": 1,
-    "legacy": 2
-  },
-  "app/[orgSlug]/admin/tournaments/summary/summary.module.css": {
-    "kitScope": 54
-  },
   "app/[orgSlug]/admin/tournaments/venues/page.tsx": {
     "kx": 8,
     "helpers": 3
@@ -223,7 +198,7 @@
     "kitScope": 18
   },
   "components/admin/TournamentSetupWizard.module.css": {
-    "kitScope": 77
+    "kitScope": 59
   },
   "components/admin/TournamentSetupWizard.tsx": {
     "kx": 4,

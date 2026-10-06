@@ -5,6 +5,7 @@ import { withObservability } from '@/lib/observability';
 import { notify } from '@/lib/notify';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
 import { addHostOwnTeamToTournament, getHostOwnTeamState, HostOwnTeamError } from '@/lib/host-own-team';
+import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 
 /**
  * The hosting coach's OWN team, in the tournament their portal runs (lib/host-own-team.ts has the
@@ -57,7 +58,7 @@ export const POST = withObservability(async (req: Request) => {
 
   const { data: tournament } = await supabaseAdmin.from('tournaments').select('status').eq('id', tournamentId).maybeSingle<{ status: string }>();
   if (tournament?.status === 'completed') {
-    return json({ error: 'This tournament is completed and locked. Set the status to Active in Event Settings to make changes.' }, 409);
+    return json({ error: LOCKED_RESULTS }, 409);
   }
 
   try {

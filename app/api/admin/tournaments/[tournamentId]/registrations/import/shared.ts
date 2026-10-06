@@ -8,6 +8,7 @@ import type {
   TournamentTeamImportDivision,
   TournamentTeamImportExistingTeam,
 } from '@/lib/import/tournament-teams';
+import { LOCKED_IMPORTS } from '@/lib/tournament-status-words';
 
 export type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -76,7 +77,7 @@ export async function authorizeTournamentTeamImport(
   if (options.blockLocked && tournament.status === 'completed') {
     return {
       response: json({
-        error: 'This tournament is completed and locked. Set the status to Active in Event Settings to preview imports.',
+        error: LOCKED_IMPORTS,
       }, 409),
     };
   }

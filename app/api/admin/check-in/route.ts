@@ -14,6 +14,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
 import { effectiveFee, markPaidInFullPatch } from '@/lib/mark-paid';
+import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -26,7 +27,7 @@ function canCheckIn(ctx: AuthContextWithScope): boolean {
 }
 
 function lockedResponse() {
-  return json({ error: 'This tournament is completed and locked. Set it back to Active in Event Settings to make changes.' }, 409);
+  return json({ error: LOCKED_RESULTS }, 409);
 }
 
 async function isTournamentLocked(tournamentId: string): Promise<boolean> {

@@ -11,6 +11,7 @@ import type {
   TournamentScheduleImportVenue,
   TournamentScheduleImportVenueFacility,
 } from '@/lib/import/tournament-schedule';
+import { LOCKED_IMPORTS } from '@/lib/tournament-status-words';
 
 export type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -110,7 +111,7 @@ export async function authorizeTournamentScheduleImport(
   if (options.blockLocked && tournament.status === 'completed') {
     return {
       response: json({
-        error: 'This tournament is completed and locked. Set the status to Active in Event Settings to preview schedule imports.',
+        error: LOCKED_IMPORTS,
       }, 409),
     };
   }

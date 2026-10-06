@@ -41,6 +41,7 @@ import {
 } from '@/components/admin/tournament';
 import s from '../../admin-common.module.css';
 import styles from './data-tools.module.css';
+import { LOCKED_IMPORTS } from '@/lib/tournament-status-words';
 
 type Notice = {
   type: 'success' | 'warning';
@@ -217,7 +218,7 @@ export default function TournamentDataToolsPage() {
         ? 'Your role can view tournament data, but cannot download import templates.'
         : null;
   const importUnavailableReason = templateUnavailableReason ??
-    (isLocked ? 'Completed tournaments are read-only. Set the tournament back to Active before importing teams.' : null);
+    (isLocked ? LOCKED_IMPORTS : null);
   const registrationExportUnavailableReason = contextLoading
     ? 'Loading data tools.'
     : !currentTournament
@@ -235,7 +236,7 @@ export default function TournamentDataToolsPage() {
         ? 'Your role can view schedules, but cannot download schedule import templates.'
         : null;
   const scheduleImportUnavailableReason = scheduleTemplateUnavailableReason ??
-    (isLocked ? 'Completed tournaments are read-only. Set the tournament back to Active before importing schedule rows.' : null);
+    (isLocked ? LOCKED_IMPORTS : null);
 
   const templateDisabled = Boolean(templateUnavailableReason);
   const importDisabled = Boolean(importUnavailableReason);

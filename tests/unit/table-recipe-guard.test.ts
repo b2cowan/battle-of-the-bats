@@ -50,8 +50,6 @@ const KNOWN_DEBT: Record<string, string> = {
   'app/[orgSlug]/admin/families/families.module.css': 'F-18',
   'app/[orgSlug]/admin/house-league/house-league.module.css': 'F-18',
   'app/[orgSlug]/admin/rep-teams/rep-teams.module.css': 'F-18',
-  'app/[orgSlug]/admin/org/tournaments/tournaments-admin.module.css': 'F-18',
-  'app/[orgSlug]/admin/tournaments/archives/archives-admin.module.css': 'F-18',
   // K-13 — the tournament admin's schedule generator preview and health tables keep the shell's
   // own cell sizes beside the flat-row list; headings were moved to the baseline in the same pass.
   'app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css': 'K-13',

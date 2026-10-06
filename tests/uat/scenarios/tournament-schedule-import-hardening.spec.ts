@@ -424,7 +424,7 @@ test.describe.serial('Tournament schedule import route hardening', () => {
     await setTournamentStatus(smoke.tournamentId, 'completed');
     const lockedPreview = await previewSchedule(ownerPage, smoke, nonConflictingCsv);
     expect(lockedPreview.status).toBe(409);
-    expect(errorText(lockedPreview)).toContain('completed and locked');
+    expect(errorText(lockedPreview)).toContain('its results are locked');
     await setTournamentStatus(smoke.tournamentId, 'active');
 
     const lockBatchId = await insertImportBatch({
@@ -438,7 +438,7 @@ test.describe.serial('Tournament schedule import route hardening', () => {
       tournamentId: smoke.tournamentId,
     });
     expect(lockedCommit.status).toBe(409);
-    expect(errorText(lockedCommit)).toContain('completed and locked');
+    expect(errorText(lockedCommit)).toContain('its results are locked');
     await setTournamentStatus(smoke.tournamentId, 'active');
 
     const wrongActorBatchId = await insertImportBatch({

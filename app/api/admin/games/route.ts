@@ -32,6 +32,7 @@ import {
   resolveVenueSelectionFromCatalog,
   type TournamentVenueCatalog,
 } from '@/lib/tournament-venue';
+import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 
 /**
  * Resolve one game's venue selection against its tournament's catalog and spread the result
@@ -71,7 +72,7 @@ function venueSelectionErrorResponse(err: VenueSelectionError) {
 
 function tournamentLockedResponse() {
   return new Response(
-    JSON.stringify({ error: 'This tournament is completed and locked. Set the status to Active in Event Settings to make changes.' }),
+    JSON.stringify({ error: LOCKED_RESULTS }),
     { status: 409, headers: { 'Content-Type': 'application/json' } },
   );
 }

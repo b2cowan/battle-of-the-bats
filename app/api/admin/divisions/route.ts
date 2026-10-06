@@ -4,10 +4,11 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { coinTossKey } from '@/lib/tie-breakers';
 import { resolveAndFillPlayoffSeeds } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 
 function tournamentLockedResponse() {
   return Response.json(
-    { error: 'This tournament is completed and locked. Set the status to Active in Event Settings to make changes.' },
+    { error: LOCKED_RESULTS },
     { status: 409 },
   );
 }

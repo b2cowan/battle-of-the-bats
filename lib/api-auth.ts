@@ -10,6 +10,7 @@ import { assertSafeSupabaseServerEnvironment } from './supabase-safety';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit } from './plan-config';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isOrgBillingSuspended, OrgBillingSuspendedError } from './org-billing-access';
+import { LOCKED_RESULTS } from './tournament-status-words';
 
 export interface AuthContext {
   user: User;
@@ -397,7 +398,7 @@ export async function requireWritableTournament(
   if (!data || data.org_id !== ctx.org.id) return forbidden();
   if (data.status === 'completed') {
     return Response.json(
-      { error: 'This tournament is completed and locked. Set the status to Active in Event Settings to make changes.' },
+      { error: LOCKED_RESULTS },
       { status: 409 },
     );
   }
