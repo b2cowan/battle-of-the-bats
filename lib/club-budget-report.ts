@@ -34,7 +34,8 @@ import {
   type CategoryEvent, type GridLine, type MonthGrid, type MonthKey, type CashFlowResult,
 } from './coach-budget-months';
 import { budgetedOn } from './coach-budget-basis';
-import { PLAN_LADDER_LABEL } from './coach-budget-totals';
+import { buildPeriodView, type PeriodGranularity, type PeriodView } from './coach-budget-periods-view';
+import { PLAN_LADDER_LABEL, isFundingKind } from './coach-budget-totals';
 import type { CellDetailItem, MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
 import {
   FROM_THE_TEAMS_ID, NOT_FILED_FILING, NOT_FILED_ID, ON_REQUEST_FILING, SOURCE_MODULE, TEAM_SUPPORT_FILING,
@@ -237,7 +238,8 @@ function planRollupLines(lines: readonly ClubPlanLineFacts[]): RollupLine[] {
 }
 
 /** The year's months (until 3c sets a year's first month, January to December — `clubYearSpan`). */
-function yearMonths(year: number): MonthKey[] {
+/** The club year's twelve months, from its first day (3c moves the first month; this follows). */
+export function clubYearMonths(year: number): MonthKey[] {
   const first = monthKeyOf(clubYearSpan(year).first)!;
   return Array.from({ length: 12 }, (_, i) => addMonths(first, i));
 }
@@ -311,9 +313,11 @@ export interface ClubPlan {
   openingBalance: number;
   net: number;
   closingBalance: number;
-  /** By period: the coach's month grid fed the plan (`budget` cells), the year's twelve months. */
-  periodGrid: { months: MonthKey[]; revenue: MonthGrid; expenses: MonthGrid; balance: CashFlowResult };
 }
+
+/** The Budget's By period, both granularities (switching between them never re-reads). */
+export interface ClubPeriodViews { months: PeriodView; quarters: PeriodView }
+export type ClubPlanWithPeriods = ClubPlan & { periodView: ClubPeriodViews };
 
 /** The reader's team groups (B11): `null` = every team. The club's figures are the club's whatever the
  *  scope; only a team's NAME (and a request's own words) stay inside the reader's groups, as 3a's reads. */
@@ -394,13 +398,6 @@ export function buildClubPlan(input: {
   const expenseLines = expenseCats.flatMap(c => c.lines);
   const net = netForYear(revenueTotal, expenseTotal);
 
-  // By period: the same plan, by month (the coach's grid; `budget` cells).
-  const months = yearMonths(year);
-  const todayMonth = monthKeyOf(today) ?? months[0];
-  const report = rollupMoneyReport({ lines: [...planRollupLines(lines), ...fromTheTeamsPlanLines(drawn)], spend: [] });
-  const revenueGrid = buildMonthGrid({ lines: gridLinesOf(report.revenue, lines), actuals: [], scheduled: [], todayMonth, months, truncated: false });
-  const expensesGrid = buildMonthGrid({ lines: gridLinesOf(report.expenses, lines), actuals: [], scheduled: [], todayMonth, months, truncated: false });
-
   return {
     year,
     revenue: {
@@ -417,13 +414,66 @@ export function buildClubPlan(input: {
     openingBalance: input.openingBalance,
     net,
     closingBalance: closingBalance(input.openingBalance, net),
-    periodGrid: {
-      months,
-      revenue: sortGrid(revenueGrid, categoryOrder),
-      expenses: sortGrid(expensesGrid, categoryOrder),
-      balance: clubCashFlow(months, revenueGrid, expensesGrid, null, 'budget', input.openingBalance, 0),
-    },
   };
+}
+
+/**
+ * By period: the coach's OWN period view (`buildPeriodView`, the builder the coach's Budget › By period
+ * renders) fed the club's plan — the year's twelve months (or its four quarters), From the teams as the
+ * lead revenue row by its installments' due dates, the balance walked from the year's worked-out opening.
+ * Built here, once, so the screen formats and never re-adds, and `check:club-money-arithmetic` proves
+ * what is on screen (session 2 replaced the month-grid-shaped feed: the coach's period grid reads this
+ * shape, and Quarters needs the builder's own grouping). Only the Budget's read builds it: Budget vs.
+ * Actual reads the plan too and never shows By period.
+ */
+export function withPeriodViews(
+  plan: ClubPlan, lines: readonly ClubPlanLineFacts[], categoryOrder: Readonly<Record<string, number>>,
+): ClubPlanWithPeriods {
+  const { year, openingBalance } = plan;
+  const { planned, periods } = plan.revenue.fromTheTeams;
+  const view = (g: PeriodGranularity) => clubPeriodView(year, lines, planned, periods, categoryOrder, openingBalance, g);
+  return { ...plan, periodView: { months: view('months'), quarters: view('quarters') } };
+}
+
+/**
+ * The club's plan as the coach's period view: each plan line a `PeriodViewLine` (a cost, or money in —
+ * `other_income`, the kind whose actual is typed, as a club's own income is), From the teams as the
+ * builder's lead revenue row (its `dues` input: the shares billed, spread by their installments' due
+ * dates), the year's twelve months fixed, the balance from the year's worked-out opening. Then the groups
+ * and their rows are put in the PLAN's order — the library's, as the List reads them — where the coach's
+ * builder sorts cost categories by name.
+ */
+function clubPeriodView(
+  year: number, lines: readonly ClubPlanLineFacts[], fromTheTeams: number, fromTheTeamsPeriods: readonly ClubPlanPeriod[],
+  order: Readonly<Record<string, number>>, opening: number, granularity: PeriodGranularity,
+): PeriodView {
+  const view = buildPeriodView(
+    lines.map(l => ({
+      // A line with no word keeps a row of its own (the List shows each line), never the builder's "Not itemized" bucket.
+      id: l.id, description: l.description, itemId: l.itemId ?? `line:${l.id}`, itemName: l.description,
+      categoryId: l.categoryId, categoryName: l.categoryName, totalAmount: l.totalAmount,
+      lineKind: l.direction === 'in' ? 'other_income' : 'cost',
+      periods: l.periods.map(p => ({ periodDate: p.date, amount: p.amount })),
+    })),
+    granularity,
+    {
+      categoryOrder: new Map(Object.entries(order)),
+      dues: fromTheTeams > 0.005 || fromTheTeamsPeriods.length > 0
+        ? { assessed: fromTheTeams, installments: fromTheTeamsPeriods.map(p => ({ date: p.date, amount: p.amount })) }
+        : null,
+      openingBalance: opening,
+      months: clubYearMonths(year),
+    },
+  );
+  const sortOrder = new Map(lines.map(l => [l.id, l.sortOrder] as const));
+  const groups = sortByPlanOrder(view.groups, g => categoryIdOfKey(g.key.replace(/^in:/, '')), g => g.name, order)
+    .sort((a, b) => Number(!isFundingKind(a.lineKind)) - Number(!isFundingKind(b.lineKind)))
+    .map(g => ({
+      ...g,
+      rows: [...g.rows].sort((a, b) => ((a.lineId ? sortOrder.get(a.lineId) : undefined) ?? 0) - ((b.lineId ? sortOrder.get(b.lineId) : undefined) ?? 0)
+        || a.description.localeCompare(b.description)),
+    }));
+  return { ...view, groups };
 }
 
 // ══ BUDGET VS. ACTUAL ═════════════════════════════════════════════════════════════════════════
@@ -565,7 +615,7 @@ function emptyGrid(months: MonthKey[]): MonthGrid {
 export function buildClubReport(input: ClubReportInput): ClubReport {
   const { year, today, lines, allocations, requests, bookLines, books, categoryOrder, scope } = input;
   const loop = loopIndex(allocations, requests);
-  const months = yearMonths(year);
+  const months = clubYearMonths(year);
   const span = clubYearSpan(year);
   const inYear = (day: string | null) => day !== null && day >= span.first && day <= span.last;
   const todayMonth = monthKeyOf(today) ?? months[0];
@@ -742,9 +792,12 @@ export interface BoardSummary {
   /** The year against the budget — READ from Budget vs. Actual's report, never computed again. */
   againstBudget: {
     revenue: { planned: number; plannedToDate: number; actual: number };
-    fromTheTeams: { allocations: number; onRequest: number };
+    /** From the teams, split: what the allocations brought in and what came on request — and its plan (the allocations). */
+    fromTheTeams: { planned: number; allocations: number; onRequest: number };
     expenses: { planned: number; plannedToDate: number; actual: number };
     paidToTeamsOnRequest: number;
+    /** What the year's plan sets aside for requests paid to teams (Team support › Paid to teams on request). */
+    paidToTeamsOnRequestPlanned: number;
     offPlan: number;
     net: { planned: number; actual: number };
     headroom: number;
@@ -755,12 +808,13 @@ export interface BoardSummary {
   books: ClubBook[];
 }
 
-/** The Actual of one statement row — or, with `itemId: null`, of a category's rows other than On request. */
-function itemActual(section: ReportSection, categoryId: string, itemId: string | null): number {
+/** The Actual (or the plan, `of: 'budgeted'`) of one statement row — or, with `itemId: null`, of a category's
+ *  rows other than On request. READ from the statement, never worked out again. */
+function itemActual(section: ReportSection, categoryId: string, itemId: string | null, of: 'actual' | 'budgeted' = 'actual'): number {
   const cat: CategoryRow | undefined = section.categories.find(c => c.categoryId === categoryId);
   if (!cat) return 0;
   return sumMoney(cat.items.filter(i => (itemId === null ? i.itemId !== ON_REQUEST_FILING.itemId : i.itemId === itemId))
-    .map(i => ({ amount: i.actual })));
+    .map(i => ({ amount: of === 'actual' ? i.actual : (i.inPlan ? i.budgeted : 0) })));
 }
 
 export function buildBoardSummary(input: {
@@ -785,11 +839,13 @@ export function buildBoardSummary(input: {
   const againstBudget = {
     revenue: { planned: statement.revenue.budgeted, plannedToDate: report.toDate.revenuePlanned, actual: statement.revenue.actual },
     fromTheTeams: {
+      planned: itemActual(statement.revenue, FROM_THE_TEAMS_ID, null, 'budgeted'),
       allocations: itemActual(statement.revenue, FROM_THE_TEAMS_ID, null),
       onRequest: itemActual(statement.revenue, FROM_THE_TEAMS_ID, ON_REQUEST_FILING.itemId),
     },
     expenses: { planned: statement.expenses.budgeted, plannedToDate: report.toDate.expensesPlanned, actual: statement.expenses.actual },
     paidToTeamsOnRequest: itemActual(statement.expenses, TEAM_SUPPORT_FILING.categoryId, TEAM_SUPPORT_FILING.itemId),
+    paidToTeamsOnRequestPlanned: itemActual(statement.expenses, TEAM_SUPPORT_FILING.categoryId, TEAM_SUPPORT_FILING.itemId, 'budgeted'),
     offPlan: report.band.offPlan,
     net: { planned: statement.net.budgeted, actual: statement.net.actual },
     headroom: report.headroom,
@@ -873,7 +929,7 @@ export const BOARD_TEAMS_EXPORT_COLUMNS = [
   { label: 'Allocated', key: 'allocated', format: 'currency' as const },
   { label: 'Collected', key: 'collected', format: 'currency' as const },
   { label: 'Outstanding', key: 'outstanding', format: 'currency' as const },
-  { label: 'Requests waiting', key: 'requests', format: 'currency' as const },
+  { label: 'Requests waiting', key: 'requests', format: 'number' as const },
   { label: `Cash on hand · ${HELD_BY_THE_TEAM_WORD.toLowerCase()}`, key: 'cash', format: 'currency' as const },
 ];
 
@@ -882,13 +938,13 @@ export const BOARD_TEAMS_EXPORT_COLUMNS = [
 export function boardTeamsExportRows(summary: Pick<BoardSummary, 'teams' | 'teamsCash'>): Record<string, string | number | null>[] {
   const rows: Record<string, string | number | null>[] = summary.teams.map(t => ({
     team: t.teamName, group: t.groupName ?? '', allocated: t.allocated, collected: t.collected,
-    outstanding: t.outstanding, requests: t.requestsWaiting.amount, cash: t.cash.cash,
+    outstanding: t.outstanding, requests: t.requestsWaiting.count, cash: t.cash.cash,
   }));
   const total = (pick: (t: SummaryTeamRow) => number) => sumMoney(summary.teams.map(t => ({ amount: pick(t) })));
   rows.push({
     team: 'The teams', group: '',
     allocated: total(t => t.allocated), collected: total(t => t.collected), outstanding: total(t => t.outstanding),
-    requests: total(t => t.requestsWaiting.amount), cash: null,
+    requests: summary.teams.reduce((n, t) => n + t.requestsWaiting.count, 0), cash: null,
   });
   rows.push({ team: TEAMS_CASH_TOTAL_WORD, group: '', allocated: null, collected: null, outstanding: null, requests: null, cash: summary.teamsCash.total });
   return rows;

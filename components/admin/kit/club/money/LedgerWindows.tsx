@@ -9,14 +9,18 @@
  *                           where it came from. Who recorded it and when (C17), and ONE door to its
  *                           source — no Edit, no Void (C12's last part, C07).
  *   a transfer half       — both halves are named and voided together, with a reason (C13).
- *   Add entry             — creates ASK: Money In or Out (never a transfer half, C12), the club's own
- *                           categories, the payee picker with Manage payees at its foot (C01), how it
- *                           was paid and the reference, Pending as a choice.
+ *   Add entry             — creates ASK: Money In or Out (never a transfer half, C12), FILED UNDER a budget
+ *                           word (Club Tier Stage 3b, Ask 4a — the word picker the Budget's Add line and every
+ *                           coach money form use, money-out words for money out; the hint says whether the word
+ *                           is on the year's plan — a word with no line counts as off-plan), the payee picker
+ *                           with Manage payees at its foot (C01), how it was paid and the reference, Pending.
+ *                           The free-text category retired with 3a's form: a line's word is what gives it an
+ *                           Actual on Budget vs. Actual, matched to the plan by word (the coach's rule).
  *   Transfer              — between the club's OWN books only (a team never appears, C12).
  *
  * Every write answers 409/403 in words (lib/club-money-words.ts); a refused tap re-reads the book.
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import KitDialog from '../KitDialog';
@@ -26,11 +30,14 @@ import PayeeCombobox, { type PayeeSelection } from '@/components/accounting/Paye
 import { LedgerLineRead } from '@/components/coaches/kit';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
-import { howItCame } from '@/lib/club-money-words';
+import { FILED_BY_ITS_SOURCE, filedUnderHint, howItCame, wasCategoryWord, CLUB_BUDGET_REFUSAL } from '@/lib/club-money-words';
+import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
+import type { BudgetCategoryWithItems } from '@/lib/types';
+import type { Filing } from '@/lib/club-ledger';
 import { tournamentToday } from '@/lib/timezone';
 import type { BookRowOut } from '@/lib/club-ledger-read';
 import {
-  DayField, FormError, MethodField, ReasonQuestion, TextField, day, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
+  DayField, FormError, MethodField, ReasonQuestion, TextField, day, jsonInit, money, moneyFetch, moneyKit, moneyMove, parseAmount, refusalText,
   type MoveResult,
 } from './MoneyKit';
 
@@ -48,30 +55,68 @@ export function splitHow(paymentMethod: string | null): { method: DuesPaymentMet
   return { method: text ? 'other' : '', reference: text && text.toLowerCase() !== 'other' ? text : '' };
 }
 
-const NEW_CATEGORY = '__new__';
+/** The words a club line can be filed under (the Budget's own picker list: standard and club-shared words). */
+export type WordList = BudgetCategoryWithItems[];
 
-/** The club's own categories, as a dropdown with a way to name a new one (today's free text, kept). */
-function CategoryField({ id, value, onChange, categories }: {
-  id: string; value: string; onChange: (v: string) => void; categories: readonly string[];
+/**
+ * What the year's plan holds, by word — the "Filed under" hint's question: is this word on the plan? Read once
+ * per year the window asks about (the entry's date decides the year).
+ */
+function usePlanWords(q: string, year: number): Map<string, number> | null {
+  const [byYear, setByYear] = useState<Record<number, Map<string, number>>>({});
+  useEffect(() => {
+    if (byYear[year]) return;
+    let live = true;
+    // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
+    void moneyFetch<{ plan?: { revenue: { categories: { lines: { itemId: string | null; planned: number }[] }[] }; expenses: { categories: { lines: { itemId: string | null; planned: number }[] }[] } } }>(`/api/admin/accounting/budget-plan?${q}&year=${year}`)
+      .then(r => {
+        if (!live || !r.ok || !r.data.plan) return;
+        const m = new Map<string, number>();
+        for (const c of [...r.data.plan.revenue.categories, ...r.data.plan.expenses.categories]) {
+          for (const l of c.lines) if (l.itemId) m.set(l.itemId, l.planned);
+        }
+        setByYear(prev => ({ ...prev, [year]: m }));
+      })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [q, year, byYear]);
+  return byYear[year] ?? null;
+}
+
+/** The word a line is filed under, as the picker holds it. */
+const selectionOfFiling = (f: Filing | null): BudgetItemSelection | null =>
+  (f && f.itemId && !f.byItsSource
+    ? { categoryId: f.categoryId, categoryName: f.categoryName, itemId: f.itemId, itemName: f.itemName ?? '', suggestedAmount: null }
+    : null);
+
+/** FILED UNDER — the budget word picker (Ask 4a), money-out words for money out, money-in for money in, with
+ *  the hint whether the word is on the year's plan. */
+function FiledUnderField({ id, words, value, onChange, direction, orgSlug, q, date, hint }: {
+  id: string; words: WordList | null; value: BudgetItemSelection | null; onChange: (v: BudgetItemSelection) => void;
+  direction: 'in' | 'out'; orgSlug: string; q: string; date: string; hint?: string | null;
 }) {
-  const known = categories.includes(value);
-  const [typing, setTyping] = useState(!!value && !known);
+  const year = Number(date.slice(0, 4)) || Number(tournamentToday().slice(0, 4));
+  const plan = usePlanWords(q, year);
+  const onPlan = value?.itemId && plan ? (plan.has(value.itemId) ? { planned: plan.get(value.itemId)! } : null) : undefined;
   return (
-    <label className={ck.field} htmlFor={id}>
-      <span className={ck.label}>Category<span className={repKit.req} aria-hidden>*</span></span>
-      {typing ? (
-        <input id={id} className={ck.input} value={value} maxLength={100} placeholder="Name the category"
-          onChange={e => onChange(e.target.value)} />
-      ) : (
-        <select id={id} className={ck.select} value={known ? value : ''} onChange={e => {
-          if (e.target.value === NEW_CATEGORY) { setTyping(true); onChange(''); } else onChange(e.target.value);
-        }}>
-          <option value="">Choose…</option>
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          <option value={NEW_CATEGORY}>A new category…</option>
-        </select>
-      )}
-    </label>
+    <div className={ck.field}>
+      <span className={ck.label} id={`${id}-label`}>Filed under<span className={repKit.req} aria-hidden>*</span></span>
+      {words ? (
+        <BudgetItemPicker
+          categories={words}
+          value={value}
+          onChange={onChange}
+          /* org-slug-ok: the picker appends `/{catId}/items`, so the org travels as `adminOrgSlug` */
+          createItemEndpoint="/api/admin/accounting/budget-categories"
+          createItemMode="admin"
+          adminOrgSlug={orgSlug}
+          direction={direction}
+          selectId={`${id}-picker`}
+        />
+      ) : <p className={ck.hint}>Loading the budget’s words…</p>}
+      {onPlan !== undefined && <p className={ck.hint}>{filedUnderHint(onPlan, year)}</p>}
+      {hint && <p className={ck.hint}>{hint}</p>}
+    </div>
   );
 }
 
@@ -118,22 +163,17 @@ function PayeeField({ id, q, value, onChange, payeesHref, label }: {
   );
 }
 
-const parseAmount = (s: string): number | null => {
-  const n = Number(s.replace(/[$,\s]/g, ''));
-  return Number.isFinite(n) && n > 0 && n <= 999999.99 ? Math.round(n * 100) / 100 : null;
-};
-
 // ── Add an entry ─────────────────────────────────────────────────────────────────────────────────
 
-export function AddEntryWindow({ book, q, categories, payeesHref, onAdded, onClose }: {
-  book: BookRef; q: string; categories: readonly string[]; payeesHref: string;
+export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, onAdded, onClose }: {
+  book: BookRef; q: string; orgSlug: string; words: WordList | null; payeesHref: string;
   onAdded: (text: string) => void; onClose: () => void;
 }) {
   const [entryType, setEntryType] = useState<'income' | 'expense'>('expense');
   const [date, setDate] = useState(() => tournamentToday());
   const [what, setWhat] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
+  const [word, setWord] = useState<BudgetItemSelection | null>(null);
   const [payee, setPayee] = useState<PayeeSelection | null>(null);
   const [method, setMethod] = useState<DuesPaymentMethod | ''>('');
   const [reference, setReference] = useState('');
@@ -147,12 +187,12 @@ export function AddEntryWindow({ book, q, categories, payeesHref, onAdded, onClo
     if (busy) return;
     if (!what.trim()) { setError('Say what it was for.'); return; }
     if (n == null) { setError('Give an amount between $0.01 and $999,999.99.'); return; }
-    if (!category.trim()) { setError('Choose a category.'); return; }
+    if (!word?.itemId) { setError(CLUB_BUDGET_REFUSAL.word_required); return; }
     setBusy(true); setError('');
     try {
       // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
       const r = await moneyFetch(`/api/admin/accounting/ledgers/${book.id}/entries?${q}`, jsonInit('POST', {
-        entryDate: date, description: what.trim(), amount: n, entryType, status, category: category.trim(),
+        entryDate: date, description: what.trim(), amount: n, entryType, status, budgetItemId: word.itemId,
         paymentMethod: method ? howItCame(method, reference) : (reference.trim() || null),
         payeeId: payee?.payeeId ?? null, payeePayer: payee?.displayName ?? null, notes: notes.trim() || null,
       }));
@@ -181,15 +221,14 @@ export function AddEntryWindow({ book, q, categories, payeesHref, onAdded, onClo
     >
       <FormError>{error}</FormError>
       <div className={moneyKit.pair}>
-        <DirectionField id="ae-money" value={entryType} onChange={setEntryType} />
+        <DirectionField id="ae-money" value={entryType} onChange={v => { setEntryType(v); setWord(null); }} />
         <DayField id="ae-date" label="Date" value={date} onChange={setDate} />
       </div>
       <TextField id="ae-what" label="What" required value={what} onChange={setWhat} maxLength={500}
         placeholder="For example: Diamond permit" />
-      <div className={moneyKit.pair}>
-        <TextField id="ae-amount" label="Amount" required value={amount} onChange={setAmount} placeholder="$0.00" />
-        <CategoryField id="ae-cat" value={category} onChange={setCategory} categories={categories} />
-      </div>
+      <TextField id="ae-amount" label="Amount" required value={amount} onChange={setAmount} placeholder="$0.00" />
+      <FiledUnderField id="ae-word" words={words} value={word} onChange={setWord} direction={entryType === 'income' ? 'in' : 'out'}
+        orgSlug={orgSlug} q={q} date={date} />
       <PayeeField id="ae-payee" q={q} value={payee} onChange={setPayee} payeesHref={payeesHref}
         label={entryType === 'income' ? 'Paid by' : 'Paid to'} />
       <div className={moneyKit.pair}>
@@ -293,37 +332,37 @@ function sourceDoor(row: BookRowOut, accountingBase: string): { href: string; la
  * The window a line opens. Which one is the server's to say (`row.can`): a typed line is editable, a
  * transfer half voids both halves, a line from a source (or on a team's book) is read here only.
  */
-export function LineWindow({ row, book, q, categories, accountingBase, payeesHref, canMove, onChanged, onClose }: {
-  row: BookRowOut; book: BookRef; q: string; categories: readonly string[]; accountingBase: string; payeesHref: string;
+export function LineWindow({ row, book, q, orgSlug, words, accountingBase, payeesHref, canMove, onChanged, onClose }: {
+  row: BookRowOut; book: BookRef; q: string; orgSlug: string; words: WordList | null; accountingBase: string; payeesHref: string;
   canMove: boolean;
   /** A write landed (or was refused because the line changed): re-read the book; the text is the notice. */
   onChanged: (text: string | null) => void;
   onClose: () => void;
 }) {
   if (row.status !== 'void' && canMove && row.can.edit) {
-    return <EditLineWindow row={row} book={book} q={q} categories={categories} payeesHref={payeesHref} onChanged={onChanged} onClose={onClose} />;
+    return <EditLineWindow row={row} book={book} q={q} orgSlug={orgSlug} words={words} payeesHref={payeesHref} onChanged={onChanged} onClose={onClose} />;
   }
   return <ReadLineWindow row={row} book={book} q={q} accountingBase={accountingBase} canMove={canMove} onChanged={onChanged} onClose={onClose} />;
 }
 
 type Draft = {
-  entryType: 'income' | 'expense'; date: string; what: string; amount: string; category: string;
+  entryType: 'income' | 'expense'; date: string; what: string; amount: string; word: BudgetItemSelection | null;
   payee: PayeeSelection | null; method: DuesPaymentMethod | ''; reference: string; status: 'posted' | 'pending'; notes: string;
 };
 const draftOf = (row: BookRowOut): Draft => {
   const how = splitHow(row.paymentMethod);
   return {
     entryType: row.moneyIn != null ? 'income' : 'expense',
-    date: row.date, what: row.description, amount: (row.moneyIn ?? row.moneyOut ?? 0).toFixed(2), category: row.category ?? '',
+    date: row.date, what: row.description, amount: (row.moneyIn ?? row.moneyOut ?? 0).toFixed(2), word: selectionOfFiling(row.filedUnder),
     payee: row.payeeId || row.payeeName ? { payeeId: row.payeeId, payeePayer: row.payeeId ? null : row.payeeName, displayName: row.payeeName ?? '' } : null,
     method: how.method, reference: how.reference, status: row.status === 'pending' ? 'pending' : 'posted', notes: row.notes ?? '',
   };
 };
-const draftSig = (d: Draft) => JSON.stringify({ ...d, what: d.what.trim(), amount: d.amount.trim(), category: d.category.trim(), payee: d.payee?.payeeId ?? d.payee?.displayName ?? null });
+const draftSig = (d: Draft) => JSON.stringify({ ...d, what: d.what.trim(), amount: d.amount.trim(), word: d.word?.itemId ?? null, payee: d.payee?.payeeId ?? d.payee?.displayName ?? null });
 
 /** A line you typed: it saves as you go; Void asks, with a reason. */
-function EditLineWindow({ row, book, q, categories, payeesHref, onChanged, onClose }: {
-  row: BookRowOut; book: BookRef; q: string; categories: readonly string[]; payeesHref: string;
+function EditLineWindow({ row, book, q, orgSlug, words, payeesHref, onChanged, onClose }: {
+  row: BookRowOut; book: BookRef; q: string; orgSlug: string; words: WordList | null; payeesHref: string;
   onChanged: (text: string | null) => void; onClose: () => void;
 }) {
   const [d, setD] = useState<Draft>(() => draftOf(row));
@@ -331,17 +370,21 @@ function EditLineWindow({ row, book, q, categories, payeesHref, onChanged, onClo
   const saved = useRef(false);
   const sig = draftSig(d);
   const n = parseAmount(d.amount);
+  /* The word the server holds now: the line's own, then each save's (an old line stays Not filed until filed). */
+  const [filedItemId, setFiledItemId] = useState<string | null>(row.filedUnder?.itemId ?? null);
   const blocked = !d.what.trim() ? 'Give the entry a name to save it.'
     : n == null ? 'Give an amount between $0.01 and $999,999.99 to save it.'
-    : !d.category.trim() ? 'Choose a category to save it.'
-    : !d.date ? 'Give the entry a date to save it.' : null;
+    : !d.date ? 'Give the entry a date to save it.'
+    : filedItemId && !d.word?.itemId ? CLUB_BUDGET_REFUSAL.word_required : null;
 
   const write = useCallback(async (signal: AbortSignal) => {
     // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
     const res = await fetch(`/api/admin/accounting/ledgers/${book.id}/entries/${row.id}?${q}`, {
       ...jsonInit('PATCH', {
         entryDate: d.date, description: d.what.trim(), amount: parseAmount(d.amount), entryType: d.entryType, status: d.status,
-        category: d.category.trim(), paymentMethod: d.method ? howItCame(d.method, d.reference) : (d.reference.trim() || null),
+        // The word goes only when it was chosen here — an old line stays Not filed until someone files it.
+        ...(d.word?.itemId && d.word.itemId !== filedItemId ? { budgetItemId: d.word.itemId } : {}),
+        paymentMethod: d.method ? howItCame(d.method, d.reference) : (d.reference.trim() || null),
         payeeId: d.payee?.payeeId ?? null, payeePayer: d.payee?.displayName ?? null, notes: d.notes.trim() || null,
       }),
       signal,
@@ -349,7 +392,8 @@ function EditLineWindow({ row, book, q, categories, payeesHref, onChanged, onClo
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(refusalText(data, 'Couldn’t save'));
     saved.current = true;
-  }, [book.id, row.id, q, d]);
+    if (d.word?.itemId) setFiledItemId(d.word.itemId);
+  }, [book.id, row.id, q, d, filedItemId]);
 
   // The autosave holds while the Void question is open: a change typed in the last 0.9s must not
   // PATCH under a void. Keep it, and the pending change saves as usual.
@@ -382,14 +426,14 @@ function EditLineWindow({ row, book, q, categories, payeesHref, onChanged, onClo
         footer={<button type="button" className="btn btn-outline" onClick={() => void close()}>Done</button>}
       >
         <div className={moneyKit.pair}>
-          <DirectionField id="le-money" value={d.entryType} onChange={v => set({ entryType: v })} />
+          <DirectionField id="le-money" value={d.entryType} onChange={v => set({ entryType: v, word: v === d.entryType ? d.word : null })} />
           <DayField id="le-date" label="Date" value={d.date} onChange={v => set({ date: v })} />
         </div>
         <TextField id="le-what" label="What" required value={d.what} onChange={v => set({ what: v })} maxLength={500} />
-        <div className={moneyKit.pair}>
-          <TextField id="le-amount" label="Amount" required value={d.amount} onChange={v => set({ amount: v })} />
-          <CategoryField id="le-cat" value={d.category} onChange={v => set({ category: v })} categories={categories} />
-        </div>
+        <TextField id="le-amount" label="Amount" required value={d.amount} onChange={v => set({ amount: v })} />
+        <FiledUnderField id="le-word" words={words} value={d.word} onChange={v => set({ word: v })}
+          direction={d.entryType === 'income' ? 'in' : 'out'} orgSlug={orgSlug} q={q} date={d.date}
+          hint={!row.filedUnder && row.legacyCategory ? wasCategoryWord(row.legacyCategory) : null} />
         <PayeeField id="le-payee" q={q} value={d.payee} onChange={v => set({ payee: v })} payeesHref={payeesHref}
           label={d.entryType === 'income' ? 'Paid by' : 'Paid to'} />
         <div className={moneyKit.pair}>
@@ -489,7 +533,9 @@ function ReadLineWindow({ row, book, q, accountingBase, canMove, onChanged, onCl
           )}
           facts={[
             ['Amount', amount],
-            row.category ? ['Category', row.category] : null,
+            row.filedUnder
+              ? ['Filed under', `${row.filedUnder.categoryName}${row.filedUnder.itemName && row.filedUnder.itemName !== row.filedUnder.categoryName ? ` › ${row.filedUnder.itemName}` : ''}${row.filedUnder.byItsSource ? ` · ${FILED_BY_ITS_SOURCE.toLowerCase()}` : ''}`]
+              : row.category ? ['Filed under', `${row.category}${row.legacyCategory ? ` · ${wasCategoryWord(row.legacyCategory)}` : ''}`] : null,
             row.detail ? ['How it came', row.detail] : null,
             ['On', day(row.date)],
             isTransfer && row.source.kind === 'transfer' && row.source.partnerLedgerName

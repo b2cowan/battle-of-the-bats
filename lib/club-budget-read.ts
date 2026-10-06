@@ -7,8 +7,8 @@ import { loadClubLoop, seasonsHoldingPayout, type ClubLoop } from './club-money-
 import { teamCashHeld } from './club-team-cash';
 import { clubYearSpan, isClubBook, openingBalance } from './club-money-figures';
 import {
-  buildClubPlan, buildClubReport, buildBoardSummary, planYears,
-  type ClubAllocationFacts, type ClubBook, type ClubBookLineFacts, type ClubPlan, type ClubPlanLineFacts,
+  buildClubPlan, buildClubReport, buildBoardSummary, planYears, withPeriodViews,
+  type ClubAllocationFacts, type ClubBook, type ClubBookLineFacts, type ClubPlan, type ClubPlanLineFacts, type ClubPlanWithPeriods,
   type ClubReport, type ClubRequestFacts, type BoardSummary, type TeamScope,
 } from './club-budget-report';
 
@@ -31,11 +31,17 @@ import {
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-/** The years the Year pill offers (`planYears`): every year with a line, this year, and always the next year. */
-export async function clubPlanYears(orgId: string, today: string = tournamentToday()): Promise<number[]> {
+/**
+ * The years the Year pill offers (`planYears`): every year with a line, this year, and always the next year —
+ * and how many lines each holds, for the pill's second line ("this year · 12 lines", "plan ahead · no lines
+ * yet"; session 2).
+ */
+export async function clubPlanYears(orgId: string, today: string = tournamentToday()): Promise<{ years: number[]; yearLines: Record<number, number> }> {
   const rows = await fetchAll<{ season_year: number }>((a, b) => supabaseAdmin
     .from('org_budget_lines').select('season_year').eq('org_id', orgId).order('season_year').range(a, b));
-  return planYears(rows.map(r => r.season_year), today);
+  const yearLines: Record<number, number> = {};
+  for (const r of rows) yearLines[r.season_year] = (yearLines[r.season_year] ?? 0) + 1;
+  return { years: planYears(rows.map(r => r.season_year), today), yearLines };
 }
 
 /** The year's plan lines, each with its word, the word's side, and its periods. */
@@ -189,12 +195,12 @@ async function loadYear(orgId: string, year: number) {
  *  outside it is counted, never named (B11). */
 export async function readClubPlan(
   orgId: string, year: number, today: string = tournamentToday(), scope: PromiseLike<TeamScope> | TeamScope = null,
-): Promise<ClubPlan> {
+): Promise<ClubPlanWithPeriods> {
   const [lines, allocations, categoryOrder, books, seen] = await Promise.all([
     loadPlanLines(orgId, year), loadClubLoop(orgId, null).then(l => allocationsOf(orgId, l)),
     loadCategoryOrder(orgId), loadClubBooks(orgId, year), scope,
   ]);
-  return buildClubPlan({ year, today, lines, allocations, categoryOrder, openingBalance: books.opening, scope: seen });
+  return withPeriodViews(buildClubPlan({ year, today, lines, allocations, categoryOrder, openingBalance: books.opening, scope: seen }), lines, categoryOrder);
 }
 
 /** Budget vs. Actual and the plan it reads against, from ONE load of the year's rows. */

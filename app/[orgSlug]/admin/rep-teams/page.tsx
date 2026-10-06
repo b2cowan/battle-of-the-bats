@@ -17,7 +17,12 @@
  *   · at ≤ 640 the table becomes white cards with a corner chevron (it does not fit a phone);
  *   · the Upcoming bills panel LEFT this page (Club Tier Stage 3a, Ask 2): its lanes are Accounting ›
  *     Allocations › Coming due and Accounting › Payment requests. A team's money with the club is on its
- *     own page ("With the club"); the board gains a money column with 3b.
+ *     own page ("With the club").
+ *   · ⚖ THE MONEY COLUMN (Club Tier Stage 3b, specimen 4 — the slot Stage 2 left): Outstanding, what the team
+ *     owes the club, under the word the summary's teams table uses for the same figure; a late payment is a
+ *     red caption, the one thing in it only the club can chase. Shown only to someone who can open
+ *     Accounting (as the team page's "With the club" is). The team's own cash is NOT here — the board is the
+ *     president's "is every team in order?" scan; the cash lives on the summary and the team's account.
  * ⚠ Departure, told at build time: an "Archived" choice joins the group filter. The drawing shows no
  * way to reach an archived team, and its page is where "Bring back" lives (specimen 2).
  */
@@ -43,6 +48,10 @@ import {
 } from '@/lib/club-board-view';
 import type { ClubBoardRow } from '@/lib/club-team-board';
 import type { RepTeam, RepTeamGroup } from '@/lib/types';
+import { fmt as fmtMoney } from '@/lib/coach-money-summary';
+import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
+
+const boardLate = cr.lateCaption;
 
 const AddTeamDialog = dynamic(() => import('@/components/admin/kit/club/AddTeamDialog'));
 
@@ -52,8 +61,11 @@ const ALL = '';
 const UNGROUPED = 'none';
 const ARCHIVED = 'archived';
 
+/** What a team owes the club, from Accounting's own read (3a's definitions). */
+interface TeamMoney { teamId: string; outstanding: number; overdue: { count: number; amount: number } }
+
 export default function RepTeamsBoardPage() {
-  const { currentOrg, user, userRole, loading: orgLoading } = useOrg();
+  const { currentOrg, user, userRole, loading: orgLoading, canOpen } = useOrg();
   usePageTitle('Rep Teams');
   const orgSlug = currentOrg?.slug ?? '';
   const base = `/${orgSlug}/admin/rep-teams`;
@@ -67,6 +79,8 @@ export default function RepTeamsBoardPage() {
   const [groupsOpen, setGroupsOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [notice, setNotice] = useNotice();
+  const seesMoney = canOpen('module_accounting');
+  const [money, setMoney] = useState<Map<string, TeamMoney> | null>(null);
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
@@ -77,9 +91,11 @@ export default function RepTeamsBoardPage() {
       const q = `orgSlug=${encodeURIComponent(orgSlug)}`;
       // Every team, archived ones included: the group counts (a group holding an archived team can't
       // be deleted) and the Archived filter read the same list the board draws from.
-      const [teamsRes, groupsRes] = await Promise.all([
+      const [teamsRes, groupsRes, moneyRes] = await Promise.all([
         fetch(`/api/admin/rep-teams/teams?archived=true&${q}`, { cache: 'no-store' }),
         fetch(`/api/admin/rep-teams/groups?${q}`, { cache: 'no-store' }),
+        // The money column's read: only for someone who can open Accounting (it fails soft — the column hides).
+        seesMoney ? fetch(`/api/admin/accounting/teams?${q}`, { cache: 'no-store' }).catch(() => null) : Promise.resolve(null),
       ]);
       const teamsData = await teamsRes.json().catch(() => ({}));
       if (!teamsRes.ok) throw new Error(teamsData.error ?? 'The teams could not be loaded.');
@@ -87,12 +103,14 @@ export default function RepTeamsBoardPage() {
       if (!current()) return;
       setTeams(((teamsData.teams ?? []) as BoardTeam[]).filter(t => t.board));
       setGroups(Array.isArray(groupsData.groups) ? groupsData.groups : []);
+      const moneyData = moneyRes?.ok ? await moneyRes.json().catch(() => null) : null;
+      setMoney(Array.isArray(moneyData?.teams) ? new Map((moneyData.teams as TeamMoney[]).map(t => [t.teamId, t])) : null);
     } catch (e) {
       if (current()) setLoadError(e instanceof Error ? e.message : 'The teams could not be loaded.');
     } finally {
       if (current()) setLoading(false);
     }
-  }, [orgSlug, beginRead]);
+  }, [orgSlug, beginRead, seesMoney]);
 
   useDeferredLoad(!orgLoading && !!orgSlug, load);
 
@@ -223,12 +241,13 @@ export default function RepTeamsBoardPage() {
                   <th scope="col" className={repKit.num}>Roster</th>
                   <th scope="col">Next event</th>
                   <th scope="col" className={repKit.num}>Documents</th>
+                  {money && <th scope="col" className={repKit.num}>Outstanding</th>}
                   <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
                 </tr>
               </thead>
               <tbody>
                 {bands.map(band => (
-                  <BandRows key={band.key} label={band.label} rows={band.rows} base={base} />
+                  <BandRows key={band.key} label={band.label} rows={band.rows} base={base} money={money} />
                 ))}
               </tbody>
             </table>
@@ -284,13 +303,13 @@ type Row = BoardTeam & { groupId: string | null; view: ReturnType<typeof rowView
  *  row opens the team (standard §3.6, owner 2026-09-29): the name stays the real link — the keyboard's,
  *  a reader's, a new tab's — and the row is the pointer shortcut on top of it; a click that ends a text
  *  selection is a copy gesture, not a door. */
-function BandRows({ label, rows, base }: { label: string; rows: Row[]; base: string }) {
+function BandRows({ label, rows, base, money }: { label: string; rows: Row[]; base: string; money: Map<string, TeamMoney> | null }) {
   const router = useRouter();
   return (
     <>
       {label && (
         <tr className={repKit.band}>
-          <td colSpan={7}>{label}</td>
+          <td colSpan={money ? 8 : 7}>{label}</td>
         </tr>
       )}
       {rows.map(({ team, board, view: { season, coach, next, docs, noPlayers } }) => {
@@ -332,6 +351,7 @@ function BandRows({ label, rows, base }: { label: string; rows: Row[]; base: str
               {next ? <>{next.day}<span className={repKit.cellSub}>{next.line}</span></> : <span className={repKit.dim}>—</span>}
             </td>
             <td className={`${repKit.num}${docs ? '' : ` ${repKit.dim}`}`}>{docs ?? '—'}</td>
+            {money && <OutstandingCell m={money.get(team.id) ?? null} />}
             <td className={repKit.go}>
               {/* The row's mark, not a second door: the row is the pointer's target, the name the keyboard's. */}
               <span className={repKit.goLink} aria-hidden>
@@ -342,6 +362,17 @@ function BandRows({ label, rows, base }: { label: string; rows: Row[]; base: str
         );
       })}
     </>
+  );
+}
+
+/** What the team owes the club; a late payment is a red caption under it (the summary's word, "Outstanding"). */
+function OutstandingCell({ m }: { m: TeamMoney | null }) {
+  if (!m || m.outstanding <= 0.005) return <td className={`${repKit.num} ${repKit.dim}`}>{m ? '$0.00' : '—'}</td>;
+  return (
+    <td className={repKit.num}>
+      {fmtMoney(m.outstanding)}
+      {m.overdue.amount > 0.005 && <span className={`${repKit.cellSub} ${boardLate}`}>{fmtMoney(m.overdue.amount)} overdue</span>}
+    </td>
   );
 }
 

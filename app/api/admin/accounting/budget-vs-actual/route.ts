@@ -4,7 +4,7 @@ import { readYearParam, resolveClubMoney } from '@/lib/club-money-route';
 import { teamIdsInScope } from '@/lib/club-team-route';
 import { tournamentToday } from '@/lib/timezone';
 import { clubPlanYears, readClubYear } from '@/lib/club-budget-read';
-import { legacyReportFields } from '@/lib/club-budget-legacy';
+import { canMoveClubMoney } from '@/lib/member-access';
 
 /**
  * GET /api/admin/accounting/budget-vs-actual?year=2026 — the club's Budget vs. Actual (Club Tier Stage
@@ -25,8 +25,13 @@ import { legacyReportFields } from '@/lib/club-budget-legacy';
  * or on an allocation (B11, as 3a's reads). No row cap anywhere (C05: the newest fifty expense lines). Team health has LEFT this read (S3B-05):
  * how each team is paying is the summary's.
  *
- * ⚰ The top-level `availableYears`, `summary`, `categories`, `uncategorized`, `orgActuals`, `teamHealth`
- * are the OLD page's fields, mapped from `plan` and `report` — they retire with that page (session 2).
+ * `plan` — the year's plan (the same `ClubPlan` the Budget reads, from the same load): a Budgeted figure opens
+ * its line's own window right here (hub specimen 2, "a Budgeted figure opens the line's own window").
+ * `years` / `yearLines`: the Year pill (the same on the Budget and the Overview). `canMove`: the line's window
+ * offers its edit to someone who can change the plan (3a's one money rule).
+ *
+ * ⚰ The OLD page's top-level fields (`availableYears`, `summary`, `categories`, `uncategorized`, `orgActuals`,
+ * `teamHealth`) retired with it (session 2) — team health lives on the summary now (S3B-05).
  */
 export const GET = withObservability(async (req: Request) => {
   const gate = await resolveClubMoney(req, { scope: 'books', write: false });
@@ -36,12 +41,10 @@ export const GET = withObservability(async (req: Request) => {
   const today = tournamentToday();
   const year = readYearParam(req, today);
   // The report and the plan it reads against, from ONE load of the year's rows.
-  const [{ plan, report }, years] = await Promise.all([readClubYear(ctx.org.id, year, today, teamIdsInScope(ctx)), clubPlanYears(ctx.org.id, today)]);
+  const [{ plan, report }, { years, yearLines }] = await Promise.all([
+    readClubYear(ctx.org.id, year, today, teamIdsInScope(ctx)),
+    clubPlanYears(ctx.org.id, today),
+  ]);
 
-  return NextResponse.json({
-    year,
-    years,
-    report,
-    ...legacyReportFields(plan, report, years),
-  });
+  return NextResponse.json({ year, years, yearLines, canMove: canMoveClubMoney(ctx, ctx.org), report, plan });
 }, { route: '/api/admin/accounting/budget-vs-actual' });

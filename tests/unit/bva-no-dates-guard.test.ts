@@ -53,7 +53,10 @@ const ROLLUP = 'lib/coach-budget-rollup.ts';
 const EXPORTS = 'lib/coach-money-exports.ts';
 const DUES = 'lib/coach-dues-revenue.ts';
 
-const panel = readCode(PANEL);
+/* ⚖ The statement's rows were promoted into a shared component (Club Tier Stage 3b, 2026-10-06) that both
+   portals render; this guard reads the panel and the rows as one statement. */
+const ROWS = 'components/coaches/MoneyStatementRows.tsx';
+const panel = readCode(PANEL) + '\n' + readCode(ROWS);
 const rollup = readCode(ROLLUP);
 const exportsSrc = readCode(EXPORTS);
 const dues = readCode(DUES);
@@ -71,7 +74,8 @@ const dues = readCode(DUES);
  */
 function bodyOf(src: string, decl: string): string {
   const lines = src.split('\n');
-  const start = lines.findIndex(l => l.startsWith(decl));
+  // A promoted component is exported from its shared file (`export function ItemRows`).
+  const start = lines.findIndex(l => l.startsWith(decl) || l.startsWith(`export ${decl}`));
   assert.notEqual(
     start, -1,
     '`' + decl + '` is gone from the file this guard scans. If it was renamed, rename it here too — '

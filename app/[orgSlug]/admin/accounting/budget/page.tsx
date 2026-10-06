@@ -1,1027 +1,377 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { DollarSign, ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check } from 'lucide-react';
+/**
+ * Accounting › BUDGET (Club Tier Stage 3b, session 2 — hub v38/39 specimen 1; C10, C11, C05, S3B-02,
+ * S3B-03, J4-026; Asks 2, 4a, 4b, 4d, 5).
+ *
+ * The coach's Budget with the club's one difference, billing teams, built into the line:
+ *   toolbar — ONE line, the same in both views (owner 2026-10-01): Year · View (List · By period) · When
+ *             (List only, while a line has no date) or Columns (By period) · Export · Tools · the one lime
+ *             Add line, in the Ledgers' order (2026-10-02). On a phone: Year, View, a 44px Tools (Export
+ *             joins it) and a 44px lime +. Tools holds Categories and the teams' own words, each a window.
+ *   band    — the coach's: Total revenue · Total expenses · Closing balance (red only below zero). The
+ *             old four cards go (two are columns now; "Unallocated" was one of four names for one thing).
+ *   List    — BudgetPlanList (revenue first, the category is the shelf, Planned · Allocated · Collected).
+ *   By period — the coach's OWN period grid (promoted, components/coaches/MoneyPeriodGrid), fed the coach's
+ *             own period view of the club's plan, built on the server (one arithmetic, gated).
+ *   a line  — opens to READ (BudgetLineWindow): its allocations a section, Allocate $X opening New allocation
+ *             as a page, filled in from the line. Many allocations per line (C11).
+ *   a year  — the Year pill lists every year with a plan and ALWAYS the next one; an empty year offers
+ *             Start from the year before's plan (lime) and Add a line (C10). Remembered for the visit, with
+ *             Budget vs. Actual and the Overview.
+ *
+ * WHO WRITES: 3a's one money rule (owner, treasurer, an admin with Accounting — Ask 4d), answered by the
+ * server as `canMove`. Everyone who can open Accounting reads.
+ *
+ * ⚰ THE OLD PAGE (four cards, the in-row ✎ / 🗑 / "View Allocation →" / "Allocate to Teams", the periods
+ * fold, the foot panels) and its stylesheet retired with this page, and so did the old Allocate page.
+ */
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { MoreHorizontal, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
-import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
-import TeamBudgetItems from '@/components/accounting/TeamBudgetItems';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { CoachListToolbar } from '@/components/coaches/kit';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
+import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
+import { PeriodGrid } from '@/components/coaches/MoneyPeriodGrid';
+import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import { LoadFailed, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
+import { money, moneyFetch, jsonInit, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
+import YearPill, { useClubYear } from '@/components/admin/kit/club/money/YearPill';
+import BudgetPlanList, { lineHasUndated, type WhenFilter } from '@/components/admin/kit/club/money/BudgetPlanList';
 import {
-  downloadXLSX, generateCSV, downloadCSVBlob,
-  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
-} from '@/lib/export';
-import ExportMenu from '@/components/admin/ExportMenu';
-import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
+  AddLineWindow, BudgetLineWindow, CategoriesWindow, FromTheTeamsWindow, TeamWordsWindow,
+} from '@/components/admin/kit/club/money/BudgetWindows';
+import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/components/admin/kit/club/money/ClubMoneyExport';
+import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
+import { fmt as fmtSigned } from '@/lib/coach-money-summary';
+import { PLAN_LADDER_LABEL } from '@/lib/coach-budget-totals';
+import { GRANULARITY_LABEL, PERIOD_GRANULARITIES, whenSummary, whenSummaryText, type PeriodGranularity } from '@/lib/coach-budget-periods-view';
+import { budgetPeriodGridColumns, budgetPeriodGridRows, type MoneyRowKind } from '@/lib/coach-money-exports';
+import {
+  BUDGET_BAND_WORDS, FROM_THE_TEAMS_SPREAD_NOTE, FROM_THE_TEAMS_WORD, budgetOpeningNote, emptyYearWords,
+  netForYearWord, openingBalanceRowWord, outsideTheYearNote,
+} from '@/lib/club-money-words';
+import { clubYearSpan } from '@/lib/club-money-figures';
+import type { ClubPlan, ClubPlanWithPeriods, PlanLineRow } from '@/lib/club-budget-report';
 import type { BudgetCategoryWithItems } from '@/lib/types';
-import styles from './budget.module.css';
+import type { ExportColumnDef } from '@/lib/export';
 
-// ── Export definition ─────────────────────────────────────────────────────────
+interface PlanRead {
+  year: number;
+  years: number[];
+  yearLines: Record<number, number>;
+  today: string;
+  canMove: boolean;
+  plan: ClubPlanWithPeriods;
+}
 
-const BUDGET_EXPORT_COLS: ExportColumnDef[] = [
-  { label: 'Category',    key: 'category',    format: 'text'     },
-  { label: 'Description', key: 'description', format: 'text'     },
-  { label: 'Total',       key: 'total',       format: 'currency' },
-  { label: 'Allocated',   key: 'allocated',   format: 'currency' },
-  { label: 'Collected',   key: 'collected',   format: 'currency' },
-  { label: 'Periods',     key: 'periodCount', format: 'number'   },
-  { label: 'Allocated?',  key: 'isAllocated', format: 'text'     },
+type Win = 'add' | 'teams' | 'categories' | 'words' | null;
+
+/** The List's file: the plan as it reads, revenue first, each line with its word, When and the plan's three money
+ *  columns; the plan's close under it (session 1's call list: "its rows gain Allocated and Collected, and Revenue"). */
+const LIST_COLUMNS: ExportColumnDef[] = [
+  { label: 'Category / line', key: 'item', format: 'text' },
+  { label: 'Filed under', key: 'word', format: 'text' },
+  { label: 'When', key: 'when', format: 'text' },
+  { label: 'Planned', key: 'planned', format: 'currency' },
+  { label: 'Allocated', key: 'allocated', format: 'currency' },
+  { label: 'Collected', key: 'collected', format: 'currency' },
+  { label: 'Notes', key: 'notes', format: 'text' },
 ];
 
-function fmt(n: number) {
-  return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+function listRows(plan: ClubPlan): { rows: Record<string, string | number>[]; kinds: (MoneyRowKind | undefined)[] } {
+  const rows: Record<string, string | number>[] = [];
+  const kinds: (MoneyRowKind | undefined)[] = [];
+  const push = (r: Record<string, string | number>, k?: MoneyRowKind) => { rows.push(r); kinds.push(k); };
+  const when = (l: { periods: PlanLineRow['periods']; planned: number }) =>
+    whenSummaryText(whenSummary(l.periods.map(p => ({ periodDate: p.date, amount: p.amount })), l.planned), money);
+  const L = PLAN_LADDER_LABEL;
+  push({ item: L.revenueBand.toUpperCase() }, 'section');
+  const t = plan.revenue.fromTheTeams;
+  if (t.planned > 0.005 || t.allocations.length > 0) {
+    push({ item: FROM_THE_TEAMS_WORD, when: when({ periods: t.periods, planned: t.planned }), planned: t.planned }, 'category');
+    for (const a of t.allocations) push({ item: `  — ${a.description}`, planned: a.allocated }, 'item');
+  }
+  const line = (l: PlanLineRow) => push({
+    item: `  — ${l.description}`, word: l.itemName ? `${l.categoryName ?? ''} › ${l.itemName}` : '', when: when(l),
+    planned: l.planned, allocated: l.allocations.length > 0 ? l.allocated ?? '' : '', collected: l.allocations.length > 0 ? l.collected ?? '' : '',
+    notes: l.notes ?? '',
+  }, 'item');
+  for (const c of plan.revenue.categories) { push({ item: c.categoryName, planned: c.planned }, 'category'); c.lines.forEach(line); }
+  push({ item: L.totalRevenue, planned: plan.revenue.total }, 'total');
+  push({ item: L.expensesBand.toUpperCase() }, 'section');
+  for (const c of plan.expenses.categories) {
+    push({ item: c.categoryName, planned: c.planned, allocated: c.allocated ?? '', collected: c.collected ?? '' }, 'category');
+    c.lines.forEach(line);
+  }
+  push({ item: L.totalExpenses, planned: plan.expenses.total, allocated: plan.expenses.allocated, collected: plan.expenses.collected }, 'total');
+  const firstDay = clubYearSpan(plan.year).first;
+  push({ item: openingBalanceRowWord(firstDay), planned: plan.openingBalance }, 'total');
+  push({ item: netForYearWord(plan.year), planned: plan.net }, 'total');
+  push({ item: L.closingBalance, planned: plan.closingBalance }, 'total');
+  return { rows, kinds };
 }
 
-interface Period { id: string; label: string; periodDate: string | null; amount: number; sortOrder: number; }
-interface AllocationSummary { id: string; teamCount: number; totalAllocated: number; collected: number; outstanding: number; }
-interface BudgetLine {
-  id: string;
-  description: string;
-  totalAmount: number;
-  notes: string | null;
-  sortOrder: number;
-  categoryId: string | null;
-  itemId: string | null;
-  itemName: string | null;
-  createdAt: string;
-  periods: Period[];
-  allocation: AllocationSummary | null;
-}
-interface CategoryGroup { id: string; name: string; sortOrder: number; lines: BudgetLine[]; }
-interface Summary { totalBudgeted: number; totalAllocated: number; totalCollected: number; orgHeadroom: number; }
-interface PlanData {
-  year: number;
-  availableYears: number[];
-  summary: Summary;
-  categories: CategoryGroup[];
-  uncategorized: BudgetLine[];
-}
+export default function BudgetTab() {
+  const { currentOrg, loading: orgLoading } = useOrg();
+  const router = useRouter();
+  const search = useSearchParams();
+  const isPhone = useIsPhone();
+  const slug = currentOrg?.slug ?? '';
+  const q = `orgSlug=${encodeURIComponent(slug)}`;
+  const base = `/${slug}/admin/accounting`;
 
-interface PeriodDraft { label: string; periodDate: string; amount: string; }
+  const [year, setYear] = useClubYear(slug);
+  const [read, setRead] = useState<PlanRead | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [view, setView] = useState<'list' | 'period'>(() => (search.get('view') === 'period' ? 'period' : 'list'));
+  const [granularity, setGranularity] = useState<PeriodGranularity>('months');
+  const [when, setWhen] = useState<WhenFilter>('all');
+  const [closed, setClosed] = useState<Set<string>>(() => new Set());
+  const [gridClosed, setGridClosed] = useState<Set<string>>(() => new Set());
+  const [monthStart, setMonthStart] = useState<number | null>(null);
+  const [lineId, setLineId] = useState<string | null>(() => search.get('line'));
+  const [win, setWin] = useState<Win>(null);
+  const [categories, setCategories] = useState<BudgetCategoryWithItems[] | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [notice, setNotice] = useNotice();
 
-const BLANK_PERIOD: PeriodDraft = { label: '', periodDate: '', amount: '' };
+  const beginRead = useLatestRead();
+  const load = useCallback(async () => {
+    if (!slug) return;
+    const current = beginRead();
+    const r = await moneyFetch<PlanRead>(`/api/admin/accounting/budget-plan?${q}${year ? `&year=${year}` : ''}`).catch(() => null);
+    if (!current()) return;
+    if (!r?.ok) { setFailed(true); return; }
+    setFailed(false);
+    setRead(r.data);
+  }, [slug, q, year, beginRead]);
+  useDeferredLoad(!orgLoading && !!slug, load);
 
-function blankPeriods(): PeriodDraft[] { return [{ ...BLANK_PERIOD }]; }
-
-export default function OrgBudgetPage() {
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
-  const base = `/${currentOrg?.slug ?? ''}/admin`;
-  const canWrite = userRole === 'owner' || userRole === 'treasurer';
-  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
-  const asterisk = useKitAsterisk();
-
-  const [year, setYear]     = useState(new Date().getFullYear());
-  const [plan, setPlan]     = useState<PlanData | null>(null);
-  const [fetching, setFetching] = useState(true);
-  const [error, setError]   = useState('');
-
-  // BudgetItemPicker data — planning-eligible only (standard + club-shared)
-  const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
-
-  /* The Categories panel reads EVERY tier, including each team's own (mig 277, owner ruling Q1) —
-     the club sees what its teams plan under, and renames only its own. */
-  const [allCategories, setAllCategories] = useState<BudgetCategoryWithItems[]>([]);
-  const [categoryUsage, setCategoryUsage] =
-    useState<Record<string, { teamCount: number; usedByClub: boolean }>>({});
-  const [renameCatId,  setRenameCatId]  = useState<string | null>(null);
-  const [renameValue,  setRenameValue]  = useState('');
-  const [renameSaving, setRenameSaving] = useState(false);
-  const [renameError,  setRenameError]  = useState('');
-
-  // Add-line form state
-  const [addOpen,       setAddOpen]       = useState(false);
-  const [addPicker,     setAddPicker]     = useState<BudgetItemSelection | null>(null);
-  const [addDesc,       setAddDesc]       = useState('');
-  const [addAmount,     setAddAmount]     = useState('');
-  const [addNotes,      setAddNotes]      = useState('');
-  const [addPeriods,    setAddPeriods]    = useState<PeriodDraft[]>([]);
-  const [showPeriodsForm, setShowPeriodsForm] = useState(false);
-  const [addSaving,     setAddSaving]     = useState(false);
-  const [addError,      setAddError]      = useState('');
-
-  // Expanded periods rows
-  const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
-
-  // Edit line state
-  const [editLineId,    setEditLineId]    = useState<string | null>(null);
-  const [editDesc,      setEditDesc]      = useState('');
-  const [editAmount,    setEditAmount]    = useState('');
-  const [editNotes,     setEditNotes]     = useState('');
-  const [editSaving,    setEditSaving]    = useState(false);
-  const [editError,     setEditError]     = useState('');
-
-  // Delete confirmation
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const orgSlug = currentOrg?.slug;
-  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-
-  const load = useCallback(async (y: number) => {
-    setFetching(true);
-    setError('');
-    try {
-      const qs = new URLSearchParams({ year: String(y) });
-      if (orgSlug) qs.set('orgSlug', orgSlug);
-      const res  = await fetch(`/api/admin/accounting/budget-plan?${qs}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to load');
-      setPlan(data);
-      setYear(y);
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to load budget plan.');
-    } finally {
-      setFetching(false);
-    }
-  }, [orgSlug]);
-
-  /* ⚠ `forPlanning=1` KEEPS A TEAM'S OWN HEADING OUT OF THE CLUB'S PICKER (mig 277). This list feeds
-     the Add Line form, and the club's own plan may only be filed under standard and club-shared
-     categories — the same rule the write path enforces. The panel below asks the same endpoint
-     WITHOUT that flag, because seeing every team's heading is exactly its job. */
+  // The word picker's list: planning-eligible words only (the club's own plan never files under a team's word).
   const loadCategories = useCallback(async () => {
-    const catQs = orgSlug
-      ? `scope=org&forPlanning=1&orgSlug=${encodeURIComponent(orgSlug)}`
-      : 'scope=org&forPlanning=1';
-    const res  = await fetch(`/api/admin/accounting/budget-categories?${catQs}`);
-    const data = await res.json();
-    if (res.ok) setCategories(data.categories ?? []);
-  }, [orgSlug]);
+    const r = await moneyFetch<{ categories?: BudgetCategoryWithItems[] }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&${q}`).catch(() => null);
+    if (r?.ok) setCategories(r.data.categories ?? []);
+  }, [q]);
+  const canMove = read?.canMove ?? false;
+  useDeferredLoad(canMove && categories === null, loadCategories);
 
-  const loadAllCategories = useCallback(async () => {
-    const qs = orgSlug ? `usage=1&orgSlug=${encodeURIComponent(orgSlug)}` : 'usage=1';
-    const res  = await fetch(`/api/admin/accounting/budget-categories?${qs}`);
-    const data = await res.json();
-    if (res.ok) {
-      setAllCategories(data.categories ?? []);
-      setCategoryUsage(data.usage ?? {});
-    }
-  }, [orgSlug]);
-
+  // A line opened from another tab (Budget vs. Actual's plan panel, Months): `?line=` — once, then the address is clean.
   useEffect(() => {
-    if (currentOrg) {
-      load(year);
-      loadCategories();
-      loadAllCategories();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentOrg]);
+    if (!search.get('line') && !search.get('view')) return;
+    router.replace(`${base}/budget`);
+  }, [search, router, base]);
 
-  if (loading) return <p className={styles.muted}>Loading…</p>;
+  const plan = read?.plan ?? null;
+  const allLines = useMemo(() => (plan ? [...plan.revenue.categories, ...plan.expenses.categories].flatMap(c => c.lines) : []), [plan]);
+  const openLine = allLines.find(l => l.id === lineId) ?? null;
+  const hasUndated = allLines.some(lineHasUndated);
+  const changed = useCallback((text: string | null) => { if (text) setNotice({ tone: 'good', text }); void load(); }, [load, setNotice]);
 
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_accounting')) {
-    return (
-      <div className={styles.accessDenied}>
-        <DollarSign size={32} />
-        <h2>Access Restricted</h2>
-        <p>You don&apos;t have access to the Accounting module.</p>
-      </div>
-    );
-  }
+  /* The file is the shape on screen: the List, or the period grid at the granularity chosen. */
+  const buildExport = useCallback((): ClubMoneyFile => {
+    if (!read) throw new Error('The budget is still loading.');
+    const p = read.plan;
+    const asGrid = view === 'period';
+    const pv = granularity === 'quarters' ? p.periodView.quarters : p.periodView.months;
+    const built = asGrid ? budgetPeriodGridRows(pv, { leadRowName: FROM_THE_TEAMS_WORD }) : listRows(p);
+    return {
+      dataset: asGrid ? `budget-by-${granularity}` : 'budget',
+      title: asGrid ? `Budget by ${granularity === 'months' ? 'month' : 'quarter'}` : 'Budget',
+      columns: asGrid ? budgetPeriodGridColumns(pv) : LIST_COLUMNS,
+      rows: built.rows,
+      rowKinds: built.kinds,
+      scopeLabel: String(p.year),
+      teamName: currentOrg?.name ?? '',
+      // No masthead: the plan is a DATASET, as the coach's is (its file starts on its column row, the round-trip
+      // rule — `export-masthead-guard`). Budget vs. Actual and the board report are the club's documents.
+      emptyMessage: `The ${p.year} plan has nothing in it yet.`,
+    };
+  }, [read, view, granularity, currentOrg?.name]);
+  const exportFailed = useCallback((text: string) => setNotice({ tone: 'bad', text }), [setNotice]);
+  const runExport = useClubMoneyFile(q, slug, buildExport, exportFailed);
 
-  function toggleExpand(id: string) {
-    setExpandedLines(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
+  if (failed) return <LoadFailed title="We couldn’t load the budget." onRetry={() => void load()} />;
+  if (!read || !plan) return <p className={ck.loading}>Loading…</p>;
 
-  // ── Add line ──────────────────────────────────────────────────────────────
+  const thisYear = Number(read.today.slice(0, 4));
+  const isEmpty = allLines.length === 0 && plan.revenue.fromTheTeams.allocations.length === 0;
+  const fromYear = read.years.filter(y => y < plan.year && (read.yearLines[y] ?? 0) > 0).sort((a, b) => b - a)[0] ?? null;
+  const words = emptyYearWords(plan.year, fromYear);
+  const firstDay = clubYearSpan(plan.year).first;
+  const toggle = (set: (fn: (s: Set<string>) => Set<string>) => void) => (key: string) =>
+    set(s => { const n = new Set(s); if (n.has(key)) n.delete(key); else n.add(key); return n; });
+  const otherRevenueLines = plan.revenue.categories.reduce((n, c) => n + c.lines.length, 0);
+  const periodView = granularity === 'quarters' ? plan.periodView.quarters : plan.periodView.months;
 
-  function handlePickerChange(sel: BudgetItemSelection) {
-    setAddPicker(sel);
-    if (!addDesc || addDesc === '') {
-      setAddDesc(sel.itemName);
-    }
-    if (!addAmount && sel.suggestedAmount) {
-      setAddAmount(String(sel.suggestedAmount));
-    }
-  }
-
-  async function handleAddLine() {
-    const desc = addDesc.trim();
-    if (!desc) { setAddError('Description is required.'); return; }
-    const amount = Number(addAmount);
-    if (isNaN(amount) || amount <= 0) { setAddError('Amount must be a positive number.'); return; }
-
-    // Validate periods if entered
-    if (showPeriodsForm && addPeriods.some(p => p.label || p.amount)) {
-      const filled = addPeriods.filter(p => p.label.trim() && p.amount);
-      const periodSum = filled.reduce((s, p) => s + Number(p.amount), 0);
-      if (Math.abs(periodSum - amount) > 0.01) {
-        setAddError(`Period amounts (${fmt(periodSum)}) must equal line total (${fmt(amount)}).`);
-        return;
-      }
-      for (const p of filled) {
-        if (!p.label.trim()) { setAddError('Each period needs a label.'); return; }
-        if (!p.amount || Number(p.amount) <= 0) { setAddError('Each period needs a positive amount.'); return; }
-      }
-    }
-
-    setAddSaving(true);
-    setAddError('');
+  async function startFrom() {
+    if (starting || fromYear == null || !plan) return;
+    setStarting(true);
     try {
-      // ⚰ Interim (Club Tier 3b session 1): the dates go WITH the line — the add saves both in one step and
-      // refuses dates that don't add up, so they can never be dropped behind a "saved". Session 2 replaces this page.
-      const filled = showPeriodsForm ? addPeriods.filter(p => p.label.trim() && p.amount) : [];
-      const res = await fetch(`/api/admin/accounting/budget-plan/lines${orgQuery}`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          seasonYear:  year,
-          itemId:      addPicker?.itemId     ?? null,
-          description: desc,
-          totalAmount: amount,
-          notes:       addNotes.trim() || null,
-          periods: filled.length > 0
-            ? filled.map(p => ({ label: p.label.trim(), periodDate: p.periodDate || null, amount: Number(p.amount) }))
-            : undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to add line');
-
-      resetAddForm();
-      await load(year);
-    } catch (e: any) {
-      setAddError(e.message ?? 'Failed to add line.');
+      const r = await moneyFetch<{ lines: number }>(`/api/admin/accounting/budget-plan/start-from?${q}`, jsonInit('POST', { fromYear, toYear: plan.year }));
+      if (!r.ok) { setNotice({ tone: 'bad', text: refusalText(r.data, 'The plan couldn’t be started. Please try again.') }); return; }
+      changed(`${plan.year} starts from ${fromYear}’s plan: ${r.data.lines} ${r.data.lines === 1 ? 'line' : 'lines'}, moved a year on. Nothing is billed until you allocate.`);
+    } catch {
+      setNotice({ tone: 'bad', text: 'The plan couldn’t be started. Check your connection and try again.' });
     } finally {
-      setAddSaving(false);
+      setStarting(false);
     }
   }
 
-  function resetAddForm() {
-    setAddOpen(false);
-    setAddPicker(null);
-    setAddDesc('');
-    setAddAmount('');
-    setAddNotes('');
-    setAddPeriods([]);
-    setShowPeriodsForm(false);
-    setAddError('');
-  }
-
-  // ── Edit line ─────────────────────────────────────────────────────────────
-
-  function startEdit(line: BudgetLine) {
-    setEditLineId(line.id);
-    setEditDesc(line.description);
-    setEditAmount(String(line.totalAmount));
-    setEditNotes(line.notes ?? '');
-    setEditError('');
-  }
-
-  async function handleSaveEdit() {
-    if (!editLineId) return;
-    const desc = editDesc.trim();
-    if (!desc) { setEditError('Description is required.'); return; }
-    const amount = Number(editAmount);
-    if (isNaN(amount) || amount <= 0) { setEditError('Amount must be a positive number.'); return; }
-
-    setEditSaving(true);
-    setEditError('');
-    try {
-      const res = await fetch(`/api/admin/accounting/budget-plan/lines/${editLineId}${orgQuery}`, {
-        method:  'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: desc, totalAmount: amount, notes: editNotes.trim() || null }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to save');
-      setEditLineId(null);
-      await load(year);
-    } catch (e: any) {
-      setEditError(e.message ?? 'Failed to save.');
-    } finally {
-      setEditSaving(false);
-    }
-  }
-
-  // ── Delete line ───────────────────────────────────────────────────────────
-
-  async function handleDelete(lineId: string) {
-    setDeletingId(lineId);
-    try {
-      const res  = await fetch(`/api/admin/accounting/budget-plan/lines/${lineId}${orgQuery}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to delete');
-      await load(year);
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to delete line.');
-    } finally {
-      setDeletingId(null);
-    }
-  }
-
-  // ── Rename a shared category ──────────────────────────────────────────────
-
-  function startRename(cat: BudgetCategoryWithItems) {
-    setRenameCatId(cat.id);
-    setRenameValue(cat.name);
-    setRenameError('');
-  }
-
-  async function handleSaveRename() {
-    if (!renameCatId) return;
-    const name = renameValue.trim();
-    if (!name) { setRenameError('A name is required.'); return; }
-
-    setRenameSaving(true);
-    setRenameError('');
-    try {
-      const res = await fetch(
-        `/api/admin/accounting/budget-categories/${renameCatId}${orgQuery}`,
-        {
-          method:  'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ name }),
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to rename');
-      setRenameCatId(null);
-      /* Both lists carry this heading, and the plan below prints it too — a rename that reached one
-         of the three would leave the same category reading two different names on one screen. */
-      await Promise.all([loadAllCategories(), loadCategories(), load(year)]);
-    } catch (e: any) {
-      setRenameError(e.message ?? 'Failed to rename.');
-    } finally {
-      setRenameSaving(false);
-    }
-  }
-
-  /** What a rename would reach — the sentence that sizes the one action on the row. */
-  function usageLine(cat: BudgetCategoryWithItems): string {
-    if (cat.teamId) return cat.teamName ?? 'One of your teams';
-    const use = categoryUsage[cat.id];
-    if (!use) return cat.orgId ? 'Every team can plan under this' : 'Standard across every club';
-    const parts: string[] = [];
-    if (use.teamCount > 0) parts.push(`${use.teamCount} team${use.teamCount === 1 ? '' : 's'}`);
-    if (use.usedByClub) parts.push('your club’s own budget');
-    if (!parts.length) {
-      return cat.orgId ? 'Nobody is planning under it yet' : 'Standard across every club';
-    }
-    return `Used by ${parts.join(' and ')}`;
-  }
-
-  // ── Period draft helpers ──────────────────────────────────────────────────
-
-  function updatePeriod(idx: number, patch: Partial<PeriodDraft>) {
-    setAddPeriods(prev => prev.map((p, i) => i === idx ? { ...p, ...patch } : p));
-  }
-
-  // ── Export ────────────────────────────────────────────────────────────────
-
-  function buildBudgetExportRows() {
-    if (!plan) return [];
-    const rows: Record<string, unknown>[] = [];
-
-    for (const cat of plan.categories) {
-      for (const line of cat.lines) {
-        rows.push({
-          category:    cat.name,
-          description: line.description,
-          total:       line.totalAmount,
-          allocated:   line.allocation?.totalAllocated ?? 0,
-          collected:   line.allocation?.collected ?? 0,
-          periodCount: line.periods.length,
-          isAllocated: line.allocation ? 'Yes' : 'No',
-        });
-      }
-    }
-    for (const line of plan.uncategorized) {
-      rows.push({
-        category:    'Uncategorized',
-        description: line.description,
-        total:       line.totalAmount,
-        allocated:   line.allocation?.totalAllocated ?? 0,
-        collected:   line.allocation?.collected ?? 0,
-        periodCount: line.periods.length,
-        isAllocated: line.allocation ? 'Yes' : 'No',
-      });
-    }
-    return rows;
-  }
-
-  function handleExportXLSX() {
-    const rows     = buildBudgetExportRows();
-    const headers  = serializeHeaders(BUDGET_EXPORT_COLS);
-    const data     = serializeRows(rows as Record<string, unknown>[], BUDGET_EXPORT_COLS);
-    const filename = buildFilename(
-      { org: currentOrg?.slug, dataset: 'budget-plan', scope: String(year) },
-      'xlsx',
-    );
-    downloadXLSX(filename, headers, data, 'Budget Plan');
-  }
-
-  function handleExportCSV() {
-    const rows     = buildBudgetExportRows();
-    const headers  = serializeHeaders(BUDGET_EXPORT_COLS);
-    const data     = serializeRows(rows as Record<string, unknown>[], BUDGET_EXPORT_COLS);
-    const filename = buildFilename(
-      { org: currentOrg?.slug, dataset: 'budget-plan', scope: String(year) },
-      'csv',
-    );
-    downloadCSVBlob(filename, generateCSV(headers, data));
-  }
-
-  // ── Render ────────────────────────────────────────────────────────────────
-
-  const allLines = plan
-    ? [...plan.categories.flatMap(c => c.lines), ...plan.uncategorized]
-    : [];
-
-  function renderLines(lines: BudgetLine[]) {
-    return lines.map(line => {
-      const isExpanded = expandedLines.has(line.id);
-      const isEditing  = editLineId === line.id;
-      const isDeleting = deletingId === line.id;
-
-      return [
-        // Main row
-        <tr key={line.id} className={styles.tr}>
-          <td className={styles.td} style={{ width: '40%' }}>
-            {isEditing ? (
-              <input
-                className={styles.input}
-                value={editDesc}
-                onChange={e => setEditDesc(e.target.value)}
-                maxLength={200}
-                autoFocus
-              />
-            ) : (
-              <>
-                <div className={styles.lineDesc}>{line.description}</div>
-                {line.itemName && <div className={styles.lineItem}>{line.itemName}</div>}
-              </>
-            )}
-          </td>
-
-          <td className={`${styles.td} ${styles.tdRight}`} style={{ width: '15%' }}>
-            {isEditing ? (
-              <input
-                className={styles.input}
-                type="number" min={0.01} step={0.01}
-                value={editAmount}
-                onChange={e => setEditAmount(e.target.value)}
-                style={{ width: 100 }}
-              />
-            ) : (
-              <span className={styles.lineAmount}>{fmt(line.totalAmount)}</span>
-            )}
-          </td>
-
-          <td className={styles.td} style={{ width: '20%' }}>
-            {line.periods.length > 0 && !isEditing && (
-              <button
-                type="button"
-                className={styles.periodToggleBtn}
-                onClick={() => toggleExpand(line.id)}
-              >
-                {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                {line.periods.length} period{line.periods.length !== 1 ? 's' : ''}
-              </button>
-            )}
-          </td>
-
-          <td className={styles.td} style={{ width: '15%' }}>
-            {line.allocation ? (
-              <span className={styles.badgeAllocated}>
-                <Check size={11} /> Allocated
-              </span>
-            ) : null}
-          </td>
-
-          <td className={`${styles.td} ${styles.tdRight}`} style={{ width: '10%' }}>
-            {isEditing ? (
-              <div className={styles.actionsCell}>
-                <button type="button" className={styles.btnIcon} onClick={handleSaveEdit} disabled={editSaving} title="Save">
-                  <Check size={15} />
-                </button>
-                <button type="button" className={styles.btnIcon} onClick={() => setEditLineId(null)} title="Cancel">
-                  <X size={15} />
-                </button>
-              </div>
-            ) : (
-              <div className={styles.actionsCell}>
-                {!line.allocation && canWrite && (
-                  <Link
-                    href={`${base}/accounting/budget/allocate/${line.id}`}
-                    className="btn btn-secondary"
-                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem', whiteSpace: 'nowrap' }}
-                  >
-                    Allocate to Teams
-                  </Link>
-                )}
-                {/* ⚖ SHOWN AGAIN (Club Tier Stage 3a, Ask 2): the allocation's page lives in Accounting now,
-                    so everyone on this page can open it — the treasurer who made it included. */}
-                {line.allocation && (
-                  <Link
-                    href={`${base}/accounting/allocations/${line.allocation.id}`}
-                    className="btn btn-ghost"
-                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem', whiteSpace: 'nowrap' }}
-                  >
-                    View Allocation →
-                  </Link>
-                )}
-                {canWrite && (
-                  <>
-                    <button
-                      type="button"
-                      className={styles.btnIcon}
-                      onClick={() => startEdit(line)}
-                      title="Edit"
-                    >
-                      <Pencil size={13} />
-                    </button>
-                    {!line.allocation && (
-                      <button
-                        type="button"
-                        className={`${styles.btnIcon} ${styles.btnIconDanger}`}
-                        onClick={() => handleDelete(line.id)}
-                        disabled={isDeleting}
-                        title="Delete"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </td>
-        </tr>,
-
-        // Edit error row
-        isEditing && editError ? (
-          <tr key={`${line.id}-edit-err`} className={styles.tr}>
-            <td colSpan={5} className={styles.td}>
-              <p className={styles.errorText}>{editError}</p>
-            </td>
-          </tr>
-        ) : null,
-
-        // Periods expand row
-        isExpanded && line.periods.length > 0 && !isEditing ? (
-          <tr key={`${line.id}-periods`} className={styles.periodsRow}>
-            <td colSpan={5} className={styles.td}>
-              <div className={styles.periodsInner}>
-                <table className={styles.periodTable}>
-                  <thead>
-                    <tr>
-                      <th className={styles.periodTh}>Period</th>
-                      <th className={styles.periodTh}>Date</th>
-                      <th className={styles.periodTh} style={{ textAlign: 'right' }}>Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {line.periods.map(p => (
-                      <tr key={p.id} className={styles.periodTr}>
-                        <td>{p.label}</td>
-                        <td>{p.periodDate ?? '—'}</td>
-                        <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(p.amount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </td>
-          </tr>
-        ) : null,
-      ];
-    });
-  }
-
-  const noLines = !fetching && plan && allLines.length === 0;
-
-  // The header's actions — one fragment both headers render, so the kit header never forks them.
-  const headerActions = (
-    <>
-          <ExportMenu
-            formats={['xlsx', 'csv']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            disabled={!plan || allLines.length === 0}
-          />
-          {canWrite && !addOpen && (
-            <button type="button" className="btn btn-primary" onClick={() => setAddOpen(true)}>
-              <Plus size={15} /> Add Line
-            </button>
-          )}
-    </>
-  );
+  const exportButton = <ClubMoneyExport run={runExport} formats={['xlsx', 'csv']} disabled={isEmpty} />;
 
   return (
-    <div className={styles.page}>
-      {/* ⚖ A TAB OF ACCOUNTING (Club Tier Stage 3a, Ask 2 option B): the page lost only its own header —
-          the Accounting frame titles it and the tab row says which tab is lit. Its actions sit at the end of
-          the season row (a create belongs to the tab's own toolbar, §3.9). 3b redraws the page. */}
-
-      {/* Year selector */}
-      <div className={styles.yearRow} style={{ flexWrap: 'wrap' }}>
-        <span>Season year:</span>
-        <select
-          className={styles.yearSelect}
-          value={year}
-          onChange={e => load(Number(e.target.value))}
-          disabled={fetching}
-        >
-          {(plan?.availableYears ?? [year]).map(y => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginLeft: 'auto', flexWrap: 'wrap' }}>
-          {headerActions}
-        </div>
-      </div>
-
-      {error && <p className={styles.errorText} style={{ marginBottom: '1rem' }}>{error}</p>}
-
-      {/* Summary cards */}
-      {plan && (
-        <div className={styles.summaryGrid}>
-          <div className={styles.summaryCard}>
-            <div className={styles.summaryLabel}>Total Budgeted</div>
-            <div className={styles.summaryValue}>{fmt(plan.summary.totalBudgeted)}</div>
-          </div>
-          <div className={styles.summaryCard}>
-            <div className={styles.summaryLabel}>Allocated to Teams</div>
-            <div className={`${styles.summaryValue} ${plan.summary.totalAllocated > 0 ? styles.summaryValueMuted : ''}`}>
-              {fmt(plan.summary.totalAllocated)}
-            </div>
-          </div>
-          <div className={styles.summaryCard}>
-            <div className={styles.summaryLabel}>Collected from Teams</div>
-            <div className={`${styles.summaryValue} ${plan.summary.totalCollected > 0 ? styles.summaryValuePos : ''}`}>
-              {fmt(plan.summary.totalCollected)}
-            </div>
-          </div>
-          <div className={styles.summaryCard}>
-            <div className={styles.summaryLabel}>Unallocated Budget</div>
-            <div className={`${styles.summaryValue} ${plan.summary.orgHeadroom < 0 ? styles.summaryValueNeg : ''}`}>
-              {fmt(plan.summary.orgHeadroom)}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {fetching ? (
-        <p className={styles.muted}>Loading…</p>
-      ) : (
-        <>
-          {/* Budget lines — by category */}
-          {noLines ? (
-            <div className={styles.emptyBudget}>
-              <p>No budget lines for {year} yet.</p>
-              {canWrite && (
-                <button type="button" className="btn btn-primary" onClick={() => setAddOpen(true)}>
-                  <Plus size={15} /> Add First Line
-                </button>
+    <>
+      {notice && <PageNotice notice={notice} />}
+      <CoachListToolbar
+        actions={(
+          <>
+            {!isPhone && exportButton}
+            <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={15} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools">
+              <CoachToolbarMenuItem label="Categories" hint="Rename the club’s shared headings" onSelect={() => setWin('categories')} />
+              <CoachToolbarMenuItem label="Words your teams use" hint="Publish a team’s word to every team" onSelect={() => setWin('words')} />
+              {isPhone && !isEmpty && (
+                <>
+                  <CoachToolbarMenuItem label="Export to Excel" hint="The plan as it reads on screen" onSelect={() => void runExport('xlsx')} />
+                  <CoachToolbarMenuItem label="Export to CSV" onSelect={() => void runExport('csv')} />
+                </>
               )}
-            </div>
-          ) : (
-            <>
-              {plan?.categories.map(cat => (
-                <div key={cat.id} className={styles.categorySection}>
-                  <div className={styles.categoryHeader}>
-                    <span className={styles.categoryName}>{cat.name}</span>
-                    <span className={styles.categoryTotal}>
-                      {fmt(cat.lines.reduce((s, l) => s + l.totalAmount, 0))}
-                    </span>
-                  </div>
-                  <div className={styles.tableWrap}>
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th className={styles.th}>Description</th>
-                          <th className={`${styles.th} ${styles.thRight}`}>Total</th>
-                          <th className={styles.th}>Periods</th>
-                          <th className={styles.th}>Status</th>
-                          <th className={styles.th}></th>
-                        </tr>
-                      </thead>
-                      <tbody>{renderLines(cat.lines)}</tbody>
-                    </table>
-                  </div>
-                </div>
-              ))}
-
-              {plan && plan.uncategorized.length > 0 && (
-                <div className={styles.categorySection}>
-                  <div className={styles.categoryHeader}>
-                    <span className={styles.categoryName}>Uncategorized</span>
-                    <span className={styles.categoryTotal}>
-                      {fmt(plan.uncategorized.reduce((s, l) => s + l.totalAmount, 0))}
-                    </span>
-                  </div>
-                  <div className={styles.tableWrap}>
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th className={styles.th}>Description</th>
-                          <th className={`${styles.th} ${styles.thRight}`}>Total</th>
-                          <th className={styles.th}>Periods</th>
-                          <th className={styles.th}>Status</th>
-                          <th className={styles.th}></th>
-                        </tr>
-                      </thead>
-                      <tbody>{renderLines(plan.uncategorized)}</tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Add Line form */}
-          {canWrite && addOpen && (
-            <div className={styles.addLineSection}>
-              <div className={styles.addLineHeader}>
-                <span>Add Budget Line</span>
-                <button type="button" className={styles.btnIcon} onClick={resetAddForm}>
-                  <X size={16} />
-                </button>
-              </div>
-              <div className={styles.addLineBody}>
-                <div style={{ marginBottom: '1rem' }}>
-                  <BudgetItemPicker
-                    categories={categories}
-                    value={addPicker}
-                    onChange={handlePickerChange}
-                    /* org-slug-ok: the picker appends `/{catId}/items`, so the org travels
-                       separately as `adminOrgSlug` and is added after the path. */
-                    createItemEndpoint="/api/admin/accounting/budget-categories"
-                    createItemMode="admin"
-                    adminOrgSlug={orgSlug}
-                    /* This form BUILDS A BUDGET LINE, so a suggested amount is a real question here
-                       and `handlePickerChange` pre-fills the line's amount with it — one of the two
-                       surfaces that opt in (owner ruling 2026-09-02; see `suggestAmount`). */
-                    suggestAmount
-                    /* ⚠ THE ORG BUDGET IS A SPENDING PLAN, so it answers this without asking (mig
-                       246). Total Budgeted → Allocated to Teams → Collected: every line here is
-                       money going out. A revenue surface would pass 'in'; there isn't one. */
-                    direction="out"
-                  />
-                </div>
-
-                <div className={styles.formGrid}>
-                  <div className={`${styles.field} ${styles.formGridFull}`}>
-                    <label className={styles.label} htmlFor="add-desc">
-                      Description <span style={asterisk}>*</span>
-                    </label>
-                    <input
-                      id="add-desc"
-                      className={styles.input}
-                      type="text"
-                      value={addDesc}
-                      onChange={e => setAddDesc(e.target.value)}
-                      maxLength={200}
-                      placeholder="e.g. Diamond Permits — 2026 season"
-                      autoFocus
-                    />
-                  </div>
-
-                  <div className={styles.field}>
-                    <label className={styles.label} htmlFor="add-amount">
-                      Total Amount ($) <span style={asterisk}>*</span>
-                    </label>
-                    <input
-                      id="add-amount"
-                      className={styles.input}
-                      type="number" min={0.01} step={0.01}
-                      value={addAmount}
-                      onChange={e => setAddAmount(e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-
-                  <div className={styles.field}>
-                    <label className={styles.label} htmlFor="add-notes">Notes (optional)</label>
-                    <input
-                      id="add-notes"
-                      className={styles.input}
-                      type="text"
-                      value={addNotes}
-                      onChange={e => setAddNotes(e.target.value)}
-                      maxLength={300}
-                      placeholder="Internal note"
-                    />
-                  </div>
-                </div>
-
-                {/* Period distribution toggle */}
-                <div style={{ marginTop: '1rem' }}>
-                  <button
-                    type="button"
-                    className={styles.periodToggleBtn}
-                    style={{ fontSize: '0.82rem' }}
-                    onClick={() => {
-                      setShowPeriodsForm(p => {
-                        if (!p) setAddPeriods(blankPeriods());
-                        return !p;
-                      });
-                    }}
-                  >
-                    {showPeriodsForm ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                    {showPeriodsForm ? 'Hide' : 'Add'} period distribution (optional)
-                  </button>
-                </div>
-
-                {showPeriodsForm && (
-                  <div style={kx({ marginTop: '0.75rem', paddingLeft: '0.5rem', borderLeft: '2px solid var(--white-8)' }, { borderLeft: '2px solid var(--home-line)' })}>
-                    <p className={styles.hint} style={{ marginBottom: '0.6rem' }}>
-                      Break this budget line into monthly or phase-based amounts. Totals must equal the line total.
-                    </p>
-                    {addPeriods.map((p, i) => (
-                      <div key={i} className={styles.periodEditorRow}>
-                        <input
-                          className={styles.input}
-                          value={p.label}
-                          onChange={e => updatePeriod(i, { label: e.target.value })}
-                          placeholder="Label (e.g. May)"
-                          maxLength={40}
-                        />
-                        <input
-                          className={styles.input}
-                          type="date"
-                          value={p.periodDate}
-                          onChange={e => updatePeriod(i, { periodDate: e.target.value })}
-                        />
-                        <input
-                          className={styles.input}
-                          type="number" min={0.01} step={0.01}
-                          value={p.amount}
-                          onChange={e => updatePeriod(i, { amount: e.target.value })}
-                          placeholder="Amount"
-                        />
-                        <button
-                          type="button"
-                          className={`${styles.btnIcon} ${styles.btnIconDanger}`}
-                          onClick={() => setAddPeriods(prev => prev.filter((_, j) => j !== i))}
-                          disabled={addPeriods.length === 1}
-                        >
-                          <X size={13} />
-                        </button>
-                      </div>
-                    ))}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem' }}
-                        onClick={() => setAddPeriods(prev => [...prev, { ...BLANK_PERIOD }])}
-                      >
-                        <Plus size={12} /> Add Period
-                      </button>
-                      {addAmount && addPeriods.some(p => p.amount) && (
-                        <span className={styles.hint}>
-                          Period sum: {fmt(addPeriods.reduce((s, p) => s + (Number(p.amount) || 0), 0))}
-                          {' / '}Total: {fmt(Number(addAmount) || 0)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {addError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{addError}</p>}
-
-                <div className={styles.formActions}>
-                  <button type="button" className="btn btn-ghost" onClick={resetAddForm}>Cancel</button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleAddLine}
-                    disabled={addSaving}
-                  >
-                    {addSaving ? 'Adding…' : 'Add Line'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {canWrite && !addOpen && !noLines && (
-            <div style={{ marginTop: '1rem' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setAddOpen(true)}>
-                <Plus size={14} /> Add Line
+            </CoachToolbarMenu>
+            {canMove && (
+              <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => setWin('add')} aria-label="Add line">
+                <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add line</span>
               </button>
+            )}
+          </>
+        )}
+      >
+        <YearPill year={plan.year} years={read.years} yearLines={read.yearLines} thisYear={thisYear}
+          onChange={y => { setYear(y); setLineId(null); setWhen('all'); }} />
+        <SingleSelectDropdown label="View" lead value={view}
+          options={[{ id: 'list', label: 'List' }, { id: 'period', label: 'By period' }]}
+          onChange={next => setView(next as 'list' | 'period')} />
+        {view === 'list' && hasUndated && (
+          <SingleSelectDropdown label="When" value={when}
+            options={[{ id: 'all', label: 'All' }, { id: 'undated', label: 'No date yet' }, { id: 'dated', label: 'Dated' }]}
+            onChange={next => setWhen(next as WhenFilter)} />
+        )}
+        {view === 'period' && (
+          <SingleSelectDropdown label="Columns" value={granularity}
+            options={PERIOD_GRANULARITIES.map(g => ({ id: g, label: GRANULARITY_LABEL[g] }))}
+            onChange={next => setGranularity(next as PeriodGranularity)} />
+        )}
+      </CoachListToolbar>
+
+      {isEmpty ? (
+        /* C10: an empty year — the compact tier: one sentence, the fact, the one lime action. */
+        <div className={cr.emptyYear}>
+          <p className={cr.emptyYearTitle}>{words.title}</p>
+          <p className={cr.emptyYearBody}>{words.body}</p>
+          {canMove && (
+            <div className={cr.emptyYearActions}>
+              {words.start && (
+                <button type="button" className="btn btn-lime" onClick={() => void startFrom()} disabled={starting}>
+                  {starting ? 'Starting…' : words.start}
+                </button>
+              )}
+              <button type="button" className={words.start ? 'btn btn-outline' : 'btn btn-lime'} onClick={() => setWin('add')}>Add a line</button>
             </div>
           )}
-        </>
-      )}
-
-      {/* ── Categories ────────────────────────────────────────────────────────────────────────
-          ⚠ THE ONLY PLACE A CATEGORY CAN BE RENAMED (mig 277, owner ruling Q4 2026-09-04). It sits
-          here because this is where the club's money vocabulary is already managed, and because the
-          budget grid above only names a category the CLUB has filed a dollar under this year — a
-          heading six teams plan under can be absent from that grid entirely, which is precisely the
-          one that most needs fixing.
-          ⚠ ALL THREE TIERS, one list, grouped: what the club owns, what ships with the product, and
-          what its teams wrote. Only the middle group is unreachable by anybody; only the first is
-          this club's to reword. */}
-      {allCategories.length > 0 && (
-        <div className={styles.categoryPanel}>
-          <div className={styles.categoryPanelHead}>
-            <div>
-              <h2 className={styles.categoryPanelTitle}>Categories</h2>
-              <p className={styles.categoryPanelSub}>
-                The headings every budget in the club sits under — yours and your teams&rsquo;.
-              </p>
-            </div>
-          </div>
-
-          {([
-            {
-              key:   'club',
-              label: 'Your club’s — every team uses these',
-              rows:  allCategories.filter(c => c.orgId && !c.teamId),
-            },
-            {
-              key:   'platform',
-              label: 'Comes with the product',
-              rows:  allCategories.filter(c => !c.orgId),
-            },
-            {
-              key:   'team',
-              label: 'Teams’ own — visible to you, renamed by them',
-              rows:  allCategories.filter(c => c.teamId),
-            },
-          ] as const).filter(group => group.rows.length > 0).map(group => (
-            <div key={group.key}>
-              <div className={styles.categoryGroupLabel}>{group.label}</div>
-              {group.rows.map(cat => {
-                const isRenaming = renameCatId === cat.id;
-                const canRename  = canWrite && !!cat.orgId && !cat.teamId;
-                return (
-                  <div key={cat.id}>
-                    <div className={styles.categoryRow}>
-                      {isRenaming ? (
-                        <input
-                          className={styles.input}
-                          value={renameValue}
-                          onChange={e => setRenameValue(e.target.value)}
-                          maxLength={80}
-                          aria-label="Category name"
-                          autoFocus
-                        />
-                      ) : (
-                        <div className={styles.categoryRowName}>
-                          {cat.name}
-                          <span className={styles.categoryRowUse}>{usageLine(cat)}</span>
-                        </div>
-                      )}
-
-                      {!isRenaming && (
-                        <span className={cat.teamId
-                          ? styles.categoryTagTeam
-                          : cat.orgId ? styles.categoryTagShared : styles.categoryTagFixed}>
-                          {cat.teamId ? 'Team’s own' : cat.orgId ? 'Shared' : 'Fixed'}
-                        </span>
-                      )}
-
-                      {isRenaming ? (
-                        <div className={styles.actionsCell}>
-                          <button
-                            type="button" className={styles.btnIcon} title="Save"
-                            onClick={handleSaveRename} disabled={renameSaving}
-                          >
-                            <Check size={15} />
-                          </button>
-                          <button
-                            type="button" className={styles.btnIcon} title="Cancel"
-                            onClick={() => setRenameCatId(null)}
-                          >
-                            <X size={15} />
-                          </button>
-                        </div>
-                      ) : canRename ? (
-                        <button
-                          type="button"
-                          className={styles.btnIcon}
-                          onClick={() => startRename(cat)}
-                          title={`Rename ${cat.name}`}
-                        >
-                          <Pencil size={13} />
-                        </button>
-                      ) : null}
-                    </div>
-                    {isRenaming && renameError && (
-                      <p className={styles.errorText} style={{ padding: '0 0 0.6rem' }}>{renameError}</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+        </div>
+      ) : (
+        <div className={cr.report}>
+          <MoneySummaryBand
+            ariaLabel="Budget summary"
+            tiles={[
+              {
+                key: 'revenue', label: PLAN_LADDER_LABEL.totalRevenue, figure: money(plan.revenue.total), tone: 'good',
+                caption: BUDGET_BAND_WORDS.revenue(plan.revenue.fromTheTeams.planned, otherRevenueLines),
+              },
+              {
+                key: 'expenses', label: PLAN_LADDER_LABEL.totalExpenses, figure: money(plan.expenses.total),
+                caption: BUDGET_BAND_WORDS.expenses(plan.expenses.allocated),
+              },
+              {
+                key: 'closing', label: PLAN_LADDER_LABEL.closingBalance, figure: fmtSigned(plan.closingBalance),
+                tone: plan.closingBalance < -0.005 ? 'danger' : 'plain',
+                caption: BUDGET_BAND_WORDS.closing(plan.net),
+              },
+            ]}
+          />
+          {view === 'list' ? (
+            <BudgetPlanList
+              plan={plan}
+              when={hasUndated ? when : 'all'}
+              closed={closed}
+              onToggle={toggle(setClosed)}
+              onOpenLine={setLineId}
+              onOpenTeams={() => setWin('teams')}
+            />
+          ) : (
+            <PeriodGrid
+              view={periodView}
+              granularity={granularity}
+              monthStart={monthStart}
+              onMonthStart={setMonthStart}
+              closed={gridClosed}
+              onToggle={toggle(setGridClosed)}
+              onEditLine={id => setLineId(id)}
+              duesHref={`${base}/allocations`}
+              leadRow={{ name: FROM_THE_TEAMS_WORD, title: 'See the allocations it adds up', onOpen: () => setWin('teams') }}
+              spanWord="year"
+              openingNote={budgetOpeningNote(plan.openingBalance, firstDay)}
+              beyondNote={outsideTheYearNote(plan.year)}
+              closingNote={plan.revenue.fromTheTeams.allocations.length > 0 ? FROM_THE_TEAMS_SPREAD_NOTE : undefined}
+            />
+          )}
         </div>
       )}
 
-      {/* ⚠ THE CLUB'S ONLY WINDOW ONTO ITS TEAMS' OWN BUDGET VOCABULARY (mig 240). A coach's item
-          belongs to their team and appears in no other team's picker — which is the ruling, and
-          also means a club could otherwise never see that three teams have each invented the same
-          word. It sits on the org's own budget page because that is where the club's taxonomy is
-          already managed; publishing is the one action, and it is one-way. */}
-      {currentOrg?.slug && <TeamBudgetItems orgSlug={currentOrg.slug} canWrite={canWrite} />}
-    </div>
+      {openLine && (
+        <BudgetLineWindow
+          key={openLine.id}
+          line={openLine}
+          year={plan.year}
+          q={q}
+          orgSlug={slug}
+          canMove={canMove}
+          categories={categories ?? []}
+          accountingBase={base}
+          onChanged={changed}
+          onClose={() => setLineId(null)}
+        />
+      )}
+      {win === 'add' && (
+        <AddLineWindow
+          year={plan.year}
+          q={q}
+          orgSlug={slug}
+          categories={categories ?? []}
+          onWord={itemId => {
+            const l = allLines.find(x => x.itemId === itemId);
+            return l ? { description: l.description, planned: l.planned } : null;
+          }}
+          onAdded={text => { setWin(null); changed(text); }}
+          onClose={() => setWin(null)}
+        />
+      )}
+      {win === 'teams' && (
+        <FromTheTeamsWindow
+          year={plan.year}
+          rows={plan.revenue.fromTheTeams.allocations}
+          planned={plan.revenue.fromTheTeams.planned}
+          periods={plan.revenue.fromTheTeams.periods}
+          accountingBase={base}
+          onClose={() => setWin(null)}
+        />
+      )}
+      {win === 'categories' && (
+        <CategoriesWindow q={q} canMove={canMove} onRenamed={() => { void load(); void loadCategories(); }} onClose={() => setWin(null)} />
+      )}
+      {win === 'words' && <TeamWordsWindow orgSlug={slug} canMove={canMove} onClose={() => setWin(null)} />}
+    </>
   );
 }

@@ -13,9 +13,16 @@
  * in the club's blue / "The club's own"), and the payee's window carries the switch with what it does.
  * Only a club with teams draws either (`clubSharesPayees` — the PATCH refuses on the same pure rule). A team's
  * picker lists a shared payee under "Shared by your club" and tells the coach the club sees payments to
- * it. ⚠ "What the teams recorded" in that window is Club Tier Stage 3b — NOT built here.
+ * it.
+ *
+ * ⚖ WHAT THE TEAMS RECORDED (Club Tier Stage 3b, specimen 5 — S3B-06): a SHARED payee's window gains ONE door,
+ * a row opening the report one level down (`payees/[payeeId]`), captioned with the report's own count and
+ * total for the year — the one place a team figure touches the payee. The Payees list keeps showing the
+ * club's own entries only (mig 316). Unsharing removes the door; the report keeps what was recorded while
+ * it was shared.
  */
-import { use, useCallback, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { ChevronRight, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -29,6 +36,10 @@ import {
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { FormError, TextField, day, jsonInit, moneyFetch, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
 import { pluralize } from '@/lib/utils';
+import { PAYEE_REPORT_WORDS } from '@/lib/club-money-words';
+import { clubYearOf } from '@/lib/club-money-figures';
+import { formatStoredDate, tournamentToday } from '@/lib/timezone';
+import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 import { clubSharesPayees } from '@/lib/team-payee-scope';
 
 /**
@@ -141,6 +152,7 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
           others={payees.filter(p => p.id !== open.id)}
           canShare={canShare}
           q={q}
+          reportHref={`/${orgSlug}/admin/accounting/payees/${open.id}`}
           onClose={changed => { setOpen(null); if (changed) void load(); }}
           onDone={text => { setOpen(null); setNotice({ tone: 'good', text }); void load(); }}
         />
@@ -154,8 +166,8 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
 }
 
 /** A payee: its name saves as you type; merge asks; delete only when no line names it. */
-function PayeeWindow({ payee, others, canShare, q, onClose, onDone }: {
-  payee: Payee; others: Payee[]; canShare: boolean; q: string; onClose: (changed: boolean) => void; onDone: (text: string) => void;
+function PayeeWindow({ payee, others, canShare, q, reportHref, onClose, onDone }: {
+  payee: Payee; others: Payee[]; canShare: boolean; q: string; reportHref: string; onClose: (changed: boolean) => void; onDone: (text: string) => void;
 }) {
   const [name, setName] = useState(payee.name);
   const [saved, setSaved] = useState(false);
@@ -228,6 +240,7 @@ function PayeeWindow({ payee, others, canShare, q, onClose, onDone }: {
               className={ck.switch} disabled={sharing} onClick={() => void share(!shared)} />
           </div>
         )}
+        {canShare && shared && <RecordedDoor payeeId={payee.id} q={q} href={reportHref} />}
         {payee.inUse && others.length > 0 && (
           <p className={ck.hint}>Two spellings of one payee? Merge this one into the other: every entry moves to the one you keep.</p>
         )}
@@ -238,6 +251,42 @@ function PayeeWindow({ payee, others, canShare, q, onClose, onDone }: {
       {asking === 'delete' && (
         <DeleteQuestion payee={payee} q={q} onClose={() => setAsking(null)} onDone={onDone} />
       )}
+    </>
+  );
+}
+
+/**
+ * The door to what the teams recorded paying a shared payee: a row inside the window that opens a page (a row
+ * list's door, register K-19), captioned with the report's count and total for this year. It reads the report
+ * when it appears — a payee shared a moment ago shows "Nothing recorded" until a team records a payment.
+ */
+function RecordedDoor({ payeeId, q, href }: { payeeId: string; q: string; href: string }) {
+  const year = clubYearOf(tournamentToday());
+  const [caption, setCaption] = useState<string | null>(null);
+  const [since, setSince] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    void moneyFetch<{ report?: { teams: unknown[]; total: number; payee: { sharedAt: string } } }>(`/api/admin/accounting/payees/${payeeId}/report?${q}&year=${year}`)
+      .then(r => {
+        if (!live || !r.ok || !r.data.report) return;
+        setCaption(PAYEE_REPORT_WORDS.doorCaption(r.data.report.teams.length, r.data.report.total, year));
+        setSince(r.data.report.payee.sharedAt);
+      })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [payeeId, q, year]);
+  return (
+    <>
+      {since && <p className={ck.hint}>Shared since {formatStoredDate(since, { withYear: false })}.</p>}
+      <div className={cr.windowRows}>
+        <Link href={href} className={cr.windowRow}>
+          <span className={cr.windowRowMain}>
+            <span className={cr.windowRowTitle}>{PAYEE_REPORT_WORDS.door}</span>
+            <span className={cr.windowRowSub}>{caption ?? 'Loading…'}</span>
+          </span>
+          <ChevronRight size={16} aria-hidden className={cr.windowRowEnd} />
+        </Link>
+      </div>
     </>
   );
 }

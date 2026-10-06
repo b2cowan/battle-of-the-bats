@@ -36,29 +36,47 @@ export function useRecordAutosave({ enabled, loading, sig, blocked, write, failT
   const [saveError, setSaveError] = useState('');
   const sigRef = useRef(sig);
   useEffect(() => { sigRef.current = sig; }, [sig]);
+  /* ⚠ ONE SAVE AT A TIME (Club Tier 3b /review, 2026-10-06). Done, ✓ or Retry pressed while the autosave is
+     in flight used to send a second PATCH beside it — out of order where a route has no version token (the
+     older draft could land last), refused where it has one (the token not yet advanced by the first). A
+     caller now waits for the save in flight, then saves again only if something changed since it began. */
+  const inFlight = useRef<{ done: Promise<boolean>; sig: string } | null>(null);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     if (!enabled) return true;
+    const running = inFlight.current;
+    if (running) {
+      const ok = await running.done;
+      if (!ok || sigRef.current === running.sig) return ok;
+    }
     if (blocked) { setSaveError(blocked); return false; }
     const sigAtSave = sigRef.current;
     setSaving(true); setSaveError('');
     const abort = new AbortController();
     const timeout = setTimeout(() => abort.abort(), SAVE_TIMEOUT_MS);
+    const done = (async () => {
+      try {
+        await write(abort.signal);
+        // A change typed WHILE the save was in flight keeps the record dirty for the next pass.
+        if (sigRef.current === sigAtSave) setDirty(false);
+        return true;
+      } catch (e: unknown) {
+        setSaveError(
+          e instanceof DOMException && e.name === 'AbortError'
+            ? (timeoutText ?? 'Saving is taking too long — check your connection.')
+            : e instanceof Error ? e.message : failText,
+        );
+        return false;
+      } finally {
+        clearTimeout(timeout);
+        setSaving(false);
+      }
+    })();
+    inFlight.current = { done, sig: sigAtSave };
     try {
-      await write(abort.signal);
-      // A change typed WHILE the save was in flight keeps the record dirty for the next pass.
-      if (sigRef.current === sigAtSave) setDirty(false);
-      return true;
-    } catch (e: unknown) {
-      setSaveError(
-        e instanceof DOMException && e.name === 'AbortError'
-          ? (timeoutText ?? 'Saving is taking too long — check your connection.')
-          : e instanceof Error ? e.message : failText,
-      );
-      return false;
+      return await done;
     } finally {
-      clearTimeout(timeout);
-      setSaving(false);
+      if (inFlight.current?.done === done) inFlight.current = null;
     }
   }, [enabled, blocked, write, failText, timeoutText]);
 

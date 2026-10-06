@@ -122,11 +122,15 @@ export async function proxy(request: NextRequest) {
         ? `/${segments[0]}/admin/accounting/payment-requests`
       : segments[2] === 'accounting' && segments[3] === 'ledger' && segments.length === 5
         ? `/${segments[0]}/admin/accounting/ledger`
+      // Stage 3b retired the budget line's own Allocate page into New allocation, opened from the line.
+      : segments[2] === 'accounting' && segments[3] === 'budget' && segments[4] === 'allocate' && segments.length === 6
+        ? `/${segments[0]}/admin/accounting/allocations/new`
       : null;
     if (moved) {
       const url = request.nextUrl.clone();
       url.pathname = moved;
-      if (segments[2] === 'accounting') url.searchParams.set('book', segments[4]);
+      if (segments[3] === 'ledger') url.searchParams.set('book', segments[4]);
+      if (segments[3] === 'budget') url.searchParams.set('line', segments[5]);
       return NextResponse.redirect(url, { status: 307 });
     }
   }

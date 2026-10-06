@@ -362,3 +362,140 @@ export const FILED_UNDER_REFUSAL = {
   wrong_side_out: 'Money out is filed under a money-out word.',
   wrong_side_in: 'Money in is filed under a money-in word.',
 } as const;
+
+// ── Club Tier Stage 3b, the screens (session 2): every sentence the Budget, Budget vs. Actual, the board
+//    summary, a team's money, the payee report and the coach's Club tab print. ⚠ DRAFTS FOR /marketing,
+//    tagged on the hub (specimens 1–6); the drawings fixed what each must CARRY — the words are placement. ──
+
+/** The Year pill's second line for a year (C10's planning half): this year, the year ahead, or a count. */
+export function yearPillDetail(year: number, thisYear: number, lines: number): string {
+  const count = lines === 0 ? 'no lines yet' : `${lines} ${lines === 1 ? 'line' : 'lines'}`;
+  if (year === thisYear) return `this year · ${count}`;
+  if (year === thisYear + 1) return `plan ahead · ${count}`;
+  return count;
+}
+
+/** A partly billed cost line, under its name: the part the club pays itself unless it allocates it. */
+export const notAllocatedCaption = (amount: number) =>
+  `${fmt(amount)} not allocated · the club pays it unless you allocate it`;
+
+/** The Budget's band captions (Total revenue · Total expenses · Closing balance). */
+export const BUDGET_BAND_WORDS = {
+  revenue: (fromTheTeams: number, otherLines: number) => (fromTheTeams > 0.005
+    ? `${fmt(fromTheTeams)} from the teams${otherLines > 0 ? ` · ${otherLines} more ${otherLines === 1 ? 'line' : 'lines'}` : ''}`
+    : otherLines > 0 ? `${otherLines} ${otherLines === 1 ? 'line' : 'lines'}` : 'Nothing planned in yet'),
+  expenses: (allocated: number) => (allocated > 0.005 ? `${fmt(allocated)} of it allocated to teams` : 'None of it allocated to teams yet'),
+  /** "$30.00 less than the year opened with" — the plan's close against its opening. */
+  closing: (net: number) => (Math.abs(net) <= 0.005
+    ? 'The same as the year opened with'
+    : `${fmt(Math.abs(net))} ${net < 0 ? 'less' : 'more'} than the year opened with`),
+} as const;
+
+/** Where the plan's opening comes from (Ask 5): worked out from the books, never typed. */
+export const budgetOpeningNote = (opening: number, firstDay: string) =>
+  `The year opened with ${fmt(opening)}, what the club’s books held on ${formatStoredDate(firstDay, { withYear: false })}, worked out from the books. Revenue and expenses are planned; money is assumed to arrive and leave in its planned months.`;
+
+/** The plan's closing rows' words ("Opening balance · Jan 1", "Net for 2026"). */
+export const openingBalanceRowWord = (firstDay: string) => `Opening balance · ${formatStoredDate(firstDay, { withYear: false })}`;
+export const netForYearWord = (year: number) => `Net for ${year}`;
+
+/** By period, under the grid: how From the teams spreads. */
+export const FROM_THE_TEAMS_SPREAD_NOTE = 'From the teams spreads by its installments’ due dates; every other line by its own periods.';
+/** By period, money dated outside the year (it sits under No date yet, in the Total and in no month). */
+export const outsideTheYearNote = (year: number) =>
+  `Some of this plan is dated outside ${year}. It sits under No date yet: in the year’s Total, in no month. Change its dates to place it.`;
+
+/** An empty year (C10): the compact empty state — one sentence, the fact, the one lime action. */
+export const emptyYearWords = (year: number, from: number | null) => ({
+  title: `No plan for ${year} yet`,
+  body: from != null
+    ? `Start from ${from}’s lines, amounts and dates moved a year on, or add lines one by one. Nothing is billed to a team until you allocate.`
+    : 'Add lines one by one. Nothing is billed to a team until you allocate.',
+  start: from != null ? `Start from ${from}’s plan` : null,
+});
+
+/** The line window's allocations section. */
+export const LINE_ALLOCATIONS_WORD = 'Allocated to teams';
+export const allocationRowCaption = (teams: string, otherTeams: number, allocated: number, collected: number) =>
+  `${[teams, otherTeams > 0 ? `${otherTeams} more ${otherTeams === 1 ? 'team' : 'teams'}` : ''].filter(Boolean).join(' · ')} · ${fmt(allocated)} · ${fmt(collected)} collected`;
+export const NOT_ALLOCATED_LEAD = 'The club pays this part itself unless you allocate it.';
+
+/** The board summary (the Overview tab) — Ask 1. */
+export const SUMMARY_WORDS = {
+  standsHeading: (today: string) => `Where the club stands · today, ${formatStoredDate(today, { withYear: false })}`,
+  cashCaption: (books: number, pendingOut: number, pendingCount: number) =>
+    `the club’s ${books} ${books === 1 ? 'book' : 'books'}${pendingCount > 0
+      ? ` · ${pendingCount === 1 ? `a ${fmt(pendingOut)} cheque` : `${fmt(pendingOut)} in ${pendingCount} lines`} not yet cleared`
+      : ''}`,
+  owedCaption: (overdue: number, sent: number) =>
+    [overdue > 0.005 ? `${fmt(overdue)} overdue` : null, sent > 0.005 ? `${fmt(sent)} sent, waiting for you` : null]
+      .filter(Boolean).join(' · ') || 'nothing overdue',
+  waitingCaption: (count: number, holding: number) =>
+    count === 0 ? 'nothing waiting'
+      : `${count} ${count === 1 ? 'request' : 'requests'}${holding > 0 ? ` · ${holding} holding up a payout` : ''}`,
+  againstHeading: (year: number) => `${year} against the budget`,
+  /** Headroom said once, with its arithmetic (its one definition). */
+  headroom: (headroom: number, revenueUnder: number, owed: number) => {
+    const head = headroom >= -0.005
+      ? `Headroom: ${fmt(headroom)} of the year’s planned spending is left.`
+      : `Headroom: spending is ${fmt(Math.abs(headroom))} over the year’s plan.`;
+    if (revenueUnder <= 0.005) return head;
+    return `${head} Revenue is ${fmt(revenueUnder)} under plan so far${owed > 0.005 ? `, and ${fmt(Math.min(owed, revenueUnder))} of that is what the teams still owe` : ''}.`;
+  },
+  teamsCashBand: (total: number, teams: number) =>
+    `Held by the teams: ${fmt(total)} across ${teams} ${teams === 1 ? 'team' : 'teams'}. The coaches’ own books; never part of the club’s figures above.`,
+  teamsCashBandShort: (total: number) =>
+    `Held by the teams ${fmt(total)} in all: the coaches’ own books, never in the club’s figures.`,
+  phoneYear: (spent: number, plannedOut: number, collected: number, plannedIn: number, headroom: number) =>
+    `Spent ${fmt(spent)} of ${fmt(plannedOut)} · collected ${fmt(collected)} of ${fmt(plannedIn)} · headroom ${fmt(headroom)}`,
+} as const;
+
+/** A team's cash, as the club reads it (D1, Ask 4e): whose figure, and from which season. */
+export function teamCashCaption(season: { live: boolean; closedOn: string | null } | null): string {
+  if (!season) return 'The coaches haven’t started a season yet';
+  if (season.live) return `${HELD_BY_THE_TEAM_WORD} · the coaches’ figure today`;
+  return `${HELD_BY_THE_TEAM_WORD} · at close, ${formatStoredDate(season.closedOn, { withYear: false })}`;
+}
+/** The same, shortest — under a figure in the teams table, only when the season is not live. */
+export const teamCashClosedWord = (closedOn: string | null) => `at close, ${formatStoredDate(closedOn, { withYear: false })}`;
+
+/** A team's account with the club: the callout, reworded for what 3b reads (specimen 4). */
+export const teamAccountCallout = (teamName: string) =>
+  `${teamName}’s money is kept by its coaches, in their portal. The club reads one figure of it, the team’s cash on hand, and never adds it into the club’s figures. The rest of this page is the club’s side of the team: what it billed, what it received, what it paid the team. Nothing here can be changed.`;
+
+/** The Rep Teams team page's "What the club sees" — the two lines 3b and Ledger Parity add. */
+export const WHAT_THE_CLUB_SEES_3B = {
+  cash: 'The team’s cash on hand (one figure; never its families’ payments or its other spending)',
+  sharedPayees: 'What it recorded paying the payees you share',
+} as const;
+
+/** The coach's Money › Club tab, one quiet line at its foot (Ask 4c): what the club reads, and never. */
+export const coachWhatTheClubReads = (orgName: string) =>
+  `${orgName} sees what you owe it, your requests, your cash on hand, and what you pay the payees it shares. Never your families’ payments or the rest of your books.`;
+
+/** The shared-payee report (specimen 5): the door on the payee's window, the callout, the bands. */
+export const PAYEE_REPORT_WORDS = {
+  door: 'What the teams recorded paying it',
+  doorCaption: (teams: number, total: number, year: number) =>
+    teams === 0 ? `Nothing recorded in ${year}` : `${teams} ${teams === 1 ? 'team' : 'teams'} · ${fmt(total)} in ${year}`,
+  callout: (payee: string, year: number, sharedOn: string | null) =>
+    `What each team recorded paying ${payee} in ${year}${sharedOn ? `, since you shared it with your teams on ${formatStoredDate(sharedOn, { withYear: false })}` : ''}. These are the teams’ own records, not proof that a payment was made.`,
+  calloutShort: (sharedOn: string | null) =>
+    `What each team recorded paying it${sharedOn ? ` since you shared it on ${formatStoredDate(sharedOn, { withYear: false })}` : ''}. The teams’ own records, not proof of payment.`,
+  foot: (sharedOn: string | null) => (sharedOn
+    ? `A payment counts when a team recorded it on or after ${formatStoredDate(sharedOn, { withYear: false })}, against a bill entered on or after ${formatStoredDate(sharedOn, { withYear: false })}. A team’s other payees and other spending never show.`
+    : 'A team’s other payees and other spending never show.'),
+  recordedBand: (teams: number, total: number) => `${teams} ${teams === 1 ? 'team' : 'teams'} recorded · ${fmt(total)}`,
+  nothingBand: (n: number) => `Nothing recorded · ${n}`,
+  rowSpan: (count: number, first: string | null, last: string | null) =>
+    `${count} ${count === 1 ? 'payment' : 'payments'}${first && last
+      ? ` · ${first === last ? formatStoredDate(first, { withYear: false }) : `${formatStoredDate(first, { withYear: false })} to ${formatStoredDate(last, { withYear: false })}`}`
+      : ''}`,
+  outOfPocket: 'paid by a family',
+} as const;
+
+/** The Ledger's "Filed under" hint (Ask 4a): is the word on this year's plan? */
+export const filedUnderHint = (onPlan: { planned: number } | null, year: number) =>
+  (onPlan ? `On the ${year} plan · ${fmt(onPlan.planned)} planned.` : `Not on the ${year} plan, so it counts as off-plan.`);
+export const FILED_BY_ITS_SOURCE = 'Filed by where it came from';
+export const wasCategoryWord = (legacy: string) => `was: ${legacy}`;

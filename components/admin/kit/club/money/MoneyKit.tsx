@@ -10,6 +10,7 @@
  * guard holds it). A screen formats; it never re-adds.
  */
 import { useState, type ReactNode } from 'react';
+import { Lock } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import { CoachCard, CoachEyebrow, CoachFigure, kit } from '@/components/coaches/kit';
 import { fmt } from '@/lib/coach-money-summary';
@@ -40,6 +41,13 @@ export function installmentsWord(n: number, capital = false): string {
    Payees page reads its routes the same way, and the admin kit is admin-only). Re-exported for every
    club caller. */
 export { jsonInit, moneyFetch, refusalText };
+
+/** A typed amount ("$1,250.00", "1250") in dollars to the cent, or null when it isn't a positive amount up to `max`
+ *  (a ledger line's cap by default; the plan's lines allow more). */
+export function parseAmount(s: string, max = 999_999.99): number | null {
+  const n = Number(s.replace(/[$,\s]/g, ''));
+  return Number.isFinite(n) && n > 0 && n <= max ? Math.round(n * 100) / 100 : null;
+}
 
 /** Did the money change under the caller? (409 `money_state_changed` — refresh in place.) */
 export const isStale = (status: number, data: unknown): boolean =>
@@ -136,17 +144,19 @@ export function ReasonQuestion({
   );
 }
 
-/** A page's figure cards (an allocation's four, a team's three): the label, the figure, one fact. */
+/** A page's figure cards (an allocation's four, a team's four): the label, the figure, one fact. */
 export function FigureCards({ items, three = false }: {
-  /** `tone` colours the figure — `bad` for money that is late (an allocation's Overdue, as drawn). */
-  items: { label: string; value: ReactNode; sub?: ReactNode; tone?: 'good' | 'bad' | 'muted' }[];
+  /** `tone` colours the figure — `bad` for money that is late (an allocation's Overdue, as drawn). `held`: a
+   *  figure the club READS but doesn't own (a team's cash on hand, Club Tier Stage 3b Ask 4e) — the lock in its
+   *  label and the blue edge of "held by the team". */
+  items: { label: string; value: ReactNode; sub?: ReactNode; tone?: 'good' | 'bad' | 'muted'; held?: boolean }[];
   three?: boolean;
 }) {
   return (
     <div className={`${three ? styles.cards3 : repKit.cards4} ${styles.figures}`}>
       {items.map(i => (
-        <CoachCard key={i.label}>
-          <CoachEyebrow>{i.label}</CoachEyebrow>
+        <CoachCard key={i.label} className={i.held ? styles.heldCard : undefined}>
+          <CoachEyebrow>{i.held && <Lock size={11} aria-hidden className={styles.heldLock} />}{i.label}</CoachEyebrow>
           <CoachFigure className={styles.figure} tone={i.tone}>{i.value}</CoachFigure>
           {i.sub != null && <p className={kit.sub}>{i.sub}</p>}
         </CoachCard>

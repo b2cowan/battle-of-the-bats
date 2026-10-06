@@ -34,7 +34,7 @@ import {
 } from '../lib/club-money-figures.ts';
 import { ledgerExportRows } from '../lib/club-ledger.ts';
 import {
-  buildBoardSummary, buildClubPlan, buildClubReport, FROM_THE_TEAMS_ID, TEAM_SUPPORT_WORD_IDS,
+  buildBoardSummary, buildClubPlan, buildClubReport, withPeriodViews, FROM_THE_TEAMS_ID, TEAM_SUPPORT_WORD_IDS,
 } from '../lib/club-budget-report.ts';
 
 const TODAY = '2026-09-30';
@@ -350,8 +350,18 @@ check('plan Total revenue', plan.revenue.total, naivePlannedIn);
 check('plan Total expenses', plan.expenses.total, naivePlannedOut);
 check('plan closes on opening + revenue − expenses', plan.closingBalance, opening3b + naivePlannedIn - naivePlannedOut);
 // Periods: the By period grid places every planned dollar once — a line's periods sum to its total, the rest is undated.
-check('By period revenue = the plan\'s revenue', plan.periodGrid.revenue.totals.total.budget, naivePlannedIn);
-check('By period expenses = the plan\'s expenses', plan.periodGrid.expenses.totals.total.budget, naivePlannedOut);
+// The view on screen is the coach's own period view (session 2) — proved at BOTH granularities, the shape
+// the screen formats: totals, each dated column's opening + net = closing, and the year's close.
+for (const [g, view] of Object.entries(withPeriodViews(plan, planLines, order).periodView)) {
+  check(`By period (${g}) revenue = the plan's revenue`, view.revenueTotals?.total ?? 0, naivePlannedIn);
+  check(`By period (${g}) expenses = the plan's expenses`, view.expenseTotals.total, naivePlannedOut);
+  check(`By period (${g}) From the teams = the plan's`, view.installments?.total ?? 0, fromTeamsPlanned);
+  check(`By period (${g}) closes where the List closes`, view.balance.seasonClosing, plan.closingBalance);
+  check(`By period (${g}) opens on the year's worked-out opening`, view.balance.seasonOpening, opening3b);
+  for (const c of view.columns.filter(x => !x.unscheduled)) {
+    check(`By period (${g}) ${c.key}: opening + net = closing`, view.balance.opening[c.key] + view.balance.net[c.key], view.balance.closing[c.key]);
+  }
+}
 for (const l of planLines.filter(x => x.periods.length)) check(`plan ${l.id} periods sum to the total`, l.periods.reduce((x, p) => x + p.amount, 0), l.totalAmount);
 
 // 7. Budget vs. Actual. The naive filing: the loop by source; a typed line by its word; else Not filed.
@@ -426,6 +436,9 @@ check('summary Waiting on you = every waiting request, both directions', summary
 check('summary the teams\' cash is its own total', summary.teamsCash.total, 4020.5);
 check('summary From the teams = allocations + on request', (Math.round(summary.againstBudget.fromTheTeams.allocations * 100) + Math.round(summary.againstBudget.fromTheTeams.onRequest * 100)) / 100,
   rep.statement.revenue.categories.find(c => c.categoryId === FROM_THE_TEAMS_ID).actual);
+// The summary's two planned sub-rows (session 2) are READ from the statement: From the teams' plan is the
+// allocations drawn from the year's cost lines, the plan's own figure.
+check('summary From the teams planned = the plan\'s From the teams', summary.againstBudget.fromTheTeams.planned, plan.revenue.fromTheTeams.planned);
 
 // ── Report ──────────────────────────────────────────────────────────────────────────────────────
 const REQUIRED = [

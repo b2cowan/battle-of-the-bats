@@ -10,6 +10,13 @@
  * team · Outstanding (running — paying the team on request never changes it), banded by the team's
  * seasons, closing on "Outstanding on {today}". A line opens the allocation or the request it came
  * from. Export writes the statement.
+ *
+ * ⚖ THE ONE FIGURE THE CLUB READS FROM THE TEAM'S OWN BOOKS (Club Tier Stage 3b, specimen 4 — D1, C15,
+ * Ask 4e): the fourth card is the team's Cash on hand, read through the coaches' own function each time
+ * the page opens (the figure their Money shows), never stored by the club, never added into a club figure —
+ * the lock and the blue edge of "held by the team", its caption saying whose figure and for which season
+ * (a team between seasons shows its closed season's closing figure and that season's close date). The
+ * callout says which figure is read and that it is never added in. The statement under it is 3a's.
  */
 import { use, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -22,16 +29,19 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import { Callout, LoadFailed, PageLoading, RepChip, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { FigureCards, day, daysLateWords, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import { ledgerKit } from '@/components/coaches/kit';
-import { howItCame } from '@/lib/club-money-words';
+import { howItCame, teamAccountCallout, teamCashCaption } from '@/lib/club-money-words';
+import { fmt as fmtSigned } from '@/lib/coach-money-summary';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import { pluralize } from '@/lib/utils';
-import type { AccountRow, TeamAccount } from '@/lib/club-money-figures';
+import type { AccountRow, TeamAccount, TeamCashHeld } from '@/lib/club-money-figures';
 
 interface AccountRead {
   asOf: string;
   team: { id: string; name: string };
   account: TeamAccount;
   seasons: { id: string; name: string; status: string }[];
+  withTheClub: { requestsWaiting: number } | null;
+  teamCash: TeamCashHeld | null;
 }
 
 const of = (r: AccountRow) => (r.installmentCount && r.installmentCount > 1 && r.installmentNumber ? `, ${r.installmentNumber} of ${r.installmentCount}` : '');
@@ -112,21 +122,29 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
     ? (r.allocationId ? `${base}/allocations/${r.allocationId}?bill=${r.sourceId}` : null)
     : `${base}/payment-requests?request=${r.sourceId}`;
   const empty = account.seasons.length === 0;
+  const waiting = read.withTheClub?.requestsWaiting ?? 0;
+  const cash = read.teamCash;
 
   return (
     <div className={repKit.page}>
       {header}
       <Callout tone="info" role="note" icon={<Lock size={16} aria-hidden />}>
-        <b>{team.name}’s money is kept by its coaches, in their portal, and is never added into the club’s figures.</b>
-        <span className={repKit.calloutSub}>
-          This page is the club’s side of the team: what the club billed, what it received, and what it paid the team on request. Nothing here can be added, edited, voided or transferred.
-        </span>
+        {teamAccountCallout(team.name)}
       </Callout>
 
-      <FigureCards three items={[
+      <FigureCards items={[
         { label: 'Outstanding', value: money(account.outstanding), sub: left > 0 ? pluralize(left, 'installment') + ' not yet received' : 'Nothing owed' },
         { label: 'Next due', value: f.nextDue ? money(f.nextDue.amount) : '—', sub: f.nextDue ? day(f.nextDue.dueDate) : f.overdue.count > 0 ? `${money(f.overdue.amount)} overdue` : 'Nothing coming due' },
-        { label: 'Paid to the team', value: money(account.paidToTeam), sub: account.paidToTeamCount > 0 ? pluralize(account.paidToTeamCount, 'request') : 'No requests paid' },
+        {
+          label: 'Paid to the team', value: money(account.paidToTeam),
+          sub: `${account.paidToTeamCount > 0 ? pluralize(account.paidToTeamCount, 'request') : 'No requests paid'} · ${waiting > 0 ? `${waiting} waiting` : 'none waiting'}`,
+        },
+        {
+          label: 'Cash on hand', held: true,
+          value: cash?.cash == null ? '—' : fmtSigned(cash.cash),
+          tone: cash?.cash != null && cash.cash < -0.005 ? 'bad' : undefined,
+          sub: teamCashCaption(cash?.cash == null ? null : cash.season),
+        },
       ]} />
 
       {empty ? (

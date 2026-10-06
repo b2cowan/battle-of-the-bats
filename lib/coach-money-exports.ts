@@ -38,6 +38,7 @@ import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
 import { clubMoneyInWord, type ClubMoneyInMeaning, type ClubRequestType } from './coach-club-money';
 import { clubInstallmentState } from './club-money-figures';
 import { CLUB_SENT_WAITING_WORD } from './club-money-words';
+import { BOARD_TEAMS_EXPORT_COLUMNS } from './club-budget-report';
 import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
 import type { CommitmentStanding } from './payable-standing';
 import { expensePayeeName } from './expense-payee';
@@ -400,6 +401,9 @@ function periodColumnKey(col: PeriodView['columns'][number]): string {
  */
 export function budgetPeriodGridRows(
   view: PeriodView,
+  /** The CLUB's By period (Club Tier Stage 3b): its lead revenue row is "From the teams", read from the
+   *  allocations, where the coach's is Player installments. Absent = the coach's file exactly. */
+  opts: { leadRowName?: string } = {},
 ): { rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[] } {
   const rows: ExportRow[] = [];
   const kinds: (MoneyRowKind | undefined)[] = [];
@@ -469,7 +473,7 @@ export function budgetPeriodGridRows(
      deliberately NOT printed anywhere in this file — the caller builds an export's view without
      one, and a file is the saved plan. */
   if (view.installments) {
-    const row: ExportRow = { item: L.installments };
+    const row: ExportRow = { item: opts.leadRowName ?? L.installments };
     for (const col of view.columns) row[periodColumnKey(col)] = cell(false, view.installments.cells[col.key]);
     row.total = cell(false, view.installments.total);
     push(row, 'category');
@@ -558,6 +562,9 @@ export const DUES_EXPORT_COLUMNS: ExportColumnDef[] = [
    harness renders an eighteen-family bench and refuses the commit if it ever needs a second page. */
 const REPORT_SHAPES = new Map<readonly ExportColumnDef[], ReportShape>([
   [DUES_EXPORT_COLUMNS, { orientation: 'landscape', density: 'compact' }],
+  /* The club's board report (Club Tier 3b): seven columns, the teams' cash labelled in its heading. On a
+     portrait page the fit contract dropped a column and printed an apology (the pre-commit PDF check, 2026-10-06). */
+  [BOARD_TEAMS_EXPORT_COLUMNS, { orientation: 'landscape' }],
 ]);
 
 export type DuesExportPlayer = {

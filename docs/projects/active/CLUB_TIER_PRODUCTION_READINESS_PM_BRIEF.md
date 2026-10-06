@@ -218,6 +218,25 @@ the old screens, the ledger shows every older line as "Not filed". That is the a
 behaviour. Nothing reaches a real club before release: Club is not on sale, and production has no club
 budget lines. The database change must reach production before this code does.
 
+**Stage 3b, session 2 (the screens): built on the test system 2026-10-06; the owner's walks (ledger
+§271, eleven short walks on the hub) come next.** What a treasurer now sees:
+- **The Budget** reads like a coach's: the year, revenue first, and beside each cost what the teams were
+  billed and have paid. A line opens to read, the pencil changes it in place, and "Allocate" bills what
+  is left on it. Next year starts from this year's plan in one press.
+- **Budget vs. Actual** is the coach's Statement and month-by-month view on the club's year. Every
+  figure opens the plan line or the ledger lines it is made of.
+- **The Overview is the one page for the board:** where the club stands today, the year against the
+  budget, each team's standing, and the club's books, with one export, the board report. Each team's
+  own cash is shown and labelled as the team's, and is never added in.
+- **Every new ledger line is filed under a budget word**, which is what lets the club's spending meet
+  its plan.
+- **A payee the club shares with its teams** has a report of what the teams recorded paying it.
+- **A coach is told, in one line on their Money › Club tab,** what the club can and cannot see.
+- **On a phone, every month grid**, coach and club, opens on the current month.
+
+The old Budget, Allocate and Budget vs. Actual pages are gone. Success: the eleven walks pass and the
+figures on every page agree with each other, a check the build already enforces.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money

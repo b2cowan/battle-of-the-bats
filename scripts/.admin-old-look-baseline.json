@@ -1,23 +1,4 @@
 {
-  "app/[orgSlug]/admin/accounting/budget-vs-actual/bva.module.css": {
-    "kitScope": 61
-  },
-  "app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx": {
-    "kx": 2,
-    "helpers": 1
-  },
-  "app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx": {
-    "kx": 7,
-    "helpers": 2,
-    "legacy": 1
-  },
-  "app/[orgSlug]/admin/accounting/budget/budget.module.css": {
-    "kitScope": 54
-  },
-  "app/[orgSlug]/admin/accounting/budget/page.tsx": {
-    "kx": 1,
-    "helpers": 2
-  },
   "app/[orgSlug]/admin/admin-common.module.css": {
     "kitScope": 45
   },

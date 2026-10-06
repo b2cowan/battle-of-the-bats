@@ -6,6 +6,7 @@ import {
   ChevronRight, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { coachWhatTheClubReads } from '@/lib/club-money-words';
 import { useOrg } from '@/lib/org-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -562,9 +563,10 @@ function ClubExplainer() {
         <div className={`${styles.moneyKindCard} ${styles.moneyKindCardPay}`}>
           <h4><ArrowUpRight size={13} aria-hidden /> What they bill you</h4>
           <p>
-            Your club&apos;s <strong>owner or treasurer</strong> splits a shared cost across its teams.
-            Your share arrives here already divided into installments with due dates — file it under one
-            of your own budget words and mark each installment paid as you pay it.
+            Your club&apos;s <strong>owner, treasurer or an admin who handles its money</strong> splits a
+            shared cost across its teams. Your share arrives here already divided into installments with
+            due dates — file it under one of your own budget words, and tap <strong>We’ve sent it</strong> as
+            you pay each one. The club confirms it when the money arrives.
           </p>
           <p className={styles.moneyKindEgs}>Field and diamond fees · league insurance · association dues</p>
         </div>
@@ -1875,6 +1877,21 @@ export function ClubPanel({
             )}
           </section>
         </>
+      )}
+
+      {/* ── WHAT THE CLUB READS (Club Tier Stage 3b, specimen 6 — Ask 4c) ──────────────────────────
+          One quiet line CLOSES the tab: what the club can read of this team's money, and what it never
+          reads — the coach's side of the club's "What the club sees" panel, now that 3b shows the club
+          this team's cash on hand. A standing line, not a notice (it is a fact of the relationship, not
+          news), so it never fades or dismisses; last, because a coach comes here to pay the club and the
+          bills lead; a plain line, not a card, because a card above the work is text read past every
+          visit. A team in a club only — and this tab exists only for one (`ORG_ONLY_SECTIONS`). The
+          building is the icon this tab's own empty state already wears for the club. */}
+      {!loading && !error && (
+        <p className={styles.clubReadsLine}>
+          <Building2 size={14} aria-hidden />
+          <span>{coachWhatTheClubReads(currentOrg?.name ?? 'Your club')}</span>
+        </p>
       )}
 
       {/* ══ THE BILL'S ROOM (List · Room · Question, 2026-09-02) ═══════════════════════════════

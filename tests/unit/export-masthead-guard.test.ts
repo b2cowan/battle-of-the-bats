@@ -32,11 +32,16 @@ const ALLOWED = new Map([
     'the team report a treasurer emails to a board; nothing imports it'],
   ['app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx',
     'the same report one level up, for the club board; no admin-side budget importer exists'],
+  ['app/[orgSlug]/admin/accounting/page.tsx',
+    'the board report (Club Tier 3b): the Overview written as a document for the board; nothing imports it'],
+  ['app/[orgSlug]/admin/accounting/payees/[payeeId]/page.tsx',
+    'the shared-payee report (Club Tier 3b): what the teams recorded paying one payee; nothing imports it'],
 ]);
 
 /** Named so a future reader meets them before they meet the temptation. */
 const NEVER = [
   'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx',   // budget plan — round trip
+  'app/[orgSlug]/admin/accounting/budget/page.tsx',                    // the club's plan — the coach's shape, a dataset
   'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx',             // schedule — round trip
 ];
 

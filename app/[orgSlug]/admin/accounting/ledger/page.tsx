@@ -49,7 +49,7 @@ import DateRangeDropdown from '@/components/coaches/DateRangeDropdown';
 import FilterGroup from '@/components/coaches/FilterGroup';
 import pill from '@/components/shared/FilterPill.module.css';
 import { day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
-import { AddEntryWindow, LineWindow, TransferWindow, type BookRef } from '@/components/admin/kit/club/money/LedgerWindows';
+import { AddEntryWindow, LineWindow, TransferWindow, type BookRef, type WordList } from '@/components/admin/kit/club/money/LedgerWindows';
 import AddLedgerWindow from '@/components/admin/kit/club/money/AddLedgerWindow';
 import type { BookRead, BookRowOut, LineStatus } from '@/lib/club-ledger-read';
 import type { LedgerSummary } from '@/lib/types';
@@ -92,8 +92,12 @@ export default function LedgerTab() {
      pick is kept as picked; the statuses the book reads are derived from it. */
   const [pickedStatuses, setPickedStatuses] = useState<Set<string>>(() => new Set(STATUS_REST));
   const statuses = pickedStatuses.size ? pickedStatuses : STATUS_ALL;
-  const [cats, setCats] = useState<Set<string>>(() => new Set());
+  /* ⚖ A DOOR CAN NARROW THE BOOK ON ARRIVAL (Club Tier Stage 3b): Budget vs. Actual's "behind the figure"
+     panel opens "these lines in the Ledger" — `?category=` (the filing) and `?from=&to=` (the year). */
+  const [cats, setCats] = useState<Set<string>>(() => { const c = search.get('category'); return new Set(c ? [c] : []); });
   const [range, setRange] = useState<{ selection: DateRangeSelection; from: string; to: string }>(() => {
+    const from = search.get('from'), to = search.get('to');
+    if (from && to && /^\d{4}-\d{2}-\d{2}$/.test(from) && /^\d{4}-\d{2}-\d{2}$/.test(to)) return { selection: 'custom', from, to };
     const r = resolveDateRangePreset('thisMonth', today, bounds);
     return { selection: 'thisMonth', from: r.from, to: r.to };
   });
@@ -105,6 +109,8 @@ export default function LedgerTab() {
   const [win, setWin] = useState<'add' | 'transfer' | 'ledger' | null>(null);
   const { tournaments } = useTournament();
   const [notice, setNotice] = useNotice();
+  /** The budget words a line can be filed under (Ask 4a) — read when a window that files one first opens. */
+  const [words, setWords] = useState<WordList | null>(null);
 
   // The club's books (never a team's), for the Book pill; the General ledger by default.
   const loadBooks = useCallback(async () => {
@@ -170,6 +176,16 @@ export default function LedgerTab() {
     void loadBook();
     void loadBooks();
   }, [loadBook, loadBooks, setNotice]);
+
+  const wantWords = !!read?.canMove && (open != null || win === 'add') && words === null;
+  useEffect(() => {
+    if (!wantWords) return;
+    let live = true;
+    void moneyFetch<{ categories?: WordList }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&${q}`)
+      .then(r => { if (live) setWords(r.ok ? r.data.categories ?? [] : []); })
+      .catch(() => { if (live) setWords([]); });
+    return () => { live = false; };
+  }, [wantWords, q]);
 
   if (booksFailed) return <LoadFailed title="We couldn’t load the club’s books." onRetry={() => void loadBooks()} />;
   if (!books || teamBook) return <p className={ck.loading}>Loading…</p>;
@@ -283,12 +299,12 @@ export default function LedgerTab() {
 
       {open && read && (
         <LineWindow
-          row={open} book={ref} q={q} categories={read.categories} accountingBase={base} payeesHref={payeesHref}
+          row={open} book={ref} q={q} orgSlug={slug} words={words} accountingBase={base} payeesHref={payeesHref}
           canMove={canMove} onChanged={changed} onClose={() => setOpen(null)}
         />
       )}
       {win === 'add' && read && (
-        <AddEntryWindow book={ref} q={q} categories={read.categories} payeesHref={payeesHref}
+        <AddEntryWindow book={ref} q={q} orgSlug={slug} words={words} payeesHref={payeesHref}
           onClose={() => setWin(null)} onAdded={text => { setWin(null); changed(text); }} />
       )}
       {win === 'ledger' && (

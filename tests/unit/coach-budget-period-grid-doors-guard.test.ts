@@ -38,6 +38,9 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BUDGET = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx';
+/* The grid itself moved here (Club Tier 3b, 2026-10-06), shared with the club's Budget: the guard reads
+   the panel AND the grid, so a door rule holds wherever the code sits. */
+const GRID = 'components/coaches/MoneyPeriodGrid.tsx';
 /* The view that decides WHICH rows can carry a door. The grid can only be as honest as this is:
    drop `lineId` here and every assertion below still passes over a screen that opens nothing. */
 const VIEW = 'lib/coach-budget-periods-view.ts';
@@ -50,7 +53,7 @@ function codeOnly(src: string): string {
     .join('\n');
 }
 
-const budget = codeOnly(readFileSync(join(ROOT, BUDGET), 'utf8'));
+const budget = codeOnly(readFileSync(join(ROOT, BUDGET), 'utf8')) + '\n' + codeOnly(readFileSync(join(ROOT, GRID), 'utf8'));
 const view = codeOnly(readFileSync(join(ROOT, VIEW), 'utf8'));
 
 test('the view still carries the one line behind a row, so a door has something true to open', () => {

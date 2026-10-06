@@ -279,7 +279,7 @@ if (has('--changed') && !onlyIds) {
     // (stripped) or a `clock`. A field that ever becomes a PATH segment needs its own sentinel and
     // `.replace`, or its screen silently stops matching its own route folder.
     const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', recordPracticeEventId: '__EVENT__', gameEventId: '__EVENT__', finishedPracticeEventId: '__EVENT__', fundraiserId: '__ID__', finishedYearId: '__ID__', receiptPlayerId: '__PLAYER__', planTemplateId: '__TEMPLATE__', lineupTemplateId: '__TEMPLATE__', evalSessionId: '__SESSION__', opponentKey: '__OPPONENT__', commitmentId: '__ID__', measurableTypeId: '__ID__',
-      clubSlug: '__ORG__', tournOrgSlug: '__ORG__', onboardingOrgSlug: '__ORG__', clubTeamId: '__TEAM__', clubYearId: '__YEAR__', clubPastYearId: '__YEAR__', clubClosedTeamId: '__TEAM__', clubSeasonId: '__SEASON__', clubPersonId: '__PERSON__', clubLedgerId: '__LEDGER__', clubBudgetLineId: '__LINE__', clubAllocationId: '__ALLOC__', tournamentSlug: '__TSLUG__', tournamentId: '__ID__', clubTournamentId: '__ID__', tournamentGameDay: '__ID__' };
+      clubSlug: '__ORG__', tournOrgSlug: '__ORG__', onboardingOrgSlug: '__ORG__', clubTeamId: '__TEAM__', clubYearId: '__YEAR__', clubPastYearId: '__YEAR__', clubClosedTeamId: '__TEAM__', clubSeasonId: '__SEASON__', clubPersonId: '__PERSON__', clubLedgerId: '__LEDGER__', clubSharedPayeeId: '__PAYEE__', clubBudgetLineId: '__LINE__', clubAllocationId: '__ALLOC__', tournamentSlug: '__TSLUG__', tournamentId: '__ID__', clubTournamentId: '__ID__', tournamentGameDay: '__ID__' };
     // `route` on an entry names its folder outright, for the one shape a path cannot be turned back
     // into: a dynamic segment the entry fills with a literal word (the preview's `[section]`).
     const dirOf = (s) => s.route ??
@@ -295,6 +295,7 @@ if (has('--changed') && !onlyIds) {
         .replace('__SEASON__', '[seasonId]')
         .replace('__PERSON__', '[personId]')
         .replace('__LEDGER__', '[ledgerId]')
+        .replace('__PAYEE__', '[payeeId]')
         .replace('__LINE__', '[lineId]')
         .replace('__ALLOC__', '[allocationId]')
         .replace('__TSLUG__', '[tournamentSlug]')

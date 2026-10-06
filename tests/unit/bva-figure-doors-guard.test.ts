@@ -82,7 +82,12 @@ function codeOnly(src: string): string {
     .join('\n');
 }
 
-const panel = codeOnly(readFileSync(join(ROOT, PANEL), 'utf8'));
+/* ⚖ THE STATEMENT'S ROWS WERE PROMOTED (Club Tier Stage 3b, 2026-10-06): the item rows, the category fold,
+   the bands and their types moved byte for byte into a shared component the club's Budget vs. Actual
+   renders too. The panel keeps the panels a figure opens. Every assertion here reads BOTH files as one
+   statement, so a rule that held on the coach's screen holds on the club's — they are the same rows. */
+const ROWS = 'components/coaches/MoneyStatementRows.tsx';
+const panel = codeOnly(readFileSync(join(ROOT, PANEL), 'utf8')) + '\n' + codeOnly(readFileSync(join(ROOT, ROWS), 'utf8'));
 const route = codeOnly(readFileSync(join(ROOT, ROUTE), 'utf8'));
 const grid  = codeOnly(readFileSync(join(ROOT, GRID), 'utf8'));
 

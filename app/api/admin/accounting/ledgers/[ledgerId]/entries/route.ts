@@ -7,7 +7,7 @@ import { bookInScope, teamIdsInScope } from '@/lib/club-team-route';
 import type { AccountingEntryStatus, AccountingEntryType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { canMoveClubMoney } from '@/lib/member-access';
-import { TEAM_BOOK_READ_ONLY } from '@/lib/club-money-words';
+import { TEAM_BOOK_READ_ONLY, CLUB_BUDGET_REFUSAL } from '@/lib/club-money-words';
 import { readFiledUnder } from '@/lib/club-budget-writes';
 import { moveRefused } from '@/lib/club-money-route';
 
@@ -80,7 +80,6 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const amount:         unknown = body.amount;
   const entryType:      string  = typeof body.entryType      === 'string' ? body.entryType                               : '';
   const status:         string  = typeof body.status         === 'string' ? body.status                                  : '';
-  const category:       string | null = typeof body.category       === 'string' ? body.category.trim().slice(0, 100) || null       : null;
   const paymentMethod:  string | null = typeof body.paymentMethod  === 'string' ? body.paymentMethod.trim().slice(0, 100) || null  : null;
   const payeeId:        string | null = typeof body.payeeId        === 'string' ? body.payeeId || null                             : null;
   const payeePayer:     string | null = typeof body.payeePayer     === 'string' ? body.payeePayer.trim().slice(0, 200) || null     : null;
@@ -107,10 +106,12 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
 
   /* ⚖ FILED UNDER A BUDGET WORD (Club Tier Stage 3b, Ask 4a): `budgetItemId` — a word offered to the club,
      on the line's own side; its category is derived from it. That is what gives the line an Actual on
-     Budget vs. Actual (matched to the plan by word, the coach's rule), and a line filed under a word
-     writes NO free-text category. ⚰ The free-text `category` is still accepted ONLY from today's Add
-     entry window, which sends no word: it retires with that window in session 2 (the call list's retire
-     list). Such a line reads "Not filed" until someone files it. */
+     Budget vs. Actual (matched to the plan by word, the coach's rule). A new line NEEDS a word: the free-text
+     `category` retired with the old Add entry window (session 2), so the Ledger's Category filter lists the
+     budget's categories, never a book's own spellings (C14). Lines typed before keep their words as history. */
+  if (body.budgetItemId === undefined || body.budgetItemId === null || body.budgetItemId === '') {
+    return NextResponse.json({ error: CLUB_BUDGET_REFUSAL.word_required, code: 'word_required' }, { status: 400 });
+  }
   const filed = await readFiledUnder(ctx!.org.id, body.budgetItemId, entryType as 'income' | 'expense');
   if (!filed.ok) return moveRefused(filed);
 
@@ -122,7 +123,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
       amount: amount as number,
       entryType: entryType as AccountingEntryType,
       status: status as AccountingEntryStatus,
-      category: filed.value ? null : category,
+      category: null,
       budgetCategoryId: filed.value?.categoryId ?? null,
       budgetItemId: filed.value?.itemId ?? null,
       paymentMethod,

@@ -127,7 +127,8 @@ test('both grids read one window size and one wording for it', () => {
     'MoneyMonthGrid is defining its own MONTH_WINDOW again. It re-exports the lib\'s so the two '
     + 'grids cannot show a season a different number of months at a time.');
   for (const [what, src] of [
-    ['the Budget tab', read('app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx')],
+    // The Budget tab's grid is the shared one (Club Tier 3b, 2026-10-06) — its pager lives there.
+    ['the Budget tab', read('components/coaches/MoneyPeriodGrid.tsx')],
     ['Budget vs. Actual', read('app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx')],
   ] as const) {
     assert.ok(src.includes('periodRangeLabel('),

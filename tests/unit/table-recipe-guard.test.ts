@@ -47,8 +47,6 @@ const ROOT = process.cwd();
 /** Files whose table rules still carry literal sizes, each with the register row that owns it. */
 const KNOWN_DEBT: Record<string, string> = {
   // F-18 — club-side admin tables; no fixture could render them, so they were not touched.
-  'app/[orgSlug]/admin/accounting/budget/budget.module.css': 'F-18',
-  'app/[orgSlug]/admin/accounting/budget-vs-actual/bva.module.css': 'F-18',
   'app/[orgSlug]/admin/families/families.module.css': 'F-18',
   'app/[orgSlug]/admin/house-league/house-league.module.css': 'F-18',
   'app/[orgSlug]/admin/rep-teams/rep-teams.module.css': 'F-18',

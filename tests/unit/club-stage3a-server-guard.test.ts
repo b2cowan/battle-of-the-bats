@@ -73,7 +73,6 @@ const R = {
   acctTransfers: 'app/api/admin/accounting/transfers/route.ts',
   acctLedgers: 'app/api/admin/accounting/ledgers/route.ts',
   acctLedger: 'app/api/admin/accounting/ledgers/[ledgerId]/route.ts',
-  acctAllocateToTeams: 'app/api/admin/accounting/budget-plan/lines/[lineId]/allocate-to-teams/route.ts',
   oldAllocations: 'app/api/admin/rep-teams/allocations/route.ts',
   oldAllocation: 'app/api/admin/rep-teams/allocations/[allocationId]/route.ts',
   coachInstallment: 'app/api/coaches/[orgSlug]/teams/[teamId]/allocations/[splitId]/installments/[installId]/route.ts',
@@ -124,8 +123,6 @@ describe('ONE rule for who may move club money (Ask 1, C08)', () => {
     [R.acctTransfers, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
     [R.acctLedgers, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
     [R.acctLedger, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
-    // Stage 3b: a thin door into `createClubAllocation`, gated by resolveClubMoney's write rule (canMoveClubMoney).
-    [R.acctAllocateToTeams, /resolveClubMoney\(req, \{ scope: 'books', write: true \}\)/],
     [R.oldAllocations, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
     [R.oldAllocation, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
   ];

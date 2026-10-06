@@ -48,6 +48,12 @@
  *     reversed); the club's General ledger with a pending cheque, a void, two spellings of one payee and
  *     a float to the tournament's own book; a tournament the club hosts with its own 15U AAA linked in, tryouts OPEN on 15U AAA
  *     (the public "Tryouts are open" card), and a house-league season open for registration.
+ *   · Club Tier Stage 3b (the screens, 2026-10-06): revenue on the plan — a sponsor line (dated) and a grant line
+ *     with NO date yet; TWO allocations from Diamond permits with some of the line still left to allocate; the
+ *     club's lines FILED under the plan's words (one under a word with no line: off-plan), two older ones left
+ *     Not filed; the tournament's book taking in its registrations; two teams recording payments to the shared
+ *     payee after it was shared (the payee report); and money in on three teams, 16U AA's on its CLOSED season,
+ *     so each team's cash on hand — and a team between seasons — reads a real figure.
  *
  * Run:   node --env-file=.env.local scripts/seed-club-fixture.mjs           (build if absent)
  *        node --env-file=.env.local scripts/seed-club-fixture.mjs --reset   (delete + rebuild)
@@ -60,6 +66,7 @@
  */
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -320,25 +327,30 @@ const words = await one('budget words', db.from('budget_items')
 const word = (cat, item) => words.find(w => w.name === item && w.budget_categories?.name === cat) ?? null;
 
 const BUDGET = [
-  { cat: 'Facilities', item: 'Diamond Permits', description: 'Diamond permits — city fields', months: [[4, 2000], [5, 2000], [6, 2000]] },
+  { cat: 'Facilities', item: 'Diamond Permits', description: 'Diamond permits — city fields', months: [[4, 3000], [5, 3000], [6, 3000]] },
   { cat: 'Officials',  item: 'Umpire Fees',     description: 'Umpire fees — home games',     months: [[5, 1500], [6, 1500], [7, 1500]] },
   { cat: 'Admin',      item: 'Insurance',       description: 'Club insurance',               months: [[4, 2500]] },
   { cat: 'Tournaments', item: 'Entry Fees',     description: 'Tournament entry fees',        months: [[6, 1500], [7, 1500]] },
+  // Revenue (Club Tier 3b, Ask 4b): a sponsor line split across the year, and a grant with no date yet.
+  { cat: 'Sponsorship', item: 'Team sponsorship', description: 'Club sponsors',             months: [[3, 1500], [9, 1500]] },
+  { cat: 'Sponsorship', item: 'Grant',            description: 'Town recreation grant',     months: [], total: 2000 },
 ];
 const lineIds = {};
 for (const [i, b] of BUDGET.entries()) {
   const w = word(b.cat, b.item);
-  const total = b.months.reduce((s, [, a]) => s + a, 0);
+  if (!w) die(`budget word ${b.cat} › ${b.item}`, { message: 'not in the platform library — a plan line needs its word' });
+  const total = b.total ?? b.months.reduce((s, [, a]) => s + a, 0);
   const line = await one(`budget line ${b.description}`, db.from('org_budget_lines').insert({
     org_id: orgId, season_year: Y, category_id: w?.category_id ?? null, item_id: w?.id ?? null,
     description: b.description, total_amount: total, sort_order: i,
   }).select('id').single());
   lineIds[b.item] = line.id;
+  if (!b.months.length) continue;   // "No date yet": a line with no periods
   die(`periods ${b.description}`, (await db.from('org_budget_periods').insert(b.months.map(([m, amount], j) => ({
     budget_line_id: line.id, period_label: `${Y}-${String(m).padStart(2, '0')}`, period_date: `${Y}-${String(m).padStart(2, '0')}-01`, amount, sort_order: j,
   })))).error);
 }
-ok(`${Y} org budget: 4 lines split by month`);
+ok(`${Y} org budget: 4 cost lines split by month · revenue: Club sponsors (dated) + Town recreation grant (no date yet)`);
 
 // Ledgers
 const general = await one('general ledger', db.from('accounting_ledgers').insert({ org_id: orgId, entity_type: 'org', entity_id: null, name: `${ORG_NAME} — General` }).select('id').single());
@@ -496,6 +508,68 @@ die('permit 2', (await entry(general.id, { entry_date: daysFromNow(-3), descript
 die('pending cheque', (await entry(general.id, { entry_date: daysFromNow(-1), description: 'Umpires’ association fees', amount: 640, entry_type: 'expense', category: 'Officials', payment_method: 'Cheque 2230', status: 'pending', notes: 'Not cleared yet', created_by: TREASURER })).error);
 die('void line', (await entry(general.id, { entry_date: daysFromNow(-6), description: 'Umpire clinic registration', amount: 240, entry_type: 'expense', category: 'Training', payment_method: 'Card', status: 'void', void_reason: 'Entered twice', voided_by: TREASURER, voided_at: new Date(Date.now() - 5 * DAY).toISOString(), created_by: TREASURER })).error);
 ok('books: the tournament\'s own book + a $500.00 float to it · payees "Mizuno Canada" and "Mizuno Canada Ltd." (the club\'s own) and "Town of Milton" (shared with teams) · a pending cheque · a void');
+
+// ── Club Tier Stage 3b — what the §F walks read (the screens, 2026-10-06) ──────────────────────────────
+// Straight to the tables, as the books above are. Since mig 317 a club ledger line carries the coach's two
+// columns (a budget category and a word); a FILED line writes no free-text category.
+const platformWord = (cat, item) => {
+  const w = word(cat, item);
+  if (!w) die(`word ${cat} › ${item}`, { message: 'not in the platform library' });
+  return w;
+};
+const filed = (cat, item) => { const w = platformWord(cat, item); return { budget_category_id: w.category_id, budget_item_id: w.id }; };
+const fileUnder = async (ledgerId, description, cat, item) => {
+  const { data, error } = await db.from('accounting_entries').update({ ...filed(cat, item), category: null })
+    .eq('ledger_id', ledgerId).eq('description', description).select('id');
+  die(`file ${description}`, error);
+  if (!data?.length) die(`file ${description}`, { message: 'no such line on the book' });
+};
+await fileUnder(general.id, 'Sponsorship — Maple Hardware', 'Sponsorship', 'Team sponsorship');
+await fileUnder(general.id, 'Diamond permit', 'Facilities', 'Diamond Permits');
+await fileUnder(general.id, 'Umpires’ association fees', 'Officials', 'Umpire Fees');        // the pending cheque
+await fileUnder(general.id, 'Helmets and catcher gear', 'Facilities', 'Field Equipment');    // a word with no line: Off-plan
+// Left Not filed on purpose, as lines typed before 3b read: "Diamond permits — spring block", "Practice balls".
+
+// A second allocation from Diamond permits ($9,000.00 planned; $6,750.00 + $1,800.00 allocated, $450.00 left).
+// ⚠ Not named "Diamond fees …": the layout sweep finds THE Diamond fees allocation by that prefix.
+await allocate({
+  description: `Fall ball diamond fees ${Y}`, lineItem: 'Diamond Permits',
+  splits: [
+    { slug: '15u-aaa', amount: 900, installments: [[900, daysFromNow(30)]] },
+    { slug: '13u-aaa', amount: 900, installments: [[900, daysFromNow(30)]] },
+  ],
+});
+
+// The tournament's book takes money in of its own, beside its float (the Months grid's other-books row).
+die('tournament registrations', (await entry(tourBook.id, {
+  entry_date: daysFromNow(-20), description: 'Team registrations — three visiting teams', amount: 1440, entry_type: 'income',
+  payment_method: 'E-Transfer', ...filed('Tournaments', 'Registration revenue'), created_by: TREASURER,
+})).error);
+
+// Two teams record payments to the shared payee AFTER it was shared (the report counts from the share).
+const permitWord = platformWord('Facilities', 'Diamond Permits');
+const toTown = (slug, description) => ({
+  org_id: orgId, team_id: team[slug].id, program_year_id: team[slug].years.active, expense_type: 'expense', description,
+  category: 'Facilities', budget_category_id: permitWord.category_id, budget_item_id: permitWord.id,
+  payee_id: town.id, payee_payer: 'Town of Milton', created_by: coachIds[slug] ?? OWNER,
+});
+await insertCommitmentWithRecords(db, { row: toTown('15u-aaa', 'Diamond rental — Lions Park'), ...paidOnce(375, daysFromNow(-9)) });
+await insertCommitmentWithRecords(db, {
+  row: toTown('13u-aaa', 'Diamond rental — Bennett Park'),
+  installments: [{ amount: 250, dueDate: daysFromNow(-20) }, { amount: 250, dueDate: daysFromNow(-4) }],
+  payments: [{ amount: 250, paidDate: daysFromNow(-20), installmentNumber: 1 }, { amount: 250, paidDate: daysFromNow(-4), installmentNumber: 2 }],
+});
+
+// Money in on three teams, so each one's cash on hand reads a real figure — 16U AA's on its CLOSED season
+// (a team between seasons shows its last closed season's closing figure).
+const moneyIn = (slug, yearKey, r, cat, item) => db.from('rep_team_money_in').insert({
+  org_id: orgId, team_id: team[slug].id, program_year_id: team[slug].years[yearKey], entry_kind: 'income',
+  ...filed(cat, item), created_by: coachIds[slug] ?? OWNER, ...r,
+});
+die('15u-aaa bottle drive', (await moneyIn('15u-aaa', 'active', { amount: 1200, received_date: daysFromNow(-30), description: 'Bottle drive' }, 'Fundraising', 'Fundraising drive')).error);
+die('13u-aaa sponsor', (await moneyIn('13u-aaa', 'active', { amount: 800, received_date: daysFromNow(-26), description: 'Team sponsor — Halton Auto', received_from: 'sponsor' }, 'Sponsorship', 'Team sponsorship')).error);
+die('16u-aa last season', (await moneyIn('16u-aa', 'completed', { amount: 310, received_date: `${Y - 1}-06-15`, description: 'Bottle drive' }, 'Fundraising', 'Fundraising drive')).error);
+ok('3b: four club lines filed (one off-plan), two Not filed · "Fall ball diamond fees" from Diamond permits ($450.00 left) · the tournament\'s book takes in $1,440.00 · 15U AAA and 13U AAA paid Town of Milton · money in on 15U AAA, 13U AAA and 16U AA (closed season)');
 
 // ── House league for the registrar ───────────────────────────────────────────────
 const season = await one('league season', db.from('league_seasons').insert({

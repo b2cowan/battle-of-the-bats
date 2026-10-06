@@ -21,6 +21,7 @@ import { use, useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { AlertTriangle, Book, Building2, CalendarCheck, CalendarPlus, ExternalLink, Lock, RotateCcw } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { WHAT_THE_CLUB_SEES_3B } from '@/lib/club-money-words';
 import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
@@ -529,6 +530,10 @@ function WhatTheClubSees() {
             <li>Payment requests</li>
             <li>How many families are connected</li>
             <li>A closed season’s record, roster and staff</li>
+            {/* What Club Tier Stage 3b (the team's cash, D1) and Ledger Parity (shared payees, D7) let the club read —
+                each line says what it never includes (Ask 4c; the coach's Club tab says the same from their side). */}
+            <li>{WHAT_THE_CLUB_SEES_3B.cash}</li>
+            <li>{WHAT_THE_CLUB_SEES_3B.sharedPayees}</li>
           </ul>
         </div>
         <div>

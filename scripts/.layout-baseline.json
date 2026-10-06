@@ -2997,109 +2997,41 @@
       "reason": null,
       "detail": "content spills 56px with overflow-x:visible — no scroller owns it"
     },
-    "admin-accounting-budget|361|tap-floor|select·2026": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|tap-floor|button·2 periods": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|tap-floor|button·Edit": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|control-width|button·Edit": {
-      "reason": null,
-      "detail": "21px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|361|tap-floor|button·Delete": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|control-width|button·Delete": {
-      "reason": null,
-      "detail": "21px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|361|tap-floor|button·3 periods": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-budget|361|tap-floor|button·1 period": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|tap-floor|select·2026": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|tap-floor|button·2": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|tap-floor|button·3": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|tap-floor|button·1": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|content-overflow|div·TournamentsEst$3,000.00Alloc$0.00Collect": {
-      "reason": null,
-      "detail": "content spills 55px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|361|content-overflow|div·OfficialsEst$4,500.00Alloc$3,000.00Colle": {
-      "reason": null,
-      "detail": "content spills 67px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|361|content-overflow|div·AdminEst$2,500.00Alloc$0.00Collected$0.0": {
-      "reason": null,
-      "detail": "content spills 9px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-allocate|361|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-allocate|361|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocate|361|tap-floor|select·Select year…": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|361|tap-floor|select·Fixed ($)Percentage (%)Sessions (# sessi": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|361|tap-floor|input·e.g. 1000.00": {
-      "reason": null,
+    "admin-accounting-allocate|361|tap-floor|input·e.g. Field rental — 2025 season": {
+      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
       "detail": "35px tall (floor 44)"
     },
-    "admin-accounting-allocate|361|tap-floor|select·Lump Sum (single payment)Custom (multipl": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|361|tap-floor|input·Internal note for this split": {
-      "reason": null,
+    "admin-accounting-allocate|361|tap-floor|input·e.g. 3000.00": {
+      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
       "detail": "35px tall (floor 44)"
     },
-    "admin-accounting-allocate|361|tap-floor|button·Add Another Team": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
+    "admin-accounting-allocate|361|tap-floor|button·Team Splits": {
+      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
+      "detail": "31px tall (floor 44)"
     },
-    "admin-accounting-allocate|361|tap-floor|a·Back to Budget": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
+    "admin-accounting-allocate|390|tap-floor|input·e.g. Field rental — 2025 season": {
+      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
+      "detail": "35px tall (floor 44)"
     },
-    "admin-accounting-allocate|361|tap-floor|button·Review": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
+    "admin-accounting-allocate|390|tap-floor|input·e.g. 3000.00": {
+      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
+      "detail": "35px tall (floor 44)"
     },
-    "admin-accounting-allocate|361|content-overflow|select·Lump Sum (single payment)Custom (multipl": {
-      "reason": null,
-      "detail": "content spills 72px with overflow-x:visible — no scroller owns it"
+    "admin-accounting-allocate|390|tap-floor|button·Team Splits": {
+      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-accounting-allocate|768|tap-floor|input·e.g. Field rental — 2025 season": {
+      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocate|768|tap-floor|input·e.g. 3000.00": {
+      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-accounting-allocate|768|tap-floor|button·Team Splits": {
+      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
+      "detail": "31px tall (floor 44)"
     },
     "admin-families|361|tap-floor|a·Public site": {
       "reason": null,
@@ -3972,106 +3904,6 @@
     "admin-rep-team-history-year|390|content-overflow|div·RosterSchedule & ResultsCoachesDocuments": {
       "reason": null,
       "detail": "content spills 27px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-budget|390|tap-floor|select·2026": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|tap-floor|button·2 periods": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|tap-floor|button·Edit": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|control-width|button·Edit": {
-      "reason": null,
-      "detail": "21px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|390|tap-floor|button·Delete": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|control-width|button·Delete": {
-      "reason": null,
-      "detail": "21px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|390|tap-floor|button·3 periods": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-budget|390|tap-floor|button·1 period": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|tap-floor|select·2026": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|tap-floor|button·2": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|tap-floor|button·3": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|tap-floor|button·1": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|content-overflow|div·TournamentsEst$3,000.00Alloc$0.00Collect": {
-      "reason": null,
-      "detail": "content spills 26px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|390|content-overflow|div·OfficialsEst$4,500.00Alloc$3,000.00Colle": {
-      "reason": null,
-      "detail": "content spills 38px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-allocate|390|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|select·Select year…": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|select·Fixed ($)Percentage (%)Sessions (# sessi": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|input·e.g. 1000.00": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|select·Lump Sum (single payment)Custom (multipl": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|input·Internal note for this split": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|button·Add Another Team": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|a·Back to Budget": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|button·Review": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|content-overflow|select·Lump Sum (single payment)Custom (multipl": {
-      "reason": null,
-      "detail": "content spills 58px with overflow-x:visible — no scroller owns it"
     },
     "admin-families|390|tap-floor|a·Public site": {
       "reason": null,
@@ -4988,94 +4820,6 @@
     "admin-rep-team-history-year|390|content-overflow|div·HistoryRep Teams · 15U AAA2025 SeasonCom": {
       "reason": null,
       "detail": "content spills 11px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-budget|768|tap-floor|select·2026": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-budget|768|tap-floor|button·2 periods": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-budget|768|tap-floor|button·Edit": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "admin-accounting-budget|768|control-width|button·Edit": {
-      "reason": null,
-      "detail": "21px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|768|tap-floor|button·Delete": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "admin-accounting-budget|768|control-width|button·Delete": {
-      "reason": null,
-      "detail": "21px wide (floor 44) — icon-only control"
-    },
-    "admin-accounting-budget|768|tap-floor|button·3 periods": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-budget|768|tap-floor|button·1 period": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-bva|768|tap-floor|select·2026": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-accounting-bva|768|tap-floor|button·2": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-bva|768|tap-floor|button·3": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-bva|768|tap-floor|button·1": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|a·Accounting": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|select·Select year…": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|select·Fixed ($)Percentage (%)Sessions (# sessi": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|input·e.g. 1000.00": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|select·Lump Sum (single payment)Custom (multipl": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|input·Internal note for this split": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|button·Add Another Team": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|a·Back to Budget": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|button·Review": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
     },
     "admin-families|768|tap-floor|a·Public site": {
       "reason": null,
@@ -13105,54 +12849,6 @@
     "admin-org-members-treasurer|768|tap-floor|a·View by team": {
       "reason": null,
       "detail": "15px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|tap-floor|button·Show entries (4)": {
-      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-accounting-bva|361|content-overflow|div·UAT Rep ClubAccountingOverviewLedgerAllo": {
-      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
-      "detail": "content spills 86px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|361|content-overflow|div·Season year:2026ExportEdit Budget →Org H": {
-      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
-      "detail": "content spills 102px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|361|content-overflow|div·FacilitiesEst$6,000.00Alloc$6,750.00Coll": {
-      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
-      "detail": "content spills 102px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|390|tap-floor|button·Show entries (4)": {
-      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-accounting-bva|390|content-overflow|div·UAT Rep ClubAccountingOverviewLedgerAllo": {
-      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
-      "detail": "content spills 57px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|390|content-overflow|div·Season year:2026ExportEdit Budget →Org H": {
-      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
-      "detail": "content spills 73px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|390|content-overflow|div·FacilitiesEst$6,000.00Alloc$6,750.00Coll": {
-      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
-      "detail": "content spills 73px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-bva|768|tap-floor|button·Show entries (4)": {
-      "reason": "Budget vs. Actual's own phone overflow, carried from before Stage 3a (its wide rows; baselined then, unexplained, under the old page header). The key changed when the page took the Accounting frame and the rebuilt test club's figures changed. Its phone layout is Stage 3b's.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-accounting-allocate|361|tap-floor|select·Select team…11U AA12U AA13U AAA15U AA15U": {
-      "reason": "The budget allocator's team select, baselined before Stage 3a; the key changed because the rebuilt test club has one more team. Not redrawn in 3a.",
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|select·Select team…11U AA12U AA13U AAA15U AA15U": {
-      "reason": "The budget allocator's team select, baselined before Stage 3a; the key changed because the rebuilt test club has one more team. Not redrawn in 3a.",
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|select·Select team…11U AA12U AA13U AAA15U AA15U": {
-      "reason": "The budget allocator's team select, baselined before Stage 3a; the key changed because the rebuilt test club has one more team. Not redrawn in 3a.",
-      "detail": "37px tall (floor 44)"
     },
     "admin-accounting-ledger|361|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",

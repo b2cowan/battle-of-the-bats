@@ -1,0 +1,65 @@
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   THE MONEY HIERARCHY'S TYPE SCALE — one declaration for every money grid, in BOTH portals (Club Tier
+   Stage 3b, 2026-10-06). Moved here from `.coachesShell` in coaches.module.css, which now COMPOSES it, so
+   a coach's grid reads exactly what it read before; the club's Budget and Budget vs. Actual render the
+   coach's own Statement rows, period grid and month grid (promoted, never copied) and wear the same class
+   on their report frame. One source, two shells — never a second copy of these numbers (register K-02).
+   ⚠ `tests/unit/money-hierarchy-type-scale.test.ts` reads this file for the declarations.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ══ ONE SOURCE FOR THE MONEY HIERARCHY'S TYPE SCALE ═══════════════════════════════════════════
+   The OUTLINE (`.ledger*`, a card stack) and the GRID (`.moneyGrid*`, a real table) draw the same
+   category → line → total tree, one toggle apart on Budget Plan. Their sizes and weights are
+   therefore ONE decision, and they are declared exactly once, here.
+
+   ⚠ These began as duplicated literals in both families and forked TWICE in a single day — which
+   is why `tests/unit/money-hierarchy-type-scale.test.ts` exists. With one declaration the two
+   halves cannot disagree at all, so that test's equality assertions are now belt-and-braces; what
+   it still genuinely guards is the two RELATIONSHIPS a variable cannot express — that a category
+   reads LARGER than its own lines, and that neither family reverts to small caps.
+
+   Declared on the portal SHELL (by composition, since 2026-10-06) rather than on each family's container because the two families
+   share no common ancestor class, and a per-family declaration would be the duplication all over
+   again. ⚠ NOT `:global(:root)` — a rule with no local class is legal to the dev server
+   (LightningCSS) and FAILS the production webpack build as "not pure", which is exactly how it
+   escaped: written 2026-08-13, first built 2026-08-14, Amplify dev job 255 red. Every consumer of
+   these five (both families plus `.footValue`) renders inside the shell, and none is portalled out
+   of it, so the shell is the nearest ancestor they all share. `scripts/check-css-module-purity.mjs`
+   now catches the next one locally. */
+.moneyScale {
+  /* ⚠ THE ONE STEP EVERY FOLDED MONEY ROW TAKES (`/simplify`, 2026-09-10). `.moneyGridLead` (the
+     reports' lines under a category) and `.driveHandInLead` (a drive's hand-ins under their
+     participant) both indent by this, so a coach meets ONE depth of nesting across the hub. The
+     agreement used to be held by a comment saying the two must match — retune one and nothing
+     fails, the two screens just quietly stop lining up.
+     ⚠ Their PHONE overrides stay divergent on purpose and are not tokenised: the reports' grid
+     tightens to 1.1rem inside a pinned column, while a hand-in card drops the indent to zero and
+     says "nested" with an inset and an accent edge instead. Only the shared base is shared.
+     ⚠ ON THE SHELL, NOT `:root` — see the note below: a rule with no local class passes the dev
+     server and FAILS the production webpack build as "not pure". Both consumers render inside the
+     shell and neither is portalled out of it. */
+  --money-fold-indent: 1.55rem;
+  --money-cat-size:    0.92rem;
+  --money-cat-weight:  800;
+  --money-line-size:   0.84rem;
+  --money-line-weight: 600;
+  /* A category's own figure sits a step under its name — it is read across, not scanned down. */
+  --money-catnum-size: 0.86rem;
+  /* ⚠⚠ THERE IS NO FOURTH RUNG FOR A CLOSING ANSWER, AND THAT IS A RULING (owner 2026-09-06, QA
+     §146) — taken TWICE in one session, on the built screen both times, which is why it is written
+     here rather than left to the next person's taste.
+       1. Season net, Total revenue and Total expenses were measuring IDENTICALLY. Owner: *"the
+          fonts of all 3 rows look the same."* He was right — and two pieces of prose were wrong
+          about it, a walk step claiming the net read "larger and bolder" and a stylesheet comment
+          claiming the subtotals wore a thinner cap. Neither was ever built. (The row had in fact
+          been rendering SMALLER than its subtotals — a specificity defect — and the fix lifted it
+          to parity while both descriptions went on claiming primacy.)
+       2. A step up to 1rem was built and shown to him. He ruled it back OUT on sight: *"go back to
+          making the font size the same as the revenue/expense rows. It keeps it in line with the
+          other monthly statement and looks better."*
+     So the closing answer is set apart by SPACE and by POSITION — its extra padding, its heavier
+     cap, and being last — never by size. The Months view's closing row is the reason: these are one
+     report behind a View pill, and a coach who switches should not find the last row grown.
+     ⚠ `money-hierarchy-type-scale.test.ts` pins the EQUALITY, so a future "the answer should shout"
+     fails the build and lands here instead. */
+}

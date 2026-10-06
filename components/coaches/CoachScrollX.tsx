@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { MoveHorizontal } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { AUTO_SCROLL_FLAG } from './useOpenOnNow';
 
 /**
  * A horizontally-scrolling 2-D grid that CANNOT ship without an affordance for the sideways.
@@ -117,7 +118,12 @@ export default function CoachScrollX({
         // hint, which sits earlier in the DOM and has no overflow of its own.
         data-testid="coach-scrollx"
         className={`${styles.scrollX} ${sticky ? styles.scrollXSticky : ''} ${overflows ? styles.scrollXOverflowing : ''} ${frame ? '' : styles.scrollXBare} ${wrapCells ? styles.scrollXWrapCells : ''} ${scrollerClassName}`}
-        onScroll={e => { if (!scrolled && e.currentTarget.scrollLeft > 8) setScrolled(true); }}
+        onScroll={e => {
+          // A month grid opening on this month at touch widths scrolls this frame itself (`useOpenOnNow`,
+          // Club Tier Stage 3b fix 2): that scroll is the product's, so the one-time hint stays for the reader.
+          if (e.currentTarget.dataset[AUTO_SCROLL_FLAG]) { delete e.currentTarget.dataset[AUTO_SCROLL_FLAG]; return; }
+          if (!scrolled && e.currentTarget.scrollLeft > 8) setScrolled(true);
+        }}
         // Keyboard and screen-reader users get a real scrollable region rather than a
         // silently clipped one; the label carries the same information as the hint.
         tabIndex={overflows ? 0 : undefined}

@@ -132,9 +132,8 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     }
     input.status = v as AccountingEntryStatus;
   }
-  if ('category' in body) {
-    input.category = typeof body.category === 'string' ? body.category.trim().slice(0, 100) || null : null;
-  }
+  /* ⚰ The free-text `category` is no longer written (Club Tier Stage 3b, session 2): a line is filed under a
+     budget word (`budgetItemId`, below). An old line's typed words stay as they were — history, never a filing. */
   if ('paymentMethod' in body) {
     input.paymentMethod = typeof body.paymentMethod === 'string' ? body.paymentMethod.trim().slice(0, 100) || null : null;
   }

@@ -106,6 +106,8 @@ export async function buildDocuments() {
   const { checkinSheetHeadings, checkinTickColumn } = await import('../lib/export/tryout-checkin-columns.ts');
   const { buildFamilyDuesStatements } = await import('../lib/coach-dues-statement.ts');
   const money$ = await import('../lib/coach-money-exports.ts');
+  const clubReports$ = await import('../lib/club-money-reports.ts');
+  const clubPlan$ = await import('../lib/club-budget-report.ts');
   const { buildPeriodView } = await import('../lib/coach-budget-periods-view.ts');
   const dues$ = await import('../lib/dues-payments.ts');
   const { formatTime } = await import('../lib/utils.ts');
@@ -765,27 +767,100 @@ export async function buildDocuments() {
     });
   }
 
-  const ADMIN_BVA_HEADERS = ['Description', 'Estimated', 'Allocated', 'Collected', 'Unallocated', 'Status'];
-  doc({
-    id: 'admin-budget-vs-actual',
-    label: 'Club Budget vs. Actual',
-    screens: ['app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx'],
-    headings: ADMIN_BVA_HEADERS,
-    render: (name, settings) => downloadPDF(
-      name, 'Budget vs. Actual', SEASON, ADMIN_BVA_HEADERS, [], settings,
-      {
-        identity: ORG, shape: { orientation: 'landscape' },
-        groups: ['Money in', 'Money out'].map((label) => ({
-          label,
-          rows: Array.from({ length: 9 }, (_, i) => [
-            ['Tournament entry fees', 'Equipment & uniforms', 'Field rental'][i % 3],
-            money(3200), money(2750), money(2400), money(350),
-            ['On plan', 'Over', 'Under'][i % 3],
-          ]),
-        })),
-      },
-    ),
-  });
+  /* ⚖ THE CLUB'S BUDGET VS. ACTUAL IS THE COACH'S STATEMENT (Club Tier Stage 3b, 2026-10-06). The exhibit that
+   * stood here printed the retired page's six columns (Estimated · Allocated · Collected · Unallocated · Status);
+   * the page now prints the coach's Statement — revenue then expenses by category and line, Budgeted · Actual ·
+   * Variance, the year's net — through the REAL builder (`clubStatementFile`), raw figures and bracket notation
+   * exactly as the page hands them over. The fixture holds the shapes that matter: a category with several
+   * lines, an off-plan line (Budgeted blank), a "Not filed" category, and a long line name. */
+  {
+    const fig = (budgeted, actual) => ({ budgeted, actual, variance: Math.round((actual - budgeted) * 100) / 100 });
+    const item = (itemName, budgeted, actual, inPlan = true) => ({ itemName, inPlan, ...fig(budgeted, actual) });
+    const cat = (categoryName, items, inPlan = true) => ({
+      categoryName, inPlan, items,
+      ...fig(items.reduce((t, i) => t + (i.inPlan ? i.budgeted : 0), 0), items.reduce((t, i) => t + i.actual, 0)),
+    });
+    const section = (categories) => ({
+      categories,
+      ...fig(categories.reduce((t, c) => t + c.budgeted, 0), categories.reduce((t, c) => t + c.actual, 0)),
+    });
+    const revenue = section([
+      cat('From the teams', [item('From the teams — allocations', 23450, 17610), item('From the teams — on request', 1200, 800)]),
+      cat('Sponsorship', [item('Club sponsors', 3000, 1500), item('Town recreation grant', 2000, 0)]),
+      cat('Tournaments', [item('Registration revenue', 0, 1440, false)], false),
+    ]);
+    const expenses = section([
+      cat('Facilities', [item('Diamond permits — city fields', 14000, 12150), item('Field equipment', 0, 1200, false), item('Indoor winter training space — Burlington Sports Centre', 4200, 4800)]),
+      cat('Officials', [item('Umpire fees — home games', 4500, 3000), item('Umpires’ association fees', 640, 640)]),
+      cat('Admin', [item('Club insurance', 2500, 2500), item('Software & subscriptions', 600, 412)]),
+      cat('Team support', [item('Paid to teams on request', 1500, 1180)]),
+      cat('Not filed', [item('Not filed', 0, 2340, false)], false),
+    ]);
+    const net = fig(revenue.budgeted - expenses.budgeted, revenue.actual - expenses.actual);
+    const built = clubReports$.clubStatementFile({ revenue, expenses, net }, 'season', 2026);
+    doc({
+      id: 'admin-budget-vs-actual',
+      label: 'Club Budget vs. Actual',
+      screens: ['app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx'],
+      headings: built.columns.map((c) => c.label),
+      render: (name, settings) => money$.downloadMoneyExport('pdf', {
+        dataset: 'budget-vs-actual', title: 'Budget vs. Actual',
+        columns: built.columns, rows: built.rows, rowKinds: built.kinds, currencyNotation: 'brackets',
+        orgLabel: 'riverdale-ridge', scopeLabel: '2026', teamName: ORG,
+        masthead: { title: `${ORG} · 2026`, subtitle: 'Budget vs. Actual — Statement · Compare: Whole year', meta: 'As at October 6, 2026' },
+        pdfSettings: settings, emptyMessage: 'Nothing to export on Budget vs. Actual.',
+      }),
+    });
+  }
+
+  /* ⚖ THE BOARD REPORT (Club Tier Stage 3b, Ask 1): the Overview written as a document — the position, the year
+   * against the budget and the club's books as the opening block, then the teams through the REAL builder
+   * (`boardTeamsExportRows`), whose two closing rows are the teams' totals with the cash BLANK and the teams'
+   * cash on its own row, labelled as never the club's. Nine teams in two groups, one between seasons. */
+  {
+    const team = (teamName, groupName, allocated, collected, requests, cash) => ({
+      teamName, groupName, allocated, collected, outstanding: Math.round((allocated - collected) * 100) / 100,
+      requestsWaiting: { count: requests, amount: requests * 120 }, cash: { cash },
+    });
+    const teams = [
+      team('15U AAA', 'Senior', 2250, 1350, 1, 4120.55), team('15U AA', 'Senior', 1350, 450, 0, -310),
+      team('16U AA', 'Senior', 0, 0, 0, 7352), team('18U AA', 'Senior', 900, 900, 0, 1205.4),
+      team('13U AAA', 'Junior', 2250, 900, 1, 2800), team('12U AA', 'Junior', 1350, 0, 0, null),
+      team('11U AA', 'Junior', 2850, 0, 2, 960.25), team('9U AA', 'Junior', 0, 0, 0, null),
+      team('Rookie Development Program — Tuesday and Thursday sessions', 'Junior', 600, 600, 0, 215),
+    ];
+    const held = teams.filter((t) => t.cash.cash != null);
+    const summary = { teams, teamsCash: { total: Math.round(held.reduce((t, x) => t + x.cash.cash, 0) * 100) / 100, teamCount: held.length } };
+    const rows = clubPlan$.boardTeamsExportRows(summary).map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v ?? ''])));
+    doc({
+      id: 'admin-board-report',
+      label: 'Club board report',
+      screens: ['app/[orgSlug]/admin/accounting/page.tsx'],
+      headings: clubPlan$.BOARD_TEAMS_EXPORT_COLUMNS.map((c) => c.label),
+      render: (name, settings) => money$.downloadMoneyExport('pdf', {
+        dataset: 'board-report', title: 'Board report',
+        columns: clubPlan$.BOARD_TEAMS_EXPORT_COLUMNS, rows, rowKinds: rows.map((_, i) => (i >= rows.length - 2 ? 'total' : undefined)),
+        orgLabel: 'riverdale-ridge', scopeLabel: '2026', teamName: ORG,
+        masthead: { title: `${ORG} · 2026`, subtitle: 'Board report', meta: 'As at October 6, 2026' },
+        pdfIntro: {
+          label: 'Where the club stands, and the year against the budget',
+          rows: [
+            ['Cash on hand · the club’s books, today', '$21,346.20'],
+            ['Owed by the teams', '$9,180.00'],
+            ['Waiting on you', '$1,380.00'],
+            ['Revenue 2026 · so far of planned', '$19,850.00 of $29,650.00'],
+            ['Expenses 2026 · so far of planned', '$28,222.00 of $28,040.00'],
+            ['Off-plan spending', '$3,540.00'],
+            ['Headroom', '($182.00)'],
+            ['UAT Rep Club — General · Club', '$18,906.20'],
+            ['Invitational 2026 · Tournament', '$1,940.00'],
+            ['Reserve fund · Club', '$500.00'],
+          ],
+        },
+        pdfSettings: settings, emptyMessage: 'Nothing to export on the board report.',
+      }),
+    });
+  }
 
   doc({
     id: 'coach-family-statements',
@@ -1231,6 +1306,14 @@ export const NO_PDF_SCREENS = [
     file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx',
     reason: 'Fundraisers and sponsorships export as xlsx/csv only — eleven columns for a pivot table.',
   },
+  {
+    file: 'app/[orgSlug]/admin/accounting/budget/page.tsx',
+    reason: 'The club\'s plan exports as xlsx/csv only — a dataset in the coach\'s Budget shape (Club Tier 3b); the club\'s documents are Budget vs. Actual and the board report.',
+  },
+  {
+    file: 'app/[orgSlug]/admin/accounting/payees/[payeeId]/page.tsx',
+    reason: 'The shared-payee report exports as xlsx/csv only (Club Tier 3b).',
+  },
 ];
 
 /**
@@ -1239,6 +1322,10 @@ export const NO_PDF_SCREENS = [
  * discovered separately and must still be claimed.
  */
 export const PLUMBING_SCREENS = [
+  {
+    file: 'components/admin/kit/club/money/ClubMoneyExport.tsx',
+    reason: 'The club\'s money export button and runner (Club Tier 3b). It dispatches whatever formats its CALLER offers; it owns no document of its own.',
+  },
   {
     file: 'components/coaches/MoneyExportButton.tsx',
     reason: 'The shared coach money export dialog. It dispatches whatever formats its CALLER offers; it owns no document of its own.',

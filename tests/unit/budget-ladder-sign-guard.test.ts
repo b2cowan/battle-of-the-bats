@@ -43,6 +43,9 @@ const PANEL = path.join(
   process.cwd(),
   'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx',
 );
+/* The By period grid and its balance helpers moved here (Club Tier 3b, 2026-10-06): one grid, both
+   portals. The guard reads the panel AND the grid, so the rules hold wherever the code sits. */
+const GRID = path.join(process.cwd(), 'components/coaches/MoneyPeriodGrid.tsx');
 
 /** The file with its comments stripped — the explanations above contain the strings forbidden below. */
 function codeOnly(src: string): string {
@@ -54,7 +57,7 @@ function codeOnly(src: string): string {
 }
 
 describe('the balance rows keep their sign', () => {
-  const src = codeOnly(fs.readFileSync(PANEL, 'utf8'));
+  const src = codeOnly(fs.readFileSync(PANEL, 'utf8')) + '\n' + codeOnly(fs.readFileSync(GRID, 'utf8'));
 
   it('renders every balance figure through one signed helper built on the bracket formatter', () => {
     // The helper is the one place a balance cell is drawn; it must read the SHARED formatter.

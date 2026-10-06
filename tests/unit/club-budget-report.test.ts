@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  buildBoardSummary, buildClubPlan, buildClubReport, fileClubLine, loopIndex, planYears,
+  buildBoardSummary, buildClubPlan, buildClubReport, withPeriodViews, fileClubLine, loopIndex, planYears,
   statementExportRows, boardTeamsExportRows, allocationInYear,
   FROM_THE_TEAMS_ID, NOT_FILED_ID, ON_REQUEST_ID, TEAM_SUPPORT_WORD_IDS,
   type ClubAllocationFacts, type ClubBook, type ClubBookLineFacts, type ClubPlanLineFacts, type ClubRequestFacts,
@@ -185,11 +185,21 @@ describe('the plan: Allocated, Not allocated, From the teams (C11, Ask 4b)', () 
     assert.equal(plan.revenue.total, 17150);
     assert.equal(plan.closingBalance, 21762 + 17150 - 14000, 'the plan closes on opening + net');
   });
-  it('By period: the coach\'s grid fed the plan; From the teams lands on its due months', () => {
+  it('By period: the coach\'s own period view fed the plan; From the teams lands on its due months', () => {
     const plan = buildClubPlan({ year: YEAR, today: TODAY, lines, allocations: [a1], categoryOrder: {}, openingBalance: 0 });
-    const may = plan.periodGrid.months.indexOf('2026-05');
-    assert.equal(plan.periodGrid.revenue.totals.cells[may].budget, 12150);
-    assert.equal(plan.periodGrid.balance.ending, plan.closingBalance);
+    const { months, quarters } = withPeriodViews(plan, lines, {}).periodView;
+    // The year's twelve months, always — the club's plan opens on its first day whatever is dated.
+    assert.deepEqual(months.columns.filter(c => !c.unscheduled).map(c => c.key)[0], `${YEAR}-01`);
+    assert.equal(months.columns.filter(c => !c.unscheduled).length, 12);
+    assert.equal(quarters.columns.filter(c => !c.unscheduled).length, 4);
+    // From the teams is the lead revenue row, in the month its installments fall due.
+    assert.equal(months.installments?.cells[`${YEAR}-05`], 12150);
+    assert.equal(months.installments?.total, plan.revenue.fromTheTeams.planned);
+    // Both granularities close where the List closes.
+    assert.equal(months.balance.seasonClosing, plan.closingBalance);
+    assert.equal(quarters.balance.seasonClosing, plan.closingBalance);
+    assert.equal(months.revenueTotals?.total, plan.revenue.total);
+    assert.equal(months.expenseTotals.total, plan.expenses.total);
   });
 });
 

@@ -5,7 +5,8 @@ import { ChevronDown, ChevronRight, X, CalendarClock } from 'lucide-react';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import ReportNotes, { NoteText } from '@/components/coaches/ReportNotes';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
-import { monthGridNotesFor } from '@/lib/coach-money-report-notes';
+import { useOpenOnNow } from '@/components/coaches/useOpenOnNow';
+import { monthGridNotesFor, type ReportNote } from '@/lib/coach-money-report-notes';
 import {
   buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan, balanceShowsMonth,
   categoryHasFigure, hasUndated, isPayoutCategory, cellPanelSpec, panelRowWords, UNDATED_CELL,
@@ -16,7 +17,7 @@ import {
   monthKeyOf,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine, type GridLineResult,
   type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
-  type RevenueGroupKey,
+  type RevenueGroupKey, type CashFlowResult,
 } from '@/lib/coach-budget-months';
 import { fmtCompact, fmt as fmtSignedAmount } from '@/lib/coach-money-summary';
 import { moneySectionHref } from '@/lib/coach-money-links';
@@ -239,12 +240,38 @@ function signClass(n: number, emphasis: Emphasis): string {
   return '';
 }
 
+/**
+ * THE CLUB'S READING OF THIS GRID (Club Tier Stage 3b, Ask 5 — "the coach's MoneyMonthGrid, fed the
+ * club's figures, never a second grid"). Every field is optional; absent, the grid is exactly the coach's.
+ */
+export interface MonthGridClubReading {
+  /** "year" wherever the coach's panels say "season" ("whole year", "planned for the year"). */
+  /**
+   * The three balance rows, already worked out over EVERY book the club owns (`ClubMonthsFeed.balances`).
+   * The grid's own helper (`buildBandCashFlow`) knows only the coach's bands; the club's balance must
+   * include the other books to close on Cash on hand to the cent. Null on Difference (no balance there).
+   */
+  balance: (lens: MoneyLens) => CashFlowResult | null;
+  /** "The club's other books": what a tournament's or the house league's book moved on its own, by
+   *  month, for the lens — one row above the balance, drawn only where it has a figure. */
+  otherBooks: { label: string; byLens: (lens: MoneyLens) => Array<{ month: MonthKey; net: number }> | null };
+  /** The notes under the grid, in the club's words (lib/club-money-report-notes.ts). */
+  notes: ReportNote[];
+  /** Where a budget line opens (its window on the Budget tab). */
+  planLineHref: (lineId: string) => string;
+  /** The plan panel's door for someone who cannot change the plan. */
+  planDoor: { label: string; href: string };
+  /** A records panel's doors, on the club's own pages (null = no door for that one). */
+  door: (door: PanelDoor, categoryKey: string) => { label: string; href: string } | null;
+}
+
 export default function MoneyMonthGrid({
   data,
   lens: lensChoice,
   base,
   canWrite,
   monthStart,
+  club,
 }: {
   data: MonthGridPayload;
   lens: MoneyLens;
@@ -253,10 +280,14 @@ export default function MoneyMonthGrid({
   canWrite: boolean;
   /** First month of the visible window. The CALLER owns the control — see `MONTH_WINDOW`. */
   monthStart: number;
+  /** The club's reading (Club Tier Stage 3b) — see `MonthGridClubReading`. */
+  club?: MonthGridClubReading;
   /** The rendering page's season query (`''` or `'?year=<id>'`) — drill-ins from an archived
    *  season must stay in that season, not teleport the reader to the live one. */
 }) {
   const { monthGrid: grid, revenueGrid, returnedGrid, spendingGrid, cellDetails, cashOnHand, todayMonth } = data;
+  /** "season" on the coach's grid, "year" on the club's — the panels' words for the whole span. */
+  const span = club ? 'year' : 'season';
   /* ⚠⚠ THE DEPLOY-SKEW BELT (review finding, 2026-09-02). The type says `spendingGrid` is always
      sent — and the live route always sends it — but a payload fetched across a deploy boundary
      (fresh client, stale response) can genuinely lack it, and `difference` is a PRE-EXISTING saved
@@ -290,7 +321,8 @@ export default function MoneyMonthGrid({
      `lib/coach-money-report-notes.ts` for why that is not optional on this report. The lens passed
      is the COERCED one above (a stale payload with no spending grid falls back to the cash
      reading); the fallback is deploy-skew belt, not a sentence, so it stays here. */
-  const notes = useMemo(() => monthGridNotesFor(data, lens), [data, lens]);
+  const clubNotes = club?.notes;
+  const notes = useMemo(() => clubNotes ?? monthGridNotesFor(data, lens), [clubNotes, data, lens]);
   const quietNotes = useMemo(() => notes.filter(n => n.tone === 'note'), [notes]);
   const alertNote = notes.find(n => n.tone === 'alert') ?? null;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -371,6 +403,11 @@ export default function MoneyMonthGrid({
   /* Bands follow the WINDOW, so stepping the months re-groups them — a band describes what is on
      screen, not the season. */
   const bands = monthYearBands(view);
+  /* ⚖ A PHONE OPENS ON THIS MONTH (owner, Club Tier Stage 3b fix 2, 2026-10-06 — both portals). The grid
+     scrolls its own frame at touch widths so this month sits in view with the two before it; a desk is
+     unchanged. Re-opens only when the grid itself changes (the lens, the window). */
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const openedOnNow = useOpenOnNow(scrollerRef, `${lens}|${view[0] ?? ''}|${start}|${view.length}`);
 
   /* ⚠ THE COLUMN APPEARS ONLY WHERE IT CAN HOLD SOMETHING (owner ruling 2026-08-21) — but the
      rule is now enforced on the FIGURE rather than on the lens's name. Undated money used to be
@@ -404,11 +441,26 @@ export default function MoneyMonthGrid({
      owns that subtraction so this screen and the export cannot answer differently. */
   /* ⚠ NO BALANCE ROWS ON DIFFERENCE — and none on SEASON SPENDING either (owner D1): that lens is
      the Statement's expense half, and a balance over half a statement would be an invented figure. */
+  const clubBalance = club?.balance;
   const cash = useMemo(
     () => (lens === 'difference' || lens === 'spending'
       ? null
-      : buildBandCashFlow(revenueGrid, grid, lens, cashOnHand, opening ?? 0, returnedGrid)),
-    [grid, revenueGrid, returnedGrid, lens, cashOnHand, opening]);
+      : clubBalance
+        /* ⚖ THE CLUB'S BALANCE IS ALREADY WORKED OUT OVER EVERY BOOK IT OWNS (Ask 5) — its other books
+           move the balance and sit in no band above, so the grid's own helper would miss them. */
+        ? clubBalance(lens)
+        : buildBandCashFlow(revenueGrid, grid, lens, cashOnHand, opening ?? 0, returnedGrid)),
+    [grid, revenueGrid, returnedGrid, lens, cashOnHand, opening, clubBalance]);
+  /** "The club's other books", by month, for this lens — only where it has a figure. */
+  const otherBooks = useMemo(() => {
+    const months = club?.otherBooks.byLens(lens) ?? null;
+    if (!months || !months.some(m => Math.abs(m.net) > 0.005)) return null;
+    return {
+      label: club!.otherBooks.label,
+      byMonth: new Map(months.map(m => [m.month, m.net] as const)),
+      total: Math.round(months.reduce((s, m) => s + m.net, 0) * 100) / 100,
+    };
+  }, [club, lens]);
 
   /* ⚠ A REVENUE GROUP RENDERS ONLY WHERE IT HAS SOMETHING TO SAY UNDER THIS LENS, and that is what
      makes Scheduled read as a FORWARD view rather than a restatement: a bottle drive has no
@@ -517,10 +569,12 @@ export default function MoneyMonthGrid({
     setDetail({
       // The drawings' own form: whose money, and when. The lens is named by the control that got here.
       title: `${row?.subject.name ?? cat.label} · ${when === UNDATED_CELL ? 'no date yet'
-        : when === SEASON_CELL ? 'whole season' : formatMonthLong(when)}`,
+        : when === SEASON_CELL ? `whole ${span}` : formatMonthLong(when)}`,
       items,
       totalLabel: spec.totalLabel,
-      doors: spec.doors,
+      doors: club
+        ? spec.doors.flatMap(d => { const to = club.door(d, cat.categoryKey); return to ? [{ section: d.section, extra: { href: to.href }, label: to.label }] : []; })
+        : spec.doors,
       subjects,
       subject: row?.subject.name,
     });
@@ -544,7 +598,7 @@ export default function MoneyMonthGrid({
       title: when === UNDATED_CELL
         ? `See what makes up ${who} with no date yet`
         : when === SEASON_CELL
-          ? `See everything behind ${who} this season`
+          ? `See everything behind ${who} this ${span}`
           : `See what makes up ${who} in ${formatMonthLong(when)}`,
     };
   }
@@ -892,7 +946,13 @@ export default function MoneyMonthGrid({
     <div className={styles.wrap}>
       {/* A month grid is a COMPARISON, so it keeps its shape and scrolls with the line name
           pinned rather than stacking into cards (Chunk A D1/D2). */}
-      <CoachScrollX sticky hint="Swipe the grid to see later months" className={styles.scroller}>
+      <CoachScrollX
+        sticky
+        /* Opened mid-year on a phone, there are months either side — the hint says so. */
+        hint={openedOnNow ? 'Swipe the grid to see other months' : 'Swipe the grid to see later months'}
+        className={styles.scroller}
+        scrollerRef={scrollerRef}
+      >
         {/* ⚠ `styles.grid` is NOT a no-op, however empty its own rule looks. It is the ancestor in
             `.grid thead th.lead` (the pinned header corner's stacking order) and in the two heading
             colours for the "No date yet" and current-month columns. Removing it silently unstyles
@@ -929,7 +989,7 @@ export default function MoneyMonthGrid({
                   that was not true. Cross-season belongs in its own view. */}
               {showUndated && <th className={`${styles.num} ${styles.undated}`}>No date yet</th>}
               {view.map(m => (
-                <th key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`}>{formatMonthBare(m)}</th>
+                <th key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`} data-now={m === todayMonth ? '' : undefined}>{formatMonthBare(m)}</th>
               ))}
               <th className={`${styles.num} ${styles.totalCol}`}>Total</th>
             </tr>
@@ -1000,6 +1060,24 @@ export default function MoneyMonthGrid({
                   </tr>
                 )}
               </>
+            )}
+
+            {/* ⚖ THE CLUB'S OTHER BOOKS (Club Tier Stage 3b, Ask 5): what a tournament's or the house
+                league's book moved on its own this month. The rows above read the Club books (the
+                definition of Collected and Spent); the balance below covers every book the club owns, so
+                the gap is this one row, and the last closing is Cash on hand to the cent. Leaves when
+                Stages 7 and 9 bring those books into the budget. */}
+            {cash && otherBooks && (
+              <tr className={shared.moneyGridFlow}>
+                <th scope="row" className={styles.lead}>{otherBooks.label}</th>
+                {showUndated && <td className={`${styles.num} ${styles.undated}`}><span className={styles.nil}>—</span></td>}
+                {view.map(m => (
+                  <td key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`}>
+                    {cellNode(balanceShowsMonth(lens, m, todayMonth) ? otherBooks.byMonth.get(m) || null : null, { emphasis: 'negative' })}
+                  </td>
+                ))}
+                <td className={`${styles.num} ${styles.totalCol}`}>{cellNode(otherBooks.total || null, { emphasis: 'negative' })}</td>
+              </tr>
             )}
 
             {/* The two rows a coach cannot work out by looking: the month's net, and the balance
@@ -1191,7 +1269,7 @@ export default function MoneyMonthGrid({
               {detail.doors.map(door => (
                 <Link
                   key={door.label}
-                  href={moneySectionHref(base, door.section, door.extra)}
+                  href={club && door.extra?.href ? door.extra.href : moneySectionHref(base, door.section, door.extra)}
                   className={shared.btnSecondary}
                 >
                   {door.label}
@@ -1226,7 +1304,7 @@ export default function MoneyMonthGrid({
             <div className={shared.modalHeader}>
               <h3 className={shared.modalTitle}>
                 {plan.title} · {plan.when === UNDATED_CELL ? 'no date yet'
-                  : plan.when === SEASON_CELL ? 'whole season' : formatMonthLong(plan.when)}
+                  : plan.when === SEASON_CELL ? `whole ${span}` : formatMonthLong(plan.when)}
               </h3>
               <button className={shared.modalCloseBtn} onClick={() => setPlan(null)} aria-label="Close"><X size={16} /></button>
             </div>
@@ -1255,7 +1333,7 @@ export default function MoneyMonthGrid({
               <p className={styles.chooserSub}>
                 <strong>{fmt(plan.figure)}</strong>{' '}
                 {plan.when === SEASON_CELL
-                  ? 'planned for the season'
+                  ? `planned for the ${span}`
                   : lens === 'difference' && plan.when !== UNDATED_CELL
                     ? 'difference — plan against what the season has spent'
                     : 'planned'}
@@ -1280,7 +1358,7 @@ export default function MoneyMonthGrid({
                       // lump sum — the coach was looking at a month grid, so dates are what they
                       // came for.
                       <Link
-                        href={moneySectionHref(base, 'budget', { line: l.id, periods: '1' })}
+                        href={club ? club.planLineHref(l.id) : moneySectionHref(base, 'budget', { line: l.id, periods: '1' })}
                         className={styles.chooserChoice}
                         onClick={() => setPlan(null)}
                         title={`Edit ${l.description}’s payment dates`}
@@ -1309,13 +1387,13 @@ export default function MoneyMonthGrid({
             {plan.moreCount > 0 && (
               <p className={styles.chooserHint}>
                 {plan.moreCount === 1 ? '1 more line is' : `${plan.moreCount} more lines are`} budgeted
-                this season — tap Total to see {plan.moreCount === 1 ? 'it' : 'them'}.
+                this {span} — tap Total to see {plan.moreCount === 1 ? 'it' : 'them'}.
               </p>
             )}
             <p className={styles.chooserFoot}>
               {plan.lines.length === 1
-                ? 'Amount shown is this line’s whole-season total.'
-                : `${plan.lines.length} budget lines are shown as one row. Amounts are each line’s whole-season total, not this column’s share.`}
+                ? `Amount shown is this line’s whole-${span} total.`
+                : `${plan.lines.length} budget lines are shown as one row. Amounts are each line’s whole-${span} total, not this column’s share.`}
               {canWrite ? (plan.lines.length === 1
                 ? ' Open it to change its payment dates.'
                 : ' Open one to change its payment dates.') : ''}
@@ -1331,11 +1409,11 @@ export default function MoneyMonthGrid({
             {!canWrite && (
               <div className={shared.modalFooter}>
                 <Link
-                  href={moneySectionHref(base, 'budget')}
+                  href={club ? club.planDoor.href : moneySectionHref(base, 'budget')}
                   className={shared.btnSecondary}
                   onClick={() => setPlan(null)}
                 >
-                  Open Budget Plan
+                  {club ? club.planDoor.label : 'Open Budget Plan'}
                 </Link>
               </div>
             )}

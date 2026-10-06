@@ -105,10 +105,12 @@ describe('D8 — the treasurer holds what the allocation loop needs', () => {
       'the shared gate\'s loop scope must stay canOpenRepMoney');
   });
 
-  it('the allocate wizard reads its teams from Accounting, never from a Rep Teams route', () => {
-    const src = read('app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx');
+  it('New allocation reads its teams from Accounting, never from a Rep Teams team list', () => {
+    // Club Tier 3b retired the old allocate wizard into New allocation (opened from a budget line). Its one
+    // Rep Teams address is the allocation create itself, which answers the one money rule (3a).
+    const src = read('app/[orgSlug]/admin/accounting/allocations/new/page.tsx');
     assert.match(src, /\/api\/admin\/accounting\/team-options/);
-    assert.doesNotMatch(src, /fetch\(`\/api\/admin\/rep-teams\//);
+    assert.doesNotMatch(src, /fetch\(`\/api\/admin\/rep-teams\/(?!allocations)/);
   });
 });
 

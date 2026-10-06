@@ -31,17 +31,8 @@
    their two columns. Anchored under the grid so it beats the kit's `.big` whatever the bundle order. */
 @media (max-width: 400px) { .figures .figure { font-size: var(--type-title); } }
 
-/* ── The Overview's period: From and To as one compact pair (/design 2026-10-01) — each date at its own
-   width at a desk; on a phone the pair takes the row and each date half of it. Anchored under `.period`
-   so the width beats the kit field's `width: 100%` whatever the bundle order. ── */
-.period { display: flex; align-items: flex-end; gap: 0.6rem; margin-left: auto; }
-.periodField { display: flex; flex-direction: column; gap: 0.25rem; }
-.period .periodInput { width: 10.5rem; }
-@media (max-width: 640px) {
-  .period { flex: 1 1 100%; margin-left: 0; }
-  .periodField { flex: 1 1 0; min-width: 0; }
-  .period .periodInput { width: 100%; }
-}
+/* ⚰ The Overview's From/To pair (`.period`, `.periodField`, `.periodInput`) stood here; the Year pill replaced
+   it (Club Tier 3b, the board summary). */
 
 /* ── The toolbar lede: one quiet sentence at the toolbar's start (an allocation's schedule) ── */
 .lede {
@@ -254,3 +245,8 @@
 /* The statement's closing row (Outstanding on …) and an allocation's (This year, 9 teams): a group
    row's weight set apart by a 2px rule (K-04's shape, standard §3.5). */
 .closeRow > td { border-top: 2px solid var(--home-line-strong); font-weight: 700; color: var(--text-primary); }
+
+/* ── A figure the club READS but doesn't own (Club Tier Stage 3b, Ask 4e — a team's cash on hand): the blue
+   edge of the "held by the team" callout, and a lock before its label. ── */
+.figures .heldCard { border-left: 3px solid var(--info); }
+.heldLock { vertical-align: -1px; margin-right: 0.3rem; }

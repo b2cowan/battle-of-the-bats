@@ -34,7 +34,13 @@ interface TeamItem {
   createdAt: string;
 }
 
-export default function TeamBudgetItems({ orgSlug, canWrite }: { orgSlug: string; canWrite: boolean }) {
+export default function TeamBudgetItems({ orgSlug, canWrite, inWindow = false }: {
+  orgSlug: string;
+  canWrite: boolean;
+  /** Hosted in a window that titles it (the club's Budget › Tools › Words your teams use, Club Tier Stage 3b):
+   *  the section's own heading gives way to the window's; its explaining sentence stays. */
+  inWindow?: boolean;
+}) {
   const [items, setItems] = useState<TeamItem[] | null>(null);
   const [error, setError] = useState('');
   const [publishing, setPublishing] = useState<string | null>(null);
@@ -86,7 +92,7 @@ export default function TeamBudgetItems({ orgSlug, canWrite }: { orgSlug: string
   return (
     <section className={styles.section}>
       <header className={styles.head}>
-        <h2 className={styles.title}><Users size={16} aria-hidden /> Items your teams have added</h2>
+        {!inWindow && <h2 className={styles.title}><Users size={16} aria-hidden /> Items your teams have added</h2>}
         <p className={styles.sub}>
           A coach&apos;s own budget item stays with their team and never appears in another team&apos;s
           list. Publish one to hand it to every team — there is no way back, so an item a team is

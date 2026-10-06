@@ -51,6 +51,16 @@ const CSS = readFileSync(
 );
 
 /**
+ * WHERE THE SCALE IS DECLARED (Club Tier Stage 3b, 2026-10-06): its own small module, composed into the
+ * coach shell — so the club's money reports, which render the coach's own grids, wear the one declaration
+ * too. Variables resolve against it; the rules that READ them still live in coaches.module.css.
+ */
+const SCALE = readFileSync(
+  path.join(process.cwd(), 'components', 'coaches', 'moneyScale.module.css'),
+  'utf8',
+);
+
+/**
  * The statement's own stylesheet. The closing answer lives here rather than in the shared recipe,
  * because "Season net" is a fact only Budget vs. Actual has — so the one relationship that says it
  * outranks its own subtotals spans TWO files, and neither file can hold it alone.
@@ -93,7 +103,7 @@ function prop(selector: string, name: string, src: string = CSS): string {
 function rem(value: string): number {
   const varRef = value.match(/^var\(\s*(--[\w-]+)\s*(?:,[^)]*)?\)$/);
   if (varRef) {
-    const decl = CSS.match(new RegExp(`${varRef[1]}\\s*:\\s*([^;]+)`));
+    const decl = SCALE.match(new RegExp(`${varRef[1]}\\s*:\\s*([^;]+)`));
     assert.ok(decl, `${varRef[1]} is referenced but never declared — the money type scale lost its source.`);
     value = decl![1].trim();
   }

@@ -1,12 +1,27 @@
 'use client';
+/**
+ * Accounting › Allocations › NEW ALLOCATION (Club Tier Stage 3a moved it here; 3b, specimen 1, opens it FROM A
+ * BUDGET LINE — C11, C10).
+ *
+ * ⚖ FROM A LINE (`?line=<id>&year=<y>`, the line window's "Allocate $X"): one way to bill teams, not two — the
+ * old Allocate page retired into this one. The page reads the line from ITS OWN year's plan (the old page read
+ * only this calendar year's, so another year's line opened "Budget line not found"), shows what it plans, what
+ * is already allocated from it and what is left, and fills in the amount with what is left — never more (the
+ * server refuses above it, 409 `over_line`, under the line's lock). The line is the allocation's source, so the
+ * "Org Ledger Entry ID" box is not offered; the allocation and its link to the line are written in ONE step,
+ * and its total is what its teams' shares add up to, never the line's. Back returns to the Budget.
+ * Without a line it is 3a's form, unchanged.
+ */
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Trash2, ChevronRight, ChevronLeft } from 'lucide-react';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useOrg } from '@/lib/org-context';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { KIT_INK, KIT_STEP } from '@/components/admin/kit/kit-inline';
 import styles from '../../../rep-teams/rep-teams.module.css';
+import { RecordFacts } from '@/components/coaches/kit';
+import type { PlanLineRow } from '@/lib/club-budget-report';
 
 interface ProgramYearOption { id: string; name: string; year: number; status: string; }
 interface TeamOption { id: string; name: string; years: ProgramYearOption[]; }
@@ -56,7 +71,17 @@ function computeAmount(method: string, value: string, total: number): number | n
 
 export default function NewAllocationPage() {
   const router = useRouter();
+  const search = useSearchParams();
   const { currentOrg, loading } = useOrg();
+  const lineId = search.get('line');
+  const lineYear = Number(search.get('year')) || null;
+  /** The budget line this allocation is drawn from, read from its own year's plan. */
+  const [line, setLine] = useState<PlanLineRow | null>(null);
+  /** Opened from a line and it isn't here: gone from the plan, or the read failed. */
+  const [lineProblem, setLineProblem] = useState<'missing' | 'failed' | null>(null);
+  /** Opened from a line (and the line is not gone): the form is the line's from the first paint, never the
+   *  plain form with its ledger-entry box for the moment the line is loading (/design, 2026-10-06). */
+  const fromLine = !!lineId && lineProblem !== 'missing';
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
@@ -93,6 +118,24 @@ export default function NewAllocationPage() {
       .catch(() => {})
       .finally(() => setTeamsLoading(false));
   }, [currentOrg, orgQuery]);
+
+  // From a line: its own year's plan, read once; the amount starts at what is left on it.
+  useEffect(() => {
+    if (!currentOrg || !lineId) return;
+    let live = true;
+    fetch(`/api/admin/accounting/budget-plan${orgQuery}${lineYear ? `&year=${lineYear}` : ''}`)
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then(data => {
+        if (!live) return;
+        const found = ([...(data.plan?.expenses?.categories ?? [])] as { lines: PlanLineRow[] }[]).flatMap(c => c.lines).find(l => l.id === lineId) ?? null;
+        if (!found) { setLineProblem('missing'); return; }
+        setLine(found);
+        setDescription(d => d || found.description);
+        setTotalAmount(t => t || (found.notAllocated ?? 0).toFixed(2));
+      })
+      .catch(() => { if (live) setLineProblem('failed'); });
+    return () => { live = false; };
+  }, [currentOrg, orgQuery, lineId, lineYear]);
 
   if (loading) return <p className={styles.muted}>Loading…</p>;
 
@@ -201,10 +244,20 @@ export default function NewAllocationPage() {
 
   const splitSum = splits.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0);
 
+  /** Opened from a line: nothing goes until the line is here (or known gone) — an allocation sent before it
+   *  loaded went out unlinked, past the line's cap. */
+  function lineGate(): string {
+    if (!lineId || line || lineProblem === 'missing') return '';
+    return lineProblem === 'failed' ? 'The budget line couldn’t be loaded. Go back to the Budget and press Allocate again.' : 'The budget line is still loading.';
+  }
+
   function validateStep1(): string {
+    const gate = lineGate();
+    if (gate) return gate;
     if (!description.trim()) return 'Description is required.';
     const t = parseFloat(totalAmount);
     if (isNaN(t) || t <= 0) return 'Total amount must be a positive number.';
+    if (line && t > (line.notAllocated ?? 0) + 0.005) return `Up to ${fmt(line.notAllocated ?? 0)} can be allocated from this line — what is left on it.`;
     return '';
   }
 
@@ -234,7 +287,8 @@ export default function NewAllocationPage() {
   }
 
   async function handleSubmit() {
-    const v2 = validateStep2();
+    if (submitting) return;   // a double click makes ONE allocation (3b call list: the server can't tell a second from a real one)
+    const v2 = lineGate() || validateStep2();
     if (v2) { setError(v2); return; }
     setError('');
     setSubmitting(true);
@@ -245,7 +299,7 @@ export default function NewAllocationPage() {
         body: JSON.stringify({
           description: description.trim(),
           totalAmount: parseFloat(totalAmount),
-          sourceEntryId: sourceEntryId.trim() || null,
+          ...(line ? { sourceBudgetLineId: line.id } : { sourceEntryId: sourceEntryId.trim() || null }),
           splits: splits.map(s => ({
             teamId: s.teamId,
             programYearId: s.programYearId,
@@ -264,10 +318,10 @@ export default function NewAllocationPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to create allocation');
+      // Held through the navigation: the page is leaving, and a second click must not make a second allocation.
       router.push(`${base}/accounting/allocations/${data.allocation.id}`);
     } catch (e: any) {
       setError(e.message ?? 'Failed to create allocation.');
-    } finally {
       setSubmitting(false);
     }
   }
@@ -282,10 +336,12 @@ export default function NewAllocationPage() {
   return (
     <div className={styles.page} style={{ maxWidth: 720 }}>
       <AdminPageHeader
-        crumbs={[{ label: 'Accounting' }, { label: 'Allocations' }]}
+        crumbs={lineId ? [{ label: 'Accounting' }, { label: 'Budget' }] : [{ label: 'Accounting' }, { label: 'Allocations' }]}
         title="New allocation"
-        backTo={{ href: `${base}/accounting/allocations`, label: 'Allocations' }}
+        backTo={lineId ? { href: `${base}/accounting/budget`, label: 'Budget' } : { href: `${base}/accounting/allocations`, label: 'Allocations' }}
       />
+      {lineProblem === 'missing' && <p className={styles.errorText}>That budget line isn’t on the club’s plan any more. Allocate from the Budget, or start a new allocation here.</p>}
+      {lineProblem === 'failed' && <p className={styles.errorText}>The budget line couldn’t be loaded. Go back to the Budget and press Allocate again.</p>}
 
       {/* Step indicator */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', alignItems: 'center' }}>
@@ -310,6 +366,15 @@ export default function NewAllocationPage() {
       {/* ── Step 1 ── */}
       {step === 1 && (
         <div>
+          {fromLine && !line && !lineProblem && <p className={styles.muted}>Loading the budget line…</p>}
+          {line && (
+            <RecordFacts rows={[
+              ['From the line', `${line.description} · ${lineYear ?? ''}`],
+              ['Planned', fmt(line.planned)],
+              ['Already allocated', `${fmt(line.allocated ?? 0)}${line.allocations.length > 0 ? ` · ${line.allocations.map(a => a.description).join(', ')}` : ''}`],
+              ['Left to allocate', fmt(line.notAllocated ?? 0)],
+            ]} />
+          )}
           <div className={styles.formGrid} style={{ gridTemplateColumns: '1fr' }}>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="alloc-desc">
@@ -329,7 +394,7 @@ export default function NewAllocationPage() {
 
             <div className={styles.field}>
               <label className={styles.label} htmlFor="alloc-total">
-                Total Amount ($) <span style={asterisk}>*</span>
+                {fromLine ? 'Amount to split' : 'Total Amount ($)'} <span style={asterisk}>*</span>
               </label>
               <input
                 id="alloc-total"
@@ -341,10 +406,13 @@ export default function NewAllocationPage() {
                 onChange={e => setTotalAmount(e.target.value)}
                 placeholder="e.g. 3000.00"
               />
-              <p className={styles.hint}>The full shared expense being split. You can allocate less than this total if the org retains a portion.</p>
+              <p className={styles.hint}>{line
+                ? `Up to ${fmt(line.notAllocated ?? 0)}, what is left on the line. Whatever you don’t allocate stays on the line for later.`
+                : fromLine ? 'Up to what is left on the line.'
+                : 'The full shared expense being split. You can allocate less than this total if the club pays a portion itself.'}</p>
             </div>
 
-            <div className={styles.field}>
+            {!fromLine && <div className={styles.field}>
               <label className={styles.label} htmlFor="alloc-entry">Org Ledger Entry ID (optional)</label>
               <input
                 id="alloc-entry"
@@ -355,7 +423,7 @@ export default function NewAllocationPage() {
                 placeholder="Paste accounting entry ID to link"
               />
               <p className={styles.hint}>Link this allocation to the expense entry in your org ledger.</p>
-            </div>
+            </div>}
           </div>
 
           {error && <p className={styles.errorText} style={{ marginTop: '1rem' }}>{error}</p>}

@@ -15,18 +15,6 @@
     "hex": 6,
     "rgba": 0
   },
-  "app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx": {
-    "hex": 3,
-    "rgba": 0
-  },
-  "app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx": {
-    "hex": 10,
-    "rgba": 0
-  },
-  "app/[orgSlug]/admin/accounting/budget/page.tsx": {
-    "hex": 2,
-    "rgba": 0
-  },
   "app/[orgSlug]/admin/accounting/ledger/[ledgerId]/page.tsx": {
     "hex": 1,
     "rgba": 0

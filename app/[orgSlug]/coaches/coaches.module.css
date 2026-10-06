@@ -483,6 +483,8 @@
 
 /* ── Shell ──────────────────────────────────────────────────────────────── */
 .coachesShell {
+  /* The money type scale (one declaration, both portals — see moneyScale.module.css). */
+  composes: moneyScale from '../../../components/coaches/moneyScale.module.css';
   /* The desktop sidebar's width, and what a viewport-pinned foot must clear on a phone (the
      bottom nav plus the home indicator). ONE owner each (/simplify, 2026-09-14): `.sidebar`,
      `.saveBar`, the lineup builder's docked bar and the floating save pill all read these —
@@ -3695,62 +3697,9 @@ a.oneChip:hover { border-color: currentColor; }
    first consolidation is what created the outline. */
 
 
-/* ══ ONE SOURCE FOR THE MONEY HIERARCHY'S TYPE SCALE ═══════════════════════════════════════════
-   The OUTLINE (`.ledger*`, a card stack) and the GRID (`.moneyGrid*`, a real table) draw the same
-   category → line → total tree, one toggle apart on Budget Plan. Their sizes and weights are
-   therefore ONE decision, and they are declared exactly once, here.
-
-   ⚠ These began as duplicated literals in both families and forked TWICE in a single day — which
-   is why `tests/unit/money-hierarchy-type-scale.test.ts` exists. With one declaration the two
-   halves cannot disagree at all, so that test's equality assertions are now belt-and-braces; what
-   it still genuinely guards is the two RELATIONSHIPS a variable cannot express — that a category
-   reads LARGER than its own lines, and that neither family reverts to small caps.
-
-   Declared on the portal SHELL rather than on each family's container because the two families
-   share no common ancestor class, and a per-family declaration would be the duplication all over
-   again. ⚠ NOT `:global(:root)` — a rule with no local class is legal to the dev server
-   (LightningCSS) and FAILS the production webpack build as "not pure", which is exactly how it
-   escaped: written 2026-08-13, first built 2026-08-14, Amplify dev job 255 red. Every consumer of
-   these five (both families plus `.footValue`) renders inside the shell, and none is portalled out
-   of it, so the shell is the nearest ancestor they all share. `scripts/check-css-module-purity.mjs`
-   now catches the next one locally. */
-.coachesShell {
-  /* ⚠ THE ONE STEP EVERY FOLDED MONEY ROW TAKES (`/simplify`, 2026-09-10). `.moneyGridLead` (the
-     reports' lines under a category) and `.driveHandInLead` (a drive's hand-ins under their
-     participant) both indent by this, so a coach meets ONE depth of nesting across the hub. The
-     agreement used to be held by a comment saying the two must match — retune one and nothing
-     fails, the two screens just quietly stop lining up.
-     ⚠ Their PHONE overrides stay divergent on purpose and are not tokenised: the reports' grid
-     tightens to 1.1rem inside a pinned column, while a hand-in card drops the indent to zero and
-     says "nested" with an inset and an accent edge instead. Only the shared base is shared.
-     ⚠ ON THE SHELL, NOT `:root` — see the note below: a rule with no local class passes the dev
-     server and FAILS the production webpack build as "not pure". Both consumers render inside the
-     shell and neither is portalled out of it. */
-  --money-fold-indent: 1.55rem;
-  --money-cat-size:    0.92rem;
-  --money-cat-weight:  800;
-  --money-line-size:   0.84rem;
-  --money-line-weight: 600;
-  /* A category's own figure sits a step under its name — it is read across, not scanned down. */
-  --money-catnum-size: 0.86rem;
-  /* ⚠⚠ THERE IS NO FOURTH RUNG FOR A CLOSING ANSWER, AND THAT IS A RULING (owner 2026-09-06, QA
-     §146) — taken TWICE in one session, on the built screen both times, which is why it is written
-     here rather than left to the next person's taste.
-       1. Season net, Total revenue and Total expenses were measuring IDENTICALLY. Owner: *"the
-          fonts of all 3 rows look the same."* He was right — and two pieces of prose were wrong
-          about it, a walk step claiming the net read "larger and bolder" and a stylesheet comment
-          claiming the subtotals wore a thinner cap. Neither was ever built. (The row had in fact
-          been rendering SMALLER than its subtotals — a specificity defect — and the fix lifted it
-          to parity while both descriptions went on claiming primacy.)
-       2. A step up to 1rem was built and shown to him. He ruled it back OUT on sight: *"go back to
-          making the font size the same as the revenue/expense rows. It keeps it in line with the
-          other monthly statement and looks better."*
-     So the closing answer is set apart by SPACE and by POSITION — its extra padding, its heavier
-     cap, and being last — never by size. The Months view's closing row is the reason: these are one
-     report behind a View pill, and a coach who switches should not find the last row grown.
-     ⚠ `money-hierarchy-type-scale.test.ts` pins the EQUALITY, so a future "the answer should shout"
-     fails the build and lands here instead. */
-}
+/* ══ THE MONEY HIERARCHY'S TYPE SCALE now lives in components/coaches/moneyScale.module.css (Club Tier
+   Stage 3b, 2026-10-06), COMPOSED into `.coachesShell` above, so the club's money reports wear the one
+   declaration too. Its full reasoning moved with it. ══ */
 
 
 /* ── The chevron that opens a row, and the spacer that keeps a childless row's name in line ──
@@ -6944,7 +6893,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
     right: 0;
     top: auto;
     width: auto;
-    /* Flush to the BAR'S TOP, as `.sheetAnchor` is in CoachesBottomNav.module.css: the builder is
+    /* Flush to the BAR'S TOP, as the portal's sheet frame's menu layer is (SheetFrame.module.css): the builder is
        a page under the bar, not a dialog over it, so the bar stays visible and tappable beneath. */
     /* ⚠ `--coach-foot-clear` (declared on `.coachesShell` at this same breakpoint) IS the nav
        plus the home indicator — the formula this file warns against hand-copying. These panels
@@ -7054,7 +7003,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
     z-index: 259;   /* directly under the panel, over the autosave pill (250) */
     /* ⚠ THE SAME DIM AS THE PORTAL'S OTHER FOUR SHEETS, IN BOTH THEMES. `.sheetScrim` in
        CoachesBottomNav.module.css carries these two values and a warm remap; this scrim cannot
-       simply WEAR that class (it is positioned against `.sheetAnchor`, and this panel is
+       simply WEAR that class (it is positioned against the More sheet's nav, and this panel is
        standalone because it is shared with the desktop popover), so it copies the values and
        must copy the remap with them. Without it the warm theme — the portal's DEFAULT — dimmed
        the page flat black here and warm brown under the position sheet on the same screen. */
@@ -13124,8 +13073,8 @@ div.gdRow { cursor: default; }
    to 301 put it over `.gdSheet` (z-index 45) as well — and every sheet on this screen is opened
    FROM this bar, so the bar is always stuck on screen when one opens. Hit-tested: the End-game
    wrap's "Keep coaching" and "Confirm & notify families" both came back BLOCKED by a footer
-   button, 68.2px of the sheet buried. It also outranked `.sheetAnchor` (260), the shared
-   container for the nav's More sheet and the team switcher, which every other phone surface
+   button, 68.2px of the sheet buried. It also outranked the portal's sheet layer (260 — today the
+   shared sheet frame's menu layer, `SheetFrame.module.css`), which every other phone surface
    deliberately sits under. `.stickyActionBar`'s z-index 2 is correct and sufficient.
 
    Doubled class on purpose: `.stickyActionBar` is ~11,950 lines earlier in this same file, and a
@@ -13205,7 +13154,7 @@ div.gdRow { cursor: default; }
      SCHEDULE's slide-over, not these. Its offset lands it squarely inside the band a populated
      sheet occupies, so at 45 it drew over the End-game wrap's two buttons; in the `error` state
      the pill takes `pointer-events: auto` and could intercept the tap outright. 260 is the exact
-     value and the exact reasoning `.sheetAnchor` already carries in CoachesBottomNav.module.css —
+     value and the exact reasoning the portal's sheet frame carries (`SheetFrame.module.css`) —
      above the pill's 250, below the nav's 300 — so the portal now has ONE answer to this. The nav
      never covers these sheets anyway: they are offset above its box, not stacked against it. */
   bottom: 1rem; z-index: 260; max-height: 70dvh; overflow-y: auto;
@@ -14529,6 +14478,20 @@ div.gdRow { cursor: default; }
   font-size: var(--type-support);
   color: var(--text-tertiary);
 }
+
+/* The line that closes Money › Club (Club Tier Stage 3b, specimen 6): what the club reads of the team's
+   money, and what it never reads. A plain line — no card, no tint — so it reads as reference under the
+   bills rather than as a notice above them. The icon sits on the first line of a wrapped sentence. */
+.clubReadsLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 1.25rem 0 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+.clubReadsLine > svg { flex: none; margin-top: 0.15rem; }
 
 /* ⚰ `.clubPendingNote` STOOD HERE and is deleted (2026-09-01). It was a sentence above the requests
    table — "2 requests are still with the club. They sit at the top until someone answers." The

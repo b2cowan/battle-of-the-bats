@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { readCode, readSource } from './_source-code.ts';
@@ -37,7 +37,6 @@ const BUDGET_WRITES: Record<string, string[]> = {
   'app/api/admin/accounting/budget-plan/lines/route.ts': ['POST'],
   'app/api/admin/accounting/budget-plan/lines/[lineId]/route.ts': ['PATCH', 'DELETE'],
   'app/api/admin/accounting/budget-plan/lines/[lineId]/periods/route.ts': ['POST'],
-  'app/api/admin/accounting/budget-plan/lines/[lineId]/allocate-to-teams/route.ts': ['POST'],
   'app/api/admin/accounting/budget-plan/start-from/route.ts': ['POST'],
 };
 
@@ -77,10 +76,8 @@ describe('2. an allocation is ONE step, and its money rules live in the step (C1
   it('its total is its teams\' shares, and the line link is written in the same insert', () => {
     assert.match(fn, /VALUES\s*\(v_alloc, p_org, p_description, v_shares, p_source_entry, p_source_line, p_actor\)/);
   });
-  it('both create doors go through it — and nothing in the app inserts an allocation by hand any more', () => {
-    for (const f of ['app/api/admin/rep-teams/allocations/route.ts', 'app/api/admin/accounting/budget-plan/lines/[lineId]/allocate-to-teams/route.ts']) {
-      assert.match(readCode(f), /createClubAllocation\(/, f);
-    }
+  it('the one create door goes through it — and nothing in the app inserts an allocation by hand any more', () => {
+    assert.match(readCode('app/api/admin/rep-teams/allocations/route.ts'), /createClubAllocation\(/);
     assert.match(readCode('lib/club-budget-writes.ts'), /rpc\('club_allocation_create'/);
     const repo = path.join(import.meta.dirname, '..', '..');
     const walk = (dir: string): string[] => readdirSync(dir).flatMap(n => {
@@ -91,8 +88,13 @@ describe('2. an allocation is ONE step, and its money rules live in the step (C1
       .filter(f => /from\('rep_cost_allocations'\)\s*\.insert\(/.test(readCode(path.relative(repo, f).split(path.sep).join('/'))));
     assert.deepEqual(offenders, []);
   });
-  it('the "already allocated" refusal is gone: many allocations per line', () => {
-    assert.doesNotMatch(readCode('app/api/admin/accounting/budget-plan/lines/[lineId]/allocate-to-teams/route.ts'), /already been allocated/);
+  it('one way to bill teams, not two: the old Allocate page and its route are retired (session 2)', () => {
+    // The line window's "Allocate $X" opens New allocation filled in from the line; the old page (and the
+    // route only it called, which refused a second allocation per line) went with the old look.
+    const repo = path.join(import.meta.dirname, '..', '..');
+    assert.equal(existsSync(path.join(repo, 'app/api/admin/accounting/budget-plan/lines/[lineId]/allocate-to-teams/route.ts')), false);
+    assert.equal(existsSync(path.join(repo, 'app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx')), false);
+    assert.match(readCode('app/[orgSlug]/admin/accounting/allocations/new/page.tsx'), /sourceBudgetLineId: line\.id/);
   });
   it('a line\'s total and periods are one step: a CHANGED total below allocated is refused with the figure; periods must add up', () => {
     const save = sqlFunction('club_budget_line_save');
@@ -196,8 +198,12 @@ describe('4. a club ledger line is filed under a WORD (Ask 4a)', () => {
     assert.match(merge, /\.in\('entity_type', \[\.\.\.CLUB_OWNED_BOOK_KINDS\]\)/, 'the club\'s own books, never a team\'s');
     assert.equal(merge.match(/\.in\(scope\.column, scope\.ids\)/g)?.length, 2, 'both the label and the word move only inside the org');
   });
-  it('a filed line writes no free-text category; the word is on the line\'s own side', () => {
-    assert.match(readCode('app/api/admin/accounting/ledgers/[ledgerId]/entries/route.ts'), /category: filed\.value \? null : category/);
+  it('a new line is filed under a word and writes no free-text category; the word is on the line\'s own side', () => {
+    // Session 2: the Add entry window draws Filed under as required (hub specimen 2), so the free-text
+    // category retired outright — a new line without a word is refused, never saved with a typed category.
+    const post = readCode('app/api/admin/accounting/ledgers/[ledgerId]/entries/route.ts');
+    assert.match(post, /code: 'word_required'/);
+    assert.match(post, /category: null,/);
     assert.match(readCode('lib/club-budget-writes.ts'), /word\.item\.direction !== want/);
   });
   it('a club plan line\'s category is always its word\'s: neither door reads a bare category id', () => {

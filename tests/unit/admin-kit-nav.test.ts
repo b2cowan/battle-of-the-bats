@@ -160,7 +160,7 @@ describe('the admin kit nav — where you are', () => {
     assert.equal(accountingTabFor(`${BASE}/accounting`, BASE, REP), 'overview');
     assert.equal(accountingTabFor(`${BASE}/accounting/budget-vs-actual`, BASE, REP), 'budget-vs-actual');
     assert.equal(accountingTabFor(`${BASE}/accounting/budget`, BASE, REP), 'budget', 'Budget must not light on Budget vs. Actual');
-    for (const down of ['allocations/a1', 'teams/t1', 'payees', 'budget/allocate/l1', 'allocations/new', 'ledger/l1']) {
+    for (const down of ['allocations/a1', 'teams/t1', 'payees', 'payees/p1', 'allocations/new', 'ledger/l1']) {
       assert.equal(accountingTabFor(`${BASE}/accounting/${down}`, BASE, REP), null, `${down} is one level down`);
     }
     // A club with no rep teams has no loop tabs, so their addresses light nothing (/review, 10-01).

@@ -508,6 +508,9 @@ export async function resolveAdminContext() {
     .eq('org_id', club.id).eq('last_name', 'Okafor').eq('first_name', 'Chidi').maybeSingle());
   const ledger = await need('the club\'s General ledger', db.from('accounting_ledgers').select('id')
     .eq('org_id', club.id).eq('entity_type', 'org').eq('is_archived', false).limit(1).maybeSingle());
+  // The payee the club SHARES with its teams (Ledger Parity D7) — its report is Club Tier 3b's.
+  const sharedPayee = await need('shared payee "Town of Milton"', db.from('org_payees').select('id')
+    .eq('org_id', club.id).is('team_id', null).eq('name', 'Town of Milton').eq('shared_with_teams', true).maybeSingle());
   const line = await need('budget line "Diamond permits — city fields"', db.from('org_budget_lines').select('id')
     .eq('org_id', club.id).eq('description', 'Diamond permits — city fields').maybeSingle());
   // The fixture names it for its year ("Diamond fees 2026", Club Tier Stage 3a's money loop).
@@ -548,6 +551,7 @@ export async function resolveAdminContext() {
     clubSeasonId: season.id,
     clubPersonId: person.id,
     clubLedgerId: ledger.id,
+    clubSharedPayeeId: sharedPayee.id,
     clubBudgetLineId: line.id,
     clubAllocationId: allocation.id,
     clubTournamentId: clubTournament.id,

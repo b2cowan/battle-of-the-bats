@@ -529,6 +529,30 @@ function deriveColumns(
   return { columns, truncated };
 }
 
+/**
+ * The columns of a FIXED span (`opts.months` — the club's year, Club Tier Stage 3b): every month of it,
+ * or its quarters, whatever is dated. Money dated outside it is `truncated` — it sits under No date yet,
+ * in the Total and in no month, exactly as money past the coach's two-year window does (ruling 0).
+ */
+function fixedColumns(
+  months: readonly MonthKey[], dates: string[], granularity: PeriodGranularity,
+): { columns: PeriodColumn[]; truncated: boolean } {
+  const inSpan = new Set<string>(months);
+  const truncated = dates.some(d => { const m = monthKeyOf(d); return m !== null && !inSpan.has(m); });
+  if (granularity === 'months') {
+    return { truncated, columns: months.map(m => ({ key: m, label: MONTH_SHORT[Number(m.slice(5, 7)) - 1], unscheduled: false })) };
+  }
+  const seen = new Set<string>();
+  const columns: PeriodColumn[] = [];
+  for (const m of months) {
+    const key = quarterKeyOf(m);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    columns.push({ key, label: key.slice(5), unscheduled: false });
+  }
+  return { columns, truncated };
+}
+
 /** Group consecutive dated columns by their year. `2026-09` and `2026-Q3` both yield `2026`. */
 function deriveYearBands(columns: PeriodColumn[]): PeriodYearBand[] {
   const bands: PeriodYearBand[] = [];
@@ -589,6 +613,13 @@ export function buildPeriodView(
      * carry no `lineId` door (there is no record to open). Null/absent = nothing being tried.
      */
     trial?: { amount: number; date: string | null } | null;
+    /**
+     * A FIXED span of months — the CLUB's year (Club Tier Stage 3b, Ask 5), whose plan opens on its
+     * first day whatever is dated, so its grid always shows the year's twelve months and walks the
+     * balance from the first. Absent (every coach caller): the columns run from the earliest dated
+     * period to the latest, as they always have.
+     */
+    months?: readonly MonthKey[];
   } = {},
 ): PeriodView {
   const dated: string[] = [];
@@ -612,7 +643,9 @@ export function buildPeriodView(
   const trial = opts.trial && opts.trial.amount > 0.005 ? opts.trial : null;
   if (trial?.date) dated.push(trial.date);
 
-  const { columns: dateColumns, truncated } = deriveColumns(dated, granularity);
+  const { columns: dateColumns, truncated } = opts.months
+    ? fixedColumns(opts.months, dated, granularity)
+    : deriveColumns(dated, granularity);
   const columnKeys = dateColumns.map(c => c.key);
 
   const groupsByKey = new Map<string, PeriodViewGroup>();
@@ -827,7 +860,9 @@ export function buildPeriodView(
      from months so it reads the same in every view. */
   // The display's own columns ARE the month domain when it shows months; only Quarters needs the
   // span re-derived at month resolution (`/simplify` 2026-09-12 — the same sort was run twice).
-  const monthColumns = granularity === 'months' ? dateColumns : deriveColumns(dated, 'months').columns;
+  const monthColumns = granularity === 'months' ? dateColumns
+    : opts.months ? fixedColumns(opts.months, dated, 'months').columns
+      : deriveColumns(dated, 'months').columns;
   const monthKeys = monthColumns.map(c => c.key as MonthKey);
   const monthlyRevenue: Record<string, number> = {};
   const monthlyExpense: Record<string, number> = {};

@@ -31,18 +31,18 @@ const accountingHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'Finding your way: one page, six tabs',
       summary: 'Overview, Ledger, Allocations, Payment requests, Budget and Budget vs. Actual — tabs across the top of one page.',
-      keywords: ['tabs', 'overview', 'ledger tab', 'allocations tab', 'payment requests tab', 'budget', 'budget vs actual', 'navigation', 'where is'],
+      keywords: ['tabs', 'overview', 'board summary', 'ledger tab', 'allocations tab', 'payment requests tab', 'budget', 'budget vs actual', 'navigation', 'where is'],
       searchText: 'accounting tabs overview ledger allocations payment requests budget budget vs actual one page tab bar rail where is the ledger where are allocations where are payment requests back arrow one level down team account payees',
       content: (
         <>
           <p>Accounting is one page, and its tabs run across the top:</p>
           <HelpDefs>
-            <HelpDef term="Overview">The club’s figures for a period, its books, and what each team owes the club.</HelpDef>
+            <HelpDef term="Overview">The board summary: where the club stands today, the year against the budget, the teams and the club’s books.</HelpDef>
             <HelpDef term="Ledger">One book at a time, read like a bank statement. The <strong>Book</strong> pill switches between the club’s books.</HelpDef>
             <HelpDef term="Allocations">What the club bills its teams, and what is coming due.</HelpDef>
             <HelpDef term="Payment requests">What the teams ask of the club, waiting for your answer.</HelpDef>
-            <HelpDef term="Budget">The season’s plan by category and line.</HelpDef>
-            <HelpDef term="Budget vs. Actual">The plan against what has been allocated and collected.</HelpDef>
+            <HelpDef term="Budget">The year’s plan, revenue first and then expenses, line by line.</HelpDef>
+            <HelpDef term="Budget vs. Actual">The year’s plan against what the club’s books actually moved.</HelpDef>
           </HelpDefs>
           <p><strong>Allocations</strong> and <strong>Payment requests</strong> appear only when your club runs rep teams. A page one level down — an allocation, a team’s account, Payees — has no tabs; its back arrow returns you to the tab you came from.</p>
         </>
@@ -53,8 +53,8 @@ const accountingHelp: HelpPageContent = {
       heading: 'The club’s books, and the Overview',
       id: 'ledgers',
       summary: 'Every dollar lives in a book: the General ledger, a tournament’s book, or a fund you keep apart.',
-      keywords: ['ledger', 'book', 'general ledger', 'tournament ledger', 'org sub-ledger', 'net position', 'overview', 'held by the teams'],
-      searchText: 'ledger book general ledger tournament ledger house league book org sub-ledger reserve fund net position net balance overview period from to income expenses pending held by the teams outstanding next due team cash is the coaches',
+      keywords: ['ledger', 'book', 'general ledger', 'tournament ledger', 'org sub-ledger', 'overview', 'board summary', 'where the club stands', 'cash on hand', 'owed by the teams', 'waiting on you', 'held by the team', 'board report', 'year pill'],
+      searchText: 'ledger book general ledger tournament ledger house league book org sub-ledger reserve fund overview board summary board report where the club stands today cash on hand owed by the teams waiting on you year pill the year against the budget teams table allocated collected outstanding requests held by the team lock team cash is the coaches never added to the club figures export board report excel pdf',
       content: (
         <>
           <p>The club’s money is kept in <strong>books</strong> (ledgers). Each has a kind:</p>
@@ -63,8 +63,14 @@ const accountingHelp: HelpPageContent = {
             <HelpDef term="Tournament">One tournament’s fees, costs and any float the club moves to it.</HelpDef>
             <HelpDef term="House league">A house league season’s registration fees.</HelpDef>
           </HelpDefs>
-          <p>The <strong>Overview</strong> tab opens with four figures — <strong>Income</strong>, <strong>Expenses</strong>, <strong>Net position</strong> and <strong>Pending</strong> — for the period in its <strong>From</strong> and <strong>To</strong> boxes. It starts on this calendar year and updates as soon as you change a date. Below them, <strong>The club’s books</strong> lists every book with its kind and its balance; a book opens the Ledger tab on it.</p>
-          <p>For a club that runs rep teams, <strong>Held by the teams</strong> lists what each team owes the club and its next due date. A team’s own cash belongs to its coaches — the club reads only what the team owes it. A team opens its <a href="#team-account">account with the club</a>.</p>
+          <p>The <strong>Overview</strong> tab is the board summary. The <strong>Year</strong> pill picks the year; <strong>Export</strong> writes the whole summary as a board report (Excel first, then CSV or PDF). Top to bottom:</p>
+          <HelpDefs>
+            <HelpDef term="Where the club stands · today">Three figures: <strong>Cash on hand</strong> (the club’s own books, never a team’s), <strong>Owed by the teams</strong> (what is overdue, and what a team says it has sent that you haven’t confirmed) and <strong>Waiting on you</strong> (payment requests, and how many are holding up a payout).</HelpDef>
+            <HelpDef term="The year against the budget">Revenue (with what came from the teams, on allocations and on request), expenses (with what was paid to teams on request, and any <strong>off-plan</strong> spending), and the <strong>net for the year</strong>, each against its plan. One sentence says how much <strong>headroom</strong> is left. <strong>Budget vs. Actual</strong> below it opens the full report. On a phone this is one row that opens Budget vs. Actual.</HelpDef>
+            <HelpDef term="The teams">One row per team: <strong>Allocated</strong>, <strong>Collected</strong>, <strong>Outstanding</strong>, <strong>Requests</strong>, and the team’s <strong>Cash on hand · held by the team</strong> with a lock. A team opens its <a href="#team-account">account with the club</a>.</HelpDef>
+            <HelpDef term="The club’s books">Every book with its kind and balance, ending on <strong>Cash on hand</strong>. A book opens the Ledger tab on it.</HelpDef>
+          </HelpDefs>
+          <p>A team’s cash is read from its coaches’ own records. It is shown for information, never added into the club’s figures: the closing row of the teams table leaves it blank, and its total sits in its own band, <em>Held by the teams · not the club’s money</em>.</p>
         </>
       ),
     },
@@ -104,19 +110,19 @@ const accountingHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to add an entry',
       summary: 'Record money in or out on a book, with a category, a payee and how it was paid.',
-      keywords: ['add income', 'add expense', 'add entry', 'entry', 'posted', 'pending', 'category', 'payee', 'payment method', 'cheque not cleared'],
-      searchText: 'add income add expense add entry ledger entry money in money out the club paid the club received posted pending cheque written not yet cleared category new category description what date amount payee payer paid to paid by how it was paid reference e-transfer cheque number notes receipt invoice umpire diamond rental',
+      keywords: ['add income', 'add expense', 'add entry', 'entry', 'posted', 'pending', 'filed under', 'payee', 'payment method', 'cheque not cleared'],
+      searchText: 'add income add expense add entry ledger entry money in money out the club paid the club received posted pending cheque written not yet cleared filed under budget word on this year’s plan off-plan description what date amount payee payer paid to paid by how it was paid reference e-transfer cheque number notes receipt invoice umpire diamond rental',
       content: (
         <>
           <p>Every entry should make sense later without anyone needing to remember the context.</p>
           <HelpSteps>
             <li>On the <strong>Ledger</strong> tab, pick the book with the <strong>Book</strong> pill, then press <strong>Add entry</strong>.</li>
             <li>Choose <strong>Out — the club paid</strong> or <strong>In — the club received</strong>, and give the date.</li>
-            <li>Say <strong>What</strong> it was, the <strong>Amount</strong> and the <strong>Category</strong> — pick one, or choose <strong>A new category…</strong> and type it.</li>
+            <li>Say <strong>What</strong> it was, the <strong>Amount</strong> and what it is <strong>Filed under</strong> (required) — pick a budget word. Money out offers the money-out words, money in the money-in words, and a hint says whether the word is on this year’s plan.</li>
             <li>Optionally name who it was <strong>Paid to</strong> (or <strong>Paid by</strong>), <strong>How it was paid</strong>, and the cheque or E-Transfer <strong>Reference</strong>.</li>
             <li>Leave the status on <strong>Posted</strong>, or choose <strong>Pending</strong> for a cheque written that hasn’t cleared yet. Then add it.</li>
           </HelpSteps>
-          <p>Use the same category names every time — the Ledger’s Category filter and every export read them.</p>
+          <p>The word you pick decides where the line reports on Budget vs. Actual. A word with no line on the year’s plan still saves, and counts as off-plan. See <a href="#categories">Filing a line under a budget word</a>.</p>
         </>
       ),
     },
@@ -156,8 +162,8 @@ const accountingHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to prepare a board-ready financial report',
       summary: 'Use the Overview’s period, each book’s export, and Budget vs. Actual to produce a clean treasurer report.',
-      keywords: ['board report', 'budget vs actual', 'treasurer report', 'export pdf', 'date range'],
-      searchText: 'board report treasurer report budget vs actual date range period from to categories export pdf csv xlsx financial report monthly meeting headroom',
+      keywords: ['board report', 'budget vs actual', 'treasurer report', 'export pdf', 'year pill'],
+      searchText: 'board report treasurer report overview export board report budget vs actual year pill categories export pdf csv xlsx financial report monthly meeting where the club stands held by the team',
       links: [
         { label: 'Exports & Downloads guide', href: '../help/exports' },
       ],
@@ -165,10 +171,11 @@ const accountingHelp: HelpPageContent = {
         <>
           <p>For a monthly or year-end report, start broad and then drill into the detail.</p>
           <HelpSteps>
-            <li>On the <strong>Overview</strong>, set <strong>From</strong> and <strong>To</strong> to the report’s period.</li>
+            <li>On the <strong>Overview</strong>, pick the year with the <strong>Year</strong> pill and read where the club stands.</li>
+            <li>Press <strong>Export</strong> for the board report — Excel first, then CSV or PDF. It carries the position, the year against the budget, the teams and the books, as at today.</li>
             <li>Check each book’s balance, and open any that looks wrong.</li>
-            <li>On the <strong>Ledger</strong>, set <strong>Date</strong> to the same period and <strong>Export</strong> each book — every entry in the period, with its totals.</li>
-            <li>Export <strong>Budget vs. Actual</strong> for the board packet — the PDF option needs Tournament Plus or above.</li>
+            <li>On the <strong>Ledger</strong>, set <strong>Date</strong> to the report’s period and <strong>Export</strong> each book — every entry in the period, with its totals.</li>
+            <li>Export <strong>Budget vs. Actual</strong> for the board packet — the PDF option needs Tournament Plus or above (on Months the PDF is the whole-year statement).</li>
           </HelpSteps>
           <p>Before sharing a report outside the board, take out any personal information and check the period once more.</p>
         </>
@@ -179,8 +186,8 @@ const accountingHelp: HelpPageContent = {
       id: 'entries',
       heading: 'Reading the Ledger, and correcting a line',
       summary: 'Oldest first between a starting and an ending balance, each with its date; filters; Tools; editing, voiding, and lines that come from elsewhere.',
-      keywords: ['entry', 'income', 'expense', 'transfer', 'posted', 'pending', 'void', 'edit entry', 'starting balance', 'ending balance', 'book pill', 'filters', 'tools', 'filter button', 'reset filters'],
-      searchText: 'ledger book pill switch books entry income expense transfer posted pending void edit entry saves as you type autosave starting balance ending balance oldest first bank statement running balance money out money in type status category date this month all time filters balance disappears balance column gone balance hidden when filtering category untick posted pending line faint void reason audit trail read only line from an allocation request fee where to change it team book team account tools menu payees transfer where did the payees button go where did the transfer button go year on the balance lines row shows only the day phone card filter button phone filter sheet filters on a phone where did the filters go reset filters',
+      keywords: ['entry', 'income', 'expense', 'transfer', 'posted', 'pending', 'void', 'edit entry', 'starting balance', 'ending balance', 'book pill', 'filters', 'tools', 'filter button', 'reset filters', 'not filed', 'filed under'],
+      searchText: 'ledger book pill switch books entry income expense transfer posted pending void edit entry saves as you type autosave starting balance ending balance oldest first bank statement running balance money out money in type status category not filed filed under date this month all time filters balance disappears balance column gone balance hidden when filtering category untick posted pending line faint void reason audit trail read only line from an allocation request fee where to change it team book team account tools menu payees transfer where did the payees button go where did the transfer button go year on the balance lines row shows only the day phone card filter button phone filter sheet filters on a phone where did the filters go reset filters',
       content: (
         <>
           <p>The <strong>Ledger</strong> tab shows one book at a time. The <strong>Book</strong> pill switches books — it opens on the General ledger and shows every book’s balance. <strong>Tools</strong> (⋯, beside Export) holds the rarer jobs: <a href="#recipe-transfer-between-ledgers">Transfer</a> and <a href="#payees">Payees</a>.</p>
@@ -188,11 +195,11 @@ const accountingHelp: HelpPageContent = {
           <HelpDefs>
             <HelpDef term="Type">Expenses, income, team allocations, team support, transfers. Narrowing it hides the Balance column, because a running total of only some lines isn’t a balance of anything.</HelpDef>
             <HelpDef term="Status">Starts on <strong>Posted</strong> and <strong>Pending</strong>. A pending line is faint and keeps the balance before it until it clears. Tick <strong>Void</strong> to see voided lines, each with its reason, or <strong>All</strong> for every line. Untick <strong>Posted</strong> and the Balance column goes too — posted lines are the ones that move it.</HelpDef>
-            <HelpDef term="Category">One or several of your categories. Like Type, it hides the Balance column.</HelpDef>
+            <HelpDef term="Category">One or several budget categories, or <strong>Not filed</strong>. Like Type, it hides the Balance column.</HelpDef>
             <HelpDef term="Date">Starts on <strong>This month</strong>. Pick a preset, your own dates, or <strong>All time</strong>. The Balance column stays: the starting balance carries everything before your dates.</HelpDef>
           </HelpDefs>
           <p><strong>On a phone the filters sit behind one Filter button</strong>, beside the balance. It opens a sheet showing what each filter is set to. A number on the button counts the ones you’ve changed; <strong>Reset filters</strong> puts them back.</p>
-          <p><strong>Every line opens.</strong> A line you typed opens ready to edit, and saves as you type. <strong>Void this line</strong> asks why; the line stays on the book, marked void with your reason and your name, and counts nowhere. A line written by an allocation, a payment request or a house league fee is read-only, and says where to change it — undo the payment, or reverse the approval, and both books follow.</p>
+          <p><strong>Every line opens.</strong> A line you typed opens ready to edit, and saves as you type (its <strong>Filed under</strong> too). An older line reads <strong>Not filed</strong> until someone files it. <strong>Void this line</strong> asks why; the line stays on the book, marked void with your reason and your name, and counts nowhere. A line written by an allocation, a payment request or a house league fee files itself, read-only, and says where to change it — undo the payment, or reverse the approval, and both books follow.</p>
           <p>A team’s own book isn’t on the Ledger. The club reads a team through its <a href="#team-account">account</a>.</p>
         </>
       ),
@@ -202,8 +209,8 @@ const accountingHelp: HelpPageContent = {
       id: 'payees',
       heading: 'Payees: who the club pays, and who pays it',
       summary: 'Rename a payee, merge two spellings of one, delete one no line uses, and choose which ones the club’s teams can use.',
-      keywords: ['payee', 'payees', 'payer', 'vendor', 'merge payees', 'rename payee', 'delete payee', 'two spellings', 'manage payees', 'shared with teams', 'share a payee', 'teams column', 'the club’s own'],
-      searchText: 'payee payees payer vendor supplier merge payees two spellings duplicate payee rename payee delete payee manage payees paid to paid by last used tools menu share a payee with teams shared with teams switch teams column the club’s own which payees can teams use team picker shared by your club club sees payments teams cannot rename stop sharing',
+      keywords: ['payee', 'payees', 'payer', 'vendor', 'merge payees', 'rename payee', 'delete payee', 'two spellings', 'manage payees', 'shared with teams', 'share a payee', 'teams column', 'the club’s own', 'shared payee', 'what the teams paid', 'what the teams recorded paying it'],
+      searchText: 'payee payees payer vendor supplier merge payees two spellings duplicate payee rename payee delete payee manage payees paid to paid by last used tools menu share a payee with teams shared with teams switch teams column the club’s own which payees can teams use team picker shared by your club club sees payments teams cannot rename stop sharing shared payee report what the teams recorded paying it what the teams paid nothing recorded year pill',
       content: (
         <>
           <p><strong>Payees</strong> are the names on the Ledger’s <strong>Paid to</strong> and <strong>Paid by</strong> lines. Open the list from the Ledger’s <strong>Tools → Payees</strong> (on a phone too), or from <strong>Manage payees…</strong>, the last row of the payee picker in any entry.</p>
@@ -212,6 +219,7 @@ const accountingHelp: HelpPageContent = {
             <li><strong>Merge</strong> — when one supplier has two spellings, open one and choose <strong>Merge into another payee</strong>. Every line moves to the name you keep.</li>
             <li><strong>Delete</strong> — only a payee no line uses, the club’s or a team’s. One that is in use can be merged instead.</li>
             <li><strong>Share with teams</strong> — in a club that runs teams, the <strong>Teams</strong> column says which payees are <strong>Shared with teams</strong> and which are <strong>The club’s own</strong>. Open a payee and turn on <strong>Shared with teams</strong>: every team can pick it as a payee, can’t rename or merge it, and their payee list tells them the club sees payments to it. Turn it off and it leaves their picker; a team record that already names it keeps the name.</li>
+            <li><strong>What the teams recorded paying it</strong> — open a payee you share and this opens the shared-payee report: each team’s payments in the year (a team folds open to its dates), with a <strong>Year</strong> pill and <strong>Export</strong>, then the teams that recorded nothing. Only payments recorded after you shared the payee count, and they are the teams’ own records, not proof that a payment was made. A team’s other payees and other spending never show.</li>
           </ul>
           <p>A team’s own payees are its coaches’ to manage, in the Payees window on their own Ledger.</p>
         </>
@@ -220,15 +228,15 @@ const accountingHelp: HelpPageContent = {
     {
       group: 'How accounting works',
       id: 'categories',
-      heading: 'Using categories for filtering and reporting',
-      summary: 'Pick a category from your list or add a new one; consistent names power the filters and the exports.',
-      keywords: ['category', 'categories', 'reporting', 'filtering', 'export', 'new category'],
-      searchText: 'category categories reporting filtering export a new category registration fees diamond rental umpire fees sponsorship grant fundraising consistent names',
+      heading: 'Filing a line under a budget word',
+      summary: 'Every ledger line is filed under one of the budget’s words; that is what puts it on Budget vs. Actual.',
+      keywords: ['filed under', 'not filed', 'category', 'categories', 'budget word', 'off-plan', 'reporting', 'filtering', 'export'],
+      searchText: 'filed under not filed budget word category categories off-plan on the plan money out money in words reporting filtering export filed by where it came from team allocations team support registration fees',
       content: (
         <>
-          <p>Every entry has a <strong>category</strong>. Pick one from the list your books already use, or choose <strong>A new category…</strong> to add one. Consistent names pay off when you compare years or prepare a treasurer’s report.</p>
-          <p>Names that work well for a tournament book: Registration Fees, Diamond Rental, Umpire Fees, Trophies &amp; Medals, Prize Pool, Sponsorship. For the club’s books: Grant Income, Fundraising, General Expenses, Administrative.</p>
-          <p>The Ledger’s <strong>Category</strong> filter narrows a book to one or several categories, and every export carries the category column.</p>
+          <p>Every entry is <strong>Filed under</strong> one of the budget’s words — the same words the Budget plans with. Money out is filed under a money-out word and money in under a money-in word, and a hint says whether the word is on this year’s plan. A word with no plan line still saves; it counts as <strong>off-plan</strong> on Budget vs. Actual. Add or rename words from the Budget tab’s <strong>Tools → Categories</strong>.</p>
+          <p>Lines the money loop writes — allocations, payment requests, registration fees — file themselves, and show their word read-only. Lines typed before this change keep their old text and read <strong>Not filed</strong> until someone files them; open one and choose its word.</p>
+          <p>The Ledger’s <strong>Category</strong> filter lists the budget’s categories, and every export carries the category column.</p>
         </>
       ),
     },
@@ -237,8 +245,8 @@ const accountingHelp: HelpPageContent = {
       id: 'allocations',
       heading: 'Allocations: billing the teams',
       summary: 'Split a shared cost across teams in installments, see what is coming due, and record what arrives.',
-      keywords: ['allocation', 'allocations', 'cost allocation', 'rep team', 'shared costs', 'installments', 'coming due', 'due filter', 'record received', 'confirm received', 'undo a payment', 'sent waiting for you to confirm'],
-      searchText: 'cost allocation allocations rep team shared costs diamond fees insurance association fees installment schedule new allocation details team splits review by allocation coming due overdue days late sent waiting for you to confirm due in the next 14 days later due filter next 30 days rest of the season where did show all go head coach filter button on a phone needs you on track record received confirm received received on how it came reference e-transfer cheque undo a payment returned by the bank reason general ledger voided due again coaches told remind this team open the team account where did allocations go rep teams allocations moved',
+      keywords: ['allocation', 'allocations', 'cost allocation', 'rep team', 'shared costs', 'installments', 'coming due', 'due filter', 'record received', 'confirm received', 'undo a payment', 'sent waiting for you to confirm', 'allocate from a line'],
+      searchText: 'allocate from a line allocate from the budget cost allocation allocations rep team shared costs diamond fees insurance association fees installment schedule new allocation details team splits review by allocation coming due overdue days late sent waiting for you to confirm due in the next 14 days later due filter next 30 days rest of the season where did show all go head coach filter button on a phone needs you on track record received confirm received received on how it came reference e-transfer cheque undo a payment returned by the bank reason general ledger voided due again coaches told remind this team open the team account where did allocations go rep teams allocations moved',
       content: (
         <p>An <strong>allocation</strong> splits a shared cost — diamond fees, insurance, association dues — across the teams you choose, each share in installments with due dates. The Allocations tab is where you bill the teams, watch what is coming due, and record what arrives.</p>
       ),
@@ -248,7 +256,7 @@ const accountingHelp: HelpPageContent = {
           title: 'Billing the teams for a shared cost',
           content: (
             <>
-              <p>On the <strong>Allocations</strong> tab, press <strong>New allocation</strong>. Three steps: <strong>Details</strong> (what it is, and the season), <strong>Team Splits</strong> (each team’s share — a set amount, a percentage or by sessions — with one due date or several installments), and <strong>Review</strong>. You can also allocate a budget line to the teams from the <strong>Budget</strong> tab.</p>
+              <p>On the <strong>Allocations</strong> tab, press <strong>New allocation</strong>. Three steps: <strong>Details</strong> (what it is, and the season), <strong>Team Splits</strong> (each team’s share — a set amount, a percentage or by sessions — with one due date or several installments), and <strong>Review</strong>. There is one way to bill teams: <strong>New allocation</strong>. From a cost line on the <strong>Budget</strong> tab, <strong>Allocate $X</strong> opens New allocation already filled in from the line — the amount can be up to what is left on the line, and <strong>Back</strong> returns you to the Budget.</p>
               <p>Each team’s coaches see their share on their <strong>Club</strong> screen straight away. They file it under one of their own budget words — that classification is theirs, so two teams may file the same cost differently.</p>
             </>
           ),
@@ -323,12 +331,12 @@ const accountingHelp: HelpPageContent = {
       id: 'team-account',
       heading: 'A team’s account with the club',
       summary: 'What one team has been billed, has paid and still owes the club — the club’s own records.',
-      keywords: ['team account', 'what does a team owe', 'team statement', 'held by the teams', 'outstanding'],
-      searchText: 'team account account with the club what does a team owe team statement held by the teams billed received outstanding next due requests the club own records read only never added to club figures export',
+      keywords: ['team account', 'what does a team owe', 'team statement', 'held by the team', 'cash on hand', 'outstanding'],
+      searchText: 'team account account with the club what does a team owe team statement held by the team cash on hand lock between seasons last closed season closing figure the coaches records billed received outstanding next due requests the club own records read only never added to club figures export',
       content: (
         <>
-          <p>Open a team from <strong>Held by the teams</strong> on the Overview, or with the <strong>Open … ’s account</strong> button at the foot of its bill on an allocation. Three figures lead — <strong>Outstanding</strong>, <strong>Next due</strong>, and <strong>Paid to the team</strong> on its requests — then the account reads like a statement: what the club billed the team, what the team paid, and what the club paid it.</p>
-          <p>These are the club’s own records of the team, read-only here. They are never added into the club’s figures — the team’s money is its coaches’, and this page only says where the team stands with the club. <strong>Export</strong> gives you the statement as a file.</p>
+          <p>Open a team from <strong>The teams</strong> on the Overview, or with the <strong>Open … ’s account</strong> button at the foot of its bill on an allocation. Four cards lead — <strong>Outstanding</strong>, <strong>Next due</strong>, <strong>Paid to the team</strong> on its requests, and <strong>Cash on hand</strong>, marked with a lock as held by the team — then the account reads like a statement: what the club billed the team, what the team paid, and what the club paid it.</p>
+          <p>The three club figures are the club’s own records of the team, read-only here. <strong>Cash on hand</strong> is the one figure read from the coaches’ records: it is today’s figure while the team has a live season, and a team between seasons shows its last closed season’s closing figure, dated. It is never added into the club’s figures — the team’s money is its coaches’, and the rest of this page says where the team stands with the club. <strong>Export</strong> gives you the statement as a file.</p>
         </>
       ),
     },
@@ -356,37 +364,82 @@ const accountingHelp: HelpPageContent = {
     {
       group: 'The club and its teams',
       id: 'reminders',
-      heading: 'Reminders, and the budget tabs',
-      summary: 'Remind head coaches what their team owes the club; family dues reminders run on their own; plan on the Budget tab.',
-      keywords: ['reminders', 'send reminders', 'allocation reminders', 'dues reminders', 'org budget', 'budget vs actual', 'planning', 'add budget item', 'new budget line'],
-      searchText: 'send reminders allocation reminders remind coaches what their team owes the club preview who gets one late nobody to send to no head coach one email per team reply comes to you last sent automated dues reminders 30-day 7-day guardians automatic daily runs on its own do i have to click org budget budget vs actual planning tools add a budget line add budget item new item not in the list add to your list item category',
+      heading: 'Reminders',
+      summary: 'Remind head coaches what their team owes the club; family dues reminders run on their own.',
+      keywords: ['reminders', 'send reminders', 'allocation reminders', 'dues reminders'],
+      searchText: 'send reminders allocation reminders remind coaches what their team owes the club preview who gets one late nobody to send to no head coach one email per team reply comes to you last sent automated dues reminders 30-day 7-day guardians automatic daily runs on its own do i have to click',
       content: (
         <>
           <p><strong>Send reminders</strong> on the Allocations tab emails each team’s head coaches — and any staff the head coach gave money access — what their team owes the club: anything overdue, and anything due in the next 14 days. It shows you first who gets one and what each email lists, marks the late ones, and names any team with nobody to send to (no head coach yet, or an invitation nobody has answered). Each coach gets one email; a reply comes to you. The window also says when reminders were last sent, and by whom.</p>
           <p><strong>Family dues reminders</strong> go out on their own. Each day, guardians with an upcoming installment get an email — about a month ahead and about a week ahead — for every team whose <strong>Automatic Dues Reminders</strong> switch is on (each coach controls their own team’s switch). A guardian is never emailed twice in the same week for the same installment. You don’t have to do anything to keep this running.</p>
-          <p>The <strong>Budget</strong> tab plans the season by category and line, and allocates costs to teams. Each line picks an item from your list; for something new, type its name in the item box, choose <strong>+ Add “…” to your list</strong>, pick its category and click <strong>Add item</strong>. <strong>Budget vs. Actual</strong> is explained below.</p>
         </>
       ),
     },
     {
       group: 'The club and its teams',
+      id: 'budget',
+      heading: 'The Budget: planning the year',
+      summary: 'The year’s plan, revenue first and then expenses; a line opens to read, the pencil edits it, and a cost line can be allocated to the teams.',
+      keywords: ['budget', 'plan', 'budget line', 'add line', 'by period', 'start from last year’s plan', 'allocate from a line', 'from the teams', 'opening balance', 'closing balance', 'categories', 'words your teams use', 'year pill'],
+      searchText: 'budget plan the year budget line add line year pill view list by period when filter no date yet columns months quarters export excel csv tools categories words your teams use revenue first from the teams worked out from the allocations never typed expenses planned allocated collected opening balance net for the year closing balance a line opens to read pencil edits saves as you type allocate from a line allocate remove a line only while it has no allocations start from last year’s plan start from this year’s plan empty year no plan yet one way to bill teams new allocation',
+      content: (
+        <p>The <strong>Budget</strong> tab is the club’s plan for one year. Every line here is something the club expects to take in or spend, and Budget vs. Actual later reads the year’s real books against it.</p>
+      ),
+      subtopics: [
+        {
+          id: 'budget-reading',
+          title: 'Reading the plan',
+          content: (
+            <>
+              <p>The <strong>Year</strong> pill picks the year. <strong>View</strong> reads the plan as a <strong>List</strong> or <strong>By period</strong>; By period adds a <strong>Columns</strong> choice of <strong>Months</strong> or <strong>Quarters</strong>, and on a phone it opens scrolled to this month. While any line has no date, a <strong>When</strong> filter (All, No date yet, Dated) appears on the List. <strong>Export</strong> writes the plan as it reads on screen, as Excel or CSV.</p>
+              <HelpDefs>
+                <HelpDef term="Revenue first">The plan opens with money coming in. <strong>From the teams</strong> is a row worked out from the allocations — it is never typed — and it opens to the allocations that add up to it.</HelpDef>
+                <HelpDef term="Then expenses">Each line shows <strong>Planned</strong>, <strong>Allocated</strong> and <strong>Collected</strong>. A part-billed cost line says how much is not allocated: the club pays that part itself unless you allocate it.</HelpDef>
+                <HelpDef term="The closing rows">An <strong>Opening balance</strong> read from the club’s books on the year’s first day, the <strong>Net for the year</strong>, and the <strong>Closing balance</strong>. The opening is worked out from the books, never typed.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'budget-lines',
+          title: 'Adding and changing a line',
+          content: (
+            <>
+              <p>Press <strong>Add line</strong> to plan something new. A line opens to <strong>read</strong> first; the pencil turns the whole line into a form, and it saves as you type. A line’s total can’t be set below what is already allocated from it.</p>
+              <p>A line can be removed only while it has no allocations. The <strong>Tools</strong> menu holds <strong>Categories</strong> (rename the club’s shared headings) and <strong>Words your teams use</strong> (publish a team’s word to every team).</p>
+              <HelpNote variant="info" title="A new year starts from the last one">An empty year offers <strong>Start from last year’s plan</strong> (the button names the year): last year’s lines, amounts and dates moved a year on. Nothing is billed to a team until you allocate.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'budget-allocate',
+          title: 'Allocating a cost line to the teams',
+          content: (
+            <>
+              <p>Open a cost line and its <strong>Allocated to teams</strong> section lists every allocation drawn from it. When part of the line is not allocated yet, <strong>Allocate $X</strong> opens <strong>New allocation</strong> already filled in from the line.</p>
+              <p>The amount can be up to what is left on the line, and there is no ledger-entry box to fill. <strong>Back</strong> returns you to the Budget. This is the one way to bill teams: the old separate Allocate page is gone.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      group: 'The club and its teams',
       id: 'budget-vs-actual',
       heading: 'Reading Budget vs. Actual',
-      summary: 'See estimated, allocated, and collected amounts per line, plus org headroom and team collection health.',
-      keywords: ['budget vs actual', 'estimated', 'allocated', 'collected', 'headroom', 'team collection health'],
-      searchText: 'budget vs actual estimated allocated collected unallocated status org headroom org ledger expenses team collection health on track behind overdue pdf view allocation',
+      summary: 'The year’s plan against what the club’s books moved: Collected, Spent, Off-plan and Cash on hand, as a Statement or by month.',
+      keywords: ['budget vs actual', 'statement', 'months', 'compare', 'whole year', 'to date', 'showing', 'scheduled', 'collected', 'spent', 'off-plan', 'cash on hand', 'open these lines in the ledger', 'expand all'],
+      searchText: 'budget vs actual statement months view compare whole year to date showing budget scheduled actual this year only expand all collapse all collected spent off-plan nobody budgeted this cash on hand the club’s books budgeted figure opens the plan line actual figure opens the lines behind it open these lines in the ledger not filed export excel csv pdf year pill',
       content: (
         <>
-          <p>Budget vs. Actual compares what you planned against what has been allocated and collected. Each budget line shows:</p>
-          <ul>
-            <li><strong>Estimated</strong> — the amount you budgeted.</li>
-            <li><strong>Allocated</strong> — the amount split out to teams.</li>
-            <li><strong>Collected</strong> — what has actually come in.</li>
-            <li><strong>Unallocated</strong> — the estimated amount not yet allocated.</li>
-            <li><strong>Status</strong> — Allocated or Unallocated.</li>
-          </ul>
-          <p>The headline <strong>Org Headroom</strong> shows your budgeted total against org ledger expenses. The <strong>Org Ledger Expenses</strong> panel lists the year’s posted expenses as one total; it isn’t matched line by line to the budget. The <strong>Team Collection Health</strong> grid shows each team’s collection progress with an On Track / Behind / Overdue status, and <strong>View Allocation</strong> opens the allocation behind a line.</p>
-          <p>Export this report from the <strong>Export</strong> menu — Excel and CSV are available on all plans; the <strong>PDF</strong> board-packet option needs Tournament Plus or above.</p>
+          <p>Budget vs. Actual reads the year’s plan against what the club’s books moved. A band across the top gives <strong>Collected</strong>, <strong>Spent</strong>, <strong>Off-plan</strong> (spending nobody budgeted, shown only when there is some) and <strong>Cash on hand</strong> (the club’s books, as of today).</p>
+          <HelpDefs>
+            <HelpDef term="View">The <strong>Year</strong> pill picks the year. <strong>View</strong> switches between <strong>Statement</strong> and <strong>Months</strong>.</HelpDef>
+            <HelpDef term="Statement">Revenue, then expenses, each category folding open to its lines, with the plan, <strong>Actual</strong> and <strong>Variance</strong>. <strong>Compare</strong> reads the plan for the <strong>Whole year</strong> or <strong>To date</strong>. <strong>Expand all</strong> and <strong>Collapse all</strong> fold every category at once.</HelpDef>
+            <HelpDef term="Months">The year month by month, with a running balance. <strong>Showing</strong> picks <strong>Budget</strong>, <strong>Scheduled</strong> (this year only) or <strong>Actual</strong>. On a phone it opens scrolled to this month.</HelpDef>
+          </HelpDefs>
+          <p><strong>Every figure opens what is behind it.</strong> A budgeted figure opens the plan line; an actual figure opens the actual lines, with <strong>Open these lines in the Ledger</strong>. Money filed under no budget word sits in a <strong>Not filed</strong> row until someone files it.</p>
+          <p>Export from the <strong>Export</strong> menu — Excel and CSV are available on all plans; the <strong>PDF</strong> needs Tournament Plus or above, and is always the whole-year statement.</p>
         </>
       ),
     },
@@ -395,22 +448,25 @@ const accountingHelp: HelpPageContent = {
       group: 'How accounting works',
       heading: 'Exporting accounting data',
       summary: 'Export a book, the allocations, the payment requests, a team’s account, the budget and Budget vs. Actual.',
-      keywords: ['export', 'xlsx', 'csv', 'pdf', 'spreadsheet', 'download', 'board', 'report', 'ledger', 'budget', 'allocations export', 'payment requests export'],
+      keywords: ['export', 'xlsx', 'csv', 'pdf', 'spreadsheet', 'download', 'board', 'board report', 'report', 'ledger', 'budget', 'allocations export', 'payment requests export'],
       searchText:
-        'export xlsx csv excel pdf spreadsheet download board report ledger book whole period signed amount money out negative void marked void left out of totals total money in total money out net allocations coming due allocation payment requests team account statement budget budget-vs-actual print treasurer tournament plus',
+        'export xlsx csv excel pdf spreadsheet download board report ledger book whole period signed amount money out negative void marked void left out of totals total money in total money out net allocations coming due allocation payment requests team account statement budget budget-vs-actual print treasurer tournament plus board report overview shared payee report what the teams recorded paying it',
       links: [
         { label: 'Exports & Downloads guide', href: '../help/exports' },
       ],
       content: (
         <>
-          <p>Each Accounting page has one <strong>Export</strong> button; Excel comes first, then CSV. The <strong>PDF</strong> board packet (on Budget vs. Actual) needs Tournament Plus or above.</p>
+          <p>Each Accounting page has one <strong>Export</strong> button; Excel comes first, then CSV. The <strong>PDF</strong> (on the Overview’s board report and on Budget vs. Actual) needs Tournament Plus or above.</p>
           <HelpDefs>
             <HelpDef term="A book (Ledger)">Every entry in the period you’re reading — not just what’s on screen — whatever the other filters say. One <strong>Amount</strong> column, signed: money out is negative. A void line is kept, marked VOID, and left out of the totals at the foot: total money in, total money out and the net. The menu says all this before it runs.</HelpDef>
             <HelpDef term="Allocations">The list, or the Coming due view, whichever you’re reading.</HelpDef>
             <HelpDef term="An allocation">Every team’s share and every installment, with how each payment came.</HelpDef>
             <HelpDef term="Payment requests">Every request with its decision.</HelpDef>
             <HelpDef term="A team’s account">The team’s statement with the club.</HelpDef>
-            <HelpDef term="Budget and Budget vs. Actual">The plan by category and line, and the estimated / allocated / collected report.</HelpDef>
+            <HelpDef term="The Overview">The board report: where the club stands, the year against the budget, the teams (with each team’s cash held by the team) and the books, as at today.</HelpDef>
+            <HelpDef term="The Budget">The plan as it reads on screen — the List, or By period at the columns you chose. Excel and CSV.</HelpDef>
+            <HelpDef term="Budget vs. Actual">The Statement or Months you are reading. The PDF is always the whole-year statement.</HelpDef>
+            <HelpDef term="A shared payee">What the teams recorded paying it, for the year you are reading.</HelpDef>
           </HelpDefs>
           <p>
             See the <a href="../help/exports">Exports &amp; Downloads guide</a> for format details,
