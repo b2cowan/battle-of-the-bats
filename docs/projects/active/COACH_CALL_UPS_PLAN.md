@@ -805,4 +805,5 @@ Drawn and ruled on the board-flags mockup (https://claude.ai/artifact/WaY9Wi25z4
 round 2). Built on dev 2026-10-06 alongside the board's flags-under-the-name change. Guards:
 `coach-game-day-board-flags-guard.test.ts` (new: the one rule, the ink on all three rows, the word
 kept for a screen reader, the word gone from the row) and this plan's guard's console test, now
-reading the console's `whoFor` helper. Owner walk: ledger §274, W2.
+reading the console's `whoFor` helper. Owner walk: ledger §274, W2. **Committed `6f3ad4b2`
+2026-10-06.**

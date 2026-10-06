@@ -433,3 +433,6 @@ name is proven by the guard and the mockup, and walked by the owner (§274 W2).
 **Verification:** `coach-game-day-board-flags-guard.test.ts` (new, 7 tests) plus the call-ups,
 lineup-phone and sheet-frame guards: 151/151. Focused lint: no new warnings (10 older ones in the
 console). Typecheck clean. CSS purity, selectors, palette and text contrast, spelling clean.
+`/review`: no Critical, High or Medium findings (a stale comment and one weak assertion fixed);
+`check:layout` on the console and the builder's screens: no new findings. **Committed `6f3ad4b2`
+2026-10-06.**
