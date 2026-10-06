@@ -58,6 +58,12 @@ each its own build and walk; the lineup builder last.
 wore the dark theme's on warm) and in two rulings that never reached every sheet; "acts and closes / you type and
 commit" could not sort sheets that stay open but save every tap. Full-screen windows (rooms, the event window, tags,
 help) are pages, not sheets, and stay out.
+**Added 2026-10-06 (step 3; owner, both as recommended, drawn true size on the hub):** the plan left three game-day
+sheets to the test. **End game is a FORM** — a corrected final score and the night's one family notification; a stray
+tap on the bar left the game with the correction dropped. **Scouting is a MENU while reading and a FORM while an
+observation is being typed** — the Award sheet's switch (D3) applied to a second sheet. **Score stays a menu** — every
+tap autosaves. ⚠ A layer may change while a sheet is open, so the frame takes it as a value, and the switch must land
+in the same commit as the inner form's own focus move (report it from the handler, never an effect).
 
 ### 2026-10-03 — ONE CONTROL HEIGHT, THE PORTAL'S BUTTON: 34px ON A COMPUTER (owner: "looks good, go for it. I agree with your recommendations") — hub https://claude.ai/artifact/GFfHZkFRiXAxxybnAiGrWd, plan `docs/projects/active/ADMIN_CONTROL_HEIGHT_PLAN.md`
 

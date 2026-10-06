@@ -8,11 +8,12 @@
    behind it (the dim is `LineupSheetScrim`, which `SheetFrame` renders beside the sheet), and a height
    cap with the scroll contained, so a long list never drags the page behind it.
 
-   ⚠ THE MENU LAYER ONLY, SO FAR. D1 sorts every sheet by one test — "would a stray tap on the bar lose
-   something?" A sheet that loses nothing (a list of things to do; a filter that saves each tap) sits ON
-   TOP of the bar: under it in z (260, the nav is 300), the bar lit and live. The FORM layer — over the
-   bar, modal, the keyboard kept inside — joins with its first consumer, the game day's Note (step 3);
-   until then the lineup builder's `.lineupDrawerOverNav` is the only one.
+   ⚠ TWO LAYERS. D1 sorts every sheet by one test — "would a stray tap on the bar lose something?" A
+   sheet that loses nothing (a list of things to do; a filter that saves each tap) is the MENU layer: it
+   sits ON TOP of the bar — under it in z (260, the nav is 300), the bar lit and live. A sheet holding
+   work in hand is the FORM layer (`.form`, below): it comes down OVER the bar. Joined in step 3 by the
+   game day's Note, End game and Scouting-while-logging; the lineup builder's `.lineupDrawerOverNav`
+   drawers move onto it in step 5.
 
    ⚠ `--coach-foot-clear` IS THE BAR PLUS THE HOME INDICATOR. `.coachesShell` declares it, and
    `.adminShell` declares it for the admin pages that borrow a portal sheet (the club's Ledger and
@@ -65,6 +66,30 @@
     border-radius: 2px;
     background: var(--border-2);
   }
+
+  /* ══ THE FORM LAYER (D1; the 2026-09-23 ruling's own geometry, from `.lineupDrawerOverNav`) ══════════
+     Work in hand, so the sheet comes down OVER the bar: flush to the screen's foot, capped at the screen
+     less 12px, and stacked over the nav. The dim comes with it (`LineupSheetScrim overNav`, one below at
+     389), so the bar is dimmed as well as covered — a lit bar under a modal is the mixed signal the ruling
+     removes. The frame also takes the bar out of the tab order and the accessibility tree
+     (`useOverlayOpenIfAvailable`); geometry alone defends the thumb and nothing else.
+
+     ⚠ 390, NOT 400, AND NOT 301. Above the nav (300); below `.modalOverlay` (400) and the global confirm
+     (1000), so a dialog opened FROM a form still lands on top of it.
+
+     ⚠ THE HOME INDICATOR IS THIS LAYER'S TO PAD, AND ONLY THIS LAYER'S. At `bottom: 0` the indicator is
+     no longer inside the bar's token, so the sheet takes the inset itself — that is the inset alone, not
+     the bar's height, which this file still never copies. Two classes, so it beats `.sheet` on
+     specificity rather than on source order. */
+  .sheet.form {
+    bottom: 0;
+    max-height: calc(100dvh - 12px);
+    z-index: 390;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+  /* The form takes focus itself when it opens (a dialog that never takes focus is never announced); the
+     sheet is the frame of what is focused, not a control, so it draws no ring — its controls draw theirs. */
+  .sheet.form:focus { outline: none; }
 }
 
 /* The menu LABEL (D2) — once the dim covers the row that opened the sheet, nothing on screen says what

@@ -1,7 +1,9 @@
 'use client';
-import type { HTMLAttributes, ReactNode, Ref, RefObject } from 'react';
+import { useCallback, useRef, type HTMLAttributes, type ReactNode, type Ref, type RefObject } from 'react';
 import { rescueFocusTo } from '@/lib/overlay-hooks';
+import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
 import LineupSheetScrim from './LineupSheetScrim';
+import { useDialogFloor } from './useDialogFloor';
 import styles from './SheetFrame.module.css';
 
 /**
@@ -12,43 +14,85 @@ import styles from './SheetFrame.module.css';
  * ⚠⚠ RENDER IT INSIDE THE ELEMENT YOUR DISMISS HOOK WATCHES. The dim is what a tap off the sheet lands
  * on. Outside `useDismissable`'s boundary, the hook's `pointerdown` fires first, unmounts the sheet, and
  * the `click` that follows lands on whatever the dim was covering — on 2026-09-22, under touch, that
- * pressed a button and marked a lineup READY (see `CoachToolbarMenu`'s `drawerOnPhone`). A mouse passes
- * that test every time; only touch shows it. Inside the boundary the hook reads the tap as "inside" and
- * the dim's own `onClose` closes cleanly.
+ * pressed a button and marked a lineup READY (see `CoachToolbarMenu`'s `drawerOnPhone`); on 2026-10-06 the
+ * step-3 captures found the game-day console doing it with its own dim, a tap off Note or End game
+ * leaving the game for the Schedule. A mouse passes that test every time; only touch shows it. Inside the
+ * boundary the hook reads the tap as "inside" and the dim's own `onClose` closes cleanly.
  *
- * ⚠ THE MENU LAYER, AND THEREFORE NEVER MODAL (D1). A sheet that loses nothing to a stray tap on the bar
- * sits on top of the bar with the bar live, so it does not claim `aria-modal`: a screen reader held inside
- * a sheet whose bar a thumb can still reach is told one thing while a sighted coach is shown another —
- * and the Ledgers' Filter sheet has no close button to leave by. The props type omits `aria-modal`, but
- * TypeScript does not check a HYPHENATED attribute a props type leaves out, so a caller could still pass it
- * — the sheet sets it to `undefined` AFTER the spread, which is what actually keeps it off (/review
- * 2026-10-05). The FORM layer (over the bar, modal, the keyboard kept inside) arrives with its first
- * consumer, the game day's Note (step 3).
+ * ⚠ TWO LAYERS, SORTED BY ONE TEST (D1): would a stray tap on the bottom bar lose something?
+ *   · No → the MENU layer (the default). On top of the bar, the bar lit and live, and NEVER modal: a screen
+ *     reader held inside a sheet whose bar a thumb can still reach is told one thing while a sighted coach
+ *     is shown another — and the Ledgers' Filter sheet has no close button to leave by.
+ *   · Yes → the FORM layer (`form`). Down over the bar, the dim over the bar too, and the bar taken out of
+ *     reach of the thumb, the keyboard AND the screen reader (`useOverlayOpenIfAvailable` — the nav goes
+ *     `visibility: hidden`; covering a nav is not taking it away, the 2026-09-23 lesson). Modal, and it
+ *     keeps the keyboard inside (`useDialogFloor`: Tab trapped, Escape and the phone's Back close it, focus
+ *     goes back to `opener`). A form owes its caller's head a 44px × (D2) — the frame cannot see the head,
+ *     so `sheet-frame-guard` checks every form consumer for one.
+ *   The layer may change while the sheet is open — the Award sheet's switch (D3), and the game day's
+ *   Scouting while an observation is being typed. Hand the layer a value, not a fixed flag.
+ *
+ * ⚠ THE FLOOR ALSO STANDS ONE HISTORY ENTRY (`useBackStep`, inside `useDialogFloor`). A caller with its
+ * own back step must stand it down while its sheet is in the form layer, or Back pops two entries for one
+ * sheet. A sheet switching layer hands the entry over in one commit (`useBackStep` takes a dead entry
+ * over), so the switch costs no history.
+ *
+ * The props type omits `aria-modal`, but TypeScript does not check a HYPHENATED attribute a props type
+ * leaves out, so a caller could still pass it — the sheet sets it AFTER the spread, from the layer, which
+ * is what actually decides it (/review 2026-10-05).
  *
  * ⚠ The props omit `className` and `style` too: the frame IS the sheet's surface (the stylesheet says why a
  * second class would be settled by bundle order), and a caller's inline geometry is the drift this
  * component exists to stop.
  *
- * Escape and a click elsewhere stay with the caller, whose dismiss boundary holds its trigger as well as this
- * sheet. The DIM is the frame's, so its answer to "and then where?" is the frame's too: a tap on it blurs
- * whatever held focus, and the frame hands focus back to `opener` when nothing else took it. It is a
- * required prop because it is the contract every sheet owes (plan: "focus returns to what opened it") — the
- * step-2 captures found three of five sheets had written the close and forgotten the hand-back.
+ * In the menu layer, Escape and a click elsewhere stay with the caller, whose dismiss boundary holds its
+ * trigger as well as this sheet. The DIM is the frame's, so its answer to "and then where?" is the frame's
+ * too: a tap on it blurs whatever held focus, and the frame hands focus back to `opener` when nothing else
+ * took it. It is a required prop because it is the contract every sheet owes (plan: "focus returns to what
+ * opened it") — the step-2 captures found three of five sheets had written the close and forgotten the
+ * hand-back. The form layer keeps the same contract through the floor.
  */
-export default function SheetFrame({ label, onClose, opener, ref, children, ...sheet }: Omit<HTMLAttributes<HTMLDivElement>, 'aria-modal' | 'className' | 'style' | 'children'> & {
+export default function SheetFrame({ label, onClose, opener, form = false, busy = false, ref, children, ...sheet }: Omit<HTMLAttributes<HTMLDivElement>, 'aria-modal' | 'className' | 'style' | 'children'> & {
   /** The menu label (D2): small capitals at the head, because the dim hides the row that opened it. */
   label?: string;
-  /** A tap on the dim: close the sheet. The frame returns focus afterwards. */
+  /** Close the sheet: a tap on the dim, and — in the form layer — Escape and the phone's Back. The frame
+   *  returns focus afterwards. */
   onClose: () => void;
-  /** What opened the sheet — where focus goes back after a tap on the dim. Read when the net runs. */
+  /** What opened the sheet — where focus goes back after it closes. Read when the hand-back runs. */
   opener: RefObject<HTMLElement | null>;
+  /** The FORM layer (D1): over the bar, the bar out of reach, modal, the keyboard kept inside. */
+  form?: boolean;
+  /** Form layer: a write is in flight — the dim, Escape and Back wait for it (the floor's busy gate). */
+  busy?: boolean;
   ref?: Ref<HTMLDivElement>;
   children: ReactNode;
 }) {
+  // The floor needs the panel, and so do its callers: the Tools menu roves its items and Filter and the two
+  // switchers seat focus in it on open — so the frame keeps its own ref and forwards the caller's.
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const setPanel = useCallback((el: HTMLDivElement | null) => {
+    panelRef.current = el;
+    if (typeof ref === 'function') ref(el);
+    else if (ref) ref.current = el;
+  }, [ref]);
+  // Tolerant: the Tools menu's frame also renders on admin pages, outside the portal's overlay provider.
+  useOverlayOpenIfAvailable(form);
+  useDialogFloor(form, panelRef, { onClose, busy, opener });
+  const closeFromDim = () => {
+    if (form && busy) return;
+    onClose();
+    rescueFocusTo(opener);
+  };
   return (
     <>
-      <LineupSheetScrim onClose={() => { onClose(); rescueFocusTo(opener); }} />
-      <div ref={ref} className={styles.sheet} {...sheet} aria-modal={undefined}>
+      <LineupSheetScrim onClose={closeFromDim} overNav={form} />
+      <div
+        ref={setPanel}
+        className={form ? `${styles.sheet} ${styles.form}` : styles.sheet}
+        tabIndex={form ? -1 : undefined}
+        {...sheet}
+        aria-modal={form || undefined}
+      >
         {label && <SheetLabel>{label}</SheetLabel>}
         {children}
       </div>

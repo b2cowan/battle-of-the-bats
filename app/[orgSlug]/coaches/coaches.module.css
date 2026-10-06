@@ -13189,10 +13189,22 @@ div.gdRow { cursor: default; }
   .gdPage .savePill { bottom: calc(var(--coach-foot-clear) + var(--gd-foot-h) + 0.6rem); }
 }
 
-/* Bottom sheets: one at a time, above the bottom nav on phones, centered column on desktop.
-   Deliberately NOT `.modalOverlay` (the portal's modal-with-backdrop idiom): these sheets must
-   leave the board visible and tappable context behind them — a bench decision is made while
-   looking at the bench. */
+/* The sheets: one at a time. ON A COMPUTER (≥901) each is a card in a centred column at the window's
+   foot, deliberately NOT `.modalOverlay` (the portal's modal-with-backdrop idiom): it leaves the board
+   visible and tappable behind it — a bench decision is made while looking at the bench.
+
+   ⚠ AT ≤900 FIVE OF THEM ARE NOT THIS CLASS AT ALL (Sheet Frame step 3, 2026-10-06). Score, Who's here,
+   Note, the scouting book and the End-game wrap render through the portal's shared frame
+   (`components/coaches/SheetFrame`), which carries the drawer the owner ruled on 2026-09-22 — flush to
+   the bar, 18px corners, the grab line, the dim — once for every sheet in the portal. This file used to
+   carry a fourth copy of that recipe, and it had drifted: the bar's height copied by hand, the dark
+   theme's dim on warm, a 72dvh cap nothing recorded a reason for, no contained scroll, and a dim OUTSIDE
+   the dismiss boundary that let a tap fall through to the page. The frame also sorts them into the
+   ruled layers: Note, End game and Scouting-while-logging come down over the bar (work in hand), Score
+   and Who's here sit on it.
+
+   The ONE card left at ≤900 is the substitution confirm (`data-card`), whose question is about the board
+   behind it. */
 .gdSheet {
   position: fixed; left: 50%; transform: translateX(-50%); width: min(30rem, calc(100vw - 1.5rem));
   /* ⚠ 260, not the 45 it was (/review 2026-09-22). The autosave pill is NEW on this screen — the
@@ -13210,64 +13222,13 @@ div.gdRow { cursor: default; }
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.35);
 }
 @media (max-width: 900px) {
-  /* ── THE FIVE SHEETS ARE DRAWERS ON A PHONE (owner ruling 2026-09-22) ───────────────────
-     Score, Who's here, Note, the scouting book and the End-game wrap rise from the bar's top
-     edge: full width, flush, rounded at the top only, with a grab line and the page dimmed
-     behind. Same shape as the position sheet and the More sheet, so this screen stops speaking
-     two overlay languages — the argument the owner had already accepted for the lineup builder
-     (D12/D13) the same day.
-
-     ⚠ `:not([data-card])` is the carve-out and it is (0,2,0), so it beats the base rule on
-     specificity rather than on source order. The one card left is the SUBSTITUTION CONFIRM,
-     whose question is about the board behind it. */
-  .gdSheet:not([data-card]) {
-    left: 0; right: 0; width: auto; transform: none;
-    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
-    border-radius: 18px 18px 0 0;
-    border-bottom: 0;
-    max-height: 72dvh;
-    padding: 0.55rem 0.9rem calc(1.1rem + env(safe-area-inset-bottom, 0px));
-  }
-  /* The card that stays a card. */
-  .gdSheet[data-card] { bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + 0.5rem); max-height: 62dvh; }
+  /* The card that stays a card, clear of the bar by the bar's own token — never its height copied. */
+  .gdSheet[data-card] { bottom: calc(var(--coach-foot-clear) + 0.5rem); max-height: 62dvh; }
 }
-/* ── THE DRAWER'S SCRIM ──────────────────────────────────────────────────────────────────────
-   A REAL ELEMENT, not a pseudo-element on the sheet. It was tried as `.gdSheet::before` with a
-   negative z-index, on the reasoning that a negative child paints behind its parent's background
-   — which is only true when the parent does NOT form a stacking context. `.gdSheet` does (fixed
-   + z-index), so within that context the painting order is background → negative children →
-   content, and the scrim dimmed THE DRAWER ITSELF, leaving its text on a grey ground. Owner
-   caught it on the phone: "looks like you are dimming the whole thing, drawers too."
+/* Inside the shared frame (≤900): the frame insets its content 8px, this screen's sheets were laid out at
+   0.9rem. The difference, so every line sits where the hub drew it. */
+.gdSheetBody { padding: 0 0.4rem; }
 
-   It also takes the tap. The pseudo-element version had to be `pointer-events: none` (a tap on a
-   pseudo reports its PARENT, which would have read as a tap inside the sheet and defeated
-   tap-away) — but that let taps fall THROUGH the dimmed page to whatever sat behind, so tapping
-   a dimmed position pill both closed the sheet and opened the picker. A scrim that dims without
-   blocking is a lie. This one is a sibling of the sheet, so a tap on it is still "outside" to
-   `useDismissable` and closes, while the page under it stays inert.
-
-   259: over the page, the action bar (2) and the autosave pill (250) — the pill is covered so an
-   error pill can never intercept a tap on the sheet, the same reason `.sheetAnchor` gives — and
-   under the sheet (260) and the nav (300), which stays lit and tappable as the nav's own sheets
-   intend. Phone only; above the drawer breakpoint these are cards and there is nothing to dim. */
-.gdScrim { display: none; }
-@media (max-width: 900px) {
-  .gdScrim {
-    display: block; position: fixed; inset: 0; z-index: 259;
-    background: rgba(13, 17, 26, 0.45); /* token-exempt: scrim over the page, matches .sheetScrim */
-  }
-}
-
-/* The drawer's grab line — the phone sheet system's signature, so these read as the same kind of
-   surface as the position sheet and the More sheet. Decorative: nothing here is draggable, and
-   there are already four ways out. Absent above the drawer breakpoint, where these stay cards. */
-.gdGrab { display: none; }
-@media (max-width: 900px) {
-  .gdSheet:not([data-card]) .gdGrab {
-    display: block; width: 36px; height: 4px; border-radius: 999px;
-    margin: 0 auto 0.5rem; background: var(--border-2);
-  }
-}
 .gdSheetHead {
   display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
   margin-bottom: 0.6rem; font-size: var(--type-body); color: var(--text-primary);

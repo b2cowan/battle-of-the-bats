@@ -62,9 +62,11 @@ import {
 import { resolveLineupCaps, resolvePlayerPitcherCap } from '@/lib/lineup-caps';
 import { useScreenWakeLock } from '@/lib/hooks/useScreenWakeLock';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import LineupPositionSheet from '@/components/coaches/LineupPositionSheet';
+import SheetFrame from '@/components/coaches/SheetFrame';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import { GAME_MOMENT_MAX, sortMomentsNewestFirst } from '@/lib/coach-game-moments';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -167,6 +169,11 @@ export default function CoachGameConsolePage({
   const momentInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [sheet, setSheet] = useState<SheetKind>(null);
+  /** What opened the sheet — the frame and the × hand focus back to it. Set from the tap's own
+   *  button: iOS Safari does not focus a button it taps, so "whatever had focus" is not it. */
+  const sheetOpenerRef = useRef<HTMLElement | null>(null);
+  /** Scouting's observation box is open — work in hand, so the book's sheet takes the form layer. */
+  const [bookLogging, setBookLogging] = useState(false);
   const [subInId, setSubInId] = useState<string | null>(null);
   const [coverFor, setCoverFor] = useState<{ playerId: string; position: string } | null>(null);
   /** `fromPeriod` is FROZEN at the moment the decision sheet opens — the board stays live
@@ -523,7 +530,8 @@ export default function CoachGameConsolePage({
   };
 
   // ── End game (the one deliberate act; the single family notification) ─────────────────────
-  const openEndSheet = () => {
+  const openEndSheet = (from: HTMLElement | null = null) => {
+    sheetOpenerRef.current = from;
     setFinalTeam(String(teamScore ?? 0));
     setFinalOpp(String(oppScore ?? 0));
     setEndError('');
@@ -681,6 +689,8 @@ export default function CoachGameConsolePage({
    * builder's other control, a native `<select>` — which is what the desktop grid has always used.
    */
   const isPhone = useIsPhone();
+  /** ≤900, the bar's breakpoint: where this screen's sheets are drawers on the shared frame. */
+  const isPhoneNav = useIsPhoneNav();
   const [positionFor, setPositionFor] = useState<string | null>(null);
   /**
    * ⚠ WHERE FOCUS GOES AFTER A PICK (/review 2026-09-22 — measured landing on `<body>`).
@@ -784,9 +794,9 @@ export default function CoachGameConsolePage({
   };
   /**
    * Open the position sheet for one player — a surface, so it abandons a swap like any other AND
-   * closes any open sheet. ⚠ The closing matters: `.gdSheet` is deliberately scrim-less so the
-   * board stays visible behind it, which also leaves the board's position pills TAPPABLE behind
-   * it. Without this, tapping a pill while (say) the score sheet was open left two surfaces up at
+   * closes any open sheet. ⚠ The closing matters: on a computer `.gdSheet` is a deliberately
+   * scrim-less card so the board stays visible behind it, which also leaves the board's position
+   * controls TAPPABLE behind it. Without this, tapping a pill while (say) the score sheet was open left two surfaces up at
    * once — the thing `openSheet`'s rule exists to prevent, arrived at from the other direction.
    */
   const beginPositionEdit = (playerId: string) => {
@@ -803,10 +813,20 @@ export default function CoachGameConsolePage({
    * No Escape, no tap-away, and no phone Back either: §219 gave a history entry to every dialog
    * FLOOR, and these six never had one, so Back walked out of the game entirely.
    *
-   * They stay NON-MODAL by design — no scrim, the board readable behind them, because a bench
-   * decision is made while looking at the bench. So this is `useDismissable` (a pointer-down
-   * outside dismisses, Escape dismisses) plus `useBackStep`, rather than `useDialogFloor`, whose
-   * focus TRAP would contradict a surface you are meant to be able to look and tap past.
+   * The MENU-layer sheets stay non-modal — the board readable behind them, because a bench
+   * decision is made while looking at the bench. So they get `useDismissable` (a pointer-down
+   * outside dismisses, Escape dismisses) plus `useBackStep`, rather than a focus TRAP that would
+   * contradict a surface you are meant to be able to look and tap past.
+   *
+   * ⚠⚠ THE FORM-LAYER SHEETS ARE THE EXCEPTION (Sheet Frame step 3, owner 2026-10-06). D1's test —
+   * "would a stray tap on the bottom bar lose something?" — says Note (a half-typed note), End game
+   * (a corrected final score, before the families are notified) and Scouting WHILE an observation
+   * is typed hold work in hand. On a phone those come down over the bar and stand on the frame's
+   * floor (`useDialogFloor`: Escape, Tab kept inside, Back, focus home), which ALSO stands a history
+   * entry — so this page's own dismiss and back step stand down for them, or Back would pop two
+   * entries for one sheet. Scouting switches layer while it is open; the hand-over costs no
+   * history (`useBackStep` takes the dead entry over). Above 900 there is no bar to lose, and every
+   * sheet stays the non-modal card it was. Score and Who's here save every tap: menus.
    *
    * ⚠ Both states are cleared together on purpose. They are supposed to be mutually exclusive,
    * but nothing enforced it: with a sheet open you could still tap a bench row and then a field
@@ -816,11 +836,32 @@ export default function CoachGameConsolePage({
   const sheetRef = useRef<HTMLDivElement>(null);
   const swapRef = useRef<HTMLDivElement>(null);
   const overlayOpen = sheet !== null || pendingSwap !== null;
+  const sheetIsForm = isPhoneNav && (sheet === 'moment' || sheet === 'end' || (sheet === 'book' && bookLogging));
+  /** A save in flight holds a form open: the dim, Escape and Back wait for it (the floor's busy gate). */
+  const sheetBusy = (sheet === 'moment' && momentSaving) || (sheet === 'end' && endSaving);
   const dismissOverlay = useCallback(() => { setSheet(null); setPendingSwap(null); }, []);
-  useDismissable(overlayOpen, [sheetRef, swapRef], dismissOverlay);
-  useBackStep(overlayOpen, dismissOverlay);
+  /**
+   * The sheets' ONE close-and-hand-back — the ×, End game's "Keep coaching" and a menu-layer
+   * sheet's Escape. Focus moves to the opener at once, BEFORE the sheet unmounts (the dismiss
+   * hook's own Escape contract), so it never lands on `<body>`. (The dim and the form layer's
+   * Escape and Back belong to the frame, which hands focus back itself.)
+   * ⚠ Escape cannot lean on the hook's own hand-back for a sheet: the hook re-arms each time
+   * Scouting returns to the menu layer and records what had focus THEN — the observation box's
+   * door, inside the sheet Escape is closing (measured: focus on nothing). The substitution
+   * confirm keeps the hook's own (the row that opened it).
+   */
+  const closeSheetToOpener = () => {
+    // A save in flight holds the sheet, as it holds the dim, Escape and Back — closing End game under its
+    // own PATCH hid a failed "Confirm & notify families" behind a closed sheet (/review, 2026-10-06).
+    if (sheetBusy) return;
+    dismissOverlay();
+    sheetOpenerRef.current?.focus({ preventScroll: true });
+  };
+  useDismissable(overlayOpen && !sheetIsForm, [sheetRef, swapRef], dismissOverlay, sheet !== null ? closeSheetToOpener : undefined);
+  useBackStep(overlayOpen && !sheetIsForm, dismissOverlay);
 
-  const openSheet = (kind: SheetKind) => {
+  const openSheet = (kind: SheetKind, from: HTMLElement | null = null) => {
+    sheetOpenerRef.current = from;
     setSheet(kind);
     abandonSwap();
     setPositionFor(null);
@@ -982,24 +1023,20 @@ export default function CoachGameConsolePage({
   ) : null;
 
   /**
-   * Every sheet wears the same head; one definition instead of six hand-copies — and the grab
-   * line rides with it, which is what makes these five DRAWERS and leaves the substitution
-   * confirm (whose head is inline, by itself) a card. Owner ruling 2026-09-22.
+   * The five sheets wear the same head; one definition instead of a copy each. A sentence title
+   * and a 44px × — the form head D2 asks of a sheet that covers the bar, and the head a tall menu
+   * may keep (Sheet Frame, 2026-10-05). The substitution confirm's head is inline, by itself.
    *
-   * The line is decorative: nothing here is draggable, and there are already four ways out
-   * (Escape, tap-away, the phone's Back, the X). It is the phone sheet system's signature, so a
-   * coach reads these as the same kind of surface as the position sheet and the More sheet.
+   * ⚠ The grab line that used to ride here is the shared frame's now (step 3): one line, drawn by
+   * the frame on every drawer in the portal, and absent on the desktop card as it always was.
    */
   const sheetHead = (title: React.ReactNode) => (
-    <>
-      <span className={styles.gdGrab} aria-hidden />
-      <div className={styles.gdSheetHead}>
-        <b>{title}</b>
-        <button type="button" className={styles.gdSheetClose} onClick={() => setSheet(null)} aria-label="Close">
-          <X size={16} />
-        </button>
-      </div>
-    </>
+    <div className={styles.gdSheetHead}>
+      <b>{title}</b>
+      <button type="button" className={styles.gdSheetClose} onClick={closeSheetToOpener} aria-label="Close">
+        <X size={16} />
+      </button>
+    </div>
   );
 
   /**
@@ -1036,28 +1073,53 @@ export default function CoachGameConsolePage({
     </div>
   );
 
+  /**
+   * ── ONE WAY TO RENDER A SHEET (Sheet Frame step 3, rulings D1–D6 and the owner's 2026-10-06 sort) ──
+   * Every sheet on this screen but the substitution confirm. At ≤900, where the bar is, it is a
+   * drawer on the portal's shared frame: the frame's grab line, its dim (the warm one on warm —
+   * this screen's own was the dark theme's everywhere), its height cap and contained scroll, and
+   * `--coach-foot-clear` where the bar's height used to be copied by hand. Above 900 it is the card
+   * it always was.
+   *
+   * ⚠⚠ THE DIM IS INSIDE `sheetRef` NOW, AND THAT IS A FIX, NOT A TIDY-UP. This screen's own dim
+   * was a sibling OUTSIDE the boundary `useDismissable` watches, on the reasoning that a tap on it
+   * would read as "outside" and close the sheet. It did — on `pointerdown`, which unmounted the dim
+   * before the tap's `click` arrived, so under touch the click landed on whatever the dim had been
+   * covering. Measured 2026-10-06 at 390: a tap on the dim over the console's Back arrow closed
+   * Note, Scouting or End game AND LEFT THE GAME for the Schedule. The frame's dim answers the tap
+   * itself (close, then focus home to `sheetOpenerRef`), so the boundary is a wrapper holding both
+   * — `display: contents`, so it adds no box.
+   *
+   * `sheetIsForm` picks the layer for whichever sheet is open — only one ever is. `.gdSheetBody`
+   * makes up the 6.4px the frame's 8px inset is short of this screen's 0.9rem, so every line inside
+   * sits where it did (the hub drew them unchanged).
+   */
+  const renderSheet = (label: string, body: React.ReactNode) => (
+    <div ref={sheetRef} style={{ display: 'contents' }}>
+      {isPhoneNav ? (
+        <SheetFrame role="dialog" aria-label={label} onClose={dismissOverlay} opener={sheetOpenerRef} form={sheetIsForm} busy={sheetBusy}>
+          <div className={styles.gdSheetBody}>{body}</div>
+        </SheetFrame>
+      ) : (
+        <div className={styles.gdSheet} role="dialog" aria-label={label}>{body}</div>
+      )}
+    </div>
+  );
+
   // The Scouting Book sheet (the rider's door) — ONE instance, rendered by both the live
   // console (header-name door) and the recap (capture door), so the two can never drift.
-  /**
-   * The drawers' scrim. Rendered for the five `sheet` surfaces and NOT for the substitution
-   * confirm, which is deliberately still a card over a board the coach is meant to read.
-   *
-   * ⚠ It is a SIBLING of the sheet, never a child or a pseudo-element of it — see `.gdScrim`
-   * for what happened when it was the latter. Being a sibling is also what keeps it "outside"
-   * for `useDismissable`, so a tap on it closes without needing a handler of its own, and the
-   * page underneath stays inert instead of taking the tap through a dimmed layer.
-   */
-  const drawerScrim = sheet !== null ? <div className={styles.gdScrim} aria-hidden /> : null;
-
-  const bookSheet = sheet === 'book' && event.opponent ? (
-    <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label={`Your book on ${event.opponent}`}>
+  // Reading it is a menu; typing an observation into it is a form (owner, 2026-10-06), so the
+  // panel says when its box opens and closes.
+  const bookSheet = sheet === 'book' && event.opponent ? renderSheet(`Your book on ${event.opponent}`, (
+    <>
       {sheetHead(`${event.opponent} — your book`)}
       <OpponentScoutingPanel
         orgSlug={orgSlug} teamId={teamId} eventId={eventId}
         opponentName={event.opponent} mirrored={mirrored}
+        onLoggingChange={setBookLogging}
       />
-    </div>
-  ) : null;
+    </>
+  )) : null;
 
   // ── Review mode (after End game, or at this URL outside the live window) ──────────────────
   if (!live) {
@@ -1074,7 +1136,7 @@ export default function CoachGameConsolePage({
           <div className={styles.gdCard}>
             <div className={styles.gdMatch}>
               {opponentDoor ? (
-                <button type="button" className={styles.gdOppDoor} onClick={() => setSheet('book')}>
+                <button type="button" className={styles.gdOppDoor} onClick={e => openSheet('book', e.currentTarget)}>
                   <span className={styles.gdOppName}>{matchupTitle}</span>
                 </button>
               ) : (
@@ -1095,7 +1157,7 @@ export default function CoachGameConsolePage({
           {/* The Scouting Book capture door (rider): quiet line, never a modal; skipping never
               re-asks — it simply sits here. Same surface the score-saved toast opens. */}
           {opponentDoor && ended && (
-            <button type="button" className={styles.gdBookLine} onClick={() => setSheet('book')}>
+            <button type="button" className={styles.gdBookLine} onClick={e => openSheet('book', e.currentTarget)}>
               While it’s fresh — <b>add to the book on {event.opponent}?</b> ›
             </button>
           )}
@@ -1140,9 +1202,6 @@ export default function CoachGameConsolePage({
               <span>Playing time — season report</span><span aria-hidden>›</span>
             </Link>
           )}
-
-          {drawerScrim}
-
 
           {bookSheet}
         </div>
@@ -1189,7 +1248,7 @@ export default function CoachGameConsolePage({
               // Kept as the CONTEXTUAL route now that the footer carries a door you can see
               // (G3 = A) — two routes to one sheet are fine when they cannot disagree.
               // Absent when the slot is TBD — a door to nothing is a dead end, not a feature.
-              <button type="button" className={styles.gdOppDoor} onClick={() => openSheet('book')}>
+              <button type="button" className={styles.gdOppDoor} onClick={e => openSheet('book', e.currentTarget)}>
                 <span className={styles.gdOppName}>{matchupTitle}</span>
               </button>
             ) : (
@@ -1467,7 +1526,7 @@ export default function CoachGameConsolePage({
             unreachable by the gate, which is the tell. `can` flags gate AFFORDANCES, not reads.
             ⚠ Mirrored games keep the door too: the sheet is where "Scored by the tournament" is
             explained, and a coach who goes looking deserves that sentence, not a missing control. */}
-        <button type="button" className={styles.gdScoreDoor} onClick={() => openSheet('score')}>
+        <button type="button" className={styles.gdScoreDoor} onClick={e => openSheet('score', e.currentTarget)}>
           <span>{can.score && !mirrored ? 'Update score' : 'Score'}</span>
           <b className={styles.gdScoreDoorVal}>
             {teamScore ?? '–'}<span className={styles.gdScoreDash}> – </span>{oppScore ?? '–'}
@@ -1503,12 +1562,12 @@ export default function CoachGameConsolePage({
                 inside a 56px button at 390 and squeezed its three neighbours; the count is a
                 thing you read once, and the drawer it opens is the place that owns it. */}
             {can.attendance && (
-              <button type="button" className={styles.gdFbtn} onClick={() => openSheet('attendance')}>
+              <button type="button" className={styles.gdFbtn} onClick={e => openSheet('attendance', e.currentTarget)}>
                 Who’s here
               </button>
             )}
             {can.moments && (
-              <button type="button" className={styles.gdFbtn} onClick={() => openSheet('moment')}>
+              <button type="button" className={styles.gdFbtn} onClick={e => openSheet('moment', e.currentTarget)}>
                 Note
                 {moments.length > 0 && <small>{moments.length} TONIGHT</small>}
               </button>
@@ -1519,7 +1578,7 @@ export default function CoachGameConsolePage({
                 keeps its door as the contextual route; this is the one you can see. Absent on a
                 TBD opponent, like the name's door, because a book on nobody is a dead end. */}
             {opponentDoor && (
-              <button type="button" className={styles.gdFbtn} onClick={() => openSheet('book')}>
+              <button type="button" className={styles.gdFbtn} onClick={e => openSheet('book', e.currentTarget)}>
                 Scouting
               </button>
             )}
@@ -1529,7 +1588,7 @@ export default function CoachGameConsolePage({
               </button>
             )}
             {can.score && !mirrored && (
-              <button type="button" className={styles.gdFbtn} data-tone="end" onClick={openEndSheet}>
+              <button type="button" className={styles.gdFbtn} data-tone="end" onClick={e => openEndSheet(e.currentTarget)}>
                 End game
               </button>
             )}
@@ -1537,8 +1596,8 @@ export default function CoachGameConsolePage({
         )}
 
         {/* ── Sheets ── */}
-        {sheet === 'score' && (
-          <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label="Score">
+        {sheet === 'score' && renderSheet('Score', (
+          <>
             {sheetHead('Score')}
             {mirrored ? (
               <p className={styles.gdQuietNote}>
@@ -1592,11 +1651,11 @@ export default function CoachGameConsolePage({
             ) : (
               <p className={styles.gdQuietNote}>The score is kept by your coaching staff.</p>
             )}
-          </div>
-        )}
+          </>
+        ))}
 
-        {sheet === 'attendance' && (
-          <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label="Who’s here">
+        {sheet === 'attendance' && renderSheet('Who’s here', (
+          <>
             {sheetHead('Who’s here')}
             {/* The count the footer button used to carry, in the drawer that owns it. */}
             <p className={styles.gdAttCount}>
@@ -1629,8 +1688,8 @@ export default function CoachGameConsolePage({
                 </div>
               );
             })}
-          </div>
-        )}
+          </>
+        ))}
 
         {/* ── THE POSITION SHEET — the builder's, unchanged (G1 = A, owner 2026-09-22) ─────
             The whole of "make it the lineup editor's experience". One component serves both
@@ -1657,10 +1716,12 @@ export default function CoachGameConsolePage({
           />
         )}
 
-        {/* The capture sheet (P2, mockup frames 12–13). Quiet sheet, never a modal over the
-            game: one line, an optional player, one button. Nothing here notifies anyone. */}
-        {sheet === 'moment' && can.moments && (
-          <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label="Note a moment">
+        {/* The capture sheet (P2, mockup frames 12–13): one line, an optional player, one button.
+            Nothing here notifies anyone. On a phone it is the FORM layer (Sheet Frame step 3): it
+            holds a half-typed note, so it covers the bar — a thumb on Schedule mid-game used to
+            leave with the note unsaved. Above 900 it stays a quiet card beside the board. */}
+        {sheet === 'moment' && can.moments && renderSheet('Note a moment', (
+          <>
             {sheetHead('Note')}
             {momentSavedCount > 0 && (
               <p className={styles.gdMomentSaved} aria-live="polite">
@@ -1726,16 +1787,16 @@ export default function CoachGameConsolePage({
                 under the textarea reads "For you and your staff", and the footer button's own
                 help article covers the notification rule. A drawer that has to be short should
                 not spend a two-line paragraph repeating its own caption. */}
-          </div>
-        )}
-
-        {drawerScrim}
-
+          </>
+        ))}
 
         {bookSheet}
 
-        {sheet === 'end' && (
-          <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label="End game">
+        {/* End game — the FORM layer on a phone (owner, 2026-10-06): a corrected final score and the
+            one notification of the night are work in hand, and a stray tap on the bar used to leave
+            the game with the correction dropped. */}
+        {sheet === 'end' && renderSheet('End game', (
+          <>
             {sheetHead('End game')}
             <div className={styles.gdFinal}>
               <span className={styles.gdScoreLbl}>FINAL — {matchupTitle.toUpperCase()}</span>
@@ -1799,7 +1860,7 @@ export default function CoachGameConsolePage({
             </p>
             {endError && <p className={styles.errorText}>{endError}</p>}
             <div className={styles.gdSheetActions}>
-              <button type="button" className={styles.gdBigBtn} onClick={() => setSheet(null)}>
+              <button type="button" className={styles.gdBigBtn} onClick={closeSheetToOpener} disabled={endSaving}>
                 Keep coaching
               </button>
               <button
@@ -1809,8 +1870,8 @@ export default function CoachGameConsolePage({
                 {endSaving ? 'Finishing…' : 'Confirm & notify families'}
               </button>
             </div>
-          </div>
-        )}
+          </>
+        ))}
 
         {/* Swap confirm — the one decision, two big buttons (mockup frame 4). Anchored to the
             period the decision was MADE at (frozen in pendingSwap), not wherever the cursor

@@ -33,7 +33,7 @@ async function throwIfNotOk(res: Response, fallback: string): Promise<void> {
  * attributed — owner-ratified 2026-08-04).
  */
 export default function OpponentScoutingPanel({
-  orgSlug, teamId, eventId, opponentName, mirrored = false,
+  orgSlug, teamId, eventId, opponentName, mirrored = false, onLoggingChange,
 }: {
   orgSlug: string;
   teamId: string;
@@ -42,6 +42,8 @@ export default function OpponentScoutingPanel({
   opponentName: string;
   /** Mirrored tournament game? Only then does "Their tournament so far" have a source (P3). */
   mirrored?: boolean;
+  /** An observation is being typed (the capture box opened) or not — the game day's sheet changes layer. */
+  onLoggingChange?: (logging: boolean) => void;
 }) {
   const key = encodeURIComponent(normalizeOpponentName(opponentName));
   const apiBase = `/api/coaches/${orgSlug}/teams/${teamId}/opponents/${key}`;
@@ -232,6 +234,7 @@ export default function OpponentScoutingPanel({
         tags={tags}
         heading="Log an observation from this game"
         onSave={logObservation}
+        onOpenChange={onLoggingChange}
         filter={<ScoutTagFilter tags={usedTags} value={filterTag} onChange={setFilterTag} />}
       />
 

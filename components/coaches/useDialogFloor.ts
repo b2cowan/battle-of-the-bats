@@ -126,7 +126,16 @@ armFocusHistory();
 export function useDialogFloor(
   open: boolean,
   panelRef: RefObject<HTMLElement | null>,
-  opts: { onClose: () => void; onBack?: () => void; busy?: boolean; walk?: DialogWalk | null; focusKey?: string | null; address?: string | null },
+  opts: {
+    onClose: () => void; onBack?: () => void; busy?: boolean; walk?: DialogWalk | null; focusKey?: string | null; address?: string | null;
+    /**
+     * What opened the panel, when the caller KNOWS — focus goes back to it on close. Without it the floor
+     * reads its focus history, which is right for a keyboard and for a mouse, and can be wrong for a TAP:
+     * iOS Safari does not focus a button it taps, so the history never saw the opener and the newest entry
+     * is whatever was focused before. The shared sheet frame names its opener (Sheet Frame step 3).
+     */
+    opener?: RefObject<HTMLElement | null>;
+  },
 ): void {
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   // The latest options, so the one keydown effect (keyed on `open`) never re-binds on render churn
@@ -149,7 +158,8 @@ export function useDialogFloor(
     if (!open) return;
     const token = Symbol('dialog-floor');
     openFloors.push(token);
-    restoreFocusRef.current = openerOf(panelRef.current);
+    const named = optsRef.current.opener?.current;
+    restoreFocusRef.current = named?.isConnected ? named : openerOf(panelRef.current);
 
     function onKey(event: KeyboardEvent) {
       const panel = panelRef.current;
@@ -236,7 +246,7 @@ export function useDialogFloor(
       document.removeEventListener('keydown', onKey);
       restoreFocusRef.current?.focus?.();
     };
-  }, [open, panelRef]);
+  }, [open, panelRef, optsRef]);
 
   // The record changed while the panel stayed open (Prev/Next): if the control that had focus went
   // with the old record, seat focus on the panel again so the trap and the arrow keys keep working.

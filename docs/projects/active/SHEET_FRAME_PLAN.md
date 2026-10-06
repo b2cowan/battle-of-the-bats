@@ -5,7 +5,8 @@ PM Brief · Plan notes): https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, sour
 frames and measured facts in `sheet-frame/` (`facts.json`). PM brief `SHEET_FRAME_PM_BRIEF.md`. Build prompt
 `SHEET_FRAME_BUILD_PROMPT.md` (one step per chat). Ruling recorded in `memory/design_decisions.md` (2026-10-05).
 **Step 1 built 2026-10-05, committed `9ab32b23`; ✅ owner QA §264 PASSED 9/9 2026-10-05** (see *Build record*).
-**Step 2 built 2026-10-05, committed `91986b7c`; owner QA §266 open** (hub tab QA Walk). Steps 3–5 to build.
+**Step 2 built 2026-10-05, committed `91986b7c`; ✅ owner QA §266 PASSED 17/17 2026-10-06** (see *Build record*).
+**Step 3 built on dev 2026-10-06; owner QA §268 open** (hub tab QA Walk). Steps 4–5 to build.
 
 ## The rulings
 
@@ -68,8 +69,10 @@ rule, no hand-copied bar height, `aria-modal` only on the form layer.
 
 | Defect | Step |
 |---|---|
-| Game-day Note is a form above a live bar | 3 |
-| Game-day dim is the dark one on warm; the bar height copied by hand | 3 |
+| Game-day Note is a form above a live bar | 3 (built) |
+| Game-day dim is the dark one on warm; the bar height copied by hand | 3 (built) |
+| Game-day dim OUTSIDE the dismiss boundary: under touch a tap on it closed Note, Scouting or End game AND pressed what it covered — over the console's ← it left the game (4–5 of 6 sheets at 390) — found capturing step 3 | 3 (built) |
+| End game holds a corrected score above a live bar; Scouting's observation box likewise — sorted by D1 in step 3, owner 2026-10-06 | 3 (built) |
 | Filter sheet and position picker `aria-modal` while the bar is live | 1 (Filter: built), 4 |
 | Print has no title and no role | 2 (built) |
 | Three builder forms let the keyboard out (2026-09-23 open half) | 5 |
@@ -166,7 +169,7 @@ was re-signed in Dark at 08:09, before this session) and re-ran clean in warm ("
 league Teams page's tap-floor findings (player rows 32px, Export 38px at 768) are on elements nothing in this diff
 reaches — pre-existing, reported.
 
-### Step 2 — the small menus (built on dev 2026-10-05; owner QA §266)
+### Step 2 — the small menus (built 2026-10-05, committed `91986b7c`; owner QA §266 ✅ PASSED 17/17 2026-10-06)
 
 **Before building.** Parallel work checked: no commit since step 1 on this step's files; the call-ups session's
 uncommitted edits are in `lib/export/pdf.ts` and its guard (not the builder page); a notifications session is editing
@@ -224,6 +227,10 @@ lines); `npm run verify:changed` exit 0 (5,628 tests). `check:layout --only=` th
 the player page and the lineup builder, `--theme=warm`: no new findings; 8 baseline entries on the player page at 768
 (position-reorder buttons, not this step) no longer reproduce — not pruned.
 
+**Owner QA §266 ✅ PASSED 2026-10-06, 17/17** — hub tab QA Walk: W1 the Schedule's two menus rise from the bar (6/6) · W2 the
+switchers and Print say what they are (6/6) · W3 the keyboard lands where it should (5/5). Writes nothing. No notes —
+the switchers on the frame (the undrawn ~6px inset change, named in W2 step 1) accepted as built.
+
 **Not done, reported.** The Schedule day list (`.daySheetOverlay`) could not be opened on the UAT data (no day with two
 events) — left for step 4. Help's 30px × and the tag manager's / admin sheet's lost Escape focus stay out of the frame.
 
@@ -263,3 +270,140 @@ unaffected. Reported, not fixed (all Low, all pre-existing in kind):
   sheet open leaves its dismiss listeners armed until the next Escape, which they answer. Fix: fold `canSwitch` in.
 - Copy from's × and dim, and Save as template's dim, still drop focus to `<body>` — step 5.
 - Advisory: ↑ on a closed choice menu opens on the last row, not the ticked one (the menu-button pattern; kept).
+
+### Step 3 — game day (built on dev 2026-10-06; owner QA §268)
+
+**Before building.** Parallel work checked: no commit since step 2 on the console, the frame, the observation form or
+the scouting panel; the call-ups session's uncommitted edits are in `lib/export/pdf.ts` and its guard. Before-captures
+(`.probe/sf3/capture.mjs`, copied from step 2's; it adds a Tab count and puts the dim tap OVER the console's ← Back)
+found what the plan did not list: **under touch, a tap on the game-day dim closed the sheet and pressed what it covered**
+— over ←, it LEFT THE GAME for the Schedule on Note, Scouting (both states) and End game (4 of 6 sheets in warm, 5 in
+dark, at 390). The console's dim was a sibling OUTSIDE `useDismissable`'s boundary (its comment called that the
+point); `pointerdown` unmounted it before the `click`, which landed on the page — the 2026-09-22 trap the frame's header
+names. The frame puts the dim inside, so moving the sheets onto it closes this. The dev server died twice mid-session
+("Jest worker…"; once while another session's server held the port); stopped, `.next` cleared, restarted each time.
+
+**The sort (the plan left Score, Scouting and End game to the step).** Drawn true size on the hub (Mockup › 4 · What
+moves, "the three sheets this hub did not draw"; v10) and **ruled by the owner 2026-10-06, all as recommended**:
+- **End game → the FORM layer.** It holds a corrected final score and the night's one family notification; a stray tap on
+  the bar left the game with the correction dropped.
+- **Scouting → menu while reading, FORM while an observation is typed** — the Award sheet's switch (D3).
+- **Score → menu**: every +1 and digit autosaves. ⚠ Found sorting it, NOT a layer question: the running score saves
+  **10 seconds** after the last tap and nothing flushes it when the coach leaves the page (the flush is on
+  `visibilitychange` only), so a run tapped and then any tap that leaves the game within 10s is never saved — sheet
+  open or not. End game's final score corrects it. **Owner: a separate small fix after step 3** (TODO).
+- Who's here → menu (ruled). Note → form (ruled). The substitution confirm stays a card (plan).
+
+**Built.**
+- `SheetFrame` gains the FORM layer (`form`, `busy`): `.sheet.form` (bottom 0, the screen less 12px, z 390, the home
+  indicator padded — the inset alone, never the bar's height); the dim with it (`LineupSheetScrim overNav`, 389);
+  `useOverlayOpenIfAvailable(form)` (the nav `visibility: hidden` — tolerant, because the Tools menu's frame also renders
+  on admin pages outside the provider); `useDialogFloor(form, …)` (Escape, Tab kept inside, Back, focus home), `tabIndex
+  -1` and `aria-modal` from the layer. The `opener` contract holds in both layers; the dim waits for `busy`. The frame
+  keeps its own panel ref and forwards the caller's. The layer may change while open.
+- `useDialogFloor` takes an optional `opener`: a caller that KNOWS what opened it names it (iOS Safari does not focus a
+  tapped button, so the floor's focus history never saw it). Every other floor unchanged.
+- Game day: ONE `renderSheet` for the five sheets — at ≤900 (`useIsPhoneNav`, the bar's breakpoint) `<SheetFrame>`
+  inside a `display: contents` wrapper on `sheetRef` (the dim inside the dismiss boundary), with `.gdSheetBody` making up
+  the 6.4px the frame's 8px inset is short of the console's 0.9rem; above 900 the `.gdSheet` card as before.
+  `sheetIsForm = isPhoneNav && (Note | End game | Scouting && bookLogging)`; the page's `useDismissable` and
+  `useBackStep` stand down for a form (the floor stands its own entry; the layer switch hands the entry over in one
+  commit). Every door passes its own button as the opener (`openSheet(kind, e.currentTarget)`); the ×, Keep coaching and
+  the dim hand focus back to it. The recap's two book doors go through `openSheet` too.
+- `ScoutObservationForm` reports `onOpenChange` IN ITS HANDLERS (door, close — Cancel, Done, Escape), passed through
+  `OpponentScoutingPanel`'s `onLoggingChange`: from an effect, the switch would land a commit after the box's own focus
+  move and the floor's hand-back would win. Other homes of the form (the schedule's Scouting tab, the opponent page) pass
+  nothing and are unchanged.
+- `coaches.module.css`: the console's drawer block (`.gdSheet:not([data-card])`, the hand-copied bar height, 72dvh),
+  `.gdScrim` (the dark dim on warm) and `.gdGrab` deleted; the substitution card reads `calc(var(--coach-foot-clear) +
+  0.5rem)`.
+
+**Proved.** `.probe/sf3/capture.mjs` + `diff.mjs`, before and after, the seven surfaces at 390 touch (warm, dark), 768
+touch and 1280:
+- **Every line of content kept its horizontal place** (dx 0 on every node of every sheet) and sits 2.8px higher in its
+  sheet (the frame's grab line, 38×4, and 6px top padding); the bottom padding is 14px (was 17.6).
+- Note and End game: down over the bar (bottom 844), modal, the nav hidden, the warm dim to the foot at 389, focus on the
+  sheet when it opens, **Tab ×12 never left** (was 9 and 7 out of 12), Escape and the dim hand focus back to the
+  button. Scouting: a menu at rest; with the box open the form layer, Tab never left, Escape closes only the box (focus
+  on its door). Score and Scouting-at-rest on the bar with the warm dim; Who's here grows to the cap (top 12, 760 high).
+  **The dim tap stayed in the game on every sheet.** The substitution card **pixel-identical** at 390.
+- 768 (touch): the same as 390 — dx 0, the forms down over the bar, the menus on it, every dim tap staying in the game.
+  1280: **all seven surfaces pixel-identical** (the cards untouched). Dark keeps its dark dim (the frame's, the same value).
+- `.probe/sf3/keys.mjs` at 800 with a keyboard, **16/16**: Note and End game open as modals with focus on the sheet and
+  the bar hidden; Tab and Shift+Tab ×15 never leave either; Escape, Back and Keep coaching close them with focus back on
+  the button and the game kept, Note's typed line still there on reopening; Scouting opens as a menu and its box is the
+  form layer (Tab kept inside); Escape in the box closes only the box (focus on its door), Escape again closes the sheet
+  (focus on Scouting); Back while logging closes the sheet, and one more Back leaves the game (no entry left behind).
+  **The first run failed "Escape again" — focus went to `<body>`**: the page's dismiss hook re-arms when Scouting
+  returns to the bar and recorded the box's door, inside the closing sheet. Fixed in the step: a sheet's Escape moves
+  focus to `sheetOpenerRef` at once, before the sheet unmounts (`escapeSheet` — the hook's own Escape contract; a first
+  version that only rescued focus from `<body>` left it wherever Tab had taken it, caught by the re-capture); the
+  substitution confirm keeps the hook's own hand-back.
+- The frame's menu layer, as a regression check: `.probe/sf3/menus.mjs` (step 2's capture, re-pointed) against step 2's
+  final record — the eight sheets already on the frame (both Tools, Filter, both switchers, View, Add event, Print), warm
+  and dark: **pixel-identical, every computed style, focus on open, Escape and dim tap identical**.
+
+**Checks.** `sheet-frame-guard` grew step 3 (27 tests: the form layer's geometry, the bar taken away, the floor and its
+named opener, one render path, the sort, every door's opener, Scouting's in-handler switch, the console's recipe gone);
+step 1's assertions moved with it (the home-indicator padding and the 390 live in `.sheet.form` only; `aria-modal` from
+the layer). Every guard that reads a touched file: 624/624 across 31 files. `npm run typecheck` clean; focused lint 0
+errors (the one warning on a touched line — the floor's effect now reads its options ref — fixed; the rest are on
+untouched lines). `npm run verify:changed` exit 0 (5,648 tests) on the build; after the last Escape fix guard files (653/653 — the count grew with a parallel session's tests), typecheck and
+lint re-ran clean and the 390 captures and the keyboard walk were re-taken. `check:layout --only=coach-game-console,coach-team-hub-switcher,
+coach-player-switcher --theme=warm`: no new findings (the same 8 player-page baseline entries at 768 as step 2 no longer
+reproduce — not pruned).
+
+**Not done, reported.**
+- The running score's 10-second save (above) — owner: a separate fix after this step (TODO).
+- A tap on the dim still CLOSES a form (the frame's rule, as drawn). Note's typed line survives it (page state); End
+  game's corrected score does not (a reopen starts from the running score) and neither does a typed observation (it
+  lives inside the panel) — the same as before this step, now with the bar no longer a second way to lose them.
+  Keeping them is a small follow-up if wanted. Back while logging likewise closes the whole book, not just the box.
+- ~~Help: the game-day article said Note's player is picked by tapping a name~~ — fixed by `/docs`, below.
+
+**/simplify (four lenses: reuse, simplification, efficiency, altitude), 2026-10-06.** Reuse and efficiency: nothing
+material (no shared ref-merge helper exists — the frame's is the third copy of a two-line idiom; the frame's hooks
+register nothing in the menu layer and read no volatile context). Applied:
+- **One close-and-hand-back** on the console: the ×, Keep coaching and a menu-layer sheet's Escape all call
+  `closeSheetToOpener` (focus to the opener at once, before the sheet unmounts); the separate `closeSheet` and
+  `escapeSheet` are gone, and the frame gets the plain `dismissOverlay` (it hands focus back itself).
+- `sheetBusy` sits beside `sheetIsForm`; the frame's merged-ref comment names its real readers (the Tools menu roves its
+  items, Filter and both switchers seat focus); the head's comment counts five sheets.
+- Skipped, with reasons: an optional `restoreTo` on `useDismissable` (altitude) — with the three closes merged it would
+  remove nothing from the page and would widen a 32-caller shared hook; it belongs with the next item. **The frame
+  owning dismiss and the back step in BOTH layers** (altitude: the stand-down rule now lives in a comment every form
+  consumer must follow) — one consumer today; build it in step 5, when the lineup builder's three forms make the second.
+  `optsRef` stays in the floor's deps (the hooks lint asks for it; stable, no re-bind).
+
+Re-proved after the pass: guard 27/27, typecheck clean, lint unchanged on touched lines, `keys.mjs` 16/16, the 390 warm
+capture identical to the build (focus on open, Escape, dim tap, Tab, content dx 0).
+
+**/review (standard tier; correctness, state/timing and blast-radius lenses), 2026-10-06.** Blast radius clean: the
+frame's hooks register nothing in the menu layer and nothing throws on the admin pages outside the overlay provider
+(`useOverlayOpenIfAvailable`); the 33 floors without `opener` keep their focus history; the observation form's other
+homes pass nothing; no script, spec, demo tour or help anchor reads the removed classes; `--coach-foot-clear` is
+declared wherever the console renders. The layer switch was traced both ways (cleanups before creates: the new step takes
+the dead entry over, no entry gained or lost). Two confirmed, fixed:
+- **Medium — crossing 900px with an observation box open** (found by two lenses): the sheet remounts as the desktop card,
+  the box with it, but the page's "logging" flag stayed true — back at ≤900 the book covered the bar with no box in it.
+  Fix: `ScoutObservationForm` reports an unmount with the box open as a close (cleanup, via `useLatestRef`), so the box is
+  the flag's ONE owner; `openSheet` no longer resets it by hand. (The typed observation is still lost on the crossing — a
+  tablet turned mid-sentence; Note and End game keep theirs.)
+- **Low — the × and Keep coaching ignored `busy`**: End game could be closed under its own "Confirm & notify families",
+  and a failure then landed on a closed sheet. Fix: `closeSheetToOpener` holds while `sheetBusy`; Keep coaching is
+  disabled while End game sends.
+Proved: `.probe/sf3/review-check.mjs` 6/6 (600 → 1000 → 600 with the box open comes back a menu; with End game's PATCH
+held, Keep coaching disabled, the × holding, the failure shown on the open sheet, then Keep coaching closing it — the
+PATCH intercepted, nothing written); `keys.mjs` 16/16 and the 390 capture unchanged.
+Refuted (dropped): "Escape in the observation box closes the whole sheet at ≤900" — measured twice, it closes only the
+box. Reported, not fixed (Low, as before this step): a tap on the dim or Back while an observation is SAVING closes the
+book and drops a failure message (the box's saving state is its own; holding it would need a second report). Not traced:
+`useBackStep`'s entry count across a 900px crossing with a FORM open (the same takeover path as the traced layer switch).
+
+**/docs (Mode A), 2026-10-06** — `lib/help-content/coaches.tsx`, the game-day article (`#premium-game-day`), no anchor
+changed: Note's player is picked under **About a player?** (it said "tap a player's name" — a dropdown since 2026-09-22);
+the bench board's "matchup and score up top" is the matchup with the inning stepper (the score moved under the board
+2026-09-22); Scouting opens from the **Scouting** button at the foot as well as the opponent's name (also since
+2026-09-22); one sentence each on Note, End game and Scouting-while-logging covering the bottom bar on a phone. Search
+fields gained "about a player", "log an observation", "bottom bar hidden / disappeared" and the matching phrases.
+`measure:help`: the article stays inside the standard; focused lint clean.

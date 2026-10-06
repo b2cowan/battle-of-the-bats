@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, Plus } from 'lucide-react';
 import { OPPONENT_OBSERVATION_MAX } from '@/lib/coach-opponents';
 import { claimEscape } from './escapeOwnership';
+import { useLatestRef } from './useLatestRef';
 import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
 
 /** "Pitching, Hitting, Defense, Baserunning or Coaching" — the sport's own vocabulary, read out. */
@@ -41,8 +42,16 @@ function readOut(tags: string[]): string {
  * (which reads "Done" once something has been saved — closing is not discarding) or Escape closes
  * it. ⚠ Escape inside the sheet is CLAIMED so the game card beneath does not close with it — see
  * `escapeOwnership.ts` for why neither stopPropagation nor the marker alone is enough.
+ *
+ * `onOpenChange` tells a host that the box is open — the game day's Scouting sheet comes down over the
+ * bottom bar while an observation is typed (Sheet Frame step 3, owner 2026-10-06: work in hand is the form
+ * layer). ⚠ Every close the coach makes reports IN ITS HANDLER, never from an effect keyed on the box: the
+ * host's switch and this form's own focus move must land in ONE commit (an unmount with the box open — the
+ * close nobody makes — reports from its cleanup, below). React runs every effect cleanup before any new effect, so the frame's
+ * floor hands focus back to Scouting first and the door below takes it last; split across two commits,
+ * Cancel would leave the focus ring behind the dim.
  */
-export default function ScoutObservationForm({ tags, heading, onSave, filter }: {
+export default function ScoutObservationForm({ tags, heading, onSave, filter, onOpenChange }: {
   /** The sport-pack vocabulary, as the card route serves it. */
   tags: string[];
   /** "Log an observation from this game" on the card; "Log an observation" on the page. */
@@ -52,6 +61,8 @@ export default function ScoutObservationForm({ tags, heading, onSave, filter }: 
   /** The tag filter that shares the door's row (left; the door takes the right). Renders null
    *  when no tag is in use — the door then keeps the right edge alone. */
   filter?: ReactNode;
+  /** The box opened or closed — for a host whose surface changes with it. */
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [body, setBody] = useState('');
@@ -72,6 +83,16 @@ export default function ScoutObservationForm({ tags, heading, onSave, filter }: 
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
+  // ⚠ GOING AWAY WITH THE BOX OPEN IS A CLOSE TOO (/review, Sheet Frame step 3, 2026-10-06). The handlers
+  // report every close the coach makes; this reports the one nobody makes — the host unmounting the box
+  // mid-sitting (the game day's sheet closing, or a tablet crossing 900px, where the sheet remounts as the
+  // desktop card). Without it the host's "an observation is being typed" outlived the box, and the book
+  // came back over the bar with nothing in it to type into.
+  const reportRef = useLatestRef({ open, onOpenChange });
+  useEffect(() => () => {
+    const { open: wasOpen, onOpenChange: report } = reportRef.current;
+    if (wasOpen) report?.(false);
+  }, [reportRef]);
 
   // The cursor lands in the box the moment the sheet opens; on close, focus returns to the door
   // — which only exists AFTER that render, hence the flag rather than a direct call in close().
@@ -86,6 +107,7 @@ export default function ScoutObservationForm({ tags, heading, onSave, filter }: 
   function close() {
     returnFocusRef.current = true;
     setOpen(false);
+    onOpenChange?.(false);
     setBody('');
     setTag(null);
     setError('');
@@ -119,7 +141,7 @@ export default function ScoutObservationForm({ tags, heading, onSave, filter }: 
     <div className={styles.scoutLogBar}>
       {filter}
       {!open && (
-        <button ref={doorRef} type="button" className={styles.scoutLogDoor} onClick={() => setOpen(true)}>
+        <button ref={doorRef} type="button" className={styles.scoutLogDoor} onClick={() => { setOpen(true); onOpenChange?.(true); }}>
           <Plus size={14} aria-hidden /> Log an observation
         </button>
       )}
