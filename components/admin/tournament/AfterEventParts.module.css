@@ -1,0 +1,67 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   AFTER THE EVENT — the parts the finished board and Summary share (AfterEventParts.tsx; Tournament
+   admin redesign Stage 4, hub v24). The kit draws the cards and rows (`ClubSection`, `ClubRow`,
+   `CoachDoorCard`, `CoachFigure`); this file sets only what they have no slot for. Born on the kit:
+   TOKENS ONLY (scripts/check-public-tokens.mjs holds this folder).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* A section card's own spacing is the kit's; a host that spaces its children with `gap` zeroes it. */
+.card { min-width: 0; }
+
+/* One lead mark (§3.10.7): a trophy for a champion, the standings mark for a division with no final. */
+.markChampion { display: flex; color: var(--home-olive); }
+.markStandings { display: flex; color: var(--text-tertiary); }
+
+/* Under the rows: why there is nothing to share, then the board's line of figures. */
+.note,
+.foot {
+  margin: 0;
+  padding: 0.6rem 1.1rem 0.7rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-support);
+  line-height: 1.45;
+}
+.note { color: var(--text-secondary); }
+.foot { color: var(--text-tertiary); }
+/* Money owed reads in the amber of money owed (Teams' "Owes $475", Stage 2). */
+.owed { color: var(--warning-light); font-weight: 650; }
+
+/* The event in numbers: four figures, two by two, the kit's 24px figure. */
+.figures {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.9rem 1rem;
+}
+.figLabel { display: block; margin-top: 0.15rem; font-size: var(--type-support); line-height: 1.35; color: var(--text-tertiary); }
+
+/* Next year: one sentence, then the reuse door (or the Tournament plan's sentence, Archive and lock). */
+.nextYear { display: flex; flex-direction: column; align-items: stretch; gap: 0.75rem; }
+.sentence { margin: 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+.reuse { min-height: var(--admin-control-h); align-self: flex-start; }
+/* At a desk Summary lays the sentence and its button side by side (as drawn). */
+.nextYearWide { display: flex; align-items: center; gap: 1rem; }
+.nextYearWide .sentence { flex: 1 1 auto; min-width: 0; }
+.nextYearWide .reuse { flex: none; align-self: center; }
+
+/* The door card (the board's one door to Summary): the kit's door, a title and one line. */
+.door { --card-gap: 0.2rem; }
+.doorTitle { font-size: var(--type-body); font-weight: 650; line-height: 1.35; color: var(--text-primary); }
+.doorLine { font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
+
+/* The copy action: a white worded button at a desk; on a phone the plain button's border makes the
+   44px icon a BOXED icon — an action, never the bare olive glyph a door wears (/design review). */
+.boxedIcon { flex: none; }
+
+@media (max-width: 768px) {
+  .reuse { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  /* A champion's final day is a desk's detail (the phone drawing leaves it off). */
+  .finalDay { display: none; }
+  .note,
+  .foot { padding-left: 0.85rem; padding-right: 0.85rem; }
+  /* On a phone the reuse door spans the card, as drawn. */
+  .reuse { align-self: stretch; width: 100%; }
+  .nextYearWide { flex-direction: column; align-items: stretch; }
+  .nextYearWide .reuse { align-self: stretch; }
+}

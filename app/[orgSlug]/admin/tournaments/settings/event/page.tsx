@@ -18,6 +18,9 @@ import { TOURNAMENT_FORMAT_OPTIONS, getTournamentFormat, tournamentFormatLabel, 
 import TieBreakerEditor from '@/components/admin/TieBreakerEditor';
 import { normalizeTieBreakers, clampRunDiffCap, DEFAULT_TIE_BREAKERS, type TieBreaker } from '@/lib/tie-breakers';
 import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
+import { statusConfirm } from '@/lib/tournament-status-words';
+import { willEmailResultsOnComplete } from '@/lib/coach-email-rules';
+import { tournamentToday } from '@/lib/timezone';
 import styles from '../../branding/branding.module.css';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -775,12 +778,30 @@ export default function TournamentEventSettingsPage() {
     performSaveRef.current?.({ slugOverride: newSlug });
   }
 
-  // Status modal copy
-  const statusModalProps = pendingStatusChange === 'active'
-    ? { type: 'primary' as const, title: 'Make Tournament Active?', message: 'The tournament will be publicly visible and open for team registrations.', confirmText: 'Make Active' }
-    : pendingStatusChange === 'completed'
-    ? { type: 'warning' as const, title: 'Mark as Completed?', message: `This tournament will be locked. Registrations close, and all event data — scores, standings, schedules, divisions, and team registrations — becomes read-only and final.${notifyTeamsOnComplete ? ' Team contacts will receive a results summary email.' : ''} You can reopen the tournament by setting the status back to Active.`, confirmText: 'Mark Completed' }
-    : { type: 'primary' as const, title: 'Move to Draft?', message: 'The tournament will be hidden from teams and the public.', confirmText: 'Move to Draft' };
+  // Status modal copy — the event's record's own sentences (Tournament admin redesign Stage 4, P5, owner
+  // 2026-10-06: one home for every status sentence; whether this switch stays here at all is Stage 5's).
+  // Active from Completed is the record's Reopen; from Draft, its Activate.
+  const statusChange = pendingStatusChange === 'active'
+    ? (tournamentStatus === 'completed' ? 'reopen' : 'activate')
+    : pendingStatusChange === 'completed' ? 'complete' : 'draft';
+  const statusQuestion = statusConfirm(statusChange, {
+    name: tournamentName || currentTournament?.name || '',
+    startDate: startDate || null,
+    today: tournamentToday(),
+    finiteSlots: (currentOrg?.tournamentLimit ?? 9999) < 9999,
+    willEmailTeams: willEmailResultsOnComplete({
+      notifyTeamsOnComplete,
+      settings: { coach_email_pause_all: coachEmailPauseAll },
+      resultsNotifiedAt,
+      planHasSummary: canUsePostEventNotifications,
+    }),
+  });
+  const statusModalProps = {
+    type: statusQuestion.danger ? 'danger' as const : 'primary' as const,
+    title: statusQuestion.title,
+    message: statusQuestion.body,
+    confirmText: statusQuestion.action,
+  };
 
   if (userRole !== 'owner' && userRole !== 'admin') {
     return (

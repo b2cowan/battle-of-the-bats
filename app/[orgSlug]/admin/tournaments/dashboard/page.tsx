@@ -40,7 +40,12 @@ import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import { Callout, repKit } from '@/components/admin/kit/club/RepKit';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { ARCHIVE_CONFIRM_BODY } from '@/lib/tournament-archive-words';
+import HelpButton from '@/components/help/HelpButton';
+import type { HelpRequest } from '@/components/help/help-drawer-context';
+import type { EventRecap } from '@/lib/event-recap';
+import FinishedBoard from './FinishedBoard';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { statusConfirm } from '@/lib/tournament-status-words';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import GameDayBoard, {
   BoardNote, CustomizeLink, EMPTY_GAME_DAY, GAME_DAY_PARTS, type GameDayPartId, type GameDayStats,
@@ -51,13 +56,14 @@ import GameDayBoard, {
 // Kept at module scope per the kx() convention: legacy values never change, only the kit side does.
 const ICON_ACCENT_LEGACY: CSSProperties = { color: 'var(--logic-lime)' };
 const ICON_MUTED_LEGACY: CSSProperties = { color: 'var(--data-gray)' };
-const ICON_WARNING_LEGACY: CSSProperties = { color: 'var(--warning)' };
-const INFO_LEGACY: CSSProperties = { color: 'var(--blueprint-blue)' };
 // Two overlay shapes: the populate modal blurs behind it, the confirm dialogs don't — both scrim
 // to the kit's `--home-scrim` (the same token `.modal-overlay` uses globally).
 const MODAL_OVERLAY_BLUR_LEGACY: CSSProperties = { position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)' };
 const MODAL_OVERLAY_LEGACY: CSSProperties = { position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' };
 const MODAL_OVERLAY_KIT: CSSProperties = { background: 'var(--home-scrim)' };
+
+/** A finished board's "?" — the close-out guide (the help drawer lists the stage's tasks above it). */
+const FINISHED_BOARD_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'] };
 
 // ── Domain types ────────────────────────────────────────────────────────────
 
@@ -159,6 +165,8 @@ type DashboardStats = {
   isGameDay: boolean;
   gameDay: GameDayStats;
   champions: DivisionChampion[];
+  /** A finished event's "How it finished" and the event in numbers (lib/event-recap — the same read as Summary). */
+  recap: EventRecap | null;
   /** Whether marking complete will email a results summary to team contacts (mirrors the confirm copy). */
   notifyTeamsOnComplete: boolean;
   coinTossNeeded: { divisionId: string; divisionName: string; teamNames: string[] }[];
@@ -357,6 +365,7 @@ const EMPTY_STATS: DashboardStats = {
   isGameDay: false,
   gameDay: EMPTY_GAME_DAY,
   champions: [],
+  recap: null,
   notifyTeamsOnComplete: false,
   coinTossNeeded: [],
   publishChecklist: {
@@ -590,7 +599,7 @@ function AddTile({ kind, items, open, onToggle, onAdd }: {
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  const { currentTournament, isLocked, refresh: refreshTournaments } = useTournament();
+  const { currentTournament, tournaments, isLocked, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
   usePageTitle('Dashboard');
   const router = useRouter();
@@ -621,9 +630,6 @@ export default function AdminDashboard() {
   const [activating, setActivating] = useState(false);
   const [activateError, setActivateError] = useState('');
   const [showActivateConfirm, setShowActivateConfirm] = useState(false);
-  const [archiving, setArchiving] = useState(false);
-  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
-  const [archiveError, setArchiveError] = useState('');
   const [showOptionalItems, setShowOptionalItems] = useState(false);
 
   // ── Mark complete (one-click finalize from the "ready" guidance card) ──────
@@ -769,6 +775,7 @@ export default function AdminDashboard() {
           isGameDay:       data?.isGameDay       ?? false,
           gameDay:         { ...EMPTY_GAME_DAY, ...(data?.gameDay ?? {}) },
           champions:       data?.champions       ?? [],
+          recap:           data?.recap           ?? null,
           notifyTeamsOnComplete: data?.notifyTeamsOnComplete ?? false,
           coinTossNeeded:  data?.coinTossNeeded  ?? [],
           publishChecklist: {
@@ -816,7 +823,10 @@ export default function AdminDashboard() {
 
   // Live auto-refresh (J1-086, and G6's shared rule): the board's figures move on their own every 30 s
   // while the tab is visible, and at once when it comes back. Cheap (one cached GET).
-  useVisiblePoll(() => pollStatsRef.current?.(), { enabled: Boolean(currentTournament?.id) });
+  // A finished event's board does not poll (Stage 4): nothing on it can change once results are locked,
+  // and each read of a finished event also reads its recap — it reads fresh on every visit instead.
+  const boardIsFinished = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
+  useVisiblePoll(() => pollStatsRef.current?.(), { enabled: Boolean(currentTournament?.id) && !boardIsFinished });
 
   // Fetch other tournaments for populate-from
   useEffect(() => {
@@ -857,22 +867,18 @@ export default function AdminDashboard() {
     } finally { setActivating(false); }
   }
 
-  async function handleArchive() {
-    if (!currentTournament?.id || archiving) return;
-    setArchiving(true); setArchiveError(''); setShowArchiveConfirm(false);
-    try {
-      const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'set-status', id: currentTournament.id, data: { status: 'archived' } }),
-      });
-      const json = await res.json().catch(() => null) as { error?: string } | null;
-      if (!res.ok) throw new Error(json?.error ?? 'Failed to archive tournament.');
-      await refreshTournaments();
-      router.refresh();
-    } catch (err) {
-      setArchiveError(err instanceof Error ? err.message : 'Failed to archive tournament.');
-    } finally { setArchiving(false); }
+  /** Archive (the Tournament plan's finished board — FinishedBoard asks first). Throws the route's words. */
+  async function archiveEvent() {
+    if (!currentTournament?.id) return;
+    const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set-status', id: currentTournament.id, data: { status: 'archived' } }),
+    });
+    const json = await res.json().catch(() => null) as { error?: string } | null;
+    if (!res.ok) throw new Error(json?.error ?? 'Couldn’t archive the tournament.');
+    await refreshTournaments();
+    router.refresh();
   }
 
   // Marks the tournament complete via the SAME server action as Settings, so the
@@ -880,7 +886,9 @@ export default function AdminDashboard() {
   // triggered (the notify email is sent server-side on the transition to completed).
   async function handleComplete() {
     if (!currentTournament?.id || completing) return;
-    setCompleting(true); setCompleteError(''); setShowCompleteConfirm(false);
+    // The question stays open until the change lands: a refusal is said in it (it used to close first,
+    // so a refused Mark complete said nothing anywhere).
+    setCompleting(true); setCompleteError('');
     try {
       const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
         method: 'POST',
@@ -889,7 +897,10 @@ export default function AdminDashboard() {
       });
       const json = await res.json().catch(() => null) as { error?: string } | null;
       if (!res.ok) throw new Error(json?.error ?? 'Failed to mark tournament complete.');
+      setShowCompleteConfirm(false);
       await refreshTournaments();
+      // The finished board reads its recap on a fresh read (the poll is off once finished), so read again.
+      setStatsReloadKey(k => k + 1);
       router.refresh();
     } catch (err) {
       setCompleteError(err instanceof Error ? err.message : 'Failed to mark tournament complete.');
@@ -932,6 +943,8 @@ export default function AdminDashboard() {
   const isDraft       = status === 'draft';
   const isActive      = status === 'active';
   const isCompleted   = status === 'completed';
+  // Completed, or archived (the context lists no archived event, so the second is a moment at most).
+  const isFinished    = isCompleted || status === 'archived';
 
   const visibleStats  = currentTournament?.id ? stats : EMPTY_STATS;
   const checklist     = visibleStats.publishChecklist;
@@ -975,7 +988,6 @@ export default function AdminDashboard() {
   // 'ready' wins over 'live' so a finished-but-active tournament is steered to finalize.
   const guidanceStage: GuidanceStage | null =
     isDraft ? 'draft'
-    : isCompleted ? 'done'
     : isActive ? (readyToFinalize ? 'ready' : isGameDay ? 'live' : isPreEvent ? 'pre' : 'post')
     : null; // archived → no rail
   const guidanceRail = (guidanceStage && currentOrg?.slug && currentTournament?.id) ? (() => {
@@ -1885,7 +1897,11 @@ export default function AdminDashboard() {
     <div className={styles.page}>
       {/* G1: the event header above names the event and carries its one status chip; the page names
           only itself — no second copy of the name, no ACTIVE/LIVE tags, Customize at the board's foot. */}
-      <AdminPageHeader title="Dashboard" />
+      <AdminPageHeader
+        title="Dashboard"
+        inlineActions
+        actions={isFinished ? <HelpButton help={FINISHED_BOARD_HELP} label="Dashboard" iconOnly /> : undefined}
+      />
 
       {currentTournament?.id && statsError && (
         <div className="mb-4 text-xs" style={kx(ICON_MUTED_LEGACY, KIT_INK.tertiary)}>Dashboard counts are unavailable right now.</div>
@@ -2095,130 +2111,27 @@ export default function AdminDashboard() {
         </>
       )}
 
-      {/* ── COMPLETED DASHBOARD ──────────────────────────── */}
-      {isCompleted && currentTournament?.id && (
-        <>
-          {guidanceRail}
-
-          {/* Wrap-up banner — headline + champion(s) + hand-off (Plus = summary, Free = results) */}
-          <div className={styles.wrapUpCard}>
-            <div className={styles.wrapUpIcon}><Trophy size={22} /></div>
-            <div className={styles.wrapUpBody}>
-              <h2>Tournament Complete</h2>
-              {champions.length > 0 && (
-                <div className={styles.wrapUpChampions}>
-                  {champions.map(c => (
-                    <span key={c.divisionId} className={styles.wrapUpChampion}>
-                      <Trophy size={11} aria-hidden />
-                      <strong>{c.championTeamName}</strong>
-                      <span className={styles.wrapUpChampionDiv}>{c.divisionName}</span>
-                    </span>
-                  ))}
-                </div>
-              )}
-              <p>
-                {visibleStats.teams} team{visibleStats.teams !== 1 ? 's' : ''} registered
-                {visibleStats.completed > 0 ? ` · ${visibleStats.completed} games completed` : ''}
-                {pay.hasFeeSchedule && pay.totalExpected > 0 ? ` · ${fmt(pay.totalCollected)} collected` : ''}
-              </p>
-            </div>
-            {hasSummary ? (
-              <Link href={`${base}/summary`} className="btn btn-lime btn-data">Review event summary →</Link>
-            ) : (
-              <Link href={`${base}/results`} className={styles.panelLink}>View results →</Link>
-            )}
-          </div>
-
-          {/* Free orgs: Summary is locked, so keep the recap here + one compact upsell. */}
-          {!hasSummary && (
-            <>
-              <div className={styles.analyticsGrid}>
-                <section className={styles.analyticsPanel}>
-                  <div className={styles.panelHeader}>
-                    <Users size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
-                    <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Final Registration</h2>
-                    <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
-                  </div>
-                  <div className={styles.mainGauge}>
-                    <div className={styles.gaugeFigures}>
-                      <span className={styles.gaugeMain}><CountUp value={reg.totalAccepted} /></span>
-                      {reg.totalCapacity > 0 && <><span className={styles.gaugeOf}>/ {reg.totalCapacity}</span></>}
-                      <span className={styles.gaugeLabel}>teams</span>
-                    </div>
-                    {reg.totalCapacity > 0 && <GaugeBar value={reg.totalAccepted} max={reg.totalCapacity} />}
-                  </div>
-                  {reg.byDivision.length > 1 && (
-                    <div className={styles.divisionTable}>
-                      {reg.byDivision.map(d => (
-                        <div key={d.id} className={styles.divisionRow}>
-                          <span className={styles.divisionName}>{d.name}</span>
-                          <span className={styles.divisionCount}>{d.accepted}{d.capacity ? `/${d.capacity}` : ''}</span>
-                          {d.capacity && <GaugeBar value={d.accepted} max={d.capacity} danger={false} />}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                <section className={styles.analyticsPanel}>
-                  <div className={styles.panelHeader}>
-                    <DollarSign size={16} style={kx(ICON_WARNING_LEGACY, KIT_INK.warning)} />
-                    <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Final Payments</h2>
-                    <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
-                  </div>
-                  {pay.hasFeeSchedule ? (
-                    <>
-                      <div className={styles.mainGauge}>
-                        <div className={styles.gaugeFigures}>
-                          <span className={styles.gaugeMain}>{fmt(pay.totalCollected)}</span>
-                          <span className={styles.gaugeOf}>/ {fmt(pay.totalExpected)}</span>
-                          <span className={styles.gaugeLabel}>collected</span>
-                        </div>
-                        <GaugeBar value={pay.totalCollected} max={pay.totalExpected} />
-                      </div>
-                      {(pay.totalExpected - pay.totalCollected) > 0 && (
-                        <div className={styles.outstandingRow}>
-                          <TrendingUp size={13} />
-                          <span>{fmt(pay.totalExpected - pay.totalCollected)} still outstanding</span>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className={styles.emptyPanel}><span>No fee schedule was configured.</span></div>
-                  )}
-                </section>
-              </div>
-
-              <div className={styles.completedUpsell}>
-                <div className={styles.completedUpsellBody}>
-                  <Star size={16} className={styles.completedUpsellIcon} aria-hidden />
-                  <div>
-                    <strong>Your post-event summary</strong>
-                    <p>A shareable division recap, public results links, and reusing this setup to start next year — available on Tournament Plus.</p>
-                  </div>
-                </div>
-                <Link href={subscriptionHref} className="btn btn-lime btn-data">Review Tournament Plus</Link>
-              </div>
-            </>
-          )}
-
-          {hasCapability(userRole ?? 'official', userCapabilities, 'create_tournaments') && (
-            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-              {archiveError && <span style={kx({ fontSize: '0.8rem', color: 'var(--danger)', marginRight: '0.75rem', alignSelf: 'center' }, KIT_INK.danger)}>{archiveError}</span>}
-              <button type="button" className="btn btn-ghost btn-data" style={kx({ color: 'var(--white-40)', borderColor: 'var(--border-2)' }, { color: 'var(--text-tertiary)', borderColor: 'var(--home-line-strong)' })} onClick={() => { setArchiveError(''); setShowArchiveConfirm(true); }} disabled={archiving}>
-                {archiving ? 'Archiving…' : 'Archive Tournament'}
-              </button>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ── ARCHIVED ────────────────────────────────────── */}
-      {status === 'archived' && (
-        <div style={kx({ padding: '2rem 0', color: 'var(--data-gray)', fontSize: '0.85rem' }, KIT_INK.tertiary)}>
-          This tournament is archived. View historical results in{' '}
-          <Link href={`${base}/archives`} style={kx(INFO_LEGACY, KIT_INK.accent)}>Past Tournaments</Link>.
-        </div>
+      {/* ── AFTER THE EVENT (completed; archived is unreachable — the context lists no archived event) —
+          Stage 4's finished board (D1, D6): How it finished · Next year · Summary's door. ── */}
+      {isFinished && currentTournament?.id && visibleStats.recap && (
+        <FinishedBoard
+          recap={visibleStats.recap}
+          tournament={{
+            id: currentTournament.id,
+            name: currentTournament.name,
+            year: currentTournament.year ?? null,
+            status,
+            startDate: currentTournament.startDate ?? null,
+          }}
+          base={base}
+          planHref={`${subscriptionHref}?plan=tournament_plus`}
+          hasSummary={hasSummary}
+          canClone={canReuseSetup}
+          canArchive={hasCapability(userRole ?? 'official', userCapabilities, 'create_tournaments')}
+          tournamentLimit={currentOrg?.tournamentLimit ?? 9999}
+          slotHolders={tournaments.length}
+          archive={archiveEvent}
+        />
       )}
 
       {/* ── POPULATE-FROM MODAL ──────────────────────────── */}
@@ -2306,26 +2219,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ── ARCHIVE CONFIRM ───────────────────────────────── */}
-      {showArchiveConfirm && (
-        <div style={kx(MODAL_OVERLAY_LEGACY, MODAL_OVERLAY_KIT)}>
-          <div className="modal" style={{ maxWidth: 420, width: '100%' }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 style={{ margin: 0 }}>Archive this tournament?</h3>
-              <button className="btn btn-ghost btn-data" onClick={() => setShowArchiveConfirm(false)}>✕</button>
-            </div>
-            <p style={kx({ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.75rem' }, KIT_INK.tertiary)}>
-              {ARCHIVE_CONFIRM_BODY}
-            </p>
-            {archiveError && <p style={kx({ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }, KIT_INK.danger)}>{archiveError}</p>}
-            <div className="modal-footer">
-              <button className="btn btn-ghost btn-data" onClick={() => setShowArchiveConfirm(false)} disabled={archiving}>Cancel</button>
-              <button className="btn btn-danger btn-data" onClick={handleArchive} disabled={archiving}>{archiving ? 'Archiving…' : 'Archive Tournament'}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── ACTIVATE CONFIRM ──────────────────────────────── */}
       {showActivateConfirm && (
         <div style={kx(MODAL_OVERLAY_LEGACY, MODAL_OVERLAY_KIT)}>
@@ -2373,29 +2266,36 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ── MARK COMPLETE CONFIRM (one-click finalize) ────────
-          Mirrors the Settings "Mark as Completed?" warning; the confirm is lime
-          (positive, reopenable milestone) — Archive stays the only danger action. */}
-      {showCompleteConfirm && (
-        <div style={kx(MODAL_OVERLAY_LEGACY, MODAL_OVERLAY_KIT)}>
-          <div className="modal" style={{ maxWidth: 420, width: '100%' }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 style={{ margin: 0 }}>Mark this tournament complete?</h3>
-              <button className="btn btn-ghost btn-data" onClick={() => { setShowCompleteConfirm(false); setCompleteError(''); }}>✕</button>
-            </div>
-            <p style={kx({ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.75rem' }, KIT_INK.tertiary)}>
-              This locks the tournament. Registrations close and all event data — scores, standings, schedules, divisions, and registrations — becomes read-only and final.
-              {visibleStats.notifyTeamsOnComplete ? ' Team contacts will receive a results summary email.' : ''}
-              {' '}You can reopen it anytime by setting the status back to Active.
-            </p>
-            {completeError && <p style={kx({ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }, KIT_INK.danger)}>{completeError}</p>}
-            <div className="modal-footer">
-              <button className="btn btn-ghost btn-data" onClick={() => { setShowCompleteConfirm(false); setCompleteError(''); }} disabled={completing}>Cancel</button>
-              <button className="btn btn-lime btn-data" onClick={handleComplete} disabled={completing}>{completing ? 'Marking…' : 'Mark Complete'}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── MARK COMPLETE — the "ready" card's one button asks first, in the kit's question window, with the
+          record's own sentence (Tournament admin redesign Stage 4, P5: one home for every status sentence;
+          it says the results email only when it will send). ── */}
+      {showCompleteConfirm && currentTournament && (() => {
+        const q = statusConfirm('complete', {
+          name: currentTournament.name,
+          startDate: currentTournament.startDate ?? null,
+          today: tournamentToday(),
+          finiteSlots: (currentOrg?.tournamentLimit ?? 9999) < 9999,
+          willEmailTeams: visibleStats.notifyTeamsOnComplete,
+        });
+        const close = () => { if (!completing) { setShowCompleteConfirm(false); setCompleteError(''); } };
+        return (
+          <KitDialog
+            kind="question"
+            title={q.title}
+            onClose={close}
+            busy={completing}
+            footer={(
+              <>
+                <button type="button" className="btn btn-outline" onClick={close} disabled={completing}>Cancel</button>
+                <button type="button" className="btn btn-lime" onClick={handleComplete} disabled={completing}>{q.action}</button>
+              </>
+            )}
+          >
+            <p>{q.body}</p>
+            {completeError && <p role="alert">{completeError}</p>}
+          </KitDialog>
+        );
+      })()}
     </div>
   );
 }

@@ -1,842 +1,126 @@
-.page {
-  max-width: 1060px;
-  /* Scoped token for .modalError below. */
-  --modal-error-text: #fecaca; /* token-exempt: lighter red-200 tint, no matching danger token */
-}
-
-.pageHeader {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.headerIcon {
-  width: 48px;
-  height: 48px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--logic-lime);
-  flex-shrink: 0;
-}
-
-.pageTitle {
-  margin: 0;
-  color: var(--white);
-  font-family: var(--font-data);
-  font-size: 1.75rem;
-  font-weight: 900;
-}
-
-.pageSub,
-.muted {
-  margin: 0.25rem 0 0;
-  color: var(--white-60);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.lockedCard,
-.divisionCard {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-}
-
-.lockedCard {
-  max-width: 760px;
-  padding: 1.5rem;
-}
-
-.lockedCard h2,
-.sectionHeader h2 {
-  margin: 0;
-  color: var(--white-90);
-  font-size: 1rem;
-  font-weight: 900;
-}
-
-.lockedCard p,
-.sectionHeader p {
-  margin: 0.45rem 0 1rem;
-  color: var(--white-55);
-  font-size: 0.9rem;
-  line-height: 1.55;
-}
-
-/* ── Zone 1 · Champions band (the recap headline) ── */
-.championBand {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  flex-wrap: wrap;
-  padding: 0.85rem 1rem;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  border-radius: 2px;
-  background: rgba(var(--logic-lime-rgb), 0.06);
-}
-
-.championBandLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.championBandList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.championChip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  padding: 0.25rem 0.55rem;
-  border-radius: 2px;
-  /* Dark ink on the light lime fill (matches .btn-lime). `var(--black)` is NOT a
-     defined token — only --black-10..40 exist — so it resolved to nothing and the
-     text inherited white, rendering unreadable white-on-lime. */
-  color: var(--on-lime);
-  background: var(--logic-lime);
-}
-
-.championChip strong {
-  font-family: var(--font-data);
-  font-size: 0.82rem;
-  font-weight: 900;
-}
-
-.championChipDiv {
-  font-size: 0.64rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  opacity: 0.7;
-}
-
-.metricGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.metricCard {
-  min-width: 0;
-  padding: 1rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255,255,255,0.025);
-}
-
-.metricCard svg {
-  color: var(--logic-lime);
-}
-
-.metricCard span,
-.metricCard small {
-  display: block;
-  margin-top: 0.5rem;
-  color: var(--white-60);
-  font-size: 0.76rem;
-  line-height: 1.4;
-}
-
-.metricCard strong {
-  display: block;
-  margin-top: 0.15rem;
-  color: var(--white);
-  font-size: 1.3rem;
-  font-weight: 900;
-}
-
-/* ── Zone 2 · Share the results (compact, secondary) ── */
-.zoneTitle {
-  margin: 0 0 0.65rem;
-  color: var(--white-90);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.sharePanel {
-  margin-top: 1.25rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--border-2);
-  border-radius: 2px;
-  background: rgba(255,255,255,0.025);
-}
-
-.shareActions {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-/* Value reflection — visible, quiet, no ask */
-.valueReflection {
-  margin: 0.9rem 0 0;
-  color: var(--white-55);
-  font-size: 0.78rem;
-  line-height: 1.5;
-}
-
-/* ── Zone 3 · What's next (opt-in, collapsed) ── */
-.whatsNextCard {
-  margin-top: 1.25rem;
-}
-
-.whatsNextPrimary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.whatsNextPrimary strong {
-  display: block;
-  color: var(--white-90);
-  font-size: 0.92rem;
-  font-weight: 900;
-}
-
-.whatsNextPrimary p {
-  margin: 0.3rem 0 0;
-  max-width: 46ch;
-  color: var(--white-55);
-  font-size: 0.82rem;
-  line-height: 1.5;
-}
-
-.whatsNextNote {
-  margin: 0.75rem 0 0;
-  color: var(--white-55);
-  font-size: 0.76rem;
-  line-height: 1.45;
-}
-
-.discoveryLine {
-  margin: 1rem 0 0;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--border-2);
-  color: var(--white-55);
-  font-size: 0.78rem;
-  line-height: 1.5;
-}
-
-.discoveryLink {
-  color: var(--logic-lime);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.discoveryLink:hover {
-  text-decoration: underline;
-}
-
-.successHero {
-  padding: 0;
-}
-
-.successHeader {
-  max-width: 760px;
-}
-
-.successBadge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 0.15rem 0.5rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  border-radius: 2px;
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  font-size: 0.68rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.successHeader h2 {
-  margin: 0.75rem 0 0;
-  color: var(--white);
-  font-family: var(--font-data);
-  font-size: 1.35rem;
-  font-weight: 900;
-}
-
-.successHeader p {
-  margin: 0.5rem 0 0;
-  color: var(--white-60);
-  font-size: 0.9rem;
-  line-height: 1.55;
-}
-
-.successGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 1rem;
-  margin-top: 1.25rem;
-}
-
-.successPanel {
-  min-width: 0;
-  padding: 1rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  border-radius: 2px;
-  background: rgba(0,0,0,0.16);
-}
-
-.successPanel h3 {
-  margin: 0 0 0.75rem;
-  color: var(--white-90);
-  font-size: 0.86rem;
-  font-weight: 900;
-}
-
-.copySummaryList,
-.copyList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.copySummaryList li,
-.copyList li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  color: var(--white-60);
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
-.copySummaryList svg {
-  flex: 0 0 auto;
-  margin-top: 0.12rem;
-  color: var(--logic-lime);
-}
-
-.nextStepList {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.nextStepLink {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-width: 0;
-  padding: 0.7rem 0.75rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  color: inherit;
-  background: rgba(var(--blueprint-blue-rgb), 0.055);
-  text-decoration: none;
-}
-
-.nextStepLink:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.35);
-  background: rgba(var(--logic-lime-rgb), 0.055);
-}
-
-.nextStepLink strong,
-.nextStepLink small {
-  display: block;
-}
-
-.nextStepLink strong {
-  color: var(--white-90);
-  font-size: 0.82rem;
-  font-weight: 900;
-}
-
-.nextStepLink small {
-  margin-top: 0.2rem;
-  color: var(--white-45);
-  font-size: 0.74rem;
-  line-height: 1.35;
-}
-
-.nextStepLink svg {
-  flex: 0 0 auto;
-  color: var(--logic-lime);
-}
-
-.repeatModal {
-  width: min(720px, calc(100vw - 2rem));
-}
-
-.repeatModalIntro {
-  margin: 0.35rem 0 0;
-  color: var(--white-50);
-  font-size: 0.8rem;
-  line-height: 1.45;
-}
-
-.repeatModalBody {
-  padding: 1.25rem 1.5rem;
-}
-
-.repeatFormGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(120px, 0.4fr);
-  gap: 0.85rem;
-}
-
-.fieldLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  min-width: 0;
-  color: var(--white-70);
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.fieldLabel span {
-  color: var(--white-40);
-  font-weight: 500;
-}
-
-.fieldLabel:first-child,
-.fieldLabel:nth-child(3) {
-  grid-column: span 2;
-}
-
-.copyGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-  margin-top: 1rem;
-}
-
-.copyPanel {
-  min-width: 0;
-  padding: 0.9rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  border-radius: 2px;
-  background: rgba(255,255,255,0.025);
-}
-
-.copyPanel h4 {
-  margin: 0 0 0.65rem;
-  color: var(--white-90);
-  font-size: 0.8rem;
-  font-weight: 900;
-}
-
-.checkDot,
-.neverDot {
-  flex: 0 0 auto;
-  width: 0.48rem;
-  height: 0.48rem;
-  margin-top: 0.34rem;
-  border-radius: 999px;
-}
-
-.checkDot {
-  background: var(--logic-lime);
-}
-
-.neverDot {
-  border: 1px solid rgba(255,255,255,0.35);
-  background: transparent;
-}
-
-.modalNote {
-  margin: 1rem 0 0;
-  color: var(--white-50);
-  font-size: 0.78rem;
-  line-height: 1.45;
-}
-
-.modalError {
-  margin-top: 0.85rem;
-  padding: 0.65rem 0.75rem;
-  border: 1px solid rgba(var(--danger-rgb),0.35);
-  border-radius: 2px;
-  color: var(--modal-error-text);
-  background: rgba(var(--danger-rgb),0.08);
-  font-size: 0.8rem;
-  line-height: 1.45;
-}
-
-.section {
-  margin-top: 1.25rem;
-}
-
-.sectionHeader {
-  margin-bottom: 0.75rem;
-}
-
-.sectionHeader p {
-  margin-bottom: 0;
-}
-
-.divisionList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.divisionCard {
-  padding: 1rem;
-}
-
-.divisionHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.divisionHeader h3 {
-  margin: 0;
-  color: var(--white-90);
-  font-size: 1rem;
-  font-weight: 900;
-}
-
-.divisionHeader p {
-  margin: 0.3rem 0 0;
-  color: var(--white-60);
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
-.championBadge,
-.leaderBadge,
-.neutralBadge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0.25rem 0.55rem;
-  border-radius: 2px;
-  font-size: 0.74rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.championBadge {
-  color: var(--on-lime); /* dark ink on lime (matches .btn-lime); see .championChip note */
-  background: var(--logic-lime);
-}
-
-.leaderBadge {
-  color: var(--logic-lime);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-}
-
-.neutralBadge {
-  color: var(--white-45);
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  background: rgba(255,255,255,0.025);
-}
-
-.divisionStats {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-top: 0.85rem;
-}
-
-.divisionStats span {
-  color: var(--white-60);
-  font-size: 0.76rem;
-}
-
-@media (max-width: 920px) {
-  .metricGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .successGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .pageHeader,
-  .divisionHeader {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .metricGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .shareActions :global(.btn),
-  .whatsNextPrimary :global(.btn) {
-    justify-content: center;
-    min-height: 44px;
-    width: 100%;
-  }
-
-  .repeatModal {
-    width: calc(100vw - 1rem);
-  }
-
-  .repeatModalBody {
-    padding: 1rem;
-  }
-
-  .repeatFormGrid,
-  .copyGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .fieldLabel:first-child,
-  .fieldLabel:nth-child(3) {
-    grid-column: auto;
-  }
-
-  .successHero {
-    padding: 0;
-  }
-
-  .nextStepLink {
-    align-items: flex-start;
-  }
-}
-
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   SUMMARY (page.tsx — Tournament admin redesign Stage 4, D3, hub v24). Rewritten whole on the kit
+   (2026-10-06): the old look's 54 kit-scope restatements, the champions band, the division recap, the
+   four figure cards, "Share the results", "What's next" and Summary's own reuse window left with the
+   screen they drew. The cards are the shared after-event parts (components/admin/tournament/
+   AfterEventParts); this file lays them out and draws the printed page.
+   TOKENS ONLY on screen; the printed page's paper and ink are literal, each marked (they print the same
+   whatever the organizer's theme).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.page { display: flex; flex-direction: column; gap: 0.9rem; max-width: 68rem; min-width: 0; }
+/* The cards space themselves by the page's gap. */
+.page > section,
+.top > section { margin: 0; }
+.muted { margin: 0; font-size: var(--type-body); color: var(--text-tertiary); }
+
+/* How it finished and the event in numbers: stacked on a phone, side by side at a desk (as drawn). */
+.top { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+@media (min-width: 1024px) {
+  .top { display: grid; grid-template-columns: minmax(0, 1fr) 25rem; gap: 1.25rem; align-items: start; }
+}
+
+/* The Tournament plan's page: one sentence, then the lock line. */
+.lockedSentence { margin: 0 0 0.25rem; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+
+/* The quiet last line: what else the product runs (kept for /marketing, 2026-10-06). */
+.closing { margin: 0.1rem 0.15rem 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+.closingLink { color: var(--home-olive); text-decoration: underline; text-underline-offset: 2px; }
+.closingLink:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+/* At touch widths the link clears the 44px floor (the layout sweep, 2026-10-06): it keeps its place in the
+   sentence, as one unbroken box the height of a thumb — the portal foot link's floor. */
+@media (max-width: 768px) {
+  .closingLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
+
+/* ── THE PRINTED PAGE (J1-110): a copy portalled onto <body>, hidden on screen; in print every other
+   child of <body> leaves the paper (the coaches portal's certificate form), so no strip, rail, header,
+   button, bar or demo bar prints around it. One Letter page at the drawing's sizes. ── */
+.printCopy { display: none; }
 @media print {
-  .sharePanel,
-  .valueReflection,
-  .whatsNextCard {
-    display: none;
+  :global(body):has(> .printCopy) > :global(*):not(.printCopy) { display: none !important; }
+  :global(body):has(> .printCopy) {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important; /* token-exempt: paper, whatever the admin's theme */
   }
-
-  .page {
-    max-width: none;
+  .printCopy {
+    display: block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
-   Post-event summary on the coaches portal's kit — the recap, the share panel, the what's-next card
-   (its own chrome; `CollapsibleCard`'s kit layer is the lead's) and the repeat-setup success section.
-   All three header variants (`.pageHeader`/`.headerIcon`/`.pageTitle`/`.pageSub`) now render only
-   inside `AdminPageHeader`'s `legacy` prop, so none of them mount while the switch is on — no kit rule
-   is needed for that markup. `--modal-error-text` above stays a legacy-only hex (already token-exempt,
-   untouched); the kit's error line takes `--danger-light` directly on `.modalError`. ⚠ TOKENS ONLY. */
-:global([data-admin-kit]) .muted { color: var(--text-tertiary); }
-
-:global([data-admin-kit]) .lockedCard,
-:global([data-admin-kit]) .divisionCard {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .lockedCard h2,
-:global([data-admin-kit]) .sectionHeader h2 {
-  font-family: var(--font-display);
-  font-size: var(--type-heading);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .lockedCard p,
-:global([data-admin-kit]) .sectionHeader p { color: var(--text-secondary); }
-
-/* ── Zone 1 · Champions band — an accent banner, its "Champions" label the kit eyebrow ── */
-:global([data-admin-kit]) .championBand {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .championBandLabel {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  color: var(--text-secondary);
-}
-/* A champion is a solid highlight (R1's ink-on-lime), not a tinted verdict chip — the band's chip and
-   the division recap's badge alike. */
-:global([data-admin-kit]) .championChip,
-:global([data-admin-kit]) .championBadge {
-  border-radius: 999px;
-  color: var(--home-lime-ink);
-  background: var(--home-lime);
-}
-:global([data-admin-kit]) .championChipDiv { opacity: 1; color: var(--home-lime-ink); }
-
-:global([data-admin-kit]) .metricCard {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .metricCard svg { color: var(--text-tertiary); }
-:global([data-admin-kit]) .metricCard span {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .metricCard small {
+.paper {
+  box-sizing: border-box;
+  width: 8.5in;
+  min-height: 10.9in;
+  padding: 0.67in 0.75in;
+  background: #FFFFFF; /* token-exempt: paper, whatever the admin's theme */
+  color: #1F1B14; /* token-exempt: print ink, independent of the screen's theme */
   font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .metricCard strong {
-  font-family: var(--font-display);
-  font-weight: 700;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Zone 2 · Share the results ── */
-:global([data-admin-kit]) .zoneTitle {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .sharePanel {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .valueReflection { color: var(--text-tertiary); }
-
-/* ── Zone 3 · What's next (this card's own copy; `CollapsibleCard`'s chrome is the lead's) ── */
-:global([data-admin-kit]) .whatsNextPrimary strong {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .whatsNextPrimary p { color: var(--text-secondary); }
-:global([data-admin-kit]) .whatsNextNote { color: var(--text-secondary); }
-:global([data-admin-kit]) .discoveryLine {
-  border-top-color: var(--home-line);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .discoveryLink { color: var(--home-olive); }
-
-/* ── Repeat-setup success section ── */
-/* A fact F3 moved out of the header, at the top of the section it describes. */
-:global([data-admin-kit]) .kitLede {
-  margin: -0.25rem 0 1.25rem;
-  font-size: var(--type-support);
-  color: var(--text-secondary);
+  font-size: 13px;
   line-height: 1.5;
 }
-/* Names the plan tier — a quiet chip, not a verdict. */
-:global([data-admin-kit]) .successBadge {
+.paperEyebrow {
+  margin: 0;
   font-family: var(--font-data);
-  font-size: var(--type-token);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */
+}
+.paperTitle {
+  margin: 6px 0 2px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #1F1B14; /* token-exempt: print ink, independent of the screen's theme */
+}
+.paperDates { margin: 0 0 26px; color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */ }
+.paperHeading {
+  margin: 22px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #BDB5A6; /* token-exempt: print rule, independent of the screen's theme */
+  font-family: var(--font-display);
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  border-radius: 999px;
-  color: var(--text-secondary);
-  background: var(--home-olive-soft);
-  border-color: var(--home-line-strong);
+  text-transform: uppercase;
+  color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */
 }
-:global([data-admin-kit]) .successHeader h2 {
+.paperTable { width: 100%; border-collapse: collapse; font-size: var(--type-body); }
+.paperTable th,
+.paperTable td {
+  padding: 7px 4px;
+  border-bottom: 1px solid #E1DBD0; /* token-exempt: print rule, independent of the screen's theme */
+  text-align: left;
+  font-weight: 400;
+  vertical-align: top;
+}
+.paperTable th {
   font-family: var(--font-display);
-  font-size: var(--type-heading);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .successHeader p { color: var(--text-secondary); }
-:global([data-admin-kit]) .successPanel {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .successPanel h3 {
-  font-family: var(--font-data);
   font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */
 }
-:global([data-admin-kit]) .copySummaryList li,
-:global([data-admin-kit]) .copyList li { color: var(--text-secondary); }
-:global([data-admin-kit]) .copySummaryList svg { color: var(--home-olive); }
-
-:global([data-admin-kit]) .nextStepList { gap: 0.6rem; }
-:global([data-admin-kit]) .nextStepLink {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-  transition: border-color 0.15s ease, background 0.15s ease;
+.paperTable b { font-weight: 700; }
+.paperNum { text-align: right !important; font-variant-numeric: tabular-nums; }
+.paperFigures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.paperFigures b { display: block; font-size: 22px; font-weight: 800; line-height: 1.1; }
+.paperFigures span { font-size: 11.5px; color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */ }
+.paperFoot {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 40px;
+  font-size: 11px;
+  color: #7A7266; /* token-exempt: print ink, independent of the screen's theme */
 }
-:global([data-admin-kit]) .nextStepLink:hover {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .nextStepLink strong { color: var(--text-primary); }
-:global([data-admin-kit]) .nextStepLink small { color: var(--text-tertiary); }
-:global([data-admin-kit]) .nextStepLink svg { color: var(--home-olive); }
-
-/* ── Repeat-setup dialog's own copy (the surrounding `.modal`/`.form-input` chrome is global,
-   not yet on the kit — see the report to the lead) ── */
-:global([data-admin-kit]) .repeatModalIntro { color: var(--text-secondary); }
-:global([data-admin-kit]) .fieldLabel {
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-:global([data-admin-kit]) .fieldLabel span { color: var(--text-tertiary); }
-:global([data-admin-kit]) .copyPanel {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .copyPanel h4 {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .checkDot { background: var(--home-olive); }
-:global([data-admin-kit]) .neverDot { border-color: var(--home-line-strong); }
-:global([data-admin-kit]) .modalNote { color: var(--text-tertiary); }
-:global([data-admin-kit]) .modalError { color: var(--danger-light); }
-
-/* ── Division recap ── */
-:global([data-admin-kit]) .divisionHeader h3 { color: var(--text-primary); }
-:global([data-admin-kit]) .divisionHeader p { color: var(--text-secondary); }
-:global([data-admin-kit]) .divisionStats span { color: var(--text-tertiary); }
-:global([data-admin-kit]) .leaderBadge {
-  border-radius: 999px;
-  color: var(--info-light);
-  background: rgba(var(--info-rgb), 0.08);
-  border-color: rgba(var(--info-rgb), 0.3);
-}
-:global([data-admin-kit]) .neutralBadge {
-  border-radius: 999px;
-  color: var(--text-secondary);
-  background: var(--home-olive-soft);
-  border-color: var(--home-line-strong);
-}
+/* Each division's standings stay together where they can; the page never splits a row. */
+.paperTable tr { break-inside: avoid; }

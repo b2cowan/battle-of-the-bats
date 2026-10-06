@@ -14,6 +14,11 @@ import { Lock } from 'lucide-react';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import styles from './PlanLockLine.module.css';
 
+/** Plan & billing with the Tournament Plus panel asked for — the door every Tournament Plus lock line opens. */
+export function tournamentPlusPanelHref(orgSlug: string): string {
+  return `/${orgSlug}/admin/tournaments/settings/subscription?plan=tournament_plus`;
+}
+
 export default function PlanLockLine({ href, plan, children }: {
   /** Plan & billing with the plan's panel asked for (`…/settings/subscription?plan=tournament_plus`). */
   href: string;

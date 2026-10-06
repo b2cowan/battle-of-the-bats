@@ -1,0 +1,35 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE FINISHED BOARD's own layout (FinishedBoard.tsx — Tournament admin redesign Stage 4, D1, hub v24).
+   The cards are the shared after-event parts (components/admin/tournament/AfterEventParts); this file
+   lays them out: one column on a phone and a tablet; at a desk How it finished takes the wide column and
+   Next year + Summary's door a 330px one — the game-day board's own split (Stage 1), so the two states
+   of one board line up. Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+.board { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+.main,
+.side { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+/* The cards space themselves by the column's gap, not their own margin. */
+.main > *,
+.side > * { margin: 0; }
+@media (min-width: 1180px) {
+  .board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 20.5rem;
+    gap: 1.25rem;
+    align-items: start;
+  }
+}
+
+/* The Tournament plan's Next year: the truth about its one slot, Archive (white, asks first), the lock. */
+.slotSentence { margin: 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+.archive { min-height: var(--admin-control-h); }
+/* Summary's lock line, alone, in the door card's own place. */
+.lockSolo { padding: 0 0.25rem; }
+.error { margin: 0.5rem 0 0; color: var(--danger); font-size: var(--type-support); }
+
+@media (max-width: 768px) {
+  .archive { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .archive { width: 100%; }
+}

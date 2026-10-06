@@ -22,6 +22,8 @@ import { useTournament } from '@/lib/tournament-context';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { resolvePhase, isGameDay } from '@/lib/tournament-phase';
 import { resolveFlip, primaryTarget } from '@/lib/flip-twins';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { BOARD_WORDS } from '@/lib/after-event-words';
 import styles from './AdminContextStrip.module.css';
 
 const STRIP_HEIGHT = 44; // px — keep in sync with .strip height in the CSS
@@ -98,12 +100,18 @@ export default function AdminContextStrip() {
         firstGameStarted: Boolean(currentTournament.firstGameStarted),
       }),
     });
+    // A finished event's door to Summary (Tournament admin redesign Stage 4, the /design review): never
+    // offered on a plan without Summary (it would invite the organizer into a locked page), and it gives
+    // way on the finished board, which carries the same door as its own card.
+    const finished = phase === 'completed' || phase === 'archived';
+    const hasSummary = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'post_tournament_summary'));
+    const onBoard = pathname.includes('/admin/tournaments/dashboard');
     // In priority order; open / game day with nothing pending → nothing to surface.
     const candidates: (StripAction | null)[] = [
       results > 0 ? { key: 'finalize', label: `${results} game${results === 1 ? '' : 's'} to finalize`, href: `${base}/results`, icon: <Trophy size={15} />, count: results } : null,
       regs > 0 ? { key: 'review', label: `${regs} team${regs === 1 ? '' : 's'} to review`, href: `${base}/registrations`, icon: <Users size={15} />, count: regs } : null,
       phase === 'draft' ? { key: 'setup', label: 'Finish tournament setup', href: `${base}/dashboard`, icon: <ClipboardList size={15} />, count: 0 } : null,
-      phase === 'completed' || phase === 'archived' ? { key: 'summary', label: 'Review event summary', href: `${base}/summary`, icon: <FileText size={15} />, count: 0 } : null,
+      finished && hasSummary && !onBoard ? { key: 'summary', label: BOARD_WORDS.stripSummary, href: `${base}/summary`, icon: <FileText size={15} />, count: 0 } : null,
     ];
     // Never point at the page you're on (J1-116) — an action whose destination IS this page gives
     // way to the next one. Results had this rule alone (its tab badge already carries the count);
@@ -112,7 +120,7 @@ export default function AdminContextStrip() {
     // can lag a cross-org navigation, and the old Results check was immune to that (/review 09-29).
     const isHere = (href: string) => pathname.includes(`/admin/tournaments${href.slice(base.length)}`);
     return candidates.find((c): c is StripAction => c !== null && !isHere(c.href)) ?? null;
-  }, [onTournamentRoute, onChatPage, pathname, base, currentTournament, worklist]);
+  }, [onTournamentRoute, onChatPage, pathname, base, currentTournament, currentOrg, worklist]);
 
   // Visible unless dismissed for the same action whose count hasn't increased.
   const visible = !!action && hydrated && !(
