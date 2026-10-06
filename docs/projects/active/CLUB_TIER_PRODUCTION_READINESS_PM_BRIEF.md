@@ -183,6 +183,41 @@ to the team's cash but not equal to it, and the team's own figures arrive with 3
 Accounting overview's totals, Budget, Budget vs. Actual and the board summary. Left to 3c: the club's
 own year. Left to Stage 7: tournament fees in the books.
 
+**Stage 3b — the budget, Budget vs. Actual and the board summary: drawn 2026-10-05 (hub version 36,
+Mockups → Stage 3b; the month-by-month view added 2026-10-06); all nine questions ratified 2026-10-06; session 1 built (below).** What changes, by person, if the drawings are
+ratified. **The treasurer** plans the club's year the way a coach plans a season: revenue first, then
+spending, with a line billed to the teams as many times as it needs (today a second bill from one line is
+refused and the rest is stranded), and next year one pick away. Budget vs. Actual finally has an actual
+for every line — today it has none and promises "a future update" — read the same way the coach's is:
+Collected, Spent, Off-plan and Cash on hand across the top, then the statement. It also gets the coach's month-by-month view, ending each month on what the club held, because a club pays its big bills first and collects from the teams months later; the budget can be laid out by month the same way. Bank reconciliation is left for its own project, for both the club and the coaches. **The president** gets
+the one page they would show the board, on the Overview tab: where the club stands today (its own cash,
+what the teams owe it, what waits on the club), how the year is going against the budget, and each team's
+standing, with the team's own cash shown beside it, labelled as held by the team and never added into the
+club's figures. Today the Overview's four figures add every book together, the teams' included, so the
+club's "net position" counts money that belongs to the teams. **A head coach** sees one new sentence on
+the Club tab saying what the club can read of the team's money (its cash on hand, and what it paid shared
+payees) and what it never reads. Why it matters: a club board asks "how much money do we have, and are we
+on budget?", and today the screen that should answer gives a wrong total and no actuals. Trade-off
+proposed: club spending is matched to the budget the way a coach's is, by budget word, rather than the
+per-line link this plan first wrote; that keeps the two sides reading alike, at the cost of old club
+lines showing "Not filed" until someone files them. Success = every figure on these pages has one written
+definition held by a build check, the walks pass, and a treasurer can hand the board report to the board
+without explaining any number on it.
+
+**Stage 3b, session 1 (the server half): built and committed 2026-10-06 (26277b5f), on the test system, not yet released.** Nothing
+a treasurer sees has changed yet; the new pages come with session 2. What now works underneath them:
+spending can be filed under a budget word and is matched to the plan that way; a budget line can be
+billed to the teams as many times as it needs, but never for more than is left on it; the plan carries
+revenue as well as spending; and Budget vs. Actual, the month-by-month view and the board summary all
+read the same figures, each written down once and held by a build check. Each team's own cash is read
+from the coach's books and is never added into the club's money. Someone limited to some team groups
+sees the club's totals, but never the names of teams outside their groups. Two calls were made on the
+way. Money the club pays a team on request is filed under one fixed word, "Team support", rather than a
+word each club invents. An unpaid installment stays in the month it was due. Until session 2 replaces
+the old screens, the ledger shows every older line as "Not filed". That is the agreed no-backfill
+behaviour. Nothing reaches a real club before release: Club is not on sale, and production has no club
+budget lines. The database change must reach production before this code does.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money
