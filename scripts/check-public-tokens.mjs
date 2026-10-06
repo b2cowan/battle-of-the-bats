@@ -113,6 +113,7 @@ const SCOPES = {
       'components/notifications/notifications-page.module.css',
       'components/notifications/NotificationUndoNote.module.css',
       'components/notifications/NotificationMessage.module.css',
+      'components/notifications/NotificationReader.module.css',
       'components/notifications/notification-buttons.module.css',
       'components/notifications/EnablePushBanner.module.css',
     ],

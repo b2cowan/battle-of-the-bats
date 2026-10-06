@@ -15,6 +15,10 @@
  * STEP 2 · the drawer — on a computer the bell opens a drawer holding the whole list, and a click
  * OPENS a notification in a pane beside it (D1, D2, D6, D7). One message block for every frame; the
  * drawer reads the same feed as the pages; nothing on a computer links to the Notifications pages.
+ *
+ * STEP 3 · the admin's Notifications page opens notifications too (D5) — in the coach page's own
+ * reader, one file for both pages (owner, 2026-10-06, hub screen 10 Q1); nothing in the list
+ * navigates on a tap any more, and nothing the admin page loads reaches `coaches.module.css`.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import assert from 'node:assert/strict';
@@ -35,7 +39,10 @@ const BELL = 'components/notifications/NotificationBell.tsx';
 const ADMIN_STRIP = 'components/admin/AdminTopStrip.tsx';
 const COACH_STRIP = 'components/coaches/CoachTopStrip.tsx';
 const BODY = 'components/notifications/NotificationFeedBody.tsx';
-const READER = 'components/coaches/CoachNotificationReader.tsx';
+const READER = 'components/notifications/NotificationReader.tsx';
+const ADMIN_PAGE_FRAME = 'components/notifications/NotificationsPageContent.tsx';
+const COACH_PAGE_FRAME = 'components/coaches/CoachNotificationsPage.tsx';
+const REPO = path.join(import.meta.dirname, '..', '..');
 
 /** One action's branch of the route's POST: from its `body.action === '…'` to the next one. */
 function routeBranch(action: string): string {
@@ -221,7 +228,7 @@ describe('Step 2 · the bell opens a drawer, and a click opens a notification be
     assert.match(pane, /portal=\{portal\}/);
     assert.doesNotMatch(pane, /onClose=/, 'the pane closes with its own ×, not a Close button');
     const reader = messageElement(READER);
-    assert.match(reader, /portal="coach"/);
+    assert.match(reader, /portal=\{portal\}/, 'the reader speaks the words of the page that opened it (step 3)');
     assert.match(reader, /onClose=\{onClose\}/);
     // The reader's words live only in the block now — no second stamp, destination or button row.
     assert.doesNotMatch(readCode(READER), /notificationStamp|notificationDestination|<Trash2|<ArrowRight/);
@@ -237,8 +244,7 @@ describe('Step 2 · the bell opens a drawer, and a click opens a notification be
     }
     // The bell opens the drawer, loaded on the click (the bell is on every page; the drawer is not).
     assert.match(readCode(BELL), /const NotificationDrawer = dynamic\(\(\) => import\('\.\/NotificationDrawer'\), \{ ssr: false \}\);/);
-    const repo = path.join(import.meta.dirname, '..', '..');
-    assert.equal(existsSync(path.join(repo, 'components/notifications/NotificationPanel.tsx')), false, 'the old panel is gone');
+    assert.equal(existsSync(path.join(REPO, 'components/notifications/NotificationPanel.tsx')), false, 'the old panel is gone');
   });
 
   it('the drawer reads the pages\' feed, opens on Unread (Q3), and keeps what it opened (D2)', () => {
@@ -306,5 +312,80 @@ describe('Step 2 · the bell opens a drawer, and a click opens a notification be
       readCode(DRAWER),
       /<PortalKitRoot>\s*<div style=\{\{ display: 'contents' \}\} \{\.\.\.coachWarmAttr\}>\{layer\}<\/div>\s*<\/PortalKitRoot>/,
     );
+  });
+});
+
+/**
+ * Every repo file a module loads, at any depth — static imports, re-exports and `import('…')` — through
+ * `@/` and relative specifiers only (packages are not ours to walk). Comments are stripped first, so a
+ * comment that NAMES a stylesheet is not an import of it. ⚠ A stylesheet is walked too: a CSS module's
+ * `composes: x from '…'` and `@import` load the sheet they name, and `composes` is exactly how the coach
+ * stylesheet has been borrowed before — a leak through one would pass a walker that stopped at `.css`.
+ */
+function reachableFrom(entry: string): Set<string> {
+  const seen = new Set<string>();
+  const resolve = (from: string, spec: string): string | null => {
+    const base = spec.startsWith('@/') ? path.join(REPO, spec.slice(2)) : path.resolve(path.dirname(path.join(REPO, from)), spec);
+    for (const ext of ['', '.tsx', '.ts', '/index.tsx', '/index.ts']) {
+      const abs = base + ext;
+      if (existsSync(abs) && /\.(tsx?|css)$/.test(abs)) return path.relative(REPO, abs).split(path.sep).join('/');
+    }
+    return null;
+  };
+  const walk = (rel: string) => {
+    if (seen.has(rel)) return;
+    seen.add(rel);
+    const specs = rel.endsWith('.css')
+      ? [...readSource(rel).replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(?:composes:[^;]*?from\s+|@import\s+(?:url\(\s*)?)['"]([^'"]+)['"]/g)].map(m => m[1])
+      : [...readCode(rel).matchAll(/(?:from\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/g)].map(m => m[1]);
+    for (const spec of specs) {
+      if (!spec.startsWith('@/') && !spec.startsWith('.')) continue;
+      const next = resolve(rel, spec);
+      if (next) walk(next);
+    }
+  };
+  walk(entry);
+  return seen;
+}
+
+describe('Step 3 · the admin\'s Notifications page opens notifications (D5)', () => {
+  it('a tap opens the reader on the admin page, in the admin\'s words', () => {
+    const page = readCode(ADMIN_PAGE_FRAME);
+    assert.match(page, /<NotificationFeedBody feed=\{feed\} onOpen=\{openEntry\} \/>/);
+    assert.match(functionBody(page, 'openEntry'), /setReading\(entry\);\s*void feed\.markSeen\(entryMembers\(entry\)\);/);
+    assert.match(page, /<NotificationReader entry=\{reading\} portal="admin" feed=\{feed\} onClose=\{\(\) => setReading\(null\)\} \/>/);
+  });
+
+  it('one reader for both pages (Q1): the coach page wears the same file, and the old one is gone', () => {
+    assert.match(readCode(COACH_PAGE_FRAME), /<NotificationReader entry=\{reading\} portal="coach" feed=\{feed\} onClose=\{\(\) => setReading\(null\)\} \/>/);
+    assert.equal(existsSync(path.join(REPO, 'components/coaches/CoachNotificationReader.tsx')), false, 'no second reader');
+    assert.match(readCode(READER), /onDone=\{n => \{ void feed\.clearRow\(n\); onClose\(\); \}\}/);
+    assert.match(readCode(READER), /onDelete=\{members => \{ feed\.deleteRows\(members\); onClose\(\); \}\}/);
+    // Done and Delete act on the LIVE row, in the feed, for every caller — the reader's and the drawer pane's
+    // snapshots predate the read, and a failed Done's rollback must not bring a read row back unread
+    // (/review 2026-09-25, fixed in the reader alone until the step-3 /simplify moved it here).
+    const feed = readCode(FEED);
+    assert.match(callbackBody(feed, 'clearRow'), /const n = items\.find\(x => x\.id === row\.id\) \?\? row;/);
+    assert.match(callbackBody(feed, 'deleteRows'), /members\.map\(m => items\.find\(x => x\.id === m\.id\) \?\? m\)/);
+  });
+
+  it('nothing in the notification list leaves the page on a tap — on either page (D1)', () => {
+    assert.match(readCode(BODY), /onOpen: \(entry: ActivityEntry\) => void;/, 'opening is required, not optional');
+    for (const file of [BODY, FEED, READER, ADMIN_PAGE_FRAME, COACH_PAGE_FRAME]) {
+      assert.doesNotMatch(readCode(file), /window\.location|\bmarkRead\b|\bbundleClick\b/, `${file} navigates on a tap`);
+    }
+  });
+
+  it('a delete on the admin page leaves the page\'s Undo note, at the column\'s foot (step 1 Q1)', () => {
+    const body = readCode(BODY);
+    assert.match(body, /<NotificationUndoNote feed=\{feed\} returnFocusTo=/);
+    assert.doesNotMatch(body, /placement="drawer"/);
+  });
+
+  it('nothing the admin page loads reaches the coach portal\'s ~945KB stylesheet', () => {
+    const loaded = reachableFrom(ADMIN_PAGE_FRAME);
+    assert.ok(loaded.has(READER) && loaded.has('components/coaches/CoachesBottomNav.module.css'), 'the walk reaches the reader and its sheet styles');
+    assert.equal(loaded.has('app/[orgSlug]/coaches/coaches.module.css'), false,
+      'the admin Notifications page must never load coaches.module.css — not through the reader, the message block, a hook or a stylesheet\'s composes');
   });
 });

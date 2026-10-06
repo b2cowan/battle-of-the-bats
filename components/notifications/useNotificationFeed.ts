@@ -15,9 +15,10 @@ import { DAY_ORDER, dayBucket, NOTIFICATION_DELETE_MAX_IDS } from '@/lib/notific
  * FRAMES (the admin title block; CoachPageHeader). The frame needs exactly two things from the feed
  * — whether "Mark all read" would do anything, and the handler — and the body needs the rest.
  *
- * ⚠ The admin page's row tap still navigates with a full document load after the mark-read round
- * trip (R8, deferred to a second pass by the owner; step 3 makes that page open the notification
- * instead). Do not "fix" that here without the URL-state half that goes with it.
+ * Nothing here navigates (Notifications Open in Place step 3, 2026-10-06): every surface OPENS a
+ * notification and reads it with `markSeen`; going on to its page is the opened message's own link, a
+ * full document load (R8, client navigation on tap, stays deferred with its URL-state half). The old
+ * admin tap — mark read, then `window.location` — went with `markRead` / `bundleClick`.
  */
 
 export const FEED_PAGE_SIZE = 40;
@@ -142,9 +143,9 @@ export function useNotificationFeed(
     }
   }, [orgId, loadingMore, withoutPending]);
 
-  // ── Mark read WITHOUT leaving (the coach reader, owner ruling 2026-09-25) ────────
-  // Opening a notification in the reader reads it; going on to its page is a second, separate
-  // choice. One call for a single row and a bundle alike — a bundle is read when it is opened.
+  // ── Mark read WITHOUT leaving (the reader, owner ruling 2026-09-25; every surface since step 3) ──
+  // Opening a notification reads it; going on to its page is a second, separate choice. One call
+  // for a single row and a bundle alike — a bundle is read when it is opened.
   const markSeen = useCallback(async (members: AppNotification[]) => {
     const unreadIds = members.filter(m => !m.readAt).map(m => m.id);
     if (unreadIds.length === 0) return;
@@ -154,19 +155,6 @@ export function useNotificationFeed(
     await Promise.all(unreadIds.map(id => postAction({ action: 'mark-read', id })));
   }, []);
 
-  // ── Mark read (single) + navigate — the ADMIN feed's tap (the coach feed opens the reader) ──
-  const markRead = useCallback(async (n: AppNotification) => {
-    await markSeen([n]);
-    if (n.link) window.location.href = n.link;
-  }, [markSeen]);
-
-  // ── Bundle: mark every member read at once, then open the type's list (admin tap) ──
-  const bundleClick = useCallback(async (members: AppNotification[]) => {
-    await markSeen(members);
-    const link = members.find(m => m.link)?.link;
-    if (link) window.location.href = link;
-  }, [markSeen]);
-
   // ── Clear — "I am finished with this one" (2026-09-06, mockup 9427bc24) ──────
   // The customer's word is DONE (owner ruling 2026-10-05, D8: beside a trash, "Clear" read as
   // delete); the action and `cleared_at` keep their names.
@@ -174,7 +162,11 @@ export function useNotificationFeed(
   // is the whole change: the zone used to answer "have you looked at it?" while its heading
   // promised "have you dealt with it?". Also stamps read, because a row you are finished with
   // should not sit unread — the server does the same, guarded, so a reload agrees.
-  const clearRow = useCallback(async (n: AppNotification) => {
+  const clearRow = useCallback(async (row: AppNotification) => {
+    // The LIVE row, not the caller's copy (as `deleteRows` below): an opened notification was read after it
+    // was handed over, and the rollback restores the row it holds — a failed Done must not put a read
+    // notification back to unread (/review 2026-09-25, once fixed in the reader alone; every caller now).
+    const n = items.find(x => x.id === row.id) ?? row;
     if (n.clearedAt) return;
     const now = new Date().toISOString();
     setItems(prev => prev.map(x =>
@@ -192,7 +184,7 @@ export function useNotificationFeed(
         x.id === n.id ? { ...x, clearedAt: null, readAt: n.readAt } : x,
       ));
     }
-  }, []);
+  }, [items]);
 
   // ── Mark all read — EVERYTHING (owner ruling 2026-10-05, D9) ────────────────
   // Needs attention included: a row leaves that zone on Done (`cleared_at`), never on read, so
@@ -311,7 +303,7 @@ export function useNotificationFeed(
   return {
     items, loading, loadingMore, hasMore, error, isEmpty,
     unreadOnly, setUnreadOnly, filter, setFilter,
-    reload: load, loadMore, markRead, markSeen, bundleClick, markAllRead, clearRow,
+    reload: load, loadMore, markSeen, markAllRead, clearRow,
     deleteRows, undoDelete, pendingDelete,
     ...view,
   };

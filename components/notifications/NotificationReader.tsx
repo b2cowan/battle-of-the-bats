@@ -1,18 +1,18 @@
 'use client';
 import { useEffect, useId, useRef } from 'react';
-import type { AppNotification } from '@/lib/types';
 import type { ActivityEntry } from '@/lib/notification-view';
-import NotificationMessage from '@/components/notifications/NotificationMessage';
+import NotificationMessage from './NotificationMessage';
+import type { NotificationFeed } from './useNotificationFeed';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
-import sheet from './CoachesBottomNav.module.css';
-import own from './CoachNotificationReader.module.css';
+import sheet from '@/components/coaches/CoachesBottomNav.module.css';
+import own from './NotificationReader.module.css';
 
 /**
- * THE NOTIFICATION READER — a coach notification, opened (owner ruling 2026-09-25, D3 option B, on
- * the mockup "One Row for Notifications"). A tap on a row in the coach feed opens this instead of
- * leaving the page: the whole message, the day and the clock it arrived, and ONE button on to the
- * place that deals with it. Opening it marks it read — the owner's reason for the ruling: *"it
+ * THE NOTIFICATION READER — a notification, opened from a Notifications page (owner ruling
+ * 2026-09-25, D3 option B, on the mockup "One Row for Notifications"). A tap on a row opens this
+ * instead of leaving the page: the whole message, the day and the clock it arrived, and ONE button on
+ * to the place that deals with it. Opening it marks it read — the owner's reason for the ruling: *"it
  * allows me to mark individual ones as read (open, read, close) without having to leave the
  * notifications page."* Going on is a second, deliberate tap.
  *
@@ -20,11 +20,23 @@ import own from './CoachNotificationReader.module.css';
  * phone, and its link (Insights) describes the team TODAY — so an older review had nowhere to be
  * read. Here it reads whole, whatever its age.
  *
- * ⚖ THIS FILE IS THE FRAME; THE MESSAGE IS SHARED (Notifications Open in Place, step 2, 2026-10-06).
- * What the reader SAYS — the kind and stamp, the title, the body or the bundle's members, and Open ·
- * Done · Close · Delete in that order — is `NotificationMessage`, the block the bell's drawer wears
- * too, so the two cannot drift (hub screen 7). Close is passed in because this frame closes from its
- * button row; the drawer's pane closes with its own ×.
+ * ⚖ ONE READER, BOTH PORTALS (Notifications Open in Place step 3, owner 2026-10-06, Q1 on hub screen
+ * 10). The coach's Notifications page has worn it since 09-25; the ADMIN's page wears it too (D5: "the
+ * coach's 09-25 sheet in the admin's styling") — on a phone the admin's only place to read a
+ * notification, since neither portal has a bell there. It moved here from `components/coaches/` so the
+ * two pages share one file, not two frames that drift. `portal` names whose page words the onward
+ * button speaks (D4). The admin's in-tree marker (`adminKitAttr`) carries the same
+ * `data-coach-warm-enabled` the coach shell does, so the warm remaps below reach it unchanged.
+ * ⚠ It must never load `coaches.module.css` (~945KB): the admin renders it. Its sheet styles are the
+ * bottom bar's own stylesheet, which the admin's bar already wears — the reason this frame, and not the
+ * Sheet Frame's (whose dim imports that stylesheet), was chosen for the admin page.
+ *
+ * ⚖ THIS FILE IS THE FRAME; THE MESSAGE IS SHARED (step 2, 2026-10-06). What the reader SAYS — the kind
+ * and stamp, the title, the body or the bundle's members, and Open · Done · Close · Delete in that order
+ * — is `NotificationMessage`, the block the bell's drawer wears too, so the two cannot drift (hub screen
+ * 7). Close is passed in because this frame closes from its button row; the drawer's pane closes with
+ * its own ×. The FRAME is the Sheet Frame project's to move (its step 4 puts it on `SheetFrame`) — for
+ * both pages at once now.
  *
  * ⚖ A MENU, NOT A FORM, by the drawer ruling (2026-09-23): nothing is typed and nothing can be
  * lost, so on a phone it is the More sheet's own container at the bar's top edge — `.sheetAnchor`
@@ -37,21 +49,26 @@ import own from './CoachNotificationReader.module.css';
  * It stands on `useDialogFloor`: Escape, the Tab trap, focus back to the row on close, and the
  * phone's Back gesture closes the reader rather than leaving the page ("Back goes up ONE level").
  *
+ * Done and Delete act on the FEED here, once for both pages, then close. The reader hands over its
+ * snapshot, taken before opening marked it read; the feed swaps in the LIVE row for both (/review
+ * 2026-09-25: a failed Done's rollback, and an Undo, must bring back the read row, not the unread copy).
+ * A delete leaves the page's Undo note (D3).
+ *
  * ⚠ Rendered in-tree, never through a portal: the warm skin is a wrapper above the providers.
  */
-export default function CoachNotificationReader({
+export default function NotificationReader({
   entry,
+  portal,
+  feed,
   onClose,
-  onClear,
-  onDelete,
 }: {
   /** What was opened — one notification, or a same-day bundle of one kind. */
   entry: ActivityEntry;
+  /** Whose page words name the onward button (D4). */
+  portal: 'coach' | 'admin';
+  /** The page's feed: Done and Delete act on it. */
+  feed: Pick<NotificationFeed, 'clearRow' | 'deleteRows'>;
   onClose: () => void;
-  /** Take a Needs-attention row off the list — Done (the row's own Done, offered here too). */
-  onClear: (n: AppNotification) => void;
-  /** Delete what is open — the notification, or every member of a bundle (D3). */
-  onDelete: (members: AppNotification[]) => void;
 }) {
   const anchorRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -95,10 +112,10 @@ export default function CoachNotificationReader({
 
         <NotificationMessage
           entry={entry}
-          portal="coach"
+          portal={portal}
           titleId={titleId}
-          onDone={onClear}
-          onDelete={onDelete}
+          onDone={n => { void feed.clearRow(n); onClose(); }}
+          onDelete={members => { feed.deleteRows(members); onClose(); }}
           onClose={onClose}
         />
       </div>

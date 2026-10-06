@@ -1,15 +1,19 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import { CheckCheck, Settings } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { entryMembers, type ActivityEntry } from '@/lib/notification-view';
 import { useNotificationFeed } from './useNotificationFeed';
 import NotificationFeedBody from './NotificationFeedBody';
+import NotificationReader from './NotificationReader';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from './notifications-page.module.css';
 
 /**
- * The full "See all" notifications page — the ADMIN shell's frame (Notification Center Rework P4).
+ * The ADMIN's Notifications page — the admin shell's frame around the shared feed (Notification
+ * Center Rework P4).
  *
  * ⚠ AS OF 2026-09-03 THIS IS THE ADMIN FRAME ONLY. The coaches route used to render this same
  * component and inherited a header with no responsive rules (two controls that could not wrap
@@ -17,11 +21,27 @@ import styles from './notifications-page.module.css';
  * (state in useNotificationFeed, markup in NotificationFeedBody) is what the two shells share; the
  * coach page wears CoachPageHeader in components/coaches/CoachNotificationsPage.tsx. Chat is
  * excluded server-side (P3), so it never appears here either.
+ *
+ * ⚖ A TAP OPENS THE NOTIFICATION (Notifications Open in Place D5, owner 2026-10-05; built in step 3,
+ * 2026-10-06, as drawn on hub screen 10). Neither portal has a bell on a phone, so for an admin on a
+ * phone this page — under More — is the only place to read one. A tap used to mark it read and load a
+ * page it never named; it now opens the coach page's own reader (`NotificationReader`, one file for
+ * both pages): a sheet on the bottom bar on a phone, a small dialog on a computer, with the whole
+ * message and a button named for its page in the admin's words. Opening reads it; Done and the trash
+ * (with "Notification deleted · Undo" at the column's foot) work as on the coach's page. On a computer
+ * the bell's drawer holds this same list, and nothing links here any more (D6); an old link or a help
+ * article still can.
  */
 export default function NotificationsPageContent({ settingsHref }: { settingsHref?: string } = {}) {
   const { currentOrg } = useOrg();
   usePageTitle('Notifications');
   const feed = useNotificationFeed(currentOrg?.id);
+  const [reading, setReading] = useState<ActivityEntry | null>(null);
+
+  function openEntry(entry: ActivityEntry) {
+    setReading(entry);
+    void feed.markSeen(entryMembers(entry));
+  }
 
   const headerActions = (
     <>
@@ -49,7 +69,10 @@ export default function NotificationsPageContent({ settingsHref }: { settingsHre
         actions={headerActions}
       />
 
-      <NotificationFeedBody feed={feed} />
+      <NotificationFeedBody feed={feed} onOpen={openEntry} />
+      {reading && (
+        <NotificationReader entry={reading} portal="admin" feed={feed} onClose={() => setReading(null)} />
+      )}
     </div>
   );
 }

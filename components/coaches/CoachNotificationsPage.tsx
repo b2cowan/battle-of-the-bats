@@ -3,10 +3,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Bell, CheckCheck, Settings } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import CoachNotificationReader from '@/components/coaches/CoachNotificationReader';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
 import { entryMembers, FEED_EMPTY_COPY, type ActivityEntry } from '@/lib/notification-view';
 import NotificationFeedBody, { NotificationZoneChips } from '@/components/notifications/NotificationFeedBody';
+import NotificationReader from '@/components/notifications/NotificationReader';
 import { useNotificationFeed } from '@/components/notifications/useNotificationFeed';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -14,7 +14,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import feedStyles from '@/components/notifications/notifications-page.module.css';
 
 /**
- * The coach portal's "See all" notifications page — the coach FRAME around the shared feed body
+ * The coach portal's Notifications page — the coach FRAME around the shared feed body
  * (coach-notifications review, owner-approved D1 2026-09-03; mockup artifact 56f7093f).
  *
  * Why a frame of its own: the coaches route used to render the admin page's component, whose
@@ -45,8 +45,9 @@ import feedStyles from '@/components/notifications/notifications-page.module.css
  *
  * ⚖ A TAP OPENS THE NOTIFICATION (owner ruling 2026-09-25, D3 option B): the reader holds the whole
  * message and one button on to its page; opening it marks it read, so a coach can read one and
- * close it without leaving here. The admin feed keeps its tap (mark read and go) until step 3. On a
- * computer the bell is a drawer holding this same list, and nothing there links here any more
+ * close it without leaving here. The admin's Notifications page opens them the same way, in the same
+ * reader (Notifications Open in Place step 3, 2026-10-06). On a computer the bell is a drawer holding
+ * this same list, and nothing there links here any more
  * (Notifications Open in Place D6, 2026-10-05): this page is the phone's home for notifications,
  * and the place an old link or a help article still lands.
  *
@@ -59,7 +60,7 @@ export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string })
   const { currentOrg } = useOrg();
   usePageTitle('Notifications');
   const feed = useNotificationFeed(currentOrg?.id);
-  const { items, unreadOnly, setUnreadOnly, markSeen, clearRow, deleteRows } = feed;
+  const { unreadOnly, setUnreadOnly, markSeen } = feed;
   const [reading, setReading] = useState<ActivityEntry | null>(null);
 
   function openEntry(entry: ActivityEntry) {
@@ -119,17 +120,7 @@ export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string })
         emptyCopy={FEED_EMPTY_COPY.coach}
       />
       {reading && (
-        <CoachNotificationReader
-          entry={reading}
-          onClose={() => setReading(null)}
-          /* Clear the LIVE row, not the reader's snapshot (/review 2026-09-25): the snapshot was taken
-             before opening marked it read, and Clear's rollback restores the row it is handed — a
-             failed Clear would have put an already-read notification back to unread. */
-          onClear={n => { void clearRow(items.find(x => x.id === n.id) ?? n); setReading(null); }}
-          /* Delete closes the reader and leaves the Undo note (D3, 2026-10-05). The feed swaps in the
-             LIVE rows itself, so an Undo brings back the read row, not this unread snapshot. */
-          onDelete={members => { deleteRows(members); setReading(null); }}
-        />
+        <NotificationReader entry={reading} portal="coach" feed={feed} onClose={() => setReading(null)} />
       )}
     </div>
   );

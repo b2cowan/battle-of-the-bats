@@ -89,25 +89,25 @@ export default function NotificationFeedBody({
   toolbar?: ReactNode;
   /**
    * A tap OPENS the notification rather than going to its page (the coach reader, owner ruling
-   * 2026-09-25 — D3 option B: "open, read, close" without leaving the page). The frame owns the
-   * reader; the row only says which entry was opened, and announces a dialog. Omitted → the admin
-   * feed's tap, unchanged: mark read and go.
+   * 2026-09-25 — D3 option B: "open, read, close" without leaving the page; the admin's page too since
+   * Notifications Open in Place step 3, 2026-10-06, D5). The frame owns the reader; the row only says
+   * which entry was opened, and announces a dialog. Required: no row on either page leaves on a tap —
+   * the old admin tap (mark read, then a full load of a page it never named) is gone with it.
    */
-  onOpen?: (entry: ActivityEntry) => void;
+  onOpen: (entry: ActivityEntry) => void;
 }) {
   const {
     items, loading, loadingMore, hasMore, error, isEmpty,
     unreadOnly, setUnreadOnly,
-    reload, loadMore, markRead, bundleClick, clearRow,
+    reload, loadMore, clearRow,
     needsAttention, activityGroups, showNeeds, showActivity, groupedAt,
   } = feed;
   // Where focus lands when the Undo note leaves while holding it (a delete's row is gone).
   const listRef = useRef<HTMLDivElement>(null);
 
-  // A tap opens the reader where the frame has one, and marks read + goes where it does not.
-  const openOne = (n: AppNotification) => (onOpen ? onOpen({ kind: 'item', notification: n }) : markRead(n));
-  const openBundle = (eventType: string, members: AppNotification[]) =>
-    (onOpen ? onOpen({ kind: 'bundle', eventType, members }) : bundleClick(members));
+  // A tap opens the frame's reader — a single notification, or a bundle as its members.
+  const openOne = (n: AppNotification) => onOpen({ kind: 'item', notification: n });
+  const openBundle = (eventType: string, members: AppNotification[]) => onOpen({ kind: 'bundle', eventType, members });
 
   // ── Row renderers ─────────────────────────────────────────────────────────────
   function row(n: AppNotification, isAct: boolean) {
@@ -118,7 +118,7 @@ export default function NotificationFeedBody({
         className={`${styles.item} ${isUnread ? styles.unread : styles.read}${isAct ? ` ${styles.actItem}` : ''}`}
         onClick={() => openOne(n)}
         role="button"
-        aria-haspopup={onOpen ? 'dialog' : undefined}
+        aria-haspopup="dialog"
         tabIndex={0}
         onKeyDown={e => e.key === 'Enter' && openOne(n)}
       >
@@ -162,7 +162,7 @@ export default function NotificationFeedBody({
         className={`${styles.item} ${anyMemberUnread ? styles.unread : styles.read}`}
         onClick={() => openBundle(eventType, members)}
         role="button"
-        aria-haspopup={onOpen ? 'dialog' : undefined}
+        aria-haspopup="dialog"
         tabIndex={0}
         onKeyDown={e => e.key === 'Enter' && openBundle(eventType, members)}
       >

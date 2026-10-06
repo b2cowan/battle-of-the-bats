@@ -1,7 +1,10 @@
-/* CoachNotificationReader — the reader's FRAME: what differs from the More / team / RSVP sheets it
+/* NotificationReader — the reader's FRAME: what differs from the More / team / RSVP sheets it
    shares a container with (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown`
    / `.sheetGrab`). The message inside — eyebrow, title, body, members and the button row — is the
    shared `NotificationMessage` block and its own stylesheet (Notifications Open in Place, step 2).
+   Worn by BOTH portals' Notifications pages since step 3 (2026-10-06); moved here from
+   `components/coaches/` with its component. The admin's bar is the same stylesheet, so the anchor's
+   bar-height arithmetic holds there too (the admin's context strip never shows on this page).
    Doubled selectors where this file overrides the nav module: both write at (0,1,0), and which of
    two same-weight rules wins across modules is bundle order — (0,2,0) wins whichever comes first.
 

@@ -15,10 +15,10 @@ import styles from './NotificationMessage.module.css';
  * the buttons and their order are the same block in all three. Only the frame around it differs, so
  * they can't drift apart"). Lifted out of the coach reader (09-25) in step 2, so the bell's drawer
  * and the reader read one block:
- *   · the coach's reader — a menu-layer sheet on a phone, a small dialog on a computer
- *     (`CoachNotificationReader`, whose FRAME belongs to the Sheet Frame project);
- *   · the bell's drawer — the pane beside the list (`NotificationDrawer`);
- *   · the admin's Notifications page — step 3.
+ *   · the reader both Notifications pages open — a menu-layer sheet on a phone, a small dialog on a
+ *     computer (`NotificationReader`, the coach's since 09-25 and the admin's since step 3; its FRAME
+ *     belongs to the Sheet Frame project);
+ *   · the bell's drawer — the pane beside the list (`NotificationDrawer`).
  *
  * ⚖ OPEN · DONE · CLOSE · DELETE, in that order in every frame (D3 + D8): the way on, named for its
  * page in that portal's own words (`notificationDestination`); Done (the old Clear) only on a single

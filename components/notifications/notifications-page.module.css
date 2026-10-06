@@ -1,5 +1,5 @@
-/* Full "See all" notifications page (Notification Center Rework P4). Full-width
-   companion to the bell dropdown; reuses the same zones/grouping/bundling.
+/* The Notifications pages (Notification Center Rework P4) — a phone's only place to read notifications,
+   and on a computer the same list the bell's drawer holds; reuses the same zones/grouping/bundling.
 
    ⚠ TWO SHELLS, ONE BODY (coach-notifications review R1/R2, 2026-09-03). The FEED BODY
    (toolbar · list · load more · states — NotificationFeedBody) is shared by the admin page and the
