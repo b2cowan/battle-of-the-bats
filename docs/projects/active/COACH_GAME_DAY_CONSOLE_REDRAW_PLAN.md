@@ -360,3 +360,43 @@ clean · `check:layout --only=coach-game-console` **✓ no new findings** at 361
 browser: the four bar buttons reach at scrollY 0/200/400 at 390 **and** 360; the End-game sheet's
 two buttons reach; rows 57.2px; every interactive element ≥44px except the pre-existing global skip
 link; focus lands on the moved player's control; no page errors.
+
+## 8 · A final score notifies no family (owner ruling 2026-10-06)
+
+**Asked:** "when we end a game, can we remove any notifications to families and update this button
+accordingly?" **Widened before building, and ruled:** the same final-score message also fired when a
+score was typed on the Schedule, so removing it from End game alone would have left families hearing
+a result only when the coach entered it the slow way. Owner chose **never, anywhere** and the label
+**End game**. Also on the record: today the message reached no family at all — the follower tier was
+removed 2026-09-12 and the guardian tier is switched off — so "Confirm & notify families" named an
+effect that did not happen.
+
+- **Server:** the `final_score` family-message kind is gone (`lib/family-notify.ts`), and the events
+  PATCH maps only status, time and place onto a family message. Moved / cancelled / back-on are
+  unchanged. The quiet flag keeps its one remaining job — a running score is never decided as a
+  result — and stays as narrow as it was.
+- **Console:** the End game button reads **End game** (busy: **Ending…**); its note reads "Ending the
+  game records the result and updates your season record. You can still fix the score from the
+  schedule." (moments prefix kept); "before confirming" became "before you end the game"; the score
+  panel's line is now "The score saves as you go. Nothing is sent to families."
+- **Notification settings:** `family_game_update`'s description drops "or posts a final score".
+- **Guard:** `tests/unit/family-score-silence-guard.test.ts` — no score kind, no score field picks a
+  family message, no console copy promises one. Proven to fail with the old kind restored.
+- **Help (`/docs`):** the game-day guide's score section, the notifications FAQ, the
+  abandoned-console FAQ and the moments FAQ say a score sends families nothing; "notify families"
+  and "when do families hear" stay in the search fields and now land on that answer. The FAQ also
+  says, verified in code, that a team on **Public link** shows the score on its public page as soon
+  as it is saved.
+- **Pitch slide #07:** the drawing's closing envelope ("ONE MESSAGE when the game ends") is redrawn
+  as the scoreboard families watch on the team's own page ("THEY WATCH IT"); caption and alt follow.
+  The registry key stays `one-message`.
+- **/review** (high-risk tier; correctness, blast-radius and copy-truth lenses): no Critical/High.
+  Fixed: a console comment still saying "families hear once, at End game", "final score" left in
+  the family-access section's search text, and the guard widened to the whole route. Refuted: a
+  score save being re-read as "game moved" — neither score path sends the time. Left as is: the
+  "fix the score from the schedule" line is untrue for a tournament-mirrored game, but End game does
+  not exist there (the guide's tournament-games answer already says the organizer scores it).
+  `check:layout` on the game console: 5 contrast findings on the Out chip and a 9+ badge, untouched
+  by this change — not a finding against it.
+- **Committed `23ce6347` 2026-10-06.** Owner browser check owed (the End game sheet and the
+  score-panel line on a phone).
