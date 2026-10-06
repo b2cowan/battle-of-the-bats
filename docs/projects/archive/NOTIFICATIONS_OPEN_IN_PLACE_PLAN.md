@@ -425,16 +425,21 @@ whose behavior is unchanged on the happy path, comments, help prose, a test and 
 **Found, not fixed:**
 - **The "Install FieldLogicHQ" banner covers the foot of every phone sheet, in both portals, until dismissed** — it is
   `z-index: 400` over the sheets' 260 (and the More sheet's); on the coach page it hides the reader's lime button.
-  Pre-existing and portal-wide: the install prompt's or Sheet Frame's, not this project's.
+  Pre-existing and portal-wide: the install prompt's or Sheet Frame's, not this project's. **Fixed 2026-10-06,
+  `2ea62042`** (owner: "tackle 1 and 2") — the banner sits at 255, under every portal sheet and window; the
+  surfaces outside that convention still under it (scorekeeper, gate, chat confirms, tryouts, tablet windows,
+  the public day jump) are a TODO line.
 - **The reader's panel shows the browser's focus ring when opened from the keyboard** (both pages; the coach's did before
   this step). The frame's — Sheet Frame step 4.
 - **The admin's Notifications page has no settings gear** — its route never passed `settingsHref`. On a phone an admin
-  reaches settings through More › Account › Notification settings (help now says so).
+  reaches settings through More › Account › Notification settings (help now says so). → TODO, with the next item: one
+  small design round (the coach page's 09-25 one row).
 - **The admin page's Unread | All is still the old small-capitals pill** (the coach page and the drawer wear the
   portal's two-way switch).
 - **Sheet Frame's plan and build prompt name the reader's old path** (a step-4 sheet). Not edited — another project's
   files; its build prompt already tells step 4 to check this project's commits first.
-- Steps 1–2's open items stand: the Dark bell badge's contrast, the drawer title's size, family and public links' bare
+- Steps 1–2's open items stand: the Dark bell badge's contrast (**fixed 2026-10-06, `2ea62042`** — a `--danger-fill`
+  token, 4.83:1 in Dark, 6.04:1 in Warm), the drawer title's size, family and public links' bare
   "Open", a notification arriving while the drawer is open.
 
 **Project status: COMPLETE 2026-10-06** — all three steps built, committed and walked (§265 · §267 · §272 ✅). The plan, PM
