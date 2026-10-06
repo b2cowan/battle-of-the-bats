@@ -294,14 +294,43 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 .qaverdict button[data-v=pass][aria-pressed=true]{background:#e3f3d4;border-color:#7fa85a}.qaverdict button[data-v=issue][aria-pressed=true]{background:#f6dede;border-color:var(--error)}.qaverdict button[data-v=call][aria-pressed=true]{background:#f4ecd9;border-color:var(--warn)}
 .qanotes{width:100%;min-height:84px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--white);font:inherit}
 .qaout{margin:8px 0 0;white-space:pre-wrap;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px}
+/* ── Screen 10 · step 3 · the admin's reader drawn over REAL captures of the admin page (dev, 2026-10-06);
+   every value below is measured from the coach's reader as it renders today, in each theme ── */
+.s3{position:relative;overflow:hidden;font-family:Inter,system-ui,sans-serif;line-height:1.4;text-align:left}
+.s3>img{position:absolute;inset:0;display:block;width:100%;height:100%}
+.s3.ph3{width:390px;height:844px}.s3.pc3{width:1280px;height:800px}
+.s3-scrim{position:absolute;left:0;right:0;top:0;bottom:72px;background:rgba(36,30,21,.28)}
+.s3[data-t=dark] .s3-scrim{background:rgba(13,17,26,.45)}
+.pc3 .s3-scrim,.s3.pc3[data-t=dark] .s3-scrim{bottom:0;background:rgba(0,0,0,.6)}
+.s3-sheet{position:absolute;left:0;right:0;bottom:72px;background:#fff;border:1px solid rgba(70,55,30,.12);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -8px 32px rgba(70,55,30,.24),0 0 0 1px rgba(70,55,30,.5);padding:6px 20px 16px;color:#241e15}
+.s3-grab{display:flex;align-items:center;justify-content:center;height:44px;margin:-6px 0 0}
+.s3-grab span{width:38px;height:4px;border-radius:2px;background:rgba(70,55,30,.9)}
+.s3-dlg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:480px;background:#fff;border:1px solid rgba(87,101,30,.3);border-radius:12px;padding:17.6px 21.6px 20px;color:#241e15}
+.s3-eye{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;font:700 12px/19.2px 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#615a54}
+.s3-eye .ic{font-size:16px;letter-spacing:0;line-height:1}
+.s3-eye .s3-st{font:500 12px/19.2px Inter,sans-serif;letter-spacing:0;text-transform:none}
+.s3-t{margin:8px 0 0;font:700 16px/20.8px 'Barlow Condensed',sans-serif;color:#241e15;text-wrap:balance}
+.s3-b{margin:8px 0 0;font:400 14px/21.7px Inter,sans-serif;color:#4a4235}
+.s3-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.s3-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7.2px 14.4px;border:1px solid rgba(70,55,30,.2);border-radius:6px;background:#fff;color:#4a4235;font:600 14px/16.8px Inter,sans-serif;white-space:nowrap}
+.s3-btn svg{width:14px;height:14px}
+.s3-btn.go{background:#d9f99d;color:#241e15;border-color:transparent;font-weight:700}.s3-btn.go svg{width:16px;height:16px}
+.s3-btn.tr{width:34px;padding:0;margin-left:auto}.s3-btn.tr svg{width:16px;height:16px}
+.ph3 .s3-btn{flex:1 1 0;min-height:44px}.ph3 .s3-btn.go{flex:1 1 100%;min-height:48px}.ph3 .s3-btn.tr{flex:0 0 auto;width:44px}
+.s3[data-t=dark] .s3-sheet{background:#0d111a;border-color:rgba(79,163,224,.25);box-shadow:0 -8px 32px rgba(0,0,0,.65),0 0 24px rgba(79,163,224,.1);color:#fff}
+.s3[data-t=dark] .s3-grab span{background:rgba(255,255,255,.25)}
+.s3[data-t=dark] .s3-dlg{background:#111827;border-color:rgba(30,58,138,.3)}
+.s3[data-t=dark] .s3-eye{color:#94a3b8}.s3[data-t=dark] .s3-t{color:rgba(255,255,255,.9)}.s3[data-t=dark] .s3-b{color:rgba(255,255,255,.7)}
+.s3[data-t=dark] .s3-btn{background:#111827;border-color:rgba(30,58,138,.25);color:rgba(255,255,255,.7)}
+.s3[data-t=dark] .s3-btn.go{background:#d9f99d;color:#0a0a0a;border-color:transparent}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Notifications Open in Place — project hub</strong><br><small>A click on a notification opens it where you are, with the whole message and a button that says where it goes · round 1 drawn 2026-10-05 from the bell on the club’s Payment requests screen · round 2 drawn 2026-10-05: the split drawer (the owner’s idea), with the phone corrected · round 3 drawn 2026-10-05: Clear becomes Done, a trash to delete, Mark all read means all · D1–D9 accepted 2026-10-05 (“looks good”) · plan, PM brief and a three-step build prompt written 2026-10-05 · step 2 (the drawer) built 2026-10-06, committed a1134f15: screen 9 holds what the hub never drew, ruled the same day</small></div>
+  <div class="hubtitle"><strong>Notifications Open in Place — project hub</strong><br><small>A click on a notification opens it where you are, with the whole message and a button that says where it goes · round 1 drawn 2026-10-05 from the bell on the club’s Payment requests screen · round 2 drawn 2026-10-05: the split drawer (the owner’s idea), with the phone corrected · round 3 drawn 2026-10-05: Clear becomes Done, a trash to delete, Mark all read means all · D1–D9 accepted 2026-10-05 (“looks good”) · plan, PM brief and a three-step build prompt written 2026-10-05 · step 2 (the drawer) built 2026-10-06, committed a1134f15: screen 9 holds what the hub never drew, ruled the same day · step 3 (the admin’s Notifications page) built 2026-10-06: screen 10, ruled the same day</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Three rounds drawn 2026-10-05; D1–D9 accepted 2026-10-05">Design</li>
     <li class="stage done" title="NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md + PM brief + BUILD_PROMPT.md (three steps, one chat each), 2026-10-05">Plan</li>
-    <li class="stage current" title="Step 1 (the rules) committed a9829568 2026-10-05, owner QA §265 PASSED 2026-10-06. Step 2 (the drawer) built 2026-10-06, Q1–Q3 ruled on screen 9 the same day; /simplify + /review run, committed a1134f15 2026-10-06; owner QA §267 (tab QA Walk). Step 3 (the admin page) to build">Build · step 2 of 3</li>
+    <li class="stage current" title="Step 1 (the rules) committed a9829568 2026-10-05, owner QA §265 PASSED 2026-10-06. Step 2 (the drawer) built 2026-10-06, Q1–Q3 ruled on screen 9 the same day; /simplify + /review run, committed a1134f15 2026-10-06; owner QA §267 PASSED 2026-10-06, 22/22. Step 3 (the admin page): drawn on screen 10 2026-10-06, Q1–Q2 ruled the same day as recommended; built 2026-10-06, committed 157adb69 (one reader for both pages, the admin page opens notifications; /docs, /simplify and /review run); owner QA §272 (tab QA Walk)">Build · step 3 of 3 · QA §272</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -313,7 +342,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
   <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
   <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
   <button type="button" data-hub="plan" aria-pressed="false">Plan notes</button>
-  <button type="button" data-hub="qa" aria-pressed="false">QA Walk · step 2</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk · step 3</button>
 </nav>
 
 <!-- Icons drawn once, used everywhere -->
@@ -456,6 +485,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <a href="#s-every">7 · Every place it opens</a>
     <a href="#s-round1">8 · Round 1 · A, B, C</a>
     <a href="#s-step2">9 · Step 2 · never drawn</a>
+    <a href="#s-step3">10 · Step 3 · the admin page</a>
   </nav>
   <div class="frame">
 
@@ -880,6 +910,92 @@ Q2 the four quiet states as drawn, in the Notifications page’s own words
 Q3 the drawer opens on Unread</pre>
       </div>
     </section>
+
+    <!-- 10 · STEP 3 · THE ADMIN'S NOTIFICATIONS PAGE -->
+    <section class="screen" id="s-step3" hidden>
+      <div class="eyebrow">Screen 10 · step 3 build · 2026-10-06 · decision 5 · two questions, ruled the same day as recommended</div>
+      <h1 tabindex="-1">The admin’s Notifications page opens a notification where you are</h1>
+      <p class="sub lead">Drawn at true size before it is built. The page behind each drawing is a <b>real capture</b> of the club treasurer’s Notifications page on dev today. Only the opened notification is drawn, and every size and colour in it is measured from the coach’s reader as it renders today. A tap on a row opens it and marks it read; nothing loads until you press the lime button.</p>
+
+      <div class="callout round">
+        <h3>Question 1 · one reader for both pages</h3>
+        <p>Decision 5 says the admin’s page gets “the coach’s 09-25 sheet in the admin’s styling”. The plan’s step 3 named the Sheet Frame project’s shared phone frame instead, which the hub’s own plan notes allowed only “if that step has landed”. It hasn’t landed: the coach’s reader is still on its own frame, and Sheet Frame’s step 4 is the one that moves it. The shared frame would also bring the coach portal’s whole stylesheet, about 945KB, onto the admin’s page through its dim. The reader’s own frame brings nothing new, because the admin’s bottom bar already wears the same sheet styles.</p>
+        <p><strong>Recommended: one reader for both pages.</strong> The coach’s reader moves beside the message block, and the admin’s page wears it as it is, with the admin’s button words. Nothing changes for a coach. When Sheet Frame’s step 4 moves the reader onto the shared frame, both pages move together.</p>
+        <p class="altx">Alternative: a second, admin-only reader on the shared frame now. That means two frames to keep in step until Sheet Frame’s step 4, and the 945KB stylesheet loading on the admin’s Notifications page.</p>
+      </div>
+
+      <h2>Question 2 · the admin’s reader, as it would be built</h2>
+      <div class="pair">
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>Admin · Notifications · the holding-up notice tapped · 390px · Warm</h3></div>
+          <div class="scroller"><div class="s3 ph3" data-t="warm">
+            <img src="notifications-open-in-place/admin-390-warm-today.jpg" alt="The club treasurer’s Notifications page on a phone, captured on dev">
+            <div class="s3-scrim"></div>
+            <div class="s3-sheet">
+              <div class="s3-grab"><span></span></div>
+              <p class="s3-eye"><span class="ic">⏳</span><span>A request is holding up a team’s payout</span><span class="s3-st">· Mon, Oct 5 · 1:12 p.m.</span></p>
+              <div class="s3-t">A request from 15U AAA is holding up their payout to families</div>
+              <p class="s3-b">Their coach can’t pay families their end-of-season share until you answer it.</p>
+              <div class="s3-acts"><span class="s3-btn go">Open the request <svg><use href="#i-arrow"/></svg></span><span class="s3-btn"><svg><use href="#i-check"/></svg>Done</span><span class="s3-btn">Close</span><span class="s3-btn tr" title="Delete"><svg><use href="#i-trash"/></svg></span></div>
+            </div>
+          </div></div>
+          <p class="caption"><span class="mk" data-k="new" data-note="The coach’s reader, unchanged, over the admin’s bar. It rises from the bar’s top edge, and the bar stays visible and tappable beneath it (a menu, by the 09-23 drawer ruling); a tap on the bar closes the notification first. The way on spans the sheet at 48px; Done, Close and the trash share the row beneath at the 44px tap floor. A tap on the dim or the grab line, Close, Escape and the phone’s Back all close it.">New</span> a tap opens the notification · <span class="mk" data-k="un" data-note="The page behind is today’s, captured on dev: the header, the list and the bar do not change in this step.">Unchanged</span> the page and the bar</p>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">Proposed</span><h3>The same · 390px · Dark</h3></div>
+          <div class="scroller"><div class="s3 ph3" data-t="dark">
+            <img src="notifications-open-in-place/admin-390-dark-today.jpg" alt="The same page in Dark, captured on dev">
+            <div class="s3-scrim"></div>
+            <div class="s3-sheet">
+              <div class="s3-grab"><span></span></div>
+              <p class="s3-eye"><span class="ic">⏳</span><span>A request is holding up a team’s payout</span><span class="s3-st">· Mon, Oct 5 · 1:12 p.m.</span></p>
+              <div class="s3-t">A request from 15U AAA is holding up their payout to families</div>
+              <p class="s3-b">Their coach can’t pay families their end-of-season share until you answer it.</p>
+              <div class="s3-acts"><span class="s3-btn go">Open the request <svg><use href="#i-arrow"/></svg></span><span class="s3-btn"><svg><use href="#i-check"/></svg>Done</span><span class="s3-btn">Close</span><span class="s3-btn tr" title="Delete"><svg><use href="#i-trash"/></svg></span></div>
+            </div>
+          </div></div>
+          <p class="caption"><span class="mk" data-k="un" data-note="In Dark the sheet is the bar’s own near-black, the same surface as the admin’s More sheet, and the lime button keeps its dark words.">Unchanged</span> the More sheet’s surface, in Dark</p>
+        </div>
+      </div>
+
+      <div class="spec">
+        <div class="spectop"><span class="lbl after">Proposed</span><h3>Admin · Notifications · opened on a computer · 1280px · Warm</h3></div>
+        <div class="scroller"><div class="s3 pc3" data-t="warm">
+          <img src="notifications-open-in-place/admin-1280-warm-today.jpg" alt="The club treasurer’s Notifications page on a computer, captured on dev">
+          <div class="s3-scrim"></div>
+          <div class="s3-dlg">
+            <p class="s3-eye"><span class="ic">⏳</span><span>A request is holding up a team’s payout</span><span class="s3-st">· Mon, Oct 5 · 1:12 p.m.</span></p>
+            <div class="s3-t">A request from 15U AAA is holding up their payout to families</div>
+            <p class="s3-b">Their coach can’t pay families their end-of-season share until you answer it.</p>
+            <div class="s3-acts"><span class="s3-btn go">Open the request <svg><use href="#i-arrow"/></svg></span><span class="s3-btn"><svg><use href="#i-check"/></svg>Done</span><span class="s3-btn">Close</span><span class="s3-btn tr" title="Delete"><svg><use href="#i-trash"/></svg></span></div>
+          </div>
+        </div></div>
+        <p class="caption"><span class="mk" data-k="new" data-note="On a computer the bell’s drawer is where notifications are read, and nothing links to this page any more. An old link or a help article can still land here, so the page opens the coach’s small dialog: 480px, centred over a dimmed window. The buttons keep the phone’s order, with the trash set apart at the right (hub screen 7: one block in every frame).">New</span> the coach’s small dialog, on a computer</p>
+      </div>
+
+      <div class="callout good">
+        <h3>Decided before, and carried over unchanged</h3>
+        <ul>
+          <li><strong>Delete and Undo.</strong> The trash closes the notification and leaves “Notification deleted · Undo” for six seconds, centred under the page’s column: 12px above the bar on a phone, 1rem above the window’s foot on a computer. That is the coach page’s place (step 1, Q1).</li>
+          <li><strong>The button’s words</strong> are the admin’s (decision 4): Open the request, Open the bill, Open Teams, Open the game, Open the team. ⚠ The holding-up notice on dev was sent before step 1, so it will read <em>Open Payment requests</em>. One sent since then names its one request, as drawn.</li>
+          <li><strong>Done</strong> shows only on a Needs-attention notification, and marks it Done and closes it, as the row’s own Done does.</li>
+        </ul>
+      </div>
+
+      <div class="callout">
+        <h3>Found while capturing, and not part of this step</h3>
+        <ul>
+          <li><strong>The “Install FieldLogicHQ” banner covers the foot of every phone sheet in both portals</strong> until it is dismissed (it sits a layer above them). On the coach’s page it hides the reader’s lime button. It is older than this project and affects every sheet, so it is not fixed here.</li>
+          <li><strong>The admin page’s Unread | All is still the older small-capitals pill.</strong> The coach’s page and the drawer wear the portal’s two-way switch. Changing it would restyle the admin page’s toolbar, which decision 5 does not cover.</li>
+        </ul>
+      </div>
+
+      <div class="copyback">
+        <strong>Ruled 2026-10-06</strong> (owner, both as recommended):
+        <pre>Q1 one reader for both pages: the coach's reader moved beside the message block, and the admin's page wears it
+Q2 the admin's reader as drawn: a sheet on the bar at 390 (Warm and Dark), the small dialog at 1280</pre>
+      </div>
+    </section>
   </div>
 </section>
 
@@ -949,6 +1065,11 @@ Q3 a score notice reads “Open the game”: its link opens that game’s score 
 Q2 the drawer’s loading, caught-up, nothing-yet and couldn’t-load states, in the Notifications page’s own words
 Q3 the drawer opens on Unread, as the bell did; a row opened this visit stays until the drawer closes</pre>
     <p class="sub" style="margin-top:8px">Two differences from screens 2 to 4 were decided by the portal’s written rules, not asked: the onward button is lime with dark words (olive is never a button’s fill), and Unread | All is the portal’s own two-way switch (ruling 2026-09-25 D1b).</p>
+  </div>
+  <div class="copyback">
+    <strong>Ruled 2026-10-06 in the step 3 build</strong> (both as recommended, on screen 10 of the Mockup tab):
+    <pre>Q1 one reader for both Notifications pages, not two: the coach’s 09-25 reader (D5’s own words), which loads nothing new on the admin page; the Sheet Frame’s shared frame would have brought the coach portal’s whole stylesheet with it, and it moves both pages at once in its step 4
+Q2 the admin’s reader as drawn: a sheet on the bottom bar at 390 in Warm and Dark, the small dialog at 1280</pre>
   </div>
 </section>
 
@@ -1042,38 +1163,39 @@ Q3 the drawer opens on Unread, as the bell did; a row opened this visit stays un
 </section>
 
 <section id="hub-qa" class="docpage qa" hidden>
-  <div class="eyebrow">Owner QA · §267 · Club accounting + Coaches Portal · Notifications Open in Place step 2</div>
-  <h1>The bell opens a drawer, and a notification opens beside the list</h1>
-  <p class="sub">Step 2 replaces the bell’s small panel on a computer with the drawer from screens 2 to 4 and 9. Three walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat. Step 1’s walk (§265) passed on 2026-10-06; the QA ledger keeps it.</p>
+  <div class="eyebrow">Owner QA · §272 · Club accounting · Notifications Open in Place step 3 · the last step</div>
+  <h1>The admin’s Notifications page opens a notification where you are</h1>
+  <p class="sub">Step 3 gives the club’s Notifications page the reader the coach’s page has had since 09-25, as drawn on screen 10: on a phone a sheet on the bottom bar, on a computer a small dialog. Three walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat. Step 2’s walk (§267) passed 22/22 on 2026-10-06; the QA ledger keeps it.</p>
   <div class="qacard">
     <h3>Sign in as</h3>
     <dl>
-      <dt>Where</dt><dd>http://localhost:3000/auth/login, on a computer, in a window wider than 900px (the bell lives in the top strip, which a phone never shows). The dev server was restarted for this step.</dd>
-      <dt>Club (W1)</dt><dd>uat-club-treasurer@uat-rep-club.local (password: <code>UAT_REP_CLUB_TREASURER_PASSWORD</code> in <code>.env.local</code>) · UAT Rep Club.</dd>
-      <dt>Coach (W2, W3)</dt><dd>uat-coach@uat-test-org.local (password: <code>UAT_COACH_PASSWORD</code>), then go to <b>http://localhost:3000/uat-rep-club/coaches</b> (UAT Rep Club, the coach’s own club). The coach’s notifications were reset on 2026-10-06 to the coach notification fixture: 64, 16 unread, three in Needs attention.</dd>
+      <dt>Who</dt><dd>uat-club-treasurer@uat-rep-club.local (password: <code>UAT_REP_CLUB_TREASURER_PASSWORD</code> in <code>.env.local</code>) · UAT Rep Club, at http://localhost:3000/auth/login.</dd>
+      <dt>W1, W2 · a phone</dt><dd>A window <b>390px</b> wide: Chrome’s device toolbar (Ctrl+Shift+M) set to iPhone 13 works. If an <b>Install FieldLogicHQ</b> banner appears at the foot, close it with its × first: it sits over every phone sheet (found while drawing this step, not part of it).</dd>
+      <dt>W3 · a computer</dt><dd>A window wider than 900px.</dd>
+      <dt>The data</dt><dd>One fresh notice was seeded for this walk on 2026-10-06 (<code>node scripts/seed-uat-treasurer-notifications.mjs</code>): <b>UAT Test Team filed a $450.00 request</b>, unread, written the way the product writes one today, pointing at the club’s one waiting request. The treasurer’s two older notices are already read.</dd>
     </dl>
-    <p class="meta"><b>What the walks change on dev (not put back):</b> the treasurer’s two notifications end up read; the coach’s “Assistant coach joined” is deleted, “Team marked no-show” is marked Done and everything of the coach’s ends up read. Walk W2 before W3: W2 counts the bell down from 16. <b>To walk W2 again</b>, ask Claude to re-run the coach notification fixture (<code>node scripts/seed-uat-coach-notifications.mjs</code>): it puts the coach’s notifications back exactly as they were.</p>
+    <p class="meta"><b>What the walks change on dev (not put back):</b> the fresh notice is read (W1), marked Done and then deleted (W2). The request it was about is never touched. Walk W1, then W2, then W3. <b>To walk W1 or W2 again</b>, ask Claude to re-run the treasurer fixture: it puts the fresh notice back, unread.</p>
   </div>
   <div class="qaindex" role="group" aria-label="Walks">
-    <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · The treasurer reads without leaving the page</b><span class="meta">The drawer, a message beside the list, the button that names its page.</span><span class="qachip" data-chip="w1"></span></button>
-    <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · A coach works down the list</b><span class="meta">What stays, the bell’s count, delete and Undo, Done, Mark all read.</span><span class="qachip" data-chip="w2"></span></button>
-    <button type="button" class="qawcard" data-walk="w3" aria-pressed="false"><b>W3 · The keyboard, Back, 1024 and Dark</b><span class="meta">One level at a time; the smallest computer; the other theme.</span><span class="qachip" data-chip="w3"></span></button>
+    <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · A treasurer reads a notification on a phone</b><span class="meta">The sheet on the bar, the whole message, the button that names its page.</span><span class="qachip" data-chip="w1"></span></button>
+    <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · Done, and a delete that leaves the request alone</b><span class="meta">Done, the trash, Undo, and the request still waiting.</span><span class="qachip" data-chip="w2"></span></button>
+    <button type="button" class="qawcard" data-walk="w3" aria-pressed="false"><b>W3 · On a computer: the dialog, the keyboard and Dark</b><span class="meta">The page by its address, a small dialog, one level at a time.</span><span class="qachip" data-chip="w3"></span></button>
   </div>
 
     <div class="qawalk" id="w1">
-      <h2>W1 · The treasurer reads without leaving the page</h2>
+      <h2>W1 · A treasurer reads a notification on a phone</h2>
       <div class="qacard">
-        <h3>What this walk is for</h3><p>On a computer the bell opens a drawer holding the whole list. A click opens a notification beside the list instead of loading a page, and its button names the page it goes to.</p>
-        <h3>It passes when</h3><p>Nothing is cut short in the open message; the list stays put while you read; the row you are reading is highlighted; the button reads Open Payment requests or Open the bill, not a bare Open; there is no See all; the dim closes the drawer; Open the bill lands on that bill.</p>
-        <h3>Not in this walk</h3><p>Delete, Done and Mark all read (W2), the keyboard and Dark (W3). The holding-up notice opening its one request is checked by a test: the one on dev was sent before step 1, so it names the list.</p>
+        <h3>What this walk is for</h3><p>On a phone there is no bell, so More › Notifications is where an admin reads. A tap there now opens the notification in a sheet on the bottom bar instead of loading a page it never named.</p>
+        <h3>It passes when</h3><p>The sheet rises from the bar and the bar stays visible and lit; the whole message reads; the button reads Open the request; Close, the phone’s Back and a tap on the bar each close it without leaving the page; Open the request lands on that request, open.</p>
+        <h3>Not in this walk</h3><p>Done and the trash (W2); a computer (W3).</p>
       </div>
       <ol class="qasteps">
-        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">Sign in as the treasurer, open <b>/uat-rep-club/admin/accounting/payment-requests</b> (Accounting, the Payment requests tab), and click the <b>bell</b> at the top right (it shows a red <b>1</b>).</p><p class="qasee">A drawer comes in from the right under the top strip, the full height of the window, and the page behind is dimmed lightly. Its head reads <b>Notifications</b> with a gear and an ×. Below: <b>Unread | All</b> (Unread chosen, dark) and <b>Mark all read</b>. <b>NEEDS ATTENTION 2</b>, “stays until you mark it Done”, holds both notifications, each with <b>DONE</b>; “11U AA says they sent $450.00” has a dot. There is no See all anywhere.</p></div></li>
-        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Click <b>A request from 15U AAA is holding up their payout to families</b>.</p><p class="qasee">The page behind does not reload. A pane opens to the left of the list: the kind and the day and time at the top, the whole title, and the whole sentence “Their coach can’t pay families their end-of-season share until you answer it.” Then a lime <b>Open Payment requests →</b>, <b>✓ Done</b>, and a square trash on its own at the far right. In the list, that row is still there, tinted, with an olive edge.</p></div></li>
-        <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Click <b>11U AA says they sent $450.00</b> in the list.</p><p class="qasee">The message changes in place to the $450.00 one, and the line the row cut off (“Diamond fees 2026, 1 of 3 · sent Oct 5 · …”) reads whole. Its button reads <b>Open the bill →</b>. Its dot is gone, and so is the bell’s red number. The row stays in the list, now the highlighted one.</p></div></li>
-        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Press the <b>×</b> at the top right of the message (not the drawer’s).</p><p class="qasee">The message closes and the drawer is the list alone again, 380px wide. No row is highlighted.</p></div></li>
-        <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Click the dimmed page to the left of the drawer.</p><p class="qasee">The drawer closes, and nothing on the page under your click was opened or changed.</p></div></li>
-        <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Open the bell again, click <b>11U AA says they sent $450.00</b>, then <b>Open the bill →</b>.</p><p class="qasee">You land on Accounting’s <b>Allocations</b> tab, on <b>Diamond fees 2026</b>, with 11U AA’s bill open. The drawer is gone.</p></div></li>
+        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">Sign in as the treasurer in the 390px window and tap <b>More</b> at the bottom right.</p><p class="qasee">The More sheet rises with <b>Notifications</b> in it and a <b>1</b> beside it.</p></div></li>
+        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Notifications</b>.</p><p class="qasee">ORGANIZATION · <b>Notifications</b>, and <b>NEEDS ATTENTION 3</b>: <b>UAT Test Team filed a $450.00 request</b> on top with an unread dot (“From club · Diamond permit reimbursement”), then the 15U AAA and 11U AA notices, each with DONE.</p></div></li>
+        <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>UAT Test Team filed a $450.00 request</b> (the words, not its DONE).</p><p class="qasee">No new page loads. A white sheet rises from the top of the bottom bar, which stays visible and lit beneath it, and the page above is dimmed. In the sheet: a grab line; <b>🧾 A TEAM FILED A PAYMENT REQUEST</b> with today’s day and the time it arrived; the title; “From club · Diamond permit reimbursement”; a full-width lime <b>Open the request →</b>; and <b>✓ Done</b>, <b>Close</b> and a square trash in a row beneath. It looks like screen 10.</p></div></li>
+        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Close</b>. Then tap the notice again, and go <b>Back</b> (the browser’s back arrow, or a swipe from the left edge on a real phone).</p><p class="qasee">Close closes the sheet, and the notice’s dot is gone. Back closes the sheet too, and you are still on Notifications, not the page before it.</p></div></li>
+        <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Tap the notice again, then tap <b>More</b> on the bottom bar.</p><p class="qasee">The notification closes and More opens: never two sheets at once. Tap the dimmed page to close More.</p></div></li>
+        <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Tap the notice once more, then <b>Open the request →</b>.</p><p class="qasee">You land on Accounting’s <b>Payment requests</b> with UAT Test Team’s request open in its window: “Payment request · waiting …”, <b>UAT Test Team asks the club for $450.00</b>.</p></div></li>
       </ol>
       <div class="qaverdict" role="group" aria-label="W1 verdict">
         <button type="button" data-w="w1" data-v="pass" aria-pressed="false">Pass</button>
@@ -1086,22 +1208,18 @@ Q3 the drawer opens on Unread, as the bell did; a row opened this visit stays un
     </div>
 
     <div class="qawalk" id="w2" hidden>
-      <h2>W2 · A coach works down the list</h2>
+      <h2>W2 · Done, and a delete that leaves the request alone</h2>
       <div class="qacard">
-        <h3>What this walk is for</h3><p>Reading one notification after another in the drawer: what you open stays in the list until you close the drawer, the bell’s count follows you down, the trash deletes with a few seconds to Undo, and Done and Mark all read keep their step 1 meanings.</p>
-        <h3>It passes when</h3><p>Opened rows stay listed under Unread; the bell reads 8 then 7 at the steps that say so; the Undo note sits centred under the list (not under the message) and Undo brings the row back; a delete sticks after the drawer closes; Done keeps the row in view, further down, read; Mark all read leaves the decisions pinned.</p>
-        <h3>Not in this walk</h3><p>The keyboard, Back, 1024 and Dark (W3).</p>
+        <h3>What this walk is for</h3><p>In an opened notification, Done takes it out of Needs attention, and the trash deletes it from your own list with a few seconds to Undo. Deleting a notice never touches the request it was about.</p>
+        <h3>It passes when</h3><p>Done moves the notice below Needs attention, read; the Undo pill sits centred just above the bottom bar and Undo brings the notice back; a delete sticks after a reload; the $450.00 request is still waiting on Payment requests.</p>
+        <h3>Not in this walk</h3><p>A computer (W3).</p>
       </div>
       <ol class="qasteps">
-        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">Sign in as the coach, open <b>/uat-rep-club/coaches</b>, and click the <b>bell</b> (it shows <b>9+</b>).</p><p class="qasee">The drawer, on Unread. <b>NEEDS ATTENTION 3</b>: Assistant coach invite awaiting approval, Team marked no-show and Payment failed, each with DONE. Below them, by day: Game moved, Rain delay, <b>4 scores submitted</b>, <b>4 new registrations</b>, Assistant coach joined, 🏆 Champions crowned and Your week in review. No See all.</p></div></li>
-        <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Click <b>4 new registrations</b>.</p><p class="qasee">The message lists the four, Lakeside Lightning, Prairie Storm, Harbour Heat and Valley Vipers, each with its own day and time. The button reads <b>Open in admin →</b> (a coach who received an admin notice, as ruled). No Done. In the list the row is still there, highlighted, its dot gone, although Unread is chosen.</p></div></li>
-        <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Click <b>4 scores submitted</b>.</p><p class="qasee">The message swaps. “4 new registrations” is still in the list, no longer highlighted. The bell now reads <b>8</b>.</p></div></li>
-        <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Click <b>Assistant coach joined</b>.</p><p class="qasee">Its button reads <b>Open Settings →</b>; the trash at the far right. The bell reads <b>7</b>.</p></div></li>
-        <li><input type="checkbox" id="w2s5" aria-label="W2 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Point at <b>Rain delay — all 4:00 p.m. games pushed 45 minutes</b> without clicking, then click the small trash that appears on it. Then press <b>Undo</b> within six seconds.</p><p class="qasee">The trash appears where the row’s dot was. After the click the row is gone, the bell reads <b>6</b>, and a dark pill, <b>Notification deleted · Undo</b>, sits at the drawer’s foot, centred under the list, not under the message. After Undo the row is back with its dot and the bell reads <b>7</b>.</p></div></li>
-        <li><input type="checkbox" id="w2s6" aria-label="W2 step 6"><div class="qabody"><span class="qan"></span><p class="qado">In the open message (Assistant coach joined), press its <b>trash</b>. Wait ten seconds, close the drawer with its <b>×</b>, and open the bell again.</p><p class="qasee">The message closes and the row leaves the list, with the pill at the foot (the bell stays at 7: that one was already read). After reopening, Assistant coach joined is still gone.</p></div></li>
-        <li><input type="checkbox" id="w2s7" aria-label="W2 step 7"><div class="qabody"><span class="qan"></span><p class="qado">On <b>Team marked no-show</b>, press its own <b>DONE</b> (in the row, without opening it).</p><p class="qasee">It leaves Needs attention, which now holds two, and shows further down under its day, read, still in the list although Unread is chosen. The bell reads <b>6</b>.</p></div></li>
-        <li><input type="checkbox" id="w2s8" aria-label="W2 step 8"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Mark all read</b>.</p><p class="qasee">Every dot goes and so does the bell’s red number. <b>Assistant coach invite awaiting approval</b> and <b>Payment failed</b> stay pinned under Needs attention with DONE: reading is not finishing. Mark all read goes (nothing left to read).</p></div></li>
-        <li><input type="checkbox" id="w2s9" aria-label="W2 step 9"><div class="qabody"><span class="qan"></span><p class="qado">Close the drawer and open it again.</p><p class="qasee">On Unread, only the two Needs-attention rows: the ones read during the last visit have left the Unread list (choose <b>All</b> to see them).</p></div></li>
+        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">Go back to <b>More › Notifications</b>, tap <b>UAT Test Team filed a $450.00 request</b>, then <b>✓ Done</b> in the sheet.</p><p class="qasee">The sheet closes. Needs attention now reads <b>2</b>, and the notice shows further down under <b>Today</b>, read, with no DONE button of its own.</p></div></li>
+        <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap the notice under Today, then the <b>trash</b> at the right of the sheet’s buttons.</p><p class="qasee">There is no “are you sure?”. The sheet closes, the notice leaves the list at once, and a dark pill, <b>Notification deleted · Undo</b>, sits centred just above the bottom bar.</p></div></li>
+        <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Undo</b> within six seconds.</p><p class="qasee">The pill goes and the notice is back under Today, read.</p></div></li>
+        <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Tap the notice, then the trash again. Wait ten seconds, then reload the page.</p><p class="qasee">After the reload the notice is still gone. The 15U AAA and 11U AA notices are still there.</p></div></li>
+        <li><input type="checkbox" id="w2s5" aria-label="W2 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Accounting</b> on the bottom bar, then the <b>Payment requests</b> tab.</p><p class="qasee">UAT Test Team’s <b>$450.00 Diamond permit reimbursement</b> is still there, waiting on the club. Deleting the notification did not touch the request.</p></div></li>
       </ol>
       <div class="qaverdict" role="group" aria-label="W2 verdict">
         <button type="button" data-w="w2" data-v="pass" aria-pressed="false">Pass</button>
@@ -1114,20 +1232,18 @@ Q3 the drawer opens on Unread, as the bell did; a row opened this visit stays un
     </div>
 
     <div class="qawalk" id="w3" hidden>
-      <h2>W3 · The keyboard, Back, 1024 and Dark</h2>
+      <h2>W3 · On a computer: the dialog, the keyboard and Dark</h2>
       <div class="qacard">
-        <h3>What this walk is for</h3><p>Escape, the browser’s Back and the keyboard each go up one level: the message first, then the drawer. The drawer holds at the smallest computer width and reads right in Dark.</p>
-        <h3>It passes when</h3><p>The keyboard never lands behind the dim; Escape and Back close the message before the drawer; at 1024 both panes fit with a sliver of page; in Dark the onward button is lime with dark words; narrowing past 900px closes the drawer.</p>
-        <h3>Not in this walk</h3><p>What the buttons do (W1, W2).</p>
+        <h3>What this walk is for</h3><p>On a computer the bell’s drawer is where notifications are read, and nothing links to this page. Reached by its address, an old link or a help article, the page opens the coach’s small dialog.</p>
+        <h3>It passes when</h3><p>A 480px dialog opens in the middle of a dimmed window, buttons in the order Open · Done · Close · trash; the keyboard stays inside it; Escape closes it and puts the keyboard back on the row; in Dark the onward button is lime with dark words.</p>
+        <h3>Not in this walk</h3><p>A phone (W1, W2).</p>
       </div>
       <ol class="qasteps">
-        <li><input type="checkbox" id="w3s1" aria-label="W3 step 1"><div class="qabody"><span class="qan"></span><p class="qado">As the coach, make the window about <b>1024px</b> wide. Press <b>Tab</b> until the bell is outlined and press <b>Enter</b>. Then press Tab a dozen times.</p><p class="qasee">The drawer opens. Tab walks the drawer’s own controls (the gear, ×, Unread, All, the rows and their buttons) and comes back round to the top; it never reaches the dimmed page.</p></div></li>
-        <li><input type="checkbox" id="w3s2" aria-label="W3 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tab onto a row in Needs attention, then Tab twice more.</p><p class="qasee">With the keyboard on the row its trash shows, as it does under the pointer. The next Tab reaches its DONE, the next its trash.</p></div></li>
-        <li><input type="checkbox" id="w3s3" aria-label="W3 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Shift+Tab back to the row itself and press <b>Enter</b>.</p><p class="qasee">The message opens beside the list with the keyboard on its title. At this width the two panes cover all but a strip of the page at the left, most of it the sidebar, dimmed.</p></div></li>
-        <li><input type="checkbox" id="w3s4" aria-label="W3 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Escape</b>, then <b>Escape</b> again.</p><p class="qasee">The first closes the message and puts the keyboard back on that row. The second closes the drawer and the bell is outlined.</p></div></li>
-        <li><input type="checkbox" id="w3s5" aria-label="W3 step 5"><div class="qabody"><span class="qan"></span><p class="qado">With the mouse, open the bell and a notification, then press the browser’s <b>Back</b> button twice.</p><p class="qasee">The first Back closes the message and leaves the drawer open; the second closes the drawer. You are still on the same page. (A third Back leaves the page as it always has.)</p></div></li>
-        <li><input type="checkbox" id="w3s6" aria-label="W3 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>http://localhost:3000/account/appearance</b>, choose <b>Dark</b>, come back to <b>/uat-rep-club/coaches</b>, open the bell and click any notification with an onward button.</p><p class="qasee">The dim is darker, the drawer dark with light words, the chosen half of Unread | All lime, the onward button lime with dark words, and the highlighted row tinted with a lime edge.</p></div></li>
-        <li><input type="checkbox" id="w3s7" aria-label="W3 step 7"><div class="qabody"><span class="qan"></span><p class="qado">With the drawer open, narrow the window below about <b>900px</b>.</p><p class="qasee">The drawer closes as the top strip and its bell leave. Switch Appearance back to Warm afterwards if that is how you keep it.</p></div></li>
+        <li><input type="checkbox" id="w3s1" aria-label="W3 step 1"><div class="qabody"><span class="qan"></span><p class="qado">In a window wider than 900px, open <b>http://localhost:3000/uat-rep-club/admin/notifications</b>.</p><p class="qasee">The Notifications page with its <b>ALL · NEEDS ATTENTION · ACTIVITY</b> chips and Unread | All, and the two older notices under Needs attention.</p></div></li>
+        <li><input type="checkbox" id="w3s2" aria-label="W3 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Click <b>11U AA says they sent $450.00</b>.</p><p class="qasee">The page does not change. A 480px dialog opens in the middle of the window, which is dimmed all over, top strip and bell included. It reads the kind, the day and time, the title and the whole line “Diamond fees 2026, 1 of 3 · sent Oct 5 · test reference number 12345. Confirm it when it arrives.” Then a lime <b>Open the bill →</b>, <b>✓ Done</b>, <b>Close</b>, and the trash set apart at the right.</p></div></li>
+        <li><input type="checkbox" id="w3s3" aria-label="W3 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Tab</b> six or seven times.</p><p class="qasee">The keyboard moves through the dialog’s buttons and comes back round; it never lands on the dimmed page behind.</p></div></li>
+        <li><input type="checkbox" id="w3s4" aria-label="W3 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Escape</b>.</p><p class="qasee">The dialog closes and the 11U AA row is outlined: the keyboard is back on it. Press <b>Enter</b> and it opens again; click the dimmed window and it closes.</p></div></li>
+        <li><input type="checkbox" id="w3s5" aria-label="W3 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>http://localhost:3000/account/appearance</b>, choose <b>Dark</b>, come back to the Notifications page and click <b>A request from 15U AAA is holding up their payout to families</b>.</p><p class="qasee">A dark dialog with light words, and a lime <b>Open Payment requests →</b> with dark words (that notice was sent before step 1, so it names the list, not one request). Switch Appearance back to Warm afterwards if that is how you keep it.</p></div></li>
       </ol>
       <div class="qaverdict" role="group" aria-label="W3 verdict">
         <button type="button" data-w="w3" data-v="pass" aria-pressed="false">Pass</button>
@@ -1342,7 +1458,7 @@ Q3 the drawer opens on Unread, as the bell did; a row opened this visit stays un
 </script>
 <script>
 (function () {
-  var KEY = 'notif-open-place-walk-267-v1';
+  var KEY = 'notif-open-place-walk-272-v1';
   var WALKS = ['w1', 'w2', 'w3'];
   var state = { ticks: {}, verdict: {}, notes: {}, open: 'w1' };
   try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') state = Object.assign(state, p); } } catch (e) {}
@@ -1383,10 +1499,10 @@ Q3 the drawer opens on Unread, as the bell did; a row opened this visit stays un
     return lines.join('\n');
   }
   var out = document.getElementById('qaOut');
-  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = '§267 Notifications Open in Place step 2\n' + summary(state.open); });
+  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = '§272 Notifications Open in Place step 3\n' + summary(state.open); });
   document.getElementById('qaBuildAll').addEventListener('click', function () {
     var n = 0, of = 0; WALKS.forEach(function (w) { var c = count(w); n += c.n; of += c.of; });
-    out.textContent = '§267 Notifications Open in Place step 2 — checked ' + n + ' of ' + of + '\n' + WALKS.map(summary).join('\n');
+    out.textContent = '§272 Notifications Open in Place step 3 — checked ' + n + ' of ' + of + '\n' + WALKS.map(summary).join('\n');
   });
   function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
   document.getElementById('qaCopy').addEventListener('click', function () { var text = out.textContent; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(selectOut); else selectOut(); });

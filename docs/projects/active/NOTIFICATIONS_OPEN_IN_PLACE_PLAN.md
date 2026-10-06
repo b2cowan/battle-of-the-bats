@@ -104,7 +104,9 @@ names. Small walk.
 ### Step 3 · the admin's Notifications page (D5) and the docs
 
 1. `NotificationsPageContent` passes `onOpen`; the shared block in a `SheetFrame` menu-layer sheet ≤ 900 (bar visible and
-   tappable, Back closes it) and a dialog above. Delete and Undo as in the drawer.
+   tappable, Back closes it) and a dialog above. Delete and Undo as in the drawer. **Built instead as the coach's own
+   reader, one file for both pages** (owner, 2026-10-06, hub screen 10 Q1 — D5's own words; `SheetFrame`'s dim loads
+   `coaches.module.css`). See the step-3 Build record.
 2. `/docs`: the bell tour, the notifications FAQ (coach + org help), every "See all" mention, the drawer, Done, Delete.
 3. QA walk as a tab on the hub, and an Owner QA Ledger section.
 
@@ -216,7 +218,7 @@ here (the bell's own stylesheet; the badge's comment claims ~6.1:1 on warm rust,
 and `NotificationUndoNote` are the delete surface (the drawer places the note at its own foot — the component needs a
 placement prop then); `notificationDestination(link, 'admin')` for the admin drawer, `'coach'` for the coach's.
 
-### Step 2 · the drawer — built 2026-10-06, committed `a1134f15` 2026-10-06; owner QA §267 (hub tab QA Walk)
+### Step 2 · the drawer — built 2026-10-06, committed `a1134f15` 2026-10-06; ✅ owner QA §267 PASSED 2026-10-06, 22/22 (writes read back on dev)
 
 **Owner rulings in the build session (2026-10-06, hub screen 9 — "what the hub never drew" — all three as
 recommended):**
@@ -332,3 +334,105 @@ on an open, to zero on Mark all read, Load more still offered.
 **Step 3 adapts to:** the admin page passes `onOpen` and wears `NotificationMessage` (portal `'admin'`, `onClose` for
 its Close) in a `SheetFrame` menu-layer sheet ≤ 900 and a dialog above; `FEED_EMPTY_COPY` already holds the admin's
 words; the delete surface is the feed's, the note `placement="page"`.
+
+### Step 3 · the admin's Notifications page — built 2026-10-06, committed `157adb69` 2026-10-06; owner QA §272 (hub tab QA Walk)
+
+**Raised before building (disagree out loud).** The plan's step 3 named a `SheetFrame` menu-layer sheet, and this build
+prompt said never to load `coaches.module.css` into anything the admin renders. Those two conflict: `SheetFrame` always
+renders `LineupSheetScrim`, whose stylesheet IS `coaches.module.css` (~945KB). The accepted D5 itself says "the coach's
+09-25 sheet in the admin's styling", and the hub's plan notes allowed the shared frame only "if that step has landed" —
+Sheet Frame step 4 had not touched the coach reader (its last commit was this project's `a1134f15`). The coach reader's
+own frame loads nothing new on the admin: its sheet styles are `CoachesBottomNav.module.css`, which the admin's bottom
+bar already wears, and the admin shell carries the same `data-coach-warm-enabled` marker in-tree (`adminKitAttr`).
+
+**Owner rulings in the build session (2026-10-06, hub screen 10 — real captures of the admin page with the reader drawn
+over them, measured from the coach reader — both as recommended):**
+- **Q1 · one reader for both pages**, not a second admin frame on `SheetFrame`. Sheet Frame step 4 moves the one reader
+  for both pages at once.
+- **Q2 · the admin's reader as drawn**: the sheet on the bar at 390 (Warm and Dark), the 480px dialog at 1280.
+
+**Built:**
+1. **One reader** — `components/coaches/CoachNotificationReader.tsx` (+ `.module.css`) moved to
+   `components/notifications/NotificationReader.tsx` (+ `.module.css`); the FRAME is unchanged (Sheet Frame's half). Its
+   props are now `entry · portal · feed · onClose`: `portal` names the onward page's words (D4), and Done (on the LIVE row,
+   the /review 2026-09-25 rule that lived in the coach page) and Delete act on the feed inside the reader, then close —
+   one home for both pages instead of two copies of the same three handlers.
+2. **The admin page opens notifications** — `NotificationsPageContent` holds `reading`, opens with `markSeen`, and renders
+   the reader with `portal="admin"`. Delete leaves the page's Undo note (`placement="page"`, step 1's place).
+3. **Nothing in the list navigates any more** — `NotificationFeedBody`'s `onOpen` is required (rows always announce a
+   dialog) and `useNotificationFeed` loses `markRead` / `bundleClick`, the last `window.location` jumps in the list.
+4. **Comments** — the admin route and page no longer call themselves the "See all" page; the message block, the coach page
+   and the feed's header say both pages open notifications.
+5. **Guards** — `notification-open-in-place-guard.test.ts` gains step 3 (the admin page opens the reader in the admin's
+   words; one reader worn by both pages and the old file gone; Done on the live row, Delete through the feed; `onOpen`
+   required and no navigation in the list, the feed, the reader or either page; the page's Undo note; and an IMPORT
+   WALKER from the admin page — every local import at any depth — that fails if it reaches `coaches.module.css`). The
+   walker was proven both ways in a throwaway test: it finds the stylesheet from the coach page and from `SheetFrame`.
+   `scripts/check-public-tokens.mjs`: the reader's stylesheet joins the operator scope (it left `components/coaches`,
+   which that scope covers as a folder).
+6. **Walk fixture** — `scripts/seed-uat-treasurer-notifications.mjs` (dev only, refuses production, tag `nop3-walk`,
+   re-run = reset): ONE fresh `team_request_filed` notice for the club's newest waiting request, in the sender's own
+   words and link (`?request=`). Only that: a treasurer receives the club's three money notices and nothing else, so an
+   Activity row would be one this account never gets.
+7. **`/docs`** — org help's Notifications article rewritten (the drawer on a computer, More › Notifications on a phone, a
+   click opens in place with a button naming its page, Read · Done · Delete as definition rows, settings from the
+   drawer's gear or More › Account › Notification settings); the coach bell tour made scannable (the drawer, opening one, the
+   three words, the phone); the coach phone FAQ (Done and the trash), the week-in-review and settings FAQs, and the
+   tournament settings FAQ ("the gear in the bell's drawer", plus the phone path). Keywords and `searchText` follow;
+   "see all" survives only as the alias "where did see all go". `measure:help`: the org article is under the limit; the
+   coach bell article is 486 words in definition rows (it was one ~240-word paragraph inside a longer article).
+
+**Checks:** `npm run typecheck` clean; focused eslint — one pre-existing warning (the feed's initial load); the
+notification guards 66/66. `npm run verify:changed`: 5,782 unit tests pass; the chain stopped at
+`check-public-tokens` on ANOTHER session's in-flight work (two sheets the Tournament admin redesign retired, still on the
+admin colour-debt list) — the token-scope coverage line, which this step touches, is green. Every later check run one by
+one: green except two more of other sessions' (`check-admin-old-look`: that redesign's restyle went down unrecorded;
+`check-schema-parity`: the Club Tier 3b migration on dev only). `check:layout --only=admin-notifications,coach-notifications`
+(after `auth-setup` refreshed the stored sessions, which had expired): no new findings at 361 · 390 · 768 · 1440; three
+baseline entries (the admin "Public site" tap floor) no longer reproduce — another session removed that door; not
+pruned here. **Rendered check** (`.probe/nop3-built.mjs`, every write answered in the browser, none sent): the treasurer
+at 390 in Warm and Dark — a tap opens without leaving, the sheet 390 wide with its foot on the bar's top (772 = 772),
+"Open Payment requests" (the dev notice predates step 1), the way on 48px, Done · Close · trash at 44, a tap on the bar
+closes it, Back closes it and stays; a delete takes the row at once, the note 12px above the bar and centred on the
+column with the keyboard on Undo, Undo restores, no delete sent. At 1280 — the 480px dialog centred, Open · Done · Close
+· Delete, the dim over the top strip, Tab kept inside, Escape back to the row, Done sends `clear`. The admin page loads no
+rule from `coaches.module.css`. The coach's reader is pixel-placed as before (y 474, h 298 before and after) and still
+says "Open in admin". The walk's path was rehearsed read-only at 390: More shows Notifications 1, the fixture notice
+opens, "Open the request" lands on Payment requests with that request's window open. The dev server was restarted
+(moved files, shared modules).
+
+**/simplify (four lenses) and /review (standard tier: correctness, concurrency/state, regression) 2026-10-06.**
+/simplify: Done's live-row lookup moved from the reader INTO `clearRow` (as `deleteRows` already did) — every caller is
+covered now, and the drawer's message pane, which also hands Done its pre-read snapshot, had the same latent rollback
+fault; the reader takes only `clearRow` / `deleteRows`. The guard's import walker now follows a stylesheet's
+`composes … from` and `@import` too (the route the coach stylesheet has been borrowed by before; proven both ways in a
+throwaway test), and lost a size assertion that only restated the premise. The fixture builds its title and body with
+the product's own `CLUB_MONEY_NOTICE.newRequest` (it registers the test resolver itself, so the run line stays plain
+`node`) instead of a hand-kept copy. Two stale "See all page" comments. Skipped: a shared open-the-reader hook (two
+call sites, and the drawer's open differs); the reader's imports from `components/coaches` (they move with the frame in
+Sheet Frame step 4); a folder rule in the token gate (`components/notifications` is split between scopes, and another
+session is editing that script); promoting the walker (one consumer — promote it on the second); loading the reader
+lazily (small, and its CSS already ships with the bottom bar). /review: concurrency and regression found nothing (every
+old path, removed export and required prop traced; purity, selectors and token checks re-run clean); correctness found
+one Low, fixed — the help said "More › Account › Notifications" where the Account page's row reads **Notification
+settings**. Gate after the fixes: typecheck clean, focused eslint (the one pre-existing warning), `npm test` 5,782 pass,
+the notification guards 36/36, spelling clean. The rendered check was not re-run: the fixes after it are a feed callback
+whose behavior is unchanged on the happy path, comments, help prose, a test and a dev script.
+
+**Found, not fixed:**
+- **The "Install FieldLogicHQ" banner covers the foot of every phone sheet, in both portals, until dismissed** — it is
+  `z-index: 400` over the sheets' 260 (and the More sheet's); on the coach page it hides the reader's lime button.
+  Pre-existing and portal-wide: the install prompt's or Sheet Frame's, not this project's.
+- **The reader's panel shows the browser's focus ring when opened from the keyboard** (both pages; the coach's did before
+  this step). The frame's — Sheet Frame step 4.
+- **The admin's Notifications page has no settings gear** — its route never passed `settingsHref`. On a phone an admin
+  reaches settings through More › Account › Notification settings (help now says so).
+- **The admin page's Unread | All is still the old small-capitals pill** (the coach page and the drawer wear the
+  portal's two-way switch).
+- **Sheet Frame's plan and build prompt name the reader's old path** (a step-4 sheet). Not edited — another project's
+  files; its build prompt already tells step 4 to check this project's commits first.
+- Steps 1–2's open items stand: the Dark bell badge's contrast, the drawer title's size, family and public links' bare
+  "Open", a notification arriving while the drawer is open.
+
+**Project status:** all three steps are built. When §272 passes, the project is complete — the plan and PM brief move to
+`docs/projects/archive/` and the hub's stage strip closes.
