@@ -18,9 +18,10 @@ import { utcToZonedInputs, zonedWallClockToUtc } from './timezone';
  *    (`rep_team_lineup_entries.inning_positions`, via the existing lineup PUT). No new
  *    playing-time record, no shift log. Abandoning the console mid-game leaves data
  *    indistinguishable from never opening it.
- *  · The quiet flag is honored ONLY for score fields and ONLY inside the live window — it must
- *    never become a general notification bypass. The one family notification fires at End game
- *    through the ordinary (non-quiet) write path.
+ *  · The quiet flag is honored ONLY for score fields and ONLY inside the live window. It keeps a
+ *    running score from being decided as a result; End game's ordinary (non-quiet) write decides
+ *    it. (It once also held back a family notification; a score notifies no family since
+ *    2026-10-06, owner — End game included.)
  */
 
 // ── The live window ──────────────────────────────────────────────────────────────────────────
@@ -346,8 +347,8 @@ export const QUIET_ALLOWED_FIELDS = ['teamScore', 'opponentScore'] as const;
 export type QuietWriteVerdict = { ok: true } | { ok: false; reason: string };
 
 /**
- * May THIS request suppress the family notification? Rejection is a 400 at the route — never a
- * silent un-quieting (which would spam families) and never a silent suppression of a
+ * May THIS request be a quiet running-score save (no result decided)? Rejection is a 400 at the
+ * route — never a silent un-quieting (which would decide a mid-game "win") and never a quiet
  * non-score change (which would make the flag a general bypass).
  */
 export function validateQuietScoreWrite(input: {

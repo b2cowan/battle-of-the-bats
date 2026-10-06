@@ -3252,7 +3252,8 @@ export type NotificationEventType =
   // A tryout family responded (Accept/Decline) to an offer via the no-login link (Phase 2B.5) — the
   // coach still finalizes. Bell default on; TS-union change only (no DB CHECK on event_type).
   | 'tryout_offer_response'
-  // Chunk D 1.11 — a connected family's team moved a game or posted a final score. Reaches
+  // Chunk D 1.11 — a connected family's team moved, cancelled or reinstated a game (a final score
+  // stopped notifying 2026-10-06, owner). Reaches
   // FAMILY accounts (not org staff), who are not organization members, so it is always
   // dispatched with an explicit recipient list. Deliberately NOT in PUSH_DEFAULT_ON_EVENTS:
   // Android/prod push delivery is still unverified (discovery G9), and promising a family a

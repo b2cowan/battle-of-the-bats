@@ -197,7 +197,7 @@ export default function CoachGameConsolePage({
   const [lineupError, setLineupError] = useState('');
   const [undoStack, setUndoStack] = useState<GridRow[][]>([]);
 
-  // Score autosave — 10s debounce, `quiet: true` (server-checked; families hear once, at End game).
+  // Score autosave — 10s debounce, `quiet: true` (server-checked; a running score is never decided as a result).
   const [scoreDirty, setScoreDirty] = useState(false);
   const [scoreSaving, setScoreSaving] = useState(false);
   const [scoreError, setScoreError] = useState('');
@@ -529,7 +529,7 @@ export default function CoachGameConsolePage({
     }
   };
 
-  // ── End game (the one deliberate act; the single family notification) ─────────────────────
+  // ── End game (the one deliberate act; it decides the result and notifies nobody) ──────────
   const openEndSheet = (from: HTMLElement | null = null) => {
     sheetOpenerRef.current = from;
     setFinalTeam(String(teamScore ?? 0));
@@ -561,8 +561,8 @@ export default function CoachGameConsolePage({
           return;
         }
       }
-      // Non-quiet, no explicit result: the server derives win/loss/tie and sends the ONE
-      // family notification for tonight (the quiet path never called the dispatcher).
+      // Non-quiet, no explicit result: the server derives win/loss/tie (the quiet running-score
+      // path never decides one). A score notifies no family (owner, 2026-10-06).
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -820,7 +820,7 @@ export default function CoachGameConsolePage({
    *
    * ⚠⚠ THE FORM-LAYER SHEETS ARE THE EXCEPTION (Sheet Frame step 3, owner 2026-10-06). D1's test —
    * "would a stray tap on the bottom bar lose something?" — says Note (a half-typed note), End game
-   * (a corrected final score, before the families are notified) and Scouting WHILE an observation
+   * (a corrected final score, before the result is decided) and Scouting WHILE an observation
    * is typed hold work in hand. On a phone those come down over the bar and stand on the frame's
    * floor (`useDialogFloor`: Escape, Tab kept inside, Back, focus home), which ALSO stands a history
    * entry — so this page's own dismiss and back step stand down for them, or Back would pop two
@@ -852,7 +852,7 @@ export default function CoachGameConsolePage({
    */
   const closeSheetToOpener = () => {
     // A save in flight holds the sheet, as it holds the dim, Escape and Back — closing End game under its
-    // own PATCH hid a failed "Confirm & notify families" behind a closed sheet (/review, 2026-10-06).
+    // own PATCH hid a failed End game behind a closed sheet (/review, 2026-10-06).
     if (sheetBusy) return;
     dismissOverlay();
     sheetOpenerRef.current?.focus({ preventScroll: true });
@@ -1644,8 +1644,7 @@ export default function CoachGameConsolePage({
                   })}
                 </div>
                 <p className={styles.gdQuietNote}>
-                  Families aren’t pinged {sportPack.score.unit.toLowerCase()}-by-{sportPack.score.unit.toLowerCase()}.
-                  They get one notification — the final score — when you end the game.
+                  The score saves as you go. Nothing is sent to families.
                 </p>
               </>
             ) : (
@@ -1792,8 +1791,8 @@ export default function CoachGameConsolePage({
 
         {bookSheet}
 
-        {/* End game — the FORM layer on a phone (owner, 2026-10-06): a corrected final score and the
-            one notification of the night are work in hand, and a stray tap on the bar used to leave
+        {/* End game — the FORM layer on a phone (owner, 2026-10-06): a corrected final score is work in
+            hand, and a stray tap on the bar used to leave
             the game with the correction dropped. */}
         {sheet === 'end' && renderSheet('End game', (
           <>
@@ -1825,7 +1824,7 @@ export default function CoachGameConsolePage({
                   </span>
                 ) : null;
               })()}
-              <p className={styles.gdQuietNote}>Tap a number to correct it before confirming.</p>
+              <p className={styles.gdQuietNote}>Tap a number to correct it before you end the game.</p>
             </div>
             <div className={styles.gdSumLines}>
               <span className={styles.gdSumLine}>Substitutions tonight<b>{subCount}</b></span>
@@ -1853,10 +1852,12 @@ export default function CoachGameConsolePage({
                 You have a moment typed but not saved — go back and save it first, or it won’t be kept.
               </p>
             )}
+            {/* ⚠ Ending a game notifies NOBODY (owner, 2026-10-06) — a final score no longer sends
+                families anything, from here or from the Schedule. The button names the act, and
+                this line says what the act does to the record. */}
             <p className={styles.gdQuietNote}>
-              {moments.length > 0
-                ? 'Moments stay with you and your staff. Confirming sends families the final score — nothing else.'
-                : 'Confirming sends families their one notification for tonight and finishes the record.'}
+              {moments.length > 0 ? 'Moments stay with you and your staff. ' : ''}
+              Ending the game records the result and updates your season record. You can still fix the score from the schedule.
             </p>
             {endError && <p className={styles.errorText}>{endError}</p>}
             <div className={styles.gdSheetActions}>
@@ -1867,7 +1868,7 @@ export default function CoachGameConsolePage({
                 type="button" className={styles.gdBigBtn} data-primary="yes"
                 onClick={() => void confirmEnd()} disabled={endSaving}
               >
-                {endSaving ? 'Finishing…' : 'Confirm & notify families'}
+                {endSaving ? 'Ending…' : 'End game'}
               </button>
             </div>
           </>

@@ -386,8 +386,9 @@ export const PITCH_SLIDES = {
    *
    * The claim is exact rather than a flattering paraphrase, verified in the code: the bench
    * console saves the running score with a QUIET write that notifies nobody, so families watching
-   * the team's page see it move on their own; ending the game is the one non-quiet write, and it
-   * sends a single final-score message.
+   * the team's page see it move on their own. ⚠ Ending the game sends NOTHING either, since
+   * 2026-10-06 (owner): a final score notifies no family. The drawing's closing envelope ("ONE
+   * MESSAGE when the game ends") and the caption's "one message when it is over" went with it.
    */
   '#07': {
     id: '#07',
@@ -404,8 +405,8 @@ export const PITCH_SLIDES = {
     pageAnswer:
       'Keep score from the bench and it shows up on the team’s own page as it moves — families just watch it there. Nothing is sent while the game runs, and nobody texts you for the score.',
     seoPhrase: 'a score families watch themselves',
-    alt: 'Four chat bubbles down one side, two of them reading “score?” and one holding only a question mark. Facing them, a two-box scoreboard with a broadcast symbol, and below a dividing rule a single envelope with one arrow leaving it.',
-    caption: 'The same question all afternoon, answered once — by a scoreboard they can watch themselves, and one message when it is over.',
+    alt: 'Four chat bubbles down one side, two of them reading “score?” and one holding only a question mark. An arrow leads from them to a two-box scoreboard with a broadcast symbol, labelled “They watch it — on the team’s own page”.',
+    caption: 'The same question all afternoon, answered once — by a scoreboard they can watch themselves.',
   },
   /**
    * ⚠ THIS SLIDE WENT CAPTURE → DRAWING → CAPTURE IN ONE DAY (2026-08-21), and the round trip is

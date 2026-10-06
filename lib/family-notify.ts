@@ -24,7 +24,12 @@ import { isVisibleToFamilies } from './family-access';
  * schedule edit.
  */
 
-export type FamilyGameUpdateKind = 'schedule_change' | 'final_score' | 'cancelled' | 'reinstated';
+/**
+ * What a family hears about: the changes they have to ACT on. A final score was one of these until
+ * 2026-10-06 (owner) — a result is something a family looks up, not something they act on, so it
+ * notifies nobody, from End game or from the Schedule.
+ */
+export type FamilyGameUpdateKind = 'schedule_change' | 'cancelled' | 'reinstated';
 
 interface EventFacts {
   id: string;
@@ -37,9 +42,6 @@ interface EventFacts {
   location: string | null;
   opponent: string | null;
   homeAway: string | null;
-  teamScore: number | null;
-  opponentScore: number | null;
-  result: string | null;
   status: string;
 }
 
@@ -49,13 +51,6 @@ function describe(event: EventFacts, teamName: string, kind: FamilyGameUpdateKin
     weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
   });
 
-  if (kind === 'final_score') {
-    const outcome = event.result === 'win' ? 'Won' : event.result === 'loss' ? 'Lost' : 'Tied';
-    return {
-      title: `${teamName} — final score`,
-      body: `${outcome} ${event.teamScore}–${event.opponentScore} ${opponent}.`,
-    };
-  }
   const noun = event.eventType === 'practice' ? 'practice' : 'game';
   if (kind === 'cancelled') {
     return {
@@ -92,7 +87,7 @@ export async function notifyFamiliesOfGameUpdate(params: {
   try {
     const { data: eventRow } = await supabaseAdmin
       .from('rep_team_events')
-      .select('id, team_id, org_id, program_year_id, event_type, name, starts_at, location, opponent, home_away, team_score, opponent_score, result, status')
+      .select('id, team_id, org_id, program_year_id, event_type, name, starts_at, location, opponent, home_away, status')
       .eq('id', params.eventId)
       .maybeSingle();
     if (!eventRow) return;
@@ -109,9 +104,6 @@ export async function notifyFamiliesOfGameUpdate(params: {
       location: (row.location as string) ?? null,
       opponent: (row.opponent as string) ?? null,
       homeAway: (row.home_away as string) ?? null,
-      teamScore: (row.team_score as number) ?? null,
-      opponentScore: (row.opponent_score as number) ?? null,
-      result: (row.result as string) ?? null,
       status: (row.status as string) ?? 'scheduled',
     };
 
@@ -201,7 +193,7 @@ export async function notifyFamiliesOfGameUpdate(params: {
     const recipients = Array.from(new Set(links.map(l => l.invited_email).filter(Boolean)));
 
     // Sent in bounded parallel, NOT one at a time. This dispatcher runs inside the coach's
-    // "save score" request (awaited, because this host has no reliable after-response hook),
+    // schedule save (awaited, because this host has no reliable after-response hook),
     // so a team with many connected families would otherwise add dozens of sequential provider
     // round-trips to a button press — long enough to look hung and be retried. Eight at a
     // time keeps a full team under a second or two without hammering the provider.

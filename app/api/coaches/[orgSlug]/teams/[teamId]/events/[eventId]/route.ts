@@ -85,14 +85,12 @@ export const PATCH = withObservability(async (req: Request,
     }
   }
 
-  // Game-Day Mode P1: the bench console saves the RUNNING score debounced with `quiet: true`,
-  // suppressing the per-save family notification (a run scored must not ping every family; the
-  // one final-score notification fires at End game through an ordinary non-quiet write). The
-  // flag is server-checked and NARROW by design — score fields only, live game-day window only,
-  // never a mirrored game — and an ineligible quiet request is REFUSED rather than silently
-  // un-quieted (which would spam) or silently honored (which would make it a notification
-  // bypass for schedule changes). The notify() chokepoint is untouched: a quiet save simply
-  // never reaches the dispatcher.
+  // Game-Day Mode P1: the bench console saves the RUNNING score debounced with `quiet: true`, which
+  // keeps a mid-game score from being decided as a result (below); End game's ordinary non-quiet
+  // write is the one that decides it. The flag is server-checked and NARROW by design — score
+  // fields only, live game-day window only, never a mirrored game — and an ineligible quiet request
+  // is REFUSED rather than silently honored. (It once also held back a per-save family notification;
+  // a score no longer notifies families at all — owner, 2026-10-06, see the notify block below.)
   const quiet = body.quiet === true;
   if (quiet) {
     const verdict = validateQuietScoreWrite({
@@ -286,37 +284,33 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   // ── Tell connected families (Chunk D 1.11) ──
-  // Only the three changes a family actually needs to hear about: it moved, it's off, or it's
-  // over. Field number, uniform, notes and tags are coach-side detail and stay silent — a
-  // family layer that pings on every keystroke is one families mute in a week.
+  // Only the changes a family has to ACT on: it moved, it's off, or it's back on. Field number,
+  // uniform, notes and tags are coach-side detail and stay silent — a family layer that pings on
+  // every keystroke is one families mute in a week.
+  //
+  // ⚠ A SCORE IS NOT ONE OF THEM (owner, 2026-10-06). A final score used to notify here — from End
+  // game AND from a score typed on the Schedule — and it went: a result is something a family
+  // looks up, not something they act on. Removed for every path at once, never End game alone: a
+  // rule where the slow way of entering a score notified and the bench console didn't would have
+  // been backwards. A score message, if one is ever wanted, comes back as a decision of its own.
   //
   // AWAITED deliberately, not fired into `after()`: Amplify has no waitUntil bridge, so
   // post-response work can silently never run (memory: reference_next_after_amplify). The
   // dispatcher never throws, so awaiting it cannot fail the coach's save.
-  // `changed(key)` means "this save actually moved the field", so a no-op re-save stays
-  // silent. A score field counts only when it lands on a VALUE — clearing a score mid-
-  // correction should not announce a result.
+  // `changed(key)` means "this save actually moved the field", so a no-op re-save stays silent.
   const changed = <K extends keyof typeof fields & keyof typeof event>(key: K) =>
     fields[key] !== undefined && (fields[key] as unknown) !== (event[key] as unknown);
-  const scoreLanded = <K extends keyof typeof fields>(key: K) =>
-    changed(key) && fields[key] !== null;
 
   const familyUpdateKind =
     changed('status') && fields.status === 'cancelled' ? 'cancelled' as const
     // The reverse transition matters just as much: a family told the game was off needs to
     // hear it is back on.
     : changed('status') && fields.status === 'scheduled' ? 'reinstated' as const
-    // ALL THREE score fields, not just our own. A 4–2 corrected to 4–3 moves only the
-    // opponent's number, and leaving it out meant the correction never reached anyone.
-    : scoreLanded('result') || scoreLanded('teamScore') || scoreLanded('opponentScore')
-      ? 'final_score' as const
     : changed('startsAt') || changed('location')
       ? 'schedule_change' as const
     : null;
 
-  // A validated quiet write is score-only inside the live window, so the only kind it can
-  // suppress is its own running-score 'final_score' — End game's non-quiet write still lands here.
-  if (familyUpdateKind && !quiet) {
+  if (familyUpdateKind) {
     await notifyFamiliesOfGameUpdate({
       eventId,
       kind: familyUpdateKind,

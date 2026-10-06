@@ -334,16 +334,19 @@ function RosterFromGroupText() {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
-   #07 — all afternoon → one message
+   #07 — all afternoon → a scoreboard they watch
 
    ⚠ THE ONLY SLIDE IN THE LIBRARY THAT IS A DRAWING BECAUSE IT CANNOT BE PHOTOGRAPHED, not
    because drawing is the better answer. The demo world's live game console exists about seven
    hours a week, the seeded Saturday game deliberately has no lineup, and game rows take a fresh
    id every reseed. Do not "solve" this by trying to capture it.
 
-   THE COUNT IS THE ARGUMENT: four bubbles in, one envelope out.
+   THE COUNT IS THE ARGUMENT: four bubbles in, one scoreboard nobody has to ask about.
+   ⚠ It used to end in an envelope — "ONE MESSAGE when the game ends". That half went 2026-10-06
+   (owner): a final score notifies no family, from End game or the schedule. The registry key
+   stays 'one-message' because the slide entry points at it; the drawing no longer says one.
    ──────────────────────────────────────────────────────────────────────────── */
-function OneMessageNotOnePerRun() {
+function ScoreTheyWatch() {
   return (
     <g fill="none" strokeLinecap="round" strokeLinejoin="round">
       <g transform="rotate(-4 145 133)">
@@ -367,31 +370,21 @@ function OneMessageNotOnePerRun() {
         <text className={`${styles.label} ${styles.fAmber}`} x="175" y="360" fontSize="27" textAnchor="middle" stroke="none">?</text>
       </g>
 
-      <path className={styles.sFaint} strokeWidth="2" d="M290 240C348 240 400 240 448 240" />
-      <circle className={styles.fDim} cx="458" cy="240" r="5" stroke="none" />
+      <path className={styles.sFaint} strokeWidth="2" d="M290 240C350 240 400 290 446 290" />
+      <circle className={styles.fDim} cx="458" cy="290" r="5" stroke="none" />
 
-      {/* they watch it themselves — the running score, which notifies nobody */}
-      <g transform="rotate(-0.6 630 190)">
-        <rect className={styles.sInk} strokeWidth="3" x="516" y="120" width="88" height="74" rx="9" />
-        <rect className={styles.sInk} strokeWidth="3" x="626" y="120" width="88" height="74" rx="9" />
-        <rect className={styles.fInk} stroke="none" x="540" y="152" width="40" height="11" rx="5.5" />
-        <rect className={styles.fInk} stroke="none" x="650" y="152" width="40" height="11" rx="5.5" />
-        <path className={styles.sDim} strokeWidth="2.5" d="M736 145a20 20 0 010 40M736 157a9 9 0 010 16" />
-        <Sub x={615} y={228}>they watch it themselves</Sub>
-      </g>
-
-      <path className={styles.sFaint} strokeWidth="1.4" d="M500 258h268" />
-
-      {/* and ONE message when the game ends */}
-      <g transform="rotate(-1 630 336)">
-        <rect className={styles.sInk} strokeWidth="3" x="556" y="292" width="150" height="100" rx="7" />
-        <path className={styles.sInk} strokeWidth="3" d="M556 299l75 56 75-56" />
-        <path className={styles.sDim} strokeWidth="2.5" d="M714 342h46m-14-11l14 11-14 11" />
+      {/* they watch it themselves — the score on the team's own page, which notifies nobody */}
+      <g transform="rotate(-0.6 630 290)">
+        <rect className={styles.sInk} strokeWidth="3" x="486" y="244" width="110" height="92" rx="10" />
+        <rect className={styles.sInk} strokeWidth="3" x="618" y="244" width="110" height="92" rx="10" />
+        <rect className={styles.fInk} stroke="none" x="516" y="284" width="50" height="13" rx="6.5" />
+        <rect className={styles.fInk} stroke="none" x="648" y="284" width="50" height="13" rx="6.5" />
+        <path className={styles.sDim} strokeWidth="2.5" d="M750 265a25 25 0 010 50M750 279a11 11 0 010 22" />
       </g>
 
       <Say x={150} y={442} tone="dim">ALL AFTERNOON</Say>
-      <Say x={631} y={432} tone="ink">ONE MESSAGE</Say>
-      <Sub x={631} y={462}>when the game ends</Sub>
+      <Say x={631} y={432} tone="ink">THEY WATCH IT</Say>
+      <Sub x={631} y={462}>on the team’s own page</Sub>
     </g>
   );
 }
@@ -775,7 +768,7 @@ function TournamentYear() {
 export const SLIDE_DRAWINGS = {
   'money-sources':      { Draw: MoneySources,           ...WIDE },
   'roster-group-text':  { Draw: RosterFromGroupText,    ...WIDE },
-  'one-message':        { Draw: OneMessageNotOnePerRun, ...WIDE },
+  'one-message':        { Draw: ScoreTheyWatch,         ...WIDE },
   'registration-inbox': { Draw: RegistrationsFromEmail, ...WIDE },
   'copied-forward':     { Draw: CopiedForward,          ...WIDE },
   // The §69 batch — three coach slides whose PHOTOGRAPHS were unreadable on a phone (34%, 34%,
