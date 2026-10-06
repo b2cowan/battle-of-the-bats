@@ -6,7 +6,7 @@ frames and measured facts in `sheet-frame/` (`facts.json`). PM brief `SHEET_FRAM
 `SHEET_FRAME_BUILD_PROMPT.md` (one step per chat). Ruling recorded in `memory/design_decisions.md` (2026-10-05).
 **Step 1 built 2026-10-05, committed `9ab32b23`; ✅ owner QA §264 PASSED 9/9 2026-10-05** (see *Build record*).
 **Step 2 built 2026-10-05, committed `91986b7c`; ✅ owner QA §266 PASSED 17/17 2026-10-06** (see *Build record*).
-**Step 3 built 2026-10-06, committed `5d036eeb`; owner QA §268 open** (hub tab QA Walk). Steps 4–5 to build.
+**Step 3 built 2026-10-06, committed `5d036eeb`; ✅ owner QA §268 PASSED 19/19 2026-10-06** (see *Build record*). Steps 4–5 to build.
 
 ## The rulings
 
@@ -271,7 +271,7 @@ unaffected. Reported, not fixed (all Low, all pre-existing in kind):
 - Copy from's × and dim, and Save as template's dim, still drop focus to `<body>` — step 5.
 - Advisory: ↑ on a closed choice menu opens on the last row, not the ticked one (the menu-button pattern; kept).
 
-### Step 3 — game day (built 2026-10-06, committed `5d036eeb`; owner QA §268)
+### Step 3 — game day (built 2026-10-06, committed `5d036eeb`; owner QA §268 ✅ PASSED 19/19 2026-10-06)
 
 **Before building.** Parallel work checked: no commit since step 2 on the console, the frame, the observation form or
 the scouting panel; the call-ups session's uncommitted edits are in `lib/export/pdf.ts` and its guard. Before-captures
@@ -407,3 +407,7 @@ the bench board's "matchup and score up top" is the matchup with the inning step
 2026-09-22); one sentence each on Note, End game and Scouting-while-logging covering the bottom bar on a phone. Search
 fields gained "about a player", "log an observation", "bottom bar hidden / disappeared" and the matching phrases.
 `measure:help`: the article stays inside the standard; focused lint clean.
+
+**Owner QA §268 ✅ PASSED 2026-10-06, 19/19** — hub tab QA Walk: W1 Note and End game cover the bar (7/7) · W2 Who’s
+here, Score and Scouting stay on the bar (7/7) · W3 the keyboard stays inside a form (5/5). Writes nothing. No notes on
+the step; the walk found the game-day button row’s gap above the bar, built as its own follow-up (§269).
