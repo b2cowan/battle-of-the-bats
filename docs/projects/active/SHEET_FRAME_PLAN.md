@@ -413,7 +413,7 @@ fields gained "about a player", "log an observation", "bottom bar hidden / disap
 here, Score and Scouting stay on the bar (7/7) · W3 the keyboard stays inside a form (5/5). Writes nothing. No notes on
 the step; the walk found the game-day button row’s gap above the bar, built as its own follow-up (§269).
 
-### Follow-up — the game-day button row docks on the nav (built and committed `62f76580` 2026-10-06; owner QA §269 ✅ PASSED 6/6 2026-10-06)
+### Follow-up — the game-day button row docks on the nav (built and committed `62f76580` + `b06d8483` 2026-10-06; owner QA §269 ✅ PASSED 6/6 2026-10-06)
 
 Found by the owner in the §268 walk: the row of Who's here · Note · Scouting · End game is `.stickyActionBar` inside
 the page column, so on a phone it was 358px of 390 (the shell's 16px gutters) and, scrolled to the end, fell back into
@@ -447,7 +447,7 @@ furniture).
   from "Confirm & notify families" to "End game" (a final score notifies nobody, owner 2026-10-06); §268 W1 step 4
   names the old label.
 
-### Follow-up — the bottom bar keeps its colour at the end of a page, in Warm (built and committed `62f76580` 2026-10-06; owner QA §270 ✅ PASSED 4/4 2026-10-06)
+### Follow-up — the bottom bar keeps its colour at the end of a page, in Warm (built and committed `62f76580` + `b06d8483` 2026-10-06; owner QA §270 ✅ PASSED 4/4 2026-10-06)
 
 Owner, during the §269 walk: "why does the nav change its tint after scrolling down?" Measured (`.probe/gdfoot/navtint.mjs`,
 `ground.mjs`): the bar is frosted on purpose (warm `rgba(var(--home-paper-rgb), 0.92)` + `blur(20px)`, the 2026-07-13

@@ -20,7 +20,7 @@ the game's Back arrow it left the game. On a computer nothing changed. **Found, 
 next):** a run tapped on the score is saved ten seconds later, so leaving the game within those ten seconds loses it;
 End game's final score still corrects it. Owner QA §268.
 
-**Follow-up built 2026-10-06, committed `62f76580` — the game-day button row docks on the bar.** Found by the owner in the §268 walk: on a
+**Follow-up built 2026-10-06, committed `62f76580` + `b06d8483` — the game-day button row docks on the bar.** Found by the owner in the §268 walk: on a
 phone or tablet the row of Who's here · Note · Scouting · End game stopped short of the screen's edges and, at the
 end of the page, lifted off the bottom bar. Drawn true size and ruled as drawn the same day: it now runs edge to edge
 and sits on the bar wherever you are on the page; the buttons did not move; a computer is unchanged. Owner QA §269 passed 6/6.
