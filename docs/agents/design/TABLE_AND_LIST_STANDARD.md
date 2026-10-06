@@ -209,6 +209,22 @@ the basis, the caveats and the doors — never a sentence inside a money column.
   correction, not money, so a book opens without it; an auditor asks for it, so it stays one pick
   away. First drawn on the club's Ledger (Stage 3a specimen 1); the tournament redesign's voided
   fees and refunds use the same recipe.
+- **A column the screen reads but does not own** (owner, Club Tier Stage 3b Ask 4e, 2026-10-06).
+  When a table shows a figure that belongs to someone else — the club's board summary reading each
+  team's cash on hand from its coaches' books — that column says so and is never added in:
+  - its heading carries a **lock** and **the owner's name** ("Cash on hand · held by the team");
+  - its cells carry the same **blue edge** as the "held by" callout, so the column reads as one
+    thing top to bottom;
+  - the table's **closing row is blank under it** — the closing row is the screen's own totals, and
+    a figure it does not own is never one of them;
+  - its own total, when the reader needs one, sits in a **separate band under the closing row**,
+    worded as not the screen's ("Held by the teams: $32,234.35 across 9 teams — the coaches' own
+    books, never part of the club's figures above");
+  - on a phone, where no column heading carries the label, **every row's figure carries the
+    owner's words** ("Held by the team $4,215.60"), and the total closes the list on its own line.
+  The export follows the screen: the same heading, a blank under it in the closing row, the total
+  on its own row. Shared with the tournament redesign: a team's figure read from its coach (an
+  entry fee a team says it paid) is the same case.
 
 ### 3.6 Interaction
 

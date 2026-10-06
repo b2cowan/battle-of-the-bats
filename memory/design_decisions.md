@@ -21,6 +21,65 @@ links open the event the team is playing in. The "not assigned" wall keeps its "
 there has nowhere inside the portal to go.
 **Applies to:** the coaches portal's team masthead; any future proposal to put a club-site door in coach chrome.
 
+### 2026-10-06 — THE CLUB'S BUDGET AND BUDGET VS. ACTUAL READ LIKE THE COACH'S, WITH SIX NAMED DIFFERENCES (owner: "I agree with your recommendations, including the 2 fixes" — Club Tier Stage 3b, Ask 2) — hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 3b, plan `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 3
+
+**Decision:** the club's Budget and Budget vs. Actual are the coach's two screens — the band, revenue first, the category
+is the shelf, Budgeted · Actual · Variance, the amber dash on an off-plan row, the figures as the doors, Compare, the
+Months grid and its lenses, By period — and the coach's own Statement rows and period grid are PROMOTED into shared
+components both portals render (never a copy). They differ in exactly six named ways: (1) the plan bills teams, so a cost
+line carries Allocated and Collected and an allocatable remainder ("$1,850.00 not allocated" under its name, never a
+column), and From the teams leads revenue, read from the allocations; (2) the year is the unit, and its opening balance is
+worked out from the books on the year's first day rather than typed or carried (Ask 5); (3) the club's Cash on hand is its
+own books, never a team's; (4) a team's standing lives on the Overview (the board summary), not in Budget vs. Actual's
+team cards (S3B-05); (5) two of the coach's three report shapes, Statement and Months — By activity waits for Stage 7;
+(6) a club line opens to READ first, because it holds its allocations, where a coach's budget line opens its form (a line
+is a record by the 2026-10-01 standard; a coach's line is a question by the 2026-09-02 grammar). "Collected" carries two
+scopes on purpose, as on the coach's side: the loop's figure on Allocations, a team's account and the Budget's column;
+all money in on Budget vs. Actual's band.
+**Rationale:** the first 3b drawings were made from memory of the coach's screens and broke about a dozen of the owner's
+own rulings ("N lines" captions, a "Not in the plan" chip, revenue not grouped by category, a card per line on a phone).
+The coach's screens are the benchmark and their rulings live in their code comments; a club reader who has also coached
+meets one grammar. Naming the differences is what stops the next pass "restoring parity" on a difference that is a reason.
+**Applies to:** Accounting › Budget, Accounting › Budget vs. Actual; the shared Statement rows and period grid; any
+future club money report.
+
+### 2026-10-06 — A TEAM'S CASH IS READ, LABELLED AND NEVER ADDED IN: A COLUMN THE SCREEN DOESN'T OWN (owner, Club Tier Stage 3b Ask 4e and ruling D1) — same hub and plan
+
+**Decision:** the club reads ONE figure from a team's own books — its cash on hand, the coaches' own figure, read when the
+page loads and never stored. Wherever it shows it is "held by the team": on the board summary's teams table it is a
+column with a lock and the owner's name in its heading, blank in the closing row, totalled only in its own band under the
+table worded as not the club's money; on a phone every row's figure carries "Held by the team" and the total closes the
+list on its own line; on a team's account it is the fourth card with the blue edge. It is NEVER summed into a club figure
+(Cash on hand, Owed by the teams, the closing row). The table part is written into the table standard §3.5 as shared.
+**Rationale:** C04 — the old Overview added every book together, the teams' included, and made the club read $21,176 ahead
+on money that was mostly the teams'. D1: the coaches' records are the truth for team money; the club reads, it never owns.
+A figure the screen shows but doesn't own needs a shape that makes adding it in visibly wrong.
+**Applies to:** the board summary (Overview), a team's account, the board report export; the tournament redesign's tables
+(a team's figure read from its coach is the same case).
+
+### 2026-10-06 — A MONTH GRID OPENS ON THIS MONTH ON A PHONE, IN BOTH PORTALS; ITS NOTATION IS WHOLE DOLLARS (owner, Club Tier Stage 3b fixes 1 and 2) — same hub and plan
+
+**Decision:** (fix 2) at touch widths, Budget vs. Actual › Months and the Budget's By period open SCROLLED TO THIS MONTH —
+coach and club — so a September reader sees July to October, not January to March. A desk is unchanged (it shows the
+whole window). (fix 1) the month grids' notation is recorded as exception K-27: whole dollars, no sign, brackets below
+zero (red only on a balance row), a dash for nothing.
+**Rationale:** the coach's grids opened on their first month on a phone, so the month a reader came for was a swipe or
+three away; drawing the club's grid opening on this month would have made the two portals differ. The notation predated
+the money-cell rule ("a dollar sign in every figure") and had no register row — a twelve-column grid needs the room.
+**Applies to:** `MoneyMonthGrid` and the shared period grid, in both portals; `check:layout` proves the coach's screens
+otherwise did not move.
+
+### 2026-10-06 — THE COACH IS TOLD WHAT THE CLUB READS, IN ONE QUIET LINE AT THE FOOT OF THE CLUB TAB (owner, Club Tier Stage 3b Ask 4c) — same hub and plan
+
+**Decision:** on Money › Club, for a team in a club only, one standing line closes the tab after the bills, with the
+building icon: what the club reads (what the team owes it, the team's requests, its cash on hand, what it pays the payees
+the club shares) and what it never reads (families' payments, the rest of the books). A plain line, not a card; it doesn't
+fade or dismiss. The club's "What the club sees" panel on a team's page gains the same two new lines from its side.
+**Rationale:** 3b makes the club read one more figure from the team's own books; nothing in the portal said what the club
+could read. The bills lead and reference goes last (2026-09-06) — a coach comes to the tab to pay the club — and a
+standing card above the work is text a coach reads past every visit (the owner, 2026-09-04).
+**Applies to:** the coach's Money › Club tab; the club's team page; /marketing owns the words.
+
 ### 2026-10-05 — A NOTIFICATION OPENS WHERE YOU ARE; READ, DONE AND DELETE ARE THREE WORDS FOR THREE THINGS (owner: "looks good" on round 3, all nine as recommended) — hub https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, plan `docs/projects/active/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md`
 
 **Decision:** (D1) a click on a notification OPENS it (kind, day + clock, whole message) and marks it read; the page is a
