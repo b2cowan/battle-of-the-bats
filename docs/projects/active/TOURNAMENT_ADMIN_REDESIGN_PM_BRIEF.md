@@ -16,7 +16,14 @@
 > many, Swap, Randomize and Registration questions), a team's record that opens for reading and edits whole from
 > its pencil, the waiting count as the amber pill, and Export as one button; /marketing kept every new word,
 > including the review's "Enter a full email address to save it.". **The owner closed every walk on 1 October**
-> (§252 and §254, with the follow-ups'), so no walk is open on this project.
+> (§252 and §254, with the follow-ups'), so no walk is open on this project. **Stage 4 (after the event) was drawn on
+> 5 October** on the hub's Stage 4 tab; its first question (who draws the dashboard before an event) was ruled the
+> same day — Stage 5 — and a design review tightened the drawing in thirteen places (below), all applied on the
+> owner's "go ahead". **The owner ruled the rest on 6 October, all as drawn and recommended.** **Stage 4 was built
+> and committed the same day**, after the owner settled five small questions at its start (all as recommended) and
+> after a cleanup pass, a five-way review and the screen probes fixed a dozen things first — the biggest, the board staying blank after
+> Mark complete until a reload. **Two owner walks are open:** the morning after, from a phone (§275), and statuses
+> and the way back, at a desk (§276), on the hub's QA tab.
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is
@@ -87,6 +94,66 @@ waiting team shows at the top of its own division; and selecting many teams stay
 needs the same thing. One small placement is left for the build's first message: what the Tournament plan sees
 where Promote would be.
 
+## What an organizer would see and do differently in Stage 4 (after the event) — drawn 2026-10-05, ruled 2026-10-06
+
+The morning after a tournament an organizer does four things: sees who won, sets up next year, shares and prints
+the results, and tidies up. Measured on the demo's finished Season Opener (the only finished event in any test
+data) and the free test club.
+
+- **The board says how it finished.** Today a finished event's board says "Tournament complete" twice and has two
+  lime buttons to the same summary; the one champion sits at 547px on a phone, and a division that never played a
+  final isn't mentioned. After: each division in one card at the top (about 196px) — the champion with the final it
+  won ("beat Riverdale Rapids 5–4"), and a division without a final with where its top team finished — then the
+  weekend in one line (the teams that played, games, money).
+- **Next year is one button.** Today the only way is an 18px "Did you know?" link that opens Summary, where the
+  button sits in a closed card at the bottom: four taps and a different window from the one the Tournaments list
+  uses. After: "Reuse this setup" is the board's one main button (about 513px on a phone), and every door — the
+  board, Summary, Past tournaments, the event's own page — opens the same short form with the event already chosen:
+  two taps and the dates. Summary's own version goes. On the free plan the button is a plain lock line with the
+  plan's name.
+- **Summary fits a phone, shares the champions page and prints clean.** Four figures in one card instead of four
+  tall cards; "Next year" open instead of closed 1,553px down; Share copies the public champions page (today it
+  copies the standings); Print prints the recap only (today it prints the admin's menu and header around it). The
+  page goes from 1,755px to about 875px on a phone. The free plan sees one line saying what Summary holds, not a
+  full-page upsell.
+- **Status changes ask first, and the way back from an archive is where people look.** Today the Tournaments list
+  changes a status the moment a menu changes — moving a live event to Draft takes its public site down with no
+  question — and bringing an archived event back fails after the tap when the plan is full. After: each event opens
+  its own page (its status in words, what each change does to the public site, Reuse, Seal, Delete), and every
+  change asks first. Each event lives on one list: the Tournaments list shows what's ahead (live and draft), and
+  Past tournaments — already in the menu — holds every finished event (completed, archived, sealed) and opens the same
+  page, so "bring it back" and "reuse" live where people look after the event.
+- **One name per page.** "Tournaments" everywhere (the browser tab and the help say "Manage Tournaments");
+  "Past tournaments" everywhere (its title says "Archives"); "Summary" everywhere (today also "Post-event summary",
+  "event summary" and "post-tournament summaries").
+
+**The design review (5 October), applied:** the recap counts the 8 teams that played, not the 9 that registered (the
+first drawing carried today's registration count, which the printed standings beneath it contradicted); the phone's
+"Review event summary" strip steps aside on the board, where the Summary card already is, and never invites a free
+organizer into a locked page; the finished events moved off the Tournaments list so no event sits on two lists; win–loss
+records read "3-0-0" as everywhere else in the product; and smaller wording and sizing fixes (the record says the year
+once, a full plan names the event holding its slot, the confirm repeats the button's own words, desk window buttons at
+the computer's height).
+
+**What the measuring found that nobody had asked about:** inside an event there is **no link to the Tournaments
+list at all** — not in the menu, the phone's More, or the account menu — though status, reuse, sealing and delete
+live there. And on the free plan, **setting up next year's event takes this year's public results offline**: the
+one slot stays taken by the finished event until it is archived, and archiving takes its site down. That one is a
+packaging question for the business, not a screen; the drawing just makes the board say it. The questions
+(A19–A24 on the hub's Stage 4 tab) were ruled on 6 October, all as recommended: the finished events move to Past
+tournaments (in the menu), so the missing link matters less, and the free-plan question goes to the business owner of
+pricing.
+
+**As built (6 October).** Everything above shipped as drawn, plus a handful of calls made while building, each on
+the hub's "Built" part for the walk to question: a sealed event can never be reopened; Bring back says before any
+tap when the plan is full or another event took its link; changing a public link asks first; at the slot limit New
+tournament becomes the plan's lock line; an event nobody played in shows its figures instead of an empty list; and
+the money shows whenever anything was collected, fees or not. Measured: sharing the champions page is one tap,
+printing is one tap plus the browser's (one page, nothing of the admin on it), next year's draft is a tap, the dates
+and a tap, and bringing an archived event back is three taps and its question. The help now describes the new
+board, Summary, reuse, the two lists and every status change, and old searches (Manage Tournaments, Archives,
+Post-event summary) still find it.
+
 ## Why it matters
 
 Game day is the weekend a director is judged on, and it's run from a phone at a diamond. It's also where
@@ -136,3 +203,7 @@ heading and rows together, as the plain team list on the same page already was. 
 - **Stage 2:** on a phone the first team is on the **first screen** of Teams; a team waiting for a decision is
   **visible and accepted in two taps**; no Teams control an organizer taps is under 38px tall or under 44px wide as
   an icon; an announcement's count is the number of teams it reaches.
+- **Stage 4:** from a finished event's board, next year's draft is **two taps and the dates**, through the same form
+  from every door; how each division finished is on the **first screen** of the board and of Summary on a phone;
+  Share links the champions page and Print prints the recap alone; no status change is written without a question
+  that says what it does to the public site.

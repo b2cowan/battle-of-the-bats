@@ -63,7 +63,7 @@ const MODAL_OVERLAY_LEGACY: CSSProperties = { position: 'fixed', inset: 0, zInde
 const MODAL_OVERLAY_KIT: CSSProperties = { background: 'var(--home-scrim)' };
 
 /** A finished board's "?" — the close-out guide (the help drawer lists the stage's tasks above it). */
-const FINISHED_BOARD_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'] };
+const FINISHED_BOARD_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'closeout-finished-board' };
 
 // ── Domain types ────────────────────────────────────────────────────────────
 

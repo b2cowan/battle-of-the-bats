@@ -23,6 +23,17 @@
 > `TOURNAMENT_ADMIN_REDESIGN_STAGE2_BUILD_PROMPT.md`: Part 0 the A15 email defect (own commit, first) · Part 1 the
 > form window's named Previous / Next and editable title (own commit — Club Tier 3a's screens start after it) ·
 > Parts 2–3 Teams and Communications. Sequencing beside Club Tier 3a: §8.
+> **Stage 4 (after the event) DRAWN 2026-10-05** on the hub's Stage 4 tab (hub v21, §6d), from
+> `TOURNAMENT_ADMIN_REDESIGN_STAGE4_DESIGN_PROMPT.md`: D1–D6, findings F47–F55 (§3), asks A18–A24. **A18 RULED the same
+> day** (owner, as recommended: Stage 5 owns the dashboard's before-event view). **The `/design` review's thirteen
+> changes (+1 found re-checking) applied the same day on the owner's "go ahead"** (hub v22, §6d); the tab split into
+> parts 2026-10-06 (v23). **⚖ STAGE 4 RULED 2026-10-06** (owner's paste-back): D1, D2, D3 and D5 as drawn, A19–A24
+> as recommended. **Build prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE4_BUILD_PROMPT.md`** — P1 (a tiered division) and P2 (a final never scored) go to the owner at
+> its start.
+> **✅ STAGE 4 BUILT and COMMITTED 2026-10-06** (after /simplify + /review): `8bdecc9f` (Part 0) · `e1d6e021`
+> (Part 1) · `8237fb15` (Parts 2–3) · `211fcb1d` (Part 4); help and records in the docs commit after them; P1–P5 ruled
+> at its start, all as recommended — §6d "Stage 4 — as built". **Owner walks §275 (the morning after, from a phone)
+> and §276 (statuses and the way back, at a desk) owed** — the hub's QA tab (v25).
 > **Created:** 2026-09-28 · **Branch:** dev · **Companions:** `TOURNAMENT_ADMIN_REDESIGN_PM_BRIEF.md` ·
 > hub `TOURNAMENT_ADMIN_REDESIGN_HUB.html` (republish the same path for the project's life).
 > **Origin:** Phase 3 of `ADMIN_DESIGN_CONTINUITY_PLAN.md` ("Tournament screens — its own project when it
@@ -343,6 +354,69 @@ differently from the published standings, so it can name the wrong team (J1-109,
 **F35 — The Tournaments list sets status from a menu that writes on change** (Draft with no confirm), under
 a subtitle that says "set which one is live" above several live rows (J1-037).
 
+**Re-checked and re-measured 2026-10-05 for Stage 4** (probe `.probe/s4/probe.mjs`, read-only — every non-GET refused;
+390 · 360 · 768 · 1440, Warm and Dark). The only finished event in any test data is the local demo's **Riverdale Season
+Opener** (Tournament Plus, completed: U11 decided by a final, Cedar Hollow Cyclones 5–4 over Riverdale Rapids; U13 round
+robin only, Riverdale Thunder 3–0); the Tournament plan's finished board was pictured by a probe that showed the free
+club's live event as completed in the read (nothing written). Positions are from the top of an organizer's screen,
+without the demo's own bar (135px on a phone, 143 at a desk). **State of the five:** F26 (after-event half) open — the
+notices draw as callouts since `936655a9` but still can't render on a one-slot plan; F32 fixed `936655a9`; F33 open (and
+a third flow exists, the draft board's copy-into-this-draft — Stage 5's, A18); F34 partly fixed `936655a9` (leader sort,
+"0 champions") — the 143px cards, Share and Print open; F35 partly — the subtitle no longer renders (the foundation's
+header drops it), the menu still writes on change. **Measured, phone:** the board's champion at 547px under a 311px
+guidance card, "Reuse this setup →" 137×18 and "Dismiss" 62×14, the board 924px; Summary's first figure at 257px in
+four 143px cards, Share at 1,276, Print at 1,421, "What's next" closed at 1,553, the page 1,755px; the Tournaments list's
+first event at 379px (the demo; 313 on the free club) as a 222px card of labelled lines, three 192×27 status menus.
+**At a desk:** champion 507, Archive 602, the board one screen; Summary's "What's next" at 882. No sideways spill at any
+width or theme.
+
+**F47 — The finished board says "complete" twice and offers no next year.** A guidance card ("Tournament complete — nice
+work", 311px on a phone, a lime to Summary, a dismissible "Did you know?" link to reuse that opens Summary) above a tinted
+wrap-up card ("Tournament Complete", the champion as a chip, a second lime to Summary), plus the context strip to
+Summary: three doors to one page, two lime. On the Tournament plan, two limes again (View final results, Review
+Tournament Plus) and the old gauges. Code: `dashboard/page.tsx` completed branch + `GuidanceRail` stage `done`.
+
+**F48 — No door to the Tournaments list from inside an event.** Probed on the Plus fixture (1440, 390): the rail, the
+phone's More sheet and the account menu link every tournament page but not the list; the rail's "Tournaments" row (shown
+only off the tournament pages, for a tournament-only club) goes through `admin/tournaments/page.tsx`, which sends you to
+the dashboard when an event is selected. The list is reached by a typed address, a club's Organization page, or the
+draft board's "Set up fees" (F55) — yet status, reuse, seal, edit details and delete live there, and F32's archive
+sentence sends people to it. For the frame's owners (Stage 8 nav review); ask A22.
+
+**F49 — On a one-slot plan, next year costs this year's public site.** The Tournament plan and the Premium Coaches
+Portal's included tournament have one slot (`getEffectiveTournamentLimit`); a completed event holds it (occupied =
+not archived); New tournament and the clone route refuse at the limit; archived is not a public status, so archiving
+takes the site and every shared link offline. A free organizer opening next year's registration takes last year's
+results down, and nothing says so until New tournament refuses. A packaging question for `/strategy` (ask A23); no
+gate change here.
+
+**F50 — A division with no final reads "Leader" on a finished event.** The Season Opener's U13 played six round-robin
+games: Summary says "Leader: Riverdale Thunder" under "Until then, the team leading the standings is shown"; the board
+lists champions only, so U13 is missing. Champions come only from a decided final (`lib/champions.ts`), which can be
+true of one division and not another in the same completed event.
+
+**F51 — An Exhibition's public Champions page promises playoff finals.** An Exhibition has standings ("Standings still
+run", `lib/tournament-phase.ts` — the Stage 4 prompt said it has none) and no bracket; its public Champions page says
+"No champions crowned yet — once the playoff finals are decided…". Public pages are out of scope: for their owner.
+
+**F52 — The demo: an unused anchor and a one-slot Plus club (for `/demos`).** `post-event-summary` (Summary's header) is
+rung by no tour step — the "morning after" moment opens Summary by its address, and the anchor guard checks only steps.
+The demo club stores `tournament_limit = 1` on Tournament Plus, so its list reads "3 / 1 slots" under "Tournament slots
+full… review the plan override", the list's Reuse setup is refused ("Tournament Limit Reached"), and the moment's
+"Next year starts from one button" can't be kept.
+
+**F53 — Summary says the public results are a Plus feature.** Shown to a Tournament Plus organizer: "Your saved summary,
+shareable public results, and reusing this setup next year all come with Tournament Plus"; the free board's upsell
+lists "public results links". The public site and its results are on every plan; only Summary's copy buttons are Plus.
+Words for `/marketing`, a note for `/strategy` (report only).
+
+**F54 — Past tournaments has three names, the club's name above its title, and no way back.** Rail "Past tournaments",
+tab "Past Tournaments", title "Archives"; the club's name as its eyebrow (against the 2026-10-01 ruling), a plan fact
+under the title, its Plus lock as a dashed box (against 2026-09-30), and "Seal Now" as an archived event's only action.
+
+**F55 — The pre-event board's "Set up fees →" opens the Tournaments list** (`dashboard/page.tsx` payments panel), which
+sets no fees (Event settings does). Stage 5's (A18).
+
 ### The volunteers
 
 **F36 — The volunteer screens are the strongest in the tournament product, with four open items.** Since
@@ -394,7 +468,7 @@ which reads as the product changing its mind. Routed to the foundation / Club St
 | **1 · Game day** | The dashboard's game-day board, Results, Check-in; the one-event-identity rule (A2) first applied here; one word per game state | A2, A4, A6, A7, A9, A10 | Phone first, desk second |
 | 2 · Teams and registration — **DRAWN + RULED 2026-09-30 (§6b); build prompt written** | Teams (first team on screen one, the pools row, one colour per status, words not glyphs, a row opens the team), registration health, Communications; + the pending team on the board (F41), the email that reaches every team (F42, F43), Communications' formatting (F44), the record (F45) | Q 6.1 (ruled) · T1 T3 · A13–A17 | Both |
 | 3 · The schedule | Opens on the day; the bracket shows scores and winners; one generator name; drag with undo; the coin toss where seeding happens; the rain delay as Storm Mode's home | Q 8.1 | Both |
-| 4 · After the event | The completed board celebrates and offers "Run it back"; one reuse flow; Summary on a phone; the champions page shared; Past tournaments and the Tournaments list | Q 13.1 | Desk first |
+| 4 · After the event — **DRAWN 2026-10-05, RULED 2026-10-06 (§6d); build prompt written** | The finished board says how each division finished and offers Reuse this setup (its one lime); one reuse flow (the wizard's step, every door); Summary on a phone, the champions page shared, a clean printout; Past tournaments as every finished event's list; the Tournaments list (what's ahead) with its statuses as bands and the event's record, every change asking first; the Exhibition; + no door to the list (F48), the one-slot next year (F49) | Q 13.1 (ruled) · A18 (ruled: Stage 5 owns the before-event view) · A19–A24 | Desk first |
 | 5 · Create and set up | One set of creation questions (diamonds in both wizards); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens | Q 1.1, 2.1, 3.1, 4.1 | Desk first, phone usable |
 | 6 · The volunteers | Scorekeeper and gate: the install banner, 44px buttons, a waiting-score signal, the staff landing; the gate inherits Stage 1's check-in board | — | Phone only |
 | D · Defects now | Not a stage: F32 archive promise, F16 pools button, F26 bare Plus notice, F08's "no refresh needed", J1-075 "email will be sent", F34's leader sort, F04's empty box, J1-116 the strip on its own page, "0 champions detected" — **COMMITTED `936655a9` 2026-09-29** (record below; walk §251) | A8 | — |
@@ -895,6 +969,222 @@ Raised by the owner while walking §252, each ruled in the conversation and buil
   editing, "No notes yet."; and the two held-save words owed since Stage 2's review, "Enter a full email address to
   save it." and "Give the team a name to save it.". Two help sentences warmed ("when you're done"; "Swap comes back
   when every spot is showing again").
+
+## 6d. Stage 4 — After the event, as drawn (2026-10-05)
+
+Drawn at true size on the hub's **Stage 4** tab, phone and desk, before (captured 2026-10-05 on the demo's finished
+Season Opener, the free and Plus test clubs) and after (drawn Warm; a Dark copy cloned at load). Prompt
+`TOURNAMENT_ADMIN_REDESIGN_STAGE4_DESIGN_PROMPT.md`. Drawn figures are read from the drawing (`.probe/s4/measure4.mjs` →
+the hub's `{{M:s4-*}}` keys). §6c is left for Stage 3. **A18 ruled at the start (owner, 2026-10-05, as recommended):
+Stage 5 owns the dashboard's before-event view** (the checklist and guidance card, with their share of the 207 kit
+rules), so Stage 4 draws and retires the after-event view only; Stage 5 also takes the draft board's copy-into-this-draft
+reuse and F55.
+
+- **D1 · The finished board.** Title band as Stage 1 built it (+ the bare "?", which now holds the guidance card's task
+  list — the help drawer already reads the same list). **"How it finished"** (words for `/marketing`): one section card,
+  a row per division — a champion with a trophy and the final it won ("U11 champion · beat Riverdale Rapids 5–4 in the
+  final"; the runner-up and scores are already computed by `deriveTierChampions`, the board's read passes the name only
+  today), a division without a final with its top team, record and "no final", no trophy (F50); a foot line, the
+  weekend (teams · games played · money in three states). Head action **Copy champions link** (the public page, every
+  plan; absent when Standings is hidden; on a phone the boxed 44px icon, an action). **Next year**: one sentence and the
+  board's one lime, **Reuse this setup**. Summary as one door card, named "Summary" ("The weekend's recap — a champions
+  link to share, and a printed page for your records"). The strip above the phone bar ("Review event summary", shown on
+  every page of a finished or archived event) **gives way on the board** — the page already carries the door — and is
+  not offered on a plan without Summary; it stays on the event's other pages. "Teams" in the foot line counts the
+  teams that **played** (8 in the demo; today's 9 is the registrations). The guidance card and the wrap-up card go (F47). **Archive** leaves the board on unlimited
+  plans (into the event's record, A20) and stays on the Tournament plan as next year's path, beside the one-slot
+  sentence (F49, A23); there Summary and Reuse are lock lines (Summary's in the door card's own place, after Next
+  year) and the board has no lime. A win–loss record takes a hyphen ("3-0-0"); the final's score keeps its dash. Phone: result ≈196px (today 547),
+  Reuse ≈513px (today no action). Desk: result ≈195px, Reuse ≈345px; one screen.
+- **D2 · Reuse this setup — the one flow.** Every door opens the wizard's reuse step with the event chosen (no source
+  pick; Cancel + the lime): the board's lime, Summary's Next year, the Completed rows of the Tournaments list and Past
+  tournaments, every event's record. Summary's own window goes (F33). Content restyled: the five areas as the composer's
+  checkbox rows (title + one caption), "Never copied" as one sentence, the warnings as a white callout with an amber
+  edge; fields and rules unchanged (both dates required, from today). **Full screen on a phone** — a change to the
+  wizard's frame, tagged "shared, Stage 5", its own choice in D2's ruling. It lands on the new draft's board (Stage 5's
+  checklist) with a toast. Taps from the board: 4 + typing, in a different window → 2 + the dates.
+- **D3 · Summary.** One name, **"Summary"** (the rail's word) for the title, the board's door, the lock lines and the
+  printout — today "Post-event summary", the strip's "event summary" and Plan & billing's "post-tournament summaries"
+  (words for `/marketing`). Title band with Copy champions link and Print (44px icons on a phone, white 34px buttons at a desk);
+  How it finished (the board's card); **the weekend** as one card of four figures (24px, 2×2; "8 teams", the teams that
+  played — not "9 · 8 accepted"); **Next year** open, a white
+  button (the board keeps the lime). The division recap's registration counts, "Leader", the Plus line (F53) and the
+  four 143px cards go; the League Plus / Club line kept word for word for `/marketing`. The `post-event-summary` anchor
+  stays on the title band. Phone: figures card ≈343px, Next year ≈548px (today closed at 1,553), the page ≈875px (today
+  1,755). **The printed page** (Letter, drawn true size): the club, event and dates; How it finished as Division · Team · How it
+  finished (a column heading true for a division with no final); the weekend; each division's final standings (W-L-T,
+  hyphenated); a footer — no admin frame (J1-110). The Tournament plan: the title, one sentence, one lock
+  line (no full-page upsell, F38).
+- **D4 · Past tournaments.** **Every finished event's one list** (the `/design` review): Completed · Archived · Sealed
+  records; the Tournaments list holds what's ahead. One name (title and tab "Past tournaments"); no eyebrow; Public ledger a door (icon on a
+  phone, white button at a desk). One frame, bands **Completed · Archived · Sealed records**; a row (name; dates · public
+  site live/offline) opens **the event's record** (D5). Sealed records on the Tournament plan: one lock line (today a
+  dashed box). The archived record on a full one-slot plan says "Bringing it back needs a free slot. Your plan has one, and ‹the
+  event› holds it." before any tap, with the lock line (today the list's menu fails after the tap). A record's line says
+  its dates once; its Status opens with the day the event finished ("Finished Jun 14. Its public site is offline…") and
+  never repeats the chip — no archive DATE is drawn, because the product stores none. Desk: a table, Tournament · Dates · Public
+  site, Reuse setup in the Completed band.
+- **D5 · The Tournaments list.** One name, "Tournaments" (tab and help say "Manage Tournaments" — `/marketing`); no
+  "Organization" eyebrow; New tournament the one lime. Statuses as bands, **Live · Draft only** — Mark complete moves an event to Past tournaments, and an olive door at the
+  list's foot says "Finished events are in Past tournaments" (the `/design` review; A22); the status word for a running
+  event "Live" vs the help grid's "Active" flagged for `/marketing`; a 60px row per event in one frame (today a 222px
+  card); no row action.
+  The callouts and "How statuses work" go (Seal's warning into its confirm). **The event's record** (the kit's form
+  window; reads first, the pencil edits Details whole; named Previous / Next): Status in words with the changes that
+  state allows, each a white button that **asks first** naming the public site and the slot (Activate · Mark complete ·
+  Move back to draft · Reopen · Archive · Bring back); Next year; Permanent record (Seal); Details; Delete at the end.
+  Drawn confirm: "Move Riverdale Invitational back to draft?" with **Move back to draft** (the verb of the button that
+  opened it; today written in silence, F35). The desk record is drawn opened from Past tournaments ("1 of 1 in
+  Completed"); its window buttons are 34px. Desk: a table, Tournament · Dates · Teams.
+- **D6 · The Exhibition** (illustrative; no test data holds one). No winner rows, no champions link; the weekend's
+  figures, Copy the **Standings** link, Next year (A24, F51).
+
+**The formatting check** (the tab's last section) ran Stage 1's sixteen departures, §3.5–3.7, §3.10, K-08 and every
+ruling since Stage 2 (one control height 34px, the white action button, door vs window-opening action, no dashed lock,
+record reads first + names its neighbours, no club name above a title, one spelling). One named exception: Reuse setup
+in Past tournaments' Completed band only (K-08, as Teams' Accept). Flagged for `/marketing`: four one-spelling pairs. **A second,
+independent reviewer** then read the drawing and its rendered pictures against the same rules: one departure (the phone
+record drawn without its named Previous / Next foot — fixed, "1 of 1" on the free club's one-event list) and three check
+rows that claimed more than the pictures showed (Records; "Summary's door once" while the frame's strip still offers it,
+F39; the type ladder stated short) — reworded. It confirmed the button roles, every lock a plain line, the required
+asterisk's ink, 34px desk / 44px phone, no tinted rows, and the Exhibition's standings link.
+
+**The `/design` review (2026-10-05), thirteen changes, all applied to the drawing on the owner's "go ahead"** (each is
+a row or a note in the tab's formatting check): (1) "Teams" counts the teams that played (8), not today's 9
+registrations — on the board, Summary, the print and the record; (2) one name, **Summary**; (3) the strip above the phone
+bar gives way where the page carries the same door, and is never offered without Summary (it appears only after an
+event, so it is Stage 4's, not the frame's — the first draft left it as F39); (4) Copy on a phone is the boxed 44px icon
+(an action), never a bare olive glyph (a door's look); (5) **each event lives in one list by its phase** — the
+Tournaments list holds what's ahead, Past tournaments every finished event (A22 sharpened: the first draft had a
+Completed band on both lists, same rows and record); (6) a win–loss record with a hyphen, one format (3-0-0); (7) the
+print's How it finished columns true for every row; (8) a record's line says the year once; (9) Status opens with the day
+it finished, never repeating its chip (the review proposed "Archived Jun 15"; no archive date is stored, so the event's
+end date is used); (10) a full plan names the event holding the slot; (11) the confirm says "Move back to draft"; (12) the
+free board's Summary lock in the door card's place; (13) the door card says the link is to share and the printed page is
+for your records (the printout carries the money). **+1 found re-checking the pictures:** the desk record and its
+confirm drew 44px buttons; 34 on a computer (3 Oct).
+
+**The asks — ⚖ ALL RULED as recommended** (A18 on 2026-10-05; A19–A24 on 2026-10-06 from the owner's paste-back, which
+also ruled D1, D2 — the reuse step full screen on a phone included — D3 and D5 as drawn): **A18** before-event view → Stage 5 (**ruled 2026-10-05**) ·
+**A19** which doors open Reuse this setup and where it lands (rec.: four doors, one step — the board, Summary, Past
+tournaments' Completed rows, every record; Summary's window goes; lands on the new draft's board) · **A20** a status change asks first and lives in the event's record (rec.; Archive leaves the
+board on unlimited plans) · **A21** what the Tournament plan sees (rec.: an honest lock line at each Plus door; the
+champions link on every plan) · **A22** the list has no door (rec., sharpened by the `/design` review: each event in one list by its phase — the
+Tournaments list what's ahead, Past tournaments every finished event, the same record; the list's own door to the
+frame's owners) · **A23** one-slot next year costs this year's site (rec.: say it on
+the board, route to `/strategy`) · **A24** the Exhibition names no winner (rec.). Rulings per drawing: D1, D2, D3, D5 — all as drawn.
+
+**The build prompt** is `TOURNAMENT_ADMIN_REDESIGN_STAGE4_BUILD_PROMPT.md` (written 2026-10-06). It orders the work Part 0 (one read and one definition per
+figure for "How it finished" and the weekend — today the board's and Summary's routes each build their own) · Part 1
+(one reuse opener, every door) · Parts 2–3 (the board, Summary and its print) · Part 4 (the event's record and the two
+lists), and puts two placements the drawing does not show to the owner at its start: **P1** a division with tiers
+(rec.: its top tier's champion, today's admin rule, the tier named when there are tiers; the public page keeps every
+tier) and **P2** a bracket whose final was never scored (rec.: where its top team finished, "final not scored", no
+trophy). It also carries three facts the drawing could not: Mark complete emails the teams when the event's setting is
+on, so its confirm must say so; the archive sentence's "change its status on the Tournaments list" stops being true
+and is rewritten; and each new reuse door must join the clone route's analytics allow-list.
+
+**At the build's start (owner, 2026-10-06, all five as recommended):** **P1** a division with tiers = one row, its
+top tier's champion, the tier named only when the division has tiers (the public page keeps every tier) · **P2** a
+final never scored = where its top team finished, "final not scored", no trophy; a division where no game has a
+result has no row · **P3** (found at the start) the copy action follows what the public champions page will show —
+it names champions only once EVERY playoff game in the event has a result and a top-tier final is decided, and an
+event with no playoffs never names any — so the champions link when it names one, otherwise the Standings link
+(the Exhibition's form) · **P4** (the drawing's note disagreed with) "teams" = the teams that played, but the money
+counts every accepted team, as Teams' payments do · **P5** (found at the start: Event Settings has its own Draft /
+Active / Completed switch and the game-day board its own Mark complete wording) all three doors read the record's
+sentences from one home now; whether Event Settings keeps a status switch goes to **Stage 5**.
+
+**The definitions (Part 0, written before any code — one sentence each, one helper computes them all,
+`lib/event-recap.ts`):**
+- **A division's finish.** Its top tier's decided final (the champions rule, `decidedFinalFor`: GF2 → GF → FIN of the
+  first bracket group, scored with a winner, forfeits included) → the **champion**, the runner-up, both scores, whether
+  it was won by forfeit, the final's date, and the tier's name when the division has more than one bracket; otherwise
+  the team **first in the published standings** (`computeTournamentStandings`, the read Summary's ranking uses since
+  `936655a9`) with its W-L-T, marked **final not scored** when the division has playoff games but no decided top-tier
+  final and **no final** when it has none; **no row** when no game in the division has a final result, or when only
+  playoff games were played and none decided (a bracket-only division with nothing to rank). Rows in the event's
+  division order. **An Exhibition has no finishes** (A24).
+- **Teams** — the teams that played: every team on either side of at least one game with a final result.
+- **Games played** — games with a final result (status completed or forfeit), playoffs included; of them, **in the
+  playoffs** = the playoff games.
+- **Collected** — what every accepted team has paid (`total_paid`), with or without a fee schedule.
+- **Still owed** — the sum of every accepted team's unpaid balance against its own fee (division fee in division
+  mode, else the event's: `getEffectiveFee` / `owedAmount` from Teams' model), and **by how many teams**; the event
+  **charged fees** when any accepted team has one.
+- **The link to share** (P3) — `champions` when the public champions page will name a champion
+  (`isTournamentPlayoffsComplete` + a top-tier champion among the accepted teams, the page's own reads); `standings`
+  otherwise and for an Exhibition; **none** when the Standings page is hidden or the event isn't public (draft,
+  archived).
+
+**Not drawn — the build's work:** the print stylesheet; the clone route's options (unchanged); the confirms' one home
+beside `lib/tournament-archive-words.ts`; the board's champion read (runner-up, scores, a no-final division's top);
+**the old look's retirement** in every file Stage 4 rebuilds — the dashboard's after-event rules only (A18), Summary's
+and Past tournaments' `legacy=` props and stylesheets, the Tournaments list's — held by `npm run check:old-look` and the
+strict admin colour gate. "One control height" is in the tree (`d9302f6f`).
+
+**Stage 4 taps:** run a finished event back **4 + typing → 2 + dates**; reuse from a list **2 → 2** (Past tournaments'
+Completed row, in the rail); share the champions page **not offered → 1**; print the summary **2 → 2**, recap only; bring an archived event
+back **no reachable door → 3 + the confirm**, a full plan said before the tap.
+
+### Stage 4 — as built (2026-10-06; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE4_BUILD_PROMPT.md`; owner walks §275 + §276 owed)
+
+**Committed on dev 2026-10-06, after `/simplify` and `/review`:** `8bdecc9f` Part 0 (one read and one definition
+per figure — `lib/event-recap.ts`, `lib/event-recap-read.ts`, the words in `lib/after-event-words.ts`) · `e1d6e021`
+Part 1 (one reuse opener for every door — `SetupWizardProvider` in the admin frame; `NoticePill`; `ClubRow`
+`mark`/`external`; `CheckChoice` and the record styles in ScreenParts; `lib/tournament-status-words.ts`) ·
+`8237fb15` Parts 2–3 (the finished board, `FinishedBoard.tsx` + `AfterEventParts.tsx`; Summary and its printed page;
+the strip's summary door; P5 in Event Settings) · `211fcb1d` Part 4 (the event's record `TournamentRecord.tsx`, the
+two lists, the set-status rules, the locked-results sentence, the ratchets locked). Help (`lib/help-content/tournaments.tsx`)
+in the docs commit after them. No migration.
+
+**Calls made while building** (each on the hub's Built part, for the walk to question):
+- A **sealed** event never goes back to Active or Draft, from any status (the server holds it; the record offers no
+  Reopen). Archive and Bring back stay open to it.
+- **Bring back** is refused in words, before any tap, when the plan's slots are full (the holder named, the *More
+  tournament slots* lock) or another live event took its public link (change it in Details first); a race on the
+  link is a 409 in the same words, never a 500. Bring back is a change TO Completed, so its question says the
+  results email when the route will send it.
+- **Changing a public link asks first** ("Change the public link?"); name, year and dates autosave.
+- At the slot limit **New tournament becomes the *More tournament slots* lock line**; a blank new tournament lands on
+  its board; reuse lands on the new draft's board with "Draft created from …".
+- The help **"?"** shows on the finished board only (Stage 5 owns the live board's header); the **Mark complete
+  question stays open** until the change lands and says a refusal in place; "Leave setup?" asks only after a change.
+- An event nobody played in, and an Exhibition, show **The event in numbers** instead of an empty How it finished
+  (with the share note when Standings is hidden); the **money pair shows whenever fees were charged or anything was
+  collected** (the definitions' "collected, with or without a fee schedule"); a division's row needs a game with a
+  **final** result — a submitted score ranks no one; "Finished Jul 3" is said only once the last day has come.
+- Summary's closing link is 44px tall at touch widths (the layout sweep's tap floor), in its sentence.
+- The four screens' help "?" open their own sub-topic of the close-out article (`closeout-finished-board`,
+  `closeout-summary`, `closeout-two-lists`).
+
+**/review (high-risk, five lenses) fixed before the commit:** the board stayed blank after Mark complete until a
+reload (its poll is off once finished — now it reads again); a sealed event could be reopened through Draft or
+Archive first; the lists' counts read only the first 1,000 rows (now paged, `lib/supabase-paging`); Bring back's
+unannounced email; a division of unfinalized scores got a row; two import UAT specs matched the old locked wording;
+and four Low (the link race, money without fees, the empty finished board, the context's read race). Refuted or
+left: a half-typed name is dropped on leaving the record — the walked Teams record does the same (one decision for
+both, not taken here); a tied final reads "final not scored" (the public champions rule — routed); a board read that
+fails shows its error and Retry rather than a partial board (kept: honest).
+
+**Verified 2026-10-06:** typecheck clean; unit 5,807 / 5,807 (`event-recap.test.ts` 23, `tournament-lists.test.ts`
+10); every gate in `verify:changed` green (schema parity red only on another session's dev-only migration). Read-only
+probes (`.probe/s4b/probe2.mjs`, every write refused by a stub and recorded): share **1 tap**, the clipboard holds the
+champions link · print **1 tap + the browser's**, one Letter page, only the summary on the paper · reuse **1 tap + the
+dates + 1**, nothing written before Create, a refusal said in the window · Bring back **3 taps + its confirm**,
+exactly one change sent, at the confirm; a full plan said before any tap · nothing a thumb taps under the floor at
+390 / 360 (the strip's own link and Dismiss are older) · the Tournament plan's lock lines on the board, Past
+tournaments and the list. Layout sweep (`--only` the four screens + the org list; 361 / 390 / 768 / 1440; Warm, then
+Dark with `--dump`): no new findings; 44 entries the old list and old Summary held pruned.
+**Gaps against the drawings:** the board's Reuse button at 390 sits ~43px lower than drawn (the champion's caption
+wraps; /marketing's Next year sentence is longer than the placeholder); the first finish row ~8px.
+
+**Routed, not built:** A23 (the one-slot packaging question) → `/strategy` · F51 (an Exhibition's public champions
+page) and **F56** (a bracket-only event's public champions page always says its results are hidden) and a tied final
+reading "final not scored" → the public pages' owner · F52 (the demo club's one slot refuses its own Reuse) →
+`/demos`. **Follow-ups:** one lock helper across the routes; one champions-page predicate shared with the public
+page; a shared print portal (the certificate's and Summary's); a record-form hook shared with Teams; the counts read
+could become one grouped query.
 
 ## 7. The asks
 

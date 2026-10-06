@@ -113,6 +113,12 @@ Each stage below is independently decidable. **Nothing proceeds without an expli
 > plan's §6b; owner walks §252 and §254 closed by the owner 2026-10-01). Its first
 > commit fixed the announcement email that reached every registered team: an untargeted send now reaches the
 > accepted teams, and `announcements.email_recipients` (migration 314, on prod 2026-09-30) keeps who it reached.
+> **Stage 4 (after the event) COMMITTED 2026-10-06** — `8bdecc9f` · `e1d6e021` · `8237fb15` · `211fcb1d` (its plan's §6d
+> "Stage 4 — as built"; owner walks §275 and §276 owed): one read for every after-event figure (`lib/event-recap.ts`), the
+> finished board, Summary and its printed page, one reuse opener for every door, the event's record and the two lists
+> (Tournaments · Past tournaments). Its set-status route now holds a sealed event out of Active and Draft from any
+> status. Routed: A23 (the one-slot packaging question) to `/strategy`; F51 and F56 (the public champions page for an
+> Exhibition and a bracket-only event) to the public pages; F52 (the demo club's one slot) to `/demos`.
 
 ---
 

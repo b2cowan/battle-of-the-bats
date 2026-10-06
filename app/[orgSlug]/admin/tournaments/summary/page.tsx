@@ -61,7 +61,7 @@ type SummaryData = {
 
 const noSubscribe = () => () => {};
 
-const SUMMARY_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'faq-post-event-summary' };
+const SUMMARY_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'closeout-summary' };
 
 export default function TournamentSummaryPage() {
   const { currentOrg } = useOrg();

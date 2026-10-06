@@ -39,7 +39,7 @@ import { pastBands, walkOrder, type ListEvent } from '@/lib/tournament-lists';
 import { formatEventDateRange, formatStoredDate } from '@/lib/timezone';
 import styles from './archives-admin.module.css';
 
-const PAST_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'faq-completed-archived-sealed' };
+const PAST_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'closeout-two-lists' };
 
 export default function AdminArchivesPage() {
   const { currentOrg, userRole, userCapabilities } = useOrg();

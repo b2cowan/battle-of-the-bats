@@ -41,7 +41,7 @@ import { aheadBands, walkOrder } from '@/lib/tournament-lists';
 import { formatEventDateRange } from '@/lib/timezone';
 import styles from './tournaments-admin.module.css';
 
-const LIST_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'faq-completed-archived-sealed' };
+const LIST_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'closeout-two-lists' };
 
 export default function AdminTournamentsPage({
   searchParams,

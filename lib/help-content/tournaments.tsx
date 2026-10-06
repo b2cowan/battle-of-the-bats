@@ -20,7 +20,7 @@ const tournamentsHelp: HelpPageContent = {
       searchText: 'create tournament draft dates URL slug divisions capacity venues contacts rules announcements scoring settings access branding preview activate registration public launch checklist round robin playoffs bracket only exhibition scrimmage day no playoffs tournament format schedule rules',
       links: [
         { label: 'Open Dashboard', href: '../tournaments/dashboard' },
-        { label: 'Manage Tournaments', href: '../tournaments/manage' },
+        { label: 'Tournaments', href: '../tournaments/manage' },
       ],
       content: (
         <>
@@ -42,11 +42,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-publish-tournament',
           question: 'How do I publish a tournament?',
-          answerText: 'Use Manage Tournaments or the dashboard activation button. A tournament must have dates, divisions, a public contact, and at least one open division before activation.',
-          keywords: ['publish', 'activate', 'go live', 'registration open'],
+          answerText: 'Open the tournament from the Tournaments list (it used to be called Manage Tournaments) and tap Activate under Status, or use the Activate button on its dashboard. It asks first, then the public site goes online. A tournament needs its dates, at least one division, and a public contact before it can be activated; until then its record says what to add first.',
+          keywords: ['publish', 'activate', 'go live', 'registration open', 'Tournaments list', 'Manage Tournaments', 'event record'],
           popular: true,
           answer: (
-            <p>Open <strong>Manage Tournaments</strong>, change the tournament status to <strong>Active</strong>, and confirm the activation prompt. Activation is blocked until required launch items are complete: dates, at least one division, a public contact (a selected contact member or a contact email), and at least one division open for registration.</p>
+            <p>Open <strong>Tournaments</strong>, tap the tournament to open its record, and tap <strong>Activate</strong> under <strong>Status</strong> &mdash; it asks first, then the public site goes online. You can also activate from the tournament&rsquo;s dashboard. Activation needs its dates, at least one division, and a public contact (a selected contact member or a contact email); until those are in, the record says what to add first.</p>
           ),
         },
         {
@@ -69,15 +69,15 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'Create, edit, and launch a tournament',
       summary: 'Names, dates, public URLs, draft mode, and the launch checklist — plus how to open team registration.',
       keywords: ['new tournament', 'edit tournament', 'slug', 'dates', 'launch checklist', 'open registration', 'activate tournament', 'public form', 'division open', 'live preview', 'preview public page'],
-      searchText: 'new tournament name year slug URL public link dates draft active status activation checklist tournament slot limit open team registration activate public registration form accepted teams capacity fees contact live preview phone preview public page preview while typing side by side desktop wide window countdown first pitch days to go missing preview no preview tournament colours colors theme presets swatches pick colour while creating Tournament Plus manage branding permission',
+      searchText: 'new tournament name year slug URL public link dates draft active status activation checklist tournament slot limit open team registration activate public registration form accepted teams capacity fees contact live preview phone preview public page preview while typing side by side desktop wide window countdown first pitch days to go missing preview no preview tournament colours colors theme presets swatches pick colour while creating Tournament Plus manage branding permission manage tournaments tournaments list new tournament sidebar event record',
       links: [
-        { label: 'Manage Tournaments', href: '../tournaments/manage' },
+        { label: 'Tournaments', href: '../tournaments/manage' },
         { label: 'Dashboard Checklist', href: '../tournaments/dashboard' },
         { label: 'Divisions', href: '../tournaments/divisions' },
       ],
       content: (
         <>
-          <p>Click <strong>New Tournament</strong> from Manage Tournaments. The setup wizard saves the tournament as a draft so you can finish the details before anything appears publicly.</p>
+          <p>Tap <strong>New tournament</strong> on the <strong>Tournaments</strong> list or in the sidebar. The setup wizard saves the tournament as a draft so you can finish the details before anything appears publicly.</p>
           <p>The <strong>URL slug</strong> is used in every public tournament link. Choose it carefully — changing it later can break links already shared by email, social media, or team communications.</p>
         </>
       ),
@@ -103,7 +103,7 @@ const tournamentsHelp: HelpPageContent = {
                 <li>Finish the launch checklist: dates, public contact, divisions, and required public information.</li>
                 <li>Open <strong>Divisions</strong> and confirm at least one division is accepting registrations.</li>
                 <li>Review capacities, fees, and custom registration questions before sharing the link.</li>
-                <li>Use <strong>Manage Tournaments</strong> to move the tournament from <strong>Draft</strong> to <strong>Active</strong>.</li>
+                <li>Open the tournament from the <strong>Tournaments</strong> list and tap <strong>Activate</strong> in its record.</li>
                 <li>Open the public registration page and submit a quick internal test if your workflow allows it.</li>
                 <li>Share the public registration link with teams only after the form shows the right divisions and fees.</li>
               </HelpSteps>
@@ -156,39 +156,45 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Create the tournament',
       heading: 'Reuse setup for repeat tournaments',
       summary: 'Start the next event from prior setup without bringing teams, scores, or payments along.',
-      keywords: ['reuse setup', 'repeat tournament', 'next year', 'previous tournament', 'Tournament Plus', 'clone', 'live preview'],
-      searchText: 'reuse setup previous tournament repeat event next year copy clone Tournament Plus draft divisions pools slots venues locations registration questions fees branding public pages rules resources welcome never copied teams registrations waitlists games scores standings champions payments uploaded files private notes live preview public page preview prefilled',
+      keywords: ['reuse setup', 'reuse this setup', 'repeat tournament', 'next year', 'previous tournament', 'Tournament Plus', 'clone', 'live preview', 'create the draft'],
+      searchText: 'reuse setup reuse this setup previous tournament repeat event next year copy clone Tournament Plus draft create the draft bring forward what to bring forward finished dashboard past tournaments summary event record new tournament divisions pools slots venues locations registration questions fees branding public pages rules resources welcome never copied teams registrations waitlists games scores standings champions payments uploaded files private notes live preview public page preview prefilled draft created from',
       links: [
-        { label: 'Manage Tournaments', href: '../tournaments/manage' },
+        { label: 'Past tournaments', href: '../tournaments/archives' },
         { label: 'Dashboard', href: '../tournaments/dashboard' },
         { label: 'Plan & billing', href: '../tournaments/settings/subscription' },
       ],
       content: (
         <>
-          <p>Tournament Plus helps returning organizers turn a repeat event into review-and-adjust work instead of rebuilding from empty. Start from Manage Tournaments, the new tournament wizard, a draft dashboard prompt, or the completed tournament Summary page.</p>
-          <p>The reused tournament is always created as a draft. Review dates, fees, registration questions, public page visibility, rules, and welcome content before activation.</p>
+          <p>On Tournament Plus and above, next year&rsquo;s event starts from this year&rsquo;s setup in one step. <strong>Reuse this setup</strong> is on a finished tournament&rsquo;s dashboard, its <strong>Summary</strong>, and its record, and a completed tournament&rsquo;s row in <strong>Past tournaments</strong> carries <strong>Reuse setup</strong>. You can also choose <strong>Reuse a previous tournament setup</strong> when you start a <strong>New tournament</strong>, or fill a draft from an earlier event with the reuse prompt on the draft&rsquo;s dashboard.</p>
+          <HelpSteps>
+            <li>Tap <strong>Reuse this setup</strong>. The new draft&rsquo;s name and public link are filled in for you, a year on, and every area is already chosen.</li>
+            <li>Enter the new dates.</li>
+            <li>Under <strong>What to bring forward</strong>, clear any area you want to set up fresh.</li>
+            <li>Tap <strong>Create the draft</strong>. You land on the new draft&rsquo;s dashboard, with a note saying which event it came from.</li>
+          </HelpSteps>
+          <p>The new tournament stays private as a draft until you activate it. The window lists what to check under <strong>Review before you publish</strong>: dates, fees, registration questions, public page visibility, rules, and welcome content.</p>
           <p>On a wide desktop window, the live preview of the public page arrives already filled in with the new name and dates, so you can check how the returning event reads before creating the draft. When <strong>Public presence</strong> is among the areas being reused, the preview also shows the colours carried over from that event; on Tournament Plus you can pick a different preset above the preview, and your choice replaces the copied colours.</p>
-          <p>Default setup areas can include:</p>
+          <p>The five areas you can bring forward:</p>
           <ul>
             <li><strong>Event structure</strong> — divisions, pools, and empty schedule slots.</li>
             <li><strong>Locations</strong> — venues and playing surfaces.</li>
-            <li><strong>Registration setup</strong> — custom questions and fee setup.</li>
-            <li><strong>Public presence</strong> — branding and public page visibility.</li>
+            <li><strong>Registration setup</strong> — registration questions and fees.</li>
+            <li><strong>Public presence</strong> — branding and public page settings.</li>
             <li><strong>Content</strong> — rules, resources, and welcome content.</li>
           </ul>
-          <p><strong>Never copied:</strong> teams, registrations, waitlists, games, scores, standings, champions, payment status, reminders, uploaded files, message history, archived summaries, or private admin notes.</p>
-          <p>Free Tournament users may see the repeat-event value prompt, but creating a reused setup draft is available on Tournament Plus, League Plus, and Club.</p>
+          <p>Teams, registrations, waitlists, games, scores, standings, champions, payment status, reminders, uploaded files, message history, and private admin notes stay with the event you reused &mdash; they are never copied.</p>
+          <p>Reusing a setup is on Tournament Plus, League Plus, and Club; on the Tournament plan each door shows a lock line instead.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-reuse-previous-tournament-setup',
           question: 'Can I reuse a previous tournament setup?',
-          answerText: 'Tournament Plus can create a new draft from a previous tournament while leaving teams, results, payments, files, and history behind.',
-          keywords: ['reuse setup', 'previous tournament', 'next year', 'clone', 'Tournament Plus'],
+          answerText: 'Yes, on Tournament Plus and above. Tap Reuse this setup on a finished tournament’s dashboard, its Summary, or its record, or Reuse setup on its row in Past tournaments. Enter the new dates, choose what to bring forward, and tap Create the draft. You can also reuse a previous setup when you start a New tournament. Teams, results, payments, files, and history stay behind.',
+          keywords: ['reuse setup', 'reuse this setup', 'previous tournament', 'next year', 'clone', 'Tournament Plus', 'create the draft'],
           popular: true,
           answer: (
-            <p>Yes. Use <strong>Reuse setup</strong> from Manage Tournaments, the new tournament wizard, a draft dashboard prompt, or a completed tournament Summary page. Choose the setup areas to copy, then review the new draft before activation.</p>
+            <p>Yes, on Tournament Plus and above. Tap <strong>Reuse this setup</strong> on a finished tournament&rsquo;s dashboard, its <strong>Summary</strong>, or its record &mdash; or <strong>Reuse setup</strong> on its row in <strong>Past tournaments</strong>. Enter the new dates, choose what to bring forward, and tap <strong>Create the draft</strong>. You can also reuse a previous setup when you start a <strong>New tournament</strong>.</p>
           ),
         },
         {
@@ -206,7 +212,7 @@ const tournamentsHelp: HelpPageContent = {
           answerText: 'Review dates, divisions, venues, registration questions, fees, public pages, rules, resources, and welcome copy before activating.',
           keywords: ['review copied setup', 'activation', 'draft', 'warnings'],
           answer: (
-            <p>Check the new draft before publishing: event dates, division capacities, venues, registration questions, fee amounts, public page visibility, rules, resources, and welcome/news copy. The workflow may also show review warnings when the source is old, still draft, or still active.</p>
+            <p>Check the new draft before publishing: event dates, division capacities, venues, registration questions, fee amounts, public page visibility, rules, resources, and welcome/news copy. The reuse window also lists what to check under <strong>Review before you publish</strong> &mdash; for example when the event you reused is still a draft or still active, or ran more than a year earlier.</p>
           ),
         },
       ],
@@ -264,13 +270,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-delete-division',
           question: 'What happens if I delete a division?',
-          answerText: 'Deleting a division also deletes everything inside it — every game in that division, including any scores already recorded, and every team registered into it. It cannot be undone. If the division still holds games or teams, FieldLogicHQ stops and tells you exactly what is there ("this division still holds 12 games (8 with a recorded score) and 6 registered teams") so you can back out. You can move those teams and games to another division first, or confirm to delete everything together. Note this is the opposite of deleting a single team, which keeps that team\'s games. If the tournament is Completed and locked, deletion is blocked entirely until you set the status back to Active in Event Settings.',
+          answerText: 'Deleting a division also deletes everything inside it — every game in that division, including any scores already recorded, and every team registered into it. It cannot be undone. If the division still holds games or teams, FieldLogicHQ stops and tells you exactly what is there ("this division still holds 12 games (8 with a recorded score) and 6 registered teams") so you can back out. You can move those teams and games to another division first, or confirm to delete everything together. Note this is the opposite of deleting a single team, which keeps that team\'s games. If the tournament is Completed and locked, deletion is blocked entirely until you reopen it from Past tournaments.',
           keywords: ['delete division', 'remove division', 'delete a division', 'division deleted', 'lost games', 'lost scores', 'undo delete', 'accidentally deleted'],
           answer: (
             <>
               <p>Deleting a division also deletes <strong>everything inside it</strong> — every game in that division, including any scores already recorded, and every team registered into it. This cannot be undone.</p>
               <p>You won&rsquo;t do it by accident. If the division still holds games or teams, FieldLogicHQ stops and tells you exactly what&rsquo;s in there &mdash; for example &ldquo;this division still holds 12 games (8 with a recorded score) and 6 registered teams&rdquo; &mdash; so you can back out. Move those teams and games to another division first, or confirm to remove them together.</p>
-              <p>This is the <strong>opposite</strong> of deleting a single team, which keeps that team&rsquo;s games (see <em>Review and accept teams</em>). If the tournament is <strong>Completed</strong> and locked, deletion is blocked entirely until you set the status back to Active in <strong>Event Settings</strong>.</p>
+              <p>This is the <strong>opposite</strong> of deleting a single team, which keeps that team&rsquo;s games (see <em>Review and accept teams</em>). If the tournament is <strong>Completed</strong> and locked, deletion is blocked entirely until you reopen it from <strong>Past tournaments</strong>.</p>
             </>
           ),
         },
@@ -424,10 +430,10 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-post-event-results-email',
           question: 'How do teams get final results after the tournament?',
-          answerText: 'Tournament Plus can send accepted team contacts one post-event email with public standings, schedule, and teams links when the tournament is marked completed.',
+          answerText: 'Tournament Plus can send accepted team contacts one post-event email with public standings, schedule, and teams links. Turn on the post-event results notification in Event Settings. It sends once, the first time the tournament becomes Completed: when you mark it complete, or when you bring back an archived tournament that never sent it. The question before either step says the email will go.',
           keywords: ['post-event email', 'results notification', 'completed tournament', 'Tournament Plus'],
           answer: (
-            <p>Open <strong>Event Settings</strong> and enable the post-event results notification. The email sends once when the tournament changes to Completed, and FieldLogicHQ records that it was sent so it is not resent by accident.</p>
+            <p>Open <strong>Event Settings</strong> and enable the post-event results notification. The email sends once, the first time the tournament becomes Completed &mdash; when you mark it complete, or when you bring back an archived tournament that never sent it &mdash; and the question before either step says the email will go. FieldLogicHQ records that it was sent, so it is not resent by accident.</p>
           ),
         },
         {
@@ -649,13 +655,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-delete-team-with-games',
           question: 'Can I delete a team that already has games?',
-          answerText: 'Yes. Open the team\'s record and tap Delete this team… at the end. FieldLogicHQ checks first: if the team appears in any game, deleting is paused and you are told how many games it plays in and how many already have a recorded score — for example "this team appears in 6 games (4 with a recorded score)". You can back out, or confirm to continue. If you continue, those games are KEPT, not deleted: each one loses that one side and shows an empty slot where the team was, and the opponent\'s record and score are untouched. This is deliberate — a game belongs to both teams, so removing one team must never erase the other team\'s history. Tidy up by reassigning or removing those games from the schedule afterwards. Note this differs from deleting a whole division, which does remove its games and scores. If the tournament is Completed and locked, deletion is blocked until you set the status back to Active.',
+          answerText: 'Yes. Open the team\'s record and tap Delete this team… at the end. FieldLogicHQ checks first: if the team appears in any game, deleting is paused and you are told how many games it plays in and how many already have a recorded score — for example "this team appears in 6 games (4 with a recorded score)". You can back out, or confirm to continue. If you continue, those games are KEPT, not deleted: each one loses that one side and shows an empty slot where the team was, and the opponent\'s record and score are untouched. This is deliberate — a game belongs to both teams, so removing one team must never erase the other team\'s history. Tidy up by reassigning or removing those games from the schedule afterwards. Note this differs from deleting a whole division, which does remove its games and scores. If the tournament is Completed and locked, deletion is blocked until you reopen it from Past tournaments.',
           keywords: ['delete team', 'remove team', 'delete registration', 'team has games', 'delete a team with games', 'blank team', 'empty slot in schedule', 'undo delete team'],
           answer: (
             <>
               <p>Yes. Open the team&rsquo;s record and tap <strong>Delete this team&hellip;</strong> at the end. FieldLogicHQ checks first: if the team appears in any game, deleting pauses and tells you what&rsquo;s at stake &mdash; for example &ldquo;this team appears in 6 games (4 with a recorded score).&rdquo; You can back out, or confirm to continue.</p>
               <p>If you continue, <strong>those games are kept, not deleted</strong>. Each one loses that one side and shows an empty slot where the team was, while the opponent&rsquo;s record and score stay exactly as they were. That&rsquo;s deliberate: a game belongs to <em>both</em> teams, so removing one team must never erase the other team&rsquo;s history. Tidy up by reassigning or removing those games in the schedule afterwards.</p>
-              <p>This differs from deleting a whole <strong>division</strong>, which <em>does</em> remove its games and scores. If the tournament is <strong>Completed</strong> and locked, deletion is blocked until you set the status back to Active.</p>
+              <p>This differs from deleting a whole <strong>division</strong>, which <em>does</em> remove its games and scores. If the tournament is <strong>Completed</strong> and locked, deletion is blocked until you reopen it from Past tournaments.</p>
             </>
           ),
         },
@@ -868,7 +874,7 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-resolve-typed-locations',
           question: 'My games have field names typed in as text. How do I link them to my real fields?',
-          answerText: 'Open the Schedule page. If any games name a field as plain text, a note at the top says how many typed locations there are, with a Review button. The panel lists one row per name rather than per game, so one decision covers every game using that name. A name that matches one of your fields exactly is filled in for you and marked Exact match; a name that matches nothing can be created as a new field, or deliberately left as typed text. Each row shows the exact name your games will display before you apply, and nothing changes until you press Apply. Nobody is notified — linking a name to a field is tidying your own records, not moving a game, so no family or coach gets a "game moved" message. Close names are never guessed: Field 1 is not offered as Diamond 1, because a wrong guess would move real games to the wrong field. Games marked TBD are not listed because they name no field at all, and games still using the generator temporary fields belong to Resolve Temporary Facilities instead. After applying, each row keeps an Undo for as long as the panel stays open, which puts the typed text back. Below the pending rows, every field your games are already on is listed with its game count, and any of those groups can be moved to a different field at any time — that is how you correct a wrong choice later, once the Undo is gone. If someone else changed one of those games in the meantime, Undo leaves that game alone and tells you. Once a name is linked, renaming the field updates every one of those games automatically, and the double-booking check can protect them. If the Review button is greyed out, the tournament status is Completed — set it back to Active in Event Settings to make changes. Dismissing the note with the X hides it in your browser until a new typed location appears, which is how you keep names you meant to leave as text.',
+          answerText: 'Open the Schedule page. If any games name a field as plain text, a note at the top says how many typed locations there are, with a Review button. The panel lists one row per name rather than per game, so one decision covers every game using that name. A name that matches one of your fields exactly is filled in for you and marked Exact match; a name that matches nothing can be created as a new field, or deliberately left as typed text. Each row shows the exact name your games will display before you apply, and nothing changes until you press Apply. Nobody is notified — linking a name to a field is tidying your own records, not moving a game, so no family or coach gets a "game moved" message. Close names are never guessed: Field 1 is not offered as Diamond 1, because a wrong guess would move real games to the wrong field. Games marked TBD are not listed because they name no field at all, and games still using the generator temporary fields belong to Resolve Temporary Facilities instead. After applying, each row keeps an Undo for as long as the panel stays open, which puts the typed text back. Below the pending rows, every field your games are already on is listed with its game count, and any of those groups can be moved to a different field at any time — that is how you correct a wrong choice later, once the Undo is gone. If someone else changed one of those games in the meantime, Undo leaves that game alone and tells you. Once a name is linked, renaming the field updates every one of those games automatically, and the double-booking check can protect them. If the Review button is greyed out, the tournament status is Completed — reopen it from Past tournaments to make changes. Dismissing the note with the X hides it in your browser until a new typed location appears, which is how you keep names you meant to leave as text.',
           keywords: ['typed field name', 'typed location', 'link to real field', 'match typed locations', 'resolve locations', 'review locations', 'locations typed by hand', 'convert typed location', 'tidy field names', 'create field from name', 'leave as typed text', 'undo', 'already linked', 'change field for many games', 'bulk change field', 'exact match', 'no match', 'dismiss notice'],
           popular: true,
           answer: (
@@ -879,7 +885,7 @@ const tournamentsHelp: HelpPageContent = {
               <p>Close names are never guessed at: &ldquo;Field&nbsp;1&rdquo; is not offered as &ldquo;Diamond&nbsp;1&rdquo;. Games marked <strong>TBD</strong> aren&apos;t listed, because they name no field at all, and games still on the generator&apos;s temporary fields belong to <strong>Resolve Temporary Facilities</strong>.</p>
               <p>After applying, each row keeps an <strong>Undo</strong> for as long as the panel stays open, which puts the typed text back. Below the pending rows, every field your games are already on is listed with its game count — and any of those groups can be moved to a different field at any time. That is how you correct a choice later, once the Undo is gone. If someone else changed one of those games in the meantime, Undo leaves that game alone and tells you.</p>
               <p>Once a name is linked, renaming that field updates every one of those games automatically, and the double-booking check can protect them.</p>
-              <p>If <strong>Review</strong> is greyed out, the tournament status is <strong>Completed</strong> — set it back to Active in <strong>Event Settings</strong> to make changes. Dismissing the note with the <strong>×</strong> hides it in your browser until a new typed location appears, which is how you keep names you meant to leave as text.</p>
+              <p>If <strong>Review</strong> is greyed out, the tournament status is <strong>Completed</strong> — reopen it from <strong>Past tournaments</strong> to make changes. Dismissing the note with the <strong>×</strong> hides it in your browser until a new typed location appears, which is how you keep names you meant to leave as text.</p>
             </>
           ),
         },
@@ -1798,39 +1804,91 @@ const tournamentsHelp: HelpPageContent = {
       id: 'recipe-closeout-tournament',
       group: 'Close Out',
       heading: 'Complete the tournament',
-      summary: 'Wrap up once all games are done, share final results, and understand tournament lifecycle states.',
-      keywords: ['closeout', 'complete tournament', 'mark complete', 'ready to finalize', 'finalize tournament', 'archive', 'seal', 'final results', 'completed', 'archived', 'sealed'],
-      searchText: 'closeout tournament complete mark complete mark tournament complete ready to finalize finalize dashboard prompt lock results read-only reopen archive seal final results post-event summary free tournament slot immutable snapshot public site goes offline links stop working bring back an archived tournament unarchive restore board report results email lifecycle draft active completed archived sealed public page shows final results automatically without marking complete fans champions final standings wrap up next on the schedule do i need to mark complete round robin',
+      summary: 'Mark it complete, share and print how it finished, reuse the setup — and where every status change lives.',
+      keywords: ['closeout', 'complete tournament', 'mark complete', 'ready to finalize', 'finalize tournament', 'archive', 'seal', 'final results', 'completed', 'archived', 'sealed', 'Manage Tournaments', 'Archives', 'Past tournaments', 'Tournaments list', 'Post-event summary', 'summary', 'how it finished', 'champions link', 'standings link', 'print summary', 'reopen', 'bring back', 'move back to draft', 'delete tournament', 'event record', 'sealed records', 'public ledger', 'results are locked'],
+      searchText: 'closeout tournament complete mark complete mark tournament complete every game in ready to finalize finalize dashboard prompt lock results read-only results are locked reopen archive seal final results post-event summary free tournament slot immutable snapshot permanent public record public site goes offline links stop working bring back an archived tournament unarchive restore board report results email lifecycle draft active completed archived sealed public page shows final results automatically without marking complete fans champions final standings wrap up next on the schedule do i need to mark complete round robin manage tournaments archives past tournaments tournaments list finished board finished dashboard how it finished final not scored no final copy champions link copy standings link the event in numbers teams played games played collected still owed print letter one page next year reuse this setup event record status activate move back to draft delete this tournament public link sealed records public ledger free slot link taken',
       links: [
-        { label: 'Manage Tournaments', href: '../tournaments/manage' },
-        { label: 'Past Tournaments', href: '../tournaments/archives' },
+        { label: 'Tournaments', href: '../tournaments/manage' },
+        { label: 'Past tournaments', href: '../tournaments/archives' },
         { label: 'Summary', href: '../tournaments/summary' },
       ],
       content: (
         <>
-          <p>Every tournament has a lifecycle:</p>
-          <ul>
-            <li><strong>Draft</strong> — setup mode, visible to admins only.</li>
-            <li><strong>Active</strong> — public and accepting registrations or live operations.</li>
-            <li><strong>Completed</strong> — event is over but still counts as a tournament slot.</li>
-            <li><strong>Archived</strong> — retired from active views: its public site goes offline and it no longer counts against the active tournament slot limit.</li>
-            <li><strong>Sealed</strong> — a permanent immutable snapshot of final results has been created.</li>
-          </ul>
-          <p>Once every game is in, your tournament <strong>dashboard</strong> shows a <strong>You&rsquo;re ready to finalize</strong> prompt with a one-click <strong>Mark tournament complete</strong> — so you can close out right from the dashboard. You can also change the status from <strong>Event Settings</strong> or <strong>Manage Tournaments</strong>.</p>
-          <p>Marking a tournament complete locks it: registrations close and all event data — scores, standings, schedules, divisions, and registrations — becomes read-only and final. You can reopen it any time by setting the status back to <strong>Active</strong>.</p>
-          <p>Your public tournament page shows its <strong>finished wrap-up</strong> — the champions and final standings — on its own once the games are done, so completing is about locking your records, not about what fans see.</p>
-          <p>Close-out steps:</p>
-          <ol>
-            <li>Confirm all scores, standings, and playoff results are complete.</li>
-            <li>Mark the tournament <strong>Completed</strong> — from the dashboard&rsquo;s finalize prompt, <strong>Event Settings</strong>, or <strong>Manage Tournaments</strong>.</li>
-            <li>Send or share public final results if your plan and workflow include post-event communication.</li>
-            <li>Export any registration, schedule, accounting, or results reports needed by your board.</li>
-            <li>Archive the tournament when it should leave active views and free its tournament slot. Its public site goes offline, so every link you&rsquo;ve shared stops working.</li>
-            <li>Seal only after final review. Sealing creates a permanent snapshot and cannot be undone.</li>
-          </ol>
-          <p>For completed or archived tournaments, Tournament Plus adds a <strong>Summary</strong> page with registration totals, payment readiness, schedule progress, division recaps, public results links, print/share actions, and a prompt to reuse the setup for the next event.</p>
+          <p>When the last game is in, mark the tournament complete. Its dashboard becomes the finished board, <strong>Summary</strong> gives you a recap to share and print, and every later change &mdash; reopen, archive, bring back, seal, or delete &mdash; lives in the tournament&rsquo;s record.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'closeout-mark-complete',
+          title: 'Mark the tournament complete',
+          content: (
+            <>
+              <p>Once every game is in, your tournament dashboard shows <strong>Every game&rsquo;s in &mdash; ready to finalize</strong> with a <strong>Mark tournament complete</strong> button. You can also open the tournament from the <strong>Tournaments</strong> list and tap <strong>Mark complete</strong> in its record, or use the status switch in <strong>Event Settings</strong>.</p>
+              <p>Each asks first and says what will happen: its results become read-only and final, registration closes, and it moves to <strong>Past tournaments</strong>. Its public site stays online. If the post-event results email is on, the question says each team&rsquo;s coach will get it.</p>
+              <p>Your public tournament page shows its finished wrap-up &mdash; the champions and final standings &mdash; on its own once the games are done, so completing is about locking your records, not about what fans see.</p>
+            </>
+          ),
+        },
+        {
+          id: 'closeout-finished-board',
+          title: 'The finished dashboard',
+          content: (
+            <>
+              <p>A completed tournament&rsquo;s dashboard shows how it ended and what comes next:</p>
+              <ul>
+                <li><strong>How it finished</strong> &mdash; each division&rsquo;s champion and the final&rsquo;s score. A division whose final was never scored shows the team first in the standings, marked <em>final not scored</em>; a division with no final shows its standings leader. An Exhibition shows its figures instead, because it names no winner.</li>
+                <li>The line under it &mdash; the teams that played, the games played, what was collected, and anything still owed.</li>
+                <li><strong>Copy champions link</strong> &mdash; copies the public champions page in one tap, or <strong>Copy standings link</strong> when the public page has no champion to name. If you hid the Standings page, there is no link to copy, and the board says why.</li>
+                <li><strong>Next year</strong> &mdash; <strong>Reuse this setup</strong>, on Tournament Plus and above.</li>
+                <li><strong>Summary</strong> &mdash; the door to the tournament&rsquo;s recap.</li>
+              </ul>
+              <p>On the Tournament plan, Next year says how many tournament slots are in use and offers <strong>Archive this tournament</strong>, so the slot is free for your next event.</p>
+            </>
+          ),
+        },
+        {
+          id: 'closeout-summary',
+          title: 'Summary and its printed page',
+          content: (
+            <>
+              <p>Summary, on Tournament Plus and above, is the tournament&rsquo;s recap on one page: <strong>How it finished</strong>, <strong>The event in numbers</strong> (the teams that played, games played, what was collected, and anything still owed), and <strong>Next year</strong>. <strong>Copy champions link</strong> and <strong>Print</strong> sit at the top.</p>
+              <p>Tap <strong>Print</strong> for a one-page recap on Letter paper &mdash; how each division finished and the final standings &mdash; with nothing of the admin screen around it.</p>
+              <p>The money counts every accepted team, including one that never played a game; the teams figure counts only the teams that played. A tournament that charged no fees and collected nothing shows no money figures.</p>
+            </>
+          ),
+        },
+        {
+          id: 'closeout-two-lists',
+          title: 'Tournaments and Past tournaments',
+          content: (
+            <>
+              <p>Each tournament lives in one list, by where it is in its life:</p>
+              <ul>
+                <li><strong>Tournaments</strong> &mdash; what&rsquo;s ahead: <strong>Active</strong> and <strong>Draft</strong>. It used to be called Manage Tournaments. On the Tournament plan it also says how many tournament slots are in use.</li>
+                <li><strong>Past tournaments</strong> &mdash; what&rsquo;s finished: <strong>Completed</strong>, <strong>Archived</strong>, and your <strong>Sealed records</strong>, each of which opens its permanent public record. <strong>Public ledger</strong> opens the public page that lists them. It used to be called Archives.</li>
+              </ul>
+              <p>Tap a tournament in either list to open its record. On Tournament Plus and above, a completed tournament&rsquo;s row in Past tournaments also carries <strong>Reuse setup</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'closeout-record',
+          title: 'Change a status from the tournament’s record',
+          content: (
+            <>
+              <p>Every status change lives in the tournament&rsquo;s record, and each one asks first, saying what it will do to the public site, registration, and your tournament slot:</p>
+              <ul>
+                <li><strong>Draft</strong> &mdash; <strong>Activate</strong> puts the public site online. It needs dates, a division, and a contact first; the record says what to add.</li>
+                <li><strong>Active</strong> &mdash; <strong>Mark complete</strong>, or <strong>Move back to draft</strong>, which takes the public site offline so every link you&rsquo;ve shared stops working.</li>
+                <li><strong>Completed</strong> &mdash; <strong>Reopen</strong> makes its results editable again and moves it back to Tournaments. <strong>Archive</strong> takes its public site offline and frees its tournament slot.</li>
+                <li><strong>Archived</strong> &mdash; <strong>Bring back</strong> returns it as Completed, with its public site online at the same links.</li>
+              </ul>
+              <p>On Tournament Plus and above, a finished tournament&rsquo;s <strong>Permanent record</strong> offers <strong>Seal</strong>, which keeps a permanent public record of its results in your public ledger. Sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
+              <p>The record&rsquo;s <strong>Details</strong> &mdash; name, year, public link, and dates &mdash; edit with the pencil and save as you go. Changing the public link asks first, because every link you&rsquo;ve already shared stops working. A tournament that isn&rsquo;t active can be deleted from the end of its record.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-public-final-results-automatic',
@@ -1848,21 +1906,30 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-where-mark-complete',
           question: 'Where do I mark a tournament complete?',
-          answerText: 'When every game is scored, the tournament dashboard shows a "You\'re ready to finalize" prompt with a one-click Mark tournament complete button. You can also change the status from Event Settings or Manage Tournaments. Completing locks the results; reopen any time by setting the status back to Active.',
-          keywords: ['mark complete', 'ready to finalize', 'finalize tournament', 'close out', 'dashboard prompt', 'lock results'],
+          answerText: 'When every game is in, your tournament dashboard shows "Every game’s in — ready to finalize" with a Mark tournament complete button. You can also open the tournament from the Tournaments list and tap Mark complete in its record. Either way it asks first. Completing locks the results; to make changes afterwards, reopen it from Past tournaments.',
+          keywords: ['mark complete', 'ready to finalize', 'finalize tournament', 'close out', 'dashboard prompt', 'lock results', 'Manage Tournaments'],
           popular: true,
           answer: (
-            <p>When every game is scored, your tournament <strong>dashboard</strong> shows a <strong>You&rsquo;re ready to finalize</strong> prompt with a one-click <strong>Mark tournament complete</strong>. You can also change the status from <strong>Event Settings</strong> or <strong>Manage Tournaments</strong>. Completing locks the results and standings as final; reopen any time by setting the status back to <strong>Active</strong>.</p>
+            <p>When every game is in, your tournament <strong>dashboard</strong> shows <strong>Every game&rsquo;s in &mdash; ready to finalize</strong> with a <strong>Mark tournament complete</strong> button. You can also open the tournament from the <strong>Tournaments</strong> list and tap <strong>Mark complete</strong> in its record. Either way it asks first. Completing locks the results and standings as final; to make changes afterwards, reopen it from <strong>Past tournaments</strong>.</p>
+          ),
+        },
+        {
+          id: 'faq-reopen-completed',
+          question: 'How do I change a completed tournament?',
+          answerText: 'A completed tournament’s results are locked. Open it from Past tournaments and tap Reopen: its results become editable again and it moves back to your Tournaments list. A sealed tournament can’t be reopened.',
+          keywords: ['reopen', 'results are locked', 'locked', 'edit completed tournament', 'undo complete', 'change results after complete'],
+          answer: (
+            <p>A completed tournament&rsquo;s results are locked. Open it from <strong>Past tournaments</strong> and tap <strong>Reopen</strong>: its results become editable again and it moves back to your <strong>Tournaments</strong> list, with its public site still online. A sealed tournament can&rsquo;t be reopened.</p>
           ),
         },
         {
           id: 'faq-completed-archived-sealed',
           question: 'What is the difference between completed, archived, and sealed?',
-          answerText: 'Completed means over but still active for slot purposes. Archived retires it, takes its public site offline, and frees a slot. Sealed creates a permanent immutable snapshot.',
-          keywords: ['completed', 'archived', 'sealed', 'lifecycle'],
+          answerText: 'Completed means the event is over: its results are read-only, its public site stays online, and it still holds a tournament slot. Archived takes its public site offline and frees the slot; you can bring it back from Past tournaments. Sealed means a permanent public record of its results was kept in your public ledger; sealing can’t be undone, and a sealed tournament can’t be reopened.',
+          keywords: ['completed', 'archived', 'sealed', 'lifecycle', 'Archives', 'Past tournaments'],
           popular: true,
           answer: (
-            <p><strong>Completed</strong> means the event is over. <strong>Archived</strong> retires it from active views, takes its public site offline, and frees a tournament slot. <strong>Sealed</strong> creates a permanent final-results snapshot that cannot be changed.</p>
+            <p><strong>Completed</strong> means the event is over: its results are read-only, its public site stays online, and it still holds a tournament slot. <strong>Archived</strong> takes its public site offline and frees the slot; you can bring it back from <strong>Past tournaments</strong>. <strong>Sealed</strong> means a permanent public record of its results was kept in your public ledger; sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
           ),
         },
         {
@@ -1872,46 +1939,46 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['plan limit', 'slot', 'completed', 'archive'],
           popular: true,
           answer: (
-            <p>Yes. A completed tournament still occupies a tournament slot. Archive it when you are ready to retire it and free that slot.</p>
+            <p>Yes. A completed tournament still holds a tournament slot. Archive it when you are ready to retire it and free that slot.</p>
           ),
         },
         {
           id: 'faq-free-slot',
           question: 'How do I free up a tournament slot?',
-          answerText: 'Archive a completed or old tournament to free a tournament slot. Its public site goes offline, so every link you have shared stops working.',
+          answerText: 'Archive a finished tournament: open it from Past tournaments and tap Archive. On the Tournament plan its finished dashboard also offers Archive this tournament. Its public site goes offline, so every link you have shared stops working.',
           keywords: ['free slot', 'plan limit', 'archive tournament'],
           answer: (
-            <p>Change an old tournament to <strong>Archived</strong>. Archived tournaments preserve historical data but no longer count against the active tournament slot limit. Archiving takes its public site offline, so every link you&rsquo;ve shared stops working.</p>
+            <p>Archive a finished tournament: open it from <strong>Past tournaments</strong> and tap <strong>Archive</strong>. On the Tournament plan, its finished dashboard also offers <strong>Archive this tournament</strong>. Archived tournaments keep their teams, games, and payments but no longer hold a slot. Archiving takes the public site offline, so every link you&rsquo;ve shared stops working.</p>
           ),
         },
         {
           id: 'faq-bring-back-archived',
           question: 'Can I bring an archived tournament back?',
-          answerText: 'Yes. On the Tournaments list, change the tournament\'s status from Archived back to Active or Completed. It needs a free tournament slot on your plan: if every slot is in use, archive another tournament first or upgrade. Its public site comes back online. There is no restore button on Past tournaments; that page is for sealing and viewing records.',
-          keywords: ['bring back archived', 'restore tournament', 'unarchive', 'undo archive', 'reactivate tournament', 'archived by mistake', 'public site offline'],
+          answerText: 'Yes. Open it from Past tournaments and tap Bring back. It comes back as Completed, and its public site goes back online at the same links. It needs a free tournament slot: if every slot is in use, the record says which event holds it before you tap anything. If another tournament now uses its public link, change this tournament’s public link in Details first.',
+          keywords: ['bring back archived', 'restore tournament', 'unarchive', 'undo archive', 'reactivate tournament', 'archived by mistake', 'public site offline', 'Archives'],
           answer: (
             <>
-              <p>Yes. On the <strong>Tournaments</strong> list, change the tournament&rsquo;s status from <strong>Archived</strong> back to <strong>Active</strong> or <strong>Completed</strong>, and its public site comes back online.</p>
-              <p>It needs a free tournament slot on your plan: if every slot is in use, archive another tournament first or upgrade. <strong>Past tournaments</strong> has no restore button &mdash; that page is for sealing and viewing records.</p>
+              <p>Yes. Open it from <strong>Past tournaments</strong> and tap <strong>Bring back</strong>. It comes back as <strong>Completed</strong>, and its public site goes back online at the same links.</p>
+              <p>It needs a free tournament slot: if every slot is in use, the record says which event holds it before you tap anything. If another tournament now uses its public link, change this tournament&rsquo;s public link in <strong>Details</strong> first.</p>
             </>
           ),
         },
         {
           id: 'faq-when-seal',
           question: 'When should I seal a tournament?',
-          answerText: 'Seal only when all scores are verified and final because sealing is permanent.',
-          keywords: ['seal', 'permanent', 'final results', 'archive'],
+          answerText: 'Seal only when all scores are verified and final, because sealing is permanent and a sealed tournament can’t be reopened. Seal it from its record’s Permanent record, on Tournament Plus and above. Its sealed public record stays even if you later delete the tournament.',
+          keywords: ['seal', 'permanent', 'final results', 'archive', 'permanent record', 'public ledger'],
           answer: (
-            <p>Seal only after all scores, standings, and final results have been reviewed. Sealing creates an immutable record and cannot be reversed.</p>
+            <p>Seal only after all scores, standings, and final results have been reviewed: sealing is permanent, and a sealed tournament can&rsquo;t be reopened. Seal it from its record&rsquo;s <strong>Permanent record</strong>, on Tournament Plus and above. Its sealed public record stays even if you later delete the tournament.</p>
           ),
         },
         {
           id: 'faq-post-event-summary',
           question: 'What is the post-event summary for?',
-          answerText: 'Tournament Plus gives completed or archived tournaments a printable recap and repeat-event planning surface.',
-          keywords: ['summary', 'recap', 'post-event', 'clone next year', 'renewal'],
+          answerText: 'Summary, on Tournament Plus and above, is a finished tournament’s recap on one page: how each division finished, the event in numbers, and Reuse this setup for next year. Copy the champions link to share it, or Print a one-page recap on Letter paper for your records.',
+          keywords: ['summary', 'Post-event summary', 'recap', 'post-event', 'print', 'champions link', 'clone next year', 'renewal'],
           answer: (
-            <p>The Summary page helps organizers share the public results record, print a recap, review registration and payment readiness, and create a future draft from the completed tournament setup.</p>
+            <p><strong>Summary</strong>, on Tournament Plus and above, is a finished tournament&rsquo;s recap on one page: how each division finished, the event in numbers, and <strong>Reuse this setup</strong> for next year. Copy the champions link to share it, or <strong>Print</strong> a one-page recap on Letter paper for your records.</p>
           ),
         },
       ],
@@ -1959,8 +2026,8 @@ const tournamentsHelp: HelpPageContent = {
           </p>
           <p>
             Schedule imports block scored, submitted, completed, generator-locked, playoff,
-            pool-slot structural, and facility-lane structural changes. Completed tournaments
-            are locked until the status is set back to Active. Scores, delete imports, and
+            pool-slot structural, and facility-lane structural changes. A completed tournament
+            is locked until you reopen it from Past tournaments. Scores, delete imports, and
             replace/wipe imports are not supported.
           </p>
         </>
