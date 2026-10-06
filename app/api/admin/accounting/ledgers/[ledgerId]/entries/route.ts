@@ -8,6 +8,8 @@ import type { AccountingEntryStatus, AccountingEntryType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { canMoveClubMoney } from '@/lib/member-access';
 import { TEAM_BOOK_READ_ONLY } from '@/lib/club-money-words';
+import { readFiledUnder } from '@/lib/club-budget-writes';
+import { moveRefused } from '@/lib/club-money-route';
 
 type Params = { params: Promise<{ ledgerId: string }> };
 
@@ -103,6 +105,15 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     return NextResponse.json({ error: 'status must be posted or pending' }, { status: 400 });
   }
 
+  /* ⚖ FILED UNDER A BUDGET WORD (Club Tier Stage 3b, Ask 4a): `budgetItemId` — a word offered to the club,
+     on the line's own side; its category is derived from it. That is what gives the line an Actual on
+     Budget vs. Actual (matched to the plan by word, the coach's rule), and a line filed under a word
+     writes NO free-text category. ⚰ The free-text `category` is still accepted ONLY from today's Add
+     entry window, which sends no word: it retires with that window in session 2 (the call list's retire
+     list). Such a line reads "Not filed" until someone files it. */
+  const filed = await readFiledUnder(ctx!.org.id, body.budgetItemId, entryType as 'income' | 'expense');
+  if (!filed.ok) return moveRefused(filed);
+
   const entry = await createEntry(
     ledgerId,
     {
@@ -111,7 +122,9 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
       amount: amount as number,
       entryType: entryType as AccountingEntryType,
       status: status as AccountingEntryStatus,
-      category,
+      category: filed.value ? null : category,
+      budgetCategoryId: filed.value?.categoryId ?? null,
+      budgetItemId: filed.value?.itemId ?? null,
       paymentMethod,
       payeeId,
       payeePayer,

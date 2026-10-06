@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, it } from 'node:test';
-import { readCode } from './_source-code.ts';
+import { functionBody, readCode } from './_source-code.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -35,6 +35,14 @@ const READS_THE_MODULE: Record<string, RegExp> = {
   'lib/club-money-reads.ts': /from '\.\/club-money-figures'/,
   'lib/club-ledger-read.ts': /from '\.\/club-money-figures'/,
   'lib/club-money-reminders.ts': /from '\.\/club-money-figures'/,
+  // Club Tier Stage 3b: the Budget, Budget vs. Actual and the board summary — every figure through the
+  // definitions module, assembled by lib/club-budget-report.ts (it computes nothing itself).
+  'app/api/admin/accounting/budget-plan/route.ts': /from '@\/lib\/club-budget-read'/,
+  'app/api/admin/accounting/budget-vs-actual/route.ts': /from '@\/lib\/club-budget-read'/,
+  'app/api/admin/accounting/summary/route.ts': /from '@\/lib\/club-budget-read'/,
+  'lib/club-budget-read.ts': /from '\.\/club-budget-report'/,
+  'lib/club-budget-report.ts': /from '\.\/club-money-figures'/,
+  'lib/club-team-cash.ts': /seasonClosingCashCents\(/,
 };
 
 /**
@@ -42,16 +50,22 @@ const READS_THE_MODULE: Record<string, RegExp> = {
  * ⚠ THIS LIST ONLY SHRINKS. A new entry is a decision, not a fix.
  */
 const NOT_YET: Record<string, string> = {
-  'app/api/admin/accounting/budget-plan/route.ts':
-    '3b redraws Budget (C11): its Collected/Outstanding per line join the module with the board summary.',
-  'app/api/admin/accounting/budget-vs-actual/route.ts':
-    '3b redraws Budget vs. Actual (C05, C09): team health\'s overdue and Collected join the module there.',
+  /* EMPTY since Club Tier Stage 3b session 1: the budget-plan and Budget vs. Actual routes left it — every
+     figure on them is now the definitions module's (the plan's Allocated / Collected / Not allocated, the
+     report's Actual / Spent / Off-plan / Headroom; team health left Budget vs. Actual for the summary). */
 };
 
 const HAND_ROLLED: [string, RegExp][] = [
   ['a hand-rolled overdue', /\b(due_date|dueDate)\s*<\s*(today|now|todayStr|tournamentToday\(\))/],
   ['a hand-summed Collected / Outstanding', /\.filter\(\(?\w+(?::\s*any)?\)?\s*=>\s*!?\w+\.(paid_at|paidAt)\)\s*\.reduce\(/],
   ['overdue asked of the dues helper instead of the club\'s module', /isInstallmentOverdue\(/],
+  // Club Tier Stage 3b: Allocated is the teams' shares of EVERY allocation drawn from a line (`lineAllocated`),
+  // never one allocation's total kept in a Map, and never a sum of STORED split rows rolled by hand (`Number(…)`
+  // off a row). A form adding up the shares being TYPED (`parseFloat`) is the form's arithmetic, not the figure.
+  ['a hand-summed Allocated', /\bsplit\w*\.reduce\(\s*\([^)]*\)\s*=>\s*\w+\s*\+\s*Number\(/i],
+  // ONE Headroom (`headroom`: planned expenses − Spent). "Unallocated Budget" and "Org Headroom" were one word,
+  // two sums (C05).
+  ['a re-derived Headroom', /\b(?:org)?[hH]eadroom\s*[:=]\s*[\w.]+\s*-\s*[\w.]+/],
 ];
 
 function walk(dir: string): string[] {
@@ -65,10 +79,17 @@ describe('every club money surface reads the one definition', () => {
   for (const [file, rule] of Object.entries(READS_THE_MODULE)) {
     it(file, () => assert.match(readCode(file), rule));
   }
-  it('a book\'s Balance is the module\'s, wherever a summary prints one', () => {
+  it('a book\'s Balance is ONE SQL sum, wherever a summary prints one (C14, mig 317)', () => {
+    // `club_book_totals` is `bookBalance`'s definition summed in SQL (posted in − posted out, all-time);
+    // `check:club-money-atomicity` holds it to a naive walk of the same rows on the database.
+    // One mapper of its row (getBookTotals), and every summary reads it.
     const db = readCode('lib/db.ts');
-    const summary = db.slice(db.indexOf('export async function getLedgerSummary('), db.indexOf('function mapLedger('));
-    assert.match(summary, /const balance = bookBalance\(/);
+    assert.match(functionBody(db, 'getBookTotals'), /rpc\('club_book_totals'/);
+    const summary = functionBody(db, 'getLedgerSummaries');
+    assert.match(summary, /getBookTotals\(/);
+    assert.match(summary, /balance:\s+t\.balance/);
+    assert.match(readCode('lib/club-budget-read.ts'), /getBookTotals\(/, 'the year\'s books read the same sum');
+    assert.doesNotMatch(readCode('lib/club-budget-read.ts'), /rpc\('club_book_totals'/, 'never a second mapper of the row');
   });
 });
 

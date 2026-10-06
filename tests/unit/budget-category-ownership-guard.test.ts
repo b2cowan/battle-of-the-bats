@@ -119,14 +119,20 @@ const CATEGORY_VISIBILITY_GUARDS: Array<{ file: string; needs: string; why: stri
     needs: 'categoryOfferedToClub',
     why: 'the club creating a shared item under a team’s private heading would hide it from everyone else',
   },
+  /* ⚖ THE CLUB LINE'S HOLE IS CLOSED AT THE ROOT SINCE CLUB TIER STAGE 3b (mig 317, Ask 4a): a club line
+     names a WORD, always, and its category is that word's — a bare category id is no longer accepted by
+     either door, so there is nothing left for `resolveOrgBudgetCategory` to authorise there. These two
+     entries pin the new shape: the write derives the category from the authorised item, and every door
+     reads the word through `readWord` (`resolveOrgBudgetItem`) — club-stage3b-server-guard checks neither
+     route reads a categoryId, and that the edit's step takes the category from the word itself. */
   {
-    file: 'app/api/admin/accounting/budget-plan/lines/route.ts',
-    needs: 'resolveOrgBudgetCategory',
+    file: 'supabase/migrations/317_the_club_plan_meets_its_books.sql',
+    needs: 'SELECT category_id INTO v_category FROM budget_items WHERE id = p_item;',
     why: 'a club line naming a bare category id, with no item to derive from, went to the database unread',
   },
   {
-    file: 'app/api/admin/accounting/budget-plan/lines/[lineId]/route.ts',
-    needs: 'resolveOrgBudgetCategory',
+    file: 'lib/club-budget-writes.ts',
+    needs: 'const word = await readWord(body.itemId, orgId);',
     why: 'the PATCH beside it had the same hole',
   },
 ];

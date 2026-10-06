@@ -26,6 +26,7 @@
  */
 
 import { supabaseAdmin } from './supabase-admin';
+import { CLUB_OWNED_BOOK_KINDS } from './club-money-figures';
 import { normalizeSportId } from './sports';
 import type { BudgetItem, BudgetItemDirection } from './types';
 import type { BudgetItemActualSource } from './coach-budget-totals';
@@ -223,13 +224,30 @@ export async function repointBudgetItemReferences(
   /** The words being folded away — ids AND names, because an auto-filled label has to follow. */
   sources: Array<{ id: string; name: string }>,
   target: BudgetItemRepointTarget,
-  /** The org whose records may be touched. Every referenced table carries it, NOT NULL. */
+  /** The org whose records may be touched — by its `org_id`, or for a ledger line by its own books (`scopeOf`). */
   orgId: string,
 ): Promise<{ ok: true } | { ok: false; movedLabels: string[]; failedLabel: string; error: string }> {
   const sourceIds = sources.map(s => s.id);
   const movedLabels: string[] = [];
+  /* WHICH ROWS ARE THE ORG'S, one rule for every table: its `org_id` — or, for a ledger line, which has
+     none, one of the club's own books (mig 317: `CLUB_OWNED_BOOK_KINDS`, never a team's), read once.
+     ⚠ Not `getClubOwnedLedgers`: lib/db.ts does not load in the unit tests that import this module. */
+  const clubOwnedBookIds = async (): Promise<string[]> => {
+    const { data, error } = await supabaseAdmin.from('accounting_ledgers').select('id')
+      .eq('org_id', orgId).in('entity_type', [...CLUB_OWNED_BOOK_KINDS]);
+    if (error) throw error;
+    return (data ?? []).map(l => l.id as string);
+  };
+  let clubBooks: Promise<string[]> | null = null;
+  const scopeOf = async (ref: BudgetItemReference): Promise<{ column: string; ids: string[] }> =>
+    ref.orgScope === 'ledger'
+      ? { column: 'ledger_id', ids: await (clubBooks ??= clubOwnedBookIds()) }
+      : { column: 'org_id', ids: [orgId] };
 
   for (const ref of BUDGET_ITEM_REFERENCES) {
+    const scope = await scopeOf(ref);
+    // A club with no books of its own has no lines on them.
+    if (scope.ids.length === 0) { movedLabels.push(ref.label); continue; }
     /**
      * ⚠⚠ THE AUTO-FILLED LABEL MOVES FIRST, WHILE THE ROWS CAN STILL BE FOUND (/review, data lens,
      * 2026-08-17). `rep_budget_lines.description` is NOT NULL and the server fills it from the
@@ -251,7 +269,7 @@ export async function repointBudgetItemReferences(
           .update({ [ref.autoNameColumn]: target.name })
           .eq(ref.column, source.id)
           .eq(ref.autoNameColumn, source.name)
-          .eq('org_id', orgId);
+          .in(scope.column, scope.ids);
         if (error) return { ok: false, movedLabels, failedLabel: ref.label, error: error.message };
       }
     }
@@ -266,7 +284,7 @@ export async function repointBudgetItemReferences(
       .from(ref.table)
       .update(patch)
       .in(ref.column, sourceIds)
-      .eq('org_id', orgId);
+      .in(scope.column, scope.ids);
     if (error) return { ok: false, movedLabels, failedLabel: ref.label, error: error.message };
     movedLabels.push(ref.label);
   }
@@ -522,12 +540,13 @@ export async function resolveRaisingForItem(
  * plan is not written from one team's vocabulary, and the club taxonomy endpoint does not filter by
  * sport either. Adding one here would refuse a word the club's own list had just offered.
  */
-/* ⚠ A NARROWER RESULT THAN THE COACH'S (mig 280). `resolveBudgetItem` now also carries the two
-   fields a TEAM budget line's kind is derived from; a CLUB line's kind is a question the club
-   answers for itself (mig 271), so this door has no use for them and does not read them. Stated as
+/* ⚠ A NARROWER RESULT THAN THE COACH'S (mig 280). `resolveBudgetItem` also carries the fields a TEAM
+   budget line's KIND is derived from; a club has no line kind, so this door does not read `actualSource`.
+   It does carry the word's SIDE since Club Tier Stage 3b (mig 317): a club line plans money in or out by
+   its word (Ask 4b), and a club ledger line must be filed under a word on its own side (Ask 4a). Stated as
    a `Pick` of the same shape rather than a second interface, so the two cannot drift into being
    different ideas of "a resolved item". */
-export type ResolvedOrgBudgetItem = Pick<ResolvedBudgetItem, 'id' | 'categoryId' | 'name' | 'categoryName'>;
+export type ResolvedOrgBudgetItem = Pick<ResolvedBudgetItem, 'id' | 'categoryId' | 'name' | 'categoryName' | 'direction'>;
 export type OrgBudgetItemResult = ItemResolveResult<ResolvedOrgBudgetItem>;
 
 export async function resolveOrgBudgetItem(
@@ -541,7 +560,7 @@ export async function resolveOrgBudgetItem(
 
   const { data } = await supabaseAdmin
     .from('budget_items')
-    .select('id, category_id, org_id, team_id, name, budget_categories(name)')
+    .select('id, category_id, org_id, team_id, name, direction, budget_categories(name)')
     .eq('id', itemId)
     .maybeSingle();
 
@@ -563,6 +582,7 @@ export async function resolveOrgBudgetItem(
       categoryId: row.category_id as string,
       name: row.name as string,
       categoryName: ((row.budget_categories as { name?: string } | null)?.name) ?? null,
+      direction: row.direction as BudgetItemDirection,
     },
   };
 }

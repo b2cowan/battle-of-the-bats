@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-03 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-06 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-03
+# DB Schema Reference — 2026-10-06
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -436,8 +436,8 @@ id (uuid), workspace_org_id (uuid) → organizations.id NOT NULL, rep_team_id (u
 ## Module: Accounting
 
 ### accounting_entries
-id (uuid), ledger_id (uuid) → accounting_ledgers.id NOT NULL, entry_date NOT NULL, description NOT NULL, amount (numeric) NOT NULL, entry_type NOT NULL, status, category, linked_entry_id (uuid) → accounting_entries.id, source_module, source_entity_id (uuid), created_by (uuid), created_at, updated_at, payment_method, payee_id (uuid) → org_payees.id, payee_payer, notes, void_reason, voided_by (uuid), voided_at
-- Indexes: accounting_entries_entry_date_idx, accounting_entries_ledger_id_idx, accounting_entries_linked_entry_id_idx, accounting_entries_payee_id_idx
+id (uuid), ledger_id (uuid) → accounting_ledgers.id NOT NULL, entry_date NOT NULL, description NOT NULL, amount (numeric) NOT NULL, entry_type NOT NULL, status, category, linked_entry_id (uuid) → accounting_entries.id, source_module, source_entity_id (uuid), created_by (uuid), created_at, updated_at, payment_method, payee_id (uuid) → org_payees.id, payee_payer, notes, void_reason, voided_by (uuid), voided_at, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id
+- Indexes: accounting_entries_budget_category_id_idx, accounting_entries_budget_item_id_idx, accounting_entries_entry_date_idx, accounting_entries_ledger_id_idx, accounting_entries_linked_entry_id_idx, accounting_entries_payee_id_idx
 
 ### accounting_ledgers
 id (uuid), org_id (uuid) → organizations.id NOT NULL, entity_type NOT NULL, entity_id (uuid), name NOT NULL, currency, is_archived (boolean), created_at
@@ -461,7 +461,7 @@ id (uuid), category_id (uuid) → budget_categories.id NOT NULL, org_id (uuid) �
 
 ### org_budget_lines
 id (uuid), org_id (uuid) → organizations.id NOT NULL, season_year (integer) NOT NULL, category_id (uuid) → budget_categories.id, item_id (uuid) → budget_items.id, description NOT NULL, total_amount (numeric) NOT NULL, notes, sort_order (integer), created_at, updated_at
-- Indexes: org_budget_lines_category_id_idx, org_budget_lines_item_id_idx, org_budget_lines_org_year_idx
+- Indexes: org_budget_lines_category_id_idx, org_budget_lines_item_id_idx, org_budget_lines_one_line_per_item, org_budget_lines_org_year_idx
 
 ### org_budget_periods
 id (uuid), budget_line_id (uuid) → org_budget_lines.id NOT NULL, period_label NOT NULL, period_date, amount (numeric) NOT NULL, sort_order (integer), created_at

@@ -84,7 +84,6 @@ export const POST = withObservability(async (req: Request,
     description,
     paymentMethod = null,
     notes = null,
-    budgetLineId = null,
   } = body;
 
   if (!['payment_to_org', 'charge_to_org'].includes(requestType)) {
@@ -133,7 +132,10 @@ export const POST = withObservability(async (req: Request,
       description:     description.trim(),
       payment_method:  paymentMethod?.trim() || null,
       notes:           notes?.trim() || null,
-      budget_line_id:  budgetLineId || null,
+      /* ⚠ NO `budget_line_id` FROM THE CALLER (Club Tier Stage 3b, owner's go 2026-10-06). It is the CLUB's
+         plan line (`org_budget_lines`), and it was stored straight from the body, unchecked — so a request
+         could name another club's line. No screen ever sent it; the club files a request by its own
+         rule (lib/club-budget-report.ts `fileLine`), never by a link a team supplies. */
       budget_item_id:     item.item?.id ?? null,
       budget_category_id: item.item?.categoryId ?? null,
       created_by:      ctx.user.id,

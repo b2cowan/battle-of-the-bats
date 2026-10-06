@@ -85,6 +85,13 @@ export interface BudgetItemReference {
    * coach typed, and no fold has any business rewriting that.
    */
   autoNameColumn?: string;
+  /**
+   * HOW A ROW IS SCOPED TO ITS CLUB, when it has no `org_id` of its own. Absent = the row carries
+   * `org_id` (every table until mig 317). `'ledger'` = a ledger line, which belongs to a BOOK: it is
+   * reached through the club's own books (never a team's — a club line can only name a word offered to
+   * the club). The fold's re-point reads this; the counters need no scope (they count by word id).
+   */
+  orgScope?: 'ledger';
   /** What a coach calls these records, for the sentence a refusal or a confirmation has to write. */
   label: string;
 }
@@ -119,6 +126,12 @@ export const BUDGET_ITEM_REFERENCES: readonly BudgetItemReference[] = [
      and one refusal naming "2 fundraising records" is truer than one naming a kind the coach then
      has to go and check. */
   { table: 'rep_fundraisers',           column: 'budget_item_id', categoryColumn: 'budget_category_id', label: 'fundraising records' },
+  /* ⚠ THE EIGHTH ARRIVED WITH MIGRATION 317 (Club Tier Stage 3b, Ask 4a): a club ledger line is filed
+     under a budget word, and Budget vs. Actual matches its Actual to the plan by that word. A merge
+     that skipped these would leave the club's spending filed under a word that no longer exists — the
+     line's Actual would fall to "Not filed" and its plan line would read unspent. It has no `org_id`:
+     it is reached through the club's books (`orgScope`). */
+  { table: 'accounting_entries', column: 'budget_item_id', categoryColumn: 'budget_category_id', label: 'club ledger lines', orgScope: 'ledger' },
 ] as const;
 
 /** How many records of each kind point at these words — the count every guard and the fold need. */

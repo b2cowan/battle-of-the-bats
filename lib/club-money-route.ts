@@ -2,6 +2,7 @@ import 'server-only';
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden, type AuthContextWithRole } from './api-auth';
 import { canMoveClubMoney, canOpenModule, canOpenRepMoney } from './member-access';
+import { clubYearOf } from './club-money-figures';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -39,6 +40,12 @@ export interface Refused { ok: false; status: number; body: object }
 export type Moved<T> = ({ ok: true } & T) | Refused;
 
 export const refused = (status: number, body: object): Refused => ({ ok: false, status, body });
+
+/** The `?year=` a club money read is for (Club Tier Stage 3b): 2020–2099, else the club year today falls in. */
+export function readYearParam(req: Request, today: string): number {
+  const year = parseInt(new URL(req.url).searchParams.get('year') ?? '', 10);
+  return year >= 2020 && year <= 2099 ? year : clubYearOf(today);
+}
 
 /** A refusal, as the response. */
 export function moveRefused(r: Refused): Response {

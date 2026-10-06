@@ -399,7 +399,8 @@ export interface BookLineFacts {
   status: 'posted' | 'pending' | 'void';
 }
 
-const isMoneyIn = (l: Pick<BookLineFacts, 'entryType'>) =>
+/** Money in on a book: income, or the receiving half of a transfer. The one test every club reader uses. */
+export const isMoneyIn = (l: Pick<BookLineFacts, 'entryType'>) =>
   l.entryType === 'income' || l.entryType === 'transfer_in';
 
 type BookMovement = Pick<BookLineFacts, 'amount' | 'entryType' | 'status'>;
@@ -480,4 +481,309 @@ export function bookWindow<T extends BookLineFacts>(
 /** One export row's signed amount: + money in, − money out. A void line is marked and totals 0. */
 export function signedAmount(l: Pick<BookLineFacts, 'amount' | 'entryType'>): number {
   return isMoneyIn(l) ? l.amount : -l.amount;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+ * CLUB TIER STAGE 3b — THE PLAN, THE YEAR AND THE CLUB'S BOOKS (owner rulings 2026-10-06, Asks 1–5).
+ *
+ * Every figure the Budget, Budget vs. Actual and the board summary print, each with the ONE sentence
+ * the hub's "One definition per figure" table gives it (the doc comment is that sentence). The
+ * assembly — which rows feed which figure — is lib/club-budget-report.ts; it asks these functions
+ * and never sums a figure for itself. `scripts/check-club-money-arithmetic.mjs` recomputes them from
+ * rows by an independent walk.
+ *
+ * ⚖ "Collected" carries TWO scopes, on purpose (Ask 2): two functions with two names, never one
+ * function with a flag. The loop's Collected is `clubBillFigures(...).collected` above (Allocations,
+ * a team's account, the Budget's column). The band's Collected is `bandCollected` below (Total
+ * revenue's Actual on Budget vs. Actual).
+ * ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** The kinds of book the CLUB owns. A team's book is the coaches' (D1) and is never one of them. */
+export type ClubBookKind = 'org' | 'tournament' | 'league_season';
+export const CLUB_OWNED_BOOK_KINDS: readonly ClubBookKind[] = ['org', 'tournament', 'league_season'];
+
+/** Is this a book the club owns (Club, Tournament, House league) — never a team's. */
+export function isClubOwnedBook(kind: string): kind is ClubBookKind {
+  return (CLUB_OWNED_BOOK_KINDS as readonly string[]).includes(kind);
+}
+
+/**
+ * The Club books: the General ledger and any book the club opened by name. Actual, Spent, Off-plan
+ * and the band's Collected read these; a tournament's and the house league's books keep their own
+ * money until Stages 7 and 9 decide how it joins the budget.
+ */
+export function isClubBook(kind: string): boolean {
+  return kind === 'org';
+}
+
+// ── The year rule ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * THE YEAR RULE. An allocation belongs to the year of the line it was drawn from, and one made
+ * without a line to the year its first installment falls due. A year's Allocated, Collected and
+ * Outstanding read the same allocations. A ledger line belongs to the year its date falls in. Until
+ * 3c names the year and sets its months, a year is the calendar year.
+ */
+export function allocationYear(a: { lineYear: number | null; firstDueDate: string | null; createdOn: string }): number {
+  if (a.lineYear != null) return a.lineYear;
+  return Number((a.firstDueDate ?? a.createdOn).slice(0, 4));
+}
+
+/** The ledger half of the year rule, and the year a page opens on: the club year a day falls in. Until 3c,
+ *  the calendar year. */
+export function clubYearOf(day: string): number {
+  return Number(day.slice(0, 4));
+}
+
+/** The year's first and last day (inclusive). Until 3c, the calendar year. 3c moves THIS, and only this. */
+export function clubYearSpan(year: number): { first: string; last: string } {
+  return { first: `${year}-01-01`, last: `${year}-12-31` };
+}
+
+// ── The plan ─────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * PLANNED. What a budget line plans for the year: its amount. A band's total is the sum of its lines.
+ * One word (category and item) carries one line, so planning a word already on the plan adds to its
+ * line.
+ */
+export function planned(lines: readonly { totalAmount: number }[]): number {
+  return sumMoney(lines.map(l => ({ amount: l.totalAmount })));
+}
+
+/**
+ * ALLOCATED. What the club billed its teams from a line: the teams' shares of every allocation drawn
+ * from that line, added up. A line can carry any number of allocations.
+ */
+export function lineAllocated(
+  lineId: string,
+  allocations: readonly { sourceBudgetLineId: string | null; splits: readonly { amount: number }[] }[],
+): number {
+  let c = 0;
+  for (const a of allocations) {
+    if (a.sourceBudgetLineId !== lineId) continue;
+    for (const s of a.splits) c += cents(s.amount);
+  }
+  return dollars(c);
+}
+
+/**
+ * NOT ALLOCATED. Planned − Allocated on a cost line: the part the club pays itself unless it
+ * allocates it later. Never below zero, because a line can't be planned below what is allocated.
+ * (A line billed above its total before that rule existed reads zero here, never a negative.)
+ */
+export function notAllocated(plannedAmount: number, allocated: number): number {
+  return dollars(Math.max(0, cents(plannedAmount) - cents(allocated)));
+}
+
+// ── The books, for a year ─────────────────────────────────────────────────────────────────────
+
+/** A posted or pending line on a book the club owns, as the year's report reads it. */
+export interface ClubBookMovementFacts {
+  amount: number;
+  entryType: 'income' | 'expense' | 'transfer_in' | 'transfer_out';
+  status: 'posted' | 'pending' | 'void';
+  /** For a transfer: the kind of book its other half sits on (null when that half can't be found). */
+  partnerKind?: string | null;
+}
+
+/**
+ * Which way a line moves the CLUB's money — or that it moves none of it.
+ *   · 'in' / 'out'   — money in or out.
+ *   · 'own_transfer' — a transfer between two books the club owns: it moves nothing in total, so it
+ *                      is not revenue and not spending, and the balance across every book is untouched.
+ *   · null           — void (counts nowhere).
+ * A transfer to or from a TEAM's book is money in or out (that is the money loop). Pending is still
+ * classified; whether it counts is the reader's lens (Cash counts posted, Scheduled counts pending).
+ */
+export function clubMovement(l: ClubBookMovementFacts): 'in' | 'out' | 'own_transfer' | null {
+  if (l.status === 'void') return null;
+  const transfer = l.entryType === 'transfer_in' || l.entryType === 'transfer_out';
+  if (transfer && l.partnerKind && isClubOwnedBook(l.partnerKind)) return 'own_transfer';
+  return isMoneyIn(l) ? 'in' : 'out';
+}
+
+/**
+ * ACTUAL. For a line: posted lines in the year on the club's Club books (the General ledger and any
+ * book it opened by name) that carry the line's budget word, money out for a cost and money in for
+ * income. Pending and void lines count nowhere. A line written by the money loop files itself: an
+ * allocation received under "From the teams", a request paid to a team under "Team support", money
+ * received on request under "From the teams, on request".
+ *
+ * (Which word a line carries — its own, or its source's — is lib/club-budget-report.ts `fileLine`.
+ * This is the rule for WHETHER it counts.)
+ */
+export function countsAsActual(l: ClubBookMovementFacts & { bookKind: string }): boolean {
+  if (l.status !== 'posted' || !isClubBook(l.bookKind)) return false;
+  const m = clubMovement(l);
+  return m === 'in' || m === 'out';
+}
+
+/**
+ * SPENT. The Actual of Total expenses: every posted money-out line in the year on the club's Club
+ * books, on the plan or off it, money paid to teams on request included. A transfer between the
+ * club's own books is not spending. A tournament's and the house league's books keep their own
+ * money until Stages 7 and 9 decide how it joins the budget.
+ */
+export function spent(lines: readonly (ClubBookMovementFacts & { bookKind: string })[]): number {
+  let c = 0;
+  for (const l of lines) if (countsAsActual(l) && clubMovement(l) === 'out') c += cents(l.amount);
+  return dollars(c);
+}
+
+/**
+ * COLLECTED — the BAND's scope (Budget vs. Actual). The Actual of Total revenue: every money-in line
+ * posted in the year on the club's Club books, received allocations included. (The LOOP's Collected —
+ * what the club has received against allocations — is `clubBillFigures(...).collected`; two scopes,
+ * two functions, by Ask 2.)
+ */
+export function bandCollected(lines: readonly (ClubBookMovementFacts & { bookKind: string })[]): number {
+  let c = 0;
+  for (const l of lines) if (countsAsActual(l) && clubMovement(l) === 'in') c += cents(l.amount);
+  return dollars(c);
+}
+
+/**
+ * OFF-PLAN. Spending on a word the year's plan has no line for, plus spending filed to no word yet
+ * ("Not filed"). The coach's "nobody budgeted this". Hidden at zero.
+ */
+export function offPlan(expenseRows: readonly { inPlan: boolean; actual: number }[]): number {
+  let c = 0;
+  for (const r of expenseRows) if (!r.inPlan) c += cents(r.actual);
+  return dollars(c);
+}
+
+/**
+ * HEADROOM — one: planned expenses − Spent, for the year. Said once, on the summary. Budget vs.
+ * Actual says the same thing as "Spent $X of $Y planned", as the coach's band does since Headroom
+ * left it (2026-10-01).
+ */
+export function headroom(plannedExpenses: number, spentAmount: number): number {
+  return dollars(cents(plannedExpenses) - cents(spentAmount));
+}
+
+/** NET FOR THE YEAR. Total revenue − Total expenses, planned and actual. The coach's "Season net", in
+ *  the club's unit. */
+export function netForYear(totalRevenue: number, totalExpenses: number): number {
+  return dollars(cents(totalRevenue) - cents(totalExpenses));
+}
+
+/** One book's sums, as `club_book_totals` (mig 317) returns them: one SQL aggregate per book set. */
+export interface BookTotals {
+  ledgerId: string;
+  /** Posted money in / out inside the window asked for. */
+  postedIn: number;
+  postedOut: number;
+  /** The all-time Balance — `bookBalance`'s definition, summed in SQL. */
+  balance: number;
+}
+
+/**
+ * CASH ON HAND · THE CLUB'S. The Balance of every book the club owns (Club, Tournament and House
+ * league kinds) added up: posted, whole history, as of today. Never a team's book. A pending cheque
+ * doesn't move it; it is a caption.
+ */
+export function clubCashOnHand(books: readonly { kind: string; balance: number }[]): number {
+  let c = 0;
+  for (const b of books) if (isClubOwnedBook(b.kind)) c += cents(b.balance);
+  return dollars(c);
+}
+
+/**
+ * OPENING BALANCE. What every book the club owns held at the start of the year's first day: the
+ * posted lines dated before it, added up. Worked out from the books, never typed (a coach's season
+ * carries a typed opening because its records start fresh; the club's books never do). Until 3c it
+ * is Jan 1; 3c moves the day and locks a closed year, so a line backdated into it can't move the
+ * figure.
+ *
+ * Takes each club-owned book's totals for the window that ENDS the day before the year's first day.
+ */
+export function openingBalance(totalsBeforeFirstDay: readonly { kind: string; postedIn: number; postedOut: number }[]): number {
+  let c = 0;
+  for (const t of totalsBeforeFirstDay) {
+    if (!isClubOwnedBook(t.kind)) continue;
+    c += cents(t.postedIn) - cents(t.postedOut);
+  }
+  return dollars(c);
+}
+
+/**
+ * CLOSING BALANCE. Opening balance + the net, every book the club owns. On the Budget, the plan's:
+ * the year's Total revenue − Total expenses added to the opening. On Months, each month's opening +
+ * its net; under Cash, this month closes on Cash on hand to the cent.
+ */
+export function closingBalance(opening: number, net: number): number {
+  return dollars(cents(opening) + cents(net));
+}
+
+/**
+ * THE CLUB'S OTHER BOOKS. On Months: what a tournament's or the house league's book took in or paid
+ * on its own in the month, transfers between the club's books left out. One row, so a month's
+ * balance covers every book while the statement above it reads the Club books. It leaves when
+ * Stages 7 and 9 bring those books into the budget.
+ *
+ * Returns the money in and out separately (the month's net is in − out), for the lens asked:
+ * 'actual' counts posted lines, 'scheduled' pending ones.
+ */
+export function otherBooksMovement(
+  lines: readonly (ClubBookMovementFacts & { bookKind: string })[],
+  lens: 'actual' | 'scheduled',
+): { moneyIn: number; moneyOut: number } {
+  let inC = 0, outC = 0;
+  const want = lens === 'actual' ? 'posted' : 'pending';
+  for (const l of lines) {
+    if (l.status !== want || !isClubOwnedBook(l.bookKind) || isClubBook(l.bookKind)) continue;
+    const m = clubMovement(l);
+    if (m === 'in') inC += cents(l.amount);
+    else if (m === 'out') outC += cents(l.amount);
+  }
+  return { moneyIn: dollars(inC), moneyOut: dollars(outC) };
+}
+
+// ── Where the club stands today (the board summary) ──────────────────────────────────────────
+
+/**
+ * OWED BY THE TEAMS. Outstanding across every team, as of today. Its caption says how much is overdue
+ * and how much is sent and waiting for the club. (3a's Outstanding — billed − collected, across every
+ * year — over every installment the club has billed.)
+ */
+export function owedByTheTeams(installments: readonly ClubInstallmentFacts[], today: string): {
+  amount: number; overdue: CountAndAmount; sent: CountAndAmount;
+} {
+  const f = clubBillFigures(installments, today);
+  return { amount: f.outstanding, overdue: f.overdue, sent: f.sent };
+}
+
+/**
+ * WAITING ON YOU. Requests still waiting for the club's answer: their count and their total, both
+ * directions together ("how much is waiting on me", not a balance).
+ */
+export function waitingOnYou(requests: readonly { status: string; amount: number }[]): CountAndAmount {
+  let count = 0, c = 0;
+  for (const r of requests) {
+    if (r.status !== 'pending') continue;
+    count++;
+    c += cents(r.amount);
+  }
+  return { count, amount: dollars(c) };
+}
+
+/**
+ * CASH ON HAND · HELD BY THE TEAM. The coach's own Cash on hand for the team's live season: the figure
+ * the coach's Money shows, read when the page loads and never stored by the club. A team with no live
+ * season shows its last season's closing figure and that season's close date. Labelled "held by the
+ * team", never added into a club figure, and totalled only in its own band.
+ *
+ * (Read through the coach's own function — lib/club-team-cash.ts. This is the one place it is added
+ * up, and only for its own band.)
+ */
+export interface TeamCashHeld {
+  teamId: string;
+  /** Null when the team has never had a season to read. */
+  cash: number | null;
+  season: { id: string; name: string; live: boolean; closedOn: string | null } | null;
+}
+
+export function teamsCashTotal(teams: readonly TeamCashHeld[]): number {
+  return sumMoney(teams.map(t => ({ amount: t.cash ?? 0 })));
 }

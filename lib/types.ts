@@ -826,6 +826,11 @@ export interface AccountingEntry {
   entryType: AccountingEntryType;
   status: AccountingEntryStatus;
   category: string | null;
+  /** The budget WORD the line is filed under (mig 317, Club Tier Stage 3b, Ask 4a) — category + item from
+   *  the one budget library. Null = not filed (every line typed before 3b; every line the money loop
+   *  writes, which files itself by its source). */
+  budgetCategoryId: string | null;
+  budgetItemId: string | null;
   linkedEntryId: string | null;
   sourceModule: string | null;
   sourceEntityId: string | null;

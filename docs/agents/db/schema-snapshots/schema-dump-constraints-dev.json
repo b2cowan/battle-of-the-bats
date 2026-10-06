@@ -1,6 +1,26 @@
 [
   {
     "table_name": "accounting_entries",
+    "constraint_name": "accounting_entries_budget_category_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "budget_category_id",
+    "foreign_table": "budget_categories",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "accounting_entries",
+    "constraint_name": "accounting_entries_budget_item_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "budget_item_id",
+    "foreign_table": "budget_items",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "accounting_entries",
     "constraint_name": "accounting_entries_created_by_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "created_by",

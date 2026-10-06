@@ -366,7 +366,7 @@ async function move(fn, args, label) {
   return data;
 }
 
-// Allocations — mirror createRepCostAllocationWithSplits
+// Allocations — the rows club_allocation_create writes (mig 317), inserted directly
 async function allocate({ description, lineItem, splits }) {
   const total = splits.reduce((sum, x) => sum + x.amount, 0);
   const alloc = await one(`allocation ${description}`, db.from('rep_cost_allocations').insert({

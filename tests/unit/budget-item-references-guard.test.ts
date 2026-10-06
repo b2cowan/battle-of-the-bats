@@ -139,8 +139,17 @@ describe('budget_items references — the list of what points at a word', () => 
       + `tables, found ${onReferenceTables.length} — the snapshot may have failed to load, which `
       + 'would make the check below pass over nothing.');
 
+    /* A free-text `category` that is NOT the word's heading, and so is deliberately not moved by a fold.
+       ⚠ ONE ENTRY, WITH ITS REASON — a new one is a decision, not a fix. */
+    const NOT_A_HEADING: Record<string, string> = {
+      'accounting_entries.category':
+        'the club ledger\'s legacy free-text label and the money loop\'s category KEYS (rep_allocation, '
+        + 'team_*_to_org), never a filed word\'s name — a line filed under a word writes it NULL (mig 317), '
+        + 'and a fold must not stamp a heading into it.',
+    };
     const unclaimed = BUDGET_ITEM_REFERENCES.flatMap(ref => {
       const claimed = new Set([ref.categoryColumn, ref.categoryNameColumn].filter(Boolean));
+      for (const key of Object.keys(NOT_A_HEADING)) if (key.startsWith(`${ref.table}.`)) claimed.add(key.slice(ref.table.length + 1));
       /* Two ways a table records a heading, and both are live: a foreign key to `budget_categories`,
          and the free-text `category` name that predates the taxonomy and is still written today. */
       const links = [

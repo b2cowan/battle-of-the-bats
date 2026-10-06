@@ -23,8 +23,8 @@ import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
 import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForPayment, type PlanPiece } from './payable-plan';
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
-import { bookBalance } from './club-money-figures';
-import { fetchAll } from './supabase-paging';
+import { CLUB_OWNED_BOOK_KINDS } from './club-money-figures';
+import { toCents, toDollars } from './coach-register';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
@@ -2299,10 +2299,10 @@ export async function getLedgerEntries(
 export async function createEntry(
   ledgerId: string,
   input: Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category'> &
-    Partial<Pick<AccountingEntry, 'paymentMethod' | 'payeeId' | 'payeePayer' | 'notes'>>,
+    Partial<Pick<AccountingEntry, 'paymentMethod' | 'payeeId' | 'payeePayer' | 'notes' | 'budgetCategoryId' | 'budgetItemId'>>,
   createdBy: string
 ): Promise<AccountingEntry> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('accounting_entries')
     .insert({
       ledger_id:      ledgerId,
@@ -2312,6 +2312,8 @@ export async function createEntry(
       entry_type:     input.entryType,
       status:         input.status,
       category:       input.category ?? null,
+      budget_category_id: input.budgetCategoryId ?? null,
+      budget_item_id:     input.budgetItemId ?? null,
       payment_method: input.paymentMethod ?? null,
       payee_id:       input.payeeId ?? null,
       payee_payer:    input.payeePayer ?? null,
@@ -2320,6 +2322,10 @@ export async function createEntry(
     })
     .select()
     .single();
+  /* ⚠ IT THROWS ON FAILURE (Club Tier Stage 3b; found by 3a's review, "createEntry ignores its insert
+     error"). A refused insert used to reach mapEntry(null) and crash on a property read, far from the
+     cause; the caller now gets the database's own error. */
+  if (error) throw error;
   return mapEntry(data!);
 }
 
@@ -2336,7 +2342,7 @@ export async function createEntry(
 export async function updateEntry(
   entryId: string,
   ledgerId: string,
-  input: Partial<Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category' | 'paymentMethod' | 'payeeId' | 'payeePayer' | 'notes'>>
+  input: Partial<Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category' | 'budgetCategoryId' | 'budgetItemId' | 'paymentMethod' | 'payeeId' | 'payeePayer' | 'notes'>>
 ): Promise<void> {
   const { error } = await supabaseAdmin
     .from('accounting_entries')
@@ -2347,6 +2353,8 @@ export async function updateEntry(
       ...(input.entryType     !== undefined && { entry_type:      input.entryType }),
       ...(input.status        !== undefined && { status:          input.status }),
       ...(input.category      !== undefined && { category:        input.category }),
+      ...(input.budgetCategoryId !== undefined && { budget_category_id: input.budgetCategoryId }),
+      ...(input.budgetItemId  !== undefined && { budget_item_id:  input.budgetItemId }),
       ...(input.paymentMethod !== undefined && { payment_method:  input.paymentMethod }),
       ...(input.payeeId       !== undefined && { payee_id:        input.payeeId }),
       ...(input.payeePayer    !== undefined && { payee_payer:     input.payeePayer }),
@@ -2384,45 +2392,71 @@ export async function voidEntry(
 }
 
 /**
- * A book's figures. ⚠ EVERY ROW, PAGED (Club Tier Stage 3a, C14): a bare select stops at 1,000 rows
- * with no error, so a busy book's Income, Expenses and Net silently left out everything after the
- * thousandth line. ⚠ `balance` IS ALL-TIME, whatever window the other figures were asked for — one
- * scope for a book's Balance on every screen (the Overview's card and the Ledger tab used to print
- * two). The windowed figures stay as they are until 3b redraws the Overview (C04).
+ * A set of books' figures, from ONE SQL aggregate (Club Tier Stage 3b, C14 — `club_book_totals`,
+ * mig 317; it replaces the page-by-page walk 3a kept on purpose for 3b). Every row counts, with no
+ * 1,000-row cap and no page loop. ⚠ `balance` IS ALL-TIME, whatever window the other figures were
+ * asked for — one scope for a book's Balance on every screen. It is `bookBalance`'s definition
+ * (lib/club-money-figures.ts: posted in − posted out; pending and void move nothing), summed in SQL;
+ * `check:club-money-atomicity` holds the SQL sum to a naive walk of the same rows on the database.
  */
+export interface BookTotalsRow {
+  postedIn: number; postedOut: number; income: number; expense: number; pendingIn: number; pendingOut: number;
+  /** All-time, whatever the window. */
+  balance: number;
+}
+
+/** `club_book_totals` (mig 317) for a set of books — the ONE mapper of its row. A book with no lines reads zeros. */
+export async function getBookTotals(
+  ledgerIds: readonly string[], from: string | null = null, to: string | null = null,
+): Promise<Map<string, BookTotalsRow>> {
+  if (ledgerIds.length === 0) return new Map();
+  const { data, error } = await supabaseAdmin.rpc('club_book_totals', { p_ledgers: ledgerIds, p_from: from, p_to: to });
+  if (error) throw error;
+  return new Map(((data ?? []) as Record<string, unknown>[]).map(r => [r.ledger_id as string, {
+    postedIn: Number(r.posted_in), postedOut: Number(r.posted_out), income: Number(r.income), expense: Number(r.expense),
+    pendingIn: Number(r.pending_in), pendingOut: Number(r.pending_out), balance: Number(r.balance),
+  }]));
+}
+
+const NO_TOTALS: BookTotalsRow = { postedIn: 0, postedOut: 0, income: 0, expense: 0, pendingIn: 0, pendingOut: 0, balance: 0 };
+
+export async function getLedgerSummaries(
+  ledgers: readonly AccountingLedger[],
+  opts: { from?: string; to?: string } = {}
+): Promise<LedgerSummary[]> {
+  const totals = await getBookTotals(ledgers.map(l => l.id), opts.from ?? null, opts.to ?? null);
+  return ledgers.map(ledger => {
+    const t = totals.get(ledger.id) ?? NO_TOTALS;
+    return {
+      ledger,
+      postedIncome:    t.postedIn,
+      postedExpenses:  t.postedOut,
+      pendingIncome:   t.pendingIn,
+      pendingExpenses: t.pendingOut,
+      netPosted:       toDollars(toCents(t.postedIn) - toCents(t.postedOut)),
+      incomeOnly:      t.income,
+      expensesOnly:    t.expense,
+      balance:         t.balance,
+    };
+  });
+}
+
+/** The books the CLUB owns — Club, Tournament and House league kinds, never a team's (`CLUB_OWNED_BOOK_KINDS`).
+ *  The one read of "the club's books": the year's report, the Ledger's category list and a word merge. */
+export async function getClubOwnedLedgers(orgId: string): Promise<Array<{ id: string; name: string; entityType: string }>> {
+  const { data, error } = await supabaseAdmin
+    .from('accounting_ledgers').select('id, name, entity_type, created_at')
+    .eq('org_id', orgId).in('entity_type', [...CLUB_OWNED_BOOK_KINDS]).order('created_at');
+  if (error) throw error;
+  return (data ?? []).map(l => ({ id: l.id as string, name: l.name as string, entityType: l.entity_type as string }));
+}
+
+/** One book's figures — the set's read for a set of one. */
 export async function getLedgerSummary(
   ledger: AccountingLedger,
   opts: { from?: string; to?: string } = {}
 ): Promise<LedgerSummary> {
-  const all = await fetchAll<{ entry_type: string; status: string; amount: number; entry_date: string }>((a, b) =>
-    supabaseAdmin
-      .from('accounting_entries')
-      .select('entry_type, status, amount, entry_date')
-      .eq('ledger_id', ledger.id)
-      .neq('status', 'void')
-      .order('id')
-      .range(a, b));
-  const rows = all.filter(r => (!opts.from || r.entry_date >= opts.from) && (!opts.to || r.entry_date <= opts.to));
-  // The book's Balance is the ONE definition's (lib/club-money-figures.ts `bookBalance`).
-  const balance = bookBalance(all.map(r => ({
-    amount: Number(r.amount), entryType: r.entry_type as AccountingEntryType, status: r.status as AccountingEntryStatus,
-  })));
-  const sum = (type: AccountingEntryType, status: AccountingEntryStatus) =>
-    rows.filter(r => r.entry_type === type && r.status === status)
-        .reduce((acc: number, r) => acc + Number(r.amount), 0);
-  const postedIncome   = sum('income',  'posted') + sum('transfer_in',  'posted');
-  const postedExpenses = sum('expense', 'posted') + sum('transfer_out', 'posted');
-  return {
-    ledger,
-    postedIncome,
-    postedExpenses,
-    pendingIncome:   sum('income',  'pending'),
-    pendingExpenses: sum('expense', 'pending'),
-    netPosted:       postedIncome - postedExpenses,
-    incomeOnly:      sum('income',  'posted'),
-    expensesOnly:    sum('expense', 'posted'),
-    balance,
-  };
+  return (await getLedgerSummaries([ledger], opts))[0];
 }
 
 function mapLedger(row: any): AccountingLedger {
@@ -2448,6 +2482,8 @@ function mapEntry(row: any): AccountingEntry {
     entryType:      row.entry_type,
     status:         row.status,
     category:       row.category ?? null,
+    budgetCategoryId: row.budget_category_id ?? null,
+    budgetItemId:   row.budget_item_id ?? null,
     linkedEntryId:  row.linked_entry_id ?? null,
     sourceModule:   row.source_module ?? null,
     sourceEntityId: row.source_entity_id ?? null,
@@ -3618,6 +3654,18 @@ function mapRepProgramYear(r: any): RepProgramYear {
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
+}
+
+/** Every season of several teams in one read (newest first) — for a read that walks many teams at once. */
+export async function getRepProgramYearsForTeams(teamIds: readonly string[]): Promise<RepProgramYear[]> {
+  if (teamIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('*')
+    .in('team_id', [...teamIds])
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepProgramYear);
 }
 
 export async function getRepProgramYears(teamId: string): Promise<RepProgramYear[]> {
@@ -10894,82 +10942,10 @@ export async function getRepCostAllocationDetail(
   return { allocation: mapRepCostAllocation(alloc), splits: mappedSplits };
 }
 
-export async function createRepCostAllocationWithSplits(fields: {
-  orgId: string;
-  description: string;
-  totalAmount: number;
-  sourceEntryId?: string | null;
-  createdBy: string;
-  splits: Array<{
-    teamId: string;
-    programYearId: string;
-    amount: number;
-    splitMethod: 'percentage' | 'sessions' | 'fixed';
-    splitValue: number;
-    paymentSchedule: 'standard' | 'custom';
-    notes?: string | null;
-    installments: Array<{ installmentNumber: number; amount: number; dueDate: string }>;
-  }>;
-}): Promise<{
-  allocation: RepCostAllocation;
-  splits: Array<RepAllocationSplit & { installments: RepAllocationInstallment[] }>;
-}> {
-  const { data: alloc, error: ae } = await supabaseAdmin
-    .from('rep_cost_allocations')
-    .insert({
-      org_id: fields.orgId,
-      description: fields.description,
-      total_amount: fields.totalAmount,
-      source_entry_id: fields.sourceEntryId ?? null,
-      created_by: fields.createdBy,
-    })
-    .select()
-    .single();
-  if (ae) throw ae;
-
-  const resultSplits: Array<RepAllocationSplit & { installments: RepAllocationInstallment[] }> = [];
-
-  for (const split of fields.splits) {
-    const { data: splitRow, error: se } = await supabaseAdmin
-      .from('rep_allocation_splits')
-      .insert({
-        allocation_id: alloc.id,
-        team_id: split.teamId,
-        program_year_id: split.programYearId,
-        org_id: fields.orgId,
-        amount: split.amount,
-        split_method: split.splitMethod,
-        split_value: split.splitValue,
-        payment_schedule: split.paymentSchedule,
-        notes: split.notes ?? null,
-      })
-      .select()
-      .single();
-    if (se) throw se;
-
-    const instRows: RepAllocationInstallment[] = [];
-    for (const inst of split.installments) {
-      const { data: instRow, error: ie } = await supabaseAdmin
-        .from('rep_allocation_installments')
-        .insert({
-          split_id: splitRow.id,
-          installment_number: inst.installmentNumber,
-          amount: inst.amount,
-          due_date: inst.dueDate,
-          org_id: fields.orgId,
-          team_id: split.teamId,
-        })
-        .select()
-        .single();
-      if (ie) throw ie;
-      instRows.push(mapRepAllocationInstallment(instRow));
-    }
-
-    resultSplits.push({ ...mapRepAllocationSplit(splitRow), installments: instRows });
-  }
-
-  return { allocation: mapRepCostAllocation(alloc), splits: resultSplits };
-}
+/* ⚰ `createRepCostAllocationWithSplits` STOOD HERE (removed Club Tier Stage 3b): an allocation, then each
+   split, then each installment — separate writes, so a failure part-way left a half-made allocation, and
+   the line link was a second, unchecked write after it (C11). Every allocation is now ONE database step,
+   `club_allocation_create` (mig 317), through lib/club-budget-writes.ts `createClubAllocation`. */
 
 export async function updateRepCostAllocationDescription(
   allocationId: string,

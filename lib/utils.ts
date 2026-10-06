@@ -16,6 +16,12 @@ export function joinWithAnd(items: readonly string[]): string {
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
+/** A canonical uuid (8-4-4-4-12 hex). Checked before an id reaches a uuid column, so a malformed one is a
+ *  404 / refusal in words rather than a Postgres cast error. */
+export function isUuid(v: unknown): v is string {
+  return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+}
+
 export function formatPoolName(name: string): string {
   const bare = name
     .replace(/^Pool\s+/i, '')

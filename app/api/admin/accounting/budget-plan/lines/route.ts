@@ -1,97 +1,28 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { resolveOrgBudgetItem, resolveOrgBudgetCategory } from '@/lib/coach-budget-items';
+import { moveRefused, resolveClubMoney } from '@/lib/club-money-route';
+import { addClubLine } from '@/lib/club-budget-writes';
 
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_accounting')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_accounting')) return forbidden();
-  return null;
-}
-
-// POST /api/admin/accounting/budget-plan/lines
-// Adds a new budget line to the org's plan for a given year.
+/**
+ * POST /api/admin/accounting/budget-plan/lines — plan a word on a year (Club Tier Stage 3b; Asks 4a,
+ * 4b, 4d). Body: `{ seasonYear, itemId, totalAmount, description?, notes?, periods?: [{ label, date,
+ * amount }], sortOrder? }`.
+ *
+ *   · WHO: 3a's one money rule (`canMoveClubMoney` — owner, treasurer, an admin with Accounting). It was
+ *     owner/treasurer BY NAME until 3b (S3B-03).
+ *   · THE WORD is required and authorised (`resolveOrgBudgetItem`: standard words and the club's own,
+ *     never a team's); its category is derived from it. Money-in words plan revenue (Ask 4b).
+ *   · ONE WORD, ONE LINE: a word already on the year ADDS to its line → 200 `{ line, joined: true }`;
+ *     a new line → 201 `{ line, joined: false }`.
+ *   · Refusals (`{ error, code }`): 400 `bad_year` · `bad_total` · `word_required` · `bad_word` ·
+ *     `bad_description` · `bad_periods` · `bad_period_label` · `bad_period_date` · `bad_period_amount` ·
+ *     `periods_dont_add_up` (+ `periodsTotal`, `lineTotal`); 409 `line_changed` (a join raced twice).
+ */
 export const POST = withObservability(async (req: Request) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
-
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
-
-  const body = await req.json();
-  const {
-    seasonYear,
-    categoryId   = null,
-    itemId       = null,
-    description,
-    totalAmount,
-    notes        = null,
-    sortOrder    = 0,
-  } = body;
-
-  const year = parseInt(seasonYear ?? '', 10);
-  if (!year || year < 2020 || year > 2099) {
-    return NextResponse.json({ error: 'seasonYear must be a valid 4-digit year' }, { status: 400 });
-  }
-
-  const desc = typeof description === 'string' ? description.trim() : '';
-  if (!desc || desc.length > 200) {
-    return NextResponse.json({ error: 'description is required (max 200 characters)' }, { status: 400 });
-  }
-
-  const amount = Number(totalAmount);
-  if (isNaN(amount) || amount <= 0) {
-    return NextResponse.json({ error: 'totalAmount must be a positive number' }, { status: 400 });
-  }
-
-  /* ⚠⚠ THE WORD IS AUTHORISED, AND UNTIL 2026-08-17 IT WAS NOT (`/review`, security lens). This
-     route stored whatever `itemId` arrived — no ownership check, no tier check — while every
-     coach-side write path went through a resolver. Any club could therefore file its budget against
-     another club's team-private word, and the cost landed on that team's coach as an unremovable,
-     unexplainable word. The list here has always offered standard + club words only; this is the
-     save finally agreeing with it.
-     ⚠ AND THE CATEGORY COMES FROM THE ITEM, not from the request. An item belongs to exactly one
-     category, so accepting both independently let the two levels of the club's report disagree
-     about the same row — the very thing the coach-side routes derive it to prevent. */
-  const linked = await resolveOrgBudgetItem(itemId, ctx!.org.id);
-  if (!linked.ok) return NextResponse.json({ error: linked.error }, { status: 400 });
-
-  /* ⚠⚠ AND THE BARE CATEGORY IS AUTHORISED TOO, SINCE MIGRATION 277. When a line names an item the
-     category is derived from it above and is therefore already checked — but a club line may name a
-     category and NO item, and that id used to go straight to the database. That was harmless while
-     every category was org-wide: there was nothing nameable that was not already the club's. Now
-     that one team's heading can be private, an unchecked id would let the club file its own plan
-     under a word it cannot see, rename or remove and the owning team can. Same hole, same shape and
-     the same remedy as the item check directly above — one level up and three weeks later. */
-  const linkedCategory = await resolveOrgBudgetCategory(categoryId, ctx!.org.id);
-  if (!linkedCategory.ok) return NextResponse.json({ error: linkedCategory.error }, { status: 400 });
-
-  const { data, error } = await supabaseAdmin
-    .from('org_budget_lines')
-    .insert({
-      org_id:       ctx!.org.id,
-      season_year:  year,
-      category_id:  linked.item ? linked.item.categoryId : linkedCategory.categoryId,
-      item_id:      linked.item?.id ?? null,
-      description:  desc,
-      total_amount: amount,
-      notes:        notes       ?? null,
-      sort_order:   sortOrder   ?? 0,
-    })
-    .select(`
-      id, season_year, description, total_amount, notes, sort_order, created_at, updated_at,
-      category_id, item_id,
-      budget_categories ( id, name ),
-      budget_items ( id, name )
-    `)
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json({ line: data }, { status: 201 });
+  const gate = await resolveClubMoney(req, { scope: 'books', write: true });
+  if ('error' in gate) return gate.error;
+  const body = await req.json().catch(() => ({}));
+  const done = await addClubLine(gate.ctx.org.id, body);
+  if (!done.ok) return moveRefused(done);
+  return NextResponse.json({ line: done.line, joined: done.joined }, { status: done.joined ? 200 : 201 });
 }, { route: '/api/admin/accounting/budget-plan/lines' });

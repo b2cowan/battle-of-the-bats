@@ -1,12 +1,41 @@
 {
-  "generated": "2026-10-03",
-  "total": 0,
+  "generated": "2026-10-06",
+  "total": 7,
   "counts": {
     "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
+    "columns": 2,
+    "indexes": 3,
+    "constraints": 2,
     "rls": 0
   },
-  "items": []
+  "items": [
+    {
+      "key": "column:only-dev:accounting_entries.budget_category_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:accounting_entries.budget_item_id",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:accounting_entries.accounting_entries_budget_category_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:accounting_entries.accounting_entries_budget_item_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:accounting_entries_budget_category_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:accounting_entries_budget_item_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_budget_lines_one_line_per_item",
+      "sig": ""
+    }
+  ]
 }

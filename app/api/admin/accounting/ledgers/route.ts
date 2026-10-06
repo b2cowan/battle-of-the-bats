@@ -4,7 +4,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getOrCreateOrgLedger, getOrgAllLedgers, getLedgerSummary } from '@/lib/db';
+import { getOrCreateOrgLedger, getOrgAllLedgers, getLedgerSummaries } from '@/lib/db';
 import { bookInScope, teamIdsInScope } from '@/lib/club-team-route';
 import { withObservability } from '@/lib/observability';
 import { canMoveClubMoney } from '@/lib/member-access';
@@ -30,7 +30,8 @@ export const GET = withObservability(async (req: Request) => {
   // A member limited to some team groups sees only their groups' team books (B11).
   const [all, scope] = await Promise.all([getOrgAllLedgers(ctx!.org.id), teamIdsInScope(ctx!)]);
   const ledgers   = all.filter(l => bookInScope(l, scope));
-  const summaries = await Promise.all(ledgers.map(l => getLedgerSummary(l, { from, to })));
+  // One SQL sum for every book (C14 — `club_book_totals`, mig 317), not one read per book.
+  const summaries = await getLedgerSummaries(ledgers, { from, to });
 
   // Each summary carries its book's all-time `balance` (one scope everywhere, C14). The badge's word
   // for its kind is LEDGER_KIND_WORD (lib/club-ledger.ts), which knows all four.

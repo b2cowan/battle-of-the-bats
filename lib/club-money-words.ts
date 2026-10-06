@@ -311,3 +311,54 @@ export function teamsWord(teams: readonly WordTeam[], activeTeams: readonly Word
   }
   return `${n} teams`;
 }
+
+// ── Club Tier Stage 3b: the plan, Budget vs. Actual, the board summary ────────────────────────
+/* ⚠ DRAFTS FOR /marketing, like every sentence above. The row names are the hub's drawn words
+   (specimens 1–3); the refusals carry what the drawing fixed (the figure in the way). */
+
+/** The revenue row nobody types: what the club billed its teams from the year's cost lines. */
+export const FROM_THE_TEAMS_WORD = 'From the teams';
+/** Under From the teams: money a team paid the club on a To-club request (not against a bill). */
+export const ON_REQUEST_WORD = 'On request';
+/** The standard word a request paid to a team files under (mig 317), under TEAM_SUPPORT_WORD. */
+export const TEAM_SUPPORT_ITEM_WORD = 'Paid to teams on request';
+/** A club ledger line filed to no budget word — every line typed before 3b, until someone files it. */
+export const NOT_FILED_WORD = 'Not filed';
+/** Months: what a tournament's or the house league's book moved on its own (Ask 5). */
+export const OTHER_BOOKS_WORD = 'The club’s other books';
+/** A team's cash, read from the coaches' own books and never the club's (D1, Ask 4e). */
+export const HELD_BY_THE_TEAM_WORD = 'Held by the team';
+/** A team outside the reader's groups, where a club read would otherwise name it (B11: counted, never named). */
+export const OUTSIDE_YOUR_GROUPS_WORD = 'A team outside your groups';
+/** The teams' cash total, in its own band, worded as not the club's. */
+export const TEAMS_CASH_TOTAL_WORD = 'Held by the teams · not the club’s money';
+
+/** The Budget's refusals (C11, C10). Each says what is in the way, with the figure. */
+export const CLUB_BUDGET_REFUSAL = {
+  below_allocated: (allocated: number) =>
+    `This line can’t be less than ${fmt(allocated)}, what is already allocated from it.`,
+  over_line: (left: number) =>
+    `That is more than is left on the line. Up to ${fmt(left)} can still be allocated from it.`,
+  periods_dont_add_up: (periodsTotal: number, lineTotal: number) =>
+    `The dates add up to ${fmt(periodsTotal)}, and the line is ${fmt(lineTotal)}. Make them match to save.`,
+  bad_period_amount: 'Each date needs an amount above zero.',
+  bad_period_label: 'Each date needs a name.',
+  year_has_lines: (year: number) => `${year} already has a plan. Add to it line by line.`,
+  nothing_to_copy: (year: number) => `${year} has no lines to start from.`,
+  word_on_plan: (word: string) => `${word} is already on this year’s plan. Open that line to change it.`,
+  line_changed: 'This line changed while you were editing it. Reopen it to see the latest.',
+  not_a_cost_line: 'Only a cost line bills teams. This line plans money coming in.',
+  line_not_found: 'That budget line isn’t on the club’s plan any more.',
+  has_allocations: 'This line has allocations drawn from it, so it can’t be removed.',
+  allocated_line_is_a_cost: 'Teams are billed from this line, so it stays a cost. Choose a money-out word.',
+  bad_total: 'The line needs an amount above zero.',
+  bad_description: 'A description is needed, 200 characters at most.',
+  word_required: 'Choose what this line is filed under.',
+  bad_source_entry: 'That isn’t one of the club’s ledger entries.',
+} as const;
+
+/** The entry's "Filed under" refusals (Ask 4a). */
+export const FILED_UNDER_REFUSAL = {
+  wrong_side_out: 'Money out is filed under a money-out word.',
+  wrong_side_in: 'Money in is filed under a money-in word.',
+} as const;

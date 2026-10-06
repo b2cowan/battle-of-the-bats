@@ -1,94 +1,35 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_accounting')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_accounting')) return forbidden();
-  return null;
-}
+import { moveRefused, resolveClubMoney } from '@/lib/club-money-route';
+import { readClubPeriods, saveClubLine } from '@/lib/club-budget-writes';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 type Ctx = { params: Promise<{ lineId: string }> };
 
-// POST /api/admin/accounting/budget-plan/lines/[lineId]/periods
-// Full replace: deletes all existing periods for this line and inserts the new set.
-// Send an empty array to clear all periods (revert line to lump sum).
-// Body: { periods: [{ label, periodDate?, amount, sortOrder? }] }
+/**
+ * POST /api/admin/accounting/budget-plan/lines/[lineId]/periods — replace a line's dates, in ONE step
+ * (Club Tier Stage 3b, C11: they were set once at creation and never checked again). Body:
+ * `{ periods: [{ label, date | periodDate, amount }] }`; `[]` (or no list) makes the line a lump sum.
+ *
+ * Editable at any time; every save is checked (`club_budget_line_save`, mig 317): each amount above
+ * zero, and the set adding up to the line's total within $0.02 — else 400 `periods_dont_add_up` with
+ * `periodsTotal` and `lineTotal`. WHO: 3a's one money rule (`canMoveClubMoney`). → 200 `{ periods }`.
+ */
 export const POST = withObservability(async (req: Request, { params }: Ctx) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
-
-  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
-
+  const gate = await resolveClubMoney(req, { scope: 'books', write: true });
+  if ('error' in gate) return gate.error;
   const { lineId } = await params;
+  const body = await req.json().catch(() => ({}));
 
-  // Verify the line belongs to this org
-  const { data: line, error: fe } = await supabaseAdmin
-    .from('org_budget_lines')
-    .select('id, org_id, total_amount')
-    .eq('id', lineId)
-    .eq('org_id', ctx!.org.id)
-    .maybeSingle();
+  const periods = readClubPeriods(body?.periods ?? []);
+  if (!periods.ok) return moveRefused(periods);
+  const saved = await saveClubLine(gate.ctx.org.id, lineId, { periods: periods.value });
+  if (!saved.ok) return moveRefused(saved);
 
-  if (fe) return NextResponse.json({ error: fe.message }, { status: 500 });
-  if (!line) return NextResponse.json({ error: 'Budget line not found' }, { status: 404 });
-
-  const body = await req.json();
-  const rawPeriods = Array.isArray(body.periods) ? body.periods : [];
-
-  // Validate each period
-  for (let i = 0; i < rawPeriods.length; i++) {
-    const p = rawPeriods[i];
-    const label = typeof p.label === 'string' ? p.label.trim() : '';
-    if (!label) {
-      return NextResponse.json({ error: `Period ${i + 1}: label is required` }, { status: 400 });
-    }
-    const amount = Number(p.amount);
-    if (isNaN(amount) || amount <= 0) {
-      return NextResponse.json({ error: `Period ${i + 1}: amount must be a positive number` }, { status: 400 });
-    }
-  }
-
-  // Replace all periods: delete existing, insert new
-  const { error: de } = await supabaseAdmin
-    .from('org_budget_periods')
-    .delete()
-    .eq('budget_line_id', lineId);
-
-  if (de) return NextResponse.json({ error: de.message }, { status: 500 });
-
-  if (rawPeriods.length === 0) {
-    return NextResponse.json({ periods: [] });
-  }
-
-  const rows = rawPeriods.map((p: any, i: number) => ({
-    budget_line_id: lineId,
-    period_label:   String(p.label).trim(),
-    period_date:    p.periodDate ?? null,
-    amount:         Number(p.amount),
-    sort_order:     p.sortOrder ?? i,
-  }));
-
-  const { data: inserted, error: ie } = await supabaseAdmin
-    .from('org_budget_periods')
-    .insert(rows)
-    .select('id, budget_line_id, period_label, period_date, amount, sort_order');
-
-  if (ie) return NextResponse.json({ error: ie.message }, { status: 500 });
-
-  const periods = (inserted ?? []).map((p: any) => ({
-    id:         p.id,
-    label:      p.period_label,
-    periodDate: p.period_date,
-    amount:     Number(p.amount),
-    sortOrder:  p.sort_order,
-  }));
-
-  return NextResponse.json({ periods });
+  const { data, error } = await supabaseAdmin.from('org_budget_periods')
+    .select('id, period_label, period_date, amount, sort_order').eq('budget_line_id', lineId).order('sort_order');
+  if (error) throw error;
+  return NextResponse.json({
+    periods: (data ?? []).map(p => ({ id: p.id, label: p.period_label, periodDate: p.period_date, amount: Number(p.amount), sortOrder: p.sort_order })),
+  });
 }, { route: '/api/admin/accounting/budget-plan/lines/[lineId]/periods' });

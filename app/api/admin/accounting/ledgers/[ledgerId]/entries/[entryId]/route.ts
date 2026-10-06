@@ -9,6 +9,8 @@ import { withObservability } from '@/lib/observability';
 import { canMoveClubMoney } from '@/lib/member-access';
 import { SOURCED_LINE_READ_ONLY, TEAM_BOOK_READ_ONLY } from '@/lib/club-money-words';
 import { isSourcedLine } from '@/lib/club-ledger';
+import { readFiledUnder } from '@/lib/club-budget-writes';
+import { moveRefused } from '@/lib/club-money-route';
 
 /**
  * ⚖ A LINE WRITTEN BY AN ALLOCATION, A REQUEST OR A HOUSE-LEAGUE FEE IS CHANGED WHERE IT CAME FROM
@@ -72,7 +74,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
 
   const { data: existing } = await supabaseAdmin
     .from('accounting_entries')
-    .select('id, entry_type, status, category, source_module, linked_entry_id')
+    .select('id, entry_type, status, category, source_module, linked_entry_id, budget_item_id')
     .eq('id', entryId)
     .eq('ledger_id', ledgerId)
     .maybeSingle();
@@ -144,6 +146,20 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   }
   if ('notes' in body) {
     input.notes = typeof body.notes === 'string' ? body.notes.trim().slice(0, 2000) || null : null;
+  }
+
+  /* ⚖ FILED UNDER (Club Tier Stage 3b, Ask 4a): `budgetItemId` files the line under a word (null = not
+     filed). The word must stay on the line's side: re-typing a filed line In ↔ Out re-checks the word it
+     keeps. An old line's free text stays as it was — filing it does not rewrite history. */
+  if ('budgetItemId' in body || input.entryType !== undefined) {
+    const effectiveType = (input.entryType ?? existing.entry_type) as 'income' | 'expense';
+    const effectiveWord = 'budgetItemId' in body ? body.budgetItemId : existing.budget_item_id;
+    const filed = await readFiledUnder(ctx!.org.id, effectiveWord, effectiveType);
+    if (!filed.ok) return moveRefused(filed);
+    if ('budgetItemId' in body) {
+      input.budgetItemId = filed.value?.itemId ?? null;
+      input.budgetCategoryId = filed.value?.categoryId ?? null;
+    }
   }
 
   await updateEntry(entryId, ledgerId, input);

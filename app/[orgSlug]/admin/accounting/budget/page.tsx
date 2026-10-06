@@ -221,39 +221,25 @@ export default function OrgBudgetPage() {
     setAddSaving(true);
     setAddError('');
     try {
+      // ⚰ Interim (Club Tier 3b session 1): the dates go WITH the line — the add saves both in one step and
+      // refuses dates that don't add up, so they can never be dropped behind a "saved". Session 2 replaces this page.
+      const filled = showPeriodsForm ? addPeriods.filter(p => p.label.trim() && p.amount) : [];
       const res = await fetch(`/api/admin/accounting/budget-plan/lines${orgQuery}`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           seasonYear:  year,
-          categoryId:  addPicker?.categoryId ?? null,
           itemId:      addPicker?.itemId     ?? null,
           description: desc,
           totalAmount: amount,
           notes:       addNotes.trim() || null,
+          periods: filled.length > 0
+            ? filled.map(p => ({ label: p.label.trim(), periodDate: p.periodDate || null, amount: Number(p.amount) }))
+            : undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to add line');
-
-      // If periods are filled, upsert them
-      if (showPeriodsForm) {
-        const filled = addPeriods.filter(p => p.label.trim() && p.amount);
-        if (filled.length > 0) {
-          await fetch(`/api/admin/accounting/budget-plan/lines/${data.line.id}/periods${orgQuery}`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              periods: filled.map((p, i) => ({
-                label:      p.label.trim(),
-                periodDate: p.periodDate || null,
-                amount:     Number(p.amount),
-                sortOrder:  i,
-              })),
-            }),
-          });
-        }
-      }
 
       resetAddForm();
       await load(year);

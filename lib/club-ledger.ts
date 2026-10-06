@@ -20,7 +20,9 @@
  */
 import {
   CLUB_LOOP_CATEGORY, LOOP_CATEGORY_KEYS, TEAM_ALLOCATIONS_WORD, TEAM_SUPPORT_WORD, categoryWord,
+  FROM_THE_TEAMS_WORD, ON_REQUEST_WORD, NOT_FILED_WORD, TEAM_SUPPORT_ITEM_WORD,
 } from './club-money-words';
+import { isClubOwnedBook, isMoneyIn } from './club-money-figures';
 import { toCents } from './coach-register';
 import type { AccountingEntityType } from './types';
 
@@ -87,6 +89,101 @@ export function isSourcedLine(l: LineFacts, referenced = false): boolean {
 
 /** The line's category, in words (a loop key reads as the club's word; a typed one as typed). */
 export const lineCategoryWord = (l: Pick<LineFacts, 'category'>) => categoryWord(l.category);
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+ * ⚖ WHAT A CLUB LINE IS FILED UNDER — THE ONE RULE (Club Tier Stage 3b, Ask 4a; mig 317).
+ * Budget vs. Actual counts a line under its filing, the Ledger shows and filters by it, the line window
+ * prints it. One function, so the three can never file one line two ways.
+ *   · the money loop's own lines file themselves by their SOURCE, never by a word: an allocation
+ *     received → "From the teams" (under its allocation); money received on a To-club request → "From
+ *     the teams › On request"; a request paid to a team → the standard club-only word "Team support ›
+ *     Paid to teams on request" (mig 317's fixed ids);
+ *   · a typed line files under its word (category AND item — a word is both), else "Not filed";
+ *   · a transfer between two books the club owns, and a house-league fee, are filed nowhere (null) — the
+ *     first moves nothing in total, the second waits for Stage 9; a transfer to a TEAM's book made by
+ *     hand before 3a refused them is money out with no word: "Not filed".
+ * ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** The standard word a request paid to a team files under (mig 317's fixed ids). Never change them. */
+export const TEAM_SUPPORT_WORD_IDS = {
+  categoryId: '3b5e7a00-0317-4c1b-8a50-7ea0507c0001',
+  itemId: '3b5e7a00-0317-4c1b-8a50-7ea0507c0002',
+} as const;
+
+/** Synthetic category / item ids for the rows nobody types. Never a database id (not uuid-shaped). */
+export const FROM_THE_TEAMS_ID = 'club:from-the-teams';
+export const ON_REQUEST_ID = 'club:on-request';
+export const NOT_FILED_ID = 'club:not-filed';
+
+export interface Filing {
+  categoryId: string;
+  categoryName: string;
+  itemId: string | null;
+  itemName: string | null;
+  /** True for a loop line: it files itself and its word is read-only. */
+  byItsSource: boolean;
+}
+
+export const FROM_THE_TEAMS = { categoryId: FROM_THE_TEAMS_ID, categoryName: FROM_THE_TEAMS_WORD } as const;
+export const ON_REQUEST_FILING: Filing = { ...FROM_THE_TEAMS, itemId: ON_REQUEST_ID, itemName: ON_REQUEST_WORD, byItsSource: true };
+export const TEAM_SUPPORT_FILING: Filing = {
+  categoryId: TEAM_SUPPORT_WORD_IDS.categoryId, categoryName: TEAM_SUPPORT_WORD,
+  itemId: TEAM_SUPPORT_WORD_IDS.itemId, itemName: TEAM_SUPPORT_ITEM_WORD, byItsSource: true,
+};
+export const NOT_FILED_FILING: Filing = { categoryId: NOT_FILED_ID, categoryName: NOT_FILED_WORD, itemId: null, itemName: NOT_FILED_WORD, byItsSource: false };
+/** "From the teams", under the allocation a received installment belongs to (null: not found — a line
+ *  written before 3a whose installment can no longer be traced). */
+export const allocationFiling = (allocation: { id: string; description: string } | null): Filing =>
+  ({ ...FROM_THE_TEAMS, itemId: allocation?.id ?? null, itemName: allocation?.description ?? null, byItsSource: true });
+
+export interface FilingFacts extends LineFacts {
+  budgetCategoryId: string | null;
+  budgetCategoryName: string | null;
+  budgetItemId: string | null;
+  budgetItemName: string | null;
+  /** For a transfer: the kind of book its other half sits on (null/absent: not found). */
+  partnerKind?: string | null;
+}
+
+/** THE filing (see the block above). `allocationOf` names a received installment's allocation, when the
+ *  caller can trace it (`findLoopRecord`). */
+export function fileLine(l: FilingFacts, allocationOf?: () => { id: string; description: string } | null): Filing | null {
+  const type = lineType(l);
+  if (type === 'team_allocations') return allocationFiling(allocationOf?.() ?? null);
+  if (type === 'team_support') return isMoneyIn(l) ? ON_REQUEST_FILING : TEAM_SUPPORT_FILING;
+  if (type === 'house_league_fees') return null;
+  if (type === 'transfer') return l.partnerKind && isClubOwnedBook(l.partnerKind) ? null : NOT_FILED_FILING;
+  if (l.budgetItemId && l.budgetCategoryId) {
+    return {
+      categoryId: l.budgetCategoryId, categoryName: l.budgetCategoryName ?? NOT_FILED_WORD,
+      itemId: l.budgetItemId, itemName: l.budgetItemName, byItsSource: false,
+    };
+  }
+  return NOT_FILED_FILING;
+}
+
+/** The Ledger's Category column and filter (C14): on a club book, the line's filing (a house-league fee
+ *  keeps 3a's word); on a TEAM's book, the coaches' own words — those lines are never the club's to file. */
+export function ledgerCategory(l: FilingFacts, bookKind: LedgerKind): string | null {
+  if (bookKind === 'team' || lineType(l) === 'house_league_fees') return lineCategoryWord(l);
+  return fileLine(l)?.categoryName ?? null;
+}
+
+/** The facts that trace a loop line back to its installment or request. */
+export interface LoopLink { id: string; sourceModule: string | null; sourceEntityId: string | null; linkedEntryId: string | null }
+
+/**
+ * The installment or request a loop line belongs to: by its source (3a on), else — a line written before
+ * 3a, with no source column — through the payer's half the record names in `accounting_entry_id` (this
+ * line, or its partner). One lookup, for the Ledger and for Budget vs. Actual alike.
+ */
+export function findLoopRecord<T>(
+  l: LoopLink, sourceModule: string, byId: ReadonlyMap<string, T>, byEntry: ReadonlyMap<string, T>,
+): T | undefined {
+  return (l.sourceModule === sourceModule && l.sourceEntityId ? byId.get(l.sourceEntityId) : undefined)
+    ?? byEntry.get(l.id)
+    ?? (l.linkedEntryId ? byEntry.get(l.linkedEntryId) : undefined);
+}
 
 /**
  * The numbers beside the Ledger's Status and Type choices: what ticking that choice would LIST, given the other

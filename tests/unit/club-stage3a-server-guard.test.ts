@@ -124,7 +124,8 @@ describe('ONE rule for who may move club money (Ask 1, C08)', () => {
     [R.acctTransfers, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
     [R.acctLedgers, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
     [R.acctLedger, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
-    [R.acctAllocateToTeams, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
+    // Stage 3b: a thin door into `createClubAllocation`, gated by resolveClubMoney's write rule (canMoveClubMoney).
+    [R.acctAllocateToTeams, /resolveClubMoney\(req, \{ scope: 'books', write: true \}\)/],
     [R.oldAllocations, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
     [R.oldAllocation, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
   ];
@@ -167,7 +168,9 @@ describe('group scope on every club money write (B11)', () => {
     });
   }
   it('a new allocation refuses a team outside the member\'s groups', () => {
-    assert.match(readCode(R.oldAllocations), /repGroupScopeGuard\(ctx!, team\.groupId\)/);
+    // Stage 3b moved the create into ONE step behind `createClubAllocation`; both create doors go through it.
+    assert.match(readCode(R.oldAllocations), /createClubAllocation\(ctx!,/);
+    assert.match(functionBody(readCode('lib/club-budget-writes.ts'), 'createClubAllocation'), /repGroupScopeGuard\(ctx, team\.group_id \?\? null\)/);
   });
   it('the reads narrow to the member\'s teams', () => {
     for (const f of ['allocations/route.ts', 'allocations/[allocationId]/route.ts', 'coming-due/route.ts', 'payment-requests/route.ts', 'teams/route.ts']) {
@@ -382,13 +385,17 @@ describe('a team\'s book is read-only everywhere; a transfer voids both halves (
     assert.match(functionBody(readCode('lib/club-payees.ts'), 'deleteClubPayee'), /if \(uses > 0\) return inUse\(/);
   });
   it('a general allocation\'s source entry is one of the club\'s own (C17)', () => {
-    const code = readCode(R.oldAllocations);
-    assert.match(code, /\.eq\('accounting_ledgers\.org_id', ctx!\.org\.id\)/);
-    assert.match(code, /\.neq\('accounting_ledgers\.entity_type', 'team'\)/);
+    // Stage 3b: checked inside `createClubAllocation` (lib/club-budget-writes.ts), the one create both doors use.
+    const code = functionBody(readCode('lib/club-budget-writes.ts'), 'createClubAllocation');
+    assert.match(code, /\.eq\('accounting_ledgers\.org_id', orgId\)/);
+    assert.match(code, /\.in\('accounting_ledgers\.entity_type', \[\.\.\.CLUB_OWNED_BOOK_KINDS\]\)/, 'a club-owned book (Stage 3b: never a team\'s)');
+    assert.match(code, /src\.status === 'void'/);
   });
   it('the club\'s category list is its own, never the teams\'', () => {
     assert.match(readCode('app/api/admin/accounting/categories/route.ts'), /await clubCategories\(ctx\.org\.id\)/);
-    assert.match(functionBody(readCode('lib/club-ledger-read.ts'), 'clubCategories'), /\.neq\('entity_type', 'team'\)/);
+    // Stage 3b: the club-owned books' one read (getClubOwnedLedgers — Club, Tournament, House league; never a team's).
+    assert.match(functionBody(readCode('lib/club-ledger-read.ts'), 'clubCategories'), /getClubOwnedLedgers\(orgId\)/);
+    assert.match(functionBody(readCode('lib/db.ts'), 'getClubOwnedLedgers'), /\.in\('entity_type', \[\.\.\.CLUB_OWNED_BOOK_KINDS\]\)/);
   });
   it('every server-only function is closed to the browser key (mig 311\'s rule)', () => {
     const fns = [...sql.matchAll(/CREATE OR REPLACE FUNCTION public\.(club_\w+)\(/g)].map(m => m[1]);
