@@ -5,15 +5,16 @@
    consumer — the Ledgers' Filter sheet — had been wearing that menu's classes directly. ═══
 
    Full width, flush to the bar's top, 18px top corners, a grab line, the card surface, the page dimmed
-   behind it (the dim is `LineupSheetScrim`, which `SheetFrame` renders beside the sheet), and a height
+   behind it (the dim is `.dim`, at the foot of this file, which `SheetFrame` renders beside the sheet), and a height
    cap with the scroll contained, so a long list never drags the page behind it.
 
    ⚠ TWO LAYERS. D1 sorts every sheet by one test — "would a stray tap on the bar lose something?" A
    sheet that loses nothing (a list of things to do; a filter that saves each tap) is the MENU layer: it
    sits ON TOP of the bar — under it in z (260, the nav is 300), the bar lit and live. A sheet holding
    work in hand is the FORM layer (`.form`, below): it comes down OVER the bar. Joined in step 3 by the
-   game day's Note, End game and Scouting-while-logging; the lineup builder's `.lineupDrawerOverNav`
-   drawers move onto it in step 5.
+   game day's Note, End game and Scouting-while-logging, and in step 4 by the Award sheet while it is
+   edited; the lineup builder's `.lineupDrawerOverNav` drawers move onto it in step 5. A sheet opened
+   from inside a full-screen window has no bar to sort by and sits over the window (`.overWindow`).
 
    ⚠ `--coach-foot-clear` IS THE BAR PLUS THE HOME INDICATOR. `.coachesShell` declares it, and
    `.adminShell` declares it for the admin pages that borrow a portal sheet (the club's Ledger and
@@ -69,7 +70,7 @@
 
   /* ══ THE FORM LAYER (D1; the 2026-09-23 ruling's own geometry, from `.lineupDrawerOverNav`) ══════════
      Work in hand, so the sheet comes down OVER the bar: flush to the screen's foot, capped at the screen
-     less 12px, and stacked over the nav. The dim comes with it (`LineupSheetScrim overNav`, one below at
+     less 12px, and stacked over the nav. The dim comes with it (`.dim.form`, one below at
      389), so the bar is dimmed as well as covered — a lit bar under a modal is the mixed signal the ruling
      removes. The frame also takes the bar out of the tab order and the accessibility tree
      (`useOverlayOpenIfAvailable`); geometry alone defends the thumb and nothing else.
@@ -88,8 +89,82 @@
     padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   }
   /* The form takes focus itself when it opens (a dialog that never takes focus is never announced); the
-     sheet is the frame of what is focused, not a control, so it draws no ring — its controls draw theirs. */
-  .sheet.form:focus { outline: none; }
+     sheet is the frame of what is focused, not a control, so it draws no ring — its controls draw theirs.
+     A record sheet whose keys the frame owns (`ownsKeys`, step 4) takes focus the same way in the menu
+     layer, so the ring rule is the sheet's whenever it is focusable. */
+  .sheet:focus { outline: none; }
+
+  /* ══ OVER A WINDOW (`overWindow`, step 4, 2026-10-06) ═══════════════════════════════════════════════
+     A sheet opened from INSIDE a full-screen window has no bar under it — the window already took it — so
+     it sits at the screen's foot, like a form, and stacks ABOVE the window: 410, over `.modalOverlay`'s
+     400. (The form layer's 390 sits under a window on purpose: a dialog opened FROM a form must land on
+     it.) Worn by a player's RSVP — a sibling of the event window, so 410 is what lifts it over the window
+     — and by the depth chart's row menu, which renders inside its player window, where 410 is counted
+     inside that window's own stacking context. After `.sheet.form`, so a form over a window takes this z. */
+  .sheet.overWindow {
+    bottom: 0;
+    max-height: calc(100dvh - 12px);
+    z-index: 410;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ══ THE GRAB LINE AS A CLOSE BUTTON (`grabCloses`, step 4) ════════════════════════════════════════
+     A record head keeps its own way out (D3): the position picker's and RSVP's grab line was always a 44px
+     Close control, not a mark. The frame draws it once — the same 38×4 line in the frame's ink, as the
+     button's mark, in place of the drawn one — and the button's 44px begin where the sheet's top padding
+     does (the −6px), so the record's name reads where it always did. Not sticky: a record sheet is short. */
+  .sheet.grabCloses::before { content: none; }
+  .grab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: var(--tap-min, 44px);
+    margin: -6px 0 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .grab > span {
+    display: block;
+    width: 38px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-2);
+  }
+}
+
+/* ══ THE DIM — the frame's own since step 4 ══════════════════════════════════════════════════════════
+   It was the lineup builder's `LineupSheetScrim` (`coaches.module.css`), which keeps its copy for the
+   builder's own drawers until step 5 moves them onto this frame. The frame took its own because a third
+   place had to exist (over a window) and because a dim borrowed from the coach portal's stylesheet tied
+   every framed sheet to that ~945KB file — the reason the admin's notification reader stayed off it.
+
+   A SIBLING of the sheet, never a pseudo-element: the sheet has a z-index and therefore its own stacking
+   context, so a negative-z pseudo would paint on the sheet's own background. Over the page to the bar's
+   top in the menu layer (the bar is never dimmed — it is a menu's way out); down over the bar with a
+   form, one under the sheet; over everything over a window. The two colours are the portal's sheet dim
+   (`.sheetScrim` beside the More sheet and `.lineupSheetScrim` carry the same pair) and the warm remap
+   travels with them, or the portal's DEFAULT theme dims flat black. Nothing above 900, so no call site
+   needs a width branch. */
+.dim { display: none; }
+@media (max-width: 900px) {
+  .dim {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: var(--coach-foot-clear);
+    z-index: 259;   /* directly under the sheet, over the autosave pill (250) */
+    background: rgba(13, 17, 26, 0.45); /* token-exempt: scrim over the page, dark skin */
+  }
+  .dim.form { bottom: 0; z-index: 389; }
+  .dim.overWindow { bottom: 0; z-index: 409; }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dim {
+    background: rgba(36, 30, 21, 0.28); /* token-exempt: scrim over the warm page */
+  }
 }
 
 /* The menu LABEL (D2) — once the dim covers the row that opened the sheet, nothing on screen says what

@@ -1,15 +1,13 @@
 'use client';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type RefObject } from 'react';
 import Link from 'next/link';
 import { Check, Pencil, Printer, Trash2 } from 'lucide-react';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
+import SheetFrame from '@/components/coaches/SheetFrame';
 import { useAwardTypePicker } from '@/components/coaches/AwardTypePicker';
-import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { awardNotePlaceholder, awardTypeLabel, describeAwardOccasion, sameAwardOccasion } from '@/lib/rep-award-occasion';
 import type { RepPlayerAward, RepTeamAwardType } from '@/lib/types';
-import sheet from './CoachesBottomNav.module.css';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import own from './AwardSheet.module.css';
 
@@ -34,13 +32,16 @@ function stored(f: AwardForm) {
  * while editing, so the thumb that tapped ✎ rests on ✓, never on a bin that arrived under it.
  *
  * ⚠⚠ TWO LAYERS, ONE SHEET — the 2026-09-23 drawer-layers ruling, applied by what the sheet IS at
- * the moment, not by what opened it. READING it is a menu (tap Print, the pencil or the bin, it
- * acts): it rises from the bar's top edge in the phone's one sheet system (`.sheetAnchor`, the team
- * switcher's anchor) and the bar stays visible and tappable beneath it. EDITING it is a form: it
- * drops to the screen's foot, above the nav, and `useOverlayOpen` takes the bar out of reach and out
- * of the tab order — covering a nav is not taking it away unless the keyboard is shut out too.
- * ✓ is the way out, beside the scrim and Escape, which both finish the edit first (a held change
- * they close without — below).
+ * the moment, not by what opened it, on the portal's sheet frame (Sheet Frame step 4, 2026-10-06:
+ * `form={editing}`, D3 keeps the switch). READING it is a menu (tap Print, the pencil or the bin, it
+ * acts): it sits on the bar, the bar lit and tappable beneath it, never modal, the keyboard not held
+ * (owner, 2026-10-06 — what the old floor gave it stays: Escape, Back, focus in and home; Tab past the
+ * end closes it, a tap on the bar closes it first). EDITING it is a form: the frame drops it to the
+ * screen's foot, over the nav, takes the bar out of reach and out of the tab order — covering a nav is
+ * not taking it away unless the keyboard is shut out too — and holds the keyboard inside. The frame owns
+ * its keys in both layers (`ownsKeys`), so ONE floor stands throughout and only its hold changes: the
+ * switch costs no history entry. ✓ is the way out, beside the dim and Escape, which both finish the edit
+ * first (a held change they close without — below).
  *
  * ⚠ EDITING SAVES AS YOU GO (the 2026-09-24 ruling: editing autosaves, creating asks). ✓ means
  * finished, not save; the transient "Saved" says the rest. A change the product would refuse —
@@ -70,6 +71,7 @@ export default function AwardSheet({
   onSaved,
   onLibraryChanged,
   onRemove,
+  opener,
 }: {
   orgSlug: string;
   teamId: string;
@@ -88,8 +90,9 @@ export default function AwardSheet({
   /** The host asks "Remove …?" and deletes: 'removed', 'kept' (the coach said no), or the sentence
    *  of a failure — shown HERE, because the page's own error line sits behind the sheet. */
   onRemove: (award: RepPlayerAward) => Promise<'removed' | 'kept' | string>;
+  /** The row's button that opened it — focus goes home to it (a tap on iOS never focused it). */
+  opener: RefObject<HTMLElement | null>;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
   const formId = useId();
   const [editing, setEditing] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -164,9 +167,6 @@ export default function AwardSheet({
     onLibraryChanged,
   });
 
-  // A form covers the nav; a menu sits on top of it — only while editing does the bar go.
-  useOverlayOpen(editing);
-
   /** ✓ — save what is pending, then read. A held change keeps the coach in the edit (the line
    *  under the player says why); a ✓ pressed while a save is in flight waits for it. */
   const [finishPending, setFinishPending] = useState<null | 'read' | 'close'>(null);
@@ -198,7 +198,6 @@ export default function AwardSheet({
     if (removing) return;
     if (editing && !blocked) void finish('close'); else onClose();
   }, [removing, editing, blocked, finish, onClose]);
-  useDialogFloor(true, panelRef, { onClose: requestClose, busy: removing });
 
   async function remove() {
     setRemoving(true);
@@ -219,20 +218,18 @@ export default function AwardSheet({
 
   return (
     <>
-      <div
-        className={`${sheet.sheetAnchor} ${editing ? own.anchorForm : ''}`}
+      {/* A form covers the nav; a menu sits on top of it — only while editing does the bar go (the frame). */}
+      <SheetFrame
+        ownsKeys
+        form={editing}
+        busy={removing}
+        onClose={requestClose}
+        opener={opener}
+        role="dialog"
+        aria-label={`${readPlayer} · ${readType?.name ?? 'Award'}`}
         data-award-sheet={editing ? 'editing' : 'reading'}
       >
-        <div className={sheet.sheetScrim} aria-hidden onClick={requestClose} />
-        <div
-          ref={panelRef}
-          tabIndex={-1}
-          className={`${sheet.dropdown} ${own.panel} ${editing ? own.panelForm : ''}`}
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${readPlayer} · ${readType?.name ?? 'Award'}`}
-        >
-          <span className={sheet.sheetGrab} aria-hidden />
+        <div className={editing ? `${own.body} ${own.bodyForm}` : own.body}>
           <div className={own.head}>
             <button
               type="button"
@@ -329,11 +326,11 @@ export default function AwardSheet({
           )}
           {/* The transient "Saved" — INSIDE the panel, so it paints above the sheet it reports on and
               its Retry stays inside the floor's Tab trap; while editing it sits in the corner the
-              panel's foot leaves it (`.panelForm` here, the `[data-award-sheet]` rule beside
+              panel's foot leaves it (`.bodyForm` here, the `[data-award-sheet]` rule beside
               `.savePill`). */}
           <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />
         </div>
-      </div>
+      </SheetFrame>
       {picker.overlays}
     </>
   );

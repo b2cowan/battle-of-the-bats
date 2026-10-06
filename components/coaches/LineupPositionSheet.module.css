@@ -1,30 +1,11 @@
-/* LineupPositionSheet — what differs from the More / team / RSVP sheets it shares a container
-   with (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown` /
-   `.sheetGrab`). Doubled selectors on purpose where the nav module writes the same property at
-   (0,1,0) inside its ≤900 block — which of two same-weight rules wins across modules is bundle
-   order (the kit learned this the day it was built). Only ever rendered at ≤640. */
+/* LineupPositionSheet — the content of a record sheet on the portal's sheet frame (`SheetFrame`, the
+   menu layer: Sheet Frame step 4, 2026-10-06). The frame draws the sheet, its dim, its height cap and
+   its grab line as a 44px Close; this file draws what is inside. Only ever rendered at ≤640. */
 
-/* The anchor's foot is the BAR's top — the nav module's own `.sheetAnchor` already says so (the
-   builder is a page under the bar, not a dialog over it); the z-index clears the row sheet and the
-   auto-fill panel (260) that share this screen, and stays under the nav (300). */
-.floor.floor { z-index: 270; }
-.panel.panel {
-  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-}
-/* The grab line as a 44px control — the sheet's own way out, beside the scrim and Escape. */
-.grabBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: var(--tap-min, 44px);
-  margin: -6px 0 0;
-  padding: 0;
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-.grabBtn > span { margin: 0; }
+/* The record's own inset — the frame pads 8px a side and 14px at the foot; the picker's chips and rows
+   have always stood 14px in and 18px up, as the More sheet's container set them (`.dropdown`), and the
+   step kept every line where it was. */
+.body { padding: 0 6px 4px; }
 
 .name {
   font-family: var(--font-display);

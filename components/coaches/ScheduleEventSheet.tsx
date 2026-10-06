@@ -200,6 +200,8 @@ export default function ScheduleEventSheet({
   // Which player's RSVP SHEET is open (one at a time; stage 2 · C3 — it used to be an inline
   // editor under the row). null = closed.
   const [rsvpEditId, setRsvpEditId] = useState<string | null>(null);
+  // The attendance row that opened it — focus goes home to it (a tap on iOS never focused it).
+  const rsvpOpenerRef = useRef<HTMLElement | null>(null);
   // Whether a lineup is SAVED (any position set), and which players it holds — what the Lineup row
   // reads, and what flags attendance ↔ lineup drift. The look-only peek that rendered the order
   // retired with the tabs (E3): the builder's first screen IS the order, one inning at a time.
@@ -1104,7 +1106,7 @@ export default function ScheduleEventSheet({
         attendanceFilter={attendanceFilter}
         setAttendanceFilter={setAttendanceFilter}
         setAllAttendance={setAllAttendance}
-        setRsvpEditId={setRsvpEditId}
+        setRsvpEditId={(playerId, from) => { rsvpOpenerRef.current = from; setRsvpEditId(playerId); }}
         handleAttendanceSave={handleAttendanceSave}
       />
     </>
@@ -1164,6 +1166,7 @@ export default function ScheduleEventSheet({
             onPick={status => { setPlayerAttendance(row.player.id, { status }); setRsvpEditId(null); }}
             onNote={note => setPlayerAttendance(row.player.id, { note })}
             onClose={() => setRsvpEditId(null)}
+            opener={rsvpOpenerRef}
           />
         );
       })()}

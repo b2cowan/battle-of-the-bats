@@ -1,27 +1,16 @@
-/* AwardSheet — what differs from the phone's one sheet system it stands in
-   (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown` / `.sheetGrab`).
-   Doubled selectors on purpose, as the RSVP sheet's are: the nav module writes the same properties
-   at (0,1,0) inside its ≤900 block, and which of two same-weight rules wins across modules is
-   bundle order — (0,2,0) wins whichever comes first. The sheet only renders at ≤640. */
+/* AwardSheet — the content of a record sheet on the portal's sheet frame (`SheetFrame`, Sheet Frame
+   step 4, 2026-10-06): the menu layer while it is read, the FORM layer while it is edited (`form`). The
+   frame draws the sheet, its dim, its grab line and both layers' geometry — EDITING drops it to the
+   screen's foot over the nav (390: under `.modalOverlay`, so the award-type library, the icon chooser
+   and the confirm still land on top of it) and takes the bar away. This file draws what is inside. The
+   sheet only renders at ≤640. */
 
-/* EDITING — a form covers the nav (owner ruling 2026-09-23). The anchor drops from the bar's top
-   edge to the SCREEN'S foot, above the nav (300) and below `.modalOverlay` (400), so the award-type
-   library and the icon chooser, and the confirm (1000), still land on top of it. The bar itself is
-   taken away by `useOverlayOpen`; this is only the geometry. */
-.anchorForm.anchorForm {
-  bottom: 0;
-  z-index: 390;
-}
-
-.panel.panel {
-  padding: 6px 16px 14px;
-}
-/* The whole screen is the sheet's to rise into, less a strip of scrim above it; the foot leaves the
-   transient "Saved" a corner to sit in, as a page carrying the pill does (`.savePillPage`). */
-.panelForm.panelForm {
-  max-height: calc(100dvh - 12px);
-  padding-bottom: calc(var(--save-pill-h, 2.25rem) + 1.25rem + env(safe-area-inset-bottom, 0px));
-}
+/* The record's own inset — the frame pads 8px a side; the facts have always stood 16px in, and 20px
+   under the sheet's top edge, as the More sheet's container set them (`.dropdown` + its grab line). */
+.body { padding: 2px 8px 0; }
+/* Editing, the foot leaves the transient "Saved" a corner to sit in, as a page carrying the pill does
+   (`.savePillPage`) — the frame's own foot (14px and the home indicator) plus the pill's height. */
+.bodyForm { padding-bottom: calc(var(--save-pill-h, 2.25rem) + 1.25rem - 14px); }
 
 /* The head — the bin, then the pencil / ✓, at the right. No title: the facts name the award. */
 .head {

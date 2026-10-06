@@ -47,11 +47,13 @@ describe('the install banner sits under every sheet and over the page chrome it 
     const opened: [string, string, string][] = [
       ['the portal sheet frame (menu layer)', 'components/coaches/SheetFrame.module.css', '.sheet'],
       ['the portal sheet frame (form layer)', 'components/coaches/SheetFrame.module.css', '.sheet.form'],
-      ['the bar-anchored sheets (the notification reader, RSVP, the position picker)', 'components/coaches/CoachesBottomNav.module.css', '.sheetAnchor'],
+      // Sheet Frame step 4 (2026-10-06): the bar-anchored record sheets (the position picker, the notification
+      // reader, the Award sheet — edited, the form layer above) stand on the frame, and RSVP over its window.
+      ['the portal sheet frame (over a window — RSVP, the depth chart’s row menu)', 'components/coaches/SheetFrame.module.css', '.sheet.overWindow'],
+      ['the portal sheet frame’s dim', 'components/coaches/SheetFrame.module.css', '.dim'],
       ['the bottom bar and its More sheet', 'components/coaches/CoachesBottomNav.module.css', '.bottomNav'],
       ['the builder drawers\' dim', 'app/[orgSlug]/coaches/coaches.module.css', '.lineupSheetScrim'],
-      ['the Award sheet (form)', 'components/coaches/AwardSheet.module.css', '.anchorForm.anchorForm'],
-      ['the RSVP sheet', 'components/coaches/CoachRsvpSheet.module.css', '.floor.floor'],
+      ['the RSVP dialog on a computer', 'components/coaches/CoachRsvpSheet.module.css', '.floor.floor'],
       ['the admin kit\'s windows', 'components/admin/kit/club/KitDialog.module.css', '.overlayQuestion'],
     ];
     const over = opened

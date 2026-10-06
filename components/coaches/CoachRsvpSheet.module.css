@@ -1,37 +1,11 @@
-/* CoachRsvpSheet — what differs from the More / team sheets it shares a container with
-   (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown` / `.sheetGrab`).
-   Doubled selectors on purpose: the nav module writes the same properties at (0,1,0) inside its
-   ≤900 block, and which of two same-weight rules wins across modules is bundle order — (0,2,0)
-   wins whichever comes first (the kit learned this the day it was built). */
+/* CoachRsvpSheet — the content of a record sheet that, wherever the bar shows (≤900), stands on the
+   portal's sheet frame over the event window (`SheetFrame form overWindow`: Sheet Frame step 4,
+   2026-10-06). The frame draws the sheet, its dim and its grab line as a 44px Close; this file draws
+   what is inside, and the small centred dialog the same content is on a computer (the foot of this file). */
 
-/* The anchor's foot is the SCREEN'S foot, not the bar's: the event sheet covers the bar at ≤640
-   and the nav is hidden while any sheet is open. Above the event sheet's overlay (400 at ≤640,
-   200 wider) and the day sheet (400). */
-.floor.floor {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 0;
-  z-index: 410;
-}
-.panel.panel {
-  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-}
-/* The grab line as a 44px control — the sheet's own way out, beside the scrim and Escape. */
-.grabBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: var(--tap-min, 44px);
-  margin: -6px 0 0;
-  padding: 0;
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-.grabBtn > span { margin: 0; }
+/* The record's own inset — the frame pads 8px a side and 14px at the foot; the four choices and the note
+   have always stood 14px in and 18px up, as the More sheet's container set them (`.dropdown`). */
+.body { padding: 0 6px 4px; }
 
 .name {
   font-family: var(--font-display);
@@ -85,15 +59,24 @@
 /* The note under the choices, at the floor. */
 .note.note { width: 100%; margin-top: 8px; min-height: var(--tap-min, 44px); }
 
-/* ABOVE THE NAV BREAKPOINT the nav module draws nothing (its sheet rules are ≤900), and the row is
-   the tap at every width now that the inline editor is gone — so the same panel is a small
-   centered dialog: the coach portal's modal surface, no grab line. The anchor stays the zero-height
-   box at the screen's foot (a full-screen fixed element is CHROME to the rendered sweep, which
-   would report the event sheet beneath as hidden under it); the scrim rises from it over the
-   viewport and the panel is placed at the viewport's centre against it. */
+/* ABOVE THE NAV BREAKPOINT there is no bar and no frame, and the row is the tap at every width now
+   that the inline editor is gone — so the content is a small centered dialog: the coach portal's modal
+   surface, no grab line. The anchor is a zero-height box at the screen's foot (a full-screen fixed
+   element is CHROME to the rendered sweep, which would report the event sheet beneath as hidden under
+   it), above the event sheet's overlay (200 wider than a phone); the scrim rises from it over the
+   viewport and the panel is placed at the viewport's centre against it. Only ever rendered above 900.
+   (Doubled as it was when it shared the More container's anchor; the install banner's layer guard reads it so.) */
+.floor.floor {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  z-index: 410;
+}
 @media (min-width: 901px) {
   .scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 100vh; background: rgba(0, 0, 0, 0.6); }
-  .panel.panel {
+  .panel {
     position: absolute;
     left: 50%;
     bottom: 50vh;
@@ -104,5 +87,4 @@
     border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
     border-radius: var(--radius);
   }
-  .grabBtn { display: none; }
 }

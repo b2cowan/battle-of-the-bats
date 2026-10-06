@@ -28,6 +28,19 @@ Asked about in the same walk and fixed the same day: in Warm the bottom bar turn
 on the club admin), because the page behind its frosted glass was near-black there; it now stays cream everywhere.
 Owner QA §270 passed 4/4.
 
+**Step 4 built 2026-10-06 — the record sheets.** The position sheet (the lineup builder and game day), the Award
+sheet, a player's RSVP, the notification reader (now on both the coach's and the club admin's Notifications pages)
+and the player row menus come from the same frame as every other phone sheet, with nothing inside them moved. What a
+coach can see: the grab line is the frame's lighter one, these sheets wear the card colour in Dark (as the switchers
+have since step 2), and the row menus sit a hair further in. What a coach can feel: **with the position sheet or the
+Award sheet open, a tap on the bottom bar now closes the sheet first** — the More sheet used to open on top with the
+other still standing underneath. For a keyboard or a screen reader, a sheet on a live bar no longer claims to be the
+whole page (owner ruling, 2026-10-06): Tab past its end closes it; Escape, Back and focus returning to what opened it
+all stay. A sheet over a window (RSVP) or being edited (an award) still holds the keyboard. On a computer nothing
+changed. **Found on the way, not fixed:** the Schedule's day list (several events on one day) can only be opened on a
+tablet or computer, where Escape does nothing, Back leaves the Schedule, and a tap beside it presses what is
+underneath — a small follow-up for the owner to rule on. Owner QA §273.
+
 ## What changes for a coach
 
 Very little on screen, on purpose:

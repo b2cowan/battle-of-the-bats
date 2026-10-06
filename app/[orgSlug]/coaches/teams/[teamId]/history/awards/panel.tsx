@@ -68,6 +68,9 @@ export function AwardsPanel({
   const [selectedTypeIds, setSelectedTypeIds] = useState<Set<string>>(() => new Set());
   // The award whose sheet is open (a phone), by id so a quiet re-read hands it the fresh record.
   const [openAwardId, setOpenAwardId] = useState<string | null>(null);
+  // The row's button that opened the Award sheet — focus goes home to it (the row's own tap included).
+  const awardOpenerRef = useRef<HTMLElement | null>(null);
+  const openAwardFrom = (id: string, from: HTMLElement | null) => { awardOpenerRef.current = from; setOpenAwardId(id); };
   const [giveOpen, setGiveOpen] = useState(false);
   // Editing an already-given award (Awards One Tag Idiom Part A) reuses the give form — null
   // when the modal is giving a NEW award instead.
@@ -417,7 +420,7 @@ export function AwardsPanel({
                             <tr
                               key={a.id}
                               className={styles.rowTappable}
-                              onClick={() => { if (window.getSelection()?.toString()) return; setOpenAwardId(a.id); }}
+                              onClick={e => { if (window.getSelection()?.toString()) return; openAwardFrom(a.id, e.currentTarget.querySelector('button')); }}
                             >
                               <td className={styles.tdShrink}>{shortDate(a)}</td>
                               <td className={styles.awardsPlayerCell}>{a.playerName}</td>
@@ -427,7 +430,7 @@ export function AwardsPanel({
                                   type="button"
                                   className={`${styles.linkBtn} ${styles.listRowToggle}`}
                                   aria-label={`Open ${a.playerName ?? 'this player'}’s ${a.awardType?.name ?? 'award'}`}
-                                  onClick={e => { e.stopPropagation(); setOpenAwardId(a.id); }}
+                                  onClick={e => { e.stopPropagation(); openAwardFrom(a.id, e.currentTarget); }}
                                 >
                                   <ChevronRight size={18} className={styles.listRowChevron} aria-hidden />
                                 </button>
@@ -542,6 +545,7 @@ export function AwardsPanel({
           onSaved={reloadAwardsQuietly}
           onLibraryChanged={reloadQuietly}
           onRemove={handleDelete}
+          opener={awardOpenerRef}
         />
       )}
     </>

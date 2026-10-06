@@ -353,11 +353,12 @@ describe('Step 3 · the admin\'s Notifications page opens notifications (D5)', (
     const page = readCode(ADMIN_PAGE_FRAME);
     assert.match(page, /<NotificationFeedBody feed=\{feed\} onOpen=\{openEntry\} \/>/);
     assert.match(functionBody(page, 'openEntry'), /setReading\(entry\);\s*void feed\.markSeen\(entryMembers\(entry\)\);/);
-    assert.match(page, /<NotificationReader entry=\{reading\} portal="admin" feed=\{feed\} onClose=\{\(\) => setReading\(null\)\} \/>/);
+    // `opener`: the row that opened it, where focus goes home (Sheet Frame step 4 put the reader on the shared frame).
+    assert.match(page, /<NotificationReader entry=\{reading\} portal="admin" feed=\{feed\} onClose=\{\(\) => setReading\(null\)\} opener=\{readingFromRef\} \/>/);
   });
 
   it('one reader for both pages (Q1): the coach page wears the same file, and the old one is gone', () => {
-    assert.match(readCode(COACH_PAGE_FRAME), /<NotificationReader entry=\{reading\} portal="coach" feed=\{feed\} onClose=\{\(\) => setReading\(null\)\} \/>/);
+    assert.match(readCode(COACH_PAGE_FRAME), /<NotificationReader entry=\{reading\} portal="coach" feed=\{feed\} onClose=\{\(\) => setReading\(null\)\} opener=\{readingFromRef\} \/>/);
     assert.equal(existsSync(path.join(REPO, 'components/coaches/CoachNotificationReader.tsx')), false, 'no second reader');
     assert.match(readCode(READER), /onDone=\{n => \{ void feed\.clearRow\(n\); onClose\(\); \}\}/);
     assert.match(readCode(READER), /onDelete=\{members => \{ feed\.deleteRows\(members\); onClose\(\); \}\}/);
@@ -370,7 +371,7 @@ describe('Step 3 · the admin\'s Notifications page opens notifications (D5)', (
   });
 
   it('nothing in the notification list leaves the page on a tap — on either page (D1)', () => {
-    assert.match(readCode(BODY), /onOpen: \(entry: ActivityEntry\) => void;/, 'opening is required, not optional');
+    assert.match(readCode(BODY), /onOpen: \(entry: ActivityEntry, from: HTMLElement\) => void;/, 'opening is required, not optional — and names the row, where the reader hands focus back');
     for (const file of [BODY, FEED, READER, ADMIN_PAGE_FRAME, COACH_PAGE_FRAME]) {
       assert.doesNotMatch(readCode(file), /window\.location|\bmarkRead\b|\bbundleClick\b/, `${file} navigates on a tap`);
     }
@@ -384,7 +385,9 @@ describe('Step 3 · the admin\'s Notifications page opens notifications (D5)', (
 
   it('nothing the admin page loads reaches the coach portal\'s ~945KB stylesheet', () => {
     const loaded = reachableFrom(ADMIN_PAGE_FRAME);
-    assert.ok(loaded.has(READER) && loaded.has('components/coaches/CoachesBottomNav.module.css'), 'the walk reaches the reader and its sheet styles');
+    // On a phone the reader stands on the shared sheet frame since Sheet Frame step 4 — whose dim became its own
+    // that step, so the frame no longer reaches coaches.module.css either.
+    assert.ok(loaded.has(READER) && loaded.has('components/coaches/SheetFrame.module.css'), 'the walk reaches the reader and its sheet styles');
     assert.equal(loaded.has('app/[orgSlug]/coaches/coaches.module.css'), false,
       'the admin Notifications page must never load coaches.module.css — not through the reader, the message block, a hook or a stylesheet\'s composes');
   });

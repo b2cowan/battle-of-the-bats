@@ -1,8 +1,7 @@
 'use client';
 import { useCallback, useRef, type HTMLAttributes, type ReactNode, type Ref, type RefObject } from 'react';
-import { rescueFocusTo } from '@/lib/overlay-hooks';
+import { rescueFocusTo, usePointerOutside } from '@/lib/overlay-hooks';
 import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
-import LineupSheetScrim from './LineupSheetScrim';
 import { useDialogFloor } from './useDialogFloor';
 import styles from './SheetFrame.module.css';
 
@@ -32,10 +31,30 @@ import styles from './SheetFrame.module.css';
  *   The layer may change while the sheet is open — the Award sheet's switch (D3), and the game day's
  *   Scouting while an observation is being typed. Hand the layer a value, not a fixed flag.
  *
+ * ⚠ OVER A WINDOW (`overWindow`, step 4, 2026-10-06). A sheet opened from inside a full-screen window —
+ * a player's RSVP over the event window, the depth chart's row menu over its player — has no bar under
+ * it to sort by: the window already took it. It sits at the SCREEN'S foot, above the window (410, over
+ * `.modalOverlay`'s 400), its dim over everything, and it registers no overlay of its own (the window
+ * holds the lock). The layer still says what it is: RSVP is a form there (it is a sibling of a MODAL
+ * window, so it must be modal itself, or the keyboard walks out behind both); the row menu, inside its
+ * window's own DOM, stays a menu.
+ *
+ * ⚠ WHO ANSWERS THE KEYS. In the form layer, always the frame (the floor). In the menu layer, by default
+ * the CALLER: the Tools menu, the Filter sheet, the switchers and game day each have a trigger that
+ * toggles the sheet (and a popover or a card wider), so their dismiss hook watches the trigger AND the
+ * sheet. A sheet with no trigger of its own — a RECORD sheet, opened from a row the dim then covers —
+ * passes `ownsKeys` (step 4, owner 2026-10-06): the frame stands the floor WITHOUT ITS TRAP (Escape, the
+ * phone's Back, focus in on open and home to `opener`; Tab past the last control closes it, as the Tools
+ * menu's Tab does, rather than walking under the dim) and closes it on a tap on the bar, before the bar
+ * acts — the bar is live under a menu, and More opened over a sheet still standing left two up at once.
+ * Never modal. That is the owner's ruling for the menu layer's keys: what the old floor gave a record
+ * sheet stays, the hold on the keyboard and the modal claim go.
+ *
  * ⚠ THE FLOOR ALSO STANDS ONE HISTORY ENTRY (`useBackStep`, inside `useDialogFloor`). A caller with its
  * own back step must stand it down while its sheet is in the form layer, or Back pops two entries for one
  * sheet. A sheet switching layer hands the entry over in one commit (`useBackStep` takes a dead entry
- * over), so the switch costs no history.
+ * over), so the switch costs no history — and with `ownsKeys` there is nothing to hand over: one floor
+ * stands in both layers and only its trap changes.
  *
  * The props type omits `aria-modal`, but TypeScript does not check a HYPHENATED attribute a props type
  * leaves out, so a caller could still pass it — the sheet sets it AFTER the spread, from the layer, which
@@ -43,56 +62,77 @@ import styles from './SheetFrame.module.css';
  *
  * ⚠ The props omit `className` and `style` too: the frame IS the sheet's surface (the stylesheet says why a
  * second class would be settled by bundle order), and a caller's inline geometry is the drift this
- * component exists to stop.
+ * component exists to stop. A record sheet's own inset is its CONTENT's: a body wrapper inside.
  *
- * In the menu layer, Escape and a click elsewhere stay with the caller, whose dismiss boundary holds its
- * trigger as well as this sheet. The DIM is the frame's, so its answer to "and then where?" is the frame's
- * too: a tap on it blurs whatever held focus, and the frame hands focus back to `opener` when nothing else
- * took it. It is a required prop because it is the contract every sheet owes (plan: "focus returns to what
- * opened it") — the step-2 captures found three of five sheets had written the close and forgotten the
- * hand-back. The form layer keeps the same contract through the floor.
+ * The DIM is the frame's, so its answer to "and then where?" is the frame's too: a tap on it blurs
+ * whatever held focus, and the frame hands focus back to `opener` when nothing else took it. It is a
+ * required prop because it is the contract every sheet owes (plan: "focus returns to what opened it") —
+ * the step-2 captures found three of five sheets had written the close and forgotten the hand-back. The
+ * floor keeps the same contract wherever it stands.
  */
-export default function SheetFrame({ label, onClose, opener, form = false, busy = false, ref, children, ...sheet }: Omit<HTMLAttributes<HTMLDivElement>, 'aria-modal' | 'className' | 'style' | 'children'> & {
+export default function SheetFrame({
+  label, onClose, opener, form = false, busy = false, ownsKeys = false, overWindow = false, grabCloses = false, ref, children, ...sheet
+}: Omit<HTMLAttributes<HTMLDivElement>, 'aria-modal' | 'className' | 'style' | 'children'> & {
   /** The menu label (D2): small capitals at the head, because the dim hides the row that opened it. */
   label?: string;
-  /** Close the sheet: a tap on the dim, and — in the form layer — Escape and the phone's Back. The frame
-   *  returns focus afterwards. */
+  /** Close the sheet: a tap on the dim, and — wherever the floor stands — Escape and the phone's Back. The
+   *  frame returns focus afterwards. */
   onClose: () => void;
   /** What opened the sheet — where focus goes back after it closes. Read when the hand-back runs. */
   opener: RefObject<HTMLElement | null>;
   /** The FORM layer (D1): over the bar, the bar out of reach, modal, the keyboard kept inside. */
   form?: boolean;
-  /** Form layer: a write is in flight — the dim, Escape and Back wait for it (the floor's busy gate). */
+  /** A write is in flight — the dim, Escape and Back wait for it (the floor's busy gate). */
   busy?: boolean;
+  /** Menu layer: the frame answers Escape, Back and a tap on the bar — a sheet with no trigger of its own.
+   *  Temporary by design: when step 5 gives the frame every consumer's dismiss and Back (a trigger joining
+   *  the boundary), the floor always stands and this flag goes — `trap: form` is then the only choice left. */
+  ownsKeys?: boolean;
+  /** Opened from inside a full-screen window: at the screen's foot, above the window, its dim over all. */
+  overWindow?: boolean;
+  /** The grab line is a 44px Close button — a record head's own way out (D3 keeps it). */
+  grabCloses?: boolean;
   ref?: Ref<HTMLDivElement>;
   children: ReactNode;
 }) {
   // The floor needs the panel, and so do its callers: the Tools menu roves its items and Filter and the two
   // switchers seat focus in it on open — so the frame keeps its own ref and forwards the caller's.
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const dimRef = useRef<HTMLDivElement>(null);
   const setPanel = useCallback((el: HTMLDivElement | null) => {
     panelRef.current = el;
     if (typeof ref === 'function') ref(el);
     else if (ref) ref.current = el;
   }, [ref]);
   // Tolerant: the Tools menu's frame also renders on admin pages, outside the portal's overlay provider.
-  useOverlayOpenIfAvailable(form);
-  useDialogFloor(form, panelRef, { onClose, busy, opener });
-  const closeFromDim = () => {
-    if (form && busy) return;
+  // Over a window, the window already took the bar.
+  useOverlayOpenIfAvailable(form && !overWindow);
+  const floor = form || ownsKeys;
+  useDialogFloor(floor, panelRef, { onClose, busy, opener, trap: form });
+  // A tap on the bar under a menu the frame owns closes it first. The dim and the sheet are the boundary — a
+  // dim counted as outside lets the tap fall through. The pointer half of `useDismissable`: the floor owns Escape.
+  usePointerOutside(Boolean(ownsKeys) && !form, [panelRef, dimRef], () => { if (!busy) onClose(); });
+  const closeToOpener = () => {
+    if (busy) return;
     onClose();
     rescueFocusTo(opener);
   };
+  const layer = `${form ? ` ${styles.form}` : ''}${overWindow ? ` ${styles.overWindow}` : ''}`;
   return (
     <>
-      <LineupSheetScrim onClose={closeFromDim} overNav={form} />
+      <div ref={dimRef} className={`${styles.dim}${layer}`} aria-hidden="true" onClick={closeToOpener} />
       <div
         ref={setPanel}
-        className={form ? `${styles.sheet} ${styles.form}` : styles.sheet}
-        tabIndex={form ? -1 : undefined}
+        className={`${styles.sheet}${layer}${grabCloses ? ` ${styles.grabCloses}` : ''}`}
+        tabIndex={floor ? -1 : undefined}
         {...sheet}
         aria-modal={form || undefined}
       >
+        {grabCloses && (
+          <button type="button" className={styles.grab} aria-label="Close" onClick={closeToOpener}>
+            <span aria-hidden />
+          </button>
+        )}
         {label && <SheetLabel>{label}</SheetLabel>}
         {children}
       </div>

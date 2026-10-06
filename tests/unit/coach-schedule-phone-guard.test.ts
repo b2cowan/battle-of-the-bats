@@ -201,7 +201,7 @@ describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a
   it('the attendance row is the tap — a button that says it opens a dialog — and the old button is gone (in the room, since stage 1 · E2)', () => {
     assert.match(room, /<CoachRowList label="Attendance" inset className=\{styles\.attendanceRows\}>/, 'the portal\'s one row recipe, hairlined inside the sheet on a phone');
     assert.match(room, /<CoachRow\s+key=\{row\.player\.id\}\s+as="button"\s+aria-haspopup="dialog"/, 'the whole row raises the sheet');
-    assert.ok(room.includes('onClick={() => setRsvpEditId(row.player.id)}'));
+    assert.ok(room.includes('onClick={e => setRsvpEditId(row.player.id, e.currentTarget)}'), 'the tap names the row — where the sheet hands focus back');
     assert.ok(!/Edit RSVP/.test(page + sheet + room), 'no "Edit RSVP" anywhere on the page, its sheet or its room');
     assert.ok(!/Edit RSVP|rsvpEditor|rsvpOption/.test(css), 'nor its editor\'s rules in the stylesheet');
     assert.match(room, /<span className=\{styles\.attendanceStatusBadge\} data-status=\{row\.status\} data-field-key aria-hidden>/, 'the badge is the trail and the looked-for value (A4)');
@@ -209,8 +209,11 @@ describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a
   });
   it('the RSVP sheet is a real dialog on its own floor, rendered as a SIBLING of the event sheet', () => {
     const rsvp = readCode(RSVP);
-    assert.match(rsvp, /role="dialog"\s+aria-modal="true"\s+aria-labelledby=\{nameId\}/);
-    assert.ok(rsvp.includes('useDialogFloor(true, panelRef, { onClose });'), 'its own floor — Escape closes it first, focus returns to the row');
+    // Wherever the bar shows it is the shared sheet frame's FORM layer over the event window (Sheet Frame step 4 —
+    // modal, its floor the frame's, pinned in sheet-frame-guard); on a computer, a dialog on its own floor.
+    assert.match(rsvp, /<SheetFrame form overWindow grabCloses onClose=\{onClose\} opener=\{opener\} role="dialog" aria-labelledby=\{nameId\}/);
+    assert.match(rsvp, /role="dialog" aria-modal="true" aria-labelledby=\{nameId\}/);
+    assert.ok(rsvp.includes('useDialogFloor(!isPhoneNav, panelRef, { onClose, opener });'), 'its own floor — Escape closes it first, focus returns to the row');
     assert.match(rsvp, /aria-pressed=\{on\}/, 'the four choices say which one holds');
     assert.ok(!rsvp.includes('useOverlayOpen('), 'the event sheet beneath already holds the lock');
     assert.ok(!fn.includes('<CoachRsvpSheet'), 'never inside the event sheet\'s panel');

@@ -1,11 +1,10 @@
 'use client';
-import { useId, useRef } from 'react';
-import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import { useId, type RefObject } from 'react';
+import SheetFrame from '@/components/coaches/SheetFrame';
 import { positionGroups, ordinal, type PositionChip } from '@/lib/lineup-position-groups';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { BENCH_POSITION } from '@/lib/lineup-analysis';
 import type { LineupPlayerRow } from '@/lib/lineup-grid';
-import sheet from './CoachesBottomNav.module.css';
 import own from './LineupPositionSheet.module.css';
 
 /**
@@ -32,19 +31,19 @@ import own from './LineupPositionSheet.module.css';
  * grouping itself is the pure `positionGroups` in lib/lineup-position-groups.ts.
  *
  * A tap applies through the editor's ONE `setPosition` mutation (one undo step) and closes;
- * Escape and the scrim close; focus returns to the pill (the floor's own restore).
+ * Escape, Back, the dim and the grab line close; focus returns to the pill (`opener`).
  *
- * The fourth member of the phone's ONE sheet system (More · the team switcher · a player's RSVP ·
- * this): the nav module's own container — `.sheetAnchor` / `.sheetScrim` / `.dropdown` /
- * `.sheetGrab` from `CoachesBottomNav.module.css` — so the four share one skin, one grab line, one
- * radius. The anchor's foot is the BAR's top, as More's is: the builder is a page under the bar,
- * not a dialog over it. What differs is written in `LineupPositionSheet.module.css`. Only ever
- * rendered at ≤640 (the editor gates it on `useIsPhone`), where the nav module's sheet rules
- * exist; the desktop keeps its `<select>`.
+ * ⚖ ON THE PORTAL'S SHEET FRAME, IN THE MENU LAYER (Sheet Frame step 4, owner 2026-10-06). Picking a
+ * position loses nothing if a thumb strays onto the bar, so the sheet sits ON the bar, the bar lit and
+ * live, and it is never modal — it claimed `aria-modal` and held the keyboard while the bar stayed
+ * tappable until step 4. The frame owns its keys (`ownsKeys`: Escape, Back, focus in and home, Tab past
+ * the end closes it, a tap on the bar closes it first) and draws its grab line as the record head's 44px
+ * Close (`grabCloses`, D3). The record head is the player and the inning; the chips' 14px inset is the
+ * content's own (`.body`). Only ever rendered at ≤640 (the editor and the console gate it on
+ * `useIsPhone`), inside the frame's breakpoint; the desktop keeps its `<select>`.
  *
- * ⚠ Its own `useDialogFloor` (Escape, the Tab trap, focus back to the pill on close). ⚠ Not
- * registered with `useOverlayOpen` — none of the four sheets is. ⚠ Rendered in-tree, never
- * through a portal (the warm skin is a wrapper above the providers).
+ * ⚠ The `data-position-sheet` marker stays on a wrapper: the layout sweep finds the dialog INSIDE it.
+ * ⚠ Rendered in-tree, never through a portal (the warm skin is a wrapper above the providers).
  */
 export interface LineupPositionSheetProps {
   row: LineupPlayerRow;
@@ -57,15 +56,15 @@ export interface LineupPositionSheetProps {
   /** The pick: a code, `Bench`, or `''` for Leave open. The caller writes it AND closes the sheet. */
   onPick: (code: string) => void;
   onClose: () => void;
+  /** The pill that opened it — focus goes home to it (a tap on iOS never focused it). */
+  opener: RefObject<HTMLElement | null>;
 }
 
 export default function LineupPositionSheet({
-  row, inning, inningCount, periodLabel, sportPack, pitcherCap, onPick, onClose,
+  row, inning, inningCount, periodLabel, sportPack, pitcherCap, onPick, onClose, opener,
 }: LineupPositionSheetProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
   const nameId = useId();
   const subId = useId();
-  useDialogFloor(true, panelRef, { onClose });
 
   const name = playerDisplayName(row.player);
   const current = row.inningPositions[String(inning)] ?? '';
@@ -90,51 +89,40 @@ export default function LineupPositionSheet({
   };
 
   return (
-    <div className={`${sheet.sheetAnchor} ${own.floor}`} data-position-sheet>
-      <div className={sheet.sheetScrim} aria-hidden onClick={onClose} />
-      <div
-        ref={panelRef}
-        tabIndex={-1}
-        className={`${sheet.dropdown} ${own.panel}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={nameId}
-        aria-describedby={subId}
-      >
-        {/* The grab line is a real control at the floor — a tap on it closes, like the scrim. */}
-        <button type="button" className={own.grabBtn} aria-label="Close" onClick={onClose}>
-          <span className={sheet.sheetGrab} aria-hidden />
-        </button>
-        <div id={nameId} className={own.name}>{name}</div>
-        <div id={subId} className={own.sub}>{subline}</div>
-        <button type="button" className={own.benchRow} aria-pressed={current === BENCH_POSITION} onClick={() => onPick(BENCH_POSITION)}>
-          <span className={own.benchMark} aria-hidden>▭</span>
-          <span>{BENCH_POSITION}</span>
-          {current === BENCH_POSITION && <small>now</small>}
-        </button>
-        {best.length > 0 && (
-          <>
-            <div className={own.groupHead}>Best</div>
-            <div className={own.chips} role="group" aria-label="Best positions, in rank order">{best.map(c => chip(c))}</div>
-          </>
-        )}
-        {fine.length > 0 && (
-          <>
-            <div className={own.groupHead}>Fine — anywhere not Never</div>
-            <div className={own.chips} role="group" aria-label="Fine — anywhere not Never">{fine.map(c => chip(c))}</div>
-          </>
-        )}
-        {never.length > 0 && (
-          <>
-            <div className={own.groupHead} data-tone="never">Never</div>
-            <div className={own.chips} role="group" aria-label="Never on their chart">{never.map(c => chip(c, 'never'))}</div>
-          </>
-        )}
-        <div className={own.groupHead}>Or</div>
-        <button type="button" className={own.quietRow} aria-pressed={current === ''} onClick={() => onPick('')}>
-          Leave open{current === '' && <small> · now</small>}
-        </button>
-      </div>
+    <div data-position-sheet style={{ display: 'contents' }}>
+      <SheetFrame ownsKeys grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={nameId} aria-describedby={subId}>
+        <div className={own.body}>
+          <div id={nameId} className={own.name}>{name}</div>
+          <div id={subId} className={own.sub}>{subline}</div>
+          <button type="button" className={own.benchRow} aria-pressed={current === BENCH_POSITION} onClick={() => onPick(BENCH_POSITION)}>
+            <span className={own.benchMark} aria-hidden>▭</span>
+            <span>{BENCH_POSITION}</span>
+            {current === BENCH_POSITION && <small>now</small>}
+          </button>
+          {best.length > 0 && (
+            <>
+              <div className={own.groupHead}>Best</div>
+              <div className={own.chips} role="group" aria-label="Best positions, in rank order">{best.map(c => chip(c))}</div>
+            </>
+          )}
+          {fine.length > 0 && (
+            <>
+              <div className={own.groupHead}>Fine — anywhere not Never</div>
+              <div className={own.chips} role="group" aria-label="Fine — anywhere not Never">{fine.map(c => chip(c))}</div>
+            </>
+          )}
+          {never.length > 0 && (
+            <>
+              <div className={own.groupHead} data-tone="never">Never</div>
+              <div className={own.chips} role="group" aria-label="Never on their chart">{never.map(c => chip(c, 'never'))}</div>
+            </>
+          )}
+          <div className={own.groupHead}>Or</div>
+          <button type="button" className={own.quietRow} aria-pressed={current === ''} onClick={() => onPick('')}>
+            Leave open{current === '' && <small> · now</small>}
+          </button>
+        </div>
+      </SheetFrame>
     </div>
   );
 }

@@ -139,14 +139,7 @@ export function useDismissable(
     // scroll outside an open panel now dismisses it. That reads as correct — the user has moved on —
     // and matches what mainstream UI libraries do.
     const onPointer = (e: PointerEvent) => {
-      const current = refsRef.current;
-      const boundaries = Array.isArray(current) ? current : [current];
-      // An unmounted boundary is not a reason to dismiss — it's absent, not "outside". Requiring at
-      // least one live boundary keeps a portaled panel from dismissing itself on the frame before its
-      // own node lands.
-      const live = boundaries.filter(r => r.current);
-      if (!live.length) return;
-      if (live.every(r => !r.current!.contains(e.target as Node))) onDismissRef.current();
+      if (isOutside(refsRef.current, e.target)) onDismissRef.current();
     };
     const onKey = (e: KeyboardEvent) => {
       // Never hijack Escape mid-IME-composition: for someone typing Japanese/Chinese/Korean, that
@@ -187,6 +180,42 @@ export function useDismissable(
       document.removeEventListener('pointerdown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
+  }, [open]);
+}
+
+/** Does a pointer-down at `target` land outside the boundary? An unmounted boundary is not a reason to
+ *  dismiss — it's absent, not "outside". Requiring at least one live boundary keeps a portaled panel from
+ *  dismissing itself on the frame before its own node lands. */
+function isOutside(ref: RefObject<HTMLElement | null> | Array<RefObject<HTMLElement | null>>, target: EventTarget | null): boolean {
+  const live = (Array.isArray(ref) ? ref : [ref]).filter(r => r.current);
+  return live.length > 0 && live.every(r => !r.current!.contains(target as Node));
+}
+
+/**
+ * The POINTER half of `useDismissable` on its own: a pointer-down outside the boundary calls
+ * `onOutside`, and Escape is left to whoever owns it. For a surface whose Escape a dialog floor answers —
+ * the sheet frame's record sheets (Sheet Frame step 4) — `useDismissable` would also answer Escape and
+ * CLAIM it, taking the key from the floor. Same boundary rule, same `pointerdown` reasons (above); the
+ * callback and the refs are held in refs, as there.
+ */
+export function usePointerOutside(
+  open: boolean,
+  ref: RefObject<HTMLElement | null> | Array<RefObject<HTMLElement | null>>,
+  onOutside: () => void,
+) {
+  const onOutsideRef = useRef(onOutside);
+  const refsRef = useRef(ref);
+  useEffect(() => {
+    onOutsideRef.current = onOutside;
+    refsRef.current = ref;
+  }, [onOutside, ref]);
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (isOutside(refsRef.current, e.target)) onOutsideRef.current();
+    };
+    document.addEventListener('pointerdown', onPointer);
+    return () => document.removeEventListener('pointerdown', onPointer);
   }, [open]);
 }
 

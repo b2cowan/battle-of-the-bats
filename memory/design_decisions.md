@@ -137,6 +137,13 @@ tap on the bar left the game with the correction dropped. **Scouting is a MENU w
 observation is being typed** — the Award sheet's switch (D3) applied to a second sheet. **Score stays a menu** — every
 tap autosaves. ⚠ A layer may change while a sheet is open, so the frame takes it as a value, and the switch must land
 in the same commit as the inner form's own focus move (report it from the handler, never an effect).
+**Added 2026-10-06 (step 4; owner, as recommended):** **a menu-layer sheet keeps Escape, Back, focus on the sheet when
+it opens and focus home to what opened it, and gives up only the keyboard hold and the modal claim** — Tab past its
+last control closes it, the Tools menu's rule. (The position picker, a read award and the notification reader held the
+keyboard and claimed `aria-modal` over a live bar until step 4.) Two sorts the test could not make: **a sheet over a
+full-screen window has no bar under it** — it sits at the screen's foot above the window, and it is a FORM when the
+window beneath is modal and the sheet is its sibling (RSVP), a menu when it renders inside the window's own DOM (the
+depth chart's row menu); and **a surface that cannot open on a phone is not a phone sheet** (the Schedule's day list).
 
 ### 2026-10-03 — ONE CONTROL HEIGHT, THE PORTAL'S BUTTON: 34px ON A COMPUTER (owner: "looks good, go for it. I agree with your recommendations") — hub https://claude.ai/artifact/GFfHZkFRiXAxxybnAiGrWd, plan `docs/projects/active/ADMIN_CONTROL_HEIGHT_PLAN.md`
 

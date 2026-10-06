@@ -2,11 +2,13 @@
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
- * THE DIM BEHIND A BUILDER DRAWER (stage 3 · D12/D13, owner 2026-09-22). The lineup builder's four
- * phone overlays — Setup, Templates, Print, the player row menu — each raise one of these behind
+ * THE DIM BEHIND A BUILDER DRAWER (stage 3 · D12/D13, owner 2026-09-22). The lineup builder's
+ * phone overlays — Setup, Save as template, Print, Copy from, Call up — each raise one of these behind
  * themselves: a tap anywhere off the drawer closes it, and the page dims so the surface reads as
  * owning the screen instead of hovering over it. It stops at the BAR'S top, so the nav is never
- * dimmed, the same choice `.sheetScrim` makes for the portal's other four sheets.
+ * dimmed, the same choice `.sheetScrim` makes under More. (The player row menu moved to the portal's
+ * sheet frame — which now carries its own copy of this dim — in Sheet Frame step 4, 2026-10-06; the
+ * builder's other drawers follow in step 5, and this component goes with them.)
  *
  * ⚠ It renders nothing above 900 — the class is `display: none` until the bottom nav exists — so no
  * call site needs a width branch of its own, and the desktop keeps its popovers undimmed.

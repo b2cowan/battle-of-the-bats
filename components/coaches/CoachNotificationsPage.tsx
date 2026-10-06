@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Bell, CheckCheck, Settings } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -62,8 +62,11 @@ export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string })
   const feed = useNotificationFeed(currentOrg?.id);
   const { unreadOnly, setUnreadOnly, markSeen } = feed;
   const [reading, setReading] = useState<ActivityEntry | null>(null);
+  // The row that opened the reader — focus goes home to it.
+  const readingFromRef = useRef<HTMLElement | null>(null);
 
-  function openEntry(entry: ActivityEntry) {
+  function openEntry(entry: ActivityEntry, from: HTMLElement) {
+    readingFromRef.current = from;
     setReading(entry);
     void markSeen(entryMembers(entry));
   }
@@ -120,7 +123,7 @@ export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string })
         emptyCopy={FEED_EMPTY_COPY.coach}
       />
       {reading && (
-        <NotificationReader entry={reading} portal="coach" feed={feed} onClose={() => setReading(null)} />
+        <NotificationReader entry={reading} portal="coach" feed={feed} onClose={() => setReading(null)} opener={readingFromRef} />
       )}
     </div>
   );

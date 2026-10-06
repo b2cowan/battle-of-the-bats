@@ -682,16 +682,17 @@ export default function CoachGameConsolePage({
    * raises the SAME `LineupPositionSheet` the phone builder raises — one component, one grammar,
    * so the two screens can never drift into different answers to "what does Casey play?".
    *
-   * ⚠ Phone only, exactly as the builder gates it: the sheet is the fourth member of the phone's
-   * bottom-sheet system, and that system's positioning rules live entirely inside the nav's
-   * ≤900px block (`.sheetAnchor` in CoachesBottomNav.module.css). Rendered above that width it
-   * would lay out in the document flow. So ≤640 raises the sheet and wider widths get the
+   * ⚠ Phone only, exactly as the builder gates it: the sheet stands on the portal's sheet frame,
+   * whose rules live entirely inside the bar's ≤900px block (`SheetFrame.module.css`). Rendered
+   * above that width it would lay out in the document flow. So ≤640 raises the sheet and wider widths get the
    * builder's other control, a native `<select>` — which is what the desktop grid has always used.
    */
   const isPhone = useIsPhone();
   /** ≤900, the bar's breakpoint: where this screen's sheets are drawers on the shared frame. */
   const isPhoneNav = useIsPhoneNav();
   const [positionFor, setPositionFor] = useState<string | null>(null);
+  /** The pill that opened the position sheet — focus goes home to it when the sheet closes unpicked. */
+  const positionOpenerRef = useRef<HTMLElement | null>(null);
   /**
    * ⚠ WHERE FOCUS GOES AFTER A PICK (/review 2026-09-22 — measured landing on `<body>`).
    *
@@ -799,7 +800,8 @@ export default function CoachGameConsolePage({
    * controls TAPPABLE behind it. Without this, tapping a pill while (say) the score sheet was open left two surfaces up at
    * once — the thing `openSheet`'s rule exists to prevent, arrived at from the other direction.
    */
-  const beginPositionEdit = (playerId: string) => {
+  const beginPositionEdit = (playerId: string, from: HTMLElement) => {
+    positionOpenerRef.current = from;
     setSheet(null);
     abandonSwap();
     setPositionFor(playerId);
@@ -938,7 +940,7 @@ export default function CoachGameConsolePage({
         data-field-key
         data-pos-for={r.playerId}
         aria-label={`${label} — currently ${pos || 'on the bench'}. Change it.`}
-        onClick={() => beginPositionEdit(r.playerId)}
+        onClick={e => beginPositionEdit(r.playerId, e.currentTarget)}
       >
         {shown}
       </button>
@@ -1712,6 +1714,7 @@ export default function CoachGameConsolePage({
               positionSheetRow.player.lineupProfile?.pitcher?.maxInnings, teamPitcherCap)}
             onPick={code => { setPositionAt(positionSheetRow.player.id, code); setPositionFor(null); }}
             onClose={() => setPositionFor(null)}
+            opener={positionOpenerRef}
           />
         )}
 

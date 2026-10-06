@@ -1,11 +1,9 @@
 /* Only on mobile */
-/* ⚠ `.sheetAnchor` shares these declarations: it is the containing box OUTSIDE the nav for the sheets
-   that reuse this one (the position picker, RSVP, the notification reader, the Award sheet), and their
-   surface reads them from its nearest ancestor. Add a variable to one, add it to both — here and in the
-   warm remap below. (The team and player switchers left it for the portal's sheet frame, Sheet Frame
-   step 2, 2026-10-05; the four above follow in step 4.) */
-.bottomNav,
-.sheetAnchor {
+/* (Until Sheet Frame step 4, 2026-10-06, `.sheetAnchor` shared these declarations — the containing box
+   OUTSIDE the nav that the team and player switchers, the position picker, RSVP, the notification reader
+   and the Award sheet borrowed this sheet's container through. All six stand on the portal's sheet frame
+   now (`components/coaches/SheetFrame.tsx`), so the anchor is gone and only the More sheet wears this.) */
+.bottomNav {
   /* Scoped dropdown-surface color (bespoke near-black, not a semantic token) — declared
      unconditionally here so it cascades to .dropdown regardless of the media query. */
   --nav-dropdown-bg: #0d111a; /* token-exempt: bespoke near-black dropdown, no global match */
@@ -328,23 +326,6 @@
      `useDismissable` keeps treating a tap in it as inside. The scrim is positioned the same way
      — `position: fixed` would be contained by the nav's backdrop-filter and is avoided. */
   .moreWrap { position: static; }
-  /* THE ANCHOR OUTSIDE THE NAV (phone re-evaluation stage 1 · B1, 2026-09-21). A sheet drawn from
-     somewhere that is not inside the nav — first the team switcher in the masthead (which moved to the
-     portal's sheet frame in Sheet Frame step 2, 2026-10-05), today the position picker, RSVP, the
-     notification reader and the Award sheet — wraps the scrim and the panel in this zero-height box
-     pinned to the bar's top edge, and the two absolute rules below resolve against it exactly as they
-     resolve against the nav. Below the nav's z-index on
-     purpose: the bar stays visible and tappable beneath the sheet, as it does under More; ABOVE
-     the autosave pill's 250 (`.savePill` in the coaches module), so the scrim covers the pill and
-     an error pill can never intercept a tap on the sheet (/review 2026-09-21). */
-  .sheetAnchor {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
-    height: 0;
-    z-index: 260;
-  }
   .sheetScrim {
     position: absolute;
     left: 0;
@@ -419,8 +400,7 @@
     background: rgba(var(--home-paper-rgb), 0.92);
     border-top-color: var(--home-line);
   }
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bottomNav,
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sheetAnchor {
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bottomNav {
     --nav-dropdown-bg: var(--home-card);
     /* Zero-alpha twin of --home-card (#FFFFFF) — see the note beside the dark pair above. */
     --nav-dropdown-bg-t: rgba(255, 255, 255, 0);

@@ -5,9 +5,10 @@ import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import HelpTooltip from '@/components/help/HelpTooltip';
-import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
+import SheetFrame from '@/components/coaches/SheetFrame';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import { useDismissable } from '@/lib/overlay-hooks';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import { useReorderSensors } from '@/lib/hooks/useReorderSensors';
 import { positionStateOf, cyclePositionState, type PositionState } from '@/lib/lineup-profile';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -156,8 +157,12 @@ export default function PositionProfileEditor({ positions, value, onChange, labe
  * cards with gaps, the pattern "Phone lists in one frame" retired. It keeps an outline because it is
  * a control inside a form, the way an input keeps its box.
  *
- * The menu is the lineup's own (`.lineupAutoMenu` + `.lineupRowSheet` + `LineupSheetScrim`): a
- * popover under the list on a desktop, the bottom drawer at the touch widths.
+ * The menu is the lineup's row menu: a popover under the list on a computer (`.lineupAutoMenu` +
+ * `.lineupRowSheet`), and wherever the bar shows (≤900) a record sheet on the portal's sheet frame, in
+ * the MENU layer (Sheet Frame step 4, 2026-10-06) — a tap acts, nothing is lost. Inside the depth chart's
+ * player window (`menuCoversNav`) there is no bar to sit on, so it sits over the window (`overWindow`),
+ * still a menu: inside that window's own DOM. Its keys are this list's (the dismiss hook and the back
+ * step); the dim's hand-back is the frame's (to the grip).
  */
 function BestOrderList({ best, label, disabled, onReorder, menuCoversNav }: {
   best: string[];
@@ -167,8 +172,11 @@ function BestOrderList({ best, label, disabled, onReorder, menuCoversNav }: {
   menuCoversNav?: boolean;
 }) {
   const sensors = useReorderSensors();
+  const isPhoneNav = useIsPhoneNav();
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  // The grip that opened it — the frame's dim hands focus back to it (a tap on iOS never focused it).
+  const menuOpenerRef = useRef<HTMLElement | null>(null);
   const closeMenu = () => setMenuFor(null);
   useDismissable(menuFor !== null, menuRef, closeMenu);
   useBackStep(menuFor !== null, closeMenu);
@@ -189,6 +197,22 @@ function BestOrderList({ best, label, disabled, onReorder, menuCoversNav }: {
     if (from >= 0 && to >= 0 && to < best.length) onReorder(arrayMove(best, from, to));
   };
   const menuIdx = menuFor ? best.indexOf(menuFor) : -1;
+  // One body for both forms of the menu — the computer's popover and the phone's sheet.
+  const menuBody = (code: string) => (
+    <>
+      <p className={coach.lineupRowSheetHead}>
+        <strong>{label(code)}</strong>
+        <span>Best · {menuIdx + 1} of {best.length}</span>
+      </p>
+      <button type="button" className={coach.lineupRowSheetItem} disabled={menuIdx === 0} onClick={() => move(code, -1)}>
+        <ChevronUp size={18} aria-hidden="true" /> Move up
+      </button>
+      <button type="button" className={coach.lineupRowSheetItem} disabled={menuIdx === best.length - 1} onClick={() => move(code, 1)}>
+        <ChevronDown size={18} aria-hidden="true" /> Move down
+      </button>
+      <button type="button" className={coach.lineupRowSheetCancel} onClick={closeMenu}>Done</button>
+    </>
+  );
 
   return (
     <div style={{ position: 'relative' }}>
@@ -201,28 +225,22 @@ function BestOrderList({ best, label, disabled, onReorder, menuCoversNav }: {
           }}>
             {best.map((code, idx) => (
               <BestOrderRow key={code} code={code} rank={idx + 1} last={idx === best.length - 1}
-                label={label(code)} disabled={disabled} onMenu={() => setMenuFor(code)} />
+                label={label(code)} disabled={disabled} onMenu={from => { menuOpenerRef.current = from; setMenuFor(code); }} />
             ))}
           </ol>
         </SortableContext>
       </DndContext>
       {menuFor !== null && menuIdx >= 0 && (
         <div ref={menuRef}>
-          <LineupSheetScrim onClose={closeMenu} overNav={menuCoversNav} />
-          <div className={`${coach.lineupAutoMenu} ${coach.lineupRowSheet}${menuCoversNav ? ` ${coach.lineupDrawerOverNav}` : ''}`}
-            role="dialog" aria-label={`Options for ${label(menuFor)}`}>
-            <p className={coach.lineupRowSheetHead}>
-              <strong>{label(menuFor)}</strong>
-              <span>Best · {menuIdx + 1} of {best.length}</span>
-            </p>
-            <button type="button" className={coach.lineupRowSheetItem} disabled={menuIdx === 0} onClick={() => move(menuFor, -1)}>
-              <ChevronUp size={18} aria-hidden="true" /> Move up
-            </button>
-            <button type="button" className={coach.lineupRowSheetItem} disabled={menuIdx === best.length - 1} onClick={() => move(menuFor, 1)}>
-              <ChevronDown size={18} aria-hidden="true" /> Move down
-            </button>
-            <button type="button" className={coach.lineupRowSheetCancel} onClick={closeMenu}>Done</button>
-          </div>
+          {isPhoneNav ? (
+            <SheetFrame onClose={closeMenu} opener={menuOpenerRef} overWindow={menuCoversNav} role="dialog" aria-label={`Options for ${label(menuFor)}`}>
+              {menuBody(menuFor)}
+            </SheetFrame>
+          ) : (
+            <div className={`${coach.lineupAutoMenu} ${coach.lineupRowSheet}`} role="dialog" aria-label={`Options for ${label(menuFor)}`}>
+              {menuBody(menuFor)}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -230,7 +248,7 @@ function BestOrderList({ best, label, disabled, onReorder, menuCoversNav }: {
 }
 
 function BestOrderRow({ code, rank, last, label, disabled, onMenu }: {
-  code: string; rank: number; last: boolean; label: string; disabled?: boolean; onMenu: () => void;
+  code: string; rank: number; last: boolean; label: string; disabled?: boolean; onMenu: (from: HTMLElement) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: code, disabled });
   return (
@@ -246,7 +264,7 @@ function BestOrderRow({ code, rank, last, label, disabled, onMenu }: {
       {/* The grip is the one control: hold to drag, tap for the menu (the D8 handle). A coach who
           cannot edit sees the order and no grip — a disabled handle is a control that looks live. */}
       {!disabled && (
-        <button type="button" {...attributes} {...listeners} onClick={onMenu}
+        <button type="button" {...attributes} {...listeners} onClick={e => onMenu(e.currentTarget)}
           aria-label={`${label}, Best ${rank}. Hold to move, tap for options.`}
           style={{
             display: 'grid', placeItems: 'center', flex: 'none', width: 44, height: 44,

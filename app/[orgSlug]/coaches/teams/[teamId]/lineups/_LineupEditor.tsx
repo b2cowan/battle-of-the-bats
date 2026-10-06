@@ -9,6 +9,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
+import SheetFrame from '@/components/coaches/SheetFrame';
 import LineupDrawerHead from '@/components/coaches/LineupDrawerHead';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
@@ -83,7 +84,7 @@ function SortableLineupRow({
   onStarterToggle: (playerId: string, checked: boolean) => void;
   onPositionChange: (playerId: string, inning: number, value: string) => void;
   onRemove: (playerId: string) => void;
-  onRowActions: (playerId: string) => void;
+  onRowActions: (playerId: string, from: HTMLElement) => void;
   orderLabel: string;
   cellIssueFor: (playerId: string, inning: number, value: string) => { isOpen: boolean; hasConflict: boolean; description?: string };
 }) {
@@ -107,7 +108,7 @@ function SortableLineupRow({
           <span className={styles.lineupBatNumber} style={{ color: battingNumber ? 'var(--white-90)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>{battingNumber || '–'}</span>
           <button type="button" className={styles.lineupBatHandle} data-numbered={battingNumber ? 'true' : undefined}
             aria-label={`${name}, ${battingNumber ? `batting ${battingNumber}` : 'on the bench'}. Hold to move, tap for options.`}
-            {...attributes} {...listeners} onClick={() => onRowActions(row.player.id)}>
+            {...attributes} {...listeners} onClick={e => onRowActions(row.player.id, e.currentTarget)}>
             <GripVertical size={12} aria-hidden="true" />{battingNumber || '–'}
           </button>
         </div>
@@ -291,6 +292,9 @@ export default function LineupEditor(props: LineupEditorProps) {
   // taps, not two round trips; Remove and Cancel close it.
   const [rowActionsFor, setRowActionsFor] = useState<string | null>(null);
   const rowSheetRef = useRef<HTMLDivElement>(null);
+  // The handle that opened it — the frame's dim hands focus back to it (a tap on iOS never focused it).
+  const rowOpenerRef = useRef<HTMLElement | null>(null);
+  const openRowActions = (playerId: string, from: HTMLElement) => { rowOpenerRef.current = from; setRowActionsFor(playerId); };
   useDismissable(rowActionsFor !== null, rowSheetRef, () => setRowActionsFor(null));
   /* ⚠ BACK CLOSES THE DRAWER, IT DOES NOT LEAVE THE PAGE (owner, 2026-09-22 — “when I hit
      back it brings me to the lineup list and not the lineup I am editing”). These panels predate
@@ -317,6 +321,9 @@ export default function LineupEditor(props: LineupEditorProps) {
   const inningOnScreen = Math.min(Math.max(1, phoneInning), Math.max(1, inningCount));
   // The position sheet (D5): whose pill is open, for the inning on screen. null = closed.
   const [positionFor, setPositionFor] = useState<string | null>(null);
+  // The pill that opened it — focus goes home to it when the sheet closes.
+  const positionOpenerRef = useRef<HTMLElement | null>(null);
+  const openPositionSheet = (playerId: string, from: HTMLElement) => { positionOpenerRef.current = from; setPositionFor(playerId); };
   // The Setup row (D1): focus returns to it when its panel closes by a key or a Generate.
   const setupRowRef = useRef<HTMLButtonElement>(null);
   const autoFillLabel = { competitive: 'Competitive', balanced: 'Balanced', development: 'Development' }[autoPolicy];
@@ -1238,8 +1245,8 @@ export default function LineupEditor(props: LineupEditorProps) {
                 coverage={phoneCoverage} clash={phoneClash} dots={phoneDots}
                 onStep={setPhoneInning}
                 onOpenInning={() => setLens({ view: 'inning', inning: inningOnScreen, fromCheck: false })}
-                onRowActions={setRowActionsFor}
-                onPickPosition={setPositionFor}
+                onRowActions={openRowActions}
+                onPickPosition={openPositionSheet}
                 cellIssueFor={cellIssueFor}
               />
               {/* ⚰ The phone's "Hold a number to move a player · ‹ › for the innings" hint was
@@ -1288,7 +1295,7 @@ export default function LineupEditor(props: LineupEditorProps) {
                   <SortableContext items={rows.map(r => r.player.id)} strategy={verticalListSortingStrategy}>
                     {rows.map(row => (
                       <SortableLineupRow key={row.player.id} row={row} battingNumber={row.battingOrder} mode={lineupMode} inningCount={inningCount}
-                        onStarterToggle={toggleStarter} onPositionChange={setPosition} onRemove={removePlayer} onRowActions={setRowActionsFor}
+                        onStarterToggle={toggleStarter} onPositionChange={setPosition} onRemove={removePlayer} onRowActions={openRowActions}
                         orderLabel={sportPack.orderLabel} cellIssueFor={cellIssueFor} />
                     ))}
                   </SortableContext>
@@ -1299,12 +1306,13 @@ export default function LineupEditor(props: LineupEditorProps) {
           </DndContext>
         )}
 
-        {/* The row-actions sheet (D8): opened by a TAP on a row's number at touch widths. It wears
-            the toolbar popovers' phone recipe (`lineupAutoMenu` — a panel anchored above the nav),
-            so it is the same surface Auto-fill, Templates and Print already open there. Move up /
-            Move down are the non-drag path — the ↑ ↓ the order view used to carry, one tap away
-            instead of one tab away — so nobody is stranded if press-and-hold feels wrong on a
-            given phone. */}
+        {/* The row-actions sheet (D8): opened by a TAP on a row's number at touch widths (≤768, inside
+            the bar's 900). On the portal's sheet frame, in the MENU layer (Sheet Frame step 4): a tap
+            acts, so it sits on the bar and the bar stays the way out; the record head names the player.
+            Move up / Move down are the non-drag path — the ↑ ↓ the order view used to carry, one tap
+            away instead of one tab away — so nobody is stranded if press-and-hold feels wrong on a
+            given phone. Its keys are this page's (the dismiss hook and the back step below the state),
+            the dim's hand-back is the frame's (to the handle). */}
         {sheetRow && (
           /* ⚠⚠ THE SCRIM MUST LIVE INSIDE THE ELEMENT `useDismissable` WATCHES (/review, 2026-09-22).
              It was a SIBLING of the ref'd sheet here, where the builder's other three drawers put it
@@ -1318,8 +1326,7 @@ export default function LineupEditor(props: LineupEditorProps) {
              scrim's own onClick is the single close path. ⚠ This wrapper is not decoration — if it
              is ever flattened, the defect comes back silently. */
           <div ref={rowSheetRef}>
-          <LineupSheetScrim onClose={() => setRowActionsFor(null)} />
-          <div className={`${styles.lineupAutoMenu} ${styles.lineupRowSheet}`} role="dialog" aria-label={`Options for ${playerDisplayName(sheetRow.player)}`}>
+          <SheetFrame onClose={() => setRowActionsFor(null)} opener={rowOpenerRef} role="dialog" aria-label={`Options for ${playerDisplayName(sheetRow.player)}`}>
             <p className={styles.lineupRowSheetHead}>
               <strong>{playerDisplayName(sheetRow.player)}</strong>
               <span>{sheetRow.battingOrder ? `${sportPack.orderLabel} · ${sheetRow.battingOrder} of ${rows.filter(r => r.starter).length}` : 'Bench'}</span>
@@ -1328,7 +1335,7 @@ export default function LineupEditor(props: LineupEditorProps) {
             <button type="button" className={styles.lineupRowSheetItem} disabled={sheetIndex === rows.length - 1} onClick={() => moveRowByPlayer(sheetRow.player.id, 1)}><ChevronDown size={18} aria-hidden="true" /> Move down</button>
             <button type="button" className={`${styles.lineupRowSheetItem} ${styles.lineupRowSheetDanger}`} onClick={() => { removePlayer(sheetRow.player.id); setRowActionsFor(null); }}><X size={18} aria-hidden="true" /> Remove from lineup</button>
             <button type="button" className={styles.lineupRowSheetCancel} onClick={() => setRowActionsFor(null)}>Cancel</button>
-          </div>
+          </SheetFrame>
           </div>
         )}
 
@@ -1341,6 +1348,7 @@ export default function LineupEditor(props: LineupEditorProps) {
             sportPack={sportPack} pitcherCap={pitcherCapFor(positionRow)}
             onPick={code => { setPosition(positionRow.player.id, inningOnScreen, code); setPositionFor(null); }}
             onClose={() => setPositionFor(null)}
+            opener={positionOpenerRef}
           />
         )}
 

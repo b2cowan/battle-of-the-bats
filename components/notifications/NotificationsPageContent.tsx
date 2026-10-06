@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { CheckCheck, Settings } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -37,8 +37,11 @@ export default function NotificationsPageContent({ settingsHref }: { settingsHre
   usePageTitle('Notifications');
   const feed = useNotificationFeed(currentOrg?.id);
   const [reading, setReading] = useState<ActivityEntry | null>(null);
+  // The row that opened the reader — focus goes home to it.
+  const readingFromRef = useRef<HTMLElement | null>(null);
 
-  function openEntry(entry: ActivityEntry) {
+  function openEntry(entry: ActivityEntry, from: HTMLElement) {
+    readingFromRef.current = from;
     setReading(entry);
     void feed.markSeen(entryMembers(entry));
   }
@@ -71,7 +74,7 @@ export default function NotificationsPageContent({ settingsHref }: { settingsHre
 
       <NotificationFeedBody feed={feed} onOpen={openEntry} />
       {reading && (
-        <NotificationReader entry={reading} portal="admin" feed={feed} onClose={() => setReading(null)} />
+        <NotificationReader entry={reading} portal="admin" feed={feed} onClose={() => setReading(null)} opener={readingFromRef} />
       )}
     </div>
   );

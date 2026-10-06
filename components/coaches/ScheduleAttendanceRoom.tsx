@@ -49,8 +49,8 @@ export default function ScheduleAttendanceRoom({
   attendanceFilter: RepAttendanceStatus | 'all';
   setAttendanceFilter: (f: RepAttendanceStatus | 'all') => void;
   setAllAttendance: (status: RepAttendanceStatus) => void;
-  /** Raise the RSVP sheet for one player. */
-  setRsvpEditId: (playerId: string) => void;
+  /** Raise the RSVP sheet for one player — with the row, where focus goes home to. */
+  setRsvpEditId: (playerId: string, from: HTMLElement) => void;
   handleAttendanceSave: () => Promise<boolean>;
 }) {
   const filteredRows = attendanceFilter === 'all'
@@ -141,7 +141,7 @@ export default function ScheduleAttendanceRoom({
                 as="button"
                 aria-haspopup="dialog"
                 aria-label={`${name} · ${cur.label}${row.note ? ' · has a note' : ''} · set attendance`}
-                onClick={() => setRsvpEditId(row.player.id)}
+                onClick={e => setRsvpEditId(row.player.id, e.currentTarget)}
                 title={name}
                 trail={
                   <>

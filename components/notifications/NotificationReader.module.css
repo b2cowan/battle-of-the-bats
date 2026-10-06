@@ -1,45 +1,27 @@
-/* NotificationReader — the reader's FRAME: what differs from the More / team / RSVP sheets it
-   shares a container with (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown`
-   / `.sheetGrab`). The message inside — eyebrow, title, body, members and the button row — is the
-   shared `NotificationMessage` block and its own stylesheet (Notifications Open in Place, step 2).
-   Worn by BOTH portals' Notifications pages since step 3 (2026-10-06); moved here from
-   `components/coaches/` with its component. The admin's bar is the same stylesheet, so the anchor's
-   bar-height arithmetic holds there too (the admin's context strip never shows on this page).
-   Doubled selectors where this file overrides the nav module: both write at (0,1,0), and which of
-   two same-weight rules wins across modules is bundle order — (0,2,0) wins whichever comes first.
+/* NotificationReader — the reader's FRAME. The message inside — eyebrow, title, body, members and the button
+   row — is the shared `NotificationMessage` block and its own stylesheet (Notifications Open in Place, step 2).
+   Worn by BOTH portals' Notifications pages since step 3 (2026-10-06); moved here from `components/coaches/`
+   with its component.
 
-   ⚖ ON A PHONE THE ANCHOR IS THE SHARED ONE, AT THE BAR'S TOP EDGE — the MENU layer of the drawer
-   ruling (2026-09-23): a reader holds nothing that can be lost, so the bar stays visible and
-   tappable under it, exactly as it does under More. Nothing here moves the anchor below 901px. */
+   ⚖ WHEREVER THE BAR SHOWS (≤900) IT IS THE PORTAL'S SHEET FRAME, IN THE MENU LAYER (Sheet Frame step 4,
+   2026-10-06): a reader holds nothing that can be lost, so the bar stays visible and tappable under it,
+   exactly as it does under More. The frame draws the sheet, its dim, its height cap and its grab line as
+   a 44px Close; it reads `--coach-foot-clear`, which the coach shell and the admin shell both declare. This
+   file draws only the message's inset there, and the computer's dialog below. */
 
-.panel.panel {
-  padding: 6px 20px 16px;
-}
+/* The message's own inset — the frame pads 8px a side and 14px at the foot; the message has always stood
+   20px in and 16px up, as this reader set it on the More sheet's container. */
+.body { padding: 0 12px 2px; }
 
-/* The grab line as a 44px control — the sheet's own way out, beside the scrim, Escape and Back. */
-.grabBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: var(--tap-min, 44px);
-  margin: -6px 0 0;
-  padding: 0;
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-.grabBtn > span { margin: 0; }
-
-/* ABOVE THE NAV BREAKPOINT the nav module draws nothing (its sheet rules are ≤900), so the same
-   panel is a small centered dialog — the RSVP sheet's answer, for the same reason. The anchor
-   becomes a zero-height box at the screen's foot (a full-screen fixed element is CHROME to the
-   rendered sweep); the scrim rises from it over the viewport and the panel is centred against it.
-   ⚖ The button row keeps the PHONE's order — the way on first, the trash last and apart — because
-   the message is one block in every frame (hub screen 7, 2026-10-05); the portal's other dialogs put
-   the way on last. Its 34px computer height is the block's own. */
+/* ABOVE THE NAV BREAKPOINT there is no bar and no frame, so the message is a small centered dialog — the
+   RSVP sheet's answer, for the same reason. The anchor is a zero-height box at the screen's foot (a
+   full-screen fixed element is CHROME to the rendered sweep); the scrim rises from it over the viewport and
+   the panel is centred against it. Only ever rendered above 900.
+   ⚖ The button row keeps the PHONE's order — the way on first, the trash last and apart — because the
+   message is one block in every frame (hub screen 7, 2026-10-05); the portal's other dialogs put the way on
+   last. Its 34px computer height is the block's own. */
 @media (min-width: 901px) {
-  .floor.floor {
+  .floor {
     position: fixed;
     left: 0;
     right: 0;
@@ -47,7 +29,7 @@
     height: 0;
     z-index: 400;
   }
-  .scrim.scrim {
+  .scrim {
     position: absolute;
     left: 0;
     right: 0;
@@ -55,7 +37,7 @@
     height: 100vh;
     background: rgba(0, 0, 0, 0.6); /* token-exempt: modal scrim, the RSVP sheet's value */
   }
-  .panel.panel {
+  .panel {
     position: absolute;
     left: 50%;
     bottom: 50vh;
@@ -68,5 +50,4 @@
     border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
     border-radius: var(--radius);
   }
-  .grabBtn { display: none; }
 }

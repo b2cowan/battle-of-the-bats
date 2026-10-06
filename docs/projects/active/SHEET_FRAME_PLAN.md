@@ -6,7 +6,8 @@ frames and measured facts in `sheet-frame/` (`facts.json`). PM brief `SHEET_FRAM
 `SHEET_FRAME_BUILD_PROMPT.md` (one step per chat). Ruling recorded in `memory/design_decisions.md` (2026-10-05).
 **Step 1 built 2026-10-05, committed `9ab32b23`; ✅ owner QA §264 PASSED 9/9 2026-10-05** (see *Build record*).
 **Step 2 built 2026-10-05, committed `91986b7c`; ✅ owner QA §266 PASSED 17/17 2026-10-06** (see *Build record*).
-**Step 3 built 2026-10-06, committed `5d036eeb`; ✅ owner QA §268 PASSED 19/19 2026-10-06** (see *Build record*). Steps 4–5 to build.
+**Step 3 built 2026-10-06, committed `5d036eeb`; ✅ owner QA §268 PASSED 19/19 2026-10-06** (see *Build record*).
+**Step 4 built 2026-10-06; owner QA §273** (see *Build record*). Step 5 to build.
 
 ## The rulings
 
@@ -44,6 +45,10 @@ form 390 over the bar, under `.modalOverlay` 400.
    sorted by the same test in the step's plan. The substitution confirm stays a card. Its own owner walk.
 4. **The record sheets.** Position picker, RSVP, player row menu, notification reader, Award sheet onto the frame,
    looking unchanged; the position picker drops `aria-modal` (menu layer); the Award sheet keeps switching layer.
+   **Built 2026-10-06** — with what the code said that this line did not: RSVP is a FORM over its window (the frame's
+   third place, `overWindow`); the frame owns a record sheet's keys in the menu layer, without the trap (owner
+   ruling 2026-10-06); the frame took its own dim; the profile's and the depth chart's row menus came too; the Schedule
+   day list is not a phone sheet (below).
 5. **The lineup builder's drawers — last.** Setup, Save as template, Call up, Copy from, Print's geometry: one frame
    with the rest. Call up takes the shared form head (`LineupDrawerHead`) instead of its own `<h3>`; the three forms
    keep the keyboard inside (`useDialogFloor` — it also calls `useBackStep`, so the §219 back-step guard moves with it;
@@ -51,10 +56,11 @@ form 390 over the bar, under `.modalOverlay` 400.
    the three Tools panels share one Escape line; step 5 checks Copy from's own × and pick).
 
 **Out of the frame:** full-screen windows (`RoomShell` rooms, `ScheduleEventSheet`, `TagManagerDrawer`,
-`HelpDrawer`); the More sheet's own container; the club admin's `BottomSheet` (D4). The Schedule day list
-(`.daySheetOverlay`, several events on one day) is a menu that covers the bar — sort it in step 2 or 4 if it can be
-opened on test data. (Step 2: the UAT team has no day with two events, so it could not be opened without writing one —
-left for step 4.)
+`HelpDrawer`); the More sheet's own container; the club admin's `BottomSheet` (D4). **The Schedule day list**
+(`.daySheetOverlay`, a month cell's "+N more") **is not a phone sheet**: since 2026-09-21 the phone's month view is
+dots plus the chosen day's rows, with no "+N more", so the list opens only at 641px and wider, as a centred card
+(found opening it in step 4 with four probe events on one day; its ≤640 rules are dead code). Its tablet defects are
+reported in step 4's build record, with a recommendation.
 
 ## Guards that pin today's sheets (keep them green or move their assertions with the step)
 
@@ -73,7 +79,10 @@ rule, no hand-copied bar height, `aria-modal` only on the form layer.
 | Game-day dim is the dark one on warm; the bar height copied by hand | 3 (built) |
 | Game-day dim OUTSIDE the dismiss boundary: under touch a tap on it closed Note, Scouting or End game AND pressed what it covered — over the console's ← it left the game (4–5 of 6 sheets at 390) — found capturing step 3 | 3 (built) |
 | End game holds a corrected score above a live bar; Scouting's observation box likewise — sorted by D1 in step 3, owner 2026-10-06 | 3 (built) |
-| Filter sheet and position picker `aria-modal` while the bar is live | 1 (Filter: built), 4 |
+| Filter sheet and position picker `aria-modal` while the bar is live | 1 (Filter: built), 4 (built — the Award sheet while read and the reader too) |
+| A tap on More with the position picker or the Award sheet open opened More on top, the sheet still open beneath (the reader's 09-25 /review fix had reached only the reader) — found capturing step 4 | 4 (built — the frame closes a record sheet on a tap on the bar) |
+| The Schedule day list on a tablet: no Escape, Back leaves the Schedule, focus never enters, a tap on its dim falls through (over the team name it opened the switcher) — found in step 4 | reported — not a phone sheet; a follow-up (owner's call) |
+| Tools, Filter and the two switchers stand no back step: Back with one open on a phone leaves the page (by the code) — found in step 4 | 5 |
 | Print has no title and no role | 2 (built) |
 | Three builder forms let the keyboard out (2026-09-23 open half) | 5 |
 | Escape leaves focus nowhere: Copy from, tag manager, admin sheet | 2 (Copy from, built — one Escape line serves the three Tools panels); the other two are out of the frame — report |
@@ -470,3 +479,133 @@ bounce shows the same canvas. Not caused by the docked row (D7); the strip was t
   Dark captures of the game, Overview, Lineups and admin home are pixel-identical. Not checkable in the test browser:
   the iPhone bounce (QA §270 W5 step 3). The volunteer shells (`data-guest-kit`, warm palette fixed) are not covered by
   the rule and were not measured.
+
+### Step 4 — the record sheets (built 2026-10-06; owner QA §273)
+
+**Before building — the code disagreed with the plan in four places (raised before any change, owner answered the
+one question that was his).**
+- **The notification reader was mid-flight**, then wasn't. At the start it was being rewritten, uncommitted, by
+  Notifications Open in Place step 3 — one reader for the coach's AND the admin's Notifications pages, kept off this
+  frame on purpose because the frame's dim imported `coaches.module.css` (~945KB) into the admin. That project
+  committed and closed mid-session (`157adb69`, `fc889b4b`); this step gave the frame its own dim (below), which
+  removed the reason, so the reader joined as the plan intended.
+- **RSVP is not a menu** (the build prompt said it was). It never sits on the bar: it opens over the event window,
+  which has already taken the bar, and that window is MODAL — a sheet stacked on a modal window must be modal itself,
+  or the keyboard walks out behind both. It stays exactly as a keyboard and a screen reader met it (held inside,
+  modal), in the FORM layer. Neither of the frame's layers reached above a window (menu 260, form 390, the window 400),
+  so the frame gained a third place: **over a window** (`overWindow`, 410).
+- **"Looking unchanged" holds for what is inside, not for the sheet's skin.** These sheets wore the More sheet's
+  container; on the frame every line of content keeps its place (each sheet's own inset moves into a body wrapper,
+  the step-3 pattern), and the sheet takes the frame's surface — the change the switchers took in step 2, accepted
+  on that walk: in Dark the background goes from the bar's near-black to the card surface, and in both themes the
+  edge shadow, the grab line's ink and the slide-up animation follow the frame.
+- **The Schedule day list cannot be opened on a phone.** Since 2026-09-21 (phone re-evaluation stage 2 · C2) the
+  phone's month view is dots plus the chosen day's rows, with no "+N more"; the day list opens only at 641px and wider,
+  where it is a centred card. It is not a phone sheet, so it stays out of the frame — the owner had ruled "draw it in
+  this step" on the premise that it was one. Its phone styling (`.daySheet` at ≤640) is dead code. Reported, with a
+  recommendation (below), not built.
+
+**The decision the owner made (2026-10-06, as recommended).** Today the position picker and the Award sheet (read)
+held the keyboard inside and claimed `aria-modal` with the bar live. A menu-layer record sheet keeps Escape, Back,
+focus on the sheet when it opens and focus home to what opened it; it loses the keyboard hold and the modal claim —
+Tab past its last control (Shift+Tab before its first) closes it, focus sent home first so the browser's Tab carries
+on from there, as the Tools menu's Tab does.
+
+**Who answers the keys — the deferred "frame owns dismiss and Back in both layers".** Lands now for the sheets with
+no trigger of their own (the record sheets): `ownsKeys`. The trigger-owning consumers (Tools, Filter, the switchers,
+game day, the row menus) keep their own dismiss hook until step 5. Found reading them: Tools, Filter and the two
+switchers have **no back step** — on a phone, Back with one open leaves the page (by the code; step 5's).
+
+**Built.**
+- `SheetFrame`: its OWN dim (`.dim`, `.dim.form`, `.dim.overWindow` in `SheetFrame.module.css`, the portal's pair of
+  colours and the warm remap — it no longer imports `LineupSheetScrim`, so nothing on the frame reaches
+  `coaches.module.css`); `ownsKeys` — the floor in the menu layer WITHOUT its trap, and a pointer-down outside the dim
+  and the sheet (a tap on the bar) closes the sheet first; `overWindow` (bottom 0, 410 / 409, no overlay of its own —
+  the window holds the lock); `grabCloses` (the grab line as a 44px Close, `.grab`, in place of the drawn one); the
+  dim's close waits for `busy` in either layer; `tabIndex -1` wherever the floor stands.
+- `useDialogFloor`: `trap: false` — see the decision above. Read on every key, so a layer switch needs no re-bind.
+- **Position picker** (builder and game day ≤640): `<SheetFrame ownsKeys grabCloses>`, menu layer, no `aria-modal`;
+  both hosts name the pill as the opener (`e.currentTarget`).
+- **Award sheet**: `<SheetFrame ownsKeys form={editing} busy={removing}>` — ONE floor in both layers, only its hold
+  changing; its own `useOverlayOpen`, floor, anchor and form geometry deleted (the frame's).
+- **RSVP**: ≤900 `<SheetFrame form overWindow grabCloses>`; above 900 the centred dialog it was, on its own floor, with
+  the More container's inert classes dropped.
+- **Notification reader** (both portals): ≤900 `<SheetFrame ownsKeys grabCloses>`; above 900 its dialog. Its own
+  bar-tap listener (the 09-25 /review fix) is the frame's rule now. The list names the row it opened from
+  (`onOpen(entry, from)`).
+- **Player row menus**: the builder's (touch widths) and the player profile's Best positions list (≤900) on the frame's
+  menu layer, their own dismiss hook and back step kept; the depth chart's player window passes `overWindow` (the
+  menu inside a window — it was `.lineupDrawerOverNav`). Above 900 the profile's popover is unchanged. The frame's
+  dim hands focus back to the handle (it went to `<body>`).
+- `CoachesBottomNav.module.css`: `.sheetAnchor` retired — its last six users (the switchers in step 2, these four
+  now) all stand on the frame. Comments that named it point at the frame.
+
+**Proved.** `.probe/sf4/capture.mjs` + `diff.mjs` (copied from step 3's; it adds Back, and a tap on the bar's More with the sheet open), before and after, the record sheets at 390 touch in warm and dark, 768 touch and 1280:
+- **Every line of content kept its place** in the picker (builder and game day), RSVP, the Award sheet (read and edited) and the reader (coach and treasurer): dx 0, dy 0 on every node but the grab-line Close button, which now spans the frame's width. The row menus (builder, profile, depth chart) moved 2.4px in and grew 9px at the foot — the frame's inset and foot, the Tools menu's (taken, not padded back).
+- **What changed is the ruled behaviour and the frame's skin.** The picker, the Award sheet (read) and the reader: no `aria-modal`; Tab past the end closes them. **A tap on More with the picker or the Award sheet open now closes the sheet first** (before: More opened on top, the sheet still open beneath — every run, both themes, the builder and game day). The row menus: a tap on the dim hands focus back to the handle (it went to `<body>`). The skin: the frame's grab line (lighter), its shadow, and in Dark the card surface (`rgb(17, 24, 39)`, was the bar's `rgb(13, 17, 26)`); the slide-up animation is gone.
+- RSVP at 390 and 768: still a form over its window (modal, the window's bar hidden, Tab never leaves, Escape and Back close RSVP alone), z 410 with the frame's dim at 409. 1280: RSVP, the profile's popover and the treasurer's reader **pixel-identical**; the coach's reader's dialog identical (the pixels that differ are the list behind it, through its corners).
+- The frame's existing consumers, re-captured because the frame changed (`.probe/sf4/menus.mjs`, fresh before-captures — the UAT fixture was re-seeded today): the eight sheets (both Tools, Filter, both switchers, View, Add event, Print) warm and dark — **pixel-identical, every computed style, focus on open, Escape and dim tap identical**; game day's seven surfaces (`.probe/sf4/gameday.mjs`) warm and dark — **pixel-identical, content dx 0 dy 0**; the only difference is the dim element's class name.
+- `.probe/sf4/keys.mjs` with a keyboard, **21/21**: the picker (600) and a read award open with focus on the sheet, not modal; Tab past the last control closes them and focus carries on from the opener (the next row's handle; the page after the award's chevron); Shift+Tab before the first closes them; Escape and Back hand focus to the pill / the chevron; one more Back leaves (no entry left behind). The Award sheet while edited: modal, the bar hidden, Tab ×15 / Shift+Tab ×15 never leave, Escape closes it (nothing typed) with focus on the chevron, and the read → edit switch leaves no history entry. RSVP (800): modal, Tab never leaves, Escape and Back close RSVP alone with the window still open.
+- **Writes:** the reader probes answer every notification write themselves (opening marks a notice read); the award and the positions were opened, never edited. Fixtures, all removed or restored: four practices on one day (the day list), Devon's two positions swapped (restored to 2B, SS); ONE probe award stays for the walk.
+
+**Checks.** `sheet-frame-guard` grew step 4 (9 tests: the frame's own dim and no borrowed stylesheet; over a window; the grab Close; the menu layer's keys; the picker; the Award sheet's one floor; RSVP's form over its window; the reader; the row menus); step 1–3 assertions moved with the frame (the dim, the close's busy gate, the layer classes, the floor's call, `.sheet:focus`). Moved with the step: `coach-lineup-phone-guard` (the row menu's scrim is the frame's; the picker on the frame; the openers), `coach-award-edit`, `coach-schedule-phone-guard` and `coach-schedule-sheet-guard` (RSVP and its row), `coach-reports-phone-guard` (the award row names its opener), `notification-open-in-place-guard` (the reader's opener; the admin page reaches `SheetFrame.module.css` and still never `coaches.module.css`). Every guard that reads a touched file: 388/388. `npm run typecheck` clean; focused lint 0 errors (the 10 warnings are on game-page lines this step did not touch). `npm run verify:changed`: the unit run 5,793/5,795 — both failures traced: one was this step's (`coach-reports-phone-guard`, moved), the other is `install-banner-layer-guard`, ANOTHER session's untracked guard, which reads the two rules this step retired (below); the remaining checks run one by one: all clean but three that read other sessions' uncommitted work (`check-public-tokens` and `check-admin-old-look` — the tournament admin redesign; `check-schema-parity` — Club Tier 3b's dev-only migration). `check:layout --only=` the nine touched screens (the builder and its position sheet, RSVP, both Notifications pages, Awards, the player edit, the depth chart, game day) `--theme=warm`: **no new findings** (34 baseline entries no longer reproduce — earlier changes; not pruned).
+
+**Not done, reported.** - **The Schedule day list, on a tablet** (641–900, where it opens): a centred card that hides the bar, with **no Escape** (measured: nothing happens), **Back leaves the Schedule**, focus never enters it, and **a tap on its dim falls through** — over the team name it closed the card AND opened the team switcher (the step-3 game-day defect's family: it closes on the press). Its ≤640 bottom-sheet rules are dead code. Recommendation: give the card the dialog floor (Escape, Back, focus in and home) and close it on the tap, not the press, at 641+; delete the dead phone rules. A small follow-up; the owner's call.
+- **Tools, Filter and the two switchers have no back step** (by the code): on a phone, Back with one open leaves the page. Step 5's, with the frame owning dismiss and Back for trigger-owning sheets.
+- **The frame's grab line is faint** — warm `--border-2` on white, about 1.2:1 — and on a record sheet it is now a Close control (it was dark olive on those). The frame's ink since step 1 (the Tools menu, the switchers); a `/design` call, not changed here.
+- ~~**`install-banner-layer-guard.test.ts`** reads `.sheetAnchor` and `.anchorForm.anchorForm`, both retired here~~ — that session committed the guard (`2ea62042`) during this step's /review, so this step would have broken a test in the history: its two rows now read the frame's `.sheet.overWindow` and `.dim` (below). RSVP's `.floor.floor` kept its spelling for it.
+
+**/simplify (four lenses: reuse, simplification, efficiency, altitude), 2026-10-06.** Efficiency: nothing material.
+Applied:
+- **One "tap outside" test, shared** (reuse and altitude both raised it): the frame's own document listener was half of
+  `useDismissable` written again. `lib/overlay-hooks.ts` now holds the boundary test once (`isOutside`) and exports its
+  pointer half, `usePointerOutside` (no Escape claim — the floor owns Escape here); `useDismissable` and the frame both
+  use it. The Notifications drawer's third copy is left alone (a closed project; it would widen the step).
+- `ownsKeys` is documented as temporary: step 5, when the frame owns dismiss and Back for every consumer, deletes it.
+Skipped, with reasons — all step 5's, recorded so they are not lost:
+- **The frame working out its opener** (altitude): a tap on iOS does not focus the button, which is why every host now
+  passes `opener` (`e.currentTarget`). A "last pointer target" kept beside the floor's focus history would make it
+  optional. It touches every consumer, and this step's proof was built on explicit openers.
+- **`overWindow` derived** from "a window already holds the bar when the sheet mounts" — needs a mount-time snapshot of
+  the overlay count (a form sheet registers itself). Two callers today; a third would forget the prop.
+- Inverting `trap` to `modal` (the menu layer is the common case); the dim's colours as tokens (a third copy of the
+  pair — the lineup builder's scrim retires in step 5, leaving two); `grabCloses` kept as a prop (deriving it would
+  hide a decision); the `display: contents` marker wrappers kept (the layout sweep selects through them); RSVP's and
+  the reader's two branches kept (only a centred mode on the frame would remove them).
+Re-proved after the pass: the eight sheets already on the frame pixel-identical and behaving the same (the shared
+dismiss hook unchanged for its existing users); the picker and the Award sheet still close on a tap on the bar;
+`keys.mjs` 17/17.
+
+**/review (standard tier; correctness, focus/history timing and blast-radius lenses), 2026-10-06.** Security and data
+lenses do not apply (no data, route or permission touched). Blast radius clean: every caller of a changed signature
+passes the new opener; `trap: false` is reachable only from the frame; the only `busy` outside the form layer is game
+day's, already gated; the layout sweep's markers kept; the admin page still never reaches `coaches.module.css`.
+Timing traced clean: a close on the press followed by a navigating click (the press gate holds `exit`), a tap on More
+taking the dead history entry over, the Award sheet's layer switch (one floor, one entry), the game page's own back
+step standing down for the picker. Confirmed, fixed:
+- **High — `install-banner-layer-guard`** (another session's, committed `2ea62042` during this review) read the two
+  rules this step retired, so this commit would have broken a test in the history. Its rows now read the frame's
+  `.sheet.overWindow` and `.dim` — both above the banner.
+- **Medium — RSVP and the reader drew the phone frame for one moment on a computer.** `useIsPhoneNav` read the media
+  query in an effect, so a sheet mounted by a tap rendered the ≤900 branch first and then swapped: a floor and a
+  history step stood up and torn down, focus sent home and back. Fix: `useSyncExternalStore` (server snapshot `true`),
+  so a later mount gets the real answer at once; the masthead's hydration is unchanged.
+- **Low — a menu-layer sheet with nothing focusable still held Tab** (the no-focusables branch ran before the trap
+  check). Fix: one `leave()` for both branches — with `trap: false`, Tab always closes the sheet, busy still holding.
+- Low — a stale comment in `coach-lineup-phone-guard` named `.sheetAnchor`.
+Reported, not fixed (Low or advisory, none reachable as a defect a coach meets today):
+- Tab out of a sheet whose opener has left the page: focus restarts from the page top (no host does this).
+- The reader's Done and Delete remove the row that opened it, so focus has no home (as before this step).
+- The floor's focus-home has no `preventScroll` (as before; it now also runs on a tap on the bar) — the page may
+  scroll to the opener.
+- The Award sheet: with a save in flight, opening the type library and then the save finishing returns the sheet to
+  the menu layer with the library open, where a tap in the library closes the sheet (low confidence; a slow save).
+- The awards row hands its first button to the sheet as the opener; a row without one would pass nothing
+  (unreachable — the row always renders it). The floor reads the opener once, at open (no host swaps it).
+Re-proved after the fixes: `sheet-frame-guard` 39/39; at 1280, RSVP and both readers **pixel-identical** to the
+before-captures (the desktop dialog, no frame in between); at 390, RSVP and the reader as built (RSVP modal over its
+window, the bar hidden, Escape, a dim tap and Back closing RSVP alone; the reader closing on a tap on the bar);
+`keys.mjs` RSVP and the Award sheet 15/15; game day's `keys.mjs` 16/16.
+
+**/docs (Mode A), 2026-10-06** — no help article describes how these sheets close, the bottom bar under them, or the
+keyboard in a way this step makes wrong; no edits.

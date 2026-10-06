@@ -93,8 +93,9 @@ export default function NotificationFeedBody({
    * Notifications Open in Place step 3, 2026-10-06, D5). The frame owns the reader; the row only says
    * which entry was opened, and announces a dialog. Required: no row on either page leaves on a tap —
    * the old admin tap (mark read, then a full load of a page it never named) is gone with it.
+   * `from` is the row itself — where the reader hands focus back (a tap on iOS never focuses it).
    */
-  onOpen: (entry: ActivityEntry) => void;
+  onOpen: (entry: ActivityEntry, from: HTMLElement) => void;
 }) {
   const {
     items, loading, loadingMore, hasMore, error, isEmpty,
@@ -106,8 +107,8 @@ export default function NotificationFeedBody({
   const listRef = useRef<HTMLDivElement>(null);
 
   // A tap opens the frame's reader — a single notification, or a bundle as its members.
-  const openOne = (n: AppNotification) => onOpen({ kind: 'item', notification: n });
-  const openBundle = (eventType: string, members: AppNotification[]) => onOpen({ kind: 'bundle', eventType, members });
+  const openOne = (n: AppNotification, from: HTMLElement) => onOpen({ kind: 'item', notification: n }, from);
+  const openBundle = (eventType: string, members: AppNotification[], from: HTMLElement) => onOpen({ kind: 'bundle', eventType, members }, from);
 
   // ── Row renderers ─────────────────────────────────────────────────────────────
   function row(n: AppNotification, isAct: boolean) {
@@ -116,11 +117,11 @@ export default function NotificationFeedBody({
       <div
         key={n.id}
         className={`${styles.item} ${isUnread ? styles.unread : styles.read}${isAct ? ` ${styles.actItem}` : ''}`}
-        onClick={() => openOne(n)}
+        onClick={e => openOne(n, e.currentTarget)}
         role="button"
         aria-haspopup="dialog"
         tabIndex={0}
-        onKeyDown={e => e.key === 'Enter' && openOne(n)}
+        onKeyDown={e => e.key === 'Enter' && openOne(n, e.currentTarget)}
       >
         <span className={styles.icon}>{iconFor(n.eventType)}</span>
         <div className={styles.content}>
@@ -160,11 +161,11 @@ export default function NotificationFeedBody({
       <div
         key={`bundle-${eventType}-${newest.id}`}
         className={`${styles.item} ${anyMemberUnread ? styles.unread : styles.read}`}
-        onClick={() => openBundle(eventType, members)}
+        onClick={e => openBundle(eventType, members, e.currentTarget)}
         role="button"
         aria-haspopup="dialog"
         tabIndex={0}
-        onKeyDown={e => e.key === 'Enter' && openBundle(eventType, members)}
+        onKeyDown={e => e.key === 'Enter' && openBundle(eventType, members, e.currentTarget)}
       >
         <span className={styles.icon}>{iconFor(eventType)}</span>
         <div className={styles.content}>

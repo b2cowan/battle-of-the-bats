@@ -1,11 +1,11 @@
 'use client';
-import { useEffect, useId, useRef } from 'react';
+import { useId, useRef, type RefObject } from 'react';
 import type { ActivityEntry } from '@/lib/notification-view';
 import NotificationMessage from './NotificationMessage';
 import type { NotificationFeed } from './useNotificationFeed';
+import SheetFrame from '@/components/coaches/SheetFrame';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
-import { useLatestRef } from '@/components/coaches/useLatestRef';
-import sheet from '@/components/coaches/CoachesBottomNav.module.css';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import own from './NotificationReader.module.css';
 
 /**
@@ -26,41 +26,40 @@ import own from './NotificationReader.module.css';
  * notification, since neither portal has a bell there. It moved here from `components/coaches/` so the
  * two pages share one file, not two frames that drift. `portal` names whose page words the onward
  * button speaks (D4). The admin's in-tree marker (`adminKitAttr`) carries the same
- * `data-coach-warm-enabled` the coach shell does, so the warm remaps below reach it unchanged.
- * ⚠ It must never load `coaches.module.css` (~945KB): the admin renders it. Its sheet styles are the
- * bottom bar's own stylesheet, which the admin's bar already wears — the reason this frame, and not the
- * Sheet Frame's (whose dim imports that stylesheet), was chosen for the admin page.
+ * `data-coach-warm-enabled` the coach shell does, so the warm remaps reach it unchanged.
+ * ⚠ It must never load `coaches.module.css` (~945KB): the admin renders it. The sheet frame stopped
+ * borrowing that stylesheet for its dim in Sheet Frame step 4 — which is what let this reader onto it.
  *
  * ⚖ THIS FILE IS THE FRAME; THE MESSAGE IS SHARED (step 2, 2026-10-06). What the reader SAYS — the kind
  * and stamp, the title, the body or the bundle's members, and Open · Done · Close · Delete in that order
  * — is `NotificationMessage`, the block the bell's drawer wears too, so the two cannot drift (hub screen
  * 7). Close is passed in because this frame closes from its button row; the drawer's pane closes with
- * its own ×. The FRAME is the Sheet Frame project's to move (its step 4 puts it on `SheetFrame`) — for
- * both pages at once now.
+ * its own ×.
  *
- * ⚖ A MENU, NOT A FORM, by the drawer ruling (2026-09-23): nothing is typed and nothing can be
- * lost, so on a phone it is the More sheet's own container at the bar's top edge — `.sheetAnchor`
- * / `.sheetScrim` / `.dropdown` / `.sheetGrab` from `CoachesBottomNav.module.css`, one skin with
- * More, the team sheet and the RSVP sheet — and the bar stays visible and tappable beneath it.
- * Deliberately NOT registered with `useOverlayOpen` (that would hide the bar it is drawn against).
- * Above the nav breakpoint the nav module draws nothing, so the same panel is a small centered
- * dialog (the RSVP sheet's answer, same reason).
- *
- * It stands on `useDialogFloor`: Escape, the Tab trap, focus back to the row on close, and the
- * phone's Back gesture closes the reader rather than leaving the page ("Back goes up ONE level").
+ * ⚖ A MENU, NOT A FORM, by the drawer ruling (2026-09-23): nothing is typed and nothing can be lost.
+ * Wherever the bar shows (≤900) it is the portal's sheet frame in the MENU layer (Sheet Frame step 4,
+ * 2026-10-06): on the bar, the bar lit and tappable beneath it, never modal. The frame owns its keys
+ * (`ownsKeys`, owner 2026-10-06 — what the old floor gave it stays: Escape, the phone's Back, focus in on
+ * open and home to the row; the hold on the keyboard goes, and Tab past the end closes it) and closes it
+ * on a tap on the bar BEFORE the bar acts — the More sheet draws over a sheet still standing, which is
+ * how the 09-25 /review found the reader buried under More; the frame's rule is that review's fix. Its
+ * record head keeps the grab line as a 44px Close (`grabCloses`). Above 900 — no bar — the same message
+ * is a small centred dialog on its own floor (the RSVP sheet's answer, same reason).
  *
  * Done and Delete act on the FEED here, once for both pages, then close. The reader hands over its
  * snapshot, taken before opening marked it read; the feed swaps in the LIVE row for both (/review
  * 2026-09-25: a failed Done's rollback, and an Undo, must bring back the read row, not the unread copy).
  * A delete leaves the page's Undo note (D3).
  *
- * ⚠ Rendered in-tree, never through a portal: the warm skin is a wrapper above the providers.
+ * ⚠ The `data-notification-reader` marker stays on the outermost box. ⚠ Rendered in-tree, never
+ * through a portal: the warm skin is a wrapper above the providers.
  */
 export default function NotificationReader({
   entry,
   portal,
   feed,
   onClose,
+  opener,
 }: {
   /** What was opened — one notification, or a same-day bundle of one kind. */
   entry: ActivityEntry;
@@ -69,55 +68,40 @@ export default function NotificationReader({
   /** The page's feed: Done and Delete act on it. */
   feed: Pick<NotificationFeed, 'clearRow' | 'deleteRows'>;
   onClose: () => void;
+  /** The row that opened it — focus goes home to it (a tap on iOS never focused it). */
+  opener: RefObject<HTMLElement | null>;
 }) {
-  const anchorRef = useRef<HTMLDivElement>(null);
+  const isPhoneNav = useIsPhoneNav();
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
-  useDialogFloor(true, panelRef, { onClose });
+  // The centred dialog's own floor; wherever the bar shows the frame's is the floor.
+  useDialogFloor(!isPhoneNav, panelRef, { onClose, opener });
 
-  /* ⚠ A TAP ON THE BAR BENEATH CLOSES THE READER FIRST — never two sheets (/review 2026-09-25, High).
-     The bar stays tappable under a menu-layer sheet, and the More sheet draws in the NAV's stacking
-     context (300) over this anchor (260): opening More from here buried the reader, still open, with
-     nothing on screen to say so. The team sheet's rule, applied the same way — a pointer-down outside
-     this sheet's own subtree (scrim + panel) is a tap on the bar, and it closes the reader before More
-     opens. ⚠ The boundary is the ANCHOR, not the panel: a pointer-down on the scrim must NOT close
-     here, or the tap's click would land on the notification row the scrim was covering and open a
-     second reader (the scrim-outside-its-boundary trap). The scrim closes on its own click, as before.
-     A local listener rather than `useDismissable`: that hook also answers Escape and CLAIMS it, which
-     would take the key from the floor that owns this sheet's Escape, focus return and Back step. */
-  const closeRef = useLatestRef(onClose);
-  useEffect(() => {
-    const onPointer = (e: PointerEvent) => {
-      if (anchorRef.current && !anchorRef.current.contains(e.target as Node)) closeRef.current();
-    };
-    document.addEventListener('pointerdown', onPointer);
-    return () => document.removeEventListener('pointerdown', onPointer);
-  }, [closeRef]);
+  const message = (
+    <NotificationMessage
+      entry={entry}
+      portal={portal}
+      titleId={titleId}
+      onDone={n => { void feed.clearRow(n); onClose(); }}
+      onDelete={members => { feed.deleteRows(members); onClose(); }}
+      onClose={onClose}
+    />
+  );
 
+  if (isPhoneNav) {
+    return (
+      <div data-notification-reader style={{ display: 'contents' }}>
+        <SheetFrame ownsKeys grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={titleId}>
+          <div className={own.body}>{message}</div>
+        </SheetFrame>
+      </div>
+    );
+  }
   return (
-    <div ref={anchorRef} className={`${sheet.sheetAnchor} ${own.floor}`} data-notification-reader>
-      <div className={`${sheet.sheetScrim} ${own.scrim}`} aria-hidden onClick={onClose} />
-      <div
-        ref={panelRef}
-        tabIndex={-1}
-        className={`${sheet.dropdown} ${own.panel}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
-        {/* The grab line is a real control on a phone — a tap on it closes, like the scrim. */}
-        <button type="button" className={own.grabBtn} aria-label="Close" onClick={onClose}>
-          <span className={sheet.sheetGrab} aria-hidden />
-        </button>
-
-        <NotificationMessage
-          entry={entry}
-          portal={portal}
-          titleId={titleId}
-          onDone={n => { void feed.clearRow(n); onClose(); }}
-          onDelete={members => { feed.deleteRows(members); onClose(); }}
-          onClose={onClose}
-        />
+    <div className={own.floor} data-notification-reader>
+      <div className={own.scrim} aria-hidden onClick={onClose} />
+      <div ref={panelRef} tabIndex={-1} className={own.panel} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        {message}
       </div>
     </div>
   );

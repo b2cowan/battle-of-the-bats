@@ -76,7 +76,7 @@ describe('E2 — attendance in its own room', () => {
     assert.ok(room.includes("onClick={() => setAllAttendance('attending')}") && room.includes("onClick={() => setAllAttendance('unknown')}"));
     assert.match(room, /<CoachRowList label="Attendance" inset className=\{styles\.attendanceRows\}>/);
     assert.match(room, /<CoachRow\s+key=\{row\.player\.id\}\s+as="button"\s+aria-haspopup="dialog"/, 'the row is the tap and says it opens a dialog');
-    assert.ok(room.includes('onClick={() => setRsvpEditId(row.player.id)}'));
+    assert.ok(room.includes('onClick={e => setRsvpEditId(row.player.id, e.currentTarget)}'), 'the tap names the row — where the RSVP sheet hands focus back (Sheet Frame step 4)');
     assert.ok(room.includes('<SaveStatusPill'), 'the transient Saved pill');
     assert.match(css, /\.gdPage, \.ppRunPage, \.attendanceRoom \{/, 'the field floor follows the list into the room');
   });

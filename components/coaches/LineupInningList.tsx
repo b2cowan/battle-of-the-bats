@@ -63,10 +63,10 @@ export interface LineupInningListProps {
   onStep: (inning: number) => void;
   /** The pill: open the inning inspector on this inning. */
   onOpenInning: () => void;
-  /** A tap on a number: the row-actions sheet (D8). */
-  onRowActions: (playerId: string) => void;
-  /** A tap on a position pill: the position sheet. */
-  onPickPosition: (playerId: string) => void;
+  /** A tap on a number: the row-actions sheet (D8) — with the number, where focus goes home to. */
+  onRowActions: (playerId: string, from: HTMLElement) => void;
+  /** A tap on a position pill: the position sheet — with the pill, where focus goes home to. */
+  onPickPosition: (playerId: string, from: HTMLElement) => void;
   cellIssueFor: (playerId: string, inning: number, value: string) => { isOpen: boolean; hasConflict: boolean; description?: string };
 }
 
@@ -74,8 +74,8 @@ function InningRow({
   row, inning, inningCount, periodLabel, onRowActions, onPickPosition, cellIssueFor,
 }: {
   row: LineupPlayerRow; inning: number; inningCount: number; periodLabel: string;
-  onRowActions: (playerId: string) => void;
-  onPickPosition: (playerId: string) => void;
+  onRowActions: LineupInningListProps['onRowActions'];
+  onPickPosition: LineupInningListProps['onPickPosition'];
   cellIssueFor: LineupInningListProps['cellIssueFor'];
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.player.id });
@@ -103,7 +103,7 @@ function InningRow({
       {/* The number is the handle (D8): hold to drag, tap for Move up · Move down · Remove. */}
       <button type="button" className={coach.lineupBatHandle} data-numbered={number ? 'true' : undefined}
         aria-label={`${spoken}, ${number ? `batting ${number}` : 'on the bench'}. Hold to move, tap for options.`}
-        {...attributes} {...listeners} onClick={() => onRowActions(row.player.id)}>
+        {...attributes} {...listeners} onClick={e => onRowActions(row.player.id, e.currentTarget)}>
         <GripVertical size={12} aria-hidden="true" />{number || '–'}
       </button>
       {/* mig 309 — a borrowed player is marked on the phone too. ⚠ The mark lives INSIDE the name
@@ -121,7 +121,7 @@ function InningRow({
         aria-label={`${periodLabel} ${inning} position for ${spoken}`}
         aria-describedby={descriptionId}
         data-open={issue.isOpen || undefined} data-clash={issue.hasConflict || undefined} data-blank={!value || undefined}
-        onClick={() => onPickPosition(row.player.id)}>
+        onClick={e => onPickPosition(row.player.id, e.currentTarget)}>
         {value || '—'}
       </button>
       {issue.description && <span id={descriptionId} className={coach.srOnly}>{issue.description}</span>}

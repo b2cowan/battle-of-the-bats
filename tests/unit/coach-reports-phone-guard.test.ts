@@ -94,9 +94,10 @@ describe('R1 · R2 — every report table on a phone is a table, a pinned scroll
   it('the whole row opens the award, and its last column is a real, named chevron button (2026-09-01 / 09-03)', () => {
     const hist = awards.slice(awards.indexOf('Full history'));
     const phone = hist.slice(hist.indexOf('{isPhone ? ('), hist.indexOf(') : ('));
-    assert.match(phone, /className=\{styles\.rowTappable\}\s*onClick=\{\(\) => \{ if \(window\.getSelection\(\)\?\.toString\(\)\) return; setOpenAwardId\(a\.id\); \}\}/);
+    // The row and the chevron both name the chevron as what opened the sheet — where it hands focus back (Sheet Frame step 4).
+    assert.match(phone, /className=\{styles\.rowTappable\}\s*onClick=\{e => \{ if \(window\.getSelection\(\)\?\.toString\(\)\) return; openAwardFrom\(a\.id, e\.currentTarget\.querySelector\('button'\)\); \}\}/);
     assert.match(phone, /<button\s+type="button"\s+className=\{`\$\{styles\.linkBtn\} \$\{styles\.listRowToggle\}`\}\s+aria-label=\{`Open /);
-    assert.match(phone, /onClick=\{e => \{ e\.stopPropagation\(\); setOpenAwardId\(a\.id\); \}\}/);
+    assert.match(phone, /onClick=\{e => \{ e\.stopPropagation\(\); openAwardFrom\(a\.id, e\.currentTarget\); \}\}/);
     assert.match(phone, /<ChevronRight size=\{18\}/);
     assert.doesNotMatch(awards, /CoachToolbarMenu|MoreHorizontal/, 'the row\'s ⋯ menu is retired');
   });

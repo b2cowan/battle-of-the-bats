@@ -222,15 +222,19 @@ describe('the award\'s sheet on a phone', () => {
   });
 
   it('reading is a menu above the bar; editing is a form that covers it (the 2026-09-23 drawer layers)', () => {
-    assert.match(sheet, /useOverlayOpen\(editing\);/, 'only while editing does the bar go — out of the tab order too');
-    assert.match(sheet, /className=\{`\$\{sheet\.sheetAnchor\} \$\{editing \? own\.anchorForm : ''\}`\}/);
-    assert.match(sheetCss, /\.anchorForm\.anchorForm \{\s*bottom: 0;\s*z-index: 390;/, 'above the nav (300), below .modalOverlay (400)');
+    // On the shared sheet frame since Sheet Frame step 4 (2026-10-06): the frame takes the bar away, drops the
+    // sheet to the screen's foot (390 — above the nav, below .modalOverlay) and holds the keyboard, all from
+    // `form`; its geometry is pinned in sheet-frame-guard.
+    assert.match(sheet, /<SheetFrame\s+ownsKeys\s+form=\{editing\}/, 'only while editing is it the form layer');
+    assert.doesNotMatch(sheet, /useOverlayOpen|sheetAnchor|anchorForm/, 'one owner for the layer: the frame');
   });
 
   it('the picker\'s drawers render beside the panel, never inside it (the floor answers keys inside its panel)', () => {
-    const panelEnd = sheet.lastIndexOf('</div>\n      </div>\n      {picker.overlays}');
-    assert.ok(panelEnd > -1, 'picker.overlays renders as a sibling of the anchor, after the panel closes');
-    assert.match(sheet, /useDialogFloor\(true, panelRef, \{ onClose: requestClose, busy: removing \}\);/);
+    const panelEnd = sheet.lastIndexOf('</div>\n      </SheetFrame>\n      {picker.overlays}');
+    assert.ok(panelEnd > -1, 'picker.overlays renders as a sibling of the frame, after the panel closes');
+    // ONE floor, the frame's, in both layers (it owns the keys); a removal in flight holds it.
+    assert.match(sheet, /onClose=\{requestClose\}/);
+    assert.match(sheet, /busy=\{removing\}/);
   });
 
   it('the picker\'s create row: Escape puts away the row alone, and focus lands back on "+ New"', () => {

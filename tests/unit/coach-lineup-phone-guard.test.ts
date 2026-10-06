@@ -212,15 +212,15 @@ describe('D1 — the Setup row and its panel', () => {
     // marked the lineup ready — a state change the coach never asked for. ⚠ A MOUSE NEVER SHOWED
     // IT; only touch did, which is the only input this feature exists for. No linter, type check or
     // layout sweep can see this, which is why it is pinned here.
+    // (The row menu's dim is the shared sheet frame's since Sheet Frame step 4 — the frame renders inside
+    // the same wrapper, held by sheet-frame-guard.)
     const editorScrims: [string, string][] = [
-      ['the row menu', 'onClose={() => setRowActionsFor(null)}'],
       ['the Setup & Auto-fill drawer', 'onClose={closePanelToRow}'],
       ['the call-up sheet', 'onClose={callUps.onCloseSheet}'],
     ];
     // Every scrim must come AFTER the opening tag that carries its dismissable's ref, so it is a
     // descendant of the watched element rather than a sibling of it.
     const boundaries: Record<string, string> = {
-      'the row menu': '<div ref={rowSheetRef}>',
       'the Setup & Auto-fill drawer': 'ref={autoFillRef}',
       'the call-up sheet': 'ref={callUpRef}',
     };
@@ -230,6 +230,8 @@ describe('D1 — the Setup row and its panel', () => {
       const wrapAt = editor.lastIndexOf(boundaries[name], scrimAt);
       assert.notEqual(wrapAt, -1, `${name}: no dismissable boundary opens before its scrim`);
     }
+    const rowFrameAt = editor.indexOf('<SheetFrame onClose={() => setRowActionsFor(null)}');
+    assert.ok(rowFrameAt > 0 && editor.lastIndexOf('<div ref={rowSheetRef}>', rowFrameAt) > 0, 'the row menu: its frame (and the frame’s dim) inside the watched wrapper');
     // ⚠ The row sheet's ref belongs to the WRAPPER, never to the panel — putting it back on the
     // panel is exactly the shape that shipped the defect.
     assert.ok(!editor.includes('<div ref={rowSheetRef} className='), 'the row sheet ref is the wrapper, not the panel');
@@ -258,7 +260,7 @@ describe('D1 — the Setup row and its panel', () => {
     assert.ok(scrim.includes('bottom: var(--coach-foot-clear);'), 'the DEFAULT stops at the bar’s top — a menu leaves the nav lit and tappable');
     assert.match(scrim, /z-index: 259;/, 'directly under the panel (260), over the autosave pill (250)');
     // ⚠⚠ THE SAME DIM AS THE PORTAL'S OTHER FOUR SHEETS, IN BOTH THEMES. This scrim cannot WEAR
-    // `.sheetScrim` (that one positions against `.sheetAnchor`; this panel is standalone because it
+    // `.sheetScrim` (that one positions against the More sheet's nav; this panel is standalone because it
     // is shared with the desktop popover), so it copies the values — and a copy that takes the dark
     // value WITHOUT the warm one is a bug on the portal's DEFAULT theme: two drawers on one screen
     // dimmed the page different colours until /simplify caught it.
@@ -277,7 +279,9 @@ describe('D1 — the Setup row and its panel', () => {
     // sheet (moved into the toolbar the same day, still reusing this recipe rather than a shell of
     // its own). A fourth call site that looked like these three until one of them changed is
     // exactly what this count exists to prevent.
-    assert.equal(editor.split('<LineupSheetScrim onClose=').length - 1, 3, 'the editor’s three drawers');
+    // ⚠ TWO since Sheet Frame step 4 (2026-10-06): the row-actions drawer moved onto the shared sheet frame,
+    // which brings its own dim.
+    assert.equal(editor.split('<LineupSheetScrim onClose=').length - 1, 2, 'the editor’s two drawers');
     assert.equal(builder.split('<LineupSheetScrim onClose=').length - 1, 2, 'Print and Save as template');
     assert.equal(copyFrom.split('<LineupSheetScrim onClose=').length - 1, 1, 'Copy from');
     assert.equal(scrimCmp.split('styles.lineupSheetScrim').length - 1, 1, 'the class has exactly one home');
@@ -509,7 +513,7 @@ describe('The two drawer layers — a form covers the nav, a menu sits on top of
     assert.ok(builder.includes('${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Save as template"'), 'Save as template wears it, and names itself');
     // ⚠ AND THE OTHER WAY ROUND. Print and the row-actions sheet act-and-close; raising them would
     // take the bar away from a coach who only meant to look at a list.
-    assert.ok(editor.includes('<LineupSheetScrim onClose={() => setRowActionsFor(null)} />'), 'the row menu is a MENU — no overNav');
+    assert.ok(editor.includes('<SheetFrame onClose={() => setRowActionsFor(null)} opener={rowOpenerRef} role="dialog"'), 'the row menu is a MENU — the frame’s menu layer, no form');
     assert.ok(builder.includes('<LineupSheetScrim onClose={closePrint} />'), 'Print is a MENU — no overNav');
     // Copy from is a MENU too (D7, 2026-10-02): you tap and it acts. Full screen at ≤640, but ABOVE
     // the bar — it never takes the nav-covering modifier.
@@ -793,8 +797,9 @@ describe('D5 — one inning at a time', () => {
     assert.match(hook, /useSensor\(MouseSensor, \{ activationConstraint: \{ distance: 6 \} \}\)/, 'the D8 mouse travel, unchanged');
   });
   it('the number is the D8 handle, unchanged: lineupBatHandle, the sortable listeners, a tap opens the row sheet', () => {
-    assert.match(list, /className=\{coach\.lineupBatHandle\}[^>]*\{\.\.\.attributes\} \{\.\.\.listeners\} onClick=\{\(\) => onRowActions\(row\.player\.id\)\}/);
-    assert.match(editor, /onRowActions=\{setRowActionsFor\}/);
+    // The tap names the handle — where the row menu hands focus back (Sheet Frame step 4; iOS never focuses it).
+    assert.match(list, /className=\{coach\.lineupBatHandle\}[^>]*\{\.\.\.attributes\} \{\.\.\.listeners\} onClick=\{e => onRowActions\(row\.player\.id, e\.currentTarget\)\}/);
+    assert.match(editor, /onRowActions=\{openRowActions\}/);
   });
   it('the pill is a <button aria-haspopup="dialog"> with no chevron glyph, reading this inning\'s cell with the grid\'s outlines', () => {
     const pill = between(list, 'className={s.pill}', '</button>', 'the pill');
@@ -854,11 +859,11 @@ describe('D5 — one inning at a time', () => {
   });
   it('the position sheet\'s pick is the same setPosition mutation for the inning on screen, then closes; a Never pick is never confirmed', () => {
     assert.match(editor, /onPick=\{code => \{ setPosition\(positionRow\.player\.id, inningOnScreen, code\); setPositionFor\(null\); \}\}/);
-    assert.match(editor, /onPickPosition=\{setPositionFor\}/);
+    assert.match(editor, /onPickPosition=\{openPositionSheet\}/);
     assert.doesNotMatch(sheet, /confirm\(/);
-    assert.match(sheet, /useDialogFloor\(true, panelRef, \{ onClose \}\)/);
-    assert.match(sheet, /role="dialog"\s*aria-modal="true"/);
-    assert.match(sheet, /sheet\.sheetAnchor/, 'the one sheet system\'s container');
+    // Its container, layer and keys are the shared sheet frame's since Sheet Frame step 4 (a dialog in the menu
+    // layer, never modal, the frame owning Escape, Back and focus) — held by sheet-frame-guard.
+    assert.match(sheet, /<SheetFrame ownsKeys grabCloses onClose=\{onClose\} opener=\{opener\} role="dialog"/);
   });
   /**
    * ⚰ The phone hint ("Hold a number to move a player · ‹ › for the innings") was REMOVED on

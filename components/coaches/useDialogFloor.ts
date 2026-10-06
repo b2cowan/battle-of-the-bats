@@ -65,6 +65,11 @@ import { useBackStep } from './useBackStep';
  * in the portal, and from inside a dirty form it dropped the typing — the route guard never sees a
  * popstate.
  *
+ * ⚠ A SHEET ON A LIVE BAR STANDS ON IT WITHOUT THE TRAP (`trap: false`, Sheet Frame step 4, owner
+ * 2026-10-06). The phone's record sheets — the position picker, a read award — keep Escape, Back and
+ * focus in and home, and give up only the hold on the keyboard: their bar is lit and tappable, so a
+ * keyboard held inside them would be told the page has nothing else while a thumb reaches the bar.
+ *
  * `walk`, when given, binds ← / → to the room's Prev / Next — never while an input has focus.
  */
 export interface DialogWalk {
@@ -135,6 +140,15 @@ export function useDialogFloor(
      * is whatever was focused before. The shared sheet frame names its opener (Sheet Frame step 3).
      */
     opener?: RefObject<HTMLElement | null>;
+    /**
+     * `false`: the keyboard is NOT held (Sheet Frame step 4, owner 2026-10-06 — a sheet on top of a live
+     * bottom bar is never modal, D1). Escape, Back, focus in on open and home on close all stand; Tab past
+     * the last control (or Shift+Tab before the first) CLOSES the panel instead of wrapping, with focus sent
+     * home first so the browser's own Tab carries on from the opener — the Tools menu's rule for its Tab.
+     * Walking on with the panel still open would put focus under its dim. Read on every key, so a panel
+     * may change it while open (the Award sheet holds the keyboard only while it is being edited).
+     */
+    trap?: boolean;
   },
 ): void {
   const restoreFocusRef = useRef<HTMLElement | null>(null);
@@ -211,7 +225,18 @@ export function useDialogFloor(
       // Shift+Tab walk out behind the panel (80 presses in a club window: 34 landed outside it).
       const focusables = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE))
         .filter(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
+      const held = optsRef.current.trap !== false;
+      /** Not held: leaving closes the panel (see `trap`). Home FIRST — the default Tab then moves on from
+       *  there — and the close's own hand-back is spent, or it would pull focus back from where Tab went. */
+      const leave = () => {
+        if (busy) { event.preventDefault(); return; }
+        const home = restoreFocusRef.current;
+        restoreFocusRef.current = null;
+        home?.focus?.({ preventScroll: true });
+        onClose();
+      };
       if (focusables.length === 0) {
+        if (!held) { leave(); return; }
         event.preventDefault();
         panel.focus();
         return;
@@ -225,13 +250,11 @@ export function useDialogFloor(
         (event.shiftKey ? last : first).focus();
         return;
       }
-      if (event.shiftKey && (active === first || active === panel)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
-      }
+      const leaving = event.shiftKey ? active === first || active === panel : active === last;
+      if (!leaving) return;
+      if (!held) { leave(); return; }
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
     }
 
     document.addEventListener('keydown', onKey);
