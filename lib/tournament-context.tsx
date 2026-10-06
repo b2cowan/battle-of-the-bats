@@ -18,7 +18,9 @@ interface TournamentContextType {
   isLocked: boolean;
   loading: boolean;
   setCurrentTournament: (t: Tournament) => void;
-  refresh: () => Promise<void>;
+  /** Re-read the list. `selectId` makes that event the current one once it is in the list (a tournament
+   *  just created: its row exists only after this read). */
+  refresh: (selectId?: string) => Promise<void>;
 }
 
 const TournamentContext = createContext<TournamentContextType>({
@@ -83,7 +85,13 @@ export function TournamentProvider({ children, orgSlug }: { children: ReactNode;
   const [currentTournament, setCurrentState] = useState<Tournament | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(async () => {
+  // The newest read wins: an older one landing last would set a list without the event just created (or
+  // just changed) and move the selection back. A caller's pick waits for whichever read lands.
+  const readSeq = useRef(0);
+  const pendingPick = useRef<string | null>(null);
+  const refresh = useCallback(async (selectId?: string) => {
+    const mine = ++readSeq.current;
+    if (selectId) pendingPick.current = selectId;
     setLoading(true);
     // Use the scoped API endpoint — server enforces org filter + assignment filter
     try {
@@ -92,6 +100,7 @@ export function TournamentProvider({ children, orgSlug }: { children: ReactNode;
       const data: unknown = res.ok ? await res.json() : [];
       const rows = Array.isArray(data) ? data as TournamentRow[] : [];
       const ts = rows.map(mapRow).filter(t => t.status !== 'archived');
+      if (mine !== readSeq.current) return;
 
       setTournaments(ts);
       // Deep-link support: a ?tournamentId= in the URL (notifications, emails)
@@ -106,23 +115,29 @@ export function TournamentProvider({ children, orgSlug }: { children: ReactNode;
       const urlSlug = params?.get('tournamentSlug') ?? null;
       const fromUrl = (urlId ? ts.find(t => t.id === urlId) : null)
         ?? (urlSlug ? ts.find(t => t.slug === urlSlug) : null);
+      // A caller's pick (the event it just created) outranks the address and the saved choice.
+      const pick = pendingPick.current;
+      pendingPick.current = null;
+      const picked = pick ? ts.find(t => t.id === pick) ?? null : null;
+      // An explicit choice — the caller's or the address's — is persisted, so the switcher and later
+      // navigation agree.
+      const chosen = picked ?? fromUrl ?? null;
 
       const savedId = typeof window !== 'undefined' ? localStorage.getItem(storageKey(orgSlug)) : null;
       const saved   = savedId ? ts.find(t => t.id === savedId) : null;
       const active  = ts.find(t => t.status === 'active');
-      const resolved = fromUrl ?? saved ?? active ?? ts[0] ?? null;
-      setCurrentState(resolved);
+      setCurrentState(chosen ?? saved ?? active ?? ts[0] ?? null);
 
-      // Persist the deep-linked choice so the switcher + later navigation agree.
-      if (fromUrl && typeof window !== 'undefined') {
-        localStorage.setItem(storageKey(orgSlug), fromUrl.id);
+      if (chosen && typeof window !== 'undefined') {
+        localStorage.setItem(storageKey(orgSlug), chosen.id);
       }
     } catch (error) {
+      if (mine !== readSeq.current) return;
       console.error('[tournament-context] Failed to load tournaments', error);
       setTournaments([]);
       setCurrentState(null);
     } finally {
-      setLoading(false);
+      if (mine === readSeq.current) setLoading(false);
     }
   }, [orgSlug]);
 

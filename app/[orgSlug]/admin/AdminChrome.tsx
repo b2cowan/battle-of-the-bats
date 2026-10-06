@@ -14,6 +14,7 @@ import EnablePushBanner from '@/components/notifications/EnablePushBanner';
 import { AdminDensityProvider } from '@/lib/admin-density';
 import { AdminWorklistProvider } from '@/lib/admin-worklist';
 import AdminTitleManager from './AdminTitleManager';
+import { SetupWizardProvider } from '@/components/admin/tournament/SetupWizardOpener';
 import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
 import styles from './admin.module.css';
 
@@ -136,7 +137,11 @@ export default function AdminChrome({
   return (
     <AdminDensityProvider>
       <AdminWorklistProvider>
-        <ClubBriefProvider>{frame}</ClubBriefProvider>
+        {/* The one setup wizard every door opens (Tournament admin redesign Stage 4, D2): above the pages
+            so its notice survives the move to the new draft's board. */}
+        <SetupWizardProvider>
+          <ClubBriefProvider>{frame}</ClubBriefProvider>
+        </SetupWizardProvider>
       </AdminWorklistProvider>
     </AdminDensityProvider>
   );

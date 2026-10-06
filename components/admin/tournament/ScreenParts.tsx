@@ -27,6 +27,30 @@ export function RecordSection({ title, children }: { title?: ReactNode; children
   );
 }
 
+/**
+ * A titled checkbox choice — the composer's row (Stage 2's C2), lifted here when the reuse step drew the
+ * same row (Stage 4, D2): the 22px box on a 44px line, a title, and one caption under it. Rows stack with
+ * a hairline between them. ⚠ The composer still draws its rows from its own stylesheet; moving it onto
+ * this part is owed (a measured change to a walked screen, not a drive-by).
+ */
+export function CheckChoice({ checked, onChange, title, caption, disabled }: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  title: ReactNode;
+  caption?: ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <label className={styles.choice}>
+      <input type="checkbox" className={styles.check22} checked={checked} disabled={disabled} onChange={e => onChange(e.target.checked)} />
+      <span className={styles.choiceText}>
+        <b>{title}</b>
+        {caption != null && <span>{caption}</span>}
+      </span>
+    </label>
+  );
+}
+
 /** A caption's facts joined by the house dot, skipping any that say nothing. */
 export function joinDots(parts: ReactNode[]): ReactNode {
   return parts

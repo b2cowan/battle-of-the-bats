@@ -20,15 +20,13 @@ import { useEffect, useState, type ElementType } from 'react';
 import {
   LayoutGrid, ChevronRight, Plus, Home, Users2, HelpCircle, LogOut, DollarSign, Trophy,
 } from 'lucide-react';
-import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
+import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { hasCapability } from '@/lib/roles';
-import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { getBillingHref } from '@/lib/billing-urls';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
@@ -87,7 +85,8 @@ export default function AdminKitRail() {
   } = nav;
   const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
-  const [creating, setCreating] = useState(false);
+  // The + opens the ONE setup wizard the admin frame mounts (Stage 4, D2) — not a copy of its own.
+  const { openNew } = useSetupWizard();
 
   const helpHref = onTournaments ? `${base}/help/tournaments`
     : section === 'house-league' ? `${base}/help/house-league`
@@ -143,7 +142,7 @@ export default function AdminKitRail() {
         )}
 
         {onTournaments ? (
-          <TournamentRail labelled={!tournamentOnly} onCreate={() => setCreating(true)} />
+          <TournamentRail labelled={!tournamentOnly} onCreate={() => openNew('sidebar_create')} />
         ) : (
           <>
             {!tournamentOnly && !isCanceled && programs.length > 0 && (
@@ -210,7 +209,6 @@ export default function AdminKitRail() {
         </div>
       </nav>
     </aside>
-    {creating && <CreateTournamentWizard onClose={() => setCreating(false)} />}
     </>
   );
 }
@@ -419,33 +417,6 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
   );
 }
 
-/**
- * The new-tournament wizard, mounted OUTSIDE the rail: the rail is `position: sticky`, which makes it
- * a stacking context, and a modal inside it would sit under the page it is meant to cover (today's
- * rail renders it outside its `<aside>` for the same reason).
- */
-function CreateTournamentWizard({ onClose }: { onClose: () => void }) {
-  const router = useRouter();
-  const { currentOrg, userRole, userCapabilities } = useOrg();
-  const { tournaments, refresh } = useTournament();
-  if (!currentOrg) return null;
-  return (
-    <TournamentSetupWizard
-      isOpen
-      orgSlug={currentOrg.slug}
-      orgContactEmail={currentOrg.contactEmail ?? null}
-      existingTournaments={tournaments.map(t => ({ id: t.id, name: t.name, year: t.year ?? null, status: t.status ?? null }))}
-      sourceSurface="sidebar_create"
-      previewOrg={currentOrg}
-      canManageBranding={Boolean(userRole && hasCapability(userRole, userCapabilities, 'manage_branding'))}
-      canClone={hasPlanFeature(currentOrg.planId, 'tournament_cloning')}
-      upgradeCopy={requiresTournamentPlusCopy('tournament_cloning')}
-      onClose={onClose}
-      onCreated={async () => {
-        onClose();
-        await refresh();
-        router.push(`/${currentOrg.slug}/admin/tournaments/dashboard`);
-      }}
-    />
-  );
-}
+/* ⚰ CreateTournamentWizard — the rail's own copy of the setup wizard — was here until Stage 4 (2026-10-06):
+   the frame mounts ONE wizard now (components/admin/tournament/SetupWizardOpener.tsx), outside the rail for
+   the reason this copy gave (the rail's `position: sticky` would trap a modal under the page). */

@@ -172,6 +172,8 @@
   text-transform: none;
   color: var(--text-tertiary);
 }
+/* A row's one lead mark (`mark`, §3.10.7): an icon in its own 28px column, at every width. */
+.rowMark { flex: none; display: flex; justify-content: center; width: 28px; margin-right: -0.25rem; }
 /* The date column (the portal's `.rowListLead`): wide enough for "Sun, Jun 14 · 11:30 a.m.". */
 .rowLead {
   flex: none;

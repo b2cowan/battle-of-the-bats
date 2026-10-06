@@ -101,6 +101,9 @@ export function ClubRowBand({ children, count }: { children: ReactNode; count?: 
 type RowBase = {
   title: ReactNode;
   caption?: ReactNode;
+  /** The row's ONE lead mark (standard §3.10.7) — an icon in a column of its own before the title, at
+   *  every width (How it finished's trophy, Tournament admin redesign Stage 4). The caller colours it. */
+  mark?: ReactNode;
   /** The date column (the portal's `lead`): a column of its own at a desk; on a phone it moves onto
    *  the caption's line, ahead of the caption, joined by " ·". Formatted by the caller. */
   lead?: ReactNode;
@@ -121,17 +124,19 @@ type RowBase = {
   'aria-label'?: string;
 };
 export type ClubRowProps =
-  | (RowBase & { as: 'link'; href: string })
+  /** `external`: a door OUT of the admin (a sealed event's public record) — a new tab, the caller's ↗ as its trail. */
+  | (RowBase & { as: 'link'; href: string; external?: boolean })
   | (RowBase & { as: 'button'; onClick: MouseEventHandler<HTMLButtonElement>; 'aria-haspopup'?: 'dialog' })
   | (RowBase & { as?: 'static' });
 
 export function ClubRow(props: ClubRowProps) {
-  const { title, caption, lead, captionFirst, trail, chevron, actions, beside } = props;
+  const { title, caption, mark, lead, captionFirst, trail, chevron, actions, beside } = props;
   const opens = props.as === 'link' || props.as === 'button';
   const cls = `${styles.row}${opens ? ` ${styles.rowDoor}` : ''}`;
   const chevronEl = <span className={styles.rowChevron}><ChevronRight size={16} aria-hidden /></span>;
   const inner = (
     <>
+      {mark != null && <span className={styles.rowMark} aria-hidden>{mark}</span>}
       {lead != null && <span className={styles.rowLead}>{lead}</span>}
       <span className={styles.rowMain}>
         <span className={styles.rowTitle}>{title}</span>
@@ -149,7 +154,14 @@ export function ClubRow(props: ClubRowProps) {
   return (
     <li className={itemCls} data-row-list-row data-caption-first={captionFirst || undefined}>
       {props.as === 'link' ? (
-        <Link href={props.href} className={cls} aria-label={props['aria-label']}>{inner}</Link>
+        <Link
+          href={props.href}
+          className={cls}
+          aria-label={props['aria-label']}
+          {...(props.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        >
+          {inner}
+        </Link>
       ) : props.as === 'button' ? (
         <button type="button" className={cls} onClick={props.onClick} aria-haspopup={props['aria-haspopup']} aria-label={props['aria-label']}>
           {inner}
@@ -365,6 +377,28 @@ export function SavePill({ saving, dirty, error, held, onRetry, inline = false }
                 : state === 'dirty' ? 'Unsaved changes'
                   : <><Check size={13} aria-hidden /> Saved</>}
       </span>
+    </div>
+  );
+}
+
+/**
+ * A one-off confirmation — "Draft created from Riverdale Season Opener", "Champions link copied"
+ * (Tournament admin redesign Stage 4). The save word's pill, look and fade, for a thing that just
+ * HAPPENED rather than a save: the same transient rule (it lingers ~2.5s, fades, then `onDone` unmounts
+ * it), never furniture over the work. Give it a `key` per notice so a second one restarts the linger.
+ */
+export function NoticePill({ message, onDone }: { message: string; onDone: () => void }) {
+  const [phase, setPhase] = useState<'shown' | 'fading'>('shown');
+  const done = useRef(onDone);
+  useEffect(() => { done.current = onDone; }, [onDone]);
+  useEffect(() => {
+    const fade = window.setTimeout(() => setPhase('fading'), LINGER_MS);
+    const leave = window.setTimeout(() => done.current(), LINGER_MS + FADE_MS);
+    return () => { window.clearTimeout(fade); window.clearTimeout(leave); };
+  }, []);
+  return (
+    <div className={styles.savePill} data-state="saved" data-phase={phase} role="status">
+      <span className={styles.saveStatus}><Check size={13} aria-hidden /> {message}</span>
     </div>
   );
 }

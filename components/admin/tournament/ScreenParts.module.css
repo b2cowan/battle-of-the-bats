@@ -47,6 +47,60 @@
 input[type='checkbox'].check22 { width: 22px; height: 22px; flex: none; margin: 0; border-radius: 5px; }
 input[type='checkbox'].check22::before { width: 6px; height: 11px; border-width: 0 2.5px 2.5px 0; }
 
+/* A record's read facts (a label, then its value), its fields while editing, and Delete at the end —
+   Teams' team record drew them first (Stage 2, in its own stylesheet); the event's record (Stage 4) reads
+   them here. ⚠ Teams still draws its own copies: moving it onto these is owed (a walked screen). */
+.recordIdentity { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.5rem; }
+.recordFacts { display: grid; gap: 0.1rem; margin: 0 0 0.5rem; }
+.recordFacts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.recordFacts dt { flex: none; font-size: var(--type-support); color: var(--text-tertiary); }
+.recordFacts dd { margin: 0; min-width: 0; text-align: right; overflow-wrap: anywhere; }
+.recordFacts a { color: var(--home-olive); text-decoration: underline; text-underline-offset: 3px; }
+.recordFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; margin: 0; }
+.recordFields > label { margin-bottom: 0.25rem; }
+.recordFieldWide { grid-column: 1 / -1; }
+@media (max-width: 640px) {
+  .recordFields { grid-template-columns: minmax(0, 1fr); }
+}
+.recordDelete {
+  min-height: var(--admin-control-h);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--danger-light);
+  cursor: pointer;
+}
+.recordDelete:hover { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 768px) { .recordDelete { min-height: var(--tap-min, 44px); } }
+/* A line said before a tap, in place of the button it stands for (a full plan, a link taken). */
+.recordBefore { margin: 0 0 0.25rem; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+
+/* A titled checkbox choice (CheckChoice) — the composer's row: the box on a 44px line, a hairline between rows. */
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--home-line);
+  cursor: pointer;
+}
+.choice:first-of-type { border-top: 0; }
+.choiceText { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.choiceText b { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.choiceText span { font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
+
 /* The title band's worded button: labelled at a desk, a 44px icon on a phone (Stage 1's form). */
 .headerButton { display: inline-flex; align-items: center; gap: 0.35rem; }
 @media (max-width: 760px) {

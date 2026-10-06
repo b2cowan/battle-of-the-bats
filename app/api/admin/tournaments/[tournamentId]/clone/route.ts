@@ -7,6 +7,7 @@ import { isThemePresetKey } from '@/lib/themes';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { slotsInUseRefusal } from '@/lib/tournament-status-words';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -21,11 +22,17 @@ const WARNING_KEYS = [
   'registration_setup_review',
   'public_content_review',
 ] as const;
+// ⚠ Every door the setup wizard records (its `ReuseSetupSourceSurface`) must be listed here, or the
+// clone records `unknown` for it. Stage 4 (2026-10-06) added the finished board, Past tournaments' rows
+// and the event's record; 'summary' is now Summary's Next year opening the same reuse step.
 const SOURCE_SURFACES = [
   'summary',
   'sidebar_create',
   'manage_tournaments_new_button',
   'manage_tournaments_row',
+  'finished_board',
+  'past_tournaments_row',
+  'tournament_record',
   'unknown',
 ] as const;
 
@@ -305,9 +312,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   if (countError) return json({ error: countError.message }, 500);
   if (slugError) return json({ error: slugError.message }, 500);
   if (ctx.org.tournamentLimit < 9999 && (count ?? 0) >= ctx.org.tournamentLimit) {
-    return json({ error: `Your plan allows ${ctx.org.tournamentLimit} tournament slot${ctx.org.tournamentLimit === 1 ? '' : 's'}. Archive another tournament before cloning.` }, 403);
+    return json({ error: slotsInUseRefusal(ctx.org.tournamentLimit) }, 403);
   }
-  if ((slugCount ?? 0) > 0) return json({ error: 'A non-archived tournament already uses this URL.' }, 409);
+  if ((slugCount ?? 0) > 0) return json({ error: 'Another tournament already uses this public link. Choose a different one.' }, 409);
 
   try {
     const result = await cloneTournament(tournamentId, ctx.org.id, {
