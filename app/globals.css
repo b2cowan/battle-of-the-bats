@@ -1025,6 +1025,19 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --home-scrim: rgba(36, 30, 21, 0.34);
 }
 
+/* ⚠ THE PAGE BASE UNDER A WARM PORTAL IS THE PAPER (owner, 2026-10-06 — found in the Sheet Frame §269
+   walk). The palette above hangs off the portal's marker, INSIDE <body>, so <body> kept the dark base
+   (`--bg`, near-black) on every warm coach and admin page. It showed in two places: the strip the outer
+   <main> reserves for the bottom nav, seen THROUGH the frosted bar at the end of every page (8% of
+   near-black turned the bar grey there, and on any page too short to scroll), and the iPhone's bounce
+   past the top or bottom of a page. Painting <body> the paper fixes both and keeps the frost (frosted
+   bars are the platform's chrome — the 2026-07-13 backdrop-filter ruling).
+   ⚠ A COPY of `--home-paper`, because <body> is outside the marker that declares it (the sandbox
+   chrome's `--sandbox-warm-paper` is the same kind of copy for the same reason);
+   `warm-palette-contrast.test.ts` fails if the two drift. Only under the warm account theme and only on a
+   page carrying the portal's marker: Dark, the public site and the volunteer shells are untouched. */
+html[data-user-theme="warm"]:has([data-coach-warm-enabled]) body { background: #F8F4ED; }
+
 /* ─── Coaches Portal under an explicit DARK preference (Nav Unification Stage G) ────────────
    The block above defines the --home-* palette ONLY under html[data-user-theme="warm"]. Under an
    explicit Dark choice it never applies, so every --home-* custom property was UNDEFINED inside

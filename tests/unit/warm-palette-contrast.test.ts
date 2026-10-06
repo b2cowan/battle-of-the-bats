@@ -198,6 +198,18 @@ describe('warm palette — legible by construction', () => {
     }
   });
 
+  it('the page base under a warm portal is the paper, and its copy agrees with --home-paper', () => {
+    // <body> sits outside the marker that declares --home-paper, so globals.css paints it with a copy.
+    // Without it the strip reserved for the bottom nav is near-black, and the frosted bar turns grey at
+    // the end of every page (owner, 2026-10-06, the §269 walk).
+    const css = readFileSync(COACH_PALETTE, 'utf8');
+    const base = /html\[data-user-theme="warm"\]:has\(\[data-coach-warm-enabled\]\) body \{ background: (#[0-9a-f]{6}); \}/i.exec(css);
+    assert.ok(base, 'the warm page-base rule is gone from app/globals.css');
+    const paper = readSelectorTokens(COACH_PALETTE, 'html[data-user-theme="warm"] [data-coach-warm-enabled]')['--home-paper'];
+    assert.ok(paper, '--home-paper not found in the warm block');
+    assert.deepEqual(parseHex(base[1]), parseHex(paper), 'the page base and --home-paper must move together');
+  });
+
   it('every prose ink clears AA on every ground', () => {
     const failures: string[] = [];
     for (const name of PROSE_INKS) {

@@ -25,6 +25,8 @@ import { cssRule, readCode, splitPhoneCss } from './_source-code.ts';
  *     ≤900 — Note and End game in the form layer, Scouting switching to it while an observation is typed
  *     (owner, 2026-10-06), Score and Who's here in the menu layer — and the console's own drawer recipe,
  *     its dark-only dim, its hand-copied bar height and its fall-through dim are gone.
+ *   · Follow-up (2026-10-06, owner D7 + D8): the game-day button row DOCKS on the nav at ≤900 — edge to
+ *     edge, its buttons in the console's column, on the nav at every scroll position; a computer unchanged.
  *
  * What it cannot see is the rendered sheet — `.probe/sf1/capture.mjs` (step 1, ten sheets),
  * `.probe/sf2/capture.mjs` (step 2, five sheets and two Tools sheets as the regression check) and
@@ -314,5 +316,37 @@ describe('step 3 · the form layer, and the game day on the frame', () => {
     assert.ok(card.includes('bottom: calc(var(--coach-foot-clear) + 0.5rem);'), 'the card that stays a card reads the token');
     assert.doesNotMatch(gameDay, /--bottom-nav-height/);
     assert.match(cssRule(coachesCss, '.gdSheetBody'), /padding: 0 0\.4rem;/, 'the frame’s 8px plus this = the 0.9rem the hub drew');
+  });
+});
+
+/* Found by the owner in the §268 walk and ruled from the hub's true-size drawings (Mockup › 7): the
+   game-day button row was a sticky bar inside the page's column — 358px of a 390px phone, and 32px
+   off the nav once the page ran out. `.probe/gdfoot/verify.mjs` measured the built row at 390, 768,
+   800 and 1280; `.probe/gdfoot/sheets.mjs` hit-tested its buttons and the sheets over it. */
+describe('follow-up · the game-day button row docks on the nav (owner D7 + D8, 2026-10-06)', () => {
+  const coachesCss = readCode('app/[orgSlug]/coaches/coaches.module.css');
+  const gameFoot = coachesCss.slice(coachesCss.indexOf('.gdFooter {'), coachesCss.indexOf('.gdFbtn {'));
+  const phone = gameFoot.slice(gameFoot.indexOf('@media (max-width: 900px) {'));
+
+  it('D7 · at ≤900 the row is pinned on the nav at every scroll position, edge to edge, its buttons in the console’s column', () => {
+    const docked = cssRule(phone, '.gdFooter.gdFooter');
+    for (const decl of [
+      'position: fixed;', 'left: 0;', 'right: 0;', 'bottom: var(--coach-foot-clear);', 'margin: 0;',
+      'padding-inline: max(var(--coach-gutter), calc((100% - var(--gd-col-w)) / 2));',
+    ]) assert.ok(docked.includes(decl), decl);
+    assert.doesNotMatch(docked, /z-index/, 'the clearance is geometric — a raised row buried its own sheets once (2026-09-22)');
+    assert.match(cssRule(phone, '.gdPage:has(> .gdFooter)'), /^\s*padding-bottom: var\(--gd-foot-h\);\s*$/,
+      'the console leaves the row its own height, and only while the row is there (a read-only viewer has none)');
+  });
+
+  it('the column and the gutter the row insets to each have ONE declaration', () => {
+    assert.match(coachesCss, /\.gdPage \{ --gd-col-w: 30rem; max-width: var\(--gd-col-w\);/);
+    assert.match(coachesCss, /--coach-gutter: 1rem;/);
+    assert.match(coachesCss, /\.coachesMain \{ padding: 1rem var\(--coach-gutter\) 2rem; \}/, 'the page pads by the same gutter');
+  });
+
+  it('D8 · above 900 the row stays sticky in its column — only the phone block docks it', () => {
+    assert.doesNotMatch(cssRule(gameFoot, '.gdFooter'), /position|left:|right:/);
+    assert.equal(coachesCss.split('.gdFooter.gdFooter {').length - 1, 1, 'one docking rule');
   });
 });
