@@ -60,8 +60,8 @@ lends its trigger through an optional `triggerRef`. Step 4 added:
    are committed (`9ab32b23`, `91986b7c`, `5d036eeb`) and walked (owner QA §264, §266, §268 PASSED); the step-3 walk's
    two follow-ups too (`62f76580` + `b06d8483`; §269, §270 PASSED). Since 2026-10-05 a call-ups session has held
    uncommitted edits to the lineup PDF and its guard (step 5 waits for that). Notifications Open in Place is complete
-   (`157adb69`, `fc889b4b`); its reader now stands on this frame (step 4). A session fixing the install banner holds an
-   untracked `tests/unit/install-banner-layer-guard.test.ts` that still reads two rules step 4 retired — theirs to move. `TODO.md`, the Owner QA Ledger, `memory/design_decisions.md` and
+   (`157adb69`, `fc889b4b`); its reader now stands on this frame (step 4, committed `2a304b52`, which also moved the
+   install banner's guard off the two rules it retired). `TODO.md`, the Owner QA Ledger, `memory/design_decisions.md` and
    `lib/help-content/coaches.tsx` usually hold other sessions' uncommitted edits — stage only your own lines: build
    `HEAD` + your lines and point the index at it (`.probe/sf3/stage-shared.cjs`; `.probe/sf3/record-pass.cjs` anchors
    each edit on text present in BOTH `HEAD` and the working copy). Never touch a file you did not change.
@@ -132,7 +132,7 @@ lends its trigger through an optional `triggerRef`. Step 4 added:
    here menus. **Built** (`5d036eeb`; follow-ups `62f76580` + `b06d8483`).
 4. The record sheets: the position picker, the Award sheet, RSVP (a form over its window), the notification reader
    (both portals) and the player row menus onto the frame, contents unmoved; the frame's own dim, `ownsKeys`,
-   `overWindow`, `grabCloses`. **Built** (2026-10-06; owner QA §273). The Schedule day list is not a phone sheet —
+   `overWindow`, `grabCloses`. **Built** (`2a304b52`; owner QA §273). The Schedule day list is not a phone sheet —
    reported, not built.
 5. Last: the lineup builder's drawers; Call up takes the shared form head; the three forms keep the keyboard inside
    (`useDialogFloor`, which also calls `useBackStep` — move the §219 guard with it); Copy from's × and the dims of Copy

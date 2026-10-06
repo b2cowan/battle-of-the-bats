@@ -28,7 +28,7 @@ Asked about in the same walk and fixed the same day: in Warm the bottom bar turn
 on the club admin), because the page behind its frosted glass was near-black there; it now stays cream everywhere.
 Owner QA §270 passed 4/4.
 
-**Step 4 built 2026-10-06 — the record sheets.** The position sheet (the lineup builder and game day), the Award
+**Step 4 built 2026-10-06, committed `2a304b52` — the record sheets.** The position sheet (the lineup builder and game day), the Award
 sheet, a player's RSVP, the notification reader (now on both the coach's and the club admin's Notifications pages)
 and the player row menus come from the same frame as every other phone sheet, with nothing inside them moved. What a
 coach can see: the grab line is the frame's lighter one, these sheets wear the card colour in Dark (as the switchers

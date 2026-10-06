@@ -7,7 +7,7 @@ frames and measured facts in `sheet-frame/` (`facts.json`). PM brief `SHEET_FRAM
 **Step 1 built 2026-10-05, committed `9ab32b23`; ✅ owner QA §264 PASSED 9/9 2026-10-05** (see *Build record*).
 **Step 2 built 2026-10-05, committed `91986b7c`; ✅ owner QA §266 PASSED 17/17 2026-10-06** (see *Build record*).
 **Step 3 built 2026-10-06, committed `5d036eeb`; ✅ owner QA §268 PASSED 19/19 2026-10-06** (see *Build record*).
-**Step 4 built 2026-10-06; owner QA §273** (see *Build record*). Step 5 to build.
+**Step 4 built 2026-10-06, committed `2a304b52`; owner QA §273** (see *Build record*). Step 5 to build.
 
 ## The rulings
 
@@ -480,7 +480,7 @@ bounce shows the same canvas. Not caused by the docked row (D7); the strip was t
   the iPhone bounce (QA §270 W5 step 3). The volunteer shells (`data-guest-kit`, warm palette fixed) are not covered by
   the rule and were not measured.
 
-### Step 4 — the record sheets (built 2026-10-06; owner QA §273)
+### Step 4 — the record sheets (built 2026-10-06, committed `2a304b52`; owner QA §273)
 
 **Before building — the code disagreed with the plan in four places (raised before any change, owner answered the
 one question that was his).**
@@ -609,3 +609,5 @@ window, the bar hidden, Escape, a dim tap and Back closing RSVP alone; the reade
 
 **/docs (Mode A), 2026-10-06** — no help article describes how these sheets close, the bottom bar under them, or the
 keyboard in a way this step makes wrong; no edits.
+
+**Committed `2a304b52` 2026-10-06**, after /simplify, /review and /docs. Staged around other sessions' work: the game page, the lineup builder and the phone inning list also carry another session's call-up edits (left out); `TODO.md`, the QA ledger and `memory/design_decisions.md` carry only this step's lines. The four comment edits this step made in `coaches.module.css` were committed in `ad957b4e` (another session staged the whole file). The commit's own state was checked apart from the working copy (HEAD plus the staged files in a throwaway checkout): every touched guard 233/233, typecheck clean.
