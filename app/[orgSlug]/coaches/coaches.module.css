@@ -539,11 +539,11 @@
     flex-direction: column; --coach-topstrip-h: 0px;
     /* The bottom nav plus the home indicator — everything pinned to the foot clears this. */
     --coach-foot-clear: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
-  }
-  /* The coaches shell nests its own <main> inside the app layout's <main>, and BOTH were
     /* The page's side gutter. `.coachesMain` pads by it, and a bar docked edge to edge (the
        game-day button row) insets its buttons by it so they stay in the page's column. */
     --coach-gutter: 1rem;
+  }
+  /* The coaches shell nests its own <main> inside the app layout's <main>, and BOTH were
      reserving for the 72px fixed bottom nav: the outer one via `main { padding-bottom:
      var(--bottom-nav-height) }` in globals.css (correct — that IS the nav's height), and this
      rule via a further 6rem on top. Every coaches page therefore ended in a band of dead space.
@@ -13087,18 +13087,6 @@ div.gdRow { cursor: default; }
      with one short name would otherwise sit at 40px. */
   text-align: left; min-height: var(--tap-min, 44px); cursor: pointer;
 }
-/* ⚠ DOCKED, NOT STICKY, WHEREVER THE BOTTOM NAV SHOWS (owner, Sheet Frame hub D7, 2026-10-06). As a
-   sticky bar the row was part of the page's column, so on a phone it stopped `--coach-gutter` short
-   of each edge (358px of 390) and, scrolled to the end, fell back into the flow 32px OFF THE NAV —
-   `.coachesMain`'s bottom padding. A row holding four of the screen's jobs earns a docked bar (the
-   2026-09-14 ruling); a docked bar sits on what it docks to at every scroll position. So: pinned to
-   the viewport like `.saveBar`, its surface and top line edge to edge, its buttons inset to the
-   column (the gutter on a phone, the 480px column on a tablet — `100%` is the viewport here, which
-   excludes a desktop scrollbar where `100vw` would not), and the console padded by the row's own
-   height so its last line scrolls clear. Only while the row is there: a read-only viewer has none.
-   ⚠ Still NO z-index (above): the clearance stays geometric. Above 900 (D8) the row stays sticky in
-   its column at the window's foot — no nav to sit on, and a full-window band holding a 480px
-   column of buttons would be empty furniture. */
 .gdRowMain[data-static="yes"] { cursor: default; }
 
 /* ── THE SCORE'S DOOR (owner ruling 2026-09-22) ──────────────────────────────────────────────
@@ -13150,6 +13138,18 @@ div.gdRow { cursor: default; }
      keeping both would count the home indicator twice and float the bar off the nav. */
   padding-bottom: 0.6rem;
 }
+/* ⚠ DOCKED, NOT STICKY, WHEREVER THE BOTTOM NAV SHOWS (owner, Sheet Frame hub D7, 2026-10-06). As a
+   sticky bar the row was part of the page's column, so on a phone it stopped `--coach-gutter` short
+   of each edge (358px of 390) and, scrolled to the end, fell back into the flow 32px OFF THE NAV —
+   `.coachesMain`'s bottom padding. A row holding four of the screen's jobs earns a docked bar (the
+   2026-09-14 ruling); a docked bar sits on what it docks to at every scroll position. So: pinned to
+   the viewport like `.saveBar`, its surface and top line edge to edge, its buttons inset to the
+   column (the gutter on a phone, the 480px column on a tablet — `100%` is the viewport here, which
+   excludes a desktop scrollbar where `100vw` would not), and the console padded by the row's own
+   height so its last line scrolls clear. Only while the row is there: a read-only viewer has none.
+   ⚠ Still NO z-index (above): the clearance stays geometric. Above 900 (D8) the row stays sticky in
+   its column at the window's foot — no nav to sit on, and a full-window band holding a 480px
+   column of buttons would be empty furniture. */
 @media (max-width: 900px) {
   .gdFooter.gdFooter {
     position: fixed; left: 0; right: 0; bottom: var(--coach-foot-clear); margin: 0;
