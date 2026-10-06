@@ -11,7 +11,7 @@ page with nothing dimmed behind them; they now rise from the bottom bar and dim 
 **Step 2 built 2026-10-05** — the small menus say what they are; the Schedule's + and view menus rise from the bar.
 Owner QA §266 passed.
 
-**Step 3 built on dev 2026-10-06 — game day.** On a phone or tablet, Note and End game come down over the bottom bar,
+**Step 3 built 2026-10-06, committed `5d036eeb` — game day.** On a phone or tablet, Note and End game come down over the bottom bar,
 so a stray tap cannot leave the game with a note half written or a corrected final score dropped; Scouting does the
 same only while an observation is being typed (owner rulings 2026-10-06: End game and Scouting were the two the plan
 left to sort). Who's here, Score and Scouting-while-reading stay on the bar with the warm dim; Who's here shows about
