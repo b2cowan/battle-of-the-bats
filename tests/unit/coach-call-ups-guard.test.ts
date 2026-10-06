@@ -487,10 +487,12 @@ describe('call-ups — the mark a coach reads', () => {
   });
 
   it('the bench console marks a call-up on BOTH the field and the bench', () => {
+    // Since 2026-10-06 the mark is the ink of the name, drawn inside `whoFor` (owner: "the coach
+    // knows who is their own player vs a call up"); `coach-game-day-board-flags-guard` pins its shape.
     const src = read('app/[orgSlug]/coaches/teams/[teamId]/game/[eventId]/page.tsx');
-    assert.match(src, /const callUpMarkFor/, 'The console\'s call-up mark helper is gone.');
+    assert.match(src, /const whoFor = [\s\S]*?isCallUp\(playerById\.get\(playerId\)\)/, 'The console\'s name helper no longer asks whether the player is a call-up.');
     assert.equal(
-      src.split('{callUpMarkFor(r.playerId)}').length - 1, 2,
+      src.split('{whoFor(r.playerId, [').length - 1, 2,
       'The console draws its rows twice — on the field and on the bench — and the call-up mark must '
       + 'appear in both. One of them has lost it, which means a borrowed player reads as one of '
       + 'your own in half the board.',

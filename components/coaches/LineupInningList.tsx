@@ -106,13 +106,11 @@ function InningRow({
         {...attributes} {...listeners} onClick={e => onRowActions(row.player.id, e.currentTarget)}>
         <GripVertical size={12} aria-hidden="true" />{number || '–'}
       </button>
-      {/* mig 309 — a borrowed player is marked on the phone too. ⚠ The mark lives INSIDE the name
-          cell rather than as a sixth sibling: this row's widths are handle 44 · name · 38 · 64 · 38,
-          and another column would have pushed the position pill off a 360px screen. The name gives
-          way to it rather than the other way round (see `.name` / `.nameText`). */}
+      {/* mig 309 — a borrowed player is marked on the phone too: by the ink of the name, not a word
+          under it (owner, 2026-10-06 — see `.callUpName`). The word stays for a screen reader. */}
       <span className={s.name}>
-        <span className={s.nameText}>{name}</span>
-        {isCallUp(row.player) && <span className={coach.lineupCallUpMark}>{CALL_UP_LABEL}</span>}
+        <span className={isCallUp(row.player) ? `${s.nameText} ${coach.callUpName}` : s.nameText}>{name}</span>
+        {isCallUp(row.player) && <span className={coach.srOnly}>, {CALL_UP_LABEL}</span>}
       </span>
       {neighbour(prev, 'prev')}
       {/* The blank cell reads "—" (owner, 2026-09-18); the amber outline carries the open state, the

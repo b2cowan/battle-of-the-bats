@@ -120,9 +120,10 @@ function SortableLineupRow({
       )}
       <td className={styles.lineupPlayerCell} style={{ display: 'table-cell', verticalAlign: 'middle' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-          <span className={styles.lineupPlayerName}>{name}</span>
-          {/* mig 309 — the mark travels with the row, on every surface a call-up appears. */}
-          {isCallUp(row.player) && <span className={styles.lineupCallUpMark}>{CALL_UP_LABEL}</span>}
+          {/* mig 309 — the mark travels with the row, on every surface a call-up appears: the ink of
+              the name, not a word beside it (owner, 2026-10-06 — see `.callUpName`). */}
+          <span className={isCallUp(row.player) ? `${styles.lineupPlayerName} ${styles.callUpName}` : styles.lineupPlayerName}>{name}</span>
+          {isCallUp(row.player) && <span className={styles.srOnly}>, {CALL_UP_LABEL}</span>}
           <button type="button" className={styles.lineupRemoveBtn} aria-label={`Remove ${name} from the lineup`} title="Remove" onClick={() => onRemove(row.player.id)}><X size={13} /></button>
         </div>
       </td>

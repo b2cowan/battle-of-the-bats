@@ -909,12 +909,33 @@ export default function CoachGameConsolePage({
   };
   const numberOf = (playerId: string) => playerById.get(playerId)?.playerNumber ?? null;
   /**
-   * The call-up mark (mig 309) — drawn on the field rows AND the bench rows, from one place so the
-   * two halves of this board cannot disagree. The console is the screen where a coach is making
-   * live decisions about who plays next, so "is this one of mine?" is at its most load-bearing.
+   * A board row's name and its flags — drawn on the field rows AND the bench rows, from one place so
+   * the two halves of this board cannot disagree.
+   *
+   * ⚠ A CALL-UP (mig 309) IS MARKED BY THE INK OF THE NAME, NOT A WORD (owner, 2026-10-06: "the
+   * coach knows who is their own player vs a call up they don't need these words on each one").
+   * The word stays in the accessible name, so a screen reader still says "Logan Test, Call-up".
+   * One mark with the builder's batting order and the phone's inning list: `.callUpName`.
+   *
+   * ⚠ ON A PHONE THE FLAGS SIT ON THEIR OWN LINE UNDER THE NAME (owner, 2026-10-06 — mockup
+   * `COACH_GAME_DAY_BOARD_FLAGS_MOCKUP.html`). Beside the name, "1 of 2 innings pitched" left a
+   * 360px row about 50px of name, which broke "Devon Test" mid-word over three lines, and the
+   * bench's sitting streak broke a name over nine. `.gdWho` stacks at ≤640 — the width the Who's
+   * here rows already stack at, for the same reason — and the row keeps its 56px floor.
    */
-  const callUpMarkFor = (playerId: string) =>
-    (isCallUp(playerById.get(playerId)) ? <span className={styles.gdWarn}>{CALL_UP_LABEL}</span> : null);
+  const whoFor = (playerId: string, flags: React.ReactNode[]) => {
+    const callUp = isCallUp(playerById.get(playerId));
+    const shown = flags.filter(Boolean);
+    return (
+      <span className={styles.gdWho}>
+        <span className={callUp ? `${styles.gdName} ${styles.callUpName}` : styles.gdName}>
+          {nameOf(playerId)}
+          {callUp && <span className={styles.srOnly}>, {CALL_UP_LABEL}</span>}
+        </span>
+        {shown.length > 0 && <span className={styles.gdFlags}>{shown}</span>}
+      </span>
+    );
+  };
 
   /**
    * The position, as a CONTROL — the builder's two, chosen by width (see `isPhone` above).
@@ -1397,14 +1418,14 @@ export default function CoachGameConsolePage({
                 const facts = (
                   <>
                     <span className={styles.gdNum}>{numberOf(r.playerId)}</span>
-                    <span className={styles.gdName}>{nameOf(r.playerId)}</span>
-                    {callUpMarkFor(r.playerId)}
-                    {isOut && <span className={styles.gdWarn} data-tone="red">{ATTENDANCE_WORD.absent}</span>}
-                    {pitched > 0 && cap !== null && (
-                      <span className={styles.gdWarn} data-tone={pitched >= cap ? 'red' : undefined}>
-                        {pitched} of {cap} {sportPack.periodLabelPlural.toLowerCase()} pitched
-                      </span>
-                    )}
+                    {whoFor(r.playerId, [
+                      isOut && <span key="out" className={styles.gdWarn} data-tone="red">{ATTENDANCE_WORD.absent}</span>,
+                      pitched > 0 && cap !== null && (
+                        <span key="pitched" className={styles.gdWarn} data-tone={pitched >= cap ? 'red' : undefined}>
+                          {pitched} of {cap} {sportPack.periodLabelPlural.toLowerCase()} pitched
+                        </span>
+                      ),
+                    ])}
                   </>
                 );
                 return (
@@ -1464,14 +1485,14 @@ export default function CoachGameConsolePage({
                 const facts = (
                   <>
                     <span className={styles.gdNum}>{numberOf(r.playerId)}</span>
-                    <span className={styles.gdName}>{nameOf(r.playerId)}</span>
-                    {callUpMarkFor(r.playerId)}
-                    {isOut && <span className={styles.gdWarn} data-tone="red">{ATTENDANCE_WORD.absent}</span>}
-                    {!isOut && streak >= 2 && (
-                      <span className={styles.gdWarn} data-tone="red">
-                        {ordinal(streak)} straight {periodLabel.toLowerCase()} sitting
-                      </span>
-                    )}
+                    {whoFor(r.playerId, [
+                      isOut && <span key="out" className={styles.gdWarn} data-tone="red">{ATTENDANCE_WORD.absent}</span>,
+                      !isOut && streak >= 2 && (
+                        <span key="streak" className={styles.gdWarn} data-tone="red">
+                          {ordinal(streak)} straight {periodLabel.toLowerCase()} sitting
+                        </span>
+                      ),
+                    ])}
                   </>
                 );
                 return (

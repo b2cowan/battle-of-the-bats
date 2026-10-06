@@ -779,3 +779,30 @@ re-runnable rather than only looking it.
 ⚠ **Four findings on the closed-season page's chrome remain UNRECORDED**, as before — a 29px *Share
 your season* button and a team-switcher overflow. Not this work's, and marking them accepted would
 record real tap-floor defects as decisions.
+
+## 18 · On screen, a call-up is the ink of the name (owner, 2026-10-06)
+
+> *"can we also remove the words "call up"? maybe just change the font color or do something more
+> subtle to identify a call up? the coach knows who is their own player vs a call up they don't need
+> these words on each one"*
+
+Asked on the game-day board, and applied to **every on-screen row that lists a call-up**: the bench
+console (field and bench), the builder's batting order on a computer, and the phone's inning list.
+Taking the word off one of the three would have made a borrowed player look one way while the lineup
+is built and another way during the game. **The name is now amber** (`--warning`, the colour the
+call-up pill's name already used, §14), from ONE rule (`.callUpName`). The chip rule
+(`.lineupCallUpMark`) is gone.
+
+**Kept:** the word in each row's accessible name (a `.srOnly` ", Call-up" beside the name); the
+*Call-ups* group heading where a coach adds one; and the printed **batting-order card**'s
+"(Call-up)" (§17's reason — its readers do not know who was borrowed; asked again as question 4 and
+kept as recommended).
+
+**This narrows §5's table** ("an ordinary row, wearing a call-up mark"): the mark is still there, as
+the name's ink rather than a word. §17's last line ("the on-screen marks are unchanged") is superseded.
+
+Drawn and ruled on the board-flags mockup (https://claude.ai/artifact/WaY9Wi25z4gefJk4ET2msz,
+round 2). Built on dev 2026-10-06 alongside the board's flags-under-the-name change. Guards:
+`coach-game-day-board-flags-guard.test.ts` (new: the one rule, the ink on all three rows, the word
+kept for a screen reader, the word gone from the row) and this plan's guard's console test, now
+reading the console's `whoFor` helper. Owner walk: ledger §274, W2.

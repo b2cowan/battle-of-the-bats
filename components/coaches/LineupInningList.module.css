@@ -188,10 +188,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* ⚰ `.callUpMark` was DELETED here 2026-09-22 — the phone row now wears the shared
-   `coach.lineupCallUpMark`. Two rules for one mark had already drifted (letter-spacing 0.06 vs
-   0.05em, and one was a tinted pill while the other was bare ink), which is exactly what the
-   `isCallUp`/`CALL_UP_LABEL` doc-block says this feature must not do. */
+/* ⚰ `.callUpMark` was DELETED here 2026-09-22 — the phone row wears the shared mark from the coaches
+   module, `coach.callUpName` since 2026-10-06 (the name's amber ink; the word is gone from the row).
+   Two rules for one mark had already drifted (letter-spacing 0.06 vs 0.05em, and one was a tinted
+   pill while the other was bare ink), which is exactly what the `isCallUp`/`CALL_UP_LABEL`
+   doc-block says this feature must not do. */
 /* The neighbours — the previous and next inning's positions, read-only and dim. 12px is the
    field floor's minimum (A4): a looked-for value, not this one. */
 .neighbour {

@@ -1,0 +1,420 @@
+<title>Game-Day Board Flags</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Public+Sans:wght@400;500;600&family=Inter:wght@400;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+/* Layout: a review sheet. Document chrome on a cool neutral ground so the warm phone frames read as
+   specimens, never as page. Frames are drawn at true size and scroll sideways rather than reflow. */
+:root{
+  --ground:#F2F3F0; --surface:#FFFFFF; --ink:#1B1D19; --ink-2:#4A4E46; --ink-3:#6E7368;
+  --line:#DCDED6; --accent:#4F6B16; --accent-soft:#E8EFD6;
+  --crit:#AE3620; --crit-soft:#F8E4DE; --good:#2C6349; --good-soft:#E2EFE8;
+  --f-display:Archivo,system-ui,sans-serif; --f-body:"Public Sans",system-ui,-apple-system,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#121410; --surface:#1A1D18; --ink:#ECEBE5; --ink-2:#B5B9AD; --ink-3:#8A8F82;
+    --line:#2E332A; --accent:#A9CC55; --accent-soft:#222A14;
+    --crit:#E8775C; --crit-soft:#331A13; --good:#67B18E; --good-soft:#14261D; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#121410; --surface:#1A1D18; --ink:#ECEBE5; --ink-2:#B5B9AD; --ink-3:#8A8F82;
+  --line:#2E332A; --accent:#A9CC55; --accent-soft:#222A14;
+  --crit:#E8775C; --crit-soft:#331A13; --good:#67B18E; --good-soft:#14261D; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--f-body);line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 72px;display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+header{display:flex;flex-direction:column;gap:8px}
+h1{font-size:clamp(26px,4.4vw,38px);font-weight:700;letter-spacing:-.02em;line-height:1.05}
+.lede{color:var(--ink-2);font-size:16px;max-width:66ch;margin:0}
+section{display:flex;flex-direction:column;gap:14px}
+h2{font-size:21px;font-weight:700;letter-spacing:-.01em}
+p{margin:0;max-width:68ch}
+.finds{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.find{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.find b{font-family:var(--f-display);font-size:15px}
+.find p{font-size:14px;color:var(--ink-2)}
+.frames{display:flex;flex-wrap:wrap;gap:28px}
+.framecol{display:flex;flex-direction:column;gap:10px;min-width:0;max-width:100%}
+.framecap{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.framecap h3{font-size:15px}
+.tag{font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border-radius:4px;padding:2px 6px}
+.tag.today{background:var(--crit-soft);color:var(--crit)}
+.tag.new{background:var(--good-soft);color:var(--good)}
+.tag.alt{background:var(--accent-soft);color:var(--accent)}
+.scroller{overflow-x:auto;max-width:100%;padding-bottom:4px}
+.truesize{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);max-width:360px}
+.truesize b{color:var(--ink)}
+
+/* ── The product, drawn with its own rules (coaches.module.css .gd*, warm palette, the field floor). */
+.phone{
+  --p-paper:#F8F4ED; --p-card:#FFFFFF; --p-ink:#241E15; --p-dim:#615A54; --p-line:rgba(70,55,30,.12);
+  --p-olive:#57651E; --p-olive-soft:rgba(87,101,30,.10); --p-live:#B03A22; --p-live-soft:rgba(176,58,34,.10);
+  --p-amber:#835006; --p-amber-soft:rgba(217,165,74,.12);
+  --p-sans:Inter,system-ui,sans-serif; --p-mono:"IBM Plex Mono",ui-monospace,monospace;
+  position:relative;width:360px;height:780px;flex:0 0 auto;background:var(--p-paper);border:0;outline:1px solid var(--line);
+  border-radius:14px;overflow:hidden;font-family:var(--p-sans);font-size:14px;line-height:1.6;color:var(--p-ink);
+}
+.phone *{box-sizing:border-box}
+.ph-mast{height:53px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;gap:8px;padding:0 14px;font-size:17px;font-weight:700}
+.ph-mast em{font-style:normal;color:var(--p-dim);font-weight:400;font-size:13px}
+.ph-mast b{font-family:var(--p-mono);font-size:13px;font-weight:600;letter-spacing:.06em;margin-left:4px}
+.ph-body{padding:10px 16px;display:flex;flex-direction:column;gap:10px}
+.ph-pin{background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;padding:9px 13px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(30,31,28,.07)}
+.ph-steprow{display:flex;align-items:center;justify-content:center;gap:10px}
+.ph-step{width:44px;height:44px;border:1px solid var(--p-line);border-radius:9px;display:grid;place-items:center;color:var(--p-dim);font-size:18px;background:var(--p-card)}
+.ph-inn{background:var(--p-olive-soft);color:var(--p-olive);font-family:var(--p-mono);font-size:12px;font-weight:700;letter-spacing:.06em;border-radius:999px;padding:8px 12px;white-space:nowrap}
+.ph-dots{display:flex;justify-content:center;gap:6px}
+.ph-dots i{width:7px;height:7px;border-radius:999px;background:#D9D4C6;display:block}
+.ph-dots i.on{background:var(--p-olive);box-shadow:0 0 0 2.5px rgba(87,101,30,.22)}
+.ph-dots i.done{background:var(--p-olive)}
+.gd-group{display:flex;flex-direction:column;gap:.4rem}
+.gd-lbl{margin:.3rem .2rem .1rem;font-family:var(--p-mono);font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--p-dim)}
+.gd-row{display:flex;align-items:center;gap:.6rem;width:100%;background:var(--p-card);border:1px solid var(--p-line);border-radius:9px;min-height:3.5rem;padding:.35rem .7rem;position:relative}
+.gd-main{display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;min-height:44px}
+.gd-num{font-family:var(--p-mono);font-size:12px;font-weight:700;color:var(--p-dim);min-width:1.7em}
+.gd-name{font-weight:600;font-size:14px;flex:1;min-width:0;overflow-wrap:anywhere}
+.gd-warn{font-family:var(--p-mono);font-size:12px;font-weight:600;line-height:1.2;color:var(--p-amber);background:var(--p-amber-soft);border-radius:6px;padding:.35em .55em}
+.gd-warn[data-tone="red"]{color:var(--p-live);background:var(--p-live-soft)}
+.gd-pos{font-family:var(--p-mono);font-size:14px;font-weight:700;background:var(--p-olive-soft);color:var(--p-olive);border:1.5px solid var(--p-olive);border-radius:7px;min-width:3.25rem;min-height:44px;padding:0 .6rem;display:grid;place-items:center;flex:0 0 auto}
+/* PROPOSED (phone only): the name owns its line; every flag sits on the line under it. */
+.gd-stack{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1;min-width:0}
+.gd-stack .gd-name{flex:none;line-height:1.3;max-width:100%}
+.gd-flags{display:flex;flex-wrap:wrap;gap:4px}
+.gd-stack .gd-warn{padding:.2em .55em}
+/* ROUND 2: a call-up is its NAME in the call-up amber (the builder's call-up pill already uses it), no word. */
+.gd-name.callup,.lb-name.callup,.lbd-name.callup{color:var(--p-amber)}
+/* the lineup builder, drawn from LineupInningList.module.css (phone) and the batting-order row (computer) */
+.lb-row{display:flex;align-items:center;gap:6px;height:58px;padding:0 8px 0 6px;background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;position:relative}
+.lb-handle{flex:none;width:44px;height:44px;border:1px solid var(--p-line);border-radius:9px;display:grid;place-items:center;font-family:var(--p-mono);font-size:12px;font-weight:700;color:var(--p-dim)}
+.lb-name{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:.1rem;font-size:14px;font-weight:600;line-height:1.3}
+.lb-mark{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--p-amber)}
+.lb-nb{flex:none;width:38px;font-size:12px;font-weight:600;color:var(--p-dim);text-align:center}
+.lb-pill{flex:none;width:64px;min-height:44px;border:1px solid var(--p-line);border-radius:9px;display:grid;place-items:center;font-family:var(--p-mono);font-size:14px;font-weight:700}
+.lbd-row{display:flex;align-items:center;gap:.3rem;width:300px;padding:10px 12px;background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;font-size:14px}
+.lbd-num{font-family:var(--p-mono);font-size:12px;font-weight:700;color:var(--p-dim);width:22px}
+.lbd-name{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lbd-chip{flex:none;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:.1rem .35rem;border-radius:4px;background:rgba(131,80,6,.16);color:var(--p-amber)}
+.lbd-x{flex:none;width:22px;text-align:center;color:var(--p-dim)}
+.cell.wide{width:auto}
+/* the live height readout */
+.hgt{position:absolute;right:-1px;top:-9px;font-family:var(--f-mono);font-size:10px;font-weight:600;background:var(--ink);color:var(--surface);border-radius:3px;padding:0 5px;line-height:16px;z-index:3;pointer-events:none}
+.hgt.big{background:var(--crit);color:#fff}
+.ph-foot{position:absolute;left:0;right:0;bottom:72px;height:67px;display:flex;gap:8px;background:var(--p-card);border-top:1px solid var(--p-line);padding:10px 16px;z-index:7}
+.ph-fbtn{flex:1;min-height:47px;border:1px solid var(--p-line);border-radius:9px;display:grid;place-items:center;font-size:12.5px;font-weight:600;background:var(--p-card);text-align:center;line-height:1.2}
+.ph-fbtn.end{color:var(--p-live);border-color:#E7BEB2}
+.ph-nav{position:absolute;left:0;right:0;bottom:0;height:72px;background:var(--p-card);border-top:1px solid var(--p-line);display:flex;align-items:center;justify-content:space-around;padding:0 6px;z-index:6}
+.ph-tab{display:flex;flex-direction:column;align-items:center;gap:5px;font-family:var(--p-mono);font-size:10px;font-weight:600;letter-spacing:.06em;color:var(--p-dim)}
+.ph-tab i{width:22px;height:22px;border:1.7px solid var(--p-dim);border-radius:5px;display:block}
+.ph-tab.on{color:var(--p-ink)}
+.ph-tab.on i{background:#22261C;border-color:#22261C;border-radius:999px}
+.fold{position:absolute;left:0;right:0;bottom:139px;border-top:2px dashed var(--crit);z-index:8;pointer-events:none}
+.fold span{position:absolute;right:8px;top:-20px;font-family:var(--f-mono);font-size:10px;font-weight:600;color:var(--crit);background:var(--p-paper);padding:0 4px}
+
+/* the row-by-row strip: each cell is exactly a 360px phone's row width (328px) */
+.strip{display:flex;flex-direction:column;gap:18px}
+.spec{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px}
+.spec-h{font-size:14px;color:var(--ink-2)}
+.spec-h b{font-family:var(--f-display);color:var(--ink);margin-right:6px}
+.trio{display:flex;flex-wrap:wrap;gap:14px}
+.trio > div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.colcap{font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.cell.phone{width:328px;height:auto;border:0;border-radius:8px;overflow:visible;padding-block:12px}
+.cell .none{display:grid;place-items:center;min-height:3.5rem;font-family:var(--f-mono);font-size:11.5px;color:var(--p-dim)}
+
+ul.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:72ch}
+ul.plain li{font-size:15px;color:var(--ink-2)}
+ul.plain b{color:var(--ink)}
+.asks{display:flex;flex-direction:column;gap:12px}
+.ask{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.ask b{font-family:var(--f-display);font-size:15px}
+.ask p{font-size:14px;color:var(--ink-2)}
+.ask .rec{font-family:var(--f-mono);font-size:11.5px;font-weight:600;color:var(--accent);letter-spacing:.04em}
+
+/* the QA walk */
+.built{background:var(--good-soft);color:var(--good);border-radius:8px;padding:10px 14px;font-size:14px;max-width:72ch}
+.signin{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px;max-width:640px}
+.signin dt{color:var(--ink-3);font-family:var(--f-mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;padding-top:2px}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.signin code{font-family:var(--f-mono);font-size:13px}
+.walk{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.walk-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
+.walk-h h3{font-size:16px}
+.walk-h .count{font-family:var(--f-mono);font-size:12px;color:var(--ink-3)}
+.walk p.why{font-size:14px;color:var(--ink-2)}
+.step{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;max-width:78ch}
+.step input{margin-top:4px;width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.step label{cursor:pointer}
+.step .sid{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);flex:none;width:22px;padding-top:3px}
+.verdict{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13.5px}
+.verdict label{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:5px 11px;cursor:pointer}
+.walk textarea,.summary textarea{width:100%;min-height:64px;font:inherit;font-size:14px;color:var(--ink);background:var(--ground);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.summary{display:flex;flex-direction:column;gap:8px}
+.summary button{align-self:flex-start;font:inherit;font-weight:600;font-size:14px;background:var(--accent);color:var(--surface);border:0;border-radius:8px;padding:9px 16px;cursor:pointer}
+.summary button:focus-visible,.step input:focus-visible,.verdict input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Coaches portal &middot; Game day &middot; the board &middot; 2026-10-06</span>
+    <h1>Game-Day Board Flags</h1>
+    <p class="lede">Every warning on a board row &mdash; the pitching count, the sitting streak, Call-up, Out &mdash; sits on the same line as the name, so on a phone the name gets whatever room is left. Proposed: on a phone, the name keeps its own line and the flags sit on a line under it. <b>Round 2:</b> the word &ldquo;Call-up&rdquo; comes off every row; a call-up is shown by the colour of their name. Open this on your phone; the frames are drawn at true size.</p>
+  </header>
+
+  <section>
+    <h2>What I found</h2>
+    <div class="finds">
+      <div class="find"><b>It is every flag, not only the pitching one</b><p>The bench&rsquo;s &ldquo;2nd straight inning sitting&rdquo; is wider than the pitching count, so a benched player is squeezed harder than your pitcher was. Call-up and Out add to it.</p></div>
+      <div class="find"><b>The name is being cut mid-word</b><p>&ldquo;Dev / on / Test&rdquo; is Devon Test broken inside the word. With about 50px left, the name wraps wherever it can, not at the space.</p></div>
+      <div class="find"><b>The same screen already solved this once</b><p>The Who&rsquo;s here list on this screen gives the name its own line on a phone and puts the controls below it. The board rows never got the same rule.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The whole screen, before and after</h2>
+    <p>Inning 2 of 6, scrolled so the inning stepper is pinned, as in your screenshot. Devon is at the pitching cap, Avery has sat two straight, Logan (at second base) is a call-up. The red dashed line is where the action bar starts. Each number is the row&rsquo;s height, measured as this page draws it.</p>
+    <div class="frames">
+      <div class="framecol">
+        <div class="framecap"><h3>Today</h3><span class="tag today">as built</span></div>
+        <div class="scroller"><div class="phone" id="f-today"></div></div>
+        <p class="truesize" id="cap-today">360 &times; 780</p>
+      </div>
+      <div class="framecol">
+        <div class="framecap"><h3>Proposed</h3><span class="tag new">restyled</span></div>
+        <div class="scroller"><div class="phone" id="f-new"></div></div>
+        <p class="truesize" id="cap-new">360 &times; 780</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Every flag, row by row</h2>
+    <p>Rows at a 360px phone&rsquo;s width, the width your screenshot was taken at. A row with no flag is unchanged. The third column is the other fix I considered: keep everything on one line and shorten the words.</p>
+    <div class="strip" id="strip"></div>
+  </section>
+
+  <section>
+    <h2>The call-up, everywhere it shows on screen</h2>
+    <p>The word appears in two more places today, both in the lineup builder. Removing it from the game-day board alone would leave a call-up looking one way while you build the lineup and another way during the game, so the proposal takes it off all three.</p>
+    <div class="strip">
+      <div class="spec"><p class="spec-h"><b>Lineups on a phone</b>the per-inning list</p><div class="trio">
+        <div><span class="colcap">Today</span><div class="cell phone"><div class="lb-row"><span class="lb-handle">4</span><span class="lb-name"><span>Logan Test</span><span class="lb-mark">Call-up</span></span><span class="lb-nb">LF</span><span class="lb-pill">2B</span><span class="lb-nb">2B</span></div></div></div>
+        <div><span class="colcap">Proposed</span><div class="cell phone"><div class="lb-row"><span class="lb-handle">4</span><span class="lb-name callup"><span>Logan Test</span></span><span class="lb-nb">LF</span><span class="lb-pill">2B</span><span class="lb-nb">2B</span></div></div></div>
+      </div></div>
+      <div class="spec"><p class="spec-h"><b>Lineups on a computer</b>the batting order</p><div class="trio">
+        <div><span class="colcap">Today</span><div class="cell phone wide"><div class="lbd-row"><span class="lbd-num">4</span><span class="lbd-name">Logan Test</span><span class="lbd-chip">Call-up</span><span class="lbd-x">&times;</span></div></div></div>
+        <div><span class="colcap">Proposed</span><div class="cell phone wide"><div class="lbd-row"><span class="lbd-num">4</span><span class="lbd-name callup">Logan Test</span><span class="lbd-x">&times;</span></div></div></div>
+      </div></div>
+    </div>
+    <ul class="plain">
+      <li><b>Where the word stays:</b> the <i>Call-ups</i> group in the builder, where you add a borrowed player to a game. It names the group once and its pills are already amber.</li>
+      <li><b>The printed batting-order card</b> keeps &ldquo;(Call-up)&rdquo; for now, because it goes to the umpire and the other coach, who don&rsquo;t know who you borrowed. The dugout sheet already prints the bare name. See question 4.</li>
+      <li><b>A screen reader</b> still says &ldquo;Logan Test, call-up&rdquo;, so the cue isn&rsquo;t lost for a coach who can&rsquo;t see the colour.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What changes</h2>
+    <ul class="plain">
+      <li><b>On a phone,</b> a flagged player&rsquo;s name stays on one line and the flags sit under it, inside the same tap area. The row stays the same height as an unflagged row. A player with two flags at once, which is rare, takes one extra line.</li>
+      <li><b>The words do not change.</b> &ldquo;2 of 2 innings pitched&rdquo; still turns red at the cap, and the screen reader still hears the flags as part of the row.</li>
+      <li><b>On a tablet or computer</b> nothing moves. There is room for the name and the flags side by side, and the switch happens at the same width the Who&rsquo;s here list already uses.</li>
+      <li><b>A call-up&rsquo;s name is amber,</b> with no word beside it, on the game-day board and both lineup builder views. Amber is the colour the builder already uses for a call-up, and it is also visibly lighter than the other names, so it still reads for a coach who doesn&rsquo;t see colour well.</li>
+      <li><b>Not changing:</b> the position button, the swap flow, bench order, or what each flag means.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Your call</h2>
+    <div class="asks">
+      <div class="ask"><b>1 &middot; Flags under the name on a phone</b><p>Applies to all four flags on both the field and the bench, so the next long flag cannot cause this again.</p><span class="rec">RECOMMENDED</span></div>
+      <div class="ask"><b>2 &middot; Keep the words as they are</b><p>Shortening to &ldquo;2 of 2 pitched&rdquo; (as the Console re-draw drew it) only buys room for a short name, and a long name still breaks. Once the flag has its own line, the full words cost nothing. Say so if you would rather have the shorter words anyway; they combine fine with option 1.</p><span class="rec">RECOMMENDED: KEEP</span></div>
+      <div class="ask"><b>3 &middot; A call-up is an amber name, with no word, on every on-screen row</b><p>The game-day board, the per-inning list on a phone and the batting order on a computer, so a borrowed player looks the same while you build the lineup and during the game. One thing to weigh: an amber name can sit beside an amber pitching flag on the same row. The flag is in a box and the name isn&rsquo;t, so they still read as two different things.</p><span class="rec">RECOMMENDED</span></div>
+      <div class="ask"><b>4 &middot; The printed batting-order card keeps &ldquo;(Call-up)&rdquo;</b><p>That card is read by people who don&rsquo;t know your team. Your reason, that the coach already knows, doesn&rsquo;t apply to them. Say so if you want it gone from the card too.</p><span class="rec">RECOMMENDED: KEEP</span></div>
+    </div>
+    <p class="built">Ruled 2026-10-06: questions 1&ndash;4 as recommended. Built on dev the same day. Your walk is below (QA ledger &sect;274).</p>
+  </section>
+
+  <section id="walk">
+    <h2>QA walk &middot; &sect;274</h2>
+    <dl class="signin">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev server up)</dd>
+      <dt>Sign in</dt><dd><code>uat-coach@uat-test-org.local</code> &middot; <code>UATPassword2026!</code> (dev only; keep this page private)</dd>
+      <dt>Team</dt><dd><b>UAT Test Team</b>, on the live game <b>vs Probe Rovers</b>: Schedule, then the <b>Game day</b> button beside it</dd>
+      <dt>If</dt><dd>the game opens as a recap instead of live, tell me and I&rsquo;ll move it back into its game-day window.</dd>
+    </dl>
+    <div id="walks"></div>
+    <div class="summary">
+      <button type="button" id="build">Build summary</button>
+      <textarea id="out" readonly aria-label="Summary to paste back into chat" placeholder="Your summary appears here to paste back into chat."></textarea>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var warn = function(t, red){ return '<span class="gd-warn"' + (red ? ' data-tone="red"' : '') + '>' + t + '</span>'; };
+  // Each row: number, name, position, flags [[text, red]], call-up (1 = borrowed for this game)
+  var field = [
+    [4,'Devon Test','P',[['2 of 2 innings pitched',1]]],
+    [5,'Emerson Test','C',[]],[6,'Frankie Test','1B',[]],[12,'Logan Test','2B',[],1],
+    [8,'Harper Test','3B',[]],[9,'Indy Test','SS',[]],[10,'Jordan Test','LF',[]],
+    [11,'Kai Test','CF',[]],[2,'Blake Test','RF',[]]
+  ];
+  var bench = [
+    [1,'Avery Test','—',[['2nd straight inning sitting',1]]],
+    [7,'Gray Test','—',[]],
+    [3,'Casey Test','—',[]]
+  ];
+  function row(r, mode){
+    var flags = r[3].map(function(f){ return warn(f[0], f[1]); }).join('');
+    var nameCls = 'gd-name';
+    if (r[4] && mode === 'today') flags = warn('Call-up', 0) + flags;
+    if (r[4] && mode === 'new') nameCls += ' callup';
+    var inner;
+    if (mode === 'new' && r[3].length){
+      inner = '<span class="gd-num">' + r[0] + '</span><span class="gd-stack"><span class="' + nameCls + '">' + r[1] + '</span><span class="gd-flags">' + flags + '</span></span>';
+    } else {
+      inner = '<span class="gd-num">' + r[0] + '</span><span class="' + nameCls + '">' + r[1] + '</span>' + flags;
+    }
+    return '<div class="gd-row" data-measure><span class="gd-main">' + inner + '</span><span class="gd-pos">' + r[2] + '</span></div>';
+  }
+  function screen(mode){
+    return '<div class="ph-mast">UAT Test Team <em>&#9662;</em> <b>3-2-1</b></div>' +
+      '<div class="ph-body">' +
+        '<div class="ph-pin"><div class="ph-steprow"><span class="ph-step">&#8249;</span><span class="ph-inn">INNING 2 OF 6</span><span class="ph-step">&#8250;</span></div>' +
+        '<div class="ph-dots"><i class="done"></i><i class="on"></i><i></i><i></i><i></i><i></i></div></div>' +
+        '<div class="gd-group"><p class="gd-lbl">On the field — inning 2</p>' + field.map(function(r){ return row(r, mode); }).join('') + '</div>' +
+        '<div class="gd-group"><p class="gd-lbl">Bench — longest sitting first</p>' + bench.map(function(r){ return row(r, mode); }).join('') + '</div>' +
+      '</div>' +
+      '<div class="fold"><span>action bar</span></div>' +
+      '<div class="ph-foot"><div class="ph-fbtn">Who’s here</div><div class="ph-fbtn">Note</div><div class="ph-fbtn">Scouting</div><div class="ph-fbtn end">End game</div></div>' +
+      '<div class="ph-nav"><span class="ph-tab on"><i></i>Overview</span><span class="ph-tab"><i></i>Schedule</span><span class="ph-tab"><i></i>Chat</span><span class="ph-tab"><i></i>Roster</span><span class="ph-tab"><i></i>More</span></div>';
+  }
+  document.getElementById('f-today').innerHTML = screen('today');
+  document.getElementById('f-new').innerHTML = screen('new');
+
+  var specimens = [
+    ['Your screenshot','amber, under the cap',[4,'Devon Test','P',[['1 of 2 innings pitched',0]]],'1 of 2 pitched'],
+    ['At the cap','turns red',[4,'Devon Test','P',[['2 of 2 innings pitched',1]]],'2 of 2 pitched'],
+    ['A long name','with the pitching count',[14,'Alexandra Richardson-Test','P',[['1 of 2 innings pitched',0]]],'1 of 2 pitched'],
+    ['Bench streak','the widest flag',[1,'Avery Test','—',[['2nd straight inning sitting',1]]],'2nd straight sitting'],
+    ['A call-up','nothing else on the row',[12,'Logan Test','2B',[],1],null],
+    ['A call-up with a flag','who has sat two straight',[12,'Logan Test','—',[['2nd straight inning sitting',1]],1],null],
+    ['No flag','unchanged',[5,'Emerson Test','C',[]],null]
+  ];
+  var cell = function(cap, html){ return '<div><span class="colcap">' + cap + '</span><div class="cell phone">' + html + '</div></div>'; };
+  document.getElementById('strip').innerHTML = specimens.map(function(s){
+    var r = s[2];
+    var alt = s[3] ? row([r[0], r[1], r[2], [[s[3], r[3][0][1]]]], 'today') : '<span class="none">no shorter form needed</span>';
+    return '<div class="spec"><p class="spec-h"><b>' + s[0] + '</b>' + s[1] + '</p><div class="trio">' +
+      cell('Today', row(r, 'today')) + cell('Proposed', row(r, 'new')) + cell('Considered: shorter words', alt) +
+      '</div></div>';
+  }).join('');
+
+  function measure(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-measure]'), function(el){
+      var old = el.querySelector('.hgt'); if (old) old.remove();
+      var h = Math.round(el.getBoundingClientRect().height);
+      var tag = document.createElement('span');
+      tag.className = 'hgt' + (h > 57 ? ' big' : '');
+      tag.textContent = h + 'px';
+      el.appendChild(tag);
+    });
+    ['today','new'].forEach(function(id){
+      var frame = document.getElementById('f-' + id);
+      var fold = frame.getBoundingClientRect().bottom - 139;
+      var rows = frame.querySelectorAll('.gd-row'), full = 0;
+      Array.prototype.forEach.call(rows, function(r){ if (r.getBoundingClientRect().bottom <= fold) full++; });
+      var cap = document.getElementById('cap-' + id);
+      cap.innerHTML = '360 &times; 780 &middot; <b>' + full + ' of ' + rows.length + '</b> players fully above the action bar &middot; tallest row <b>' +
+        Math.max.apply(null, Array.prototype.map.call(rows, function(r){ return Math.round(r.getBoundingClientRect().height); })) + 'px</b>';
+    });
+  }
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(measure); } else { measure(); }
+  window.addEventListener('load', measure);
+})();
+</script>
+<script>
+(function(){
+  // The QA walk: ticks, verdicts and notes kept in this browser only; the summary is how results travel.
+  var KEY = "qa274-board-flags";
+  var WALKS = [
+    { id: "W1", title: "Flags sit under the name on a phone", writes: "Writes nothing.",
+      steps: [
+        "On a phone, or a browser window narrower than about 640px, open Game day for <b>vs Probe Rovers</b>.",
+        "<b>Devon Test</b> (P): the name is on one line and <b>1 of 2 innings pitched</b> sits on the line under it. The row is the same height as <b>Emerson Test</b>&rsquo;s below it.",
+        "<b>Logan Test</b> is marked Out: <b>Out</b> sits under the name, and the row is the same height as the others.",
+        "Tap Devon&rsquo;s <b>P</b> button: the position sheet opens as before. Close it without picking.",
+        "Switch to Dark and look at the same two rows: the flags under the names are easy to read.",
+        "On a tablet or computer, or a window wider than about 640px: both flags sit beside the name again, as they did before."
+      ] },
+    { id: "W2", title: "A call-up is an amber name, with no word", writes: "Writes, and step 6 undoes it: you call up one player for this game and take them off again.",
+      steps: [
+        "Open <b>Lineups</b> for the vs Probe Rovers game. Tap <b>Call up a player</b> and pick anyone. They appear in the <b>Call-ups</b> group under the order, as an amber pill under that heading. This is where the word stays.",
+        "Add them to the lineup. On a computer, their name in the batting order is <b>amber, with no Call-up tag beside it</b>. Everyone else&rsquo;s name is in the normal ink.",
+        "On a phone, in the inning-by-inning list, their name is amber with <b>no Call-up line under it</b>, and the row is the same height as the others.",
+        "Open <b>Game day</b>: their row on the field or the bench shows the amber name, with no word.",
+        "Print the <b>Batting order card</b> (Tools, then Print): it still says <b>(Call-up)</b> after their name. The dugout poster prints their name alone, as before.",
+        "Clean up: remove them from the lineup (the &times; beside their name), then take them off this game (the &times; on their pill under Call-ups)."
+      ] }
+  ];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var host = document.getElementById("walks");
+  host.innerHTML = WALKS.map(function(w){
+    var steps = w.steps.map(function(s, i){
+      var id = w.id + "-" + (i + 1);
+      return '<div class="step"><span class="sid">' + (i + 1) + '</span><input type="checkbox" id="' + id + '"><label for="' + id + '">' + s + '</label></div>';
+    }).join("");
+    var v = ["pass", "issue", "needs a call"].map(function(k){
+      var id = w.id + "-v-" + k.replace(/ /g, "");
+      return '<label for="' + id + '"><input type="radio" name="' + w.id + '-v" id="' + id + '" value="' + k + '">' + k + '</label>';
+    }).join("");
+    return '<div class="walk"><div class="walk-h"><h3>' + w.id + ' &middot; ' + w.title + '</h3><span class="count" id="' + w.id + '-count"></span></div>' +
+      '<p class="why">' + w.writes + '</p>' + steps +
+      '<div class="verdict"><span>Verdict:</span>' + v + '</div>' +
+      '<textarea id="' + w.id + '-notes" aria-label="' + w.id + ' notes" placeholder="Notes for ' + w.id + ' (optional)"></textarea></div>';
+  }).join("");
+  function count(w){
+    var done = w.steps.filter(function(_, i){ return state[w.id + "-" + (i + 1)]; }).length;
+    document.getElementById(w.id + "-count").textContent = done + " of " + w.steps.length;
+    return done;
+  }
+  WALKS.forEach(function(w){
+    w.steps.forEach(function(_, i){
+      var el = document.getElementById(w.id + "-" + (i + 1));
+      el.checked = !!state[el.id];
+      el.addEventListener("change", function(){ state[el.id] = el.checked; save(); count(w); });
+    });
+    Array.prototype.forEach.call(document.getElementsByName(w.id + "-v"), function(r){
+      r.checked = state[w.id + "-v"] === r.value;
+      r.addEventListener("change", function(){ state[w.id + "-v"] = r.value; save(); });
+    });
+    var n = document.getElementById(w.id + "-notes");
+    n.value = state[w.id + "-notes"] || "";
+    n.addEventListener("input", function(){ state[w.id + "-notes"] = n.value; save(); });
+    count(w);
+  });
+  document.getElementById("build").addEventListener("click", function(){
+    var lines = WALKS.map(function(w){
+      var done = count(w);
+      var verdict = (state[w.id + "-v"] || "no verdict").toUpperCase();
+      var open = w.steps.map(function(_, i){ return i + 1; }).filter(function(i){ return !state[w.id + "-" + i]; });
+      var note = (state[w.id + "-notes"] || "").trim();
+      return "§274 Game-day board flags · " + w.id + " · " + w.title + " — [" + verdict + "] " + done + "/" + w.steps.length +
+        (open.length ? " (unticked: " + open.join(", ") + ")" : "") + (note ? "\n  Notes: " + note : "");
+    });
+    var out = document.getElementById("out");
+    out.value = lines.join("\n");
+    out.focus(); out.select();
+    try { if (navigator.clipboard) navigator.clipboard.writeText(out.value).catch(function(){}); } catch (e) {}
+  });
+})();
+</script>

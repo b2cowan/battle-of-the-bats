@@ -7,6 +7,24 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-06 — A ROW'S FLAGS GO UNDER THE NAME ON A PHONE, AND A CALL-UP IS THE INK OF THE NAME, NOT A WORD (owner, on a screenshot of the game-day board: *"I don't like how much space this takes up"*, then *"the coach knows who is their own player vs a call up they don't need these words on each one"*) — mockup + walk https://claude.ai/artifact/WaY9Wi25z4gefJk4ET2msz, ledger §274
+
+**Decision:** (1) on a phone (≤640) a game-day board row's flags — innings pitched, the sitting streak, Out — sit on
+their own line under the name, inside the same tap area, and the row keeps its 56px floor; above 640 they stay beside
+it. (2) A call-up is marked by an **amber name** (`--warning`, the call-up pill's own name colour) with no "Call-up"
+word, on every on-screen row that lists one: the game-day board, the builder's batting order and the phone's inning list.
+**Rationale:** (1) beside the name, a 22-character flag left a 360px row ~50px of name: "Devon Test" broke mid-word over
+three lines, and the bench's streak broke a name over nine. The screen's own Who's here rows had already stacked at 640
+for the same reason. Shortening the words was drawn and rejected: a long name still broke. (2) The word told the coach
+something they already know, and cost each row its width or a line. The same reason took "(Call-up)" off the dugout
+poster on 2026-10-03.
+**Kept, on purpose:** the word in each row's accessible name (a screen reader says "Logan Test, Call-up"); the Call-ups
+group heading where a coach adds one; and "(Call-up)" on the printed **batting-order card**, because the umpire and the
+other coach read it and do not know who was borrowed (owner question 4, kept as recommended).
+**Weigh:** amber now means both "borrowed" (an unboxed name) and "a warning" (a boxed flag) on the same row. The box is
+what tells them apart. Reconsider if a flag ever loses its box.
+**Applies to:** any row that lists players with status flags on a phone; any future surface that lists a call-up.
+
 ### 2026-10-06 — THE COACHES PORTAL HAS NO "PUBLIC SITE" DOOR IN ITS HEADER (owner, on a screenshot of the game-day console: *"coaches just manage their teams and have no reason to toggle back and forth from the public site of the club"*)
 
 **Decision:** the team masthead's ⇄ "Public site" pill is removed at every width. Nothing replaces it.

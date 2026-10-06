@@ -400,3 +400,36 @@ effect that did not happen.
   by this change — not a finding against it.
 - **Committed `23ce6347` 2026-10-06.** Owner browser check owed (the End game sheet and the
   score-panel line on a phone).
+
+## 9 · A row's flags sit under the name on a phone (owner, 2026-10-06)
+
+> *"I don't like how much space this takes up"* (a screenshot of the board at 360px: Devon Test, P,
+> "1 of 2 innings pitched")
+
+**What the code did:** every flag on a board row (innings pitched, the sitting streak, Out, Call-up)
+was a flex sibling of the name on one line, and the name was `flex: 1; min-width: 0;
+overflow-wrap: anywhere`. At 360px the 22-character pitching flag left the name about 50px, so
+"Devon Test" broke **mid-word** over three lines (an 80px row). The bench's "2nd straight inning
+sitting" is wider, and broke a name over nine lines (215px). The Who's here rows on the same screen
+had already been made to stack at 640 for exactly this reason; the board rows never were.
+
+**Ruled as drawn** (mockup https://claude.ai/artifact/WaY9Wi25z4gefJk4ET2msz): at ≤640 the name owns
+its line and every flag sits on the line under it, inside the same tap area. Above 640, nothing
+changes. The words are unchanged; shortening them ("1 of 2 pitched") was drawn and rejected, because
+a long name still broke. Round 2 took the word "Call-up" off the row entirely
+(`COACH_CALL_UPS_PLAN.md` §18).
+
+**Built on dev 2026-10-06.** One helper, `whoFor`, draws the name and its flags for the field and
+the bench rows. `.gdWho` / `.gdFlags` stack in the 640 block, with the stacked name at
+line-height 1.3 and the chip at 0.2em block padding (18.2 + 2 + 19.2 = 39.4px, inside the row's
+44.8px content box), so a flagged row keeps the same 56px floor as a plain one.
+
+**Measured on the dev server** (`.probe/board-flags.mjs`, `.probe/board-stack.mjs`, the UAT probe
+game re-anchored live by `.probe/sf3/livegame.mjs`): at 360 and 390 every one of the 12 rows is
+57px with the name on one line, Devon's pitching flag and Logan's Out included; the flags sit UNDER
+the name at 360 and 640 and BESIDE it at 641 and 1280. The fixture game has no call-up, so the amber
+name is proven by the guard and the mockup, and walked by the owner (§274 W2).
+
+**Verification:** `coach-game-day-board-flags-guard.test.ts` (new, 7 tests) plus the call-ups,
+lineup-phone and sheet-frame guards: 151/151. Focused lint: no new warnings (10 older ones in the
+console). Typecheck clean. CSS purity, selectors, palette and text contrast, spelling clean.
