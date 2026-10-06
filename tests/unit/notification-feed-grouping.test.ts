@@ -130,7 +130,7 @@ test('both surfaces pass an EXPLICIT clock to the grouping and to the labels', (
   // per grouping pass and handed to both. A default-argument call site silently undoes that.
   const files = [
     'components/notifications/NotificationFeedBody.tsx',
-    'components/notifications/NotificationPanel.tsx',
+    'components/notifications/NotificationDrawer.tsx',
   ];
   for (const rel of files) {
     const src = readFileSync(path.join(process.cwd(), rel), 'utf8');
@@ -148,7 +148,7 @@ test('both surfaces pass an EXPLICIT clock to the grouping and to the labels', (
 
 // ── The zone ──────────────────────────────────────────────────────────────────
 
-/** The zone rule both surfaces run (NotificationPanel + useNotificationFeed), asserted once. */
+/** The zone rule every surface runs (useNotificationFeed — the pages and the bell's drawer), asserted once. */
 const inNeedsAttention = (n: AppNotification) =>
   !n.clearedAt && notificationCategory(n.eventType) === 'act';
 

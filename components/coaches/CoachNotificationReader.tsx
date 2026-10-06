@@ -1,15 +1,11 @@
 'use client';
 import { useEffect, useId, useRef } from 'react';
-import { ArrowRight, Check, Trash2 } from 'lucide-react';
-import type { AppNotification, NotificationEventType } from '@/lib/types';
-import { NOTIFICATION_EVENT_LABELS, notificationCategory } from '@/lib/notification-labels';
-import {
-  BUNDLE_NOUN, entryMembers, iconFor, notificationDestination, notificationStamp, type ActivityEntry,
-} from '@/lib/notification-view';
+import type { AppNotification } from '@/lib/types';
+import type { ActivityEntry } from '@/lib/notification-view';
+import NotificationMessage from '@/components/notifications/NotificationMessage';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import sheet from './CoachesBottomNav.module.css';
-import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import own from './CoachNotificationReader.module.css';
 
 /**
@@ -24,6 +20,12 @@ import own from './CoachNotificationReader.module.css';
  * phone, and its link (Insights) describes the team TODAY — so an older review had nowhere to be
  * read. Here it reads whole, whatever its age.
  *
+ * ⚖ THIS FILE IS THE FRAME; THE MESSAGE IS SHARED (Notifications Open in Place, step 2, 2026-10-06).
+ * What the reader SAYS — the kind and stamp, the title, the body or the bundle's members, and Open ·
+ * Done · Close · Delete in that order — is `NotificationMessage`, the block the bell's drawer wears
+ * too, so the two cannot drift (hub screen 7). Close is passed in because this frame closes from its
+ * button row; the drawer's pane closes with its own ×.
+ *
  * ⚖ A MENU, NOT A FORM, by the drawer ruling (2026-09-23): nothing is typed and nothing can be
  * lost, so on a phone it is the More sheet's own container at the bar's top edge — `.sheetAnchor`
  * / `.sheetScrim` / `.dropdown` / `.sheetGrab` from `CoachesBottomNav.module.css`, one skin with
@@ -32,17 +34,8 @@ import own from './CoachNotificationReader.module.css';
  * Above the nav breakpoint the nav module draws nothing, so the same panel is a small centered
  * dialog (the RSVP sheet's answer, same reason).
  *
- * ⚖ OPEN · DONE · CLOSE · DELETE, in that order in every frame (owner ruling 2026-10-05, D3 + D8 —
- * "Notifications Open in Place"): the way on, named for its page; Done (the old Clear) only on a
- * Needs-attention row; Close; and the trash, set apart at the end, which deletes the coach's own
- * copy with an Undo note and no question. The same buttons in the same order as the bell's drawer
- * pane, so the two cannot drift; on a computer that puts the way on FIRST, not last.
- *
  * It stands on `useDialogFloor`: Escape, the Tab trap, focus back to the row on close, and the
  * phone's Back gesture closes the reader rather than leaving the page ("Back goes up ONE level").
- *
- * The onward control is a real `<a href>`: it is navigation, and it keeps the feed's full-document
- * load (R8 — client navigation on tap is deferred with its URL-state half; see useNotificationFeed).
  *
  * ⚠ Rendered in-tree, never through a portal: the warm skin is a wrapper above the providers.
  */
@@ -84,17 +77,6 @@ export default function CoachNotificationReader({
     return () => document.removeEventListener('pointerdown', onPointer);
   }, [closeRef]);
 
-  const members = entryMembers(entry);
-  const lead = members[0];
-  const link = members.find(m => m.link)?.link ?? null;
-  const goLabel = notificationDestination(link, 'coach');
-  const kind = NOTIFICATION_EVENT_LABELS[lead.eventType as NotificationEventType] ?? 'Notification';
-  const title = entry.kind === 'bundle'
-    ? `${members.length} ${BUNDLE_NOUN[entry.eventType] ?? 'notifications'}`
-    : lead.title;
-  // Only a single Needs-attention row can be marked Done — the same rule as the row's own Done.
-  const clearable = entry.kind === 'item' && notificationCategory(lead.eventType) === 'act' && !lead.clearedAt;
-
   return (
     <div ref={anchorRef} className={`${sheet.sheetAnchor} ${own.floor}`} data-notification-reader>
       <div className={`${sheet.sheetScrim} ${own.scrim}`} aria-hidden onClick={onClose} />
@@ -111,56 +93,14 @@ export default function CoachNotificationReader({
           <span className={sheet.sheetGrab} aria-hidden />
         </button>
 
-        <p className={own.eyebrow}>
-          <span className={own.icon} aria-hidden>{iconFor(lead.eventType)}</span>
-          <span>{kind}</span>
-          {/* The stamp is NOT uppercased: the eyebrow's caps would turn "7:00 p.m." into "P.M." on
-              screen, a second spelling of the house clock that no source-text gate can see. */}
-          <span className={own.stamp}>· {notificationStamp(lead.createdAt)}</span>
-        </p>
-        <h2 id={titleId} className={own.title}>{title}</h2>
-
-        {entry.kind === 'item' ? (
-          lead.body ? <p className={own.body}>{lead.body}</p> : null
-        ) : (
-          <ul className={own.members}>
-            {members.map(m => (
-              <li key={m.id} className={own.member}>
-                <p className={own.memberTitle}>{m.title}</p>
-                {m.body && <p className={own.memberBody}>{m.body}</p>}
-                <p className={own.memberTime}>{notificationStamp(m.createdAt)}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className={own.actions}>
-          {link && goLabel && (
-            <a href={link} className={`${shared.btnPrimary} ${own.go}`}>
-              {goLabel} <ArrowRight size={16} aria-hidden />
-            </a>
-          )}
-          {clearable && (
-            <button
-              type="button"
-              className={shared.btnSecondary}
-              aria-label={`Mark “${lead.title}” done`}
-              onClick={() => onClear(lead)}
-            >
-              <Check size={14} aria-hidden /> Done
-            </button>
-          )}
-          <button type="button" className={shared.btnSecondary} onClick={onClose}>Close</button>
-          <button
-            type="button"
-            className={`${shared.btnSecondary} ${own.trash}`}
-            aria-label={`Delete “${title}”`}
-            title="Delete"
-            onClick={() => onDelete(members)}
-          >
-            <Trash2 size={16} aria-hidden />
-          </button>
-        </div>
+        <NotificationMessage
+          entry={entry}
+          portal="coach"
+          titleId={titleId}
+          onDone={onClear}
+          onDelete={onDelete}
+          onClose={onClose}
+        />
       </div>
     </div>
   );

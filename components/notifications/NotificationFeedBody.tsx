@@ -2,32 +2,27 @@
 import { useRef, type ReactNode } from 'react';
 import { BellOff, CheckCheck, ChevronRight } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
-import { iconFor, notificationTime, BUNDLE_NOUN, groupActivityItems, type ActivityEntry } from '@/lib/notification-view';
+import {
+  iconFor, notificationTime, BUNDLE_NOUN, groupActivityItems, FEED_CAUGHT_UP, FEED_EMPTY_COPY,
+  type ActivityEntry, type FeedEmptyCopy,
+} from '@/lib/notification-view';
 import type { NotificationFeed, ZoneFilter } from './useNotificationFeed';
 import NotificationUndoNote from './NotificationUndoNote';
 import styles from './notifications-page.module.css';
 
 /**
- * NotificationFeedBody — the "See all" page below its header: zone chips + Unread/All, the list
+ * NotificationFeedBody — a Notifications page below its header: zone chips + Unread/All, the list
  * (Needs attention pinned over a date-grouped, bundled Activity feed), Load more, and the three
  * states the fixture used to hide (loading · failed · empty).
  *
  * Shared by the admin page (NotificationsPageContent) and the coach page (CoachNotificationsPage);
  * the FRAME above it is each shell's own — coach-notifications review R1, 2026-09-03. The zones,
- * day grouping and bundling come from lib/notification-view, the same functions the bell uses, so
- * the three surfaces cannot drift.
+ * day grouping and bundling come from lib/notification-view, the same functions the bell's drawer
+ * uses, and the empty list's words are `FEED_EMPTY_COPY`, which the drawer says too — so the
+ * surfaces cannot drift.
  */
 
-export interface FeedEmptyCopy {
-  /** The headline when the account has NO notifications yet. */
-  headline: string;
-  /** What arrives here — the sentence that makes the emptiness make sense. */
-  description?: string;
-  /** A quieter footnote (e.g. where chat lives instead). */
-  note?: string;
-}
-
-const DEFAULT_EMPTY: FeedEmptyCopy = { headline: 'No notifications yet' };
+const DEFAULT_EMPTY: FeedEmptyCopy = FEED_EMPTY_COPY.admin;
 
 /**
  * The notifications whose preview stops at two lines on a phone (coaching from a phone · stage 6 · R4,
@@ -202,8 +197,8 @@ export default function NotificationFeedBody({
         <div className={styles.empty}>
           <span className={styles.emptyIcon}><CheckCheck size={20} aria-hidden /></span>
           <div className={styles.emptyText}>
-            <p className={styles.emptyHeadline}>You’re all caught up</p>
-            <p className={styles.emptyDesc}>Everything unread is handled. Switch to <strong>All</strong> to read back through the season.</p>
+            <p className={styles.emptyHeadline}>{FEED_CAUGHT_UP.headline}</p>
+            <p className={styles.emptyDesc}>{FEED_CAUGHT_UP.lead} <strong>{FEED_CAUGHT_UP.view}</strong> {FEED_CAUGHT_UP.tail}</p>
           </div>
         </div>
       );

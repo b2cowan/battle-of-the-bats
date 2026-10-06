@@ -66,12 +66,10 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
         {currentOrg?.id && (
           <NotificationBell
             orgId={currentOrg.id}
+            portal="admin"
             settingsHref={getNotificationSettingsHref(currentOrg.slug)}
-            seeAllHref={`/${currentOrg.slug}/admin/notifications`}
             count={notifCount}
             onCountChange={onNotifCountChange}
-            panelPlacement="topStrip"
-            warm
           />
         )}
         {/* The account door opens IN PLACE (2026-09-01, shared with the coach strip — plan

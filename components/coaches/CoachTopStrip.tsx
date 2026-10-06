@@ -27,7 +27,7 @@
  * `docs/projects/active/COACH_ACCOUNT_MENU_PLAN.md`). It was the last strip control that
  * EJECTED the coach into consumer chrome — the exact fault that removed the chat door —
  * and it had no rescue link (only /chat ever got one). All three strip controls now open
- * in place (bell panel · account menu · Workspaces popover); actual exits live INSIDE
+ * in place (bell drawer · account menu · Workspaces popover); actual exits live INSIDE
  * them, chosen knowingly, and the menu's outbound rows carry the way back. The sidebar's
  * own Sign out retired into the menu in the same change (one door per destination).
  * Hidden in the demo sandbox — a "Sign out" on the SHARED demo account must never render,
@@ -90,10 +90,8 @@ export default function CoachTopStrip({ wall = false }: {
         {!wall && currentOrg?.slug && currentOrg.id && (
           <NotificationBell
             orgId={currentOrg.id}
+            portal="coach"
             settingsHref={`/account/notifications?focus=coach-${currentOrg.slug}&back=${back}`}
-            seeAllHref={`/${currentOrg.slug}/coaches/notifications`}
-            panelPlacement="topStrip"
-            warm
           />
         )}
         {!inSandbox && (

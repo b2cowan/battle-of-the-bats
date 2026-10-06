@@ -5,15 +5,19 @@ import { notificationCategory } from '@/lib/notification-labels';
 import { DAY_ORDER, dayBucket, NOTIFICATION_DELETE_MAX_IDS } from '@/lib/notification-view';
 
 /**
- * useNotificationFeed — the "See all" page's state, in one place, so two shells can wear it.
+ * useNotificationFeed — a notification list's state, in one place, so every surface wears it: the
+ * admin's and the coach's Notifications pages, and (since Notifications Open in Place step 2,
+ * 2026-10-06) the bell's drawer, which used to fetch its own 40 rows and keep its own copies of the
+ * zone, Done and Mark all read.
  *
  * Split out of NotificationsPageContent on 2026-09-03 (coach-notifications review, R1): the admin
  * page and the coach page share the FEED (loading, paging, zones, bundling, mark-read) and own their
  * FRAMES (the admin title block; CoachPageHeader). The frame needs exactly two things from the feed
  * — whether "Mark all read" would do anything, and the handler — and the body needs the rest.
  *
- * ⚠ Row taps still navigate with a full document load after the mark-read round trip (R8, deferred
- * to a second pass by the owner). Do not "fix" that here without the URL-state half that goes with it.
+ * ⚠ The admin page's row tap still navigates with a full document load after the mark-read round
+ * trip (R8, deferred to a second pass by the owner; step 3 makes that page open the notification
+ * instead). Do not "fix" that here without the URL-state half that goes with it.
  */
 
 export const FEED_PAGE_SIZE = 40;
@@ -29,6 +33,10 @@ function byNewest(a: AppNotification, b: AppNotification): number {
   return Date.parse(b.createdAt) - Date.parse(a.createdAt);
 }
 
+function unreadIn(rows: AppNotification[]): number {
+  return rows.filter(r => !r.readAt).length;
+}
+
 function postAction(body: Record<string, unknown>) {
   return fetch('/api/notifications', {
     method:  'POST',
@@ -42,15 +50,34 @@ function postAction(body: Record<string, unknown>) {
   }).catch(console.error);
 }
 
-export function useNotificationFeed(orgId: string | undefined) {
+export interface FeedOptions {
+  /** The list it opens on. The Notifications pages are an archive and open on All (the default); the
+   *  bell's drawer is an inbox and opens on Unread (owner, 2026-10-06, step 2 Q3). */
+  unreadOnly?: boolean;
+  /** Rows to keep in the list under Unread although they are read — the caller's own choice of which.
+   *  The drawer passes the rows its visitor opened or marked Done (D2: "a row read this visit stays in
+   *  the list until the drawer closes, even under Unread"); the feed only honours the set. */
+  keep?: ReadonlySet<string>;
+}
+
+export function useNotificationFeed(
+  orgId: string | undefined,
+  { unreadOnly: opensOnUnread = false, keep }: FeedOptions = {},
+) {
   const [items,       setItems]       = useState<AppNotification[]>([]);
   const [loading,     setLoading]     = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore,     setHasMore]     = useState(false);
   // A failed read is a STATE, not an empty feed (review B6): a phone at a rink is the ordinary case.
   const [error,       setError]       = useState(false);
-  const [unreadOnly,  setUnreadOnly]  = useState(false); // archive view defaults to All
+  const [unreadOnly,  setUnreadOnly]  = useState(opensOnUnread);
   const [filter,      setFilter]      = useState<ZoneFilter>('all');
+  // ⚖ THE UNREAD COUNT, for the bell the drawer sits under (step 2 — the build prompt: "the bell's
+  // count must follow the drawer"). The server counts EVERY unread row; the list holds a page of them.
+  // So the count is (unread rows not loaded) + (unread rows on the list): the first is fixed at load and
+  // shrinks as Load more brings them in (or Mark all read reads them), the second moves with every
+  // read, Done, delete and Undo on its own — a row trash CAN delete an unread row. Null until loaded.
+  const [unreadBeyond, setUnreadBeyond] = useState<number | null>(null);
   // The delete waiting out its Undo window — what the "Notification deleted · Undo" note shows.
   const [pendingDelete, setPendingDelete] = useState<AppNotification[] | null>(null);
   const pendingRef = useRef<{ members: AppNotification[]; timer: ReturnType<typeof setTimeout> } | null>(null);
@@ -80,6 +107,7 @@ export function useNotificationFeed(orgId: string | undefined) {
       cursorRef.current = rows.length > 0 ? rows[rows.length - 1].createdAt : null;
       setItems(withoutPending(rows));
       setHasMore(Boolean(data.hasMore));
+      setUnreadBeyond(Math.max(0, (data.unreadCount ?? 0) - unreadIn(rows)));
     } catch {
       setError(true);
     } finally {
@@ -104,6 +132,9 @@ export function useNotificationFeed(orgId: string | undefined) {
       if (rows.length > 0) cursorRef.current = rows[rows.length - 1].createdAt;
       setItems(prev => [...prev, ...withoutPending(rows)]);
       setHasMore(Boolean(data.hasMore));
+      // The page's unread rows were counted as not loaded; they are on the list now.
+      const fresh = unreadIn(rows);
+      setUnreadBeyond(b => (b === null ? null : Math.max(0, b - fresh)));
     } catch {
       /* the rows already on screen stay; the button stays too, so the coach can try again */
     } finally {
@@ -172,6 +203,11 @@ export function useNotificationFeed(orgId: string | undefined) {
     if (!orgId) return;
     const now = new Date().toISOString();
     setItems(prev => prev.map(x => (x.readAt ? x : { ...x, readAt: now })));
+    setUnreadBeyond(b => (b === null ? null : 0)); // the rows not loaded are read too
+    // …and so are the rows waiting out a delete's Undo window: the delete has not been sent, so the
+    // server marks them read, and an Undo must bring them back read (/review 2026-10-06).
+    const p = pendingRef.current;
+    if (p) pendingRef.current = { ...p, members: p.members.map(m => (m.readAt ? m : { ...m, readAt: now })) };
     await postAction({ action: 'mark-all-read', orgId });
   }, [orgId]);
 
@@ -253,7 +289,8 @@ export function useNotificationFeed(orgId: string | undefined) {
     // not a slice of time or of read state, and is never filtered out from under itself.
     const needsAttention = items.filter(n => !n.clearedAt && notificationCategory(n.eventType) === 'act');
     const naIds = new Set(needsAttention.map(n => n.id));
-    const visible = unreadOnly ? items.filter(n => !n.readAt) : items;
+    // Under Unread, a row the caller keeps stays — read, but still where it was (the drawer's visit).
+    const visible = unreadOnly ? items.filter(n => !n.readAt || keep?.has(n.id)) : items;
     const activity = visible.filter(n => !naIds.has(n.id));
     const activityGroups = DAY_ORDER
       .map(label => ({ label, items: activity.filter(n => dayBucket(n.createdAt, now) === label) }))
@@ -265,8 +302,9 @@ export function useNotificationFeed(orgId: string | undefined) {
     // "Mark all read" appears only when it would do something: any unread row (D9 — Needs attention
     // included, since it now marks those too).
     const anyUnread = items.some(n => !n.readAt);
-    return { needsAttention, activityGroups, showNeeds, showActivity, needsCount, anyUnread, groupedAt: now };
-  }, [items, unreadOnly, filter]);
+    const unreadCount = unreadBeyond === null ? null : unreadBeyond + unreadIn(items);
+    return { needsAttention, activityGroups, showNeeds, showActivity, needsCount, anyUnread, unreadCount, groupedAt: now };
+  }, [items, unreadOnly, filter, keep, unreadBeyond]);
 
   const isEmpty = !loading && !error && !view.showNeeds && !view.showActivity;
 

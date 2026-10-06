@@ -5,7 +5,7 @@ import { Bell, CheckCheck, Settings } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachNotificationReader from '@/components/coaches/CoachNotificationReader';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
-import { entryMembers, type ActivityEntry } from '@/lib/notification-view';
+import { entryMembers, FEED_EMPTY_COPY, type ActivityEntry } from '@/lib/notification-view';
 import NotificationFeedBody, { NotificationZoneChips } from '@/components/notifications/NotificationFeedBody';
 import { useNotificationFeed } from '@/components/notifications/useNotificationFeed';
 import { useOrg } from '@/lib/org-context';
@@ -45,8 +45,10 @@ import feedStyles from '@/components/notifications/notifications-page.module.css
  *
  * ⚖ A TAP OPENS THE NOTIFICATION (owner ruling 2026-09-25, D3 option B): the reader holds the whole
  * message and one button on to its page; opening it marks it read, so a coach can read one and
- * close it without leaving here. The admin feed keeps its tap (mark read and go). The desktop
- * bell's panel is a glance with "See all" and keeps going straight to the page, too.
+ * close it without leaving here. The admin feed keeps its tap (mark read and go) until step 3. On a
+ * computer the bell is a drawer holding this same list, and nothing there links here any more
+ * (Notifications Open in Place D6, 2026-10-05): this page is the phone's home for notifications,
+ * and the place an old link or a help article still lands.
  *
  * ⚖ READ, DONE, DELETE (owner ruling 2026-10-05, "Notifications Open in Place" D3/D8/D9): opening
  * reads; Done (the old Clear) takes a row out of Needs attention; the reader's trash deletes the
@@ -114,11 +116,7 @@ export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string })
             </div>
           </CoachListToolbar>
         }
-        emptyCopy={{
-          headline: 'Nothing here yet',
-          description: 'When something needs you — an assistant asking to join, a game that moved, your Sunday week in review — it lands here.',
-          note: 'Chat has its own badge on the Chat tab.',
-        }}
+        emptyCopy={FEED_EMPTY_COPY.coach}
       />
       {reading && (
         <CoachNotificationReader

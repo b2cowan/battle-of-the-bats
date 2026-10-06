@@ -22,7 +22,8 @@
   padding: 0;
 }
 
-.bellBtn:hover {
+.bellBtn:hover,
+.bellBtn[aria-expanded="true"] {
   color: var(--fl-text);
   background: var(--white-8);
 }
@@ -62,233 +63,189 @@
   pointer-events: none;
 }
 
-/* ── Panel ─────────────────────────────────────────────────────────────────── */
+/* ═══ THE DRAWER (Notifications Open in Place, step 2 — D2 · D6 · D7, 2026-10-05; the undrawn parts
+   ruled 2026-10-06 on hub screen 9). It replaced the bell's 320px panel, and with it the panel's
+   ≤900px rules: the bell lives in the top strip, which a phone never shows, so those rules never ran.
 
-.panel {
+   The LAYER is fixed under the top strip — the strip's height plus the "See it live" banner term
+   (resolves to 0px for every real org; set on <html>, so it reaches this body-portaled layer) — and
+   holds the light dim and the drawer. 1105, as the panel was: above the What's-New popover (1100),
+   since this is the surface that says something is waiting for YOU (top-nav audit §D12). The strip
+   (80) is not under it, so the bell and the strip's other doors stay in reach. ═══ */
+.layer {
   position: fixed;
-  top: 8px;
-  left: 248px;        /* right edge of 240px sidebar + 8px gap */
-  width: 320px;
-  /* dvh, not vh — matched to .panelTopStrip and the ≤900 block below. On a mobile browser vh
-     ignores the retracting URL bar, which is the same "taller than the window" shape the top-strip
-     anchor was just fixed for; no current caller uses this default placement, so this is closing
-     the trap rather than fixing a live bug (review, 2026-09-06). */
-  max-height: calc(100dvh - 16px);
-  /* ⚠ HIDDEN, NOT auto — THE LIST IS THE SCROLLER, and this rule is what keeps it that way
-     (2026-09-06). With `overflow-y: auto` here the panel became a second scroller, and once the
-     content outgrew the cap it was the one that scrolled: the header, the Unread/All toggle and the
-     footer — which carries "See all", the escape hatch you want most when the dropdown is too long
-     — all scrolled away with it. Header, filter bar and footer are already `flex-shrink: 0` for
-     exactly this reason; they only hold if nothing above them can scroll. */
-  overflow: hidden;
-  background: var(--surface);
-  border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-  /* 1105, not 1100: the What's-New popover also sat at 1100, so which of the two painted on
-     top was decided by DOM insertion order rather than by anyone. Notifications win — the
-     panel is the one that says "something is waiting for YOU to act", What's-New is an
-     announcement the operator can read whenever (top-nav audit §D12, 2026-08-01). */
+  top: calc(var(--chrome-bar-h) + var(--sandbox-chrome-h, 0px));
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 1105;
+}
+
+/* The light dim (D2): the portal's own window scrim, warm or dark. A click on it closes the drawer. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--home-scrim, rgba(13, 17, 26, 0.55));
+}
+
+/* The drawer: the list on the right, a message opens to its left (D2), so it grows leftward. */
+.drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background: var(--home-card, var(--card-bg));
+  border-left: 1px solid var(--home-line-strong, var(--white-15));
+  box-shadow: -14px 0 40px rgba(0, 0, 0, 0.18); /* token-exempt: a side drawer's cast shadow, both themes */
+}
+.drawer:focus { outline: none; }   /* the floor seats focus on the drawer itself — not a control */
+
+/* The message pane — 440px. The message scrolls on its own (`.paneScroll`), so a long one never moves
+   the list beside it, and the × stays in the pane's corner however far it is read. */
+.pane {
+  position: relative;
+  flex: 0 0 440px;
+  width: 440px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--home-line-strong, var(--white-15));
+}
+.paneScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 24px 24px;
+  /* The message's first line leaves the × its room — the block reads this, so nothing here reaches
+     into the block's markup. */
+  --message-eyebrow-inset: 40px;
+}
+/* The × sits over the scroller, so it wears the card: words scrolled up beneath it never show through. */
+.paneClose.paneClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  background: var(--home-card, var(--card-bg));
+}
+.paneClose.paneClose:hover {
+  background-image: linear-gradient(var(--home-olive-soft, var(--white-8)), var(--home-olive-soft, var(--white-8)));
+}
+
+/* The list — 380px at every width the drawer exists (D7). Positioned: the Undo note sits at its foot. */
+.list {
+  position: relative;
+  flex: 0 0 380px;
+  width: 380px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-/* Coaches portal — sidebar may be narrower; override via parent class if needed */
-.panelCoaches {
-  left: 248px;        /* same sidebar width */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 58px;
+  padding: 0 12px 0 20px;
+  border-bottom: 1px solid var(--home-line, var(--white-10));
+  flex-shrink: 0;
+}
+.headTitle {
+  margin: 0 auto 0 0;
+  font-family: var(--font-display);
+  font-size: var(--type-title);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-primary);
 }
 
-/* The coach strip's panel under a warm account theme (D4, 2026-09-03). The palette itself arrives
-   through the coach warm MARKER on the panel root (see NotificationPanel) — this class only swaps
-   the one thing that marker does not: a shadow written for a near-black page, which reads as a
-   smudge on paper. `--home-shadow` exists only inside the warm block, so the fallback keeps dark
-   exactly as it was. */
-.panelWarm {
-  box-shadow: var(--home-shadow, 0 8px 32px rgba(0, 0, 0, 0.45));
+/* A bare glyph at the portal's control height — the gear, the ×, the pane's ×. */
+.iconBtn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: none;
 }
+.iconBtn:hover { background: var(--home-olive-soft, var(--white-8)); color: var(--text-primary); }
 
-/* Bell in the Stage C operator TOP STRIP (desktop, top-RIGHT corner): drop the panel from
-   the trigger's corner instead of the sidebar anchor above. Declared AFTER .panel in this
-   same file, so the override order is deterministic. The var fallback is what actually
-   applies (see the note on the rule itself) and it reads the platform chrome-bar token. */
-.panelTopStrip {
-  /* The FALLBACK is what actually applies here, not the var: this panel is portaled to
-     document.body, so it sits outside `.adminShell` and never sees that shell-scoped
-     --admin-topstrip-h. It therefore reads --chrome-bar-h — the platform chrome-bar height, which
-     IS defined at :root — instead of a hand-copied literal. A literal was correct until the strip
-     went 44px → 48px (Stage G), at which point the panel silently opened 4px too high. */
-  /* + the sandbox banner term: in a "See it live" demo the strip itself drops below the demo
-     banner, and without this term the panel opened at the strip's REAL-customer position —
-     overlapping the banner (review 2026-08-17; the var is set on <html>, so it reaches this
-     body-portaled panel, and resolves to 0px for every real org). */
-  /* ⚠ THE HEIGHT BUDGET MOVES WITH THE ANCHOR, and it did not until 2026-09-06. This variant
-     overrode `top` (≈54px down, under the strip) but inherited `.panel`'s
-     `max-height: calc(100vh - 16px)` — a budget written for a panel that starts 8px from the TOP.
-     A panel starting 54px down and allowed to be a full viewport tall ends ~54px BELOW the window,
-     and everything in that overhang — the last notifications and the whole footer — is unreachable:
-     you cannot scroll a container whose own bottom edge is off-screen. It only bit once the feed
-     grew tall enough to hit the cap. The anchor offset is now named ONCE and subtracted from the
-     budget, so the two cannot drift apart again. */
-  --panel-anchor-top: calc(var(--admin-topstrip-h, var(--chrome-bar-h)) + var(--sandbox-chrome-h, 0px) + 6px);
-  top: var(--panel-anchor-top);
-  max-height: calc(100dvh - var(--panel-anchor-top) - 16px);
-  left: auto;
-  right: 16px;
-}
-
-/* Mobile (≤900px): no sidebar — anchor the panel under the admin top bar as a
-   near-full-width dropdown instead of off-screen to the right (left:248px).
-   The two heights were hand-copied 48px literals that only COINCIDENTALLY matched the
-   platform chrome bar — they now read the token, so editing --chrome-bar-h moves this
-   panel with everything else (top-nav audit §4, 2026-08-01). */
-@media (max-width: 900px) {
-  .panel,
-  .panelCoaches,
-  .panelTopStrip {
-    top: calc(var(--chrome-bar-h) + env(safe-area-inset-top) + 0.4rem);
-    left: 0.6rem;
-    right: 0.6rem;
-    width: auto;
-    max-width: none;
-    max-height: calc(100dvh - var(--chrome-bar-h) - env(safe-area-inset-top) - 96px);
-    z-index: 1105;
-  }
-}
-
-.panelHeader {
+.tools {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.2);
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--home-line, var(--white-10));
   flex-shrink: 0;
 }
 
-.panelTitle {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.markAllBtn {
-  background: none;
-  border: none;
-  font-size: 0.72rem;
-  color: var(--blueprint-blue);
-  cursor: pointer;
-  padding: 0;
-  font-family: var(--font-ui, inherit);
-  transition: color 0.15s;
-}
-
-.markAllBtn:hover {
-  color: var(--fl-text);
-}
-
-/* ── Unread / All filter bar (P2) ──────────────────────────────────────────── */
-
-.filterBar {
-  display: flex;
-  align-items: center;
-  padding: 0.45rem 1rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.15);
-  flex-shrink: 0;
-}
-
-.segToggle {
+/* Unread | All — the portal's own two-way switch (Roster's List | Depth chart, the coach
+   Notifications page's read filter; owner ruling 2026-09-25 D1b), at the portal's computer height.
+   Its twin is `.segChoice` in coaches.module.css, a stylesheet too large to load on every admin page;
+   the values are the same tokens. */
+.seg {
   display: inline-flex;
-  gap: 2px;
-  padding: 2px;
-  background: var(--white-5, rgba(255, 255, 255, 0.05));
-  border-radius: 6px;
+  border: 1px solid var(--home-line-strong, var(--white-15));
+  border-radius: 7px;
+  overflow: hidden;
 }
-
 .segBtn {
+  min-height: 32px;
+  padding: 0 1rem;
   border: none;
-  background: none;
+  border-right: 1px solid var(--home-line, var(--white-10));
+  background: var(--white-05);
+  color: var(--text-tertiary);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
   cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  padding: 0.26rem 0.7rem;
-  border-radius: 4px;
-  transition: color 0.15s, background 0.15s;
 }
-
-.segBtn:hover {
-  color: var(--fl-text);
-}
-
+.segBtn:last-child { border-right: none; }
+.segBtn:hover { background: var(--home-olive-soft, var(--white-8)); }
 .segBtnActive,
-.segBtnActive:hover {
-  background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
-  color: var(--fl-text);
+.segBtnActive:hover { background: var(--logic-lime); color: var(--on-lime); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive:hover {
+  background: var(--home-ink);
+  color: var(--home-paper);
 }
 
-/* Chevron hint on a bundle row ("6 new registrations →").
-   ⚠ TEXT AND GLYPHS IN THIS FILE READ THE SEMANTIC INKS (--text-secondary / --text-tertiary), NOT
-   THE --white-N ALPHA LADDER (coach-notifications review R2, 2026-09-03). In the warm coach portal
-   --white-30/25/20 remap to the HAIRLINE token — right for a border, 1.43:1 for a word. Timestamps,
-   day headers and this chevron were invisible for that reason. The semantic inks resolve to
-   data-gray in the dark admin shell and to --home-dim / --home-ink-soft under the warm marker. */
-.bundleChevron {
-  color: var(--text-tertiary);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-/* ── Panel footer — subtle settings link ───────────────────────────────────── */
-
-.panelFooter {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: center;
-  gap: 1.25rem;
-  padding: 0.5rem 1rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.2);
-}
-
-.settingsLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.72rem;
-  color: var(--text-tertiary);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.settingsLink:hover {
-  color: var(--fl-text);
-}
-
-/* ── Notification rows ─────────────────────────────────────────────────────── */
-
-.notifList {
+/* The list's own scroller. Room at the foot for the Undo note, so it never sits on the last row. */
+.body {
   flex: 1;
-  /* ⚠ min-height: 0 IS LOad-BEARING, not defensive tidying (2026-09-06). A flex item defaults to
-     `min-height: auto`, which resolves to its CONTENT height and refuses to shrink below it — so
-     `overflow-y: auto` here never engaged, the list pushed the panel past its max-height, and the
-     panel scrolled instead. This one line is what makes the list the scroller. */
+  /* ⚠ min-height: 0 IS LOAD-BEARING (2026-09-06, carried from the panel): a flex item defaults to
+     `min-height: auto`, its CONTENT height, and refuses to shrink — without this the list pushes past
+     the drawer's foot and nothing scrolls. */
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 4.5rem;
+}
+.body:focus { outline: none; }   /* the fallback for focus after a delete — not a control */
+
+.more {
+  display: flex;
+  justify-content: center;
+  padding: 14px 20px;
 }
 
 /* ── Section + date headers (P1 zones) ─────────────────────────────────────── */
 
 .sectionHeader {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 0.4rem;
-  padding: 0.6rem 1rem 0.4rem;
+  padding: 0.6rem 20px 0.4rem;
   font-family: var(--font-data);
   font-size: 0.64rem;
   font-weight: 700;
@@ -309,9 +266,20 @@
   color: var(--warning);
 }
 
+/* The zone's promise, in the zone (D8): "stays until you mark it Done". */
+.sectionHint {
+  margin-left: auto;
+  font-family: var(--font-sans, inherit);
+  font-size: var(--type-support);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+
 /* Today / Yesterday / Earlier — quieter than a section header. */
 .dateHeader {
-  padding: 0.5rem 1rem 0.25rem;
+  padding: 0.5rem 20px 0.25rem;
   font-family: var(--font-data);
   font-size: 0.62rem;
   font-weight: 700;
@@ -320,28 +288,20 @@
   color: var(--text-tertiary);
 }
 
-/* Act rows in "Needs attention" carry a subtle amber left edge (inset shadow =
-   no layout shift vs. non-act rows). */
-.actItem {
-  box-shadow: inset 2px 0 0 var(--warning);
-}
+/* ── Notification rows — the bell's own, unchanged in the drawer (hub screen 2) ── */
 
 .notifItem {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;
-  padding: 0.7rem 1rem;
+  padding: 12px 20px;
   /* --home-line where the warm marker defines it (paper-on-white is not a separator); the alpha
      hairline everywhere else. */
   border-bottom: 1px solid var(--home-line, var(--white-5, rgba(255,255,255,0.05)));
   cursor: pointer;
   transition: background 0.12s;
-  text-decoration: none;
   color: inherit;
-}
-
-.notifItem:last-child {
-  border-bottom: none;
 }
 
 .notifItem:hover {
@@ -354,6 +314,27 @@
 
 .notifItem.unread:hover {
   background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.12);
+}
+
+/* Act rows in "Needs attention" carry a subtle amber left edge (inset shadow =
+   no layout shift vs. non-act rows). */
+.actItem {
+  box-shadow: inset 2px 0 0 var(--warning);
+}
+
+/* The row being read (D2): the portal's olive tint and edge for a chosen item, over the amber edge
+   of a Needs-attention row. Written at (0,3,0) so it outranks `.notifItem.unread:hover` too. */
+.notifItem.selected.selected,
+.notifItem.selected.selected:hover {
+  background: rgba(var(--home-olive-rgb, var(--logic-lime-rgb)), 0.14);
+  box-shadow: inset 3px 0 0 var(--home-olive, var(--logic-lime));
+}
+
+.notifIcon {
+  font-size: 1rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .notifDot {
@@ -385,7 +366,14 @@
   font-weight: 400;
   color: var(--text-secondary);
 }
+.notifRead.selected .notifTitle {
+  font-weight: 600;
+  color: var(--fl-text);
+}
 
+/* ⚠ TEXT AND GLYPHS IN THIS FILE READ THE SEMANTIC INKS (--text-secondary / --text-tertiary), NOT
+   THE --white-N ALPHA LADDER (coach-notifications review R2, 2026-09-03). In the warm coach portal
+   --white-30/25/20 remap to the HAIRLINE token — right for a border, 1.43:1 for a word. */
 .notifBody {
   font-size: 0.75rem;
   color: var(--text-tertiary);
@@ -402,11 +390,16 @@
   margin: 0;
 }
 
-/* ── The act row's meta line: timestamp + Clear (2026-09-06) ──────────────────── */
-/* The bell carries the same Clear as the "See all" page — the two share a zone, and a row a coach
-   could only dispatch on one of them would be exactly the drift lib/notification-view exists to
-   prevent. On the meta line rather than the row's right edge because these rows truncate title and
-   body to one line each and have no width to give up. */
+/* Chevron hint on a bundle row ("6 new registrations →"). */
+.bundleChevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ── The act row's meta line: timestamp + Done (2026-09-06; Done since 2026-10-05, D8) ── */
+/* On the meta line rather than the row's right edge because these rows cut title and body to one
+   line each and have no width to give up. */
 .notifMeta {
   display: flex;
   align-items: center;
@@ -441,19 +434,54 @@
   outline-offset: 2px;
 }
 
-/* The panel is reachable on a phone (the coach bell lives in the top strip), so Clear takes the
-   same touch floor every other control in the portal does. */
-@media (max-width: 768px) {
-  .clearBtn { min-height: var(--tap-min, 44px); }
+/* The row's trash (D3): on the row under the pointer, AND on the row the keyboard is in — hidden by
+   opacity, never by `visibility`/`display`, so it keeps its place in the Tab order and appears the
+   moment the keyboard reaches the row (`:focus-within`). It sits over the unread dot, and the row's
+   words make room for it while it shows. */
+.rowTrash {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--home-line-strong, var(--white-15));
+  border-radius: 6px;
+  background: var(--home-card, var(--card-bg));
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+}
+.rowTrash:hover { color: var(--text-primary); background: var(--home-olive-soft, var(--white-8)); }
+.notifItem:hover .rowTrash,
+.notifItem:focus-within .rowTrash {
+  opacity: 1;
+  pointer-events: auto;
+}
+.notifItem:hover .notifContent,
+.notifItem:focus-within .notifContent {
+  padding-right: 30px;
+}
+/* The trash takes the place of the row's right-hand marks while it shows — the unread dot and a
+   bundle's chevron — so the chevron never peeks out beside it. Hidden, not removed: the row keeps
+   its shape. */
+.notifItem:hover .notifDot,
+.notifItem:hover .bundleChevron,
+.notifItem:focus-within .notifDot,
+.notifItem:focus-within .bundleChevron {
+  visibility: hidden;
 }
 
-/* ── Empty + loading states ────────────────────────────────────────────────── */
+/* ── The quiet states (hub screen 9, Q2) ───────────────────────────────────── */
 
 .emptyState {
-  padding: 2.5rem 1rem;
+  padding: 2.25rem 1.5rem;
   text-align: center;
   color: var(--text-tertiary);
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -461,7 +489,43 @@
 }
 
 .emptyIcon {
-  opacity: 0.35;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--home-olive-soft, var(--white-8));
+  color: var(--home-olive, var(--logic-lime));
+}
+
+.emptyHeadline {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.emptyDesc,
+.emptyNote {
+  margin: 0;
+  max-width: 270px;
+  line-height: 1.5;
+}
+.emptyNote { font-size: var(--type-support); }
+
+.errorLine {
+  margin: 0;
+  font-weight: 600;
+  color: var(--danger-light, var(--danger));
+}
+
+.retryBtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .loadingRow {

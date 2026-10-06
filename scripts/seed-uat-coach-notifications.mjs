@@ -2,7 +2,7 @@
  * seed-uat-coach-notifications.mjs  (DEV ONLY)
  *
  * Seeds a realistic BUSY notification feed for the UAT coach (uat-coach@uat-test-org.local) so the
- * coach "See all" page and the layout sweep measure the state a coach actually gets, not three
+ * coach Notifications page, the bell's drawer and the layout sweep measure the state a coach actually gets, not three
  * weekly digests. Written for the 2026-09-03 coach-notifications review
  * (docs/projects/active/COACH_NOTIFICATIONS_REVIEW.md): the thin fixture had hidden every defect on
  * this screen, and "Mark all read" only renders when something is unread.

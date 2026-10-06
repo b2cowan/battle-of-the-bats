@@ -53,6 +53,18 @@
 .undo:hover { background: color-mix(in srgb, var(--card-bg) 24%, transparent); }
 .undo:focus-visible { outline: 2px solid var(--card-bg); outline-offset: 2px; }
 
+/* In the bell's drawer (step 2 Q1 = A): centred under the drawer's list column, 16px above its foot.
+   The list column is the positioned parent; the drawer's own layer sits over the page, so the layer
+   number only orders the note over the list's rows. Doubled to beat `.region` (and its phone rule)
+   whatever the order. */
+.region.regionDrawer {
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  z-index: 2;
+  max-width: calc(100% - 1.5rem);
+}
+
 /* On a phone: 12px above the bottom bar (the gap the reader sheet keeps), and Undo at the 44px tap
    floor — the pill grows to hold it (the drawing's 40px pill predates the floor). */
 @media (max-width: 900px) {

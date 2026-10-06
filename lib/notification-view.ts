@@ -211,6 +211,45 @@ export function entryMembers(entry: ActivityEntry): AppNotification[] {
   return entry.kind === 'bundle' ? entry.members : [entry.notification];
 }
 
+/** One name per row, stable while the row is on screen: a notification's id, or a bundle's kind + its
+ *  newest member (Load more only adds OLDER rows, so a bundle keeps its name as it grows). */
+export function entryKey(entry: ActivityEntry): string {
+  return entry.kind === 'bundle' ? `bundle-${entry.eventType}-${entry.members[0].id}` : entry.notification.id;
+}
+
+/** What an empty list says, in each portal's own words. */
+export interface FeedEmptyCopy {
+  /** The headline when the account has NO notifications yet. */
+  headline: string;
+  /** What arrives here — the sentence that makes the emptiness make sense. */
+  description?: string;
+  /** A quieter footnote (e.g. where chat lives instead). */
+  note?: string;
+}
+
+/**
+ * The empty list's words, ONE copy per portal: the Notifications page and the bell's drawer say the
+ * same thing when there is nothing to show (owner, 2026-10-06, step 2 Q2 — "the Notifications page's
+ * own words, so the drawer and the page never say two different things").
+ */
+/** What a list on Unread says when everything is read — the page and the drawer alike. `view` is the
+ *  read switch's other label, drawn bold between `lead` and `tail`. */
+export const FEED_CAUGHT_UP = {
+  headline: 'You’re all caught up',
+  lead: 'Everything unread is handled. Switch to',
+  view: 'All',
+  tail: 'to read back through the season.',
+} as const;
+
+export const FEED_EMPTY_COPY: Record<'admin' | 'coach', FeedEmptyCopy> = {
+  admin: { headline: 'No notifications yet' },
+  coach: {
+    headline: 'Nothing here yet',
+    description: 'When something needs you — an assistant asking to join, a game that moved, your Sunday week in review — it lands here.',
+    note: 'Chat has its own badge on the Chat tab.',
+  },
+};
+
 /**
  * Where a coach team route opens, in the NAV'S OWN WORDS — the sidebar and the More sheet name
  * these pages, so the reader's button says the same word the coach will land on. Keyed by the

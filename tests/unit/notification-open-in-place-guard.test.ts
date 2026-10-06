@@ -11,11 +11,17 @@
  *   DELETE = gone from your own list (D3; Undo for a few seconds; nobody else's copy).
  * Never let one do another's job: Mark all read must never write `cleared_at`, and a delete must
  * never reach past the caller's own rows.
+ *
+ * STEP 2 · the drawer — on a computer the bell opens a drawer holding the whole list, and a click
+ * OPENS a notification in a pane beside it (D1, D2, D6, D7). One message block for every frame; the
+ * drawer reads the same feed as the pages; nothing on a computer links to the Notifications pages.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { describe, it } from 'node:test';
-import { readCode, readSource, functionBody, callbackBody } from './_source-code.ts';
+import { readCode, readSource, functionBody, callbackBody, cssRule } from './_source-code.ts';
 import { ADMIN_PAGE } from '../../lib/notification-view.ts';
 import { accountingTabs, kitOrgLinks, kitPrograms, kitTournamentLabel } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
@@ -23,7 +29,11 @@ import { BRING_IN_PAGE_TITLE } from '../../lib/team-move-words.ts';
 
 const ROUTE = 'app/api/notifications/route.ts';
 const FEED = 'components/notifications/useNotificationFeed.ts';
-const PANEL = 'components/notifications/NotificationPanel.tsx';
+const DRAWER = 'components/notifications/NotificationDrawer.tsx';
+const MESSAGE = 'components/notifications/NotificationMessage.tsx';
+const BELL = 'components/notifications/NotificationBell.tsx';
+const ADMIN_STRIP = 'components/admin/AdminTopStrip.tsx';
+const COACH_STRIP = 'components/coaches/CoachTopStrip.tsx';
 const BODY = 'components/notifications/NotificationFeedBody.tsx';
 const READER = 'components/coaches/CoachNotificationReader.tsx';
 
@@ -48,7 +58,8 @@ describe('D9 · Mark all read marks everything, and never marks anything Done', 
   it('it never writes cleared_at — server or either client', () => {
     assert.doesNotMatch(routeBranch('mark-all-read'), /cleared_at/);
     assert.doesNotMatch(callbackBody(readCode(FEED), 'markAllRead'), /clearedAt|ACT_EVENT_TYPES/);
-    assert.doesNotMatch(functionBody(readCode(PANEL), 'handleMarkAllRead'), /clearedAt|ACT_EVENT_TYPES/);
+    // The drawer has no mark-all of its own (step 2): it calls the feed's, read on the line above.
+    assert.doesNotMatch(readCode(DRAWER), /action: 'mark-all-read'|clearedAt/);
   });
 
   it('cleared_at has exactly one writer: Done (the route\'s clear action)', () => {
@@ -60,7 +71,7 @@ describe('D9 · Mark all read marks everything, and never marks anything Done', 
 
   it('the button shows whenever anything is unread — not only activity', () => {
     assert.match(readCode(FEED), /const anyUnread = items\.some\(n => !n\.readAt\);/);
-    assert.match(readCode(PANEL), /const canMarkAllRead = notifications\.some\(n => !n\.readAt\);/);
+    assert.match(readCode(DRAWER), /\{anyUnread && \(/, 'the drawer shows it on the feed\'s own answer');
   });
 });
 
@@ -102,11 +113,12 @@ describe('D3 · Delete removes the caller\'s own copy, after an Undo window', ()
     assert.match(code, /sendPendingDelete\(\);\s*\};\s*\}, \[orgId, sendPendingDelete\]\);/);
   });
 
-  it('the coach reader carries the trash, last and set apart: Open · Done · Close · Delete', () => {
-    const code = readCode(READER);
+  it('the opened notification carries the trash, last and set apart: Open · Done · Close · Delete', () => {
+    // Since step 2 the buttons are the shared message block's, which every frame wears.
+    const code = readCode(MESSAGE);
     const at = (needle: string) => {
       const i = code.indexOf(needle);
-      assert.ok(i > 0, `${needle} is gone from the reader`);
+      assert.ok(i > 0, `${needle} is gone from the message block`);
       return i;
     };
     const go = at('{goLabel} <ArrowRight');
@@ -122,14 +134,15 @@ describe('D8 · Clear is DONE wherever a customer reads it', () => {
   // The identifiers keep their names (`clear`, `clearRow`, `cleared_at`, `.clearBtn`); the words change.
   const VISIBLE_CLEAR = /(>\s*Clear\s*<|['"`]Clear['"`]|“Clear|Clear “|from Needs attention|clear it\b|tap Clear)/;
 
-  for (const file of [PANEL, BODY, READER]) {
+  for (const file of [DRAWER, MESSAGE, BODY, READER]) {
     it(`${file} shows no "Clear"`, () => {
       assert.doesNotMatch(readCode(file), VISIBLE_CLEAR);
     });
   }
 
-  it('the zone says what moves a row out of it', () => {
+  it('the zone says what moves a row out of it — on the page and in the drawer', () => {
     assert.match(readCode(BODY), />stays until you mark it Done</);
+    assert.match(readCode(DRAWER), />stays until you mark it Done</);
   });
 
   it('help says Done, and says what Mark all read does now', () => {
@@ -181,5 +194,117 @@ describe('D4 · the admin button words are the admin\'s own page names', () => {
     // A new request's notice already carried its own (Ask 5c) — kept.
     const filed = body.slice(body.indexOf('export async function tellClubOfNewRequest'));
     assert.match(filed, /clubMoneyLinks\.requests\(p\.org\.slug, p\.request\.id\)/);
+  });
+});
+
+describe('Step 2 · the bell opens a drawer, and a click opens a notification beside the list', () => {
+  /** One `<NotificationMessage … />` element in a file, props and all. */
+  const messageElement = (file: string) => {
+    const code = readCode(file);
+    const i = code.indexOf('<NotificationMessage');
+    assert.ok(i > 0, `${file} no longer wears the shared message block`);
+    return code.slice(i, code.indexOf('/>', i));
+  };
+
+  it('a row OPENS its notification — nothing in the drawer leaves the page on a click (D1)', () => {
+    const code = readCode(DRAWER);
+    assert.doesNotMatch(code, /window\.location/, 'a bell row never navigates');
+    assert.match(functionBody(code, 'openEntry'), /setOpened\(entry\);\s*keep\(members\.map\(m => m\.id\)\);\s*void markSeen\(members\);/);
+    // One row shell opens both kinds — a single notification and a bundle.
+    assert.equal((code.match(/onClick=\{\(\) => openEntry\(entry\)\}/g) ?? []).length, 1);
+    assert.match(functionBody(code, 'itemRow'), /return row\(\{ kind: 'item', notification: n \}/);
+    assert.match(functionBody(code, 'bundleRow'), /return row\(entry, \{/);
+  });
+
+  it('one message block: the drawer\'s pane and the coach reader wear the same one', () => {
+    const pane = messageElement(DRAWER);
+    assert.match(pane, /portal=\{portal\}/);
+    assert.doesNotMatch(pane, /onClose=/, 'the pane closes with its own ×, not a Close button');
+    const reader = messageElement(READER);
+    assert.match(reader, /portal="coach"/);
+    assert.match(reader, /onClose=\{onClose\}/);
+    // The reader's words live only in the block now — no second stamp, destination or button row.
+    assert.doesNotMatch(readCode(READER), /notificationStamp|notificationDestination|<Trash2|<ArrowRight/);
+  });
+
+  it('each strip names its portal, and nothing on a computer links to the Notifications pages (D6)', () => {
+    assert.match(readCode(ADMIN_STRIP), /<NotificationBell[\s\S]*?portal="admin"/);
+    assert.match(readCode(COACH_STRIP), /<NotificationBell[\s\S]*?portal="coach"/);
+    for (const file of [ADMIN_STRIP, COACH_STRIP, BELL, DRAWER]) {
+      const code = readCode(file);
+      assert.doesNotMatch(code, /seeAllHref|See all/, `${file}: the "See all" link is gone`);
+      assert.doesNotMatch(code, /\/(?:admin|coaches)\/notifications/, `${file} links to a Notifications page`);
+    }
+    // The bell opens the drawer, loaded on the click (the bell is on every page; the drawer is not).
+    assert.match(readCode(BELL), /const NotificationDrawer = dynamic\(\(\) => import\('\.\/NotificationDrawer'\), \{ ssr: false \}\);/);
+    const repo = path.join(import.meta.dirname, '..', '..');
+    assert.equal(existsSync(path.join(repo, 'components/notifications/NotificationPanel.tsx')), false, 'the old panel is gone');
+  });
+
+  it('the drawer reads the pages\' feed, opens on Unread (Q3), and keeps what it opened (D2)', () => {
+    const code = readCode(DRAWER);
+    assert.match(code, /useNotificationFeed\(orgId, \{ unreadOnly: true, keep: kept \}\)/);
+    assert.doesNotMatch(code, /fetch\(/, 'no second fetch of its own (the panel kept one)');
+    // The visit is the DRAWER's memory; the feed only honours the set it is handed.
+    const feed = readCode(FEED);
+    assert.match(feed, /const visible = unreadOnly \? items\.filter\(n => !n\.readAt \|\| keep\?\.has\(n\.id\)\) : items;/);
+    assert.doesNotMatch(feed, /setKept|keepSeen|setSeen/, 'the feed never decides what to keep');
+    // Done keeps its row in view too: "it stays in your list below, read" (hub screen 6) — from the row
+    // and from the pane, both through markDone.
+    assert.match(functionBody(code, 'markDone'), /keep\(\[n\.id\]\);\s*void clearRow\(n\);/);
+    assert.doesNotMatch(code, /void clearRow\(n\);\s*closePane/, 'the pane\'s Done goes through markDone');
+    // Mark all read keeps nothing: under Unread, reading everything empties the list to "caught up".
+    assert.match(code, /onClick=\{readAll\}/);
+    assert.doesNotMatch(functionBody(code, 'readAll'), /keep\(/);
+  });
+
+  it('Escape and Back go up one level — the message, then the drawer', () => {
+    assert.match(readCode(DRAWER), /useDialogFloor\(true, drawerRef, \{ onClose: open \? closePane : onClose \}\)/);
+  });
+
+  it('the bell\'s count follows the drawer: every read, Done, Mark all read, delete and Undo', () => {
+    const feed = readCode(FEED);
+    assert.match(feed, /const unreadCount = unreadBeyond === null \? null : unreadBeyond \+ unreadIn\(items\);/);
+    assert.match(callbackBody(feed, 'markAllRead'), /setUnreadBeyond\(b => \(b === null \? null : 0\)\)/);
+    assert.match(callbackBody(feed, 'loadMore'), /setUnreadBeyond\(/);
+    assert.match(readCode(BELL), /onUnreadChange=\{setUnreadCount\}/);
+    // The drawer hands up the server's count once, then MOVES the bell — an absolute push erased the +1
+    // the bell's live listener gave an arrival this list does not hold (/review 2026-10-06).
+    const drawer = readCode(DRAWER);
+    assert.match(drawer, /if \(before === null\) countRef\.current\(unreadCount\);/);
+    assert.match(drawer, /countRef\.current\(c => Math\.max\(0, c \+ unreadCount - before\)\)/);
+    // Mark all read reads arrivals too, so it sets the bell to zero outright.
+    assert.match(functionBody(drawer, 'readAll'), /countRef\.current\(0\);\s*void markAllRead\(\);/);
+    // A row waiting out its Undo window is read by Mark all read as well, so an Undo brings it back read.
+    assert.match(callbackBody(feed, 'markAllRead'), /p\.members\.map\(m => \(m\.readAt \? m : \{ \.\.\.m, readAt: now \}\)\)/);
+  });
+
+  it('Load more shows whenever there is more — under "caught up" too (/review 2026-10-06)', () => {
+    // The first page can be all read with unread rows behind it: Unread must still reach them.
+    assert.match(readCode(DRAWER), /\{!loading && !error && hasMore && \(/);
+  });
+
+  it('one organization per drawer', () => {
+    assert.match(readCode(BELL), /key=\{orgId\}/);
+  });
+
+  it('the trash shows for the pointer AND the keyboard; the Undo note sits at the list\'s foot (Q1)', () => {
+    const css = readCode('components/notifications/notifications.module.css');
+    assert.match(css, /\.notifItem:hover \.rowTrash,\s*\.notifItem:focus-within \.rowTrash \{/);
+    assert.doesNotMatch(cssRule(css, '.rowTrash'), /visibility|display:\s*none/, 'hidden by opacity, so it keeps its Tab stop');
+    assert.match(readCode(DRAWER), /<NotificationUndoNote feed=\{feed\} placement="drawer"/);
+  });
+
+  it('a delete closes the message it deleted, never the drawer', () => {
+    const del = functionBody(readCode(DRAWER), 'deleteEntry');
+    assert.doesNotMatch(del, /onClose\(/);
+    assert.match(del, /deleteRows\(members\);/);
+  });
+
+  it('the drawer carries both portals\' theme markers through its portal', () => {
+    assert.match(
+      readCode(DRAWER),
+      /<PortalKitRoot>\s*<div style=\{\{ display: 'contents' \}\} \{\.\.\.coachWarmAttr\}>\{layer\}<\/div>\s*<\/PortalKitRoot>/,
+    );
   });
 });

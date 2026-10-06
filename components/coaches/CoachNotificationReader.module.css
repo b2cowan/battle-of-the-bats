@@ -1,5 +1,7 @@
-/* CoachNotificationReader — what differs from the More / team / RSVP sheets it shares a container
-   with (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown` / `.sheetGrab`).
+/* CoachNotificationReader — the reader's FRAME: what differs from the More / team / RSVP sheets it
+   shares a container with (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown`
+   / `.sheetGrab`). The message inside — eyebrow, title, body, members and the button row — is the
+   shared `NotificationMessage` block and its own stylesheet (Notifications Open in Place, step 2).
    Doubled selectors where this file overrides the nav module: both write at (0,1,0), and which of
    two same-weight rules wins across modules is bundle order — (0,2,0) wins whichever comes first.
 
@@ -26,91 +28,13 @@
 }
 .grabBtn > span { margin: 0; }
 
-/* What it is and when — the kind in the feed's own words, then the day AND the clock (a sheet has
-   no day heading above it to lean on, unlike the row it was opened from). */
-.eyebrow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px 6px;
-  margin: 0;
-  font-family: var(--font-data);
-  font-size: var(--type-support, 0.75rem);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-.icon { font-size: 1rem; letter-spacing: 0; line-height: 1; }
-/* ⏰ The day and clock keep their own case — "7:00 p.m." is the house spelling, and the eyebrow's
-   uppercase would paint it "P.M." (text-transform changes what the coach reads, not the source). */
-.stamp { font-family: var(--font-sans, inherit); font-weight: 500; letter-spacing: 0; text-transform: none; }
-
-.title {
-  margin: 8px 0 0;
-  font-size: var(--type-heading, 1.05rem);
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--text-primary);
-  text-wrap: balance;
-}
-
-/* The whole message — the point of the sheet. `pre-line` keeps a sender's own line breaks; a long
-   unbroken token (a link pasted into an announcement) wraps rather than widening the sheet. */
-.body {
-  margin: 8px 0 0;
-  font-size: var(--type-body, 0.875rem);
-  line-height: 1.55;
-  color: var(--text-secondary);
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-}
-
-/* A bundle opens as its members, newest first — each one's own words and time. */
-.members { list-style: none; margin: 10px 0 0; padding: 0; }
-.member { padding: 10px 0; border-top: 1px solid var(--home-line, var(--white-10)); }
-.member:first-child { border-top: 0; padding-top: 4px; }
-.memberTitle { margin: 0; font-size: var(--type-body, 0.875rem); font-weight: 600; color: var(--text-primary); }
-.memberBody {
-  margin: 3px 0 0;
-  font-size: var(--type-body, 0.875rem);
-  line-height: 1.5;
-  color: var(--text-secondary);
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-}
-.memberTime { margin: 3px 0 0; font-family: var(--font-data); font-size: var(--type-support, 0.75rem); color: var(--text-tertiary); }
-
-/* The way on, then Done and Close, then the trash set apart at the end (D3, 2026-10-05). On a phone
-   the onward button spans the sheet at the thumb's reach; Done, Close and the trash share the row
-   beneath, the trash a square at the tap floor. */
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-}
-.actions > button { flex: 1 1 0; justify-content: center; min-height: var(--tap-min, 44px); }
-.go.go {
-  flex: 1 1 100%;
-  justify-content: center;
-  min-height: 48px;
-  text-decoration: none;
-}
-.trash.trash {
-  flex: 0 0 auto;
-  width: var(--tap-min, 44px);
-  margin-left: auto;
-  padding: 0;
-}
-
 /* ABOVE THE NAV BREAKPOINT the nav module draws nothing (its sheet rules are ≤900), so the same
    panel is a small centered dialog — the RSVP sheet's answer, for the same reason. The anchor
    becomes a zero-height box at the screen's foot (a full-screen fixed element is CHROME to the
    rendered sweep); the scrim rises from it over the viewport and the panel is centred against it.
-   ⚖ The footer keeps the PHONE's order — the way on first, the trash last and apart — because the
-   message is one block in every frame (hub screen 7, 2026-10-05); the portal's other dialogs put the
-   way on last. Buttons at the portal's computer height, 34px (One control height, 2026-10-03). */
+   ⚖ The button row keeps the PHONE's order — the way on first, the trash last and apart — because
+   the message is one block in every frame (hub screen 7, 2026-10-05); the portal's other dialogs put
+   the way on last. Its 34px computer height is the block's own. */
 @media (min-width: 901px) {
   .floor.floor {
     position: fixed;
@@ -142,7 +66,4 @@
     border-radius: var(--radius);
   }
   .grabBtn { display: none; }
-  .actions > button { flex: 0 0 auto; min-height: 34px; }
-  .go.go { flex: 0 0 auto; min-height: 34px; }
-  .trash.trash { width: 34px; }
 }
