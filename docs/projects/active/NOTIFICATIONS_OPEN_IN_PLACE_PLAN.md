@@ -127,7 +127,7 @@ confirming the payment): a good follow-up, its own project.
 
 _(each step appends: what was built, commits, checks run, findings.)_
 
-### Step 1 · the rules under every surface — built 2026-10-05, committed `a9829568` 2026-10-05 (owner QA §265)
+### Step 1 · the rules under every surface — built 2026-10-05, committed `a9829568` 2026-10-05, ✅ owner QA §265 PASSED 2026-10-06 on the owner's word (three writes proven by probe instead — see the ledger)
 
 **Owner rulings in the build session (2026-10-05, on the drawing https://claude.ai/artifact/UH3XitdqBKmBPRX7PN61mB,
 all three as recommended):**

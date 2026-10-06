@@ -39,6 +39,22 @@ do another's job: Mark all read must never write `cleared_at`.
    the hub's drawings; anything the hub never drew (an empty drawer, an error, the Undo note's exact place on a phone)
    gets a picture first (an Artifact, true size) and a question.
 
+## Learned in step 1 (committed `a9829568`; read its Build record in the plan before starting)
+
+- **"Step 2 adapts to" and "Found, not fixed"** in the plan's step-1 Build record are binding inputs: the reader's
+  button order is the shared block's order (Open · Done · Close · trash, every frame); deletes go through the feed's
+  `deleteRows` / `undoDelete` / `pendingDelete` and `NotificationUndoNote` (which needs a placement for the drawer's
+  foot); the admin drawer calls `notificationDestination(link, 'admin')`, the coach drawer `'coach'`.
+- **The bell's count must follow the drawer.** The live count only hears new notifications; a read, Done, Mark all
+  read or delete in the drawer must push the count itself — and a row trash CAN delete an unread row.
+- **Focus after a row trash:** the Undo note takes focus only when the delete left focus on the page; a drawer row
+  keeps its surface open, so the drawer decides where focus goes (the note's own comment says so).
+- **QA walks:** open the walk's URL signed in as the walk's account before publishing (a plan lock sent step 1's
+  first walk to UAT Test Org's lock screen); the coach's notifications come from
+  `node scripts/seed-uat-coach-notifications.mjs` in UAT Rep Club (re-run = reset); name only rows on the FIRST page
+  of 40 (the weekly reviews sit below Load more); read every writing step back on dev before recording a pass.
+- If the dev server shows "Jest worker encountered … child process exceptions", restart it before any walk or probe.
+
 ## The steps (detail in the plan)
 
 1. **The rules under every surface.** Mark all read marks everything (D9); a delete action with Undo in the shared feed
