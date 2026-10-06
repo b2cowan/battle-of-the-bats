@@ -13,9 +13,9 @@ Build **step STEP** of the Notifications Open in Place project. The owner accept
 
 - `CLAUDE.md`, `AGENTS.md`, `AGENCY_RULES.md`. Work on `dev`; stage explicit pathspecs only; other sessions share this
   working copy.
-- The plan: `docs/projects/active/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md` — the rulings (D1–D9), the facts the build
+- The plan: `docs/projects/archive/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md` — the rulings (D1–D9), the facts the build
   stands on, the three steps, the guards, what is out of scope. The hub
-  (https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, source `docs/projects/active/NOTIFICATIONS_OPEN_IN_PLACE_HUB.html`)
+  (https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, source `docs/projects/archive/NOTIFICATIONS_OPEN_IN_PLACE_HUB.html`)
   holds the drawings at true size (screens 2–6 are the approved build target) and the Decisions tab.
 - `memory/design_decisions.md`, the 2026-10-05 entry "A NOTIFICATION OPENS WHERE YOU ARE", and the 09-23 drawer-layers
   ruling (a phone reader is a MENU-layer sheet: the bottom bar stays visible and tappable).

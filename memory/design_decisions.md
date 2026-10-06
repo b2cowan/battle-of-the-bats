@@ -80,7 +80,7 @@ could read. The bills lead and reference goes last (2026-09-06) — a coach come
 standing card above the work is text a coach reads past every visit (the owner, 2026-09-04).
 **Applies to:** the coach's Money › Club tab; the club's team page; /marketing owns the words.
 
-### 2026-10-05 — A NOTIFICATION OPENS WHERE YOU ARE; READ, DONE AND DELETE ARE THREE WORDS FOR THREE THINGS (owner: "looks good" on round 3, all nine as recommended) — hub https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, plan `docs/projects/active/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md`
+### 2026-10-05 — A NOTIFICATION OPENS WHERE YOU ARE; READ, DONE AND DELETE ARE THREE WORDS FOR THREE THINGS (owner: "looks good" on round 3, all nine as recommended) — hub https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, plan `docs/projects/archive/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md`
 
 **Decision:** (D1) a click on a notification OPENS it (kind, day + clock, whole message) and marks it read; the page is a
 second, named click. (D2) on a computer the bell opens a DRAWER holding the list (380px, full height); a notification

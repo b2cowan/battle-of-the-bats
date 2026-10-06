@@ -1,7 +1,7 @@
 # Notifications Open in Place — plan
 
-**Status:** D1–D9 accepted 2026-10-05 (owner, on round 3: "looks good"). Hub (Mockup · Decisions · PM Brief · Plan
-notes): https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, source `docs/projects/active/NOTIFICATIONS_OPEN_IN_PLACE_HUB.html`.
+**Status:** ✅ COMPLETE 2026-10-06, archived 2026-10-06 — steps 1–3 committed (`a9829568` · `a1134f15` · `157adb69`), owner QA §265 · §267 · §272 passed. D1–D9 accepted 2026-10-05 (owner, on round 3: "looks good"). Hub (Mockup · Decisions · PM Brief · Plan
+notes): https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, source `docs/projects/archive/NOTIFICATIONS_OPEN_IN_PLACE_HUB.html`.
 PM brief: `NOTIFICATIONS_OPEN_IN_PLACE_PM_BRIEF.md`. Build prompt (one step per chat):
 `NOTIFICATIONS_OPEN_IN_PLACE_BUILD_PROMPT.md`. Ruling recorded in `memory/design_decisions.md` (2026-10-05).
 
@@ -335,7 +335,7 @@ on an open, to zero on Mark all read, Load more still offered.
 its Close) in a `SheetFrame` menu-layer sheet ≤ 900 and a dialog above; `FEED_EMPTY_COPY` already holds the admin's
 words; the delete surface is the feed's, the note `placement="page"`.
 
-### Step 3 · the admin's Notifications page — built 2026-10-06, committed `157adb69` 2026-10-06; owner QA §272 (hub tab QA Walk)
+### Step 3 · the admin's Notifications page — built 2026-10-06, committed `157adb69` 2026-10-06; ✅ owner QA §272 PASSED 2026-10-06, 16/16 (writes read back on dev)
 
 **Raised before building (disagree out loud).** The plan's step 3 named a `SheetFrame` menu-layer sheet, and this build
 prompt said never to load `coaches.module.css` into anything the admin renders. Those two conflict: `SheetFrame` always
@@ -371,9 +371,12 @@ over them, measured from the coach reader — both as recommended):**
    `scripts/check-public-tokens.mjs`: the reader's stylesheet joins the operator scope (it left `components/coaches`,
    which that scope covers as a folder).
 6. **Walk fixture** — `scripts/seed-uat-treasurer-notifications.mjs` (dev only, refuses production, tag `nop3-walk`,
-   re-run = reset): ONE fresh `team_request_filed` notice for the club's newest waiting request, in the sender's own
-   words and link (`?request=`). Only that: a treasurer receives the club's three money notices and nothing else, so an
-   Activity row would be one this account never gets.
+   re-run = reset): the three notices a treasurer receives, each in the product's own words (`CLUB_MONEY_NOTICE`) and
+   link against a real record — a fresh unread `team_request_filed` for the newest waiting request, a read holding-up
+   notice for another team's waiting request, a read "says they sent" for a payment the club has not confirmed. ⚠ Its
+   first cut seeded only the fresh one and leaned on the treasurer's two older rows; a rebuild of the UAT Rep Club
+   fixture that afternoon (another session — a new org row) wiped all three, and the owner found the page empty at
+   W1 step 2. It now seeds everything the walk names, so a re-run after any rebuild restores the walk.
 7. **`/docs`** — org help's Notifications article rewritten (the drawer on a computer, More › Notifications on a phone, a
    click opens in place with a button naming its page, Read · Done · Delete as definition rows, settings from the
    drawer's gear or More › Account › Notification settings); the coach bell tour made scannable (the drawer, opening one, the
@@ -434,5 +437,6 @@ whose behavior is unchanged on the happy path, comments, help prose, a test and 
 - Steps 1–2's open items stand: the Dark bell badge's contrast, the drawer title's size, family and public links' bare
   "Open", a notification arriving while the drawer is open.
 
-**Project status:** all three steps are built. When §272 passes, the project is complete — the plan and PM brief move to
-`docs/projects/archive/` and the hub's stage strip closes.
+**Project status: COMPLETE 2026-10-06** — all three steps built, committed and walked (§265 · §267 · §272 ✅). The plan, PM
+brief, build prompt, hub and its captures moved to `docs/projects/archive/` and the hub's stage strip closed
+2026-10-06 (owner: "all three" — commit, archive, close).

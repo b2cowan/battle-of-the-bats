@@ -1,7 +1,7 @@
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * NOTIFICATIONS OPEN IN PLACE (owner ruling 2026-10-05, D1–D9 — plan
- * docs/projects/active/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md). Built in three steps; each adds its own
+ * docs/projects/archive/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md). Built in three steps; each adds its own
  * checks here.
  *
  * STEP 1 · the rules under every surface — three words for three things:
