@@ -82,6 +82,7 @@ rule, no hand-copied bar height, `aria-modal` only on the form layer.
 | Help's × is 30px on a phone | out of the frame — report to Help's owner |
 | Club Ledger Tools + Filter and Allocations Filter hang under their toolbar, no dim (the admin never declared `--coach-foot-clear`) — found capturing step 1 | 1 (built) |
 | Filter sheet: a tap on the dim leaves focus nowhere — found capturing step 1 | 1 (built) |
+| Game-day button row (Who's here · Note · Scouting · End game) is 358px of 390 (the shell's 16px gutters) and, scrolled to the end, sits 32px off the nav (it is `.stickyActionBar` in the page column, so it falls back into flow above `main`'s 32px bottom padding); same 32px at 768 — found by the owner in the §268 walk 2026-10-06, not step 3's change | follow-up — drawn 2026-10-06 (hub Mockup › 7), ruled as drawn the same day (D7 docked on a phone and tablet, D8 a computer unchanged) and built; owner QA §269 ✅ PASSED 6/6 2026-10-06 (Build record → *Follow-up*) |
 
 ## Verification per step
 
@@ -411,3 +412,61 @@ fields gained "about a player", "log an observation", "bottom bar hidden / disap
 **Owner QA §268 ✅ PASSED 2026-10-06, 19/19** — hub tab QA Walk: W1 Note and End game cover the bar (7/7) · W2 Who’s
 here, Score and Scouting stay on the bar (7/7) · W3 the keyboard stays inside a form (5/5). Writes nothing. No notes on
 the step; the walk found the game-day button row’s gap above the bar, built as its own follow-up (§269).
+
+### Follow-up — the game-day button row docks on the nav (built and committed `62f76580` 2026-10-06; owner QA §269 ✅ PASSED 6/6 2026-10-06)
+
+Found by the owner in the §268 walk: the row of Who's here · Note · Scouting · End game is `.stickyActionBar` inside
+the page column, so on a phone it was 358px of 390 (the shell's 16px gutters) and, scrolled to the end, fell back into
+the flow 32px off the nav (`.coachesMain`'s bottom padding); the same 32px at 768 (a 480px strip) and at 1280 (off the
+window's foot). Not step 3's change: the row had looked like this since it was raised to clear the nav on 2026-09-22.
+Drawn true size on the hub (Mockup › 7: the live console, captured, then captured with the change applied in place;
+390 mid-scroll and end, 768 end; warm and dark) and **ruled as drawn 2026-10-06 — D7** docked on a phone and tablet,
+**D8** a computer unchanged (no nav to sit on; a full-window band holding a 480px column of buttons would be empty
+furniture).
+
+- **Built (one stylesheet):** at ≤900 `.gdFooter.gdFooter` is `position: fixed; left: 0; right: 0; bottom:
+  var(--coach-foot-clear); margin: 0` with `padding-inline: max(var(--coach-gutter), calc((100% - var(--gd-col-w)) /
+  2))` — `100%` is the viewport for a fixed box, which excludes a desktop scrollbar where `100vw` would not — and
+  `.gdPage:has(> .gdFooter)` pads by `--gd-foot-h`, only while the row is there (a read-only viewer has none). Still no
+  z-index: the clearance stays geometric (the 2026-09-22 lesson). The shell names its phone gutter `--coach-gutter`
+  (`.coachesMain` pads by it) and the console its column `--gd-col-w` (`.gdPage`'s max-width), so the row insets to
+  both without a copied number. `.coachesMain`'s comment no longer claims `.stickyActionBar` has no consumers.
+- **Proved:** `.probe/gdfoot/verify.mjs` at the top, middle and end of the page — 390 touch, 768 touch and 800 mouse:
+  row 390/390, 768/768, 800/800, buttons 16–374, 144–624, 160–640 (the column to the pixel), gap to the nav 0 at
+  every position, the last line 31px above the row at the end; 1280 unchanged (sticky, 510–990, the 32px lift as D8
+  rules). `.probe/gdfoot/sheets.mjs` at 390, top and end: all four buttons answer their own tap; Who's here rises from
+  the nav over the row; Note and End game come down over everything.
+- **Gates:** `sheet-frame-guard` follow-up block (3 tests, 30/30); `coach-practice-plans-phone-guard` and
+  `coach-schedule-sheet-guard` (both read the shell) 57/57; CSS purity, selectors, spelling clean; focused lint clean.
+  `npm run verify:changed` red only on `budget-ladder-sign-guard`, `coach-budget-period-grid-doors-guard` and
+  `month-grid-reconcile-guard` — they read the budget screens another session has uncommitted, not this change.
+  `check:layout --only=coach-game-console`: no geometry findings; five contrast findings, none from this change — the
+  red Out tag in dark (4.23:1 at 12px; the fixture has a player marked Out today) and the red 9+ badge at 1440
+  (3.76:1). Reported, not fixed.
+- **Noted for §268's walk, not this change:** another session's uncommitted work renames End game's confirm button
+  from "Confirm & notify families" to "End game" (a final score notifies nobody, owner 2026-10-06); §268 W1 step 4
+  names the old label.
+
+### Follow-up — the bottom bar keeps its colour at the end of a page, in Warm (built and committed `62f76580` 2026-10-06; owner QA §270 ✅ PASSED 4/4 2026-10-06)
+
+Owner, during the §269 walk: "why does the nav change its tint after scrolling down?" Measured (`.probe/gdfoot/navtint.mjs`,
+`ground.mjs`): the bar is frosted on purpose (warm `rgba(var(--home-paper-rgb), 0.92)` + `blur(20px)`, the 2026-07-13
+backdrop-filter ruling) and its own colour never changed; what changed was BEHIND it. The warm palette hangs off the
+portal's marker (`[data-coach-warm-enabled]`), inside `<body>`, so `<body>` kept `--bg` (#0A0A0A) on every warm coach
+AND club-admin page (the admin layout carries the same marker and borrows the same bar). At the end of a page the
+bar sits over the outer `<main>`'s nav reservation, which shows `<body>`: 8% of near-black through the frost read as a
+grey bar (229,225,218 vs 249,245,237 mid-page) — always, on a page too short to scroll; and an iPhone's overscroll
+bounce shows the same canvas. Not caused by the docked row (D7); the strip was there before.
+
+- **Built (owner: "go ahead", 2026-10-06):** one rule in `app/globals.css`, after the warm palette block —
+  `html[data-user-theme="warm"]:has([data-coach-warm-enabled]) body { background: #F8F4ED; }`. A copy of
+  `--home-paper` because `<body>` is outside the marker that declares it (the `--sandbox-warm-paper` precedent);
+  `warm-palette-contrast.test.ts` grew a test that fails if the two drift (11/11). Rejected: an opaque bar — it would
+  hide the symptom, keep the black canvas for the bounce, and break the platform's frosted chrome.
+- **Proved:** `.probe/gdfoot/tint.mjs` + `tint-diff.mjs` (390 touch, the end of the page, warm and dark, before and
+  after) and `tint2.mjs` (Roster, Schedule, Overview re-taken with the old base forced back on in the same load, after
+  the first run's sign-in failed on two pages): in Warm the game, Overview, Roster, Lineups and the club admin home
+  change ONLY in the strip under the bar (rows 772–843); the Schedule is identical (it scrolls in its own frame); the
+  Dark captures of the game, Overview, Lineups and admin home are pixel-identical. Not checkable in the test browser:
+  the iPhone bounce (QA §270 W5 step 3). The volunteer shells (`data-guest-kit`, warm palette fixed) are not covered by
+  the rule and were not measured.

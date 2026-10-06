@@ -119,11 +119,12 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 .qaverdict button[data-v=pass][aria-pressed=true]{background:#e3f3d4;border-color:#7fa85a}.qaverdict button[data-v=issue][aria-pressed=true]{background:#f6dede;border-color:var(--error)}.qaverdict button[data-v=call][aria-pressed=true]{background:#f4ecd9;border-color:var(--warn)}
 .qanotes{width:100%;min-height:84px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--white);font:inherit}
 .qaout{margin:8px 0 0;white-space:pre-wrap;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px}
+.shot.wide,.shot.wide img{width:768px}
 .qa .pair{margin:6px 0 4px}.qa .shot,.qa .shot img{width:300px;max-width:100%}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Sheet Frame — project hub</strong><br><small>One shared frame for the portal’s phone sheets · inventory of 23 live sheets and the proposal, drawn 2026-10-03 at 390px · D1–D6 accepted 2026-10-05 · five build steps, each from its own prompt · <b>step 1 of 5 built and walked 2026-10-05 · step 2 committed 91986b7c 2026-10-05, QA §266 ✅ passed 2026-10-06 · step 3 (game day) committed 5d036eeb 2026-10-06, End game and Scouting ruled the same day, QA §268 ✅ passed 19/19 2026-10-06</b></small></div>
+  <div class="hubtitle"><strong>Sheet Frame — project hub</strong><br><small>One shared frame for the portal’s phone sheets · inventory of 23 live sheets and the proposal, drawn 2026-10-03 at 390px · D1–D6 accepted 2026-10-05 · five build steps, each from its own prompt · <b>step 1 of 5 built and walked 2026-10-05 · step 2 committed 91986b7c 2026-10-05, QA §266 ✅ passed 2026-10-06 · step 3 (game day) committed 5d036eeb 2026-10-06, End game and Scouting ruled the same day, QA §268 ✅ passed 19/19 2026-10-06 · the game-day button row (found in the walk) drawn, ruled as drawn (D7–D8) and built 2026-10-06 (committed 62f76580), QA §269 ✅ passed 6/6 2026-10-06 · the bottom bar’s grey tint at the end of a page fixed the same day, QA §270 ✅ passed 4/4 2026-10-06</b></small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Round 1 drawn 2026-10-03: 23 sheets opened live at 390px, warm and dark; D1–D6 accepted 2026-10-05">Design</li>
     <li class="stage done" title="SHEET_FRAME_PLAN.md + PM brief + build prompt, 2026-10-05">Plan</li>
@@ -151,6 +152,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <a href="#s-moves">4 · What moves</a>
     <a href="#s-out">5 · What stays out</a>
     <a href="#s-order">6 · The order</a>
+    <a href="#s-foot">7 · The button row</a>
   </nav>
   <div class="frame">
 
@@ -467,6 +469,80 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
         <li class="out"><h3>Out of the frame</h3><p>Full-screen windows, the More sheet’s own container, and the club admin’s sheet (decision 4).</p></li>
       </ol>
     </section>
+
+    <!-- 7 · THE GAME-DAY BUTTON ROW (found in the §268 walk, 2026-10-06) -->
+    <section class="screen" id="s-foot" hidden>
+      <div class="eyebrow">Screen 7 · found in the §268 walk, 2026-10-06 · D7 and D8 ruled as drawn the same day, built, QA §269 ✅ passed 6/6, the bar’s tint QA §270 ✅ passed 4/4</div>
+      <h1 tabindex="-1">The game-day button row docks on the nav</h1>
+      <p class="sub lead">Owner, during the walk: the row of <b>Who’s here · Note · Scouting · End game</b> stops short of the screen’s edges, and at the bottom of the page it lifts off the nav. Measured on the live game: on a 390px phone the row is 358px wide (16px short of each edge), and scrolled to the very end it sits 32px above the nav. The same 32px on a tablet. Not new: step 3 never touched the row; it has looked like this since it was raised to clear the nav on 22 September.</p>
+
+      <div class="callout">
+        <h3>Why it does that</h3>
+        <ul>
+          <li><strong>The row sticks to the page, but it is still part of the page’s column.</strong> It takes the column’s width, so it keeps the page’s 16px side margins. When the page runs out, it drops back to its place in the column, which ends 32px (the page’s bottom margin) above the nav.</li>
+          <li><strong>A docked bar is the portal’s shape for a row of real actions.</strong> The 14 September ruling gives a full-width bar only to a screen with real content in it; this row holds four of the screen’s jobs. The lineup builder’s Undo · Redo · Print bar was docked on the nav the same way on phones, until its actions moved into the toolbar.</li>
+          <li><strong>Each drawing below is the live screen</strong>, captured, then captured again with the change applied in place, at true size. The buttons keep their places and sizes in every one.</li>
+        </ul>
+      </div>
+
+      <div class="move">
+        <h2>Phone · in the middle of the game</h2>
+        <p>The row’s surface and its top line run edge to edge, so it reads as part of the foot rather than a shelf floating on it. The buttons do not move.</p>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span><h3>Scrolled part way</h3></div>
+            <div class="scroller"><div class="shot"><img data-shot="gdfoot-mid" src="sheet-frame/gdfoot-mid-warm.jpg" alt="The game-day console scrolled part way: the button row on the nav, 16px short of each edge." width="390" height="844">
+              <button type="button" class="pin" style="left:2px;top:716px" data-d="D7" data-here="The row stops 16px short of each edge: it takes the page’s column, not the screen.">7</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><h3>Scrolled part way</h3><span class="mk" data-k="re" data-note="The row’s surface and top line span the screen. Same buttons, same places, same sizes; still on the nav.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="gdfoot-mid-P" src="sheet-frame/gdfoot-mid-P-warm.jpg" alt="The same screen with the button row edge to edge on the nav." width="390" height="844">
+              <button type="button" class="pin fix" style="left:2px;top:716px" data-d="D7" data-here="Edge to edge; the buttons have not moved.">7</button></div></div></div>
+        </div>
+      </div>
+
+      <div class="move">
+        <h2>Phone · scrolled to the very bottom</h2>
+        <p>Today the row lifts 32px off the nav and the page shows between them. Proposed: it stays on the nav, and the page’s last line ends about 32px above the row instead, the way every page ends above the nav.</p>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span><h3>At the end of the page</h3></div>
+            <div class="scroller"><div class="shot"><img data-shot="gdfoot-end" src="sheet-frame/gdfoot-end-warm.jpg" alt="The console at the end of the page: the button row 32px above the nav, the page's ground between them." width="390" height="844">
+              <button type="button" class="pin" style="left:182px;top:743px" data-d="D7" data-here="32px of page between the row and the nav: the page ran out, so the row dropped back to its place in the column.">7</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><h3>At the end of the page</h3><span class="mk" data-k="re" data-note="On the nav at every scroll position. The page leaves room for the row, so its last line scrolls clear of it.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="gdfoot-end-P" src="sheet-frame/gdfoot-end-P-warm.jpg" alt="The console at the end of the page with the button row on the nav, edge to edge." width="390" height="844">
+              <button type="button" class="pin fix" style="left:182px;top:668px" data-d="D7" data-here="The page’s last line ends about 32px above the row, and the row stays on the nav.">7</button></div></div></div>
+        </div>
+      </div>
+
+      <div class="move">
+        <h2>Tablet (768px) · scrolled to the very bottom</h2>
+        <p>The console is a 480px column in the middle. Today the row is a 480px strip lifting off a full-width nav; proposed, its surface spans the screen and the buttons keep the column. Scroll the frame sideways.</p>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span></div>
+            <div class="scroller"><div class="shot wide"><img data-shot="gdfoot768-end" src="sheet-frame/gdfoot768-end-warm.jpg" alt="The console on a tablet at the end of the page: a 480px button row 32px above the nav." width="768" height="844">
+              <button type="button" class="pin" style="left:370px;top:743px" data-d="D7" data-here="The 480px row lifts 32px off a full-width nav.">7</button></div></div></div>
+        </div>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><span class="mk" data-k="re" data-note="The surface spans the screen; the buttons keep the console’s 480px column; on the nav at every scroll position.">Restyled</span></div>
+            <div class="scroller"><div class="shot wide"><img data-shot="gdfoot768-end-P" src="sheet-frame/gdfoot768-end-P-warm.jpg" alt="The console on a tablet with the button row spanning the screen on the nav." width="768" height="844">
+              <button type="button" class="pin fix" style="left:60px;top:716px" data-d="D7" data-here="Edge to edge, the buttons in the column.">7</button></div></div></div>
+        </div>
+      </div>
+
+      <div class="move">
+        <h2>On a computer · not drawn, proposed unchanged</h2>
+        <p>Above 900px there is no bottom bar. The row sits at the foot of the window in the console’s 480px column, and at the end of the page it also lifts 32px, onto the page’s own ground rather than into a gap between two bars. <button type="button" class="button" data-d="D8" data-here="The computer, where the row has no nav to sit on.">Open decision 8</button></p>
+        <p class="sub"><span class="mk" data-k="un" data-note="Every sheet opens over the row exactly as it does today in the middle of the page, the saved pill still rides above the row, and the buttons keep their sizes. Nothing changes on a computer unless decision 8 says so.">Unchanged</span> the sheets, the saved pill, and the buttons themselves.</p>
+      </div>
+
+      <div class="move" id="s-foot-tint">
+        <h2>Also found in the walk · the bottom bar turned grey at the end of a page <span class="mk" data-k="keep" data-note="Owner, 2026-10-06: asked why the nav changes tint after scrolling down, then said go ahead with the recommended fix. Built the same day; QA §270 (W5) passed 4/4 the same day.">Fixed 2026-10-06</span></h2>
+        <p>The bottom bar is frosted on purpose: 92% cream with a blur, so 8% of whatever sits behind it shows through. Mid-page that is the cream page and the white cards. At the end of every page it was the strip kept free for the bar, which the warm theme never painted: it still had the dark theme’s near-black base, so the bar read grey. A page too short to scroll had a grey bar all the time, and an iPhone’s bounce past the top or bottom showed the same near-black. The fix paints that base the warm cream on every warm coach and club-admin page; the frost stays. Measured on six pages before and after: in warm only the strip under the bar changed (grey 229,225,218 → cream 249,245,237); the Dark captures were identical.</p>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Before</span><h3>End of the page, warm</h3></div>
+            <div class="scroller"><div class="shot"><img src="sheet-frame/navtint-end-before.png" alt="The game at the end of the page with the bottom bar a greyer cream than the page." width="390" height="844"></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">After</span><h3>End of the page, warm</h3><span class="mk" data-k="re" data-note="The bar keeps the cream it has mid-page. Same frost, same bar; only the page base behind it changed.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img src="sheet-frame/navtint-end-after.png" alt="The same screen with the bottom bar the same cream as the page." width="390" height="844"></div></div></div>
+        </div>
+      </div>
+    </section>
   </div>
 </section>
 
@@ -504,6 +580,16 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <p>The frame is promoted from the Tools drawer first (nothing visible), then the small menus, then game day, then the record sheets, then the lineup builder’s drawers. Each step is its own build and walk.</p>
     <p class="rec"><strong>Recommended.</strong> Lineup and practice screens are being worked on in parallel, and the builder’s drawers already follow the rulings, so they gain least and collide most. Game day gets its own walk because it is used under the most pressure.</p>
     <p class="altx">Alternative: one sweep. Faster to finish, one walk instead of five, but it would land on screens another session is changing.</p></div>
+
+  <div class="decisionrow" id="D7"><div class="dhead"><h3>D7 · On a phone and tablet, the game-day button row docks on the nav, edge to edge</h3><span class="tag accepted">Ruled as drawn 2026-10-06</span></div>
+    <p>Wherever the bottom bar shows (up to 900px wide), the row of Who’s here · Note · Scouting · End game is pinned on the nav at every scroll position, top, middle and end. Its surface and top line span the screen; its buttons stay in the page’s column (16px in from the edges on a phone, the 480px column on a tablet). The page leaves room for the row, so its last line scrolls clear and ends about 32px above it.</p>
+    <p class="rec"><strong>Recommended.</strong> The row holds four of the screen’s jobs, which is what earns a docked bar (14 September). A docked bar sits on what it docks to at every scroll position; today this one does only until the page runs out. Nothing moves for a thumb: the buttons keep their places and sizes. Mockup › 7.</p>
+    <p class="altx">Alternative: close the 32px gap only and keep the row 358px wide. Smaller, but the row still reads as a shelf floating on the nav rather than part of the foot.</p></div>
+
+  <div class="decisionrow" id="D8"><div class="dhead"><h3>D8 · On a computer, the row stays as it is</h3><span class="tag accepted">Ruled as drawn 2026-10-06</span></div>
+    <p>Above 900px there is no bottom bar. The row stays at the foot of the window in the console’s 480px column, as today, including the 32px it lifts at the very end of the page.</p>
+    <p class="rec"><strong>Recommended: leave it.</strong> There is no second bar for a gap to sit between; the lift lands on the page’s own ground. A band across the whole window holding a 480px column of buttons would read as empty furniture, and game day is run from a phone. Step 3 also promised no change on a computer.</p>
+    <p class="altx">Alternative: dock it at the window’s foot too, so it never lifts. Consistent with the phone, at the cost of a wide, mostly empty band on a computer.</p></div>
 </section>
 
 <section id="hub-brief" class="docpage" hidden>
@@ -530,6 +616,12 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
   <div class="eyebrow">Plan notes · for the build session</div>
   <h1>Sheet Frame — what a build would change</h1>
   <div class="note">Steps 1 and 2 of 5 built 2026-10-05, step 3 on 2026-10-06 (records below; the full record is the plan’s <em>Build record</em>). The recipes and defects further down are the 2026-10-03 drawing, from the live page at 390px and the code that day.</div>
+  <h2>Follow-up — the game-day button row (drawn, ruled as drawn D7–D8, built and committed 62f76580 2026-10-06; QA §269 ✅ passed 6/6, the bar’s tint QA §270 ✅ passed 4/4)</h2>
+  <ul>
+    <li><strong>Found in the §268 walk (owner):</strong> the console’s <code>.gdFooter</code> is <code>.stickyActionBar</code> inside the page column, so it is 358px of 390 (the shell’s 16px gutters) and, at the end of the page, sits back in flow — 32px off the nav (the shell <code>main</code>’s 32px bottom padding). Same 32px at 768 (a 480px strip) and at 1280 (off the window foot). Not step 3’s change.</li>
+    <li><strong>Drawn as:</strong> at ≤900, <code>position: fixed; left: 0; right: 0; bottom: var(--coach-foot-clear)</code> with <code>padding-inline: max(1rem, (100vw − 30rem) / 2)</code> so the buttons keep the column, and the console padded by <code>--gd-foot-h</code> so its last line scrolls clear — the <code>.saveBar</code> / retired lineup dock recipe; no hand-copied gutter or padding numbers. Proved in place: row 390/390 and 768/768, gap to nav 0 at mid and end, buttons 16–374 and 144–624 unchanged.</li>
+    <li><strong>Built 2026-10-06:</strong> as drawn, one stylesheet. The shell names its phone gutter (<code>--coach-gutter</code>, which <code>.coachesMain</code> now pads by) and the console its column (<code>--gd-col-w</code>), so the row insets to both without a copied number; <code>.gdPage:has(&gt; .gdFooter)</code> reserves <code>--gd-foot-h</code> only while the row is there (a read-only viewer has none). Proved: <code>.probe/gdfoot/verify.mjs</code> at 390 / 768 / 800 / 1280 (edge to edge, buttons to the column’s pixel, gap 0 top · middle · end; 1280 unchanged) and <code>sheets.mjs</code> (buttons answer their tap; Who’s here, Note and End game open over the row as before). Guard: <code>sheet-frame-guard</code> follow-up block (3 tests).</li>
+  </ul>
   <h2>Step 3 — built 2026-10-06 (game day)</h2>
   <ul>
     <li><strong>The form layer joins the frame:</strong> <code>SheetFrame</code> takes <code>form</code> (and <code>busy</code>): <code>.sheet.form</code> sits at the screen’s foot over the nav (z 390, the home indicator padded), the dim comes with it (<code>LineupSheetScrim overNav</code>), the nav leaves the tab order and the accessibility tree (<code>useOverlayOpenIfAvailable</code>), and the floor keeps the keyboard inside (<code>useDialogFloor</code>, which now takes the caller’s named <code>opener</code> — iOS never focuses a tapped button). <code>aria-modal</code> follows the layer. The layer may change while the sheet is open.</li>
@@ -597,6 +689,8 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 
 <section id="hub-qa" class="docpage qa" hidden>
   <p class="meta">Step 1 · Owner QA §264 ✅ PASSED 2026-10-05, 9/9 — the club’s sheets rise from the bar; the coach’s did not change.</p>
+  <p class="meta"><b>§270 ✅ PASSED 2026-10-06, 4/4 · W5 below</b> — in Warm the bottom bar keeps its colour at the end of a page (asked during W4, fixed 2026-10-06; Mockup › 7, last block).</p>
+  <p class="meta"><b>§269 ✅ PASSED 2026-10-06, 6/6 · W4 below</b> — the game-day button row docks on the nav (found in this walk, ruled as drawn 2026-10-06 from Mockup › 7, built the same day).</p>
   <p class="meta">Step 2 · Owner QA §266 ✅ PASSED 2026-10-06, 17/17 — the Schedule’s two menus rise from the bar; the switchers and Print say what they are; the keyboard lands where it should. Both walks are retired from this tab.</p>
   <div class="eyebrow">Owner QA · §268 ✅ PASSED 2026-10-06, 19/19 · Coaches portal · Sheet Frame step 3 · game day</div>
   <h1>On game day, a sheet that holds your work covers the bar</h1>
@@ -627,7 +721,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <dl>
       <dt>Where</dt><dd>http://localhost:3000/auth/login. W1 and W2 on a phone, or a browser window narrowed under 900px (the bottom bar shows); W3 on a computer with a keyboard, the window about 800px wide.</dd>
       <dt>Coach</dt><dd>uat-coach@uat-test-org.local (password: <code>UAT_COACH_PASSWORD</code> in <code>.env.local</code>) · <b>UAT Test Team</b>, UAT Rep Club. The account may land on another team: switch first.</dd>
-      <dt>The game</dt><dd><b>vs Probe Rovers</b>, which has to be live. If it opens as <b>Game recap · Read-only</b> instead of with a red <b>LIVE</b>, run <code>node .probe/sf3/livegame.mjs</code> in the repo: it moves that one test game’s start to 30 minutes ago and prints its game-day address.</dd>
+      <dt>The game</dt><dd><b>UAT probe game</b> (vs Probe Rovers, at home), which has to be live. Open it from the <b>Schedule</b> with the <b>Game day</b> button beside it — not by tapping the row, which opens the event page (no Note button there). Not <b>UAT probe game · no lineup</b> (@ Probe Rovers): that is a different test game. If there is no <b>Game day</b> button, or the game opens as <b>Game recap · Read-only</b> instead of with a red <b>LIVE</b>, run <code>node .probe/sf3/livegame.mjs</code> in the repo: it moves that one test game’s start to 30 minutes ago and prints its game-day address.</dd>
     </dl>
     <p class="meta"><b>What the walks change:</b> nothing a coach would see. No note or observation is saved, the score is not touched, and the game is not ended — every step closes a sheet without saving. Restart the dev server first: this step changes shared parts.</p>
   </div>
@@ -635,6 +729,8 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · Note and End game cover the bar</b><span class="meta">On a phone: the two forms, the dim, Back, Dark.</span><span class="qachip" data-chip="w1"></span></button>
     <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · Who’s here, Score and Scouting stay on the bar</b><span class="meta">On a phone: the menus, and Scouting’s switch.</span><span class="qachip" data-chip="w2"></span></button>
     <button type="button" class="qawcard" data-walk="w3" aria-pressed="false"><b>W3 · The keyboard stays inside a form</b><span class="meta">On a computer, the window narrowed.</span><span class="qachip" data-chip="w3"></span></button>
+    <button type="button" class="qawcard" data-walk="w4" aria-pressed="false"><b>W4 · §269 · The button row docks on the nav</b><span class="meta">A phone, Dark, then a narrowed window and a computer.</span><span class="qachip" data-chip="w4"></span></button>
+    <button type="button" class="qawcard" data-walk="w5" aria-pressed="false"><b>W5 · §270 · The bottom bar keeps its colour</b><span class="meta">A phone in Warm, an iPhone bounce, then Dark.</span><span class="qachip" data-chip="w5"></span></button>
   </div>
     <div class="qawalk" id="w1">
       <h2>W1 · Note and End game cover the bar</h2>
@@ -644,7 +740,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
         <h3>Not in this walk</h3><p>The sheets that stay on the bar (W2). The keyboard (W3). A computer, where nothing changed.</p>
       </div>
       <ol class="qasteps">
-        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone, as the coach on <b>UAT Test Team</b>, open the live game <b>vs Probe Rovers</b> and tap <b>Note</b> in the row of buttons at the foot.</p><p class="qasee">The Note sheet comes down to the bottom of the screen and the bottom bar is gone, the page above dimmed in warm tan: <b>Note</b> and ×, the text box, <b>About a player?</b>, <b>Save note</b>. (It used to sit on top of a live bar.)</p></div></li>
+        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone, as the coach on <b>UAT Test Team</b>, go to <b>Schedule</b> and tap the <b>Game day</b> button beside <b>UAT probe game</b> (vs Probe Rovers) — the button, not the row. On the game, tap <b>Note</b> in the row of buttons at the foot.</p><p class="qasee">The Note sheet comes down to the bottom of the screen and the bottom bar is gone, the page above dimmed in warm tan: <b>Note</b> and ×, the text box, <b>About a player?</b>, <b>Save note</b>. (It used to sit on top of a live bar.)</p></div></li>
         <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Type a few words. Then tap the dimmed page at the top left, right over the game’s <b>←</b> back arrow.</p><p class="qasee">The sheet closes and <b>you stay on the game</b>; the bar comes back. (Before this step that tap also pressed the arrow and left for the Schedule.)</p></div></li>
         <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Note</b> again.</p><p class="qasee">Your words are still in the box. Clear them and tap <b>×</b>.</p></div></li>
         <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>End game</b>.</p><p class="qasee">The End-game sheet comes down over the bar the same way: <b>FINAL — VS PROBE ROVERS</b>, the two scores, <b>Keep coaching</b> and <b>Confirm &amp; notify families</b> at the foot, no bottom bar. <b>Do not confirm.</b></p></div></li>
@@ -694,7 +790,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
         <h3>Not in this walk</h3><p>How the sheets look (W1, W2).</p>
       </div>
       <ol class="qasteps">
-        <li><input type="checkbox" id="w3s1" aria-label="W3 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a computer, narrow the browser to about 800px wide so the bottom bar shows, open the live game, press <b>Tab</b> until <b>Note</b> has the focus ring, and press <b>Enter</b>.</p><p class="qasee">Note opens. Press <b>Tab</b> about ten times: the ring moves between the box, the player menu, <b>×</b> and <b>Save note</b> and never lands on the page or the bar.</p></div></li>
+        <li><input type="checkbox" id="w3s1" aria-label="W3 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a computer, narrow the browser to about 800px wide so the bottom bar shows, open the live game (Schedule → the <b>Game day</b> button beside UAT probe game), press <b>Tab</b> until <b>Note</b> has the focus ring, and press <b>Enter</b>.</p><p class="qasee">Note opens. Press <b>Tab</b> about ten times: the ring moves between the box, the player menu, <b>×</b> and <b>Save note</b> and never lands on the page or the bar.</p></div></li>
         <li><input type="checkbox" id="w3s2" aria-label="W3 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Escape</b>.</p><p class="qasee">Note closes and the focus ring is on <b>Note</b>.</p></div></li>
         <li><input type="checkbox" id="w3s3" aria-label="W3 step 3"><div class="qabody"><span class="qan"></span><p class="qado"><b>Tab</b> to <b>End game</b>, press <b>Enter</b>, then <b>Tab</b> about ten times. Then press <b>Escape</b>.</p><p class="qasee">The ring stays inside End game; Escape closes it with the ring on <b>End game</b>.</p></div></li>
         <li><input type="checkbox" id="w3s4" aria-label="W3 step 4"><div class="qabody"><span class="qan"></span><p class="qado"><b>Tab</b> to <b>Scouting</b>, press <b>Enter</b>, <b>Tab</b> to <b>+ Log an observation</b> and press <b>Enter</b>.</p><p class="qasee">The bar goes and the cursor is in the box. Tab moves around the sheet and never leaves it.</p></div></li>
@@ -709,9 +805,63 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
       <label class="meta" for="w3notes">Notes for W3</label>
       <textarea id="w3notes" class="qanotes" data-notes="w3"></textarea>
     </div>
+    <div class="qawalk" id="w4" hidden>
+      <h2>W4 · The button row docks on the nav</h2>
+      <p class="meta">Owner QA §269 ✅ PASSED 2026-10-06, 6/6 · ruled as drawn 2026-10-06 from Mockup › 7 (D7, D8) · built the same day. Same game and sign-in as above.</p>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>On a phone or tablet the row of Who’s here · Note · Scouting · End game is part of the foot: edge to edge, on the bottom bar, wherever you are on the page.</p>
+        <h3>It passes when</h3><p>The row’s surface reaches both edges, it never leaves the bottom bar (not even at the end of the page), the buttons sit where they did, and a computer looks as it did.</p>
+        <h3>Not in this walk</h3><p>What the sheets do (W1–W3). The keyboard.</p>
+      </div>
+      <div class="pair">
+        <div class="spec"><div class="spectop"><span class="lbl before">Before</span><h3>End of the page</h3></div>
+          <div class="scroller"><div class="shot"><img data-shot="gdfoot-end" src="sheet-frame/gdfoot-end-warm.jpg" alt="The button row 32px above the nav at the end of the page, 16px short of each edge." width="390" height="844"></div></div></div>
+        <div class="spec"><div class="spectop"><span class="lbl after">After</span><h3>End of the page</h3></div>
+          <div class="scroller"><div class="shot"><img data-shot="gdfoot-end-P" src="sheet-frame/gdfoot-end-P-warm.jpg" alt="The button row edge to edge on the nav at the end of the page." width="390" height="844"></div></div></div>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w4s1" aria-label="W4 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone, open the live game (Schedule → the <b>Game day</b> button beside <b>UAT probe game</b>) and look at the row of buttons at the foot.</p><p class="qasee">The row’s white surface and the thin line along its top run all the way to both edges of the screen, and the row sits right on the bottom bar. The four buttons are where they were, lined up with the cards above.</p></div></li>
+        <li><input type="checkbox" id="w4s2" aria-label="W4 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Scroll slowly to the very bottom of the page.</p><p class="qasee">The row stays on the bottom bar the whole way; no strip of page opens between them at the end. The last card, <b>Open the full builder</b>, stops a little above the row and is not hidden behind it.</p></div></li>
+        <li><input type="checkbox" id="w4s3" aria-label="W4 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Who’s here</b> and close it with <b>×</b>. Then tap <b>Note</b> and close it with <b>×</b>.</p><p class="qasee">Who’s here still rises from the bottom bar, over the row. Note still comes down over everything, the bar gone. Each button answered the first tap.</p></div></li>
+        <li><input type="checkbox" id="w4s4" aria-label="W4 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Switch to <b>Dark</b> (account menu → Appearance) and look at the foot. Then switch back to Warm.</p><p class="qasee">The row’s dark card colour and its faint top line run edge to edge, on the bar.</p></div></li>
+        <li><input type="checkbox" id="w4s5" aria-label="W4 step 5"><div class="qabody"><span class="qan"></span><p class="qado">On a computer, narrow the browser to about 800px wide (the bottom bar shows) and scroll to the end of the game.</p><p class="qasee">The row’s surface spans the window; the four buttons stay in the middle column, lined up with the cards; at the end of the page the row is still on the bottom bar.</p></div></li>
+        <li><input type="checkbox" id="w4s6" aria-label="W4 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Widen the window past 900px.</p><p class="qasee">Unchanged from before: the row is the width of the middle column, at the foot of the window.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W4 verdict">
+        <button type="button" data-w="w4" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w4" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w4" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w4"></span>
+      </div>
+      <label class="meta" for="w4notes">Notes for W4</label>
+      <textarea id="w4notes" class="qanotes" data-notes="w4"></textarea>
+    </div>
+    <div class="qawalk" id="w5" hidden>
+      <h2>W5 · The bottom bar keeps its colour at the end of a page</h2>
+      <p class="meta">Owner QA §270 ✅ PASSED 2026-10-06, 4/4 · found in the W4 walk and fixed 2026-10-06 (Mockup › 7, the last block). Same sign-in as above, in Warm.</p>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>In Warm, the bottom bar is the same cream wherever you are on a page, and nothing near-black shows at the edges of a page.</p>
+        <h3>It passes when</h3><p>The bar never turns grey at the end of a page, an iPhone’s bounce shows cream, and Dark looks as it did.</p>
+        <h3>Not in this walk</h3><p>The button row (W4). The sheets (W1–W3).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w5s1" aria-label="W5 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone in <b>Warm</b>, open the <b>Overview</b>, note the bottom bar’s colour, then scroll to the very bottom.</p><p class="qasee">The bar stays the same cream all the way down; it no longer turns a greyer shade at the end.</p></div></li>
+        <li><input type="checkbox" id="w5s2" aria-label="W5 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Open the live game (Schedule → <b>Game day</b> beside UAT probe game) and scroll to the very bottom.</p><p class="qasee">The same: the bar under the button row stays cream at the end of the page.</p></div></li>
+        <li><input type="checkbox" id="w5s3" aria-label="W5 step 3"><div class="qabody"><span class="qan"></span><p class="qado">On an iPhone, pull down past the top of a page, then push up past the bottom, so it bounces.</p><p class="qasee">Cream shows in the gap while it bounces, not black. (Not checked before the walk: the bounce cannot be produced in the test browser.)</p></div></li>
+        <li><input type="checkbox" id="w5s4" aria-label="W5 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Switch to <b>Dark</b> (account menu → Appearance), scroll to the end of a page, then switch back to Warm.</p><p class="qasee">Dark is unchanged: the dark bar, the dark page.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W5 verdict">
+        <button type="button" data-w="w5" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w5" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w5" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w5"></span>
+      </div>
+      <label class="meta" for="w5notes">Notes for W5</label>
+      <textarea id="w5notes" class="qanotes" data-notes="w5"></textarea>
+    </div>
   <div class="qacard">
     <h3>Paste-back</h3>
-    <div class="qatools"><button type="button" class="button" id="qaBuildOne">Summary of this walk</button><button type="button" class="button" id="qaBuildAll">Summary of all three</button><button type="button" class="button" id="qaCopy">Copy</button></div>
+    <div class="qatools"><button type="button" class="button" id="qaBuildOne">Summary of this walk</button><button type="button" class="button" id="qaBuildAll">Summary of all five</button><button type="button" class="button" id="qaCopy">Copy</button></div>
     <pre class="qaout" id="qaOut" aria-live="polite"></pre>
   </div>
 </section>
@@ -819,7 +969,10 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 /* QA walk: ticks, verdicts and notes kept in this browser; a summary to paste back. */
 (function () {
   var KEY = 'sheet-frame-walk-268-v1';
-  var WALKS = ['w1', 'w2', 'w3'];
+  var WALKS = ['w1', 'w2', 'w3', 'w4', 'w5'];
+  /* W4 and W5 are their own ledger sections (found in this walk); W1-W3 are section 268. */
+  var S268 = ['w1', 'w2', 'w3'];
+  var SECTION = { w4: '§269 Game-day button row', w5: '§270 Bottom bar colour' };
   var state = { ticks: {}, verdict: {}, notes: {}, open: 'w1' };
   try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') state = Object.assign(state, p); } } catch (e) {}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
@@ -859,10 +1012,10 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     return lines.join('\n');
   }
   var out = document.getElementById('qaOut');
-  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = '§268 Sheet Frame step 3\n' + summary(state.open); });
+  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = (SECTION[state.open] || '§268 Sheet Frame step 3') + '\n' + summary(state.open); });
   document.getElementById('qaBuildAll').addEventListener('click', function () {
-    var n = 0, of = 0; WALKS.forEach(function (w) { var c = count(w); n += c.n; of += c.of; });
-    out.textContent = '§268 Sheet Frame step 3 — checked ' + n + ' of ' + of + '\n' + WALKS.map(summary).join('\n');
+    var n = 0, of = 0; S268.forEach(function (w) { var c = count(w); n += c.n; of += c.of; });
+    out.textContent = '§268 Sheet Frame step 3 — checked ' + n + ' of ' + of + '\n' + S268.map(summary).join('\n') + '\n\n' + SECTION.w4 + '\n' + summary('w4') + '\n\n' + SECTION.w5 + '\n' + summary('w5');
   });
   function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
   document.getElementById('qaCopy').addEventListener('click', function () { var text = out.textContent; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(selectOut); else selectOut(); });
