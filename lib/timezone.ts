@@ -445,14 +445,17 @@ export function formatEventDateRange(
   start: string | null | undefined,
   end: string | null | undefined,
   withYear: boolean,
+  /** "October 2–4, 2026" — the long month, for paper (Summary's printed page, Stage 4). */
+  opts: { longMonth?: boolean } = {},
 ): string | null {
   const s = parseDateOnlyParts(start);
   if (!s) return null;
   const e = parseDateOnlyParts(end);
+  const MONTHS = opts.longMonth ? LONG_MONTHS : SHORT_MONTHS;
   const year = withYear ? `, ${(e ?? s).y}` : '';
-  const sTxt = `${SHORT_MONTHS[s.m - 1]} ${s.d}`;
+  const sTxt = `${MONTHS[s.m - 1]} ${s.d}`;
   if (!e || (e.y === s.y && e.m === s.m && e.d === s.d)) return `${sTxt}${year}`;
-  if (e.y !== s.y) return `${sTxt}, ${s.y} – ${SHORT_MONTHS[e.m - 1]} ${e.d}, ${e.y}`;
-  if (e.m === s.m) return `${SHORT_MONTHS[s.m - 1]} ${s.d}–${e.d}${year}`;
-  return `${sTxt} – ${SHORT_MONTHS[e.m - 1]} ${e.d}${year}`;
+  if (e.y !== s.y) return `${sTxt}, ${s.y} – ${MONTHS[e.m - 1]} ${e.d}, ${e.y}`;
+  if (e.m === s.m) return `${MONTHS[s.m - 1]} ${s.d}–${e.d}${year}`;
+  return `${sTxt} – ${MONTHS[e.m - 1]} ${e.d}${year}`;
 }

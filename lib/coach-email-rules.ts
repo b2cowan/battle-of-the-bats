@@ -35,6 +35,22 @@ export function coachEmailsPaused(settings: unknown): boolean {
 }
 
 /**
+ * Whether marking an event complete will email each team its results — every suppression the sender
+ * (`sendCompletionResultsNotification`, set-status → completed) applies: the event's "notify teams on
+ * complete" setting, the club's pause, never sent before, and a plan with Summary. The confirms read
+ * this (the game-day board's, the event's record — Tournament admin redesign Stage 4), so "the teams
+ * get an email" is said only when one will go.
+ */
+export function willEmailResultsOnComplete(e: {
+  notifyTeamsOnComplete: boolean | null | undefined;
+  settings: unknown;
+  resultsNotifiedAt: string | null | undefined;
+  planHasSummary: boolean;
+}): boolean {
+  return Boolean(e.notifyTeamsOnComplete) && !coachEmailsPaused(e.settings) && !e.resultsNotifiedAt && e.planHasSummary;
+}
+
+/**
  * Whether a given automatic coach email is enabled for a tournament.
  * Pass the tournament's `settings` JSONB. Defaults to true when the key is
  * missing or `settings` is null/undefined — only an explicit `false` disables.

@@ -10,8 +10,9 @@
  * orders those groups top-tier-first (Tier 1 < Tier 2, Gold < Silver), so the *division*
  * champion is the TOP tier's final winner — never an arbitrary lower-tier/consolation final.
  */
-import type { Game, Division } from '@/lib/types';
-import { groupGamesByBracketId } from '@/lib/playoff-bracket';
+// Relative (not '@/lib/…') so the unit suite can load the champions rule through lib/event-recap.ts.
+import type { Game, Division } from './types';
+import { groupGamesByBracketId } from './playoff-bracket';
 
 export interface ChampionInfo {
   division: string;

@@ -18,10 +18,11 @@ import { withObservability } from '@/lib/observability';
 import { tournamentNow } from '@/lib/timezone';
 import { gameWindowState, type ScheduledWindowState } from '@/lib/game-live-state';
 import { decidedFinalFor, type ChampionGameInput } from '@/lib/champions';
+import { loadEventRecap } from '@/lib/event-recap-read';
 import { hasFirstGameStarted, isGameDay as isGameDayRule } from '@/lib/tournament-phase';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
-import { coachEmailsPaused } from '@/lib/email';
+import { willEmailResultsOnComplete } from '@/lib/coach-email-rules';
 import { resolveTournamentChatParticipants } from '@/lib/chat-resolvers';
 import { getTournamentChatRoom, getActiveMemberUserIds } from '@/lib/chat-service';
 
@@ -609,9 +610,13 @@ export const GET = withObservability(async (req: Request) => {
     ...(divPayMap.get(div.id) ?? { paid: 0, depositPaid: 0, pending: 0, pastDue: 0, total: 0 }),
   }));
 
-  const [registrationFields, registrationAnswers] = await Promise.all([
+  // A finished event's board reads "How it finished" and the event's figures from the ONE recap read
+  // Summary returns too (Stage 4, Part 0) — never from this route's own rows.
+  const isFinished = t.status === 'completed' || t.status === 'archived';
+  const [registrationFields, registrationAnswers, recap] = await Promise.all([
     getTournamentRegistrationFields(tournamentId),
     getTournamentRegistrationFieldAnswersForRegistrations(teamPayments.map(team => team.id)),
+    isFinished ? loadEventRecap(tournamentId, ctx.org.slug) : Promise.resolve(null),
   ]);
   const answersByRegistration = new Map<string, Array<{
     fieldId: string;
@@ -803,16 +808,21 @@ export const GET = withObservability(async (req: Request) => {
     isTournamentDay,
     isGameDay,
     gameDay,
+    // The game-day board's division lines (a live event): the champion's name once a final is decided.
     champions,
+    // A finished event's board (null before): lib/event-recap-read.ts, the same object Summary returns.
+    recap,
     // Whether marking complete will ACTUALLY email a results summary to team contacts,
     // mirroring every suppression the server-side sender applies (set-status → completed):
     // the per-event toggle on, org-wide coach emails not paused, not already sent once, and
     // the plan includes post-event summaries. Keeps the one-click complete confirm honest
     // (e.g. a reopen→re-complete won't re-email, so it must not promise one).
-    notifyTeamsOnComplete: Boolean(t.notify_teams_on_complete)
-      && !coachEmailsPaused(t.settings)
-      && !t.results_notified_at
-      && hasPlanFeature(ctx.org.planId, 'post_tournament_summary'),
+    notifyTeamsOnComplete: willEmailResultsOnComplete({
+      notifyTeamsOnComplete: t.notify_teams_on_complete,
+      settings: t.settings,
+      resultsNotifiedAt: t.results_notified_at,
+      planHasSummary: hasPlanFeature(ctx.org.planId, 'post_tournament_summary'),
+    }),
     publishChecklist: {
       hasDates,
       hasDivisions,
