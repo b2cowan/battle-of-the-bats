@@ -4,7 +4,6 @@ import {
   getCoachPortalAuth,
   getCoachPortalAssignments,
   getCoachPortalClosedAssignments,
-  getCoachPortalPublicHref,
 } from '@/lib/coach-portal-request';
 import { getCoachMastheadFeed, EMPTY_MASTHEAD_FEED } from '@/lib/coach-masthead';
 import { getScoutingNudgeForNextGame } from '@/lib/coach-opponent-nudge';
@@ -46,10 +45,9 @@ export default async function CoachTeamLayout({
   if (!authCtx) return <>{children}</>;
 
   const isTeamWorkspace = isTeamWorkspaceOrg(authCtx.org);
-  const [assignments, closedAll, publicHref] = await Promise.all([
+  const [assignments, closedAll] = await Promise.all([
     getCoachPortalAssignments(authCtx.org.id, authCtx.user.id, isTeamWorkspace),
     getCoachPortalClosedAssignments(authCtx.org.id, authCtx.user.id, isTeamWorkspace),
-    isTeamWorkspace ? Promise.resolve(null) : getCoachPortalPublicHref(authCtx.org),
   ]);
 
   // The SAME resolution rule the client runs (`resolveWorkingSeason`) over the SAME two arrays, so
@@ -123,7 +121,6 @@ export default async function CoachTeamLayout({
         teamId={teamId}
         orgName={authCtx.org.name}
         isTeamWorkspace={isTeamWorkspace}
-        publicHref={publicHref}
         records={feed.records}
         status={status}
         scoutingNudge={scoutingNudge}

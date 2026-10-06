@@ -7,10 +7,9 @@ import { resolveOrgHomeHref } from './module-entitlements';
 /**
  * Request-scoped reads shared by the TWO server layouts of the premium portal.
  *
- * Why this exists: the portal layout (`/[orgSlug]/coaches`) resolves the coach's identity,
- * assignments and public-site door for the shell; the team layout
- * (`/[orgSlug]/coaches/teams/[teamId]`) needs the same three facts to build the masthead's
- * status feed. On a HARD load both render in one request, so without `cache()` every team page
+ * Why this exists: the portal layout (`/[orgSlug]/coaches`) resolves the coach's identity and
+ * assignments for the shell; the team layout (`/[orgSlug]/coaches/teams/[teamId]`) needs the same
+ * facts to build the masthead's status feed. On a HARD load both render in one request, so without `cache()` every team page
  * would pay for that work twice. On a soft navigation only the team layout renders — there is
  * nothing to share and nothing is wasted either way.
  *
@@ -45,10 +44,14 @@ export const getCoachPortalClosedAssignments = cache(
 );
 
 /**
- * The masthead's "Public site" flip target, or null when this org has no real public page.
+ * The org's public home page, or null when this org has no real public page. Read ONLY by the
+ * portal layout's "not assigned" wall, whose "Back to {club}" door is an exit for a coach who has
+ * nowhere inside the portal to go. ⚠ The team masthead used to read it for a ⇄ "Public site" pill;
+ * that pill was removed on purpose (owner ruling 2026-10-06 — see `CoachTeamHeader`). Do not
+ * re-wire it into the team layout.
  *
  * ⚠ `.catch(() => null)`: the resolver runs an uncaught DB count and this sits on the portal's
- * critical path — a query blip must cost the flip pill, never a 500 (/review 2026-08-02).
+ * critical path — a query blip must cost the door, never a 500 (/review 2026-08-02).
  */
 export const getCoachPortalPublicHref = cache(
   (org: Parameters<typeof resolveOrgHomeHref>[0]) => resolveOrgHomeHref(org).catch(() => null),

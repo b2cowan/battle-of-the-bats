@@ -7,6 +7,20 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-06 — THE COACHES PORTAL HAS NO "PUBLIC SITE" DOOR IN ITS HEADER (owner, on a screenshot of the game-day console: *"coaches just manage their teams and have no reason to toggle back and forth from the public site of the club"*)
+
+**Decision:** the team masthead's ⇄ "Public site" pill is removed at every width. Nothing replaces it.
+**Rationale:** it opened the CLUB's home page: a place the club admin runs, which a coach can neither change nor needs
+to work their team. That made it an exit wearing the ⇄ glyph, which the nav grammar reserves for the other side of the
+SAME place (`NAV_UNIFICATION_PLAN.md` §3). A public-site door is for the people who run that site (club and tournament
+admins). The sidebar's copy of this door had already been removed once (Batch 3); the masthead brought it back under the
+"operator-family flip, header-right" rule, which never asked whether a coach operates the club's site. It also cost a
+database lookup on every team page.
+**Kept, on purpose:** the flips that are about the coach's OWN team. The tournament record's ⇄ pill and the ⇄ Fan view
+links open the event the team is playing in. The "not assigned" wall keeps its "Back to {club}" exit, because a coach
+there has nowhere inside the portal to go.
+**Applies to:** the coaches portal's team masthead; any future proposal to put a club-site door in coach chrome.
+
 ### 2026-10-05 — A NOTIFICATION OPENS WHERE YOU ARE; READ, DONE AND DELETE ARE THREE WORDS FOR THREE THINGS (owner: "looks good" on round 3, all nine as recommended) — hub https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, plan `docs/projects/active/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md`
 
 **Decision:** (D1) a click on a notification OPENS it (kind, day + clock, whole message) and marks it read; the page is a

@@ -588,7 +588,8 @@
 }
 
 /* ── Pinned team masthead (D2 Option A, owner-picked 2026-08-02) ────────────
-   Shell-owned: org eyebrow · team name · season meta · flip. Sticky against the
+   Shell-owned: team name · club · season meta · status · help. (No public-site flip since
+   2026-10-06 — owner ruling, see `CoachTeamHeader`'s docblock.) Sticky against the
    VIEWPORT below the fixed top strip — the DOCUMENT is the portal's one scroll
    container (see .coachesMain: it must never regain an overflow rule) — so identity
    pins while page titles scroll, the admin model. Negative margins cancel the
@@ -697,7 +698,7 @@
 /* ── The right slot (Option B, owner-picked 2026-08-02) ──────────────────────────────────────
    Identity left, live status right — admin's event-header pattern. Two problems it solves at
    once: today's status was previously the tail of a small mono sentence and read as decoration,
-   and a standalone team (no club eyebrow, no public-site flip) left this half of the bar empty. */
+   and a standalone team (no club eyebrow) left this half of the bar empty. */
 .teamHeaderRight {
   display: flex;
   align-items: center;
@@ -761,8 +762,8 @@
 }
 
 /* ⚠⚠ THE STATUS IS NOT ON A PHONE — OWNER RULING 2026-08-24, AND IT COVERS GAME DAY TOO.
-   This wrapper exists ONLY so the ruling can hide the status without hiding the public-site flip
-   link, which shares `.teamHeaderRight` and is a door rather than a fact. `display: contents` means
+   This wrapper exists ONLY so the ruling can hide the status without hiding the help "?", which
+   shares `.teamHeaderRight` and is chrome rather than a fact. `display: contents` means
    the chip/stack stay direct flex children of that row at every width above the breakpoint — the
    wrapper adds no box and changes nothing on desktop.
 
@@ -794,38 +795,8 @@
   white-space: nowrap;
 }
 
-.teamHeaderFlip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-shrink: 0;
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  text-decoration: none;
-  border: 1px solid var(--white-20);
-  border-radius: 999px;
-  padding: 0.3rem 0.75rem;
-  transition: background 0.12s, color 0.12s;
-}
-.teamHeaderFlip:hover { background: var(--white-5); color: var(--text-primary); }
-/* ⚠ A TOUCH TARGET AT TOUCH WIDTHS (/design 2026-10-01 — the layout sweep measured it 29px tall on every
-   coach screen once the test club had a public site). At ≤ 768 the pill takes the 44px floor; on a phone
-   it is the admin header's round ⇄ — the icon alone, the words kept for a screen reader (aria-label). */
-.teamHeaderFlipWord { display: inline; }
-@media (max-width: 768px) {
-  .teamHeaderFlip { min-height: var(--tap-min, 44px); }
-}
-@media (max-width: 640px) {
-  .teamHeaderFlip { width: var(--tap-min, 44px); padding: 0; justify-content: center; }
-  .teamHeaderFlipWord { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-}
-
 /* ── The page's help "?" — moved here from the page-title band 2026-08-25 ────────────────────────
-   LAST in the right slot, after the status stack and after the flip, so the 2026-08-11 clause
+   LAST in the right slot, after the status stack, so the 2026-08-11 clause
    ("its own slot, always LAST, top-right at every width") reads literally. Drawn by the masthead
    from whatever the page publishes — see `CoachPageHelpSlot`.
 

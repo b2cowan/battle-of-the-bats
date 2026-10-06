@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeftRight, ChevronDown, X } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { resolveLiveSeason, resolveClosedSeason } from '@/lib/coach-season-view';
 import { mastheadSeasonLabel } from '@/lib/coach-season-label';
@@ -63,12 +63,17 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   renders as a button with a chevron and opens `CoachTeamSwitchSheet` — the More sheet's own
  *   rows, moved. One team: plain text. Desktop: the sidebar's select, untouched.
  * - Mounted by the TEAM layout, so it exists only under /teams/{teamId}.
+ * - ⚠ NO "PUBLIC SITE" DOOR (owner ruling 2026-10-06). The masthead carried a ⇄ "Public site" pill
+ *   from D2 (2026-08-01) until then. It opened the CLUB's home page — a place the club admin runs and
+ *   a coach can neither change nor needs — so it was an exit wearing the ⇄ glyph, which the nav
+ *   grammar reserves for the other side of the SAME place. Do not re-add it. The flips a coach does
+ *   use are about their own team and stay where that team is: the tournament record's ⇄ pill and
+ *   the ⇄ Fan view links open the event their team is playing in.
  */
 function CoachTeamHeaderInner({
   teamId,
   orgName,
   isTeamWorkspace,
-  publicHref,
   records,
   status: rawStatus,
   statusYearId,
@@ -78,7 +83,6 @@ function CoachTeamHeaderInner({
   teamId: string;
   orgName: string;
   isTeamWorkspace: boolean;
-  publicHref: string | null;
   records: Record<string, MastheadRecord>;
   status: MastheadStatus;
   /** The season `status` was computed for — see the layout's note. Null when there is none. */
@@ -284,10 +288,10 @@ function CoachTeamHeaderInner({
           {/* ⚠ THE STATUS DOES NOT RENDER AT PHONE WIDTH — owner ruling 2026-08-24, game day
               included. This wrapper is `display: contents` above 640 (so the chip/stack stay
               direct flex children of the row and desktop is byte-identical) and `display: none`
-              below it. It exists for ONE reason: the public-site flip beneath is a DOOR, not a
-              fact, and hiding `.teamHeaderRight` wholesale would have taken it too — the kind of
-              thing a width rule removes silently. See `.teamHeaderStatus` for why the slot is
-              removed rather than shrunk, and where the bench console's other phone doors are. */}
+              below it. It exists for ONE reason: the help "?" beneath is chrome, not a fact, and
+              hiding `.teamHeaderRight` wholesale would have taken it too — the kind of thing a
+              width rule removes silently. See `.teamHeaderStatus` for why the slot is removed
+              rather than shrunk, and where the bench console's other phone doors are. */}
           <span className={styles.teamHeaderStatus}>
             {seasonFinished ? (
               <>
@@ -309,17 +313,10 @@ function CoachTeamHeaderInner({
             ) : null}
           </span>
 
-          {publicHref && (
-            <Link href={publicHref} className={styles.teamHeaderFlip} aria-label="Public site">
-              <ArrowLeftRight size={13} aria-hidden />
-              <span className={styles.teamHeaderFlipWord}>Public site</span>
-            </Link>
-          )}
-
           {/* The page's help "?" — moved out of the page-title band 2026-08-25 (owner ruling;
-              `COACH_PAGE_TITLE_BAND_PLAN.md` §5). It is drawn LAST, after the status stack and
-              after the flip, so the 2026-08-11 clause — "its own slot, always LAST, top-right at
-              every width" — reads literally rather than approximately.
+              `COACH_PAGE_TITLE_BAND_PLAN.md` §5). It is drawn LAST, after the status stack, so the
+              2026-08-11 clause — "its own slot, always LAST, top-right at every width" — reads
+              literally rather than approximately.
 
               ⚠ OUTSIDE `.teamHeaderStatus` on purpose. That wrapper is `display: none` at ≤640
               (the 2026-08-24 status ruling); the "?" is not a status and must survive there.
