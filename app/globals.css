@@ -101,6 +101,11 @@
   --warning-rgb: 245, 158, 11;
   --danger:      #EF4444;
   --danger-rgb:  239, 68, 68;
+  /* A danger FILL with light words on it — a count badge (the bell's red number). --danger is a
+     glyph / tint / border red: white on it is 3.76:1, under AA at a badge's 10px (the rendered check,
+     2026-10-05). One step deeper clears it at 4.83:1; warm re-points this at its rust (~6.1:1). Asserted
+     in tests/unit/warm-palette-contrast.test.ts. Tints, borders and dots keep --danger. */
+  --danger-fill: #DC2626;
   --info:        #3B82F6;
   --info-rgb:    59, 130, 246;
 
@@ -967,6 +972,7 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --danger:        var(--home-live);
   --danger-rgb:    var(--home-live-rgb);
   --danger-light:  var(--home-live);
+  --danger-fill:   var(--home-live);
   --warning:       var(--home-amber);
   --warning-rgb:   var(--home-amber-rgb);
   --warning-light: var(--home-amber);
@@ -1243,6 +1249,7 @@ html[data-user-theme="dark"] [data-coach-warm-enabled] {
   --pv-danger: var(--danger);
   --pv-danger-rgb: var(--danger-rgb);
   --pv-danger-light: var(--danger-light);
+  --pv-danger-fill: var(--danger-fill);
   --pv-warning: var(--warning);
   --pv-warning-rgb: var(--warning-rgb);
   --pv-warning-light: var(--warning-light);
@@ -1338,6 +1345,7 @@ html[data-user-theme="dark"] [data-coach-warm-enabled] {
   --danger: var(--pv-danger);
   --danger-rgb: var(--pv-danger-rgb);
   --danger-light: var(--pv-danger-light);
+  --danger-fill: var(--pv-danger-fill);
   --warning: var(--pv-warning);
   --warning-rgb: var(--pv-warning-rgb);
   --warning-light: var(--pv-warning-light);

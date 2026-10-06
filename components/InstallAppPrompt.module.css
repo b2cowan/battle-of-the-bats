@@ -9,7 +9,14 @@
   );
   left: 0;
   right: 0;
-  z-index: 400;
+  /* ⚠ UNDER EVERY SHEET, OVER THE PAGE (2026-10-06). A nudge never covers a surface someone opened.
+     It was 400 — over every phone sheet in both portals (the menu layer 259/260 — the portal's sheets,
+     the notification reader —, the bar's More at 300, the form layer 390) and level with the windows
+     (400), so it hid a sheet's own buttons — the reader's "Open the request" among them — until it was
+     dismissed (found by Notifications Open in Place step 3). 255: above the autosave pill and the docked
+     bars it already sat over (≤ 250), below the sheet dims (259) and everything over them. Pinned by
+     tests/unit/install-banner-layer-guard.test.ts against every sheet layer it must stay under. */
+  z-index: 255;
   display: flex;
   align-items: center;
   gap: 0.75rem;

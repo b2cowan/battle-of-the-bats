@@ -465,4 +465,17 @@ describe('admin kit dark palette — the release-day Dark look, no debt', () => 
     for (const name of KIT_DARK_STATE) check(name, ['kit card', 'kit page']);
     assert.deepEqual(problems, [], `Kit Dark inks:\n  ${problems.join('\n  ')}`);
   });
+
+  it('a white digit on the danger FILL clears AA in Dark and in Warm — the bell\'s red count (2026-10-06)', () => {
+    // The bell's badge paints `--white-fixed` on `--danger-fill`. Dark's --danger (#EF4444) is a glyph and
+    // tint red that put the digit at 3.76:1 (the rendered check, 2026-10-05); the fill is its own token.
+    const warm = { ...root, ...readSelectorTokens(COACH_PALETTE, 'html[data-user-theme="warm"] [data-coach-warm-enabled]') };
+    for (const [theme, d] of [['Dark', decls], ['Warm', warm]] as const) {
+      const fill = resolveInk(d, '--danger-fill');
+      const digit = resolveInk(d, '--white-fixed');
+      assert.ok(fill && digit, `--danger-fill or --white-fixed did not resolve in ${theme}`);
+      const r = contrast(digit.rgb, fill.rgb);
+      assert.ok(r >= AA_NORMAL, `${theme}: white on --danger-fill is ${r.toFixed(2)}:1 (needs ${AA_NORMAL}:1)`);
+    }
+  });
 });

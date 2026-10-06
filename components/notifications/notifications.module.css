@@ -45,7 +45,9 @@
   right: 0;
   min-width: 16px;
   height: 16px;
-  background: var(--danger);
+  /* The danger FILL, not --danger: white on Dark's #EF4444 was 3.76:1 (the rendered check,
+     2026-10-05/06); --danger-fill is one step deeper in Dark (4.83:1) and the rust in warm. */
+  background: var(--danger-fill);
   /* Fixed white, not --white: the coach warm gate remaps --white to dark ink, which put this
      digit dark-on-rust at 2.73:1 (review 2026-08-17). The badge ground is a danger fill in
      every theme, so its ink is theme-proof white (~6.1:1 on the warm rust). */
