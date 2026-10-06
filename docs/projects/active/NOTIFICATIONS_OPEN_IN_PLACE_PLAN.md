@@ -215,3 +215,120 @@ here (the bell's own stylesheet; the badge's comment claims ~6.1:1 on warm rust,
 **Step 2 adapts to:** the reader's action row is the shared block's order now; `deleteRows`/`undoDelete`/`pendingDelete`
 and `NotificationUndoNote` are the delete surface (the drawer places the note at its own foot — the component needs a
 placement prop then); `notificationDestination(link, 'admin')` for the admin drawer, `'coach'` for the coach's.
+
+### Step 2 · the drawer — built 2026-10-06, committed `a1134f15` 2026-10-06; owner QA §267 (hub tab QA Walk)
+
+**Owner rulings in the build session (2026-10-06, hub screen 9 — "what the hub never drew" — all three as
+recommended):**
+- **Q1 · the Undo note in the drawer:** centred under the LIST, 16px above the drawer's foot, whether or not a message
+  is open (not under the whole drawer).
+- **Q2 · the four quiet states** (loading · caught up · nothing yet · couldn't load) as drawn, in the Notifications
+  page's own words — one copy per portal, `FEED_EMPTY_COPY` in `lib/notification-view.ts`, which the page now reads too.
+- **Q3 · the drawer opens on Unread**, as the bell did.
+
+**Decided by the portal's written rules, not asked (shown on screen 9):** the onward button is the portal's lime with
+dark ink — the hub drew it olive, and olive is never a button's fill (globals.css warm CTA block); Unread | All wears
+the portal's own two-way switch (ruling 2026-09-25 D1b), not the old bell's mono pill. The message title keeps the
+display face every portal window title wears (KitDialog, the sheet frame, the 09-25 reader); the hub drew it in the body
+face. Type sizes stay on the scale (heading 16 / body 14) in every frame, not the pane's drawn 18 / 14.5.
+
+**Built:**
+1. **One message block** — `components/notifications/NotificationMessage.tsx` + `.module.css`: eyebrow (icon, kind,
+   un-uppercased stamp), title (`titleId`, optional `titleRef`, `tabIndex=-1`), body or bundle members, and Open · Done ·
+   [Close] · trash. Close renders only for a frame that passes `onClose` (the reader); the drawer's pane has its ×. The
+   buttons are the block's own (`.btn` / `.go`): the coach `.btnPrimary` / `.btnSecondary` live in the ~945KB
+   `coaches.module.css`, which the bell would have loaded on every admin page — same tokens as those and the admin kit's.
+   `CoachNotificationReader` now wears it; its file and stylesheet keep only the frame (Sheet Frame's half untouched).
+2. **The drawer** — `components/notifications/NotificationDrawer.tsx`, portaled to `<body>` inside `PortalKitRoot` +
+   `coachWarmAttr` (so the admin's drawer carries the admin kit's marker as well as the warm one — the panel carried only
+   the warm one). Fixed under the strip (`--chrome-bar-h` + `--sandbox-chrome-h`), z 1105; the light dim is
+   `--home-scrim` and closes on its own click inside the boundary; a pointer-down outside the drawer and the bell closes
+   it; a window narrowed to ≤ 900px closes it. 380px list; a 440px pane to its left whose message scrolls inside
+   `.paneScroll` under a pinned ×. Rows are the bell's own (one line each), plus the selected state (`aria-current`, olive
+   tint + 3px edge), and a trash per row and per bundle shown on `:hover` and `:focus-within` (opacity, so it keeps its
+   Tab stop), taking the place of the dot / chevron while it shows. Load more, Mark all read (on `anyUnread`), the gear
+   (`settingsHref`, closes the drawer), ×. It stands on `useDialogFloor`: Tab trapped, focus to the bell on close,
+   Escape and Back close the message first (`onClose: open ? closePane : onClose`), then the drawer. A message that opens
+   puts the keyboard on its title; × on the pane returns it to the row (by `data-row-key`, after the commit — Done moves
+   the row). A delete closes the message it deleted, never the drawer; the Undo note takes the keyboard (what had it left
+   with the row or the pane) and hands it to the row that took the deleted one's place when it leaves.
+3. **The feed** — `useNotificationFeed(orgId, { unreadOnly, keepSeen })`: the drawer opens on Unread and keeps rows opened
+   this visit, and rows marked Done from the row ("it stays in your list below, read", hub screen 6), under Unread until
+   it closes; Mark all read does not keep them. **The unread count**: the server's `unreadCount` minus the loaded page's
+   unread = rows not loaded (`unreadBeyond`; shrinks as Load more brings them in, zero on Mark all read), plus the unread
+   rows on the list — so every read, Done, delete (an unread row too) and Undo moves it. The drawer pushes it to the bell
+   (`onUnreadChange`). The panel's own 40-row fetch, zone and actions are gone.
+4. **The bell** — opens the drawer (`aria-haspopup="dialog"`, `aria-expanded`, pressed look while open); props `portal`
+   (required) · `settingsHref` · `count` / `onCountChange`; `seeAllHref`, `panelPlacement`, `warm` and `useDismissable`
+   are gone (the drawer owns its boundary). Both strips pass `portal`; neither links to a Notifications page any more.
+5. **Removed:** `NotificationPanel.tsx`, and in `notifications.module.css` the panel's frame, header, filter bar, footer,
+   its `.panelCoaches` / `.panelWarm` / `.panelTopStrip`, and the ≤ 900 / ≤ 768 rules that never ran.
+6. **The Undo note** gains `placement="drawer"`: absolute in the list column (no measuring), `.region.regionDrawer`.
+7. **Guards** — `notification-open-in-place-guard.test.ts` gains step 2 (a row opens and nothing navigates; one message
+   block in the pane and the reader; each strip names its portal and nothing links to the Notifications pages; the old
+   panel is gone; the drawer reads the shared feed, opens on Unread and keeps opened and Done rows; Escape/Back one
+   level; the count; the trash for pointer and keyboard; the Undo placement; a delete never closes the drawer; both
+   theme markers), and step 1's panel checks moved to the drawer and the message block.
+   `notification-feed-grouping.test.ts` reads the drawer instead of the panel. `scripts/check-public-tokens.mjs`: the
+   new stylesheet joins the operator scope.
+
+**Checks:** `npm run typecheck` clean; focused eslint — no new warnings (one pre-existing on the feed's initial load);
+`npm run verify:changed` exit 0 (5,648 unit tests, spelling, dictionary, contrast, tokens, selectors) — before the
+last three small changes (the × pinned over a scrolling message, the trash taking the dot's place, Done keeping its
+row in view), after which the guards (29), typecheck, lint, tokens and selectors were re-run clean. **Rendered check**
+(`.probe/nop2-drawer.mjs`, the coach and the club treasurer, 1280 and 1024, warm and dark, a realistic ~215-character
+week in review plus one ~3,500-character message substituted in the browser only): the layer starts under the strip
+(y 48); the list 380px, 820px with a message; at 1024 about 200px of page left; the long message scrolls inside its pane
+(1863 over 752) while the list keeps its height; Escape → the message closes and the keyboard is on its row, Escape →
+the drawer closes and the keyboard is on the bell; a row trash leaves the note centred under the list (centre 834 =
+the list's centre) 16px above the foot with the keyboard on Undo, and Undo restores the row with no delete sent; the
+trash shows on hover and on keyboard focus; the bell followed every read (16 → 15 → 14 → 13; a bundle of four, 13 → 9);
+the admin drawer carries both markers and names its pages (Open Payment requests, Open the bill); ≤ 900px closes it.
+The coach's notifications were reset afterwards (`node scripts/seed-uat-coach-notifications.mjs`). Dev server
+restarted for the walk.
+
+**/simplify (four lenses) and /review (high-risk tier: correctness, concurrency/state, regression, security) 2026-10-06.**
+/simplify: the drawer is loaded on the bell's click (`next/dynamic`, `ssr: false`, as the help drawer) instead of on every
+admin and coach page; "kept this visit" moved OUT of the shared feed into the drawer (the feed takes a `keep` set and only
+honours it — no mode flag in `markSeen` / `clearRow`); the two row kinds share one `row()` shell; the caught-up words are
+one copy (`FEED_CAUGHT_UP`, read by the page too); the buttons are one stylesheet both the message block and the drawer's
+toolbar import (`notification-buttons.module.css`); the drawer gives the eyebrow its × room through a custom property
+(`--message-eyebrow-inset`) instead of a `p:first-of-type` selector into the block. Skipped: a batch mark-read for a
+bundle (an API change, outside the step); the page's `.segToggle` (the old mono pill, not the portal switch); a shared
+outside-press hook (`useDismissable` claims Escape, which belongs to the floor's message-then-drawer order); one row
+component with the page (the rows genuinely differ). /review fixed four:
+- **The count push erased a live arrival** (two lenses): the drawer pushed an absolute count, so the +1 the bell's
+  listener gave a notification arriving while the drawer was open vanished on the next read. It now hands up the
+  server's count once and then MOVES the bell by what it changed; Mark all read sets it to zero (the server reads
+  arrivals too).
+- **Undo after Mark all read brought a row back unread** (two lenses; step 1's page has the same path): Mark all read now
+  stamps the rows waiting out their Undo window, which the server reads too.
+- **"You're all caught up" could hide older unread rows**: the first page all read, unread rows behind it, and Load more
+  drawn only inside the list. Load more is now drawn whenever there is more, as the page does.
+- **One organization per drawer** (`key={orgId}`) — belt and braces: an org switch needs a press outside, which closes it.
+Not fixed (Low): a Load more in flight across a Mark all read can bring rows back looking unread; reopening within a
+moment of a delete can show the deleted row once (the pending set is per drawer); an item that becomes a bundle under
+Load more loses its highlight; the onward `<a href>` is not validated (pre-existing — the panel assigned it to
+`window.location`); the shared demo account can delete its own notifications (the demos have none; they reseed); admin
+help still names "See all" (step 3's `/docs`). Gate: the guards (61), typecheck, lint, tokens and selectors clean;
+`verify:changed`'s only reds are `sheet-frame-guard.test.ts` (another session's step-3 work in the tree).
+`check:layout`: a `--changed` run widened to every screen and aborted on memory (it ran beside `verify:changed`), so it
+was re-run scoped after a restart — one finding, the pre-existing bell-badge contrast in Dark (below); the treasurer
+screen unmeasured (the sweep's stored session for that account has expired). Re-probed after the fixes: the bell 16 → 15
+on an open, to zero on Mark all read, Load more still offered.
+
+**Found, not fixed:**
+- **A notification that arrives while the drawer is open** raises the bell (its own live listener) but joins the list
+  only when the drawer is opened again. (Its count is kept since /review — see above.) The feed does not listen for
+  new rows.
+- **The bell's red badge digit in Dark is 3.76:1** (white on `#EF4444` at 10px) whenever there is an unread
+  notification — step 1's finding, unchanged by this step; Warm resolves the rust and passes. The fix is a Dark badge
+  fill (or ink), a `/design` call.
+- **The coach's family and public links still read a bare "Open"** (Game moved, Rain delay, Playoffs, Champions) — step
+  1's finding, unchanged.
+- **The message title** is the display face at 16px (the portal's window-title rule), which reads small beside 14px body
+  text in the 440px pane. Raising it is a type-scale question for `/design`, not this build.
+
+**Step 3 adapts to:** the admin page passes `onOpen` and wears `NotificationMessage` (portal `'admin'`, `onClose` for
+its Close) in a `SheetFrame` menu-layer sheet ≤ 900 and a dialog above; `FEED_EMPTY_COPY` already holds the admin's
+words; the delete surface is the feed's, the note `placement="page"`.

@@ -55,6 +55,19 @@ do another's job: Mark all read must never write `cleared_at`.
   of 40 (the weekly reviews sit below Load more); read every writing step back on dev before recording a pass.
 - If the dev server shows "Jest worker encountered … child process exceptions", restart it before any walk or probe.
 
+## Learned in step 2 (committed `a1134f15` 2026-10-06; read its Build record in the plan before starting)
+
+- **The message block exists**: `NotificationMessage` (portal words, Open · Done · [Close] · trash). A frame that closes
+  from its button row passes `onClose`; one with its own × does not. Never re-draw the eyebrow, stamp or buttons.
+- **Never import `coaches.module.css` into anything the admin renders** — it is ~945KB, and the bell is on every admin
+  page. The block carries its own buttons on the same tokens.
+- **A portaled admin surface wears `PortalKitRoot` + `coachWarmAttr`**, or it misses the admin kit's rules.
+- **`FEED_EMPTY_COPY`** holds both portals' empty-list words; the page and the drawer read it.
+- **Check a drawing against the portal's written rules before building it**: the hub drew the onward button olive (never
+  a fill) and the read switch as the old pill — both corrected on screen 9 without a question.
+- **The probe pattern**: `.probe/nop2-drawer.mjs` signs in both accounts and swaps a long body in the browser
+  (`page.route`) to prove scrolling without writing; it marks rows read, so re-run the coach fixture after.
+
 ## The steps (detail in the plan)
 
 1. **The rules under every surface.** Mark all read marks everything (D9); a delete action with Undo in the shared feed
