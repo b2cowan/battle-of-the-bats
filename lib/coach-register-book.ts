@@ -1,4 +1,5 @@
 import 'server-only';
+import { getSeasonClubBills } from './coach-club-bills';
 import {
   getRepTeamExpenses,
   getRepTeamMoneyIn,
@@ -118,11 +119,11 @@ export async function loadSeasonRegisterRows(
       .select('id, name, pledged_amount, created_at, budget_item_id, budget_category_id')
       .eq('program_year_id', programYear.id)
       .eq('kind', 'sponsor'),
-    supabaseAdmin
-      .from('rep_allocation_splits')
-      .select('id, budget_item_id, budget_category_id, rep_cost_allocations ( description )')
-      .eq('team_id', teamId)
-      .eq('program_year_id', programYear.id),
+    /* ⚖ CLUB TIER STAGE 3c, S3C-11 (owner 2026-10-07, call 1): the season's CLUB BILLS through the one reader
+       every coach cash read shares (`getSeasonClubBills`, lib/coach-club-bills.ts) — this season's bills still
+       owed, and every club payment carried by this season (recorded while it ran), whichever season's bill it
+       paid. A payment of an earlier bill made after that season closed lands HERE, never in the closed season. */
+    getSeasonClubBills(teamId, programYear.id),
     /* ⚠ SEASON-SCOPED AS OF MIGRATION 247. This used to be team-LIFETIME, which is precisely why a
        register scoped to the working season could not reproduce Cash on hand.
        ⚠⚠ AND NO LONGER `.eq('status','approved')` (owner ruling 2026-08-17): a PENDING request now
@@ -165,10 +166,10 @@ export async function loadSeasonRegisterRows(
     if (e.budgetItemId) itemIds.add(e.budgetItemId);
     if (e.budgetCategoryId) categoryIds.add(e.budgetCategoryId);
   }
-  const splits = (splitsRes.data ?? []) as unknown as Array<{
-    id: string; budget_item_id: string | null; budget_category_id: string | null;
-    rep_cost_allocations: { description: string } | null;
-  }>;
+  const splits = splitsRes.map(b => ({
+    id: b.id, budget_item_id: b.budgetItemId, budget_category_id: b.budgetCategoryId,
+    rep_cost_allocations: { description: b.allocationDescription } as { description: string } | null,
+  }));
   const clubRequests = (requestsRes.data ?? []) as Array<{
     id: string; request_type: string; amount: number; description: string; status: string;
     budget_item_id: string | null; budget_category_id: string | null;
@@ -225,12 +226,14 @@ export async function loadSeasonRegisterRows(
     categoryIds.size > 0
       ? supabaseAdmin.from('budget_categories').select('id, name').in('id', [...categoryIds])
       : EMPTY<{ id: string; name: string }>(),
-    splits.length > 0
-      ? supabaseAdmin
-          .from('rep_allocation_installments')
-          .select('id, split_id, installment_number, amount, due_date, paid_at, sent_at, sent_on, paid_on, sent_method, sent_reference, paid_method, paid_reference')
-          .in('split_id', splits.map(s => s.id))
-      : EMPTY<AllocationInstallmentRow>(),
+    // The installments this season reads came with its bills (one reader, call 1) — in the row shape below.
+    Promise.resolve({
+      data: splitsRes.flatMap(b => b.installments.map((i): AllocationInstallmentRow => ({
+        id: i.id, split_id: b.id, installment_number: i.installmentNumber, amount: i.amount, due_date: i.dueDate,
+        paid_at: i.paidAt, sent_at: i.sentAt, sent_on: i.sentOn, paid_on: i.paidOn,
+        sent_method: i.sentMethod, sent_reference: i.sentReference, paid_method: i.paidMethod, paid_reference: i.paidReference,
+      }))),
+    }),
     schedules.length > 0
       ? supabaseAdmin
           .from('rep_player_dues_installments')

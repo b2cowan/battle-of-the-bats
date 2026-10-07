@@ -268,6 +268,13 @@ export interface ItemRow {
    * ⚠ DO NOT REACH FOR IT ON AN ORDINARY ROW — its absence is how the screen tells the two apart.
    */
   duesParts?: { cashKept: number; familyPaidCosts: number; fundraisingCredited: number };
+  /**
+   * ⚠ THE CLUB'S ONLY (Club Tier Stage 3c, Ask 4): money that arrived this fiscal year against a bill
+   * PLANNED in an earlier one — "2025–26's bills, paid this year". The name of the year it was planned in.
+   * Its Budgeted and Variance print blank, never the amber "nobody budgeted this" dash: it WAS planned, in
+   * its own year. The coach's rollup never sets it; its absence is the coach's ordinary row.
+   */
+  plannedIn?: string;
 }
 
 export interface CategoryRow {

@@ -58,16 +58,21 @@ import { CLUB_COMPARE_BASES, clubMonthsFile, clubMonthsNotes, clubNetRowLabel, c
 import { NOT_FILED_ID } from '@/lib/club-ledger';
 import { OTHER_BOOKS_WORD } from '@/lib/club-money-words';
 import { clubYearSpan, sumMoney } from '@/lib/club-money-figures';
-import { formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { formatStoredDate } from '@/lib/timezone';
 import type { ClubPlan, ClubReport } from '@/lib/club-budget-report';
+import type { FiscalYearOption, FiscalYearRead } from '@/lib/club-fiscal-year';
+import type { AgainstLastYear } from '@/lib/club-year-compare';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 
 interface Read {
-  year: number;
-  years: number[];
+  /** The fiscal year read (Stage 3c): its name, span, close, `current` (today falls in it) and `canWrite`. */
+  year: FiscalYearRead;
+  years: FiscalYearOption[];
   canMove: boolean;
   report: ClubReport;
   plan: ClubPlan;
+  /** Compare › Against last year (Ask 8c) — session 2 draws it; null when the year before has no books. */
+  againstLastYear: AgainstLastYear | null;
 }
 
 type View = 'statement' | 'months';
@@ -116,8 +121,8 @@ export default function BudgetVsActualTab() {
   useDeferredLoad(canMove && lineId != null && categories === null, loadCategories);
 
   const report = read?.report ?? null;
-  const today = report?.today ?? tournamentToday();
-  const isThisYear = !!report && report.year === Number(today.slice(0, 4));
+  // The server says whether the year read is the one today falls in (Stage 3c: the one definition, S3C-01).
+  const isThisYear = !!read?.year.current;
   const effectiveLens: ClubLens = lens === 'scheduled' && !isThisYear ? 'budget' : lens;
 
   /* The statement at the basis chosen — the coach's own re-cut (`rebaseReport`), one pass, every figure off
@@ -169,7 +174,7 @@ export default function BudgetVsActualTab() {
     const thisMonth = isThisYear && effectiveLens === 'actual' ? formatMonthLong(report.months.todayMonth).split(' ')[0] : null;
     const other = effectiveLens === 'difference' ? null : report.months.otherBooks[effectiveLens];
     return clubMonthsNotes({
-      lens: effectiveLens, year: report.year,
+      lens: effectiveLens, year: report.year.name,
       opening: fmtSigned(report.months.openingBalance), firstDay: formatStoredDate(clubYearSpan(report.year).first, { withYear: false }),
       cashOnHand: fmtSigned(report.months.cashOnHand),
       pendingOut: report.pending.moneyOut > 0.005 ? money(report.pending.moneyOut) : null,
@@ -184,7 +189,7 @@ export default function BudgetVsActualTab() {
     const asMonths = view === 'months' && format !== 'pdf';
     const built = asMonths
       ? clubMonthsFile(report.months, effectiveLens, monthBalance(effectiveLens))
-      : clubStatementFile(statement, basis, report.year);
+      : clubStatementFile(statement, basis, report.year.name);
     const lensWord = MONEY_LENSES.find(l => l.id === effectiveLens)?.label ?? '';
     return {
       dataset: asMonths ? `budget-by-month-${effectiveLens}` : 'budget-vs-actual',
@@ -193,15 +198,15 @@ export default function BudgetVsActualTab() {
       rows: built.rows,
       rowKinds: built.kinds,
       currencyNotation: 'brackets',
-      scopeLabel: String(report.year),
+      scopeLabel: report.year.name,
       teamName: currentOrg?.name ?? '',
       notes: asMonths ? monthNotes : statementNoteStack,
       masthead: {
-        title: `${currentOrg?.name ?? ''} · ${report.year}`,
+        title: `${currentOrg?.name ?? ''} · ${report.year.name}`,
         subtitle: `Budget vs. Actual — ${asMonths ? `Months · Showing: ${lensWord}` : `Statement · Compare: ${CLUB_COMPARE_BASES.find(b => b.id === basis)?.label ?? ''}`}`,
         meta: `As at ${formatStoredDate(report.today, { withYear: true, longMonth: true })}`,
       },
-      emptyMessage: `Budget vs. Actual has nothing to report for ${report.year} yet.`,
+      emptyMessage: `Budget vs. Actual has nothing to report for ${report.year.name} yet.`,
     };
   }, [report, statement, view, effectiveLens, basis, monthBalance, monthNotes, statementNoteStack, currentOrg?.name]);
   const exportFailed = useCallback((text: string) => setNotice({ tone: 'bad', text }), [setNotice]);
@@ -225,7 +230,7 @@ export default function BudgetVsActualTab() {
     door: (d, categoryKey) => (d.section === 'ledger'
       ? (categoryKey.includes('club:from-the-teams') && d.extra?.view === 'due'
         ? { label: 'Open Coming due', href: `${base}/allocations?view=coming-due` }
-        : { label: 'Open the Ledger', href: `${base}/ledger?from=${report.year}-01-01&to=${report.year}-12-31` })
+        : { label: 'Open the Ledger', href: `${base}/ledger?from=${report.year.firstDay}&to=${report.year.lastDay}` })
       : null),
   };
 
@@ -271,7 +276,7 @@ export default function BudgetVsActualTab() {
             />
           )}
         >
-          <YearPill year={report.year} years={read.years}
+          <YearPill year={report.year.key} years={read.years}
             onChange={y => { setYear(y); setBehind(null); setLineId(null); }} />
           <SingleSelectDropdown label="View" lead value={view}
             options={[{ id: 'statement', label: 'Statement' }, { id: 'months', label: 'Months' }]}
@@ -295,7 +300,7 @@ export default function BudgetVsActualTab() {
 
         {empty ? (
           <div className={cr.emptyYear}>
-            <p className={cr.emptyYearTitle}>Nothing to compare for {report.year} yet</p>
+            <p className={cr.emptyYearTitle}>Nothing to compare for {report.year.name} yet</p>
             <p className={cr.emptyYearBody}>Budget vs. Actual reads the year’s plan against what the club’s books moved. Plan the year on the Budget tab; every line an entry is filed under shows here.</p>
             <div className={cr.emptyYearActions}>
               <button type="button" className="btn btn-outline" onClick={() => router.push(`${base}/budget`)}>Open the Budget</button>
@@ -336,7 +341,7 @@ export default function BudgetVsActualTab() {
                   <SubtotalRow label={PLAN_LADDER_LABEL.totalExpenses} budgeted={statement.expenses.budgeted}
                     actual={statement.expenses.actual} variance={statement.expenses.variance} direction="out" />
                   <tr className={bvaStyles.netRow}>
-                    <th scope="row" className={bvaStyles.lead}>{clubNetRowLabel(basis, report.year)}</th>
+                    <th scope="row" className={bvaStyles.lead}>{clubNetRowLabel(basis, report.year.name)}</th>
                     <td>{fmtCell(statement.net.budgeted)}</td>
                     <td>{fmtCell(statement.net.actual)}</td>
                     <td style={{ color: varianceColor(statement.net.variance) }}>{varianceText(statement.net.variance, 'in')}</td>

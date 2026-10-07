@@ -344,8 +344,10 @@ export const CLUB_BUDGET_REFUSAL = {
     `The dates add up to ${fmt(periodsTotal)}, and the line is ${fmt(lineTotal)}. Make them match to save.`,
   bad_period_amount: 'Each date needs an amount above zero.',
   bad_period_label: 'Each date needs a name.',
-  year_has_lines: (year: number) => `${year} already has a plan. Add to it line by line.`,
-  nothing_to_copy: (year: number) => `${year} has no lines to start from.`,
+  year_has_lines: (year: string) => `${year} already has a plan. Add to it line by line.`,
+  nothing_to_copy: (year: string) => `${year} has no lines to start from.`,
+  different_months: (from: string, to: string) =>
+    `${from} and ${to} don’t run the same months, so ${to} can’t start from ${from}’s plan. Add its lines one by one.`,
   word_on_plan: (word: string) => `${word} is already on this year’s plan. Open that line to change it.`,
   line_changed: 'This line changed while you were editing it. Reopen it to see the latest.',
   not_a_cost_line: 'Only a cost line bills teams. This line plans money coming in.',
@@ -390,16 +392,16 @@ export const budgetOpeningNote = (opening: number, firstDay: string) =>
 
 /** The plan's closing rows' words ("Opening balance · Jan 1", "Net for 2026"). */
 export const openingBalanceRowWord = (firstDay: string) => `Opening balance · ${formatStoredDate(firstDay, { withYear: false })}`;
-export const netForYearWord = (year: number) => `Net for ${year}`;
+export const netForYearWord = (year: string) => `Net for ${year}`;
 
 /** By period, under the grid: how From the teams spreads. */
 export const FROM_THE_TEAMS_SPREAD_NOTE = 'From the teams is placed by its installments’ due dates; every other line by its own dates.';
 /** By period, money dated outside the year (it sits under No date yet, in the Total and in no month). */
-export const outsideTheYearNote = (year: number) =>
+export const outsideTheYearNote = (year: string) =>
   `Some of this plan is dated outside ${year}. It sits under No date yet: in the year’s Total, in no month. Change its dates to place it.`;
 
 /** An empty year (C10): the compact empty state — one sentence, the fact, the one lime action. */
-export const emptyYearWords = (year: number, from: number | null) => ({
+export const emptyYearWords = (year: string, from: string | null) => ({
   title: `No plan for ${year} yet`,
   body: from != null
     ? `Start from ${from}’s lines, amounts and dates moved a year on, or add lines one by one. Nothing is billed to a team until you allocate.`
@@ -426,7 +428,7 @@ export const SUMMARY_WORDS = {
   waitingCaption: (count: number, holding: number) =>
     count === 0 ? 'nothing waiting'
       : `${count} ${count === 1 ? 'request' : 'requests'}${holding > 0 ? ` · ${holding} holding up a payout` : ''}`,
-  againstHeading: (year: number) => `${year} against the budget`,
+  againstHeading: (year: string) => `${year} against the budget`,
   /** Headroom said once, with its arithmetic (its one definition). */
   headroom: (headroom: number, revenueUnder: number, owed: number) => {
     const head = headroom >= -0.005
@@ -469,9 +471,9 @@ export const coachWhatTheClubReads = (orgName: string) =>
 /** The shared-payee report (specimen 5): the door on the payee's window, the callout, the bands. */
 export const PAYEE_REPORT_WORDS = {
   door: 'What the teams recorded paying it',
-  doorCaption: (teams: number, total: number, year: number) =>
+  doorCaption: (teams: number, total: number, year: string) =>
     teams === 0 ? `Nothing recorded in ${year}` : `${teams} ${teams === 1 ? 'team' : 'teams'} · ${fmt(total)} in ${year}`,
-  callout: (payee: string, year: number, sharedOn: string | null) =>
+  callout: (payee: string, year: string, sharedOn: string | null) =>
     `What each team recorded paying ${payee} in ${year}${sharedOn ? `, since you shared it with your teams on ${formatStoredDate(sharedOn, { withYear: false })}` : ''}. These are the teams’ own records, not proof that a payment was made.`,
   calloutShort: (sharedOn: string | null) =>
     `What each team recorded paying it${sharedOn ? ` since you shared it on ${formatStoredDate(sharedOn, { withYear: false })}` : ''}. The teams’ own records, not proof of payment.`,
@@ -487,8 +489,74 @@ export const PAYEE_REPORT_WORDS = {
   outOfPocket: 'paid by a family',
 } as const;
 
-/** The Ledger's "Filed under" hint (Ask 4a): is the word on this year's plan? */
-export const filedUnderHint = (onPlan: { planned: number } | null, year: number) =>
+/** The Ledger's "Filed under" hint (Ask 4a): is the word on this year's plan? `year` is the fiscal year's NAME. */
+export const filedUnderHint = (onPlan: { planned: number } | null, year: string) =>
   (onPlan ? `On the ${year} plan · ${fmt(onPlan.planned)} planned.` : `Not on the ${year} plan, so it counts as off-plan.`);
 export const FILED_BY_ITS_SOURCE = 'Filed by where it came from';
 export const wasCategoryWord = (legacy: string) => `was: ${legacy}`;
+
+// ── Club Tier Stage 3c: the fiscal year (Ask 9 — "fiscal year", the club side only, never "financial
+//    year"). DRAFTS for /marketing: every sentence below is owed its pass before the screens ship. ──
+
+/** A write dated into a closed fiscal year (call 2; the hub's specimen 3 words). `day` the date it was given,
+ *  `year` the closed year it falls in, `nextDay` the first day of the first OPEN year. */
+export const yearClosedWords = (p: { day: string; year: string; nextDay: string; reopen: string | null }) =>
+  `${formatStoredDate(p.day)} is in ${p.year}, which is closed. Date it ${formatStoredDate(p.nextDay)} or later${p.reopen ? `, or reopen ${p.reopen} first` : ''}.`;
+
+/** A change to a line, a payment or a bill that sits in a closed fiscal year (Undo, Reverse, Void, an edit). */
+export const recordedInClosedYearWords = (year: string, reopen: string | null) =>
+  `Recorded in ${year}, which is closed.${reopen ? ` To change it, reopen ${reopen}.` : ''}`;
+
+/** A plan line, its dates, or an allocation from it, on a closed fiscal year. */
+export const planClosedWords = (year: string, reopen: string | null) =>
+  `${year} is closed, so its plan can’t change.${reopen ? ` Reopen ${reopen} to change it.` : ''}`;
+
+/** The fiscal year's window, Close and Reopen: refusals in words. */
+export const FISCAL_YEAR_REFUSAL = {
+  not_found: 'That fiscal year isn’t one of the club’s.',
+  not_ended: (year: string, lastDay: string) => `${year} runs until ${formatStoredDate(lastDay)}. A year can be closed once it has ended.`,
+  already_closed: (year: string) => `${year} is already closed.`,
+  close_order: (year: string) => `Close ${year} first. Fiscal years close oldest first.`,
+  not_closed: (year: string) => `${year} isn’t closed.`,
+  not_latest: (latest: string) => `Only the latest closed year can be reopened. Reopen ${latest} first.`,
+  reason_required: 'Say why you’re reopening it. The reason is kept with the year.',
+  bad_reason: 'Keep the reason to 500 characters.',
+  bad_name: 'A fiscal year’s name is 1 to 40 characters.',
+  name_taken: (name: string) => `Another fiscal year is already called ${name}.`,
+  year_closed: (year: string) => `${year} is closed, so its name can’t change.`,
+  first_close_done: 'The first month can’t change once a fiscal year has been closed.',
+  bad_month: 'Choose the month the fiscal year starts in.',
+  split_below_allocated: (line: string, allocated: number, staying: number) =>
+    `${line} bills ${fmt(allocated)} to teams, and only ${fmt(staying)} of it would stay in this year. Change the line’s dates first.`,
+} as const;
+
+/** Only an open season is billed (S3C-09). */
+export const SEASON_CLOSED_REFUSAL = (teamName: string) =>
+  `${teamName} has no season running, so it can’t be billed. Bill it once its next season starts.`;
+/** Why a team's row offers no season on New allocation. */
+export const NO_SEASON_RUNNING_WORD = 'No season running';
+
+/** The pasted ledger-entry id has left New allocation (C17). */
+export const SOURCE_ENTRY_RETIRED =
+  'An allocation is billed from a budget line, or as an off-plan bill. It no longer links to a ledger entry.';
+
+/** Budget vs. Actual: last year's bills, paid this year (Ask 4) — under From the teams, Budgeted blank. */
+export const lastYearsBillsWord = (yearBefore: string) => `${yearBefore}’s bills, paid this year`;
+export const lastYearsBillsCaption = (yearBefore: string) => `planned and billed in ${yearBefore}`;
+
+/** The Overview, once a fiscal year has ended and is still open (Ask 2's door). */
+export const yearEndedWords = (year: string, lastDay: string) =>
+  `${year} ended on ${formatStoredDate(lastDay, { withYear: false })} and is still open. Close it to lock its books before you print its papers.`;
+
+/** The Overview's "From 2025–26, still open" (Ask 4). */
+export const stillOpenFromWord = (year: string) => `From ${year}, still open`;
+
+/** The coach's Club tab (Ask 8b): an unpaid bill from an earlier season, under a band naming it. */
+export const stillOwedFromSeasonWord = (seasonName: string) => `Still owed from the ${seasonName}`;
+
+/** Compare › Against last year: an earlier year's bills paid in either year, as one row (so the columns compare
+ *  like with like). */
+export const EARLIER_YEARS_BILLS_WORD = 'Earlier years’ bills, paid in the year';
+
+/** The year-end report: the one line instead of the teams' cash (specimen 5). */
+export const YEAR_END_NO_TEAM_CASH = 'Each team’s own cash is its coaches’ money, not the club’s, and isn’t part of these papers.';

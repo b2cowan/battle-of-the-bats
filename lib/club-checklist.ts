@@ -1,4 +1,6 @@
 import 'server-only';
+import { loadFiscalSetting } from './club-fiscal-year-server';
+import { fiscalYearOf } from './club-fiscal-year';
 import { supabaseAdmin } from './supabase-admin';
 import { planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import { memberDisplayName } from './member-names';
@@ -19,8 +21,8 @@ import { listTeamsWithActiveHeadCoach } from './coach-membership';
  *   3 coaches  — every active team has an active HEAD coach (team staff memberships, the access truth
  *                since 2026-08-16 — never the per-season projection); "n of m", naming the gaps
  *   4 public   — a tagline is saved on the public page
- *   5 budget   — the club budget has at least one line for the current budget year (the calendar
- *                year until Stage 3c's club year, D2)
+ *   5 budget   — the club budget has at least one line for the FISCAL year today falls in (Stage 3c — the one
+ *                definition, lib/club-fiscal-year.ts; `budgetYear` is that year's NAME, "2026–27")
  *   families   — present (a Club inclusion), never a step that can be "done"
  *
  * House league and tournaments are two optional lines, never steps, for a club that runs neither.
@@ -55,7 +57,9 @@ type Org = EntitlementOrg & { id: string; slug: string };
 
 export async function computeClubChecklist(org: Org): Promise<ClubChecklist> {
   const base = `/${org.slug}/admin`;
-  const budgetYear = Number(tournamentToday().slice(0, 4));
+  // The fiscal year today falls in (Stage 3c, S3C-01) — never today's first four characters.
+  const fiscal = fiscalYearOf(tournamentToday(), await loadFiscalSetting(org.id));
+  const budgetYear = fiscal.name;
 
   const [boardRes, teamsRes, covered, siteRes, budgetRes, seasonsRes, tournamentsRes] = await Promise.all([
     supabaseAdmin.from('organization_members').select('user_id, role')
@@ -66,8 +70,9 @@ export async function computeClubChecklist(org: Org): Promise<ClubChecklist> {
     // The access truth, through the module that owns it (the projection guard allows no other door).
     listTeamsWithActiveHeadCoach(org.id),
     supabaseAdmin.from('org_public_site_content').select('tagline').eq('org_id', org.id).maybeSingle(),
-    supabaseAdmin.from('org_budget_lines').select('id', { count: 'exact', head: true })
-      .eq('org_id', org.id).eq('season_year', budgetYear),
+    fiscal.id
+      ? supabaseAdmin.from('org_budget_lines').select('id', { count: 'exact', head: true }).eq('fiscal_year_id', fiscal.id)
+      : Promise.resolve({ count: 0, error: null }),
     supabaseAdmin.from('league_seasons').select('id', { count: 'exact', head: true })
       .eq('org_id', org.id).neq('status', 'archived'),
     supabaseAdmin.from('tournaments').select('id', { count: 'exact', head: true })

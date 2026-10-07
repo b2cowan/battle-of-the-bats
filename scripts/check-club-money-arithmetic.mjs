@@ -36,6 +36,10 @@ import { ledgerExportRows } from '../lib/club-ledger.ts';
 import {
   buildBoardSummary, buildClubPlan, buildClubReport, withPeriodViews, FROM_THE_TEAMS_ID, TEAM_SUPPORT_WORD_IDS,
 } from '../lib/club-budget-report.ts';
+import { fiscalYearOf, fiscalYearMonths, fiscalQuarters, nextFiscalYear, previousFiscalYear } from '../lib/club-fiscal-year.ts';
+import { buildAgainstLastYear, buildYearEndReport, compareSpans, statementOrder } from '../lib/club-year-compare.ts';
+import { EARLIER_BILLS_PREFIX } from '../lib/club-budget-report.ts';
+import { carriedOpening } from '../lib/club-money-figures.ts';
 
 const TODAY = '2026-09-30';
 const failures = [];
@@ -199,6 +203,10 @@ check('export rows = every window line', exp.rows.length, inside.length);
 // The same discipline: the module (lib/club-budget-report.ts over lib/club-money-figures.ts) against a
 // naive walk written here. The fixture is the club's year with every shape that could split two readings.
 const Y = 2026;
+// A January club with no fiscal-year rows: every year is the calendar year, exactly as before Stage 3c.
+const JAN = { firstMonth: 1, rows: [] };
+const YEAR = fiscalYearOf(`${Y}-06-01`, JAN);
+const inYEAR = d => d >= YEAR.firstDay && d <= YEAR.lastDay;
 const W = {
   diamond: { categoryId: 'c-fields', categoryName: 'Field & facilities', itemId: 'w-diamond', itemName: 'Diamond permits' },
   insurance: { categoryId: 'c-ins', categoryName: 'Insurance', itemId: 'w-ins', itemName: 'Club insurance' },
@@ -210,7 +218,7 @@ const W = {
   umpires: { categoryId: 'c-off', categoryName: 'Officials', itemId: 'w-ump', itemName: 'Umpires association fees' },
 };
 const PL = (id, w, total, direction, periods = []) => ({
-  id, seasonYear: Y, categoryId: w?.categoryId ?? 'c-admin', categoryName: w?.categoryName ?? 'Administration',
+  id, categoryId: w?.categoryId ?? 'c-admin', categoryName: w?.categoryName ?? 'Administration',
   itemId: w?.itemId ?? null, itemName: w?.itemName ?? null, direction, totalAmount: total, description: w?.itemName ?? 'Office (typed before 3b)',
   notes: null, sortOrder: 0, updatedAt: '2026-01-05T12:00:00Z', periods: periods.map((p, i) => ({ label: p[0], date: p[0], amount: p[1], sortOrder: i })),
 });
@@ -228,18 +236,18 @@ const SPL = (alloc, team, amount, inst) => ({ id: `${alloc}-${team}`, teamId: te
   paidOn: x.paidOn ?? null, sentAt: x.sentOn ? `${x.sentOn}T15:00:00Z` : null, sentOn: x.sentOn ?? null, accountingEntryId: x.entry ?? null,
 })) });
 const allocations = [
-  { id: 'A1', description: 'Diamond fees 2026', createdOn: '2026-03-01', sourceBudgetLineId: 'L-diamond', lineYear: Y, splits: [
+  { id: 'A1', description: 'Diamond fees 2026', createdOn: '2026-03-01', sourceBudgetLineId: 'L-diamond', lineYearKey: YEAR.key, splits: [
     SPL('A1', 'T-11U', 6075, [{ due: '2026-05-15', paidOn: '2026-05-10' }]),
     SPL('A1', 'T-10U', 6075, [{ due: '2026-05-15' }]) ] },                                         // overdue
-  { id: 'A2', description: 'Diamond permits, fall top-up', createdOn: '2026-09-20', sourceBudgetLineId: 'L-diamond', lineYear: Y, splits: [
+  { id: 'A2', description: 'Diamond permits, fall top-up', createdOn: '2026-09-20', sourceBudgetLineId: 'L-diamond', lineYearKey: YEAR.key, splits: [
     SPL('A2', 'T-11U', 925, [{ due: '2026-10-15', sentOn: '2026-09-29' }]),                         // sent, not received
     SPL('A2', 'T-10U', 925, [{ due: '2026-10-15' }]) ] },
-  { id: 'A3', description: 'Uniform order, Girls', createdOn: '2026-04-01', sourceBudgetLineId: 'L-unif', lineYear: Y, splits: [
+  { id: 'A3', description: 'Uniform order, Girls', createdOn: '2026-04-01', sourceBudgetLineId: 'L-unif', lineYearKey: YEAR.key, splits: [
     SPL('A3', 'T-16G', 3375, [{ due: '2026-06-01', paidOn: '2026-06-01' }]),
     SPL('A3', 'T-14G', 3375, [{ due: '2026-11-01' }]) ] },
-  { id: 'A4', description: 'Bus to provincials', createdOn: '2026-06-20', sourceBudgetLineId: null, lineYear: null, splits: [
+  { id: 'A4', description: 'Bus to provincials', createdOn: '2026-06-20', sourceBudgetLineId: null, lineYearKey: null, splits: [
     SPL('A4', 'T-14G', 500, [{ due: '2026-07-01', paidOn: '2026-07-05', entry: 'A4-team-half' }]) ] },  // no line: the year of its first due
-  { id: 'A5', description: 'Spring training 2025', createdOn: '2025-11-01', sourceBudgetLineId: 'L-2025', lineYear: 2025, splits: [
+  { id: 'A5', description: 'Spring training 2025', createdOn: '2025-11-01', sourceBudgetLineId: 'L-2025', lineYearKey: '2025-01-01', splits: [
     SPL('A5', 'T-11U', 200, [{ due: '2026-02-01', paidOn: '2026-02-03' }]),                       // last year's bill, paid this year
     SPL('A5', 'T-10U', 150, [{ due: '2026-04-01' }]) ] },                                          // last year's bill, still owed this spring
 ];
@@ -292,12 +300,12 @@ const books3b = Object.keys(openingByBook).map(id => ({ id, kind: kindOf[id], na
 const opening3b = Object.values(openingByBook).reduce((a, b) => a + b, 0);
 const order = { 'c-fields': 2, 'c-off': 3, 'c-gear': 4, 'c-events': 6, 'c-admin': 7, 'c-ins': 8, 'c-spon': 10, [TEAM_SUPPORT_WORD_IDS.categoryId]: 11 };
 
-const plan = buildClubPlan({ year: Y, today: TODAY, lines: planLines, allocations, categoryOrder: order, openingBalance: opening3b });
+const plan = buildClubPlan({ year: YEAR, today: TODAY, lines: planLines, allocations, categoryOrder: order, openingBalance: opening3b });
 // Cash on hand's caption is today's: every pending line on the Club books, whatever its date — last year's
 // uncleared cheque included (it is not in the year's lines).
 const priorPending = [BL({ date: '2025-12-20', amount: 75, type: 'expense', status: 'pending', w: W.umpires })];
 const pendingLines = [...bookLines, ...priorPending].filter(l => l.status === 'pending' && l.bookKind === 'org');
-const rep = buildClubReport({ year: Y, today: TODAY, lines: planLines, allocations, requests, bookLines, pendingLines, books: books3b, openingBalance: opening3b, categoryOrder: order });
+const rep = buildClubReport({ year: YEAR, setting: JAN, today: TODAY, lines: planLines, allocations, requests, bookLines, pendingLines, books: books3b, openingBalance: opening3b, categoryOrder: order });
 
 // Each shape is READ OFF the fixture (never declared), so an edit that loses one exits 2.
 const isTransfer3b = l => l.entryType === 'transfer_in' || l.entryType === 'transfer_out';
@@ -312,7 +320,7 @@ shapeIf('plan:undated line', planLines.some(l => l.periods.length === 0));
 shapeIf('loop:sourced', bookLines.some(l => l.sourceModule === 'rep_allocation_installment'));
 shapeIf('loop:before-3a link', bookLines.some(l => !l.sourceModule && l.linkedEntryId && loopKeys.has(l.category)));
 shapeIf('loop:a word rode along', bookLines.some(l => l.sourceModule && l.budgetItemId));
-shapeIf('loop:last year bill paid this year', allocations.some(a => a.lineYear != null && a.lineYear < Y && a.splits.some(s => s.installments.some(i => i.paidAt))));
+shapeIf('loop:last year bill paid this year', allocations.some(a => a.lineYearKey != null && a.lineYearKey < YEAR.key && a.splits.some(s => s.installments.some(i => i.paidAt))));
 shapeIf('loop:no line', allocations.some(a => !a.sourceBudgetLineId));
 shapeIf('request:on request', requests.some(r => r.requestType === 'payment_to_org' && r.status === 'approved'));
 shapeIf('request:paid to a team', requests.some(r => r.requestType === 'charge_to_org' && r.status === 'approved'));
@@ -320,8 +328,8 @@ shapeIf('request:waiting both ways', ['payment_to_org', 'charge_to_org'].every(t
 shapeIf('request:reversed (void)', bookLines.some(l => l.status === 'void' && loopKeys.has(l.category)));
 shapeIf('book:pending', bookLines.some(l => l.status === 'pending'));
 shapeIf('book:pending own transfer', bookLines.some(l => l.status === 'pending' && isTransfer3b(l) && l.bookKind === 'org' && ['org', 'tournament', 'league_season'].includes(l.partnerKind)));
-shapeIf('book:pending from last year', pendingLines.some(l => l.entryDate < `${Y}-01-01`));
-shapeIf('installment:last year\'s bill still owed', allocations.some(a => a.lineYear != null && a.lineYear < Y && a.splits.some(s => s.installments.some(i => !i.paidAt && i.dueDate.startsWith(`${Y}-`)))));
+shapeIf('book:pending from last year', pendingLines.some(l => l.entryDate < YEAR.firstDay));
+shapeIf('installment:last year\'s bill still owed', allocations.some(a => a.lineYearKey != null && a.lineYearKey < YEAR.key && a.splits.some(s => s.installments.some(i => !i.paidAt && inYEAR(i.dueDate)))));
 shapeIf('book:void', bookLines.some(l => l.status === 'void' && !loopKeys.has(l.category)));
 shapeIf('book:own transfer', bookLines.some(l => isTransfer3b(l) && ['org', 'tournament', 'league_season'].includes(l.partnerKind)));
 shapeIf('book:by hand to a team', bookLines.some(l => isTransfer3b(l) && l.partnerKind === 'team' && !loopKeys.has(l.category)));
@@ -404,7 +412,7 @@ check('Months · Cash revenue = the band\'s Collected', rep.months.revenueGrid.t
 check('Months · Cash expenses = Spent', rep.months.monthGrid.totals.total.actual, rep.band.spent.amount);
 // Scheduled is by DUE DATE in the year, whichever year's line the allocation was drawn from.
 const naiveScheduledIn = (allocations
-  .flatMap(a => a.splits.flatMap(s => s.installments)).filter(i => !i.paidAt && i.dueDate.startsWith(`${Y}-`)).reduce((x, i) => x + Math.round(i.amount * 100), 0)
+  .flatMap(a => a.splits.flatMap(s => s.installments)).filter(i => !i.paidAt && inYEAR(i.dueDate)).reduce((x, i) => x + Math.round(i.amount * 100), 0)
   + requests.filter(r => r.status === 'pending' && r.requestType === 'payment_to_org').reduce((x, r) => x + Math.round(r.amount * 100), 0)) / 100;
 const movesMoney = l => !(isTransfer3b(l) && own.has(l.partnerKind));
 const naiveScheduledOut = (bookLines.filter(l => l.status === 'pending' && l.bookKind === 'org' && !isIn(l) && movesMoney(l)).reduce((x, l) => x + Math.round(l.amount * 100), 0)
@@ -421,7 +429,7 @@ check('Months · Cash: the year closes on opening + every book\'s movement', rep
 
 // 9. The summary's figures are the report's.
 const summary = buildBoardSummary({
-  report: rep, allocations, requests: requests.map(r => ({ ...r, holdingPayout: r.id === 'R-wait-out' })), books: books3b,
+  report: rep, setting: JAN, allocations, requests: requests.map(r => ({ ...r, holdingPayout: r.id === 'R-wait-out' })), books: books3b,
   teams: ['T-11U', 'T-10U', 'T-16G', 'T-14G'].map(t => ({ teamId: t, teamName: t, groupName: null, isArchived: false })),
   teamCash: [{ teamId: 'T-11U', cash: 4100.5, season: null }, { teamId: 'T-10U', cash: -80, season: null }],
 });
@@ -440,6 +448,198 @@ check('summary From the teams = allocations + on request', (Math.round(summary.a
 // allocations drawn from the year's cost lines, the plan's own figure.
 check('summary From the teams planned = the plan\'s From the teams', summary.againstBudget.fromTheTeams.planned, plan.revenue.fromTheTeams.planned);
 
+// ══ 10. CLUB TIER STAGE 3c — a SEPTEMBER club, its last year CLOSED ═══════════════════════════
+// The same discipline on the fiscal year (owner rulings 2026-10-07): a year that crosses a New Year, its
+// months and quarters from September; a CLOSED predecessor whose stored closing the next year opens on
+// (opening = closing, to the cent) and which nothing after it can move; last year's bills paid this year
+// (one row); a bill that straddles the close; Against last year to the same day; the year-end report; and
+// the SHORT year a change of first month makes. Every figure against a naive walk written here.
+const shapeIf3c = (name, test) => { if (test) shapes.add(`3c ${name}`); };
+const TODAY_S = '2027-02-15';
+const sOpeningByBook = { general: 10000, savings: 2000, harvest: 500 };          // before 2025-09-01
+const sKind = { general: 'org', savings: 'org', harvest: 'tournament' };
+const SBL = o => BL({ ...o, kind: sKind[o.book ?? 'general'] });
+const sLines = [
+  // 2025–26 (September 2025 – August 2026)
+  SBL({ date: '2025-09-01', amount: 1200, type: 'expense', w: W.diamond }),                                   // the year's first day
+  SBL({ date: '2025-12-01', amount: 3000, type: 'income', w: W.sponsors, book: 'savings' }),
+  SBL({ date: '2026-01-15', amount: 400, type: 'expense', w: W.insurance }),                                  // after the New Year, same year
+  SBL({ date: '2026-03-05', amount: 600, type: 'transfer_in', cat: 'rep_allocation', src: 'rep_allocation_installment', srcId: 'S1-T-11U-1', partner: 'team' }),
+  SBL({ date: '2026-04-01', amount: 500, type: 'transfer_out', partner: 'org' }),                             // between the club's own books
+  SBL({ date: '2026-04-01', amount: 500, type: 'transfer_in', partner: 'org', book: 'savings' }),
+  SBL({ date: '2026-06-01', amount: 80, type: 'expense', status: 'pending', w: W.insurance }),               // a cheque still uncleared at the close
+  SBL({ date: '2026-08-20', amount: 900, type: 'income', book: 'harvest' }),
+  SBL({ date: '2026-08-21', amount: 250, type: 'expense', book: 'harvest' }),
+  SBL({ date: '2026-08-28', amount: 300, type: 'transfer_in', cat: 'rep_allocation', src: 'rep_allocation_installment', srcId: 'S3-T-14G-1', partner: 'team' }),
+  SBL({ date: '2026-08-31', amount: 100, type: 'expense', w: W.diamond }),                                    // the year's last day
+  // 2026–27 (September 2026 – August 2027), to today
+  SBL({ date: '2026-09-01', amount: 700, type: 'expense', w: W.diamond }),
+  SBL({ date: '2026-10-02', amount: 300, type: 'transfer_in', cat: 'rep_allocation', src: 'rep_allocation_installment', srcId: 'S3-T-14G-2', partner: 'team' }), // the straddling bill, after the close
+  SBL({ date: '2026-10-10', amount: 1500, type: 'income', w: W.sponsors, book: 'savings' }),
+  SBL({ date: '2026-11-20', amount: 600, type: 'transfer_in', cat: 'rep_allocation', src: 'rep_allocation_installment', srcId: 'S1-T-10U-1', partner: 'team' }), // last year's bill, paid this year
+  SBL({ date: '2027-01-05', amount: 300.45, type: 'expense', w: W.insurance }),
+  SBL({ date: '2027-01-20', amount: 450, type: 'transfer_in', cat: 'rep_allocation', src: 'rep_allocation_installment', srcId: 'S2-T-11U-1', partner: 'team' }),
+  SBL({ date: '2027-02-10', amount: 120, type: 'income', book: 'harvest' }),
+  SBL({ date: '2027-02-14', amount: 60, type: 'expense', status: 'pending', w: W.diamond }),
+];
+const sAllocations = [
+  { id: 'S1', description: 'Diamond fees 2025–26', createdOn: '2025-10-01', sourceBudgetLineId: 'S-diamond-25', lineYearKey: '2025-09-01', splits: [
+    SPL('S1', 'T-11U', 600, [{ due: '2026-03-01', paidOn: '2026-03-05' }]),
+    SPL('S1', 'T-10U', 600, [{ due: '2026-06-01', paidOn: '2026-11-20' }]) ] },                               // paid after the close
+  { id: 'S2', description: 'Diamond fees 2026–27', createdOn: '2026-10-01', sourceBudgetLineId: 'S-diamond', lineYearKey: '2026-09-01', splits: [
+    SPL('S2', 'T-11U', 450, [{ due: '2027-01-15', paidOn: '2027-01-20' }]),
+    SPL('S2', 'T-10U', 450, [{ due: '2027-03-15' }]),
+    SPL('S2', 'T-16G', 450, [{ due: '2027-02-01' }]) ] },                                                      // overdue
+  { id: 'S3', description: 'Bus to provincials', createdOn: '2026-08-10', sourceBudgetLineId: null, lineYearKey: null, splits: [
+    SPL('S3', 'T-14G', 600, [{ due: '2026-08-25', paidOn: '2026-08-28', amount: 300 }, { due: '2026-09-25', paidOn: '2026-10-02', amount: 300 }]) ] }, // off-plan: the year of its first due
+];
+const sPlan25 = [PL('S-diamond-25', W.diamond, 2000, 'out', [['2025-10-15', 2000]]), PL('S-spon-25', W.sponsors, 3000, 'in', [['2025-12-01', 3000]])];
+const sPlan26 = [
+  PL('S-diamond', W.diamond, 9000, 'out', [['2026-10-15', 4500], ['2027-04-15', 4500]]),
+  PL('S-ins', W.insurance, 2000, 'out', [['2026-12-01', 2000]]),
+  PL('S-spon', W.sponsors, 4000, 'in', [['2026-10-01', 2000], ['2027-03-01', 2000]]),
+  PL('S-equip', W.equipment, 1000, 'out'),
+];
+
+// The naive walk: every book the club owns, posted, by day.
+const sPostedC = (from, to, pred = () => true) => sLines.filter(l => l.status === 'posted' && l.entryDate >= from && l.entryDate <= to && pred(l))
+  .reduce((x, l) => x + walkSigned(l), 0);
+const sOpening25 = Object.values(sOpeningByBook).reduce((a, b) => a + b, 0);
+const sClosing25 = (Math.round(sOpening25 * 100) + sPostedC('0000-01-01', '2026-08-31')) / 100;
+const sBooks = (extra = []) => Object.keys(sOpeningByBook).map(id => ({ id, kind: sKind[id], name: id,
+  balance: (Math.round(sOpeningByBook[id] * 100) + [...sLines, ...extra].filter(l => l.ledgerId === id && l.status === 'posted').reduce((a, l) => a + walkSigned(l), 0)) / 100 }));
+const sCash = sBooks().reduce((x, b) => x + Math.round(b.balance * 100), 0) / 100;
+const SEP = { firstMonth: 9, rows: [{ id: 'fy-25', name: '2025–26', firstDay: '2025-09-01', lastDay: '2026-08-31',
+  closedAt: '2026-10-07T12:00:00Z', closedBy: 'u-treasurer', closingBalance: sClosing25 }] };
+const Y25 = fiscalYearOf('2026-03-01', SEP), Y26 = fiscalYearOf(TODAY_S, SEP);
+const inY = y => d => d >= y.firstDay && d <= y.lastDay;
+const sYearLines = y => sLines.filter(l => inY(y)(l.entryDate));
+const sPending = sLines.filter(l => l.status === 'pending' && l.bookKind === 'org');
+const sCounted = l => l.status === 'posted' && l.bookKind === 'org' && !(isTransfer3b(l) && own.has(l.partnerKind));
+const sSum = (from, to, side) => sLines.filter(l => sCounted(l) && l.entryDate >= from && l.entryDate <= to && (side === 'in' ? isIn(l) : !isIn(l)))
+  .reduce((x, l) => x + Math.round(l.amount * 100), 0) / 100;
+const naiveMonths = (first, n) => Array.from({ length: n }, (_, k) => { const t = +first.slice(0, 4) * 12 + (+first.slice(5, 7) - 1) + k; return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, '0')}`; });
+
+shapeIf3c('year crosses a New Year', Y26.firstDay.slice(0, 4) !== Y26.lastDay.slice(0, 4));
+shapeIf3c('closed predecessor', !!Y25.closed && previousFiscalYear(Y26, SEP).key === Y25.key);
+shapeIf3c('line on the first day', sLines.some(l => l.entryDate === Y25.firstDay || l.entryDate === Y26.firstDay));
+shapeIf3c('line on the last day', sLines.some(l => l.entryDate === Y25.lastDay));
+shapeIf3c('last year bill paid this year', sAllocations.some(a => a.lineYearKey === Y25.key && a.splits.some(s => s.installments.some(i => i.paidOn && inY(Y26)(i.paidOn)))));
+shapeIf3c('off-plan bill straddles the close', sAllocations.some(a => !a.sourceBudgetLineId && a.splits.some(s => s.installments.some(i => inY(Y25)(i.paidOn ?? '')) && s.installments.some(i => inY(Y26)(i.paidOn ?? '')))));
+shapeIf3c('own transfer in the closed year', sYearLines(Y25).some(l => isTransfer3b(l) && own.has(l.partnerKind)));
+shapeIf3c('other books in both years', sYearLines(Y25).some(l => l.bookKind !== 'org') && sYearLines(Y26).some(l => l.bookKind !== 'org'));
+shapeIf3c('pending across the close', sPending.some(l => inY(Y25)(l.entryDate)));
+
+// 10a. THE CARRY: the open year opens on the closed year's stored closing — what its books say on its first day.
+const fromBooks26 = (Math.round(sOpening25 * 100) + sPostedC('0000-01-01', '2026-08-31')) / 100;
+const sOpen26 = carriedOpening(Y25.closed.closingBalance, fromBooks26);
+check('3c carry: opening(2026–27) = closing(2025–26)', sOpen26, sClosing25);
+check('3c carry: the closing is what every book the club owns held on its last day', sClosing25, fromBooks26);
+check('3c carry: a line backdated into the closed year cannot move the opening', carriedOpening(Y25.closed.closingBalance, fromBooks26 + 999), sClosing25);
+
+// 10b. The open year, September to August.
+const rep26 = buildClubReport({ year: Y26, setting: SEP, today: TODAY_S, lines: sPlan26, allocations: sAllocations, requests: [],
+  bookLines: sYearLines(Y26), pendingLines: sPending, books: sBooks(), openingBalance: sOpen26, categoryOrder: order });
+check('3c the year\'s months run September to August', JSON.stringify(rep26.months.months), JSON.stringify(naiveMonths('2026-09-01', 12)));
+check('3c Total revenue Actual (the year to today)', rep26.statement.revenue.actual, sSum(Y26.firstDay, Y26.lastDay, 'in'));
+check('3c Total expenses Actual', rep26.statement.expenses.actual, sSum(Y26.firstDay, Y26.lastDay, 'out'));
+const earlierRow = rep26.statement.revenue.categories.flatMap(c => c.items).find(i => i.itemId === `${EARLIER_BILLS_PREFIX}${Y25.key}`);
+check('3c last year\'s bills paid this year: one row, both of them (the straddle\'s second payment too)', earlierRow?.actual ?? null, 900);
+check('3c last year\'s bills row is planned in its own year', earlierRow?.plannedIn ?? null, '2025–26');
+for (const lens of ['budget', 'scheduled', 'actual']) {
+  const rows = rep26.months.balances[lens].rows;
+  rows.forEach((r, i) => {
+    check(`3c Months ${lens} ${r.month}: opening + net = closing`, (Math.round(r.opening * 100) + Math.round(r.net * 100)) / 100, r.running);
+    if (i > 0) check(`3c Months ${lens} ${r.month} opens on the last close`, r.opening, rows[i - 1].running);
+  });
+}
+check('3c Months · Cash opens September on the carried opening', rep26.months.balances.actual.rows[0].opening, sClosing25);
+check('3c Months · Cash: this month (February) closes on Cash on hand', rep26.months.balances.actual.rows.find(r => r.month === '2027-02').running, sCash);
+check('3c Cash on hand = every book the club owns, today', rep26.band.cashOnHand, sCash);
+
+// 10c. Quarters from September, named by their months; both views close where the List closes.
+const plan26 = buildClubPlan({ year: Y26, today: TODAY_S, lines: sPlan26, allocations: sAllocations, categoryOrder: order, openingBalance: sOpen26 });
+const sPlannedIn = sPlan26.filter(l => l.direction === 'in').reduce((x, l) => x + Math.round(l.totalAmount * 100), 0) / 100 + plan26.revenue.fromTheTeams.planned;
+const sPlannedOut = sPlan26.filter(l => l.direction === 'out').reduce((x, l) => x + Math.round(l.totalAmount * 100), 0) / 100;
+check('3c the plan closes on the carried opening + revenue − expenses', plan26.closingBalance, (Math.round(sClosing25 * 100) + Math.round(sPlannedIn * 100) - Math.round(sPlannedOut * 100)) / 100);
+const views26 = withPeriodViews(plan26, sPlan26, order).periodView;
+check('3c quarters start in September, named by their months', JSON.stringify(views26.quarters.columns.filter(c => !c.unscheduled).map(c => c.label)), JSON.stringify(['Sep–Nov', 'Dec–Feb', 'Mar–May', 'Jun–Aug']));
+check('3c months view: twelve dated columns', views26.months.columns.filter(c => !c.unscheduled).length, 12);
+for (const [g, view] of Object.entries(views26)) {
+  check(`3c By period (${g}) revenue = the plan's`, view.revenueTotals?.total ?? 0, sPlannedIn);
+  check(`3c By period (${g}) expenses = the plan's`, view.expenseTotals.total, sPlannedOut);
+  check(`3c By period (${g}) closes where the List closes`, view.balance.seasonClosing, plan26.closingBalance);
+  check(`3c By period (${g}) opens on the carried opening`, view.balance.seasonOpening, sClosing25);
+  for (const c of view.columns.filter(x => !x.unscheduled)) {
+    check(`3c By period (${g}) ${c.key}: opening + net = closing`, view.balance.opening[c.key] + view.balance.net[c.key], view.balance.closing[c.key]);
+  }
+}
+
+// 10d. The CLOSED year is immovable: its Cash on hand is its stored closing, whatever happens after it.
+const rep25 = (extra = []) => buildClubReport({ year: Y25, setting: SEP, today: TODAY_S, lines: sPlan25, allocations: sAllocations, requests: [],
+  bookLines: sYearLines(Y25), pendingLines: sPending, books: sBooks(extra), openingBalance: sOpening25, categoryOrder: order });
+const later = [SBL({ date: '2027-02-15', amount: 5000, type: 'income', w: W.sponsors })];
+check('3c closed year: Cash on hand is its stored closing', rep25().band.cashOnHand, sClosing25);
+check('3c closed year: money after it never moves it', rep25(later).band.cashOnHand, sClosing25);
+check('3c closed year: Months · Cash ends on its closing', rep25().months.balances.actual.ending, sClosing25);
+check('3c closed year: its own bill paid after the close is NOT its money (it counts where it arrived)', rep25().statement.revenue.actual, sSum(Y25.firstDay, Y25.lastDay, 'in'));
+
+// 10e. Against last year: to today, against last year to the same day; last year's bills one row.
+const spans26 = compareSpans(Y26, Y25, TODAY_S);
+check('3c compare: this year to today', JSON.stringify(spans26.thisSpan), JSON.stringify({ from: '2026-09-01', to: TODAY_S }));
+check('3c compare: last year to the same day', JSON.stringify(spans26.lastSpan), JSON.stringify({ from: '2025-09-01', to: '2026-02-15' }));
+const alyr = buildAgainstLastYear({ year: Y26, before: Y25, spans: spans26, thisLines: sYearLines(Y26), lastLines: sYearLines(Y25),
+  allocations: sAllocations, requests: [], setting: SEP, statementOrder: statementOrder(rep26) });
+for (const [side, key] of [['in', 'revenue'], ['out', 'expenses']]) {
+  const t = sSum(spans26.thisSpan.from, spans26.thisSpan.to, side), l = sSum(spans26.lastSpan.from, spans26.lastSpan.to, side);
+  check(`3c compare ${key}: this year`, alyr[key].thisYear, t);
+  check(`3c compare ${key}: last year`, alyr[key].lastYear, l);
+  check(`3c compare ${key}: change = this − last`, alyr[key].change, (Math.round(t * 100) - Math.round(l * 100)) / 100);
+  check(`3c compare ${key}: categories add up`, alyr[key].categories.reduce((x, c) => x + Math.round(c.thisYear * 100), 0) / 100, alyr[key].thisYear);
+}
+check('3c compare: earlier years\' bills one row', alyr.revenue.categories.flatMap(c => c.items).find(i => i.itemId === EARLIER_BILLS_PREFIX)?.thisYear ?? null, 900);
+check('3c compare: net change', alyr.net.change, (Math.round(alyr.net.thisYear * 100) - Math.round(alyr.net.lastYear * 100)) / 100);
+
+// 10f. The year-end report: read only from locked figures; the club's books at both ends.
+const booksAt = Object.keys(sOpeningByBook).map(id => ({ id, name: id, kind: sKind[id],
+  atStart: sOpeningByBook[id],
+  atEnd: (Math.round(sOpeningByBook[id] * 100) + sLines.filter(l => l.ledgerId === id && l.status === 'posted' && l.entryDate <= Y25.lastDay).reduce((a, l) => a + walkSigned(l), 0)) / 100 }));
+const ye = buildYearEndReport({ year: Y25, closedByName: 'Treasurer', opening: sOpening25, report: rep25(), againstLastYear: null, books: booksAt,
+  snapshot: { installments: { count: 0, amount: 0, overdue: 0, sent: 0, upcoming: 0 }, requests: { count: 0, amount: 0 }, unfiled: { count: 0, amount: 0 },
+    pending: { count: 1, amount: 80 }, teams: [], totals: { billed: 0, collected: 0, owed: 0 } },
+  nextYear: nextFiscalYear(Y25, SEP) });
+const otherNet25 = sPostedC(Y25.firstDay, Y25.lastDay, l => l.bookKind !== 'org' && !(isTransfer3b(l) && own.has(l.partnerKind))) / 100;
+check('3c year-end: closes on the stored closing', ye.atAGlance.closing, sClosing25);
+check('3c year-end: the books at the start add to the opening', ye.booksTotal.atStart, sOpening25);
+check('3c year-end: the books at the end add to the closing', ye.booksTotal.atEnd, sClosing25);
+check('3c year-end: closing − opening = the net + the other books\' movement',
+  (Math.round(ye.atAGlance.closing * 100) - Math.round(ye.atAGlance.opening * 100)) / 100, (Math.round(ye.atAGlance.net * 100) + Math.round(otherNet25 * 100)) / 100);
+check('3c year-end: what carried names the next year', ye.carried.nextYear.name, '2026–27');
+
+// 10g. The SHORT year a change of first month makes (January → September from 2027): eight months, three quarters.
+const SHORT = { firstMonth: 9, rows: [
+  { id: 'fy-26', name: '2026', firstDay: '2026-01-01', lastDay: '2026-12-31', closedAt: null, closedBy: null, closingBalance: null },
+  { id: 'fy-27', name: '2027', firstDay: '2027-01-01', lastDay: '2027-08-31', closedAt: null, closedBy: null, closingBalance: null }] };
+const YS = fiscalYearOf('2027-03-01', SHORT);
+shapeIf3c('short year', YS.months < 12);
+const shortPlan = [PL('X-diamond', W.diamond, 2400, 'out', [['2027-02-15', 1200], ['2027-07-15', 1200]]), PL('X-spon', W.sponsors, 1000, 'in', [['2027-08-31', 1000]])];
+const planS = buildClubPlan({ year: YS, today: '2027-03-01', lines: shortPlan, allocations: [], categoryOrder: order, openingBalance: 5000 });
+const viewsS = withPeriodViews(planS, shortPlan, order).periodView;
+check('3c short year: eight months', JSON.stringify(fiscalYearMonths(YS)), JSON.stringify(naiveMonths('2027-01-01', 8)));
+check('3c short year: eight dated month columns', viewsS.months.columns.filter(c => !c.unscheduled).length, 8);
+check('3c short year: three quarters, the last one shorter', JSON.stringify(viewsS.quarters.columns.filter(c => !c.unscheduled).map(c => c.label)), JSON.stringify(fiscalQuarters(YS).map(q => q.label)));
+check('3c short year: its quarters are Jan–Mar, Apr–Jun, Jul–Aug', JSON.stringify(fiscalQuarters(YS).map(q => q.label)), JSON.stringify(['Jan–Mar', 'Apr–Jun', 'Jul–Aug']));
+for (const [g, view] of Object.entries(viewsS)) {
+  check(`3c short year By period (${g}) closes where the List closes`, view.balance.seasonClosing, planS.closingBalance);
+  check(`3c short year By period (${g}) closes on opening + 1,000 − 2,400`, view.balance.seasonClosing, 3600);
+}
+const repS = buildClubReport({ year: YS, setting: SHORT, today: '2027-03-01', lines: shortPlan, allocations: [], requests: [], bookLines: [], pendingLines: [],
+  books: [{ id: 'general', kind: 'org', name: 'general', balance: 5000 }], openingBalance: 5000, categoryOrder: order });
+check('3c short year: Months has eight rows', repS.months.balances.budget.rows.length, 8);
+check('3c short year: Months · Budget ends where the plan closes', repS.months.balances.budget.ending, planS.closingBalance);
+check('3c short year against the twelve before it: the same months',
+  JSON.stringify(compareSpans(YS, fiscalYearOf('2026-03-01', SHORT), '2027-10-01')), JSON.stringify({ thisSpan: { from: '2027-01-01', to: '2027-08-31' }, lastSpan: { from: '2026-01-01', to: '2026-08-31' } }));
+
 // ── Report ──────────────────────────────────────────────────────────────────────────────────────
 const REQUIRED = [
   'installment:received', 'installment:sent', 'installment:overdue', 'installment:upcoming', 'due-today',
@@ -448,6 +648,9 @@ const REQUIRED = [
   '3b plan:many allocations per line', '3b plan:billed above its total', '3b plan:revenue line', '3b loop:before-3a link',
   '3b book:own transfer', '3b book:other books', '3b word:off-plan', '3b word:not filed', '3b request:waiting both ways',
   '3b book:pending own transfer', '3b book:pending from last year', '3b installment:last year\'s bill still owed',
+  '3c year crosses a New Year', '3c closed predecessor', '3c line on the first day', '3c line on the last day',
+  '3c last year bill paid this year', '3c off-plan bill straddles the close', '3c own transfer in the closed year',
+  '3c other books in both years', '3c pending across the close', '3c short year',
 ];
 const missing = REQUIRED.filter(s => !shapes.has(s));
 console.log(`check:club-money-arithmetic — ${installments.length} installments, ${lines.length} ledger lines; shapes: ${[...shapes].sort().join(', ')}`);

@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
-import { readYearParam, resolveClubMoney } from '@/lib/club-money-route';
+import { resolveClubMoney } from '@/lib/club-money-route';
+import { describeFiscalYear, resolveFiscalYear } from '@/lib/club-fiscal-year-server';
 import { teamIdsInScope } from '@/lib/club-team-route';
 import { tournamentToday } from '@/lib/timezone';
 import { clubPlanYears, readClubYear } from '@/lib/club-budget-read';
+import { againstLastYear } from '@/lib/club-fiscal-reads';
 import { canMoveClubMoney } from '@/lib/member-access';
 
 /**
- * GET /api/admin/accounting/budget-vs-actual?year=2026 — the club's Budget vs. Actual (Club Tier Stage
+ * GET /api/admin/accounting/budget-vs-actual?year=2026-09-01 — the club's Budget vs. Actual for a FISCAL YEAR (Club Tier Stage
  * 3b, specimen 2; C05, C09, J4-024, J4-025, S3B-05, Asks 2 and 5).
  *
  * `report` (lib/club-budget-report.ts `ClubReport`):
@@ -27,8 +29,12 @@ import { canMoveClubMoney } from '@/lib/member-access';
  *
  * `plan` — the year's plan (the same `ClubPlan` the Budget reads, from the same load): a Budgeted figure opens
  * its line's own window right here (hub specimen 2, "a Budgeted figure opens the line's own window").
- * `years`: the Year pill (the same on the Budget and the Overview). `canMove`: the line's window
- * offers its edit to someone who can change the plan (3a's one money rule).
+ * `year`: the fiscal year read (`FiscalYearRead`, Stage 3c). `years`: the Year pill (the same on the Budget
+ * and the Overview). `canMove`: the line's window offers its edit to someone who can change the plan (3a's one
+ * money rule) — and never on a CLOSED year (Ask 1). On a closed year the band's Cash on hand is the year's
+ * closing (`report.band.atClose`), and the Statement's rows can't move (the lock).
+ * `againstLastYear` (Ask 8c, Compare › Against last year): this year's Actual beside the year before's, when
+ * the year before has books — `lib/club-fiscal-reads.ts` `againstLastYear`.
  *
  * ⚰ The OLD page's top-level fields (`availableYears`, `summary`, `categories`, `uncategorized`, `orgActuals`,
  * `teamHealth`) retired with it (session 2) — team health lives on the summary now (S3B-05).
@@ -39,12 +45,16 @@ export const GET = withObservability(async (req: Request) => {
   const { ctx } = gate;
 
   const today = tournamentToday();
-  const year = readYearParam(req, today);
+  const { setting, year } = await resolveFiscalYear(req, ctx.org.id, today);
+  const canMove = canMoveClubMoney(ctx, ctx.org);
   // The report and the plan it reads against, from ONE load of the year's rows.
-  const [{ plan, report }, { years }] = await Promise.all([
-    readClubYear(ctx.org.id, year, today, teamIdsInScope(ctx)),
-    clubPlanYears(ctx.org.id, today),
+  const scope = teamIdsInScope(ctx);
+  const [{ plan, report, rows }, years, read] = await Promise.all([
+    readClubYear(ctx.org.id, year, setting, today, scope),
+    clubPlanYears(ctx.org.id, setting, today),
+    describeFiscalYear(ctx.org.id, year, setting, today, canMove),
   ]);
+  const compare = await againstLastYear({ year, setting, today, report, rows });
 
-  return NextResponse.json({ year, years, canMove: canMoveClubMoney(ctx, ctx.org), report, plan });
+  return NextResponse.json({ year: read, years, canMove: read.canWrite, report, plan, againstLastYear: compare });
 }, { route: '/api/admin/accounting/budget-vs-actual' });

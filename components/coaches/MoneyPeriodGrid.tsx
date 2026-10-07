@@ -280,16 +280,23 @@ export function PeriodGrid({
      not reached today, or has passed it, that is its first column and nothing moves. */
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const todayKey = todayLocal().slice(0, 7);
+  /* A CLUB's quarters carry the months they cover (Club Tier Stage 3c, S3C-02: they start at its fiscal year's
+     first month); a coach's are calendar quarters and carry none, so every coach column reads as it always has. */
+  const ownQuarters = windowCols.some(c => c.months);
   const nowKey = granularity === 'months'
     ? windowCols[monthAtOrAfterToday(windowCols.map(c => c.key))]?.key ?? null
-    : windowCols.find(c => c.key >= quarterKeyOf(todayKey as MonthKey))?.key ?? null;
+    : ownQuarters
+      ? windowCols.find(c => (c.months?.[c.months.length - 1] ?? '') >= todayKey)?.key ?? null
+      : windowCols.find(c => c.key >= quarterKeyOf(todayKey as MonthKey))?.key ?? null;
   useOpenOnNow(scrollerRef, `${granularity}|${windowCols[0]?.key ?? ''}|${windowCols.length}`);
   /* ⚖ THIS MONTH IS TINTED (owner, §271 walk, 2026-10-07: "why aren't we highlighting our current month like we do
      in the coaches portal?"). Budget vs. Actual's Months tinted it while this grid only scrolled to it on a phone, so
      the two grids read "now" two ways; one lit-column rule (`gridColNow`) serves both. Only the column that IS this
      month (a quarter: the one holding it) — never `nowKey`'s "first month after", which is where a phone opens, not
      today. A plan for another year has no lit column. */
-  const litKey = granularity === 'months' ? todayKey : quarterKeyOf(todayKey as MonthKey);
+  const litKey = granularity === 'months' ? todayKey
+    : ownQuarters ? windowCols.find(c => c.months?.includes(todayKey))?.key ?? null
+    : quarterKeyOf(todayKey as MonthKey);
   const litCol = (col: { key: string }) => (col.key === litKey ? shared.gridColNow : undefined);
 
   /* The two bands' groups, split once (owner ruling 2026-09-08, mockup e94d05d9 round 2; the

@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { moveRefused } from '@/lib/club-money-route';
+import { closedYearFromError, isClosedYearError, refuseIfClosedFor } from '@/lib/club-fiscal-year-server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -72,6 +74,10 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: TEAM_BOOK_READ_ONLY, code: 'team_book' }, { status: 400 });
   }
 
+  // ⚖ THE FISCAL YEAR'S LOCK (Stage 3c): a transfer can't be dated into a closed year — refused in words first.
+  const closed = await refuseIfClosedFor(ctx!.org.id, [entryDate], 'date');
+  if (closed) return moveRefused(closed);
+
   const { error } = await supabaseAdmin.rpc('create_accounting_transfer', {
     p_from_ledger_id: fromLedgerId,
     p_to_ledger_id:   toLedgerId,
@@ -82,6 +88,7 @@ export const POST = withObservability(async (req: Request) => {
     p_created_by:     ctx!.user.id,
   });
 
+  if (error && isClosedYearError(error)) return moveRefused(await closedYearFromError(ctx!.org.id, [entryDate]));
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ ok: true }, { status: 201 });

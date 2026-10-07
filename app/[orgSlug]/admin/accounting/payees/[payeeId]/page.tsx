@@ -31,7 +31,6 @@ import YearPill from '@/components/admin/kit/club/money/YearPill';
 import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/components/admin/kit/club/money/ClubMoneyExport';
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 import { PAYEE_REPORT_WORDS } from '@/lib/club-money-words';
-import { clubYearOf } from '@/lib/club-money-figures';
 import type { PayeeReport, PayeeReportTeam } from '@/lib/club-payee-report';
 import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import type { MoneyRowKind } from '@/lib/coach-money-exports';
@@ -58,9 +57,8 @@ export default function SharedPayeeReportPage({ params }: { params: Promise<{ or
   const isPhone = useIsPhone();
   const q = `orgSlug=${encodeURIComponent(orgSlug)}`;
   const payeesHref = `/${orgSlug}/admin/accounting/payees`;
-  const thisYear = clubYearOf(tournamentToday());
-
-  const [year, setYear] = useState(thisYear);
+  // The fiscal year read: the server's (today's until one is picked) — Stage 3c, no year worked out here.
+  const [year, setYear] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [failed, setFailed] = useState<{ notShared: boolean } | null>(null);
   const [open, setOpen] = useState<Set<string>>(() => new Set());
@@ -70,7 +68,7 @@ export default function SharedPayeeReportPage({ params }: { params: Promise<{ or
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
     const current = beginRead();
-    const r = await moneyFetch<{ report: Report }>(`/api/admin/accounting/payees/${payeeId}/report?${q}&year=${year}`).catch(() => null);
+    const r = await moneyFetch<{ report: Report }>(`/api/admin/accounting/payees/${payeeId}/report?${q}${year ? `&year=${year}` : ''}`).catch(() => null);
     if (!current()) return;
     if (!r?.ok) { setFailed({ notShared: r?.status === 404 }); return; }
     setFailed(null);
@@ -78,11 +76,14 @@ export default function SharedPayeeReportPage({ params }: { params: Promise<{ or
   }, [payeeId, q, year, beginRead]);
   useDeferredLoad(!orgLoading, load);
 
-  // The years a reader can look at: the year it was shared, through this one (the stamps apply whatever the year).
+  // The years a reader can look at: the fiscal years holding records for this payee, and the one read (the server's
+  // list — Stage 3c; session 2 shows a Year control only when there is more than one).
   const years = useMemo(() => {
-    const from = report ? Math.min(Number(report.payee.sharedAt.slice(0, 4)), thisYear) : thisYear;
-    return Array.from({ length: thisYear - from + 1 }, (_, i) => thisYear - i);
-  }, [report, thisYear]);
+    if (!report) return [];
+    const list = [...report.years];
+    if (!list.some(y => y.key === report.year.key)) list.push({ key: report.year.key, name: report.year.name });
+    return list;
+  }, [report]);
   const toggle = (id: string) => setOpen(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
   const buildExport = useCallback((): ClubMoneyFile => {
@@ -110,18 +111,18 @@ export default function SharedPayeeReportPage({ params }: { params: Promise<{ or
       ],
       rows,
       rowKinds: kinds,
-      scopeLabel: String(report.year),
+      scopeLabel: String(report.year.name),
       teamName: currentOrg?.name ?? '',
       notes: [
-        { id: 'payee-callout', tone: 'note', segments: [{ text: PAYEE_REPORT_WORDS.callout(report.payee.name, report.year, sharedOn) }] },
+        { id: 'payee-callout', tone: 'note', segments: [{ text: PAYEE_REPORT_WORDS.callout(report.payee.name, report.year.name, sharedOn) }] },
         { id: 'payee-foot', tone: 'note', segments: [{ text: PAYEE_REPORT_WORDS.foot(sharedOn) }] },
       ],
       masthead: {
         title: `${currentOrg?.name ?? ''} · ${report.payee.name}`,
-        subtitle: `What the teams recorded paying it · ${report.year}`,
+        subtitle: `What the teams recorded paying it · ${report.year.name}`,
         meta: `As at ${formatStoredDate(tournamentToday(), { withYear: true, longMonth: true })}`,
       },
-      emptyMessage: `No team recorded paying ${report.payee.name} in ${report.year}.`,
+      emptyMessage: `No team recorded paying ${report.payee.name} in ${report.year.name}.`,
     };
   }, [report, currentOrg?.name]);
   const exportFailed = useCallback((text: string) => setNotice({ tone: 'bad', text }), [setNotice]);
@@ -153,10 +154,10 @@ export default function SharedPayeeReportPage({ params }: { params: Promise<{ or
       {header}
       {notice && <PageNotice notice={notice} />}
       <CoachListToolbar actions={<ClubMoneyExport run={runExport} formats={['xlsx', 'csv']} disabled={report.teams.length === 0} />}>
-        <YearPill year={report.year} years={years} onChange={y => { setYear(y); setOpen(new Set()); }} />
+        <YearPill year={report.year.key} years={years} onChange={y => { setYear(y); setOpen(new Set()); }} />
       </CoachListToolbar>
       <Callout tone="info" role="note" icon={<Lock size={16} aria-hidden />}>
-        {isPhone ? PAYEE_REPORT_WORDS.calloutShort(sharedOn) : PAYEE_REPORT_WORDS.callout(report.payee.name, report.year, sharedOn)}
+        {isPhone ? PAYEE_REPORT_WORDS.calloutShort(sharedOn) : PAYEE_REPORT_WORDS.callout(report.payee.name, report.year.name, sharedOn)}
       </Callout>
 
       {!isPhone ? (
@@ -178,7 +179,7 @@ export default function SharedPayeeReportPage({ params }: { params: Promise<{ or
                 );
               })}
               {report.teams.length === 0 && (
-                <tr><td colSpan={4} className={repKit.dim}>No team recorded paying {report.payee.name} in {report.year}.</td></tr>
+                <tr><td colSpan={4} className={repKit.dim}>No team recorded paying {report.payee.name} in {report.year.name}.</td></tr>
               )}
               {report.teams.length > 0 && (
                 <tr className={moneyKit.closeRow}>

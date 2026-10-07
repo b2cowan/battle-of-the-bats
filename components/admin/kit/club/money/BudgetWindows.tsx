@@ -40,6 +40,7 @@ import {
 } from '@/lib/club-money-words';
 import { formatStoredDate } from '@/lib/timezone';
 import { clubYearMonths, type ClubPlanPeriod, type PlanAllocationRow, type PlanLineRow } from '@/lib/club-budget-report';
+import type { FiscalYear } from '@/lib/club-fiscal-year';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import { FormError, TextField, jsonInit, money, moneyFetch, moneyKit, parseAmount as parseKitAmount, refusalText } from './MoneyKit';
 import cr from './ClubReport.module.css';
@@ -101,10 +102,13 @@ function periodsFromWhen(w: WhenDraft, total: number | null): { periods: { label
 }
 
 /** The year's twelve months, for One month (a dropdown — a form picking one value is a dropdown). */
-const yearMonths = (year: number) => clubYearMonths(year).map(id => ({ id, label: formatMonthLong(id) }));
+const yearMonths = (year: FiscalYearRef) => clubYearMonths(year).map(id => ({ id, label: formatMonthLong(id) }));
+
+/** The fiscal year a window is about (Stage 3c): its key (addresses) and its name (words). */
+type FiscalYearRef = Pick<FiscalYear, 'key' | 'name' | 'firstDay' | 'lastDay'>;
 
 function WhenFields({ idBase, year, value, onChange, total, held }: {
-  idBase: string; year: number; value: WhenDraft; onChange: (next: WhenDraft) => void; total: number | null; held: boolean;
+  idBase: string; year: FiscalYearRef; value: WhenDraft; onChange: (next: WhenDraft) => void; total: number | null; held: boolean;
 }) {
   const set = (patch: Partial<WhenDraft>) => onChange({ ...value, ...patch });
   const setPeriod = (key: number, patch: Partial<PeriodDraft>) =>
@@ -232,7 +236,7 @@ const draftOfLine = (l: PlanLineRow): LineDraft => ({
 });
 
 export function BudgetLineWindow({ line, year, q, orgSlug, canMove, categories, accountingBase, onChanged, onClose }: {
-  line: PlanLineRow; year: number; q: string; orgSlug: string; canMove: boolean;
+  line: PlanLineRow; year: FiscalYearRef; q: string; orgSlug: string; canMove: boolean;
   categories: BudgetCategoryWithItems[]; accountingBase: string;
   /** A write landed (or was refused because the line changed): re-read the plan; the text is the notice. */
   onChanged: (text: string | null) => void;
@@ -312,7 +316,7 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, categories, 
     <>
       <KitDialog
         kind="form"
-        eyebrow={`Budget line · ${year}`}
+        eyebrow={`Budget line · ${year.name}`}
         title={line.description}
         onClose={() => void close()}
         edit={canMove ? { editing, onToggle: () => void toggleEdit(), label: `Edit ${line.description}` } : undefined}
@@ -352,7 +356,7 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, categories, 
                       <span className={cr.leftBoxSub}>{NOT_ALLOCATED_LEAD}</span>
                     </span>
                     {canMove && (
-                      <Link className="btn btn-outline" href={`${accountingBase}/allocations/new?line=${line.id}&year=${year}`}>
+                      <Link className="btn btn-outline" href={`${accountingBase}/allocations/new?line=${line.id}&year=${year.key}`}>
                         Allocate {money(line.notAllocated)}
                       </Link>
                     )}
@@ -394,7 +398,7 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, categories, 
 
 /** Remove a line: asks first. Red — the line leaves the plan (nothing billed or recorded moves). */
 function RemoveLineQuestion({ line, year, q, onClose, onRemoved }: {
-  line: PlanLineRow; year: number; q: string; onClose: () => void; onRemoved: (text: string) => void;
+  line: PlanLineRow; year: FiscalYearRef; q: string; onClose: () => void; onRemoved: (text: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -405,7 +409,7 @@ function RemoveLineQuestion({ line, year, q, onClose, onRemoved }: {
       // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
       const r = await moneyFetch(`/api/admin/accounting/budget-plan/lines/${line.id}?${q}`, { method: 'DELETE' });
       if (!r.ok) { setError(refusalText(r.data, 'The line couldn’t be removed. Please try again.')); return; }
-      onRemoved(`${line.description} is off the ${year} plan.`);
+      onRemoved(`${line.description} is off the ${year.name} plan.`);
     } catch {
       setError('The line couldn’t be removed. Check your connection and try again.');
     } finally {
@@ -415,7 +419,7 @@ function RemoveLineQuestion({ line, year, q, onClose, onRemoved }: {
   return (
     <KitDialog
       kind="question"
-      eyebrow={`Budget line · ${year}`}
+      eyebrow={`Budget line · ${year.name}`}
       title={`Remove ${line.description}?`}
       onClose={onClose}
       busy={busy}
@@ -427,7 +431,7 @@ function RemoveLineQuestion({ line, year, q, onClose, onRemoved }: {
       )}
     >
       <FormError>{error}</FormError>
-      <p className={moneyKit.lead1}>{money(line.planned)} leaves the {year} plan. Nothing billed or recorded changes.</p>
+      <p className={moneyKit.lead1}>{money(line.planned)} leaves the {year.name} plan. Nothing billed or recorded changes.</p>
     </KitDialog>
   );
 }
@@ -435,7 +439,7 @@ function RemoveLineQuestion({ line, year, q, onClose, onRemoved }: {
 // ── Add a line (creates ask) ────────────────────────────────────────────────────────────────────
 
 export function AddLineWindow({ year, q, orgSlug, categories, onWord, onAdded, onClose }: {
-  year: number; q: string; orgSlug: string; categories: BudgetCategoryWithItems[];
+  year: FiscalYearRef; q: string; orgSlug: string; categories: BudgetCategoryWithItems[];
   /** Is this word already on the year's plan? Its line's name and figure, for the one-word-one-line note. */
   onWord: (itemId: string) => { description: string; planned: number } | null;
   onAdded: (text: string) => void;
@@ -462,13 +466,13 @@ export function AddLineWindow({ year, q, orgSlug, categories, onWord, onAdded, o
     try {
       // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
       const r = await moneyFetch<{ line: { description: string }; joined: boolean }>(`/api/admin/accounting/budget-plan/lines?${q}`, jsonInit('POST', {
-        seasonYear: year, itemId: word.itemId, totalAmount: total,
+        fiscalYear: year.key, itemId: word.itemId, totalAmount: total,
         description: name.trim() || undefined, notes: notes.trim() || undefined, periods: w.periods,
       }));
       if (!r.ok) { setError(refusalText(r.data, 'The line couldn’t be added. Please try again.')); return; }
       onAdded(r.data.joined
-        ? `${r.data.line.description} was already on the ${year} plan, so ${money(total)} was added to its line.`
-        : `${r.data.line.description} added to the ${year} plan.`);
+        ? `${r.data.line.description} was already on the ${year.name} plan, so ${money(total)} was added to its line.`
+        : `${r.data.line.description} added to the ${year.name} plan.`);
     } catch {
       setError('The line couldn’t be added. Check your connection and try again.');
     } finally {
@@ -479,7 +483,7 @@ export function AddLineWindow({ year, q, orgSlug, categories, onWord, onAdded, o
   return (
     <KitDialog
       kind="form"
-      eyebrow={`Budget · ${year}`}
+      eyebrow={`Budget · ${year.name}`}
       title="Add a line"
       onClose={onClose}
       busy={busy}
@@ -502,7 +506,7 @@ export function AddLineWindow({ year, q, orgSlug, categories, onWord, onAdded, o
         direction={direction} orgSlug={orgSlug} />
       {already && (
         <p className={ck.hint}>
-          {already.description} is already on the {year} plan at {money(already.planned)}. One word carries one line, so this adds to it.
+          {already.description} is already on the {year.name} plan at {money(already.planned)}. One word carries one line, so this adds to it.
         </p>
       )}
       <div className={moneyKit.pair}>
@@ -522,14 +526,14 @@ export function AddLineWindow({ year, q, orgSlug, categories, onWord, onAdded, o
 // ── From the teams: the allocations it adds up ─────────────────────────────────────────────────
 
 export function FromTheTeamsWindow({ year, rows, planned, periods, accountingBase, onClose }: {
-  year: number; rows: readonly PlanAllocationRow[]; planned: number; periods: readonly ClubPlanPeriod[];
+  year: FiscalYearRef; rows: readonly PlanAllocationRow[]; planned: number; periods: readonly ClubPlanPeriod[];
   accountingBase: string; onClose: () => void;
 }) {
   const months = whenMonthsText(whenSummary(periods.map(p => ({ periodDate: p.date, amount: p.amount })), planned));
   return (
     <KitDialog
       kind="form"
-      eyebrow={`Revenue · ${year}`}
+      eyebrow={`Revenue · ${year.name}`}
       title={FROM_THE_TEAMS_WORD}
       onClose={onClose}
       footer={(
@@ -543,7 +547,7 @@ export function FromTheTeamsWindow({ year, rows, planned, periods, accountingBas
       <p className={ck.hint}>What the club billed its teams from the year’s cost lines. Nobody types it: it is read from the allocations, each due on its installments’ dates.</p>
       {rows.length > 0
         ? <AllocationRows rows={rows} accountingBase={accountingBase} />
-        : <p className={ck.hint}>Nothing is allocated from the {year} plan yet. A cost line’s window allocates it.</p>}
+        : <p className={ck.hint}>Nothing is allocated from the {year.name} plan yet. A cost line’s window allocates it.</p>}
     </KitDialog>
   );
 }

@@ -117,6 +117,10 @@ export interface PeriodColumn {
    *  above (see PeriodYearBand), because it describes a group of columns, not this one. */
   label: string;
   unscheduled: boolean;
+  /** The months a column covers — set only on the CLUB's quarters (Club Tier Stage 3c, S3C-02: three months
+   *  from its fiscal year's first month), so the grid lights the quarter holding today without reading a
+   *  calendar quarter. Absent on every coach column. */
+  months?: string[];
 }
 
 export interface PeriodViewRow {
@@ -536,11 +540,15 @@ function deriveColumns(
  */
 function fixedColumns(
   months: readonly MonthKey[], dates: string[], granularity: PeriodGranularity,
+  quarters?: readonly FixedQuarter[],
 ): { columns: PeriodColumn[]; truncated: boolean } {
   const inSpan = new Set<string>(months);
   const truncated = dates.some(d => { const m = monthKeyOf(d); return m !== null && !inSpan.has(m); });
   if (granularity === 'months') {
     return { truncated, columns: months.map(m => ({ key: m, label: MONTH_SHORT[Number(m.slice(5, 7)) - 1], unscheduled: false })) };
+  }
+  if (quarters) {
+    return { truncated, columns: quarters.map(q => ({ key: q.key, label: q.label, unscheduled: false, months: [...q.months] })) };
   }
   const seen = new Set<string>();
   const columns: PeriodColumn[] = [];
@@ -576,12 +584,18 @@ function deriveYearBands(columns: PeriodColumn[]): PeriodYearBand[] {
  *  way ("never silently dropped, never smeared"). `beyondWindow` on the view names it. */
 function columnFor(
   date: string | null, granularity: PeriodGranularity, columnKeys: string[],
+  quarters?: readonly FixedQuarter[],
 ): string {
   const month = monthKeyOf(date);
   if (!month) return UNSCHEDULED;
-  const key = granularity === 'months' ? month : quarterKeyOf(month);
+  const key = granularity === 'months' ? month
+    : quarters ? quarters.find(q => q.months.includes(month))?.key ?? UNSCHEDULED
+    : quarterKeyOf(month);
   return columnKeys.includes(key) ? key : UNSCHEDULED;
 }
+
+/** A quarter of a FIXED span (the club's fiscal year — lib/club-fiscal-year.ts `fiscalQuarters`). */
+export interface FixedQuarter { key: string; label: string; months: readonly MonthKey[] }
 
 export function buildPeriodView(
   lines: PeriodViewLine[], granularity: PeriodGranularity,
@@ -620,6 +634,9 @@ export function buildPeriodView(
      * period to the latest, as they always have.
      */
     months?: readonly MonthKey[];
+    /** The fixed span's QUARTERS, when they are not calendar quarters (the club's fiscal year, Stage 3c,
+     *  S3C-02). Absent: calendar quarters (`quarterKeyOf`), as every coach caller has always had. */
+    quarters?: readonly FixedQuarter[];
   } = {},
 ): PeriodView {
   const dated: string[] = [];
@@ -644,7 +661,7 @@ export function buildPeriodView(
   if (trial?.date) dated.push(trial.date);
 
   const { columns: dateColumns, truncated } = opts.months
-    ? fixedColumns(opts.months, dated, granularity)
+    ? fixedColumns(opts.months, dated, granularity, opts.quarters)
     : deriveColumns(dated, granularity);
   const columnKeys = dateColumns.map(c => c.key);
 
@@ -740,7 +757,7 @@ export function buildPeriodView(
       add(cells, UNSCHEDULED, sign * line.totalAmount);
     } else {
       for (const p of line.periods) {
-        add(cells, columnFor(p.periodDate, granularity, columnKeys), sign * p.amount);
+        add(cells, columnFor(p.periodDate, granularity, columnKeys, opts.quarters), sign * p.amount);
       }
     }
     if (cells[UNSCHEDULED] !== undefined) hasUnscheduled = true;
@@ -794,7 +811,7 @@ export function buildPeriodView(
   let trialTotals: PeriodTotals | null = null;
   if (trial) {
     const cells: Record<string, number> = {};
-    add(cells, columnFor(trial.date, granularity, columnKeys), trial.amount);
+    add(cells, columnFor(trial.date, granularity, columnKeys, opts.quarters), trial.amount);
     if (cells[UNSCHEDULED] !== undefined) hasUnscheduled = true;
     trialTotals = { cells, total: r2(trial.amount) };
     for (const [key, amount] of Object.entries(cells)) add(costCells, key, amount);
@@ -839,7 +856,7 @@ export function buildPeriodView(
     const duesCells: Record<string, number> = {};
     let spreadTotal = 0;
     for (const i of dues.installments) {
-      add(duesCells, columnFor(i.date, granularity, columnKeys), i.amount);
+      add(duesCells, columnFor(i.date, granularity, columnKeys, opts.quarters), i.amount);
       spreadTotal = r2(spreadTotal + i.amount);
     }
     const undated = r2(dues.assessed - spreadTotal);
@@ -909,7 +926,7 @@ export function buildPeriodView(
   } else {
     const byQuarter = new Map<string, typeof flow.rows>();
     for (const row of flow.rows) {
-      const qk = quarterKeyOf(row.month);
+      const qk = opts.quarters?.find(q => q.months.includes(row.month))?.key ?? quarterKeyOf(row.month);
       if (!byQuarter.has(qk)) byQuarter.set(qk, []);
       byQuarter.get(qk)!.push(row);
     }

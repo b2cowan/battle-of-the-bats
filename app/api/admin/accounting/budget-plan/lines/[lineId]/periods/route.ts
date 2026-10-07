@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { moveRefused, resolveClubMoney } from '@/lib/club-money-route';
-import { readClubPeriods, saveClubLine } from '@/lib/club-budget-writes';
+import { readClubPeriods, saveClubLine, lineYearRefusal } from '@/lib/club-budget-writes';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 type Ctx = { params: Promise<{ lineId: string }> };
@@ -19,6 +19,9 @@ export const POST = withObservability(async (req: Request, { params }: Ctx) => {
   const gate = await resolveClubMoney(req, { scope: 'books', write: true });
   if ('error' in gate) return gate.error;
   const { lineId } = await params;
+  // ⚖ A closed fiscal year's dates never change (Stage 3c, Ask 1).
+  const closed = await lineYearRefusal(gate.ctx.org.id, lineId, true);
+  if (closed) return moveRefused(closed);
   const body = await req.json().catch(() => ({}));
 
   const periods = readClubPeriods(body?.periods ?? []);

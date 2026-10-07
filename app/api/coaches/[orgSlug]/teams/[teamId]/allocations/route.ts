@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getEarlierSeasonOwedBills } from '@/lib/coach-club-bills';
 import { getRepAllocationSplitsForTeam } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
@@ -20,6 +21,16 @@ import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilitie
  *     is why the tab vanished between seasons instead of rendering as a record. Allocations are a
  *     record of money that moved; nothing here recomputes. The read serves them, the write below
  *     refuses, and `isReadOnly` tells the screen which it is holding.
+ *
+ * ⚖ AND AN UNPAID BILL FROM AN EARLIER SEASON STAYS (Club Tier Stage 3c, Ask 8b — owner 2026-10-07; S3C-05).
+ * A bill made on a season that then rolled over left this tab while it was still owed. `earlierSplits`: the
+ * team's bills made on an EARLIER season that still have an installment the team hasn't paid, each with its
+ * `season` ({ id, name } — the band names it), until it is paid. NO year or season parameter: the read is
+ * "still owed", the same question the Overview's `upcoming-payables` lane asks (`coach-history-endpoint-guard`
+ * stays green). A paid or settled old bill leaves the tab and lives with its season. "We've sent it" works on one
+ * unchanged (the installment route checks the bill's team and club, not its season); the payment then counts in
+ * THIS season — the one running when it is recorded (S3C-11, call 1). Only the working season reads them (a
+ * finished season is a record).
  */
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
@@ -34,9 +45,12 @@ export const GET = withObservability(async (_req: Request,
      `budget_items` + `budget_categories` lookup — one of three hand-rolled copies of that block
      (`/simplify`, 2026-08-17). The reader joins them now, so there is one way to turn an item id
      into a word. */
-  const splits = await getRepAllocationSplitsForTeam(teamId, programYear.id);
+  const [splits, earlierSplits] = await Promise.all([
+    getRepAllocationSplitsForTeam(teamId, programYear.id),
+    isReadOnly ? Promise.resolve([]) : getEarlierSeasonOwedBills(teamId, programYear.id),
+  ]);
 
-  return NextResponse.json({ splits, isReadOnly, programYearName: programYear.name });
+  return NextResponse.json({ splits, earlierSplits, isReadOnly, programYearName: programYear.name });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/allocations' });
 
 /**

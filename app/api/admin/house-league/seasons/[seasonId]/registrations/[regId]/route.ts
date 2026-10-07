@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import { tournamentToday } from '@/lib/timezone';
+import { moveRefused } from '@/lib/club-money-route';
+import { closedYearFromError, isClosedYearError, loadFiscalSetting, refuseIfClosed } from '@/lib/club-fiscal-year-server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -131,18 +134,51 @@ export const PATCH = withObservability(async (req: Request,
   if ('feePaid' in body) {
     if (!canManageRegs) return forbidden();
     const paid = Boolean(body.feePaid);
+
+    /* ⚖ THE CLUB'S FISCAL YEAR LOCKS THE HOUSE LEAGUE'S BOOK TOO (Club Tier Stage 3c, call 2) — checked BEFORE the
+       registration changes, so the two never disagree. A fee line dated in a closed year: marking it paid CLEARS
+       it into the open year, dated today (it counted nowhere while pending; the database keeps the day it was
+       written); marking it unpaid would change a closed year, so it is refused in words (reopen the year). A
+       line already in the state asked for is left as it is (nothing to write). The line moves FIRST, so a close
+       that races this request refuses before the registration has changed. */
+    let clearOn: string | null = null;
+    let lineMoves = !!reg.feeEntryId;
+    let lineDate: string | null = null;
+    if (reg.feeEntryId) {
+      const { data: line, error: lineError } = await supabaseAdmin.from('accounting_entries')
+        .select('entry_date, status').eq('id', reg.feeEntryId).maybeSingle();
+      if (lineError) throw lineError;
+      if (line) {
+        lineMoves = line.status !== (paid ? 'posted' : 'pending');
+        lineDate = line.entry_date as string;
+        const setting = await loadFiscalSetting(ctx!.org.id);
+        const closed = lineMoves ? refuseIfClosed(setting, [line.entry_date], { canMove: true, kind: 'recorded' }) : null;
+        if (closed) {
+          if (!(paid && line.status === 'pending')) return moveRefused(closed);
+          clearOn = tournamentToday();
+        }
+      }
+    }
+
+    // Sync ledger entry if one is linked
+    if (reg.feeEntryId && lineMoves) {
+      const ledger = await getLeagueSeasonLedger(ctx!.org.id, seasonId);
+      if (ledger) {
+        try {
+          await updateEntry(reg.feeEntryId, ledger.id, { status: paid ? 'posted' : 'pending', ...(clearOn ? { entryDate: clearOn } : {}) });
+        } catch (e) {
+          if (isClosedYearError(e)) return moveRefused(await closedYearFromError(ctx!.org.id, [lineDate, clearOn]));
+          throw e;
+        }
+      }
+    }
+
     await supabaseAdmin
       .from('league_registrations')
       .update({ registration_fee_paid: paid, updated_at: new Date().toISOString() })
       .eq('id', regId);
 
-    // Sync ledger entry if one is linked
-    if (reg.feeEntryId) {
-      const ledger = await getLeagueSeasonLedger(ctx!.org.id, seasonId);
-      if (ledger) {
-        await updateEntry(reg.feeEntryId, ledger.id, { status: paid ? 'posted' : 'pending' });
-      }
-    } else if (paid && season.registrationFee) {
+    if (!reg.feeEntryId && paid && season.registrationFee) {
       // No entry yet — create one as posted immediately (manual/retroactive)
       const playerName = `${reg.playerFirstName} ${reg.playerLastName}`;
       await createLeagueRegistrationFeeEntry(

@@ -6,9 +6,13 @@ import { isUuid } from './utils';
 import { resolveOrgBudgetItem, type ResolvedOrgBudgetItem } from './coach-budget-items';
 import { joinPeriodSplits } from './coach-budget-periods-payload';
 import { refused, type Moved, type Refused } from './club-money-route';
-import { CLUB_BUDGET_REFUSAL, FILED_UNDER_REFUSAL } from './club-money-words';
-import { CLUB_OWNED_BOOK_KINDS, sumMoney } from './club-money-figures';
+import { CLUB_BUDGET_REFUSAL, FILED_UNDER_REFUSAL, SEASON_CLOSED_REFUSAL, SOURCE_ENTRY_RETIRED, planClosedWords } from './club-money-words';
+import { sumMoney } from './club-money-figures';
 import { toCents, toDollars } from './coach-register';
+import { billSplits, readAmount, type BillInput, type BillSplitMethod, type CleanSplit } from './club-bill-split';
+import { fiscalYearOf, readFiscalYearParam } from './club-fiscal-year';
+import { loadFiscalSetting, refuseIfClosed, refuseIfYearLocked } from './club-fiscal-year-server';
+import { liveSeasonOf } from './season-live';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -33,19 +37,19 @@ import { toCents, toDollars } from './coach-register';
  * WHO: every route calling here answers to 3a's one money rule first (`resolveClubMoney(…, { write:
  * true })` → `canMoveClubMoney`: owner, treasurer, an admin with Accounting — Ask 4d). A team named in
  * an allocation is checked against the member's groups here (B11), so a route cannot forget it.
+ *
+ * ⚖ Stage 3c — THE FISCAL YEAR AND ITS LOCK. A plan line keys on its fiscal year (mig 318, call 3); a year
+ * arrives as its KEY, its first day (an old bare number still lands — `readFiscalYearParam`). Every write
+ * here is checked against the lock FIRST, so a closed year is refused in words (409 `year_closed`, the one
+ * refusal — lib/club-fiscal-year-server.ts); the database's step and its triggers are the floor. New
+ * allocation (Ask 6): the split and the payment schedule chosen ONCE per bill (Evenly · By amount · By
+ * percentage · By sessions; one payment or installments), a team's row may carry its own installments; only
+ * a team's OPEN season is billed (S3C-09); the pasted ledger-entry id is gone (C17).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-const MAX_AMOUNT = 9_999_999.99;
-
-/** An amount off a request, to the cent — or null when it is not one above zero. */
-function readAmount(raw: unknown): number | null {
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 && n <= MAX_AMOUNT ? toDollars(toCents(n)) : null;
-}
-
 const lineNotFound = () => refused(404, { error: CLUB_BUDGET_REFUSAL.line_not_found, code: 'line_not_found' });
-const say = (status: number, code: Exclude<keyof typeof CLUB_BUDGET_REFUSAL, 'below_allocated' | 'over_line' | 'periods_dont_add_up' | 'year_has_lines' | 'nothing_to_copy' | 'word_on_plan'>) =>
+const say = (status: number, code: Exclude<keyof typeof CLUB_BUDGET_REFUSAL, 'below_allocated' | 'over_line' | 'periods_dont_add_up' | 'year_has_lines' | 'nothing_to_copy' | 'word_on_plan' | 'different_months'>) =>
   refused(status, { error: CLUB_BUDGET_REFUSAL[code], code });
 
 /** What a budget step answers (mig 317). */
@@ -55,7 +59,7 @@ type StepAnswer = { ok: boolean; code?: string } & Record<string, any>;
  * A budget step's refusal, as the one coded answer: its status, its sentence, and the figures it quotes.
  * `about` carries what the sentence names that the database does not (the word, the years).
  */
-function stepRefused(step: string, r: StepAnswer, about: { word?: string; from?: number; to?: number } = {}): Refused {
+function stepRefused(step: string, r: StepAnswer, about: { word?: string; from?: string; to?: string } = {}): Refused {
   switch (r.code) {
     case 'not_found':
     case 'line_not_found': return lineNotFound();
@@ -75,6 +79,12 @@ function stepRefused(step: string, r: StepAnswer, about: { word?: string; from?:
       return refused(409, { error: CLUB_BUDGET_REFUSAL.word_on_plan(about.word ?? 'That word'), code: r.code, existingLineId: r.existingLineId ?? null });
     case 'year_has_lines': return refused(409, { error: CLUB_BUDGET_REFUSAL.year_has_lines(about.to!), code: r.code });
     case 'nothing_to_copy': return refused(400, { error: CLUB_BUDGET_REFUSAL.nothing_to_copy(about.from!), code: r.code });
+    case 'different_months': return refused(400, { error: CLUB_BUDGET_REFUSAL.different_months(about.from!, about.to!), code: r.code });
+    case 'bad_year': return refused(400, { error: 'Choose a fiscal year.', code: r.code });
+    // The routes check the lock first and say it with the year's name; this answer only reaches a caller that
+    // raced a close (the step re-checked under its lock).
+    case 'year_closed': return refused(409, { error: planClosedWords('That fiscal year', null), code: r.code, year: null, reopen: null, nextDay: null });
+    case 'season_closed': return refused(409, { error: SEASON_CLOSED_REFUSAL(about.word ?? 'That team'), code: r.code, teamId: r.teamId ?? null });
     case 'line_changed':
     case 'allocated_line_is_a_cost':
     case 'has_allocations': return say(409, r.code);
@@ -196,10 +206,13 @@ export async function deleteClubLine(orgId: string, lineId: string): Promise<Mov
 
 // ── Add a line (one word, one line) ───────────────────────────────────────────────────────────
 
-const LINE_SELECT = 'id, season_year, description, total_amount, notes, sort_order, created_at, updated_at, category_id, item_id, budget_categories ( id, name ), budget_items ( id, name, direction )';
+const LINE_SELECT = 'id, fiscal_year_id, description, total_amount, notes, sort_order, created_at, updated_at, category_id, item_id, budget_categories ( id, name ), budget_items ( id, name, direction ), org_fiscal_years ( first_day, name )';
 
 export interface AddLineInput {
-  seasonYear: unknown;
+  /** The fiscal year's KEY (its first day). */
+  fiscalYear?: unknown;
+  /** ⚠ Stage 3b's bare year number — still read (it lands on the year with that name) until session 2's screen sends the key. */
+  seasonYear?: unknown;
   itemId: unknown;
   totalAmount: unknown;
   description?: unknown;
@@ -213,9 +226,12 @@ export interface AddLineInput {
  * amounts join, the dates concatenate (an undated side becomes a "No date yet" period, the coach's
  * Q4 rule), the notes join. Money-in words plan revenue (Ask 4b); money-out words plan costs.
  */
-export async function addClubLine(orgId: string, body: AddLineInput): Promise<Moved<{ line: Record<string, any>; joined: boolean }>> {
-  const year = parseInt(String(body.seasonYear ?? ''), 10);
-  if (!year || year < 2020 || year > 2099) return refused(400, { error: 'Choose the year.', code: 'bad_year' });
+export async function addClubLine(orgId: string, body: AddLineInput, canMove = true): Promise<Moved<{ line: Record<string, any>; joined: boolean }>> {
+  const setting = await loadFiscalSetting(orgId);
+  const year = readFiscalYearParam(String(body.fiscalYear ?? body.seasonYear ?? ''), setting);
+  if (!year) return refused(400, { error: 'Choose a fiscal year.', code: 'bad_year' });
+  const locked = refuseIfYearLocked(setting, year, canMove);
+  if (locked) return locked;
   const total = readAmount(body.totalAmount);
   if (total === null) return say(400, 'bad_total');
   const word = await readWord(body.itemId, orgId);
@@ -229,26 +245,26 @@ export async function addClubLine(orgId: string, body: AddLineInput): Promise<Mo
 
   // The line and its dates in ONE step (the category is the word's, in the step): a refusal makes nothing.
   const { data, error } = await supabaseAdmin.rpc('club_budget_line_add', {
-    p_org: orgId, p_year: year, p_item: item.id, p_description: description, p_total: total, p_notes: notes,
+    p_org: orgId, p_year: year.key, p_item: item.id, p_description: description, p_total: total, p_notes: notes,
     p_sort: Math.trunc(Number(body.sortOrder)) || 0, p_periods: periods.value && periods.value.length > 0 ? periods.value : null,
   });
   if (error) throw error;
   const r = data as StepAnswer;
   if (r.ok) return { ok: true, line: await readLine(orgId, r.lineId as string), joined: false };
-  if (r.code === 'word_on_plan') return joinOntoLine(orgId, year, item.id, { total, periods: periods.value ?? [], notes });
+  if (r.code === 'word_on_plan') return joinOntoLine(orgId, r.existingLineId as string, { total, periods: periods.value ?? [], notes });
   return stepRefused('club_budget_line_add', r, { word: item.name });
 }
 
 /** The word is already on the year: add to its line — amounts, dates and notes in the line's one step,
  *  saved against its last change and read again once if another add landed first, so neither is lost. */
 async function joinOntoLine(
-  orgId: string, year: number, itemId: string,
+  orgId: string, lineId: string,
   added: { total: number; periods: ClubPeriodInput[]; notes: string | null },
 ): Promise<Moved<{ line: Record<string, any>; joined: boolean }>> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const { data: line, error } = await supabaseAdmin.from('org_budget_lines')
       .select('id, total_amount, notes, updated_at, org_budget_periods ( period_label, period_date, amount, sort_order )')
-      .eq('org_id', orgId).eq('season_year', year).eq('item_id', itemId)
+      .eq('org_id', orgId).eq('id', lineId)
       .order('sort_order', { referencedTable: 'org_budget_periods' })
       .maybeSingle();
     if (error) throw error;
@@ -282,88 +298,58 @@ export async function readLine(orgId: string, lineId: string): Promise<Record<st
 
 // ── Start a year from another ─────────────────────────────────────────────────────────────────
 
-export async function rollClubYear(orgId: string, fromYear: unknown, toYear: unknown): Promise<Moved<{ lines: number; year: number }>> {
-  const from = parseInt(String(fromYear ?? ''), 10);
-  const to = parseInt(String(toYear ?? ''), 10);
-  if (!from || !to || from < 2020 || to > 2099 || to <= from) {
-    return refused(400, { error: 'Choose a year that follows the one to start from.', code: 'bad_year' });
+/** Start a fiscal year from another's plan (keys, or Stage 3b's bare numbers). Refused into a closed year. */
+export async function rollClubYear(orgId: string, fromYear: unknown, toYear: unknown, canMove = true): Promise<Moved<{ lines: number; year: { key: string; name: string } }>> {
+  const setting = await loadFiscalSetting(orgId);
+  const from = readFiscalYearParam(String(fromYear ?? ''), setting);
+  const to = readFiscalYearParam(String(toYear ?? ''), setting);
+  if (!from || !to || to.key <= from.key) {
+    return refused(400, { error: 'Choose a fiscal year that follows the one to start from.', code: 'bad_year' });
   }
-  const { data, error } = await supabaseAdmin.rpc('club_budget_roll_year', { p_org: orgId, p_from: from, p_to: to });
+  const locked = refuseIfYearLocked(setting, to, canMove);
+  if (locked) return locked;
+  const { data, error } = await supabaseAdmin.rpc('club_budget_roll_year', { p_org: orgId, p_from: from.key, p_to: to.key });
   if (error) throw error;
   const r = data as StepAnswer;
-  return r.ok ? { ok: true, lines: Number(r.lines), year: to } : stepRefused('club_budget_roll_year', r, { from, to });
+  return r.ok ? { ok: true, lines: Number(r.lines), year: { key: to.key, name: to.name } } : stepRefused('club_budget_roll_year', r, { from: from.name, to: to.name });
 }
 
-// ── An allocation (from a line, or a general one) ─────────────────────────────────────────────
+/**
+ * THE LOCK, for an existing line (an edit, its dates, its removal): its fiscal year closed → 409 `year_closed`
+ * in words, before anything is asked of the database. Null: the year is open (or the line isn't the club's —
+ * the step answers that).
+ */
+export async function lineYearRefusal(orgId: string, lineId: string, canMove: boolean): Promise<Refused | null> {
+  if (!isUuid(lineId)) return null;
+  const { data, error } = await supabaseAdmin.from('org_budget_lines')
+    .select('org_fiscal_years ( first_day )').eq('id', lineId).eq('org_id', orgId).maybeSingle();
+  if (error) throw error;
+  const key = (data?.org_fiscal_years as { first_day?: string } | null)?.first_day;
+  if (!key) return null;
+  const setting = await loadFiscalSetting(orgId);
+  return refuseIfYearLocked(setting, fiscalYearOf(key, setting), canMove);
+}
 
+// ── An allocation (Ask 6: one form for both doors — from a line, or "Bill from" on Allocations) ─────────
+
+/** Stage 3a's body (the page that session 2 retires): a split per team, each with its own method and installments. */
 export interface AllocationInput {
   description: unknown;
   /** A general allocation's stated total (3a's form): its shares may not exceed it. Never the stored total. */
   totalAmount?: unknown;
+  /** ⚰ C17: the pasted ledger-entry id. Refused when sent (400 `source_entry_retired`); old rows keep theirs. */
   sourceEntryId?: unknown;
   sourceBudgetLineId?: unknown;
   splits: unknown;
 }
 
-/**
- * An allocation, its splits and installments, and its link to the line — ONE step (C11). The total it
- * records is its teams' shares, never the line's. From a line, the amount can't exceed what is left on
- * it (worked out inside the step). A general allocation's source is one of the club's own live entries
- * (C17, 3a's rule). A team outside the member's groups is refused (B11).
- */
-export async function createClubAllocation(ctx: AuthContextWithRole, body: AllocationInput): Promise<Moved<{ allocationId: string; total: number }> | { error: Response }> {
-  const orgId = ctx.org.id;
-  const description = typeof body.description === 'string' ? body.description.trim() : '';
-  if (!description) return refused(400, { error: 'Describe what the allocation is for.', code: 'description_required' });
-  if (description.length > 200) return say(400, 'bad_description');
 
-  const lineId = body.sourceBudgetLineId ?? null;
-  const entryId = body.sourceEntryId ?? null;
-  if (lineId !== null && entryId !== null) {
-    return refused(400, { error: 'An allocation comes from a budget line or a ledger entry, not both.', code: 'one_source' });
-  }
-  if (lineId !== null && !isUuid(lineId)) return lineNotFound();
-  if (entryId !== null) {
-    if (!isUuid(entryId)) return say(400, 'bad_source_entry');
-    const { data: src } = await supabaseAdmin
-      .from('accounting_entries')
-      .select('id, status, accounting_ledgers!inner ( org_id, entity_type )')
-      .eq('id', entryId).eq('accounting_ledgers.org_id', orgId).in('accounting_ledgers.entity_type', [...CLUB_OWNED_BOOK_KINDS])
-      .maybeSingle();
-    if (!src || src.status === 'void') return say(400, 'bad_source_entry');
-  }
-
-  const splits = body.splits;
+/** Read Stage 3a's per-team body (the page session 2 retires) into the same clean splits. */
+function legacySplits(splits: unknown): Moved<{ method: BillSplitMethod; splits: CleanSplit[] }> {
   if (!Array.isArray(splits) || splits.length === 0) return refused(400, { error: 'Bill at least one team.', code: 'splits_required' });
-  const splitSum = sumMoney((splits as any[]).map(x => ({ amount: Number(x?.amount ?? 0) || 0 })));
-  if (body.totalAmount !== undefined && body.totalAmount !== null) {
-    const stated = Number(body.totalAmount);
-    if (!Number.isFinite(stated) || stated <= 0) return refused(400, { error: 'The amount must be above zero.', code: 'bad_total' });
-    if (splitSum > stated + 0.001) {
-      return refused(400, { error: `The teams’ shares ($${splitSum.toFixed(2)}) are more than the amount ($${stated.toFixed(2)}).`, code: 'shares_over_total' });
-    }
-  }
-
-  // Every team and season named, in two reads — not two per split. An id that isn't one is simply not found.
-  const named = (key: 'teamId' | 'programYearId') => [...new Set((splits as any[]).map(s => s?.[key]).filter(isUuid))];
-  const [teamsRead, seasonsRead] = await Promise.all([
-    supabaseAdmin.from('rep_teams').select('id, name, org_id, group_id').in('id', named('teamId')),
-    supabaseAdmin.from('rep_program_years').select('id, team_id').in('id', named('programYearId')),
-  ]);
-  if (teamsRead.error) throw teamsRead.error;
-  if (seasonsRead.error) throw seasonsRead.error;
-  const teams = new Map((teamsRead.data ?? []).map(t => [t.id as string, t]));
-  const seasons = new Map((seasonsRead.data ?? []).map(y => [y.id as string, y]));
-
-  const clean: Record<string, unknown>[] = [];
+  const clean: CleanSplit[] = [];
   for (const split of splits as any[]) {
     if (!split?.teamId || !split?.programYearId) return refused(400, { error: 'Each team needs its season.', code: 'bad_split' });
-    const team = teams.get(split.teamId);
-    if (!team || team.org_id !== orgId) return refused(404, { error: 'That team isn’t in the club.', code: 'team_not_found' });
-    const scoped = repGroupScopeGuard(ctx, team.group_id ?? null);
-    if (scoped) return { error: scoped };
-    const season = seasons.get(split.programYearId);
-    if (!season || season.team_id !== team.id) return refused(404, { error: 'That season isn’t the team’s.', code: 'season_not_found' });
     if (!['percentage', 'sessions', 'fixed'].includes(split.splitMethod)) return refused(400, { error: 'Choose how the share is split.', code: 'bad_split' });
     if (!['standard', 'custom'].includes(split.paymentSchedule)) return refused(400, { error: 'Choose the payment schedule.', code: 'bad_split' });
     const amount = readAmount(split.amount);
@@ -371,7 +357,7 @@ export async function createClubAllocation(ctx: AuthContextWithRole, body: Alloc
     if (!Array.isArray(split.installments) || split.installments.length === 0) {
       return refused(400, { error: 'Each team needs at least one installment.', code: 'bad_split' });
     }
-    const installments: { installmentNumber: number; amount: number; dueDate: string }[] = [];
+    const installments: CleanSplit['installments'] = [];
     for (const [n, i] of (split.installments as any[]).entries()) {
       const due = readAmount(i?.amount);
       if (typeof i?.dueDate !== 'string' || !isCalendarDate(i.dueDate) || due === null) {
@@ -379,27 +365,120 @@ export async function createClubAllocation(ctx: AuthContextWithRole, body: Alloc
       }
       installments.push({ installmentNumber: Number(i.installmentNumber) || n + 1, amount: due, dueDate: i.dueDate });
     }
-    const instSum = sumMoney(installments);
-    if (Math.abs(instSum - amount) > 0.01) {
-      return refused(400, {
-        error: `${team.name}’s installments add up to $${instSum.toFixed(2)}, and its share is $${amount.toFixed(2)}.`, code: 'installments_dont_add_up',
-      });
+    if (Math.abs(sumMoney(installments) - amount) > 0.01) {
+      return refused(400, { error: `A team’s installments add up to $${sumMoney(installments).toFixed(2)}, and its share is $${amount.toFixed(2)}.`, code: 'installments_dont_add_up' });
     }
     clean.push({
-      teamId: team.id, programYearId: season.id, amount, splitMethod: split.splitMethod,
+      teamId: String(split.teamId), programYearId: String(split.programYearId), amount,
       splitValue: Number(split.splitValue ?? 0) || 0, paymentSchedule: split.paymentSchedule,
-      notes: typeof split.notes === 'string' ? split.notes.trim().slice(0, 500) : null,
-      installments,
+      notes: typeof split.notes === 'string' ? split.notes.trim().slice(0, 500) : null, installments,
     });
   }
+  const methods = new Set((splits as any[]).map(x => x.splitMethod));
+  if (methods.size === 1) return { ok: true, method: [...methods][0] as BillSplitMethod, splits: clean };
+  // Mixed ways on one bill (Stage 3a's page let each team pick): a bill now has ONE method (Ask 6), so it is stored
+  // By amount — each share's value its own dollars, never a percent or a session count read as dollars.
+  return { ok: true, method: 'fixed', splits: clean.map(c => ({ ...c, splitValue: c.amount })) };
+}
+
+/**
+ * An allocation, its splits and installments, and its link to the line — ONE step (C11). Ask 6's body
+ * (`BillInput`: `teams`, `split`, `schedule`) or Stage 3a's (`splits`, until session 2 retires its page).
+ * Checked FIRST, in words: a team's season must be RUNNING (S3C-09 — 409 `season_closed`, naming the team); the
+ * bill can't count in a closed fiscal year (409 `year_closed`: a closed year's line, or an off-plan bill falling
+ * due in one); a team outside the member's groups is refused (B11); the pasted ledger-entry id is refused (C17).
+ * From a line, the amount can't exceed what is left on it (409 `over_line`, worked out inside the step).
+ */
+export async function createClubAllocation(ctx: AuthContextWithRole, body: BillInput & AllocationInput): Promise<Moved<{ allocationId: string; total: number }> | { error: Response }> {
+  const orgId = ctx.org.id;
+  const description = typeof body.description === 'string' ? body.description.trim() : '';
+  if (!description) return refused(400, { error: 'Name the bill.', code: 'description_required' });
+  if (description.length > 200) return say(400, 'bad_description');
+  if (body.sourceEntryId !== undefined && body.sourceEntryId !== null && body.sourceEntryId !== '') {
+    return refused(400, { error: SOURCE_ENTRY_RETIRED, code: 'source_entry_retired' });
+  }
+  const lineId = body.sourceBudgetLineId ?? null;
+  if (lineId !== null && !isUuid(lineId)) return lineNotFound();
+
+  // The two bodies, into one clean set of splits.
+  let method: BillSplitMethod;
+  let clean: CleanSplit[];
+  if (Array.isArray(body.teams)) {
+    const bill = billSplits(body);
+    if (!bill.ok) return bill;
+    method = bill.method;
+    clean = bill.splits.map((s, n) => ({ ...s, ...bill.teams[n] }));
+  } else {
+    const legacy = legacySplits(body.splits);
+    if (!legacy.ok) return legacy;
+    method = legacy.method;
+    clean = legacy.splits;
+    if (body.totalAmount !== undefined && body.totalAmount !== null) {
+      const stated = Number(body.totalAmount);
+      const splitSum = sumMoney(clean);
+      if (!Number.isFinite(stated) || stated <= 0) return refused(400, { error: 'The amount must be above zero.', code: 'bad_total' });
+      if (splitSum > stated + 0.001) {
+        return refused(400, { error: `The teams’ shares ($${splitSum.toFixed(2)}) are more than the amount ($${stated.toFixed(2)}).`, code: 'shares_over_total' });
+      }
+    }
+  }
+
+  // Every team named, and every season of those teams, in two reads — not two per split. An id that isn't one is
+  // simply not found.
+  const named = (key: 'teamId' | 'programYearId') => [...new Set(clean.map(s => s[key]).filter(isUuid))];
+  const [teamsRead, seasonsRead, setting, lineRead] = await Promise.all([
+    supabaseAdmin.from('rep_teams').select('id, name, org_id, group_id').in('id', named('teamId')),
+    supabaseAdmin.from('rep_program_years').select('id, team_id, status, created_at').in('team_id', named('teamId')),
+    loadFiscalSetting(orgId),
+    lineId ? supabaseAdmin.from('org_budget_lines').select('id, org_fiscal_years ( first_day )').eq('id', lineId as string).eq('org_id', orgId).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+  if (teamsRead.error) throw teamsRead.error;
+  if (seasonsRead.error) throw seasonsRead.error;
+  if (lineRead.error) throw lineRead.error;
+  const teams = new Map((teamsRead.data ?? []).map(t => [t.id as string, t]));
+  const seasons = new Map((seasonsRead.data ?? []).map(y => [y.id as string, y]));
+  /** Each team's RUNNING season — the newest draft or active one, the season its payments are carried by (call 1). */
+  const running = (teamId: string) => liveSeasonOf((seasonsRead.data ?? [])
+    .filter(y => y.team_id === teamId).map(y => ({ id: y.id as string, status: y.status as string, createdAt: y.created_at as string })))?.id ?? null;
+
+  for (const split of clean) {
+    const team = teams.get(split.teamId);
+    if (!team || team.org_id !== orgId) return refused(404, { error: 'That team isn’t in the club.', code: 'team_not_found' });
+    const scoped = repGroupScopeGuard(ctx, team.group_id ?? null);
+    if (scoped) return { error: scoped };
+    const season = seasons.get(split.programYearId);
+    if (!season || season.team_id !== team.id) return refused(404, { error: 'That season isn’t the team’s.', code: 'season_not_found' });
+    // Only the team's RUNNING season is billed (S3C-09): a closed one's books are a record, and an older season
+    // still marked open is not the one its payments would be carried by.
+    if (running(team.id) !== season.id) {
+      return refused(409, { error: SEASON_CLOSED_REFUSAL(team.name), code: 'season_closed', teamId: team.id });
+    }
+  }
+
+  // The fiscal year it would count in must be open (Ask 1): its line's year; an off-plan bill, the year its first
+  // payment falls due in. (Every caller passed the write gate — `canMoveClubMoney` — so Reopen is theirs to offer.)
+  if (lineId && lineRead.data === null) return lineNotFound();
+  const lineKey = (lineRead.data?.org_fiscal_years as { first_day?: string } | null)?.first_day ?? null;
+  const firstDue = clean.flatMap(s => s.installments.map(i => i.dueDate)).sort()[0];
+  const closedYear = lineKey
+    ? refuseIfYearLocked(setting, fiscalYearOf(lineKey, setting), true)
+    : refuseIfClosed(setting, [firstDue], { canMove: true, kind: 'date' });
+  if (closedYear) return closedYear;
 
   const { data, error } = await supabaseAdmin.rpc('club_allocation_create', {
-    p_org: orgId, p_actor: ctx.user.id, p_description: description,
-    p_source_line: lineId, p_source_entry: entryId, p_splits: clean,
+    p_org: orgId, p_actor: ctx.user.id, p_description: description, p_source_line: lineId,
+    p_split_method: method,
+    p_notes: typeof body.notes === 'string' ? body.notes.trim().slice(0, 2000) || null : null,
+    p_splits: clean.map(s => ({
+      teamId: s.teamId, programYearId: s.programYearId, amount: s.amount, splitValue: s.splitValue,
+      paymentSchedule: s.paymentSchedule, notes: s.notes, installments: s.installments,
+    })),
   });
   if (error) throw error;
   const r = data as StepAnswer;
-  return r.ok ? { ok: true, allocationId: r.allocationId as string, total: Number(r.total) } : stepRefused('club_allocation_create', r);
+  const teamName = r.code === 'season_closed' ? teams.get(r.teamId)?.name : undefined;
+  return r.ok ? { ok: true, allocationId: r.allocationId as string, total: Number(r.total) } : stepRefused('club_allocation_create', r, { word: teamName });
 }
 
 // ── An entry's "Filed under" (Ask 4a) ─────────────────────────────────────────────────────────

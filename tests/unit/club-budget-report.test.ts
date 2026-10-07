@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  buildBoardSummary, buildClubPlan, buildClubReport, withPeriodViews, fileClubLine, loopIndex, planYears,
+  buildBoardSummary, buildClubPlan, buildClubReport, withPeriodViews, fileClubLine, loopIndex,
   statementExportRows, boardTeamsExportRows, allocationInYear,
   FROM_THE_TEAMS_ID, NOT_FILED_ID, ON_REQUEST_ID, TEAM_SUPPORT_WORD_IDS,
   type ClubAllocationFacts, type ClubBook, type ClubBookLineFacts, type ClubPlanLineFacts, type ClubRequestFacts,
@@ -12,6 +12,7 @@ import { FROM_THE_TEAMS_WORD, NOT_FILED_WORD } from '../../lib/club-money-words.
 import {
   lineAllocated, notAllocated, openingBalance, clubCashOnHand, waitingOnYou, headroom, otherBooksMovement,
 } from '../../lib/club-money-figures.ts';
+import { fiscalYearOf, fiscalYearOptions, type FiscalSetting } from '../../lib/club-fiscal-year.ts';
 
 /**
  * Club Tier Stage 3b — the club's year, assembled (lib/club-budget-report.ts) over the definitions
@@ -19,7 +20,10 @@ import {
  */
 
 const TODAY = '2026-09-30';
-const YEAR = 2026;
+/** A January club with no fiscal-year rows: every year is the calendar year, exactly as before Stage 3c. */
+const JAN: FiscalSetting = { firstMonth: 1, rows: [] };
+const YEAR = fiscalYearOf('2026-06-01', JAN);
+const yearOf = (n: number) => fiscalYearOf(`${n}-06-01`, JAN);
 const DIAMOND = { categoryId: 'cat-fields', categoryName: 'Field & facilities', itemId: 'item-diamond', itemName: 'Diamond permits' };
 const INSURANCE = { categoryId: 'cat-ins', categoryName: 'Insurance', itemId: 'item-ins', itemName: 'Club insurance' };
 const EVENTS = { categoryId: 'cat-events', categoryName: 'Events', itemId: 'item-banquet', itemName: 'Year-end banquet deposit' };
@@ -47,7 +51,7 @@ const filed = (w: typeof DIAMOND) => ({ budgetCategoryId: w.categoryId, budgetCa
 function allocation(id: string, over: Partial<ClubAllocationFacts> & { shares?: number[]; due?: string; paid?: boolean[] } = {}): ClubAllocationFacts {
   const shares = over.shares ?? [600, 600];
   return {
-    id, description: `Allocation ${id}`, createdOn: '2026-03-01', sourceBudgetLineId: 'line-diamond', lineYear: YEAR,
+    id, description: `Allocation ${id}`, createdOn: '2026-03-01', sourceBudgetLineId: 'line-diamond', lineYearKey: YEAR.key,
     splits: shares.map((amount, i) => ({
       id: `${id}-s${i}`, teamId: `team-${i}`, teamName: `Team ${i}`, amount,
       installments: [{
@@ -69,7 +73,7 @@ function report(over: Partial<Parameters<typeof buildClubReport>[0]> = {}): Club
   // The pending caption reads every date; by default, the pending lines among the year's.
   const pendingLines = (over.bookLines ?? []).filter(l => l.status === 'pending');
   return buildClubReport({
-    year: YEAR, today: TODAY,
+    year: YEAR, setting: JAN, today: TODAY,
     lines: [planLine('line-diamond', DIAMOND, 14000)],
     allocations: [], requests: [], bookLines: [], pendingLines, books, openingBalance: 4000,
     categoryOrder: { 'cat-fields': 2, 'cat-ins': 7, 'cat-events': 6, 'cat-sponsor': 10, [TEAM_SUPPORT_WORD_IDS.categoryId]: 11 },
@@ -190,11 +194,11 @@ describe('the plan: Allocated, Not allocated, From the teams (C11, Ask 4b)', () 
     const plan = buildClubPlan({ year: YEAR, today: TODAY, lines, allocations: [a1], categoryOrder: {}, openingBalance: 0 });
     const { months, quarters } = withPeriodViews(plan, lines, {}).periodView;
     // The year's twelve months, always — the club's plan opens on its first day whatever is dated.
-    assert.deepEqual(months.columns.filter(c => !c.unscheduled).map(c => c.key)[0], `${YEAR}-01`);
+    assert.deepEqual(months.columns.filter(c => !c.unscheduled).map(c => c.key)[0], '2026-01');
     assert.equal(months.columns.filter(c => !c.unscheduled).length, 12);
     assert.equal(quarters.columns.filter(c => !c.unscheduled).length, 4);
     // From the teams is the lead revenue row, in the month its installments fall due.
-    assert.equal(months.installments?.cells[`${YEAR}-05`], 12150);
+    assert.equal(months.installments?.cells['2026-05'], 12150);
     assert.equal(months.installments?.total, plan.revenue.fromTheTeams.planned);
     // Both granularities close where the List closes.
     assert.equal(months.balance.seasonClosing, plan.closingBalance);
@@ -226,12 +230,19 @@ describe('a team outside the reader\'s groups is counted, never named (B11, as 3
 
 describe('the year rule', () => {
   it('an allocation belongs to its line\'s year; one with no line to the year its first installment falls due', () => {
-    assert.equal(allocationInYear(allocation('x', { lineYear: 2025 }), 2025), true);
-    assert.equal(allocationInYear(allocation('y', { sourceBudgetLineId: null, lineYear: null, due: '2027-02-01' }), 2027), true);
+    assert.equal(allocationInYear(allocation('x', { lineYearKey: yearOf(2025).key }), yearOf(2025), JAN), true);
+    assert.equal(allocationInYear(allocation('y', { sourceBudgetLineId: null, lineYearKey: null, due: '2027-02-01' }), yearOf(2027), JAN), true);
+  });
+  it('on a September fiscal year, a bill with no line counts in the fiscal year its first payment falls due in (Stage 3c)', () => {
+    const SEP: FiscalSetting = { firstMonth: 9, rows: [] };
+    const y = fiscalYearOf('2026-10-01', SEP);
+    assert.equal(y.name, '2026–27');
+    assert.equal(allocationInYear(allocation('z', { sourceBudgetLineId: null, lineYearKey: null, due: '2027-02-01' }), y, SEP), true);
+    assert.equal(allocationInYear(allocation('w', { sourceBudgetLineId: null, lineYearKey: null, due: '2026-08-31' }), y, SEP), false);
   });
   it('the Year pill offers every year with a line, this year, and always the next — never two ahead', () => {
-    assert.deepEqual(planYears([2025], TODAY), [2027, 2026, 2025]);
-    assert.deepEqual(planYears([], '2026-01-02'), [2027, 2026]);
+    assert.deepEqual(fiscalYearOptions(JAN, TODAY, { '2025-01-01': 3 }).map(o => o.name), ['2027', '2026', '2025']);
+    assert.deepEqual(fiscalYearOptions(JAN, '2026-01-02', {}).map(o => o.name), ['2027', '2026']);
   });
 });
 
@@ -274,7 +285,7 @@ describe('Months (Ask 5): every column opens + nets = closes; Cash closes this m
     assert.equal(r.months.balances.scheduled.opening, r.months.cashOnHand);
   });
   it('Scheduled is by DUE DATE in the year: last year\'s bill still owed this spring is this spring\'s money (found by /review)', () => {
-    const old = allocation('old', { shares: [300], lineYear: 2025, sourceBudgetLineId: 'line-2025', due: '2026-04-01' });
+    const old = allocation('old', { shares: [300], lineYearKey: yearOf(2025).key, sourceBudgetLineId: 'line-2025', due: '2026-04-01' });
     const done = allocation('done', { shares: [400], due: '2025-11-01' });
     const r2 = report({ allocations: [old, done] });
     const april = r2.months.months.indexOf('2026-04');
@@ -317,7 +328,7 @@ describe('the board summary reads Budget vs. Actual, never computes it again (As
     { id: 'w2', teamId: 'team-1', teamName: 'Team 1', requestType: 'charge_to_org', status: 'pending', amount: 455, description: 'y', createdOn: TODAY, accountingEntryId: null },
   ];
   const s = buildBoardSummary({
-    report: r, allocations: [a1], requests: waiting.map((w, i) => ({ ...w, holdingPayout: i === 1 })), books,
+    report: r, setting: JAN, allocations: [a1], requests: waiting.map((w, i) => ({ ...w, holdingPayout: i === 1 })), books,
     teams: [{ teamId: 'team-0', teamName: 'Team 0', groupName: null, isArchived: false }, { teamId: 'team-1', teamName: 'Team 1', groupName: null, isArchived: false }],
     teamCash: [{ teamId: 'team-0', cash: 1200, season: null }, { teamId: 'team-1', cash: -80, season: null }],
   });

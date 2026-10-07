@@ -1,4 +1,6 @@
 import 'server-only';
+import { loadFiscalSetting } from './club-fiscal-year-server';
+import { closedThrough } from './club-fiscal-year';
 import { supabaseAdmin } from './supabase-admin';
 import { getClubOwnedLedgers, getLedgerById, resolvePersonNamer } from './db';
 import { fetchAll, fetchAllIn } from './supabase-paging';
@@ -45,6 +47,8 @@ interface BookLine extends BookLineFacts, FilingFacts {
   voidReason: string | null;
   voidedBy: string | null;
   voidedAt: string | null;
+  /** The day a pending line from a closed fiscal year was written, kept when it cleared (mig 318). */
+  writtenOn: string | null;
 }
 
 export interface BookRowOut {
@@ -79,6 +83,14 @@ export interface BookRowOut {
   /** What the ledger lets you do with it: edit + void a hand line, void both halves of a club
    *  transfer, nothing for a line from a source or on a team's book. */
   can: { edit: boolean; void: 'line' | 'both_halves' | null };
+  /** Dated in the club's CLOSED fiscal years, on a book the club owns (Stage 3c, Ask 8d): no edit, void, undo or
+   *  reverse is offered (`can` is empty) — to change it, reopen the year. */
+  locked: boolean;
+  /** A PENDING line in a closed year: the one change allowed — it clears, posted and dated the day it clears in the
+   *  open year (call 2). The window's one action on a locked line. */
+  clears: boolean;
+  /** The day it was written, when a closed year's pending line cleared (shown beside its date). */
+  writtenOn: string | null;
   recordedBy: string | null;
   recordedAt: string;
   voided: null | { reason: string | null; by: string | null; at: string | null };
@@ -91,6 +103,9 @@ export interface BookRowOut {
 
 export interface BookRead {
   ledger: { id: string; name: string; kind: LedgerKind; entityId: string | null };
+  /** The club's books are closed through this day (its newest closed fiscal year's last day), or null — a line on
+   *  or before it is `locked` (Stage 3c). Null on a team's book (the coaches', never locked for the club's year). */
+  closedThrough: string | null;
   balance: number;
   startingBalance: number;
   endingBalance: number;
@@ -133,6 +148,7 @@ function mapLine(r: Record<string, any>): BookLine {
     payeeId: r.payee_id ?? null, payeePayer: r.payee_payer ?? null, notes: r.notes ?? null,
     createdBy: r.created_by ?? null, voidReason: r.void_reason ?? null, voidedBy: r.voided_by ?? null,
     voidedAt: r.voided_at ?? null,
+    writtenOn: r.written_on ?? null,
   };
 }
 
@@ -258,7 +274,7 @@ type Lookups = Awaited<ReturnType<typeof lookupsFor>>;
 function shapeLine(
   l: BookLine,
   balance: number | null,
-  book: { kind: LedgerKind; entityId: string | null; orgName: string },
+  book: { kind: LedgerKind; entityId: string | null; orgName: string; closedThrough: string | null },
   x: Lookups,
   filed: LedgerFiling,
 ): BookRowOut {
@@ -314,7 +330,10 @@ function shapeLine(
      nothing on it is the club's to file. "Not filed" is a null here (the window offers the picker). */
   const filedUnder = filed.filing && filed.filing.categoryId !== NOT_FILED_ID ? filed.filing : null;
 
-  const fixed = book.kind === 'team' || l.status === 'void' || isSourcedLine(l, !!inst || !!req);
+  // ⚖ THE LOCK (Stage 3c): a line on a club-owned book dated in a closed fiscal year offers nothing but, if it is
+  // pending, its clearing (a team's book is the coaches' and never locked for the club's year).
+  const locked = book.kind !== 'team' && book.closedThrough !== null && l.entryDate <= book.closedThrough;
+  const fixed = book.kind === 'team' || l.status === 'void' || locked || isSourcedLine(l, !!inst || !!req);
   const can: BookRowOut['can'] = fixed
     ? { edit: false, void: null }
     : isTransfer(l)
@@ -327,6 +346,7 @@ function shapeLine(
     type,
     moneyOut: moneyIn ? null : l.amount, moneyIn: moneyIn ? l.amount : null,
     balance, status: l.status, source, can,
+    locked, clears: locked && l.status === 'pending' && !isSourcedLine(l, !!inst || !!req), writtenOn: l.writtenOn,
     recordedBy: x.nameOf(l.createdBy), recordedAt: l.createdAt,
     voided: l.status === 'void' ? { reason: l.voidReason, by: x.nameOf(l.voidedBy), at: l.voidedAt } : null,
     description: l.description, notes: l.notes, paymentMethod: l.paymentMethod, payeeId: l.payeeId, payeeName,
@@ -354,12 +374,14 @@ export async function readBook(
   const lines = fetchAll<Record<string, any>>((a, b) =>
     supabaseAdmin.from('accounting_entries').select(`*, ${FILING_SELECT}`).eq('ledger_id', ledgerId)
       .order('entry_date').order('created_at').order('id').range(a, b)).then(rows => rows.map(mapLine));
-  const [all, categories, allocationOf] = await Promise.all([
+  const [all, categories, allocationOf, setting] = await Promise.all([
     lines,
     // The filter's list: the club's own words. Not for the export or for a team's (read-only) book.
     opts.all || kind === 'team' ? Promise.resolve([] as string[]) : clubCategories(orgId),
     kind === 'team' ? Promise.resolve(new Map() as AllocationOf) : lines.then(ls => allocationsOf(orgId, ls)),
+    kind === 'team' ? Promise.resolve(null) : loadFiscalSetting(orgId),
   ]);
+  const through = setting ? closedThrough(setting) : null;
 
   // Every line filed ONCE (`ledgerFiling`): the Category and Item columns, both filters, the items list and the line
   // window all read this, so none of them can file a line differently from another.
@@ -389,10 +411,11 @@ export async function readBook(
   const offset = opts.all ? 0 : Math.max(opts.offset ?? 0, 0);
   const page = narrowed.slice(offset, offset + limit);
   const lookups = await lookupsFor(orgId, page.map(r => r.line));
-  const book = { kind, entityId: ledger.entityId, orgName };
+  const book = { kind, entityId: ledger.entityId, orgName, closedThrough: through };
 
   return {
     ledger: { id: ledger.id, name: ledger.name, kind, entityId: ledger.entityId },
+    closedThrough: through,
     balance: win.balance,
     startingBalance: win.startingBalance,
     endingBalance: win.endingBalance,

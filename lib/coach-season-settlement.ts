@@ -1,4 +1,5 @@
 import 'server-only';
+import { getSeasonClubBills } from './coach-club-bills';
 import { createHash } from 'node:crypto';
 import { isFundingKind } from './coach-budget-totals';
 import { getRealisedFundraiserEntries } from './db';
@@ -83,7 +84,7 @@ export async function loadSeasonSettlement(opts: {
 
   const [
     rosterPlayers, schedules, payments, credits, payouts, expenses,
-    surplusRes, adjustmentsRes, splitsRes, requestsRes, linesRes, moneyInRecords, standings,
+    surplusRes, adjustmentsRes, allocInstallsRes, requestsRes, linesRes, moneyInRecords, standings,
   ] = await Promise.all([
     getRepRosterPlayers(pyId),
     getRepPlayerDuesSchedules(pyId),
@@ -97,7 +98,12 @@ export async function loadSeasonSettlement(opts: {
        that was itself removed when the entries read became unconditional — so it had been fetching
        a list nobody read, one round trip on every load of this sheet and on every write that
        recomputes it. */
-    supabaseAdmin.from('rep_allocation_splits').select('id').eq('program_year_id', pyId),
+    /* ⚖ CLUB TIER STAGE 3c, S3C-11 (call 1): the pot is what the team holds, so it reads the club payments THIS season
+       carries — the money that left while it ran, whichever season's bill — through the one reader the register and
+       Cash on hand share (`getSeasonClubBills`). It needs only the team and the season, so it rides the first wave. */
+    getSeasonClubBills(programYear.teamId, pyId).then(bills => ({
+      data: bills.flatMap(b => b.installments).map((i): AllocInstallRow => ({ amount: i.amount, paid_at: i.paidAt, sent_at: i.sentAt })),
+    })),
     supabaseAdmin.from('rep_team_payment_requests').select('request_type, amount, status')
       .eq('team_id', programYear.teamId).eq('program_year_id', pyId),
     supabaseAdmin.from('rep_budget_lines').select('total_amount, line_kind').eq('program_year_id', pyId),
@@ -108,11 +114,10 @@ export async function loadSeasonSettlement(opts: {
     getCommitmentStandings(pyId),
   ]);
 
-  // The second wave. All three depend only on ids the first wave returned and on NOTHING from
-  // each other, so they go together — awaiting them one at a time cost two extra round trips on
+  // The second wave. Both depend only on ids the first wave returned and on NOTHING from
+  // each other, so they go together — awaiting them one at a time cost an extra round trip on
   // every read of this sheet, and a write pays for the sheet twice.
-  const splitIds = (splitsRes.data ?? []).map((s: { id: string }) => s.id);
-  const [installments, entriesRes, allocInstallsRes] = await Promise.all([
+  const [installments, entriesRes] = await Promise.all([
     getRepDuesInstallmentsBySchedules(schedules.map(s => s.id)),
     // ⚠ REALISED ONLY — the pot is money the team is HOLDING. A pledged sponsor's entry exists
     // but nothing has arrived, and this pot is what families are paid out of: counting a promise
@@ -121,9 +126,6 @@ export async function loadSeasonSettlement(opts: {
     // "are there any?" ternary it replaced made the surrounding Promise.all infer one union type
     // across all three results instead of a tuple. That ternary's own query is gone above.
     getRealisedFundraiserEntries(pyId),
-    splitIds.length
-      ? supabaseAdmin.from('rep_allocation_installments').select('amount, paid_at, sent_at').in('split_id', splitIds)
-      : Promise.resolve({ data: [] as AllocInstallRow[] }),
   ]);
   const installmentsByPlayer = groupByPlayer(installments);
 

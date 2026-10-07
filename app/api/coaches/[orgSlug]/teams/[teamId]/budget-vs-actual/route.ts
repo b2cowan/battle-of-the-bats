@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import { getSeasonClubBills } from '@/lib/coach-club-bills';
 import {
   getRepDuesPaymentsByProgramYear, getRepDuesPayoutsByProgramYear,
   getRepDuesCreditsByProgramYear,
   getRepDuesPaidBackByCredit,
   getSeasonFundraiserEntries, getRepTeamMoneyIn, getDerivedIncomeClaims,
-  getRepAllocationSplitsForTeam, getCommitmentStandings, getSeasonName,
+  getCommitmentStandings, getSeasonName,
 } from '@/lib/db';
 import { duesPositionByInstallment } from '@/lib/coach-dues-remaining';
 import { installmentLabel, paymentLabel, effectivePayerId } from '@/lib/payable-standing';
@@ -225,8 +226,12 @@ export const GET = withObservability(async (req: Request,
 
      Both legs depend only on `teamId` / `programYear.id`, both known here, so they ride one
      `Promise.all`. */
+  /* ⚖ CLUB TIER STAGE 3c, S3C-11 (owner 2026-10-07, call 1): a club payment counts in the season RUNNING when it
+     was recorded, not in its bill's season — `getSeasonClubBills` (lib/coach-club-bills.ts), the one reader every
+     coach cash read shares. Each bill carries only the installments THIS season reads: its own bills' still-owed
+     installments (the forward view), and every payment carried by this season, whichever season's bill it paid. */
   const [clubSplits, clubReqRes] = await Promise.all([
-    getRepAllocationSplitsForTeam(teamId, programYear.id),
+    getSeasonClubBills(teamId, programYear.id),
     /* ⚠⚠ NO LONGER `.eq('status', 'approved')` (Option D, owner ruling 2026-08-23). A PENDING
        request now reaches the SCHEDULED forward view — "Asked of the club" —
        exactly as it reaches the register's, on the same argument that put it there: this book
@@ -1260,7 +1265,8 @@ export const GET = withObservability(async (req: Request,
      follow on the Actual side. Money the team owes does not become invisible for want of a label. */
   for (const split of clubSplits) {
     const cat = gridCategory(split.budgetCategoryId, split.budgetCategoryName);
-    const count = split.installments.length;
+    // The WHOLE bill's count ("installment 2 of 3"): this season reads only some of its installments (S3C-11).
+    const count = split.installmentCount;
     const description = split.allocationDescription || 'Club allocation';
     for (const inst of split.installments) {
       if (clubInstallmentLeftTeamOn(inst)) continue; // sent or received: settled above, never scheduled

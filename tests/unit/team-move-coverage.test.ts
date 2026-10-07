@@ -83,6 +83,8 @@ const STAYS: Record<string, string> = {
   league_email_log: 'house league',
   // ── Org-level setup a Coaches Portal does not use ────────────────────────────────────────────
   org_budget_lines: 'the club-side org budget (a Coaches Portal has none); moved rows that pointed at one are cleared',
+  org_fiscal_years: 'the club’s fiscal years (mig 318) — the years its own plan and books are closed by; a team’s money runs on seasons, never fiscal years, so a Coaches Portal has none to move',
+  org_fiscal_year_reopenings: 'the history of the club’s own closes (mig 318), kept with its fiscal years',
   org_venues: 'the org venue library; a Coaches Portal keeps its places in rep_team_places, which moves',
   org_venue_facilities: 'the org venue library',
   rep_team_groups: 'the org’s own groups; the club files the team under its groups (the team’s group is cleared)',

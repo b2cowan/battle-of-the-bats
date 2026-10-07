@@ -39,7 +39,7 @@ export const CLUB_COMPARE_BASES: { id: CompareBasis; label: string }[] = [
   { id: 'season', label: 'Whole year' },
   { id: 'todate', label: 'To date' },
 ];
-export const clubNetRowLabel = (basis: CompareBasis, year: number) => (basis === 'todate' ? 'Net to date' : netForYearWord(year));
+export const clubNetRowLabel = (basis: CompareBasis, year: string) => (basis === 'todate' ? 'Net to date' : netForYearWord(year));
 
 // ── The Statement's notes ──────────────────────────────────────────────────────────────────────
 
@@ -101,7 +101,10 @@ export function clubStatementNotes(input: ClubStatementNoteInput): ReportNote[] 
 
 export interface ClubMonthsNoteInput {
   lens: MoneyLens;
-  year: number;
+  /** The fiscal year's name. */
+  year: string;
+  /** The opening is the year before's LOCKED closing (Stage 3c, Ask 4): its name and the day it was closed. */
+  carriedFrom?: { name: string; closedOn: string } | null;
   /** Pre-formatted: the year's opening (worked out from the books), its first day, today's cash. */
   opening: string;
   firstDay: string;
@@ -116,10 +119,17 @@ export interface ClubMonthsNoteInput {
 
 export function clubMonthsNotes(input: ClubMonthsNoteInput): ReportNote[] {
   const out: ReportNote[] = [];
-  const opening = note('club-opening', [
-    { text: 'The year opened with ' }, { text: input.opening, bold: true },
-    { text: `, what the club’s books held on ${input.firstDay}. A line dated before ${input.firstDay} that is added or changed later moves it.` },
-  ]);
+  // ⚖ The opening says where it comes from: the year before's closing, locked (Ask 4 — a DRAFT for /marketing), or
+  // what the books held on the first day, which a line dated before it can still move (3b, settled).
+  const opening = note('club-opening', input.carriedFrom
+    ? [
+      { text: 'The year opened with ' }, { text: input.opening, bold: true },
+      { text: `, ${input.carriedFrom.name}’s closing, locked when it closed on ${input.carriedFrom.closedOn}.` },
+    ]
+    : [
+      { text: 'The year opened with ' }, { text: input.opening, bold: true },
+      { text: `, what the club’s books held on ${input.firstDay}. A line dated before ${input.firstDay} that is added or changed later moves it.` },
+    ]);
   switch (input.lens) {
     case 'budget':
       out.push(opening, note('club-basis-budget', [
@@ -168,12 +178,12 @@ export function clubMonthsNotes(input: ClubMonthsNoteInput): ReportNote[] {
 /** What the Statement's file reads of a section — the server's statement or the screen's To date re-cut alike. */
 interface FileFigures { budgeted: number; actual: number; variance: number }
 interface FileSection extends FileFigures {
-  categories: readonly (FileFigures & { categoryName: string; inPlan: boolean; items: readonly (FileFigures & { itemName: string; inPlan: boolean })[] })[];
+  categories: readonly (FileFigures & { categoryName: string; inPlan: boolean; items: readonly (FileFigures & { itemName: string; inPlan: boolean; plannedIn?: string })[] })[];
 }
 
 /** The Statement's file at the basis on screen: the coach's columns, "Plan to date" under To date. */
 export function clubStatementFile(
-  statement: { revenue: FileSection; expenses: FileSection; net: FileFigures }, basis: CompareBasis, year: number,
+  statement: { revenue: FileSection; expenses: FileSection; net: FileFigures }, basis: CompareBasis, year: string,
 ): { columns: ExportColumnDef[]; rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[] } {
   const columns: ExportColumnDef[] = [
     { label: 'Category / line item', key: 'item', format: 'text' },
@@ -189,7 +199,12 @@ export function clubStatementFile(
     for (const c of s.categories) {
       // An off-plan row's Budgeted is blank in a file — the screen's amber dash means "nothing planned".
       push({ item: c.categoryName, budgeted: c.inPlan ? c.budgeted : '', actual: c.actual, variance: c.variance }, 'category');
-      for (const i of c.items) push({ item: `  — ${i.itemName}`, budgeted: i.inPlan ? i.budgeted : '', actual: i.actual, variance: i.variance }, 'item');
+      // An earlier year's bills paid this year (Stage 3c): planned in their own year — Budgeted and Variance blank.
+      for (const i of c.items) {
+        push(i.plannedIn
+          ? { item: `  — ${i.itemName}`, budgeted: '', actual: i.actual, variance: '' }
+          : { item: `  — ${i.itemName}`, budgeted: i.inPlan ? i.budgeted : '', actual: i.actual, variance: i.variance }, 'item');
+      }
     }
     push({ item: total, budgeted: s.budgeted, actual: s.actual, variance: s.variance }, 'total');
   };

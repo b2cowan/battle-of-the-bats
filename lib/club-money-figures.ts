@@ -39,6 +39,7 @@
 import { isInstallmentOverdue } from './dues-status';
 import { addCalendarDays, daysBetweenDateStrings, orgDayKey } from './timezone';
 import { toCents as cents, toDollars as dollars } from './coach-register';
+import { fiscalYearOf, type FiscalSetting, type FiscalYear } from './club-fiscal-year';
 
 /** The window Coming due, the Overview brief and the reminders all use. One number, three surfaces. */
 export const COMING_DUE_DAYS = 14;
@@ -97,6 +98,22 @@ export function clubInstallmentLeftTeamOn(i: MoneyWhereabouts): string | null {
   if (i.sentAt) return i.sentOn ?? orgDayKey(i.sentAt);
   if (i.paidAt) return i.paidOn ?? orgDayKey(i.paidAt);
   return null;
+}
+
+/**
+ * ⚖ WHICH SEASON'S CASH READS A CLUB INSTALLMENT (Club Tier Stage 3c, S3C-11 — owner 2026-10-07, call 1). A payment
+ * counts in the season RUNNING WHEN IT WAS RECORDED (`carriedByProgramYearId`, kept by mig 318's trigger on every
+ * writer), whatever day was typed; money still the team's belongs to its BILL's season (the forward view: still
+ * owed). A payment carried by nobody (recorded while the team had no running season) is in no season's cash until
+ * the next season to run carries it. Every coach cash read asks this through `getSeasonClubBills`
+ * (lib/coach-club-bills.ts).
+ */
+export function seasonReadsClubInstallment(
+  i: MoneyWhereabouts & { carriedByProgramYearId?: string | null },
+  billSeasonId: string,
+  seasonId: string,
+): boolean {
+  return clubInstallmentLeftTeamOn(i) !== null ? i.carriedByProgramYearId === seasonId : billSeasonId === seasonId;
 }
 
 /** The coach's chip for money that has left the team and not reached the club. */
@@ -516,28 +533,42 @@ export function isClubBook(kind: string): boolean {
   return kind === 'org';
 }
 
-// ── The year rule ─────────────────────────────────────────────────────────────────────────────
+// ── The year rule (Club Tier Stage 3c: the FISCAL year — lib/club-fiscal-year.ts) ───────────────
 
 /**
- * THE YEAR RULE. An allocation belongs to the year of the line it was drawn from, and one made
- * without a line to the year its first installment falls due. A year's Allocated, Collected and
- * Outstanding read the same allocations. A ledger line belongs to the year its date falls in. Until
- * 3c names the year and sets its months, a year is the calendar year.
+ * THE YEAR RULE. An allocation belongs to the fiscal year of the line it was drawn from, and one made
+ * without a line to the fiscal year its first installment falls due in. A year's Allocated, Collected and
+ * Outstanding read the same allocations. A ledger line belongs to the fiscal year its date falls in. The
+ * year is the club's fiscal year (`fiscalYearOf`: its first month and its rows), never worked out by hand —
+ * `tests/unit/club-money-one-definition-guard.test.ts` refuses a by-hand year in the club's money files.
+ * Returns the year's KEY (its first day).
  */
-export function allocationYear(a: { lineYear: number | null; firstDueDate: string | null; createdOn: string }): number {
-  if (a.lineYear != null) return a.lineYear;
-  return Number((a.firstDueDate ?? a.createdOn).slice(0, 4));
+export function allocationYear(
+  a: { lineYearKey: string | null; firstDueDate: string | null; createdOn: string },
+  setting: FiscalSetting,
+): string {
+  if (a.lineYearKey != null) return a.lineYearKey;
+  return fiscalYearOf(a.firstDueDate ?? a.createdOn, setting).key;
 }
 
-/** The ledger half of the year rule, and the year a page opens on: the club year a day falls in. Until 3c,
- *  the calendar year. */
-export function clubYearOf(day: string): number {
-  return Number(day.slice(0, 4));
+/** The ledger half of the year rule, and the year a page opens on: the fiscal year a day falls in. */
+export function clubYearOf(day: string, setting: FiscalSetting): FiscalYear {
+  return fiscalYearOf(day, setting);
 }
 
-/** The year's first and last day (inclusive). Until 3c, the calendar year. 3c moves THIS, and only this. */
-export function clubYearSpan(year: number): { first: string; last: string } {
-  return { first: `${year}-01-01`, last: `${year}-12-31` };
+/** A fiscal year's first and last day (inclusive). */
+export function clubYearSpan(year: Pick<FiscalYear, 'firstDay' | 'lastDay'>): { first: string; last: string } {
+  return { first: year.firstDay, last: year.lastDay };
+}
+
+/**
+ * THE CARRY (Ask 4). A year whose predecessor is CLOSED opens on that stored closing, locked — a line
+ * backdated into the closed year can't move it (the lock refuses the line). Otherwise the opening is worked
+ * out from the books, as 3b's `openingBalance` does. `check:club-money-arithmetic` proves opening(next) =
+ * closing(closed) to the cent.
+ */
+export function carriedOpening(predecessorClosing: number | null, fromTheBooks: number): number {
+  return predecessorClosing ?? fromTheBooks;
 }
 
 // ── The plan ─────────────────────────────────────────────────────────────────────────────────
@@ -690,11 +721,11 @@ export function clubCashOnHand(books: readonly { kind: string; balance: number }
 }
 
 /**
- * OPENING BALANCE. What every book the club owns held at the start of the year's first day: the
+ * OPENING BALANCE. What every book the club owns held at the start of the fiscal year's first day: the
  * posted lines dated before it, added up. Worked out from the books, never typed (a coach's season
- * carries a typed opening because its records start fresh; the club's books never do). Until 3c it
- * is Jan 1; 3c moves the day and locks a closed year, so a line backdated into it can't move the
- * figure.
+ * carries a typed opening because its records start fresh; the club's books never do). Once the year
+ * before is CLOSED, the opening is that year's stored closing instead (`carriedOpening`) — and the two
+ * agree, because the lock refuses any line dated into the closed year.
  *
  * Takes each club-owned book's totals for the window that ENDS the day before the year's first day.
  */

@@ -11,6 +11,7 @@ import { SOURCED_LINE_READ_ONLY, TEAM_BOOK_READ_ONLY } from '@/lib/club-money-wo
 import { isSourcedLine } from '@/lib/club-ledger';
 import { readFiledUnder } from '@/lib/club-budget-writes';
 import { moveRefused } from '@/lib/club-money-route';
+import { closedYearFromError, isClosedYearError, loadFiscalSetting, refuseIfClosed, refuseIfClosedFor } from '@/lib/club-fiscal-year-server';
 
 /**
  * ⚖ A LINE WRITTEN BY AN ALLOCATION, A REQUEST OR A HOUSE-LEAGUE FEE IS CHANGED WHERE IT CAME FROM
@@ -74,7 +75,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
 
   const { data: existing } = await supabaseAdmin
     .from('accounting_entries')
-    .select('id, entry_type, status, category, source_module, linked_entry_id, budget_item_id')
+    .select('id, entry_date, entry_type, status, category, source_module, linked_entry_id, budget_item_id, budget_category_id, description, amount, payment_method, payee_id, payee_payer, notes')
     .eq('id', entryId)
     .eq('ledger_id', ledgerId)
     .maybeSingle();
@@ -161,7 +162,38 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     }
   }
 
-  await updateEntry(entryId, ledgerId, input);
+  /* ⚖ THE FISCAL YEAR'S LOCK (Stage 3c, Asks 1 and 8d; call 2). A line dated in a closed year is never edited
+     (to change it, reopen the year), and no line is dated into one. The ONE exception: a PENDING line from a
+     closed year clears — posted, dated the day it cleared in an open year, nothing else changed (it counted
+     nowhere in the closed year; the database keeps the day it was written). */
+  /* What the edit CHANGES: a field sent with the value it already holds changes nothing — the database's lock
+     compares the row's values the same way, so a form that sends the whole record never reads as an edit of a
+     closed year's line (or as more than a clearing). Nothing changed at all: nothing to write. */
+  const COLUMN: Record<string, string> = {
+    entryDate: 'entry_date', description: 'description', amount: 'amount', entryType: 'entry_type', status: 'status',
+    paymentMethod: 'payment_method', payeeId: 'payee_id', payeePayer: 'payee_payer', notes: 'notes',
+    budgetItemId: 'budget_item_id', budgetCategoryId: 'budget_category_id',
+  };
+  const held = (k: string) => {
+    const v = (existing as Record<string, unknown>)[COLUMN[k]];
+    return k === 'amount' ? Number(v) : v ?? null;
+  };
+  const changes = Object.keys(input).filter(k => (input as Record<string, unknown>)[k] !== held(k));
+  if (changes.length === 0) return NextResponse.json({ ok: true });
+  const setting = await loadFiscalSetting(ctx!.org.id);
+  const CLEARING = new Set(['status', 'entryDate', 'payeeId', 'budgetItemId', 'budgetCategoryId']);
+  const clearing = existing.status === 'pending' && input.status === 'posted' && changes.every(k => CLEARING.has(k));
+  const closedOld = clearing ? null : refuseIfClosed(setting, [existing.entry_date], { canMove: true, kind: 'recorded' });
+  if (closedOld) return moveRefused(closedOld);
+  const closedNew = refuseIfClosed(setting, [input.entryDate ?? existing.entry_date], { canMove: true, kind: 'date' });
+  if (closedNew) return moveRefused(closedNew);
+
+  try {
+    await updateEntry(entryId, ledgerId, input);
+  } catch (e) {
+    if (isClosedYearError(e)) return moveRefused(await closedYearFromError(ctx!.org.id, [existing.entry_date, input.entryDate]));
+    throw e;
+  }
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/accounting/ledgers/[ledgerId]/entries/[entryId]' });
 
@@ -186,7 +218,7 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
 
   const { data: existing } = await supabaseAdmin
     .from('accounting_entries')
-    .select('id, status, entry_type, category, source_module, linked_entry_id')
+    .select('id, entry_date, status, entry_type, category, source_module, linked_entry_id')
     .eq('id', entryId)
     .eq('ledger_id', ledgerId)
     .maybeSingle();
@@ -206,6 +238,14 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   // The reason prints under the line (Ask 3). Optional here only until session 2's window asks for it.
   const body = await req.json().catch(() => ({})) as Record<string, unknown>;
   const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 500) || null : null;
-  await voidEntry(entryId, ledgerId, { reason, by: ctx!.user.id });
+  // ⚖ Void is refused on a line dated in a closed fiscal year (Ask 8d) — reopen the year to change it.
+  const closed = await refuseIfClosedFor(ctx!.org.id, [existing.entry_date], 'recorded');
+  if (closed) return moveRefused(closed);
+  try {
+    await voidEntry(entryId, ledgerId, { reason, by: ctx!.user.id });
+  } catch (e) {
+    if (isClosedYearError(e)) return moveRefused(await closedYearFromError(ctx!.org.id, [existing.entry_date]));
+    throw e;
+  }
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/accounting/ledgers/[ledgerId]/entries/[entryId]' });

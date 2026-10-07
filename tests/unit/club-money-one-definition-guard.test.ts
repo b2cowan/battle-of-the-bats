@@ -122,3 +122,65 @@ describe('nothing on the club side computes a figure by hand', () => {
     }
   });
 });
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * ONE DEFINITION OF THE YEAR (Club Tier Stage 3c; S3C-01, S3C-02, S3C-03). The club's year is its FISCAL year
+ * (lib/club-fiscal-year.ts — its first month and its rows); every club money read returns the year it read, so no
+ * file works a year out by hand: no date's first four characters, no `${year}-01-01` span, no UTC year. The
+ * definition module is the one place allowed to take a date apart.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+const YEAR_BY_HAND: [string, RegExp][] = [
+  ['a date\'s first four characters read as a year', /\.slice\(\s*0\s*,\s*4\s*\)/],
+  ['a calendar-year span written by hand', /\$\{[^}]+\}-(?:01-01|12-31)|['"]-(?:01-01|12-31)['"]/],
+  ['a year read on the UTC clock', /getUTCFullYear\(/],
+];
+
+/**
+ * PAGES that still work a year out by hand, each with its lines and the session that empties it. ⚠ THIS LIST
+ * ONLY SHRINKS. (3c session 1 moved the rest onto the server's year: Budget vs. Actual's current-year test and
+ * Ledger doors, StatementBehindWindow, the Overview, the Filed-under hint, and both payee pages.)
+ */
+const YEAR_NOT_YET: Record<string, string> = {
+  'app/[orgSlug]/admin/accounting/allocations/page.tsx':
+    'lines 136, 143 — "This year" from today\'s first four characters and each allocation\'s creation stamp in UTC; '
+    + 'the allocations read now returns each one\'s fiscal `year` (3c session 1). Session 2 reads it.',
+};
+
+describe('one definition of the year — nothing in the club\'s money files works a year out by hand', () => {
+  const repo = path.join(import.meta.dirname, '..', '..');
+  const MONEY_LIB = /^club-(money|budget|ledger|payee|checklist|fiscal|year|team-cash).*\.ts$/;
+  const DEFINITION = 'lib/club-fiscal-year.ts';
+  const files = [
+    ...walk(path.join(repo, 'app', 'api', 'admin', 'accounting')),
+    ...walk(path.join(repo, 'app', '[orgSlug]', 'admin', 'accounting')),
+    ...walk(path.join(repo, 'components', 'admin', 'kit', 'club', 'money')),
+    ...readdirSync(path.join(repo, 'lib')).filter(f => MONEY_LIB.test(f)).map(f => path.join(repo, 'lib', f)),
+  ].map(f => path.relative(repo, f).split(path.sep).join('/')).filter(f => f !== DEFINITION && f !== 'lib/club-money-figures.ts');
+
+  it('the scan sees the surfaces it guards, and never the definition itself', () => {
+    assert.ok(files.includes('lib/club-budget-report.ts'));
+    assert.ok(files.includes('app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx'));
+    assert.ok(files.includes('components/admin/kit/club/money/LedgerWindows.tsx'));
+    assert.ok(!files.includes(DEFINITION));
+  });
+  for (const [what, pattern] of YEAR_BY_HAND) {
+    it(`no ${what}`, () => {
+      const offenders = files.filter(f => !(f in YEAR_NOT_YET) && pattern.test(readCode(f)));
+      assert.deepEqual(offenders, [], `${what} in ${offenders.join(', ')} — ask lib/club-fiscal-year.ts (fiscalYearOf, or the read's own year)`);
+    });
+  }
+  it('every not-yet page still needs its place (the list only shrinks)', () => {
+    for (const file of Object.keys(YEAR_NOT_YET)) {
+      const code = readCode(file);
+      assert.ok(YEAR_BY_HAND.some(([, p]) => p.test(code)), `${file} no longer works a year out by hand — remove it from YEAR_NOT_YET`);
+    }
+  });
+  it('the three definitions take the club\'s fiscal years (the "until 3c" notes are gone)', () => {
+    const figures = readCode('lib/club-money-figures.ts');
+    assert.match(functionBody(figures, 'allocationYear'), /fiscalYearOf\(/);
+    assert.match(functionBody(figures, 'clubYearOf'), /fiscalYearOf\(day, setting\)/);
+    assert.doesNotMatch(figures, /Until 3c/);
+  });
+});

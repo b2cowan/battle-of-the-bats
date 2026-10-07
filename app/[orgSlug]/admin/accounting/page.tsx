@@ -55,8 +55,19 @@ import { BOARD_TEAMS_EXPORT_COLUMNS, boardTeamsExportRows, type BoardSummary, ty
 import type { ReportNote } from '@/lib/coach-money-report-notes';
 import type { MoneyRowKind } from '@/lib/coach-money-exports';
 import { formatStoredDate } from '@/lib/timezone';
+import type { FiscalYearOption, FiscalYearRead } from '@/lib/club-fiscal-year';
+import type { OverviewYearReads } from '@/lib/club-fiscal-reads';
 
-interface Read { year: number; years: number[]; summary: BoardSummary }
+/** The Overview's read (Stage 3c): the fiscal year read, the Year pill, the summary — and the year's own reads
+ *  session 2 draws (the ended year's door, "From 2025–26, still open", a closed year's year-end report). */
+interface Read {
+  year: FiscalYearRead;
+  years: FiscalYearOption[];
+  summary: BoardSummary;
+  endedOpen: OverviewYearReads['endedOpen'];
+  stillOpen: OverviewYearReads['stillOpen'];
+  yearEnd: OverviewYearReads['yearEnd'];
+}
 
 const KIND_TONE: Record<LedgerKind, ChipTone> = { org: 'good', tournament: 'neutral', league_season: 'neutral', team: 'info' };
 
@@ -145,7 +156,7 @@ export default function AccountingOverviewPage() {
     const rows = boardTeamsExportRows(summary);
     const kinds: (MoneyRowKind | undefined)[] = rows.map((_, i) => (i >= rows.length - 2 ? 'total' : undefined));
     const position = `Where the club stands, ${formatStoredDate(summary.today, { withYear: true, longMonth: true })}: Cash on hand ${fmtSigned(p.cashOnHand)} (the club’s own books, never a team’s) · Owed by the teams ${money(p.owedByTheTeams.amount)} (${SUMMARY_WORDS.owedCaption(p.owedByTheTeams.overdue.amount, p.owedByTheTeams.sent.amount)}) · Waiting on you ${money(p.waitingOnYou.amount)} (${SUMMARY_WORDS.waitingCaption(p.waitingOnYou.count, p.waitingOnYou.holdingPayout)}).`;
-    const yearLine = `${summary.year} against the budget: revenue ${money(a.revenue.actual)} of ${money(a.revenue.planned)} planned (from the teams ${money(a.fromTheTeams.allocations)} on allocations and ${money(a.fromTheTeams.onRequest)} on request) · expenses ${money(a.expenses.actual)} of ${money(a.expenses.planned)} planned (paid to teams on request ${money(a.paidToTeamsOnRequest)}; off-plan ${money(a.offPlan)}) · ${netForYearWord(summary.year)} ${fmtSigned(a.net.actual)} against ${fmtSigned(a.net.planned)} planned.`;
+    const yearLine = `${summary.year.name} against the budget: revenue ${money(a.revenue.actual)} of ${money(a.revenue.planned)} planned (from the teams ${money(a.fromTheTeams.allocations)} on allocations and ${money(a.fromTheTeams.onRequest)} on request) · expenses ${money(a.expenses.actual)} of ${money(a.expenses.planned)} planned (paid to teams on request ${money(a.paidToTeamsOnRequest)}; off-plan ${money(a.offPlan)}) · ${netForYearWord(summary.year.name)} ${fmtSigned(a.net.actual)} against ${fmtSigned(a.net.planned)} planned.`;
     const booksLine = `The club’s books: ${summary.books.map(b => `${b.name} ${fmtSigned(b.balance)}`).join(' · ')} — Cash on hand ${fmtSigned(p.cashOnHand)}.`;
     return {
       dataset: 'board-report',
@@ -153,7 +164,7 @@ export default function AccountingOverviewPage() {
       columns: BOARD_TEAMS_EXPORT_COLUMNS,
       rows: rows.map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v ?? '']))) as Record<string, string | number>[],
       rowKinds: kinds,
-      scopeLabel: String(summary.year),
+      scopeLabel: summary.year.name,
       teamName: currentOrg?.name ?? '',
       notes: [note('board-position', position), note('board-year', yearLine), note('board-headroom', words.headroom), note('board-held', words.held), note('board-books', booksLine)],
       pdfIntro: {
@@ -162,15 +173,15 @@ export default function AccountingOverviewPage() {
           ['Cash on hand · the club’s books, today', fmtSigned(p.cashOnHand)],
           ['Owed by the teams', money(p.owedByTheTeams.amount)],
           ['Waiting on you', money(p.waitingOnYou.amount)],
-          [`Revenue ${summary.year} · so far of planned`, `${money(a.revenue.actual)} of ${money(a.revenue.planned)}`],
-          [`Expenses ${summary.year} · so far of planned`, `${money(a.expenses.actual)} of ${money(a.expenses.planned)}`],
+          [`Revenue ${summary.year.name} · so far of planned`, `${money(a.revenue.actual)} of ${money(a.revenue.planned)}`],
+          [`Expenses ${summary.year.name} · so far of planned`, `${money(a.expenses.actual)} of ${money(a.expenses.planned)}`],
           ['Off-plan spending', money(a.offPlan)],
           ['Headroom', fmtSigned(a.headroom)],
           ...summary.books.map(b => [`${b.name} · ${LEDGER_KIND_WORD[b.kind as LedgerKind] ?? 'Club'}`, fmtSigned(b.balance)] as [string, string]),
         ],
       },
       masthead: {
-        title: `${currentOrg?.name ?? ''} · ${summary.year}`,
+        title: `${currentOrg?.name ?? ''} · ${summary.year.name}`,
         subtitle: 'Board report — where the club stands, the year against the budget, the teams and the books',
         meta: `As at ${formatStoredDate(summary.today, { withYear: true, longMonth: true })}`,
       },
@@ -185,7 +196,6 @@ export default function AccountingOverviewPage() {
 
   const p = summary.position;
   const a = summary.againstBudget;
-  const thisYear = Number(summary.today.slice(0, 4));
   const teamHref = (id: string) => `${base}/teams/${id}`;
   const bookHref = (id: string) => `${base}/ledger?book=${id}`;
   const bookIds = new Set(summary.books.map(b => b.name));
@@ -196,7 +206,7 @@ export default function AccountingOverviewPage() {
     <>
       {notice && <PageNotice notice={notice} />}
       <CoachListToolbar actions={<ClubMoneyExport run={runExport} formats={['xlsx', 'pdf', 'csv']} />}>
-        <YearPill year={summary.year} years={read.years} onChange={setYear} />
+        <YearPill year={summary.year.key} years={read.years} onChange={setYear} />
       </CoachListToolbar>
 
       {/* ── Where the club stands · today ── */}
@@ -223,13 +233,13 @@ export default function AccountingOverviewPage() {
 
       {/* ── The year against the budget (read from Budget vs. Actual's report) ── */}
       {isPhone ? (
-        <ClubRowList label={SUMMARY_WORDS.againstHeading(summary.year)}>
-          <ClubRow as="link" href={`${base}/budget-vs-actual`} title={SUMMARY_WORDS.againstHeading(summary.year)}
+        <ClubRowList label={SUMMARY_WORDS.againstHeading(summary.year.name)}>
+          <ClubRow as="link" href={`${base}/budget-vs-actual`} title={SUMMARY_WORDS.againstHeading(summary.year.name)}
             caption={SUMMARY_WORDS.phoneYear(a.expenses.actual, a.expenses.planned, a.revenue.actual, a.revenue.planned, a.headroom)} chevron />
         </ClubRowList>
       ) : (
-        <ClubSection id="against" title={SUMMARY_WORDS.againstHeading(summary.year)}
-          meta={summary.year === thisYear ? `To ${formatStoredDate(summary.today, { withYear: false })}` : String(summary.year)}>
+        <ClubSection id="against" title={SUMMARY_WORDS.againstHeading(summary.year.name)}
+          meta={read.year.current ? `To ${formatStoredDate(summary.today, { withYear: false })}` : summary.year.name}>
           <div className={repKit.tableFrame}>
             <table className={repKit.table}>
               <thead>
@@ -247,7 +257,7 @@ export default function AccountingOverviewPage() {
                 <tr><td className={repKit.dim}>Paid to teams on request</td><td className={repKit.num}>{a.paidToTeamsOnRequestPlanned > 0.005 ? money(a.paidToTeamsOnRequestPlanned) : ''}</td><td className={repKit.num}>{money(a.paidToTeamsOnRequest)}</td></tr>
                 {a.offPlan > 0.005 && <tr><td className={repKit.dim}>Off-plan</td><td className={repKit.num} /><td className={repKit.num}>{money(a.offPlan)}</td></tr>}
                 <tr className={moneyKit.closeRow}>
-                  <td>{netForYearWord(summary.year)}</td>
+                  <td>{netForYearWord(summary.year.name)}</td>
                   <td className={`${repKit.num}${a.net.planned < -0.005 ? ` ${cr.negative}` : ''}`}>{fmtSigned(a.net.planned)}</td>
                   <td className={`${repKit.num}${a.net.actual < -0.005 ? ` ${cr.negative}` : ''}`}>{fmtSigned(a.net.actual)}</td>
                 </tr>
@@ -261,7 +271,7 @@ export default function AccountingOverviewPage() {
 
       {/* ── The teams: each team's standing with the club, and its cash held by the team ── */}
       {showTeams && (
-        <ClubSection id="teams" title="The teams" meta={`${summary.teams.length} ${summary.teams.length === 1 ? 'team' : 'teams'} · ${summary.year}`} list>
+        <ClubSection id="teams" title="The teams" meta={`${summary.teams.length} ${summary.teams.length === 1 ? 'team' : 'teams'} · ${summary.year.name}`} list>
           {!isPhone ? (
             <TeamsTable summary={summary} hrefOf={teamHref} />
           ) : (

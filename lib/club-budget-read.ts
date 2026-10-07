@@ -5,12 +5,16 @@ import { fetchAll, fetchAllIn } from './supabase-paging';
 import { getBookTotals, getClubOwnedLedgers } from './db';
 import { loadClubLoop, seasonsHoldingPayout, type ClubLoop } from './club-money-reads';
 import { teamCashHeld } from './club-team-cash';
-import { clubYearSpan, isClubBook, openingBalance } from './club-money-figures';
+import { carriedOpening, clubYearSpan, isClubBook, openingBalance } from './club-money-figures';
 import {
-  buildClubPlan, buildClubReport, buildBoardSummary, planYears, withPeriodViews,
+  buildClubPlan, buildClubReport, buildBoardSummary, withPeriodViews,
   type ClubAllocationFacts, type ClubBook, type ClubBookLineFacts, type ClubPlan, type ClubPlanLineFacts, type ClubPlanWithPeriods,
   type ClubReport, type ClubRequestFacts, type BoardSummary, type TeamScope,
 } from './club-budget-report';
+import {
+  fiscalYearOptions, previousFiscalYear,
+  type FiscalSetting, type FiscalYear, type FiscalYearOption,
+} from './club-fiscal-year';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -32,24 +36,30 @@ import {
  */
 
 /**
- * The years the Year pill offers (`planYears`): every year with a line, this year, and always the next year —
- * and how many lines each holds, for the Budget's empty year (it offers to start from the newest earlier year
- * that has lines).
+ * The fiscal years the Year pill offers (`fiscalYearOptions`): every year with a plan line, every closed year,
+ * the year today falls in and always the next one — each with its name, whether it is locked, and how many
+ * lines it holds (the Budget's empty year offers to start from the newest earlier year that has lines).
  */
-export async function clubPlanYears(orgId: string, today: string = tournamentToday()): Promise<{ years: number[]; yearLines: Record<number, number> }> {
-  const rows = await fetchAll<{ season_year: number }>((a, b) => supabaseAdmin
-    .from('org_budget_lines').select('season_year').eq('org_id', orgId).order('season_year').range(a, b));
-  const yearLines: Record<number, number> = {};
-  for (const r of rows) yearLines[r.season_year] = (yearLines[r.season_year] ?? 0) + 1;
-  return { years: planYears(rows.map(r => r.season_year), today), yearLines };
+export async function clubPlanYears(orgId: string, setting: FiscalSetting, today: string = tournamentToday()): Promise<FiscalYearOption[]> {
+  const rows = await fetchAll<{ fiscal_year_id: string }>((a, b) => supabaseAdmin
+    .from('org_budget_lines').select('fiscal_year_id').eq('org_id', orgId).order('id').range(a, b));
+  const keyOf = new Map(setting.rows.map(r => [r.id, r.firstDay] as const));
+  const lines: Record<string, number> = {};
+  for (const r of rows) {
+    const key = keyOf.get(r.fiscal_year_id);
+    if (key) lines[key] = (lines[key] ?? 0) + 1;
+  }
+  return fiscalYearOptions(setting, today, lines);
 }
 
-/** The year's plan lines, each with its word, the word's side, and its periods. */
-async function loadPlanLines(orgId: string, year: number): Promise<ClubPlanLineFacts[]> {
+/** The year's plan lines, each with its word, the word's side, and its periods. A year with no row has none. */
+async function loadPlanLines(year: FiscalYear): Promise<ClubPlanLineFacts[]> {
+  if (!year.id) return [];
+  const yearId = year.id;
   const lines = await fetchAll<Record<string, any>>((a, b) => supabaseAdmin
     .from('org_budget_lines')
     .select('id, description, total_amount, notes, sort_order, created_at, updated_at, category_id, item_id, budget_categories ( name ), budget_items ( name, direction ), org_budget_periods ( id, period_label, period_date, amount, sort_order )')
-    .eq('org_id', orgId).eq('season_year', year)
+    .eq('fiscal_year_id', yearId)
     .order('sort_order').order('created_at').order('id').range(a, b));
   return lines.map(l => ({
     id: l.id,
@@ -70,12 +80,13 @@ async function loadPlanLines(orgId: string, year: number): Promise<ClubPlanLineF
   }));
 }
 
-/** Every allocation the club has made, from the loop (every team), with each one's line year. */
-async function allocationsOf(orgId: string, loop: ClubLoop): Promise<ClubAllocationFacts[]> {
+/** Every allocation the club has made, from the loop (every team), with the KEY of each one's line's fiscal year. */
+export async function allocationsOf(orgId: string, loop: ClubLoop, setting: FiscalSetting): Promise<ClubAllocationFacts[]> {
   const lineIds = [...new Set([...loop.allocations.values()].map(a => a.sourceBudgetLineId).filter((x): x is string => !!x))];
-  const lineYears = await fetchAllIn<{ id: string; season_year: number }>(lineIds, (c, a, b) => supabaseAdmin
-    .from('org_budget_lines').select('id, season_year').eq('org_id', orgId).in('id', c).order('id').range(a, b));
-  const yearOf = new Map(lineYears.map(l => [l.id, l.season_year] as const));
+  const lineYears = await fetchAllIn<{ id: string; fiscal_year_id: string }>(lineIds, (c, a, b) => supabaseAdmin
+    .from('org_budget_lines').select('id, fiscal_year_id').eq('org_id', orgId).in('id', c).order('id').range(a, b));
+  const keyOfRow = new Map(setting.rows.map(r => [r.id, r.firstDay] as const));
+  const yearOf = new Map(lineYears.map(l => [l.id, keyOfRow.get(l.fiscal_year_id) ?? null] as const));
 
   const splitsBy = new Map<string, ClubAllocationFacts['splits']>();
   for (const s of loop.splits) {
@@ -93,7 +104,7 @@ async function allocationsOf(orgId: string, loop: ClubLoop): Promise<ClubAllocat
     description: a.description,
     createdOn: orgDayKey(a.createdAt),
     sourceBudgetLineId: a.sourceBudgetLineId,
-    lineYear: a.sourceBudgetLineId ? yearOf.get(a.sourceBudgetLineId) ?? null : null,
+    lineYearKey: a.sourceBudgetLineId ? yearOf.get(a.sourceBudgetLineId) ?? null : null,
     splits: splitsBy.get(a.id) ?? [],
   }));
 }
@@ -101,7 +112,7 @@ async function allocationsOf(orgId: string, loop: ClubLoop): Promise<ClubAllocat
 type YearRequest = ClubRequestFacts & { programYearId: string };
 
 /** Every request, lightly (no names, no settlement read): enough to file a loop line and list what waits. */
-async function loadRequests(orgId: string): Promise<YearRequest[]> {
+export async function loadRequests(orgId: string): Promise<YearRequest[]> {
   const rows = await fetchAll<Record<string, any>>((a, b) => supabaseAdmin
     .from('rep_team_payment_requests')
     .select('id, team_id, program_year_id, request_type, status, amount, description, created_at, accounting_entry_id, rep_teams ( name )')
@@ -114,33 +125,35 @@ async function loadRequests(orgId: string): Promise<YearRequest[]> {
 }
 
 /**
- * The books the club owns (never a team's), each with its all-time Balance, and every book's posted sums
- * for the days BEFORE the year's first day — the opening balance's input. ONE ledger read and ONE SQL
- * aggregate: `club_book_totals`'s balance is all-time whatever the window, so the window asked is the
- * opening's.
+ * The books the club owns (never a team's), each with its all-time Balance, and the year's OPENING: the year
+ * before's stored closing when that year is closed (THE CARRY, Ask 4 — locked), else every book's posted sums
+ * for the days BEFORE the year's first day (3b's, worked out from the books). ONE ledger read and ONE SQL
+ * aggregate: `club_book_totals`'s balance is all-time whatever the window, so the window asked is the opening's.
  */
-async function loadClubBooks(orgId: string, year: number): Promise<{ books: ClubBook[]; opening: number }> {
+export async function loadClubBooks(orgId: string, year: FiscalYear, setting: FiscalSetting): Promise<{ books: ClubBook[]; opening: number; openingCarried: boolean }> {
   const ledgers = await getClubOwnedLedgers(orgId);
   const dayBefore = addCalendarDays(clubYearSpan(year).first, -1);
   const totals = await getBookTotals(ledgers.map(l => l.id), null, dayBefore);
+  const before = previousFiscalYear(year, setting);
+  const fromTheBooks = openingBalance(ledgers.map(l => ({
+    kind: l.entityType, postedIn: totals.get(l.id)?.postedIn ?? 0, postedOut: totals.get(l.id)?.postedOut ?? 0,
+  })));
   return {
     books: ledgers.map(l => ({ id: l.id, kind: l.entityType, name: l.name, balance: totals.get(l.id)?.balance ?? 0 })),
-    opening: openingBalance(ledgers.map(l => ({
-      kind: l.entityType, postedIn: totals.get(l.id)?.postedIn ?? 0, postedOut: totals.get(l.id)?.postedOut ?? 0,
-    }))),
+    opening: carriedOpening(before.closed?.closingBalance ?? null, fromTheBooks),
+    openingCarried: !!before.closed,
   };
 }
 
 const BOOK_LINE_SELECT = 'id, ledger_id, entry_date, description, amount, entry_type, status, category, source_module, source_entity_id, linked_entry_id, budget_category_id, budget_item_id, budget_categories ( name ), budget_items ( name ), partner:linked_entry_id ( accounting_ledgers ( entity_type ) )';
 
-/** Every line dated in the year on the club's own books, any status, each transfer with its other half's kind. */
-async function loadBookLines(books: readonly ClubBook[], year: number): Promise<ClubBookLineFacts[]> {
-  const { first, last } = clubYearSpan(year);
-  return readBookLines(books, q => q.gte('entry_date', first).lte('entry_date', last));
+/** Every line dated in a span on the club's own books, any status, each transfer with its other half's kind. */
+export async function loadBookLines(books: readonly ClubBook[], span: { first: string; last: string }): Promise<ClubBookLineFacts[]> {
+  return readBookLines(books, q => q.gte('entry_date', span.first).lte('entry_date', span.last));
 }
 
 /** Every line still PENDING on the Club books, whatever its date (Cash on hand's caption is today's). */
-async function loadPendingLines(books: readonly ClubBook[]): Promise<ClubBookLineFacts[]> {
+export async function loadPendingLines(books: readonly ClubBook[]): Promise<ClubBookLineFacts[]> {
   return readBookLines(books.filter(b => isClubBook(b.kind)), q => q.eq('status', 'pending'));
 }
 
@@ -168,7 +181,7 @@ async function readBookLines(books: readonly ClubBook[], narrow: (q: any) => any
 }
 
 /** The budget library's order (sort, then name) for every category the club can see. */
-async function loadCategoryOrder(orgId: string): Promise<Record<string, number>> {
+export async function loadCategoryOrder(orgId: string): Promise<Record<string, number>> {
   const { data, error } = await supabaseAdmin.from('budget_categories').select('id, sort_order')
     .or(`org_id.is.null,org_id.eq.${orgId}`);
   if (error) throw error;
@@ -176,16 +189,16 @@ async function loadCategoryOrder(orgId: string): Promise<Record<string, number>>
 }
 
 /** Everything one year's reads need, loaded once. `loop` is every team's (the summary scopes it in memory). */
-async function loadYear(orgId: string, year: number) {
-  const booksP = loadClubBooks(orgId, year);
+export async function loadYear(orgId: string, year: FiscalYear, setting: FiscalSetting) {
+  const booksP = loadClubBooks(orgId, year, setting);
   const loopP = loadClubLoop(orgId, null);
   const [lines, loop, allocations, requests, booksNow, bookLines, pendingLines, categoryOrder] = await Promise.all([
-    loadPlanLines(orgId, year), loopP, loopP.then(l => allocationsOf(orgId, l)), loadRequests(orgId), booksP,
-    booksP.then(b => loadBookLines(b.books, year)), booksP.then(b => loadPendingLines(b.books)), loadCategoryOrder(orgId),
+    loadPlanLines(year), loopP, loopP.then(l => allocationsOf(orgId, l, setting)), loadRequests(orgId), booksP,
+    booksP.then(b => loadBookLines(b.books, clubYearSpan(year))), booksP.then(b => loadPendingLines(b.books)), loadCategoryOrder(orgId),
   ]);
   return {
     lines, loop, allocations, requests, books: booksNow.books, bookLines, pendingLines, categoryOrder,
-    openingBalance: booksNow.opening,
+    openingBalance: booksNow.opening, openingCarried: booksNow.openingCarried, setting,
   };
 }
 
@@ -194,23 +207,27 @@ async function loadYear(orgId: string, year: number) {
 /** `scope` = the reader's team groups (`teamIdsInScope`): the figures are the club's whatever it is; a team
  *  outside it is counted, never named (B11). */
 export async function readClubPlan(
-  orgId: string, year: number, today: string = tournamentToday(), scope: PromiseLike<TeamScope> | TeamScope = null,
-): Promise<ClubPlanWithPeriods> {
+  orgId: string, year: FiscalYear, setting: FiscalSetting, today: string = tournamentToday(), scope: PromiseLike<TeamScope> | TeamScope = null,
+): Promise<ClubPlanWithPeriods & { openingCarried: boolean }> {
   const [lines, allocations, categoryOrder, books, seen] = await Promise.all([
-    loadPlanLines(orgId, year), loadClubLoop(orgId, null).then(l => allocationsOf(orgId, l)),
-    loadCategoryOrder(orgId), loadClubBooks(orgId, year), scope,
+    loadPlanLines(year), loadClubLoop(orgId, null).then(l => allocationsOf(orgId, l, setting)),
+    loadCategoryOrder(orgId), loadClubBooks(orgId, year, setting), scope,
   ]);
-  return withPeriodViews(buildClubPlan({ year, today, lines, allocations, categoryOrder, openingBalance: books.opening, scope: seen }), lines, categoryOrder);
+  return {
+    ...withPeriodViews(buildClubPlan({ year, today, lines, allocations, categoryOrder, openingBalance: books.opening, scope: seen }), lines, categoryOrder),
+    openingCarried: books.openingCarried,
+  };
 }
 
 /** Budget vs. Actual and the plan it reads against, from ONE load of the year's rows. */
 export async function readClubYear(
-  orgId: string, year: number, today: string = tournamentToday(), scope: PromiseLike<TeamScope> | TeamScope = null,
-): Promise<{ plan: ClubPlan; report: ClubReport }> {
-  const [rows, seen] = await Promise.all([loadYear(orgId, year), scope]);
+  orgId: string, year: FiscalYear, setting: FiscalSetting, today: string = tournamentToday(), scope: PromiseLike<TeamScope> | TeamScope = null,
+): Promise<{ plan: ClubPlan; report: ClubReport; rows: Awaited<ReturnType<typeof loadYear>> }> {
+  const [rows, seen] = await Promise.all([loadYear(orgId, year, setting), scope]);
   return {
     plan: buildClubPlan({ year, today, lines: rows.lines, allocations: rows.allocations, categoryOrder: rows.categoryOrder, openingBalance: rows.openingBalance, scope: seen }),
     report: buildClubReport({ year, today, ...rows, scope: seen }),
+    rows,
   };
 }
 
@@ -222,11 +239,12 @@ export async function readClubYear(
  */
 export async function readBoardSummary(
   orgId: string,
-  year: number,
+  year: FiscalYear,
+  setting: FiscalSetting,
   scope: PromiseLike<TeamScope> | TeamScope,
   today: string = tournamentToday(),
 ): Promise<BoardSummary> {
-  const rowsP = loadYear(orgId, year);
+  const rowsP = loadYear(orgId, year, setting);
   const scopeP = Promise.resolve(scope);
   const listedP = Promise.all([rowsP, scopeP]).then(([r, s]) => listedTeams(r.loop, s));
   const cashP = listedP.then(teams => teamCashHeld(teams.map(t => t.id)));
@@ -237,6 +255,7 @@ export async function readBoardSummary(
   const held = await seasonsHoldingPayout(requests.filter(r => r.status === 'pending').map(r => r.programYearId));
   return buildBoardSummary({
     report: buildClubReport({ year, today, ...rows, scope: scopeIds }),
+    setting,
     allocations: rows.allocations
       .map(a => ({ ...a, splits: a.splits.filter(s => inScope(s.teamId)) }))
       .filter(a => a.splits.length > 0),

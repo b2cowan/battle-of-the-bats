@@ -58,7 +58,12 @@ describe('1. every Budget write answers the one money rule (Ask 4d, S3B-03)', ()
     assert.match(readCode('app/api/admin/rep-teams/allocations/route.ts'), /canMoveClubMoney\(ctx!, ctx!\.org\)/);
   });
   it('the reads say who may write (canMove), from the same rule', () => {
-    assert.match(readCode('app/api/admin/accounting/budget-plan/route.ts'), /canMove: canMoveClubMoney\(ctx, ctx\.org\)/);
+    // ⚖ Stage 3c (Ask 1): `canMove` is the one money rule AND an open year — a closed year's writes are absent,
+    // through the switch the Budget already reads (`describeFiscalYear`'s `canWrite`).
+    const route = readCode('app/api/admin/accounting/budget-plan/route.ts');
+    assert.match(route, /const canMove = canMoveClubMoney\(ctx, ctx\.org\);/);
+    assert.match(route, /canMove: read\.canWrite/);
+    assert.match(readCode('lib/club-fiscal-year-server.ts'), /canWrite: canMove && !year\.locked/);
   });
 });
 
@@ -238,7 +243,8 @@ describe('5. the team\'s cash is read through the coach\'s own function (D1, C15
     assert.doesNotMatch(cash, /\.insert\(|\.update\(|\.upsert\(/);
   });
   it('never added into a club figure: Cash on hand reads the club\'s books only', () => {
-    assert.match(readCode('lib/club-budget-report.ts'), /const cashOnHand = clubCashOnHand\(books\);/);
+    // A closed year's band reads its locked closing (Stage 3c) — still only the club's own books.
+    assert.match(readCode('lib/club-budget-report.ts'), /const cashOnHand = year\.closed \? year\.closed\.closingBalance : clubCashOnHand\(books\);/);
   });
 });
 

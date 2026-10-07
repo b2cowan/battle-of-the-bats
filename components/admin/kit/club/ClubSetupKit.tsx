@@ -72,7 +72,8 @@ function stepFact(step: Step): string | null {
       return d.hasTagline ? 'Your tagline is saved' : null;
     case 'budget': {
       const lines = (d.lines as number | undefined) ?? 0;
-      const year = d.budgetYear as number | undefined;
+      // The fiscal year's NAME ("2026–27" — Stage 3c), from the server.
+      const year = d.budgetYear as string | undefined;
       return lines > 0 ? `${pluralize(lines, 'budget line')}${year ? ` for ${year}` : ''}` : null;
     }
   }

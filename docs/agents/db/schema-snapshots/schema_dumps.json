@@ -209,6 +209,15 @@
         "column_default": null
       },
       {
+        "table_name": "accounting_entries",
+        "pos": 24,
+        "column_name": "written_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "accounting_ledgers",
         "pos": 1,
         "column_name": "id",
@@ -6167,6 +6176,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_budget_lines",
+        "pos": 12,
+        "column_name": "fiscal_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "org_budget_periods",
         "pos": 1,
         "column_name": "id",
@@ -6224,6 +6242,195 @@
         "table_name": "org_budget_periods",
         "pos": 7,
         "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "pos": 2,
+        "column_name": "fiscal_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "pos": 4,
+        "column_name": "reopened_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "pos": 5,
+        "column_name": "reopened_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "pos": 6,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "pos": 7,
+        "column_name": "was_closed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "pos": 8,
+        "column_name": "was_closed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "pos": 9,
+        "column_name": "was_closing_balance",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "pos": 10,
+        "column_name": "was_closing_snapshot",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 3,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 4,
+        "column_name": "first_day",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 5,
+        "column_name": "last_day",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 6,
+        "column_name": "closed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 7,
+        "column_name": "closed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 8,
+        "column_name": "closing_balance",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 9,
+        "column_name": "closing_snapshot",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "pos": 11,
+        "column_name": "updated_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -7641,6 +7848,15 @@
         "udt_name": "bool",
         "is_nullable": "NO",
         "column_default": "false"
+      },
+      {
+        "table_name": "organizations",
+        "pos": 44,
+        "column_name": "fiscal_first_month",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "1"
       },
       {
         "table_name": "pitch_decks",
@@ -9605,6 +9821,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_allocation_installments",
+        "pos": 24,
+        "column_name": "carried_by_program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_allocation_reminder_waves",
         "pos": 1,
         "column_name": "id",
@@ -10060,6 +10285,15 @@
         "column_name": "source_budget_line_id",
         "data_type": "uuid",
         "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_cost_allocations",
+        "pos": 9,
+        "column_name": "notes",
+        "data_type": "text",
+        "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -20609,6 +20843,13 @@
       },
       {
         "table_name": "org_budget_lines",
+        "column_name": "fiscal_year_id",
+        "foreign_table": "org_fiscal_years",
+        "foreign_column": "id",
+        "constraint_name": "org_budget_lines_fiscal_year_id_fkey"
+      },
+      {
+        "table_name": "org_budget_lines",
         "column_name": "item_id",
         "foreign_table": "budget_items",
         "foreign_column": "id",
@@ -20627,6 +20868,48 @@
         "foreign_table": "org_budget_lines",
         "foreign_column": "id",
         "constraint_name": "org_budget_periods_budget_line_id_fkey"
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "column_name": "fiscal_year_id",
+        "foreign_table": "org_fiscal_years",
+        "foreign_column": "id",
+        "constraint_name": "org_fiscal_year_reopenings_fiscal_year_id_fkey"
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_fiscal_year_reopenings_org_id_fkey"
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "column_name": "reopened_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_fiscal_year_reopenings_reopened_by_fkey"
+      },
+      {
+        "table_name": "org_fiscal_year_reopenings",
+        "column_name": "was_closed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_fiscal_year_reopenings_was_closed_by_fkey"
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "column_name": "closed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_fiscal_years_closed_by_fkey"
+      },
+      {
+        "table_name": "org_fiscal_years",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_fiscal_years_org_id_fkey"
       },
       {
         "table_name": "org_internal_notes",
@@ -20893,6 +21176,13 @@
         "foreign_table": "accounting_entries",
         "foreign_column": "id",
         "constraint_name": "rep_allocation_installments_accounting_entry_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "column_name": "carried_by_program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_installments_carried_by_program_year_id_fkey"
       },
       {
         "table_name": "rep_allocation_installments",
@@ -24795,13 +25085,18 @@
       },
       {
         "tablename": "org_budget_lines",
+        "indexname": "org_budget_lines_fiscal_year_idx",
+        "indexdef": "CREATE INDEX org_budget_lines_fiscal_year_idx ON public.org_budget_lines USING btree (fiscal_year_id)"
+      },
+      {
+        "tablename": "org_budget_lines",
         "indexname": "org_budget_lines_item_id_idx",
         "indexdef": "CREATE INDEX org_budget_lines_item_id_idx ON public.org_budget_lines USING btree (item_id)"
       },
       {
         "tablename": "org_budget_lines",
-        "indexname": "org_budget_lines_one_line_per_item",
-        "indexdef": "CREATE UNIQUE INDEX org_budget_lines_one_line_per_item ON public.org_budget_lines USING btree (org_id, season_year, item_id) WHERE (item_id IS NOT NULL)"
+        "indexname": "org_budget_lines_one_word_per_fiscal_year",
+        "indexdef": "CREATE UNIQUE INDEX org_budget_lines_one_word_per_fiscal_year ON public.org_budget_lines USING btree (fiscal_year_id, item_id) WHERE (item_id IS NOT NULL)"
       },
       {
         "tablename": "org_budget_lines",
@@ -24822,6 +25117,51 @@
         "tablename": "org_budget_periods",
         "indexname": "org_budget_periods_pkey",
         "indexdef": "CREATE UNIQUE INDEX org_budget_periods_pkey ON public.org_budget_periods USING btree (id)"
+      },
+      {
+        "tablename": "org_fiscal_year_reopenings",
+        "indexname": "org_fiscal_year_reopenings_by_idx",
+        "indexdef": "CREATE INDEX org_fiscal_year_reopenings_by_idx ON public.org_fiscal_year_reopenings USING btree (reopened_by) WHERE (reopened_by IS NOT NULL)"
+      },
+      {
+        "tablename": "org_fiscal_year_reopenings",
+        "indexname": "org_fiscal_year_reopenings_org_idx",
+        "indexdef": "CREATE INDEX org_fiscal_year_reopenings_org_idx ON public.org_fiscal_year_reopenings USING btree (org_id)"
+      },
+      {
+        "tablename": "org_fiscal_year_reopenings",
+        "indexname": "org_fiscal_year_reopenings_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_fiscal_year_reopenings_pkey ON public.org_fiscal_year_reopenings USING btree (id)"
+      },
+      {
+        "tablename": "org_fiscal_year_reopenings",
+        "indexname": "org_fiscal_year_reopenings_was_by_idx",
+        "indexdef": "CREATE INDEX org_fiscal_year_reopenings_was_by_idx ON public.org_fiscal_year_reopenings USING btree (was_closed_by) WHERE (was_closed_by IS NOT NULL)"
+      },
+      {
+        "tablename": "org_fiscal_year_reopenings",
+        "indexname": "org_fiscal_year_reopenings_year_idx",
+        "indexdef": "CREATE INDEX org_fiscal_year_reopenings_year_idx ON public.org_fiscal_year_reopenings USING btree (fiscal_year_id, reopened_at)"
+      },
+      {
+        "tablename": "org_fiscal_years",
+        "indexname": "org_fiscal_years_closed_by_idx",
+        "indexdef": "CREATE INDEX org_fiscal_years_closed_by_idx ON public.org_fiscal_years USING btree (closed_by) WHERE (closed_by IS NOT NULL)"
+      },
+      {
+        "tablename": "org_fiscal_years",
+        "indexname": "org_fiscal_years_one_name",
+        "indexdef": "CREATE UNIQUE INDEX org_fiscal_years_one_name ON public.org_fiscal_years USING btree (org_id, name)"
+      },
+      {
+        "tablename": "org_fiscal_years",
+        "indexname": "org_fiscal_years_one_start",
+        "indexdef": "CREATE UNIQUE INDEX org_fiscal_years_one_start ON public.org_fiscal_years USING btree (org_id, first_day)"
+      },
+      {
+        "tablename": "org_fiscal_years",
+        "indexname": "org_fiscal_years_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_fiscal_years_pkey ON public.org_fiscal_years USING btree (id)"
       },
       {
         "tablename": "org_internal_notes",
@@ -25352,6 +25692,11 @@
         "tablename": "rep_allocation_installments",
         "indexname": "rep_allocation_installments_accounting_entry_id_idx",
         "indexdef": "CREATE INDEX rep_allocation_installments_accounting_entry_id_idx ON public.rep_allocation_installments USING btree (accounting_entry_id)"
+      },
+      {
+        "tablename": "rep_allocation_installments",
+        "indexname": "rep_allocation_installments_carried_by_idx",
+        "indexdef": "CREATE INDEX rep_allocation_installments_carried_by_idx ON public.rep_allocation_installments USING btree (carried_by_program_year_id) WHERE (carried_by_program_year_id IS NOT NULL)"
       },
       {
         "tablename": "rep_allocation_installments",
@@ -28398,6 +28743,48 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "org_fiscal_year_reopenings",
+        "detail": "org_fiscal_year_reopenings_reason_check",
+        "check_clause": "((reason = btrim(reason)) AND ((char_length(reason) >= 1) AND (char_length(reason) <= 500)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_fiscal_year_reopenings",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_fiscal_years",
+        "detail": "org_fiscal_years_close_whole",
+        "check_clause": "((closed_at IS NULL) = (closing_balance IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_fiscal_years",
+        "detail": "org_fiscal_years_name_check",
+        "check_clause": "((name = btrim(name)) AND ((char_length(name) >= 1) AND (char_length(name) <= 40)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_fiscal_years",
+        "detail": "org_fiscal_years_span",
+        "check_clause": "((last_day >= first_day) AND (last_day <= ((first_day + '1 year -1 days'::interval))::date))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_fiscal_years",
+        "detail": "org_fiscal_years_whole_months",
+        "check_clause": "((EXTRACT(day FROM first_day) = (1)::numeric) AND (last_day = ((date_trunc('month'::text, (last_day)::timestamp with time zone) + '1 mon -1 days'::interval))::date))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_fiscal_years",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "org_internal_notes",
         "detail": "ENABLED",
@@ -28558,6 +28945,12 @@
         "table_name": "organizations",
         "detail": "organizations_account_kind_check",
         "check_clause": "(account_kind = ANY (ARRAY['organization'::text, 'team_workspace'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organizations",
+        "detail": "organizations_fiscal_first_month_check",
+        "check_clause": "((fiscal_first_month >= 1) AND (fiscal_first_month <= 12))"
       },
       {
         "kind": "CHECK",
@@ -28923,7 +29316,7 @@
         "kind": "CHECK",
         "table_name": "rep_allocation_splits",
         "detail": "rep_allocation_splits_split_method_check",
-        "check_clause": "(split_method = ANY (ARRAY['percentage'::text, 'sessions'::text, 'fixed'::text]))"
+        "check_clause": "(split_method = ANY (ARRAY['even'::text, 'percentage'::text, 'sessions'::text, 'fixed'::text]))"
       },
       {
         "kind": "RLS",
@@ -28966,6 +29359,12 @@
         "table_name": "rep_budget_periods",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_cost_allocations",
+        "detail": "rep_cost_allocations_notes_length_check",
+        "check_clause": "((notes IS NULL) OR (char_length(notes) <= 2000))"
       },
       {
         "kind": "CHECK",

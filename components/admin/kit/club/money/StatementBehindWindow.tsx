@@ -37,7 +37,7 @@ export default function StatementBehindWindow({ item, categoryName, report, acco
   const bookName = books.length === 1 ? costs.map(c => report.lineBooks[c.id]?.bookName).find(Boolean) ?? null : null;
   const where = bookName ? `on ${bookName}` : 'on the club’s books';
   const filed = item.itemName && item.itemName !== categoryName ? `${categoryName} › ${item.itemName}` : categoryName;
-  const params = new URLSearchParams({ from: `${report.year}-01-01`, to: `${report.year}-12-31`, category: categoryName });
+  const params = new URLSearchParams({ from: report.year.firstDay, to: report.year.lastDay, category: categoryName });
   /* "These lines" are the ITEM's, not the whole category's: the Ledger's Item filter (owner 2026-10-07) narrows to
      them. Keyed on the item's id, never on its name matching the category's: a word may be "Insurance › Insurance",
      while a Not filed row (and a category's "Not itemized" bucket) has no item half — the category alone is exact. */

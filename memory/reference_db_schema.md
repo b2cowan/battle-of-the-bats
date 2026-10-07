@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-06 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-07 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-06
+# DB Schema Reference — 2026-10-07
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -120,8 +120,8 @@ id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) �
 ## Module: Rep Teams
 
 ### rep_allocation_installments
-id (uuid), split_id (uuid) → rep_allocation_splits.id NOT NULL, installment_number (integer) NOT NULL, amount (numeric) NOT NULL, due_date NOT NULL, paid_at, paid_by (uuid), accounting_entry_id (uuid) → accounting_entries.id, created_at, reminder_sent_at, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, sent_on, sent_method, sent_reference, sent_by (uuid), sent_at, paid_on, paid_method, paid_reference, undone_at, undone_by (uuid), undone_reason
-- Indexes: rep_allocation_installments_accounting_entry_id_idx, rep_allocation_installments_org_idx, rep_allocation_installments_split_id_installment_number_key, rep_allocation_installments_team_idx
+id (uuid), split_id (uuid) → rep_allocation_splits.id NOT NULL, installment_number (integer) NOT NULL, amount (numeric) NOT NULL, due_date NOT NULL, paid_at, paid_by (uuid), accounting_entry_id (uuid) → accounting_entries.id, created_at, reminder_sent_at, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, sent_on, sent_method, sent_reference, sent_by (uuid), sent_at, paid_on, paid_method, paid_reference, undone_at, undone_by (uuid), undone_reason, carried_by_program_year_id (uuid) → rep_program_years.id
+- Indexes: rep_allocation_installments_accounting_entry_id_idx, rep_allocation_installments_carried_by_idx, rep_allocation_installments_org_idx, rep_allocation_installments_split_id_installment_number_key, rep_allocation_installments_team_idx
 
 ### rep_allocation_reminder_waves
 id (uuid), org_id (uuid) → organizations.id NOT NULL, sent_by (uuid), sent_at, team_id (uuid) → rep_teams.id, team_ids, recipient_count (integer) NOT NULL, installment_count (integer) NOT NULL, amount (numeric)
@@ -140,7 +140,7 @@ id (uuid), budget_line_id (uuid) → rep_budget_lines.id NOT NULL, period_label 
 - Indexes: rep_budget_periods_line_idx
 
 ### rep_cost_allocations
-id (uuid), org_id (uuid) → organizations.id NOT NULL, source_entry_id (uuid) → accounting_entries.id, description NOT NULL, total_amount (numeric) NOT NULL, created_by (uuid), created_at, source_budget_line_id (uuid) → org_budget_lines.id
+id (uuid), org_id (uuid) → organizations.id NOT NULL, source_entry_id (uuid) → accounting_entries.id, description NOT NULL, total_amount (numeric) NOT NULL, created_by (uuid), created_at, source_budget_line_id (uuid) → org_budget_lines.id, notes
 - Indexes: rep_cost_allocations_budget_line_idx, rep_cost_allocations_org_id_idx, rep_cost_allocations_source_entry_id_idx
 
 ### rep_development_goal_reviews
@@ -436,7 +436,7 @@ id (uuid), workspace_org_id (uuid) → organizations.id NOT NULL, rep_team_id (u
 ## Module: Accounting
 
 ### accounting_entries
-id (uuid), ledger_id (uuid) → accounting_ledgers.id NOT NULL, entry_date NOT NULL, description NOT NULL, amount (numeric) NOT NULL, entry_type NOT NULL, status, category, linked_entry_id (uuid) → accounting_entries.id, source_module, source_entity_id (uuid), created_by (uuid), created_at, updated_at, payment_method, payee_id (uuid) → org_payees.id, payee_payer, notes, void_reason, voided_by (uuid), voided_at, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id
+id (uuid), ledger_id (uuid) → accounting_ledgers.id NOT NULL, entry_date NOT NULL, description NOT NULL, amount (numeric) NOT NULL, entry_type NOT NULL, status, category, linked_entry_id (uuid) → accounting_entries.id, source_module, source_entity_id (uuid), created_by (uuid), created_at, updated_at, payment_method, payee_id (uuid) → org_payees.id, payee_payer, notes, void_reason, voided_by (uuid), voided_at, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id, written_on
 - Indexes: accounting_entries_budget_category_id_idx, accounting_entries_budget_item_id_idx, accounting_entries_entry_date_idx, accounting_entries_ledger_id_idx, accounting_entries_linked_entry_id_idx, accounting_entries_payee_id_idx
 
 ### accounting_ledgers
@@ -460,8 +460,8 @@ id (uuid), category_id (uuid) → budget_categories.id NOT NULL, org_id (uuid) �
 - Indexes: budget_items_category_idx, budget_items_org_idx, budget_items_team_idx, budget_items_unique_default_name, budget_items_unique_scope_side_name
 
 ### org_budget_lines
-id (uuid), org_id (uuid) → organizations.id NOT NULL, season_year (integer) NOT NULL, category_id (uuid) → budget_categories.id, item_id (uuid) → budget_items.id, description NOT NULL, total_amount (numeric) NOT NULL, notes, sort_order (integer), created_at, updated_at
-- Indexes: org_budget_lines_category_id_idx, org_budget_lines_item_id_idx, org_budget_lines_one_line_per_item, org_budget_lines_org_year_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_year (integer) NOT NULL, category_id (uuid) → budget_categories.id, item_id (uuid) → budget_items.id, description NOT NULL, total_amount (numeric) NOT NULL, notes, sort_order (integer), created_at, updated_at, fiscal_year_id (uuid) → org_fiscal_years.id NOT NULL
+- Indexes: org_budget_lines_category_id_idx, org_budget_lines_fiscal_year_idx, org_budget_lines_item_id_idx, org_budget_lines_one_word_per_fiscal_year, org_budget_lines_org_year_idx
 
 ### org_budget_periods
 id (uuid), budget_line_id (uuid) → org_budget_lines.id NOT NULL, period_label NOT NULL, period_date, amount (numeric) NOT NULL, sort_order (integer), created_at
@@ -508,7 +508,7 @@ id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) 
 - Indexes: organization_members_invited_email_idx, organization_members_organization_id_user_id_key
 
 ### organizations
-id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean)
+id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month
 - Indexes: idx_organizations_email_opt_out, organizations_slug_key
 
 ## Module: Platform Admin
@@ -712,6 +712,14 @@ rail NOT NULL, subject NOT NULL, window_started_at, attempts (integer)
 ### observability_cron_heartbeat
 job_name NOT NULL, last_run_at, rows_folded (bigint), rows_purged (bigint), status, error_detail
 
+### org_fiscal_year_reopenings
+id (uuid), fiscal_year_id (uuid) → org_fiscal_years.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, reopened_at, reopened_by (uuid), reason NOT NULL, was_closed_at NOT NULL, was_closed_by (uuid), was_closing_balance (numeric) NOT NULL, was_closing_snapshot (jsonb)
+- Indexes: org_fiscal_year_reopenings_by_idx, org_fiscal_year_reopenings_org_idx, org_fiscal_year_reopenings_was_by_idx, org_fiscal_year_reopenings_year_idx
+
+### org_fiscal_years
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, first_day NOT NULL, last_day NOT NULL, closed_at, closed_by (uuid), closing_balance (numeric), closing_snapshot (jsonb), created_at, updated_at
+- Indexes: org_fiscal_years_closed_by_idx, org_fiscal_years_one_name, org_fiscal_years_one_start
+
 ### org_people
 id (uuid), org_id (uuid) → organizations.id NOT NULL, email_normalized NOT NULL, first_name, last_name, phone, created_at, updated_at
 - Indexes: org_people_org_email_uniq
@@ -768,7 +776,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **185 tables** across 10 modules.
+Total: **187 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -779,4 +787,4 @@ Total: **185 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 41 tables
+- Other: 43 tables

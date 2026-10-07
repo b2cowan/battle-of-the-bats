@@ -4,9 +4,10 @@ import { moveRefused, resolveClubMoney } from '@/lib/club-money-route';
 import { addClubLine } from '@/lib/club-budget-writes';
 
 /**
- * POST /api/admin/accounting/budget-plan/lines — plan a word on a year (Club Tier Stage 3b; Asks 4a,
- * 4b, 4d). Body: `{ seasonYear, itemId, totalAmount, description?, notes?, periods?: [{ label, date,
- * amount }], sortOrder? }`.
+ * POST /api/admin/accounting/budget-plan/lines — plan a word on a FISCAL year (Club Tier Stage 3b; Asks 4a,
+ * 4b, 4d; Stage 3c). Body: `{ fiscalYear, itemId, totalAmount, description?, notes?, periods?: [{ label, date,
+ * amount }], sortOrder? }` — `fiscalYear` is the year's KEY, its first day (3b's bare `seasonYear` number is still
+ * read, as the year with that name, until session 2's screen sends the key).
  *
  *   · WHO: 3a's one money rule (`canMoveClubMoney` — owner, treasurer, an admin with Accounting). It was
  *     owner/treasurer BY NAME until 3b (S3B-03).
@@ -16,7 +17,8 @@ import { addClubLine } from '@/lib/club-budget-writes';
  *     a new line → 201 `{ line, joined: false }`.
  *   · Refusals (`{ error, code }`): 400 `bad_year` · `bad_total` · `word_required` · `bad_word` ·
  *     `bad_description` · `bad_periods` · `bad_period_label` · `bad_period_date` · `bad_period_amount` ·
- *     `periods_dont_add_up` (+ `periodsTotal`, `lineTotal`); 409 `line_changed` (a join raced twice).
+ *     `periods_dont_add_up` (+ `periodsTotal`, `lineTotal`); 409 `line_changed` (a join raced twice); 409
+ *     `year_closed` (the fiscal year is closed — the one refusal, lib/club-fiscal-year-server.ts).
  */
 export const POST = withObservability(async (req: Request) => {
   const gate = await resolveClubMoney(req, { scope: 'books', write: true });

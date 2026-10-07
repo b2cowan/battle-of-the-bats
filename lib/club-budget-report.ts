@@ -30,7 +30,7 @@ import {
   type RollupLine, type RollupSpend, type MoneyReport, type ReportSection, type CategoryRow,
 } from './coach-budget-rollup';
 import {
-  addMonths, buildMonthGrid, buildCashFlow, monthKeyOf, UNDATED_CELL,
+  buildMonthGrid, buildCashFlow, monthKeyOf, UNDATED_CELL,
   type CategoryEvent, type GridLine, type MonthGrid, type MonthKey, type CashFlowResult,
 } from './coach-budget-months';
 import { budgetedOn } from './coach-budget-basis';
@@ -41,7 +41,7 @@ import {
   FROM_THE_TEAMS_ID, NOT_FILED_FILING, NOT_FILED_ID, ON_REQUEST_FILING, SOURCE_MODULE, TEAM_SUPPORT_FILING,
   allocationFiling, fileLine, findLoopRecord, lineType, type Filing, type FilingFacts,
 } from './club-ledger';
-import { CLUB_SENT_WAITING_WORD, HELD_BY_THE_TEAM_WORD, OUTSIDE_YOUR_GROUPS_WORD, TEAMS_CASH_TOTAL_WORD } from './club-money-words';
+import { CLUB_SENT_WAITING_WORD, HELD_BY_THE_TEAM_WORD, OUTSIDE_YOUR_GROUPS_WORD, TEAMS_CASH_TOTAL_WORD, lastYearsBillsWord, netForYearWord } from './club-money-words';
 import { formatStoredDate } from './timezone';
 import {
   allocationYear, bandCollected, clubBillFigures, clubCashOnHand, clubMovement, clubYearOf, clubYearSpan,
@@ -49,9 +49,14 @@ import {
   otherBooksMovement, owedByTheTeams, planned, spent, sumMoney, teamsCashTotal, waitingOnYou,
   type ClubBookMovementFacts, type ClubInstallmentFacts, type CountAndAmount, type TeamCashHeld,
 } from './club-money-figures';
+import { fiscalQuarters, fiscalYearMonths, fiscalYearOf, type FiscalSetting, type FiscalYear } from './club-fiscal-year';
 
 /* The ids the rest of the club reads from here (they live with the filing rule, lib/club-ledger.ts). */
 export { FROM_THE_TEAMS_ID, NOT_FILED_ID, ON_REQUEST_ID, TEAM_SUPPORT_WORD_IDS } from './club-ledger';
+
+/** The item key of "2025–26's bills, paid this year" under From the teams (Stage 3c, Ask 4): the prefix, then
+ *  the earlier year's key. A key, never a word. */
+export const EARLIER_BILLS_PREFIX = 'club:earlier-bills:';
 
 // ── Inputs (rows, as the server reads them) ───────────────────────────────────────────────────
 
@@ -86,8 +91,8 @@ export interface ClubAllocationFacts {
   /** The club day it was made. */
   createdOn: string;
   sourceBudgetLineId: string | null;
-  /** The year of the line it was drawn from (null for one made without a line). */
-  lineYear: number | null;
+  /** The KEY (first day) of the fiscal year of the line it was drawn from (null for one made without a line). */
+  lineYearKey: string | null;
   splits: { id: string; teamId: string; teamName: string; amount: number; installments: ClubInstallment[] }[];
 }
 
@@ -194,9 +199,14 @@ function firstDue(a: ClubAllocationFacts): string | null {
   return d;
 }
 
+/** The year rule applied: the KEY of the fiscal year this allocation counts in. */
+export function allocationYearKey(a: ClubAllocationFacts, setting: FiscalSetting): string {
+  return allocationYear({ lineYearKey: a.lineYearKey, firstDueDate: firstDue(a), createdOn: a.createdOn }, setting);
+}
+
 /** The year rule applied: does this allocation belong to `year`? */
-export function allocationInYear(a: ClubAllocationFacts, year: number): boolean {
-  return allocationYear({ lineYear: a.lineYear, firstDueDate: firstDue(a), createdOn: a.createdOn }) === year;
+export function allocationInYear(a: ClubAllocationFacts, year: Pick<FiscalYear, 'key'>, setting: FiscalSetting): boolean {
+  return allocationYearKey(a, setting) === year.key;
 }
 
 const installmentsOf = (a: ClubAllocationFacts) => a.splits.flatMap(s => s.installments);
@@ -237,22 +247,12 @@ function planRollupLines(lines: readonly ClubPlanLineFacts[]): RollupLine[] {
   }));
 }
 
-/** The year's months (until 3c sets a year's first month, January to December — `clubYearSpan`). */
-/** The club year's twelve months, from its first day (3c moves the first month; this follows). */
-export function clubYearMonths(year: number): MonthKey[] {
-  const first = monthKeyOf(clubYearSpan(year).first)!;
-  return Array.from({ length: 12 }, (_, i) => addMonths(first, i));
+/** The fiscal year's months, from its first day: twelve, or a short year's own (the Months window, By
+ *  period's columns, the line window's One month list). */
+export function clubYearMonths(year: Pick<FiscalYear, 'firstDay' | 'lastDay'>): MonthKey[] {
+  return fiscalYearMonths(year);
 }
-
-/**
- * The years the Year pill offers (C10's planning half): every year with a plan line, this year, and
- * ALWAYS the next year — so a plan can start before its year does — and never an empty year two ahead.
- * Newest first.
- */
-export function planYears(yearsWithLines: readonly number[], today: string): number[] {
-  const thisYear = clubYearOf(today);
-  return [...new Set([...yearsWithLines, thisYear, thisYear + 1])].sort((a, b) => b - a);
-}
+/* The years the Year pill offers are `fiscalYearOptions` (lib/club-fiscal-year.ts) since Stage 3c. */
 
 // ══ THE BUDGET (the plan's List and By period) ═════════════════════════════════════════════════
 
@@ -302,7 +302,8 @@ export interface PlanCategory {
 }
 
 export interface ClubPlan {
-  year: number;
+  /** The fiscal year the plan is for (its key, name, span, close, and whether it is locked). */
+  year: FiscalYear;
   revenue: {
     /** The row nobody types: the Allocated column's total read as income, with its allocations. */
     fromTheTeams: { planned: number; allocations: PlanAllocationRow[]; periods: ClubPlanPeriod[] };
@@ -334,7 +335,7 @@ function allocationRow(a: ClubAllocationFacts, today: string, scope: TeamScope |
 }
 
 export function buildClubPlan(input: {
-  year: number;
+  year: FiscalYear;
   today: string;
   lines: readonly ClubPlanLineFacts[];
   /** Every allocation the club has made (those drawn from the year's cost lines are read). */
@@ -444,7 +445,7 @@ export function withPeriodViews(
  * builder sorts cost categories by name.
  */
 function clubPeriodView(
-  year: number, lines: readonly ClubPlanLineFacts[], fromTheTeams: number, fromTheTeamsPeriods: readonly ClubPlanPeriod[],
+  year: FiscalYear, lines: readonly ClubPlanLineFacts[], fromTheTeams: number, fromTheTeamsPeriods: readonly ClubPlanPeriod[],
   order: Readonly<Record<string, number>>, opening: number, granularity: PeriodGranularity,
 ): PeriodView {
   const view = buildPeriodView(
@@ -463,6 +464,9 @@ function clubPeriodView(
         : null,
       openingBalance: opening,
       months: clubYearMonths(year),
+      // The club's quarters start at its first month and are named by their months (S3C-02); the coach's are
+      // calendar quarters, untouched.
+      quarters: fiscalQuarters(year),
     },
   );
   const sortOrder = new Map(lines.map(l => [l.id, l.sortOrder] as const));
@@ -479,7 +483,9 @@ function clubPeriodView(
 // ══ BUDGET VS. ACTUAL ═════════════════════════════════════════════════════════════════════════
 
 export interface ClubReportInput {
-  year: number;
+  year: FiscalYear;
+  /** The club's fiscal years (the year rule reads them: which year a bill counts in, which year today is). */
+  setting: FiscalSetting;
   /** The club's day, `YYYY-MM-DD`. */
   today: string;
   /** The year's plan. */
@@ -524,7 +530,7 @@ export interface ClubMonthsFeed extends MonthGridPayload {
 }
 
 export interface ClubReport {
-  year: number;
+  year: FiscalYear;
   today: string;
   /** The coach's statement shape: Revenue → categories → lines; Expenses → the same; Net. */
   statement: Pick<MoneyReport, 'revenue' | 'expenses' | 'net'>;
@@ -538,7 +544,10 @@ export interface ClubReport {
     /** Spent (Total expenses' Actual), of the expenses planned. */
     spent: { amount: number; planned: number };
     offPlan: number;
+    /** The club's Cash on hand — today's; on a CLOSED year, its closing (Cash on hand at its last day). */
     cashOnHand: number;
+    /** True when `cashOnHand` is a closed year's closing, read as of its last day. */
+    atClose: boolean;
   };
   /** The one Headroom: planned expenses − Spent (said on the summary). */
   headroom: number;
@@ -632,8 +641,27 @@ export function buildClubReport(input: ClubReportInput): ClubReport {
   const lineBooks: Record<string, { ledgerId: string; bookName: string }> = {};
   const spend: RollupSpend[] = [];
   const actualIn: CategoryEvent[] = [], actualOut: CategoryEvent[] = [];
+  /* ⚖ LAST YEAR'S BILLS, PAID THIS YEAR (Ask 4). Money lands in the year it arrives; a payment against a bill
+     that counts in an EARLIER fiscal year is this year's money in, on a line of its own under From the teams
+     ("2025–26's bills, paid this year"), its Budgeted blank — it was planned, in its own year. One line per
+     earlier year (in practice, last year). */
+  const allocationById = new Map(allocations.map(a => [a.id, a] as const));
+  const earlierYearOf = (source: LineSource | null): FiscalYear | null => {
+    if (source?.kind !== 'allocation') return null;
+    const a = allocationById.get(source.allocationId);
+    if (!a) return null;
+    const key = allocationYearKey(a, input.setting);
+    return key < year.key ? fiscalYearOf(key, input.setting) : null;
+  };
+  const plannedInByItem = new Map<string, string>();
   for (const l of counted) {
-    const { filing: f, source } = fileClubLine(l, loop);
+    const filed = fileClubLine(l, loop);
+    const source = filed.source;
+    const earlier = earlierYearOf(source);
+    const f: Filing = earlier
+      ? { ...filed.filing, itemId: `${EARLIER_BILLS_PREFIX}${earlier.key}`, itemName: lastYearsBillsWord(earlier.name) }
+      : filed.filing;
+    if (earlier) plannedInByItem.set(f.itemId!, earlier.name);
     const direction = clubMovement(l) as 'in' | 'out';
     if (source) lineSources[l.id] = source;
     lineBooks[l.id] = { ledgerId: l.ledgerId, bookName: l.bookName };
@@ -642,19 +670,28 @@ export function buildClubReport(input: ClubReportInput): ClubReport {
     pushDetail('actual', f, l.entryDate, { id: l.id, description: l.description, amount: l.amount, note: source?.teamName ?? l.bookName });
   }
   const report = rollupMoneyReport({ lines: [...planRollupLines(lines), ...fromTheTeamsPlanLines(drawnFrom(lines, allocations))], spend });
+  const markEarlier = (s: ReportSection): ReportSection => (plannedInByItem.size === 0 ? s : {
+    ...s,
+    categories: s.categories.map(c => ({
+      ...c,
+      items: c.items.map(i => (i.itemId && plannedInByItem.has(i.itemId) ? { ...i, plannedIn: plannedInByItem.get(i.itemId)! } : i)),
+    })),
+  });
   const statement = {
-    revenue: { ...report.revenue, categories: sortByPlanOrder(report.revenue.categories, c => c.categoryId, c => c.categoryName, categoryOrder) },
+    revenue: markEarlier({ ...report.revenue, categories: sortByPlanOrder(report.revenue.categories, c => c.categoryId, c => c.categoryName, categoryOrder) }),
     expenses: { ...report.expenses, categories: sortByPlanOrder(report.expenses.categories, c => c.categoryId, c => c.categoryName, categoryOrder) },
     net: report.net,
   };
 
   // ── The band ──────────────────────────────────────────────────────────────────────────────
-  const cashOnHand = clubCashOnHand(books);
+  // A CLOSED year reads its closing — Cash on hand at its last day, locked — never today's (Ask 1).
+  const cashOnHand = year.closed ? year.closed.closingBalance : clubCashOnHand(books);
   const band = {
     collected: { amount: bandCollected(counted), planned: report.revenue.budgeted },
     spent: { amount: spent(counted), planned: report.expenses.budgeted },
     offPlan: offPlan(report.expenses.categories.flatMap(c => c.items)),
     cashOnHand,
+    atClose: !!year.closed,
   };
   // A pending transfer between the club's own books moves nothing, so it is not "waiting" money.
   const waiting = input.pendingLines.filter(l => l.status === 'pending' && isClubBook(l.bookKind)
@@ -699,7 +736,7 @@ export function buildClubReport(input: ClubReportInput): ClubReport {
     schedule(side, f, l.entryDate, l.amount);
     pushDetail('scheduled', f, l.entryDate, { id: l.id, description: l.description, amount: l.amount, note: 'pending' });
   }
-  if (clubYearOf(today) === year) {
+  if (clubYearOf(today, input.setting).key === year.key) {
     for (const r of requests) {
       if (r.status !== 'pending') continue;
       const toClub = r.requestType === 'payment_to_org';
@@ -780,7 +817,7 @@ export interface SummaryTeamRow extends SummaryTeamInput {
 }
 
 export interface BoardSummary {
-  year: number;
+  year: FiscalYear;
   today: string;
   /** Where the club stands today (none of the three depends on the year). */
   position: {
@@ -819,6 +856,8 @@ function itemActual(section: ReportSection, categoryId: string, itemId: string |
 
 export function buildBoardSummary(input: {
   report: ClubReport;
+  /** The club's fiscal years (which year each team's allocations count in). */
+  setting: FiscalSetting;
   /** Every allocation the club has made, limited to the reader's teams — Owed by the teams is across every year. */
   allocations: readonly ClubAllocationFacts[];
   requests: readonly SummaryRequest[];
@@ -854,7 +893,7 @@ export function buildBoardSummary(input: {
   // Each team's share of the year's allocations, and its requests — grouped once, not per team.
   const yearSplits = new Map<string, ClubAllocationFacts['splits']>();
   for (const a of allocations) {
-    if (!allocationInYear(a, year)) continue;
+    if (!allocationInYear(a, year, input.setting)) continue;
     for (const s of a.splits) yearSplits.set(s.teamId, [...(yearSplits.get(s.teamId) ?? []), s]);
   }
   const requestsBy = new Map<string, SummaryRequest[]>();
@@ -919,7 +958,7 @@ export function statementExportRows(report: Pick<ClubReport, 'statement' | 'year
   band('Revenue', report.statement.revenue, PLAN_LADDER_LABEL.totalRevenue);
   band('Expenses', report.statement.expenses, PLAN_LADDER_LABEL.totalExpenses);
   const n = report.statement.net;
-  rows.push({ section: '', category: `Net for ${report.year}`, line: '', budgeted: n.budgeted, actual: n.actual, variance: n.variance });
+  rows.push({ section: '', category: netForYearWord(report.year.name), line: '', budgeted: n.budgeted, actual: n.actual, variance: n.variance });
   return rows;
 }
 

@@ -59,14 +59,16 @@ import {
   netForYearWord, openingBalanceRowWord, outsideTheYearNote,
 } from '@/lib/club-money-words';
 import { clubYearSpan } from '@/lib/club-money-figures';
+import type { FiscalYearOption, FiscalYearRead } from '@/lib/club-fiscal-year';
 import type { ClubPlan, ClubPlanWithPeriods, PlanLineRow } from '@/lib/club-budget-report';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import type { ExportColumnDef } from '@/lib/export';
 
 interface PlanRead {
-  year: number;
-  years: number[];
-  yearLines: Record<number, number>;
+  /** The fiscal year read (Stage 3c). */
+  year: FiscalYearRead;
+  /** The Year pill — each with its plan's line count (the empty year's "Start from"). */
+  years: FiscalYearOption[];
   today: string;
   canMove: boolean;
   plan: ClubPlanWithPeriods;
@@ -114,7 +116,7 @@ function listRows(plan: ClubPlan): { rows: Record<string, string | number>[]; ki
   push({ item: L.totalExpenses, planned: plan.expenses.total, allocated: plan.expenses.allocated, collected: plan.expenses.collected }, 'total');
   const firstDay = clubYearSpan(plan.year).first;
   push({ item: openingBalanceRowWord(firstDay), planned: plan.openingBalance }, 'total');
-  push({ item: netForYearWord(plan.year), planned: plan.net }, 'total');
+  push({ item: netForYearWord(plan.year.name), planned: plan.net }, 'total');
   push({ item: L.closingBalance, planned: plan.closingBalance }, 'total');
   return { rows, kinds };
 }
@@ -188,11 +190,11 @@ export default function BudgetTab() {
       columns: asGrid ? budgetPeriodGridColumns(pv) : LIST_COLUMNS,
       rows: built.rows,
       rowKinds: built.kinds,
-      scopeLabel: String(p.year),
+      scopeLabel: p.year.name,
       teamName: currentOrg?.name ?? '',
       // No masthead: the plan is a DATASET, as the coach's is (its file starts on its column row, the round-trip
       // rule — `export-masthead-guard`). Budget vs. Actual and the board report are the club's documents.
-      emptyMessage: `The ${p.year} plan has nothing in it yet.`,
+      emptyMessage: `The ${p.year.name} plan has nothing in it yet.`,
     };
   }, [read, view, granularity, currentOrg?.name]);
   const exportFailed = useCallback((text: string) => setNotice({ tone: 'bad', text }), [setNotice]);
@@ -202,8 +204,9 @@ export default function BudgetTab() {
   if (!read || !plan) return <p className={ck.loading}>Loading…</p>;
 
   const isEmpty = allLines.length === 0 && plan.revenue.fromTheTeams.allocations.length === 0;
-  const fromYear = read.years.filter(y => y < plan.year && (read.yearLines[y] ?? 0) > 0).sort((a, b) => b - a)[0] ?? null;
-  const words = emptyYearWords(plan.year, fromYear);
+  // The newest earlier fiscal year that has lines (keys are first days, so they sort as dates).
+  const fromYear = read.years.filter(y => y.key < plan.year.key && y.lines > 0).sort((a, b) => b.key.localeCompare(a.key))[0] ?? null;
+  const words = emptyYearWords(plan.year.name, fromYear?.name ?? null);
   const firstDay = clubYearSpan(plan.year).first;
   const toggle = (set: (fn: (s: Set<string>) => Set<string>) => void) => (key: string) =>
     set(s => { const n = new Set(s); if (n.has(key)) n.delete(key); else n.add(key); return n; });
@@ -222,9 +225,9 @@ export default function BudgetTab() {
     if (starting || fromYear == null || !plan) return;
     setStarting(true);
     try {
-      const r = await moneyFetch<{ lines: number }>(`/api/admin/accounting/budget-plan/start-from?${q}`, jsonInit('POST', { fromYear, toYear: plan.year }));
+      const r = await moneyFetch<{ lines: number }>(`/api/admin/accounting/budget-plan/start-from?${q}`, jsonInit('POST', { fromYear: fromYear.key, toYear: plan.year.key }));
       if (!r.ok) { setNotice({ tone: 'bad', text: refusalText(r.data, 'The plan couldn’t be started. Please try again.') }); return; }
-      changed(`${plan.year} starts from ${fromYear}’s plan: ${r.data.lines} ${r.data.lines === 1 ? 'line' : 'lines'}, moved a year on. Nothing is billed until you allocate.`);
+      changed(`${plan.year.name} starts from ${fromYear.name}’s plan: ${r.data.lines} ${r.data.lines === 1 ? 'line' : 'lines'}, moved a year on. Nothing is billed until you allocate.`);
     } catch {
       setNotice({ tone: 'bad', text: 'The plan couldn’t be started. Check your connection and try again.' });
     } finally {
@@ -284,7 +287,7 @@ export default function BudgetTab() {
           </>
         )}
       >
-        <YearPill year={plan.year} years={read.years}
+        <YearPill year={plan.year.key} years={read.years}
           onChange={y => { setYear(y); setLineId(null); setWhen('all'); }} />
         <SingleSelectDropdown label="View" lead value={view}
           options={[{ id: 'list', label: 'List' }, { id: 'period', label: 'By period' }]}
@@ -345,7 +348,7 @@ export default function BudgetTab() {
               leadRow={{ name: FROM_THE_TEAMS_WORD, title: 'See the allocations it adds up', onOpen: () => setWin('teams') }}
               spanWord="year"
               openingNote={budgetOpeningNote(plan.openingBalance, firstDay)}
-              beyondNote={outsideTheYearNote(plan.year)}
+              beyondNote={outsideTheYearNote(plan.year.name)}
               closingNote={plan.revenue.fromTheTeams.allocations.length > 0 ? FROM_THE_TEAMS_SPREAD_NOTE : undefined}
             />
           )}

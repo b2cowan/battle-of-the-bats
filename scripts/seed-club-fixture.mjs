@@ -24,7 +24,7 @@
  *         team list and the Payment Requests wall are defect C03 — the walk RECORDS them. Granting
  *         Rep Teams here would hide the defect the walk exists to show.
  *       - The REGISTRAR is on defaults too (house league only) — which is what the role is for.
- *   · Eight rep teams in two groups: Senior (15U AAA, 15U AA, 16U AA, 18U AA — archived) and Junior
+ *   · Nine rep teams in two groups: Senior (15U AAA, 15U AA, 16U AA, 14U AA, 18U AA — archived) and Junior
  *     (13U AAA, 12U AA, 11U AA, 9U AA). Club Tier Stage 2 · session 3 added 12U AA (a live season with a
  *     roster and NO head coach) and 16U AA (a CLOSED season with no next one), plus a pending head-coach
  *     invitation on 9U AA (its accept link printed at the end), a club invitation waiting on 11U AA's
@@ -54,9 +54,22 @@
  *     Not filed; the tournament's book taking in its registrations; two teams recording payments to the shared
  *     payee after it was shared (the payee report); and money in on three teams, 16U AA's on its CLOSED season,
  *     so each team's cash on hand — and a team between seasons — reads a real figure.
+ *   · Club Tier Stage 3c (the fiscal year, 2026-10-07): the club runs a SEPTEMBER fiscal year. The year before the
+ *     one today falls in (2025–26 when built in the fall of 2026) is CLOSED — through the real one step
+ *     (`club_fiscal_year_close`), with its locked closing — and at its close it still held open money: unpaid
+ *     installments on its bill (13U AAA's, and 14U AA's on a FINISHED 2026 Season while its 2027 Season runs —
+ *     call 1 and the Club tab's earlier bills; 14U AA's first payment, recorded now, counts in its 2027 Season), a
+ *     request waiting on the club, a line filed under no word and an uncleared cheque. Today's year is open, with
+ *     the plan above (Diamond permits has $450.00 left for the New allocation walk). Town of Milton, shared with the
+ *     teams, has the club's records in both years. Everything the closed year holds is dated INSIDE it, never
+ *     days-from-now (those drift between years with the calendar).
+ *   · A SECOND club, `uat-calendar-club` ("UAT Calendar Club" — January, a plan this calendar year and next, nothing
+ *     closed, one owner), for walking the first-time set-up and the move to September. `--calendar-club` rebuilds
+ *     it alone, any time, so the transition walk can be walked again without touching UAT Rep Club.
  *
  * Run:   node --env-file=.env.local scripts/seed-club-fixture.mjs           (build if absent)
  *        node --env-file=.env.local scripts/seed-club-fixture.mjs --reset   (delete + rebuild)
+ *        node --env-file=.env.local scripts/seed-club-fixture.mjs --calendar-club   (rebuild ONLY the calendar club)
  * Without --reset an existing fixture is left alone (and its sign-ins printed): a walk in progress
  * must never be rebuilt under the walker by an accidental re-run.
  *
@@ -99,6 +112,39 @@ const DAY = 86_400_000;
 const isoDate = (d) => { const t = new Date(d); t.setMinutes(t.getMinutes() - t.getTimezoneOffset()); return t.toISOString().slice(0, 10); };
 const daysFromNow = (n) => isoDate(Date.now() + n * DAY);
 const nowIso = new Date().toISOString();
+
+// ── The fiscal year (Club Tier Stage 3c) — UAT Rep Club runs September to August ─────────────────────────────
+// The pure rule's twin for a club with no short year (lib/club-fiscal-year.ts `fiscalYearOf`); the database finds
+// the same years (`club_fiscal_year_ensure`). The fixture's two years are found from TODAY, so the shape — one
+// closed year, one open — holds whenever it is built; their names follow ("2025–26", "2026–27" in the fall of 2026).
+const FIRST_MONTH = 9;
+const TODAY = isoDate(Date.now());
+const pad2 = (n) => String(n).padStart(2, '0');
+const addDays = (day, n) => { const d = new Date(`${day}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const fyFirstOf = (day) => `${Number(day.slice(5, 7)) >= FIRST_MONTH ? Number(day.slice(0, 4)) : Number(day.slice(0, 4)) - 1}-${pad2(FIRST_MONTH)}-01`;
+const fyOf = (day) => {
+  const first = fyFirstOf(day);
+  const last = addDays(`${Number(first.slice(0, 4)) + 1}${first.slice(4)}`, -1);
+  return { first, last, name: first.slice(0, 4) === last.slice(0, 4) ? first.slice(0, 4) : `${first.slice(0, 4)}–${last.slice(2, 4)}` };
+};
+const CUR = fyOf(TODAY);                      // the open year
+const PREV = fyOf(addDays(CUR.first, -1));    // the year the fixture CLOSES
+/** A day by its month in the open year (September–December of its first calendar year, January–August of its second), or the closed one. */
+const dayIn = (fy) => (month, day = 1) => `${Number(fy.first.slice(0, 4)) + (month >= FIRST_MONTH ? 0 : 1)}-${pad2(month)}-${pad2(day)}`;
+const inCur = dayIn(CUR);
+const inPrev = dayIn(PREV);
+/** The calendar year the closed fiscal year's season was PLAYED in (spring and summer: its second calendar year). */
+const PLAYED = Number(PREV.last.slice(0, 4));
+
+// The second club (Club Tier Stage 3c): on January, for the first-time set-up and the move to September.
+const CAL_SLUG = 'uat-calendar-club';
+const CAL_NAME = 'UAT Calendar Club';
+const CAL_MARKER = '[UAT_PROTECTED] Club Tier Stage 3c transition fixture — scripts/seed-club-fixture.mjs (rebuild with --calendar-club). Do not wipe.';
+const CAL_OWNER = {
+  name: 'Jamie Laurent', title: 'Treasurer',
+  email: (process.env.UAT_CALENDAR_CLUB_OWNER_EMAIL ?? 'uat-calendar-owner@uat-rep-club.local').toLowerCase(),
+  password: process.env.UAT_CALENDAR_CLUB_OWNER_PASSWORD ?? DEFAULT_PASSWORD,
+};
 /** The 9U AA head-coach invitation's raw token — set when the fixture is BUILT (printed once, at the end). */
 let inviteToken = null;
 
@@ -134,6 +180,11 @@ const TEAMS = [
   { slug: '12u-aa',  name: '12U AA',  division: '12U', group: 'Junior', color: '#0E7490', years: ['completed', 'active'] },
   { slug: '16u-aa',  name: '16U AA',  division: '16U', group: 'Senior', color: '#9D174D', years: ['completed'],
     coach: { email: 'uat-club-coach-16aa@uat-rep-club.local', name: 'Casey Morgan' } },
+  // Club Tier Stage 3c — call 1 and the Club tab's earlier bills: a team whose season played in the closed fiscal
+  // year is FINISHED, still owing on a bill made on it, while its next season runs.
+  { slug: '14u-aa',  name: '14U AA',  division: '14U', group: 'Senior', color: '#065F46', years: ['completed', 'active'],
+    seasonYears: { completed: PLAYED, active: PLAYED + 1 },
+    coach: { email: 'uat-club-coach-14aa@uat-rep-club.local', name: 'Taylor Brooks' } },
 ];
 const yearFor = (status) => status === 'completed' ? Y - 1 : status === 'draft' ? Y + 1 : Y;
 
@@ -169,6 +220,15 @@ async function ensureUser(email, password, fullName) {
   die(`createUser ${email}`, error);
   ok(`sign-in created ${email}`);
   return data.user;
+}
+
+// ── Club Tier Stage 3c — `--calendar-club`: rebuild ONLY the calendar club, and stop ────────────────
+if (process.argv.includes('--calendar-club')) {
+  head(`Rebuilding ${CAL_NAME} (${CAL_SLUG}) — UAT Rep Club untouched`);
+  await buildCalendarClub();
+  head('Done');
+  printCalendarClub();
+  process.exit(0);
 }
 
 // ── Reset ────────────────────────────────────────────────────────────────────────
@@ -207,6 +267,8 @@ const org = await one('org', db.from('organizations').insert({
   is_public: true, is_discoverable: false, theme_preset: 'platform', internal_notes: MARKER,
   // 9999 is what a real Club checkout writes; the column's default of 1 would cap the club at ONE tournament.
   tournament_limit: 9999, team_limit: 15, onboarding_completed_at: nowIso,
+  // Club Tier Stage 3c: a September fiscal year (a club with nothing yet just takes the month).
+  fiscal_first_month: FIRST_MONTH,
 }).select('id').single());
 const orgId = org.id;
 ok(`org ${orgId}`);
@@ -248,7 +310,7 @@ for (const t of TEAMS) {
   }).select('id').single());
   team[t.slug] = { id: row.id, years: {} };
   for (const status of t.years) {
-    const year = yearFor(status);
+    const year = t.seasonYears?.[status] ?? yearFor(status);
     const py = await one(`year ${t.name} ${year}`, db.from('rep_program_years').insert({
       team_id: row.id, org_id: orgId, name: `${year} Season`, year, status,
       tryout_open: status === 'active' && !!t.tryoutsOpen,
@@ -257,7 +319,7 @@ for (const t of TEAMS) {
     team[t.slug].years[status] = py.id;
   }
 }
-ok(`8 teams in 2 groups (18U AA archived; 12U AA has no head coach; 16U AA between seasons); years ${Y - 1} completed · ${Y} active · ${Y + 1} draft (9U AA)`);
+ok(`9 teams in 2 groups (18U AA archived; 12U AA has no head coach; 16U AA between seasons; 14U AA on its ${PLAYED + 1} Season, its ${PLAYED} finished); years ${Y - 1} completed · ${Y} active · ${Y + 1} draft (9U AA)`);
 
 // Coaches — the admin Coaches route's three writes, per team
 const coachIds = {};
@@ -281,7 +343,7 @@ for (const t of TEAMS.filter(x => x.coach)) {
     })).error);
   }
 }
-ok('5 head coaches — membership + staff membership + season projection each (16U AA’s on its closed season)');
+ok('6 head coaches — membership + staff membership + season projection each (16U AA’s on its closed season)');
 
 // Rosters
 let nameCursor = 0;
@@ -335,22 +397,25 @@ const BUDGET = [
   { cat: 'Sponsorship', item: 'Team sponsorship', description: 'Club sponsors',             months: [[3, 1500], [9, 1500]] },
   { cat: 'Sponsorship', item: 'Grant',            description: 'Town recreation grant',     months: [], total: 2000 },
 ];
+// ⚖ Club Tier Stage 3c: the plan is the OPEN fiscal year's (September to August) — each month falls in that year,
+// so April–August are next spring and summer, September–December this fall. The closed year has its own plan below.
+const curYearId = await one('open fiscal year', db.rpc('club_fiscal_year_ensure', { p_org: orgId, p_day: CUR.first }));
 const lineIds = {};
 for (const [i, b] of BUDGET.entries()) {
   const w = word(b.cat, b.item);
   if (!w) die(`budget word ${b.cat} › ${b.item}`, { message: 'not in the platform library — a plan line needs its word' });
   const total = b.total ?? b.months.reduce((s, [, a]) => s + a, 0);
   const line = await one(`budget line ${b.description}`, db.from('org_budget_lines').insert({
-    org_id: orgId, season_year: Y, category_id: w?.category_id ?? null, item_id: w?.id ?? null,
+    org_id: orgId, fiscal_year_id: curYearId, category_id: w?.category_id ?? null, item_id: w?.id ?? null,
     description: b.description, total_amount: total, sort_order: i,
   }).select('id').single());
   lineIds[b.item] = line.id;
   if (!b.months.length) continue;   // "No date yet": a line with no periods
   die(`periods ${b.description}`, (await db.from('org_budget_periods').insert(b.months.map(([m, amount], j) => ({
-    budget_line_id: line.id, period_label: `${Y}-${String(m).padStart(2, '0')}`, period_date: `${Y}-${String(m).padStart(2, '0')}-01`, amount, sort_order: j,
+    budget_line_id: line.id, period_label: inCur(m).slice(0, 7), period_date: inCur(m), amount, sort_order: j,
   })))).error);
 }
-ok(`${Y} org budget: 4 cost lines split by month · revenue: Club sponsors (dated) + Town recreation grant (no date yet)`);
+ok(`${CUR.name} plan (the open fiscal year): 4 cost lines split by month · revenue: Club sponsors (dated) + Town recreation grant (no date yet)`);
 
 // Ledgers
 const general = await one('general ledger', db.from('accounting_ledgers').insert({ org_id: orgId, entity_type: 'org', entity_id: null, name: `${ORG_NAME} — General` }).select('id').single());
@@ -379,15 +444,15 @@ async function move(fn, args, label) {
 }
 
 // Allocations — the rows club_allocation_create writes (mig 317), inserted directly
-async function allocate({ description, lineItem, splits }) {
+async function allocate({ description, lineItem, lineId, splits }) {
   const total = splits.reduce((sum, x) => sum + x.amount, 0);
   const alloc = await one(`allocation ${description}`, db.from('rep_cost_allocations').insert({
-    org_id: orgId, description, total_amount: total, created_by: TREASURER, source_budget_line_id: lineIds[lineItem],
+    org_id: orgId, description, total_amount: total, created_by: TREASURER, source_budget_line_id: lineId ?? lineIds[lineItem],
   }).select('id').single());
   const out = {};
   for (const sp of splits) {
     const split = await one(`split ${description}`, db.from('rep_allocation_splits').insert({
-      allocation_id: alloc.id, team_id: team[sp.slug].id, program_year_id: team[sp.slug].years.active, org_id: orgId,
+      allocation_id: alloc.id, team_id: team[sp.slug].id, program_year_id: team[sp.slug].years[sp.season ?? 'active'], org_id: orgId,
       amount: sp.amount, split_method: 'fixed', split_value: sp.amount, payment_schedule: sp.installments.length > 1 ? 'custom' : 'standard',
     }).select('id').single());
     out[sp.slug] = [];
@@ -571,6 +636,71 @@ die('13u-aaa sponsor', (await moneyIn('13u-aaa', 'active', { amount: 800, receiv
 die('16u-aa last season', (await moneyIn('16u-aa', 'completed', { amount: 310, received_date: `${Y - 1}-06-15`, description: 'Bottle drive' }, 'Fundraising', 'Fundraising drive')).error);
 ok('3b: four club lines filed (one off-plan), two Not filed · "Fall ball diamond fees" from Diamond permits ($450.00 left) · the tournament\'s book takes in $1,440.00 · 15U AAA and 13U AAA paid Town of Milton · money in on 15U AAA, 13U AAA and 16U AA (closed season)');
 
+// ── Club Tier Stage 3c — the year before, which the fixture CLOSES at the very end (after every write) ───────
+// Its plan, its bill and its books, dated INSIDE it. ⚠ The bill is named outside the "Diamond fees" prefix: the
+// layout sweep finds THE Diamond fees allocation by that prefix.
+const prevYearId = await one('closed fiscal year', db.rpc('club_fiscal_year_ensure', { p_org: orgId, p_day: PREV.first }));
+const PREV_PLAN = [
+  { cat: 'Facilities',  item: 'Diamond Permits',  description: 'Diamond permits — city fields', months: [[4, 2500], [5, 2500], [6, 2500]] },
+  { cat: 'Admin',       item: 'Insurance',        description: 'Club insurance',               months: [[4, 2400]] },
+  { cat: 'Sponsorship', item: 'Team sponsorship', description: 'Club sponsors',                months: [[10, 1500], [3, 1500]] },
+  { cat: 'Sponsorship', item: 'Grant',            description: 'Town recreation grant',        months: [[11, 2000]] },
+];
+const prevLineIds = {};
+for (const [i, b] of PREV_PLAN.entries()) {
+  const w = platformWord(b.cat, b.item);
+  const line = await one(`${PREV.name} line ${b.description}`, db.from('org_budget_lines').insert({
+    org_id: orgId, fiscal_year_id: prevYearId, category_id: w.category_id, item_id: w.id,
+    description: b.description, total_amount: b.months.reduce((s, [, a]) => s + a, 0), sort_order: i,
+  }).select('id').single());
+  prevLineIds[b.item] = line.id;
+  die(`${PREV.name} periods ${b.description}`, (await db.from('org_budget_periods').insert(b.months.map(([m, amount], j) => ({
+    budget_line_id: line.id, period_label: inPrev(m).slice(0, 7), period_date: inPrev(m), amount, sort_order: j,
+  })))).error);
+}
+
+// Its bill, from its Diamond permits line: 15U AAA paid in full inside the year; 13U AAA's second still owed;
+// 14U AA's on its FINISHED season — the first paid NOW (call 1: it counts in 14U AA's running season), the second
+// still owed (the Club tab's earlier bills).
+const PERMIT_SHARE = `Permit share ${PREV.name}`;
+const permitShare = await allocate({
+  description: PERMIT_SHARE, lineId: prevLineIds['Diamond Permits'],
+  splits: [
+    { slug: '15u-aaa', amount: 1200, installments: [[600, inPrev(5, 15)], [600, inPrev(7, 15)]] },
+    { slug: '13u-aaa', amount: 1200, installments: [[600, inPrev(5, 15)], [600, inPrev(7, 15)]] },
+    { slug: '14u-aa', season: 'completed', amount: 1200, installments: [[600, inPrev(5, 15)], [600, inPrev(7, 15)]] },
+  ],
+});
+async function receiveShare(slug, n, { on, method, reference }) {
+  const what = `${PERMIT_SHARE}, ${n} of 2`;
+  await move('club_installment_receive', {
+    p_installment: permitShare.installments[slug][n - 1].id, p_org: orgId, p_actor: TREASURER, p_expect: 'unpaid', p_on: on,
+    p_method: method, p_method_word: METHOD_WORD[method], p_reference: reference,
+    p_club_words: `Allocation received · ${teamName[slug]} · ${what}`, p_team_words: `Allocation paid to ${ORG_NAME} · ${what}`,
+    p_category: 'rep_allocation',
+  }, `receive ${slug} ${what}`);
+}
+await receiveShare('15u-aaa', 1, { on: inPrev(5, 14), method: 'cheque', reference: '1102' });
+await receiveShare('15u-aaa', 2, { on: inPrev(7, 10), method: 'etransfer', reference: '4389' });
+await receiveShare('13u-aaa', 1, { on: inPrev(5, 20), method: 'etransfer', reference: '3290' });
+await receiveShare('14u-aa', 1, { on: addDays(TODAY, -5), method: 'etransfer', reference: '6014' });
+
+// Its books: revenue and costs filed under the plan's words, one Town of Milton record (the shared payee's
+// records in two fiscal years), a line filed under NO word, and a cheque still uncleared at the close.
+await one(`${PREV.name} books`, db.from('accounting_entries').insert([
+  { entry_date: inPrev(10, 20), description: 'Sponsorship — Halton Hills Dental', amount: 1500, entry_type: 'income', payment_method: 'Cheque 0981', ...filed('Sponsorship', 'Team sponsorship') },
+  { entry_date: inPrev(3, 12), description: 'Sponsorship — Milton Home Hardware', amount: 1500, entry_type: 'income', payment_method: 'Cheque 1007', ...filed('Sponsorship', 'Team sponsorship') },
+  { entry_date: inPrev(11, 18), description: 'Town recreation grant', amount: 2000, entry_type: 'income', payment_method: 'E-Transfer 2210', ...filed('Sponsorship', 'Grant') },
+  { entry_date: inPrev(4, 2), description: 'Club insurance — annual premium', amount: 2380, entry_type: 'expense', payment_method: 'E-Transfer 7720', ...filed('Admin', 'Insurance') },
+  { entry_date: inPrev(4, 18), description: 'Diamond permits — spring block (Town)', amount: 3900, entry_type: 'expense', payment_method: 'Cheque 2104', payee_id: town.id, payee_payer: 'Town of Milton', ...filed('Facilities', 'Diamond Permits') },
+  { entry_date: inPrev(6, 9), description: 'Field line paint', amount: 185, entry_type: 'expense', category: 'Field supplies', payment_method: 'Card' },
+  { entry_date: inPrev(8, 26), description: 'Fence repair — Lions Park', amount: 420, entry_type: 'expense', status: 'pending', payment_method: 'Cheque 2219', notes: 'Not cleared at the close', ...filed('Facilities', 'Diamond Permits') },
+].map(e => ({ ledger_id: general.id, status: 'posted', created_by: TREASURER, ...e }))).select('id'));
+
+// A request waiting on the club, filed in the closed year (a request belongs to the year it was filed in).
+await req('15u-aaa', { request_type: 'charge_to_org', money_in_meaning: 'reimbursement', amount: 260, description: 'Provincials hotel deposit', payment_method: 'etransfer', status: 'pending', created_at: `${inPrev(8, 12)}T16:00:00Z` });
+ok(`${PREV.name} (closed at the end): its plan · "${PERMIT_SHARE}" — 15U AAA paid, 13U AAA's second owed, 14U AA's first paid now (its ${PLAYED + 1} Season carries it) and second owed · books filed, "Field line paint" under no word, "Fence repair — Lions Park" uncleared, Town of Milton in both years · a request waiting`);
+
 // ── House league for the registrar ───────────────────────────────────────────────
 const season = await one('league season', db.from('league_seasons').insert({
   org_id: orgId, name: `${Y} Fall House League`, slug: `${Y}-fall-house-league`, sport: 'baseball', status: 'registration_open',
@@ -647,6 +777,18 @@ ok('templates: waiver (every team) · medical consent (15U AAA) · an old code o
 die('families attach', (await db.rpc('families_attach_people', { p_org_id: orgId })).error);
 ok('families attached');
 
+// ── Club Tier Stage 3c — CLOSE the year before, through the real one step (`club_fiscal_year_close`) ──────────
+// Last, after every write: the close locks every line dated in it. The step works out the closing itself (every
+// book the club owns, posted through the last day); what it stores beside it (`closing_snapshot` — the open money
+// as it stood, and each team's standing on the year's bills) is read here from the rows just written.
+const snapshot = await closeSnapshotOf(orgId, PREV);
+const closedYear = await move('club_fiscal_year_close', { p_org: orgId, p_first: PREV.first, p_actor: TREASURER, p_today: TODAY, p_snapshot: snapshot }, `close ${PREV.name}`);
+ok(`${PREV.name} CLOSED — closing $${Number(closedYear.closingBalance).toFixed(2)} locked · still open at the close: ${snapshot.installments.count} installment(s), ${snapshot.requests.count} request(s), ${snapshot.unfiled.count} line(s) under no word, ${snapshot.pending.count} uncleared · ${CUR.name} open`);
+
+// ── Club Tier Stage 3c — the calendar club ─────────────────────────────────────────────────────────────
+head(`${CAL_NAME} (${CAL_SLUG})`);
+await buildCalendarClub();
+
 head('Done');
 printSignIns();
 
@@ -658,5 +800,143 @@ function printSignIns() {
   console.log(inviteToken
     ? `    accept link: http://localhost:3000/auth/accept-assistant-invite?token=${inviteToken}`
     : '    accept link: printed only when the fixture is built (--reset) — or Resend it from 9U AA › Coaches');
+  console.log(`  Fiscal years: September to August — ${PREV.name} CLOSED (when built), ${CUR.name} open`);
+  printCalendarClub();
   console.log('  ⚠ Dev-only credentials.');
+}
+
+/**
+ * ⚠ A THIN COPY of `closeSnapshot` (lib/club-fiscal-reads.ts) — a seeder cannot import a server-only module, the
+ * same reason every other row in this file is raw. If the close's snapshot changes there, mirror it here. The year
+ * rule (a bill counts in its line's year; without a line, the year its first payment falls due), the overdue rule
+ * (unpaid, not sent, due before today), the filing rule (a loop line files by its source; a line with a word is
+ * filed; anything else on the club's books is "Not filed") and "a request belongs to the year it was filed in".
+ */
+async function closeSnapshotOf(orgId, fy) {
+  const inYear = (d) => !!d && d >= fy.first && d <= fy.last;
+  const dollars = (c) => Math.round(c) / 100;
+  const cents = (n) => Math.round(Number(n) * 100);
+
+  const bills = await one('snapshot bills', db.from('rep_cost_allocations')
+    .select('id, created_at, org_budget_lines ( org_fiscal_years ( first_day ) ), rep_allocation_splits ( team_id, rep_teams ( name ), rep_allocation_installments ( amount, due_date, paid_at, sent_at ) )')
+    .eq('org_id', orgId));
+  const billYear = (a) => a.org_budget_lines?.org_fiscal_years?.first_day
+    ?? fyFirstOf(a.rep_allocation_splits.flatMap(s => s.rep_allocation_installments.map(i => i.due_date)).sort()[0] ?? isoDate(a.created_at));
+  const owed = [];
+  const perTeam = new Map();
+  for (const a of bills.filter(b => billYear(b) === fy.first)) {
+    for (const s of a.rep_allocation_splits) {
+      const teamName = s.rep_teams?.name ?? 'A team';
+      const t = perTeam.get(s.team_id) ?? { teamId: s.team_id, teamName, billed: 0, collected: 0 };
+      for (const i of s.rep_allocation_installments) {
+        t.billed += cents(i.amount);
+        if (i.paid_at) t.collected += cents(i.amount);
+        else owed.push({ c: cents(i.amount), teamName, state: i.sent_at ? 'sent' : i.due_date < TODAY ? 'overdue' : 'upcoming' });
+      }
+      perTeam.set(s.team_id, t);
+    }
+  }
+  const owedBy = (state) => dollars(owed.filter(o => o.state === state).reduce((x, o) => x + o.c, 0));
+
+  const requests = await one('snapshot requests', db.from('rep_team_payment_requests')
+    .select('amount, created_at, rep_teams ( name )').eq('org_id', orgId).eq('status', 'pending'));
+  const waiting = requests.filter(r => inYear(isoDate(r.created_at)));
+
+  const books = await one('snapshot books', db.from('accounting_ledgers').select('id, entity_type')
+    .eq('org_id', orgId).in('entity_type', ['org', 'tournament', 'league_season']));
+  const kindOf = new Map(books.map(b => [b.id, b.entity_type]));
+  const all = await one('snapshot lines', db.from('accounting_entries')
+    .select('id, ledger_id, entry_date, amount, entry_type, status, category, source_module, budget_item_id, budget_category_id, linked_entry_id, description')
+    .in('ledger_id', [...kindOf.keys()]));
+  const ledgerOf = new Map(all.map(l => [l.id, l.ledger_id]));
+  const ownTransfer = (l) => (l.entry_type === 'transfer_in' || l.entry_type === 'transfer_out') && kindOf.has(ledgerOf.get(l.linked_entry_id));
+  const moves = (l) => l.status !== 'void' && !ownTransfer(l);
+  const lines = all.filter(l => inYear(l.entry_date));
+  const LOOP_KEYS = ['rep_allocation', 'team_payment_to_org', 'team_charge_to_org'];
+  const filedBySource = (l) => l.source_module === 'rep_allocation_installment' || l.source_module === 'rep_payment_request' || LOOP_KEYS.includes(l.category);
+  const unfiled = lines.filter(l => l.status === 'posted' && kindOf.get(l.ledger_id) === 'org' && moves(l)
+    && !filedBySource(l) && !(l.budget_item_id && l.budget_category_id));
+  const pending = lines.filter(l => l.status === 'pending' && moves(l));
+
+  const teams = [...perTeam.values()]
+    .map(t => ({ teamId: t.teamId, teamName: t.teamName, billed: dollars(t.billed), collected: dollars(t.collected), owed: dollars(t.billed - t.collected) }))
+    .sort((a, b) => a.teamName.localeCompare(b.teamName, undefined, { numeric: true }));
+  const sumOf = (xs, k) => dollars(xs.reduce((x, t) => x + cents(t[k]), 0));
+  return {
+    installments: { count: owed.length, amount: dollars(owed.reduce((x, o) => x + o.c, 0)), overdue: owedBy('overdue'), sent: owedBy('sent'), upcoming: owedBy('upcoming') },
+    requests: { count: waiting.length, amount: sumOf(waiting, 'amount') },
+    unfiled: { count: unfiled.length, amount: sumOf(unfiled, 'amount') },
+    pending: { count: pending.length, amount: sumOf(pending, 'amount') },
+    teams,
+    totals: { billed: sumOf(teams, 'billed'), collected: sumOf(teams, 'collected'), owed: sumOf(teams, 'owed') },
+    installmentTeams: [...new Set(owed.map(o => o.teamName))],
+    requestTeams: [...new Set(waiting.map(r => r.rep_teams?.name ?? 'A team'))],
+    pendingPayees: pending.map(l => l.description),
+  };
+}
+
+/**
+ * THE CALENDAR CLUB (Club Tier Stage 3c): a club on January — its first month never set — with a plan on this
+ * calendar year and the next, for walking the first-time set-up and the move to September. This year's Diamond
+ * permits line has dates on BOTH sides of September (the move splits it by its dates); its sponsors line is dated
+ * only after August (it moves whole to the next year's plan); next year has a line of its own. Rebuilt whole each
+ * time (`--calendar-club`): the move is one-way once the club closes a year, so a walk must be able to start again.
+ */
+async function buildCalendarClub() {
+  const prior = await one('find calendar club', db.from('organizations').select('id, internal_notes').eq('slug', CAL_SLUG).maybeSingle());
+  if (prior) {
+    if (!String(prior.internal_notes ?? '').includes('seed-club-fixture.mjs')) {
+      console.error(`✗ Refusing to delete ${CAL_SLUG}: it was not made by this script (no marker in internal_notes).`);
+      process.exit(1);
+    }
+    die('delete calendar club', (await db.from('organizations').delete().eq('id', prior.id)).error);
+    ok('old calendar club deleted (its sign-in kept; it is re-used)');
+  }
+  const calOrg = await one('calendar club', db.from('organizations').insert({
+    name: CAL_NAME, slug: CAL_SLUG, plan_id: 'club', subscription_status: 'active', account_kind: 'organization',
+    is_public: false, is_discoverable: false, theme_preset: 'platform', internal_notes: CAL_MARKER,
+    tournament_limit: 9999, team_limit: 15, onboarding_completed_at: nowIso,
+  }).select('id').single());
+  const owner = await ensureUser(CAL_OWNER.email, CAL_OWNER.password, CAL_OWNER.name);
+  die('calendar club owner', (await db.from('organization_members').insert({
+    organization_id: calOrg.id, user_id: owner.id, role: 'owner', status: 'active',
+    display_name: CAL_OWNER.name, title: CAL_OWNER.title, invited_at: nowIso, accepted_at: nowIso,
+  })).error);
+
+  const calWords = await one('budget words', db.from('budget_items')
+    .select('id, name, category_id, budget_categories!inner(name, org_id)').is('org_id', null).is('budget_categories.org_id', null));
+  const calWord = (cat, item) => {
+    const w = calWords.find(x => x.name === item && x.budget_categories?.name === cat);
+    if (!w) die(`calendar club word ${cat} › ${item}`, { message: 'not in the platform library' });
+    return w;
+  };
+  const C = Number(TODAY.slice(0, 4));
+  const PLAN = [
+    { year: C,     cat: 'Facilities',  item: 'Diamond Permits',  description: 'Diamond permits — city fields', periods: [[`${C}-04-01`, 2000], [`${C}-06-01`, 2000], [`${C}-10-01`, 2000]] },
+    { year: C,     cat: 'Admin',       item: 'Insurance',        description: 'Club insurance',               periods: [[`${C}-03-01`, 1200]] },
+    { year: C,     cat: 'Sponsorship', item: 'Team sponsorship', description: 'Club sponsors',                periods: [[`${C}-11-01`, 2000]] },
+    { year: C + 1, cat: 'Facilities',  item: 'Diamond Permits',  description: 'Diamond permits — city fields', periods: [[`${C + 1}-05-01`, 6500]] },
+  ];
+  for (const [i, p] of PLAN.entries()) {
+    const yearId = await one(`calendar club year ${p.year}`, db.rpc('club_fiscal_year_ensure', { p_org: calOrg.id, p_day: `${p.year}-01-01` }));
+    const w = calWord(p.cat, p.item);
+    const line = await one(`calendar club line ${p.description} ${p.year}`, db.from('org_budget_lines').insert({
+      org_id: calOrg.id, fiscal_year_id: yearId, category_id: w.category_id, item_id: w.id,
+      description: p.description, total_amount: p.periods.reduce((s, [, a]) => s + a, 0), sort_order: i,
+    }).select('id').single());
+    die(`calendar club periods ${p.description}`, (await db.from('org_budget_periods').insert(p.periods.map(([date, amount], j) => ({
+      budget_line_id: line.id, period_label: date.slice(0, 7), period_date: date, amount, sort_order: j,
+    })))).error);
+  }
+  const book = await one('calendar club ledger', db.from('accounting_ledgers').insert({ org_id: calOrg.id, entity_type: 'org', entity_id: null, name: `${CAL_NAME} — General` }).select('id').single());
+  die('calendar club books', (await db.from('accounting_entries').insert([
+    { entry_date: `${C}-03-04`, description: 'Club insurance — annual premium', amount: 1180, entry_type: 'expense', payment_method: 'E-Transfer', budget_category_id: calWord('Admin', 'Insurance').category_id, budget_item_id: calWord('Admin', 'Insurance').id },
+    { entry_date: `${C}-04-09`, description: 'Diamond permits — spring block', amount: 1950, entry_type: 'expense', payment_method: 'Cheque 301', budget_category_id: calWord('Facilities', 'Diamond Permits').category_id, budget_item_id: calWord('Facilities', 'Diamond Permits').id },
+  ].map(e => ({ ledger_id: book.id, status: 'posted', created_by: owner.id, ...e })))).error);
+  ok(`${CAL_NAME}: on January (no first month set) · plan ${C} (Diamond permits dated April, June and October; sponsors November only; insurance) and ${C + 1} · two lines on its General book · owner ${CAL_OWNER.email}`);
+}
+
+function printCalendarClub() {
+  console.log(`  Calendar club: http://localhost:3000/${CAL_SLUG}/admin   (January — walk the move to September)`);
+  console.log(`  owner             ${CAL_OWNER.email}  /  ${CAL_OWNER.password}`);
 }

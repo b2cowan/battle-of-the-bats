@@ -59,28 +59,30 @@ export function splitHow(paymentMethod: string | null): { method: DuesPaymentMet
 export type WordList = BudgetCategoryWithItems[];
 
 /**
- * What the year's plan holds, by word — the "Filed under" hint's question: is this word on the plan? Read once
- * per year the window asks about (the entry's date decides the year).
+ * What the plan of the fiscal year a day falls in holds, by word — the "Filed under" hint's question: is this word
+ * on the plan? The SERVER decides the year (`?day=`, Stage 3c — never a date's first four characters), and names
+ * it. Read once per day the window asks about.
  */
-function usePlanWords(q: string, year: number): Map<string, number> | null {
-  const [byYear, setByYear] = useState<Record<number, Map<string, number>>>({});
+function usePlanWords(q: string, day: string): { words: Map<string, number>; yearName: string } | null {
+  const [byDay, setByDay] = useState<Record<string, { words: Map<string, number>; yearName: string }>>({});
   useEffect(() => {
-    if (byYear[year]) return;
+    if (byDay[day]) return;
     let live = true;
     // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
-    void moneyFetch<{ plan?: { revenue: { categories: { lines: { itemId: string | null; planned: number }[] }[] }; expenses: { categories: { lines: { itemId: string | null; planned: number }[] }[] } } }>(`/api/admin/accounting/budget-plan?${q}&year=${year}`)
+    void moneyFetch<{ year?: { name: string }; plan?: { revenue: { categories: { lines: { itemId: string | null; planned: number }[] }[] }; expenses: { categories: { lines: { itemId: string | null; planned: number }[] }[] } } }>(`/api/admin/accounting/budget-plan?${q}&day=${day}`)
       .then(r => {
-        if (!live || !r.ok || !r.data.plan) return;
+        if (!live || !r.ok || !r.data.plan || !r.data.year) return;
         const m = new Map<string, number>();
         for (const c of [...r.data.plan.revenue.categories, ...r.data.plan.expenses.categories]) {
           for (const l of c.lines) if (l.itemId) m.set(l.itemId, l.planned);
         }
-        setByYear(prev => ({ ...prev, [year]: m }));
+        const yearName = r.data.year.name;
+        setByDay(prev => ({ ...prev, [day]: { words: m, yearName } }));
       })
       .catch(() => {});
     return () => { live = false; };
-  }, [q, year, byYear]);
-  return byYear[year] ?? null;
+  }, [q, day, byDay]);
+  return byDay[day] ?? null;
 }
 
 /** The word a line is filed under, as the picker holds it. */
@@ -95,9 +97,8 @@ function FiledUnderField({ id, words, value, onChange, direction, orgSlug, q, da
   id: string; words: WordList | null; value: BudgetItemSelection | null; onChange: (v: BudgetItemSelection) => void;
   direction: 'in' | 'out'; orgSlug: string; q: string; date: string; hint?: string | null;
 }) {
-  const year = Number(date.slice(0, 4)) || Number(tournamentToday().slice(0, 4));
-  const plan = usePlanWords(q, year);
-  const onPlan = value?.itemId && plan ? (plan.has(value.itemId) ? { planned: plan.get(value.itemId)! } : null) : undefined;
+  const plan = usePlanWords(q, /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : tournamentToday());
+  const onPlan = value?.itemId && plan ? (plan.words.has(value.itemId) ? { planned: plan.words.get(value.itemId)! } : null) : undefined;
   return (
     <div className={ck.field}>
       <span className={ck.label} id={`${id}-label`}>Filed under<span className={repKit.req} aria-hidden>*</span></span>
@@ -114,7 +115,7 @@ function FiledUnderField({ id, words, value, onChange, direction, orgSlug, q, da
           selectId={`${id}-picker`}
         />
       ) : <p className={ck.hint}>Loading the budget’s words…</p>}
-      {onPlan !== undefined && <p className={ck.hint}>{filedUnderHint(onPlan, year)}</p>}
+      {onPlan !== undefined && plan && <p className={ck.hint}>{filedUnderHint(onPlan, plan.yearName)}</p>}
       {hint && <p className={ck.hint}>{hint}</p>}
     </div>
   );

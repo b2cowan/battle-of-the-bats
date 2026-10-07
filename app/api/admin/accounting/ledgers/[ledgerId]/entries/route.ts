@@ -10,6 +10,7 @@ import { canMoveClubMoney } from '@/lib/member-access';
 import { TEAM_BOOK_READ_ONLY, CLUB_BUDGET_REFUSAL } from '@/lib/club-money-words';
 import { readFiledUnder } from '@/lib/club-budget-writes';
 import { moveRefused } from '@/lib/club-money-route';
+import { closedYearFromError, isClosedYearError, refuseIfClosedFor } from '@/lib/club-fiscal-year-server';
 
 type Params = { params: Promise<{ ledgerId: string }> };
 
@@ -115,6 +116,11 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const filed = await readFiledUnder(ctx!.org.id, body.budgetItemId, entryType as 'income' | 'expense');
   if (!filed.ok) return moveRefused(filed);
 
+  // ⚖ THE FISCAL YEAR'S LOCK (Stage 3c, Asks 1 and 8d): a line can't be dated into a closed year — refused in
+  // words, with both ways out ("date it Sep 1 or later, or reopen 2025–26"). The database's trigger is the floor.
+  const closed = await refuseIfClosedFor(ctx!.org.id, [entryDate], 'date');
+  if (closed) return moveRefused(closed);
+
   const entry = await createEntry(
     ledgerId,
     {
@@ -132,7 +138,11 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
       notes,
     },
     ctx!.user.id,
-  );
+  ).catch(async (e: unknown) => {
+    if (isClosedYearError(e)) return moveRefused(await closedYearFromError(ctx!.org.id, [entryDate]));
+    throw e;
+  });
+  if (entry instanceof Response) return entry;
 
   return NextResponse.json(entry, { status: 201 });
 }, { route: '/api/admin/accounting/ledgers/[ledgerId]/entries' });

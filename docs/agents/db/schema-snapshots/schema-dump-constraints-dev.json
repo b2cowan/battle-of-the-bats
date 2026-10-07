@@ -2041,6 +2041,16 @@
   },
   {
     "table_name": "org_budget_lines",
+    "constraint_name": "org_budget_lines_fiscal_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "fiscal_year_id",
+    "foreign_table": "org_fiscal_years",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_budget_lines",
     "constraint_name": "org_budget_lines_item_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "item_id",
@@ -2082,6 +2092,126 @@
   {
     "table_name": "org_budget_periods",
     "constraint_name": "org_budget_periods_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "constraint_name": "org_fiscal_year_reopenings_fiscal_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "fiscal_year_id",
+    "foreign_table": "org_fiscal_years",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "constraint_name": "org_fiscal_year_reopenings_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "constraint_name": "org_fiscal_year_reopenings_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "constraint_name": "org_fiscal_year_reopenings_reopened_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "reopened_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "constraint_name": "org_fiscal_year_reopenings_was_closed_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "was_closed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "constraint_name": "org_fiscal_years_closed_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "closed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "constraint_name": "org_fiscal_years_one_name",
+    "constraint_type": "UNIQUE",
+    "column_name": "org_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "constraint_name": "org_fiscal_years_one_name",
+    "constraint_type": "UNIQUE",
+    "column_name": "name",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "constraint_name": "org_fiscal_years_one_start",
+    "constraint_type": "UNIQUE",
+    "column_name": "org_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "constraint_name": "org_fiscal_years_one_start",
+    "constraint_type": "UNIQUE",
+    "column_name": "first_day",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "constraint_name": "org_fiscal_years_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "constraint_name": "org_fiscal_years_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -3005,6 +3135,16 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "accounting_entry_id",
     "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_installments",
+    "constraint_name": "rep_allocation_installments_carried_by_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "carried_by_program_year_id",
+    "foreign_table": "rep_program_years",
     "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"

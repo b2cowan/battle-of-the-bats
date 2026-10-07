@@ -247,7 +247,7 @@ export default function BudgetPlanList({ plan, when, closed, onToggle, onOpenLin
                 <td className={bud.schedCell} /><td>{balanceFigure(plan.openingBalance, false)}</td><td /><td /><td />
               </tr>
               <tr className={shared.moneyGridFlow}>
-                <th scope="row" className={bud.lead}>{netForYearWord(plan.year)}</th>
+                <th scope="row" className={bud.lead}>{netForYearWord(plan.year.name)}</th>
                 <td className={bud.schedCell} /><td>{balanceFigure(plan.net, false)}</td><td /><td /><td />
               </tr>
               <tr className={`${shared.moneyGridFlow} ${bud.periodGridClosing}`}>

@@ -315,7 +315,7 @@ async function main() {
     const lineUrl = `${BASE}/api/admin/accounting/budget-plan/lines?orgSlug=${orgSlug}`;
     const baitRes = await admin.request.post(lineUrl, {
       data: {
-        seasonYear: new Date().getFullYear(), description: 'Fold probe — club line',
+        fiscalYear: String(new Date().getFullYear()), description: 'Fold probe — club line',
         totalAmount: 100, categoryId: homeCat.id, itemId: teamWord.id,
       },
     });
@@ -336,7 +336,7 @@ async function main() {
 
       const okRes = await admin.request.post(lineUrl, {
         data: {
-          seasonYear: new Date().getFullYear(), description: 'Fold probe — club line (valid)',
+          fiscalYear: String(new Date().getFullYear()), description: 'Fold probe — club line (valid)',
           totalAmount: 100, categoryId: otherCat.id, itemId: club.id,
         },
       });

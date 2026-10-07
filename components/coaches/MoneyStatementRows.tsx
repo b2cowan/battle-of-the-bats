@@ -75,6 +75,9 @@ export interface ItemResult {
   /** ⚠ DERIVED, never stored: is there a budget line for this category+item? False = the team was
    *  charged for something it never planned, which is the row this whole change exists to show. */
   inPlan: boolean;
+  /** The CLUB's only (Stage 3c, Ask 4): an earlier fiscal year's bills paid this year — planned in that year, so
+   *  Budgeted and Variance are blank, never the off-plan dash. Never set on a coach's row. */
+  plannedIn?: string;
   periods: PeriodResult[];
   /** The money back netted into this row, so it can show what came back and when. */
   refunds: Array<{ id: string; description: string; amount: number; receivedDate: string | null }>;
@@ -395,14 +398,20 @@ export function ItemRows({
                     fact sits on the figure that states it: the Budget cell's dash, in amber.
                     ⚠ THE SENTENCE STAYS FOR A SCREEN READER, because a dash and an ink are not
                     readable — the same reason the category row carries one. */}
-                {!item.inPlan && (
+                {!item.inPlan && !item.plannedIn && (
                   <span className={styles.srOnly}> — not planned</span>
+                )}
+                {/* The CLUB's earlier year's bills, paid this year (Club Tier Stage 3c, Ask 4): planned in their
+                    own year, so Budgeted and Variance are BLANK, never the amber off-plan dash. Never set on a
+                    coach's row. Session 2 draws its caption ("planned and billed in 2025–26"). */}
+                {item.plannedIn && (
+                  <span className={styles.srOnly}> — planned in {item.plannedIn}</span>
                 )}
               </th>
               {/* ⚠ BOTH FIGURES ARE THE SAME CONTROL. They differ only in which list they open, so
                   a coach meeting them has one habit to learn rather than two. */}
-              <td className={item.inPlan ? '' : styles.unplannedDash}>
-                {item.inPlan && planBehind ? (
+              <td className={item.inPlan || item.plannedIn ? '' : styles.unplannedDash}>
+                {item.plannedIn ? null : item.inPlan && planBehind ? (
                   <button
                     type="button"
                     className={styles.figureBtn}
@@ -430,8 +439,8 @@ export function ItemRows({
                   </button>
                 ) : fmtCell(item.actual)}
               </td>
-              <td style={{ color: varianceInk(item.variance, item.direction, item.actual) }}>
-                {varianceText(item.variance, item.direction, item.actual)}
+              <td style={item.plannedIn ? undefined : { color: varianceInk(item.variance, item.direction, item.actual) }}>
+                {item.plannedIn ? null : varianceText(item.variance, item.direction, item.actual)}
               </td>
             </tr>
 

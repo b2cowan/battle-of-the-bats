@@ -37,8 +37,7 @@ import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { FormError, TextField, day, jsonInit, moneyFetch, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
 import { pluralize } from '@/lib/utils';
 import { PAYEE_REPORT_WORDS } from '@/lib/club-money-words';
-import { clubYearOf } from '@/lib/club-money-figures';
-import { formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { formatStoredDate } from '@/lib/timezone';
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 import { clubSharesPayees } from '@/lib/team-payee-scope';
 
@@ -261,20 +260,20 @@ function PayeeWindow({ payee, others, canShare, q, reportHref, onClose, onDone }
  * when it appears — a payee shared a moment ago shows "Nothing recorded" until a team records a payment.
  */
 function RecordedDoor({ payeeId, q, href }: { payeeId: string; q: string; href: string }) {
-  const year = clubYearOf(tournamentToday());
+  // The server reads the fiscal year today falls in, and names it (Stage 3c — no year worked out here).
   const [caption, setCaption] = useState<string | null>(null);
   const [since, setSince] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
-    void moneyFetch<{ report?: { teams: unknown[]; total: number; payee: { sharedAt: string } } }>(`/api/admin/accounting/payees/${payeeId}/report?${q}&year=${year}`)
+    void moneyFetch<{ report?: { teams: unknown[]; total: number; payee: { sharedAt: string }; year: { name: string } } }>(`/api/admin/accounting/payees/${payeeId}/report?${q}`)
       .then(r => {
         if (!live || !r.ok || !r.data.report) return;
-        setCaption(PAYEE_REPORT_WORDS.doorCaption(r.data.report.teams.length, r.data.report.total, year));
+        setCaption(PAYEE_REPORT_WORDS.doorCaption(r.data.report.teams.length, r.data.report.total, r.data.report.year.name));
         setSince(r.data.report.payee.sharedAt);
       })
       .catch(() => {});
     return () => { live = false; };
-  }, [payeeId, q, year]);
+  }, [payeeId, q]);
   return (
     <>
       {since && <p className={ck.hint}>Shared since {formatStoredDate(since, { withYear: false })}.</p>}

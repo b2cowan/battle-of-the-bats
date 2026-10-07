@@ -12,6 +12,7 @@ import {
 } from './club-money-words';
 import { clubMoneyLinks, tellClubAccounting, tellTeamMoneyPeople } from './club-money-notify';
 import { refused, type Moved, type Refused } from './club-money-route';
+import { closedYearFromError, isClosedYearError, refuseIfClosedFor } from './club-fiscal-year-server';
 import type { DuesPaymentMethod, Organization, RepAllocationInstallment } from './types';
 
 export type { Moved, Refused };
@@ -33,6 +34,14 @@ export type { Moved, Refused };
  * Who may call: the routes gate on `resolveClubMoney` (club, `canMoveClubMoney`) or on the coach's
  * live seat with money write access. Every club move here ALSO checks the member's team-group limit
  * (B11), so a route cannot forget it.
+ *
+ * ⚖ THE FISCAL YEAR'S LOCK (Club Tier Stage 3c; Asks 1, 8d; call 2). Every club move that writes or voids a
+ * line on the club's books is checked against the closed stretch FIRST and refused in words (409
+ * `year_closed`): receiving or approving dated into a closed year ("date it Sep 1 or later, or reopen"); Undo,
+ * Reverse and Void of a line dated in one ("recorded in 2025–26, which is closed — to change it, reopen").
+ * Receiving an OLD year's installment dated today is allowed (a bill still owed is the team's debt, whichever
+ * year it counts in), and so are the coach's "sent" and take-back (they write no line). The database's triggers
+ * are the floor; a move that reaches them anyway (a close in the same instant) is answered the same way.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -176,8 +185,22 @@ type RpcResult = { ok: boolean; code?: string; state?: string; entryId?: string;
 
 async function rpc(fn: string, args: Record<string, unknown>): Promise<RpcResult> {
   const { data, error } = await supabaseAdmin.rpc(fn, args);
+  // The lock's floor (mig 318): a move that raced a close is a refusal, never a 500.
+  if (error && isClosedYearError(error)) return { ok: false, code: 'year_closed' };
   if (error) throw error;
   return data as RpcResult;
+}
+
+/** A line's day and its other half's (a transfer's two halves are voided together, so both are asked). */
+async function entryDays(entryId: string | null | undefined): Promise<string[]> {
+  if (!entryId) return [];
+  const { data, error } = await supabaseAdmin.from('accounting_entries').select('entry_date, linked_entry_id').eq('id', entryId).maybeSingle();
+  if (error) throw error;
+  if (!data) return [];
+  if (!data.linked_entry_id) return [data.entry_date as string];
+  const { data: other, error: e2 } = await supabaseAdmin.from('accounting_entries').select('entry_date').eq('id', data.linked_entry_id).maybeSingle();
+  if (e2) throw e2;
+  return [data.entry_date as string, ...(other ? [other.entry_date as string] : [])];
 }
 
 // ── The club's moves ───────────────────────────────────────────────────────────────────────────
@@ -199,6 +222,7 @@ export async function clubReceiveInstallment(ctx: AuthContextWithRole, p: {
   const input = readMoveInput(p); if (!input.ok) return input;
   const found = await installmentFor(ctx, p); if (!found.ok) return found;
   const { c } = found;
+  const closed = await refuseIfClosedFor(ctx.org.id, [input.on], 'date'); if (closed) return closed;
 
   const words = installmentLineWords({
     teamName: c.team.name, orgName: ctx.org.name, allocation: c.allocation,
@@ -210,6 +234,7 @@ export async function clubReceiveInstallment(ctx: AuthContextWithRole, p: {
     p_club_words: words.club, p_team_words: words.team, p_category: CLUB_LOOP_CATEGORY.allocation,
   });
   if (!r.ok) {
+    if (r.code === 'year_closed') return closedYearFromError(ctx.org.id, [input.on]);
     return r.code === 'state_changed'
       ? refused(409, clubInstallmentRefusal(r.state as InstallmentStateWord, c.team.name))
       : notFound();
@@ -233,11 +258,15 @@ export async function clubUndoInstallment(ctx: AuthContextWithRole, p: {
   const reason = readReason(p.reason); if (!reason.ok) return reason;
   const found = await installmentFor(ctx, p); if (!found.ok) return found;
   const { c } = found;
+  // Undo voids both lines where they sit: refused when they sit in a closed year (Ask 8d — reopen it first).
+  const days = await entryDays(c.installment.accountingEntryId);
+  const closed = await refuseIfClosedFor(ctx.org.id, days, 'recorded'); if (closed) return closed;
 
   const r = await rpc('club_installment_undo', {
     p_installment: c.installment.id, p_org: ctx.org.id, p_actor: ctx.user.id, p_reason: reason.value,
   });
   if (!r.ok) {
+    if (r.code === 'year_closed') return closedYearFromError(ctx.org.id, days);
     if (r.code === 'unlinked') return refused(409, { error: UNLINKED_PAYMENT, code: 'unlinked' });
     if (r.code === 'state_changed') return refused(409, clubUndoRefusal(r.state ?? 'unpaid'));
     return notFound();
@@ -261,6 +290,7 @@ export async function clubApproveRequest(ctx: AuthContextWithRole, p: {
   const input = readMoveInput(p); if (!input.ok) return input;
   const found = await requestFor(ctx, p.requestId); if (!found.ok) return found;
   const { c } = found;
+  const closed = await refuseIfClosedFor(ctx.org.id, [input.on], 'date'); if (closed) return closed;
 
   const words = requestLineWords({
     teamName: c.team.name, orgName: ctx.org.name, description: c.row.description, requestType: c.row.request_type,
@@ -270,6 +300,7 @@ export async function clubApproveRequest(ctx: AuthContextWithRole, p: {
     p_method_word: methodWord(input.method), p_reference: input.reference, p_club_words: words.club,
     p_team_words: words.team, p_category: requestCategory(c.row.request_type),
   });
+  if (!r.ok && r.code === 'year_closed') return closedYearFromError(ctx.org.id, [input.on]);
   // Gone between our read and the lock means the coach withdrew it (a withdrawal deletes the request).
   if (!r.ok) return refused(409, requestRefusal(r.code === 'state_changed' ? r.state ?? 'approved' : 'withdrawn', 'club'));
 
@@ -325,11 +356,15 @@ export async function clubReverseRequest(ctx: AuthContextWithRole, p: {
   const reason = readReason(p.reason); if (!reason.ok) return reason;
   const found = await requestFor(ctx, p.requestId); if (!found.ok) return found;
   const { c } = found;
+  // Reverse voids both lines where they sit: refused when they sit in a closed year (Ask 8d).
+  const days = await entryDays(c.row.accounting_entry_id ?? null);
+  const closed = await refuseIfClosedFor(ctx.org.id, days, 'recorded'); if (closed) return closed;
 
   const r = await rpc('club_request_reverse', {
     p_request: c.row.id, p_org: ctx.org.id, p_actor: ctx.user.id, p_reason: reason.value,
   });
   if (!r.ok) {
+    if (r.code === 'year_closed') return closedYearFromError(ctx.org.id, days);
     if (r.code === 'unlinked') return refused(409, { error: UNLINKED_APPROVAL, code: 'unlinked' });
     if (r.code === 'state_changed') return refused(409, requestRefusal(r.state ?? 'pending', 'club'));
     return notFound();
@@ -351,10 +386,14 @@ export async function clubVoidTransfer(ctx: AuthContextWithRole, p: {
   entryId: string; reason: unknown;
 }): Promise<Moved<{ voided: string[] }>> {
   const reason = readReason(p.reason); if (!reason.ok) return reason;
+  // Both halves are voided where they sit: refused when either sits in a closed year (Ask 8d).
+  const days = await entryDays(p.entryId);
+  const closed = await refuseIfClosedFor(ctx.org.id, days, 'recorded'); if (closed) return closed;
   const r = await rpc('club_transfer_void', {
     p_entry: p.entryId, p_org: ctx.org.id, p_actor: ctx.user.id, p_reason: reason.value,
   });
   if (!r.ok) {
+    if (r.code === 'year_closed') return closedYearFromError(ctx.org.id, days);
     if (r.code === 'not_found') return notFound();
     return refused(r.code === 'already_void' ? 409 : 400, {
       error: TRANSFER_VOID_REFUSAL[r.code ?? ''] ?? 'This transfer can’t be voided.', code: r.code,

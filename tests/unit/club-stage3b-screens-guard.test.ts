@@ -74,7 +74,8 @@ describe('3. a team’s cash is read and labelled, never added in', () => {
   it('the club’s Cash on hand is its own books only', () => {
     const body = functionBody(readCode('lib/club-money-figures.ts'), 'clubCashOnHand');
     assert.match(body, /isClubOwnedBook\(b\.kind\)/);
-    assert.match(readCode('lib/club-budget-report.ts'), /const cashOnHand = clubCashOnHand\(books\);/);
+    // ⚖ Stage 3c (Ask 1): a CLOSED year's band reads its locked closing — still the club's own books, as of its last day.
+    assert.match(readCode('lib/club-budget-report.ts'), /const cashOnHand = year\.closed \? year\.closed\.closingBalance : clubCashOnHand\(books\);/);
   });
   it('the held-by column’s closing cell is blank on the Overview, and the column wears no coloured edge', () => {
     const code = readCode(OVERVIEW);

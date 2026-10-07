@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { moveRefused, resolveClubMoney } from '@/lib/club-money-route';
-import { deleteClubLine, editClubLine } from '@/lib/club-budget-writes';
+import { deleteClubLine, editClubLine, lineYearRefusal } from '@/lib/club-budget-writes';
 
 type Ctx = { params: Promise<{ lineId: string }> };
 
@@ -24,6 +24,9 @@ export const PATCH = withObservability(async (req: Request, { params }: Ctx) => 
   const gate = await resolveClubMoney(req, { scope: 'books', write: true });
   if ('error' in gate) return gate.error;
   const { lineId } = await params;
+  // ⚖ A closed fiscal year's line is never edited (Stage 3c, Ask 1) — refused in words first.
+  const closed = await lineYearRefusal(gate.ctx.org.id, lineId, true);
+  if (closed) return moveRefused(closed);
   const body = await req.json().catch(() => ({}));
   const saved = await editClubLine(gate.ctx.org.id, lineId, body && typeof body === 'object' ? body : {});
   if (!saved.ok) return moveRefused(saved);
@@ -39,6 +42,8 @@ export const DELETE = withObservability(async (req: Request, { params }: Ctx) =>
   const gate = await resolveClubMoney(req, { scope: 'books', write: true });
   if ('error' in gate) return gate.error;
   const { lineId } = await params;
+  const closed = await lineYearRefusal(gate.ctx.org.id, lineId, true);
+  if (closed) return moveRefused(closed);
   const removed = await deleteClubLine(gate.ctx.org.id, lineId);
   if (!removed.ok) return moveRefused(removed);
   return NextResponse.json({ ok: true });

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSeasonClubBills } from '@/lib/coach-club-bills';
 import {
   getRepPlayerDuesSchedules,
   getRepDuesInstallmentsBySchedules,
@@ -329,24 +330,31 @@ export const GET = withObservability(async (_req: Request,
        · allocationsReceived — what the CLUB has. The bill's "Left" means "the club has it", so a
          sent installment is still outstanding there.
      Overdue is the club's one rule: unpaid, not sent, past due in the club's day. */
+  /* ⚖ CLUB TIER STAGE 3c, S3C-11 (call 1): the CASH figure reads the payments THIS season carries — the money that
+     left the team while it ran, whichever season's bill it paid (`getSeasonClubBills`, the register's own reader,
+     so the two still agree to the cent). What the club has received and what is overdue stay questions about THIS
+     season's own bills. */
   let allocationsPaid = 0;
   let allocationsReceived = 0;
   let allocationsOverdueCount = 0;
-  if (splits.length > 0) {
-    const { data: installs } = await supabaseAdmin
-      .from('rep_allocation_installments')
-      .select('amount, due_date, paid_at, sent_at, sent_on, paid_on')
-      .in('split_id', splits.map(s => s.id));
-    for (const inst of (installs ?? []) as Array<{
-      amount: number; due_date: string | null; paid_at: string | null;
-      sent_at: string | null; sent_on: string | null; paid_on: string | null;
-    }>) {
-      const amount = Number(inst.amount ?? 0);
-      const facts = { paidAt: inst.paid_at, sentAt: inst.sent_at, sentOn: inst.sent_on, paidOn: inst.paid_on };
-      if (clubInstallmentLeftTeamOn(facts)) allocationsPaid += amount;
-      if (inst.paid_at) allocationsReceived += amount;
-      if (inst.due_date && clubInstallmentState({ ...facts, dueDate: inst.due_date }, today) === 'overdue') allocationsOverdueCount += 1;
-    }
+  const [seasonBills, ownInstalls] = await Promise.all([
+    getSeasonClubBills(teamId, programYear.id),
+    splits.length > 0
+      ? supabaseAdmin.from('rep_allocation_installments').select('amount, due_date, paid_at, sent_at, sent_on, paid_on')
+        .in('split_id', splits.map(s => s.id)).then(r => r.data ?? [])
+      : Promise.resolve([]),
+  ]);
+  for (const inst of seasonBills.flatMap(b => b.installments)) {
+    if (clubInstallmentLeftTeamOn(inst)) allocationsPaid += Number(inst.amount ?? 0);
+  }
+  for (const inst of ownInstalls as Array<{
+    amount: number; due_date: string | null; paid_at: string | null;
+    sent_at: string | null; sent_on: string | null; paid_on: string | null;
+  }>) {
+    const amount = Number(inst.amount ?? 0);
+    const facts = { paidAt: inst.paid_at, sentAt: inst.sent_at, sentOn: inst.sent_on, paidOn: inst.paid_on };
+    if (inst.paid_at) allocationsReceived += amount;
+    if (inst.due_date && clubInstallmentState({ ...facts, dueDate: inst.due_date }, today) === 'overdue') allocationsOverdueCount += 1;
   }
 
   // ── Payment requests ─────────────────────────────────────────────────────

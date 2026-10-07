@@ -74,9 +74,12 @@ export default function NewAllocationPage() {
   const search = useSearchParams();
   const { currentOrg, loading } = useOrg();
   const lineId = search.get('line');
-  const lineYear = Number(search.get('year')) || null;
+  /** The line's fiscal year, as the line window links it: the year's KEY (its first day — Stage 3c), never a number. */
+  const lineYear = search.get('year') || null;
   /** The budget line this allocation is drawn from, read from its own year's plan. */
   const [line, setLine] = useState<PlanLineRow | null>(null);
+  /** That year's name, as the plan read returns it ("2026–27"). */
+  const [lineYearName, setLineYearName] = useState<string | null>(null);
   /** Opened from a line and it isn't here: gone from the plan, or the read failed. */
   const [lineProblem, setLineProblem] = useState<'missing' | 'failed' | null>(null);
   /** Opened from a line (and the line is not gone): the form is the line's from the first paint, never the
@@ -123,13 +126,14 @@ export default function NewAllocationPage() {
   useEffect(() => {
     if (!currentOrg || !lineId) return;
     let live = true;
-    fetch(`/api/admin/accounting/budget-plan${orgQuery}${lineYear ? `&year=${lineYear}` : ''}`)
+    fetch(`/api/admin/accounting/budget-plan${orgQuery}${lineYear ? `&year=${encodeURIComponent(lineYear)}` : ''}`)
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then(data => {
         if (!live) return;
         const found = ([...(data.plan?.expenses?.categories ?? [])] as { lines: PlanLineRow[] }[]).flatMap(c => c.lines).find(l => l.id === lineId) ?? null;
         if (!found) { setLineProblem('missing'); return; }
         setLine(found);
+        setLineYearName(typeof data.year?.name === 'string' ? data.year.name : null);
         setDescription(d => d || found.description);
         setTotalAmount(t => t || (found.notAllocated ?? 0).toFixed(2));
       })
@@ -369,7 +373,7 @@ export default function NewAllocationPage() {
           {fromLine && !line && !lineProblem && <p className={styles.muted}>Loading the budget line…</p>}
           {line && (
             <RecordFacts rows={[
-              ['From the line', `${line.description} · ${lineYear ?? ''}`],
+              ['From the line', `${line.description} · ${lineYearName ?? ''}`],
               ['Planned', fmt(line.planned)],
               ['Already allocated', `${fmt(line.allocated ?? 0)}${line.allocations.length > 0 ? ` · ${line.allocations.map(a => a.description).join(', ')}` : ''}`],
               ['Left to allocate', fmt(line.notAllocated ?? 0)],

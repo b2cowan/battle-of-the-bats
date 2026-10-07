@@ -1,4 +1,6 @@
 import 'server-only';
+import { loadFiscalSetting } from './club-fiscal-year-server';
+import { closedThrough, fiscalYearOf } from './club-fiscal-year';
 import { supabaseAdmin } from './supabase-admin';
 import { orgDayKey, tournamentToday, daysBetweenDateStrings } from './timezone';
 import { getRepProgramYear, getRepTeams, mapRepAllocationInstallment, resolvePersonNamer } from './db';
@@ -424,6 +426,12 @@ export interface ClubRequestRow extends ClubRequest {
   waitingDays: number | null;
   /** The club's answer is the one thing between the team and its end-of-season payout (Ask 5b). */
   holdingPayout: boolean;
+  /** The fiscal year it was FILED in (Stage 3c, call 4 — the club's day): a waiting request from a closed year is
+   *  listed under "From 2025–26, still open" until it is decided. */
+  filedIn: { key: string; name: string };
+  /** An approval whose lines sit in a CLOSED fiscal year (Stage 3c, Ask 8d): Reverse is not offered — to reverse
+   *  it, reopen the year. */
+  locked: boolean;
 }
 
 /**
@@ -448,10 +456,12 @@ export async function clubRequests(
   });
   const visible = rows.filter(r => !scope || scope.has(r.team_id));
 
-  const [nameOf, holding] = await Promise.all([
+  const [nameOf, holding, setting] = await Promise.all([
     resolvePersonNamer(orgId, visible.flatMap(r => [r.created_by, r.reviewed_by, r.reversed_by])),
     seasonsHoldingPayout(visible.filter(r => r.status === 'pending').map(r => r.program_year_id)),
+    loadFiscalSetting(orgId),
   ]);
+  const through = closedThrough(setting);
 
   return visible.map(r => {
     const pending = r.status === 'pending';
@@ -464,6 +474,8 @@ export async function clubRequests(
       reversedByName: nameOf(r.reversed_by),
       waitingDays: pending ? Math.max(0, daysBetweenDateStrings(orgDayKey(r.created_at), today)) : null,
       holdingPayout: pending && holding.has(r.program_year_id),
+      filedIn: (y => ({ key: y.key, name: y.name }))(fiscalYearOf(orgDayKey(r.created_at), setting)),
+      locked: r.status === 'approved' && through !== null && !!r.paid_on && r.paid_on <= through,
     };
   });
 }

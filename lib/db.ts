@@ -14264,13 +14264,37 @@ export interface RepAllocationSplitWithInstallments {
  * of turning an item id into a word is how the two halves of a table start disagreeing."* One
  * reader, one answer.
  */
+/** The splits select every club-bill reader uses: the bill's description and the team's budget words ride along. */
+export const REP_ALLOCATION_SPLIT_SELECT = '*, rep_cost_allocations(description), budget_items(name), budget_categories(name)';
+
+/** One split row (read with `REP_ALLOCATION_SPLIT_SELECT`) and its installments, as every reader returns it. */
+export function mapRepAllocationSplitWithInstallments(s: Record<string, any>, installments: RepAllocationInstallment[]): RepAllocationSplitWithInstallments {
+  return {
+    id: s.id,
+    allocationId: s.allocation_id,
+    allocationDescription: (s.rep_cost_allocations?.description as string) ?? '',
+    teamId: s.team_id,
+    programYearId: s.program_year_id,
+    amount: Number(s.amount),
+    splitMethod: s.split_method,
+    splitValue: Number(s.split_value),
+    paymentSchedule: s.payment_schedule,
+    notes: s.notes ?? null,
+    budgetCategoryId: s.budget_category_id ?? null,
+    budgetItemId: s.budget_item_id ?? null,
+    budgetCategoryName: (s.budget_categories?.name as string) ?? null,
+    budgetItemName: (s.budget_items?.name as string) ?? null,
+    installments,
+  };
+}
+
 export async function getRepAllocationSplitsForTeam(
   teamId: string,
   programYearId: string,
 ): Promise<RepAllocationSplitWithInstallments[]> {
   const { data: splitData, error: splitError } = await supabaseAdmin
     .from('rep_allocation_splits')
-    .select('*, rep_cost_allocations(description), budget_items(name), budget_categories(name)')
+    .select(REP_ALLOCATION_SPLIT_SELECT)
     .eq('team_id', teamId)
     .eq('program_year_id', programYearId)
     .order('created_at');
@@ -14292,23 +14316,7 @@ export async function getRepAllocationSplitsForTeam(
     if (list) list.push(inst); else bySplit.set(inst.splitId, [inst]);
   }
 
-  return splits.map(s => ({
-    id: s.id,
-    allocationId: s.allocation_id,
-    allocationDescription: (s.rep_cost_allocations?.description as string) ?? '',
-    teamId: s.team_id,
-    programYearId: s.program_year_id,
-    amount: Number(s.amount),
-    splitMethod: s.split_method,
-    splitValue: Number(s.split_value),
-    paymentSchedule: s.payment_schedule,
-    notes: s.notes ?? null,
-    budgetCategoryId: s.budget_category_id ?? null,
-    budgetItemId: s.budget_item_id ?? null,
-    budgetCategoryName: (s.budget_categories?.name as string) ?? null,
-    budgetItemName: (s.budget_items?.name as string) ?? null,
-    installments: bySplit.get(s.id) ?? [],
-  }));
+  return splits.map(s => mapRepAllocationSplitWithInstallments(s, bySplit.get(s.id) ?? []));
 }
 
 // ── 6M: Due reminder helpers ──────────────────────────────────────────────────

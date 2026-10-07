@@ -381,12 +381,13 @@ describe('a team\'s book is read-only everywhere; a transfer voids both halves (
     assert.match(fn, /team_id IS NULL/, 'the club\'s payees only');
     assert.match(functionBody(readCode('lib/club-payees.ts'), 'deleteClubPayee'), /if \(uses > 0\) return inUse\(/);
   });
-  it('a general allocation\'s source entry is one of the club\'s own (C17)', () => {
-    // Stage 3b: checked inside `createClubAllocation` (lib/club-budget-writes.ts), the one create both doors use.
+  it('the pasted ledger-entry id has LEFT New allocation (C17 — Stage 3c, Ask 6)', () => {
+    /* ⚖ C17's end state (owner 2026-10-07, Ask 6): 3a checked a pasted entry id against the club's own live books;
+       no screen ever read it, so 3c takes it out of the form and the create refuses one in words. Old rows keep
+       theirs; the step no longer takes one (mig 318: club_allocation_create has no p_source_entry). */
     const code = functionBody(readCode('lib/club-budget-writes.ts'), 'createClubAllocation');
-    assert.match(code, /\.eq\('accounting_ledgers\.org_id', orgId\)/);
-    assert.match(code, /\.in\('accounting_ledgers\.entity_type', \[\.\.\.CLUB_OWNED_BOOK_KINDS\]\)/, 'a club-owned book (Stage 3b: never a team\'s)');
-    assert.match(code, /src\.status === 'void'/);
+    assert.match(code, /code: 'source_entry_retired'/);
+    assert.doesNotMatch(code, /p_source_entry/);
   });
   it('the club\'s category list is its own, never the teams\'', () => {
     assert.match(readCode('app/api/admin/accounting/categories/route.ts'), /await clubCategories\(ctx\.org\.id\)/);
