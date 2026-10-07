@@ -41,11 +41,26 @@ changed. **Found on the way, not fixed:** the Schedule's day list (several event
 tablet or computer, where Escape does nothing, Back leaves the Schedule, and a tap beside it presses what is
 underneath — a small follow-up for the owner to rule on. Owner QA §273 ✅ passed 19/19 2026-10-06.
 
+**Step 5 built 2026-10-06 (committed `be092f9b`) — the lineup builder's drawers, and Back.** On a phone, **Back with a menu open now closes
+the menu and keeps you on the page** — the Tools menus, the Ledger's Filter, the team and player switchers, and the
+Schedule's view and + menus (before, all seven left the page; a second Back still does). The lineup builder's five
+drawers — Lineup setup, Save as template, Call up a player, Copy from and Print — come from the same frame as every
+other phone sheet, with nothing inside them moved. One thing a coach can see: **Call up a player wears the same head as
+Lineup setup and Save as template** — its title in the plain face, a round × (owner ruling D9, drawn true size first).
+For a keyboard, the three drawers you type in now keep it inside (it walked out behind them), as Lineup setup's window
+does on a computer, and every way out returns it to what opened the drawer. Two admin Tools rows that open another page
+— the club Ledger's Payees and the tournament Teams page's Registration questions — became ordinary links, so the new
+Back cannot cancel them. The step's review found and fixed one slip before it shipped: a window opened from a phone
+menu (the practice plan's Save as template…) lost its typing cursor as the menu closed — it now opens ready to type, on
+a phone and on a computer. **Found, not fixed:** on a tablet, Lineup setup's small "Game rules" toggle is under the tap
+floor (unchanged by this step, newly measured) — a small follow-up for the owner. Owner QA §277.
+
 ## What changes for a coach
 
 Very little on screen, on purpose:
 - Writing a game-day note or ending a game, the sheet covers the bottom bar, so a stray tap cannot lose the work
   (built, step 3).
+- Back with a menu open closes the menu, never the page (built, step 5).
 - The Schedule's Add event and view menus rise from the bottom like every other menu.
 - Print, the team switcher and Call up get the same kind of title as their neighbours.
 - On the warm theme, the game-day sheets dim the screen the same way every other sheet does.

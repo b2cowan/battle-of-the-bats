@@ -155,7 +155,7 @@ lends its trigger through an optional `triggerRef`. Step 4 added:
    (both portals) and the player row menus onto the frame, contents unmoved; the frame's own dim, `ownsKeys`,
    `overWindow`, `grabCloses`. **Built** (`2a304b52`; owner QA §273 ✅ PASSED 19/19). The Schedule day list is not a phone sheet —
    reported, not built.
-5. **Last: the lineup builder's drawers.** Setup, Save as template, Call up, Copy from and Print onto the frame, so
+5. **Last: the lineup builder's drawers.** **Built and committed `be092f9b` 2026-10-06** (owner QA §277; the plan's *Build record*). Setup, Save as template, Call up, Copy from and Print onto the frame, so
    `LineupSheetScrim` retires (its last five users: Print and Save as template in `lineups/[eventId]/page.tsx`, Setup
    and Call up in `_LineupEditor.tsx`, and `LineupCopyFrom.tsx`). Call up takes the shared form head
    (`LineupDrawerHead`) instead of its own `<h3>`; the three forms (Setup, Save as template, Call up) keep the keyboard

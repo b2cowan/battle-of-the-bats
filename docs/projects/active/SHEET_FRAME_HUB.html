@@ -124,11 +124,11 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Sheet Frame — project hub</strong><br><small>One shared frame for the portal’s phone sheets · inventory of 23 live sheets and the proposal, drawn 2026-10-03 at 390px · D1–D6 accepted 2026-10-05 · five build steps, each from its own prompt · <b>step 1 of 5 built and walked 2026-10-05 · step 2 committed 91986b7c 2026-10-05, QA §266 ✅ passed 2026-10-06 · step 3 (game day) committed 5d036eeb 2026-10-06, End game and Scouting ruled the same day, QA §268 ✅ passed 19/19 2026-10-06 · the game-day button row (found in the walk) drawn, ruled as drawn (D7–D8) and built 2026-10-06 (committed 62f76580 + b06d8483), QA §269 ✅ passed 6/6 2026-10-06 · the bottom bar’s grey tint at the end of a page fixed the same day, QA §270 ✅ passed 4/4 2026-10-06 · step 4 (the record sheets) built and committed 2a304b52 2026-10-06, the menu layer’s keys ruled the same day, QA §273 ✅ passed 19/19 2026-10-06</b></small></div>
+  <div class="hubtitle"><strong>Sheet Frame — project hub</strong><br><small>One shared frame for the portal’s phone sheets · inventory of 23 live sheets and the proposal, drawn 2026-10-03 at 390px · D1–D6 accepted 2026-10-05 · five build steps, each from its own prompt · <b>step 1 of 5 built and walked 2026-10-05 · step 2 committed 91986b7c 2026-10-05, QA §266 ✅ passed 2026-10-06 · step 3 (game day) committed 5d036eeb 2026-10-06, End game and Scouting ruled the same day, QA §268 ✅ passed 19/19 2026-10-06 · the game-day button row (found in the walk) drawn, ruled as drawn (D7–D8) and built 2026-10-06 (committed 62f76580 + b06d8483), QA §269 ✅ passed 6/6 2026-10-06 · the bottom bar’s grey tint at the end of a page fixed the same day, QA §270 ✅ passed 4/4 2026-10-06 · step 4 (the record sheets) built and committed 2a304b52 2026-10-06, the menu layer’s keys ruled the same day, QA §273 ✅ passed 19/19 2026-10-06 · step 5 (the lineup builder’s drawers, and Back) built and committed be092f9b 2026-10-06, Call up’s head ruled (D9), QA §277 owed — the walk closes the project</b></small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Round 1 drawn 2026-10-03: 23 sheets opened live at 390px, warm and dark; D1–D6 accepted 2026-10-05">Design</li>
     <li class="stage done" title="SHEET_FRAME_PLAN.md + PM brief + build prompt, 2026-10-05">Plan</li>
-    <li class="stage current" title="Step 1 built 2026-10-05 (QA §264 PASSED 9/9). Step 2 committed 91986b7c (QA §266 PASSED 17/17). Step 3 committed 5d036eeb (QA §268 PASSED 19/19; follow-ups §269, §270 PASSED). Step 4 committed 2a304b52 2026-10-06: the record sheets — the position picker, the Award sheet, RSVP over its window, the notification reader on both portals and the player row menus — on the frame, contents unmoved; a tap on the bar closes the picker and the Award sheet first; a sheet on a live bar no longer holds the keyboard (owner ruling); owner QA §273 PASSED 19/19 2026-10-06. Step 5 to build.">Build · step 4 of 5</li>
+    <li class="stage current" title="Step 1 built 2026-10-05 (QA §264 PASSED 9/9). Step 2 committed 91986b7c (QA §266 PASSED 17/17). Step 3 committed 5d036eeb (QA §268 PASSED 19/19; follow-ups §269, §270 PASSED). Step 4 committed 2a304b52 2026-10-06: the record sheets — the position picker, the Award sheet, RSVP over its window, the notification reader on both portals and the player row menus — on the frame, contents unmoved; a tap on the bar closes the picker and the Award sheet first; a sheet on a live bar no longer holds the keyboard (owner ruling); owner QA §273 PASSED 19/19 2026-10-06. Step 5 built and committed be092f9b 2026-10-06: the lineup builder’s five drawers on the frame, nothing inside them moved; Call up takes the shared head (D9, ruled 2026-10-06); the frame answers every sheet’s Escape and Back, so Back with a menu open closes the menu instead of leaving the page (7 of 7 left before); the three forms keep the keyboard inside; two admin Tools rows made links. Owner QA §277 owed — the walk closes the project.">Build · step 5 of 5 built</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -394,16 +394,25 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
         </div>
       </div>
 
-      <div class="move">
-        <h2>Call up a player · the shared form head</h2>
-        <p>The title matches Lineup setup and Save as template, the two forms beside it.</p>
+      <div class="move" id="step5-ask">
+        <h2>Call up a player · the shared form head <span class="mk" data-k="keep" data-note="Owner, 2026-10-06: take it whole (D9) — built in step 5 as drawn here. Drawn again 2026-10-06 for step 5. The step-2 drawing’s “proposed” frame was the same picture as “today” — it never showed the change, and its note said the × would not change. The frames below are the live sheet with the shared head’s own markup put in place of Call up’s, true size: what step 5 would ship.">Ruled 2026-10-06 · built</span></h2>
+        <p>Call up becomes the third form that shares one head with <b>Lineup setup</b> and <b>Save as template</b>, beside it in the same builder. Two things change, and the first drawing showed neither: the title moves from the condensed display face to the plain body face (same size and weight), and the × takes the round outlined button those two forms wear. On a phone the title sits 14px higher and the fields 4px higher; the × keeps its 44px. On a computer the bare 17×21 × becomes the 26px round button. Nothing else in the sheet moves.</p>
+        <p class="meta">Measured off the live page: title Barlow Condensed → Inter, 14px 700 both; title 43px → 29px from the sheet’s top on a phone (17px → 15px on a computer); × 44×44 with no outline → 44×44 round outline on a phone, 17×21 → 26×26 on a computer. <b>Decision D9 asks whether to take it.</b></p>
         <div class="pair">
-          <div class="spec"><div class="spectop"><span class="lbl before">Today</span></div>
-            <div class="scroller"><div class="shot"><img data-shot="callup" src="sheet-frame/callup-warm.jpg" alt="Call up a player with its own heading style." width="390" height="844">
-              <button type="button" class="pin" style="left:250px;top:336px" data-d="D2" data-here="Its own heading in the display face, a third copy of the form head.">2</button></div></div></div>
-          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><span class="mk" data-k="re" data-note="The heading takes the shared form head’s title style. The × is unchanged.">Restyled</span></div>
-            <div class="scroller"><div class="shot"><img data-shot="callup-P" src="sheet-frame/callup-P-warm.jpg" alt="Call up a player with the shared form title." width="390" height="844">
-              <button type="button" class="pin fix" style="left:250px;top:336px" data-d="D2" data-here="The form head, as on Lineup setup.">2</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span><h3>Phone</h3></div>
+            <div class="scroller"><div class="shot"><img data-shot="s5-callup-before" src="sheet-frame/s5-callup-before-warm.jpg" alt="Call up a player with its own heading in the display face and a bare ×." width="390" height="844">
+              <button type="button" class="pin" style="left:200px;top:655px" data-d="D9" data-here="Its own heading, in the display face, and a bare × — a third copy of the form head, already drifted.">9</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><h3>Phone</h3><span class="mk" data-k="re" data-note="The shared form head (the one Lineup setup and Save as template wear): the title in the body face, the round 44px ×.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="s5-callup-after" src="sheet-frame/s5-callup-after-warm.jpg" alt="Call up a player with the shared form head: the title in the body face and a round ×." width="390" height="844">
+              <button type="button" class="pin fix" style="left:200px;top:645px" data-d="D9" data-here="The form head, as on Lineup setup and Save as template.">9</button></div></div></div>
+        </div>
+        <div class="pair">
+          <div class="spec"><div class="spectop"><span class="lbl before">Today</span><h3>Computer</h3></div>
+            <div class="scroller"><div class="shot"><img data-shot="s5-callup1280-before" src="sheet-frame/s5-callup1280-before-warm.jpg" alt="Call up on a computer: the display-face heading and a small bare ×." width="560" height="420">
+              <button type="button" class="pin" style="left:240px;top:95px" data-d="D9" data-here="On a computer the × is a 17×21 glyph with no button shape.">9</button></div></div></div>
+          <div class="spec"><div class="spectop"><span class="lbl after">Proposed</span><h3>Computer</h3><span class="mk" data-k="re" data-note="The same head on a computer: Call up keeps a × there (it always had one), now the 26px round one Lineup setup shows on a computer.">Restyled</span></div>
+            <div class="scroller"><div class="shot"><img data-shot="s5-callup1280-after" src="sheet-frame/s5-callup1280-after-warm.jpg" alt="Call up on a computer with the shared form head and a 26px round ×." width="560" height="420">
+              <button type="button" class="pin fix" style="left:240px;top:95px" data-d="D9" data-here="The shared head, with the computer’s ×.">9</button></div></div></div>
         </div>
       </div>
 
@@ -590,6 +599,11 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <p>Above 900px there is no bottom bar. The row stays at the foot of the window in the console’s 480px column, as today, including the 32px it lifts at the very end of the page.</p>
     <p class="rec"><strong>Recommended: leave it.</strong> There is no second bar for a gap to sit between; the lift lands on the page’s own ground. A band across the whole window holding a 480px column of buttons would read as empty furniture, and game day is run from a phone. Step 3 also promised no change on a computer.</p>
     <p class="altx">Alternative: dock it at the window’s foot too, so it never lifts. Consistent with the phone, at the cost of a wide, mostly empty band on a computer.</p></div>
+
+  <div class="decisionrow" id="D9"><div class="dhead"><h3>D9 · Call up a player takes the shared form head — title AND ×</h3><span class="tag accepted">Ruled 2026-10-06 — take it whole</span></div>
+    <p>D2 ruled one head for a form, and the plan says Call up takes it (step 5). The drawing that ruling was made from showed Call up unchanged and said its × would not change — but the shared head’s × is the round outlined one. Taken whole, Call up’s title moves to the body face and its × becomes the round button, on a phone and on a computer (Mockup › 4, drawn again from the live sheet).</p>
+    <p class="rec"><strong>Recommended: take it whole.</strong> Call up sits beside Lineup setup and Save as template in the same builder, and is the only one of the three that looks different — the drift D2 named. One head means the next change to it lands on all three. On a computer the bare 17×21 × also becomes a real 26px button.</p>
+    <p class="altx">Alternative: the title only, keeping Call up’s bare ×. Matches what the first drawing promised, but leaves Call up its own head — the third copy D2 set out to remove.</p></div>
 </section>
 
 <section id="hub-brief" class="docpage" hidden>
@@ -598,6 +612,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
   <h2>What changes for a coach</h2>
   <p>Very little on screen, on purpose. A coach writing a game-day note sees the bottom bar go dim under it, so a stray tap cannot lose the note. The Schedule’s Add event and view menus rise from the bottom like every other menu. Print, the team switcher and Call up get the same kind of title as their neighbours. On the warm theme, the game-day sheets dim the screen the same way every other sheet does. Behind the scenes, every sheet behaves the same way for a keyboard and a screen reader.</p>
   <p><strong>Step 4 (built 2026-10-06, committed 2a304b52):</strong> the sheets about one player, one award or one notice — the position sheet, the Award sheet, a player’s RSVP, the notification reader (now on the club admin’s Notifications page too) and the player row menus — come from the shared frame, nothing inside them moved. With the position sheet or the Award sheet open, a tap on the bottom bar now closes the sheet first instead of opening More on top of it. In Dark they wear the card colour; the grab line is the frame’s lighter one. For a keyboard, a sheet on a live bar no longer holds you inside it. Owner QA §273 ✅ passed 19/19 2026-10-06.</p>
+  <p><strong>Step 5 (built 2026-10-06):</strong> on a phone, Back with a menu open closes the menu and keeps you on the page — the Tools menus, the Ledger’s Filter, the team and player switchers, the Schedule’s two menus (all seven used to leave the page). The lineup builder’s five drawers come from the same frame as every other phone sheet, nothing inside them moved; Call up a player wears the same head as Lineup setup and Save as template (D9). The three drawers you type in keep a keyboard inside, as Lineup setup’s window does on a computer. Two admin Tools rows that open another page became links, so Back cannot cancel them. Owner QA §277 — the walk closes the project.</p>
   <h2>Why it matters</h2>
   <p>A coach can open 16 sheets on a phone, built from four recipes, beside two popover menus and four full-screen windows. Two rulings about how sheets behave reached some of them and not others, so the same gesture does different things on different screens. One shared frame makes the rulings hold everywhere and stops new sheets drifting.</p>
   <h2>Customer impact</h2>
@@ -622,6 +637,15 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     <li><strong>Found in the §268 walk (owner):</strong> the console’s <code>.gdFooter</code> is <code>.stickyActionBar</code> inside the page column, so it is 358px of 390 (the shell’s 16px gutters) and, at the end of the page, sits back in flow — 32px off the nav (the shell <code>main</code>’s 32px bottom padding). Same 32px at 768 (a 480px strip) and at 1280 (off the window foot). Not step 3’s change.</li>
     <li><strong>Drawn as:</strong> at ≤900, <code>position: fixed; left: 0; right: 0; bottom: var(--coach-foot-clear)</code> with <code>padding-inline: max(1rem, (100vw − 30rem) / 2)</code> so the buttons keep the column, and the console padded by <code>--gd-foot-h</code> so its last line scrolls clear — the <code>.saveBar</code> / retired lineup dock recipe; no hand-copied gutter or padding numbers. Proved in place: row 390/390 and 768/768, gap to nav 0 at mid and end, buttons 16–374 and 144–624 unchanged.</li>
     <li><strong>Built 2026-10-06:</strong> as drawn, one stylesheet. The shell names its phone gutter (<code>--coach-gutter</code>, which <code>.coachesMain</code> now pads by) and the console its column (<code>--gd-col-w</code>), so the row insets to both without a copied number; <code>.gdPage:has(&gt; .gdFooter)</code> reserves <code>--gd-foot-h</code> only while the row is there (a read-only viewer has none). Proved: <code>.probe/gdfoot/verify.mjs</code> at 390 / 768 / 800 / 1280 (edge to edge, buttons to the column’s pixel, gap 0 top · middle · end; 1280 unchanged) and <code>sheets.mjs</code> (buttons answer their tap; Who’s here, Note and End game open over the row as before). Guard: <code>sheet-frame-guard</code> follow-up block (3 tests).</li>
+  </ul>
+  <h2>Step 5 — built 2026-10-06, committed be092f9b (the lineup builder’s drawers, and Back); QA §277 owed</h2>
+  <ul>
+    <li><strong>Measured first:</strong> Back with Tools, Filter, either switcher or the Schedule’s two menus open left the page on a phone — 7 of 7; the three builder forms let 4, 9 and 10 of 12 Tab presses walk out under their dim. Two admin Tools rows (the club Ledger’s Payees, the tournament Teams page’s Registration questions) navigated by <code>router.push</code>, which a back step would cancel — made links (<code>CoachToolbarMenuItem href</code>). The hub’s Call up drawing showed no change; drawn again, ruled D9.</li>
+    <li><strong>The frame answers every sheet:</strong> <code>useDialogFloor(true, …, { trap: form })</code> — Escape, Back, focus in and home in both layers, the keyboard held only in the form layer; a tap outside the sheet, its dim and its opener closes a menu; <code>ownsKeys</code> gone; the sheet marks itself <code>data-escape-owner</code> and the floor reads its own panel’s marker as its own. Tools, Filter, the switchers, game day and the row menus stopped answering their own keys on a phone.</li>
+    <li><strong>The builder’s drawers on the frame:</strong> Setup, Call up and Save as template (<code>form</code>), Copy from (<code>full</code>) and Print, one body each for both widths; Setup’s computer window stands its own floor. <code>LineupSheetScrim</code>, <code>.lineupDrawerOverNav</code> and the ≤900 <code>.lineupAutoMenu</code> drawer retired; <code>.lineupSheetBody</code> keeps every line in place; the dim’s colours are one token (<code>--sheet-dim</code>); focus home no longer scrolls.</li>
+    <li><strong>Proved:</strong> <code>.probe/sf5/capture.mjs</code> + <code>diff.mjs</code>, 25 sheets at 390 (warm, dark), 768 and 1280 — every line in place but Call up’s ruled head; inside every drawer 0 pixels changed (the outline is the frame’s); every sheet closes on the first Back and stays, the second leaves. Found and fixed on the way: at 768 the frame’s word-breaking split “to” in Setup. <code>keys.mjs</code> 83/83, <code>nested-groups.mjs</code> 4/4. Guards 978/978; <code>verify:changed</code> 5,812/5,812, its only red another session’s dev-only migration.</li>
+    <li><strong>Found, not fixed:</strong> Setup’s “Game rules ▾” is 16px tall at 641–900 (unchanged, newly measured — the owner’s call); Back from Copy from’s question to its list leaves focus nowhere (as before); focus after the reader’s Done or Delete (a TODO at close).</li>
+    <li><strong>/simplify and /review, before the commit:</strong> the five drawers share one shell (<code>LineupDrawer</code> — the width decided and the name said once; re-captured 24 of 24 pixel-identical). The review (three lenses) found no Critical or High; one defect confirmed and fixed — <strong>a window opened from a menu sheet lost its own cursor</strong> (the practice plan’s ⋯ › Save as template… on a phone: focus on the window’s frame, not its name box), because the closing sheet’s floor pulled focus home after the window’s field had taken it. The floor now hands focus home only when focus is nowhere or still in the closing panel; with it, the dev-only twin (strict mode’s double effect cost every window’s <code>autoFocus</code> field its cursor, measured at 1280) — the floor hands back the control that had focus. Space activates a link row in a Tools menu. Measured, not a defect: tapping the row you are already on in either switcher. W3 gained step 7.</li>
   </ul>
   <h2>Step 4 — built 2026-10-06, committed 2a304b52 (the record sheets); QA §273 ✅ passed 19/19</h2>
   <ul>
@@ -701,65 +725,60 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 <section id="hub-qa" class="docpage qa" hidden>
   <p class="meta">Step 1 · Owner QA §264 ✅ PASSED 2026-10-05, 9/9 — the club’s sheets rise from the bar; the coach’s did not change.</p>
   <p class="meta">Step 2 · Owner QA §266 ✅ PASSED 2026-10-06, 17/17 — the Schedule’s two menus rise from the bar; the switchers and Print say what they are; the keyboard lands where it should.</p>
-  <p class="meta">Step 3 · Owner QA §268 ✅ PASSED 2026-10-06, 19/19 — on game day Note and End game cover the bar, Scouting while an observation is typed; Who’s here, Score and Scouting stay on it; the keyboard stays inside a form. Follow-ups §269 ✅ 6/6 (the game-day button row docks on the nav) and §270 ✅ 4/4 (in Warm the bottom bar keeps its colour at the end of a page). All five walks are retired from this tab.</p>
-  <div class="eyebrow">Owner QA · §273 ✅ PASSED 2026-10-06, 19/19 · Coaches portal + club admin · Sheet Frame step 4 · the record sheets</div>
-  <h1>The sheets about one player, one award or one notice join the shared frame</h1>
-  <p class="sub">Three walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat.</p>
+  <p class="meta">Step 3 · Owner QA §268 ✅ PASSED 2026-10-06, 19/19 — on game day Note and End game cover the bar, Scouting while an observation is typed; Who’s here, Score and Scouting stay on it; the keyboard stays inside a form. Follow-ups §269 ✅ 6/6 (the game-day button row docks on the nav) and §270 ✅ 4/4 (in Warm the bottom bar keeps its colour at the end of a page).</p>
+  <p class="meta">Step 4 · Owner QA §273 ✅ PASSED 2026-10-06, 19/19 — the record sheets (the position sheet, the Award sheet, RSVP, the notification reader, the player row menus) look as they did; a tap on the bar closes the sheet first; a sheet on a live bar no longer holds the keyboard. All walks before step 5’s are retired from this tab.</p>
+  <div class="eyebrow">Owner QA · §277 · Coaches portal + club and tournament admin · Sheet Frame step 5 · the lineup builder’s drawers, and Back</div>
+  <h1>Back closes the menu you are in, and the lineup builder’s drawers join the shared frame</h1>
+  <p class="sub">Four walks, one job each, signed off one by one. Tick as you go; the ticks stay in this browser. Build a summary at the bottom and paste it back into the chat.</p>
   <div class="qacard">
-    <h3>What changed in step 4</h3>
-    <p>The <b>position sheet</b> (the lineup builder and game day), the <b>Award sheet</b>, a player’s <b>RSVP</b>, the <b>notification reader</b> (the coach’s and the club admin’s Notifications pages) and the <b>player row menus</b> (the builder, a player’s Best positions, the depth chart) now come from the same frame as every other phone sheet. <b>What is inside each one has not moved.</b> What you can see change: the grab line at the top is the frame’s lighter one (the Tools menu’s); in Dark these sheets wear the card colour, as the team switcher has since step 2; the row menus sit a hair further from the edge and a little taller at the foot. What you can feel change: with the position sheet, the Award sheet or the reader open, <b>a tap on the bottom bar closes the sheet first</b> — More used to open on top with the sheet still standing underneath. For a keyboard, a sheet on a live bar no longer holds you inside it: Tab past the end closes it. On a computer nothing changes.</p>
+    <h3>What changed in step 5</h3>
+    <p><b>On a phone, Back with a menu open now closes the menu and keeps you on the page</b> — the Tools menu, the Ledger’s Filter, the team switcher, the player switcher and the Schedule’s view menu and + menu. Before this step Back left the page from all seven (measured). A second Back leaves, as it always did. The lineup builder’s five drawers — <b>Lineup setup</b>, <b>Save as template</b>, <b>Call up a player</b>, <b>Copy from</b> and <b>Print</b> — now come from the same frame as every other phone sheet; <b>nothing inside them moved</b>. One thing you can see: <b>Call up a player wears the same head as Lineup setup and Save as template</b> — its title in the body face, a round × (your ruling D9). For a keyboard, the three forms keep it inside (it walked out behind them), and Lineup setup’s window on a computer does too. On the club Ledger and the tournament’s Teams page, <b>Tools › Payees</b> and <b>Tools › Registration questions</b> are now ordinary links, so the new Back step cannot cancel them.</p>
     <div class="pair">
-      <div class="spec"><div class="spectop"><span class="lbl before">Before</span><h3>Position sheet</h3></div>
-        <div class="scroller"><div class="shot"><img data-shot="s4-position-before" src="sheet-frame/s4-position-before-warm.jpg" alt="The position sheet on the bar, a dark grab line at the top." width="390" height="844"></div></div></div>
-      <div class="spec"><div class="spectop"><span class="lbl after">After</span><h3>Position sheet</h3></div>
-        <div class="scroller"><div class="shot"><img data-shot="s4-position-after" src="sheet-frame/s4-position-after-warm.jpg" alt="The same sheet with every chip in place; the grab line lighter." width="390" height="844"></div></div></div>
+      <div class="spec"><div class="spectop"><span class="lbl before">Before</span><h3>Call up a player</h3></div>
+        <div class="scroller"><div class="shot"><img data-shot="s5qa-callup-before" src="sheet-frame/s5qa-callup-before-warm.jpg" alt="Call up a player with its own heading in the display face and a bare ×." width="390" height="844"></div></div></div>
+      <div class="spec"><div class="spectop"><span class="lbl after">After</span><h3>Call up a player</h3></div>
+        <div class="scroller"><div class="shot"><img data-shot="s5qa-callup-after" src="sheet-frame/s5qa-callup-after-warm.jpg" alt="The same sheet with the shared form head: the title in the body face, a round ×." width="390" height="844"></div></div></div>
     </div>
     <div class="pair">
-      <div class="spec"><div class="spectop"><span class="lbl before">Before</span><h3>Award sheet</h3></div>
-        <div class="scroller"><div class="shot"><img data-shot="s4-award-before" src="sheet-frame/s4-award-before-warm.jpg" alt="The Award sheet on the bar." width="390" height="844"></div></div></div>
-      <div class="spec"><div class="spectop"><span class="lbl after">After</span><h3>Award sheet</h3></div>
-        <div class="scroller"><div class="shot"><img data-shot="s4-award-after" src="sheet-frame/s4-award-after-warm.jpg" alt="The same Award sheet, its facts in place; the grab line lighter." width="390" height="844"></div></div></div>
+      <div class="spec"><div class="spectop"><span class="lbl before">Before</span><h3>Lineup setup</h3></div>
+        <div class="scroller"><div class="shot"><img data-shot="s5qa-setup-before" src="sheet-frame/s5qa-setup-before-warm.jpg" alt="Lineup setup covering the bar." width="390" height="844"></div></div></div>
+      <div class="spec"><div class="spectop"><span class="lbl after">After</span><h3>Lineup setup</h3></div>
+        <div class="scroller"><div class="shot"><img data-shot="s5qa-setup-after" src="sheet-frame/s5qa-setup-after-warm.jpg" alt="The same sheet on the shared frame, everything inside in place." width="390" height="844"></div></div></div>
     </div>
-    <div class="pair">
-      <div class="spec"><div class="spectop"><span class="lbl before">Before</span><h3>Player row menu</h3></div>
-        <div class="scroller"><div class="shot"><img data-shot="s4-rowmenu-before" src="sheet-frame/s4-rowmenu-before-warm.jpg" alt="The builder’s row menu: Move up, Move down, Remove, Cancel." width="390" height="844"></div></div></div>
-      <div class="spec"><div class="spectop"><span class="lbl after">After</span><h3>Player row menu</h3></div>
-        <div class="scroller"><div class="shot"><img data-shot="s4-rowmenu-after" src="sheet-frame/s4-rowmenu-after-warm.jpg" alt="The same menu, its rows a hair further in, a little taller at the foot." width="390" height="844"></div></div></div>
-    </div>
-    <p class="meta">Use the warm/dark switch at the top for the dark captures — that is where the card colour shows.</p>
+    <p class="meta">Use the warm/dark switch at the top for the dark captures.</p>
   </div>
   <div class="qacard">
     <h3>Sign in as</h3>
     <dl>
-      <dt>Where</dt><dd>http://localhost:3000/auth/login. W1 and W2 on a phone, or a browser window narrowed under 640px; W3 on a computer with a keyboard.</dd>
+      <dt>Where</dt><dd>http://localhost:3000/auth/login. W1, W2 and W4 on a phone, or a browser window narrowed under 640px (Chrome’s device toolbar, iPhone 13); W3 on a computer with a keyboard.</dd>
       <dt>Coach</dt><dd>uat-coach@uat-test-org.local (password: <code>UAT_COACH_PASSWORD</code> in <code>.env.local</code>) · <b>UAT Test Team</b>, UAT Rep Club. The account may land on another team: switch first.</dd>
-      <dt>Treasurer</dt><dd>uat-club-treasurer@uat-rep-club.local (password: <code>UAT_REP_CLUB_TREASURER_PASSWORD</code>) — W1 step 7 only.</dd>
-      <dt>Test data</dt><dd>One award, <b>SF4 probe award</b>, given to Devon Test for the walk (the re-seeded team had none). Removed after the walk passed (2026-10-06). The game <b>vs Probe Rovers</b> must be live for the game-day step: if it opens as <b>Game recap · Read-only</b>, run <code>node .probe/sf3/livegame.mjs</code>.</dd>
+      <dt>Club owner</dt><dd>uat-club-owner@uat-rep-club.local (<code>UAT_REP_CLUB_OWNER_PASSWORD</code>) — W4 step 1.</dd>
+      <dt>Tournament owner</dt><dd>The org owner (<code>UAT_ORG_OWNER_EMAIL</code> / <code>UAT_ORG_OWNER_PASSWORD</code>) on <b>uat-plus-org</b> — W4 step 2.</dd>
+      <dt>Test data</dt><dd>None added. The game <b>vs Probe Rovers</b> must be live for W1 step 7: if it opens as <b>Game recap · Read-only</b>, run <code>node .probe/sf3/livegame.mjs</code>.</dd>
     </dl>
-    <p class="meta"><b>What the walks change:</b> opening a notification marks it read, as it always has. Nothing else — every step closes a sheet without picking, answering or editing. Restart the dev server first: this step changes shared parts.</p>
+    <p class="meta"><b>What the walks change:</b> nothing — every step opens a sheet and closes it, or opens a page and comes back. Do not type a template name, call anyone up, copy or print. Restart the dev server first: this step changes shared parts.</p>
   </div>
   <div class="qaindex" role="group" aria-label="Walks">
-    <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · The record sheets look as they did</b><span class="meta">On a phone: eight sheets, Warm and Dark.</span><span class="qachip" data-chip="w1"></span></button>
-    <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · A tap on the bar closes the sheet first</b><span class="meta">On a phone: More, Back and the dim.</span><span class="qachip" data-chip="w2"></span></button>
-    <button type="button" class="qawcard" data-walk="w3" aria-pressed="false"><b>W3 · The keyboard</b><span class="meta">On a computer, the window narrowed.</span><span class="qachip" data-chip="w3"></span></button>
+    <button type="button" class="qawcard" data-walk="w1" aria-pressed="true"><b>W1 · Back closes the menu and keeps you on the page</b><span class="meta">On a phone: seven menus.</span><span class="qachip" data-chip="w1"></span></button>
+    <button type="button" class="qawcard" data-walk="w2" aria-pressed="false"><b>W2 · The lineup builder’s drawers</b><span class="meta">On a phone, Warm and Dark.</span><span class="qachip" data-chip="w2"></span></button>
+    <button type="button" class="qawcard" data-walk="w3" aria-pressed="false"><b>W3 · The keyboard stays inside the three forms</b><span class="meta">On a computer.</span><span class="qachip" data-chip="w3"></span></button>
+    <button type="button" class="qawcard" data-walk="w4" aria-pressed="false"><b>W4 · Two admin pages still open from Tools</b><span class="meta">On a phone: the club and the tournament.</span><span class="qachip" data-chip="w4"></span></button>
   </div>
     <div class="qawalk" id="w1">
-      <h2>W1 · The record sheets look as they did</h2>
+      <h2>W1 · Back closes the menu and keeps you on the page</h2>
       <div class="qacard">
-        <h3>What this walk is for</h3><p>The sheets about one record moved onto the shared frame without anything inside them moving.</p>
-        <h3>It passes when</h3><p>Each sheet opens where it did with its contents in the same places; the only differences are the lighter grab line, the card colour in Dark, and the row menus’ spacing.</p>
-        <h3>Not in this walk</h3><p>A tap on the bar (W2). The keyboard (W3).</p>
+        <h3>What this walk is for</h3><p>The phone’s Back gesture goes up one level from a menu, as it already did from every other sheet, instead of leaving the page.</p>
+        <h3>It passes when</h3><p>Each time, the first Back closes the menu and you are still on the same page; the second Back leaves, as before.</p>
+        <h3>Not in this walk</h3><p>How the drawers look (W2). The keyboard (W3). The admin links (W4).</p>
       </div>
       <ol class="qasteps">
-        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone, as the coach on <b>UAT Test Team</b>, open <b>More › Lineups</b> and the lineup for <b>vs Probe Rovers</b> — the lineup builder, not the live game — and tap a player’s position, the pill at the right of a row.</p><p class="qasee">The position sheet rises from the bar as before: the player’s name and the inning line, <b>Bench</b>, the chips, <b>Leave open</b>. The grab line at the top is lighter than it was; nothing else moved.</p></div></li>
-        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap the grab line.</p><p class="qasee">The sheet closes.</p></div></li>
-        <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Still in the builder, tap a player’s number, at the left of the row. (On the live game the number is only a label; this menu is the builder’s.)</p><p class="qasee"><b>Move up · Move down · Remove from lineup · Cancel</b>, as before — the rows a hair further in from the edge, the sheet a little taller at the foot. Tap <b>Cancel</b>.</p></div></li>
-        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Insights › Awards</b> and tap the <b>SF4 probe award</b> row (Devon Test).</p><p class="qasee">The Award sheet as before: the bin and the pencil, then Award, Player, For, Date, Note and <b>Print certificate</b>. Tap <b>✎</b>: it drops over the bar and the bar goes. Tap <b>✓</b> without changing anything: back on the bar.</p></div></li>
-        <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Schedule</b> › <b>vs Probe Rovers</b> › <b>Attendance</b> and tap <b>#1 Avery Test</b>.</p><p class="qasee">The RSVP sheet over the attendance window, as before: the four answers and the note. Tap the grab line — do not change the answer.</p></div></li>
-        <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>More › Notifications</b> and tap a notification.</p><p class="qasee">The reader on the bar as before: the kind and the time, the title, the message, the button on. Tap <b>Close</b>.</p></div></li>
-        <li><input type="checkbox" id="w1s7" aria-label="W1 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Sign in as the <b>treasurer</b> and open <b>More › Notifications</b> in the club admin; tap a notification.</p><p class="qasee">The same reader in the admin’s colours, on the bar. Tap <b>Close</b>, then sign back in as the coach.</p></div></li>
-        <li><input type="checkbox" id="w1s8" aria-label="W1 step 8"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Roster › Devon Test</b>, tap <b>✎</b> on <b>Player</b>, and under <b>Best positions</b> tap the grip (⋮⋮) beside <b>SS</b>. Then open <b>Roster › Depth chart › Devon</b> and do the same.</p><p class="qasee">Both times <b>Move up · Move down · Done</b>: on the bar on the player page; at the very bottom, over Devon’s window, on the depth chart. Tap <b>Done</b> each time and close without changing anything.</p></div></li>
-        <li><input type="checkbox" id="w1s9" aria-label="W1 step 9"><div class="qabody"><span class="qan"></span><p class="qado">Switch to <b>Dark</b> (account menu → Appearance) and open the position sheet again.</p><p class="qasee">The sheet is now the card colour — a touch lighter and bluer than the bar — as the team switcher has been since step 2. Close it and switch back to Warm.</p></div></li>
+        <li><input type="checkbox" id="w1s1" aria-label="W1 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone, as the coach, open <b>More › Lineups</b> and the lineup for <b>vs Probe Rovers</b>. Tap <b>⋯</b> (Tools), then use the phone’s Back gesture.</p><p class="qasee">Tools closes and <b>you are still in the lineup</b>. (Before this step Back took you out of it.) Back again takes you to the lineups list, as before.</p></div></li>
+        <li><input type="checkbox" id="w1s2" aria-label="W1 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Money › Ledger</b>. Tap <b>Tools</b>, then Back.</p><p class="qasee">Tools closes; you are still on the Ledger.</p></div></li>
+        <li><input type="checkbox" id="w1s3" aria-label="W1 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>Filter</b>, open <b>Type</b> and tick one choice, then Back.</p><p class="qasee">The sheet closes; you are still on the Ledger and the filter you ticked is still on. Untick it again.</p></div></li>
+        <li><input type="checkbox" id="w1s4" aria-label="W1 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Tap the team’s name at the top (<b>UAT Test Team ▾</b>), then Back.</p><p class="qasee">The team list closes; you are still on the Ledger.</p></div></li>
+        <li><input type="checkbox" id="w1s5" aria-label="W1 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Roster › Devon Test</b>. Tap the name at the top (<b>Devon Test ▾</b>), then Back.</p><p class="qasee">The player list closes; you are still on Devon’s page.</p></div></li>
+        <li><input type="checkbox" id="w1s6" aria-label="W1 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>Schedule</b>. Tap the view symbol beside <b>+</b>, then Back. Then tap <b>+</b>, then Back.</p><p class="qasee">Each menu closes; you are still on the Schedule.</p></div></li>
+        <li><input type="checkbox" id="w1s7" aria-label="W1 step 7"><div class="qabody"><span class="qan"></span><p class="qado">On the live game (<b>Schedule › vs Probe Rovers › Game day</b>), tap the score, then Back.</p><p class="qasee">The score sheet closes and you stay in the game — as before; the game’s sheets already did this.</p></div></li>
       </ol>
       <div class="qaverdict" role="group" aria-label="W1 verdict">
         <button type="button" data-w="w1" data-v="pass" aria-pressed="false">Pass</button>
@@ -771,18 +790,20 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
       <textarea id="w1notes" class="qanotes" data-notes="w1"></textarea>
     </div>
     <div class="qawalk" id="w2" hidden>
-      <h2>W2 · A tap on the bar closes the sheet first</h2>
+      <h2>W2 · The lineup builder’s drawers</h2>
       <div class="qacard">
-        <h3>What this walk is for</h3><p>The bar stays live under these sheets, and tapping it now closes the sheet before the bar does anything — two sheets are never up at once.</p>
-        <h3>It passes when</h3><p>With the position sheet, the Award sheet or the reader open, More opens on its own; Back and a tap on the dim close a sheet and keep you on the page.</p>
-        <h3>Not in this walk</h3><p>How the sheets look (W1). The keyboard (W3).</p>
+        <h3>What this walk is for</h3><p>The builder’s five drawers moved onto the shared frame without anything inside them moving; only Call up’s head changes, as ruled.</p>
+        <h3>It passes when</h3><p>Each drawer opens where it did with everything inside in place; Call up’s title and × match Lineup setup’s; a tap on the dim closes a drawer without pressing what is under it.</p>
+        <h3>Not in this walk</h3><p>Back from the menus (W1). The keyboard (W3).</p>
       </div>
       <ol class="qasteps">
-        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">In the lineup builder (<b>More › Lineups › vs Probe Rovers</b>), open a player’s position sheet and tap <b>More</b> in the bottom bar.</p><p class="qasee">The position sheet closes and <b>More opens on its own</b>. (Before this step More opened on top, with the position sheet still open underneath.) Close More.</p></div></li>
-        <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Open the <b>SF4 probe award</b> and tap <b>More</b>.</p><p class="qasee">The same: the Award sheet closes, More opens alone. Close More.</p></div></li>
-        <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">On the live game (phone), tap a player’s position on the board and tap <b>More</b>.</p><p class="qasee">The same. Close More.</p></div></li>
-        <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="qabody"><span class="qan"></span><p class="qado">In the lineup, open a position sheet and use the phone’s Back gesture.</p><p class="qasee">The sheet closes and you stay in the lineup. Back again takes you to the lineups list, as before.</p></div></li>
-        <li><input type="checkbox" id="w2s5" aria-label="W2 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Open the lineup again, tap a player’s number, then tap the dimmed page right over <b>← All lineups</b>.</p><p class="qasee">The menu closes and <b>you stay in the lineup</b>.</p></div></li>
+        <li><input type="checkbox" id="w2s1" aria-label="W2 step 1"><div class="qabody"><span class="qan"></span><p class="qado">In the lineup, tap the <b>Setup</b> row (Everyone bats · 6 innings).</p><p class="qasee"><b>Lineup setup</b> covers the bar, as before: Format and Innings, Auto-fill’s Mode and Fill, the fold, Generate and Reshuffle pinned at the foot. Tap the ×.</p></div></li>
+        <li><input type="checkbox" id="w2s2" aria-label="W2 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Tap the person-with-a-plus (<b>Call up a player</b>).</p><p class="qasee">It covers the bar, as before, but its title now reads in the same plain face as Lineup setup’s, and its × is the same round button. Everything under the title is where it was. Tap the × — do not call anyone up.</p></div></li>
+        <li><input type="checkbox" id="w2s3" aria-label="W2 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>⋯ › Save as template…</b>.</p><p class="qasee">Save as template covers the bar, as before: the name box, the button, your templates. Type nothing; tap the ×.</p></div></li>
+        <li><input type="checkbox" id="w2s4" aria-label="W2 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>⋯ › Copy from…</b>.</p><p class="qasee">Copy from fills the screen above the bar, as before; the bar stays. Tap its ×.</p></div></li>
+        <li><input type="checkbox" id="w2s5" aria-label="W2 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Tap <b>⋯ › Print…</b>, then tap the dimmed page right over <b>← All lineups</b>.</p><p class="qasee">Print (PRINT at its head) closes and <b>you stay in the lineup</b>.</p></div></li>
+        <li><input type="checkbox" id="w2s6" aria-label="W2 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Switch to <b>Dark</b> (account menu → Appearance) and open Lineup setup, then Call up.</p><p class="qasee">Both as in Warm, in the card colour; Call up with the shared head. Close them and switch back to Warm.</p></div></li>
+        <li><input type="checkbox" id="w2s7" aria-label="W2 step 7"><div class="qabody"><span class="qan"></span><p class="qado">On a computer-width window, open the Setup row’s window and Call up.</p><p class="qasee">Lineup setup is the centred window it was. Call up is the small panel under its button, now with the shared title and a round × (it had a bare ×).</p></div></li>
       </ol>
       <div class="qaverdict" role="group" aria-label="W2 verdict">
         <button type="button" data-w="w2" data-v="pass" aria-pressed="false">Pass</button>
@@ -794,18 +815,20 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
       <textarea id="w2notes" class="qanotes" data-notes="w2"></textarea>
     </div>
     <div class="qawalk" id="w3" hidden>
-      <h2>W3 · The keyboard</h2>
+      <h2>W3 · The keyboard stays inside the three forms</h2>
       <div class="qacard">
-        <h3>What this walk is for</h3><p>A sheet on a live bar no longer holds the keyboard inside it or tells a screen reader the rest of the page is gone; a sheet over a window, or one being edited, still does.</p>
-        <h3>It passes when</h3><p>Tab walks through the position sheet and past its end closes it; Escape lands on what opened it; the Award sheet holds the keyboard only while editing; RSVP holds it.</p>
-        <h3>Not in this walk</h3><p>How the sheets look (W1, W2).</p>
+        <h3>What this walk is for</h3><p>The three drawers you type in keep a keyboard inside them, and every way out hands it back to what opened them.</p>
+        <h3>It passes when</h3><p>Tab never leaves Lineup setup, Call up or Save as template; Escape lands on what opened each; Copy from’s × lands on Tools; a window opened from a menu keeps its own cursor.</p>
+        <h3>Not in this walk</h3><p>How they look (W2).</p>
       </div>
       <ol class="qasteps">
-        <li><input type="checkbox" id="w3s1" aria-label="W3 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a computer, narrow the browser to about 600px wide. In the lineup builder (<b>Lineups › vs Probe Rovers</b>), press <b>Tab</b> until a position pill has the focus ring, then <b>Enter</b>.</p><p class="qasee">The position sheet opens.</p></div></li>
-        <li><input type="checkbox" id="w3s2" aria-label="W3 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Tab</b> again and again.</p><p class="qasee">The ring moves through <b>Close</b>, <b>Bench</b>, the chips and <b>Leave open</b>; one more Tab <b>closes the sheet</b> and the ring moves on past the pill. (It used to go round and round inside.)</p></div></li>
-        <li><input type="checkbox" id="w3s3" aria-label="W3 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Open it again and press <b>Escape</b>.</p><p class="qasee">It closes with the ring on the pill.</p></div></li>
-        <li><input type="checkbox" id="w3s4" aria-label="W3 step 4"><div class="qabody"><span class="qan"></span><p class="qado">In <b>Awards</b>, Tab to the award’s chevron and press <b>Enter</b>; Tab to the pencil and press <b>Enter</b>. Press Tab about ten times, then <b>Escape</b>.</p><p class="qasee">While editing, the ring stays inside the sheet and the bar is hidden. Escape closes it (nothing was typed) with the ring on the chevron.</p></div></li>
-        <li><input type="checkbox" id="w3s5" aria-label="W3 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Widen the window to about 800px. In <b>Schedule › vs Probe Rovers › Attendance</b>, Tab to a player and press <b>Enter</b>; Tab about ten times; then <b>Escape</b>.</p><p class="qasee">RSVP keeps the ring inside it. Escape closes only RSVP — the attendance window stays, the ring on that player.</p></div></li>
+        <li><input type="checkbox" id="w3s1" aria-label="W3 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a computer, narrow the browser to about 600px wide. In the lineup, press <b>Tab</b> until the Setup row has the focus ring, then <b>Enter</b>.</p><p class="qasee">Lineup setup opens with the ring inside it. (Before this step the ring stayed on the row behind it.)</p></div></li>
+        <li><input type="checkbox" id="w3s2" aria-label="W3 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Press <b>Tab</b> about fifteen times, then <b>Escape</b>.</p><p class="qasee">The ring never leaves the sheet; Escape closes it with the ring on the Setup row.</p></div></li>
+        <li><input type="checkbox" id="w3s3" aria-label="W3 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Tab to the person-with-a-plus, <b>Enter</b>, Tab about fifteen times, then <b>Escape</b>.</p><p class="qasee">Call up keeps the ring inside; Escape closes it with the ring on its button.</p></div></li>
+        <li><input type="checkbox" id="w3s4" aria-label="W3 step 4"><div class="qabody"><span class="qan"></span><p class="qado">Tab to <b>⋯</b>, <b>Enter</b>, arrow down to <b>Save as template…</b>, <b>Enter</b>; Tab about fifteen times; <b>Escape</b>.</p><p class="qasee">The ring stays inside; Escape closes it with the ring on ⋯.</p></div></li>
+        <li><input type="checkbox" id="w3s5" aria-label="W3 step 5"><div class="qabody"><span class="qan"></span><p class="qado">Open <b>⋯ › Copy from…</b> the same way, Tab to its × and press <b>Enter</b>.</p><p class="qasee">Copy from closes with the ring on ⋯. (It used to land nowhere.)</p></div></li>
+        <li><input type="checkbox" id="w3s6" aria-label="W3 step 6"><div class="qabody"><span class="qan"></span><p class="qado">Widen the window past 900px. Open the Setup row’s window, press Tab about fifteen times, then <b>Escape</b>.</p><p class="qasee">The centred window keeps the ring inside it; Escape closes it with the ring on the Setup row.</p></div></li>
+        <li><input type="checkbox" id="w3s7" aria-label="W3 step 7"><div class="qabody"><span class="qan"></span><p class="qado">Narrow the window to about 600px again. Open <b>Schedule › UAT probe practice</b> (its plan). Tab to <b>⋯</b>, <b>Enter</b>, arrow down to <b>Save as template…</b>, <b>Enter</b>.</p><p class="qasee">The window opens with the <b>cursor blinking in its name box</b> — you could type straight away. Type nothing; <b>Escape</b> closes it with the ring on ⋯. (Found by this step’s review: the closing menu used to pull the cursor back out.)</p></div></li>
       </ol>
       <div class="qaverdict" role="group" aria-label="W3 verdict">
         <button type="button" data-w="w3" data-v="pass" aria-pressed="false">Pass</button>
@@ -816,9 +839,30 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
       <label class="meta" for="w3notes">Notes for W3</label>
       <textarea id="w3notes" class="qanotes" data-notes="w3"></textarea>
     </div>
+    <div class="qawalk" id="w4" hidden>
+      <h2>W4 · Two admin pages still open from Tools</h2>
+      <div class="qacard">
+        <h3>What this walk is for</h3><p>Two Tools rows that open another page are links now, so the new Back step on the Tools menu cannot cancel them.</p>
+        <h3>It passes when</h3><p>Each opens its page from the phone’s Tools sheet, and one Back returns to where you were.</p>
+        <h3>Not in this walk</h3><p>Everything else (W1–W3).</p>
+      </div>
+      <ol class="qasteps">
+        <li><input type="checkbox" id="w4s1" aria-label="W4 step 1"><div class="qabody"><span class="qan"></span><p class="qado">On a phone, sign in as the <b>club owner</b> and open <b>Accounting › Ledger</b>. Tap <b>Tools › Payees</b>.</p><p class="qasee">The Payees page opens. Use Back once: you are on the Ledger again.</p></div></li>
+        <li><input type="checkbox" id="w4s2" aria-label="W4 step 2"><div class="qabody"><span class="qan"></span><p class="qado">Sign in as the <b>tournament owner</b> on <b>uat-plus-org</b> and open <b>Tournaments › Teams</b> (registrations). Tap <b>Tools › Registration questions</b>.</p><p class="qasee">The registration questions page opens. Back once returns to Teams. (If Registration questions is not in the menu, there is no tournament with questions on — note it and skip.)</p></div></li>
+        <li><input type="checkbox" id="w4s3" aria-label="W4 step 3"><div class="qabody"><span class="qan"></span><p class="qado">Sign back in as the coach.</p><p class="qasee">Ready for the next walk.</p></div></li>
+      </ol>
+      <div class="qaverdict" role="group" aria-label="W4 verdict">
+        <button type="button" data-w="w4" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-w="w4" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-w="w4" data-v="call" aria-pressed="false">Needs a call</button>
+        <span class="meta" data-prog="w4"></span>
+      </div>
+      <label class="meta" for="w4notes">Notes for W4</label>
+      <textarea id="w4notes" class="qanotes" data-notes="w4"></textarea>
+    </div>
   <div class="qacard">
     <h3>Paste-back</h3>
-    <div class="qatools"><button type="button" class="button" id="qaBuildOne">Summary of this walk</button><button type="button" class="button" id="qaBuildAll">Summary of all three</button><button type="button" class="button" id="qaCopy">Copy</button></div>
+    <div class="qatools"><button type="button" class="button" id="qaBuildOne">Summary of this walk</button><button type="button" class="button" id="qaBuildAll">Summary of all four</button><button type="button" class="button" id="qaCopy">Copy</button></div>
     <pre class="qaout" id="qaOut" aria-live="polite"></pre>
   </div>
 </section>
@@ -925,8 +969,8 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
 <script>
 /* QA walk: ticks, verdicts and notes kept in this browser; a summary to paste back. */
 (function () {
-  var KEY = 'sheet-frame-walk-273-v1';
-  var WALKS = ['w1', 'w2', 'w3'];
+  var KEY = 'sheet-frame-walk-277-v1';
+  var WALKS = ['w1', 'w2', 'w3', 'w4'];
   var state = { ticks: {}, verdict: {}, notes: {}, open: 'w1' };
   try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') state = Object.assign(state, p); } } catch (e) {}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
@@ -966,10 +1010,10 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px
     return lines.join('\n');
   }
   var out = document.getElementById('qaOut');
-  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = '§273 Sheet Frame step 4\n' + summary(state.open); });
+  document.getElementById('qaBuildOne').addEventListener('click', function () { out.textContent = '§277 Sheet Frame step 5\n' + summary(state.open); });
   document.getElementById('qaBuildAll').addEventListener('click', function () {
     var n = 0, of = 0; WALKS.forEach(function (w) { var c = count(w); n += c.n; of += c.of; });
-    out.textContent = '§273 Sheet Frame step 4 — checked ' + n + ' of ' + of + '\n' + WALKS.map(summary).join('\n');
+    out.textContent = '§277 Sheet Frame step 5 — checked ' + n + ' of ' + of + '\n' + WALKS.map(summary).join('\n');
   });
   function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
   document.getElementById('qaCopy').addEventListener('click', function () { var text = out.textContent; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(selectOut); else selectOut(); });

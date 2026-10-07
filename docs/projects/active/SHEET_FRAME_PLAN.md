@@ -7,7 +7,8 @@ frames and measured facts in `sheet-frame/` (`facts.json`). PM brief `SHEET_FRAM
 **Step 1 built 2026-10-05, committed `9ab32b23`; ✅ owner QA §264 PASSED 9/9 2026-10-05** (see *Build record*).
 **Step 2 built 2026-10-05, committed `91986b7c`; ✅ owner QA §266 PASSED 17/17 2026-10-06** (see *Build record*).
 **Step 3 built 2026-10-06, committed `5d036eeb`; ✅ owner QA §268 PASSED 19/19 2026-10-06** (see *Build record*).
-**Step 4 built 2026-10-06, committed `2a304b52`; ✅ owner QA §273 PASSED 19/19 2026-10-06** (see *Build record*). Step 5 to build.
+**Step 4 built 2026-10-06, committed `2a304b52`; ✅ owner QA §273 PASSED 19/19 2026-10-06** (see *Build record*).
+**Step 5 built and committed `be092f9b` 2026-10-06; owner QA §277** (see *Build record*) — the last step; the project closes when its walk passes.
 
 ## The rulings
 
@@ -54,6 +55,9 @@ form 390 over the bar, under `.modalOverlay` 400.
    keep the keyboard inside (`useDialogFloor` — it also calls `useBackStep`, so the §219 back-step guard moves with it;
    the open half recorded with the 2026-09-23 ruling); Copy from returns focus to Tools (**done in step 2** for Escape —
    the three Tools panels share one Escape line; step 5 checks Copy from's own × and pick).
+   **Built 2026-10-06** — with the frame answering EVERY sheet's keys (the deferred half of steps 3–4), which gave Tools,
+   Filter, the two switchers and the Schedule's two menus the Back they lacked (measured: 7 of 7 left the page); Call up's
+   head taken whole (owner D9, drawn again true size); two admin Tools rows made links so the new Back cannot cancel them.
 
 **Out of the frame:** full-screen windows (`RoomShell` rooms, `ScheduleEventSheet`, `TagManagerDrawer`,
 `HelpDrawer`); the More sheet's own container; the club admin's `BottomSheet` (D4). **The Schedule day list**
@@ -82,9 +86,9 @@ rule, no hand-copied bar height, `aria-modal` only on the form layer.
 | Filter sheet and position picker `aria-modal` while the bar is live | 1 (Filter: built), 4 (built — the Award sheet while read and the reader too) |
 | A tap on More with the position picker or the Award sheet open opened More on top, the sheet still open beneath (the reader's 09-25 /review fix had reached only the reader) — found capturing step 4 | 4 (built — the frame closes a record sheet on a tap on the bar) |
 | The Schedule day list on a tablet: no Escape, Back leaves the Schedule, focus never enters, a tap on its dim falls through (over the team name it opened the switcher) — found in step 4 | reported — not a phone sheet; a follow-up (owner's call) |
-| Tools, Filter and the two switchers stand no back step: Back with one open on a phone leaves the page (by the code) — found in step 4 | 5 |
+| Tools, Filter and the two switchers stand no back step: Back with one open on a phone leaves the page (by the code) — found in step 4 | 5 (built — measured first: 7 of 7, the Schedule's two menus too) |
 | Print has no title and no role | 2 (built) |
-| Three builder forms let the keyboard out (2026-09-23 open half) | 5 |
+| Three builder forms let the keyboard out (2026-09-23 open half) | 5 (built — 4, 9 and 10 of 12 Tab presses out → 0) |
 | Escape leaves focus nowhere: Copy from, tag manager, admin sheet | 2 (Copy from, built — one Escape line serves the three Tools panels); the other two are out of the frame — report |
 | Switchers and Print: a tap on the dim leaves focus nowhere — found capturing step 2 | 2 (built) |
 | A menu of choices (Schedule view menu, practice library Sort) answers no arrow key and leaves focus on its trigger — found capturing step 2 | 2 (built) |
@@ -615,3 +619,96 @@ keyboard in a way this step makes wrong; no edits.
 **Owner QA §273 ✅ PASSED 2026-10-06, 19/19** — hub tab QA Walk: W1 the record sheets look as they did (9/9) ·
 W2 a tap on the bar closes the sheet first (5/5) · W3 the keyboard (5/5). No notes. The probe award was removed after
 the pass.
+
+### Step 5 — the lineup builder's drawers, and the frame answers every sheet (built 2026-10-06, committed `be092f9b`; owner QA §277)
+
+**Before building — what the code and the measurements said (raised in the plan presented to the owner).**
+- **Back left the page from seven sheets, measured.** With the lineup builder's Tools, the Ledger's Tools, the Ledger's
+  Filter, the team switcher, the player switcher, or the Schedule's view menu or + menu open on a phone (390, touch),
+  one Back left the page — 7 of 7 (`.probe/sf5/capture.mjs`, which marks the document so a reload of the same address
+  cannot pass for "stayed"). The plan had this "by the code"; it is now measured.
+- **The three forms let the keyboard out, measured:** of 12 Tab presses, 4 (Setup), 9 (Save as template) and 10 (Call
+  up) landed on the page behind the dim; Setup never took focus when it opened. A tap on the dim of Save as template or
+  Call up, and Back on Copy from and Print, left focus nowhere. The team switcher let 11 of 12 Tab presses walk under its dim.
+- **Two Tools rows navigate by CODE, not by link** — the club Ledger's Tools › Payees and the tournament Teams page's
+  Tools › Registration questions (`router.push`). A Tools menu standing a back step would cancel them on a phone: the
+  step's own `history.back()` lands mid-navigation, the §258 "Open Player Dues just closes the window" failure. Not in
+  the plan; found auditing every `drawerOnPhone` caller's rows before giving Tools a back step. Both became links.
+- **The hub's drawing of Call up's new head was the same picture before and after**, and its note said the × would not
+  change — but the shared head's × is the round one. Drawn again from the live sheet, true size, phone and computer
+  (hub v24, Mockup › 4, D9: the title Barlow Condensed → Inter at the same 14px 700, 14px higher; the × gains the round
+  outline, and on a computer grows from a 17×21 glyph to the 26px button). **Owner, 2026-10-06: take it whole (D9).**
+- **The owner's other answer:** step 4's §273 pass record was committed on its own first (`aa93d067`).
+
+**The follow-ups step 4's /simplify and /review left, taken or not:**
+- **Taken:** the dim's two colours as one setting (`--sheet-dim` in `globals.css`, the warm value in the warm palette;
+  the frame's `.dim` and the More sheet's `.sheetScrim` read it — the builder's copy retired with this step); the floor's
+  focus-home without scrolling (`preventScroll`), since step 4 it also runs on a tap on the bar.
+- **Not taken — the frame working out its own opener:** every consumer already names it, and two need something other
+  than the tapped button (Copy from and Save as template hand focus to Tools, the menu item that opened them having gone;
+  the notification reader to its row). A document-wide "last pointer target" would add a listener and remove nothing.
+- **Not taken — `overWindow` worked out from the overlay count:** two callers; a mount-time read of a global counter
+  that a form sheet itself increments is a silent way to be wrong.
+- **Not taken — the floor's `trap` renamed `modal`:** the other 33 floors are all modal; the frame's one line,
+  `trap: form`, says what it means.
+- **Not this step's — focus after the reader's Done or Delete removes its row:** where focus should go when the row
+  that opened a sheet leaves the list is the notification list's decision (the next row) — a TODO line.
+
+**Built.**
+- **The frame answers every sheet** (`SheetFrame`): it stands the dialog floor for every sheet, in both layers —
+  Escape, the phone's Back, focus in on open and home to `opener` however it closes — and holds the keyboard only in the
+  form layer (`trap: form`); in the menu layer a pointer-down outside the sheet, its dim and its OPENER closes it (the
+  trigger inside the boundary stays a toggle). `ownsKeys` is gone. The sheet marks itself `data-escape-owner`, and the
+  floor reads a marker on its OWN panel as its own claim (`owner !== panel`) — so a floor the sheet opens over (the
+  practice block editor under the Groups menu, the depth chart's player window under its row menu) yields to it. The
+  dim closes through the same busy gate; the floor's cleanup hands focus home, so the dim's `rescueFocusTo` went.
+- **Nothing else answers a sheet's keys on a phone.** The Tools menu's `useDismissable` stands down in sheet mode
+  (`open && !asDrawer`); the Filter sheet loses its dismiss hook and its `onBlur` Tab rule (the floor's); the team and
+  player switchers' hosts lose theirs (and their `display: contents` boundary wrappers); game day's page hook and back
+  step keep only the substitution card and the computer's cards (`pageOverlayOpen`); the builder's row menu loses its
+  hook, its back step and its wrapper; the profile's Best positions keeps its own for the popover above 900.
+- **A row that leaves the page is a link:** `CoachToolbarMenuItem` takes `href` (a Next `Link`, `role="menuitem"`);
+  picking a link closes the menu like any row. Payees and Registration questions use it.
+- **The lineup builder's five drawers on the frame** wherever the bar shows (≤900), each with ONE body for both widths:
+  Setup (`form`, the centred modal above 900 now standing its own floor — Escape, the keyboard kept inside, Back, focus
+  home to the Setup row — and `aria-modal`); Call up (`form`, `busy` while a call-up is added; the shared
+  `LineupDrawerHead`, `desktopClose` because it always carried a × on a computer); Save as template (`form`, `busy`; it
+  renders its own drawer now, as Copy from does, so it can hold while it saves); Copy from (`full`: the frame fills the
+  screen above the bar at ≤640 — D7, kept by D3 — `busy` while copying); Print (the menu layer, its PRINT label in the
+  body where it always sat). Copy from and Save as template name Tools as their opener.
+- **The frame grew:** `full` (≤640, top 0, square, no grab line, a flex column); a NAMED bottom padding
+  (`--sheet-foot-pad`, 14px, the home indicator added in the form layer and over a window) that a pinned foot takes over
+  (`.sheet.sheet:has([data-sheet-foot]) { padding-bottom: 0 }`; `.lineupSheetFoot` pads by `var(--sheet-foot-pad, 14px)`)
+  — the 2026-09-22 foot hand-off, asked as "is there a foot?", never "which sheet is this?".
+- **Retired:** `LineupSheetScrim` (the component and `.lineupSheetScrim`), `.lineupDrawerOverNav` and
+  `--lineup-drawer-foot-pad`, the ≤900 `.lineupAutoMenu` drawer and its grab line, `.lineupDrawerOverNav .modalCloseBtn`,
+  Call up's own head (`CallUpSheet`'s `.head`), the builder's `useOverlayOpen` calls (the frame's form layer makes them),
+  and the dead ≤640 `.panel.panel` in Copy from's stylesheet. `.lineupSheetBody` is the drawers' insides (a column, 0.6rem
+  gap, the old 14px inset as the frame's 8 + 6, and 0.6rem at the top — the gap the old drawer's grab line left, being a
+  flex item); every content rule that reached a drawer's insides through `.lineupAutoMenu` names `.lineupSheetBody` too.
+
+**Proved.** `.probe/sf5/capture.mjs` + `diff.mjs` (copied from step 4's; Back is pressed twice and judged by a mark on the document, so a reload of the same address cannot pass for "stayed"), every sheet the frame now answers for — 25 at 390 — before and after, at 390 touch in warm and dark, 768 touch and 1280. ⚠ The first Dark, tablet and computer before-runs overlapped the build (the dev server hot-reloads); they were thrown away and re-taken with this step's 27 files set back to `HEAD` (saved aside first, restored byte-identical to the saved patch).
+- **Every line of content kept its place** in all 25 sheets at every width — dx 0, dy 0 — but Call up's head (D9, ruled): 4.4px higher on a phone, 6.3px lower on a computer.
+- **Pixels:** at 390, 18 of the 25 are identical (every menu, game day's seven surfaces, the record sheets, Copy from); Setup, Save as template and Print differ only in the sheet's 1px outline (the frame's `--home-line-strong`; the builder's drawer wore `--border-2`) and its antialiased top corners — **0 pixels changed inside the outline**, at 390 and at 768. At 1280 every sheet is pixel-identical but Call up (its head).
+- **Found by the first after-run and fixed:** at 768 Setup's "Innings to fill" row broke **"to" over two lines** — the frame's `overflow-wrap: anywhere` reaching the drawers' insides by inheritance; `.lineupSheetBody` keeps the drawers' own `normal`. Re-captured: dx 0, dy 0, no CSS difference left.
+- **Back:** before, Back with Tools (builder, Ledger), Filter, either switcher, View or Add event open LEFT THE PAGE (7 of 7). After, every one of the 25 sheets closes on the first Back with the page kept and focus on what opened it, and the second Back leaves — no entry left behind. Copy from's question and RSVP take one more, correctly: the question returns to its list; RSVP closes, then its window.
+- **Tab:** the three forms let 4, 9 and 10 of 12 presses walk out under the dim; now 0. Every menu closes on Tab past its end instead of walking under its dim (the team switcher had let 11 of 12 out).
+- **Focus home:** a tap on the dim of Save as template or Call up, and Back on Copy from, Print, the row menus and the switchers, left focus nowhere; now on Tools, Call up, the handle or the name. A tap on the dim over ← All lineups stayed in the builder on every drawer, both before and after.
+- `.probe/sf5/keys.mjs` with a keyboard, **83/83**: the three forms (600) modal, the bar hidden, Tab ×15 / Shift+Tab ×15 never leaving, Escape and Back to the opener, one more Back leaving; Setup's centred window (1280) the same; Tools, Print, Copy from (its × → Tools), the Ledger's Tools and Filter, both switchers, View, Add event, game day's Score and Who's here (600) focus in, not modal, Tab past the end closing them, Escape → the opener, Back closing and staying, one more Back leaving; Escape in the depth chart's row menu closing the menu, the player's window staying; **the club Ledger's Tools › Payees and the tournament's Tools › Registration questions** (390 touch) links, opening their page from the phone sheet, ONE Back returning. (The first run was 80/83; all three failures were the probe's — a wrong address pattern, 40 Tab presses for Who's here's ~50 controls, Enter on the depth chart's grip starting a keyboard drag rather than opening the menu — fixed and re-run.)
+- `.probe/sf5/nested-groups.mjs`, **4/4**: the practice plan's Groups menu inside the block editor (a frame inside another floor) — Escape and Back close the menu only, the editor staying; a second Escape closes the editor.
+- **Writes:** none. Every probe refused and reported any write to the coach API; none was attempted. Nothing was typed, picked, copied, printed or called up.
+
+**Checks.** `sheet-frame-guard` grew step 5 (7 tests: one floor for every sheet and the marker rule; nothing else answers a sheet's keys on a phone; a row that leaves the page is a link; the three forms on the form layer, each with its 44px ×, and Setup's computer window on its own floor; the two menus and Copy from's `full`; the pinned foot's one value; the builder's recipe gone and its insides kept), and steps 1–4's assertions moved with the frame (the dim's close, the consumers answering no keys, the form layer's named padding, game day's card-only hook, the dim's one colour setting, the picker, the Award sheet and the reader without `ownsKeys`, the row menus). Moved with the step: `coach-lineup-phone-guard` (the drawers on the frame, the form/menu split counted on the frame, the head's × floor, Back above 900), `ledger-phone-filter-guard`, `coach-practice-week-phone-guard`, `club-stage3a-screens-guard` (Payees a link), `coach-award-edit`, `install-banner-layer-guard` (another session's committed guard: its builder-dim row retired with the dim), `admin-kit-guard` (the new dim token is restored inside a preview of a public page, the warm palette's rule for every token it changes). Every guard that reads a touched file: **978/978** across 48 files, plus `admin-kit-guard`. `npm run typecheck` clean; focused lint 0 errors (every warning on a line this step did not change). `npm run verify:changed`: **5,812/5,812** unit tests and every check passed until schema parity, which stops on another session's development-only migration (Club Tier 3b, mig 317 — not this step); the checks after it, run one by one, all clean (CSS selectors: no new dead, clashing or orphaned selector). `check:layout --only=` the builder's four screens, both switchers, game day, RSVP and the player edit, `--theme=warm`: one NEW finding — Setup's "Game rules ▾", 16px tall at 768 — pre-existing (the captures measure the same 16px box before and after) and newly measured because Setup now declares itself modal (the sweep reads an open modal's whole contents); reported below, not baselined. The dev server was restarted for the step (a deleted file, shared modules) and runs detached.
+
+**/simplify and /review (2026-10-06, before the commit).**
+- **One drawer shell (/simplify, three of its four passes found it):** the five drawers each forked `isPhoneNav ? <SheetFrame …><div .lineupSheetBody> : <div .lineupAutoMenu>` and named themselves twice. `components/coaches/LineupDrawer.tsx` now picks the width, names the drawer once (`label`) and hands `form` / `full` / `busy` / `id` / `ref` / `opener` to the frame, the popover taking its own box and attributes (`popover`: Setup's modal class, `tabIndex`, `aria-modal`; Copy from's panel). The popover side's keys stay each caller's, gated to above 900. Re-captured (`.probe/sf5s/`, the step's own after-captures as the baseline): the five drawers at 390 warm and dark, 768 and 1280 — **24 of 24 pixel-identical, every line dx 0 / dy 0**.
+- **Also from /simplify:** the frame's close is written once (the dim and the outside tap share it); Filter's Reset no longer hands focus back itself (the floor always does); the "a Tools row that leaves the page is a link" guard now FINDS every file that renders a Tools row instead of listing nine. **Not taken:** the frame's `overflow-wrap: anywhere` → `break-word` (the altitude pass's root-cause fix for the "to" split) — it was copied from the Tools popover so the Tools sheet matched it, and changing it re-lays every sheet steps 1–4 proved; a candidate for its own step, with the drawers' `normal` then deleted.
+- **/review (three lenses: correctness, keys/history/focus, blast radius) — no Critical or High.** One defect confirmed and fixed: **a window opened from a menu sheet lost its own cursor.** Now that every sheet stands the floor, a Tools pick that opens a window closes the Tools sheet in the window's own commit — the window's `autoFocus` field takes focus first, then the sheet's floor pulled it home to Tools, and the window's floor seated it on its frame. Measured on the practice plan's ⋯ › Save as template… at 390 (focus on the frame, not the name box). The floor now hands focus home only when focus is nowhere or still inside the closing panel, and reads the named opener as the panel closes. **Found with it, pre-existing:** in development every window with an `autoFocus` field lost its cursor (React's strict mode stands each effect up, down, up; the "down" handed focus home) — measured at 1280, no sheet involved; the floor now hands the control that had focus back when it stands up again over the same panel. After: the name box keeps the cursor at 390 and 1280, Escape lands on ⋯.
+- **Also from /review:** Space activates a link row in a Tools menu, as it does the button rows. **Measured, not a defect:** tapping the row you are already on in the team switcher closes the sheet and one Back then leaves (no entry left behind); the player switcher's row opens the Details tab, a real move, and Back returns one level per press. **Noted, not changed:** focus home no longer scrolls for every floor (the step-4 decision, now reaching every window); Escape with focus parked on a sheet's own trigger closes nothing (the trigger is a toggle); `memory/design_decisions.md` still describes `.lineupDrawerOverNav` and `LineupSheetScrim` — its closing line at the project's close.
+- **Re-proved on the final code, then committed `be092f9b`:** see the ledger's §277.
+
+**Not done, reported.** - **Setup's "Game rules ▾" is 16px tall at 641–900** (the tap floor is 44): at that width Setup is a sheet but shows the computer's small toggle, while a phone (≤640) has the folded 44px "Innings to fill · Game rules" row (D12 · B). Unchanged by this step; now visible to the layout sweep. Fix: the fold wherever Setup is a sheet (the bar's breakpoint, not the phone's) — a small visible change at tablet width, the owner's call.
+- **Back from Copy from's question to its list leaves focus nowhere** (the question's buttons leave with it) — as before this step.
+- **Focus after the notification reader's Done or Delete**, which remove the row that opened it — where focus goes next is the list's decision; a TODO line at the project's close (one of step 4's follow-ups, not taken here).
+- Not step 5's, carried: the Schedule day list on a tablet (its TODO line), the grab line's contrast (~1.2:1, now also a Close — a `/design` call), Help's 30px ×, the club admin's own sheet (D4).
+- **Operational:** a background task's time limit stopped the session's dev server; restarted without clearing its cache, it answered "not found" for every organization page (other sessions' tournament pages included) until `.next` was cleared — the AGENTS.md recovery. It now runs detached, so the walk does not depend on this session.
