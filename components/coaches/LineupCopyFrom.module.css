@@ -18,6 +18,14 @@
   .body.body { flex: 1 1 auto; min-height: 0; padding: 0; }
 }
 
+/* ⚠ THE SWITCH NEVER GIVES UP HEIGHT — ONLY THE LIST DOES (owner screenshot, 2026-10-07: the Games | Templates
+   switch cut through its words). In the full-screen column every child may shrink, and they shrink in proportion
+   to their size when the list is taller than the screen. The head does not (it has no clipping, so its words
+   are its floor), but the shared switch clips its corners (`overflow: hidden`), and a clipping flex item's floor
+   is zero: 32px fell to 29 on a 765px screen with one extra game, 25 on an iPhone SE, and a full season's list
+   would take it nearly flat. Two classes, the file's rule for a class beside a shared one. */
+.tabs.tabs { flex: none; }
+
 .head {
   display: flex;
   align-items: flex-start;
@@ -32,25 +40,8 @@
   .into { display: block; margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
 }
 
-/* The way out. Above 900 a popover's way out is "click anywhere else", so it shows no ×; wherever
-   the panel is a drawer it shows one at the portal's 44px floor. */
-.close {
-  display: none;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: var(--tap-min, 44px);
-  height: var(--tap-min, 44px);
-  border: 1px solid var(--border-2);
-  border-radius: 8px;
-  background: var(--card-bg);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-.close:hover { color: var(--text-primary); }
-@media (max-width: 900px) {
-  .close { display: inline-flex; }
-}
+/* The way out is the builder's one × (`LineupDrawerClose`, owner ruling 2026-10-07) — this panel kept a
+   private square copy until then. Never a × class here again. */
 
 .back {
   display: inline-flex;

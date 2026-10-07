@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { ChevronLeft, X } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import LineupDrawer from '@/components/coaches/LineupDrawer';
+import { LineupDrawerClose } from '@/components/coaches/LineupDrawerHead';
 import { formatInOrgZone } from '@/lib/timezone';
 import { CoachRowList, CoachRow, CoachRowBand } from '@/components/coaches/CoachRowList';
 import { COACH_GAME_EVENT_TYPES, formatEventWhen, sideWord } from '@/lib/coach-tournament-games';
@@ -195,11 +196,9 @@ export default function LineupCopyFrom({
     }
   }
 
-  const closeButton = (
-    <button type="button" className={styles.close} aria-label="Close" onClick={onClose}>
-      <X size={18} aria-hidden />
-    </button>
-  );
+  // The builder's one × (owner ruling 2026-10-07: a plain glyph) — shown wherever the panel is a drawer (≤900);
+  // above 900 a popover's way out is "click anywhere else", so it shows none.
+  const closeButton = <LineupDrawerClose onClose={onClose} />;
 
   /** The question: what comes across from the source the coach picked. */
   function questionView(c: Chosen) {
@@ -279,7 +278,7 @@ export default function LineupCopyFrom({
         </div>
         {closeButton}
       </div>
-      <div className={`${shared.segChoice} ${shared.segChoiceFull}`} role="tablist" aria-label="Copy from">
+      <div className={`${shared.segChoice} ${shared.segChoiceFull} ${styles.tabs}`} role="tablist" aria-label="Copy from">
         {(['games', 'templates'] as const).map(t => (
           <button key={t} type="button" role="tab" aria-selected={shownTab === t}
             className={`${shared.segBtn} ${shownTab === t ? shared.segBtnActive : ''}`}

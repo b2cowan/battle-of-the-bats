@@ -473,6 +473,19 @@ describe('The two drawer layers — a form covers the nav, a menu sits on top of
     assert.ok(head.includes('<p className={styles.lineupSheetTitle}>{title}</p>'), 'the title is the head\'s');
     assert.equal((editor + builder + callUp + saveTemplate).split('styles.lineupSetupDrawerHead').length - 1, 0, 'and no call site hand-rolls it');
   });
+  it('the builder’s × is ONE plain glyph — no outline, no circle, no square (owner ruling 2026-10-07)', () => {
+    // Four looks for one control until then: this head's round outline, Copy from's private square copy, and the
+    // game-day sheets' and windows' bare glyph. The circle also broke the coach portal's standing ban on circle buttons.
+    const closeBtn = between(css, '.lineupSetupDrawerClose {', '}', 'the close button');
+    assert.match(closeBtn, /border: 0;/, 'no outline');
+    assert.match(closeBtn, /background: none;/, 'no card drawn behind the glyph');
+    assert.doesNotMatch(closeBtn, /50%/, 'never a circle');
+    assert.equal(head.split('aria-label="Close"').length - 1, 1, 'the × markup has one home');
+    assert.ok(head.includes('<LineupDrawerClose onClose={onClose} desktop={desktopClose} />'), 'the head wears it');
+    assert.ok(copyFrom.includes('const closeButton = <LineupDrawerClose onClose={onClose} />;'), 'Copy from wears it — no × above 900, as before');
+    assert.doesNotMatch(copyFrom, /aria-label="Close"/, 'and spells no × of its own');
+    assert.doesNotMatch(stripComments(readSource('components/coaches/LineupCopyFrom.module.css')), /\.close\b/, 'nor keeps a × class');
+  });
   it('⚠⚠ COVERING THE NAV IS NOT TAKING IT AWAY — the frame takes the bar away for every form, and nothing else needs to', () => {
     /* The first build was geometry alone, which defends the THUMB and nothing else — the bar's tabs stayed in the tab
        order and the accessibility tree. `useOverlayOpen` takes them out; since Sheet Frame step 5 the frame calls it
@@ -662,6 +675,10 @@ describe('D2 — the tool row', () => {
     // Two classes on every override: `.lineupAutoMenu` and `.lineupSheetBody` live in another module at one class,
     // and equal specificity across modules resolves by bundle order.
     assert.doesNotMatch(copyCss, /(^|\n)\s*\.(panel|body) \{/, 'never a single-class override of a shared class');
+    // ⚠ The switch clips (`overflow: hidden`), so as a flex item its floor is ZERO: with a list taller than the screen it
+    // shrank with the list and cut through "Games" (owner screenshot 2026-10-07; 32px → 25 on an iPhone SE). Only the list gives.
+    assert.ok(copyFrom.includes('className={`${shared.segChoice} ${shared.segChoiceFull} ${styles.tabs}`} role="tablist"'), 'the switch carries its own class');
+    assert.match(copyCss, /\.tabs\.tabs \{ flex: none; \}/, 'and never shrinks, at any width');
     assert.ok(copyFrom.includes('popover={{ className: styles.panel, tabIndex: -1 }}'), 'the popover above 900');
   });
   it('Print keeps its preflight', () => {

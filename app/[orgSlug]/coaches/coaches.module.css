@@ -6916,6 +6916,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   gap: 0.5rem;
   margin: 0 0 0.1rem;
 }
+/* ⚠ A PLAIN GLYPH — NO OUTLINE, NO CIRCLE, NO SQUARE (owner ruling 2026-10-07). This was a round outline
+   and Copy from a private square one, beside the game-day sheets' and every window's bare ×: four looks for
+   one control, and the circle broke the coach portal's standing ban on circle buttons. The box keeps its
+   size (the 44px floor below is the tap area, not a drawing); on a computer the pointer tints it, the
+   notification drawer's ×. Copy from wears this same button (`LineupDrawerClose`), not a class of its own. */
 .lineupSetupDrawerClose {
   display: none;
   flex: none;
@@ -6923,13 +6928,13 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   justify-content: center;
   width: 26px;
   height: 26px;
-  border: 1px solid var(--border-2);
-  border-radius: 50%;
-  background: var(--card-bg);
+  border: 0;
+  border-radius: 8px;
+  background: none;
   color: var(--text-tertiary);
   cursor: pointer;
 }
-.lineupSetupDrawerClose:hover { color: var(--text-primary); }
+.lineupSetupDrawerClose:hover { color: var(--text-primary); background: var(--home-olive-soft, var(--white-8)); }
 @media (min-width: 901px) {
   /* Two classes, so it beats the `display: none` base whatever the source order ends up being. */
   .lineupSetupDrawerClose.lineupDrawerCloseDesktop { display: inline-flex; }

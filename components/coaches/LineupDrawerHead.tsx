@@ -29,7 +29,8 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * At ≤900 the × always shows, at the portal's 44px floor, because there all three are the sheet
  * frame's FORM layer and cover the bottom nav: the visible dim is a 12px strip, and Escape and the
  * back gesture are both absent on an iPhone running the portal from the home screen. That half is
- * width-only, so the stylesheet decides it — see `.lineupSetupDrawerClose` at ≤900.
+ * width-only, so the stylesheet decides it — see `.lineupSetupDrawerClose` at ≤900. The × itself is
+ * `LineupDrawerClose`, below, because Copy from carries it without this head.
  */
 export default function LineupDrawerHead({
   title, onClose, desktopClose, onBack, backDisabled,
@@ -46,9 +47,6 @@ export default function LineupDrawerHead({
   /** Show the × at ≥901 too. Only a drawer that is a MODAL at that width should ask for it. */
   desktopClose?: boolean;
 }) {
-  const closeClass = desktopClose
-    ? `${styles.lineupSetupDrawerClose} ${styles.lineupDrawerCloseDesktop}`
-    : styles.lineupSetupDrawerClose;
   return (
     <div className={styles.lineupSetupDrawerHead}>
       {onBack ? (
@@ -56,9 +54,26 @@ export default function LineupDrawerHead({
           <ChevronLeft size={17} aria-hidden /> {title}
         </button>
       ) : <p className={styles.lineupSheetTitle}>{title}</p>}
-      <button type="button" className={closeClass} aria-label="Close" onClick={onClose}>
-        <X size={16} aria-hidden />
-      </button>
+      <LineupDrawerClose onClose={onClose} desktop={desktopClose} />
     </div>
+  );
+}
+
+/**
+ * THE BUILDER'S ×, ONE BUTTON FOR EVERY DRAWER THAT CARRIES ONE — the three forms' head above, and Copy
+ * from's own two-line head. A plain glyph: no outline, no circle, no square (owner ruling 2026-10-07 — the
+ * portal's × is the game-day sheets' and the windows', and circle buttons were already banned in the coach
+ * portal). Until then this head wore a round outline and Copy from a private square copy; a drawer that
+ * needs a × takes this button, never a class of its own. Shown at ≤900 always; above 900 only when
+ * `desktop` asks (see the head's docblock).
+ */
+export function LineupDrawerClose({ onClose, desktop }: { onClose: () => void; desktop?: boolean }) {
+  const className = desktop
+    ? `${styles.lineupSetupDrawerClose} ${styles.lineupDrawerCloseDesktop}`
+    : styles.lineupSetupDrawerClose;
+  return (
+    <button type="button" className={className} aria-label="Close" onClick={onClose}>
+      <X size={16} aria-hidden />
+    </button>
   );
 }
