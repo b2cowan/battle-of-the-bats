@@ -237,6 +237,16 @@ budget lines. The database change must reach production before this code does.
 The old Budget, Allocate and Budget vs. Actual pages are gone. Success: the eleven walks pass and the
 figures on every page agree with each other, a check the build already enforces.
 
+**Stage 3c — added to its drawings 2026-10-07 (the owner, during the §271 walks): billing the teams from
+a budget line, redrawn.** Today "Allocate" takes the treasurer out of the line's window to a separate
+three-step page in an older style, and creating the allocation lands them on yet another page; to see
+the result they find their way back to the Budget and reopen the line. 3c draws it again, with two
+options: allocate inside the line's own window on one screen (recommended), or a one-screen page that
+brings the treasurer back to the line. Either way it takes the Coaches Portal's format, and the same form
+sits behind New allocation on the Allocations tab. Why 3c: 3c changes this form anyway (which seasons it
+offers, the year's name), so it changes once. Success: a treasurer bills what is left on a line without
+losing their place.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money
