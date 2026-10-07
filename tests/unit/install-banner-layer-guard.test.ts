@@ -50,9 +50,10 @@ describe('the install banner sits under every sheet and over the page chrome it 
       // Sheet Frame step 4 (2026-10-06): the bar-anchored record sheets (the position picker, the notification
       // reader, the Award sheet — edited, the form layer above) stand on the frame, and RSVP over its window.
       ['the portal sheet frame (over a window — RSVP, the depth chart’s row menu)', 'components/coaches/SheetFrame.module.css', '.sheet.overWindow'],
+      // The portal's only sheet dim since Sheet Frame step 5 (2026-10-06): the lineup builder's own
+      // (`.lineupSheetScrim`) retired when its five drawers moved onto the frame.
       ['the portal sheet frame’s dim', 'components/coaches/SheetFrame.module.css', '.dim'],
       ['the bottom bar and its More sheet', 'components/coaches/CoachesBottomNav.module.css', '.bottomNav'],
-      ['the builder drawers\' dim', 'app/[orgSlug]/coaches/coaches.module.css', '.lineupSheetScrim'],
       ['the RSVP dialog on a computer', 'components/coaches/CoachRsvpSheet.module.css', '.floor.floor'],
       ['the admin kit\'s windows', 'components/admin/kit/club/KitDialog.module.css', '.overlayQuestion'],
     ];

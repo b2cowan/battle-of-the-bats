@@ -200,7 +200,10 @@ describe('one admin button size, the portal’s (owner, 2026-10-01, option A)', 
     // behind one menu on both Ledgers. Still never olive text: that is a card-foot door.
     const ledger = readCode(`${ACCT}/ledger/page.tsx`);
     assert.match(ledger, /<CoachToolbarMenu label="Tools"/);
-    assert.match(ledger, /label="Payees"[\s\S]{0,200}onSelect=\{\(\) => router\.push\(payeesHref\)\}/);
+    // A LINK since Sheet Frame step 5 (2026-10-06): on a phone Tools is a sheet that stands a Back step, and a step
+    // only knows a tap left the page when the tap was a link — a router.push from a button was cancelled by the
+    // step's own history.back() (the §258 failure).
+    assert.match(ledger, /label="Payees"[\s\S]{0,200}href=\{payeesHref\} \/>/);
     assert.match(ledger, /label="Transfer"/);
     assert.doesNotMatch(ledger, /<Link href=\{payeesHref\}/, 'no Payees button on the toolbar');
     assert.doesNotMatch(ledger, /className=\{kit\.footLink\}/);

@@ -9,22 +9,15 @@
    private `.fieldRow` collapsed to one column at 480 where every other coach form collapses at 640,
    which made this the only two-up coach form still side-by-side at 600px.
 
-   ⚠ NO SHELL RULES HERE EITHER. The panel's frame, its phone drawer behaviour, the grab line and
-   the scrim all come from `.lineupAutoMenu` in coaches.module.css, which the caller wraps this in.
-   Everything below is the list and the form INSIDE that frame. A private copy of the shell would
+   ⚠ NO SHELL RULES HERE EITHER. On a phone the shell is the portal's sheet frame (its form layer, the
+   grab line, the dim — Sheet Frame step 5); above 900 the builder's `.lineupAutoMenu` popover. The
+   caller wraps this in one or the other. Everything below is the list and the form INSIDE that shell. A private copy of the shell would
    have been a fifth builder panel that matched the other four until one of them changed. */
 
 .body {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-}
-
-.head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
 }
 
 /* Shown while the saved list is on its way. Neither half of the sheet renders until it lands — a

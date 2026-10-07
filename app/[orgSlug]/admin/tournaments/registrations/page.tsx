@@ -20,7 +20,7 @@
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { AlertCircle, ArrowLeftRight, Check, ChevronDown, ClipboardList, Link2, ListChecks, MoreHorizontal, Plus, RefreshCw, Search, Shuffle, SlidersHorizontal, Star, Users, X } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
@@ -146,7 +146,6 @@ export default function UnifiedTeamsPage() {
   const { currentTournament, isLocked, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
   const searchParams = useSearchParams();
-  const router = useRouter();
   usePageTitle('Teams');
   const [regs, setRegs] = useState<TeamRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1795,7 +1794,7 @@ export default function UnifiedTeamsPage() {
                 <>
                   <CoachToolbarMenuHeading>{TEAMS_WORDS.toolsSetup}</CoachToolbarMenuHeading>
                   <CoachToolbarMenuItem icon={<ClipboardList size={16} aria-hidden />} label={TEAMS_WORDS.registrationQuestions}
-                    onSelect={() => router.push(questionsHref)} />
+                    href={questionsHref} />
                 </>
               )}
             </CoachToolbarMenu>

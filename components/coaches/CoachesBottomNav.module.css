@@ -332,7 +332,8 @@
     right: 0;
     bottom: 100%;
     height: 100vh;
-    background: rgba(13, 17, 26, 0.45); /* token-exempt: scrim over the page, dark skin */
+    /* The portal's sheet dim, one setting for both themes (Sheet Frame step 5): the frame's `.dim` reads it too. */
+    background: var(--sheet-dim);
   }
   .dropdown {
     left: 0;
@@ -433,8 +434,7 @@
      row and a hovered row were the same olive wash with the same grey words: two rows read as "here". */
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropActive { background: var(--home-olive-soft); color: var(--home-olive); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropDivider { background: var(--home-line); }
-  /* The sheet's own pieces in the warm skin (A1) — the scrim, the grab, the tiles. */
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sheetScrim { background: rgba(36, 30, 21, 0.28); } /* token-exempt: scrim over the warm page */
+  /* The sheet's own pieces in the warm skin (A1) — the grab, the tiles. (The scrim's warm value is `--sheet-dim`'s.) */
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sheetGrab { background: rgba(var(--home-line-rgb), 0.9); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .hotTile {
     border-color: var(--home-line);

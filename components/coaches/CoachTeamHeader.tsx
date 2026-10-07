@@ -16,7 +16,6 @@ import { formatInOrgZone } from '@/lib/timezone';
 import { useCoachNudgeDismiss } from '@/components/coaches/useCoachNudgeDismiss';
 import { CoachPageHelpSlot } from '@/components/coaches/CoachPageHelpSlot';
 import CoachTeamSwitchSheet from '@/components/coaches/CoachTeamSwitchSheet';
-import { useDismissable } from '@/lib/overlay-hooks';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import type { RepEventType } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -106,25 +105,18 @@ function CoachTeamHeaderInner({
   // The switcher (stage 1 · B1): a phone-only door on the team name, offered only when there is
   // somewhere to switch TO. `useIsPhoneNav` defaults to true so the server renders the button and a
   // desktop swaps it for plain text after mount — the chevron is display:none above 900, so the
-  // swap moves nothing. The sheet lives inside `switchRef` so one dismiss boundary covers the
-  // button, and `switchSheetRef` the scrim and the panel (the sheet's scrim is a tap INSIDE the
-  // boundary that closes it, exactly as the More sheet's does).
+  // swap moves nothing. The sheet frame answers the sheet's keys (Sheet Frame step 5): a tap outside
+  // it, its dim and the name (the name stays a toggle), Escape and the phone's Back close it, focus
+  // goes home to the name. Before step 5 this header answered them and stood no back step, so on a
+  // phone Back with the sheet open left the page.
   // The sheet remembers the ADDRESS it was opened on rather than a boolean: a switch is a
   // navigation, and the sheet closes with the address (as More does) with no effect to write —
   // the derived `switchOpen` is simply false on the next page.
   const isPhoneNav = useIsPhoneNav();
   const [switchOpenAt, setSwitchOpenAt] = useState<string | null>(null);
   const switchOpen = switchOpenAt === pathname;
-  const switchRef = useRef<HTMLSpanElement>(null);
-  const switchSheetRef = useRef<HTMLDivElement>(null);
   const switchButtonRef = useRef<HTMLButtonElement>(null);
   const closeSwitch = () => setSwitchOpenAt(null);
-  // Two boundaries, not one: the button sits inside the sticky header and the sheet is rendered
-  // OUTSIDE it (see the fragment below), so "outside" means outside both.
-  useDismissable(switchOpen, [switchRef, switchSheetRef], closeSwitch, () => {
-    setSwitchOpenAt(null);
-    switchButtonRef.current?.focus({ preventScroll: true });
-  });
   // Once per GAME, on-device (the portal's one dismiss idiom) — a new game week mints a new
   // event id, so the nudge returns for the next opponent without any expiry bookkeeping.
   // Called unconditionally (rules of hooks); the placeholder key is never written.
@@ -243,7 +235,7 @@ function CoachTeamHeaderInner({
               The chevron sits OUTSIDE the truncating span so a long name loses its tail, never its
               chevron; the button keeps the "?"'s 44px tap trick (a 4px overhang above and below the
               36px line — the bar does not grow). */}
-          <span ref={switchRef} className={styles.teamHeaderNameRow}>
+          <span className={styles.teamHeaderNameRow}>
             {canSwitch ? (
               <button
                 ref={switchButtonRef}
@@ -366,21 +358,18 @@ function CoachTeamHeaderInner({
         anything the page paints above 40 — the autosave pill (250), the console's own sheet — so
         the scrim could not cover them and an error pill could intercept a tap on the sheet's corner
         (/review 2026-09-21). Out here the sheet frame's own z-index (260: over the pill, under the
-        bar) decides. `display: contents` so the host adds no box to `.coachesMain` (the header's
-        margins and the page line's still meet). Gated on `canSwitch` as well as `switchOpen`: a
-        viewport crossing 900 while the sheet is open swaps the button for plain text, and the sheet
-        must go with it rather than stay open with no trigger. */}
+        bar) decides; its dim and sheet are fixed, so they add no box to `.coachesMain`. Gated on
+        `canSwitch` as well as `switchOpen`: a viewport crossing 900 while the sheet is open swaps the
+        button for plain text, and the sheet must go with it rather than stay open with no trigger. */}
     {canSwitch && switchOpen && (
-      <div ref={switchSheetRef} style={{ display: 'contents' }}>
-        <CoachTeamSwitchSheet
-          base={coachesBase}
-          currentTeamId={teamId}
-          assignments={assignments}
-          closedAssignments={closedAssignments}
-          onClose={closeSwitch}
-          opener={switchButtonRef}
-        />
-      </div>
+      <CoachTeamSwitchSheet
+        base={coachesBase}
+        currentTeamId={teamId}
+        assignments={assignments}
+        closedAssignments={closedAssignments}
+        onClose={closeSwitch}
+        opener={switchButtonRef}
+      />
     )}
     {/* THE OVERVIEW'S PAGE LINE (stage 1 · B2 = B, owner ruling 2026-09-21). On a phone the bar
         above is one line on every screen, so the club and the season — the Overview's own second

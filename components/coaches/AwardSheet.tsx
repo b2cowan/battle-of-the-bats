@@ -39,8 +39,8 @@ function stored(f: AwardForm) {
  * end closes it, a tap on the bar closes it first). EDITING it is a form: the frame drops it to the
  * screen's foot, over the nav, takes the bar out of reach and out of the tab order — covering a nav is
  * not taking it away unless the keyboard is shut out too — and holds the keyboard inside. The frame owns
- * its keys in both layers (`ownsKeys`), so ONE floor stands throughout and only its hold changes: the
- * switch costs no history entry. ✓ is the way out, beside the dim and Escape, which both finish the edit
+ * its keys in both layers (every sheet's, since Sheet Frame step 5), so ONE floor stands throughout and
+ * only its hold changes: the switch costs no history entry. ✓ is the way out, beside the dim and Escape, which both finish the edit
  * first (a held change they close without — below).
  *
  * ⚠ EDITING SAVES AS YOU GO (the 2026-09-24 ruling: editing autosaves, creating asks). ✓ means
@@ -220,7 +220,6 @@ export default function AwardSheet({
     <>
       {/* A form covers the nav; a menu sits on top of it — only while editing does the bar go (the frame). */}
       <SheetFrame
-        ownsKeys
         form={editing}
         busy={removing}
         onClose={requestClose}

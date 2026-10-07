@@ -57,8 +57,8 @@ export default function CoachPlayerSwitchSheet({
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Focus lands on the current row when the sheet opens (the team sheet lands on its first row;
-  // here "where am I in the list" is the useful answer). The trigger's `useDismissable` returns it
-  // to the name on Escape, and so does a tap on the dim; a tap elsewhere leaves it where the tap went.
+  // here "where am I in the list" is the useful answer). The frame returns it to the name however the
+  // sheet closes.
   useEffect(() => {
     const panel = panelRef.current;
     const here = panel?.querySelector<HTMLAnchorElement>('a[aria-current="true"]')

@@ -5,20 +5,14 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 /**
  * THE HEAD OF A LINEUP-BUILDER DRAWER — a title and a way out.
  *
- * ⚠ IT EXISTS FOR THE SAME REASON `LineupSheetScrim` DOES, AND THE DRIFT HAD ALREADY STARTED.
- * D12 gave the Setup drawer a titled head because once the scrim covers the control that opened
- * it, nothing on screen says what the surface is. On 2026-09-23 Templates needed the same head
- * (it had none at all) — and `/simplify`'s reuse pass pointed out that a THIRD copy of this idea
- * already exists and has already diverged: `CallUpSheet` renders its own head with a different
- * wrapper class, an `<h3>` instead of a `<p>`, and `modalCloseBtn` + `&times;` instead of this
- * button and the `X` glyph. Two hand-copied call sites is where that starts. This is the head
- * spelled once.
- *
- * ⚠ `CallUpSheet`'s copy is deliberately NOT folded in here. Its close button rides the portal-
- * wide `.modalCloseBtn`, which carries its own 44px floor at ≤768 and whose unification with this
- * one the stylesheet explicitly records as "a portal-wide decision, not a side effect of this
- * pass". Reconciling the two is its own unit of work; doing it here would reshape a surface this
- * ruling never asked about.
+ * ⚠ ONE HEAD, THREE FORMS, AND THE DRIFT HAD ALREADY STARTED. D12 gave the Setup drawer a titled
+ * head because once the dim covers the control that opened it, nothing on screen says what the
+ * surface is. On 2026-09-23 Templates (now Save as template) needed the same head — and `/simplify`'s
+ * reuse pass found a THIRD copy already diverged: `CallUpSheet` rendered its own head, an `<h3>` in
+ * the display face with `modalCloseBtn` + `&times;`. It was left out then (its × rode the
+ * portal-wide `.modalCloseBtn`); Sheet Frame step 5 folded it in (owner D9, 2026-10-06, drawn true
+ * size on the hub): all three of the builder's forms wear this head, and `.modalCloseBtn` itself was
+ * not touched. This is the head spelled once — the sheet frame's form head (D2).
  *
  * ⚠⚠ `desktopClose` IS A PROP, NOT AN ANCESTOR (/simplify altitude pass, 2026-09-23). The first
  * build answered "does this head show a × on the true desktop?" by scoping the ≥901 rule to
@@ -28,13 +22,14 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *
  *   · **Setup** passes it — at ≥901 it is a centered modal, and a modal backdrop is less
  *     obviously clickable than a small popover's "click anywhere else", so it earns an explicit ×.
- *   · **Templates** does not — at ≥901 it is still a small anchored popover, and must not grow a
- *     control it never had.
+ *   · **Save as template** does not — at ≥901 it is still a small anchored popover, and must not grow
+ *     a control it never had.
+ *   · **Call up** passes it too — at ≥901 it is a popover, but one that always carried a ×.
  *
- * At ≤900 the × always shows, at the portal's 44px floor, because there the drawer COVERS the
- * bottom nav: the visible scrim is a 12px strip, and Escape and the back gesture are both absent
- * on an iPhone running the portal from the home screen. That half is width-only, so the
- * stylesheet decides it — see `.lineupDrawerOverNav .lineupSetupDrawerClose`.
+ * At ≤900 the × always shows, at the portal's 44px floor, because there all three are the sheet
+ * frame's FORM layer and cover the bottom nav: the visible dim is a 12px strip, and Escape and the
+ * back gesture are both absent on an iPhone running the portal from the home screen. That half is
+ * width-only, so the stylesheet decides it — see `.lineupSetupDrawerClose` at ≤900.
  */
 export default function LineupDrawerHead({
   title, onClose, desktopClose, onBack, backDisabled,

@@ -69,6 +69,8 @@ import { useBackStep } from './useBackStep';
  * 2026-10-06). The phone's record sheets — the position picker, a read award — keep Escape, Back and
  * focus in and home, and give up only the hold on the keyboard: their bar is lit and tappable, so a
  * keyboard held inside them would be told the page has nothing else while a thumb reaches the bar.
+ * Since step 5 that is every menu-layer sheet on the frame (Tools, Filter, the switchers, game day's
+ * menus): the frame stands this floor for every sheet and holds the keyboard only in the form layer.
  *
  * `walk`, when given, binds ← / → to the room's Prev / Next — never while an input has focus.
  */
@@ -152,6 +154,9 @@ export function useDialogFloor(
   },
 ): void {
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+  /** What held focus inside the panel when the floor last stood down with the panel still in the page —
+   *  handed back if it stands up again over the same panel (below). */
+  const heldRef = useRef<HTMLElement | null>(null);
   // The latest options, so the one keydown effect (keyed on `open`) never re-binds on render churn
   // and never calls a stale closer or walks a stale list.
   const optsRef = useLatestRef(opts);
@@ -172,7 +177,9 @@ export function useDialogFloor(
     if (!open) return;
     const token = Symbol('dialog-floor');
     openFloors.push(token);
-    const named = optsRef.current.opener?.current;
+    // The opener's REF is kept, not its node: the hand-back reads the node as the panel closes.
+    const openerRef = optsRef.current.opener;
+    const named = openerRef?.current;
     restoreFocusRef.current = named?.isConnected ? named : openerOf(panelRef.current);
 
     function onKey(event: KeyboardEvent) {
@@ -192,7 +199,11 @@ export function useDialogFloor(
            TWO checks for two listener orderings, and the first is the one that actually fires here
            — see `escapeOwnership.ts` for why the DOM marker alone lost the race. */
         if (escapeClaimed(event)) return;
-        if (target instanceof Element && target.closest('[data-escape-owner]')) return;
+        // A marker on the panel ITSELF is this floor's own claim (the sheet frame marks its sheet, so a
+        // floor it opens over yields to it — Sheet Frame step 5); only a marker between the key and the
+        // panel belongs to something else.
+        const owner = target instanceof Element ? target.closest('[data-escape-owner]') : null;
+        if (owner && owner !== panel) return;
         if (!busy) onClose();
         return;
       }
@@ -260,14 +271,40 @@ export function useDialogFloor(
     document.addEventListener('keydown', onKey);
     // Seat focus on the panel — unless a field inside it already took it (an `autoFocus` input
     // mounts before this effect runs, and the coach's cursor belongs there, not on the frame).
+    // ⚠ AND HAND BACK WHAT THE PANEL HELD. A floor that stands down and up again over the same panel
+    // returns focus to the control inside that had it, not to the frame. In development that is EVERY
+    // window: React's strict mode runs each new effect twice (up, down, up), and the "down" hands focus
+    // home — so a window's `autoFocus` field lost its cursor on every dev open (measured on the practice
+    // plan's Save as template… at 390 and 1280, Sheet Frame step 5 /review), which a walk in dev reads as
+    // the product's behaviour.
     const panel = panelRef.current;
     const active = document.activeElement;
-    if (panel && !(active instanceof Node && panel.contains(active))) panel.focus();
+    const held = heldRef.current;
+    heldRef.current = null;
+    if (panel && !(active instanceof Node && panel.contains(active))) {
+      (held?.isConnected && panel.contains(held) ? held : panel).focus();
+    }
     return () => {
       const at = openFloors.indexOf(token);
       if (at >= 0) openFloors.splice(at, 1);
       document.removeEventListener('keydown', onKey);
-      restoreFocusRef.current?.focus?.();
+      // Home — unless focus already went somewhere real on its own. A pick in a sheet that opens a window
+      // closes the sheet and mounts the window in ONE commit, and the window's `autoFocus` field takes focus
+      // during that commit, BEFORE this cleanup: pulled back to the opener here, the window's own floor then
+      // seats focus on its frame, not its field (the practice plan's Tools › Save as template… on a phone,
+      // Sheet Frame step 5 /review). A panel that is gone leaves focus on `<body>`; one still mounted, inside.
+      // The opener is read NOW, so a button that re-rendered while the panel was open is the live node.
+      // Without scrolling: the opener is where the coach left it, and since the sheet frame's menus close
+      // on a tap on the bar (Sheet Frame step 4) this also runs while the coach is reaching elsewhere.
+      const now = document.activeElement;
+      heldRef.current = now instanceof HTMLElement && panel?.contains(now) ? now : null;
+      const captured = restoreFocusRef.current;
+      if (!captured) return;
+      const went = now instanceof HTMLElement && now !== document.body && now !== document.documentElement
+        && !(panel && panel.contains(now));
+      if (went) return;
+      const named = openerRef?.current;
+      (named?.isConnected ? named : captured).focus?.({ preventScroll: true });
     };
   }, [open, panelRef, optsRef]);
 

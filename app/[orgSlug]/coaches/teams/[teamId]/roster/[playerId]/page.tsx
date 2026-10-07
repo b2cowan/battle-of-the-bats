@@ -5,7 +5,6 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { parseDevelopmentAddress, returnLabel } from '@/lib/development-address';
 import { Users, Check, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { useDismissable } from '@/lib/overlay-hooks';
 import { formatStoredDate } from '@/lib/timezone';
 import CoachPlayerSwitchSheet, { type RosterSheetPlayer } from '@/components/coaches/CoachPlayerSwitchSheet';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
@@ -492,25 +491,19 @@ export default function PlayerDetailPage({
 
   /* THE ROSTER SHEET's open state (stage 5 · F2) — the team sheet's own mechanics (stage 1 · B1).
      It remembers the ADDRESS it was opened on rather than a boolean, so picking a player (a
-     navigation) closes it with no effect to write. Two dismiss boundaries — the name button in the
-     page header and the sheet rendered at the foot of the page — so "outside" means outside both,
-     and the sheet's scrim is a tap INSIDE the boundary that closes it (a scrim outside its own
-     boundary let a dismiss tap press the control beneath it, under touch only — stage 3's /review).
-     Escape returns focus to the name; a tap-away leaves it where the tap went. */
+     navigation) closes it with no effect to write. The sheet frame answers its keys (Sheet Frame
+     step 5): a tap outside the sheet, its dim and the name (the name stays a toggle), Escape and the
+     phone's Back close it, and focus goes home to the name. Before step 5 this page answered them and
+     stood no back step, so on a phone Back with the sheet open left the player. */
   const pathname = usePathname() ?? '';
   const [sheetOpenAt, setSheetOpenAt] = useState<string | null>(null);
   const nameButtonRef = useRef<HTMLButtonElement>(null);
-  const sheetRef = useRef<HTMLDivElement>(null);
   const onRoster = roster.some(r => r.id === playerId);
   // Offered only when there is somewhere to go (a one-player roster gets no chevron, as a one-team
   // coach gets none), and never for a player who is off the list — there is no "you are here" row.
   const canSheet = isPhone && onRoster && roster.length > 1;
   const sheetOpen = canSheet && sheetOpenAt === pathname;
   const closeSheet = () => setSheetOpenAt(null);
-  useDismissable(sheetOpen, [nameButtonRef, sheetRef], closeSheet, () => {
-    setSheetOpenAt(null);
-    nameButtonRef.current?.focus({ preventScroll: true });
-  });
 
   if (assignmentsLoading || fetching) return <CoachLoading label="Loading this player…" />;
   if (!page.hasAccess) {
@@ -1303,18 +1296,16 @@ export default function PlayerDetailPage({
           view wherever they are. A writer's only: nothing is ever saved for a reader. */}
       {canWriteRoster && <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />}
 
-      {/* THE ROSTER SHEET (stage 5 · F2). `display: contents` so the boundary adds no box to the
-          page; the sheet is the portal's sheet frame, fixed at the bar's top edge (Sheet Frame step 2). */}
+      {/* THE ROSTER SHEET (stage 5 · F2) — the portal's sheet frame, fixed at the bar's top edge (Sheet
+          Frame step 2), answering its own keys and back step (step 5). */}
       {sheetOpen && (
-        <div ref={sheetRef} style={{ display: 'contents' }}>
-          <CoachPlayerSwitchSheet
-            players={roster}
-            currentPlayerId={playerId}
-            hrefFor={playerHref}
-            onClose={closeSheet}
-            opener={nameButtonRef}
-          />
-        </div>
+        <CoachPlayerSwitchSheet
+          players={roster}
+          currentPlayerId={playerId}
+          hrefFor={playerHref}
+          onClose={closeSheet}
+          opener={nameButtonRef}
+        />
       )}
 
       <FeedbackModal

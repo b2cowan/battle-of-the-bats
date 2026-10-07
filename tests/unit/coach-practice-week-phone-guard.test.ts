@@ -96,7 +96,7 @@ describe('E1 — the practice plan toolbar is one row, and the "⋯" opens a dra
     assert.ok(!page.includes("testId: 'run-practice'"), 'the P10 no-clock ruling keeps it on the row, on ANY day');
   });
 
-  it('the drawer\'s scrim renders INSIDE the element the dismiss hook watches', () => {
+  it('the drawer\'s scrim is INSIDE the boundary its "tap outside" listener watches', () => {
     // ⚠ The defect this pins was reproduced next door on 2026-09-22 under TOUCH emulation: a scrim
     // rendered as a SIBLING let the dismiss hook's pointerdown unmount the overlay, and the click
     // that followed pressed the button underneath — it marked a lineup READY, a state with no
@@ -104,9 +104,11 @@ describe('E1 — the practice plan toolbar is one row, and the "⋯" opens a dra
     // ⚖ Since Sheet Frame step 1 (2026-10-05) the drawer is the portal's sheet frame, which brings the scrim with
     // it — so the frame's place inside the root is the scrim's place. The frame itself (the scrim behind the sheet,
     // the token, z 260, nothing portalled, no second copy of the drawer) is pinned in sheet-frame-guard.
+    // ⚖ Since Sheet Frame step 5 (2026-10-06) the frame answers the sheet's keys and watches its own sheet, dim and
+    // opener (sheet-frame-guard); the menu's root dismiss hook stands down for the sheet and keeps the popover.
     const root = menu.indexOf('<div ref={rootRef}');
-    assert.ok(root >= 0 && menu.indexOf('<SheetFrame ref={panelRef}') > root, 'the frame (and its scrim) is inside the watched root element');
-    assert.ok(menu.includes('useDismissable(open, rootRef'), 'rootRef is what the dismiss hook watches');
+    assert.ok(root >= 0 && menu.indexOf('<SheetFrame ref={panelRef}') > root, 'the frame renders in the menu’s root, in-tree');
+    assert.ok(menu.includes('useDismissable(open && !asDrawer, rootRef'), 'the root’s dismiss hook is the popover’s alone');
     assert.ok(!menu.includes('createPortal'), 'nothing here is portalled — the drawer inherits --coach-foot-clear in-tree');
   });
 });

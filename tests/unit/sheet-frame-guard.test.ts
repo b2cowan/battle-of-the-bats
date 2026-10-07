@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { cssRule, readCode, splitPhoneCss } from './_source-code.ts';
+import { existsSync, readdirSync } from 'node:fs';
+import { cssRule, readCode, readSource, splitPhoneCss } from './_source-code.ts';
+
+/** Every .tsx under `dir` that renders a `CoachToolbarMenuItem` (repo-relative, forward slashes). */
+function toolsRowFiles(dir: string): string[] {
+  return readdirSync(dir, { recursive: true, encoding: 'utf8' })
+    .map(rel => `${dir}/${rel.split('\\').join('/')}`)
+    .filter(rel => rel.endsWith('.tsx') && readSource(rel).includes('<CoachToolbarMenuItem'));
+}
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
@@ -33,12 +41,20 @@ import { cssRule, readCode, splitPhoneCss } from './_source-code.ts';
  *     — for a sheet with no trigger of its own — the menu layer's keys (`ownsKeys`: the floor WITHOUT its
  *     trap, and a tap on the bar closes it first; owner 2026-10-06). The picker and a read award stop
  *     claiming `aria-modal`.
+ *   · Step 5 (2026-10-06): the frame answers EVERY sheet's keys — Escape, the phone's Back, a tap outside (its
+ *     opener inside the boundary, so a trigger stays a toggle), focus in and home — and `ownsKeys` is gone; the
+ *     sheets that answered their own (Tools, Filter, the switchers, game day, the row menus) stop, which gives
+ *     Tools, Filter and the switchers the back step they lacked. The lineup builder's five drawers (Setup, Save
+ *     as template, Call up, Copy from, Print) move onto the frame and its own dim (`LineupSheetScrim`) retires;
+ *     the three forms keep the keyboard inside; Call up takes the shared form head (owner D9). A row that leaves
+ *     the page is a link. The dim's colours are one setting (`--sheet-dim`).
  *
  * What it cannot see is the rendered sheet — `.probe/sf1/capture.mjs` (step 1, ten sheets),
  * `.probe/sf2/capture.mjs` (step 2, five sheets and two Tools sheets as the regression check) and
  * `.probe/sf3/capture.mjs` (step 3, the seven game-day surfaces at 390, 768 and 1280) and `.probe/sf4/capture.mjs`
- * (step 4, the record sheets, with Tab, Escape, Back, the dim and a tap on the bar) measured them before and
- * after, warm and dark, and diffed their computed styles and pixels.
+ * (step 4, the record sheets, with Tab, Escape, Back, the dim and a tap on the bar) and `.probe/sf5/capture.mjs`
+ * (step 5, every sheet the frame now answers for, with Back pressed twice) measured them before and after, warm
+ * and dark, and diffed their computed styles and pixels.
  * ══════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -98,11 +114,12 @@ describe('step 1 · the frame is ONE place', () => {
 describe('step 1 · the dim travels with the sheet, inside the dismiss boundary', () => {
   it('the frame renders the portal dim, then the sheet, as siblings — never portalled', () => {
     const body = frame.slice(frame.indexOf('return ('));
-    const dim = body.indexOf('<div ref={dimRef} className={`${styles.dim}${layer}`} aria-hidden="true" onClick={closeToOpener} />');
+    const dim = body.indexOf('<div ref={dimRef} className={`${styles.dim}${layer}`} aria-hidden="true" onClick={close} />');
     const sheet = body.indexOf('ref={setPanel}');
     assert.ok(dim > 0 && sheet > dim, 'the dim, then the sheet');
-    assert.match(frame, /const closeToOpener = \(\) => \{\s*if \(busy\) return;\s*onClose\(\);\s*rescueFocusTo\(opener\);\s*\};/,
-      'a tap on the dim closes, then hands focus back to the opener — and waits for a write in flight');
+    // A tap on the dim closes and waits for a write in flight; the floor (standing for every sheet since step 5)
+    // hands focus back to the opener as the sheet unmounts, however it closed.
+    assert.match(frame, /const close = \(\) => \{ if \(!busy\) onClose\(\); \};/);
     assert.doesNotMatch(frame, /createPortal/, 'in-tree, so the sheet inherits --coach-foot-clear');
   });
 
@@ -112,11 +129,10 @@ describe('step 1 · the dim travels with the sheet, inside the dismiss boundary'
   });
 
   for (const c of CONSUMERS) {
-    it(`${c.who}: through the frame, inside the root its dismiss hook watches, a tap on the dim handing focus back`, () => {
-      // ⚠ A dim OUTSIDE that root let a touch dismissal press the button underneath (2026-09-22, a lineup marked
-      // READY with no way back). The frame brings the dim, so where the frame sits is where the dim sits.
-      assert.ok(c.src.indexOf(`<SheetFrame ref={${c.ref}}`) > c.src.indexOf('<div ref={rootRef}'), 'inside the watched root');
-      assert.match(c.src, /useDismissable\((open|sheetOpen), rootRef, /, 'and rootRef is what the hook watches');
+    it(`${c.who}: through the frame, which answers its keys and hands focus back to the opener`, () => {
+      // ⚠ A dim OUTSIDE the "tap outside" boundary let a touch dismissal press the button underneath (2026-09-22, a
+      // lineup marked READY with no way back). Since step 5 the frame watches its own sheet, dim and opener.
+      assert.doesNotMatch(c.src, /useDismissable\((open|sheetOpen), rootRef/, 'the sheet’s keys are the frame’s (step 5)');
       assert.doesNotMatch(c.src, /<LineupSheetScrim/, 'no dim of its own — the frame brings it');
       const line = frameLine(c.src, c.ref);
       assert.ok(line.includes(`onClose={${c.onClose}} opener={${c.opener}}`), 'the dim closes; the frame hands focus back to the opener');
@@ -127,7 +143,7 @@ describe('step 1 · the dim travels with the sheet, inside the dismiss boundary'
 
   it('the Tools menu: one close for every way out, the frame worn ALONE in sheet mode, and no placement work there', () => {
     assert.match(menu, /const dismiss = useCallback\(\(\) => \{ setOpen\(false\); rescueFocus\(\); \}/);
-    assert.match(menu, /useDismissable\(open, rootRef, dismiss\);/);
+    assert.match(menu, /useDismissable\(open && !asDrawer, rootRef, dismiss\);/, 'the popover’s; the sheet’s keys are the frame’s (step 5)');
     // Two classes across two CSS modules resolve by bundle order, so the sheet never also wears `.panel`.
     assert.match(menu, /<div ref=\{panelRef\} className=\{styles\.panel\} style=\{panelStyle\}/, 'the popover keeps .panel and its measured place');
     assert.doesNotMatch(menu, /styles\.drawer/);
@@ -140,7 +156,7 @@ describe('step 1 · the dim travels with the sheet, inside the dismiss boundary'
     // ⚠ The Omit alone does not hold: TypeScript does not check a hyphenated attribute a props type leaves out,
     // so `<SheetFrame aria-modal="true">` compiles and would ride the spread. The value AFTER it is the guard:
     // modal in the form layer (step 3), absent in the menu layer (D1).
-    assert.match(frame, /\{\.\.\.sheet\}\s+aria-modal=\{form \|\| undefined\}\s+>/);
+    assert.match(frame, /\{\.\.\.sheet\}\s+data-escape-owner=""\s+aria-modal=\{form \|\| undefined\}\s+>/);
     assert.equal(frame.split('aria-modal=').length - 1, 1, 'and nothing else in the frame sets it');
   });
 
@@ -197,11 +213,12 @@ describe('step 2 · the small menus', () => {
     });
   }
 
-  it('both hosts render the switcher inside the boundary their dismiss hook watches, and name the opener', () => {
-    assert.match(header, /useDismissable\(switchOpen, \[switchRef, switchSheetRef\], closeSwitch,/);
-    assert.match(header, /<div ref=\{switchSheetRef\} style=\{\{ display: 'contents' \}\}>\s*<CoachTeamSwitchSheet[\s\S]*?opener=\{switchButtonRef\}/);
-    assert.match(playerPage, /useDismissable\(sheetOpen, \[nameButtonRef, sheetRef\], closeSheet,/);
-    assert.match(playerPage, /<div ref=\{sheetRef\} style=\{\{ display: 'contents' \}\}>\s*<CoachPlayerSwitchSheet[\s\S]*?opener=\{nameButtonRef\}/);
+  it('both hosts name the opener and leave the sheet’s keys to the frame (step 5: Back closes the sheet)', () => {
+    // Until step 5 each host answered the sheet with `useDismissable` and stood no back step, so on a phone
+    // Back with the sheet open left the page (measured 2026-10-06). The frame stands it now.
+    assert.match(header, /<CoachTeamSwitchSheet[\s\S]*?opener=\{switchButtonRef\}/);
+    assert.match(playerPage, /<CoachPlayerSwitchSheet[\s\S]*?opener=\{nameButtonRef\}/);
+    for (const host of [header, playerPage]) assert.doesNotMatch(host, /useDismissable/, 'no second answer to the sheet’s keys');
   });
 
   it('D5 · the Schedule’s view menu and Add event rise from the bar on a phone, titled', () => {
@@ -212,18 +229,20 @@ describe('step 2 · the small menus', () => {
   });
 
   it('Print names itself: the menu label, a dialog role, never modal — focus in on open, back to Tools on Escape and on the dim', () => {
-    assert.match(builder, /<LineupSheetScrim onClose=\{closePrint\} \/>\s*<div ref=\{printRef\} className=\{styles\.lineupAutoMenu\} role="dialog" aria-label="Print">\s*<SheetLabel>Print<\/SheetLabel>/);
-    assert.match(builder, /function closePrint\(\) \{ setLineupPdfOpen\(false\); rescueFocusTo\(toolsTriggerRef\); \}/);
+    // One body for both shells (step 5): the frame on a phone (its hand-back to Tools), the popover above 900.
+    assert.match(builder, /const printBody = \(\s*<>\s*<SheetLabel>Print<\/SheetLabel>/);
+    assert.ok(builder.includes('<LineupDrawer label="Print" ref={printRef} onClose={() => setLineupPdfOpen(false)} opener={toolsTriggerRef}>{printBody}</LineupDrawer>'));
     assert.match(builder, /if \(lineupPdfOpen\) printRef\.current\?\.querySelector<HTMLElement>\('button'\)\?\.focus\(\{ preventScroll: true \}\);/, 'a dialog that never takes focus is never announced');
-    // Escape went to <body> on every Tools panel (Copy from's was booked for step 5; it is the same line).
+    // Escape went to <body> on every Tools panel (Copy from's was booked for step 5; it is the same line) — the
+    // popovers' line above 900; on a phone the frame's.
     assert.match(builder, /function escapeToolPanels\(\) \{ closeToolPanels\(\); rescueFocusTo\(toolsTriggerRef\); \}/);
-    assert.match(builder, /useDismissable\(copyOpen \|\| saveTemplateOpen \|\| lineupPdfOpen, toolsRef, closeToolPanels, escapeToolPanels\);/);
+    assert.match(builder, /useDismissable\(toolPanelOpen, toolsRef, closeToolPanels, escapeToolPanels\);/);
     // The Tools menu LENDS its button — never a query into its markup (step 2 /simplify).
     assert.match(builder, /triggerRef=\{toolsTriggerRef\}/);
     assert.match(menu, /const triggerRef = triggerRefProp \?\? ownTriggerRef;/);
     assert.doesNotMatch(builder, /aria-haspopup="menu"\]/, 'no reaching into the menu by attribute');
-    const print = builder.slice(builder.indexOf('<div ref={printRef}'), builder.indexOf('\n', builder.indexOf('<div ref={printRef}')));
-    assert.doesNotMatch(print, /aria-modal|lineupDrawerOverNav/, 'the menu layer: never modal, never over the bar (D1)');
+    const print = builder.slice(builder.indexOf('<LineupDrawer label="Print"'), builder.indexOf('\n', builder.indexOf('<LineupDrawer label="Print"')));
+    assert.doesNotMatch(print, /aria-modal|\bform\b/, 'the menu layer: never modal, never over the bar (D1)');
   });
 
   it('a menu of CHOICES answers the arrow keys, and opens on the one in force', () => {
@@ -244,22 +263,23 @@ describe('step 3 · the form layer, and the game day on the frame', () => {
   it('the form layer’s geometry: flush to the screen’s foot, over the nav, under a modal, the home indicator padded', () => {
     assert.match(frameCss, /@media \(max-width: 900px\) \{[\s\S]*\.sheet\.form \{/, 'inside the bar’s breakpoint, like the rest');
     const form = cssRule(frameCss, '.sheet.form');
-    for (const decl of ['bottom: 0;', 'max-height: calc(100dvh - 12px);', 'z-index: 390;', 'padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));']) {
+    // The bottom padding is named since step 5 (a pinned foot takes it over) — the home indicator still added.
+    for (const decl of ['bottom: 0;', 'max-height: calc(100dvh - 12px);', 'z-index: 390;', '--sheet-foot-pad: calc(14px + env(safe-area-inset-bottom, 0px));', 'padding-bottom: var(--sheet-foot-pad);']) {
       assert.ok(form.includes(decl), `.sheet.form: ${decl}`);
     }
     // 390: over the nav (300), under `.modalOverlay` (400), so a dialog opened from a form lands on top of it.
     // The sheet and its dim wear the same layer classes, so the two can never disagree (step 4: one string).
     assert.ok(frame.includes("const layer = `${form ? ` ${styles.form}` : ''}${overWindow ? ` ${styles.overWindow}` : ''}`;"));
-    assert.ok(frame.includes('className={`${styles.sheet}${layer}${grabCloses ? ` ${styles.grabCloses}` : \'\'}`}'));
+    assert.ok(frame.includes('className={`${styles.sheet}${layer}${grabCloses ? ` ${styles.grabCloses}` : \'\'}${full ? ` ${styles.full}` : \'\'}`}'));
   });
 
   it('the form layer takes the bar away from the thumb, the keyboard AND the screen reader, and keeps the keyboard inside', () => {
     // Covering a nav is not taking it away (2026-09-23): geometry alone defends the thumb and nothing else.
     // (Over a window the window already took the bar — step 4's own test.)
     assert.match(frame, /useOverlayOpenIfAvailable\(form && !overWindow\);/, 'the nav goes visibility: hidden — tolerant, the Tools menu’s frame also renders on admin pages');
-    assert.match(frame, /const floor = form \|\| ownsKeys;\s*useDialogFloor\(floor, panelRef, \{ onClose, busy, opener, trap: form \}\);/,
-      'Escape, Tab kept inside, Back, focus home — the whole floor in the form layer (the trap only there, step 4)');
-    assert.match(frame, /tabIndex=\{floor \? -1 : undefined\}/, 'the panel takes focus when it opens, so it is announced');
+    assert.match(frame, /useDialogFloor\(true, panelRef, \{ onClose, busy, opener, trap: form \}\);/,
+      'Escape, Back, focus in and home for every sheet (step 5) — and Tab kept inside in the form layer only');
+    assert.match(frame, /tabIndex=\{-1\}/, 'the panel takes focus when it opens, so it is announced');
     assert.match(frameCss, /\.sheet:focus \{ outline: none; \}/);
     // The dim comes down over the bar WITH the sheet — a lit bar under a modal is the mixed signal the ruling removes.
     assert.match(cssRule(frameCss, '.dim.form'), /^\s*bottom: 0; z-index: 389;\s*$/);
@@ -267,22 +287,22 @@ describe('step 3 · the form layer, and the game day on the frame', () => {
 
   it('the floor hands focus back to an opener the caller NAMES — a tap on iOS never focused it', () => {
     assert.match(floor, /opener\?: RefObject<HTMLElement \| null>;/);
-    assert.match(floor, /const named = optsRef\.current\.opener\?\.current;\s*restoreFocusRef\.current = named\?\.isConnected \? named : openerOf\(panelRef\.current\);/);
+    assert.match(floor, /const openerRef = optsRef\.current\.opener;\s*const named = openerRef\?\.current;\s*restoreFocusRef\.current = named\?\.isConnected \? named : openerOf\(panelRef\.current\);/);
+    assert.match(floor, /const named = openerRef\?\.current;\s*\(named\?\.isConnected \? named : captured\)\.focus/, 'and reads the named opener again as the panel closes');
   });
 
   it('game day: every sheet but the substitution confirm renders ONE way — the frame at ≤900, the card above', () => {
     const render = game.slice(game.indexOf('const renderSheet = '), game.indexOf('const bookSheet = '));
-    assert.ok(render.includes("<div ref={sheetRef} style={{ display: 'contents' }}>"),
-      'the dim inside the boundary the page’s dismiss hook watches — the console’s own dim let a tap fall through and leave the game');
+    // The console's own dim let a tap fall through and leave the game; the frame's is inside the boundary it watches.
     assert.ok(render.includes('<SheetFrame role="dialog" aria-label={label} onClose={dismissOverlay} opener={sheetOpenerRef} form={sheetIsForm} busy={sheetBusy}>'),
-      'the plain close — the frame hands focus back itself after the dim, and the floor after Escape and Back');
+      'the plain close — the frame hands focus back itself, however the sheet closes');
     assert.ok(render.includes('<div className={styles.gdSheetBody}>{body}</div>'));
-    assert.ok(render.includes('<div className={styles.gdSheet} role="dialog" aria-label={label}>{body}</div>'), 'the card above 900');
+    assert.ok(render.includes('<div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label={label}>{body}</div>'), 'the card above 900, which the page’s hook watches');
     assert.ok(render.indexOf('isPhoneNav ?') < render.indexOf('<SheetFrame'), 'the frame only where the bar is');
     for (const call of ["renderSheet('Score', (", "renderSheet('Who’s here', (", "renderSheet('Note a moment', (", "renderSheet('End game', (", 'renderSheet(`Your book on ${event.opponent}`, (']) {
       assert.ok(game.includes(call), call);
     }
-    assert.doesNotMatch(game, /ref=\{sheetRef\} className=\{styles\.gdSheet\}/, 'no sheet rendered around the frame');
+    assert.doesNotMatch(game, /className=\{styles\.gdSheet\}[^>]*>\s*<SheetFrame/, 'no sheet rendered around the frame');
     assert.match(game, /<div ref=\{swapRef\} className=\{styles\.gdSheet\} data-card="yes"/, 'the substitution confirm stays a card');
     assert.doesNotMatch(game, /aria-modal=|gdScrim|gdGrab|drawerScrim/, 'the frame decides modal; the console’s dim and grab line are gone');
   });
@@ -290,10 +310,12 @@ describe('step 3 · the form layer, and the game day on the frame', () => {
   it('game day: the test sorts the five — Note, End game and Scouting-while-logging are forms, on a phone', () => {
     assert.ok(game.includes("const sheetIsForm = isPhoneNav && (sheet === 'moment' || sheet === 'end' || (sheet === 'book' && bookLogging));"));
     assert.match(game, /const isPhoneNav = useIsPhoneNav\(\);/, 'the bar’s breakpoint, not the ≤640 phone one: the bar shows to 900');
-    // The floor stands its own history entry; the page's must stand down for a form, or Back pops two for one sheet.
-    assert.ok(game.includes('useDismissable(overlayOpen && !sheetIsForm, [sheetRef, swapRef], dismissOverlay, sheet !== null ? closeSheetToOpener : undefined);'),
-      'a sheet’s Escape hands focus to its opener — the hook re-arms when Scouting returns to the bar and would hand it to the box’s door, inside the closing sheet');
-    assert.ok(game.includes('useBackStep(overlayOpen && !sheetIsForm, dismissOverlay);'));
+    // The floor stands its own history entry; since step 5 the page stands down for EVERY sheet on a phone (either
+    // layer), or Back pops two for one sheet. It keeps the substitution card and the computer's cards.
+    assert.ok(game.includes('const pageOverlayOpen = pendingSwap !== null || (sheet !== null && !isPhoneNav);'));
+    assert.ok(game.includes('useDismissable(pageOverlayOpen, [sheetRef, swapRef], dismissOverlay, sheet !== null ? closeSheetToOpener : undefined);'),
+      'a card’s Escape hands focus to its opener at once, before the card unmounts');
+    assert.ok(game.includes('useBackStep(pageOverlayOpen, dismissOverlay);'));
     assert.ok(game.includes("const sheetBusy = (sheet === 'moment' && momentSaving) || (sheet === 'end' && endSaving);"), 'a save in flight holds the form open');
   });
 
@@ -391,21 +413,22 @@ describe('step 4 · the record sheets on the frame', () => {
     assert.match(frameCss, /\n\.dim \{ display: none; \}/, 'inert on a computer: no call site needs a width branch');
     const phone = frameCss.slice(frameCss.lastIndexOf('@media (max-width: 900px) {'));
     const dim = cssRule(phone, '.dim');
-    for (const d of ['position: fixed;', 'top: 0;', 'bottom: var(--coach-foot-clear);', 'z-index: 259;', 'background: rgba(13, 17, 26, 0.45);']) {
+    for (const d of ['position: fixed;', 'top: 0;', 'bottom: var(--coach-foot-clear);', 'z-index: 259;', 'background: var(--sheet-dim);']) {
       assert.ok(dim.includes(d), `.dim: ${d}`);
     }
-    assert.match(frameCss, /\[data-coach-warm-enabled\]\) \.dim \{\s*background: rgba\(36, 30, 21, 0\.28\);/, 'the warm remap travels with it — the portal’s DEFAULT theme');
-    // The builder's own drawers keep their copy until step 5 moves them onto the frame: the same pair, or two
-    // drawers on one screen dim the page differently.
-    const from = coachesCss.indexOf('.lineupSheetScrim { display: none; }');
-    const builderDim = coachesCss.slice(from, coachesCss.indexOf('\n}', coachesCss.indexOf('.lineupSheetScrim {', from + 10)));
-    assert.ok(builderDim.includes('background: rgba(13, 17, 26, 0.45);'), 'the builder’s dark dim');
-    assert.match(coachesCss, /\[data-coach-warm-enabled\]\) \.lineupSheetScrim \{\s*background: rgba\(36, 30, 21, 0\.28\);/, 'and its warm one');
+    // Step 5: the portal's sheet dim is ONE setting for both themes. Its warm value must travel with the dark one,
+    // or the portal's DEFAULT theme dims flat black; the More sheet reads it too, and nothing else copies the pair.
+    const globals = readCode('app/globals.css');
+    assert.match(globals, /--sheet-dim:\s+rgba\(13, 17, 26, 0\.45\);/, 'the dark dim, at the root');
+    assert.match(globals, /--sheet-dim:\s+rgba\(36, 30, 21, 0\.28\);/, 'the warm dim, in the warm palette');
+    assert.match(readCode('components/coaches/CoachesBottomNav.module.css'), /\.sheetScrim \{[^}]*background: var\(--sheet-dim\);/);
+    for (const css of [frameCss, coachesCss]) assert.doesNotMatch(css, /rgba\(13, 17, 26, 0\.45\)|rgba\(36, 30, 21, 0\.28\)/, 'no second copy of the pair');
+    assert.doesNotMatch(coachesCss, /\.lineupSheetScrim/, 'the builder’s own dim retired with step 5');
   });
 
   it('over a window: at the screen’s foot, above `.modalOverlay`, and no overlay of its own — the window holds the lock', () => {
     const over = cssRule(frameCss, '.sheet.overWindow');
-    for (const d of ['bottom: 0;', 'max-height: calc(100dvh - 12px);', 'z-index: 410;', 'padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));']) {
+    for (const d of ['bottom: 0;', 'max-height: calc(100dvh - 12px);', 'z-index: 410;', '--sheet-foot-pad: calc(14px + env(safe-area-inset-bottom, 0px));', 'padding-bottom: var(--sheet-foot-pad);']) {
       assert.ok(over.includes(d), `.sheet.overWindow: ${d}`);
     }
     assert.ok(frameCss.indexOf('.sheet.overWindow {') > frameCss.indexOf('.sheet.form {'), 'after the form layer, so a form over a window takes 410');
@@ -413,7 +436,7 @@ describe('step 4 · the record sheets on the frame', () => {
   });
 
   it('a record head keeps its Close: the grab line as a 44px button, in place of the drawn one', () => {
-    assert.match(frame, /\{grabCloses && \(\s*<button type="button" className=\{styles\.grab\} aria-label="Close" onClick=\{closeToOpener\}>/);
+    assert.match(frame, /\{grabCloses && \(\s*<button type="button" className=\{styles\.grab\} aria-label="Close" onClick=\{close\}>/);
     assert.match(cssRule(frameCss, '.grab'), /min-height: var\(--tap-min, 44px\);/);
     assert.match(frameCss, /\.sheet\.grabCloses::before \{ content: none; \}/, 'one grab line, never two');
   });
@@ -428,7 +451,9 @@ describe('step 4 · the record sheets on the frame', () => {
       'Tab past the end closes it — home first, so the browser’s Tab carries on from the opener, and the close’s hand-back spent');
     // The bar tap is the menu layer's (a form's dim covers the bar), and the dim and the sheet are the boundary — a
     // dim counted as outside lets a tap fall through. The pointer half of `useDismissable`, one boundary rule.
-    assert.ok(frame.includes('usePointerOutside(Boolean(ownsKeys) && !form, [panelRef, dimRef], () => { if (!busy) onClose(); });'));
+    // Step 5: for every menu-layer sheet, and the opener is inside the boundary so a trigger stays a toggle.
+    assert.ok(frame.includes('const close = () => { if (!busy) onClose(); };'), 'one close, the dim’s and the outside tap’s');
+    assert.ok(frame.includes('usePointerOutside(!form, [panelRef, dimRef, opener], close);'));
     const hooks = readCode('lib/overlay-hooks.ts');
     assert.match(hooks, /export function usePointerOutside\(/);
     assert.equal(hooks.split('isOutside(refsRef.current, e.target)').length - 1, 2, 'useDismissable and usePointerOutside share one boundary test');
@@ -436,7 +461,7 @@ describe('step 4 · the record sheets on the frame', () => {
   });
 
   it('the position picker: a menu on the frame, never modal, the frame owning its keys — on the builder and on game day', () => {
-    assert.ok(picker.includes('<SheetFrame ownsKeys grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={nameId} aria-describedby={subId}>'));
+    assert.ok(picker.includes('<SheetFrame grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={nameId} aria-describedby={subId}>'));
     assert.ok(picker.includes("<div data-position-sheet style={{ display: 'contents' }}>"), 'the layout sweep finds the dialog INSIDE the marker');
     assert.doesNotMatch(picker, /aria-modal|useDialogFloor|sheetAnchor|CoachesBottomNav/, 'no hold, no modal claim, no More-sheet container');
     assert.ok(editor.includes('opener={positionOpenerRef}') && game.includes('opener={positionOpenerRef}'), 'both hosts name the pill');
@@ -444,7 +469,7 @@ describe('step 4 · the record sheets on the frame', () => {
   });
 
   it('the Award sheet: ONE floor in both layers — the form layer while it is edited, the menu layer while it is read', () => {
-    assert.match(award, /<SheetFrame\s+ownsKeys\s+form=\{editing\}\s+busy=\{removing\}\s+onClose=\{requestClose\}\s+opener=\{opener\}/);
+    assert.match(award, /<SheetFrame\s+form=\{editing\}\s+busy=\{removing\}\s+onClose=\{requestClose\}\s+opener=\{opener\}/);
     assert.doesNotMatch(award, /useDialogFloor|useOverlayOpen|aria-modal|sheetAnchor/, 'the frame decides all of it from the layer');
     assert.ok(awards.includes('opener={awardOpenerRef}'));
     // A form owes a 44px way out (D2): the head's ✓ is the portal's 44px `.ppIconBtn`.
@@ -466,20 +491,154 @@ describe('step 4 · the record sheets on the frame', () => {
 
   it('the notification reader, on both portals’ pages: a menu on the frame owning its keys; the computer keeps its dialog', () => {
     const reader = readCode('components/notifications/NotificationReader.tsx');
-    assert.ok(reader.includes('<SheetFrame ownsKeys grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={titleId}>'));
+    assert.ok(reader.includes('<SheetFrame grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={titleId}>'));
     assert.ok(reader.includes("<div data-notification-reader style={{ display: 'contents' }}>"));
     assert.ok(reader.includes('useDialogFloor(!isPhoneNav, panelRef, { onClose, opener });'), 'one floor at a time — the dialog’s own above 900');
     assert.doesNotMatch(reader, /CoachesBottomNav|sheetAnchor|addEventListener\('pointerdown'/,
       'the bar-tap rule is the frame’s now — the reader’s 09-25 /review fix, held for every record sheet');
   });
 
-  it('the player row menus: the frame inside the boundary their dismiss hook watches — on the bar, or over the depth chart’s window', () => {
-    const row = tagLine(editor, '<SheetFrame onClose={() => setRowActionsFor(null)} opener={rowOpenerRef} role="dialog"');
-    assert.ok(editor.lastIndexOf('<div ref={rowSheetRef}>', editor.indexOf(row)) > 0, 'the builder’s, inside its watched wrapper');
-    assert.match(editor, /useDismissable\(rowActionsFor !== null, rowSheetRef, /);
+  it('the player row menus: on the frame — on the bar, or over the depth chart’s window — their keys the frame’s', () => {
+    const row = tagLine(editor, '<SheetFrame ref={rowSheetRef} onClose={() => setRowActionsFor(null)} opener={rowOpenerRef} role="dialog"');
+    // Step 5: the frame answers their keys and stands their back step; the builder's opens only on a phone.
+    assert.doesNotMatch(editor, /useDismissable\(rowActionsFor|useBackStep\(rowActionsFor/, 'no second answer to the row menu’s keys');
     const best = tagLine(profile, '<SheetFrame onClose={closeMenu} opener={menuOpenerRef} overWindow={menuCoversNav} role="dialog"');
-    assert.ok(profile.indexOf('isPhoneNav ? (') > profile.indexOf('<div ref={menuRef}>'), 'the profile’s and the depth chart’s, inside theirs');
-    for (const tag of [row, best]) assert.doesNotMatch(tag, /\bform\b|ownsKeys/, 'a menu whose keys are its list’s (the dismiss hook and the back step)');
+    assert.ok(profile.includes('const popoverOpen = menuFor !== null && !isPhoneNav;'), 'the profile’s popover keeps its own keys above 900');
+    assert.match(profile, /useDismissable\(popoverOpen, menuRef, closeMenu\);\s*useBackStep\(popoverOpen, closeMenu\);/);
+    for (const tag of [row, best]) assert.doesNotMatch(tag, /\bform\b/, 'menus: the bar (or the window) stays theirs');
     assert.doesNotMatch(profile, /LineupSheetScrim|lineupDrawerOverNav/, 'over the window is the frame’s place now');
+  });
+});
+
+/* Step 5 (2026-10-06): the lineup builder's five drawers onto the frame, and the frame answering every sheet's
+   keys. `.probe/sf5/capture.mjs` measured every sheet the frame now answers for, before and after, warm and dark,
+   at 390, 768 and 1280, with Back pressed twice (the second must leave the page: no entry left behind);
+   `.probe/sf5/keys.mjs` walked the keyboard. Before: Back with Tools, Filter, either switcher, or the Schedule's
+   two menus open LEFT THE PAGE (7 of 7); Setup, Save as template and Call up let 4, 9 and 10 of 12 Tab presses
+   walk out under their dim. */
+describe('step 5 · the frame answers every sheet, and the lineup builder\'s drawers stand on it', () => {
+  const floor = readCode('components/coaches/useDialogFloor.ts');
+  const builder = readCode('app/[orgSlug]/coaches/teams/[teamId]/lineups/[eventId]/page.tsx');
+  const editor = readCode('app/[orgSlug]/coaches/teams/[teamId]/lineups/_LineupEditor.tsx');
+  const callUp = readCode('components/coaches/CallUpSheet.tsx');
+  const saveTemplate = readCode('components/coaches/LineupSaveTemplate.tsx');
+  const copyFrom = readCode('components/coaches/LineupCopyFrom.tsx');
+  const drawer = readCode('components/coaches/LineupDrawer.tsx');
+  const copyCss = readCode('components/coaches/LineupCopyFrom.module.css');
+  const coachesCss = readCode('app/[orgSlug]/coaches/coaches.module.css');
+  const game = readCode('app/[orgSlug]/coaches/teams/[teamId]/game/[eventId]/page.tsx');
+
+  it('one floor for every sheet: Escape, Back, focus in and home; the keyboard held only in the form layer', () => {
+    assert.ok(frame.includes('useDialogFloor(true, panelRef, { onClose, busy, opener, trap: form });'));
+    assert.doesNotMatch(frame, /ownsKeys/, 'the frame-owned-keys flag retired: the floor always stands');
+    // A floor the sheet opens over (a window, a block editor) hears the same Escape and must yield: the sheet marks
+    // itself, and the floor reads a marker on its OWN panel as its own claim.
+    assert.ok(floor.includes("const owner = target instanceof Element ? target.closest('[data-escape-owner]') : null;"));
+    assert.ok(floor.includes('if (owner && owner !== panel) return;'));
+    // Focus home no longer scrolls the page — since step 4 it also runs on a tap on the bar — and it reads the
+    // opener as the panel closes (a re-rendered button is a new node).
+    assert.ok(floor.includes('(named?.isConnected ? named : captured).focus?.({ preventScroll: true });'));
+    // /review: since every sheet stands the floor, a Tools pick that opens a window closes the Tools sheet in the
+    // window's own commit, and the window's autoFocus field already holds focus when the sheet's floor stands down.
+    // Pulled home, the field lost its cursor (practice plan › Save as template… on a phone, measured). Home only
+    // when focus is nowhere or still inside the closing panel.
+    assert.match(floor, /const went = now instanceof HTMLElement && now !== document\.body && now !== document\.documentElement\s+&& !\(panel && panel\.contains\(now\)\);\s+if \(went\) return;/);
+    // …and a floor that stands down and up over the SAME panel (React's dev double effect: every window, every
+    // dev open) hands focus back to the control that had it, not to the frame.
+    assert.ok(floor.includes('heldRef.current = now instanceof HTMLElement && panel?.contains(now) ? now : null;'));
+    assert.ok(floor.includes('(held?.isConnected && panel.contains(held) ? held : panel).focus();'));
+  });
+
+  it('nothing else answers a sheet’s keys on a phone — answered twice, Back would pop two entries for one sheet', () => {
+    for (const [file, src] of [
+      ['components/coaches/FilterGroup.tsx', filter],
+      ['components/coaches/CoachTeamHeader.tsx', readCode('components/coaches/CoachTeamHeader.tsx')],
+      ['app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx', readCode('app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx')],
+    ] as const) assert.doesNotMatch(src, /useDismissable\(/, `${file}: its sheet is the frame’s`);
+    assert.doesNotMatch(filter, /onBlur/, 'Tab past the Filter sheet’s end is the frame’s too');
+    assert.match(menu, /useDismissable\(open && !asDrawer, rootRef, dismiss\);/, 'the Tools popover keeps its own; the sheet does not');
+    // The builder's Tools panels, Setup and Call up: their own keys above 900 only.
+    assert.ok(builder.includes('const toolPanelOpen = (copyOpen || saveTemplateOpen || lineupPdfOpen) && !isPhoneNav;'));
+    for (const step of ['useBackStep(copyOpen && !isPhoneNav,', 'useBackStep(saveTemplateOpen && !isPhoneNav,', 'useBackStep(lineupPdfOpen && !isPhoneNav,']) {
+      assert.ok(builder.includes(step), step);
+    }
+    assert.ok(editor.includes('const callUpPopoverOpen = !!callUps?.sheetOpen && !isPhoneNav;'));
+    assert.doesNotMatch(editor, /useDismissable\(autoFillOpen|useBackStep\(autoFillOpen/, 'Setup: the frame on a phone, its own floor above 900');
+    assert.doesNotMatch(game, /useBackStep\(overlayOpen/, 'game day: the page’s back step is the card’s and the swap’s');
+  });
+
+  it('a row that leaves the page is a LINK — a back step cancels a router.push from a button (the §258 failure)', () => {
+    assert.match(menu, /if \(href !== undefined && !disabled\) \{\s*return <Link href=\{href\} className=\{className\} role="menuitem" tabIndex=\{-1\}>\{body\}<\/Link>;/);
+    assert.ok(menu.includes("if ((event.target as HTMLElement).closest('button, a[href]')) dismiss();"), 'picking a link closes the menu like any row');
+    assert.match(menu, /case ' ':\s*if \(event\.target instanceof HTMLAnchorElement && event\.target\.matches\('\[role="menuitem"\]'\)\) \{\s*event\.preventDefault\(\);\s*event\.target\.click\(\);/,
+      'Space activates a link row, as it does the button rows (/review)');
+    // Every file that renders a Tools row — found, not listed, so a new page is covered the day it adds one:
+    // no row navigates by code.
+    const rowFiles = [...toolsRowFiles('app'), ...toolsRowFiles('components')];
+    assert.ok(rowFiles.length >= 10, `found ${rowFiles.length} files with a Tools row — the walk is reading the tree`);
+    for (const file of rowFiles) {
+      assert.doesNotMatch(readCode(file), /onSelect=\{\(\) => \{?\s*router\.(push|replace)\(/, `${file}: a Tools row that navigates is an href`);
+    }
+    assert.match(readCode('app/[orgSlug]/admin/accounting/ledger/page.tsx'), /label="Payees"[\s\S]{0,200}href=\{payeesHref\} \/>/);
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/registrations/page.tsx'), /label=\{TEAMS_WORDS\.registrationQuestions\}\s+href=\{questionsHref\} \/>/);
+  });
+
+  it('the three forms stand on the frame’s form layer on a phone — over the bar, the keyboard kept inside — each with its 44px ×', () => {
+    // Through the builder's one drawer shell, which hands `form`, `busy` and the opener straight to the frame.
+    assert.match(drawer, /<SheetFrame ref=\{ref\} form=\{form\} full=\{full\} busy=\{busy\} id=\{id\} role="dialog" aria-label=\{label\} onClose=\{onClose\} opener=\{opener\}>/);
+    assert.ok(editor.includes('<LineupDrawer label="Lineup setup" form id={SETUP_PANEL_ID} ref={setupPanelRef} onClose={closePanelToRow} opener={setupRowRef}'));
+    assert.ok(editor.includes('<LineupDrawer label="Call up a player" form busy={callUps.busy} onClose={callUps.onCloseSheet} opener={callUpButtonRef}>'));
+    assert.ok(saveTemplate.includes('<LineupDrawer label="Save as template" form busy={busy} onClose={onClose} opener={opener}>'));
+    assert.ok(builder.includes('busy: callUpSaving,'), 'a call-up being added holds its sheet');
+    // D2: a form's head is the shared one — Call up's own <h3> and bare × were a third copy (owner D9, 2026-10-06).
+    assert.ok(editor.includes('<LineupDrawerHead title="Lineup setup" onClose={closePanelToRow} desktopClose />'));
+    assert.ok(callUp.includes('<LineupDrawerHead title="Call up a player" onClose={onClose} desktopClose />'));
+    assert.doesNotMatch(callUp, /<h3|modalCloseBtn/, 'no head of its own');
+    assert.ok(saveTemplate.includes('<LineupDrawerHead title="Save as template" onClose={onClose}'));
+    assert.match(coachesCss, /@media \(max-width: 900px\) \{[^@]*?\.lineupSetupDrawerClose \{\s*display: inline-flex;\s*width: var\(--tap-min, 44px\);\s*height: var\(--tap-min, 44px\);/,
+      'the head’s × at the 44px floor wherever it is a form (≤900)');
+    // Above 900 Setup is a centred modal: it stands the same floor (Escape, Tab kept inside, Back, focus home).
+    assert.ok(editor.includes('useDialogFloor(autoFillOpen && !isPhoneNav, setupPanelRef, { onClose: closePanelToRow, opener: setupRowRef });'));
+    assert.ok(editor.includes(`popover={{ className: styles.lineupSetupDrawer, tabIndex: -1, 'aria-modal': 'true' }}`));
+    // No form calls useOverlayOpen itself: the frame takes the bar away (and only the frame).
+    for (const src of [builder, editor, saveTemplate, callUp]) assert.doesNotMatch(src, /useOverlayOpen\(/);
+  });
+
+  it('the two menus stand on the frame’s menu layer on a phone — Copy from filling the screen above the bar (D7, kept by D3)', () => {
+    assert.ok(copyFrom.includes('<LineupDrawer label="Copy from" ref={panelRef} full busy={busy} onClose={onClose} opener={opener}'));
+    assert.ok(builder.includes('opener={toolsTriggerRef}'), 'Copy from and Save as template hand focus home to Tools — the menu item that opened them is gone');
+    const full = frameCss.slice(frameCss.indexOf('@media (max-width: 640px) {'));
+    const sheetFull = cssRule(full, '.sheet.full');
+    for (const d of ['top: 0;', 'max-height: none;', 'display: flex;', 'flex-direction: column;', 'border-radius: 0;', 'box-shadow: none;']) {
+      assert.ok(sheetFull.includes(d), `.sheet.full: ${d}`);
+    }
+    assert.doesNotMatch(sheetFull, /(^|\n)\s*bottom:/, 'it keeps the bar’s top: a menu leaves the bar live');
+    assert.match(full, /\.sheet\.full::before \{ content: none; \}/, 'no grab line on a full screen');
+    assert.match(copyCss, /\.body\.body \{ flex: 1 1 auto; min-height: 0; padding: 0; \}/, 'two classes: the shared body lives in another module');
+  });
+
+  it('a pinned foot takes the sheet’s bottom padding, by one value — the strip of scrolled content under it stays closed', () => {
+    assert.ok(frameCss.includes('.sheet.sheet:has([data-sheet-foot]) { padding-bottom: 0; }'));
+    assert.match(cssRule(frameCss, '.sheet'), /--sheet-foot-pad: 14px;\s*padding: 6px 8px var\(--sheet-foot-pad\);/);
+    for (const layer of ['.sheet.form', '.sheet.overWindow']) {
+      assert.match(cssRule(frameCss, layer), /--sheet-foot-pad: calc\(14px \+ env\(safe-area-inset-bottom, 0px\)\);\s*padding-bottom: var\(--sheet-foot-pad\);/, layer);
+    }
+    assert.match(cssRule(coachesCss, '.lineupSheetFoot'), /padding-bottom: var\(--sheet-foot-pad, 14px\);/);
+    assert.ok(editor.includes('<div className={styles.lineupSheetFoot} data-sheet-foot>') && callUp.includes('<div className={coach.lineupSheetFoot} data-sheet-foot>'),
+      'both feet say so — the question is "is there a foot?", never which sheet this is');
+  });
+
+  it('the builder’s own drawer recipe is gone, and what is inside a drawer kept its place', () => {
+    assert.ok(!existsSync('components/coaches/LineupSheetScrim.tsx'), 'the builder’s dim retired');
+    for (const src of [builder, editor, copyFrom, saveTemplate]) assert.doesNotMatch(src, /LineupSheetScrim|lineupDrawerOverNav/);
+    assert.doesNotMatch(coachesCss, /\.lineupDrawerOverNav[ .{]|--lineup-drawer-foot-pad/, 'its over-nav modifier went with it');
+    assert.doesNotMatch(coachesCss, /@media \(max-width: 900px\) \{\s*\.lineupAutoMenu \{/, 'no phone drawer left in .lineupAutoMenu — the popover above 900 only');
+    // The body: the old drawer's 14px inset (the frame's 8 + 6) and the gap its grab line left (0.6rem).
+    assert.match(cssRule(coachesCss, '.lineupSheetBody'), /display: flex;\s*flex-direction: column;\s*gap: 0\.6rem;\s*padding: 0\.6rem 6px 0;/);
+    // Every rule that reached a drawer's insides through the popover reaches them through the body too.
+    for (const rule of ['.lineupSheetBody .lineupControlLabel', '.lineupSheetBody .select', '.lineupSheetBody .select:focus-visible',
+      '.lineupSheetBody .lineupSetupFields', '.lineupSheetBody .btnSecondary']) {
+      assert.ok(coachesCss.includes(rule), rule);
+    }
   });
 });

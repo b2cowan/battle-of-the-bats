@@ -161,8 +161,8 @@ export default function PositionProfileEditor({ positions, value, onChange, labe
  * `.lineupRowSheet`), and wherever the bar shows (≤900) a record sheet on the portal's sheet frame, in
  * the MENU layer (Sheet Frame step 4, 2026-10-06) — a tap acts, nothing is lost. Inside the depth chart's
  * player window (`menuCoversNav`) there is no bar to sit on, so it sits over the window (`overWindow`),
- * still a menu: inside that window's own DOM. Its keys are this list's (the dismiss hook and the back
- * step); the dim's hand-back is the frame's (to the grip).
+ * still a menu: inside that window's own DOM. On the frame its keys, its outside tap and its back step
+ * are the frame's, with focus home to the grip (Sheet Frame step 5); the popover's are this list's.
  */
 function BestOrderList({ best, label, disabled, onReorder, menuCoversNav }: {
   best: string[];
@@ -178,8 +178,10 @@ function BestOrderList({ best, label, disabled, onReorder, menuCoversNav }: {
   // The grip that opened it — the frame's dim hands focus back to it (a tap on iOS never focused it).
   const menuOpenerRef = useRef<HTMLElement | null>(null);
   const closeMenu = () => setMenuFor(null);
-  useDismissable(menuFor !== null, menuRef, closeMenu);
-  useBackStep(menuFor !== null, closeMenu);
+  // The popover's keys and back step (above 900); on a phone the frame stands them.
+  const popoverOpen = menuFor !== null && !isPhoneNav;
+  useDismissable(popoverOpen, menuRef, closeMenu);
+  useBackStep(popoverOpen, closeMenu);
   // The menu takes focus on its first live item (a keyboard or screen-reader user lands IN it).
   useEffect(() => {
     if (menuFor !== null) menuRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true });

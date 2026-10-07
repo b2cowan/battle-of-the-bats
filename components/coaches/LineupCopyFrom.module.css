@@ -1,30 +1,21 @@
 /* COPY FROM — the lineup builder's panel (owner rulings 2026-10-02; see LineupCopyFrom.tsx).
-   It wears the builder's own `.lineupAutoMenu` (an anchored popover above 900, the bottom drawer at
-   ≤900) and only adds what is its own here.
-   ⚠ EVERY OVERRIDE OF `.lineupAutoMenu` IS TWO CLASSES. That rule lives in another module at one
-   class, and two modules at equal specificity resolve by BUNDLE ORDER — an override that wins on one
-   route and silently loses on another. Doubling the class settles it whatever the order. */
+   Above 900 it wears the builder's own `.lineupAutoMenu` popover; wherever the bar shows (≤900) it is
+   the portal's sheet frame (Sheet Frame step 5), filling the screen above the bar at ≤640 (the frame's
+   `full`, D7). Only what is its own lives here.
+   ⚠ EVERY OVERRIDE OF A SHARED CLASS IS TWO CLASSES. `.lineupAutoMenu` and `.lineupSheetBody` live in
+   another module at one class, and two modules at equal specificity resolve by BUNDLE ORDER — an
+   override that wins on one route and silently loses on another. Doubling the class settles it. */
 
 /* Above 900 a little wider than the builder's other popovers: every row here is two lines. */
 @media (min-width: 901px) {
   .panel.panel { width: 360px; }
 }
 
-/* ≤640: FULL SCREEN ABOVE THE NAV (D7). It is a menu, so the bottom nav stays visible and tappable
-   below it — `bottom` is still `.lineupAutoMenu`'s `var(--coach-foot-clear)`; only the top moves.
-   The list scrolls inside; the title and the switch stay put. No grab line: nothing is left to drag. */
+/* ≤640: FULL SCREEN ABOVE THE NAV (D7) — the frame's `full` sheet. The body takes the height the frame
+   leaves, so the list scrolls inside while the title and the switch stay put; the frame already pads 16px,
+   so the body adds no inset of its own there. */
 @media (max-width: 640px) {
-  .panel.panel {
-    top: 0;
-    max-height: none;
-    overflow: hidden;
-    border: 0;
-    border-bottom: 1px solid var(--border-2);
-    border-radius: 0;
-    box-shadow: none;
-    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 0;
-  }
-  .panel.panel::before { display: none; }
+  .body.body { flex: 1 1 auto; min-height: 0; padding: 0; }
 }
 
 .head {

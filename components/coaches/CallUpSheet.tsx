@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
+import LineupDrawerHead from '@/components/coaches/LineupDrawerHead';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import s from './CallUpSheet.module.css';
@@ -19,11 +20,12 @@ import s from './CallUpSheet.module.css';
  * grows all season and re-creates the clutter this feature was asked for to remove. Behind a button
  * it can hold eight names and cost the builder nothing.
  *
- * ⚠ **CONTENT ONLY — the shell is the builder's own.** The caller wraps this in `.lineupAutoMenu`,
- * the same recipe the auto-fill, Templates and Print panels use, so on a phone it is already the
- * portal's drawer (flush to the bar, grab line, scrim, `--coach-foot-clear`) with no second copy of
- * those rules to drift. A private shell here would have been a fifth panel that looked like the
- * other four until one of them changed.
+ * ⚠ **CONTENT ONLY — the shell is the builder's own.** On a phone the editor puts this on the
+ * portal's sheet frame, in the FORM layer (Sheet Frame step 5: over the bar, the keyboard kept
+ * inside); above 900 in the builder's anchored popover (`.lineupAutoMenu`). A private shell here
+ * would be one more drawer that looked like the others until one of them changed. Its head is the
+ * builder's shared form head (`LineupDrawerHead`, owner D9 2026-10-06) — it was a third copy, an
+ * `<h3>` in the display face with a bare ×.
  *
  * Three things it gets right that are easy to get wrong:
  *  · **An empty pool skips the list entirely.** A coach calling someone up for the first time meets
@@ -97,10 +99,8 @@ export default function CallUpSheet({
 
   return (
     <div className={s.body}>
-      <div className={s.head}>
-        <h3 className={coach.lineupSheetTitle}>Call up a player</h3>
-        <button type="button" className={coach.modalCloseBtn} onClick={onClose} aria-label="Close">&times;</button>
-      </div>
+      {/* The × on a computer too: there this is a popover that always carried one (`desktopClose`). */}
+      <LineupDrawerHead title="Call up a player" onClose={onClose} desktopClose />
 
       {error && <p className={coach.errorText} role="alert">{error}</p>}
 
@@ -193,7 +193,7 @@ export default function CallUpSheet({
             A call-up plays this game only. They are never added to your roster, your dues, skills
             &amp; goals or your team emails.
           </p>
-          <div className={coach.lineupSheetFoot}>
+          <div className={coach.lineupSheetFoot} data-sheet-foot>
             {pool.length > 0 && (
               <button type="button" className={coach.btnSecondary} onClick={() => setCreating(false)} disabled={saving}>
                 Back

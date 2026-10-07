@@ -225,7 +225,8 @@ describe('the award\'s sheet on a phone', () => {
     // On the shared sheet frame since Sheet Frame step 4 (2026-10-06): the frame takes the bar away, drops the
     // sheet to the screen's foot (390 — above the nav, below .modalOverlay) and holds the keyboard, all from
     // `form`; its geometry is pinned in sheet-frame-guard.
-    assert.match(sheet, /<SheetFrame\s+ownsKeys\s+form=\{editing\}/, 'only while editing is it the form layer');
+    // (Its keys are the frame's in both layers — every sheet's since Sheet Frame step 5, which retired `ownsKeys`.)
+    assert.match(sheet, /<SheetFrame\s+form=\{editing\}/, 'only while editing is it the form layer');
     assert.doesNotMatch(sheet, /useOverlayOpen|sheetAnchor|anchorForm/, 'one owner for the layer: the frame');
   });
 

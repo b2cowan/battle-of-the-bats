@@ -637,6 +637,10 @@ body:has([data-chat-fullbleed]) {
   --gold-rgb:            245, 196, 81;
   --gold-strong:         var(--gold);
   --hud-surface:         #111827;
+  /* The dim behind every phone sheet — the sheet frame's and the More sheet's (Sheet Frame step 5: two
+     copies of the pair became this one). The warm palette block below remaps it; without that the portal's
+     DEFAULT theme dims flat black. */
+  --sheet-dim:           rgba(13, 17, 26, 0.45);
   --structural-slate:    #0F172A;
   --card-bg:             var(--hud-surface); /* ghost-token fix: coaches/rep-teams use this; resolves to --hud-surface */
   --data-gray:           #94A3B8;
@@ -796,6 +800,8 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --home-dim:         #615A54;
   --home-line:        rgba(70, 55, 30, 0.12);
   --home-line-strong: rgba(70, 55, 30, 0.20);
+  /* The dim behind a phone sheet on warm — the dark value is `:root`'s `--sheet-dim` (Sheet Frame step 5). */
+  --sheet-dim:        rgba(36, 30, 21, 0.28);
   --home-olive:       #57651E;
   --home-olive-soft:  rgba(87, 101, 30, 0.10);
   --home-olive-rgb:   87, 101, 30;
@@ -1196,6 +1202,7 @@ html[data-user-theme="dark"] [data-coach-warm-enabled] {
   --pv-bg-2: var(--bg-2);
   --pv-bg-3: var(--bg-3);
   --pv-hud-surface: var(--hud-surface);
+  --pv-sheet-dim: var(--sheet-dim);
   --pv-surface: var(--surface);
   --pv-surface-2: var(--surface-2);
   --pv-bg-surface: var(--bg-surface);
@@ -1292,6 +1299,7 @@ html[data-user-theme="dark"] [data-coach-warm-enabled] {
   --bg-2: var(--pv-bg-2);
   --bg-3: var(--pv-bg-3);
   --hud-surface: var(--pv-hud-surface);
+  --sheet-dim: var(--pv-sheet-dim);
   --surface: var(--pv-surface);
   --surface-2: var(--pv-surface-2);
   --bg-surface: var(--pv-bg-surface);

@@ -101,11 +101,14 @@ describe('Ledger Phone Filter — one Filter button on a phone, the pills on a d
   it('D7 and the sheet’s frame: a dialog that a pick does not close, its scrim inside the dismiss boundary', () => {
     assert.match(group, /role="dialog"/);
     assert.doesNotMatch(group, /role="menu"/, 'checkboxes and date fields are not menu items');
-    assert.match(group, /useDismissable\(sheetOpen, rootRef, close\);/, 'Escape returns focus through the hook’s own default');
-    // ⚠ Pinned on Reset's OWN line: since step 1 the frame's dim closes with the same two calls, earlier in the
-    // file, so a bare `close(); rescueFocusTo(…)` would match the dim and let Reset stop handing focus back (/review).
-    assert.match(group, /resets\.current\.forEach\(reset => reset\(\)\); close\(\); rescueFocusTo\(triggerRef\);/,
-      'Reset returns focus through the shared rescue (the ref, read in the frame)');
+    // Escape, the phone's Back, a tap outside and Tab past the end are the sheet frame's since Sheet Frame step 5,
+    // which hands focus back to the Filter button however the sheet closes (sheet-frame-guard).
+    assert.doesNotMatch(group, /useDismissable\(/, 'the sheet’s keys are the frame’s — answered twice, Back would pop two entries');
+    assert.match(group, /opener=\{triggerRef\}/, 'and the button is what focus goes home to');
+    // Reset just closes: the frame's floor hands focus to the opener as the sheet unmounts, however it closed — its own
+    // `rescueFocusTo` was a second hand-back that always found the first had landed (/simplify, Sheet Frame step 5).
+    assert.match(group, /resets\.current\.forEach\(reset => reset\(\)\); close\(\); \}\}/, 'Reset closes, the frame hands focus home');
+    assert.doesNotMatch(group, /rescueFocusTo/, 'one hand-back, the frame’s');
     // ⚖ The sheet's FRAME is the portal's sheet frame since Sheet Frame step 1 (2026-10-05) — inside the watched
     // root, its dim with it, NOT modal (D1: a stray tap on the bar loses nothing here, and a screen reader held
     // inside a sheet with no close button would have no way out), a tap on the dim handing focus back to the

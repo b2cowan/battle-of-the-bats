@@ -4,10 +4,9 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { rescueFocusTo, useDismissable } from '@/lib/overlay-hooks';
 import { useBackStep } from '@/components/coaches/useBackStep';
-import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
 import { SheetLabel } from '@/components/coaches/SheetFrame';
+import LineupDrawer from '@/components/coaches/LineupDrawer';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { ListOrdered, CalendarDays, Undo2, Redo2, MoreHorizontal } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
@@ -331,20 +330,32 @@ export default function CoachLineupBuilderPage({
     if (!ctxLoading && canLineups) void Promise.resolve().then(load);
   }, [ctxLoading, canLineups, load]);
 
-  // Close the Tools panels on an outside tap or Escape (the auto-fill popover is self-managed inside
-  // LineupEditor). All three hang off the ONE Tools wrap, so one boundary covers them — and every
-  // scrim renders inside it, so a tap on a scrim never reads as "outside" and presses what is under it.
+  /* THE TOOLS MENU'S THREE PANELS — Copy from, Print, Save as template. Wherever the bar shows (≤900)
+     each is the portal's sheet frame (Sheet Frame step 5): Copy from and Print in the MENU layer, on the
+     bar; Save as template in the FORM layer, over it. The frame answers their outside tap, Escape and the
+     phone's Back, and hands focus home to Tools however they close (`opener`). Above 900 they are
+     anchored popovers hung off the ONE Tools wrap, and this page answers them: one dismiss boundary for
+     all three, and a back step each (below). */
   const toolsRef = useRef<HTMLDivElement>(null);
   function closeToolPanels() { setCopyOpen(false); setSaveTemplateOpen(false); setLineupPdfOpen(false); }
   /* ⚠ AND THEN WHERE? — back to TOOLS, the button that opened all three (Sheet Frame step 2, 2026-10-05).
-     A panel closes with focus inside it (or on a dim, which a tap blurs), so focus fell to `<body>`; the
-     hook's own Escape restores whatever held focus when the panel OPENED, which is `<body>` too — the
-     Tools menu's item that opened it unmounted in the same commit. Measured before: a tap on Print's dim
-     left focus nowhere (the inventory found the same for Escape on Copy from). `rescueFocusTo` yields to
-     anything that took focus on its own. The Tools menu lends its button through `triggerRef`. */
+     A popover's Escape restores whatever held focus when it OPENED — the Tools menu's item, which
+     unmounted in the same commit — so focus fell to `<body>`. `rescueFocusTo` yields to anything that took
+     focus on its own. On a phone the frame hands focus home through `opener`. The Tools menu lends its
+     button through `triggerRef`. */
   const toolsTriggerRef = useRef<HTMLButtonElement>(null);
   function escapeToolPanels() { closeToolPanels(); rescueFocusTo(toolsTriggerRef); }
-  useDismissable(copyOpen || saveTemplateOpen || lineupPdfOpen, toolsRef, closeToolPanels, escapeToolPanels);
+  /* ⚠ BACK CLOSES THE PANEL, IT DOES NOT LEAVE THE PAGE (owner, 2026-09-22 — “when I hit back it brings
+     me to the lineup list and not the lineup I am editing”). One level each, so Back — the gesture or
+     the button — goes up ONE level to the page behind, and the panel's own exits consume it. On a phone
+     the frame stands it; this page, for the popovers above 900. The bar's breakpoint, not the content
+     one: the bar shows to 900, and so do the sheets. */
+  const isPhoneNav = useIsPhoneNav();
+  const toolPanelOpen = (copyOpen || saveTemplateOpen || lineupPdfOpen) && !isPhoneNav;
+  useDismissable(toolPanelOpen, toolsRef, closeToolPanels, escapeToolPanels);
+  useBackStep(copyOpen && !isPhoneNav, () => setCopyOpen(false));
+  useBackStep(saveTemplateOpen && !isPhoneNav, () => setSaveTemplateOpen(false));
+  useBackStep(lineupPdfOpen && !isPhoneNav, () => setLineupPdfOpen(false));
   /* PRINT IS A DIALOG THAT NAMES ITSELF (Sheet Frame step 2, D2): the keyboard lands on its first choice
      when it opens, as the Filter sheet's does — a panel announced as a dialog that never takes focus is
      never announced at all. Not modal: it is a menu-layer sheet, the bar stays live beneath it (D1). */
@@ -352,29 +363,6 @@ export default function CoachLineupBuilderPage({
   useEffect(() => {
     if (lineupPdfOpen) printRef.current?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
   }, [lineupPdfOpen]);
-  function closePrint() { setLineupPdfOpen(false); rescueFocusTo(toolsTriggerRef); }
-  /* ⚠ BACK CLOSES THE DRAWER, IT DOES NOT LEAVE THE PAGE (owner, 2026-09-22 — “when I hit
-     back it brings me to the lineup list and not the lineup I am editing”). These panels predate
-     §219 and never registered a level, which was survivable while they were small popovers and is
-     not now they are full-width modal drawers: a coach who opens one and reaches for the back
-     gesture loses the lineup. One step each, so Back — the gesture or the button — goes up ONE
-     level to the page behind, and the drawer's own exits consume it. */
-  useBackStep(copyOpen, () => setCopyOpen(false));
-  useBackStep(saveTemplateOpen, () => setSaveTemplateOpen(false));
-  useBackStep(lineupPdfOpen, () => setLineupPdfOpen(false));
-  /* ⚠ SAVE AS TEMPLATE IS A FORM, SO THE BAR GOES AWAY RATHER THAN BEING PAINTED OVER (2026-09-23,
-     written for the Templates drawer that held this form until Copy from, 2026-10-02; the
-     reasoning lives with the editor's two, in `_LineupEditor.tsx`). Covering the nav with a
-     z-index defends the thumb only — the tabs stayed in the tab order and the accessibility tree
-     underneath, so "a coach leaves mid-edit by hitting Schedule" survived by keyboard on a
-     surface just declared modal. `useOverlayOpen` is the portal's own July mechanism for this:
-     the bar hides itself and the page behind locks.
-     ⚠ PRINT AND COPY FROM ARE NOT HERE AND MUST NOT BE — they are MENUS (you tap and they act), and
-     the live bar is their way out.
-     ⚠ Nav breakpoint, not the content one: above 900 the bar is already `display: none` (no hole
-     to close) and this drawer is an ordinary anchored popover that must not lock the page. */
-  const isPhoneNav = useIsPhoneNav();
-  useOverlayOpen(saveTemplateOpen && isPhoneNav);
 
   // Auto-save the lineup ~0.9s after the last change (debounced) — no Save button.
   useEffect(() => {
@@ -929,6 +917,42 @@ export default function CoachLineupBuilderPage({
      ⚠ Print… is one tap deeper than its old square — the accepted cost of the split.
      ⚠ THE LAYERS (2026-09-23 ruling): Copy from and Print are MENUS — you tap and they act — so the
      bar stays live beneath them. Save as template holds a name field, a FORM, so it covers the bar. */
+  /* PRINT'S BODY, worn by both shells. Titled PRINT at every width (Sheet Frame step 2, D2): on a phone the
+     dim covers Tools, and on a computer Tools is not what this panel is — Copy from and Save as template
+     beside it already say what they are. The label sits in the body, where it always sat (14px in; the
+     frame's own label sits at its 8px inset). */
+  const printBody = (
+    <>
+      <SheetLabel>Print</SheetLabel>
+      {/* ONE document with a turn, not two documents (owner D1, 2026-09-19): the row prints,
+          the switch beneath it picks the sheet's orientation and remembers it on this device.
+          The portal's own segmented control (segChoice) as a pair of pressed/unpressed toggle
+          buttons — two Tab stops that read their state, no arrow-key contract. It sits BESIDE
+          the row's button rather than inside it — a button cannot hold buttons. */}
+      <div className={styles.lineupPdfPoster}>
+        <button type="button" className={styles.lineupPdfItem} onClick={handleLineupPoster}>
+          <strong>Dugout poster</strong>
+          <span>Positions by {sportPack.periodLabel.toLowerCase()} — blank cells to pen in at the field</span>
+        </button>
+        <div className={`${styles.segChoice} ${styles.lineupPdfOrient}`} role="group" aria-label="Poster orientation">
+          <button type="button" aria-pressed={posterOrientation === 'landscape'} className={`${styles.segBtn} ${posterOrientation === 'landscape' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('landscape')}>Landscape · wall</button>
+          <button type="button" aria-pressed={posterOrientation === 'portrait'} className={`${styles.segBtn} ${posterOrientation === 'portrait' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('portrait')}>Portrait · clipboard</button>
+        </div>
+        {/* The notes go on the POSTER, so their checkbox sits in the poster's group with its turn —
+            it used to close the panel under the Batting order card, which it does nothing to. */}
+        {lineupNotes.trim() && (
+          <label className={styles.lineupPdfNotesToggle}>
+            <input type="checkbox" checked={pdfIncludeNotes} onChange={e => setPdfIncludeNotes(e.target.checked)} />
+            <span>Print lineup notes on the poster</span>
+          </label>
+        )}
+      </div>
+      <button type="button" className={styles.lineupPdfItem} onClick={handleBattingCard}>
+        <strong>{sportPack.orderLabel} card</strong>
+        <span>Large-type order for the scorekeeper or dugout</span>
+      </button>
+    </>
+  );
   const toolsControl = (
     <div className={styles.lineupAutoWrap} ref={toolsRef}>
       <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={16} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools"
@@ -949,61 +973,28 @@ export default function CoachLineupBuilderPage({
           hasPositions={lineupRows.some(r => Object.values(r.inningPositions).some(Boolean))}
           onCopy={copyIntoLineup}
           onClose={() => setCopyOpen(false)}
+          opener={toolsTriggerRef}
         />
       )}
-      {/* Print is titled PRINT at every width (Sheet Frame step 2, D2): on a phone the dim covers Tools, and
-          on a computer Tools is not what this panel is — Copy from and Save as template beside it already
-          say what they are. The frame's menu LABEL, worn on its own until step 5 moves this container. */}
-      {lineupPdfOpen && (<>
-        <LineupSheetScrim onClose={closePrint} />
-        <div ref={printRef} className={styles.lineupAutoMenu} role="dialog" aria-label="Print">
-          <SheetLabel>Print</SheetLabel>
-          {/* ONE document with a turn, not two documents (owner D1, 2026-09-19): the row prints,
-              the switch beneath it picks the sheet's orientation and remembers it on this device.
-              The portal's own segmented control (segChoice) as a pair of pressed/unpressed toggle
-              buttons — two Tab stops that read their state, no arrow-key contract. It sits BESIDE
-              the row's button rather than inside it — a button cannot hold buttons. */}
-          <div className={styles.lineupPdfPoster}>
-            <button type="button" className={styles.lineupPdfItem} onClick={handleLineupPoster}>
-              <strong>Dugout poster</strong>
-              <span>Positions by {sportPack.periodLabel.toLowerCase()} — blank cells to pen in at the field</span>
-            </button>
-            <div className={`${styles.segChoice} ${styles.lineupPdfOrient}`} role="group" aria-label="Poster orientation">
-              <button type="button" aria-pressed={posterOrientation === 'landscape'} className={`${styles.segBtn} ${posterOrientation === 'landscape' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('landscape')}>Landscape · wall</button>
-              <button type="button" aria-pressed={posterOrientation === 'portrait'} className={`${styles.segBtn} ${posterOrientation === 'portrait' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('portrait')}>Portrait · clipboard</button>
-            </div>
-            {/* The notes go on the POSTER, so their checkbox sits in the poster's group with its turn —
-                it used to close the panel under the Batting order card, which it does nothing to. */}
-            {lineupNotes.trim() && (
-              <label className={styles.lineupPdfNotesToggle}>
-                <input type="checkbox" checked={pdfIncludeNotes} onChange={e => setPdfIncludeNotes(e.target.checked)} />
-                <span>Print lineup notes on the poster</span>
-              </label>
-            )}
-          </div>
-          <button type="button" className={styles.lineupPdfItem} onClick={handleBattingCard}>
-            <strong>{sportPack.orderLabel} card</strong>
-            <span>Large-type order for the scorekeeper or dugout</span>
-          </button>
-        </div>
-      </>)}
-      {saveTemplateOpen && (<>
-        {/* A FORM — a name and a Save — so it covers the bottom nav and its scrim dims the bar
-            (owner ruling 2026-09-23). Making a template is a CREATE, so it asks (edit autosaves,
-            create asks, 2026-09-24); replacing one asks twice, inside the window (D13–D14).
-            Deleting, renaming and editing templates live in the Lineups room's Templates tab. */}
-        <LineupSheetScrim onClose={() => setSaveTemplateOpen(false)} overNav />
-        <div className={`${styles.lineupAutoMenu} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Save as template">
-          <LineupSaveTemplate
-            templates={templates}
-            sportPack={sportPack}
-            shape={{ lineupMode, inningCount: lineupInningCount, players: templateRows.length }}
-            hasCallUps={templateRows.length < lineupRows.length}
-            onSave={saveTemplate}
-            onClose={() => setSaveTemplateOpen(false)}
-          />
-        </div>
-      </>)}
+      {/* Print: on a phone the frame's MENU layer (step 5) — the bar stays live; above 900 a popover. */}
+      {lineupPdfOpen && (
+        <LineupDrawer label="Print" ref={printRef} onClose={() => setLineupPdfOpen(false)} opener={toolsTriggerRef}>{printBody}</LineupDrawer>
+      )}
+      {saveTemplateOpen && (
+        /* A FORM — a name and a Save — so on a phone it covers the bottom nav (owner ruling 2026-09-23; the
+           frame's form layer since step 5). Making a template is a CREATE, so it asks (edit autosaves,
+           create asks, 2026-09-24); replacing one asks twice, inside the window (D13–D14). Deleting,
+           renaming and editing templates live in the Lineups room's Templates tab. */
+        <LineupSaveTemplate
+          templates={templates}
+          sportPack={sportPack}
+          shape={{ lineupMode, inningCount: lineupInningCount, players: templateRows.length }}
+          hasCallUps={templateRows.length < lineupRows.length}
+          onSave={saveTemplate}
+          onClose={() => setSaveTemplateOpen(false)}
+          opener={toolsTriggerRef}
+        />
+      )}
     </div>
   );
 
@@ -1049,6 +1040,7 @@ export default function CoachLineupBuilderPage({
             callUps={{
               players: callUps,
               sheetOpen: callUpSheetOpen,
+              busy: callUpSaving,
               onCallUp: () => { if (callUpSheetOpen) setCallUpSheetOpen(false); else void openCallUpSheet(); },
               onCloseSheet: () => setCallUpSheetOpen(false),
               onRemoveCallUp: id => void removeCallUpFromGame(id),

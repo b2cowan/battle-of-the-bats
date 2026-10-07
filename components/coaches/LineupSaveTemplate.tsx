@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, type ReactNode, type RefObject } from 'react';
 import { useBackStep } from '@/components/coaches/useBackStep';
+import LineupDrawer from '@/components/coaches/LineupDrawer';
 import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
 import SaveOverQuestion, { SaveOverList, SaveOverMatchLine } from '@/components/coaches/SaveOverQuestion';
 import LineupDrawerHead from '@/components/coaches/LineupDrawerHead';
@@ -13,9 +14,10 @@ import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './LineupSaveTemplate.module.css';
 
 /**
- * SAVE AS TEMPLATE — the body of the builder's window (Tools › Save as template…; owner rulings D13–D15,
- * 2026-10-02, hub screen 9). The page owns the window's shell (the over-nav drawer, its scrim and head);
- * this owns what is inside it.
+ * SAVE AS TEMPLATE — the builder's window (Tools › Save as template…; owner rulings D13–D15, 2026-10-02,
+ * hub screen 9). One of the builder's drawers (`LineupDrawer`, Sheet Frame step 5): wherever the bar shows
+ * (≤900) the portal's sheet frame in the FORM layer — over the bar, the keyboard kept inside, a save in
+ * flight holding it open — and above 900 an anchored popover under Tools, whose keys the page answers.
  *
  * ⚖ THE NAME DECIDES. One field, one button: a new name saves a new template, and a name the team already
  * has (capitals and spaces aside — the server's own uniqueness rule) turns the button into "Replace “X”…".
@@ -30,7 +32,7 @@ import styles from './LineupSaveTemplate.module.css';
  * lets one hold the team's own roster. The page leaves them out of what it sends; this says so.
  */
 export default function LineupSaveTemplate({
-  templates, sportPack, shape, hasCallUps, onSave, onClose,
+  templates, sportPack, shape, hasCallUps, onSave, onClose, opener,
 }: {
   templates: RepTeamLineupTemplate[];
   sportPack: SportPack;
@@ -41,6 +43,8 @@ export default function LineupSaveTemplate({
   onSave: (name: string, replace: RepTeamLineupTemplate | null) => Promise<void>;
   /** The drawer's ×. The head is drawn here so it can turn into "‹ Save as template" on the question. */
   onClose: () => void;
+  /** Tools — where focus goes home when the window closes on a phone (the menu item that opened it is gone). */
+  opener: RefObject<HTMLElement | null>;
 }) {
   const [name, setName] = useState('');
   const [replacing, setReplacing] = useState<RepTeamLineupTemplate | null>(null);
@@ -73,9 +77,12 @@ export default function LineupSaveTemplate({
 
   // No desktop × — at ≥901 this is still an anchored popover (see LineupDrawerHead).
   const head = <LineupDrawerHead title="Save as template" onClose={onClose} onBack={replacing ? backToName : undefined} backDisabled={busy} />;
+  const shell = (body: ReactNode) => (
+    <LineupDrawer label="Save as template" form busy={busy} onClose={onClose} opener={opener}>{body}</LineupDrawer>
+  );
 
   if (replacing) {
-    return (<>
+    return shell(<>
       {head}
       <div className={shared.lineupTemplateSection}>
         <SaveOverQuestion
@@ -90,7 +97,7 @@ export default function LineupSaveTemplate({
     </>);
   }
 
-  return (<>
+  return shell(<>
     {head}
     <form className={shared.lineupTemplateSection}
       onSubmit={e => { e.preventDefault(); if (match) { setError(''); setReplacing(match); } else if (name.trim()) void run(null); }}>

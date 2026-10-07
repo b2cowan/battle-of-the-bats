@@ -29,11 +29,11 @@ import sheet from './CoachesBottomNav.module.css';
  * the bar's top (`--coach-foot-clear`, inherited because it renders in-tree inside `.coachesShell`) at
  * z-index 260 — under the nav's 300, over the autosave pill's 250 — so the bar stays visible and
  * tappable. Deliberately NOT registered with `useOverlayOpen`: that would hide the bar it sits on. The
- * masthead renders it as a SIBLING of the sticky header, outside the header's own stacking context, and
- * passes both boundaries to `useDismissable`; the frame's dim renders INSIDE the sheet boundary, so a tap
- * on it closes cleanly — and hands focus back to the team name (`opener`): a tap on a dim blurs whatever
- * held focus, and before step 2 it was left on `<body>`. A tap on the bar's More button is an outside
- * pointer-down that closes this sheet before More opens (measured: never both).
+ * masthead renders it as a SIBLING of the sticky header, outside the header's own stacking context. The
+ * frame answers its keys (Sheet Frame step 5): a tap on the dim closes it cleanly, Escape and the phone's
+ * Back close it (before step 5 Back left the page), and every way out hands focus back to the team name
+ * (`opener`) — before step 2 a tap on the dim left it on `<body>`. A tap on the bar's More button is an
+ * outside pointer-down that closes this sheet before More opens (measured: never both).
  *
  * ⚠ Rendered in-tree, never through a portal: the warm skin is a `[data-coach-warm-enabled]`
  * wrapper above the providers, and a body portal would escape it and paint the dark sheet on the
@@ -61,8 +61,8 @@ export default function CoachTeamSwitchSheet({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Focus lands on the first row when the sheet opens — the trigger's `useDismissable` returns it
-  // to the name on Escape, and so does a tap on the dim; a tap elsewhere leaves it where the tap went.
+  // Focus lands on the first row when the sheet opens (after the frame seats it on the sheet); the frame
+  // returns it to the name however the sheet closes.
   useEffect(() => {
     panelRef.current?.querySelector<HTMLAnchorElement>('a[role="menuitem"]')?.focus({ preventScroll: true });
   }, []);

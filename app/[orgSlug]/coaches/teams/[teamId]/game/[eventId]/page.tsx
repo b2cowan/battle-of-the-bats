@@ -820,15 +820,17 @@ export default function CoachGameConsolePage({
    * outside dismisses, Escape dismisses) plus `useBackStep`, rather than a focus TRAP that would
    * contradict a surface you are meant to be able to look and tap past.
    *
-   * ⚠⚠ THE FORM-LAYER SHEETS ARE THE EXCEPTION (Sheet Frame step 3, owner 2026-10-06). D1's test —
-   * "would a stray tap on the bottom bar lose something?" — says Note (a half-typed note), End game
-   * (a corrected final score, before the result is decided) and Scouting WHILE an observation
-   * is typed hold work in hand. On a phone those come down over the bar and stand on the frame's
-   * floor (`useDialogFloor`: Escape, Tab kept inside, Back, focus home), which ALSO stands a history
-   * entry — so this page's own dismiss and back step stand down for them, or Back would pop two
-   * entries for one sheet. Scouting switches layer while it is open; the hand-over costs no
-   * history (`useBackStep` takes the dead entry over). Above 900 there is no bar to lose, and every
-   * sheet stays the non-modal card it was. Score and Who's here save every tap: menus.
+   * ⚠⚠ ON A PHONE THE SHEETS ARE THE FRAME'S (Sheet Frame steps 3 and 5). D1's test — "would a stray
+   * tap on the bottom bar lose something?" — says Note (a half-typed note), End game (a corrected
+   * final score, before the result is decided) and Scouting WHILE an observation is typed hold work
+   * in hand: those come down over the bar and keep the keyboard inside. Score, Who's here and
+   * Scouting at rest save every tap: menus. Wherever the bar shows (≤900), in either layer, the frame
+   * answers the sheet's keys — a tap outside, Escape, the phone's Back, focus home to the door — and
+   * stands its history entry, so this page's own dismiss and back step stand down for every sheet
+   * there (two answers would close twice and pop two entries for one sheet). Scouting switches layer
+   * while it is open with ONE floor standing throughout, so the switch costs no history. This page's
+   * hooks keep the substitution confirm (a card at every width) and, above 900 where there is no bar,
+   * every sheet's non-modal card.
    *
    * ⚠ Both states are cleared together on purpose. They are supposed to be mutually exclusive,
    * but nothing enforced it: with a sheet open you could still tap a bench row and then a field
@@ -837,20 +839,16 @@ export default function CoachGameConsolePage({
    */
   const sheetRef = useRef<HTMLDivElement>(null);
   const swapRef = useRef<HTMLDivElement>(null);
-  const overlayOpen = sheet !== null || pendingSwap !== null;
   const sheetIsForm = isPhoneNav && (sheet === 'moment' || sheet === 'end' || (sheet === 'book' && bookLogging));
   /** A save in flight holds a form open: the dim, Escape and Back wait for it (the floor's busy gate). */
   const sheetBusy = (sheet === 'moment' && momentSaving) || (sheet === 'end' && endSaving);
   const dismissOverlay = useCallback(() => { setSheet(null); setPendingSwap(null); }, []);
   /**
-   * The sheets' ONE close-and-hand-back — the ×, End game's "Keep coaching" and a menu-layer
-   * sheet's Escape. Focus moves to the opener at once, BEFORE the sheet unmounts (the dismiss
-   * hook's own Escape contract), so it never lands on `<body>`. (The dim and the form layer's
-   * Escape and Back belong to the frame, which hands focus back itself.)
-   * ⚠ Escape cannot lean on the hook's own hand-back for a sheet: the hook re-arms each time
-   * Scouting returns to the menu layer and records what had focus THEN — the observation box's
-   * door, inside the sheet Escape is closing (measured: focus on nothing). The substitution
-   * confirm keeps the hook's own (the row that opened it).
+   * The sheets' ONE close-and-hand-back — the ×, End game's "Keep coaching" and, above 900, a card's
+   * Escape. Focus moves to the opener at once, BEFORE the sheet unmounts (the dismiss hook's own
+   * Escape contract), so it never lands on `<body>`. (On a phone the frame answers a sheet's dim,
+   * Escape and Back and hands focus back itself.) The substitution confirm keeps the hook's own
+   * hand-back (the row that opened it).
    */
   const closeSheetToOpener = () => {
     // A save in flight holds the sheet, as it holds the dim, Escape and Back — closing End game under its
@@ -859,8 +857,11 @@ export default function CoachGameConsolePage({
     dismissOverlay();
     sheetOpenerRef.current?.focus({ preventScroll: true });
   };
-  useDismissable(overlayOpen && !sheetIsForm, [sheetRef, swapRef], dismissOverlay, sheet !== null ? closeSheetToOpener : undefined);
-  useBackStep(overlayOpen && !sheetIsForm, dismissOverlay);
+  // This page answers the substitution confirm, and above 900 the sheets' cards; on a phone the frame
+  // answers a sheet (see above) — answered twice, Back would pop two entries for one sheet.
+  const pageOverlayOpen = pendingSwap !== null || (sheet !== null && !isPhoneNav);
+  useDismissable(pageOverlayOpen, [sheetRef, swapRef], dismissOverlay, sheet !== null ? closeSheetToOpener : undefined);
+  useBackStep(pageOverlayOpen, dismissOverlay);
 
   const openSheet = (kind: SheetKind, from: HTMLElement | null = null) => {
     sheetOpenerRef.current = from;
@@ -1104,29 +1105,27 @@ export default function CoachGameConsolePage({
    * `--coach-foot-clear` where the bar's height used to be copied by hand. Above 900 it is the card
    * it always was.
    *
-   * ⚠⚠ THE DIM IS INSIDE `sheetRef` NOW, AND THAT IS A FIX, NOT A TIDY-UP. This screen's own dim
-   * was a sibling OUTSIDE the boundary `useDismissable` watches, on the reasoning that a tap on it
-   * would read as "outside" and close the sheet. It did — on `pointerdown`, which unmounted the dim
-   * before the tap's `click` arrived, so under touch the click landed on whatever the dim had been
-   * covering. Measured 2026-10-06 at 390: a tap on the dim over the console's Back arrow closed
-   * Note, Scouting or End game AND LEFT THE GAME for the Schedule. The frame's dim answers the tap
-   * itself (close, then focus home to `sheetOpenerRef`), so the boundary is a wrapper holding both
-   * — `display: contents`, so it adds no box.
+   * ⚠⚠ THE DIM IS INSIDE THE BOUNDARY THE FRAME WATCHES, AND THAT IS A FIX, NOT A TIDY-UP. This
+   * screen's own dim was a sibling OUTSIDE the boundary `useDismissable` watched, on the reasoning
+   * that a tap on it would read as "outside" and close the sheet. It did — on `pointerdown`, which
+   * unmounted the dim before the tap's `click` arrived, so under touch the click landed on whatever
+   * the dim had been covering. Measured 2026-10-06 at 390: a tap on the dim over the console's Back
+   * arrow closed Note, Scouting or End game AND LEFT THE GAME for the Schedule. The frame's dim
+   * answers the tap itself, and since step 5 the frame answers the sheet's keys too, so the page's
+   * own hook watches only the card above 900 (`sheetRef`) and the substitution confirm.
    *
    * `sheetIsForm` picks the layer for whichever sheet is open — only one ever is. `.gdSheetBody`
    * makes up the 6.4px the frame's 8px inset is short of this screen's 0.9rem, so every line inside
    * sits where it did (the hub drew them unchanged).
    */
   const renderSheet = (label: string, body: React.ReactNode) => (
-    <div ref={sheetRef} style={{ display: 'contents' }}>
-      {isPhoneNav ? (
-        <SheetFrame role="dialog" aria-label={label} onClose={dismissOverlay} opener={sheetOpenerRef} form={sheetIsForm} busy={sheetBusy}>
-          <div className={styles.gdSheetBody}>{body}</div>
-        </SheetFrame>
-      ) : (
-        <div className={styles.gdSheet} role="dialog" aria-label={label}>{body}</div>
-      )}
-    </div>
+    isPhoneNav ? (
+      <SheetFrame role="dialog" aria-label={label} onClose={dismissOverlay} opener={sheetOpenerRef} form={sheetIsForm} busy={sheetBusy}>
+        <div className={styles.gdSheetBody}>{body}</div>
+      </SheetFrame>
+    ) : (
+      <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label={label}>{body}</div>
+    )
   );
 
   // The Scouting Book sheet (the rider's door) — ONE instance, rendered by both the live

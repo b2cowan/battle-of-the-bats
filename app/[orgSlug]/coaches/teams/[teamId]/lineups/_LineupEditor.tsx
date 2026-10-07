@@ -8,12 +8,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { useBackStep } from '@/components/coaches/useBackStep';
-import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import SheetFrame from '@/components/coaches/SheetFrame';
+import LineupDrawer from '@/components/coaches/LineupDrawer';
 import LineupDrawerHead from '@/components/coaches/LineupDrawerHead';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { X, ChevronUp, ChevronDown, ChevronRight, GripVertical, Shuffle, Eraser, UserPlus } from 'lucide-react';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
@@ -226,6 +226,8 @@ export interface LineupEditorProps {
     onCallUp: () => void;
     onCloseSheet: () => void;
     sheetOpen: boolean;
+    /** A call-up is being added — the sheet's dim, Escape and Back wait for it (the frame's busy gate). */
+    busy?: boolean;
     /**
      * The sheet's contents, owned by the PAGE. The editor supplies the frame and the trigger and
      * knows nothing about the pool, the fetch or the form — the same split as `controlsExtra`.
@@ -296,14 +298,11 @@ export default function LineupEditor(props: LineupEditorProps) {
   // The handle that opened it — the frame's dim hands focus back to it (a tap on iOS never focused it).
   const rowOpenerRef = useRef<HTMLElement | null>(null);
   const openRowActions = (playerId: string, from: HTMLElement) => { rowOpenerRef.current = from; setRowActionsFor(playerId); };
-  useDismissable(rowActionsFor !== null, rowSheetRef, () => setRowActionsFor(null));
   /* ⚠ BACK CLOSES THE DRAWER, IT DOES NOT LEAVE THE PAGE (owner, 2026-09-22 — “when I hit
-     back it brings me to the lineup list and not the lineup I am editing”). These panels predate
-     §219 and never registered a level, which was survivable while they were small popovers and is
-     not now they are full-width modal drawers: a coach who opens one and reaches for the back
-     gesture loses the lineup. One step each, so Back — the gesture or the button — goes up ONE
-     level to the page behind, and the drawer's own exits consume it. */
-  useBackStep(rowActionsFor !== null, () => setRowActionsFor(null));
+     back it brings me to the lineup list and not the lineup I am editing”). Every drawer here stands
+     one level, so Back — the gesture or the button — goes up ONE level to the page behind, and the
+     drawer's own exits consume it. Since Sheet Frame step 5 the frame stands it, with Escape and a
+     tap outside, for every drawer on a phone (this row menu only ever opens there). */
   useEffect(() => {
     if (rowActionsFor !== null) rowSheetRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true });
   }, [rowActionsFor]);
@@ -334,55 +333,31 @@ export default function LineupEditor(props: LineupEditorProps) {
     if (!policyInitRef.current) { policyInitRef.current = true; setAutoPolicy(defaultPolicy); }
   }, [defaultPolicy]);
 
-  const autoFillRef = useRef<HTMLDivElement>(null);
-  // A tap outside closes the panel and leaves focus where the tap put it; Escape closes it and, on
-  // a phone, seats focus back on the Setup row it opened from (the keyboard is still driving).
-  useDismissable(autoFillOpen, autoFillRef, () => setAutoFillOpen(false), () => closePanelToRow());
-  useBackStep(autoFillOpen, () => closePanelToRow());
-
   /**
-   * ⚠⚠ COVERING THE NAV IS NOT THE SAME AS TAKING IT AWAY (/simplify altitude pass, 2026-09-23).
+   * ⚠⚠ SETUP AND CALL UP ARE FORMS, AND ON A PHONE THE FRAME CARRIES ALL OF IT (Sheet Frame step 5,
+   * 2026-10-06 — the 2026-09-23 ruling and its open half, closed).
    *
-   * The 2026-09-23 ruling — a FORM covers the bottom nav, a MENU sits on top of it — was first
-   * built as geometry alone: `bottom: 0` and a z-index above the bar. That defends the THUMB and
-   * nothing else. The bar's tabs stayed in the tab order and in the accessibility tree underneath
-   * the drawer, so the very defect the ruling names — *a coach leaves the builder mid-edit by
-   * hitting Schedule* — was still reachable by Tab + Enter, or by a screen reader, on a surface
-   * that had just been declared modal.
+   * Wherever the bar shows (≤900) both are the sheet frame's FORM layer: down over the bar, the bar
+   * taken out of reach of the thumb, the keyboard AND the screen reader (`useOverlayOpen`, which the
+   * frame calls — covering a nav is not taking it away, /simplify 2026-09-23), modal, and the keyboard
+   * kept inside. Before step 5 they declared themselves dialogs and let Tab walk out under the dim — 4
+   * (Setup) and 10 (Call up) of 12 presses, measured — and could open a second over-nav drawer from
+   * behind the first: the "open half" recorded with the 2026-09-23 ruling. The frame also answers their
+   * Escape, the phone's Back (§219: one level, never the page) and focus home to the button that opened
+   * them, so this editor stands none of it there — answered twice, Back would pop two history entries.
    *
-   * The portal already solved this generally in July and the builder's drawers never enrolled:
-   * `useOverlayOpen` (lib/coaches-overlay.tsx) drives BOTH halves — `CoachesBottomNav` hides
-   * itself (`visibility: hidden`, no layout shift, so the tabs leave the tree AND the tab order)
-   * and the provider locks body scroll behind the topmost overlay. It is a COUNTER, so the three
-   * drawers here compose with each other and with any confirm opened from inside one.
-   *
-   * ⚠ GATED ON THE NAV BREAKPOINT, and that is a behaviour decision rather than a styling one, so
-   * JS is the right place for it. Above 900 the bar is `display: none` and already out of both
-   * trees — there is no hole to close — while Templates and the call-up sheet are still ordinary
-   * anchored POPOVERS up there, which must not lock the page behind them. Setup is a centered
-   * modal at that width but is deliberately left as it was: its own backdrop already covers the
-   * page, and changing desktop scroll behaviour is not what this ruling asked for.
-   *
-   * ⚠ The geometry does NOT come out. A hidden bar leaves a ~72px blank strip where it was, so
-   * the drawer still has to sit at the screen's foot and the scrim still has to reach it.
+   * ⚠ ABOVE 900 they are different things. Setup is a centred MODAL over a backdrop there, so it stands
+   * the same floor itself (Escape, the keyboard kept inside, Back, focus home to the Setup row). Call up is
+   * an anchored POPOVER: a tap outside or Escape closes it, Back steps out of it, nothing is held.
    */
   const isPhoneNav = useIsPhoneNav();
-  useOverlayOpen(autoFillOpen && isPhoneNav);
-  useOverlayOpen(!!callUps?.sheetOpen && isPhoneNav);
-
-  /**
-   * ⚠⚠ THE CALL-UP DRAWER REGISTERS THE SAME TWO, AND SHIPPED WITHOUT THEM.
-   *
-   * It was the ONE overlay in this builder where Escape did nothing, Tab walked out into the lineup
-   * behind it, and the Android back gesture left the page entirely — losing the lineup a coach was
-   * editing, which is the exact defect the §219 back-step ruling was written for (owner, 2026-09-22:
-   * *"when I hit back it brings me to the lineup list and not the lineup I am editing"*). Every
-   * sibling panel — Setup, the row-actions sheet, Templates, Print — registers both; this one hand-
-   * rolled a `focus()` call instead and inherited none of it. Found by `/simplify`'s reuse pass.
-   */
+  const setupPanelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(autoFillOpen && !isPhoneNav, setupPanelRef, { onClose: closePanelToRow, opener: setupRowRef });
   const callUpRef = useRef<HTMLDivElement>(null);
-  useDismissable(!!callUps?.sheetOpen, callUpRef, () => callUps?.onCloseSheet());
-  useBackStep(!!callUps?.sheetOpen, () => callUps?.onCloseSheet());
+  const callUpButtonRef = useRef<HTMLButtonElement>(null);
+  const callUpPopoverOpen = !!callUps?.sheetOpen && !isPhoneNav;
+  useDismissable(callUpPopoverOpen, callUpRef, () => callUps?.onCloseSheet());
+  useBackStep(callUpPopoverOpen, () => callUps?.onCloseSheet());
 
   // Two input worlds, two activation rules (D8). A mouse lifts a row after 6px of travel, as it
   // always has. A finger lifts it after a HOLD (250ms without drifting) — that is what lets the
@@ -943,17 +918,17 @@ export default function LineupEditor(props: LineupEditorProps) {
 
   /* THE AUTO-FILL PANEL — the SETUP panel (D1, now shared by both breakpoints): Format and Innings
      labelled side by side at its top, Mode, the Competitive extras, Fill, Innings to fill, Game
-     rules, the note, Generate, and Reshuffle under Generate. A popover on the desktop, fixed above
-     the bar at ≤640 with its own scroll (`lineupAutoMenu`). Written once, mounted by the one Setup
-     & Auto-fill trigger every width renders. */
-  const autoFillPanel = (
-    <div id={SETUP_PANEL_ID} className={`${styles.lineupAutoMenu} ${styles.lineupSetupDrawer} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Lineup setup">
+     rules, the note, Generate, and Reshuffle under Generate. Written once (`setupBody`) and worn two
+     ways by width: wherever the bar shows (≤900) the portal's sheet frame, in the FORM layer (Sheet
+     Frame step 5); above 900 the centred modal over its own backdrop (`lineupSetupDrawer`). */
+  const setupBody = (
+    <>
       {/* ⚰ "Close is a DESKTOP-only affordance" STOPPED BEING RIGHT ON 2026-09-23, when this
           drawer started covering the bottom nav. The old reasoning — "the phone drawer already has
           the scrim, Escape, and Generate/Reshuffle to leave by" — rested on a bar that was still
           tappable underneath; it is not any more. `desktopClose` because this panel is a centered
-          MODAL at ≥901 (Templates, sharing this head, is still a popover there and asks for none);
-          the ≤900 × is width-only and the stylesheet decides it. */}
+          MODAL at ≥901 (Save as template, sharing this head, is still a popover there and asks for
+          none); the ≤900 × is width-only and the stylesheet decides it. */}
       <LineupDrawerHead title="Lineup setup" onClose={closePanelToRow} desktopClose />
       {setupFields}
       <span className={`${styles.lineupSetupLabel} ${styles.lineupPanelSection}`}>Auto-fill</span>
@@ -1030,7 +1005,7 @@ export default function LineupEditor(props: LineupEditorProps) {
           and what was being clipped at the drawer's foot was Reshuffle — the actions, which is the
           one thing a surface must never lose. Trimming further only moves the failure to a shorter
           phone; pinning the foot ends it at every height. The settings above scroll under this. */}
-      <div className={styles.lineupSheetFoot}>
+      <div className={styles.lineupSheetFoot} data-sheet-foot>
         <button type="button" className={styles.btnSecondary} onClick={handleAutoFill}>Generate lineup</button>
         {/* Reshuffle as a QUIET row under Generate, never a second full-width button competing with
             the one action this surface exists for. It keeps the 44px floor. */}
@@ -1038,7 +1013,13 @@ export default function LineupEditor(props: LineupEditorProps) {
           <Shuffle size={14} aria-hidden="true" /> Reshuffle
         </button>
       </div>
-    </div>
+    </>
+  );
+  const autoFillPanel = (
+    <LineupDrawer label="Lineup setup" form id={SETUP_PANEL_ID} ref={setupPanelRef} onClose={closePanelToRow} opener={setupRowRef}
+      popover={{ className: styles.lineupSetupDrawer, tabIndex: -1, 'aria-modal': 'true' }}>
+      {setupBody}
+    </LineupDrawer>
   );
 
   /* The strip's FACE — the mark, the state word and the sentence. One definition for both the door
@@ -1143,7 +1124,7 @@ export default function LineupEditor(props: LineupEditorProps) {
              ⚠ `hasAssignments` is read LIVE here, unlike the tone it replaces. That is safe
              because the pill disappears in response to the coach's own tap on it, and coming back
              after Clear is correct — there is no lineup again, so Auto-fill is the next move. */}
-          <div className={styles.lineupAutoWrap} ref={autoFillRef}>
+          <div className={styles.lineupAutoWrap}>
             {/* The eyebrow (owner, 2026-09-23: "can we label this button so users know its for
                 setting parameters and automating selections?"): on the desktop/tablet row the
                 trigger only ever showed its CURRENT values, which reads as a status line rather
@@ -1168,12 +1149,7 @@ export default function LineupEditor(props: LineupEditorProps) {
               )}
             </div>
             {autoFillOpen && (<>
-              {/* The scrim (D12): a tap anywhere off the drawer closes it, and the page behind dims so the
-                   surface reads as owning the screen. Renders only where the bottom nav does — the class is
-                   display:none above 900, so no width branch is needed here. */}
-              {/* `overNav` — this drawer is a FORM (owner ruling 2026-09-23), so it covers the
-                  bottom nav and the scrim dims the bar with it. See `.lineupDrawerOverNav`. */}
-              <LineupSheetScrim onClose={closePanelToRow} overNav />
+              {/* On a phone the frame brings the dim, over the bar (a FORM, owner ruling 2026-09-23). */}
               {/* The true DESKTOP's own dim (owner, 2026-09-23: "should we open a modal for this
                   given its size?"). Above, at 641–900, the scrim just above already covers this —
                   the panel is already the same fixed, bar-anchored drawer a phone gets. Only ≥901
@@ -1198,6 +1174,7 @@ export default function LineupEditor(props: LineupEditorProps) {
             {callUps && (
               <div className={styles.lineupCallUpWrap} ref={callUpRef}>
                 <button
+                  ref={callUpButtonRef}
                   type="button"
                   className={styles.lineupCallUpBtn}
                   aria-haspopup="dialog"
@@ -1215,14 +1192,14 @@ export default function LineupEditor(props: LineupEditorProps) {
                   <UserPlus size={16} aria-hidden />
                   <span className={styles.headerBtnLabel}>Call up a player</span>
                 </button>
-                {callUps.sheetOpen && (<>
-                  {/* A FORM (a first name, a last name, a number, a phone), so it covers the nav
-                      — the 2026-09-23 ruling at `.lineupDrawerOverNav`. Its own × is the way out. */}
-                  <LineupSheetScrim onClose={callUps.onCloseSheet} overNav />
-                  <div className={`${styles.lineupAutoMenu} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Call up a player">
+                {/* A FORM (a first name, a last name, a number, a phone), so on a phone it is the frame's form
+                    layer — over the bar, the keyboard kept inside (the 2026-09-23 ruling, Sheet Frame step 5).
+                    Its head's × is the way out. Above 900 an anchored popover under its button. */}
+                {callUps.sheetOpen && (
+                  <LineupDrawer label="Call up a player" form busy={callUps.busy} onClose={callUps.onCloseSheet} opener={callUpButtonRef}>
                     {callUps.sheet}
-                  </div>
-                </>)}
+                  </LineupDrawer>
+                )}
               </div>
             )}
             {controlsExtra}{clearButton}{controlsTrailing}
@@ -1312,22 +1289,15 @@ export default function LineupEditor(props: LineupEditorProps) {
             acts, so it sits on the bar and the bar stays the way out; the record head names the player.
             Move up / Move down are the non-drag path — the ↑ ↓ the order view used to carry, one tap
             away instead of one tab away — so nobody is stranded if press-and-hold feels wrong on a
-            given phone. Its keys are this page's (the dismiss hook and the back step below the state),
-            the dim's hand-back is the frame's (to the handle). */}
+            given phone. Its keys, its outside tap and its back step are the frame's (step 5), and so is
+            focus going home to the handle.
+            ⚠⚠ A TAP ON ITS DIM MUST NOT PRESS WHAT IS UNDER IT (/review, 2026-09-22). Its scrim was once
+            a SIBLING of the boundary its dismiss hook watched: a tap on it read as "outside", the
+            hook's pointer-down unmounted the sheet, and the click that followed pressed **Mark ready**
+            underneath and marked the lineup ready — under touch only, never with a mouse. The frame
+            watches its own sheet, dim and opener, so the dim's own onClick is the single close path. */}
         {sheetRow && (
-          /* ⚠⚠ THE SCRIM MUST LIVE INSIDE THE ELEMENT `useDismissable` WATCHES (/review, 2026-09-22).
-             It was a SIBLING of the ref'd sheet here, where the builder's other three drawers put it
-             INSIDE their ref'd wrapper — and that asymmetry was a real, reproducible defect on the
-             one input this feature exists for. Outside the boundary, a tap on the scrim reads as
-             "outside": `useDismissable`'s document-level POINTERDOWN fires first and unmounts the
-             sheet, and the CLICK that follows lands on whatever the dismissal just revealed at that
-             screen position. Reproduced under touch emulation: dismissing this menu pressed
-             **Mark ready** underneath it and marked the lineup ready. A mouse never showed it.
-             Inside the boundary, `useDismissable` treats the tap as inside and never fires; the
-             scrim's own onClick is the single close path. ⚠ This wrapper is not decoration — if it
-             is ever flattened, the defect comes back silently. */
-          <div ref={rowSheetRef}>
-          <SheetFrame onClose={() => setRowActionsFor(null)} opener={rowOpenerRef} role="dialog" aria-label={`Options for ${playerDisplayName(sheetRow.player)}`}>
+          <SheetFrame ref={rowSheetRef} onClose={() => setRowActionsFor(null)} opener={rowOpenerRef} role="dialog" aria-label={`Options for ${playerDisplayName(sheetRow.player)}`}>
             <p className={styles.lineupRowSheetHead}>
               <strong>{playerDisplayName(sheetRow.player)}</strong>
               <span>{sheetRow.battingOrder ? `${sportPack.orderLabel} · ${sheetRow.battingOrder} of ${rows.filter(r => r.starter).length}` : 'Bench'}</span>
@@ -1337,7 +1307,6 @@ export default function LineupEditor(props: LineupEditorProps) {
             <button type="button" className={`${styles.lineupRowSheetItem} ${styles.lineupRowSheetDanger}`} onClick={() => { removePlayer(sheetRow.player.id); setRowActionsFor(null); }}><X size={18} aria-hidden="true" /> Remove from lineup</button>
             <button type="button" className={styles.lineupRowSheetCancel} onClick={() => setRowActionsFor(null)}>Cancel</button>
           </SheetFrame>
-          </div>
         )}
 
         {/* The position sheet (D5): a tap on a row's position pill on a phone. The pick is the same

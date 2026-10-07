@@ -13,7 +13,7 @@
    sits ON TOP of the bar — under it in z (260, the nav is 300), the bar lit and live. A sheet holding
    work in hand is the FORM layer (`.form`, below): it comes down OVER the bar. Joined in step 3 by the
    game day's Note, End game and Scouting-while-logging, and in step 4 by the Award sheet while it is
-   edited; the lineup builder's `.lineupDrawerOverNav` drawers move onto it in step 5. A sheet opened
+   edited, and in step 5 by the lineup builder's three forms (Setup, Save as template, Call up). A sheet opened
    from inside a full-screen window has no bar to sort by and sits over the window (`.overWindow`).
 
    ⚠ `--coach-foot-clear` IS THE BAR PLUS THE HOME INDICATOR. `.coachesShell` declares it, and
@@ -44,7 +44,9 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     z-index: 260;   /* under the nav (300), over the autosave pill (250) — the portal's sheet value */
-    padding: 6px 8px 14px;
+    /* The bottom padding is NAMED, because a pinned foot takes it over (below) and the two must not drift. */
+    --sheet-foot-pad: 14px;
+    padding: 6px 8px var(--sheet-foot-pad);
     background: var(--home-card, var(--bg-2));
     border: 1px solid var(--home-line-strong, var(--white-15));
     border-bottom: 0;
@@ -86,12 +88,13 @@
     bottom: 0;
     max-height: calc(100dvh - 12px);
     z-index: 390;
-    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    --sheet-foot-pad: calc(14px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: var(--sheet-foot-pad);
   }
   /* The form takes focus itself when it opens (a dialog that never takes focus is never announced); the
      sheet is the frame of what is focused, not a control, so it draws no ring — its controls draw theirs.
-     A record sheet whose keys the frame owns (`ownsKeys`, step 4) takes focus the same way in the menu
-     layer, so the ring rule is the sheet's whenever it is focusable. */
+     Since step 5 every sheet takes focus the same way in either layer (the frame answers every sheet's
+     keys), so the ring rule is the sheet's. */
   .sheet:focus { outline: none; }
 
   /* ══ OVER A WINDOW (`overWindow`, step 4, 2026-10-06) ═══════════════════════════════════════════════
@@ -105,8 +108,19 @@
     bottom: 0;
     max-height: calc(100dvh - 12px);
     z-index: 410;
-    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    --sheet-foot-pad: calc(14px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: var(--sheet-foot-pad);
   }
+
+  /* ══ A PINNED FOOT TAKES THE SHEET'S BOTTOM PADDING (step 5, from the lineup builder's drawers) ═══════
+     A foot that stays put while the rest scrolls (`position: sticky; bottom: 0` — Setup's Generate,
+     Call up's Call up) stops at the SCROLLPORT's bottom, which is inside the sheet's bottom padding: the
+     scrolled content bled through a 14px strip under it (owner, 2026-09-22). Two non-fixes were measured
+     then: a negative margin (a sticky stop does not move) and a painted band (a tap still lands on the
+     control behind it). So the sheet gives its padding up and the foot pads itself by the same value —
+     `--sheet-foot-pad`, which carries the home indicator in the form layer. A foot says so with
+     `data-sheet-foot`; the question is "is there a foot?", never which sheet this is (/review 2026-09-23). */
+  .sheet.sheet:has([data-sheet-foot]) { padding-bottom: 0; }
 
   /* ══ THE GRAB LINE AS A CLOSE BUTTON (`grabCloses`, step 4) ════════════════════════════════════════
      A record head keeps its own way out (D3): the position picker's and RSVP's grab line was always a 44px
@@ -135,19 +149,40 @@
   }
 }
 
-/* ══ THE DIM — the frame's own since step 4 ══════════════════════════════════════════════════════════
-   It was the lineup builder's `LineupSheetScrim` (`coaches.module.css`), which keeps its copy for the
-   builder's own drawers until step 5 moves them onto this frame. The frame took its own because a third
-   place had to exist (over a window) and because a dim borrowed from the coach portal's stylesheet tied
-   every framed sheet to that ~945KB file — the reason the admin's notification reader stayed off it.
+/* ══ FILLS THE SCREEN ABOVE THE BAR (`full`, step 5) ═══════════════════════════════════════════════════
+   Copy from's list on a phone (2026-10-02 D7, kept by D3): a menu, so the bar stays visible and live below
+   it — `bottom` is still the bar's top; only the top moves. Square, no shadow, a hairline at its foot; no
+   grab line, nothing is left to drag. A flex column, so the caller's body can give the scrolling list the
+   height that is left. Above 640 a `full` sheet is the ordinary sheet (Copy from at 641–900). Two classes,
+   so it beats `.sheet` whatever the source order. */
+@media (max-width: 640px) {
+  .sheet.full {
+    top: 0;
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 1px solid var(--border-2);
+    border-radius: 0;
+    box-shadow: none;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 0;
+  }
+  .sheet.full::before { content: none; }
+}
+
+/* ══ THE DIM — the frame's own since step 4, the portal's only sheet dim since step 5 ════════════════
+   The lineup builder's `LineupSheetScrim` retired in step 5, when its five drawers moved onto this frame.
+   The frame took its own dim in step 4 because a third place had to exist (over a window) and because a
+   dim borrowed from the coach portal's stylesheet tied every framed sheet to that ~945KB file.
 
    A SIBLING of the sheet, never a pseudo-element: the sheet has a z-index and therefore its own stacking
    context, so a negative-z pseudo would paint on the sheet's own background. Over the page to the bar's
    top in the menu layer (the bar is never dimmed — it is a menu's way out); down over the bar with a
-   form, one under the sheet; over everything over a window. The two colours are the portal's sheet dim
-   (`.sheetScrim` beside the More sheet and `.lineupSheetScrim` carry the same pair) and the warm remap
-   travels with them, or the portal's DEFAULT theme dims flat black. Nothing above 900, so no call site
-   needs a width branch. */
+   form, one under the sheet; over everything over a window. Its colour is `--sheet-dim` (globals.css),
+   the portal's sheet dim for both themes in one place — the More sheet's `.sheetScrim` reads it too; the
+   warm value must travel with the dark one, or the portal's DEFAULT theme dims flat black. Nothing above
+   900, so no call site needs a width branch. */
 .dim { display: none; }
 @media (max-width: 900px) {
   .dim {
@@ -158,13 +193,10 @@
     top: 0;
     bottom: var(--coach-foot-clear);
     z-index: 259;   /* directly under the sheet, over the autosave pill (250) */
-    background: rgba(13, 17, 26, 0.45); /* token-exempt: scrim over the page, dark skin */
+    background: var(--sheet-dim);
   }
   .dim.form { bottom: 0; z-index: 389; }
   .dim.overWindow { bottom: 0; z-index: 409; }
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dim {
-    background: rgba(36, 30, 21, 0.28); /* token-exempt: scrim over the warm page */
-  }
 }
 
 /* The menu LABEL (D2) — once the dim covers the row that opened the sheet, nothing on screen says what

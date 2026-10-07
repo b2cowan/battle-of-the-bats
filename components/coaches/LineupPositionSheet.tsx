@@ -36,8 +36,9 @@ import own from './LineupPositionSheet.module.css';
  * ⚖ ON THE PORTAL'S SHEET FRAME, IN THE MENU LAYER (Sheet Frame step 4, owner 2026-10-06). Picking a
  * position loses nothing if a thumb strays onto the bar, so the sheet sits ON the bar, the bar lit and
  * live, and it is never modal — it claimed `aria-modal` and held the keyboard while the bar stayed
- * tappable until step 4. The frame owns its keys (`ownsKeys`: Escape, Back, focus in and home, Tab past
- * the end closes it, a tap on the bar closes it first) and draws its grab line as the record head's 44px
+ * tappable until step 4. The frame owns its keys (as it does every sheet's since step 5: Escape, Back,
+ * focus in and home, Tab past the end closes it, a tap on the bar closes it first) and draws its grab
+ * line as the record head's 44px
  * Close (`grabCloses`, D3). The record head is the player and the inning; the chips' 14px inset is the
  * content's own (`.body`). Only ever rendered at ≤640 (the editor and the console gate it on
  * `useIsPhone`), inside the frame's breakpoint; the desktop keeps its `<select>`.
@@ -90,7 +91,7 @@ export default function LineupPositionSheet({
 
   return (
     <div data-position-sheet style={{ display: 'contents' }}>
-      <SheetFrame ownsKeys grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={nameId} aria-describedby={subId}>
+      <SheetFrame grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={nameId} aria-describedby={subId}>
         <div className={own.body}>
           <div id={nameId} className={own.name}>{name}</div>
           <div id={subId} className={own.sub}>{subline}</div>

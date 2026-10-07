@@ -39,7 +39,7 @@ import own from './NotificationReader.module.css';
  * ⚖ A MENU, NOT A FORM, by the drawer ruling (2026-09-23): nothing is typed and nothing can be lost.
  * Wherever the bar shows (≤900) it is the portal's sheet frame in the MENU layer (Sheet Frame step 4,
  * 2026-10-06): on the bar, the bar lit and tappable beneath it, never modal. The frame owns its keys
- * (`ownsKeys`, owner 2026-10-06 — what the old floor gave it stays: Escape, the phone's Back, focus in on
+ * (every sheet's since step 5; owner 2026-10-06 — what the old floor gave it stays: Escape, the phone's Back, focus in on
  * open and home to the row; the hold on the keyboard goes, and Tab past the end closes it) and closes it
  * on a tap on the bar BEFORE the bar acts — the More sheet draws over a sheet still standing, which is
  * how the 09-25 /review found the reader buried under More; the frame's rule is that review's fix. Its
@@ -91,7 +91,7 @@ export default function NotificationReader({
   if (isPhoneNav) {
     return (
       <div data-notification-reader style={{ display: 'contents' }}>
-        <SheetFrame ownsKeys grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={titleId}>
+        <SheetFrame grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={titleId}>
           <div className={own.body}>{message}</div>
         </SheetFrame>
       </div>

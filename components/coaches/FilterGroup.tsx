@@ -1,10 +1,8 @@
 'use client';
 import {
-  createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState,
-  type FocusEvent, type ReactNode,
+  createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode,
 } from 'react';
 import { ChevronDown, X } from 'lucide-react';
-import { rescueFocusTo, useDismissable } from '@/lib/overlay-hooks';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import SheetFrame from './SheetFrame';
 import pill from '../shared/FilterPill.module.css';
@@ -105,7 +103,6 @@ export default function FilterGroup({ children }: { children: ReactNode }) {
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [narrowed, setNarrowed] = useState<ReadonlyMap<string, boolean>>(() => new Map());
   const resets = useRef(new Map<string, () => void>());
-  const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -135,22 +132,15 @@ export default function FilterGroup({ children }: { children: ReactNode }) {
   const sheetOpen = open && isPhone;
 
   const close = useCallback(() => { setOpen(false); setOpenKey(null); }, []);
-  // Click-away closes; Escape closes AND hands focus back to the button — the hook's own default, since the
-  // button is what held focus when the sheet opened (this hook's effect runs before the first-row focus below).
-  useDismissable(sheetOpen, rootRef, close);
+  /* The sheet frame answers the sheet's keys (Sheet Frame step 5): a tap outside, Escape and the phone's Back
+     close it, Tab past its last control closes it rather than walking under the dim, and focus goes home to
+     the Filter button however it closed. Before step 5 this group answered them itself and stood no back
+     step, so on a phone Back with the sheet open left the Ledger. */
 
   // Focus lands on the first row, so the keyboard starts inside the sheet it opened.
   useEffect(() => {
     if (sheetOpen) sheetRef.current?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
   }, [sheetOpen]);
-
-  /* Tab past the sheet's last control closes it — a sheet left open behind the focus covers what the
-     keyboard is now on. Only a REAL destination outside counts: a tap on the sheet's own blank space moves
-     focus to nothing (relatedTarget null), and must not close it. */
-  const onBlur = (event: FocusEvent<HTMLDivElement>) => {
-    const to = event.relatedTarget as Node | null;
-    if (sheetOpen && to && !rootRef.current?.contains(to)) close();
-  };
 
   const pillApi = useMemo<FilterGroupApi>(() => ({ mode: 'pill', register, openKey: null, setOpenKey: () => {} }), [register]);
   const rowApi = useMemo<FilterGroupApi>(() => ({ mode: 'row', register: noopRegister, openKey, setOpenKey }), [openKey]);
@@ -160,9 +150,7 @@ export default function FilterGroup({ children }: { children: ReactNode }) {
       <div className={styles.pills}>
         <FilterGroupContext.Provider value={pillApi}>{children}</FilterGroupContext.Provider>
       </div>
-      {/* ⚠ Inside `rootRef`, the element `useDismissable` watches — the frame brings its dim with it (see
-          `SheetFrame`). */}
-      <div ref={rootRef} className={styles.phone} onBlur={onBlur} data-escape-owner={sheetOpen ? '' : undefined}>
+      <div className={styles.phone} data-escape-owner={sheetOpen ? '' : undefined}>
         <button
           ref={triggerRef}
           type="button"
@@ -182,8 +170,8 @@ export default function FilterGroup({ children }: { children: ReactNode }) {
              live and the sheet is NOT modal. (It was, on the ground that every dimmed sheet in the portal is; none of
              the menu-layer sheets is, and this one has no close button for a screen reader to leave by.) A dialog,
              not a menu: it holds checkboxes and date fields, and picking a choice does not close it. Tab leaving the
-             sheet closes it (onBlur above), so focus never sits behind it; a tap on the dim hands focus back to the
-             button, as the Tools sheets do. */
+             sheet closes it, so focus never sits behind it, and every way out hands focus back to the button — the
+             frame's, as for every sheet. */
           <SheetFrame ref={sheetRef} label={FILTER} onClose={close} opener={triggerRef} role="dialog" aria-label={FILTER}>
             <FilterGroupContext.Provider value={rowApi}>{children}</FilterGroupContext.Provider>
             {/* D6: only while something is on, and back to REST — Status to its resting pair, the date to its
@@ -193,7 +181,7 @@ export default function FilterGroup({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   className={`${menu.item} ${styles.reset}`}
-                  onClick={() => { resets.current.forEach(reset => reset()); close(); rescueFocusTo(triggerRef); }}
+                  onClick={() => { resets.current.forEach(reset => reset()); close(); }}
                 >
                   <X size={15} aria-hidden />
                   <span className={menu.itemLabel}>Reset filters</span>

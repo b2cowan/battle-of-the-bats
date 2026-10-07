@@ -1,8 +1,8 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { ChevronLeft, X } from 'lucide-react';
 import { useBackStep } from '@/components/coaches/useBackStep';
-import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
+import LineupDrawer from '@/components/coaches/LineupDrawer';
 import { formatInOrgZone } from '@/lib/timezone';
 import { CoachRowList, CoachRow, CoachRowBand } from '@/components/coaches/CoachRowList';
 import { COACH_GAME_EVENT_TYPES, formatEventWhen, sideWord } from '@/lib/coach-tournament-games';
@@ -30,9 +30,11 @@ import styles from './LineupCopyFrom.module.css';
  *     template confirm's "Keep current" bounce the coach out of the drawer (Mobile plan §13.6 #5).
  *
  * ⚠ A MENU, NOT A FORM (the 2026-09-23 drawer ruling): you tap and it acts, nothing is typed, so the
- * bottom nav stays visible beneath it — no `overNav`, no `useOverlayOpen`. At ≤640 it fills the screen
- * ABOVE the nav (D7); at 641–900 it is the builder's ordinary bottom drawer; above that an anchored
- * panel under Tools.
+ * bottom nav stays visible beneath it. Wherever the bar shows (≤900) it is the portal's sheet frame in
+ * the MENU layer (Sheet Frame step 5), which answers its outside tap, Escape and the phone's Back and
+ * hands focus home to Tools however it closes — its × included, which used to leave focus nowhere.
+ * At ≤640 the frame fills the screen ABOVE the nav (`full`, D7); at 641–900 it is the ordinary
+ * sheet; above that an anchored panel under Tools, whose keys the page answers.
  *
  * ⚠ The PAGE owns the copy itself (`onCopy`): it links call-ups, maps the rows and writes the notice.
  * This component only finds the source and asks the question.
@@ -65,7 +67,7 @@ type Chosen =
 const matchup = (e: Pick<RepTeamEvent, 'opponent' | 'homeAway' | 'name'>) => (e.opponent ? `${sideWord(e.homeAway)} ${e.opponent}` : e.name || 'Game');
 
 export default function LineupCopyFrom({
-  orgSlug, teamId, event, sportPack, templates, hasPositions, onCopy, onClose,
+  orgSlug, teamId, event, sportPack, templates, hasPositions, onCopy, onClose, opener,
 }: {
   orgSlug: string;
   teamId: string;
@@ -78,6 +80,8 @@ export default function LineupCopyFrom({
   /** Performs the copy. Throws with a message the panel shows; resolves once the lineup has it. */
   onCopy: (pick: LineupCopyPick, what: LineupCopyWhat) => Promise<void>;
   onClose: () => void;
+  /** Tools — where focus goes home when the panel closes on a phone (the menu item that opened it is gone). */
+  opener: RefObject<HTMLElement | null>;
 }) {
   const [games, setGames] = useState<GameRow[] | null>(null);
   const [gamesError, setGamesError] = useState('');
@@ -266,33 +270,31 @@ export default function LineupCopyFrom({
     );
   }
 
-  return (
+  const body = chosen ? questionView(chosen) : (
     <>
-      {/* A MENU's scrim — it stops at the nav's top and never dims the bar. */}
-      <LineupSheetScrim onClose={onClose} />
-      <div ref={panelRef} tabIndex={-1} className={`${shared.lineupAutoMenu} ${styles.panel}`} role="dialog" aria-label="Copy from">
-        {chosen ? questionView(chosen) : (
-          <>
-            <div className={styles.head}>
-              <div>
-                <p className={shared.lineupSheetTitle}>Copy from</p>
-                <p className={styles.sub}>Into {intoWhat}</p>
-              </div>
-              {closeButton}
-            </div>
-            <div className={`${shared.segChoice} ${shared.segChoiceFull}`} role="tablist" aria-label="Copy from">
-              {(['games', 'templates'] as const).map(t => (
-                <button key={t} type="button" role="tab" aria-selected={shownTab === t}
-                  className={`${shared.segBtn} ${shownTab === t ? shared.segBtnActive : ''}`}
-                  onClick={() => setTab(t)}>
-                  {t === 'games' ? 'Games' : 'Templates'}
-                </button>
-              ))}
-            </div>
-            <div className={styles.list}>{sourceList()}</div>
-          </>
-        )}
+      <div className={styles.head}>
+        <div>
+          <p className={shared.lineupSheetTitle}>Copy from</p>
+          <p className={styles.sub}>Into {intoWhat}</p>
+        </div>
+        {closeButton}
       </div>
+      <div className={`${shared.segChoice} ${shared.segChoiceFull}`} role="tablist" aria-label="Copy from">
+        {(['games', 'templates'] as const).map(t => (
+          <button key={t} type="button" role="tab" aria-selected={shownTab === t}
+            className={`${shared.segBtn} ${shownTab === t ? shared.segBtnActive : ''}`}
+            onClick={() => setTab(t)}>
+            {t === 'games' ? 'Games' : 'Templates'}
+          </button>
+        ))}
+      </div>
+      <div className={styles.list}>{sourceList()}</div>
     </>
+  );
+  return (
+    <LineupDrawer label="Copy from" ref={panelRef} full busy={busy} onClose={onClose} opener={opener}
+      popover={{ className: styles.panel, tabIndex: -1 }} bodyClassName={styles.body}>
+      {body}
+    </LineupDrawer>
   );
 }

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { existsSync } from 'node:fs';
 import { readCode, readSource, stripComments } from './_source-code.ts';
 import { positionGroups, ordinal } from '../../lib/lineup-position-groups.ts';
 import type { LineupPlayerRow } from '../../lib/lineup-grid.ts';
@@ -80,9 +81,10 @@ const builder = readCode(BUILDER);
 const schedule = readCode(SCHEDULE);
 const list = readCode(LIST);
 const sheet = readCode(SHEET);
-const scrimCmp = readCode('components/coaches/LineupSheetScrim.tsx');
 const head = readCode('components/coaches/LineupDrawerHead.tsx');
 const copyFrom = readCode('components/coaches/LineupCopyFrom.tsx');
+const saveTemplate = readCode('components/coaches/LineupSaveTemplate.tsx');
+const drawer = readCode('components/coaches/LineupDrawer.tsx');
 const css = stripComments(readSource(STYLES));
 const listCss = stripComments(readSource(LIST_STYLES));
 
@@ -158,9 +160,11 @@ describe('D1 — the Setup row and its panel', () => {
     assert.match(row, /<small>Auto-fill · \{autoFillLabel\}<\/small>/);
   });
   it('the panel is the one auto-fill panel — title, Format · Innings, the mode, then Generate with Reshuffle quiet beneath (D12 · B)', () => {
-    const panel = between(editor, 'const autoFillPanel = (', '\n  );', 'the panel');
-    assert.ok(panel.includes('id={SETUP_PANEL_ID} className={`${styles.lineupAutoMenu} ${styles.lineupSetupDrawer} ${styles.lineupDrawerOverNav}`}'),
-      'the panel is the shared drawer, wearing the modifier that hands its bottom padding to the foot — and, since 2026-09-23, the one that puts it over the nav');
+    const panel = between(editor, 'const setupBody = (', '\n  );', 'the panel');
+    // Written once, worn two ways (Sheet Frame step 5, `LineupDrawer`): the sheet frame's FORM layer wherever the bar
+    // shows, the centred modal above 900 (the modifier that hands its bottom padding to the foot).
+    assert.ok(editor.includes('<LineupDrawer label="Lineup setup" form id={SETUP_PANEL_ID} ref={setupPanelRef}'), 'a phone: the frame’s form layer, over the nav');
+    assert.ok(editor.includes(`popover={{ className: styles.lineupSetupDrawer, tabIndex: -1, 'aria-modal': 'true' }}`), 'a computer: the centred modal');
     // ⚠ The title markup moved into `LineupDrawerHead` on 2026-09-23 (/simplify reuse pass) —
     // Templates is the second consumer and CallUpSheet is a third, already-drifted copy. What is
     // pinned here is the ORDER on this panel; the head's own shape is pinned in its own case.
@@ -183,112 +187,59 @@ describe('D1 — the Setup row and its panel', () => {
     assert.match(editor, /aria-label="Lineup innings"/);
     assert.equal(editor.split('aria-label="Lineup format"').length - 1, 1, 'Format is written once (setupFields) and rendered by width');
   });
-  it('D12 · the four phone panels are DRAWERS — flush, an 18px top radius, a grab line, and 28px more room than the card they replace', () => {
-    const drawer = between(css, '@media (max-width: 900px) {\n  .lineupAutoMenu {', '\n  }', 'the drawer');
-    assert.match(drawer, /left: 0;/);
-    assert.match(drawer, /right: 0;/);
-    assert.match(drawer, /border-radius: 18px 18px 0 0;/);
-    // Flush to the BAR'S TOP — no gap term, which is where the 28px comes from. The card used
-    // `+ 1.25rem` on the bottom and `- 2.5rem` on the cap; a drawer uses neither.
-    // ⚠ PIN THE TOKEN, NOT THE ARITHMETIC. `--coach-foot-clear` is the nav plus the home indicator,
-    // declared once on `.coachesShell` at this same breakpoint; this file warns against hand-copying
-    // that formula and the first draft of these rules did exactly that, twice. The literal is
-    // allowed to move; the clearance contract is not.
-    assert.ok(drawer.includes('bottom: var(--coach-foot-clear);'));
-    assert.ok(drawer.includes('max-height: calc(100dvh - var(--coach-foot-clear) - 12px);'));
-    assert.doesNotMatch(drawer, /1\.25rem|2\.5rem|0\.9rem/, 'no gap and no side gutters — that is the whole difference');
-    // The grab line is sticky, so it stays at the head while the content scrolls under it.
-    const grab = between(css, '.lineupAutoMenu::before {', '\n  }', 'the grab line');
-    assert.match(grab, /position: sticky;/);
-    assert.match(grab, /height: 4px;/);
-  });
-  it('D12 · every scrim sits INSIDE the element `useDismissable` watches — a tap on it must not press what is underneath', () => {
-    // ⚠⚠ THIS IS A REPRODUCED DEFECT, NOT A STYLE RULE (/review, 2026-09-22). The row menu's scrim
-    // was a SIBLING of its ref'd sheet, where the other three drawers render the scrim INSIDE their
-    // ref'd wrapper. Outside the boundary a scrim tap reads as "outside": `useDismissable`'s
-    // document-level POINTERDOWN fires first and unmounts the overlay, and the CLICK that follows
-    // lands on whatever the dismissal just revealed at that screen position. Reproduced under touch
-    // emulation on the real page: dismissing the row menu pressed **Mark ready** underneath it and
-    // marked the lineup ready — a state change the coach never asked for. ⚠ A MOUSE NEVER SHOWED
-    // IT; only touch did, which is the only input this feature exists for. No linter, type check or
-    // layout sweep can see this, which is why it is pinned here.
-    // (The row menu's dim is the shared sheet frame's since Sheet Frame step 4 — the frame renders inside
-    // the same wrapper, held by sheet-frame-guard.)
-    const editorScrims: [string, string][] = [
-      ['the Setup & Auto-fill drawer', 'onClose={closePanelToRow}'],
-      ['the call-up sheet', 'onClose={callUps.onCloseSheet}'],
+  it('D12 · the builder’s phone panels are the portal’s sheet frame — flush, an 18px top radius, a grab line', () => {
+    // ⚖ D12/D13 (2026-09-22) made every builder panel a drawer on a phone — flush, 18px corners, a grab line, a dim, and
+    // the 28px of height and 29px of width a drawer has over the card it replaced. Since Sheet Frame step 5 (2026-10-06)
+    // that drawer IS the portal's sheet frame wherever the bar shows; its geometry is pinned in sheet-frame-guard.
+    // ONE shell decides the width for all five (/simplify 2026-10-06): the frame wherever the bar shows, the
+    // builder's popover above it — and the drawer's name is written once, so the two widths cannot call it two things.
+    assert.match(drawer, /const isPhoneNav = useIsPhoneNav\(\);\s*if \(isPhoneNav\) \{\s*return \(\s*<SheetFrame ref=\{ref\} form=\{form\} full=\{full\} busy=\{busy\} id=\{id\} role="dialog" aria-label=\{label\}/,
+      'the frame wherever the bar shows (the bar’s breakpoint, 900)');
+    assert.ok(drawer.includes('<div className={bodyClassName ? `${shared.lineupSheetBody} ${bodyClassName}` : shared.lineupSheetBody}>{children}</div>'), 'the body that keeps every line in place');
+    assert.ok(drawer.includes('className={className ? `${shared.lineupAutoMenu} ${className}` : shared.lineupAutoMenu} role="dialog" aria-label={label}>'), 'above 900: the popover');
+    const wears: [string, string, string][] = [
+      ['Setup', editor, '<LineupDrawer label="Lineup setup" form'],
+      ['Call up', editor, '<LineupDrawer label="Call up a player" form'],
+      ['Print', builder, '<LineupDrawer label="Print" ref={printRef}'],
+      ['Copy from', copyFrom, '<LineupDrawer label="Copy from" ref={panelRef} full'],
+      ['Save as template', saveTemplate, '<LineupDrawer label="Save as template" form'],
     ];
-    // Every scrim must come AFTER the opening tag that carries its dismissable's ref, so it is a
-    // descendant of the watched element rather than a sibling of it.
-    const boundaries: Record<string, string> = {
-      'the Setup & Auto-fill drawer': 'ref={autoFillRef}',
-      'the call-up sheet': 'ref={callUpRef}',
-    };
-    for (const [name, onClose] of editorScrims) {
-      const scrimAt = editor.indexOf(`<LineupSheetScrim ${onClose}`);
-      assert.notEqual(scrimAt, -1, `${name}: scrim missing`);
-      const wrapAt = editor.lastIndexOf(boundaries[name], scrimAt);
-      assert.notEqual(wrapAt, -1, `${name}: no dismissable boundary opens before its scrim`);
-    }
-    const rowFrameAt = editor.indexOf('<SheetFrame onClose={() => setRowActionsFor(null)}');
-    assert.ok(rowFrameAt > 0 && editor.lastIndexOf('<div ref={rowSheetRef}>', rowFrameAt) > 0, 'the row menu: its frame (and the frame’s dim) inside the watched wrapper');
-    // ⚠ The row sheet's ref belongs to the WRAPPER, never to the panel — putting it back on the
-    // panel is exactly the shape that shipped the defect.
-    assert.ok(!editor.includes('<div ref={rowSheetRef} className='), 'the row sheet ref is the wrapper, not the panel');
-    // The builder's three Tools panels hang off ONE wrap with ONE dismiss boundary (Copy from,
-    // 2026-10-02); every scrim — Print's, Save as template's, and Copy from's inside its component —
-    // must render after that wrap opens.
+    for (const [name, src, at] of wears) assert.ok(src.includes(at), `${name}: one of the builder’s drawers`);
+    assert.doesNotMatch(editor + builder + copyFrom + saveTemplate, /lineupSheetBody|lineupAutoMenu\}? role="dialog"/, 'no drawer draws its own shell');
+    // What is inside keeps its place: the old drawer's 14px inset and the gap its grab line left.
+    assert.match(between(css, '.lineupSheetBody {', '}', 'the body'), /gap: 0\.6rem;\s*padding: 0\.6rem 6px 0;/);
+    assert.doesNotMatch(css, /@media \(max-width: 900px\) \{\s*\.lineupAutoMenu \{/, 'no second drawer recipe left in this stylesheet');
+  });
+  it('D12 · a tap on a drawer’s dim never presses what is underneath', () => {
+    // ⚠⚠ THIS IS A REPRODUCED DEFECT, NOT A STYLE RULE (/review, 2026-09-22). The row menu's scrim was a SIBLING of the
+    // element its dismiss hook watched: a tap on it read as "outside", the hook's POINTERDOWN unmounted the sheet, and the
+    // CLICK that followed pressed **Mark ready** underneath and marked the lineup ready — under touch only. Since Sheet Frame
+    // step 5 every drawer's dim is the frame's, inside the boundary the frame itself watches (its sheet, its dim, its
+    // opener), so the dim's own onClick is the single close path (sheet-frame-guard).
+    assert.doesNotMatch(editor + builder + copyFrom + saveTemplate, /LineupSheetScrim/, 'no dim of their own');
+    // Above 900 the three Tools panels are popovers hung off the ONE Tools wrap, with ONE dismiss boundary.
     const toolsAt = builder.indexOf('ref={toolsRef}');
     assert.notEqual(toolsAt, -1, 'the Tools wrap carries the dismissable ref');
     for (const [name, at] of [
-      ['Print', builder.indexOf('<LineupSheetScrim onClose={closePrint} />')],
-      ['Save as template', builder.indexOf('<LineupSheetScrim onClose={() => setSaveTemplateOpen(false)} overNav />')],
+      ['Print', builder.indexOf('<LineupDrawer label="Print"')],
+      ['Save as template', builder.indexOf('<LineupSaveTemplate')],
       ['Copy from', builder.indexOf('<LineupCopyFrom')],
     ] as const) {
       assert.notEqual(at, -1, `${name}: missing`);
-      assert.ok(at > toolsAt, `${name}: its scrim must come after the Tools wrap's ref`);
+      assert.ok(at > toolsAt, `${name}: inside the Tools wrap`);
     }
     // Escape closes and hands focus back to Tools, the button that opened all three (Sheet Frame step 2).
-    assert.match(builder, /useDismissable\(copyOpen \|\| saveTemplateOpen \|\| lineupPdfOpen, toolsRef, closeToolPanels, escapeToolPanels\);/);
+    assert.match(builder, /useDismissable\(toolPanelOpen, toolsRef, closeToolPanels, escapeToolPanels\);/);
   });
-  it('D12 · every panel that opens on a phone carries a scrim, and a MENU scrim never dims the bar', () => {
-    // The desktop renders nothing: the class is display:none until the bottom nav exists, so no
-    // call site needs a width branch of its own.
-    assert.match(css, /\.lineupSheetScrim \{ display: none; \}/);
-    const scrim = between(css, '  .lineupSheetScrim {', '\n  }', 'the scrim');
-    assert.match(scrim, /display: block;/);
-    assert.ok(scrim.includes('bottom: var(--coach-foot-clear);'), 'the DEFAULT stops at the bar’s top — a menu leaves the nav lit and tappable');
-    assert.match(scrim, /z-index: 259;/, 'directly under the panel (260), over the autosave pill (250)');
-    // ⚠⚠ THE SAME DIM AS THE PORTAL'S OTHER FOUR SHEETS, IN BOTH THEMES. This scrim cannot WEAR
-    // `.sheetScrim` (that one positions against the More sheet's nav; this panel is standalone because it
-    // is shared with the desktop popover), so it copies the values — and a copy that takes the dark
-    // value WITHOUT the warm one is a bug on the portal's DEFAULT theme: two drawers on one screen
-    // dimmed the page different colours until /simplify caught it.
-    assert.ok(scrim.includes('rgba(13, 17, 26, 0.45)'), 'the dark dim matches .sheetScrim');
-    assert.ok(css.includes('.lineupSheetScrim {\n    background: rgba(36, 30, 21, 0.28);'),
-      'and the warm remap matches it too — warm is the portal default');
-    // D13: all of the builder's phone panels, not just Setup. Two live in the editor (the Setup &
-    // Auto-fill drawer, the row-actions drawer) and on the builder page (Print, Save as template —
-    // and Copy from, whose scrim lives in its own component since 2026-10-02).
-    // Converting only one would sharpen the inconsistency.
-    // ⚠ ONE COMPONENT, N CALL SITES. They were copied <div>s once, and the copy had already
-    // drifted (the warm colour above). The class is now spelled exactly once, in the component.
-    // ⚠ THREE since 2026-09-23: the Setup & Auto-fill drawer (desktop and phone shared ONE trigger
-    // and ONE scrim that day — previously two, `closePanelToRow` on the phone and a bare
-    // `setAutoFillOpen(false)` on the desktop), the row-actions drawer, and the "Call up a player"
-    // sheet (moved into the toolbar the same day, still reusing this recipe rather than a shell of
-    // its own). A fourth call site that looked like these three until one of them changed is
-    // exactly what this count exists to prevent.
-    // ⚠ TWO since Sheet Frame step 4 (2026-10-06): the row-actions drawer moved onto the shared sheet frame,
-    // which brings its own dim.
-    assert.equal(editor.split('<LineupSheetScrim onClose=').length - 1, 2, 'the editor’s two drawers');
-    assert.equal(builder.split('<LineupSheetScrim onClose=').length - 1, 2, 'Print and Save as template');
-    assert.equal(copyFrom.split('<LineupSheetScrim onClose=').length - 1, 1, 'Copy from');
-    assert.equal(scrimCmp.split('styles.lineupSheetScrim').length - 1, 1, 'the class has exactly one home');
-    assert.ok(scrimCmp.includes('aria-hidden="true"'), 'and the markup cannot drift either');
+  it('D12 · ONE dim for every drawer — the frame’s, in both themes', () => {
+    // The builder's own dim (`LineupSheetScrim`, one component for five call sites, the warm remap beside its dark value)
+    // retired with Sheet Frame step 5: the frame's dim is the portal's one sheet dim (`--sheet-dim`), so two drawers on
+    // one screen can never dim the page differently again — the first thing that drifted in this family.
+    assert.ok(!existsSync('components/coaches/LineupSheetScrim.tsx'), 'the component is gone');
+    assert.doesNotMatch(css, /\.lineupSheetScrim/, 'and its rule');
   });
   it('D12 · B · Innings to fill and Game rules fold behind ONE 44px row on a phone; the desktop keeps them apart', () => {
-    const panel = between(editor, 'const autoFillPanel = (', '\n  );', 'the panel');
+    const panel = between(editor, 'const setupBody = (', '\n  );', 'the panel');
     assert.match(panel, /aria-expanded=\{gameRulesOpen\} aria-controls=\{SETUP_MORE_ID\}/);
     assert.match(panel, /'Innings to fill · Game rules' : 'Innings to fill'/, 'the label names only what is actually in there');
     assert.match(panel, /<div id=\{SETUP_MORE_ID\} className=\{styles\.lineupSheetMoreBody\}>\s*\{inningsToFillField\}\s*\{gameRulesFields\}/);
@@ -304,7 +255,7 @@ describe('D1 — the Setup row and its panel', () => {
       'quieter, never smaller — the floor is in the recipe both rows wear');
   });
   it('D12 · the drawer’s ACTIONS never scroll away — the foot is pinned, the settings scroll under it', () => {
-    const panel = between(editor, 'const autoFillPanel = (', '\n  );', 'the panel');
+    const panel = between(editor, 'const setupBody = (', '\n  );', 'the panel');
     const foot = between(panel, 'className={styles.lineupSheetFoot}', '</div>', 'the foot');
     assert.ok(foot.includes('Generate lineup'), 'Generate lives in the foot');
     assert.ok(foot.includes('styles.lineupSheetQuiet}`}'), 'so does the quiet Reshuffle');
@@ -319,13 +270,15 @@ describe('D1 — the Setup row and its panel', () => {
     // stop does not move) and a `box-shadow` band (it covers the strip, but a TAP still lands on
     // the control behind it). The foot takes that padding instead, so the panel with a foot gives
     // its own up — which is what `lineupSetupDrawer` is for.
-    assert.ok(panel.includes('${styles.lineupAutoMenu} ${styles.lineupSetupDrawer}'), 'the setup drawer wears the modifier');
+    assert.ok(editor.includes('popover={{ className: styles.lineupSetupDrawer,'), 'the setup modal wears the modifier');
+    // On a phone the sheet frame hands a pinned foot the sheet's bottom padding (sheet-frame-guard, step 5): the foot says so.
+    assert.ok(panel.includes('<div className={styles.lineupSheetFoot} data-sheet-foot>'));
     // ⚰ Both rules were ≤900-gated until 2026-09-23 — "Desktop is untouched, the popover is not a
     // scroller" stopped being true the day the popover became a ≥901 modal with its own max-height
     // and scroll (same reason a phone drawer needed one). Unconditional now, not width-gated.
     assert.match(css, /\.lineupSetupDrawer \{ padding-bottom: 0; \}/, 'it gives up its bottom padding, at every width');
     const pinned = between(css, '.lineupSheetFoot {', '\n}', 'the pinned foot');
-    assert.ok(pinned.includes('padding-bottom: 14px;'), 'and the foot takes it, so a tap there finds the foot');
+    assert.ok(pinned.includes('padding-bottom: var(--sheet-foot-pad, 14px);'), 'and the foot takes it, so a tap there finds the foot — the frame’s own value on a phone');
     assert.ok(pinned.includes('position: sticky;'), 'pinned');
     assert.ok(pinned.includes('bottom: 0;'), 'to the foot');
     assert.ok(pinned.includes('background: var(--card-bg);'), 'its own surface, so settings cannot show through it');
@@ -361,8 +314,9 @@ describe('D1 — the Setup row and its panel', () => {
       'the overlay sits before the panel it backs, so it paints first and the panel paints over it',
     );
     // A true dialog now, not just a disclosure — matches Call-up and the row sheet, which already
-    // carry role="dialog" at every width they render.
-    assert.match(editor, /id=\{SETUP_PANEL_ID\} className=\{`\$\{styles\.lineupAutoMenu\} \$\{styles\.lineupSetupDrawer\} \$\{styles\.lineupDrawerOverNav\}`\} role="dialog" aria-label="Lineup setup"/);
+    // carry role="dialog" at every width they render. A MODAL since Sheet Frame step 5: it stands the dialog floor.
+    assert.match(editor, /<LineupDrawer label="Lineup setup" form id=\{SETUP_PANEL_ID\} ref=\{setupPanelRef\} onClose=\{closePanelToRow\} opener=\{setupRowRef\}\s+popover=\{\{ className: styles\.lineupSetupDrawer, tabIndex: -1, 'aria-modal': 'true' \}\}>/);
+    assert.match(drawer, /<div ref=\{ref\} id=\{id\} \{\.\.\.attrs\} className=/, 'the popover takes the id, the ref, and the modal’s own attributes');
     // The close × exists in the DOM at every width; which widths PAINT it is two questions, and
     // since 2026-09-23 they are answered in two different places on purpose (/simplify altitude):
     // ≤900 is width-only so the stylesheet decides, ≥901 is PER-CONSUMER so the caller asks.
@@ -378,7 +332,7 @@ describe('D1 — the Setup row and its panel', () => {
     assert.ok(!css.includes('.lineupSetupDrawer .lineupSetupDrawerClose'), 'never re-scoped to an ancestor');
   });
   it('the trigger names itself: a phone-hidden "Setup" eyebrow (owner, 2026-09-23)', () => {
-    const wrap = between(editor, 'className={styles.lineupAutoWrap} ref={autoFillRef}', 'className={styles.lineupSetupRowWrap}', 'the trigger wrap');
+    const wrap = between(editor, '<div className={styles.lineupAutoWrap}>', 'className={styles.lineupSetupRowWrap}', 'the trigger wrap');
     assert.match(wrap, /className=\{`\$\{styles\.lineupSetupLabel\} \$\{styles\.lineupSetupTriggerLabel\}`\}>Setup</, 'reuses the panel\'s own caption recipe, not a second one');
     const mod = between(css, '.lineupSetupTriggerLabel { display: block;', '\n}', 'the eyebrow modifier');
     assert.match(mod, /@media \(max-width: 640px\) \{\s*\.lineupSetupTriggerLabel \{ display: none; \}/,
@@ -386,7 +340,10 @@ describe('D1 — the Setup row and its panel', () => {
   });
   it('Generate closes the panel and returns focus to the row; Escape does the same', () => {
     assert.match(editor, /runGenerate\(autoFillMode\);\s*closePanelToRow\(\);/);
-    assert.match(editor, /useDismissable\(autoFillOpen, autoFillRef, \(\) => setAutoFillOpen\(false\), \(\) => closePanelToRow\(\)\)/);
+    // Escape (and Back) close it and hand focus to the row: the frame's floor on a phone, the modal's own above 900
+    // (Sheet Frame step 5 — the keyboard is kept inside at both).
+    assert.ok(editor.includes('ref={setupPanelRef} onClose={closePanelToRow} opener={setupRowRef}'));
+    assert.ok(editor.includes('useDialogFloor(autoFillOpen && !isPhoneNav, setupPanelRef, { onClose: closePanelToRow, opener: setupRowRef });'));
     // ⚰ `if (isPhone)` guarded the focus-return until 2026-09-23 — dead weight once the desktop
     // shares the same trigger and the same close, since a popover returning focus to the button
     // that opened it is correct at every width, not a phone-only courtesy.
@@ -464,134 +421,71 @@ describe('D1 — the Setup row and its panel', () => {
  * ══════════════════════════════════════════════════════════════════════════════════════════
  */
 describe('The two drawer layers — a form covers the nav, a menu sits on top of it', () => {
-  it('the modifier clears the nav (300) and stays UNDER a dialog (400) — 390, never 400 and never 301', () => {
-    const over = between(css, '  .lineupAutoMenu.lineupDrawerOverNav {', '\n  }', 'the over-nav drawer');
-    assert.match(over, /z-index: 390;/, 'over the nav (300), under .modalOverlay (400) and the global confirm (1000)');
-    assert.match(over, /bottom: 0;/, 'the screen’s foot, not the bar’s top');
-    assert.match(over, /max-height: calc\(100dvh - 12px\);/);
-    // ⚠ At `bottom: 0` the home indicator stops being the nav's problem and becomes the drawer's.
-    // ⚠ PIN THE TOKEN, NOT THE ARITHMETIC — this file's own rule, applied here after /simplify
-    // pointed out the formula was hand-copied into two places that must never disagree (the
-    // container, and the Setup drawer's pinned foot, which takes the padding off the container).
-    assert.match(over, /--lineup-drawer-foot-pad: calc\(14px \+ env\(safe-area-inset-bottom, 0px\)\);/, 'declared once');
-    assert.match(over, /padding-bottom: var\(--lineup-drawer-foot-pad\);/, 'and read, never re-derived');
-    assert.ok(css.includes('padding-bottom: var(--lineup-drawer-foot-pad);\n  }'), 'the foot reads the same token by inheritance');
-    // ⚠⚠ THE HAND-OFF ASKS WHETHER THERE IS A FOOT, IT DOES NOT NAME A DRAWER (/review). Scoping
-    // it to `.lineupSetupDrawer` gave the CALL-UP sheet — which uses this same shared foot — the
-    // container's safe-area padding AND a sticky foot inside it, re-opening the strip of scrolled
-    // content under the foot that this hand-off exists to close.
-    assert.ok(css.includes('.lineupAutoMenu.lineupDrawerOverNav:has(.lineupSheetFoot) { padding-bottom: 0; }'),
-      'any over-nav drawer WITH a pinned foot hands the padding over, not just Setup');
-    assert.ok(!css.includes('.lineupSetupDrawer.lineupDrawerOverNav'), 'never re-scoped to one drawer by name');
-    assert.equal(css.split('calc(14px + env(safe-area-inset-bottom, 0px))').length - 1, 1,
-      'the formula is spelled exactly ONCE — two copies is how the foot and the container drift apart');
-    // ⚠ A drawer may open a confirm from INSIDE itself. At 400 that would tie with `.modalOverlay`
-    // and be settled by DOM order; 390 cannot tie.
-    assert.ok(!over.includes('z-index: 400'), 'a dialog opened FROM the drawer must still land on top of it');
-  });
-  it('the scrim travels with the drawer — a raised drawer over a bar-height scrim leaves the nav LIT in front of the dim', () => {
-    assert.ok(css.includes('.lineupSheetScrim.lineupDrawerOverNav { bottom: 0; z-index: 389; }'),
-      'the scrim covers and dims the bar, one below its drawer');
-    // The component is the only place the pairing can be got wrong, so it takes one prop for both.
-    assert.match(scrimCmp, /overNav\?: boolean/);
-    assert.ok(scrimCmp.includes('styles.lineupDrawerOverNav'), 'the scrim wears the same class its drawer does');
-  });
-  it('THE SPLIT: the three drawers that hold work cover the nav; the three menus do not', () => {
-    // Every over-nav drawer and its scrim, named. A drawer whose scrim does not agree with it is
-    // the failure mode this pairs up.
+  it('THE SPLIT: the three drawers that hold work are the frame’s FORM layer on a phone; the three menus its MENU layer', () => {
+    // Since Sheet Frame step 5 (2026-10-06) the layer is the frame's `form` prop, and the frame carries everything the
+    // ruling needs — the screen's foot and 390 (over the nav, under a dialog), the dim over the bar, the bar taken out
+    // of reach of the thumb, the keyboard and the screen reader, the keyboard kept inside — pinned in sheet-frame-guard.
+    // The five drawers reach the frame through `LineupDrawer`, which passes `form` straight to it.
+    assert.match(drawer, /<SheetFrame ref=\{ref\} form=\{form\} full=\{full\}/);
     const forms: [string, string, string][] = [
-      ['Setup & Auto-fill', editor, 'onClose={closePanelToRow} overNav'],
-      ['Call up a player', editor, 'onClose={callUps.onCloseSheet} overNav'],
-      ['Save as template', builder, 'onClose={() => setSaveTemplateOpen(false)} overNav'],
+      ['Setup & Auto-fill', editor, '<LineupDrawer label="Lineup setup" form id={SETUP_PANEL_ID}'],
+      ['Call up a player', editor, '<LineupDrawer label="Call up a player" form busy={callUps.busy}'],
+      ['Save as template', saveTemplate, '<LineupDrawer label="Save as template" form busy={busy}'],
     ];
-    for (const [name, source, scrim] of forms) {
-      assert.ok(source.includes(`<LineupSheetScrim ${scrim} />`), `${name}: its scrim must be raised with it`);
+    for (const [name, src, tag] of forms) assert.ok(src.includes(tag), `${name}: the form layer`);
+    // ⚠ AND THE OTHER WAY ROUND. Print, Copy from and the row-actions sheet act-and-close; raising them would take the
+    // bar away from a coach who only meant to look at a list.
+    const menus: [string, string, string][] = [
+      ['Print', builder, '<LineupDrawer label="Print" ref={printRef}'],
+      ['Copy from', copyFrom, '<LineupDrawer label="Copy from" ref={panelRef} full busy={busy}'],
+      ['the row-actions sheet', editor, '<SheetFrame ref={rowSheetRef} onClose={() => setRowActionsFor(null)}'],
+    ];
+    for (const [name, src, tag] of menus) {
+      assert.ok(src.includes(tag), `${name}: on the frame`);
+      const line = src.slice(src.indexOf(tag), src.indexOf('\n', src.indexOf(tag)));
+      assert.doesNotMatch(line, /\bform\b/, `${name}: a MENU — never over the bar`);
     }
-    // The panels themselves.
-    assert.ok(editor.includes('${styles.lineupSetupDrawer} ${styles.lineupDrawerOverNav}'), 'Setup wears the modifier');
-    assert.ok(editor.includes('${styles.lineupAutoMenu} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Call up a player"'), 'Call-up wears it');
-    assert.ok(builder.includes('${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Save as template"'), 'Save as template wears it, and names itself');
-    // ⚠ AND THE OTHER WAY ROUND. Print and the row-actions sheet act-and-close; raising them would
-    // take the bar away from a coach who only meant to look at a list.
-    assert.ok(editor.includes('<SheetFrame onClose={() => setRowActionsFor(null)} opener={rowOpenerRef} role="dialog"'), 'the row menu is a MENU — the frame’s menu layer, no form');
-    assert.ok(builder.includes('<LineupSheetScrim onClose={closePrint} />'), 'Print is a MENU — no overNav');
-    // Copy from is a MENU too (D7, 2026-10-02): you tap and it acts. Full screen at ≤640, but ABOVE
-    // the bar — it never takes the nav-covering modifier.
-    assert.ok(copyFrom.includes('<LineupSheetScrim onClose={onClose} />'), 'Copy from is a MENU — no overNav');
-    assert.ok(!copyFrom.includes('lineupDrawerOverNav'), 'and its panel never covers the bar');
-    // The count is the guard: three raised, two not, five in total.
-    assert.equal((editor + builder).split(' overNav />').length - 1, 3, 'exactly three drawers cover the nav');
+    // The count is the guard: six drawers, three of them forms — a seventh added without a decision fails this.
+    const all = editor + builder + copyFrom + saveTemplate;
+    assert.equal(all.split('<LineupDrawer ').length - 1 + all.split('<SheetFrame').length - 1, 6, 'six builder drawers on the frame');
+    assert.equal(all.split(/<LineupDrawer label="[^"]+" form\b/).length - 1, 3, 'exactly three cover the nav');
   });
   it('a drawer that covers the navigation offers an explicit way out, at the portal’s 44px floor', () => {
-    // ⚰ "Close is a DESKTOP-only affordance" rested on a bar that was still tappable underneath.
-    // It is not any more; the visible scrim is a 12px strip; and Escape and the back gesture are
-    // both absent on an iPhone running the portal from the home screen.
-    const close = between(css, '  .lineupDrawerOverNav .lineupSetupDrawerClose {', '\n  }', 'the drawer’s close');
+    // ⚰ "Close is a DESKTOP-only affordance" rested on a bar that was still tappable underneath. It is not under a form;
+    // the visible dim is a 12px strip; and Escape and the back gesture are both absent on an iPhone run from the home screen.
+    const close = between(css, '  .lineupSetupDrawerClose {\n    display: inline-flex;', '\n  }', 'the drawer’s close at ≤900');
     assert.match(close, /display: inline-flex;/);
     assert.match(close, /width: var\(--tap-min, 44px\);/);
     assert.match(close, /height: var\(--tap-min, 44px\);/);
-    // The desktop × belongs to a drawer that is a MODAL at ≥901 — Setup asks for it, the desktop
-    // Templates popover keeps its plain "click anywhere else" and must not grow one. Asked by the
-    // CALLER through `desktopClose`, never inferred from an ancestor (/simplify altitude pass).
-    assert.ok(css.includes('.lineupSetupDrawerClose.lineupDrawerCloseDesktop { display: inline-flex; }'),
-      'the ≥901 × is a modifier the head asks for, not an ancestor it happens to sit inside');
+    // The desktop × is asked for by the CALLER through `desktopClose` (/simplify altitude pass), never inferred.
+    assert.ok(css.includes('.lineupSetupDrawerClose.lineupDrawerCloseDesktop { display: inline-flex; }'));
     assert.match(head, /desktopClose\?: boolean/, 'and it is a real prop on the shared head');
-    /* ⚠⚠ EVERY over-nav drawer needs the floor, including the one that does NOT use this head.
-       The shared `.modalCloseBtn` only grows to 44px at ≤768, but the bottom nav is visible to
-       900 — so between 769 and 900 the call-up sheet was a nav-COVERING surface whose only exits
-       were a 28px × and a 12px sliver of scrim (/review, 2026-09-23). Scoped to the modifier, so
-       widening that button portal-wide stays the separate decision this repo says it is. */
-    assert.ok(css.includes('.lineupDrawerOverNav .modalCloseBtn'),
-      'the call-up sheet\'s own × takes the 44px floor wherever the drawer covers the nav');
-    // Templates was given the head D12 gave Setup and this drawer was missed: with the scrim over
-    // the square that opened it, nothing on screen said what the surface was. NO `desktopClose` —
-    // at ≥901 it is still an anchored popover and must not grow a control it never had.
-    // Since 2026-10-02 the window draws its own head, so the head can turn into "‹ Save as template"
-    // on the replace question (both drawings put Back in the bar, never at the top of the body).
-    const saveWindow = readCode('components/coaches/LineupSaveTemplate.tsx');
-    assert.match(saveWindow, /<LineupDrawerHead title="Save as template" onClose=\{onClose\} onBack=\{replacing \? backToName : undefined\} backDisabled=\{busy\} \/>/,
+    // Save as template: no desktop × (a popover there); its head turns into "‹ Save as template" on the question.
+    assert.match(saveTemplate, /<LineupDrawerHead title="Save as template" onClose=\{onClose\} onBack=\{replacing \? backToName : undefined\} backDisabled=\{busy\} \/>/,
       'Save as template names itself and carries the close, without the desktop ×; on the question its head is Back');
-    assert.match(builder, /<LineupSaveTemplate[\s\S]{0,400}onClose=\{\(\) => setSaveTemplateOpen\(false\)\}/,
-      'the builder hands the window its close');
-    // ⚠ ONE HEAD, N CALL SITES — the same reason `LineupSheetScrim` exists. A third copy of this
-    // idea already lives in CallUpSheet and has already drifted (its own wrapper, an <h3>, and
-    // `modalCloseBtn` + `&times;`); it is deliberately left alone, because unifying it means
-    // unifying `.modalCloseBtn` portal-wide, which the stylesheet records as its own decision.
+    assert.match(builder, /<LineupSaveTemplate[\s\S]{0,400}onClose=\{\(\) => setSaveTemplateOpen\(false\)\}/, 'the builder hands the window its close');
+    // ⚠ ONE HEAD, N CALL SITES. Call up's own head — an <h3> in the display face and a bare `.modalCloseBtn` × — was a
+    // third, already-drifted copy; it wears the shared head since Sheet Frame step 5 (owner D9, 2026-10-06, drawn on the hub).
+    const callUp = readCode('components/coaches/CallUpSheet.tsx');
+    assert.ok(callUp.includes('<LineupDrawerHead title="Call up a player" onClose={onClose} desktopClose />'), 'it kept a × on a computer, where it always had one');
+    assert.doesNotMatch(callUp, /modalCloseBtn|<h3/, 'no head of its own');
     assert.equal(head.split('styles.lineupSetupDrawerHead').length - 1, 1, 'the head markup has exactly one home');
     assert.ok(head.includes('<p className={styles.lineupSheetTitle}>{title}</p>'), 'the title is the head\'s');
-    assert.equal((editor + builder).split('styles.lineupSetupDrawerHead').length - 1, 0, 'and no call site hand-rolls it');
+    assert.equal((editor + builder + callUp + saveTemplate).split('styles.lineupSetupDrawerHead').length - 1, 0, 'and no call site hand-rolls it');
   });
-  it('⚠⚠ COVERING THE NAV IS NOT TAKING IT AWAY — every raised drawer enrols in the portal\'s overlay signal', () => {
-    /* The first build was geometry alone: `bottom: 0` and a z-index over the bar. That defends the
-       THUMB and nothing else — the bar's tabs stayed in the tab order and the accessibility tree
-       underneath the drawer, so "a coach leaves the builder mid-edit by hitting Schedule" was
-       still reachable by Tab + Enter, or by a screen reader, on a surface just declared modal.
-       `useOverlayOpen` is the portal's own July mechanism (CoachesBottomNav goes
-       `visibility: hidden` — out of BOTH trees — and the provider locks body scroll); the
-       builder's drawers had simply never enrolled. Found by /simplify's altitude pass. */
-    assert.ok(editor.includes("import { useOverlayOpen } from '@/lib/coaches-overlay';"));
-    assert.ok(builder.includes("import { useOverlayOpen } from '@/lib/coaches-overlay';"));
-    // ⚠ Gated on the NAV breakpoint (≤900), not the content one: above it the bar is already
-    // `display: none` (no hole), and Templates and the call-up sheet are anchored POPOVERS up
-    // there which must not lock the page behind them.
-    assert.ok(editor.includes('useOverlayOpen(autoFillOpen && isPhoneNav);'), 'Setup enrols');
-    assert.ok(editor.includes('useOverlayOpen(!!callUps?.sheetOpen && isPhoneNav);'), 'the call-up sheet enrols');
-    assert.ok(builder.includes('useOverlayOpen(saveTemplateOpen && isPhoneNav);'), 'Save as template enrols');
-    // ⚠ AND THE MENUS DO NOT. Print and the row sheet keep a live bar — it is their way out.
-    assert.ok(!builder.includes('useOverlayOpen(lineupPdfOpen'), 'Print is a MENU — it must not hide the bar');
-    assert.ok(!builder.includes('useOverlayOpen(copyOpen') && !copyFrom.includes('useOverlayOpen('), 'Copy from is a MENU — same');
-    assert.ok(!editor.includes('useOverlayOpen(rowActionsFor'), 'the row menu is a MENU — same');
-    // Three enrolments, exactly — the same count as the drawers that cover the nav.
-    assert.equal((editor + builder).split('useOverlayOpen(').length - 1, 3, 'three forms, three enrolments');
+  it('⚠⚠ COVERING THE NAV IS NOT TAKING IT AWAY — the frame takes the bar away for every form, and nothing else needs to', () => {
+    /* The first build was geometry alone, which defends the THUMB and nothing else — the bar's tabs stayed in the tab
+       order and the accessibility tree. `useOverlayOpen` takes them out; since Sheet Frame step 5 the frame calls it
+       for its form layer (sheet-frame-guard), so no builder file calls it itself — a second call would count twice. */
+    for (const src of [editor, builder, saveTemplate, copyFrom]) assert.doesNotMatch(src, /useOverlayOpen\(/);
   });
-  it('every raised drawer is still escapable by Back — a covered nav makes that the LAST way out, not a nicety', () => {
-    // §219. All five register one step; the three that now cover the bar cannot afford to lose it.
-    for (const call of [
-      'useBackStep(autoFillOpen, () => closePanelToRow());',
-      'useBackStep(!!callUps?.sheetOpen, () => callUps?.onCloseSheet());',
-    ]) assert.ok(editor.includes(call), `missing back step: ${call}`);
-    assert.ok(builder.includes('useBackStep(saveTemplateOpen, () => setSaveTemplateOpen(false));'));
-    assert.ok(builder.includes('useBackStep(copyOpen, () => setCopyOpen(false));'));
+  it('every drawer is still escapable by Back — a covered nav makes that the LAST way out, not a nicety', () => {
+    // §219. On a phone the frame's floor stands one step for every drawer (sheet-frame-guard); above 900 the popovers
+    // stand their own, and Setup's centred modal its own floor.
+    assert.ok(editor.includes('useDialogFloor(autoFillOpen && !isPhoneNav, setupPanelRef, { onClose: closePanelToRow, opener: setupRowRef });'));
+    assert.ok(editor.includes('useBackStep(callUpPopoverOpen, () => callUps?.onCloseSheet());'));
+    assert.ok(builder.includes('useBackStep(saveTemplateOpen && !isPhoneNav, () => setSaveTemplateOpen(false));'));
+    assert.ok(builder.includes('useBackStep(copyOpen && !isPhoneNav, () => setCopyOpen(false));'));
     assert.ok(copyFrom.includes('useBackStep(!!chosen, '), 'Copy from\'s question is a level of its own — Back returns to the list');
   });
 });
@@ -759,16 +653,16 @@ describe('D2 — the tool row', () => {
     assert.match(builder, /function markLineupDirty\(\) \{\s*setLineupNotice\(''\);/, 'the line above the grid ends on the next EDIT, not on a save');
   });
   it('Copy from is full screen at ≤640 — ABOVE the nav, which it leaves alone (D7, 2026-10-02)', () => {
+    // On the frame since Sheet Frame step 5: `full` fills the screen above the bar at ≤640 and keeps the bar's top
+    // (geometry in sheet-frame-guard); the body gives the list the height that is left.
+    assert.ok(copyFrom.includes('<LineupDrawer label="Copy from" ref={panelRef} full busy={busy}'));
+    assert.ok(copyFrom.includes('bodyClassName={styles.body}>'), 'the body that takes the height left');
     const copyCss = stripComments(readSource('components/coaches/LineupCopyFrom.module.css'));
-    const phone = phoneBlocks(copyCss);
-    const panel = between(phone, '.panel.panel {', '}', 'the full-screen panel');
-    assert.match(panel, /top: 0;/, 'it reaches the top of the screen');
-    assert.doesNotMatch(panel, /(^|\n)\s*bottom:/, 'and keeps .lineupAutoMenu\'s bottom — the bar\'s top — so the nav stays');
-    assert.match(phone, /\.panel\.panel::before \{ display: none; \}/, 'no grab line on a full screen');
-    // Two classes on every override: `.lineupAutoMenu` lives in another module at one class, and
-    // equal specificity across modules resolves by bundle order.
-    assert.doesNotMatch(copyCss, /(^|\n)\s*\.panel \{/, 'never a single-class override of the shared panel');
-    assert.match(copyFrom, /className=\{`\$\{shared\.lineupAutoMenu\} \$\{styles\.panel\}`\} role="dialog" aria-label="Copy from"/);
+    assert.match(phoneBlocks(copyCss), /\.body\.body \{ flex: 1 1 auto; min-height: 0; padding: 0; \}/);
+    // Two classes on every override: `.lineupAutoMenu` and `.lineupSheetBody` live in another module at one class,
+    // and equal specificity across modules resolves by bundle order.
+    assert.doesNotMatch(copyCss, /(^|\n)\s*\.(panel|body) \{/, 'never a single-class override of a shared class');
+    assert.ok(copyFrom.includes('popover={{ className: styles.panel, tabIndex: -1 }}'), 'the popover above 900');
   });
   it('Print keeps its preflight', () => {
     assert.match(builder, /if \(!\(await confirmPrintIfOpen\(\)\)\) return;/);
@@ -863,7 +757,7 @@ describe('D5 — one inning at a time', () => {
     assert.doesNotMatch(sheet, /confirm\(/);
     // Its container, layer and keys are the shared sheet frame's since Sheet Frame step 4 (a dialog in the menu
     // layer, never modal, the frame owning Escape, Back and focus) — held by sheet-frame-guard.
-    assert.match(sheet, /<SheetFrame ownsKeys grabCloses onClose=\{onClose\} opener=\{opener\} role="dialog"/);
+    assert.match(sheet, /<SheetFrame grabCloses onClose=\{onClose\} opener=\{opener\} role="dialog"/);
   });
   /**
    * ⚰ The phone hint ("Hold a number to move a player · ‹ › for the innings") was REMOVED on

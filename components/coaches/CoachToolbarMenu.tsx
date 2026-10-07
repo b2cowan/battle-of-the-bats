@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import Link from 'next/link';
 import { Check, ChevronDown } from 'lucide-react';
 import { rescueFocusTo, useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -39,7 +40,8 @@ import styles from './CoachToolbarMenu.module.css';
  *     continues from there. Before this, Tab walked into the page BEHIND an open panel that
  *     stayed on screen — the gap that makes a `role="menu"` a trap rather than a menu.
  *   · **Escape** was already right and is untouched: `useDismissable` closes and returns focus to
- *     whatever had it when the menu opened, guarding IME composition on the way.
+ *     whatever had it when the menu opened, guarding IME composition on the way. (On a phone the sheet
+ *     frame answers Escape instead, and the phone's Back with it — Sheet Frame step 5.)
  *
  * ⚠ Focus moves INTO the panel on open, mouse or keyboard alike. That is what makes the arrows
  * work without a first keystroke to "enter" the list, and it is why every item carries
@@ -111,9 +113,10 @@ export function CoachToolbarMenu({
    * pick between (the Schedule's view menu joined with Add event, Sheet Frame D5, 2026-10-05); leave it
    * off for a desktop-shaped toolbar, and off for the `chip` variant, whose panel belongs beside its pill.
    *
-   * ⚠⚠ **THE SCRIM RENDERS INSIDE `rootRef` — THE ELEMENT `useDismissable` WATCHES — AND THAT IS A
-   * FIX, NOT A TIDY-UP.** A scrim rendered as a SIBLING of the watched element makes the dismiss
-   * hook's `pointerdown` listener fire first, unmount the overlay, and let the following `click`
+   * ⚠⚠ **THE SCRIM IS INSIDE THE BOUNDARY THE "TAP OUTSIDE" LISTENER WATCHES — AND THAT IS A FIX, NOT
+   * A TIDY-UP.** Since Sheet Frame step 5 the sheet frame watches its own sheet, dim and opener (the
+   * trigger); before, it was this root, under `useDismissable`. A scrim outside the watched boundary
+   * makes the listener's `pointerdown` fire first, unmount the overlay, and let the following `click`
    * land on whatever the scrim was covering. Reproduced next door on 2026-09-22 under touch
    * emulation: dismissing the lineup builder's row menu pressed the button underneath and marked
    * the lineup READY — a state with no product path back, repaired in the database by hand. **A
@@ -218,8 +221,6 @@ export function CoachToolbarMenu({
    *  sheet's dim (whose hand-back is the frame's own: `opener`). */
   const dismiss = useCallback(() => { setOpen(false); rescueFocus(); }, [setOpen, rescueFocus]);
 
-  useDismissable(open, rootRef, dismiss);
-
   /** The items a keyboard may land on. Disabled rows are not focus stops.
    *  ⚠ BOTH ROLES. A `checked` row is a `menuitemradio`, and until Sheet Frame step 2 (2026-10-05) this
    *  read `menuitem` alone — so a menu made of choices (the Schedule's List · Week · Month, the practice
@@ -261,6 +262,14 @@ export function CoachToolbarMenu({
       case 'ArrowUp': event.preventDefault(); focusAt(at - 1); break;
       case 'Home': event.preventDefault(); focusAt(0); break;
       case 'End': event.preventDefault(); focusAt(list.length - 1); break;
+      // A row that leaves the page is a link (`href`), which a browser activates on Enter alone; a menu item
+      // answers Space too, as the button rows beside it do (/review, Sheet Frame step 5).
+      case ' ':
+        if (event.target instanceof HTMLAnchorElement && event.target.matches('[role="menuitem"]')) {
+          event.preventDefault();
+          event.target.click();
+        }
+        break;
       default: break;
     }
   };
@@ -274,6 +283,11 @@ export function CoachToolbarMenu({
      matchMedia listener per player for a drawer those callers never request (/review, 2026-09-22). */
   const isPhone = useIsPhone(drawerOnPhone);
   const asDrawer = drawerOnPhone && isPhone;
+  /* The popover answers its own outside tap and Escape. The sheet does not: the frame answers a sheet's
+     Escape, Back and outside tap, and hands focus back to the trigger (Sheet Frame step 5) — answered here
+     too, Escape would close it twice and nothing would stand the back step a phone needs (before step 5,
+     Back with the Tools sheet open left the page). */
+  useDismissable(open && !asDrawer, rootRef, dismiss);
   /* The drawer is a phone presentation of the SAME panel (E1). `useAnchoredMenu` is still called — a
      hook cannot be conditional — but it PLACES only the popover: in drawer mode its measured
      `top`/`left` would be thrown away (inline, they would also beat the frame's `position: fixed`),
@@ -308,7 +322,7 @@ export function CoachToolbarMenu({
      BEHIND them. `rescueFocus` is the answer, and it yields to a dialog that focuses itself rather than
      competing with it (see its own note above). */
   const pickCloses = (event: React.MouseEvent) => {
-    if ((event.target as HTMLElement).closest('button')) dismiss();
+    if ((event.target as HTMLElement).closest('button, a[href]')) dismiss();
   };
 
   return (
@@ -339,8 +353,9 @@ export function CoachToolbarMenu({
         {variant === 'glyph' ? null : collapseOnPhone ? <span className={shared.headerBtnLabel}>{label}</span> : label}
         {variant !== 'chip' && variant !== 'glyph' && <ChevronDown size={14} aria-hidden />}
       </button>
-      {/* ⚠ Inside `rootRef`, the element `useDismissable` watches — the frame brings its dim with it (see
-          `SheetFrame`, and `drawerOnPhone` above for the defect a dim outside it caused). */}
+      {/* The sheet answers its own keys, outside tap and back step (the frame; `useDismissable` above stands down
+          for it), and its dim is inside the boundary it watches — `drawerOnPhone` above has the defect a dim
+          outside it caused. */}
       {open && (asDrawer ? (
         <SheetFrame ref={panelRef} label={drawerTitle} onClose={() => setOpen(false)} opener={triggerRef} role="menu" onClick={pickCloses}>
           {children}
@@ -368,6 +383,7 @@ export function CoachToolbarMenuItem({
   nested = false,
   checked,
   onSelect,
+  href,
 }: {
   icon?: ReactNode;
   label: ReactNode;
@@ -390,26 +406,44 @@ export function CoachToolbarMenuItem({
    * because a screen reader user should not have to learn a second navigation model to reach it.
    */
   nested?: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    // `tabIndex={-1}`: a roving menu has ONE tab stop, the trigger. Arrow keys move between items
-    // (see the component doc above); Tab leaves the menu entirely.
-    <button
-      type="button"
-      className={`${styles.item}${nested ? ` ${styles.itemNested}` : ''}`}
-      role={checked === undefined ? 'menuitem' : 'menuitemradio'}
-      aria-checked={checked === undefined ? undefined : checked}
-      tabIndex={-1}
-      disabled={disabled}
-      onClick={onSelect}
-    >
+} & (
+  | { onSelect: () => void; href?: undefined }
+  /**
+   * ⚠ A ROW THAT GOES TO ANOTHER PAGE IS A LINK (Sheet Frame step 5, 2026-10-06). On a phone the menu is a
+   * sheet that stands a history step (the frame's Back), and a step can only tell that a tap left the page
+   * when the tap was a link: a `router.push` from a button was cancelled by the step's own `history.back()`,
+   * the §258 "Open Player Dues just closes the window" failure. A link also opens in a new tab on a long
+   * press or a middle click, as every other way to another page does.
+   */
+  | { href: string; onSelect?: undefined }
+)) {
+  const className = `${styles.item}${nested ? ` ${styles.itemNested}` : ''}`;
+  const body = (
+    <>
       {icon && <span className={styles.itemIcon}>{icon}</span>}
       <span className={styles.itemText}>
         <span className={styles.itemLabel}>{label}</span>
         {hint && <span className={styles.itemHint}>{hint}</span>}
       </span>
       {checked && <Check size={15} className={styles.itemCheck} aria-hidden />}
+    </>
+  );
+  // `tabIndex={-1}`: a roving menu has ONE tab stop, the trigger. Arrow keys move between items
+  // (see the component doc above); Tab leaves the menu entirely.
+  if (href !== undefined && !disabled) {
+    return <Link href={href} className={className} role="menuitem" tabIndex={-1}>{body}</Link>;
+  }
+  return (
+    <button
+      type="button"
+      className={className}
+      role={checked === undefined ? 'menuitem' : 'menuitemradio'}
+      aria-checked={checked === undefined ? undefined : checked}
+      tabIndex={-1}
+      disabled={disabled}
+      onClick={onSelect}
+    >
+      {body}
     </button>
   );
 }

@@ -245,7 +245,7 @@ export default function LedgerTab() {
               <CoachToolbarMenuHeading>The club’s lists</CoachToolbarMenuHeading>
               <CoachToolbarMenuItem label="Payees"
                 hint={shares ? 'Rename, merge, or share with teams' : 'Rename a payee or merge two spellings'}
-                onSelect={() => router.push(payeesHref)} />
+                href={payeesHref} />
             </CoachToolbarMenu>
             {canMove && (
               <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => setWin('add')} aria-label="Add entry">
