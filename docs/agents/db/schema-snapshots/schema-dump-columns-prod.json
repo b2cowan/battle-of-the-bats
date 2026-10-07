@@ -189,6 +189,24 @@
     "ordinal_position": 21
   },
   {
+    "table_name": "accounting_entries",
+    "column_name": "budget_category_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "accounting_entries",
+    "column_name": "budget_item_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 23
+  },
+  {
     "table_name": "accounting_ledgers",
     "column_name": "id",
     "data_type": "uuid",

@@ -1,6 +1,16 @@
 [
   {
     "tablename": "accounting_entries",
+    "indexname": "accounting_entries_budget_category_id_idx",
+    "indexdef": "CREATE INDEX accounting_entries_budget_category_id_idx ON public.accounting_entries USING btree (budget_category_id) WHERE (budget_category_id IS NOT NULL)"
+  },
+  {
+    "tablename": "accounting_entries",
+    "indexname": "accounting_entries_budget_item_id_idx",
+    "indexdef": "CREATE INDEX accounting_entries_budget_item_id_idx ON public.accounting_entries USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
+  },
+  {
+    "tablename": "accounting_entries",
     "indexname": "accounting_entries_entry_date_idx",
     "indexdef": "CREATE INDEX accounting_entries_entry_date_idx ON public.accounting_entries USING btree (ledger_id, entry_date DESC)"
   },
@@ -1118,6 +1128,11 @@
     "tablename": "org_budget_lines",
     "indexname": "org_budget_lines_item_id_idx",
     "indexdef": "CREATE INDEX org_budget_lines_item_id_idx ON public.org_budget_lines USING btree (item_id)"
+  },
+  {
+    "tablename": "org_budget_lines",
+    "indexname": "org_budget_lines_one_line_per_item",
+    "indexdef": "CREATE UNIQUE INDEX org_budget_lines_one_line_per_item ON public.org_budget_lines USING btree (org_id, season_year, item_id) WHERE (item_id IS NOT NULL)"
   },
   {
     "tablename": "org_budget_lines",
