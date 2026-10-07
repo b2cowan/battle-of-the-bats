@@ -2,10 +2,10 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * CLUB MONEY — EVERY SENTENCE THE SERVER SAYS ABOUT A MONEY MOVE (Club Tier Stage 3a, session 1).
  *
- * ⚠ DRAFTS FOR /marketing. The ratified drawings fixed what each sentence must CARRY (the team, the
- * thing, the amount, the reason); the words themselves are placement until /marketing rules on them,
- * in one pass with the coach's side so both sides use one set of words. Every string a person can
- * read lives here so that pass touches one file.
+ * ✓ SETTLED BY /marketing 2026-10-07 — the 3a sentences (six changed, the rest kept), after the 3b pass the
+ * same day. The ratified drawings fixed what each sentence must CARRY (the team, the thing, the amount, the
+ * reason); /marketing chose the words, with the coach's side, so both sides use one set of words. Every
+ * string a person can read lives here so a words pass touches one file.
  *
  * ⚖ ONE SPELLING (AGENCY_RULES, 2026-08-24): the methods are the product's one list
  * (`DUES_PAYMENT_METHOD_LABEL`: "E-Transfer", never "e-Transfer"); a request's decision is
@@ -158,11 +158,11 @@ export function clubInstallmentRefusal(state: InstallmentStateWord, teamName: st
   const by = {
     received: { error: 'This payment has already been recorded.', fixedBy: null },
     sent: {
-      error: `${teamName}’s coach has just said they sent this payment. Confirm it from their note instead.`,
+      error: `${teamName}’s coach has just said they sent this payment. Reopen it and press Confirm received.`,
       fixedBy: 'club' as const,
     },
     unpaid: {
-      error: `${teamName}’s coach took back their note that this was sent, so there is nothing to confirm.`,
+      error: `${teamName}’s coach has taken back that they sent this, so there is nothing to confirm yet.`,
       fixedBy: 'coach' as const,
     },
   }[state];
@@ -186,15 +186,15 @@ export function requestRefusal(state: string, side: 'club' | 'coach'): MoneyStat
 }
 
 export const UNLINKED_PAYMENT =
-  'This payment was recorded before payments could be undone together with their ledger lines, so it can’t be undone here. Correct it with an entry on the ledger.';
+  'This payment was recorded before Undo also voided its ledger lines, so it can’t be undone here. Correct it with an entry on the ledger.';
 export const UNLINKED_APPROVAL =
-  'This request was approved before approvals could be reversed together with their ledger lines, so it can’t be reversed here. Correct it with an entry on the ledger.';
+  'This request was approved before Reverse also voided its ledger lines, so it can’t be reversed here. Correct it with an entry on the ledger.';
 
 export const TRANSFER_VOID_REFUSAL: Record<string, string> = {
   not_a_transfer: 'This line isn’t a transfer.',
   already_void: 'This transfer has already been voided.',
   team_book: 'A team’s book is kept by its coaches. A transfer into or out of it can’t be voided here.',
-  from_a_source: 'This line was written by an allocation, a payment request or a fee. Change it where it came from.',
+  from_a_source: 'This line was written by an allocation, a payment request or a house league fee. Change it where it came from.',
 };
 
 export const TEAM_BOOK_READ_ONLY =
@@ -275,7 +275,7 @@ export function reminderEmailLines(p: {
       return `${l.allocation}${installmentOf(l.number, l.of)} · ${fmt(l.amount)} · due ${due}${late}`;
     }),
     total: `Total: ${fmt(total)}`,
-    outro: `To arrange payment, reply to this email and it will reach ${p.senderName}. Once you’ve sent it, tell the club from your team’s Money page, under Club.`,
+    outro: `To arrange payment, reply to this email and it will reach ${p.senderName}. Once you’ve sent the money, open Money › Club in your team’s portal and tap We’ve sent it, so the club knows to look for it.`,
   };
 }
 
@@ -315,7 +315,7 @@ export function teamsWord(teams: readonly WordTeam[], activeTeams: readonly Word
 // ── Club Tier Stage 3b: the plan, Budget vs. Actual, the board summary ────────────────────────
 /* ✓ SETTLED BY /marketing 2026-10-07 (the 3b words pass, after the §271 walks), with the screens' block below.
    The row names are the hub's drawn words (specimens 1–3); the refusals carry what the drawing fixed (the figure
-   in the way). ⚠ The 3a sentences ABOVE are still drafts: their /marketing pass is owed (plan, 3a session 1). */
+   in the way). The 3a sentences above were settled the same day, in their own pass. */
 
 /** The revenue row nobody types: what the club billed its teams from the year's cost lines. */
 export const FROM_THE_TEAMS_WORD = 'From the teams';

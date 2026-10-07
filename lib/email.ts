@@ -1362,7 +1362,7 @@ export function cancellationConfirmationHtml(p: {
 
 /**
  * An allocation reminder to a team's money people (Club Tier Stage 3a, Ask 4). The words are
- * `reminderEmailLines` (lib/club-money-words.ts, /marketing's drafts); every line is plain text and
+ * `reminderEmailLines` (lib/club-money-words.ts, /marketing's words, settled 2026-10-07); every line is plain text and
  * escaped here. The reply goes to the club person who sent it — the send sets `replyTo`.
  */
 export function allocationReminderHtml(words: { intro: string; items: string[]; total: string; outro: string }): string {
