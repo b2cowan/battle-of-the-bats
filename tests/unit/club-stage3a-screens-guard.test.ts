@@ -58,10 +58,20 @@ describe('the Ledger reads like the coach\'s Ledger (Ask 6), on the coach\'s own
     assert.match(ledger, /filter\(b => b\.ledger\.entityType !== 'team'\)/);
     assert.match(ledger, /router\.replace\(`\$\{base\}\/teams\/\$\{teamBook\.ledger\.entityId\}`\)/, 'a team book\'s old address forwards to the team');
   });
+  it('Item follows Category on BOTH Ledgers, one way, and a ticked item never leaves the list (owner 2026-10-07)', () => {
+    // The club's: the server sends each item WITH its category; the page keeps the picked categories' items + the ticked ones.
+    assert.match(readCode('lib/club-ledger-read.ts'), /items: \{ name: string; category: string \| null \}\[\];/);
+    assert.match(ledger, /\.filter\(i => cats\.size === 0 \|\| \(i\.category !== null && cats\.has\(i\.category\)\)\)\.map\(i => i\.name\),\s*\.\.\.items,/);
+    // The coach's: the same rule over the season's rows.
+    const coach = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx');
+    assert.match(coach, /\.filter\(r => selectedCategories\.size === 0 \|\| \(r\.categoryName != null && selectedCategories\.has\(r\.categoryName\)\)\)\s*\.map\(r => r\.itemName\)\.filter\(\(n\): n is string => !!n\),\s*\.\.\.selectedItems,/);
+    // One way: the Category list is the whole book's categories, never narrowed by the Item filter.
+    assert.match(coach, /registerCategoryNames: \[\.\.\.new Set\(\s*\(book\?\.book \?\? \[\]\)\.map\(r => r\.categoryName\)\.filter\(\(n\): n is string => !!n\),\s*\)\]/);
+  });
   it('both halves of the filed word show — Category then Item, as on the coach’s Ledger (owner 2026-10-07)', () => {
     assert.match(ledger, /<th scope="col">Category<\/th>\s*<th scope="col">Item<\/th>/);
     assert.match(ledger, /data-label="Category">\{row\.category \?\? ''\}<\/td>\s*<td className=\{moneyKit\.cat\} data-label="Item">\{row\.item \?\? ''\}<\/td>/);
-    assert.match(ledger, /label="Item" options=\{\(read\?\.items \?\? \[\]\)/, 'the Item filter lists the items on the book');
+    assert.match(ledger, /label="Item" options=\{itemNames\.map\(/, 'the Item filter lists the items on the book');
     assert.match(ledger, /params\.append\('category', c\)/, 'one category= per choice — a word may carry a comma');
     assert.match(ledger, /params\.append\('item', i\)/, 'one item= per choice — an item may carry a comma');
   });

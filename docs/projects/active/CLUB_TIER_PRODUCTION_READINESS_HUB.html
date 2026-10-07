@@ -6544,7 +6544,7 @@ dialog.truesize::backdrop{background:#16201899}
  <div class="qwwrap">
   <div class="eyebrow">Owner QA</div>
   <h1>Club Tier Readiness — QA walks</h1>
-  <p class="qwlead">Stage 3b — the club’s budget, Budget vs. Actual and the board summary — is walked as <strong>eleven short walks</strong> (ledger §271) — <strong>all eleven passed 2026-10-07</strong> (walk 2 on the owner’s call: step 9’s allocation never reached dev, so a create from a line is proven in Stage 3c’s New allocation walk instead); <strong>walk 12</strong>, the Ledger’s Item column (ledger §279, added the same day), passed 2026-10-07 on the owner’s word; <strong>walk 13</strong>, the coach’s Ledger gaining a Category filter (ledger §280), is owed. Each one tests one job, says what it’s for before you start, and is signed off on its own — a walk can pass while another is still open. Any order works; walk 1 first reads best. Walks 2, 3 and 9 write test data (an allocation, next year’s plan, a ledger entry), so rebuild the club to walk them again. Stage 3a’s six walks, Stage 2’s ten and Stage 1’s eight all passed and are kept below.</p>
+  <p class="qwlead">Stage 3b — the club’s budget, Budget vs. Actual and the board summary — is walked as <strong>eleven short walks</strong> (ledger §271) — <strong>all eleven passed 2026-10-07</strong> (walk 2 on the owner’s call: step 9’s allocation never reached dev, so a create from a line is proven in Stage 3c’s New allocation walk instead); <strong>walk 12</strong>, the Ledger’s Item column (ledger §279, added the same day), passed 2026-10-07 on the owner’s word; <strong>walk 13</strong>, the coach’s Ledger gaining a Category filter (ledger §280), and <strong>walk 14</strong>, Item following Category on both Ledgers (ledger §281), are owed. Each one tests one job, says what it’s for before you start, and is signed off on its own — a walk can pass while another is still open. Any order works; walk 1 first reads best. Walks 2, 3 and 9 write test data (an allocation, next year’s plan, a ledger entry), so rebuild the club to walk them again. Stage 3a’s six walks, Stage 2’s ten and Stage 1’s eight all passed and are kept below.</p>
   <div class="signin" id="qwFound"><strong>The test club is ready — walk it as it is.</strong> It was rebuilt on 2026-10-06 with Stage 3b’s money: revenue on the 2026 plan (Club sponsors, and a Town recreation grant with no date yet); Diamond permits billed twice (Diamond fees 2026 and Fall ball diamond fees 2026) with some of it still left to allocate; the club’s General ledger lines filed under the plan’s words (the helmets under a word with no plan line, so off-plan) and two older lines left Not filed; the tournament’s book taking in its registrations; 15U AAA and 13U AAA paying Town of Milton, the payee the club shares; and money in on 15U AAA, 13U AAA and 16U AA (on its closed season). Stage 3a’s money is all still there. The dev server was restarted and the test sign-ins refreshed the same day. Walks 2, 3 and 9 write test data, so each can be walked once — to walk one again, ask the chat to rebuild the club (<code>node --env-file=.env.local scripts/seed-club-fixture.mjs --reset</code>, then <code>node --env-file=.env.local scripts/seed-uat-coach-fixture.mjs</code>). ⚠ A rebuild resets the test accounts’ passwords, which signs every open window out: sign in again after one.</div>
   <details class="qwsetup" open>
    <summary>Before any walk — sign-in accounts</summary>
@@ -6887,6 +6887,23 @@ const WALKS=[
    {do:'Tick Facilities as well.',see:'Those two plus “Spring classic entry” and “Permits — spring block” (the Facilities ones; the Tournaments line of the same name stays out).'},
    {do:'Back to Every category.',see:'The whole season again, with the Balance column and Cash on hand back.'},
    {do:'Narrow to phone width; tap Filter.',see:'Category sits between Status and Item in the sheet. Pick one: the Filter button counts it; Reset filters puts it back. Widen again.'}
+  ]},
+ {id:'S3BW14',n:14,ledger:'§281',title:'Item follows Category, on both Ledgers',who:'A coach, then the treasurer',minutes:6,
+  short:'Pick a category and the Item filter offers only its items; an item you already ticked never vanishes.',
+  intent:'An item is part of a category, so once a category is picked, items from other categories are dead ends. The Item list now follows Category, on the coach’s Ledger and the club’s — one way only (an item never shortens Category), and no other filter moves either list. An item already ticked stays listed even outside the picked categories: the filter never changes itself under you.',
+  passes:'With a category picked, Item lists only its items; with none, every item; a ticked item outside the picked categories stays listed and ticked; Category’s list never changes when an item is picked.',
+  notIn:'The filters themselves — walks 12 and 13. The Bills view’s Item filter (it has no Category).',
+  signIn:'The UAT coach — uat-coach@uat-test-org.local, UAT Test Team; then the treasurer — Avery Chen, UAT Rep Club.',
+  where:'Desktop browser: the coach’s Money → Ledger (Timeline, Date → Whole season), then the club’s Accounting → Ledger (General book, Date → All time). Read-only: nothing is written.',
+  steps:[
+   {who:'The UAT coach',do:'Open Item with no category picked.',see:'Every item on the season’s book, Bats, Diamond Permits and Socks among them.'},
+   {do:'Category → Team Gear; open Item.',see:'Only Team Gear’s items: Bats and Socks.'},
+   {do:'Tick Socks. Then in Category, untick Team Gear and tick Facilities; open Item.',see:'Diamond Permits, and Socks still there and still ticked; the book shows nothing (no Facilities line is Socks).'},
+   {do:'Untick Socks.',see:'The Facilities lines come back.'},
+   {do:'Tick Diamond Permits; open Category.',see:'Every category is still offered: picking an item never shortens Category.'},
+   {who:'Avery · treasurer',do:'Category → Facilities; open Item.',see:'Only Diamond Permits and Field Equipment.'},
+   {do:'Category → Training as well; open Item.',see:'Coaching Clinics joins them.'},
+   {do:'Back to Every category; open Item.',see:'Every item on the book again.'}
   ]}
 ];
 const WALKS_S3A=[

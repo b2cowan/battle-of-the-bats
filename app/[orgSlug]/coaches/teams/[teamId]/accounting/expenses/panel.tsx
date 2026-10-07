@@ -3234,9 +3234,17 @@ function MoneyRecordsPanel({
       registerCategoryNames: [...new Set(
         (book?.book ?? []).map(r => r.categoryName).filter((n): n is string => !!n),
       )].sort((a, b) => a.localeCompare(b)),
-      registerItemNames: [...new Set(
-        (book?.book ?? []).map(r => r.itemName).filter((n): n is string => !!n),
-      )].sort((a, b) => a.localeCompare(b)),
+      /* ⚖ ITEM FOLLOWS CATEGORY (owner 2026-10-07): an item is part of a category, so with categories picked the
+         list offers only their items — one way only (an item never shortens Category), and never the other
+         filters (a list that moved with the date window would lose words under the coach). A TICKED item always
+         stays listed, even outside the picked categories: it is a narrowing in force, and quietly unticking it
+         would change a filter the coach set. */
+      registerItemNames: [...new Set([
+        ...(book?.book ?? [])
+          .filter(r => selectedCategories.size === 0 || (r.categoryName != null && selectedCategories.has(r.categoryName)))
+          .map(r => r.itemName).filter((n): n is string => !!n),
+        ...selectedItems,
+      ])].sort((a, b) => a.localeCompare(b)),
     };
   }, [book, selectedKinds, selectedCategories, selectedItems, filterTagIds, selectedStatus, dateRange, tagsByExpenseId]);
 

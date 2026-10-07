@@ -102,8 +102,9 @@ export interface BookRead {
   optionCounts: { status: Partial<Record<LineStatus, number>>; type: Partial<Record<LineType, number>> };
   categories: string[];
   /** The Item filter's list: the items this book's lines are filed under, every row (the coach's rule — a choice
-   *  the book never used could only empty the screen). */
-  items: string[];
+   *  the book never used could only empty the screen), each with the category it sits in, so the list can follow
+   *  the Category filter (owner 2026-10-07). One entry per item AND category: a name may sit in two. */
+  items: { name: string; category: string | null }[];
   total: number;
   offset: number;
   limit: number;
@@ -363,9 +364,10 @@ export async function readBook(
   // Every line filed ONCE (`ledgerFiling`): the Category and Item columns, both filters, the items list and the line
   // window all read this, so none of them can file a line differently from another.
   const filed = new Map(all.map(l => [l.id, ledgerFiling(l, kind, () => allocationOf.get(l.id) ?? null)] as const));
-  // The filter's list: every item on THIS book. Not for the export or for a team's (read-only) book.
+  // The filter's list: every item on THIS book, with its category. Not for the export or for a team's (read-only) book.
   const items = opts.all || kind === 'team' ? []
-    : [...new Set([...filed.values()].map(f => f.item).filter((w): w is string => !!w))].sort((x, y) => x.localeCompare(y));
+    : [...new Map([...filed.values()].filter(f => f.item).map(f => [`${f.category}\u0000${f.item}`, { name: f.item!, category: f.category }])).values()]
+      .sort((x, y) => x.name.localeCompare(y.name) || (x.category ?? '').localeCompare(y.category ?? ''));
 
   const win = bookWindow(all, { from: opts.from ?? null, to: opts.to ?? null });
   const typed = win.rows.map(r => ({ ...r, ...filed.get(r.line.id)!, status: r.line.status, type: lineType(r.line) }));

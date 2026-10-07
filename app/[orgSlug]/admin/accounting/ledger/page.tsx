@@ -213,6 +213,13 @@ export default function LedgerTab() {
   const typeOptions = TYPE_ORDER
     .filter(t => t !== 'house_league_fees' || (counts?.type?.house_league_fees ?? 0) > 0)
     .map(t => ({ id: t, label: LINE_TYPE_WORD[t], count: optionCounts?.type?.[t] ?? 0 }));
+  /* ⚖ ITEM FOLLOWS CATEGORY (owner 2026-10-07, both Ledgers): with categories picked, the Item list offers only their
+     items — one way only, and never the other filters. A TICKED item always stays listed, even outside the picked
+     categories: it is a narrowing in force, and quietly unticking it would change a filter the treasurer set. */
+  const itemNames = [...new Set([
+    ...(read?.items ?? []).filter(i => cats.size === 0 || (i.category !== null && cats.has(i.category))).map(i => i.name),
+    ...items,
+  ])].sort((a, b) => a.localeCompare(b));
   /* The Item list is per BOOK (the items on it), so a picked item leaves with the book it was picked on — kept, it
      would narrow the next book to nothing. Category stays: its list is the club's, across every book. */
   const pickBook = (id: string) => { setOpen(null); setItems(new Set()); router.replace(`${base}/ledger?book=${id}`); };
@@ -279,8 +286,8 @@ export default function LedgerTab() {
               <MultiSelectDropdown restQuiet label="Category" options={(read?.categories ?? []).map(c => ({ id: c, label: c }))}
                 selected={cats} onChange={setCats} allLabel="Every category" />
             )}
-            {((read?.items.length ?? 0) > 0 || items.size > 0) && (
-              <MultiSelectDropdown restQuiet label="Item" options={(read?.items ?? []).map(i => ({ id: i, label: i }))}
+            {itemNames.length > 0 && (
+              <MultiSelectDropdown restQuiet label="Item" options={itemNames.map(i => ({ id: i, label: i }))}
                 selected={items} onChange={setItems} allLabel="Every budget item" />
             )}
             <DateRangeDropdown
