@@ -118,7 +118,7 @@ export function clubMonthsNotes(input: ClubMonthsNoteInput): ReportNote[] {
   const out: ReportNote[] = [];
   const opening = note('club-opening', [
     { text: 'The year opened with ' }, { text: input.opening, bold: true },
-    { text: `, what the club’s books held on ${input.firstDay}. It is worked out from the books, so a line dated before ${input.firstDay} moves it until the year is locked.` },
+    { text: `, what the club’s books held on ${input.firstDay}. A line dated before ${input.firstDay} that is added or changed later moves it.` },
   ]);
   switch (input.lens) {
     case 'budget':
@@ -131,7 +131,7 @@ export function clubMonthsNotes(input: ClubMonthsNoteInput): ReportNote[] {
       out.push(note('club-basis-scheduled', [
         { text: 'Scheduled', bold: true },
         { text: ' is what is still to come, from today’s cash (' }, { text: input.cashOnHand, bold: true },
-        { text: '): the teams’ installments not yet received, by due date (an overdue one stays in its month), against the lines written and not yet cleared. A request waiting for your answer has no date and sits under No date yet, counted as possible. The club records no bill before it pays it, so a planned cost still to pay is on Budget, not here.' },
+        { text: '): the teams’ installments not yet received, by due date (an overdue one stays in its month), less the lines written and not yet cleared. A request waiting for your answer has no date: it sits under No date yet, counted as possible. The club doesn’t record a bill until it pays it, so a planned cost still to pay shows on Budget, not here.' },
       ]));
       break;
     case 'actual':

@@ -313,8 +313,9 @@ export function teamsWord(teams: readonly WordTeam[], activeTeams: readonly Word
 }
 
 // ── Club Tier Stage 3b: the plan, Budget vs. Actual, the board summary ────────────────────────
-/* ⚠ DRAFTS FOR /marketing, like every sentence above. The row names are the hub's drawn words
-   (specimens 1–3); the refusals carry what the drawing fixed (the figure in the way). */
+/* ✓ SETTLED BY /marketing 2026-10-07 (the 3b words pass, after the §271 walks), with the screens' block below.
+   The row names are the hub's drawn words (specimens 1–3); the refusals carry what the drawing fixed (the figure
+   in the way). ⚠ The 3a sentences ABOVE are still drafts: their /marketing pass is owed (plan, 3a session 1). */
 
 /** The revenue row nobody types: what the club billed its teams from the year's cost lines. */
 export const FROM_THE_TEAMS_WORD = 'From the teams';
@@ -352,7 +353,7 @@ export const CLUB_BUDGET_REFUSAL = {
   has_allocations: 'This line has allocations drawn from it, so it can’t be removed.',
   allocated_line_is_a_cost: 'Teams are billed from this line, so it stays a cost. Choose a money-out word.',
   bad_total: 'The line needs an amount above zero.',
-  bad_description: 'A description is needed, 200 characters at most.',
+  bad_description: 'A name is needed, 200 characters at most.',
   word_required: 'Choose what this line is filed under.',
   bad_source_entry: 'That isn’t one of the club’s ledger entries.',
 } as const;
@@ -364,8 +365,8 @@ export const FILED_UNDER_REFUSAL = {
 } as const;
 
 // ── Club Tier Stage 3b, the screens (session 2): every sentence the Budget, Budget vs. Actual, the board
-//    summary, a team's money, the payee report and the coach's Club tab print. ⚠ DRAFTS FOR /marketing,
-//    tagged on the hub (specimens 1–6); the drawings fixed what each must CARRY — the words are placement. ──
+//    summary, a team's money, the payee report and the coach's Club tab print. ✓ SETTLED BY /marketing
+//    2026-10-07 (twelve changed, the rest kept; the Months notes in club-money-reports.ts with them). ──
 
 /** A partly billed cost line, under its name: the part the club pays itself unless it allocates it. */
 export const notAllocatedCaption = (amount: number) =>
@@ -374,8 +375,8 @@ export const notAllocatedCaption = (amount: number) =>
 /** The Budget's band captions (Total revenue · Total expenses · Closing balance). */
 export const BUDGET_BAND_WORDS = {
   revenue: (fromTheTeams: number, otherLines: number) => (fromTheTeams > 0.005
-    ? `${fmt(fromTheTeams)} from the teams${otherLines > 0 ? ` · ${otherLines} more ${otherLines === 1 ? 'line' : 'lines'}` : ''}`
-    : otherLines > 0 ? `${otherLines} ${otherLines === 1 ? 'line' : 'lines'}` : 'Nothing planned in yet'),
+    ? `${fmt(fromTheTeams)} from the teams${otherLines > 0 ? ` · ${otherLines} other ${otherLines === 1 ? 'line' : 'lines'}` : ''}`
+    : otherLines > 0 ? `${otherLines} ${otherLines === 1 ? 'line' : 'lines'}` : 'Nothing planned yet'),
   expenses: (allocated: number) => (allocated > 0.005 ? `${fmt(allocated)} of it allocated to teams` : 'None of it allocated to teams yet'),
   /** "$30.00 less than the year opened with" — the plan's close against its opening. */
   closing: (net: number) => (Math.abs(net) <= 0.005
@@ -385,14 +386,14 @@ export const BUDGET_BAND_WORDS = {
 
 /** Where the plan's opening comes from (Ask 5): worked out from the books, never typed. */
 export const budgetOpeningNote = (opening: number, firstDay: string) =>
-  `The year opened with ${fmt(opening)}, what the club’s books held on ${formatStoredDate(firstDay, { withYear: false })}, worked out from the books. Revenue and expenses are planned; money is assumed to arrive and leave in its planned months.`;
+  `The year opened with ${fmt(opening)}, what the club’s books held on ${formatStoredDate(firstDay, { withYear: false })}. Revenue and expenses are planned; money is assumed to arrive and leave in its planned months.`;
 
 /** The plan's closing rows' words ("Opening balance · Jan 1", "Net for 2026"). */
 export const openingBalanceRowWord = (firstDay: string) => `Opening balance · ${formatStoredDate(firstDay, { withYear: false })}`;
 export const netForYearWord = (year: number) => `Net for ${year}`;
 
 /** By period, under the grid: how From the teams spreads. */
-export const FROM_THE_TEAMS_SPREAD_NOTE = 'From the teams spreads by its installments’ due dates; every other line by its own periods.';
+export const FROM_THE_TEAMS_SPREAD_NOTE = 'From the teams is placed by its installments’ due dates; every other line by its own dates.';
 /** By period, money dated outside the year (it sits under No date yet, in the Total and in no month). */
 export const outsideTheYearNote = (year: number) =>
   `Some of this plan is dated outside ${year}. It sits under No date yet: in the year’s Total, in no month. Change its dates to place it.`;
@@ -409,7 +410,7 @@ export const emptyYearWords = (year: number, from: number | null) => ({
 /** The line window's allocations section. */
 export const LINE_ALLOCATIONS_WORD = 'Allocated to teams';
 export const allocationRowCaption = (teams: string, otherTeams: number, allocated: number, collected: number) =>
-  `${[teams, otherTeams > 0 ? `${otherTeams} more ${otherTeams === 1 ? 'team' : 'teams'}` : ''].filter(Boolean).join(' · ')} · ${fmt(allocated)} · ${fmt(collected)} collected`;
+  `${[teams, otherTeams > 0 ? `${otherTeams} more ${otherTeams === 1 ? 'team' : 'teams'}` : ''].filter(Boolean).join(' · ')} · ${fmt(allocated)} allocated · ${fmt(collected)} collected`;
 export const NOT_ALLOCATED_LEAD = 'The club pays this part itself unless you allocate it.';
 
 /** The board summary (the Overview tab) — Ask 1. */
@@ -437,7 +438,7 @@ export const SUMMARY_WORDS = {
   teamsCashBand: (total: number, teams: number) =>
     `Held by the teams: ${fmt(total)} across ${teams} ${teams === 1 ? 'team' : 'teams'}. The coaches’ own books; never part of the club’s figures above.`,
   teamsCashBandShort: (total: number) =>
-    `Held by the teams ${fmt(total)} in all: the coaches’ own books, never in the club’s figures.`,
+    `Held by the teams: ${fmt(total)} in all. The coaches’ own books, never in the club’s figures.`,
   phoneYear: (spent: number, plannedOut: number, collected: number, plannedIn: number, headroom: number) =>
     `Spent ${fmt(spent)} of ${fmt(plannedOut)} · collected ${fmt(collected)} of ${fmt(plannedIn)} · headroom ${fmt(headroom)}`,
 } as const;
@@ -453,7 +454,7 @@ export const teamCashClosedWord = (closedOn: string | null) => `at close, ${form
 
 /** A team's account with the club: the callout, reworded for what 3b reads (specimen 4). */
 export const teamAccountCallout = (teamName: string) =>
-  `${teamName}’s money is kept by its coaches, in their portal. The club reads one figure of it, the team’s cash on hand, and never adds it into the club’s figures. The rest of this page is the club’s side of the team: what it billed, what it received, what it paid the team. Nothing here can be changed.`;
+  `${teamName}’s money is kept by its coaches, in their portal. The club reads one figure of it, the team’s cash on hand, and never adds it to the club’s figures. The rest of this page is the club’s side of the team: what it billed, what it received, what it paid the team. Nothing here can be changed.`;
 
 /** The Rep Teams team page's "What the club sees" — the two lines 3b and Ledger Parity add. */
 export const WHAT_THE_CLUB_SEES_3B = {
@@ -475,7 +476,7 @@ export const PAYEE_REPORT_WORDS = {
   calloutShort: (sharedOn: string | null) =>
     `What each team recorded paying it${sharedOn ? ` since you shared it on ${formatStoredDate(sharedOn, { withYear: false })}` : ''}. The teams’ own records, not proof of payment.`,
   foot: (sharedOn: string | null) => (sharedOn
-    ? `A payment counts when a team recorded it on or after ${formatStoredDate(sharedOn, { withYear: false })}, against a bill entered on or after ${formatStoredDate(sharedOn, { withYear: false })}. A team’s other payees and other spending never show.`
+    ? `A payment counts only when the team recorded it, and the bill it pays, on or after ${formatStoredDate(sharedOn, { withYear: false })}. A team’s other payees and other spending never show.`
     : 'A team’s other payees and other spending never show.'),
   recordedBand: (teams: number, total: number) => `${teams} ${teams === 1 ? 'team' : 'teams'} recorded · ${fmt(total)}`,
   nothingBand: (n: number) => `Nothing recorded · ${n}`,
