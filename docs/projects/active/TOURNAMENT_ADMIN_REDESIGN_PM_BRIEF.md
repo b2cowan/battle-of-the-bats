@@ -157,7 +157,10 @@ Post-event summary) still find it.
 **One Tournaments list, drawn and ruled 6 October after the build (the owner's question).** Ruled: one list as
 drawn, every band open, and the door in the Admin section where "Past tournaments" sits today rather than at the top
 of the menu (the list is visited now and then; switching events and starting a new one already have their own
-buttons). The drawing below described the first version. Walking the desk walk,
+buttons). The drawing below described the first version. **Built the same day:** the list, the Admin entry on
+a desk and on a phone, the old Past tournaments address opening the list, and the wording and help that pointed
+people to Past tournaments. A status change now keeps the tournament's page open while it moves group behind it.
+The desk walk (§276) is rewritten for one list. Walking the desk walk,
 the owner couldn't find the Tournaments list (there is still no way to it from inside an event) and asked why there
 are two lists at all. Drawn on the hub's Stage 4 tab: **one page, "Tournaments"**, with what's ahead on top and what's
 finished below it (Active · Draft · Completed · Archived · Sealed records), each band saying once whether its public

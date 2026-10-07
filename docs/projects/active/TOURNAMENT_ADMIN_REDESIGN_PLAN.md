@@ -1196,7 +1196,41 @@ board); on a phone More shows every group open, so it costs nothing there. Accep
 folded at the rail's foot (a scroll and a click). Fallback if a walk shows people still can't find it: an "All
 tournaments" line in the tournament picker, not the top of the rail. The row wears a list mark (Results already wears
 the trophy). Hub v27 redraws the More sheet and the desk rail with it in Admin. Supersedes A22's two lists; fixes F48
-and F57. **Next:** the build, then walk §276 rewritten for one list.
+and F57. **Built the same day (below); walk §276 rewritten for one list (hub v28).**
+
+**D7 — as built (2026-10-06, hub v28 "Built" block; committed `47efa6c3`).** `lib/tournament-lists.ts`
+holds ONE model: `listBands()` (Active · Draft soonest first, Completed · Archived latest first, an empty band
+absent), `walkOrder()`, `isFinished()`; `aheadBands` / `pastBands` / `listOf` are gone. The Tournaments page
+(`admin/org/tournaments/page.tsx`, re-exported at `tournaments/manage`) draws every band, each band's site note
+once (`LIST_WORDS.bandSite`), Reuse setup on Completed rows (the clone analytics surface
+`manage_tournaments_row`), and the Sealed records band with the Public ledger door only when a sealed record
+exists (a row on a phone, the band row's right edge at a desk). `tournaments/archives/page.tsx` is now a server
+redirect to `tournaments/manage`; its stylesheet is gone. The rail's Admin group item `archives` / Past Tournaments
+became `manage` / Tournaments (a list icon; Results wears the trophy) — the phone's More reads the same groups; the
+tournament-only club's off-tournament "Tournaments" row now links `tournaments/manage`. A status change keeps the
+record open (the event stays in the one list and moves band). Words: Mark complete's question drops "moves to Past
+tournaments" and ends "You can reopen it from its record."; `LOCKED_RESULTS` / `LOCKED_IMPORTS` and both archive
+sentences point at the Tournaments list; `LIST_WORDS.teams(n, finished)` says "no teams" on a finished event
+(the record too); the help's closeout subtopic `closeout-two-lists` (id kept, two pages link it) is now "The
+Tournaments list", every "reopen / bring back from Past tournaments" says the Tournaments list, keywords keep the old
+names for search. The Organization page tile reads "Tournaments". Sweep: `admin-t-archives` left the layout
+screens and its 10 baseline entries (frame-strip findings, the same as `admin-t-manage`'s) were pruned. Found and
+fixed on the way: the desk table's Teams heading sat left of its right-aligned figures (a local `.num` lost to the
+kit's `.table th`); the page now uses the kit's `repKit.num`. Proven read-only (`.probe/s4c/built.mjs`); typecheck,
+5,813/5,813 unit tests, the changed-files gate (one failure: another session's dev-only migration 317).
+**/review (2026-10-06, high-risk tier, three lenses — correctness + security, regression / blast radius, state):**
+nothing Critical, High or Medium. Fixed (Low): the slot line and New tournament now wait for the first read (before
+it, a full plan flashed "0 of 1 in use" and a New tournament that then became the lock line); a club's own sealed
+records list on ANY plan, the lock line following them where sealing isn't on the plan (a club that sealed on
+Tournament Plus and moved plans saw only the lock line); the public sealed-record pages' admin links point at the
+Tournaments list ("← Tournaments", was "← Past Tournaments" via the redirect). Accepted: edit mode now survives a
+status change (no stale state — the form excludes status); a re-read that fails after a change leaves the record on
+the old status with the error unshown (as before); a superseded read can let a busy button re-enable a moment early
+(the server refuses a duplicate); reuse from a Completed row reports `manage_tournaments_row` (the clone event also
+records the source's status, so finished-event reuse is still countable); the redirect drops a query string or
+sub-path (nothing links one); the Sealed records band has no site note (a different kind of band, as drawn);
+`check-public-tokens` and `admin-old-look` still name the archives folder (inert — both gates pass). Rendered check
+`admin-t-manage` + `admin-t-dashboard` at 361 / 390 / 768 / 1440: no new findings.
 
 
 **Why it reopens A22.** Walking §276 step 1 at a desk the owner could not find the list (F48 is still true as built:
