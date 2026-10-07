@@ -39,9 +39,11 @@ export default function AccountingFrame({ orgSlug, runsRepTeams, children }: {
     if (title) document.title = currentOrg?.name ? `${title} | ${currentOrg.name}` : title;
   }, [title, currentOrg?.name]);
 
-  if (!tab) return <>{children}</>;
+  // Every Accounting route sits in the money frame's width (the coach's money pages' 1200px), a page one level down
+  // included: its own `.page` gives up the club kit's narrower cap inside it (RepKit.module.css).
+  if (!tab) return <div className={repKit.moneyFrame}>{children}</div>;
   return (
-    <div className={repKit.page}>
+    <div className={`${repKit.page} ${repKit.moneyFrame}`}>
       {/* No eyebrow: the club's name is already in the bar above (owner, 2026-10-01). */}
       <AdminPageHeader title="Accounting" />
       <HubTabBar tabs={tabs} activeId={tab} ariaLabel="Accounting" />

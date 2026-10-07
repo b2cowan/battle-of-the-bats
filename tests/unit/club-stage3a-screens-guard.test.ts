@@ -35,7 +35,8 @@ describe('the frame — Accounting is one page with tabs (Ask 2 option B)', () =
     const frame = readCode(`${MONEY}/AccountingFrame.tsx`);
     // No actions (no create in the header) and no eyebrow (the club's name is in the bar above, owner 2026-10-01).
     assert.match(frame, /<AdminPageHeader title="Accounting" \/>/);
-    assert.match(frame, /if \(!tab\) return <>\{children\}<\/>;/);
+    // One level down: the page alone — no header, no tab row — inside the money frame's width (2026-10-07).
+    assert.match(frame, /if \(!tab\) return <div className=\{repKit\.moneyFrame\}>\{children\}<\/div>;/);
   });
 });
 
