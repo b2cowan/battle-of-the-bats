@@ -98,9 +98,11 @@
 .multiSelectDivider { height: 1px; background: var(--border-2); margin: 0.3rem 0.2rem; }
 
 /* ── SingleSelectDropdown — the ARRANGEMENT member of the family (Payables Rebuild P3) ──────────
-   Same pill face, a list of picks instead of checkboxes. `multiSelectLead` marks the one control
-   in a strip that chooses an arrangement rather than a narrowing (plan §7): it sits first and
-   carries the accent, so it can never be mistaken for another filter. */
+   Same pill face, a list of picks instead of checkboxes. `multiSelectLead` marks a control that
+   chooses what is read — a scope (Year, Book) or an arrangement (View) — rather than a narrowing
+   (plan §7): it leads the strip and carries the accent, so it can never be mistaken for a filter.
+   A narrowing is the opposite face: plain and label-only at rest, the olive tint below once it
+   hides something (`.multiSelectActive`). */
 .multiSelectLead > .multiSelectSummary {
   border-color: rgba(var(--logic-lime-rgb), 0.4);
   background: rgba(var(--logic-lime-rgb), 0.08);

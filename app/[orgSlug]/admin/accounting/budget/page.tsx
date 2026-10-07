@@ -4,12 +4,14 @@
  * S3B-03, J4-026; Asks 2, 4a, 4b, 4d, 5).
  *
  * The coach's Budget with the club's one difference, billing teams, built into the line:
- *   toolbar — ONE line, the same in both views (owner 2026-10-01): Year · View (List · By period) · When
- *             (List only, while a line has no date) or Columns (By period) · Export · Tools · the one lime
- *             Add line, in the Ledgers' order (2026-10-02). On a phone: Year, View, a 44px Tools (Export
- *             joins it) and a 44px lime +. Tools holds Categories and the teams' own words, each a window.
  *   band    — the coach's: Total revenue · Total expenses · Closing balance (red only below zero). The
  *             old four cards go (two are columns now; "Unallocated" was one of four names for one thing).
+ *             Above the toolbar, as on every coach money tab and Budget vs. Actual (/design §271, 2026-10-07).
+ *   toolbar — ONE line, the same in both views (owner 2026-10-01): Year · View (List · By period) · When
+ *             (List only, while a line has no date; quiet at rest) or Columns (By period) · Collapse all ·
+ *             Export · Tools · the one lime Add line, in the Ledgers' order (2026-10-02). On a phone: Year,
+ *             View, a 44px Tools (Collapse all and Export join it) and a 44px lime +. Tools holds Categories
+ *             and the teams' own words, each a window.
  *   List    — BudgetPlanList (revenue first, the category is the shelf, Planned · Allocated · Collected).
  *   By period — the coach's OWN period grid (promoted, components/coaches/MoneyPeriodGrid), fed the coach's
  *             own period view of the club's plan, built on the server (one arithmetic, gated).
@@ -40,12 +42,14 @@ import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { LoadFailed, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { money, moneyFetch, jsonInit, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
 import YearPill, { useClubYear } from '@/components/admin/kit/club/money/YearPill';
-import BudgetPlanList, { lineHasUndated, type WhenFilter } from '@/components/admin/kit/club/money/BudgetPlanList';
+import BudgetPlanList, { lineHasUndated, planFoldKeys, type WhenFilter } from '@/components/admin/kit/club/money/BudgetPlanList';
 import {
   AddLineWindow, BudgetLineWindow, CategoriesWindow, FromTheTeamsWindow, TeamWordsWindow,
 } from '@/components/admin/kit/club/money/BudgetWindows';
 import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/components/admin/kit/club/money/ClubMoneyExport';
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
+import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
+import bud from '@/app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/budget.module.css';
 import { fmt as fmtSigned } from '@/lib/coach-money-summary';
 import { PLAN_LADDER_LABEL } from '@/lib/coach-budget-totals';
 import { GRANULARITY_LABEL, PERIOD_GRANULARITIES, whenSummary, whenSummaryText, type PeriodGranularity } from '@/lib/coach-budget-periods-view';
@@ -206,6 +210,14 @@ export default function BudgetTab() {
     set(s => { const n = new Set(s); if (n.has(key)) n.delete(key); else n.add(key); return n; });
   const otherRevenueLines = plan.revenue.categories.reduce((n, c) => n + c.lines.length, 0);
   const periodView = granularity === 'quarters' ? plan.periodView.quarters : plan.periodView.months;
+  /* Collapse all / Expand all — the coach's section-level fold, on whichever view is on screen, and only where there is
+     something to fold (§271, 2026-10-07: the 3b drawing left it off the Budget while drawing it on Budget vs. Actual,
+     and it is not one of the six named differences). A computer: a quiet button after the pills; a phone: a row in Tools. */
+  const foldKeys = isEmpty ? [] : view === 'period' ? periodView.groups.map(g => g.key) : planFoldKeys(plan, hasUndated ? when : 'all');
+  const foldSet = view === 'period' ? gridClosed : closed;
+  const allFolded = foldKeys.length > 0 && foldKeys.every(k => foldSet.has(k));
+  const foldWord = allFolded ? 'Expand all' : 'Collapse all';
+  const foldAll = () => (view === 'period' ? setGridClosed : setClosed)(allFolded ? new Set() : new Set(foldKeys));
 
   async function startFrom() {
     if (starting || fromYear == null || !plan) return;
@@ -226,11 +238,36 @@ export default function BudgetTab() {
   return (
     <>
       {notice && <PageNotice notice={notice} />}
+      {/* THE FIGURES FIRST, THEN THE TOOLBAR (/design §271, 2026-10-07) — the order on Budget vs. Actual one tab over
+          and on every coach money tab (the Dues ruling, 2026-09-03: the band answers for the whole year under either
+          lens, so switching View or When changes only what is beneath the toolbar). The 3b build spec listed this
+          tab toolbar-first with no reason given. An empty year has no band, and the toolbar leads. */}
+      {!isEmpty && (
+        <MoneySummaryBand
+          ariaLabel="Budget summary"
+          tiles={[
+            {
+              key: 'revenue', label: PLAN_LADDER_LABEL.totalRevenue, figure: money(plan.revenue.total), tone: 'good',
+              caption: BUDGET_BAND_WORDS.revenue(plan.revenue.fromTheTeams.planned, otherRevenueLines),
+            },
+            {
+              key: 'expenses', label: PLAN_LADDER_LABEL.totalExpenses, figure: money(plan.expenses.total),
+              caption: BUDGET_BAND_WORDS.expenses(plan.expenses.allocated),
+            },
+            {
+              key: 'closing', label: PLAN_LADDER_LABEL.closingBalance, figure: fmtSigned(plan.closingBalance),
+              tone: plan.closingBalance < -0.005 ? 'danger' : 'plain',
+              caption: BUDGET_BAND_WORDS.closing(plan.net),
+            },
+          ]}
+        />
+      )}
       <CoachListToolbar
         actions={(
           <>
             {!isPhone && exportButton}
             <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={15} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools">
+              {isPhone && foldKeys.length > 0 && <CoachToolbarMenuItem label={foldWord} onSelect={foldAll} />}
               <CoachToolbarMenuItem label="Categories" hint="Rename the club’s shared headings" onSelect={() => setWin('categories')} />
               <CoachToolbarMenuItem label="Words your teams use" hint="Publish a team’s word to every team" onSelect={() => setWin('words')} />
               {isPhone && !isEmpty && (
@@ -254,7 +291,8 @@ export default function BudgetTab() {
           options={[{ id: 'list', label: 'List' }, { id: 'period', label: 'By period' }]}
           onChange={next => setView(next as 'list' | 'period')} />
         {view === 'list' && hasUndated && (
-          <SingleSelectDropdown label="When" value={when}
+          /* A narrowing, so quiet at rest and olive once it hides rows — the coach's When (§271, 2026-10-07). */
+          <SingleSelectDropdown label="When" restQuiet restValue="all" value={when}
             options={[{ id: 'all', label: 'All' }, { id: 'undated', label: 'No date yet' }, { id: 'dated', label: 'Dated' }]}
             onChange={next => setWhen(next as WhenFilter)} />
         )}
@@ -262,6 +300,9 @@ export default function BudgetTab() {
           <SingleSelectDropdown label="Columns" value={granularity}
             options={PERIOD_GRANULARITIES.map(g => ({ id: g, label: GRANULARITY_LABEL[g] }))}
             onChange={next => setGranularity(next as PeriodGranularity)} />
+        )}
+        {!isPhone && foldKeys.length > 0 && (
+          <button type="button" className={`${shared.btnGhost} ${bud.collapseAllBtn}`} onClick={foldAll}>{foldWord}</button>
         )}
       </CoachListToolbar>
 
@@ -283,24 +324,6 @@ export default function BudgetTab() {
         </div>
       ) : (
         <div className={cr.report}>
-          <MoneySummaryBand
-            ariaLabel="Budget summary"
-            tiles={[
-              {
-                key: 'revenue', label: PLAN_LADDER_LABEL.totalRevenue, figure: money(plan.revenue.total), tone: 'good',
-                caption: BUDGET_BAND_WORDS.revenue(plan.revenue.fromTheTeams.planned, otherRevenueLines),
-              },
-              {
-                key: 'expenses', label: PLAN_LADDER_LABEL.totalExpenses, figure: money(plan.expenses.total),
-                caption: BUDGET_BAND_WORDS.expenses(plan.expenses.allocated),
-              },
-              {
-                key: 'closing', label: PLAN_LADDER_LABEL.closingBalance, figure: fmtSigned(plan.closingBalance),
-                tone: plan.closingBalance < -0.005 ? 'danger' : 'plain',
-                caption: BUDGET_BAND_WORDS.closing(plan.net),
-              },
-            ]}
-          />
           {view === 'list' ? (
             <BudgetPlanList
               plan={plan}

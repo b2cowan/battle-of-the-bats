@@ -45,8 +45,11 @@ export default function SingleSelectDropdown({
   value: string;
   onChange: (next: string) => void;
   /**
-   * Is this the ARRANGEMENT control? It sits first in the strip and takes the accent, so it never
-   * reads as another narrowing (plan §7). Exactly one control per strip should set this.
+   * Does this pill choose WHAT IS READ rather than narrow it — the scope (the club's Year, the Ledger's
+   * Book) or the arrangement (View)? It leads the strip and takes the accent, so it never reads as
+   * another narrowing (plan §7). At most one scope and one arrangement, in that order (the club's Budget
+   * and Budget vs. Actual lead Year · View, ruled with the Stage 3b drawings 2026-10-06; /design §271,
+   * 2026-10-07). A narrowing is never `lead` — it takes `restQuiet`.
    */
   lead?: boolean;
   /**

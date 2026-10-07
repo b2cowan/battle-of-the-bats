@@ -7,6 +7,33 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-07 — THE OLIVE PILL CHOOSES WHAT IS READ; A FILTER IS QUIET UNTIL IT FILTERS; A MONEY TAB'S FIGURES SIT ABOVE ITS TOOLBAR (owner, walking §271 on the club Budget: *"are these filters supposed to be different colors and sizes?"*, then *"go ahead and run it through design and fix it"* and *"sure, review and commit"* to the `/design` report)
+
+**Decision:** (1) **Two faces, two jobs.** The olive-tinted pill (`lead`) chooses WHAT IS READ — a scope (the
+club's Year, the Ledger's Book) or an arrangement (View). A strip may lead with one of each, scope first
+(the club's Budget and Budget vs. Actual: Year · View, as the Stage 3b drawings had them). A narrowing is
+never `lead`: it is plain and shows only its name at rest, and takes the olive working tint plus its choice
+the moment it hides something (`restQuiet`). The Budget's **When** was the slip — it read "When All" in the
+plain face and stayed plain once filtered, on BOTH the club's and the coach's Budget; now quiet at rest on
+both. The sizes were never different (all three pills 30px, measured); the 30 vs the buttons' 34 is the
+10-03 control-height ruling. (2) **On a money tab whose band and toolbar both exist, the band comes first**
+— every coach money tab and the club's Budget vs. Actual already did, and the Dues ruling (2026-09-03) is
+the reason: the band answers for the whole year/season under either lens, so a lens changes only what is
+beneath the toolbar. The club's Budget had it the other way round because the 3b build spec listed it so,
+with no reason given; moved. **Not the club Overview:** it is a document of headed sections whose toolbar
+(Year + the board report) heads the whole page — the coach's Fundraising does the same with its export.
+(3) **The club's Budget gets Collapse all / Expand all**, the coach's control: a quiet button after the
+pills on a computer, a row in Tools on a phone, on List and By period. The 3b drawing drew it on Budget vs.
+Actual and left it off the Budget; it is not one of the six named differences (2026-10-06), so its absence
+was drift.
+**Rationale:** the owner could not tell from the colours which pills were set and which were filtering,
+because the one narrowing on the row wore neither face it should. Two olive pills are fine once the filter
+beside them is visibly a different kind of control; making the lead pills quieter instead would have been
+a portal-wide change to fix one pill's slip. The order and the fold are the same lesson the 3b ruling
+already names: a difference that is not one of the six is drift, not design.
+**Applies to:** `SingleSelectDropdown` `lead` / `restQuiet` everywhere; the club's Budget; the coach's Budget
+Plan; any future money tab with a band and a toolbar.
+
 ### 2026-10-07 — A CLOSE × IS A PLAIN GLYPH: NO OUTLINE, NO CIRCLE, NO SQUARE (owner, on screenshots of the lineup builder's Print, Copy from and Save as template sheets: *"why do some of these have no X, some have an X with no border, some have an X with a round border, and some have an X with a square border"*; then *"I agree with borderless, I think its small enough to go ahead and build without needing to be drawn up"*)
 
 **Decision:** a close × is the bare glyph in its tap area — 44px wherever the bar shows, and on a computer

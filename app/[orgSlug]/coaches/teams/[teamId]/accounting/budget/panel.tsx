@@ -2797,10 +2797,15 @@ export function BudgetPlanPanel({
                   already follow. A plan with every line dated has nothing to narrow to, and a
                   control that can never change anything is worse than no control.
                   ⚠ LIST ONLY. The By-period view answers "when" with its columns; hiding rows
-                  there would empty months a coach is reading across. */}
+                  there would empty months a coach is reading across.
+                  ⚠ A NARROWING, SO QUIET AT REST (owner, §271 walk 2026-10-07): the bare word "When"
+                  until a coach picks, then the olive tint and its choice. It read "When All" in the
+                  plain face, and stayed plain once it hid rows, so a narrowed plan looked whole. */}
               {viewMode === 'list' && undatedLines.length > 0 && (
                 <SingleSelectDropdown
                   label="When"
+                  restQuiet
+                  restValue="all"
                   value={whenFilter}
                   options={[
                     { id: 'all',     label: 'All' },

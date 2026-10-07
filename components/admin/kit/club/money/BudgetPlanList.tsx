@@ -47,6 +47,15 @@ export type WhenFilter = 'all' | 'undated' | 'dated';
 export const lineHasUndated = (l: { periods: readonly ClubPlanPeriod[]; planned: number }) =>
   whenSummary(l.periods.map(p => ({ periodDate: p.date, amount: p.amount })), l.planned).undated > 0.005;
 
+/** A category's fold key — the one the list's closed set holds. */
+const keyOf = (c: PlanCategory) => `${c.direction}|${c.categoryId ?? c.categoryName}`;
+
+/** Every category the List SHOWS, both sides — Collapse all's set (the coach's section-level fold). Only what the When
+ *  filter leaves on screen, as the coach's: a hidden category counted here would keep the label on "Collapse all"
+ *  after every visible one had folded. */
+export const planFoldKeys = (plan: ClubPlan, when: WhenFilter): string[] =>
+  [...plan.revenue.categories, ...plan.expenses.categories].filter(c => c.lines.some(l => passes(l, when))).map(keyOf);
+
 const passes = (l: PlanLineRow, f: WhenFilter) => f === 'all' || (f === 'undated' ? lineHasUndated(l) : !lineHasUndated(l));
 
 /** A line's answer to "when does this money move?", in the coach's words and two inks (WhenChip's). */
@@ -74,7 +83,6 @@ export default function BudgetPlanList({ plan, when, closed, onToggle, onOpenLin
 }) {
   const L = PLAN_LADDER_LABEL;
   const filtered = when !== 'all';
-  const keyOf = (c: PlanCategory) => `${c.direction}|${c.categoryId ?? c.categoryName}`;
   const cats = (list: readonly PlanCategory[]) => list
     .map(c => ({ c, lines: c.lines.filter(l => passes(l, when)) }))
     .filter(x => x.lines.length > 0);
