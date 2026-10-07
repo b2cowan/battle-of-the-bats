@@ -6545,7 +6545,7 @@ dialog.truesize::backdrop{background:#16201899}
   <div class="eyebrow">Owner QA</div>
   <h1>Club Tier Readiness — QA walks</h1>
   <p class="qwlead">Stage 3b — the club’s budget, Budget vs. Actual and the board summary — is walked as <strong>eleven short walks</strong> (ledger §271). Each one tests one job, says what it’s for before you start, and is signed off on its own — a walk can pass while another is still open. Any order works; walk 1 first reads best. Walks 2, 3 and 9 write test data (an allocation, next year’s plan, a ledger entry), so rebuild the club to walk them again. Stage 3a’s six walks, Stage 2’s ten and Stage 1’s eight all passed and are kept below.</p>
-  <div class="signin" id="qwFound"><strong>Rebuild the test club before these walks.</strong> Stage 3b’s money is in the fixture — revenue on the 2026 plan (Club sponsors, and a Town recreation grant with no date yet); Diamond permits billed twice (Diamond fees 2026 and Fall ball diamond fees 2026) with some of it still left to allocate; the club’s General ledger lines filed under the plan’s words (the helmets under a word with no plan line, so off-plan) and two older lines left Not filed; the tournament’s book taking in its registrations; 15U AAA and 13U AAA paying Town of Milton, the payee the club shares; and money in on 15U AAA, 13U AAA and 16U AA (on its closed season). Stage 3a’s money is all still there. Ask the chat that built Stage 3b to run it, or run <code>node --env-file=.env.local scripts/seed-club-fixture.mjs --reset</code>, then <code>node --env-file=.env.local scripts/seed-uat-coach-fixture.mjs</code>. The dev server needs one restart for the new pages.</div>
+  <div class="signin" id="qwFound"><strong>The test club is ready — walk it as it is.</strong> It was rebuilt on 2026-10-06 with Stage 3b’s money: revenue on the 2026 plan (Club sponsors, and a Town recreation grant with no date yet); Diamond permits billed twice (Diamond fees 2026 and Fall ball diamond fees 2026) with some of it still left to allocate; the club’s General ledger lines filed under the plan’s words (the helmets under a word with no plan line, so off-plan) and two older lines left Not filed; the tournament’s book taking in its registrations; 15U AAA and 13U AAA paying Town of Milton, the payee the club shares; and money in on 15U AAA, 13U AAA and 16U AA (on its closed season). Stage 3a’s money is all still there. The dev server was restarted and the test sign-ins refreshed the same day. Walks 2, 3 and 9 write test data, so each can be walked once — to walk one again, ask the chat to rebuild the club (<code>node --env-file=.env.local scripts/seed-club-fixture.mjs --reset</code>, then <code>node --env-file=.env.local scripts/seed-uat-coach-fixture.mjs</code>). ⚠ A rebuild resets the test accounts’ passwords, which signs every open window out: sign in again after one.</div>
   <details class="qwsetup" open>
    <summary>Before any walk — sign-in accounts</summary>
    <div class="signin"><strong>Sign in as</strong> — dev only, keep this private. URL <strong>http://localhost:3000</strong> (dev server up) · club <strong>UAT Rep Club</strong> (<code>uat-rep-club</code>) · every account’s password is <strong>UATPassword2026!</strong>
@@ -6559,12 +6559,11 @@ dialog.truesize::backdrop{background:#16201899}
      <li>Coach, 13U AAA — Priya Nair — <code>uat-club-coach-13aaa@uat-rep-club.local</code></li>
      <li>Coach, 11U AA — Marcus Bell — <code>uat-club-coach-11aa@uat-rep-club.local</code> (an invitation to 16U AA waits on his Home page)</li>
      <li>Coach, 16U AA — Casey Morgan — <code>uat-club-coach-16aa@uat-rep-club.local</code> (a team whose season is closed)</li>
-     <li>New head coach, 9U AA — <code>uat-club-newcoach@uat-rep-club.local</code> — no account yet; walk 4 creates it from the printed accept link</li>
-     <li>Standalone coach (walk 10 only) — the UAT coach account, owner of “UAT Standalone Team”</li>
+     <li>UAT coach — <code>uat-coach@uat-test-org.local</code> — head coach of UAT Test Team, a team in UAT Rep Club with its own budget (walk 6)</li>
     </ul>
     The test club’s teams: 12U AA has a season and a roster but no head coach; 9U AA’s season has nobody on it and its head coach is invited; 16U AA’s season is closed with no next one; 18U AA is archived.
     <strong>There is no preview switch any more</strong> — since the admin release on 2026-09-28 every window opens the new admin (Stage 1’s walks used one). Warm is the default look; Dark is in the account menu → Appearance.
-    One private window per role saves signing in and out. Due dates in the test club are set from the day it was built, so on a later day rebuild it (both commands above). Steps name people and relationships, never amounts.</div>
+    One private window per role saves signing in and out. Due dates in the test club are set from the day it was built (2026-10-06), so what is overdue moves with the calendar. Steps name people and relationships, never amounts.</div>
   </details>
   <div id="qwIndex">
    <div class="qwgrid" id="qwGrid"></div>
@@ -6675,7 +6674,6 @@ $('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div clas
 const RECORD_238=[{"title":"Part A · Sign in and land — one door per role","steps":["Owner (Morgan Ellis): open http://localhost:3000/uat-rep-club/admin — the “UAT Rep Club” hub opens; no redirect, no loop.","Admin (Dana Kowalski): the same address opens the hub — NOT the Tournaments area. (The fixture grants this admin every club module. A default admin is still sent into Tournaments — defect A01, fixed in Stage 1.)","Treasurer (Avery Chen): the hub opens. Note in the box which tiles it offers — Stage 1 redraws this screen.","Registrar (Riley Okonkwo): the hub opens. Note which tiles it offers.","Coach (Jordan Reyes, 15U AAA): open http://localhost:3000/uat-rep-club/coaches — you land on the 15U AAA team’s Overview in the Coaches Portal."]},{"title":"Part B · Members and roles — what each role can open","steps":["Owner → Org → Members: the four board members appear with their roles — Morgan Ellis (owner), Dana Kowalski (admin), Avery Chen (treasurer), Riley Okonkwo (registrar).","Owner → Invite member: the role list offers Admin, Staff and Volunteer (scorekeeper / gate) only — no Treasurer, Registrar or Coach. RECORD, don’t fix (defects A02 + B01, Stage 1/2).","Treasurer → Members: the page opens and shows an Invite member button. Record whether an invite is accepted or refused (the plan expects a refusal — A02).","Registrar → Members: “Access denied — only organization owners and admins can manage members.”","Admin → Org Settings: “Access denied — only organization owners can access settings.” Record it: whether an admin gets Settings is ruling D8’s Stage 1 build.","Admin → Audit Log: “Only organization owners can view the audit log.” (Owner-only by design — the owner’s view is Part G.)","Treasurer and Registrar → Families: the “This area needs the Families permission” wall (Families is off for every role until granted — by design)."]},{"title":"Part C · Teams → coaches → the coach lands in the portal","steps":["Owner → Rep Teams: five teams listed — 15U AAA, 15U AA, 13U AAA, 11U AA, 9U AA. 18U AA is NOT listed (archived).","Group filter “Senior” → 15U AAA and 15U AA only; “Junior” → 13U AAA, 11U AA and 9U AA.","Open 15U AAA → its 2026 season → Coaches: Jordan Reyes is the head coach.","Open 9U AA → it has a 2027 season in Draft, with no coach and no roster (the team being prepared for next season).","Open 15U AA → it has a completed 2025 season and an active 2026 season.","As Jordan Reyes (coach), open the 15U AAA roster: 12 players, Ada Okafor among them.","Record anything a club admin expected to do here and could not (invite a new coach, edit the team, start next season) — Stage 2 owns these."]},{"title":"Part D · The treasurer opens every money screen","steps":["Treasurer → Accounting overview opens: a card for the club’s General ledger and one for 15U AAA.","Treasurer: NO “send now” reminder buttons on the overview (they were shown before and every press was refused — C03). Owner, same screen: the buttons ARE there.","Treasurer → Org Budget: four 2026 lines — Diamond permits — city fields · Umpire fees — home games · Club insurance · Tournament entry fees.","Treasurer → Budget vs. Actual opens.","Treasurer → on the Umpire fees line, Allocate: the TEAM dropdown is EMPTY. RECORD, don’t fix — the wizard reads a Rep Teams list the treasurer may not open (C03 / ruling D8, Stage 1). Owner, same wizard: 9U AA, 11U AA, 13U AAA, 15U AA and 15U AAA.","Treasurer → Rep Teams, Cost Allocations or Payment Requests: sent back to the club hub. RECORD (B02, Stage 1).","Owner → Rep Teams → Cost Allocations: two allocations — “Diamond permits — team share” and “Umpire fees — team share”.","Owner → open “Diamond permits — team share”: 15U AAA’s installment #1 is paid; 15U AA’s installment #1 is past its due date and unpaid. Record whether ANY screen calls it overdue (the plan says the list cannot — C06, Stage 3).","Owner → Rep Teams → Payment Requests: three requests from 15U AAA — pending “Tournament entry — Burlington Classic”, approved “Umpire fees owed for June”, denied “New catcher’s gear”."]},{"title":"Part E · The admin opens every module","steps":["Admin → Rep Teams opens (five teams, as in C).","Admin → Accounting overview, Org Budget and Budget vs. Actual all open.","Admin → House League opens and shows “2026 Fall House League”, open for registration.","Admin → Public Site opens (the editor).","Admin → Families opens. Search Tremblay: Julie Tremblay’s family lists Luc (13U AAA), Elise (11U AA) and Noah (house league).","Admin → Families: Chidi Okafor’s family lists Ada (15U AAA) and Emeka (13U AAA); Karin Lindqvist’s lists Nils (15U AA) and Freya (11U AA).","Registrar → House League opens (the registrar’s own area); Accounting shows Access Restricted (by design)."]},{"title":"Part F · The club’s public page","steps":["Signed OUT (a private window), open http://localhost:3000/uat-rep-club — the club home page renders.","A “Tryouts Are Open” card reads “15U AAA — 2026 Season is accepting applications”.","Click it: you land on the 15U AAA 2026 Season Tryouts page — NOT the home page, NOT a tournament (it used to loop back — F01).","Note what the home page leads with and what it apologises for (tournament-first is F03 — Stage 4). Record, don’t fix."]},{"title":"Part G · The dead doors — each failed before today","steps":["Payees (C01): Treasurer → General ledger → add an entry → type “Maple” in Payee / Payer: the search runs with no error, and saving a new payee works.","Add item (C02): Treasurer or owner → Org Budget → add a line → type a word that is not in the list (e.g. “Scoreboard rental”) in the item picker → “+ Add “Scoreboard rental” to your list” → pick a category → Add item: the item is created and selected (it used to fail).","Audit log (A04): Owner → Org → Members → Audit Log: the log loads (entries or an empty log — no “Failed to load”).","View roster (B06): Owner → 15U AAA → 2026 season → “View roster →” jumps to the Roster section on the same page (it used to 404).","Sidebar (B06): on that season page the left rail’s Team group shows Tryouts, Roster, Schedule, Coaches — Roster lands on the season page; there is no Documents link.","Ungrouped (B06): Owner → Rep Teams → group filter “Ungrouped” → an empty list, no error (it used to fail with “Failed to load”).","Upcoming Payables (found by the new build check): Owner → Rep Teams hub → the Upcoming Payables panel loads (it used to show an error).","Reminder buttons (C03): Owner sees the send-now buttons on the Accounting overview; the treasurer does not (see D).","Tryouts card (F01): see F."]}];
 const WALKS=[
  {id:'S3BW1',n:1,ledger:'§271',title:'The Budget reads like the coach’s',who:'The treasurer',minutes:10,
-  before:{short:'Rebuild the club first',long:'these walks need the test club rebuilt with Stage 3b’s money: revenue lines, two allocations from one line, the club’s lines filed under words, the tournament’s book taking money in, payments to the shared payee and money in on three teams. Ask the chat that built Stage 3b to rebuild it, or run the two commands in the note at the top of this tab. The dev server also needs one restart.'},
   short:'The club’s plan for the year: revenue first, then each cost with what the teams were billed and paid beside it.',
   intent:'The Budget was a list of costs with a line count under each heading and an Allocate page of its own. It now reads like a coach’s Budget: the year, revenue first (From the teams is worked out from what the teams were billed, never typed), then the expenses with Allocated and Collected beside each line, and the year’s opening, net and closing at the foot. You are judging whether a treasurer can read the year’s plan in one look, with nothing to add up.',
   passes:'Revenue comes first, every cost line shows Planned, Allocated and Collected, the foot reads Opening balance, Net for 2026, Closing balance, and the band’s Closing balance is the foot’s.',
@@ -6696,13 +6694,12 @@ const WALKS=[
    {do:'Narrow to phone width.',see:'The band two-up with Closing balance across the width; the table keeps its rows, names pinned, the money scrolling sideways inside its frame; Export has moved into Tools.'}
   ]},
  {id:'S3BW2',n:2,ledger:'§271',title:'A line: read it, change it, bill what is left',who:'The treasurer',minutes:12,
-  before:{short:'Rebuild the club first',long:'this walk allocates what is left on Diamond permits, so it can be walked once per rebuild.'},
   short:'A budget line opens to read first; the pencil changes it and it saves as you type; what is left on it is billed from the line in one step.',
   intent:'A club line holds its allocations, so it opens to READ: what it plans, what it is filed under, when, and what has been billed from it. The pencil turns the whole line into its form, which saves as you type. Whatever is not allocated says so, and “Allocate” opens New allocation already filled in from the line — up to what is left, never more. A line can hold any number of allocations now (it held one), and a line with an allocation cannot be removed.',
   passes:'The line reads before it edits; a change saves on its own; Allocate opens New allocation from the line and refuses more than is left; afterwards the line shows both allocations and nothing left.',
   notIn:'The allocation’s own pages and installments — Stage 3a’s walks.',
   signIn:'Treasurer — Avery Chen.',
-  where:'Desktop browser: Accounting → Budget.',
+  where:'Desktop browser: Accounting → Budget. Writes test data (an allocation from Diamond permits), so it can be walked once; ask for a rebuild to walk it again.',
   steps:[
    {who:'Avery · treasurer',do:'Click Diamond permits — city fields.',see:'A window titled with the line, eyebrow “Budget line · 2026”: Planned, Filed under Facilities › Diamond Permits, When (three months with their amounts). Under “Allocated to teams”, two allocations: Diamond fees 2026 and Fall ball diamond fees 2026, each with its teams, allocated and collected.'},
    {see:'Under them, a box: “… not allocated · The club pays this part itself unless you allocate it.” and a white “Allocate …” button with the same figure.'},
@@ -6711,20 +6708,19 @@ const WALKS=[
    {do:'Edit again; set Planned below what is allocated (for example 5,000.00).',see:'The save is held: Planned takes a red edge and the save mark says the line can’t be planned below what is already allocated from it. Put Planned back; it saves.'},
    {do:'Press Done, open the line again, press Allocate.',see:'A page, New allocation, with a back arrow to Budget (not Allocations). A box: From the line (Diamond permits — city fields · 2026), Planned, Already allocated (with both allocations’ names), Left to allocate. No “Org Ledger Entry ID” box.'},
    {see:'Amount to split is already filled with what is left; under it: “Up to …, what is left on the line. Whatever you don’t allocate stays on the line for later.”'},
-   {do:'Type 1.00 more than what is left; press Next: team splits.',see:'Refused, in words: up to what is left can be allocated from this line. Put the amount back.'},
-   {do:'Next: give it all to 11U AA on one installment; create it.',see:'The new allocation opens. Accounting → Budget → Diamond permits: three allocations, Allocated equals Planned, and no “not allocated” box or Allocate button.'},
+   {do:'Type 1.00 more than what is left; press Team Splits.',see:'Refused, in words: up to what is left can be allocated from this line. Put the amount back.'},
+   {do:'Press Team Splits; give it all to 11U AA on one installment; press Review, then Create Allocation.',see:'The new allocation opens. Accounting → Budget → Diamond permits: three allocations, Allocated equals Planned, and no “not allocated” box or Allocate button.'},
    {do:'Open Town recreation grant; press the pencil.',see:'It reads the same way, with no “Allocated to teams” section (revenue bills nobody), and its form offers Remove this line. Don’t confirm: Keep it.'}
   ]},
  {id:'S3BW3',n:3,ledger:'§271',title:'By period, and next year’s plan',who:'The treasurer',minutes:10,
-  before:{short:'Rebuild the club first',long:'step 6 writes next year’s plan; rebuild the club to walk it again.'},
   short:'The same plan by month or by quarter, and next year started from this year’s lines.',
   intent:'By period is the coach’s period grid on the club’s year: twelve months (or four quarters), From the teams as the lead row spread by its installments’ due dates, every line by its own months, the year’s opening carried column to column. Next year can be planned now: a year with no lines offers to start from this year’s, moved a year on.',
   passes:'Every column reads opening + net = closing; the year’s Total equals the List; next year starts from this year’s plan in one press, with nothing billed to a team.',
   notIn:'The phone opening on this month — walk 6.',
   signIn:'Treasurer — Avery Chen.',
-  where:'Desktop browser: Accounting → Budget.',
+  where:'Desktop browser: Accounting → Budget. Step 7 writes next year’s plan, so it can be walked once; ask for a rebuild to walk it again.',
   steps:[
-   {who:'Avery · treasurer',do:'View → By period.',see:'The toolbar keeps its shape: Year, View, then Columns (Months) in When’s place, Export, Tools, Add line. Twelve month columns, January to December, then Total.'},
+   {who:'Avery · treasurer',do:'View → By period.',see:'The toolbar keeps its shape: Year, View, then Columns (Months) in When’s place, Export, Tools, Add line. Twelve months, January to December, a No date yet column (the grant has no date) and Total.'},
    {see:'From the teams leads, its money in the months its installments fall due. The grant sits in No date yet, in the Total but in no month.'},
    {see:'At the foot, Opening, Net and Closing for every month: each month opens with the month before’s closing, and December’s closing is the List’s Closing balance.'},
    {do:'Click From the teams’ name.',see:'The same window as on the List: the allocations it adds up. Done.'},
@@ -6759,26 +6755,26 @@ const WALKS=[
   signIn:'Treasurer — Avery Chen.',
   where:'Desktop browser: Accounting → Budget vs. Actual.',
   steps:[
-   {who:'Avery · treasurer',do:'View → Months.',see:'Compare and Collapse all leave; Showing takes Compare’s place. Twelve months; whole dollars, no signs, brackets below zero (red only on the balance rows), a dash for nothing.'},
+   {who:'Avery · treasurer',do:'View → Months.',see:'Compare and Collapse all leave; Showing takes Compare’s place. The months in whole dollars, no signs, brackets below zero (red only on the balance rows), a dash for nothing. On a computer December sits past the pinned Total: the hint under Showing says to swipe the grid for later months.'},
    {do:'Showing → Actual.',see:'Above the balance rows, a row “The club’s other books” — the tournament’s registrations and its float. The month’s closing is the club’s cash, and this month’s closing equals the band’s Cash on hand.'},
-   {do:'Click a filled cell on Diamond permits.',see:'A panel saying what the cell is made of, read-only, with a door to the Ledger.'},
+   {do:'Open Facilities with its chevron; click a filled cell on Diamond permits.',see:'A panel saying what the cell is made of, read-only, with a door to the Ledger.'},
    {do:'Showing → Scheduled.',see:'Starts from today’s cash and adds what is still due; From the teams’ cells open Coming due.'},
    {do:'Year pill → 2027.',see:'Showing offers Budget and Actual only: Scheduled is this year’s alone.'},
    {do:'Back to 2026; Export → Excel.',see:'The grid as on screen, with its notes.'}
   ]},
- {id:'S3BW6',n:6,ledger:'§271',title:'On a phone, a month grid opens on this month',who:'The treasurer, then a head coach',minutes:6,
-  short:'Both portals’ month grids open scrolled to the month you are in, on a phone; a computer is unchanged.',
+ {id:'S3BW6',n:6,ledger:'§271',title:'On a phone, a month grid opens on this month',who:'The treasurer, then the UAT coach',minutes:6,
+  short:'Both portals’ month grids open with the month you are in wholly in view, on a phone; a computer is unchanged.',
   intent:'A September reader on a phone used to open the grid on January and swipe eight months to today. On a phone (and a tablet), the grids now open with this month in view and a month or two before it; you can still swipe anywhere. A computer opens as before. This is the coach’s grid too, so it is walked in both portals.',
   passes:'All four grids open on this month on a phone and on January at a desk.',
   notIn:'What the grids say — walks 3 and 5.',
-  signIn:'Treasurer — Avery Chen; then the 15U AAA head coach — Jordan Reyes.',
+  signIn:'Treasurer — Avery Chen; then the UAT coach (uat-coach@uat-test-org.local) on UAT Test Team, a team in UAT Rep Club with a budget.',
   where:'A real phone, or the browser narrowed to about 390 px; the last step on a computer.',
   steps:[
-   {who:'Avery · treasurer',do:'Phone width: Accounting → Budget → View: By period.',see:'The grid opens with this month in view, a month or two before it at the left edge; the names stay pinned.'},
+   {who:'Avery · treasurer',do:'Phone width: Accounting → Budget → View: By period.',see:'The grid opens with this month (October) wholly in view and the month before it; the names stay pinned.'},
    {do:'Swipe back to January, then forward again.',see:'The grid moves freely; nothing snaps back.'},
-   {do:'Budget vs. Actual → View: Months.',see:'Opens on this month too, and the hint under it reads “Swipe the grid to see other months”.'},
-   {who:'Jordan · 15U AAA coach',do:'Phone width: Money → Budget → By period.',see:'The coach’s grid opens on this month.'},
-   {do:'Money → Budget vs. Actual → Months.',see:'Opens on this month.'},
+   {do:'Budget vs. Actual → View: Months.',see:'Opens with this month wholly in view beside the pinned Total (the month before it where it fits), and the hint reads “Swipe the grid to see other months”.'},
+   {who:'UAT coach · UAT Test Team',do:'Phone width: Money → Budget Plan → View: By period.',see:'The coach’s grid opens with this month wholly in view.'},
+   {do:'Money → Budget vs. Actual → View: Months.',see:'Opens with this month wholly in view beside the pinned Total.'},
    {do:'On a computer, open each of the four again.',see:'Each opens on its first month, as before.'}
   ]},
  {id:'S3BW7',n:7,ledger:'§271',title:'The Overview is the board summary',who:'The treasurer',minutes:12,
@@ -6793,7 +6789,7 @@ const WALKS=[
    {see:'“2026 against the budget”: Revenue, From the teams on allocations, on request, Expenses, Paid to teams on request, Off-plan, Net — each planned against actual — then one Headroom sentence and a link, Budget vs. Actual.'},
    {see:'The teams, in their groups: Allocated, Collected, Outstanding, Requests and a column headed with a lock, Cash on hand · held by the team. In the closing row that column is blank.'},
    {see:'Under the teams, a band of its own: “Held by the teams: … across … teams. The coaches’ own books; never part of the club’s figures above.”'},
-   {see:'16U AA (between seasons) reads its cash “at close”, with the day its season closed.'},
+   {see:'16U AA and UAT Between Seasons (both between seasons) read their cash “at close”, with the day the season closed.'},
    {see:'The club’s books: General and the tournament’s book, then Cash on hand — the same figure as the band.'},
    {do:'Press the Budget vs. Actual link.',see:'Budget vs. Actual opens. Go back.'},
    {do:'Export → Excel, then PDF.',see:'The board report: the position, the year against the budget, the teams with their cash labelled exactly as on screen, and the books.'},
@@ -6815,13 +6811,12 @@ const WALKS=[
    {who:'Morgan · owner',do:'Rep Teams → 15U AAA → What the club sees.',see:'Two new lines: the team’s cash on hand (one figure; never its families’ payments or its other spending), and what it recorded paying the payees you share.'}
   ]},
  {id:'S3BW9',n:9,ledger:'§271',title:'The Ledger files a line under the plan’s words',who:'The treasurer',minutes:10,
-  before:{short:'Rebuild the club first',long:'this walk adds an entry and files an older one; rebuild the club to walk it again.'},
   short:'Every new line is filed under a budget word; older lines read Not filed until someone files them.',
   intent:'A club line’s category was free text, so the Ledger’s Category filter listed every book’s words and no line could be matched to the plan. Category is now Filed under — the same word picker as the Budget and every coach money form — so the line counts on its plan line in Budget vs. Actual. Lines typed before this change keep their old word and read Not filed.',
   passes:'A new line can’t be saved without a word; the hint says whether the word is on the plan; an older line can be filed; the Category filter lists the budget’s categories only.',
   notIn:'Everything else on the Ledger — Stage 3a’s walk 2.',
   signIn:'Treasurer — Avery Chen.',
-  where:'Desktop browser: Accounting → Ledger, on the General book.',
+  where:'Desktop browser: Accounting → Ledger, on the General book. Writes test data (a new entry, and an older line filed), so it can be walked once; ask for a rebuild to walk it again.',
   steps:[
    {who:'Avery · treasurer',do:'Add entry (money out).',see:'Filed under, marked required, in Category’s place: the word picker, offering words for money out.'},
    {do:'Try to save with Filed under empty.',see:'Refused: choose what this line is filed under.'},
@@ -6830,7 +6825,7 @@ const WALKS=[
    {do:'Find “Practice balls” in the list.',see:'Its category reads Not filed.'},
    {do:'Open it.',see:'Its form: Filed under is empty, with “was: Equipment” under it.'},
    {do:'File it under Facilities › Field Equipment; close and open it again.',see:'It saved as you chose (the save mark fades); Filed under shows the word.'},
-   {do:'Open an “Allocation received · …” line.',see:'A read window, not a form: Filed under reads From the teams · filed by where it came from — the money loop files its own lines.'},
+   {do:'Open an “Allocation received · …” line.',see:'A read window, not a form: Filed under reads From the teams › Diamond fees 2026 · filed by where it came from — the money loop files its own lines.'},
    {do:'Filter → Category.',see:'The budget’s categories (the club’s and the product’s), never a team’s own words.'}
   ]},
  {id:'S3BW10',n:10,ledger:'§271',title:'What the teams paid a shared payee',who:'The treasurer',minutes:8,
@@ -6842,7 +6837,7 @@ const WALKS=[
   where:'Desktop browser: Accounting → Ledger → Tools → Payees — the last step at phone width.',
   steps:[
    {who:'Avery · treasurer',do:'Open Town of Milton.',see:'Its window has a row “What the teams recorded paying it”, captioned with how many teams and how much in 2026.'},
-   {do:'Open it.',see:'A page with a back arrow to Payees, Town of Milton with a Shared chip, the Year pill and Export, and a note: what each team recorded since you shared it, the teams’ own records, not proof of payment.'},
+   {do:'Open it.',see:'A page with a back arrow to Payees, Town of Milton with a “Shared with teams” chip, the Year pill and Export, and a note: what each team recorded since you shared it, the teams’ own records, not proof of payment.'},
    {see:'A band “2 teams recorded · …”, then 13U AAA (2 payments, their dates) and 15U AAA (1 payment), each with its total; then a band “Nothing recorded · …” listing the other teams with a 2026 season.'},
    {do:'Fold 13U AAA open.',see:'Its two payments with their dates and amounts. No row has a chevron at its end: nothing opens a page.'},
    {do:'Export → Excel.',see:'The report as on screen.'},
