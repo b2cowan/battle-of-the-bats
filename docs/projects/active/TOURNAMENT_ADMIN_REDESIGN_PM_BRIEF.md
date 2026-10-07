@@ -154,6 +154,19 @@ and a tap, and bringing an archived event back is three taps and its question. T
 board, Summary, reuse, the two lists and every status change, and old searches (Manage Tournaments, Archives,
 Post-event summary) still find it.
 
+**One Tournaments list, drawn and ruled 6 October after the build (the owner's question).** Ruled: one list as
+drawn, every band open, and the door in the Admin section where "Past tournaments" sits today rather than at the top
+of the menu (the list is visited now and then; switching events and starting a new one already have their own
+buttons). The drawing below described the first version. Walking the desk walk,
+the owner couldn't find the Tournaments list (there is still no way to it from inside an event) and asked why there
+are two lists at all. Drawn on the hub's Stage 4 tab: **one page, "Tournaments"**, with what's ahead on top and what's
+finished below it (Active · Draft · Completed · Archived · Sealed records), each band saying once whether its public
+sites are up; and **one door, "Tournaments"**, at the top of the side menu and of the phone's More, on every page,
+replacing "Past tournaments". It also fixes something the drawing found: on the free plan the morning after, the list
+says the plan's one slot is full and shows no event, because the finished event holding the slot sits on the other
+page. With one list it's the first row under that line. Nothing about statuses, slots or data changes; the wording
+that points people to "Past tournaments" changes with it, and the desk walk (§276) waits for the ruling.
+
 ## Why it matters
 
 Game day is the weekend a director is judged on, and it's run from a phone at a diamond. It's also where

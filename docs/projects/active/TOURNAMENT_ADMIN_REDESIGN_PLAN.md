@@ -1186,6 +1186,57 @@ reading "final not scored" → the public pages' owner · F52 (the demo club's o
 page; a shared print portal (the certificate's and Summary's); a record-form hook shared with Teams; the counts read
 could become one grouped query.
 
+### D7 · One Tournaments list — drawn 2026-10-06, after the build (hub v26, Stage 4 tab, part "D7 One list") — ⚖ RULED 2026-10-06 (hub v27)
+
+**⚖ Ruled (owner's paste-back, 2026-10-06):** **D7 as drawn** · **D7b as recommended** (every band open) · **D7a NOT as
+first recommended — the door takes Past tournaments' place inside the Admin group**, at a desk and on a phone. The
+owner asked whether the top of the menu was more than the list needs; agreed on merit: an occasional destination
+whose everyday jobs have other doors (switching = the picker, creating = the "+", Mark complete and Reuse = the
+board); on a phone More shows every group open, so it costs nothing there. Accepted cost: at a desk Admin starts
+folded at the rail's foot (a scroll and a click). Fallback if a walk shows people still can't find it: an "All
+tournaments" line in the tournament picker, not the top of the rail. The row wears a list mark (Results already wears
+the trophy). Hub v27 redraws the More sheet and the desk rail with it in Admin. Supersedes A22's two lists; fixes F48
+and F57. **Next:** the build, then walk §276 rewritten for one list.
+
+
+**Why it reopens A22.** Walking §276 step 1 at a desk the owner could not find the list (F48 is still true as built:
+inside an event the rail, More and the account menu have no Tournaments row; Past tournaments has no door back) and
+asked: *"why don't we just make one Tournaments and put past tournaments under active tournaments on the list of
+tournaments? do we need 2 nav buttons?"* A22's recorded tradeoff for the two lists was scope ("changes the rail, which
+this stage doesn't draw"); the `/design` review's actual point — no event on both lists — holds with one list, since
+each event still sits in exactly one band. Built, the split costs three things: no door (F48); **F57** (new, below);
+Mark complete sending an event to another page.
+
+**F57 — On the one-slot plan the morning after, the list says the slot is full and shows no event.** Every status but
+Archived holds a slot (`lib/tournament-status-words.ts`), so a finished event still holds the Tournament plan's one
+slot; the Tournaments list counts it (`used` = every non-archived event) but lists only Active · Draft
+(`aheadBands`). Captured on the free club at 390 with two statuses changed in the read only (`.probe/s4c/capture.mjs`):
+"1 of 1 tournament slot in use", the More tournament slots lock in New tournament's place, "No tournaments ahead
+yet." — the holder, and the Archive that frees it, are on Past tournaments.
+
+**Drawn (before = captures of the built screens, 6 Oct; after = drawn, Warm + Dark):** one page, "Tournaments", bands
+Active · Draft · Completed · Archived · Sealed records, what's ahead on top; one row shape in every band (name; dates ·
+teams; "no teams", never "no teams yet", on a finished event); each band says once what it means for the public site
+(Active / Completed "public site online", Draft "private", Archived "public site offline"), replacing Past
+tournaments' Public site column; Reuse setup stays the Completed rows' one worded action; the foot door goes; Public
+ledger moves into the Sealed records band (shown when a sealed record exists). **One door** (as first drawn, v26;
+ruled into Admin, above): a "Tournaments" row at the top of the rail above the event picker on every page (lit on
+the list), and the first row of the phone's More under Notifications; Past tournaments leaves Admin; its address
+opens the list. The one-slot morning after: the
+holder is the first row under the slot line (≈271px at 390, read from the drawing). Desk: one table, Tournament ·
+Dates · Teams · the row action · the door.
+
+**Asks (hub checkboxes, in the Stage 4 paste-back):** D7 one list as drawn (rec.) / keep two lists and only add the
+door · D7a the door at the top of the rail and of More (rec.) / in Admin (folded by default at a desk) · D7b every
+band open (rec.; I first suggested folding Archived and Sealed, then found no foldable band in the kit and that
+history only ever adds rows below) / fold Archived and Sealed with a count.
+
+**What else changes, not drawn:** the sentences that send people to Past tournaments (Mark complete's question, the
+two locked-results lines, both archive questions — words for `/marketing`); the help's Past tournaments article folds
+into Tournaments with its keywords; the Organization page's "Manage Tournaments" tile → "Tournaments"; walk §276 (W6)
+is **on hold** and is rewritten for one list (eight of its thirteen steps walk the two lists); §275 stays as passed.
+No data change.
+
 ## 7. The asks
 
 A1 · which stage first · A2 · one event identity · A3 · phone or desk per station · A4 · Storm Mode and
