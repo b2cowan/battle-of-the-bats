@@ -1,9 +1,8 @@
 'use client';
 /**
- * The two lists' one read (Tournament admin redesign Stage 4 — the Tournaments list and Past tournaments
- * read the SAME events, so an event can sit in exactly one of them and a record opened from either says
- * the same thing): every event of the club, archived included, with its counts (`?counts=1`), and the
- * club's sealed records. `reload` after any change; only the newest read paints (Stage 1's lesson).
+ * The Tournaments list's one read (Tournament admin redesign Stage 4; one list since D7): every event of the
+ * club, archived included, with its counts (`?counts=1`), and the club's sealed records. `reload` after any
+ * change; only the newest read paints (Stage 1's lesson).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { willEmailResultsOnComplete } from '@/lib/coach-email-rules';

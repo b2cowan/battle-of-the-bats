@@ -1,7 +1,7 @@
 'use client';
 /**
  * AN EVENT'S RECORD — Tournament admin redesign Stage 4 (D4, D5; A19–A22), built to hub v24, ruled
- * 2026-10-06. ONE record, opened from both lists (the Tournaments list and Past tournaments), in the admin
+ * 2026-10-06. ONE record, opened from the one Tournaments list (D7, which replaced the two lists), in the admin
  * kit's form window: full screen with ← on a phone, a window at a desk. It READS first; the head's pencil
  * edits the Details whole (the 2026-10-01 standard). In order:
  *
@@ -294,7 +294,7 @@ export default function TournamentRecord(props: TournamentRecordProps) {
   const dates = formatEventDateRange(event.startDate, event.endDate, true);
   const finished = status === 'completed' || status === 'archived';
   const identityLine = finished
-    ? [dates ?? W.datesNotSet, LIST_WORDS.teams(event.teamsPlayed), `${event.gamesPlayed} ${event.gamesPlayed === 1 ? 'game' : 'games'}`].join(' · ')
+    ? [dates ?? W.datesNotSet, LIST_WORDS.teams(event.teamsPlayed, true), `${event.gamesPlayed} ${event.gamesPlayed === 1 ? 'game' : 'games'}`].join(' · ')
     : [dates ?? W.datesNotSet, LIST_WORDS.teams(event.acceptedTeams)].join(' · ');
   const isPublic = status === 'active' || status === 'completed';
   const publicPath = saved.slug ? `/${props.orgSlug}/${saved.slug}` : null;

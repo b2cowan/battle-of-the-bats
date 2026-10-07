@@ -52,14 +52,14 @@ export function slotsInUseRefusal(limit: number): string {
 }
 
 /** What a locked (completed) event's screens and routes say when an edit is refused. */
-export const LOCKED_RESULTS = 'This tournament is completed, so its results are locked. Reopen it from Past tournaments to make changes.';
-export const LOCKED_IMPORTS = 'This tournament is completed, so its results are locked. Reopen it from Past tournaments to import.';
+export const LOCKED_RESULTS = 'This tournament is completed, so its results are locked. Reopen it from the Tournaments list to make changes.';
+export const LOCKED_IMPORTS = 'This tournament is completed, so its results are locked. Reopen it from the Tournaments list to import.';
 
 /** The archive sentence (F32, rewritten 2026-10-06: the way back is now the record's Bring back). */
 export function archiveSentence(finiteSlots: boolean): string {
   return finiteSlots
-    ? 'Its public site goes offline right away, so every link you’ve shared stops working, and its tournament slot is freed. Its teams, games, and payments are kept. To bring it back, open it in Past tournaments; you’ll need a free tournament slot.'
-    : 'Its public site goes offline right away, so every link you’ve shared stops working. Its teams, games, and payments are kept, and you can bring it back from Past tournaments.';
+    ? 'Its public site goes offline right away, so every link you’ve shared stops working, and its tournament slot is freed. Its teams, games, and payments are kept. To bring it back, open it on the Tournaments list; you’ll need a free tournament slot.'
+    : 'Its public site goes offline right away, so every link you’ve shared stops working. Its teams, games, and payments are kept, and you can bring it back from the Tournaments list.';
 }
 
 /** The event's record: its blocks, its fields, and what it says before a tap. */
@@ -171,9 +171,9 @@ export function statusConfirm(change: StatusChange, f: ConfirmFacts): { title: s
       return {
         title: `Mark ${f.name} complete?`,
         body: [
-          'Its results become read-only and final, registration closes, and it moves to Past tournaments. Its public site stays online.',
+          'Its results become read-only and final, and registration closes. Its public site stays online.',
           f.willEmailTeams ? 'Each team’s coach gets an email with the final results.' : '',
-          'You can reopen it from Past tournaments.',
+          'You can reopen it from its record.',
         ].filter(Boolean).join(' '),
         action: STATUS_ACTION.complete,
         danger: false,

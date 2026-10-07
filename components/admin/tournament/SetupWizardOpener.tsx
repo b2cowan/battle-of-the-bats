@@ -5,7 +5,7 @@
  *
  *   openReuse(event, door) — "Reuse this setup": the wizard's reuse step, the event already chosen, no
  *                            "pick a source" behind it. The finished board's lime, Summary's Next year,
- *                            Past tournaments' Completed rows, every event's record.
+ *                            the Tournaments list's Completed rows, every event's record.
  *   openNew(door)          — New tournament (the rail's +, the Tournaments list's button): the wizard's
  *                            "Start blank, or reuse" step, as before (Stage 5's).
  *

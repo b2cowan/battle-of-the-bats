@@ -1481,7 +1481,7 @@ export const SCREENS = [
 
   // ── Tournaments — the tournament-only frame (uat-plus-org), the Championship pinned by address ──
   ...[
-['/dashboard', 'admin-t-dashboard'], ['/archives', 'admin-t-archives'],
+['/dashboard', 'admin-t-dashboard'],
     ['/branding', 'admin-t-branding'], ['/check-in', 'admin-t-check-in'],
     ['/communication', 'admin-t-communication'], ['/data-tools', 'admin-t-data-tools'],
     ['/divisions', 'admin-t-divisions'], ['/manage', 'admin-t-manage'],

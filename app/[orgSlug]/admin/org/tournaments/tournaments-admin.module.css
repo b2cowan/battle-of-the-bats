@@ -1,10 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-   THE TOURNAMENTS LIST (page.tsx — Tournament admin redesign Stage 4, D5, hub v24). Rewritten whole on
-   the kit (2026-10-06): the old look's 49 kit-scope restatements left with the screen they drew — the
-   222px cards of labelled lines, the 27px status menus, the row tools, the callouts, "How statuses
-   work" and the Add / Edit / Delete windows. The rows and the table are the kit's (`ClubRow*`,
-   `repKit.table`); this file sets only the slot line, a figure column and the door at the list's foot.
-   TOKENS ONLY.
+   THE TOURNAMENTS LIST (page.tsx — Tournament admin redesign Stage 4, D5 then D7: one list, hub v27).
+   Rewritten whole on the kit (2026-10-06); Past tournaments' few rules joined it when its page became
+   this one's bands (D7). The rows and the table are the kit's (`ClubRow*`, `repKit.table`); this file
+   sets only the slot line, a band's one note, the action column, the quiet sentence
+   and the Public ledger door. TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* One line under the title on a plan with a finite number of slots, and its lock line when full. */
@@ -18,7 +17,38 @@
   color: var(--text-tertiary);
 }
 .muted { margin: 0 0 0.75rem; font-size: var(--type-body); color: var(--text-tertiary); }
-/* A count column reads down its right edge. */
-.num { text-align: right; font-variant-numeric: tabular-nums; }
-/* The door at the list's foot: the kit's foot link, olive text, 44px on touch. */
-.toPast { margin-top: 0.35rem; }
+/* What a band means for the public site, said once beside its count: the body face, quiet, sentence case
+   (the band itself is the display face in capitals). */
+.bandNote {
+  margin-left: 0.6rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+/* The Completed band's Reuse setup sits in its own column at a desk, right-aligned. */
+.actionCell { text-align: right; white-space: nowrap; }
+/* "None yet…" in the Sealed records band: one sentence, the quiet ink (§3.7). */
+.quiet { font-weight: 400; color: var(--text-tertiary); }
+/* A door out to a public record. */
+.out { color: var(--text-tertiary); }
+/* The Sealed records band row at a desk holds the Public ledger door at its right edge. */
+.bandRow { display: flex; align-items: center; gap: 0.75rem; }
+.ledgerDoor {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--home-olive);
+  text-decoration: none;
+}
+.ledgerDoor:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* On a phone the door is the band's last row; its words are a door's (olive), not a record's name. */
+.door { color: var(--home-olive); font-weight: 650; }

@@ -1,11 +1,11 @@
 /**
- * THE TWO LISTS (Tournament admin redesign Stage 4, D4 · D5 · A22): each event in ONE list by where it is
- * in its life, bands in a fixed order, an empty band absent, and a record's Previous / Next walking the
- * list's own order.
+ * THE ONE TOURNAMENTS LIST (Tournament admin redesign Stage 4, D7 — it replaced A22's two lists): every event
+ * in exactly one band, the bands in the order of an event's life, an empty band absent, and a record's
+ * Previous / Next walking the list's own order.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { aheadBands, listOf, pastBands, walkOrder, type ListEvent } from '../../lib/tournament-lists';
+import { isFinished, listBands, walkOrder, type ListEvent } from '../../lib/tournament-lists';
 import { readFileSync } from 'node:fs';
 import { statusConfirm, statusSentence } from '../../lib/tournament-status-words';
 
@@ -26,42 +26,43 @@ const events = [
   ev('winter-draft', 'draft', '2026-12-05'),
 ];
 
-describe('each event lives in one list', () => {
-  it('the Tournaments list holds what is ahead: Active, then Draft, soonest first, undated last', () => {
-    const b = aheadBands(events);
-    assert.deepEqual(b.map(x => x.key), ['active', 'draft']);
+describe('one list, every event in exactly one band', () => {
+  it('the bands run in the order of an event’s life: Active, Draft, Completed, Archived', () => {
+    assert.deepEqual(listBands(events).map(x => x.key), ['active', 'draft', 'completed', 'archived']);
+  });
+
+  it('what is ahead is soonest first, an undated draft last', () => {
+    const b = listBands(events);
     assert.deepEqual(b[0].events.map(e => e.id), ['summer', 'invitational']);
     assert.deepEqual(b[1].events.map(e => e.id), ['winter-draft', 'fall-draft']);
   });
 
-  it('Past tournaments holds every finished event: Completed, then Archived, most recent first', () => {
-    const b = pastBands(events);
-    assert.deepEqual(b.map(x => x.key), ['completed', 'archived']);
-    assert.deepEqual(b[0].events.map(e => e.id), ['opener', 'spring']);
-    assert.deepEqual(b[1].events.map(e => e.id), ['classic']);
+  it('what is finished is most recent first', () => {
+    const b = listBands(events);
+    assert.deepEqual(b[2].events.map(e => e.id), ['opener', 'spring']);
+    assert.deepEqual(b[3].events.map(e => e.id), ['classic']);
   });
 
-  it('no event is on both lists', () => {
-    const ahead = walkOrder(aheadBands(events)).map(e => e.id);
-    const past = walkOrder(pastBands(events)).map(e => e.id);
-    assert.equal(ahead.filter(id => past.includes(id)).length, 0);
-    assert.equal(ahead.length + past.length, events.length);
+  it('every event is in exactly one band', () => {
+    const ids = walkOrder(listBands(events)).map(e => e.id);
+    assert.equal(new Set(ids).size, ids.length);
+    assert.equal(ids.length, events.length);
   });
 
   it('an empty band is absent', () => {
-    assert.deepEqual(pastBands(events.filter(e => e.status !== 'archived')).map(b => b.key), ['completed']);
-    assert.deepEqual(aheadBands([]), []);
+    assert.deepEqual(listBands(events.filter(e => e.status !== 'archived' && e.status !== 'draft')).map(b => b.key), ['active', 'completed']);
+    assert.deepEqual(listBands([]), []);
   });
 
-  it('a record walks the list it was opened from, band by band', () => {
-    assert.deepEqual(walkOrder(aheadBands(events)).map(e => e.id), ['summer', 'invitational', 'winter-draft', 'fall-draft']);
+  it('a record walks the list band by band, so history always comes after what is ahead', () => {
+    assert.deepEqual(walkOrder(listBands(events)).map(e => e.id), ['summer', 'invitational', 'winter-draft', 'fall-draft', 'opener', 'spring', 'classic']);
   });
 
-  it('Mark complete moves an event to Past tournaments; Reopen moves it back', () => {
-    assert.equal(listOf('active'), 'ahead');
-    assert.equal(listOf('completed'), 'past');
-    assert.equal(listOf('archived'), 'past');
-    assert.equal(listOf('draft'), 'ahead');
+  it('Completed and Archived are finished; Active and Draft are not', () => {
+    assert.equal(isFinished('completed'), true);
+    assert.equal(isFinished('archived'), true);
+    assert.equal(isFinished('active'), false);
+    assert.equal(isFinished('draft'), false);
   });
 });
 

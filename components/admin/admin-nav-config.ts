@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Calendar, Trophy, Mail,
   Settings2, MapPin, Tag, BookOpen, Paintbrush,
-  Settings, Archive, Database, UserCheck, QrCode, MessageSquare,
+  Settings, List, Database, UserCheck, QrCode, MessageSquare,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -54,7 +54,9 @@ export const TOUR_GROUPS: TourGroup[] = [
     items: [
       { key: 'data-tools', icon: Database, label: 'Data Tools'       },
       { key: 'settings',   icon: Settings, label: 'Settings & Access' },
-      { key: 'archives',   icon: Archive,  label: 'Past Tournaments'  },
+      // The one Tournaments list (D7, ruled 2026-10-06): it took Past tournaments' place here — an occasional
+      // destination, so a row in Admin, not the top of the rail (D7a). A list mark: Results wears the trophy.
+      { key: 'manage',     icon: List,     label: 'Tournaments'       },
     ],
   },
 ];

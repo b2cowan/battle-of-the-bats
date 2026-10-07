@@ -181,7 +181,7 @@ type TournamentSetupWizardProps = {
   /** Pass existing non-archived tournaments to enable the clone pre-step. */
   existingTournaments?: PastTournament[];
   /**
-   * The event a door opened the reuse step FOR (the finished board, Summary, a Past tournaments row, an
+   * The event a door opened the reuse step FOR (the finished board, Summary, a Completed row on the Tournaments list, an
    * event's record — Stage 4, D2). The step opens on it with no "pick a source" step behind it, so its
    * foot is Cancel, not Back. It need not be in `existingTournaments`: an ARCHIVED event is a source too
    * (the clone route accepts any status), and that list holds the non-archived ones.

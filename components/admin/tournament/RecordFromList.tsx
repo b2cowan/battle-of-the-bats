@@ -3,9 +3,8 @@
  * An event's record, opened from a list (Tournament admin redesign Stage 4): the list hands over its own
  * order and its read, and this works out everything else the record needs — the neighbours its foot
  * names, its position, the plan (slots, Reuse, Seal), who holds the plan's slots, whether a newer event
- * took its public link — and re-reads both the list and the frame's event list after a change. Both lists
- * render this, so the record cannot say one thing from the Tournaments list and another from Past
- * tournaments.
+ * took its public link — and re-reads both the list and the frame's event list after a change. With one
+ * list (D7) a status change keeps the record open: the event moves band, not page.
  */
 import TournamentRecord from '@/components/admin/tournament/TournamentRecord';
 import { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
@@ -30,7 +29,7 @@ export default function RecordFromList({ openId, order, lists, onOpen, onClose }
   const { currentOrg, userRole, userCapabilities } = useOrg();
   const { refresh: refreshCtx } = useTournament();
   const idx = openId ? order.findIndex(e => e.id === openId) : -1;
-  // An event that left this list (Mark complete, Reopen, Delete) closes its record.
+  // An event that left the list (Delete) closes its record.
   if (idx < 0 || !currentOrg) return null;
   const { events, sealed } = lists;
   const event = events.find(e => e.id === openId);

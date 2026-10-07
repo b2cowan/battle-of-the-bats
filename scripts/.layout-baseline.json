@@ -5485,18 +5485,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-archives|361|tap-floor|a·2 games to finalize": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-t-archives|361|tap-floor|button·Dismiss": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-archives|361|control-width|button·Dismiss": {
-      "reason": null,
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "admin-t-branding|361|tap-floor|button·Public Pages": {
       "reason": null,
       "detail": "36px tall (floor 44)"
@@ -6425,18 +6413,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-archives|390|tap-floor|a·2 games to finalize": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-t-archives|390|tap-floor|button·Dismiss": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-archives|390|control-width|button·Dismiss": {
-      "reason": null,
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "admin-t-branding|390|tap-floor|button·Public Pages": {
       "reason": null,
       "detail": "36px tall (floor 44)"
@@ -7350,22 +7326,6 @@
       "detail": "34px tall (floor 44)"
     },
     "admin-t-dashboard|768|control-width|button·Dismiss": {
-      "reason": null,
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-archives|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-t-archives|768|tap-floor|a·2 games to finalize": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-t-archives|768|tap-floor|button·Dismiss": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-archives|768|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },

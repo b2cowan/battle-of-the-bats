@@ -1,9 +1,10 @@
 /**
- * THE TWO LISTS' MODEL (Tournament admin redesign Stage 4, D4 · D5 · A22, ruled 2026-10-06): EACH EVENT
- * LIVES IN ONE LIST, by where it is in its life. The Tournaments list holds what's ahead (Active · Draft);
- * Past tournaments holds every finished event (Completed · Archived), plus the sealed records. Mark
- * complete moves an event from the first to the second; Reopen moves it back. No React, so the unit suite
- * holds the bands and the order a record's Previous / Next walks (tests/unit/tournament-lists.test.ts).
+ * THE ONE TOURNAMENTS LIST'S MODEL (Tournament admin redesign Stage 4, D7, ruled 2026-10-06 — it replaced
+ * A22's two lists): every event of the club on ONE page, in exactly one band, the bands in the order of an
+ * event's life — Active · Draft (what's ahead, soonest first) · Completed · Archived (what's finished, most
+ * recent first) — plus the sealed records, which the page draws. What's ahead stays on top, so history only
+ * ever adds rows below. Mark complete moves an event down a band on the same page. No React, so the unit
+ * suite holds the bands and the order a record's Previous / Next walks (tests/unit/tournament-lists.test.ts).
  */
 export type EventStatus = 'draft' | 'active' | 'completed' | 'archived';
 
@@ -35,28 +36,27 @@ const behind = (a: ListEvent, b: ListEvent) =>
   || (b.year ?? 0) - (a.year ?? 0)
   || a.name.localeCompare(b.name);
 
-function bands(events: ListEvent[], order: EventStatus[], sort: (a: ListEvent, b: ListEvent) => number): ListBand[] {
-  return order
-    .map(key => ({ key, events: events.filter(e => e.status === key).sort(sort) }))
+/** The bands top to bottom, each with its own order: what's ahead soonest first, what's finished latest first. */
+const BAND_ORDER: ReadonlyArray<[EventStatus, (a: ListEvent, b: ListEvent) => number]> = [
+  ['active', ahead],
+  ['draft', ahead],
+  ['completed', behind],
+  ['archived', behind],
+];
+
+/** The Tournaments list: Active, Draft, Completed, Archived (the sealed records are their own band, drawn by the page). */
+export function listBands(events: ListEvent[]): ListBand[] {
+  return BAND_ORDER
+    .map(([key, sort]) => ({ key, events: events.filter(e => e.status === key).sort(sort) }))
     .filter(b => b.events.length > 0); // an empty band is absent
 }
 
-/** The Tournaments list: Active, then Draft. */
-export function aheadBands(events: ListEvent[]): ListBand[] {
-  return bands(events, ['active', 'draft'], ahead);
-}
-
-/** Past tournaments: Completed, then Archived (the sealed records are their own band, drawn by the page). */
-export function pastBands(events: ListEvent[]): ListBand[] {
-  return bands(events, ['completed', 'archived'], behind);
+/** A finished event — its row says "no teams" (never "no teams yet") and Completed carries Reuse setup. */
+export function isFinished(status: EventStatus): boolean {
+  return status === 'completed' || status === 'archived';
 }
 
 /** The order a record's Previous / Next walks: the list's own, band by band. */
 export function walkOrder(listBands: ListBand[]): ListEvent[] {
   return listBands.flatMap(b => b.events);
-}
-
-/** Which list an event belongs in now — a record opened from one list closes when its event leaves it. */
-export function listOf(status: EventStatus): 'ahead' | 'past' {
-  return status === 'active' || status === 'draft' ? 'ahead' : 'past';
 }

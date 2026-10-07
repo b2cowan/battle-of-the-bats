@@ -26,7 +26,6 @@ const ROUTE_LABELS: Array<[RegExp, string]> = [
   [/\/admin\/tournaments\/results(?:\/.*)?$/, 'Results'],
   [/\/admin\/tournaments\/rules(?:\/.*)?$/, 'Rules & Resources'],
   [/\/admin\/tournaments\/communication(?:\/.*)?$/, 'Communication'],
-  [/\/admin\/tournaments\/archives(?:\/.*)?$/, 'Past tournaments'],
   [/\/admin\/tournaments\/branding(?:\/.*)?$/, 'Tournament Branding'],
   [/\/admin\/tournaments\/summary(?:\/.*)?$/, 'Summary'],
   [/\/admin\/tournaments\/settings\/event(?:\/.*)?$/, 'Event Settings'],

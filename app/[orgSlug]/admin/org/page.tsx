@@ -32,8 +32,8 @@ export default function OrgAdminHub() {
       href: `${base}/members`,
     },
     {
-      label: 'Manage Tournaments',
-      desc: 'Create tournaments and change Draft, Live, Completed, or Archived state',
+      label: 'Tournaments',
+      desc: 'Every tournament in one list: start one, reuse a setup, or change its status',
       icon: RefreshCw,
       href: `${adminBase}/tournaments/manage`,
     },

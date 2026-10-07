@@ -70,7 +70,7 @@ export default async function ArchivesPage({
             <span>{archives.length} SEALED RECORD{archives.length !== 1 ? 'S' : ''} · READ-ONLY</span>
             {isAdmin && (
               <Link
-                href={`/${orgSlug}/admin/tournaments/archives`}
+                href={`/${orgSlug}/admin/tournaments/manage`}
                 style={{
                   fontSize: '0.625rem',
                   letterSpacing: '0.1em',

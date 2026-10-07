@@ -168,9 +168,8 @@ export const REUSE_WORDS = {
   created: (source: string) => `Draft created from ${source}`,
 } as const;
 
-/** The two lists (D4, D5): each event in ONE list by where it is in its life (A22). */
+/** The one Tournaments list (D7, ruled 2026-10-06 — it replaced A22's two lists): every event in one band. */
 export const LIST_WORDS = {
-  // ── Tournaments: what's ahead ──
   tournaments: 'Tournaments',
   newTournament: 'New tournament',
   /** "1 of 1 tournament slot in use" — on a plan with a finite number of slots. */
@@ -178,26 +177,21 @@ export const LIST_WORDS = {
     used > limit
       ? `${used} events hold slots; your plan has ${limit}.`
       : `${used} of ${limit} tournament ${limit === 1 ? 'slot' : 'slots'} in use`,
-  teams: (n: number) => (n === 0 ? 'no teams yet' : n === 1 ? '1 team' : `${n} teams`),
+  /** A finished event's teams are history: "no teams", never "no teams yet". */
+  teams: (n: number, finished = false) => (n === 0 ? (finished ? 'no teams' : 'no teams yet') : n === 1 ? '1 team' : `${n} teams`),
   datesNotSet: 'Dates not set',
-  toPast: 'Finished events are in Past tournaments',
-  nothingAhead: 'No tournaments ahead yet.',
+  nothingYet: 'No tournaments yet.',
   colTournament: 'Tournament',
   colDates: 'Dates',
   colTeams: 'Teams',
-  // ── Past tournaments: every finished event ──
-  past: 'Past tournaments',
+  /** What each band means for the public site, said ONCE beside its count (it replaced a column that
+   *  repeated it on every row). */
+  bandSite: { active: 'public site online', draft: 'private', completed: 'public site online', archived: 'public site offline' },
   publicLedger: 'Public ledger',
   sealedBand: 'Sealed records',
-  siteOnline: 'public site online',
-  siteOffline: 'public site offline',
-  colSite: 'Public site',
-  online: 'Online',
-  offline: 'Offline',
   /** The Completed band's row action — a named short form; everywhere else "Reuse this setup". */
   reuseRow: 'Reuse setup',
   noneSealed: 'None yet. Seal a finished tournament from its record to keep a permanent public record of its results.',
-  nothingPast: 'No finished tournaments yet.',
   /** The record's position at its foot. */
   position: (i: number, n: number) => `${i} of ${n}`,
   positionIn: (i: number, n: number, band: string) => `${i} of ${n} in ${band}`,

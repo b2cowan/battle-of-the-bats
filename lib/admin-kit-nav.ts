@@ -275,7 +275,6 @@ const KIT_TOURNAMENT_LABELS: Readonly<Record<string, string>> = {
   'Public Site': 'Public site',
   'Data Tools': 'Data tools',
   'Settings & Access': 'Settings & access',
-  'Past Tournaments': 'Past tournaments',
 };
 
 export function kitTournamentLabel(label: string): string {

@@ -160,7 +160,8 @@ export default function AdminKitRail() {
               </>
             )}
             {tournamentOnly && !isCanceled && (
-              <RailRow href={`${base}/tournaments`} label="Tournaments" active={false} icon={Trophy} />
+              // The one Tournaments list (D7) — `/tournaments` alone opens the selected event's board.
+              <RailRow href={`${base}/tournaments/manage`} label="Tournaments" active={false} icon={Trophy} />
             )}
             {orgLinks.length > 0 && (
               <>

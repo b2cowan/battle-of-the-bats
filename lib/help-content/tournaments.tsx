@@ -159,13 +159,13 @@ const tournamentsHelp: HelpPageContent = {
       keywords: ['reuse setup', 'reuse this setup', 'repeat tournament', 'next year', 'previous tournament', 'Tournament Plus', 'clone', 'live preview', 'create the draft'],
       searchText: 'reuse setup reuse this setup previous tournament repeat event next year copy clone Tournament Plus draft create the draft bring forward what to bring forward finished dashboard past tournaments summary event record new tournament divisions pools slots venues locations registration questions fees branding public pages rules resources welcome never copied teams registrations waitlists games scores standings champions payments uploaded files private notes live preview public page preview prefilled draft created from',
       links: [
-        { label: 'Past tournaments', href: '../tournaments/archives' },
+        { label: 'Tournaments', href: '../tournaments/manage' },
         { label: 'Dashboard', href: '../tournaments/dashboard' },
         { label: 'Plan & billing', href: '../tournaments/settings/subscription' },
       ],
       content: (
         <>
-          <p>On Tournament Plus and above, next year&rsquo;s event starts from this year&rsquo;s setup in one step. <strong>Reuse this setup</strong> is on a finished tournament&rsquo;s dashboard, its <strong>Summary</strong>, and its record, and a completed tournament&rsquo;s row in <strong>Past tournaments</strong> carries <strong>Reuse setup</strong>. You can also choose <strong>Reuse a previous tournament setup</strong> when you start a <strong>New tournament</strong>, or fill a draft from an earlier event with the reuse prompt on the draft&rsquo;s dashboard.</p>
+          <p>On Tournament Plus and above, next year&rsquo;s event starts from this year&rsquo;s setup in one step. <strong>Reuse this setup</strong> is on a finished tournament&rsquo;s dashboard, its <strong>Summary</strong>, and its record, and a completed tournament&rsquo;s row on the <strong>Tournaments</strong> list carries <strong>Reuse setup</strong>. You can also choose <strong>Reuse a previous tournament setup</strong> when you start a <strong>New tournament</strong>, or fill a draft from an earlier event with the reuse prompt on the draft&rsquo;s dashboard.</p>
           <HelpSteps>
             <li>Tap <strong>Reuse this setup</strong>. The new draft&rsquo;s name and public link are filled in for you, a year on, and every area is already chosen.</li>
             <li>Enter the new dates.</li>
@@ -190,11 +190,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-reuse-previous-tournament-setup',
           question: 'Can I reuse a previous tournament setup?',
-          answerText: 'Yes, on Tournament Plus and above. Tap Reuse this setup on a finished tournament’s dashboard, its Summary, or its record, or Reuse setup on its row in Past tournaments. Enter the new dates, choose what to bring forward, and tap Create the draft. You can also reuse a previous setup when you start a New tournament. Teams, results, payments, files, and history stay behind.',
+          answerText: 'Yes, on Tournament Plus and above. Tap Reuse this setup on a finished tournament’s dashboard, its Summary, or its record, or Reuse setup on its row in the Tournaments list. Enter the new dates, choose what to bring forward, and tap Create the draft. You can also reuse a previous setup when you start a New tournament. Teams, results, payments, files, and history stay behind.',
           keywords: ['reuse setup', 'reuse this setup', 'previous tournament', 'next year', 'clone', 'Tournament Plus', 'create the draft'],
           popular: true,
           answer: (
-            <p>Yes, on Tournament Plus and above. Tap <strong>Reuse this setup</strong> on a finished tournament&rsquo;s dashboard, its <strong>Summary</strong>, or its record &mdash; or <strong>Reuse setup</strong> on its row in <strong>Past tournaments</strong>. Enter the new dates, choose what to bring forward, and tap <strong>Create the draft</strong>. You can also reuse a previous setup when you start a <strong>New tournament</strong>.</p>
+            <p>Yes, on Tournament Plus and above. Tap <strong>Reuse this setup</strong> on a finished tournament&rsquo;s dashboard, its <strong>Summary</strong>, or its record &mdash; or <strong>Reuse setup</strong> on its row in the <strong>Tournaments</strong> list. Enter the new dates, choose what to bring forward, and tap <strong>Create the draft</strong>. You can also reuse a previous setup when you start a <strong>New tournament</strong>.</p>
           ),
         },
         {
@@ -270,13 +270,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-delete-division',
           question: 'What happens if I delete a division?',
-          answerText: 'Deleting a division also deletes everything inside it — every game in that division, including any scores already recorded, and every team registered into it. It cannot be undone. If the division still holds games or teams, FieldLogicHQ stops and tells you exactly what is there ("this division still holds 12 games (8 with a recorded score) and 6 registered teams") so you can back out. You can move those teams and games to another division first, or confirm to delete everything together. Note this is the opposite of deleting a single team, which keeps that team\'s games. If the tournament is Completed and locked, deletion is blocked entirely until you reopen it from Past tournaments.',
+          answerText: 'Deleting a division also deletes everything inside it — every game in that division, including any scores already recorded, and every team registered into it. It cannot be undone. If the division still holds games or teams, FieldLogicHQ stops and tells you exactly what is there ("this division still holds 12 games (8 with a recorded score) and 6 registered teams") so you can back out. You can move those teams and games to another division first, or confirm to delete everything together. Note this is the opposite of deleting a single team, which keeps that team\'s games. If the tournament is Completed and locked, deletion is blocked entirely until you reopen it from the Tournaments list.',
           keywords: ['delete division', 'remove division', 'delete a division', 'division deleted', 'lost games', 'lost scores', 'undo delete', 'accidentally deleted'],
           answer: (
             <>
               <p>Deleting a division also deletes <strong>everything inside it</strong> — every game in that division, including any scores already recorded, and every team registered into it. This cannot be undone.</p>
               <p>You won&rsquo;t do it by accident. If the division still holds games or teams, FieldLogicHQ stops and tells you exactly what&rsquo;s in there &mdash; for example &ldquo;this division still holds 12 games (8 with a recorded score) and 6 registered teams&rdquo; &mdash; so you can back out. Move those teams and games to another division first, or confirm to remove them together.</p>
-              <p>This is the <strong>opposite</strong> of deleting a single team, which keeps that team&rsquo;s games (see <em>Review and accept teams</em>). If the tournament is <strong>Completed</strong> and locked, deletion is blocked entirely until you reopen it from <strong>Past tournaments</strong>.</p>
+              <p>This is the <strong>opposite</strong> of deleting a single team, which keeps that team&rsquo;s games (see <em>Review and accept teams</em>). If the tournament is <strong>Completed</strong> and locked, deletion is blocked entirely until you reopen it from the <strong>Tournaments</strong> list.</p>
             </>
           ),
         },
@@ -655,13 +655,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-delete-team-with-games',
           question: 'Can I delete a team that already has games?',
-          answerText: 'Yes. Open the team\'s record and tap Delete this team… at the end. FieldLogicHQ checks first: if the team appears in any game, deleting is paused and you are told how many games it plays in and how many already have a recorded score — for example "this team appears in 6 games (4 with a recorded score)". You can back out, or confirm to continue. If you continue, those games are KEPT, not deleted: each one loses that one side and shows an empty slot where the team was, and the opponent\'s record and score are untouched. This is deliberate — a game belongs to both teams, so removing one team must never erase the other team\'s history. Tidy up by reassigning or removing those games from the schedule afterwards. Note this differs from deleting a whole division, which does remove its games and scores. If the tournament is Completed and locked, deletion is blocked until you reopen it from Past tournaments.',
+          answerText: 'Yes. Open the team\'s record and tap Delete this team… at the end. FieldLogicHQ checks first: if the team appears in any game, deleting is paused and you are told how many games it plays in and how many already have a recorded score — for example "this team appears in 6 games (4 with a recorded score)". You can back out, or confirm to continue. If you continue, those games are KEPT, not deleted: each one loses that one side and shows an empty slot where the team was, and the opponent\'s record and score are untouched. This is deliberate — a game belongs to both teams, so removing one team must never erase the other team\'s history. Tidy up by reassigning or removing those games from the schedule afterwards. Note this differs from deleting a whole division, which does remove its games and scores. If the tournament is Completed and locked, deletion is blocked until you reopen it from the Tournaments list.',
           keywords: ['delete team', 'remove team', 'delete registration', 'team has games', 'delete a team with games', 'blank team', 'empty slot in schedule', 'undo delete team'],
           answer: (
             <>
               <p>Yes. Open the team&rsquo;s record and tap <strong>Delete this team&hellip;</strong> at the end. FieldLogicHQ checks first: if the team appears in any game, deleting pauses and tells you what&rsquo;s at stake &mdash; for example &ldquo;this team appears in 6 games (4 with a recorded score).&rdquo; You can back out, or confirm to continue.</p>
               <p>If you continue, <strong>those games are kept, not deleted</strong>. Each one loses that one side and shows an empty slot where the team was, while the opponent&rsquo;s record and score stay exactly as they were. That&rsquo;s deliberate: a game belongs to <em>both</em> teams, so removing one team must never erase the other team&rsquo;s history. Tidy up by reassigning or removing those games in the schedule afterwards.</p>
-              <p>This differs from deleting a whole <strong>division</strong>, which <em>does</em> remove its games and scores. If the tournament is <strong>Completed</strong> and locked, deletion is blocked until you reopen it from Past tournaments.</p>
+              <p>This differs from deleting a whole <strong>division</strong>, which <em>does</em> remove its games and scores. If the tournament is <strong>Completed</strong> and locked, deletion is blocked until you reopen it from the Tournaments list.</p>
             </>
           ),
         },
@@ -874,7 +874,7 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-resolve-typed-locations',
           question: 'My games have field names typed in as text. How do I link them to my real fields?',
-          answerText: 'Open the Schedule page. If any games name a field as plain text, a note at the top says how many typed locations there are, with a Review button. The panel lists one row per name rather than per game, so one decision covers every game using that name. A name that matches one of your fields exactly is filled in for you and marked Exact match; a name that matches nothing can be created as a new field, or deliberately left as typed text. Each row shows the exact name your games will display before you apply, and nothing changes until you press Apply. Nobody is notified — linking a name to a field is tidying your own records, not moving a game, so no family or coach gets a "game moved" message. Close names are never guessed: Field 1 is not offered as Diamond 1, because a wrong guess would move real games to the wrong field. Games marked TBD are not listed because they name no field at all, and games still using the generator temporary fields belong to Resolve Temporary Facilities instead. After applying, each row keeps an Undo for as long as the panel stays open, which puts the typed text back. Below the pending rows, every field your games are already on is listed with its game count, and any of those groups can be moved to a different field at any time — that is how you correct a wrong choice later, once the Undo is gone. If someone else changed one of those games in the meantime, Undo leaves that game alone and tells you. Once a name is linked, renaming the field updates every one of those games automatically, and the double-booking check can protect them. If the Review button is greyed out, the tournament status is Completed — reopen it from Past tournaments to make changes. Dismissing the note with the X hides it in your browser until a new typed location appears, which is how you keep names you meant to leave as text.',
+          answerText: 'Open the Schedule page. If any games name a field as plain text, a note at the top says how many typed locations there are, with a Review button. The panel lists one row per name rather than per game, so one decision covers every game using that name. A name that matches one of your fields exactly is filled in for you and marked Exact match; a name that matches nothing can be created as a new field, or deliberately left as typed text. Each row shows the exact name your games will display before you apply, and nothing changes until you press Apply. Nobody is notified — linking a name to a field is tidying your own records, not moving a game, so no family or coach gets a "game moved" message. Close names are never guessed: Field 1 is not offered as Diamond 1, because a wrong guess would move real games to the wrong field. Games marked TBD are not listed because they name no field at all, and games still using the generator temporary fields belong to Resolve Temporary Facilities instead. After applying, each row keeps an Undo for as long as the panel stays open, which puts the typed text back. Below the pending rows, every field your games are already on is listed with its game count, and any of those groups can be moved to a different field at any time — that is how you correct a wrong choice later, once the Undo is gone. If someone else changed one of those games in the meantime, Undo leaves that game alone and tells you. Once a name is linked, renaming the field updates every one of those games automatically, and the double-booking check can protect them. If the Review button is greyed out, the tournament status is Completed — reopen it from the Tournaments list to make changes. Dismissing the note with the X hides it in your browser until a new typed location appears, which is how you keep names you meant to leave as text.',
           keywords: ['typed field name', 'typed location', 'link to real field', 'match typed locations', 'resolve locations', 'review locations', 'locations typed by hand', 'convert typed location', 'tidy field names', 'create field from name', 'leave as typed text', 'undo', 'already linked', 'change field for many games', 'bulk change field', 'exact match', 'no match', 'dismiss notice'],
           popular: true,
           answer: (
@@ -885,7 +885,7 @@ const tournamentsHelp: HelpPageContent = {
               <p>Close names are never guessed at: &ldquo;Field&nbsp;1&rdquo; is not offered as &ldquo;Diamond&nbsp;1&rdquo;. Games marked <strong>TBD</strong> aren&apos;t listed, because they name no field at all, and games still on the generator&apos;s temporary fields belong to <strong>Resolve Temporary Facilities</strong>.</p>
               <p>After applying, each row keeps an <strong>Undo</strong> for as long as the panel stays open, which puts the typed text back. Below the pending rows, every field your games are already on is listed with its game count — and any of those groups can be moved to a different field at any time. That is how you correct a choice later, once the Undo is gone. If someone else changed one of those games in the meantime, Undo leaves that game alone and tells you.</p>
               <p>Once a name is linked, renaming that field updates every one of those games automatically, and the double-booking check can protect them.</p>
-              <p>If <strong>Review</strong> is greyed out, the tournament status is <strong>Completed</strong> — reopen it from <strong>Past tournaments</strong> to make changes. Dismissing the note with the <strong>×</strong> hides it in your browser until a new typed location appears, which is how you keep names you meant to leave as text.</p>
+              <p>If <strong>Review</strong> is greyed out, the tournament status is <strong>Completed</strong> — reopen it from the <strong>Tournaments</strong> list to make changes. Dismissing the note with the <strong>×</strong> hides it in your browser until a new typed location appears, which is how you keep names you meant to leave as text.</p>
             </>
           ),
         },
@@ -1809,7 +1809,6 @@ const tournamentsHelp: HelpPageContent = {
       searchText: 'closeout tournament complete mark complete mark tournament complete every game in ready to finalize finalize dashboard prompt lock results read-only results are locked reopen archive seal final results post-event summary free tournament slot immutable snapshot permanent public record public site goes offline links stop working bring back an archived tournament unarchive restore board report results email lifecycle draft active completed archived sealed public page shows final results automatically without marking complete fans champions final standings wrap up next on the schedule do i need to mark complete round robin manage tournaments archives past tournaments tournaments list finished board finished dashboard how it finished final not scored no final copy champions link copy standings link the event in numbers teams played games played collected still owed print letter one page next year reuse this setup event record status activate move back to draft delete this tournament public link sealed records public ledger free slot link taken',
       links: [
         { label: 'Tournaments', href: '../tournaments/manage' },
-        { label: 'Past tournaments', href: '../tournaments/archives' },
         { label: 'Summary', href: '../tournaments/summary' },
       ],
       content: (
@@ -1824,7 +1823,7 @@ const tournamentsHelp: HelpPageContent = {
           content: (
             <>
               <p>Once every game is in, your tournament dashboard shows <strong>Every game&rsquo;s in &mdash; ready to finalize</strong> with a <strong>Mark tournament complete</strong> button. You can also open the tournament from the <strong>Tournaments</strong> list and tap <strong>Mark complete</strong> in its record, or use the status switch in <strong>Event Settings</strong>.</p>
-              <p>Each asks first and says what will happen: its results become read-only and final, registration closes, and it moves to <strong>Past tournaments</strong>. Its public site stays online. If the post-event results email is on, the question says each team&rsquo;s coach will get it.</p>
+              <p>Each asks first and says what will happen: its results become read-only and final, and registration closes; on the <strong>Tournaments</strong> list it moves down to <strong>Completed</strong>. Its public site stays online. If the post-event results email is on, the question says each team&rsquo;s coach will get it.</p>
               <p>Your public tournament page shows its finished wrap-up &mdash; the champions and final standings &mdash; on its own once the games are done, so completing is about locking your records, not about what fans see.</p>
             </>
           ),
@@ -1859,15 +1858,16 @@ const tournamentsHelp: HelpPageContent = {
         },
         {
           id: 'closeout-two-lists',
-          title: 'Tournaments and Past tournaments',
+          title: 'The Tournaments list',
           content: (
             <>
-              <p>Each tournament lives in one list, by where it is in its life:</p>
+              <p>Every tournament is on one list, <strong>Tournaments</strong>, in the <strong>Admin</strong> section of the menu. It used to be two lists, Tournaments and Past tournaments (and before that, Manage Tournaments and Archives). Each tournament sits in one group, by where it is in its life:</p>
               <ul>
-                <li><strong>Tournaments</strong> &mdash; what&rsquo;s ahead: <strong>Active</strong> and <strong>Draft</strong>. It used to be called Manage Tournaments. On the Tournament plan it also says how many tournament slots are in use.</li>
-                <li><strong>Past tournaments</strong> &mdash; what&rsquo;s finished: <strong>Completed</strong>, <strong>Archived</strong>, and your <strong>Sealed records</strong>, each of which opens its permanent public record. <strong>Public ledger</strong> opens the public page that lists them. It used to be called Archives.</li>
+                <li><strong>Active</strong> and <strong>Draft</strong> &mdash; what&rsquo;s ahead, soonest first.</li>
+                <li><strong>Completed</strong> and <strong>Archived</strong> &mdash; what&rsquo;s finished, most recent first.</li>
+                <li><strong>Sealed records</strong> &mdash; each opens its permanent public record; <strong>Public ledger</strong> opens the public page that lists them.</li>
               </ul>
-              <p>Tap a tournament in either list to open its record. On Tournament Plus and above, a completed tournament&rsquo;s row in Past tournaments also carries <strong>Reuse setup</strong>.</p>
+              <p>Each group says whether its public sites are online. Tap a tournament to open its record. On Tournament Plus and above, a completed tournament&rsquo;s row also carries <strong>Reuse setup</strong>. On the Tournament plan the list says how many tournament slots are in use, and the tournament holding a slot is on the same list.</p>
             </>
           ),
         },
@@ -1906,30 +1906,30 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-where-mark-complete',
           question: 'Where do I mark a tournament complete?',
-          answerText: 'When every game is in, your tournament dashboard shows "Every game’s in — ready to finalize" with a Mark tournament complete button. You can also open the tournament from the Tournaments list and tap Mark complete in its record. Either way it asks first. Completing locks the results; to make changes afterwards, reopen it from Past tournaments.',
+          answerText: 'When every game is in, your tournament dashboard shows "Every game’s in — ready to finalize" with a Mark tournament complete button. You can also open the tournament from the Tournaments list and tap Mark complete in its record. Either way it asks first. Completing locks the results; to make changes afterwards, reopen it from the Tournaments list.',
           keywords: ['mark complete', 'ready to finalize', 'finalize tournament', 'close out', 'dashboard prompt', 'lock results', 'Manage Tournaments'],
           popular: true,
           answer: (
-            <p>When every game is in, your tournament <strong>dashboard</strong> shows <strong>Every game&rsquo;s in &mdash; ready to finalize</strong> with a <strong>Mark tournament complete</strong> button. You can also open the tournament from the <strong>Tournaments</strong> list and tap <strong>Mark complete</strong> in its record. Either way it asks first. Completing locks the results and standings as final; to make changes afterwards, reopen it from <strong>Past tournaments</strong>.</p>
+            <p>When every game is in, your tournament <strong>dashboard</strong> shows <strong>Every game&rsquo;s in &mdash; ready to finalize</strong> with a <strong>Mark tournament complete</strong> button. You can also open the tournament from the <strong>Tournaments</strong> list and tap <strong>Mark complete</strong> in its record. Either way it asks first. Completing locks the results and standings as final; to make changes afterwards, reopen it from the <strong>Tournaments</strong> list.</p>
           ),
         },
         {
           id: 'faq-reopen-completed',
           question: 'How do I change a completed tournament?',
-          answerText: 'A completed tournament’s results are locked. Open it from Past tournaments and tap Reopen: its results become editable again and it moves back to your Tournaments list. A sealed tournament can’t be reopened.',
+          answerText: 'A completed tournament’s results are locked. Open it from the Tournaments list and tap Reopen: its results become editable again and it moves back to Active. A sealed tournament can’t be reopened.',
           keywords: ['reopen', 'results are locked', 'locked', 'edit completed tournament', 'undo complete', 'change results after complete'],
           answer: (
-            <p>A completed tournament&rsquo;s results are locked. Open it from <strong>Past tournaments</strong> and tap <strong>Reopen</strong>: its results become editable again and it moves back to your <strong>Tournaments</strong> list, with its public site still online. A sealed tournament can&rsquo;t be reopened.</p>
+            <p>A completed tournament&rsquo;s results are locked. Open it from the <strong>Tournaments</strong> list and tap <strong>Reopen</strong>: its results become editable again and it moves back to <strong>Active</strong>, with its public site still online. A sealed tournament can&rsquo;t be reopened.</p>
           ),
         },
         {
           id: 'faq-completed-archived-sealed',
           question: 'What is the difference between completed, archived, and sealed?',
-          answerText: 'Completed means the event is over: its results are read-only, its public site stays online, and it still holds a tournament slot. Archived takes its public site offline and frees the slot; you can bring it back from Past tournaments. Sealed means a permanent public record of its results was kept in your public ledger; sealing can’t be undone, and a sealed tournament can’t be reopened.',
+          answerText: 'Completed means the event is over: its results are read-only, its public site stays online, and it still holds a tournament slot. Archived takes its public site offline and frees the slot; you can bring it back from the Tournaments list. Sealed means a permanent public record of its results was kept in your public ledger; sealing can’t be undone, and a sealed tournament can’t be reopened.',
           keywords: ['completed', 'archived', 'sealed', 'lifecycle', 'Archives', 'Past tournaments'],
           popular: true,
           answer: (
-            <p><strong>Completed</strong> means the event is over: its results are read-only, its public site stays online, and it still holds a tournament slot. <strong>Archived</strong> takes its public site offline and frees the slot; you can bring it back from <strong>Past tournaments</strong>. <strong>Sealed</strong> means a permanent public record of its results was kept in your public ledger; sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
+            <p><strong>Completed</strong> means the event is over: its results are read-only, its public site stays online, and it still holds a tournament slot. <strong>Archived</strong> takes its public site offline and frees the slot; you can bring it back from the <strong>Tournaments</strong> list. <strong>Sealed</strong> means a permanent public record of its results was kept in your public ledger; sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
           ),
         },
         {
@@ -1945,20 +1945,20 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-free-slot',
           question: 'How do I free up a tournament slot?',
-          answerText: 'Archive a finished tournament: open it from Past tournaments and tap Archive. On the Tournament plan its finished dashboard also offers Archive this tournament. Its public site goes offline, so every link you have shared stops working.',
+          answerText: 'Archive a finished tournament: open it from the Tournaments list and tap Archive. On the Tournament plan its finished dashboard also offers Archive this tournament. Its public site goes offline, so every link you have shared stops working.',
           keywords: ['free slot', 'plan limit', 'archive tournament'],
           answer: (
-            <p>Archive a finished tournament: open it from <strong>Past tournaments</strong> and tap <strong>Archive</strong>. On the Tournament plan, its finished dashboard also offers <strong>Archive this tournament</strong>. Archived tournaments keep their teams, games, and payments but no longer hold a slot. Archiving takes the public site offline, so every link you&rsquo;ve shared stops working.</p>
+            <p>Archive a finished tournament: open it from the <strong>Tournaments</strong> list and tap <strong>Archive</strong>. On the Tournament plan, its finished dashboard also offers <strong>Archive this tournament</strong>. Archived tournaments keep their teams, games, and payments but no longer hold a slot. Archiving takes the public site offline, so every link you&rsquo;ve shared stops working.</p>
           ),
         },
         {
           id: 'faq-bring-back-archived',
           question: 'Can I bring an archived tournament back?',
-          answerText: 'Yes. Open it from Past tournaments and tap Bring back. It comes back as Completed, and its public site goes back online at the same links. It needs a free tournament slot: if every slot is in use, the record says which event holds it before you tap anything. If another tournament now uses its public link, change this tournament’s public link in Details first.',
+          answerText: 'Yes. Open it from the Tournaments list and tap Bring back. It comes back as Completed, and its public site goes back online at the same links. It needs a free tournament slot: if every slot is in use, the record says which event holds it before you tap anything. If another tournament now uses its public link, change this tournament’s public link in Details first.',
           keywords: ['bring back archived', 'restore tournament', 'unarchive', 'undo archive', 'reactivate tournament', 'archived by mistake', 'public site offline', 'Archives'],
           answer: (
             <>
-              <p>Yes. Open it from <strong>Past tournaments</strong> and tap <strong>Bring back</strong>. It comes back as <strong>Completed</strong>, and its public site goes back online at the same links.</p>
+              <p>Yes. Open it from the <strong>Tournaments</strong> list and tap <strong>Bring back</strong>. It comes back as <strong>Completed</strong>, and its public site goes back online at the same links.</p>
               <p>It needs a free tournament slot: if every slot is in use, the record says which event holds it before you tap anything. If another tournament now uses its public link, change this tournament&rsquo;s public link in <strong>Details</strong> first.</p>
             </>
           ),
@@ -2027,7 +2027,7 @@ const tournamentsHelp: HelpPageContent = {
           <p>
             Schedule imports block scored, submitted, completed, generator-locked, playoff,
             pool-slot structural, and facility-lane structural changes. A completed tournament
-            is locked until you reopen it from Past tournaments. Scores, delete imports, and
+            is locked until you reopen it from the Tournaments list. Scores, delete imports, and
             replace/wipe imports are not supported.
           </p>
         </>
