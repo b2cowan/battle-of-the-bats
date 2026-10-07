@@ -10,7 +10,9 @@
    (the money pages' old header, below) and fails on a new one. */
 
 /* ── Shared layout ────────────────────────────────────────────────────────── */
-.page { max-width: 960px; }
+/* Centred, at one of the portal's two widths, like every club page (owner 2026-10-07; the rule and its reason:
+   components/admin/kit/club/ClubKit.module.css). */
+.page { max-width: 960px; margin-inline: auto; }
 
 /* The money pages' OLD header (allocations, payment requests, Allocate to teams): read only inside a `legacy`
    prop AdminPageHeader no longer renders — Club Tier Stage 3 retires both with those pages. */

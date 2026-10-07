@@ -5,8 +5,11 @@
    2026-09-29): the same layout; surfaces, inks, chips and type are the portal's.
    ⚠ TOKENS ONLY — this sheet is in the strict kit gate's KIT_FILES (scripts/check-public-tokens.mjs). */
 
+/* Centred, at one of the portal's two widths, like every club page (owner 2026-10-07; the rule and its reason:
+   components/admin/kit/club/ClubKit.module.css). */
 .page {
-  max-width: 1080px;
+  max-width: 960px;
+  margin-inline: auto;
 }
 
 /* ── Current plan card ───────────────────────────────── */

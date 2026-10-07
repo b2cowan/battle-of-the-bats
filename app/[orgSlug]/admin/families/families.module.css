@@ -9,7 +9,9 @@
    ⚠ TOKENS ONLY for any new rule — `scripts/check-public-tokens.mjs` holds this area's literals and fails on a
    new one. */
 
-.page { padding: 2rem; max-width: 72rem; }
+/* Centred, at one of the portal's two widths, like every club page (owner 2026-10-07; the rule and its reason:
+   components/admin/kit/club/ClubKit.module.css). */
+.page { padding: 2rem; max-width: 1200px; margin-inline: auto; }
 
 .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.1rem; }
 .search {

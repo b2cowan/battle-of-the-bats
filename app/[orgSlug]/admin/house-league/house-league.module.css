@@ -1,5 +1,7 @@
 /* ── Shared layout ────────────────────────────────────────────────────────── */
-.page { max-width: 960px; }
+/* Centred, at one of the portal's two widths, like every club page (owner 2026-10-07; the rule and its reason:
+   components/admin/kit/club/ClubKit.module.css). */
+.page { max-width: 960px; margin-inline: auto; }
 
 .pageHeader {
   display: flex;

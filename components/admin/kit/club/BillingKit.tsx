@@ -126,7 +126,7 @@ export default function BillingKit() {
 
   if (!isOwner) {
     return (
-      <div className={ck.pageNarrow}>
+      <div className={ck.page}>
         <AdminPageHeader eyebrow="Organization" title="Plan & billing" />
         <div className={styles.lockedCard}>
           <h2 className={styles.lockedTitle}>Plan &amp; billing is the owner’s</h2>
@@ -183,7 +183,7 @@ export default function BillingKit() {
     }
 
     return (
-      <div className={ck.pageNarrow}>
+      <div className={ck.page}>
         <AdminPageHeader eyebrow="Organization" title="Plan & billing" />
         {notice && <PageNotice notice={notice} />}
         <CoachCard className={styles.reactivate}>
@@ -296,7 +296,7 @@ export default function BillingKit() {
   }
 
   return (
-    <div className={ck.pageNarrow}>
+    <div className={ck.page}>
       <AdminPageHeader eyebrow="Organization" title="Plan & billing" />
       {notice && <PageNotice notice={notice} />}
 

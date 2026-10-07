@@ -102,7 +102,7 @@ export default function ClubSetupKit() {
   let number = 0;
 
   return (
-    <div className={`${ck.pageNarrow} ${styles.page}`}>
+    <div className={`${ck.page} ${styles.page}`}>
       <AdminPageHeader eyebrow="Set up your club" title={`Get ${currentOrg.name} ready for the season`} />
 
       {status === 'error' ? (

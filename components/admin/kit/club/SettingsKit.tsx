@@ -194,7 +194,7 @@ export default function SettingsKit() {
 
   if (userRole !== 'owner') {
     return (
-      <div className={ck.pageNarrow}>
+      <div className={ck.page}>
         <AdminPageHeader eyebrow="Organization" title="Settings" />
         <div className={styles.lockedCard}>
           <h2 className={styles.lockedTitle}>Settings are the owner’s</h2>
@@ -373,7 +373,7 @@ export default function SettingsKit() {
   const listed = siteOn && (settings?.isDiscoverable ?? currentOrg.isDiscoverable);
 
   return (
-    <div className={ck.pageNarrow}>
+    <div className={ck.page}>
       <AdminPageHeader eyebrow="Organization" title="Settings" />
 
       {notice && <PageNotice notice={notice} />}

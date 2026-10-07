@@ -93,7 +93,7 @@ export default function AuditLogKit() {
 
   if (userRole !== 'owner') {
     return (
-      <div className={ck.pageNarrow}>
+      <div className={ck.page}>
         <AdminPageHeader eyebrow={eyebrow} title="Audit log" backTo={{ href: membersHref, label: 'Members' }} />
         <div className={styles.empty}>
           <h2 className={styles.emptyTitle}>The audit log is the owner’s</h2>
@@ -127,7 +127,7 @@ export default function AuditLogKit() {
     generateCSV(serializeHeaders(EXPORT_COLS), serializeRows(exportRows(), EXPORT_COLS)));
 
   return (
-    <div className={ck.page}>
+    <div className={ck.pageWide}>
       <AdminPageHeader
         eyebrow={eyebrow}
         title="Audit log"

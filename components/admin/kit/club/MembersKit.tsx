@@ -129,7 +129,7 @@ export default function MembersKit() {
 
   if (!canSee) {
     return (
-      <div className={ck.pageNarrow}>
+      <div className={ck.page}>
         <AdminPageHeader eyebrow="Organization" title="Members" />
         <div className={styles.empty}>
           <h2 className={styles.emptyTitle}>Members isn’t turned on for you</h2>
@@ -276,7 +276,7 @@ export default function MembersKit() {
   );
 
   return (
-    <div className={ck.page}>
+    <div className={ck.pageWide}>
       <AdminPageHeader
         eyebrow={tournamentTier ? 'Tournament settings' : 'Organization'}
         title="Members"

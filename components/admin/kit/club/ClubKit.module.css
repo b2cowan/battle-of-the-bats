@@ -10,8 +10,19 @@
    ⚠ MONOSPACE ONLY ON EYEBROWS, CHIPS AND READOUTS (F2): headings, labels and buttons are the body face.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-.page { max-width: 68rem; }
-.pageNarrow { max-width: 52rem; }
+/* ⚖ A CLUB PAGE CENTRES IN THE WORKING AREA, as every coaches-portal page does (owner 2026-10-07: "club pages
+   formatting should match the coaches portal so if coaches portal is centred so should the club pages" — the
+   portal's own rule is its desktop shell D1, 2026-08-01: split margins, never a left-anchored strip with the
+   leftover on one side). Every club page wrapper carries the same `margin-inline: auto`: this kit, RepKit, and
+   the older per-area sheets (Rep Teams, Families, House league, Billing, Public site, onboarding) until their
+   stages restyle them. Help is NOT one of them: it is the coach's own help layout, left-anchored there too.
+   ⚖ AND AT ONE OF THE PORTAL'S TWO WIDTHS (owner, the same day: "update the mentioned pages to the 2 page widths").
+   `.page` is the portal's reading column (960px, its `.page`): the hub, Settings, Billing, the setup checklist, a
+   refusal. `.pageWide` is its column for tables and grids (1200px, its `.pageWide` — "data-dense surfaces opt into
+   the wide column"): Members, the audit log, and RepKit's Rep Teams and Accounting. `.pageNarrow` (52rem) and the
+   old 68rem retired here; six measured widths became two. */
+.page { max-width: 960px; margin-inline: auto; }
+.pageWide { max-width: 1200px; margin-inline: auto; }
 
 /* ── A section: its eyebrow row, then its body ── */
 .section { margin: 0 0 1.75rem; }

@@ -7,6 +7,33 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-07 — A CLUB PAGE CENTRES IN THE WORKING AREA, AT ONE OF THE PORTAL'S TWO WIDTHS (owner, walking §271: *"club pages formatting should match the coaches portal so if coaches portal is centred so should the club pages"*)
+
+**Decision:** every club page wrapper carries `margin-inline: auto` — the club kit (ClubKit `.page` / `.pageNarrow`,
+RepKit `.page` / `.moneyFrame`), the older per-area sheets (Rep Teams, Families, House league, Billing, Public site,
+bring a team in, onboarding) and the Organization landing page's own cap. Measured at 1920 the same day: every club
+page has equal margins. Accounting took the portal's money width (1200px, `.moneyFrame`, owned by the Accounting
+frame) the same day.
+**Why:** the coaches portal is the formatting benchmark (owner 2026-09-28), and its desktop shell rule D1
+(2026-08-01) centres every page column — split margins, never a left-anchored strip with the leftover on one side.
+The owner's sentence is the general rule; centring is its first application.
+**Not touched, and why:** Help (it is the portal's own help layout, left-anchored there too — it already matches);
+the common admin sheet's `.page` (already centred, and shared with tournament pages); Notifications (already
+centred); the tournament admin (its own project).
+**Widths — ruled and built the same day** (owner: *"update the mentioned pages to the 2 page widths"*): the club
+pages had measured six widths (720 · 832 · 896 · 1088 · 1152 · 1200 px); now each is one of the portal's two. **960px,
+the reading column** (the portal's `.page`): the hub (the coach's Overview is 960 too), Organization, Settings,
+Billing, the setup checklist, Public site, bring a team in, a refusal, and the older Rep Teams and House league pages
+(already 960). **1200px, tables and grids** (the portal's `.pageWide`): Rep Teams, Accounting, Families, Members,
+the audit log. The kit's `.pageNarrow` (52rem) retired into `.page`; RepKit's `.page` is the wide column. Measured at
+1920: every page 960 or 1200, equal margins. **The one exception:** first-time setup's plan-choice step (a pricing
+grid of up to five plans, 1340px). New allocation keeps its 720px form until Stage 3c redraws it.
+**Parked:** the club Budget vs. Actual's Expand all on a phone (hidden on both views; the coach shows it) waits for a
+session of its own on accounting reports at phone width (owner 2026-10-07).
+**Applies to:** `components/admin/kit/club/ClubKit.module.css` (the rule's comment; `.page` 960, `.pageWide` 1200),
+`RepKit.module.css`, the five kit screens that wore `.pageNarrow`, Members' and the audit log's main view, the
+per-area sheets named above; `app/[orgSlug]/admin/org/page.tsx`.
+
 ### 2026-10-07 — THE OLIVE PILL CHOOSES WHAT IS READ; A FILTER IS QUIET UNTIL IT FILTERS; A MONEY TAB'S FIGURES SIT ABOVE ITS TOOLBAR (owner, walking §271 on the club Budget: *"are these filters supposed to be different colors and sizes?"*, then *"go ahead and run it through design and fix it"* and *"sure, review and commit"* to the `/design` report)
 
 **Decision:** (1) **Two faces, two jobs.** The olive-tinted pill (`lead`) chooses WHAT IS READ — a scope (the

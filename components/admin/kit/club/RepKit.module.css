@@ -19,7 +19,9 @@
    ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder strictly.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-.page { max-width: 68rem; min-width: 0; }
+/* Centred like every club page (owner 2026-10-07; the rule and its reason: components/admin/kit/club/ClubKit.module.css). */
+/* The wide column (1200px, the portal's `.pageWide`): every Rep Teams page is a table or a record with tables. */
+.page { max-width: 1200px; min-width: 0; margin-inline: auto; }
 /* ⚖ ACCOUNTING TAKES THE COACH'S MONEY WIDTH (owner, §271 walk, 2026-10-07: "why aren't we utilizing more of the
    window width for the club reports like we are for the coaches portal reports?"). The club's Budget and Budget
    vs. Actual draw the coach's own month grids, and at 68rem the twelve months, No date yet and Total did not fit
@@ -28,7 +30,7 @@
    ⚠ THE FRAME OWNS IT, not each page (`/simplify`, 2026-10-07): `AccountingFrame` wraps EVERY Accounting route in
    `.moneyFrame`, tab or one level down, and a page's own `.page` inside it gives up its narrower cap — so the
    column never jumps between a tab and the page it opens, and a new Accounting page cannot forget it. */
-.moneyFrame, .page.moneyFrame { max-width: 75rem; min-width: 0; }
+.moneyFrame, .page.moneyFrame { max-width: 1200px; min-width: 0; margin-inline: auto; }
 .moneyFrame .page { max-width: none; }
 /* The touch floor on these screens' own buttons (the layout sweep's R2, ≤768): the shared `.btn`
    renders a few px short, a debt the older admin carries in its baseline; the Stage 2 screens

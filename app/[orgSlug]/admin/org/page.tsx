@@ -74,7 +74,8 @@ export default function OrgAdminHub() {
   ];
 
   return (
-    <div className="p-8 max-w-4xl">
+    // The portal's reading column (960px), centred, like every club page (owner 2026-10-07; see ClubKit.module.css).
+    <div className="p-8 max-w-[960px] mx-auto">
       <AdminPageHeader
         eyebrow="Organization"
         title={currentOrg?.name ?? 'Organization Admin'}

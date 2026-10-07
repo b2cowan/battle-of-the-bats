@@ -10,8 +10,11 @@
   gap: 2rem;
 }
 
+/* Centred like every club page (owner 2026-10-07; see components/admin/kit/club/ClubKit.module.css). The one
+   width that is NOT one of the portal's two: the plan-choice step is a pricing grid of up to five plans. */
 .pageWide {
   max-width: 1340px;
+  margin-inline: auto;
 }
 
 .workflowOnlyPage {
