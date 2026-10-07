@@ -284,6 +284,13 @@ export function PeriodGrid({
     ? windowCols[monthAtOrAfterToday(windowCols.map(c => c.key))]?.key ?? null
     : windowCols.find(c => c.key >= quarterKeyOf(todayKey as MonthKey))?.key ?? null;
   useOpenOnNow(scrollerRef, `${granularity}|${windowCols[0]?.key ?? ''}|${windowCols.length}`);
+  /* ⚖ THIS MONTH IS TINTED (owner, §271 walk, 2026-10-07: "why aren't we highlighting our current month like we do
+     in the coaches portal?"). Budget vs. Actual's Months tinted it while this grid only scrolled to it on a phone, so
+     the two grids read "now" two ways; one lit-column rule (`gridColNow`) serves both. Only the column that IS this
+     month (a quarter: the one holding it) — never `nowKey`'s "first month after", which is where a phone opens, not
+     today. A plan for another year has no lit column. */
+  const litKey = granularity === 'months' ? todayKey : quarterKeyOf(todayKey as MonthKey);
+  const litCol = (col: { key: string }) => (col.key === litKey ? shared.gridColNow : undefined);
 
   /* The two bands' groups, split once (owner ruling 2026-09-08, mockup e94d05d9 round 2; the
      order flipped to Revenue → Expenses by decisions A–D, 2026-09-12). The revenue subtotal is read
@@ -302,7 +309,7 @@ export function PeriodGrid({
    */
   const totalCells = (t: PeriodTotals) => (
     <>
-      {cols.map(col => <td key={col.key}>{fmtCell(t.cells[col.key])}</td>)}
+      {cols.map(col => <td key={col.key} className={litCol(col)}>{fmtCell(t.cells[col.key])}</td>)}
       <td>{fmtCell(t.total)}</td>
     </>
   );
@@ -319,7 +326,7 @@ export function PeriodGrid({
   ) => (
     <>
       {cols.map(col => (
-        <td key={col.key}>
+        <td key={col.key} className={litCol(col)}>
           {col.unscheduled
             ? (undated == null ? '—' : balanceFigure(undated))
             : balanceFigure(byColumn[col.key])}
@@ -368,7 +375,7 @@ export function PeriodGrid({
           </span>
         )}
       </th>
-      {cols.map(col => <td key={col.key}>{fmtCell(t.cells[col.key])}</td>)}
+      {cols.map(col => <td key={col.key} className={litCol(col)}>{fmtCell(t.cells[col.key])}</td>)}
       <td>{fmtCell(t.total)}</td>
     </tr>
   );
@@ -394,7 +401,7 @@ export function PeriodGrid({
           <span className={shared.wrap640}>{lead.name}</span>
         </button>
       </th>
-      {cols.map(col => <td key={col.key}>{fmtCell(t.cells[col.key])}</td>)}
+      {cols.map(col => <td key={col.key} className={litCol(col)}>{fmtCell(t.cells[col.key])}</td>)}
       <td>{fmtCell(t.total)}</td>
     </tr>
   );
@@ -440,7 +447,7 @@ export function PeriodGrid({
               <span className={shared.wrap640}>{group.name}</span>
             </button>
           </th>
-          {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(group.lineKind, group.cells[col.key]))}</td>)}
+          {cols.map(col => <td key={col.key} className={litCol(col)}>{fmtCell(fundingCell(group.lineKind, group.cells[col.key]))}</td>)}
           <td>{fmtCell(fundingCell(group.lineKind, group.total))}</td>
         </tr>
         {open && group.rows.map(row => {
@@ -509,7 +516,7 @@ export function PeriodGrid({
                   Short version: a fact the coach gets by opening the row does not need a label
                   promising it first. */}
             </th>
-            {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
+            {cols.map(col => <td key={col.key} className={litCol(col)}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
             <td>{fmtCell(fundingCell(row.lineKind, row.total))}</td>
           </tr>
           );
@@ -567,7 +574,7 @@ export function PeriodGrid({
                   first column. It was "Line" here and "Category / line" there. */}
               <th scope="col">Category / line</th>
               {cols.map(col => (
-                <th key={col.key} scope="col" className={col.unscheduled ? styles.periodGridUnscheduled : ''} data-now={col.key === nowKey ? '' : undefined}>
+                <th key={col.key} scope="col" className={col.unscheduled ? styles.periodGridUnscheduled : litCol(col)} data-now={col.key === nowKey ? '' : undefined}>
                   {col.label}
                 </th>
               ))}
@@ -589,7 +596,7 @@ export function PeriodGrid({
                 leaves a coach wondering whether the sponsor they entered went missing. */}
             <tr className={shared.moneyGridBand}>
               <th scope="row">{L.revenueBand}</th>
-              {cols.map(col => <td key={col.key} />)}
+              {cols.map(col => <td key={col.key} className={litCol(col)} />)}
               <td />
             </tr>
             {/* ⚠ `periodGridBadge`, NOT the List's `ladderBadge` (/review, 2026-09-10): that class
@@ -606,7 +613,7 @@ export function PeriodGrid({
             {!view.installments && revenueGroups.length === 0 && (
               <tr>
                 <td className={styles.periodGridPrompt}>{REVENUE_EMPTY_PROMPT}</td>
-                {cols.map(col => <td key={col.key} />)}
+                {cols.map(col => <td key={col.key} className={litCol(col)} />)}
                 <td />
               </tr>
             )}
@@ -614,12 +621,12 @@ export function PeriodGrid({
               <th scope="row">{L.totalRevenue}</th>
               {revenueTotals
                 ? totalCells(revenueTotals)
-                : <>{cols.map(col => <td key={col.key}>—</td>)}<td>—</td></>}
+                : <>{cols.map(col => <td key={col.key} className={litCol(col)}>—</td>)}<td>—</td></>}
             </tr>
 
             <tr className={shared.moneyGridBand}>
               <th scope="row">{L.expensesBand}</th>
-              {cols.map(col => <td key={col.key} />)}
+              {cols.map(col => <td key={col.key} className={litCol(col)} />)}
               <td />
             </tr>
             {costGroups.map(renderGroup)}
@@ -630,7 +637,7 @@ export function PeriodGrid({
             {costGroups.length === 0 && !view.trial && !view.estimateRows && (
               <tr>
                 <td className={styles.periodGridPrompt}>{EXPENSES_EMPTY_PROMPT}</td>
-                {cols.map(col => <td key={col.key} />)}
+                {cols.map(col => <td key={col.key} className={litCol(col)} />)}
                 <td />
               </tr>
             )}
@@ -676,7 +683,7 @@ export function PeriodGrid({
             <tr className={`${shared.moneyGridFlow} ${shared.moneyGridFlowFirst}`}>
               <th scope="row">{L.openingBalance}</th>
               {cols.map(col => (
-                <td key={col.key}>{col.unscheduled ? '—' : balanceFigure(balance.opening[col.key])}</td>
+                <td key={col.key} className={litCol(col)}>{col.unscheduled ? '—' : balanceFigure(balance.opening[col.key])}</td>
               ))}
               {/* ⚠ NULL ≠ ZERO. A season that never carried an opening balance says so, in words,
                   where a $0.00 would claim the team started with exactly nothing — the same
