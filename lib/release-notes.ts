@@ -44,6 +44,60 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-10-07',
+    title: 'Notifications that open where you are, a finished tournament on one page, and steadier menus on your phone',
+    highlights: [
+      {
+        category: 'new',
+        text: "A finished tournament's dashboard now shows how it finished: each division's champion with the final score, the teams that played, games played, what you collected, and anything still owed in amber. A division with no decided final shows the team first in the standings, with no trophy. Copy a link to the champions in one tap, or start next year's draft with Reuse this setup.",
+      },
+      {
+        category: 'new',
+        text: 'Summary is now one page: How it finished, The event in numbers and Next year, with Print and Copy link at the top.',
+      },
+      {
+        category: 'new',
+        text: 'Every tournament now sits on one Tournaments list under Admin, grouped Active, Draft, Completed, Archived and Sealed records, each saying what it means for your public site. Open a tournament to change its status, and each change asks first. An archived tournament can now be brought back; it needs a free plan slot and its public link, and says so before you tap.',
+      },
+      {
+        category: 'new',
+        text: "On a computer, the bell opens your notifications in a drawer on the right, with Unread and All and Needs attention pinned at the top. Click one to read the whole message beside the list, with a button that takes you to the page it's about. See all is gone.",
+      },
+      {
+        category: 'improved',
+        text: 'In your admin, the Notifications page opens a notification where you are: in a sheet above the bottom bar on a phone, in a small window on a computer.',
+      },
+      {
+        category: 'improved',
+        text: 'Clear is now Done. Mark all read now marks everything read; Needs attention items stay pinned until you tap Done. In the coaches portal, an opened notification has a trash button that deletes your copy, with six seconds to undo it.',
+      },
+      {
+        category: 'improved',
+        text: "On game day on a phone, a player's flags (innings pitched, sitting streak, Out) sit under their name, so the name stays on one line. A call-up now shows as an amber name instead of the word Call-up. The printed batting-order card still says \"(Call-up)\", and the dugout poster prints the name alone.",
+      },
+      {
+        category: 'improved',
+        text: "Menus and sheets on a phone now work the same way everywhere. Back closes an open menu and keeps you on the page. On game day, Note and End game cover the bottom bar while open, so a stray tap can't leave the game with a note half-written.",
+      },
+      {
+        category: 'improved',
+        text: 'Filters show each choice\'s count at the end of its row. A filter you\'ve narrowed names your choices, up to three, for example "Status · Actual, Scheduled"; four or more read "4 selected".',
+      },
+      {
+        category: 'improved',
+        text: "On your team's Budget Plan, the When filter reads just When until you pick something, then shows your choice with a tint. It used to read \"When All\" even while hiding rows, so a filtered plan could look complete.",
+      },
+      {
+        category: 'improved',
+        text: 'On a computer, buttons and toolbar fields in your admin are now all one height, matching the coaches portal. Phones and tablets are unchanged.',
+      },
+      {
+        category: 'fixed',
+        text: "Smaller fixes: tapping the dimmed page beside an open phone sheet now closes the sheet and nothing else (it used to press what was underneath, and over a game's back arrow it left the game); the install-app banner sits under a phone sheet instead of over it; the bell's red count is easier to read in the Dark theme; and End game's button now simply reads End game.",
+      },
+    ],
+  },
+  {
     date: '2026-10-02',
     title: 'Reuse a lineup from another game, your payees in one window, and a clearer Ledger',
     highlights: [
