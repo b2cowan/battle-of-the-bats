@@ -162,12 +162,33 @@ export function fileLine(l: FilingFacts, allocationOf?: () => { id: string; desc
   return NOT_FILED_FILING;
 }
 
-/** The Ledger's Category column and filter (C14): on a club book, the line's filing (a house-league fee
- *  keeps 3a's word); on a TEAM's book, the coaches' own words — those lines are never the club's to file. */
-export function ledgerCategory(l: FilingFacts, bookKind: LedgerKind): string | null {
-  if (bookKind === 'team' || lineType(l) === 'house_league_fees') return lineCategoryWord(l);
-  return fileLine(l)?.categoryName ?? null;
+/** A line as the Ledger files it — `fileLine` run ONCE, and the two cells the Ledger shows and filters by read
+ *  from it, so the column, the filter and the line window can never file one line two ways. */
+export interface LedgerFiling {
+  /** The filing itself (`fileLine`): null on a team's book, a transfer between the club's own books, a fee. */
+  filing: Filing | null;
+  /** The Category column and filter (C14): the filing's category (a house-league fee keeps 3a's word); on a
+   *  TEAM's book, the coaches' own words — those lines are never the club's to file. */
+  category: string | null;
+  /** The Item column and filter (owner 2026-10-07 — the coach's Ledger has carried one all along, and since Ask 4a
+   *  a club line carries the coach's whole word): a typed line's item, the allocation a received installment
+   *  belongs to, "On request" / "Paid to teams on request" for a request. Nothing for a line not filed (its
+   *  Category already says "Not filed"; one cell says it), a transfer, a fee, or a line on a team's book. */
+  item: string | null;
 }
+
+export function ledgerFiling(l: FilingFacts, bookKind: LedgerKind, allocationOf?: () => { id: string; description: string } | null): LedgerFiling {
+  if (bookKind === 'team') return { filing: null, category: lineCategoryWord(l), item: null };
+  const filing = fileLine(l, allocationOf);
+  return {
+    filing,
+    category: lineType(l) === 'house_league_fees' ? lineCategoryWord(l) : filing?.categoryName ?? null,
+    item: filing && filing.categoryId !== NOT_FILED_ID ? filing.itemName : null,
+  };
+}
+
+/** The Category alone, where nothing else is wanted (the filter's list across every club book). */
+export const ledgerCategory = (l: FilingFacts, bookKind: LedgerKind): string | null => ledgerFiling(l, bookKind).category;
 
 /** The facts that trace a loop line back to its installment or request. */
 export interface LoopLink { id: string; sourceModule: string | null; sourceEntityId: string | null; linkedEntryId: string | null }
@@ -197,14 +218,18 @@ export function findLoopRecord<T>(
  * lines that would join the list.
  */
 export function ledgerOptionCounts(
-  rows: readonly { status: LineStatus; type: LineType; category: string | null }[],
-  filters: { status: ReadonlySet<LineStatus>; types: ReadonlySet<LineType> | null; categories: ReadonlySet<string> | null },
+  rows: readonly { status: LineStatus; type: LineType; category: string | null; item: string | null }[],
+  filters: {
+    status: ReadonlySet<LineStatus>; types: ReadonlySet<LineType> | null;
+    categories: ReadonlySet<string> | null; items: ReadonlySet<string> | null;
+  },
 ): { status: Partial<Record<LineStatus, number>>; type: Partial<Record<LineType, number>> } {
   const status: Partial<Record<LineStatus, number>> = {};
   const type: Partial<Record<LineType, number>> = {};
   for (const r of rows) {
     const inCategory = !filters.categories || (r.category !== null && filters.categories.has(r.category));
-    if (!inCategory) continue;
+    const inItem = !filters.items || (r.item !== null && filters.items.has(r.item));
+    if (!inCategory || !inItem) continue;
     if (!filters.types || filters.types.has(r.type)) status[r.status] = (status[r.status] ?? 0) + 1;
     if (filters.status.has(r.status)) type[r.type] = (type[r.type] ?? 0) + 1;
   }
@@ -218,6 +243,7 @@ export interface ExportableLine {
   what: string;
   detail: string | null;
   category: string | null;
+  item: string | null;
   type: LineType;
   /** Exactly one of the two is set, as on the book. */
   moneyIn: number | null;
@@ -233,6 +259,7 @@ export const LEDGER_EXPORT_COLUMNS = [
   { label: 'Detail', key: 'detail', format: 'text' as const },
   { label: 'Type', key: 'type', format: 'text' as const },
   { label: 'Category', key: 'category', format: 'text' as const },
+  { label: 'Item', key: 'item', format: 'text' as const },
   { label: 'Amount', key: 'amount', format: 'currency' as const },
   { label: 'Status', key: 'status', format: 'text' as const },
   { label: 'Recorded by', key: 'recordedBy', format: 'text' as const },
@@ -260,6 +287,7 @@ export function ledgerExportRows(lines: readonly ExportableLine[]): {
       detail: l.status === 'void' && l.voidReason ? [l.detail, `Void: ${l.voidReason}`].filter(Boolean).join(' · ') : l.detail ?? '',
       type: LINE_TYPE_WORD[l.type],
       category: l.category ?? '',
+      item: l.item ?? '',
       amount: signed,
       status: l.status === 'void' ? 'VOID' : l.status === 'pending' ? 'PENDING' : 'Posted',
       recordedBy: l.recordedBy ?? '',

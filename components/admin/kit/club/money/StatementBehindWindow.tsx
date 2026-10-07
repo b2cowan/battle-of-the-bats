@@ -8,7 +8,7 @@
  * recipe; the doors are the club's own, which is why this panel lives with the club's screen while the rows
  * it is opened from are the coach's own (promoted, components/coaches/MoneyStatementRows):
  *   · a typed line states itself (the date, its words, its amount); the ONE door is the Ledger, narrowed to
- *     these lines — their book, the year, their category;
+ *     these lines — their book, the year, their category and item;
  *   · a line the money loop wrote names the allocation or the request behind it, and that row IS the door
  *     to its page (the mirror of the coach's drive or sponsor row opening its room).
  * A Budgeted figure does not open this: it opens the line's own window (the line reads first).
@@ -38,6 +38,10 @@ export default function StatementBehindWindow({ item, categoryName, report, acco
   const where = bookName ? `on ${bookName}` : 'on the club’s books';
   const filed = item.itemName && item.itemName !== categoryName ? `${categoryName} › ${item.itemName}` : categoryName;
   const params = new URLSearchParams({ from: `${report.year}-01-01`, to: `${report.year}-12-31`, category: categoryName });
+  /* "These lines" are the ITEM's, not the whole category's: the Ledger's Item filter (owner 2026-10-07) narrows to
+     them. Keyed on the item's id, never on its name matching the category's: a word may be "Insurance › Insurance",
+     while a Not filed row (and a category's "Not itemized" bucket) has no item half — the category alone is exact. */
+  if (item.itemId && item.itemName) params.set('item', item.itemName);
   if (books.length === 1) params.set('book', books[0]);
   const ledgerHref = `${accountingBase}/ledger?${params}`;
   const typed = costs.some(c => !report.lineSources[c.id]);

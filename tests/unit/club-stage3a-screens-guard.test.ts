@@ -58,8 +58,15 @@ describe('the Ledger reads like the coach\'s Ledger (Ask 6), on the coach\'s own
     assert.match(ledger, /filter\(b => b\.ledger\.entityType !== 'team'\)/);
     assert.match(ledger, /router\.replace\(`\$\{base\}\/teams\/\$\{teamBook\.ledger\.entityId\}`\)/, 'a team book\'s old address forwards to the team');
   });
-  it('the Balance leaves once an entry that moves it is hidden — Type, Category, or Status without Posted (§255); the export holds the whole period', () => {
-    assert.match(ledger, /const showBalance = types\.size === 0 && cats\.size === 0 && statuses\.has\('posted'\);/);
+  it('both halves of the filed word show — Category then Item, as on the coach’s Ledger (owner 2026-10-07)', () => {
+    assert.match(ledger, /<th scope="col">Category<\/th>\s*<th scope="col">Item<\/th>/);
+    assert.match(ledger, /data-label="Category">\{row\.category \?\? ''\}<\/td>\s*<td className=\{moneyKit\.cat\} data-label="Item">\{row\.item \?\? ''\}<\/td>/);
+    assert.match(ledger, /label="Item" options=\{\(read\?\.items \?\? \[\]\)/, 'the Item filter lists the items on the book');
+    assert.match(ledger, /params\.append\('category', c\)/, 'one category= per choice — a word may carry a comma');
+    assert.match(ledger, /params\.append\('item', i\)/, 'one item= per choice — an item may carry a comma');
+  });
+  it('the Balance leaves once an entry that moves it is hidden — Type, Category, Item, or Status without Posted (§255); the export holds the whole period', () => {
+    assert.match(ledger, /const showBalance = types\.size === 0 && cats\.size === 0 && items\.size === 0 && statuses\.has\('posted'\);/);
     assert.match(ledger, /params\.set\('export', '1'\)/);
   });
   it('the coach\'s Ledger holds the same rule: a Status without Actual takes the Balance too (§255)', () => {

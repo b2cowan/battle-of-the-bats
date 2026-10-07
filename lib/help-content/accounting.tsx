@@ -186,16 +186,17 @@ const accountingHelp: HelpPageContent = {
       id: 'entries',
       heading: 'Reading the Ledger, and correcting a line',
       summary: 'Oldest first between a starting and an ending balance, each with its date; filters; Tools; editing, voiding, and lines that come from elsewhere.',
-      keywords: ['entry', 'income', 'expense', 'transfer', 'posted', 'pending', 'void', 'edit entry', 'starting balance', 'ending balance', 'book pill', 'filters', 'tools', 'filter button', 'reset filters', 'not filed', 'filed under'],
-      searchText: 'ledger book pill switch books entry income expense transfer posted pending void edit entry saves as you type autosave starting balance ending balance oldest first bank statement running balance money out money in type status category not filed filed under date this month all time filters balance disappears balance column gone balance hidden when filtering category untick posted pending line faint void reason audit trail read only line from an allocation request fee where to change it team book team account tools menu payees transfer where did the payees button go where did the transfer button go year on the balance lines row shows only the day phone card filter button phone filter sheet filters on a phone where did the filters go reset filters',
+      keywords: ['entry', 'income', 'expense', 'transfer', 'posted', 'pending', 'void', 'edit entry', 'starting balance', 'ending balance', 'book pill', 'filters', 'tools', 'filter button', 'reset filters', 'not filed', 'filed under', 'item', 'budget item'],
+      searchText: 'ledger book pill switch books entry income expense transfer posted pending void edit entry saves as you type autosave starting balance ending balance oldest first bank statement running balance money out money in type status category item budget item item column not filed filed under date this month all time filters balance disappears balance column gone balance hidden when filtering category untick posted pending line faint void reason audit trail read only line from an allocation request fee where to change it team book team account tools menu payees transfer where did the payees button go where did the transfer button go year on the balance lines row shows only the day phone card filter button phone filter sheet filters on a phone where did the filters go reset filters',
       content: (
         <>
           <p>The <strong>Ledger</strong> tab shows one book at a time. The <strong>Book</strong> pill switches books — it opens on the General ledger and shows every book’s balance. <strong>Tools</strong> (⋯, beside Export) holds the rarer jobs: <a href="#recipe-transfer-between-ledgers">Transfer</a> and <a href="#payees">Payees</a>.</p>
-          <p>The book reads <strong>oldest first</strong>, like a bank statement: a <strong>Starting balance</strong> at the top and an <strong>Ending balance</strong> at the foot, each named with its full date (<em>Starting balance · Jul 3, 2026</em>), and between them every line with its day (<em>Aug 12</em>), its <strong>Money out</strong>, <strong>Money in</strong> and running <strong>Balance</strong>. The balance for the whole book also sits at the right of the filters. On a phone each line is its own card.</p>
+          <p>The book reads <strong>oldest first</strong>, like a bank statement: a <strong>Starting balance</strong> at the top and an <strong>Ending balance</strong> at the foot, each named with its full date (<em>Starting balance · Jul 3, 2026</em>), and between them every line with its day (<em>Aug 12</em>), the <strong>Category</strong> and <strong>Item</strong> it is filed under, its <strong>Money out</strong>, <strong>Money in</strong> and running <strong>Balance</strong>. The balance for the whole book also sits at the right of the filters. On a phone each line is its own card.</p>
           <HelpDefs>
             <HelpDef term="Type">Expenses, income, team allocations, team support, transfers. Narrowing it hides the Balance column, because a running total of only some lines isn’t a balance of anything.</HelpDef>
             <HelpDef term="Status">Starts on <strong>Posted</strong> and <strong>Pending</strong>. A pending line is faint and keeps the balance before it until it clears. Tick <strong>Void</strong> to see voided lines, each with its reason, or <strong>All</strong> for every line. Untick <strong>Posted</strong> and the Balance column goes too — posted lines are the ones that move it.</HelpDef>
             <HelpDef term="Category">One or several budget categories, or <strong>Not filed</strong>. Like Type, it hides the Balance column.</HelpDef>
+            <HelpDef term="Item">One or several budget items, the second half of the word a line is filed under. An allocation’s lines carry the allocation’s name. Like Category, it hides the Balance column.</HelpDef>
             <HelpDef term="Date">Starts on <strong>This month</strong>. Pick a preset, your own dates, or <strong>All time</strong>. The Balance column stays: the starting balance carries everything before your dates.</HelpDef>
           </HelpDefs>
           <p><strong>On a phone the filters sit behind one Filter button</strong>, beside the balance. It opens a sheet showing what each filter is set to. A number on the button counts the ones you’ve changed; <strong>Reset filters</strong> puts them back.</p>
@@ -230,13 +231,13 @@ const accountingHelp: HelpPageContent = {
       id: 'categories',
       heading: 'Filing a line under a budget word',
       summary: 'Every ledger line is filed under one of the budget’s words; that is what puts it on Budget vs. Actual.',
-      keywords: ['filed under', 'not filed', 'category', 'categories', 'budget word', 'off-plan', 'reporting', 'filtering', 'export'],
-      searchText: 'filed under not filed budget word category categories off-plan on the plan money out money in words reporting filtering export filed by where it came from team allocations team support registration fees',
+      keywords: ['filed under', 'not filed', 'category', 'categories', 'item', 'budget item', 'budget word', 'off-plan', 'reporting', 'filtering', 'export'],
+      searchText: 'filed under not filed budget word category categories item budget item item column off-plan on the plan money out money in words reporting filtering export filed by where it came from team allocations team support registration fees',
       content: (
         <>
           <p>Every entry is <strong>Filed under</strong> one of the budget’s words — the same words the Budget plans with. Money out is filed under a money-out word and money in under a money-in word, and a hint says whether the word is on this year’s plan. A word with no plan line still saves; it counts as <strong>off-plan</strong> on Budget vs. Actual. Add or rename words from the Budget tab’s <strong>Tools → Categories</strong>.</p>
           <p>Lines the money loop writes — allocations, payment requests, registration fees — file themselves, and show their word read-only. Lines typed before this change keep their old text and read <strong>Not filed</strong> until someone files them; open one and choose its word.</p>
-          <p>The Ledger’s <strong>Category</strong> filter lists the budget’s categories, and every export carries the category column.</p>
+          <p>The Ledger shows both halves of the word, <strong>Category</strong> and <strong>Item</strong>, and filters by either. Its export carries both columns.</p>
         </>
       ),
     },

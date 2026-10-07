@@ -74,7 +74,7 @@ describe('D1 + D3 + D4 — the count beside the name, one wording for the pill a
 });
 
 describe('D5 — the club Ledger counts what ticking a choice would list, and All means all', () => {
-  const row = (status: LineStatus, type: LineType, category: string | null = null) => ({ status, type, category });
+  const row = (status: LineStatus, type: LineType, category: string | null = null) => ({ status, type, category, item: null });
   // The live defect: seven expenses in the window, two of them voided — "Expenses (7)" listed five.
   const rows = [
     row('posted', 'expense', 'Equipment'), row('posted', 'expense', 'Equipment'), row('posted', 'expense', 'Facilities'),
@@ -86,22 +86,33 @@ describe('D5 — the club Ledger counts what ticking a choice would list, and Al
   const ALL = new Set<LineStatus>(['posted', 'pending', 'void']);
 
   it('at rest a Type counts only the lines Status shows — Expenses lists 5, not 7', () => {
-    const c = ledgerOptionCounts(rows, { status: REST, types: null, categories: null });
+    const c = ledgerOptionCounts(rows, { status: REST, types: null, categories: null, items: null });
     assert.equal(c.type.expense, 5);
     assert.equal(c.type.income, 1);
     assert.equal(c.type.transfer, undefined, 'a voided transfer is not counted while Void is hidden');
   });
   it('with Void shown the voided lines count toward their Type', () => {
-    const c = ledgerOptionCounts(rows, { status: ALL, types: null, categories: null });
+    const c = ledgerOptionCounts(rows, { status: ALL, types: null, categories: null, items: null });
     assert.equal(c.type.expense, 7);
     assert.equal(c.type.transfer, 1);
   });
   it('a Status counts the lines the Type and Category filters admit', () => {
-    const c = ledgerOptionCounts(rows, { status: REST, types: new Set<LineType>(['expense']), categories: null });
+    const c = ledgerOptionCounts(rows, { status: REST, types: new Set<LineType>(['expense']), categories: null, items: null });
     assert.deepEqual(c.status, { posted: 4, pending: 1, void: 2 });
-    const f = ledgerOptionCounts(rows, { status: REST, types: null, categories: new Set(['Facilities']) });
+    const f = ledgerOptionCounts(rows, { status: REST, types: null, categories: new Set(['Facilities']), items: null });
     assert.deepEqual(f.status, { posted: 2, void: 1 });
     assert.equal(f.type.expense, 2);
+  });
+  it('an Item narrows the counts as a Category does, and a line with no item is never in one (owner 2026-10-07)', () => {
+    const withItems = [
+      { status: 'posted' as LineStatus, type: 'expense' as LineType, category: 'Facilities', item: 'Diamond permits' },
+      { status: 'posted' as LineStatus, type: 'expense' as LineType, category: 'Facilities', item: 'Practice balls' },
+      { status: 'pending' as LineStatus, type: 'expense' as LineType, category: 'Facilities', item: 'Diamond permits' },
+      { status: 'posted' as LineStatus, type: 'transfer' as LineType, category: null, item: null },
+    ];
+    const c = ledgerOptionCounts(withItems, { status: REST, types: null, categories: null, items: new Set(['Diamond permits']) });
+    assert.deepEqual(c.status, { posted: 1, pending: 1 });
+    assert.deepEqual(c.type, { expense: 2 });
   });
   it('the page reads the per-choice numbers, keeps the census for the export, and lets All mean all three', () => {
     const page = readCode('app/[orgSlug]/admin/accounting/ledger/page.tsx');

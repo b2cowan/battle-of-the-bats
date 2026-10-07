@@ -7,7 +7,8 @@ import {
   type ClubAllocationFacts, type ClubBook, type ClubBookLineFacts, type ClubPlanLineFacts, type ClubRequestFacts,
   type ClubReport,
 } from '../../lib/club-budget-report.ts';
-import { fileLine, ledgerCategory } from '../../lib/club-ledger.ts';
+import { fileLine, ledgerCategory, ledgerFiling } from '../../lib/club-ledger.ts';
+import { FROM_THE_TEAMS_WORD, NOT_FILED_WORD } from '../../lib/club-money-words.ts';
 import {
   lineAllocated, notAllocated, openingBalance, clubCashOnHand, waitingOnYou, headroom, otherBooksMovement,
 } from '../../lib/club-money-figures.ts';
@@ -359,6 +360,17 @@ describe('the Ledger\'s filing and the exports', () => {
     assert.equal(ledgerCategory({ ...base, entryType: 'expense', ...insured }, 'org'), 'Insurance');
     assert.equal(ledgerCategory({ ...base, entryType: 'transfer_out', partnerKind: 'org' }, 'tournament'), null);
     assert.equal(ledgerCategory({ ...base, entryType: 'expense', category: 'Jerseys', ...insured }, 'team'), 'Jerseys', 'never the club\'s to file');
+  });
+  it('ledgerFiling: the Item is the filing\'s second half — an allocation by its name, nothing when not filed, a transfer or a team\'s book (owner 2026-10-07)', () => {
+    const typed = ledgerFiling({ ...base, entryType: 'expense', ...insured }, 'org');
+    assert.deepEqual([typed.category, typed.item], ['Insurance', 'Club insurance']);
+    const received = ledgerFiling({ ...base, entryType: 'transfer_in', category: 'rep_allocation' }, 'org', () => ({ id: 'a1', description: 'Diamond fees 2026' }));
+    assert.deepEqual([received.category, received.item], [FROM_THE_TEAMS_WORD, 'Diamond fees 2026']);
+    const notFiled = ledgerFiling({ ...base, entryType: 'expense' }, 'org');
+    assert.deepEqual([notFiled.category, notFiled.item], [NOT_FILED_WORD, null], 'Category says Not filed; Item says nothing');
+    assert.equal(ledgerFiling({ ...base, entryType: 'transfer_out', partnerKind: 'org' }, 'tournament').item, null);
+    const team = ledgerFiling({ ...base, entryType: 'expense', category: 'Jerseys', ...insured }, 'team');
+    assert.deepEqual([team.filing, team.item], [null, null], 'never the club\'s to file');
   });
   it('the Statement export: an off-plan line\'s Budgeted is blank, each band closes on its total, the net last', () => {
     const r = report({ bookLines: [line({ amount: 500, ...filed(EVENTS) })] });

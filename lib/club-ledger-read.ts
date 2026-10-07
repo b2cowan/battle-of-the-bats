@@ -6,8 +6,8 @@ import { bookInScope } from './club-team-route';
 import { bookWindow, isMoneyIn, type BookLineFacts } from './club-money-figures';
 import { howItCame, installmentLineWords, requestLineWords } from './club-money-words';
 import {
-  NOT_FILED_ID, SOURCE_MODULE, fileLine, findLoopRecord, isSourcedLine, isTransfer, ledgerCategory, ledgerOptionCounts,
-  lineType, type ExportableLine, type Filing, type FilingFacts, type LedgerKind, type LineStatus, type LineType,
+  NOT_FILED_ID, SOURCE_MODULE, findLoopRecord, isSourcedLine, isTransfer, ledgerCategory, ledgerFiling, ledgerOptionCounts,
+  lineType, type ExportableLine, type Filing, type FilingFacts, type LedgerFiling, type LedgerKind, type LineStatus, type LineType,
 } from './club-ledger';
 
 /**
@@ -20,7 +20,7 @@ import {
  *   · the Balance ALL-TIME — one scope, so the Overview and the Ledger never print two balances;
  *   · Status (posted · pending · void) and Type, each choice counted as what ticking it would list
  *     (`ledgerOptionCounts`), beside the window's census the export reads;
- *   · Type and Category filters (the club's own categories, never the teams');
+ *   · Type, Category and Item filters (the club's own categories, never the teams'; the items on this book);
  *   · each line on the PAGE worded from its source where it has one, who recorded it, and what may be
  *     done with it on the ledger (the line window's door).
  *
@@ -55,6 +55,9 @@ export interface BookRowOut {
   /** The category the line is FILED under (Club Tier Stage 3b, C14 — `filedCategory`): its budget word's
    *  category, the loop's own ("From the teams", "Team support"), "Not filed", or none (a transfer). */
   category: string | null;
+  /** The ITEM the line is filed under — the Ledger's Item column (`ledgerItem`): its word's item, the allocation a
+   *  received installment belongs to, a request's own item. Null when not filed, a transfer, a house-league fee. */
+  item: string | null;
   /** The whole word, for the line window's "Filed under" (Ask 4a): a typed line's word, or the word a loop
    *  line files itself under (`byItsSource`, read-only). Null on a transfer and on a line not filed yet. */
   filedUnder: Filing | null;
@@ -98,6 +101,9 @@ export interface BookRead {
   /** What ticking each Status / Type choice would list, given the other filters (`ledgerOptionCounts`). */
   optionCounts: { status: Partial<Record<LineStatus, number>>; type: Partial<Record<LineType, number>> };
   categories: string[];
+  /** The Item filter's list: the items this book's lines are filed under, every row (the coach's rule — a choice
+   *  the book never used could only empty the screen). */
+  items: string[];
   total: number;
   offset: number;
   limit: number;
@@ -152,21 +158,60 @@ export async function clubCategories(orgId: string): Promise<string[]> {
 const INST_SELECT = 'id, split_id, installment_number, accounting_entry_id, paid_method, paid_reference, rep_allocation_splits ( id, team_id, allocation_id, rep_cost_allocations ( description ) )';
 const REQ_SELECT = 'id, team_id, description, accounting_entry_id';
 
+/**
+ * The installments behind some lines, keyed the two ways `findLoopRecord` traces a loop line: by its source (3a
+ * on) and by either half's link (a line written before 3a). One read for the book's filing and the page's words.
+ */
+async function installmentsFor(orgId: string, lines: readonly BookLine[]) {
+  const linkIds = [...new Set(lines.flatMap(l => [l.id, l.linkedEntryId]).filter((v): v is string => !!v))];
+  const sourceIds = lines.filter(l => l.sourceModule === SOURCE_MODULE.installment && l.sourceEntityId).map(l => l.sourceEntityId!);
+  const [byLink, bySource] = await Promise.all([
+    fetchAllIn<Record<string, any>>(linkIds, (c, a, b) =>
+      supabaseAdmin.from('rep_allocation_installments').select(INST_SELECT).eq('org_id', orgId).in('accounting_entry_id', c).order('id').range(a, b)),
+    fetchAllIn<Record<string, any>>(sourceIds, (c, a, b) =>
+      supabaseAdmin.from('rep_allocation_installments').select(INST_SELECT).eq('org_id', orgId).in('id', c).order('id').range(a, b)),
+  ]);
+  const rows = [...byLink, ...bySource];
+  return {
+    rows,
+    byEntry: new Map(byLink.map(i => [i.accounting_entry_id as string, i] as const)),
+    byId: new Map(rows.map(i => [i.id as string, i] as const)),
+  };
+}
+
+type AllocationOf = ReadonlyMap<string, { id: string; description: string }>;
+
+/**
+ * The allocation each received installment on the book belongs to — the item it files under ("From the teams ›
+ * Diamond fees 2026"). Read for the WHOLE book, not the page: the Item filter narrows every row and its list is
+ * every item on the book. The trace is the page's own (`findLoopRecord`: the source, else either half's link),
+ * and the line's filing reads this one map, so a line can never file one way in the column and another in the
+ * filter.
+ */
+async function allocationsOf(orgId: string, lines: readonly BookLine[]): Promise<AllocationOf> {
+  const loop = lines.filter(l => lineType(l) === 'team_allocations');
+  const out = new Map<string, { id: string; description: string }>();
+  if (loop.length === 0) return out;
+  const inst = await installmentsFor(orgId, loop);
+  for (const l of loop) {
+    const split = findLoopRecord(l, SOURCE_MODULE.installment, inst.byId, inst.byEntry)?.rep_allocation_splits;
+    if (split?.allocation_id) out.set(l.id, { id: split.allocation_id, description: split.rep_cost_allocations?.description ?? 'Club allocation' });
+  }
+  return out;
+}
+
 /** Everything the page's words need, read together for the page's lines only. */
 async function lookupsFor(orgId: string, page: readonly BookLine[]) {
   const linkIds = [...new Set(page.flatMap(l => [l.id, l.linkedEntryId]).filter((v): v is string => !!v))];
   const partnerIds = [...new Set(page.map(l => l.linkedEntryId).filter((v): v is string => !!v))];
   const sourced = (module: string) => page.filter(l => l.sourceModule === module && l.sourceEntityId).map(l => l.sourceEntityId!);
 
-  const [partners, instByLink, reqByLink, instById, reqById, payees, teams, nameOf] = await Promise.all([
+  const [partners, inst, reqByLink, reqById, payees, teams, nameOf] = await Promise.all([
     fetchAllIn<{ id: string; ledger_id: string }>(partnerIds, (c, a, b) =>
       supabaseAdmin.from('accounting_entries').select('id, ledger_id').in('id', c).order('id').range(a, b)),
-    fetchAllIn<Record<string, any>>(linkIds, (c, a, b) =>
-      supabaseAdmin.from('rep_allocation_installments').select(INST_SELECT).eq('org_id', orgId).in('accounting_entry_id', c).order('id').range(a, b)),
+    installmentsFor(orgId, page),
     fetchAllIn<Record<string, any>>(linkIds, (c, a, b) =>
       supabaseAdmin.from('rep_team_payment_requests').select(REQ_SELECT).eq('org_id', orgId).in('accounting_entry_id', c).order('id').range(a, b)),
-    fetchAllIn<Record<string, any>>(sourced(SOURCE_MODULE.installment), (c, a, b) =>
-      supabaseAdmin.from('rep_allocation_installments').select(INST_SELECT).eq('org_id', orgId).in('id', c).order('id').range(a, b)),
     fetchAllIn<Record<string, any>>(sourced(SOURCE_MODULE.request), (c, a, b) =>
       supabaseAdmin.from('rep_team_payment_requests').select(REQ_SELECT).eq('org_id', orgId).in('id', c).order('id').range(a, b)),
     fetchAllIn<{ id: string; name: string }>(page.map(l => l.payeeId).filter((v): v is string => !!v), (c, a, b) =>
@@ -176,8 +221,7 @@ async function lookupsFor(orgId: string, page: readonly BookLine[]) {
     resolvePersonNamer(orgId, page.flatMap(l => [l.createdBy, l.voidedBy])),
   ]);
 
-  const insts = [...instByLink, ...instById];
-  const splitIds = [...new Set(insts.map(i => i.split_id as string))];
+  const splitIds = [...new Set(inst.rows.map(i => i.split_id as string))];
   const [ledgers, splitInstallments] = await Promise.all([
     fetchAllIn<{ id: string; name: string; entity_type: string; entity_id: string | null }>([...new Set(partners.map(p => p.ledger_id))], (c, a, b) =>
       supabaseAdmin.from('accounting_ledgers').select('id, name, entity_type, entity_id').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
@@ -189,9 +233,7 @@ async function lookupsFor(orgId: string, page: readonly BookLine[]) {
   for (const r of splitInstallments) countBySplit.set(r.split_id, (countBySplit.get(r.split_id) ?? 0) + 1);
   const partnerLedger = new Map(partners.map(p => [p.id, p.ledger_id]));
   const ledgerById = new Map(ledgers.map(l => [l.id, l]));
-  const instByEntry = new Map(instByLink.map(i => [i.accounting_entry_id as string, i] as const));
   const reqByEntry = new Map(reqByLink.map(r => [r.accounting_entry_id as string, r] as const));
-  const instByIdMap = new Map(insts.map(i => [i.id as string, i] as const));
   const reqByIdMap = new Map([...reqByLink, ...reqById].map(r => [r.id as string, r] as const));
 
   return {
@@ -204,7 +246,7 @@ async function lookupsFor(orgId: string, page: readonly BookLine[]) {
       return id ? ledgerById.get(id) ?? null : null;
     },
     /** The installment / request a line belongs to (`findLoopRecord`: by its source, else either half's link — pre-3a). */
-    installmentOf: (l: BookLine) => findLoopRecord(l, SOURCE_MODULE.installment, instByIdMap, instByEntry) ?? null,
+    installmentOf: (l: BookLine) => findLoopRecord(l, SOURCE_MODULE.installment, inst.byId, inst.byEntry) ?? null,
     requestOf: (l: BookLine) => findLoopRecord(l, SOURCE_MODULE.request, reqByIdMap, reqByEntry) ?? null,
   };
 }
@@ -217,6 +259,7 @@ function shapeLine(
   balance: number | null,
   book: { kind: LedgerKind; entityId: string | null; orgName: string },
   x: Lookups,
+  filed: LedgerFiling,
 ): BookRowOut {
   const type = lineType(l);
   const partner = x.partnerOf(l);
@@ -265,13 +308,10 @@ function shapeLine(
     detail = [payeeName, l.paymentMethod].filter(Boolean).join(' · ') || null;
   }
 
-  /* ⚖ WHAT THE LINE IS FILED UNDER (Ask 4a) — the one rule, `fileLine`: its own word, or for a loop line the
-     word it files itself under by its source, read-only. A team's book is the coaches' (D1): nothing on it
-     is the club's to file. "Not filed" is a null here (the window offers the picker). */
-  const split = inst?.rep_allocation_splits;
-  const filing = book.kind === 'team' ? null
-    : fileLine(l, () => split?.allocation_id ? { id: split.allocation_id, description: split.rep_cost_allocations?.description ?? 'Club allocation' } : null);
-  const filedUnder = filing && filing.categoryId !== NOT_FILED_ID ? filing : null;
+  /* ⚖ WHAT THE LINE IS FILED UNDER (Ask 4a) — the one rule, read once by `readBook` (`ledgerFiling`): its own word,
+     or for a loop line the word it files itself under by its source, read-only. A team's book is the coaches' (D1):
+     nothing on it is the club's to file. "Not filed" is a null here (the window offers the picker). */
+  const filedUnder = filed.filing && filed.filing.categoryId !== NOT_FILED_ID ? filed.filing : null;
 
   const fixed = book.kind === 'team' || l.status === 'void' || isSourcedLine(l, !!inst || !!req);
   const can: BookRowOut['can'] = fixed
@@ -281,8 +321,8 @@ function shapeLine(
       : { edit: true, void: 'line' };
 
   return {
-    id: l.id, date: l.entryDate, what, detail, category: ledgerCategory(l, book.kind), filedUnder,
-    legacyCategory: filing?.categoryId === NOT_FILED_ID && !isTransfer(l) ? l.category : null,
+    id: l.id, date: l.entryDate, what, detail, category: filed.category, item: filed.item, filedUnder,
+    legacyCategory: filed.filing?.categoryId === NOT_FILED_ID && !isTransfer(l) ? l.category : null,
     type,
     moneyOut: moneyIn ? null : l.amount, moneyIn: moneyIn ? l.amount : null,
     balance, status: l.status, source, can,
@@ -298,7 +338,7 @@ export async function readBook(
   ledgerId: string,
   opts: {
     from?: string | null; to?: string | null;
-    status?: LineStatus[] | null; types?: LineType[] | null; categories?: string[] | null;
+    status?: LineStatus[] | null; types?: LineType[] | null; categories?: string[] | null; items?: string[] | null;
     offset?: number; limit?: number;
     /** Every narrowed row, unpaged — the export's read (never "the loaded page", C14). */
     all?: boolean;
@@ -310,16 +350,25 @@ export async function readBook(
   if (!ledger || !bookInScope(ledger, opts.scope ?? null)) return null;
   const kind = ledger.entityType as LedgerKind;
 
-  const [all, categories] = await Promise.all([
-    fetchAll<Record<string, any>>((a, b) =>
-      supabaseAdmin.from('accounting_entries').select(`*, ${FILING_SELECT}`).eq('ledger_id', ledgerId)
-        .order('entry_date').order('created_at').order('id').range(a, b)).then(rows => rows.map(mapLine)),
+  const lines = fetchAll<Record<string, any>>((a, b) =>
+    supabaseAdmin.from('accounting_entries').select(`*, ${FILING_SELECT}`).eq('ledger_id', ledgerId)
+      .order('entry_date').order('created_at').order('id').range(a, b)).then(rows => rows.map(mapLine));
+  const [all, categories, allocationOf] = await Promise.all([
+    lines,
     // The filter's list: the club's own words. Not for the export or for a team's (read-only) book.
     opts.all || kind === 'team' ? Promise.resolve([] as string[]) : clubCategories(orgId),
+    kind === 'team' ? Promise.resolve(new Map() as AllocationOf) : lines.then(ls => allocationsOf(orgId, ls)),
   ]);
 
+  // Every line filed ONCE (`ledgerFiling`): the Category and Item columns, both filters, the items list and the line
+  // window all read this, so none of them can file a line differently from another.
+  const filed = new Map(all.map(l => [l.id, ledgerFiling(l, kind, () => allocationOf.get(l.id) ?? null)] as const));
+  // The filter's list: every item on THIS book. Not for the export or for a team's (read-only) book.
+  const items = opts.all || kind === 'team' ? []
+    : [...new Set([...filed.values()].map(f => f.item).filter((w): w is string => !!w))].sort((x, y) => x.localeCompare(y));
+
   const win = bookWindow(all, { from: opts.from ?? null, to: opts.to ?? null });
-  const typed = win.rows.map(r => ({ ...r, status: r.line.status, type: lineType(r.line), category: ledgerCategory(r.line, kind) }));
+  const typed = win.rows.map(r => ({ ...r, ...filed.get(r.line.id)!, status: r.line.status, type: lineType(r.line) }));
   const typeCounts: Partial<Record<LineType, number>> = {};
   for (const r of typed) typeCounts[r.type] = (typeCounts[r.type] ?? 0) + 1;
 
@@ -328,9 +377,11 @@ export async function readBook(
   const status = new Set<LineStatus>(opts.status?.length ? opts.status : ['posted', 'pending']);
   const types = opts.types?.length ? new Set(opts.types) : null;
   const cats = opts.categories?.length ? new Set(opts.categories) : null;
+  const itemSet = opts.items?.length ? new Set(opts.items) : null;
   const narrowed = typed.filter(r => status.has(r.status)
     && (!types || types.has(r.type))
-    && (!cats || (r.category !== null && cats.has(r.category))));
+    && (!cats || (r.category !== null && cats.has(r.category)))
+    && (!itemSet || (r.item !== null && itemSet.has(r.item))));
 
   const limit = opts.all ? narrowed.length : Math.min(Math.max(opts.limit ?? 100, 1), 500);
   const offset = opts.all ? 0 : Math.max(opts.offset ?? 0, 0);
@@ -345,12 +396,13 @@ export async function readBook(
     endingBalance: win.endingBalance,
     window: { from: opts.from ?? null, to: opts.to ?? null },
     counts: { status: win.counts, type: typeCounts },
-    optionCounts: ledgerOptionCounts(typed, { status, types, categories: cats }),
+    optionCounts: ledgerOptionCounts(typed, { status, types, categories: cats, items: itemSet }),
     categories,
+    items,
     total: narrowed.length,
     offset,
     limit,
-    rows: page.map(r => shapeLine(r.line, r.balance, book, lookups)),
+    rows: page.map(r => shapeLine(r.line, r.balance, book, lookups, r)),
   };
 }
 
@@ -362,7 +414,7 @@ export async function readBookForExport(
   const book = await readBook(orgId, orgName, ledgerId, { ...window, status: ['posted', 'pending', 'void'], all: true });
   if (!book) return null;
   const lines: ExportableLine[] = book.rows.map(r => ({
-    date: r.date, what: r.what, detail: r.detail, category: r.category, type: r.type,
+    date: r.date, what: r.what, detail: r.detail, category: r.category, item: r.item, type: r.type,
     moneyIn: r.moneyIn, moneyOut: r.moneyOut, status: r.status, recordedBy: r.recordedBy, voidReason: r.voided?.reason ?? null,
   }));
   return { book, lines };

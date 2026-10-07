@@ -5,7 +5,7 @@ import {
   clubInstallmentLeftTeamOn, clubInstallmentReceivedOn, clubInstallmentState, clubInstallmentWaitingOnClub,
   comingDueBand, comingDueLater, comingDueWindowEnd, remindsAbout, signedAmount, teamAccount, type BookLineFacts, type ClubInstallmentFacts,
 } from '../../lib/club-money-figures.ts';
-import { LEDGER_KIND_WORD, isSourcedLine, ledgerExportRows, lineType } from '../../lib/club-ledger.ts';
+import { LEDGER_EXPORT_COLUMNS, LEDGER_KIND_WORD, isSourcedLine, ledgerExportRows, lineType } from '../../lib/club-ledger.ts';
 
 /**
  * Club Tier Stage 3a — the ONE definition of every club money figure (lib/club-money-figures.ts),
@@ -242,10 +242,10 @@ describe('a book: one Balance, a true Starting balance, every row (C14)', () => 
 
 describe('the export: whole period, one signed Amount, voids kept and out of the totals (C14)', () => {
   const out = ledgerExportRows([
-    { date: '2026-09-03', what: 'Insurance', detail: null, category: 'Insurance', type: 'expense', moneyIn: null, moneyOut: 3200, status: 'posted', recordedBy: 'Priya', voidReason: null },
-    { date: '2026-09-10', what: 'Allocation received · 9U A', detail: 'E-Transfer 3307', category: 'Team allocations', type: 'team_allocations', moneyIn: 450, moneyOut: null, status: 'posted', recordedBy: 'Priya', voidReason: null },
-    { date: '2026-09-18', what: 'Umpire clinic', detail: null, category: null, type: 'expense', moneyIn: null, moneyOut: 240, status: 'void', recordedBy: 'Priya', voidReason: 'Entered twice' },
-    { date: '2026-09-26', what: 'Umpires', detail: 'Cheque 2230', category: 'Officials', type: 'expense', moneyIn: null, moneyOut: 640, status: 'pending', recordedBy: null, voidReason: null },
+    { date: '2026-09-03', what: 'Insurance', detail: null, category: 'Insurance', item: 'League insurance', type: 'expense', moneyIn: null, moneyOut: 3200, status: 'posted', recordedBy: 'Priya', voidReason: null },
+    { date: '2026-09-10', what: 'Allocation received · 9U A', detail: 'E-Transfer 3307', category: 'Team allocations', item: 'Diamond fees 2026', type: 'team_allocations', moneyIn: 450, moneyOut: null, status: 'posted', recordedBy: 'Priya', voidReason: null },
+    { date: '2026-09-18', what: 'Umpire clinic', detail: null, category: null, item: null, type: 'expense', moneyIn: null, moneyOut: 240, status: 'void', recordedBy: 'Priya', voidReason: 'Entered twice' },
+    { date: '2026-09-26', what: 'Umpires', detail: 'Cheque 2230', category: 'Officials', item: 'Umpires', type: 'expense', moneyIn: null, moneyOut: 640, status: 'pending', recordedBy: null, voidReason: null },
   ]);
   it('signs the amount: + in, − out', () => {
     assert.deepEqual(out.rows.map(r => r.amount), [-3200, 450, -240, -640]);
@@ -256,6 +256,11 @@ describe('the export: whole period, one signed Amount, voids kept and out of the
     assert.match(String(out.rows[2].detail), /Void: Entered twice/);
     assert.equal(out.rows[3].status, 'PENDING');
     assert.deepEqual(out.totals, { moneyIn: 450, moneyOut: 3200, net: -2750 });
+  });
+  it('carries the Item beside the Category, as the screen does (owner 2026-10-07); a line with none is blank', () => {
+    const labels = LEDGER_EXPORT_COLUMNS.map(c => c.label);
+    assert.equal(labels.indexOf('Item'), labels.indexOf('Category') + 1);
+    assert.deepEqual(out.rows.map(r => r.item), ['League insurance', 'Diamond fees 2026', '', 'Umpires']);
   });
 });
 

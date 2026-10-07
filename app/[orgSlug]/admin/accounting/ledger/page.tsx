@@ -9,13 +9,15 @@
  *              2026-10-02): a rare tool goes behind Tools, never a toolbar button — "This book" →
  *              Transfer, "The club's lists" → Payees; the coach's Ledger ends the same way. On a phone:
  *              the Book pill, Export, Tools (the ⋯ icon, a sheet) and Add entry as 44px icons.
- *   strip    — Type · Status · Category · Date, quiet at rest (Status opens on Posted + Pending; Date on
- *              This month — the club's difference from the coach's Around today), and the book's
- *              Balance at the strip's right edge. A narrowed Type or Category, or a Status without
+ *   strip    — Type · Status · Category · Item · Date, quiet at rest (Status opens on Posted + Pending; Date
+ *              on This month — the club's difference from the coach's Around today), and the book's
+ *              Balance at the strip's right edge. A narrowed Type, Category or Item, or a Status without
  *              Posted, takes the Balance away (a balance over some of the entries belongs to nothing).
  *   the book — oldest first between a Starting and an Ending balance line (K-04), each naming its full
  *              date ("Starting balance · Jul 3, 2026" — D2; a row prints the day, D1); Date · What ·
- *              Category · Money out · Money in · Balance · chevron in K-01 compact rows; the What cell
+ *              Category · Item · Money out · Money in · Balance · chevron in K-01 compact rows (⚖ Item:
+ *              owner 2026-10-07 — since Ask 4a a club line carries the coach's whole word, so the club's
+ *              book shows both halves of it, as the coach's always has); the What cell
  *              is the name, then the detail in quiet ink on the same line; no Source column; a pending
  *              line carries its chip and the balance before it, faint; the empty side of the pair blank;
  *              voids off the book until Status asks, then the void-row recipe. A card per entry on a
@@ -93,8 +95,9 @@ export default function LedgerTab() {
   const [pickedStatuses, setPickedStatuses] = useState<Set<string>>(() => new Set(STATUS_REST));
   const statuses = pickedStatuses.size ? pickedStatuses : STATUS_ALL;
   /* ⚖ A DOOR CAN NARROW THE BOOK ON ARRIVAL (Club Tier Stage 3b): Budget vs. Actual's "behind the figure"
-     panel opens "these lines in the Ledger" — `?category=` (the filing) and `?from=&to=` (the year). */
-  const [cats, setCats] = useState<Set<string>>(() => { const c = search.get('category'); return new Set(c ? [c] : []); });
+     panel opens "these lines in the Ledger" — `?category=&item=` (the filing) and `?from=&to=` (the year). */
+  const [cats, setCats] = useState<Set<string>>(() => new Set(search.getAll('category').filter(Boolean)));
+  const [items, setItems] = useState<Set<string>>(() => new Set(search.getAll('item').filter(Boolean)));
   const [range, setRange] = useState<{ selection: DateRangeSelection; from: string; to: string }>(() => {
     const from = search.get('from'), to = search.get('to');
     if (from && to && /^\d{4}-\d{2}-\d{2}$/.test(from) && /^\d{4}-\d{2}-\d{2}$/.test(to)) return { selection: 'custom', from, to };
@@ -143,9 +146,11 @@ export default function LedgerTab() {
     if (window_.to) params.set('to', window_.to);
     params.set('status', [...statuses].join(','));
     if (types.size) params.set('type', [...types].join(','));
-    if (cats.size) params.set('category', [...cats].join(','));
+    // One param per choice: a category or an item is a word the club typed, and a comma is fair game in one.
+    for (const c of cats) params.append('category', c);
+    for (const i of items) params.append('item', i);
     return `/api/admin/accounting/ledgers/${bookId}/book?${params}`;
-  }, [bookId, slug, window_.from, window_.to, statuses, types, cats]);
+  }, [bookId, slug, window_.from, window_.to, statuses, types, cats, items]);
 
   const beginRead = useLatestRead();
   const loadBook = useCallback(async () => {
@@ -196,11 +201,11 @@ export default function LedgerTab() {
   const canMove = read?.canMove ?? false;
   const rows = read ? [...read.rows, ...more] : [];
   /* ⚖ THE BALANCE SHOWS ONLY WHILE EVERY ENTRY THAT MOVES IT IS ON SCREEN (owner, §255, 2026-10-02) —
-     the coach's rule, `balanceIsMeaningful`: every narrowing counts. Type and Category hide entries
+     the coach's rule, `balanceIsMeaningful`: every narrowing counts. Type, Category and Item hide entries
      that move it, so either takes the column (and the Starting / Ending lines and the strip's figure)
      away; Status takes it only once Posted is off, because a pending or void line never moves the
      balance. The date window never does: the Starting balance carries everything before it. */
-  const showBalance = types.size === 0 && cats.size === 0 && statuses.has('posted');
+  const showBalance = types.size === 0 && cats.size === 0 && items.size === 0 && statuses.has('posted');
   const counts = read?.counts;
   /* The window's census decides which Types are OFFERED; the number beside each choice is what ticking it would
      list (Filter Counts D1 + D5): at the row's end, never in the name. */
@@ -208,7 +213,9 @@ export default function LedgerTab() {
   const typeOptions = TYPE_ORDER
     .filter(t => t !== 'house_league_fees' || (counts?.type?.house_league_fees ?? 0) > 0)
     .map(t => ({ id: t, label: LINE_TYPE_WORD[t], count: optionCounts?.type?.[t] ?? 0 }));
-  const pickBook = (id: string) => { setOpen(null); router.replace(`${base}/ledger?book=${id}`); };
+  /* The Item list is per BOOK (the items on it), so a picked item leaves with the book it was picked on — kept, it
+     would narrow the next book to nothing. Category stays: its list is the club's, across every book. */
+  const pickBook = (id: string) => { setOpen(null); setItems(new Set()); router.replace(`${base}/ledger?book=${id}`); };
 
   const bookFoot = canMove ? (
     <button type="button" className={`${pill.multiSelectOption} ${pill.multiSelectPick}`} onClick={() => setWin('ledger')}>
@@ -266,9 +273,15 @@ export default function LedgerTab() {
               selected={pickedStatuses}
               onChange={setPickedStatuses}
             />
-            {(read?.categories.length ?? 0) > 0 && (
+            {/* A narrowing that is ON always shows its pill, even with nothing left to offer — else a stale link's
+                filter empties the book with no control to clear it. */}
+            {((read?.categories.length ?? 0) > 0 || cats.size > 0) && (
               <MultiSelectDropdown restQuiet label="Category" options={(read?.categories ?? []).map(c => ({ id: c, label: c }))}
                 selected={cats} onChange={setCats} allLabel="Every category" />
+            )}
+            {((read?.items.length ?? 0) > 0 || items.size > 0) && (
+              <MultiSelectDropdown restQuiet label="Item" options={(read?.items ?? []).map(i => ({ id: i, label: i }))}
+                selected={items} onChange={setItems} allLabel="Every budget item" />
             )}
             <DateRangeDropdown
               restQuiet restSelectionId="thisMonth"
@@ -337,7 +350,7 @@ function Book({ read, rows, showBalance, onOpen, onMore, loadingMore }: {
   const to = read.window.to;
   const startLabel = ledgerBalanceLabel('Starting balance', from);
   const endLabel = ledgerBalanceLabel('Ending balance', to);
-  const cols = showBalance ? 7 : 6;
+  const cols = showBalance ? 8 : 7;
   if (rows.length === 0 && read.total === 0) {
     return (
       <>
@@ -363,6 +376,7 @@ function Book({ read, rows, showBalance, onOpen, onMore, loadingMore }: {
               <th scope="col">Date</th>
               <th scope="col">What</th>
               <th scope="col">Category</th>
+              <th scope="col">Item</th>
               <th scope="col" className={repKit.num}>Money out</th>
               <th scope="col" className={repKit.num}>Money in</th>
               {showBalance && <th scope="col" className={repKit.num}>Balance</th>}
@@ -434,6 +448,7 @@ function LineRow({ row, showBalance, onOpen }: { row: BookRowOut; showBalance: b
         {detail && <span className={ledgerKit.detail}><span className={ledgerKit.detailSep}> · </span>{detail}</span>}
       </td>
       <td className={moneyKit.cat} data-label="Category">{row.category ?? ''}</td>
+      <td className={moneyKit.cat} data-label="Item">{row.item ?? ''}</td>
       <td className={moneyKit.amt} data-label={row.moneyOut != null ? 'Money out' : undefined}>{money(row.moneyOut)}</td>
       <td className={`${moneyKit.amt}${row.moneyIn != null ? ` ${moneyKit.amtIn}` : ''}`} data-label={row.moneyIn != null ? 'Money in' : undefined}>{money(row.moneyIn)}</td>
       {showBalance && (

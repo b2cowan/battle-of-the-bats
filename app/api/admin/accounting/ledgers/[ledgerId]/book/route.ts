@@ -12,9 +12,12 @@ type Params = { params: Promise<{ ledgerId: string }> };
 const STATUSES = new Set<LineStatus>(['posted', 'pending', 'void']);
 const TYPES = new Set<LineType>(['expense', 'income', 'team_allocations', 'team_support', 'transfer', 'house_league_fees']);
 const list = (v: string | null) => (v ? v.split(',').map(s => s.trim()).filter(Boolean) : null);
+/** A filter of words the club typed (a category, an item): one param per choice, never comma-joined — a comma is
+ *  fair game in a word, where Status and Type are fixed keys. */
+const words = (url: URL, name: string) => { const v = url.searchParams.getAll(name).map(s => s.trim()).filter(Boolean); return v.length ? v : null; };
 
 /**
- * GET /api/admin/accounting/ledgers/[ledgerId]/book?orgSlug=&from=&to=&status=&type=&category=&offset=&limit=
+ * GET /api/admin/accounting/ledgers/[ledgerId]/book?orgSlug=&from=&to=&status=&type=&category=&item=&offset=&limit=
  *
  * The Ledger tab's read (Ask 6, C14): one book, oldest first, a Starting balance before the window
  * and an Ending balance at its end, the book's Balance ALL-TIME, each line worded with its source,
@@ -54,9 +57,10 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
 
   const status = list(url.searchParams.get('status'))?.filter((s): s is LineStatus => STATUSES.has(s as LineStatus)) ?? null;
   const types = list(url.searchParams.get('type'))?.filter((t): t is LineType => TYPES.has(t as LineType)) ?? null;
-  const categories = list(url.searchParams.get('category'));
+  const categories = words(url, 'category');
+  const items = words(url, 'item');
   const book = await readBook(ctx.org.id, ctx.org.name, ledgerId, {
-    from, to, status, types, categories, scope,
+    from, to, status, types, categories, items, scope,
     offset: Number(url.searchParams.get('offset') ?? 0) || 0,
     limit: Number(url.searchParams.get('limit') ?? 100) || 100,
   });
