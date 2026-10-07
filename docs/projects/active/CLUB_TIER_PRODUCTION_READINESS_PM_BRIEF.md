@@ -247,6 +247,39 @@ sits behind New allocation on the Allocations tab. Why 3c: 3c changes this form 
 offers, the year's name), so it changes once. Success: a treasurer bills what is left on a line without
 losing their place.
 
+**Stage 3c — the club's year: drawn 2026-10-07 (the hub, Mockups → Stage 3c) and ratified the same day,
+every question as recommended. One word added at the owner's question: the club's year is its "fiscal
+year"** (the board's own word; the club side only — coaches keep "season"). Build prompts written: a server
+session, then a screens session. What changes, by person:
+- **The treasurer, the first time.** One window, "The club's year", behind the Budget's Tools: the month the
+  club's year starts and its name ("2026–27"). A new club meets it on its first, empty plan. A club that
+  already has a plan sees exactly what changes before saving: the year it is in keeps its months, the next
+  one is short, and planned lines past that short year's end move to the next plan.
+- **Every money page** prints the year's name, starts on the year's first month and opens on the year the
+  club is in. Today the year is worked out by hand in about a dozen places; the build makes it one.
+- **At the end of a year.** Once a year has ended, the Overview says so with one button. Closing asks one
+  question that lists what is still open (money the teams owe, requests waiting, lines not filed, cheques
+  not cleared), warns and never blocks, and says what it locks and what carries. A closed year is read
+  where it already is, through the Year pill, with nothing to change; a line dated into it is refused in
+  words; the latest closed year can be reopened, with a reason that is kept.
+- **The year that opens** starts on last year's closing balance, locked. What was still owed stays last
+  year's bill and is listed on the new year's Overview until it is paid.
+- **The annual meeting.** Budget vs. Actual can compare the year with last year, and the Overview's Export on
+  a closed year prints the year-end report: the year at a glance, the statement against budget and last
+  year, the club's books at both ends, the teams' standing, and what carried.
+- **Two windows the owner sent to 3c.** Billing the teams happens inside the budget line's window on one
+  screen and comes back to the line; a shared payee's window reads first with what the teams recorded paying
+  it inside it.
+- **A head coach:** nothing about the club's year reaches the portal. One question for the owner: a club
+  bill still owed when its season rolls over disappears from the coach's Club tab today; the drawing keeps it
+  there, under the season it was made on, until it is paid.
+
+Why it matters: the board's papers stop moving once they are printed, and the treasurer's year matches the
+club's real year. The biggest question is the first: a coach's finished season is one page by binding
+ruling, and the recommendation reads a finished club year in place instead, because only the money tabs read
+a year and they already do. Success: a treasurer closes a year, prints its papers, and the figures the board
+reads are the figures that stay.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money
