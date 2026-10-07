@@ -439,6 +439,11 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  /* ⚠ `max-content` is load-bearing. A fixed box pinned at `left: 50%` shrinks to fit the space
+     to the RIGHT of that line — half the screen — so on a 390px phone the sentence wrapped to five
+     lines beside the CTA while a desk never showed it. Sized to its content, the max-width below
+     is the only cap. */
+  width: max-content;
   max-width: min(38rem, calc(100vw - 2rem));
   padding: 0.8125rem 1rem;
   background: var(--hud-surface);

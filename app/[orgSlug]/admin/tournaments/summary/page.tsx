@@ -27,6 +27,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Printer } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { isDemoOrgSlug } from '@/lib/demo-org';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { useTournament } from '@/lib/tournament-context';
@@ -97,15 +98,18 @@ export default function TournamentSummaryPage() {
     return () => { cancelled = true; };
   }, [hasSummary, tournamentId, orgQuery, reloadKey]);
 
+  const inDemo = isDemoOrgSlug(currentOrg?.slug);
   const track = useCallback((action: 'print' | 'share_public_results') => {
-    if (!tournamentId) return;
+    // The demo refuses every write, and its chrome reads ANY refused write as "Nothing is saved
+    // here" — so counting a tap there told a visitor that copying a link failed to save.
+    if (!tournamentId || inDemo) return;
     // Analytics never blocks the organizer's recap.
     void fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/summary${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action }),
     }).catch(() => {});
-  }, [tournamentId, orgQuery]);
+  }, [tournamentId, orgQuery, inDemo]);
 
   // A read for a different event than the one on screen is never shown.
   const ready = summary && summary.tournament.id === tournamentId ? summary : null;
