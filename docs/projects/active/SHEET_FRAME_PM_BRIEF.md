@@ -39,7 +39,7 @@ whole page (owner ruling, 2026-10-06): Tab past its end closes it; Escape, Back 
 all stay. A sheet over a window (RSVP) or being edited (an award) still holds the keyboard. On a computer nothing
 changed. **Found on the way, not fixed:** the Schedule's day list (several events on one day) can only be opened on a
 tablet or computer, where Escape does nothing, Back leaves the Schedule, and a tap beside it presses what is
-underneath — a small follow-up for the owner to rule on. Owner QA §273.
+underneath — a small follow-up for the owner to rule on. Owner QA §273 ✅ passed 19/19 2026-10-06.
 
 ## What changes for a coach
 

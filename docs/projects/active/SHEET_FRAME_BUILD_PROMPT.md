@@ -56,15 +56,17 @@ lends its trigger through an optional `triggerRef`. Step 4 added:
 
 1. **Disagree out loud** if the code says something the plan does not; argue from what the code does. Every fact in the
    plan is a lead to verify.
-2. **Check for parallel work on your step's files** (`git status`, `git log --since=<last week> -- <files>`). Steps 1–3
-   are committed (`9ab32b23`, `91986b7c`, `5d036eeb`) and walked (owner QA §264, §266, §268 PASSED); the step-3 walk's
-   two follow-ups too (`62f76580` + `b06d8483`; §269, §270 PASSED). Since 2026-10-05 a call-ups session has held
-   uncommitted edits to the lineup PDF and its guard (step 5 waits for that). Notifications Open in Place is complete
-   (`157adb69`, `fc889b4b`); its reader now stands on this frame (step 4, committed `2a304b52`, which also moved the
-   install banner's guard off the two rules it retired). `TODO.md`, the Owner QA Ledger, `memory/design_decisions.md` and
-   `lib/help-content/coaches.tsx` usually hold other sessions' uncommitted edits — stage only your own lines: build
-   `HEAD` + your lines and point the index at it (`.probe/sf3/stage-shared.cjs`; `.probe/sf3/record-pass.cjs` anchors
-   each edit on text present in BOTH `HEAD` and the working copy). Never touch a file you did not change.
+2. **Check for parallel work on your step's files** (`git status`, `git log --since=<last week> -- <files>`). Steps 1–4
+   are committed (`9ab32b23`, `91986b7c`, `5d036eeb`, `2a304b52`) and walked (owner QA §264, §266, §268, §273 PASSED);
+   the step-3 walk's two follow-ups too (`62f76580` + `b06d8483`; §269, §270 PASSED). The call-ups session committed
+   its builder and game-day work (`6f3ad4b2`, §274: a call-up is an amber name, not a word). On 2026-10-06 evening the
+   builder's files were clean; only `lib/export/pdf.ts` and `tests/unit/coach-call-ups-guard.test.ts` held that
+   session's uncommitted edits — the lineup PDF, not a step-5 file: leave both alone. **Re-check at the start:** if
+   anyone holds uncommitted edits in `lineups/_LineupEditor.tsx`, `lineups/[eventId]/page.tsx`, `LineupCopyFrom.tsx`,
+   `LineupDrawerHead.tsx`, `CallUpSheet.tsx` or `LineupSaveTemplate.tsx`, stage around them (below), never over them.
+   `TODO.md`, the Owner QA Ledger, `memory/design_decisions.md`, `coaches.module.css` and
+   `lib/help-content/coaches.tsx` usually hold other sessions' uncommitted edits — stage only your own lines. Never touch
+   a file you did not change.
 3. **Capture before.** Copy the probe that fits the step:
    - **A step that should look unchanged** (step 4): step 2's `.probe/sf2/capture.mjs` + `diff.mjs` — computed-style
      fingerprint of every node and a pixel clip; the bar is "pixel-identical". It records focus on open, Escape, and a
@@ -88,6 +90,25 @@ lends its trigger through an optional `triggerRef`. Step 4 added:
      wrapper.
 4. **Present the step's plan** in product-owner words (what a coach sees change, if anything) and a task list. If the
    step needs something the hub never drew, draw it first (an Artifact, true size) and ask; otherwise proceed.
+
+## What step 4's commit learned (staging — apply it)
+
+- **Stage a shared file by hunk, rebuilt from `HEAD` by OLD line numbers:** `.probe/sf4/hunks.cjs list <file>`, then
+  `stage <file> <n,n,…>`. ⚠ `git apply --cached --unidiff-zero` MISPLACES every hunk after a skipped one. After
+  staging, `git diff -- <file>` (unstaged) must show only the other session's hunks.
+- **A hunk can mix your lines with theirs** — another session appended §274 directly under §273. Then swap your edits
+  into `HEAD`'s text by string and stage that (`.probe/sf4/stage-ledger.cjs`, which also checks the staged section
+  equals the working copy's).
+- **Another session's commit can sweep your uncommitted lines** (`ad957b4e` committed step 4's comment edits in
+  `coaches.module.css` with the whole file). `git log -S'<your text>'` before staging, and say so in your commit.
+- **Prove a partially staged commit on its own** before committing: `git -c core.autocrlf=false worktree add --detach
+  <scratchpad>/wt HEAD`; `git -c core.autocrlf=false diff --cached --name-only --diff-filter=AM -z | xargs -0 git -c
+  core.autocrlf=false checkout-index --prefix=<wt>/ -f --`; a `node_modules` junction and a copy of `.next/types`;
+  then the touched guards and `tsc --noEmit` there. Without `autocrlf=false` the checkout is CRLF and text-slicing
+  guards fail falsely. ⚠ Remove the junction with `cmd /c rmdir` BEFORE `git worktree remove`, so the removal cannot
+  follow it into the real `node_modules`.
+- **A foreign test that gets committed is yours to keep green** — the install banner's guard was untracked when step 4
+  found it and committed mid-review; step 4's commit would have broken it.
 
 ## What step 4 learned (apply it)
 
@@ -132,12 +153,50 @@ lends its trigger through an optional `triggerRef`. Step 4 added:
    here menus. **Built** (`5d036eeb`; follow-ups `62f76580` + `b06d8483`).
 4. The record sheets: the position picker, the Award sheet, RSVP (a form over its window), the notification reader
    (both portals) and the player row menus onto the frame, contents unmoved; the frame's own dim, `ownsKeys`,
-   `overWindow`, `grabCloses`. **Built** (`2a304b52`; owner QA §273). The Schedule day list is not a phone sheet —
+   `overWindow`, `grabCloses`. **Built** (`2a304b52`; owner QA §273 ✅ PASSED 19/19). The Schedule day list is not a phone sheet —
    reported, not built.
-5. Last: the lineup builder's drawers; Call up takes the shared form head; the three forms keep the keyboard inside
-   (`useDialogFloor`, which also calls `useBackStep` — move the §219 guard with it); Copy from's × and the dims of Copy
-   from and Save as template return focus to Tools (their Escape already does, since step 2). Plus whatever of the
-   deferred frame-owned dismiss / `restoreTo` on `useDismissable` step 4 did not take.
+5. **Last: the lineup builder's drawers.** Setup, Save as template, Call up, Copy from and Print onto the frame, so
+   `LineupSheetScrim` retires (its last five users: Print and Save as template in `lineups/[eventId]/page.tsx`, Setup
+   and Call up in `_LineupEditor.tsx`, and `LineupCopyFrom.tsx`). Call up takes the shared form head
+   (`LineupDrawerHead`) instead of its own `<h3>`; the three forms (Setup, Save as template, Call up) keep the keyboard
+   inside (`useDialogFloor`, which also calls `useBackStep` — move the §219 guard with it); Copy from's × and the dims of
+   Copy from and Save as template return focus to Tools (their Escape already does, since step 2).
+   **And the frame owns dismiss and Back for every consumer** — deferred from steps 3 and 4 to the second form
+   consumer, which this is. The trigger-owning sheets (Tools, Filter, the two switchers, game day, the row menus) stop
+   answering their own keys, which **gives Tools, Filter and the switchers the back step they lack**: today, by the
+   code, Back with one open on a phone leaves the page — measure it first, and say it in the plan, because a coach
+   will notice. `ownsKeys` is then deleted (the floor always stands; the one choice left is the trap, `= form`). Keep the
+   trigger a toggle: a tap on the button that opened a menu must close it, not close-and-reopen — the trigger joins the
+   boundary the outside-tap watches.
+   **Left by step 4's /simplify and /review — take each, or say why not, in your plan** (the plan's step-4 Build record
+   has the reasoning):
+   - the frame captures its own opener (a "last pointer target" beside the floor's focus history), making `opener`
+     optional — it touches every consumer;
+   - `overWindow` derived from "a window already holds the bar when the sheet mounts" (needs a mount-time snapshot of
+     the overlay count — a form sheet registers itself);
+   - `trap` inverted to `modal` (the menu layer is the common case);
+   - the dim's two colours as tokens once `LineupSheetScrim` is gone (then only the frame's `.dim` and the More sheet's
+     `.sheetScrim` carry them);
+   - the floor's focus-home has no `preventScroll` — since step 4 it also runs on a tap on the bar, so the page can jump
+     to the opener;
+   - Tab out of a sheet whose opener has left the page restarts focus from the top; the reader's Done and Delete remove
+     the row that opened it.
+   **Not step 5's:** the Schedule day list on a tablet (its own TODO line, the owner's call), the grab line's contrast
+   (about 1.2:1, now also a Close control — a `/design` call), Help's 30px × on a phone, and the club admin's own sheet
+   (D4: it takes the frame's look when its screens are next touched).
+
+## Step 5 closes the project
+
+When step 5's walk passes — the walk gates closing the project, not committing the step:
+- **Carry every open item out of the plan first**, so archiving does not bury it: each gets a TODO line (or confirm it
+  has one) — the day list on a tablet (has one), the grab line's contrast, Help's 30px ×, the club admin's sheet (D4),
+  and any candidate above you did not take.
+- Move `SHEET_FRAME_PLAN.md`, `SHEET_FRAME_PM_BRIEF.md` and this prompt to `docs/projects/archive/` and fix every link
+  to them (`git grep SHEET_FRAME_`: TODO, the ledger's sections, the hub, `memory/`).
+- The TODO line moves to ✅ Completed. The hub's stage strip shows the build done and the walks passed — not "Shipped",
+  which means production (the release record says when).
+- `memory/design_decisions.md`: a closing line under the 2026-10-05 entry for what the frame's contract became (the
+  frame owning keys for every sheet, `ownsKeys` gone, whatever of the candidates you took).
 
 ## Done means
 
@@ -152,8 +211,8 @@ lends its trigger through an optional `triggerRef`. Step 4 added:
   it with `--only=<the screens your step touches>` (`--list` shows them).
 - Offer `/simplify` then `/review`; offer `/docs` if a coach-visible step changed a flow.
 - The plan's Build record, the hub (stage strip and a QA Walk tab, same file path, republished), TODO.md and an Owner
-  QA Ledger section are updated. The QA tab holds step 3's §268 (W1–W3) and the follow-ups' §269 (W4) and §270 (W5),
-  all PASSED: replace them with your step's own section, keep one-line records of §264, §266, §268, §269 and §270 above
+  QA Ledger section are updated. The QA tab holds step 4's §273 (W1–W3, PASSED 19/19) under one-line records of §264,
+  §266 and §268 (with §269, §270): replace §273's walks with your step's own section, add a one-line record of §273 above
   it, and give your walks a new storage key so old ticks do not carry over. ⚠ The ledger's § number has been taken
   by a parallel session twice mid-build (§265, §267) — read it at WRITE time (`.probe/sf3/stamp.cjs` is the pattern to
   copy: it appends the section with the next free number and stamps that number into the plan, brief, TODO and hub in
