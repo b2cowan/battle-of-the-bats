@@ -1,5 +1,7 @@
 # Notifications Open in Place — plan
 
+**On production 2026-10-07** (all three steps and the banner and badge follow-ups) — Amplify job 277 (prod HEAD `17e069b8`, tag `release/2026-10-07`); the release record holds the detail.
+
 **Status:** ✅ COMPLETE 2026-10-06, archived 2026-10-06 — steps 1–3 committed (`a9829568` · `a1134f15` · `157adb69`), owner QA §265 · §267 · §272 passed. D1–D9 accepted 2026-10-05 (owner, on round 3: "looks good"). Hub (Mockup · Decisions · PM Brief · Plan
 notes): https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, source `docs/projects/archive/NOTIFICATIONS_OPEN_IN_PLACE_HUB.html`.
 PM brief: `NOTIFICATIONS_OPEN_IN_PLACE_PM_BRIEF.md`. Build prompt (one step per chat):

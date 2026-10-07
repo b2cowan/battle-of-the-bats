@@ -1,5 +1,7 @@
 # The bench console, re-drawn — game day at phone width
 
+**On production 2026-10-07** (§8 a final score notifies no family; §9 flags under the name) — Amplify job 277 (prod HEAD `17e069b8`, tag `release/2026-10-07`); the release record holds the detail.
+
 **Status:** Ruled 2026-09-22 · **BUILT ON DEV 2026-09-22** · walk owed (Owner QA Ledger §224)
 **Hub (findings · before/after at true size · rulings · QA walk):** `COACH_GAME_DAY_CONSOLE_HUB.html` — https://claude.ai/artifact/48VgBmd2bGwJRY6Y8erSBZ
 **PM brief:** `COACH_GAME_DAY_CONSOLE_REDRAW_PM_BRIEF.md`

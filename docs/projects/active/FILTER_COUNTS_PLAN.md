@@ -1,5 +1,7 @@
 # Filter Counts — plan
 
+**On production 2026-10-07** — Amplify job 277 (prod HEAD `17e069b8`, tag `release/2026-10-07`); the release record holds the detail.
+
 **Status:** D1–D6 accepted 2026-10-05 (owner: "I agree with all of your recommendations"). Hub (Mockup ·
 Decisions · PM Brief · Plan notes): https://claude.ai/artifact/EFWMUeiC3sLkn4CQaBqzrw, source
 `docs/projects/active/FILTER_COUNTS_HUB.html`. PM brief: `FILTER_COUNTS_PM_BRIEF.md`. Ruling recorded in

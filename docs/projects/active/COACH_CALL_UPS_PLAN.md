@@ -1,5 +1,7 @@
 # Call-ups — a player who is in the game but not on the team
 
+**On production 2026-10-07** (§17 the dugout poster prints the bare name; §18 a call-up is an amber name) — Amplify job 277 (prod HEAD `17e069b8`, tag `release/2026-10-07`); the release record holds the detail.
+
 **Status:** DRAWN 2026-09-22 · **RULED 2026-09-22** ("I agree with your recommendations" — R1–R6 all
 as recommended) · **PHASE 1 BUILT ON DEV 2026-09-22** · **owner browser reads 2026-09-22 — 4 defects fixed (§12) + 2 design fixes (§13) + the pill-is-the-action ruling (§14) · **/simplify + /review DONE — 10 confirmed defects fixed (§16)** · walk owed · UNCOMMITTED
 **Hub (the case · what the code does today · before/after · rulings · plan · QA walk):** `COACH_CALL_UPS_HUB.html` — https://claude.ai/artifact/KmaWXBMTLHjoetMAfxtXdR

@@ -1,5 +1,7 @@
 # Tournament admin redesign — implementation plan
 
+**On production 2026-10-07** (Stage 4, after the event, and D7, one Tournaments list) — Amplify job 277 (prod HEAD `17e069b8`, tag `release/2026-10-07`); the release record holds the detail.
+
 > **Status:** BUILD — **Stage 2 (Teams and Communications) COMMITTED 2026-09-30: `f4a4cc79` (Part 0, migration 314 applied to prod the same day) · `12aee778` (Part 1) · `aab3a3f4` (Parts 2–3, after /simplify + /review)** — §6b "Stage 2 — as built"; the §252-walk follow-ups committed `4db0faab` 2026-10-01 (§6b). **Every owner walk
 > so far is closed — §251 and §253 passed; §252 and §254 (with the follow-ups' own walk) closed by the owner
 > 2026-10-01** (ledger §254 records what that walk's ticks did and did not cover). **The defects pass, F40 (`dbc55916`) and Stage 1 (game day) are on prod

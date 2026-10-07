@@ -1,5 +1,7 @@
 # One control height — plan
 
+**On production 2026-10-07** — Amplify job 277 (prod HEAD `17e069b8`, tag `release/2026-10-07`); the release record holds the detail.
+
 Hub (mockup, brief, plan, decisions): https://claude.ai/artifact/GFfHZkFRiXAxxybnAiGrWd
 (source `docs/projects/active/ADMIN_CONTROL_HEIGHT_HUB.html`). PM brief: `ADMIN_CONTROL_HEIGHT_PM_BRIEF.md`.
 

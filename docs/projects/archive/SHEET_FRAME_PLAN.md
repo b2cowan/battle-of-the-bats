@@ -1,5 +1,7 @@
 # Sheet Frame — plan
 
+**On production 2026-10-07** (all five steps and the step-3 follow-ups) — Amplify job 277 (prod HEAD `17e069b8`, tag `release/2026-10-07`); the release record holds the detail.
+
 **Status:** D1–D6 accepted 2026-10-05 (owner: "I agree with all of your recommendations"). Hub (Mockup · Decisions ·
 PM Brief · Plan notes): https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, source `docs/projects/archive/SHEET_FRAME_HUB.html`,
 frames and measured facts in `sheet-frame/` (`facts.json`). PM brief `SHEET_FRAME_PM_BRIEF.md`. Build prompt
