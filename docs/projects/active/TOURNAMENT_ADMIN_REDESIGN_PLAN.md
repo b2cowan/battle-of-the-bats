@@ -1198,7 +1198,7 @@ tournaments" line in the tournament picker, not the top of the rail. The row wea
 the trophy). Hub v27 redraws the More sheet and the desk rail with it in Admin. Supersedes A22's two lists; fixes F48
 and F57. **Built the same day (below); walk §276 rewritten for one list (hub v28).**
 
-**D7 — as built (2026-10-06, hub v28 "Built" block; committed `47efa6c3`).** `lib/tournament-lists.ts`
+**D7 — as built (2026-10-06, hub v28 "Built" block; committed `47efa6c3`; owner walk §276 ✅ PASSED 2026-10-07, 26/26 — on the owner's word for steps 9–12, whose writes are not on dev).** `lib/tournament-lists.ts`
 holds ONE model: `listBands()` (Active · Draft soonest first, Completed · Archived latest first, an empty band
 absent), `walkOrder()`, `isFinished()`; `aheadBands` / `pastBands` / `listOf` are gone. The Tournaments page
 (`admin/org/tournaments/page.tsx`, re-exported at `tournaments/manage`) draws every band, each band's site note
@@ -1209,8 +1209,10 @@ redirect to `tournaments/manage`; its stylesheet is gone. The rail's Admin group
 became `manage` / Tournaments (a list icon; Results wears the trophy) — the phone's More reads the same groups; the
 tournament-only club's off-tournament "Tournaments" row now links `tournaments/manage`. A status change keeps the
 record open (the event stays in the one list and moves band). Words: Mark complete's question drops "moves to Past
-tournaments" and ends "You can reopen it from its record."; `LOCKED_RESULTS` / `LOCKED_IMPORTS` and both archive
-sentences point at the Tournaments list; `LIST_WORDS.teams(n, finished)` says "no teams" on a finished event
+tournaments" and ends "You can reopen it from the Tournaments list." (/marketing 2026-10-07: the same question
+opens from the record, the game-day board and Event settings); `LOCKED_RESULTS` / `LOCKED_IMPORTS` and both archive
+sentences point at the Tournaments list (the slot-plan one reads "…and you can bring it back from the Tournaments list
+if a tournament slot is free." — /marketing 2026-10-07, parallel to the unlimited one); `LIST_WORDS.teams(n, finished)` says "no teams" on a finished event
 (the record too); the help's closeout subtopic `closeout-two-lists` (id kept, two pages link it) is now "The
 Tournaments list", every "reopen / bring back from Past tournaments" says the Tournaments list, keywords keep the old
 names for search. The Organization page tile reads "Tournaments". Sweep: `admin-t-archives` left the layout
