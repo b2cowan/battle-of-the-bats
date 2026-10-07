@@ -8,9 +8,9 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import QuestionShell from '@/components/coaches/QuestionShell';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
-import MoneyMonthGrid, { MONEY_LENSES, MONTH_WINDOW, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
+import MoneyMonthGrid, { MONEY_LENSES, MONTH_WINDOW, monthGridFoldKeys, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
 import {
-  formatMonthLabel, periodRangeLabel, lensCell, lensTotal, lensUndated, lensReadsSpendingGrid,
+  formatMonthLabel, periodRangeLabel, lensCell, lensTotal, lensUndated, lensReadsSpendingGrid, expensesGridFor,
   buildBandCashFlow, categoryHasFigure, hasUndated, isPayoutCategory, balanceShowsMonth,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf,
   RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
@@ -33,7 +33,7 @@ import {
 import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { NO_DATE_LABEL } from '@/lib/coach-budget-periods-view';
 import { useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
-import { toggleKey } from '@/lib/toggle-key';
+import { toggleAllKeys, toggleKey } from '@/lib/toggle-key';
 import {
   bvaExportColumns, bvaCategoryRows, bvaActivityRows,
   type MoneyExportFormat, type MoneyRowKind, type MoneyMasthead,
@@ -1232,6 +1232,10 @@ export function BudgetVsActualPanel({
   const [sampleOpen, setSampleOpen] = useState(false);
 
   const [expandedCats,  setExpandedCats]  = useState<Set<string>>(new Set());
+  /* Months' open categories — their own set, because the grid keys a category its own way. Held HERE rather than in
+     the grid so the bar's Expand all reaches them (owner, 2026-10-07; see `monthGridFoldKeys`), and so they
+     survive a trip to the Statement and back. Empty at first: Months opens folded. */
+  const [monthCatsOpen, setMonthCatsOpen] = useState<Set<string>>(new Set());
   /* ⚰ `expandedLines` STOOD HERE and went with the item fold (2026-09-10). An item row has no
      fold to remember any more — the two figures are its doors, and a panel is not a row state. */
 
@@ -1367,11 +1371,10 @@ export function BudgetVsActualPanel({
   // The export always matches what is on screen. In the Months view that means the month grid
   // in the SELECTED lens, with the months as columns — the same shape the import template will
   // take, so today's export is tomorrow's import.
-  /** Which grid the EXPENSES band reads under this lens — the lib's own predicate, shared with
-   *  the screen (`lensReadsSpendingGrid`), so the file cannot pick a different band. The `??` is
-   *  the deploy-skew belt (see MoneyMonthGrid): a stale payload degrades to the cash grid. */
+  /** Which grid the EXPENSES band reads under this lens — the lib's `expensesGridFor`, the screen's own
+   *  selector, so the file cannot pick a different band (a stale payload degrades to the cash grid). */
   function exportExpensesBand(): MonthGrid {
-    return (lensReadsSpendingGrid(lens) ? data!.spendingGrid : undefined) ?? data!.monthGrid;
+    return expensesGridFor(data!, lens);
   }
 
   function monthExportColumns(): ExportColumnDef[] {
@@ -1872,7 +1875,9 @@ export function BudgetVsActualPanel({
      ⚠ BOTH LIST SHAPES SINCE 2026-09-06. It was statement-only while By activity had no fold at
      all; now that an activity IS a fold (see `ActivityGroup`), a control that vanished when the
      coach switched tabs would be the same missing-gesture defect one layer up.
-     (Months keeps its folds inside the grid component and is not wired to this yet.)
+     ⚠ AND MONTHS SINCE 2026-10-07 (owner: "why did we remove expand/collapse all for the monthly view?"). It was
+     never removed: Months kept its folds inside the grid and was "not wired to this yet". The grid's folds are the
+     page's now (`monthCatsOpen`), counted by the grid's own `monthGridFoldKeys` under the lens on screen.
      ⚠ The dues row is excluded because it is not a foldable group — counting it would make "all
      open" unreachable and leave the button stuck on one word. */
 
@@ -1901,26 +1906,23 @@ export function BudgetVsActualPanel({
         .filter(blockFoldable)
         .map(activityKeyOf)
     : [];
+  const monthCatKeys = view === 'months' && data ? monthGridFoldKeys(data, lens) : [];
   /** The folds this control can actually reach — whichever shape is on screen. */
-  const foldableCatKeys = view === 'activity' ? activityCatKeys : statementCatKeys;
-  const allCatsOpen = foldableCatKeys.length > 0 && foldableCatKeys.every(k => expandedCats.has(k));
+  const foldableCatKeys = view === 'months' ? monthCatKeys : view === 'activity' ? activityCatKeys : statementCatKeys;
+  // The set those keys live in, picked once: the label below and the toggle can never read two different sets.
+  const [openCats, setOpenCats] = view === 'months'
+    ? [monthCatsOpen, setMonthCatsOpen] as const
+    : [expandedCats, setExpandedCats] as const;
+  const allCatsOpen = foldableCatKeys.length > 0 && foldableCatKeys.every(k => openCats.has(k));
   function toggleAllCats() {
     /* ⚠⚠ IT ACTS ON THIS VIEW'S KEYS ONLY, never on the whole set. Collapse all used to clear
        `expandedCats` outright, which was harmless while one shape folded and is not now: on By
        activity it would silently shut every row a coach had opened on the statement. The two
        shapes' keys live in disjoint namespaces (see `activityKeyOf`) precisely so this add/remove
        can be exact. */
-    /* ⚠ THE DIRECTION IS DERIVED FROM `prev`, NOT FROM THE RENDER'S `allCatsOpen`. Reading the
-       closure is unreachable as a bug today — one button, one click event, a re-render between any
-       two — but it makes the updater's answer depend on when it happens to run, which is the shape
-       of a bug rather than a bug. `prev` is the same set the render derived `allCatsOpen` from, so
-       the visible label and the action can never disagree. */
-    setExpandedCats(prev => {
-      const openNow = foldableCatKeys.length > 0 && foldableCatKeys.every(k => prev.has(k));
-      const next = new Set(prev);
-      for (const k of foldableCatKeys) { if (openNow) next.delete(k); else next.add(k); }
-      return next;
-    });
+    /* ⚠ THE DIRECTION IS DERIVED FROM `prev`, NOT FROM THE RENDER'S `allCatsOpen` — the shared
+       `toggleAllKeys` reads it inside the updater, so the visible label and the action can never disagree. */
+    setOpenCats(prev => toggleAllKeys(prev, foldableCatKeys));
     /* ⚰ A NOTE HERE WARNED THAT THIS MUST NOT TOUCH THE ITEM FOLDS (`expandedLines`, shared by
        both shapes, quietly shut by an early version). There are no item folds left to touch since
        2026-09-10 — the whole state is gone. */
@@ -2202,8 +2204,8 @@ export function BudgetVsActualPanel({
             )}
 
             {/* ⚠ ONLY WHERE IT CAN DO SOMETHING — the same rule the month pager follows one block
-                up. That is both list shapes now and not Months; see `toggleAllCats`. */}
-            {view !== 'months' && foldableCatKeys.length > 0 && (
+                up. Every view now, Months included (2026-10-07); see `toggleAllCats`. */}
+            {foldableCatKeys.length > 0 && (
               <button
                 type="button"
                 className={`${shared.btnGhost} ${styles.collapseAllBtn}`}
@@ -2235,6 +2237,8 @@ export function BudgetVsActualPanel({
                 base={base}
                 canWrite={moneyCanWrite}
                 monthStart={monthStart}
+                expanded={monthCatsOpen}
+                onToggle={k => setMonthCatsOpen(prev => toggleKey(prev, k))}
               />
               {/* ⚠ UNDER THE GRID'S OWN NOTES, not above them. Those notes state what the lens
                   MEANS; this states why two figures on the screen differ. Basis first, then the

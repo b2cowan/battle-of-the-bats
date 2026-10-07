@@ -429,14 +429,14 @@ const accountingHelp: HelpPageContent = {
       heading: 'Reading Budget vs. Actual',
       summary: 'The year’s plan against what the club’s books moved: Collected, Spent, Off-plan and Cash on hand, as a Statement or by month.',
       keywords: ['budget vs actual', 'statement', 'months', 'compare', 'whole year', 'to date', 'showing', 'scheduled', 'collected', 'spent', 'off-plan', 'cash on hand', 'open these lines in the ledger', 'expand all'],
-      searchText: 'budget vs actual statement months view compare whole year to date showing budget scheduled actual this year only expand all collapse all collected spent off-plan nobody budgeted this cash on hand the club’s books budgeted figure opens the plan line actual figure opens the lines behind it open these lines in the ledger not filed export excel csv pdf year pill',
+      searchText: 'budget vs actual statement months view compare whole year to date showing budget scheduled cash difference actual this year only expand all collapse all collected spent off-plan nobody budgeted this cash on hand the club’s books budgeted figure opens the plan line actual figure opens the lines behind it open these lines in the ledger not filed export excel csv pdf year pill',
       content: (
         <>
           <p>Budget vs. Actual reads the year’s plan against what the club’s books moved. A band across the top gives <strong>Collected</strong>, <strong>Spent</strong>, <strong>Off-plan</strong> (spending nobody budgeted, shown only when there is some) and <strong>Cash on hand</strong> (the club’s books, as of today).</p>
           <HelpDefs>
             <HelpDef term="View">The <strong>Year</strong> pill picks the year. <strong>View</strong> switches between <strong>Statement</strong> and <strong>Months</strong>.</HelpDef>
             <HelpDef term="Statement">Revenue, then expenses, each category folding open to its lines, with the plan, <strong>Actual</strong> and <strong>Variance</strong>. <strong>Compare</strong> reads the plan for the <strong>Whole year</strong> or <strong>To date</strong>. <strong>Expand all</strong> and <strong>Collapse all</strong> fold every category at once.</HelpDef>
-            <HelpDef term="Months">The year month by month, with a running balance. <strong>Showing</strong> picks <strong>Budget</strong>, <strong>Scheduled</strong> (this year only) or <strong>Actual</strong>. On a phone it opens scrolled to this month.</HelpDef>
+            <HelpDef term="Months">The year month by month, with a running balance. <strong>Showing</strong> picks <strong>Budget</strong>, <strong>Scheduled</strong> (this year only), <strong>Cash</strong> or <strong>Difference</strong>. It opens with every category folded; <strong>Expand all</strong> opens them all at once. On a phone it opens scrolled to this month.</HelpDef>
           </HelpDefs>
           <p><strong>Every figure opens what is behind it.</strong> A budgeted figure opens the plan line; an actual figure opens the actual lines, with <strong>Open these lines in the Ledger</strong>. Money filed under no budget word sits in a <strong>Not filed</strong> row until someone files it.</p>
           <p>Export from the <strong>Export</strong> menu — Excel and CSV are available on all plans; the <strong>PDF</strong> needs Tournament Plus or above, and is always the whole-year statement.</p>

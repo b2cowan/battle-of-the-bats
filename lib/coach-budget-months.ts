@@ -1166,6 +1166,19 @@ export function lensReadsSpendingGrid(lens: MoneyLens): boolean {
 }
 
 /**
+ * THE GRID THE EXPENSES BAND READS under a lens (D1 + Q3, 2026-09-02). Cash reads the cash grid; **Season spending
+ * and Difference read the spending grid** — same plan rows, same month domain, but the `actual` cells hold the
+ * Statement's movements, which is what makes Difference tie to Headroom. Budget and Scheduled keep the cash grid
+ * (their fields are identical across the two by construction — same lines, same scheduled feed). A payload with no
+ * spending grid (the deploy-skew belt: a stale response) falls back to the cash grid.
+ * ⚠ ONE SPELLING FOR THE SCREEN, ITS NOTES AND ITS EXPORT — the line had been written three times (the grid, the
+ * notes, the coach's export; `/simplify` 2026-10-07), which is the `hasUndated` drift waiting to replay.
+ */
+export function expensesGridFor(data: { monthGrid: MonthGrid; spendingGrid?: MonthGrid | null }, lens: MoneyLens): MonthGrid {
+  return lensReadsSpendingGrid(lens) && data.spendingGrid ? data.spendingGrid : data.monthGrid;
+}
+
+/**
  * The `MonthCell` field a lens reads. The spending grid stores its figures in `actual` — a second
  * cell field on every band of the portal's heaviest payload would have been the wrong trade — so
  * the helpers below translate ONCE, here, rather than each reader remembering the mapping.

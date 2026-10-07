@@ -43,7 +43,7 @@
  */
 
 import {
-  buildBandCashFlow, hasUndated, lensReadsSpendingGrid, lensUndated,
+  buildBandCashFlow, expensesGridFor, hasUndated, lensUndated,
   formatMonthLong, type MonthGrid, type MoneyLens,
 } from './coach-budget-months';
 import type { CompareBasis } from './coach-budget-basis';
@@ -398,7 +398,7 @@ function money(n: number): string {
  */
 export function monthGridNotesFor(data: MonthGridNoteSource, lens: MoneyLens): ReportNote[] {
   const grid = data.monthGrid;
-  const expensesBand = lensReadsSpendingGrid(lens) && data.spendingGrid ? data.spendingGrid : grid;
+  const expensesBand = expensesGridFor(data, lens);
   const spendingOnly = lens === 'spending';
   const opening = data.openingBalance ?? null;
 

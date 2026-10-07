@@ -2208,6 +2208,7 @@ const coachesHelp: HelpPageContent = {
                 <HelpDef term="Running balance">Where your money stands at the end of each month. Its figure in the <strong>Total</strong> column is the closing balance — and because that column is pinned, your cash on hand stays on screen whichever month you&apos;ve scrolled to.</HelpDef>
               </HelpDefs>
               <p>On a phone, Months opens scrolled to this month, so you land on the figures that matter now.</p>
+              <p>Months opens with every category folded, so twelve columns of figures don&apos;t arrive as a wall. <strong>Expand all</strong> beside Showing opens every category at once, and <strong>Collapse all</strong> folds them again.</p>
               <p>Revenue minus expenses is the running balance, every month, to the cent. If the balance dips below zero, a line underneath names the month and the amount in plain words.</p>
               <p><strong>The Showing menu changes what every cell reads — five ways of reading one season</strong> (the fifth, <em>Season spending</em>, and the <em>Cash</em> name arrived September 2026):</p>
               <HelpDefs>

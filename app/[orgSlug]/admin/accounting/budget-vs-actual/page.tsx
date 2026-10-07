@@ -7,8 +7,8 @@
  *   band      — the coach's, word for word (ruled 2026-10-01, walked §256): Collected · Spent · Off-plan
  *               (hidden at zero, amber) · Cash on hand (the club's own books, today; red only below zero).
  *               Collected is Total revenue's Actual — "Collected" carries two scopes on purpose (Ask 2).
- *   toolbar   — Year · View (Statement · Months) · then Compare (Whole year · To date) and Collapse all on
- *               the Statement, Showing on Months · Export. Two lines on a phone.
+ *   toolbar   — Year · View (Statement · Months) · then Compare (Whole year · To date) on the Statement, Showing
+ *               on Months, and Collapse all on both · Export. Two lines on a phone.
  *   Statement — the coach's OWN rows (promoted, components/coaches/MoneyStatementRows), fed the club's
  *               report: Revenue → categories → lines → Total revenue; Expenses → the same; Net for the year.
  *               Off-plan rows show the amber dash (no chip, no word, a screen-reader sentence); one Not filed
@@ -27,12 +27,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { toggleAllKeys, toggleKey } from '@/lib/toggle-key';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import ReportNotes from '@/components/coaches/ReportNotes';
-import MoneyMonthGrid, { type MonthGridClubReading } from '@/components/coaches/MoneyMonthGrid';
+import MoneyMonthGrid, { monthGridFoldKeys, type MonthGridClubReading } from '@/components/coaches/MoneyMonthGrid';
 import {
   CategoryGroup, SectionBand, SubtotalRow, catFoldable, catKeyOf, fmtCell, rebaseReport, varianceColor, varianceText,
   type BehindSide, type CategoryResult, type ItemResult, type MoneyReport,
@@ -87,6 +88,9 @@ export default function BudgetVsActualTab() {
   const [lens, setLens] = useState<ClubLens>('budget');
   const [basis, setBasis] = useState<CompareBasis>('season');
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  /* Months' open categories, their own set (the grid keys a category its own way); held here so Collapse all reaches
+     them — the coach's Months gained it the same day (owner, 2026-10-07; see `monthGridFoldKeys`). */
+  const [monthOpen, setMonthOpen] = useState<Set<string>>(() => new Set());
   const [behind, setBehind] = useState<{ item: ItemResult; categoryName: string } | null>(null);
   const [lineId, setLineId] = useState<string | null>(null);
   const [categories, setCategories] = useState<BudgetCategoryWithItems[] | null>(null);
@@ -122,15 +126,15 @@ export default function BudgetVsActualTab() {
     ? rebaseReport({ ...report.statement, activities: [] } as MoneyReport, basis, report.today)
     : null), [report, basis]);
 
-  const foldable = statement ? [...statement.revenue.categories, ...statement.expenses.categories].filter(catFoldable).map(catKeyOf) : [];
-  const allOpen = foldable.length > 0 && foldable.every(k => expanded.has(k));
-  const toggleCat = (k: string) => setExpanded(s => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
-  const toggleAll = () => setExpanded(prev => {
-    const openNow = foldable.length > 0 && foldable.every(k => prev.has(k));
-    const next = new Set(prev);
-    for (const k of foldable) { if (openNow) next.delete(k); else next.add(k); }
-    return next;
-  });
+  // The folds Collapse all reaches: the Statement's, or on Months the grid's own under the lens on screen.
+  const foldable = view === 'months'
+    ? (report ? monthGridFoldKeys(report.months, effectiveLens) : [])
+    : statement ? [...statement.revenue.categories, ...statement.expenses.categories].filter(catFoldable).map(catKeyOf) : [];
+  // The set those keys live in, picked once: the label and the toggle can never read two different sets.
+  const [openSet, setOpenSet] = view === 'months' ? [monthOpen, setMonthOpen] as const : [expanded, setExpanded] as const;
+  const allOpen = foldable.length > 0 && foldable.every(k => openSet.has(k));
+  const toggleCat = (k: string) => setExpanded(s => toggleKey(s, k));
+  const toggleAll = () => setOpenSet(prev => toggleAllKeys(prev, foldable));
 
   /* The two figure doors. Budgeted → the line's own window (or an allocation's page, for From the teams'
      rows, whose "line" is the allocation); Actual → what it adds up. */
@@ -281,7 +285,8 @@ export default function BudgetVsActualTab() {
               options={lensOptions.map(l => ({ id: l.id, label: l.label }))}
               onChange={next => setLens(next as ClubLens)} />
           )}
-          {view === 'statement' && foldable.length > 0 && !isPhone && (
+          {/* Only over a grid on screen: an empty year draws a sentence, never the Statement or Months (/review). */}
+          {!empty && foldable.length > 0 && !isPhone && (
             <button type="button" className={`${shared.btnGhost} ${bvaStyles.collapseAllBtn}`} onClick={toggleAll}>
               {allOpen ? 'Collapse all' : 'Expand all'}
             </button>
@@ -297,7 +302,8 @@ export default function BudgetVsActualTab() {
             </div>
           </div>
         ) : view === 'months' ? (
-          <MoneyMonthGrid data={report.months} lens={effectiveLens} base={base} canWrite={canMove} monthStart={0} club={club} />
+          <MoneyMonthGrid data={report.months} lens={effectiveLens} base={base} canWrite={canMove} monthStart={0} club={club}
+            expanded={monthOpen} onToggle={k => setMonthOpen(prev => toggleKey(prev, k))} />
         ) : (
           <div className={bvaStyles.section}>
             <CoachScrollX sticky hint="Swipe the table to see Actual and Variance">

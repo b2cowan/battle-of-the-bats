@@ -13,7 +13,7 @@ import {
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
   /* ⚰ `scheduledForward` is gone altogether (2026-10-01) — it left with the band's Season end
      tile and the Scheduled sentence that derived it. */
-  formatMonthBare, monthYearBands, MONTH_WINDOW, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid,
+  formatMonthBare, monthYearBands, MONTH_WINDOW, formatMonthLong, MONEY_LENSES, expensesGridFor,
   monthKeyOf,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine, type GridLineResult,
   type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
@@ -21,7 +21,6 @@ import {
 } from '@/lib/coach-budget-months';
 import { fmtCompact, fmt as fmtSignedAmount } from '@/lib/coach-money-summary';
 import { moneySectionHref } from '@/lib/coach-money-links';
-import { toggleKey } from '@/lib/toggle-key';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './MoneyMonthGrid.module.css';
 
@@ -265,6 +264,87 @@ export interface MonthGridClubReading {
   door: (door: PanelDoor, categoryKey: string) => { label: string; href: string } | null;
 }
 
+/** The lens the grid draws for the one chosen. Plain values in, so the React Compiler can keep the grid's memos. */
+function drawnLens(lensChoice: MoneyLens, hasSpendingGrid: boolean): MoneyLens {
+  /* ⚠⚠ THE DEPLOY-SKEW BELT (review finding, 2026-09-02). The type says `spendingGrid` is always
+     sent — and the live route always sends it — but a payload fetched across a deploy boundary
+     (fresh client, stale response) can genuinely lack it, and `difference` is a PRE-EXISTING saved
+     preference: without this guard the crash would land on coaches who chose nothing new, as a
+     full-page error on the portal's most-read money screen. Degrade instead, for the seconds the
+     skew lasts: a `spending` choice renders as Cash (never cash figures under a Season-spending
+     heading), and Difference falls back to the cash grid — the exact pre-Q3 basis it always had. */
+  return hasSpendingGrid || lensChoice !== 'spending' ? lensChoice : 'actual';
+}
+
+/**
+ * The rows a category's chevron opens under this lens — ONE rule for the grid's render and for
+ * `monthGridFoldKeys`, so Expand all can never count a category whose chevron is disabled (a key with no
+ * chevron on screen leaves the button stuck on one word — the coach's Statement learnt it, 2026-09-10).
+ *
+ * ⚠⚠ A ROW THAT IS A SUBJECT ONLY SHOWS WHERE IT HAS MONEY UNDER THIS LENS (D-2, 2026-08-24).
+ * The families, drives, sponsors and requests behind a revenue group — and the families behind
+ * "Paid back to families" — are RECORDS, not plan lines: a family who has paid nothing this
+ * season has no row on Actual, and none of them has a Budget figure at all, because a group's
+ * plan is a dues schedule or a funding line and lives on the group's own row.
+ * ⚠ AND NONE OF THEM APPEARS UNDER DIFFERENCE, deliberately. There is no per-family plan to
+ * compare against, so every row would print its whole Actual as "ahead of plan" in the colour
+ * the grid uses for good news. The comparison the coach wants is the GROUP's, one row up.
+ * ⚠ THE EXPENSE BAND'S OWN CATEGORIES KEEP EVERY ROW, empty or not — a budgeted item you have
+ * not spent on is answering the question, not failing to.
+ */
+function categoryRows(cat: GridCategoryResult, band: MoneyRowDirection, lens: MoneyLens): GridCategoryResult['lines'] {
+  const subjectRows = band === 'in' || isPayoutCategory(cat.categoryKey);
+  return !subjectRows ? cat.lines
+    : lens === 'difference' ? []
+      : cat.lines.filter(l => categoryHasFigure(l.total, lens));
+}
+
+/**
+ * The categories each band DRAWS under the drawn lens — ONE function for the render and `monthGridFoldKeys`
+ * (`/simplify`, 2026-10-07: the count had restated these filters, so a change to which bands show would have
+ * had two places to land).
+ *
+ * ⚠ A REVENUE GROUP RENDERS ONLY WHERE IT HAS SOMETHING TO SAY UNDER THIS LENS, and that is what
+ * makes Scheduled read as a FORWARD view rather than a restatement: a bottle drive has no
+ * forward record, so "Fundraising" is simply absent there rather than a row of dashes. Season spending has
+ * no revenue band at all (owner D1). ⚠ The predicate is `categoryHasFigure`, shared with the export.
+ * ⚠ THE EXPENSE BAND KEEPS EVERY REAL CATEGORY, EMPTY OR NOT — a category you budgeted for and
+ * have not spent on is answering the question, not failing to.
+ * ⚠ NO PAYOUT EXCEPTION THERE ANY MORE (2026-09-02). That filter used to carry "…unless it is the
+ * payouts group", which was the band's Actual-only rule living inside another band's row list.
+ * The payouts are their own band now and answer that question for themselves.
+ * ⚠ THE RETURNED BAND IS ACTUAL-ONLY *AND* ONLY WHERE IT HAS SOMETHING TO SAY. A team that has never handed
+ * a family money back gets no heading, no row and no subtotal — three rows of nothing on the
+ * narrowest table in the portal.
+ */
+function visibleBands(data: MonthGridPayload, lens: MoneyLens) {
+  return {
+    revenue: lens === 'spending' ? [] : data.revenueGrid.categories.filter(c => categoryHasFigure(c.total, lens)),
+    expenses: expensesGridFor(data, lens).categories,
+    returned: lens === 'actual' ? data.returnedGrid.categories.filter(c => categoryHasFigure(c.total, lens)) : [],
+  };
+}
+
+/**
+ * ⚖ THE CATEGORIES EXPAND ALL REACHES ON MONTHS (owner, 2026-10-07: "why did we remove expand/collapse all
+ * for the monthly view? both in the coaches portal and club?"). It was never removed — it was never built:
+ * the Statement gained the control in the §133 walk (2026-09-04) with Months "not wired to this yet", because
+ * the folds lived inside this grid, and the club's Stage 3b drawing then copied the gap as parity. The grid
+ * still opens FOLDED (twelve columns times every line is a wall); the PAGE holds the open set now, so its one
+ * Expand all / Collapse all reaches it, beside Showing, on both portals.
+ *
+ * The keys are exactly the chevrons on screen under this lens: the categories the render draws
+ * (`visibleBands`), each through `categoryRows`.
+ */
+export function monthGridFoldKeys(data: MonthGridPayload, lensChoice: MoneyLens): string[] {
+  const lens = drawnLens(lensChoice, !!data.spendingGrid);
+  const { revenue, expenses, returned } = visibleBands(data, lens);
+  return [
+    ...revenue.filter(c => categoryRows(c, 'in', lens).length > 0),
+    ...[...expenses, ...returned].filter(c => categoryRows(c, 'out', lens).length > 0),
+  ].map(c => c.categoryKey);
+}
+
 export default function MoneyMonthGrid({
   data,
   lens: lensChoice,
@@ -272,9 +352,15 @@ export default function MoneyMonthGrid({
   canWrite,
   monthStart,
   club,
+  expanded,
+  onToggle,
 }: {
   data: MonthGridPayload;
   lens: MoneyLens;
+  /** The categories open now — the PAGE's, so its Expand all / Collapse all reaches them (see
+   *  `monthGridFoldKeys`). Empty at first: the grid opens folded. */
+  expanded: Set<string>;
+  onToggle: (categoryKey: string) => void;
   /** `/{orgSlug}/coaches/teams/{teamId}` — drill-ins link back into the pages that own the forms. */
   base: string;
   canWrite: boolean;
@@ -288,32 +374,22 @@ export default function MoneyMonthGrid({
   const { monthGrid: grid, revenueGrid, returnedGrid, spendingGrid, cellDetails, cashOnHand, todayMonth } = data;
   /** "season" on the coach's grid, "year" on the club's — the panels' words for the whole span. */
   const span = club ? 'year' : 'season';
-  /* ⚠⚠ THE DEPLOY-SKEW BELT (review finding, 2026-09-02). The type says `spendingGrid` is always
-     sent — and the live route always sends it — but a payload fetched across a deploy boundary
-     (fresh client, stale response) can genuinely lack it, and `difference` is a PRE-EXISTING saved
-     preference: without this guard the crash would land on coaches who chose nothing new, as a
-     full-page error on the portal's most-read money screen. Degrade instead, for the seconds the
-     skew lasts: a `spending` choice renders as Cash (never cash figures under a Season-spending
-     heading), and Difference falls back to the cash grid — the exact pre-Q3 basis it always had. */
-  const lens: MoneyLens = spendingGrid || lensChoice !== 'spending' ? lensChoice : 'actual';
-  /* ⚠⚠ WHICH GRID THE EXPENSES BAND READS IS THE LENS'S CALL (D1 + Q3, 2026-09-02). Cash reads the
-     cash grid; **Season spending and Difference read the spending grid** — same plan rows, same
-     month domain, but the `actual` cells hold the Statement's movements, which is what makes
-     Difference tie to Headroom. Budget and Scheduled keep the cash grid (their fields are
-     identical across the two by construction — same lines, same scheduled feed).
-     ⚠ THE PREDICATE IS THE LIB'S (`lensReadsSpendingGrid`) — the export asks the same question,
-     and two spellings of one band-selection rule is the `hasUndated` drift replayed. */
-  const expensesBand = lensReadsSpendingGrid(lens) && spendingGrid ? spendingGrid : grid;
+  /* The lens actually drawn (the deploy-skew belt), the grid the expenses band reads (the lib's `expensesGridFor`)
+     and the categories each band draws (`visibleBands`) — shared with `monthGridFoldKeys`, so Expand all counts
+     exactly the rows this render draws. */
+  const lens = drawnLens(lensChoice, !!spendingGrid);
+  // In a memo, not a bare call: the React Compiler treats a call handed `data` as one that may change it, and then
+  // gives up on every memo below that reads `data` (it skipped the whole grid until these two were wrapped).
+  const expensesBand = useMemo(() => expensesGridFor(data, lens), [data, lens]);
+  const { revenue: visibleRevenue, expenses: visibleExpenses, returned: visibleReturned } = useMemo(
+    () => visibleBands(data, lens), [data, lens]);
   /** The Season-spending lens is EXPENSES ONLY (owner D1): a cheque back to a family is
    *  settlement, not spending, and revenue is the other half of a question this lens is not
    *  answering. No revenue band, no returned band, no balance rows. */
   const spendingOnly = lens === 'spending';
-  /* ⚠ THE BAND IS ACTUAL-ONLY *AND* ONLY WHERE IT HAS SOMETHING TO SAY. A team that has never handed
-     a family money back gets no heading, no row and no subtotal — three rows of nothing on the
-     narrowest table in the portal. `categoryHasFigure` is the same predicate the revenue band and
-     the export use, so the screen and the file cannot disagree about whether the band exists. */
-  const showReturned = lens === 'actual'
-    && returnedGrid.categories.some(c => categoryHasFigure(c.total, lens));
+  /* The returned band stands only on Cash and only where it has money (`visibleBands`). `categoryHasFigure` is
+     the predicate the export uses too, so the screen and the file cannot disagree about whether the band exists. */
+  const showReturned = visibleReturned.length > 0;
   const opening = data.openingBalance ?? null;
 
   /* ⚠ ONE DERIVATION, SHARED WITH THE EXPORT (owner ruling 2026-09-05). The sentences under this
@@ -325,7 +401,6 @@ export default function MoneyMonthGrid({
   const notes = useMemo(() => clubNotes ?? monthGridNotesFor(data, lens), [clubNotes, data, lens]);
   const quietNotes = useMemo(() => notes.filter(n => n.tone === 'note'), [notes]);
   const alertNote = notes.find(n => n.tone === 'alert') ?? null;
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<{
     title: string;
     items: CellDetailItem[];
@@ -461,30 +536,6 @@ export default function MoneyMonthGrid({
       total: Math.round(months.reduce((s, m) => s + m.net, 0) * 100) / 100,
     };
   }, [club, lens]);
-
-  /* ⚠ A REVENUE GROUP RENDERS ONLY WHERE IT HAS SOMETHING TO SAY UNDER THIS LENS, and that is what
-     makes Scheduled read as a FORWARD view rather than a restatement: a bottle drive has no
-     forward record, so "Fundraising" is simply absent there rather than a row of dashes. The
-     EXPENSE band keeps its existing behaviour — a category the coach budgeted for stays visible
-     whether or not this lens has anything in it, because its absence is itself the answer.
-     ⚠ The predicate is `categoryHasFigure`, shared with the export — see its header. */
-  const visibleRevenue = useMemo(
-    () => revenueGrid.categories.filter(c => categoryHasFigure(c.total, lens)),
-    [revenueGrid, lens]);
-
-  /* ⚠ THE EXPENSE BAND KEEPS EVERY REAL CATEGORY, EMPTY OR NOT — a category you budgeted for and
-     have not spent on is answering the question, not failing to. The ONE exception is the synthetic
-     payouts group, which has no plan and no schedule and never can; see `isPayoutCategory`. */
-  /* ⚠ NO PAYOUT EXCEPTION HERE ANY MORE (2026-09-02). This filter used to carry "…unless it is the
-     payouts group", which was the band's Actual-only rule living inside another band's row list.
-     The payouts are their own band now and answer that question for themselves. */
-  const visibleExpenses = expensesBand.categories;
-  /** The returned band's own rows — the one group inside it, when it has money under this lens. */
-  const visibleReturned = useMemo(
-    () => returnedGrid.categories.filter(c => categoryHasFigure(c.total, lens)),
-    [returnedGrid, lens]);
-
-  function toggle(key: string) { setExpanded(prev => toggleKey(prev, key)); }
 
   /**
    * Every record behind a category for the WHOLE SEASON, keyed `<kind>|<categoryKey>` — the record
@@ -781,20 +832,8 @@ export default function MoneyMonthGrid({
       categoryKey: cat.categoryKey, label, group, payout,
       revenue: band === 'in', incomeSource: band === 'in' ? cat.incomeSource ?? null : null,
     };
-    /* ⚠⚠ A ROW THAT IS A SUBJECT ONLY SHOWS WHERE IT HAS MONEY UNDER THIS LENS (D-2, 2026-08-24).
-       The families, drives, sponsors and requests behind a revenue group — and the families behind
-       "Paid back to families" — are RECORDS, not plan lines: a family who has paid nothing this
-       season has no row on Actual, and none of them has a Budget figure at all, because a group's
-       plan is a dues schedule or a funding line and lives on the group's own row.
-       ⚠ AND NONE OF THEM APPEARS UNDER DIFFERENCE, deliberately. There is no per-family plan to
-       compare against, so every row would print its whole Actual as "ahead of plan" in the colour
-       the grid uses for good news. The comparison the coach wants is the GROUP's, one row up.
-       ⚠ THE EXPENSE BAND'S OWN CATEGORIES KEEP EVERY ROW, empty or not — a budgeted item you have
-       not spent on is answering the question, not failing to. */
-    const subjectRows = band === 'in' || payout;
-    const lines = !subjectRows ? cat.lines
-      : lens === 'difference' ? []
-        : cat.lines.filter(l => categoryHasFigure(l.total, lens));
+    // Which rows sit under it, and so whether it folds at all: `categoryRows` (the subject-row rules live there).
+    const lines = categoryRows(cat, band, lens);
     return (
       <Fragment key={cat.categoryKey}>
         <tr className={shared.moneyGridCat}>
@@ -802,7 +841,7 @@ export default function MoneyMonthGrid({
             <button
               type="button"
               className={shared.moneyGridToggle}
-              onClick={() => toggle(cat.categoryKey)}
+              onClick={() => onToggle(cat.categoryKey)}
               aria-expanded={open}
               disabled={lines.length === 0}
             >
