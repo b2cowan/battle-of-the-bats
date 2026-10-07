@@ -2692,10 +2692,13 @@ export interface LineupPosterPlayer {
   /**
    * True for a CALL-UP — a player borrowed for this game only (mig 309).
    *
-   * ⚠ Printed as the word "(Call-up)" after the name rather than as a tint or a chip, deliberately:
-   * this sheet goes on a dugout wall and onto a scorekeeper's clipboard, is very often photocopied
-   * or printed in greyscale, and the one question it has to answer without ambiguity is who is on
-   * this team. A colour that survives the screen and dies in the photocopier is not an answer.
+   * ⚠ The batting-order CARD prints it as the word "(Call-up)" after the name rather than as a
+   * tint or a chip, deliberately: the card is handed to an umpire and the opposing coach, is very
+   * often photocopied or printed in greyscale, and a colour that survives the screen and dies in
+   * the photocopier is not an answer to "who is on this team".
+   *
+   * ⚠ The dugout POSTER prints the bare name (owner, 2026-10-03): its readers are the coaches, who
+   * already know who they borrowed.
    */
   isCallUp?: boolean;
   /** inning(string) → position code. '' = blank (prints an empty cell); 'Bench' = sit. */
@@ -2752,9 +2755,11 @@ function matchupSeparator(homeAway?: 'home' | 'away' | 'neutral' | null): string
 }
 
 /**
- * The name as it prints, with the call-up mark when there is one (mig 309). ONE place, so the
- * poster's name column, the card and the subs line can never disagree about whether a borrowed
- * player is identified — the same reason `isCallUp` is one predicate on the screen side.
+ * The name as the CARD prints it, with the call-up mark when there is one (mig 309). ONE place,
+ * so the card's order and its subs line can never disagree about whether a borrowed player is
+ * identified — the same reason `isCallUp` is one predicate on the screen side.
+ *
+ * ⚠ The dugout poster does NOT call this — it prints the bare name (owner, 2026-10-03).
  */
 function posterPlayerName(p: LineupPosterPlayer): string {
   return p.isCallUp ? `${p.name} (${CALL_UP_LABEL})` : p.name;
@@ -3129,10 +3134,14 @@ export function buildLineupPosterDoc(jsPDFClass: any, opts: LineupPosterOptions)
       doc.setFontSize(numberSize);
       doc.text(p.number, colNoX + colNoW / 2, mid, { align: 'center', baseline: 'middle' });
     }
-    // name — shrinks through two steps before it will ever clip a kid's name
+    // name — shrinks through two steps before it will ever clip a kid's name.
+    // ⚠ The BARE name, never the call-up mark (owner, 2026-10-03): "coaches know the call ups are
+    // call ups but don't need it printed on their dugout sheet". The mark also cost the borrowed
+    // player a smaller type size than everyone else on the sheet. The card still marks — see
+    // `posterPlayerName`.
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(20, 20, 30);
-    const drawn = fitCell(doc, posterPlayerName(p), colNameW - 5, nameLadder);
+    const drawn = fitCell(doc, p.name, colNameW - 5, nameLadder);
     doc.text(drawn, colNameX + 3, mid, { align: 'left', baseline: 'middle' });
     // innings — Bench → "BN"; an unassigned inning is left EMPTY, because the ruled grid cell
     // is already the box.

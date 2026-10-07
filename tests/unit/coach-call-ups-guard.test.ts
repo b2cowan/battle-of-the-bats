@@ -524,18 +524,34 @@ describe('call-ups — the mark a coach reads', () => {
     );
   });
 
-  it('the printed lineup marks a call-up in WORDS, not colour', () => {
+  it('the batting-order card marks a call-up in WORDS, not colour', () => {
     const src = read('lib/export/pdf.ts');
     assert.match(
-      src, /function posterPlayerName/,
-      'The poster\'s call-up name helper is gone, so the name column and the card can now disagree '
-      + 'about whether a borrowed player is identified.',
+      src, /function posterPlayerName\(p: LineupPosterPlayer\): string \{\s*return p\.isCallUp \? `\$\{p\.name\} \(\$\{CALL_UP_LABEL\}\)` : p\.name;/,
+      'The card\'s call-up name helper no longer appends "(Call-up)". The card is handed to an '
+      + 'umpire and the opposing coach and is very often photocopied — a tint that survives the '
+      + 'screen and dies in the photocopier is not an answer to "who is on this team".',
     );
     assert.match(
-      src, /\(Call-up\)/,
-      'The printed sheet no longer names call-ups. This paper goes on a dugout wall and a '
-      + 'scorekeeper\'s clipboard and is very often photocopied — a tint that survives the screen '
-      + 'and dies in the photocopier is not an answer to "who is on this team".',
+      src, /const name = posterPlayerName\(p\);/,
+      'The card\'s label no longer goes through posterPlayerName, so its order and its subs line '
+      + 'can disagree about whether a borrowed player is identified.',
+    );
+  });
+
+  /**
+   * ⚠ THE RULING THIS ASSERTS, in the owner's own words (2026-10-03):
+   *   "coaches know the call ups are call ups but don't need it printed on their dugout sheet,
+   *    please remove those words"
+   * It also cost the borrowed player a smaller type size than everyone else: the extra words pushed
+   * the name down the shrink ladder.
+   */
+  it('the dugout poster prints a call-up\'s BARE name (owner, 2026-10-03)', () => {
+    const src = read('lib/export/pdf.ts');
+    assert.match(
+      src, /const drawn = fitCell\(doc, p\.name, colNameW - 5, nameLadder\);/,
+      'The dugout poster\'s name column no longer prints the bare name. The owner removed the '
+      + 'call-up mark from that sheet: its readers are the coaches, who already know who they borrowed.',
     );
   });
 });

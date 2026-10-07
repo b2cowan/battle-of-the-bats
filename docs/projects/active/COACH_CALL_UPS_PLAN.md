@@ -204,7 +204,7 @@ present. A cheaper v1 without it is possible (§7, Phase 1 fallback) and is not 
 | Batting order, field grid, per-inning list | an ordinary row, wearing a call-up mark |
 | The per-game lineup check + *Mark ready* | counted — everyone bats, coverage, clashes |
 | Per-game pitching cap / arm care | counted (§6, R2) |
-| Printed lineup card · game sheet · poster · PDF | listed, marked |
+| Printed lineup card · game sheet · poster · PDF | listed; marked on the batting-order card only — the dugout poster prints the bare name (§17, owner 2026-10-03) |
 | The bench console (on the field / bench / swap) | an ordinary row, marked |
 | Game notes / moments | taggable — they made the play |
 | That game's attendance | present; no other event's |
@@ -780,6 +780,26 @@ re-runnable rather than only looking it.
 your season* button and a team-switcher overflow. Not this work's, and marking them accepted would
 record real tap-floor defects as decisions.
 
+---
+
+## 17 · The dugout sheet prints the bare name (owner, 2026-10-03)
+
+> *"coaches know the call ups are call ups but don't need it printed on their dugout sheet, please
+> remove those words"*
+
+The dugout poster's name column now prints the call-up's name with no "(Call-up)" after it. It also
+fixes a side effect seen in the owner's print: the extra words pushed the borrowed player's name down
+the shrink ladder, so they printed in smaller type than everyone else on the sheet.
+
+**Narrowed, not reversed, from §5's "Printed lineup card · game sheet · poster · PDF — listed, marked":**
+the **batting-order card keeps the mark**, in its order and its subs line. That card is handed to an
+umpire and the opposing coach, who do not know who was borrowed; the owner's reason ("coaches know")
+is about the dugout sheet's readers. Open to the owner to remove it there too.
+
+The on-screen marks (builder, per-inning list, bench console) are unchanged.
+
+Guarded in `coach-call-ups-guard.test.ts`: the poster's bare-name test and the card's words-not-colour test.
+
 ## 18 · On screen, a call-up is the ink of the name (owner, 2026-10-06)
 
 > *"can we also remove the words "call up"? maybe just change the font color or do something more
@@ -806,4 +826,4 @@ round 2). Built on dev 2026-10-06 alongside the board's flags-under-the-name cha
 `coach-game-day-board-flags-guard.test.ts` (new: the one rule, the ink on all three rows, the word
 kept for a screen reader, the word gone from the row) and this plan's guard's console test, now
 reading the console's `whoFor` helper. Owner walk: ledger §274, W2. **Committed `6f3ad4b2`
-2026-10-06.**
+2026-10-06.** **§274 W2 ✅ PASSED 2026-10-06, 6/6** — the amber name, seen in the real app for the first time.
