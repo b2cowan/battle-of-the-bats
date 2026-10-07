@@ -43,7 +43,9 @@ function groupBody(code: string, open: string): string {
 describe('Ledger Phone Filter — one Filter button on a phone, the pills on a desk', () => {
   it('D1: every view of the coach’s Ledger groups its narrowings, and only those', () => {
     const timeline = groupBody(coach, '<FilterGroup key="timeline">');
-    for (const label of ['label="Type"', 'label="Status"', 'label="Item"']) assert.ok(timeline.includes(label), `Timeline: ${label}`);
+    for (const label of ['label="Type"', 'label="Status"', 'label="Category"', 'label="Item"']) assert.ok(timeline.includes(label), `Timeline: ${label}`);
+    // ⚖ Category sits LEFT of Item, as on the club's Ledger (owner 2026-10-07): both read Type · Status · Category · Item · Date.
+    assert.ok(timeline.indexOf('label="Status"') < timeline.indexOf('label="Category"') && timeline.indexOf('label="Category"') < timeline.indexOf('label="Item"'), 'Timeline: Status, Category, Item in that order');
     assert.match(timeline, /<DateRangeDropdown\b/);
     assert.match(timeline, /\{tagFilterPill\}/);
     const bills = groupBody(coach, '<FilterGroup key="bills">');
@@ -58,9 +60,10 @@ describe('Ledger Phone Filter — one Filter button on a phone, the pills on a d
     assert.equal((coach.match(/<FilterGroup\b/g) ?? []).length, 2, 'one group per strip face');
   });
 
-  it('D5: the club’s Ledger groups its four filters; Balance and the Book pill stay out', () => {
+  it('D5: the club’s Ledger groups its filters; Balance and the Book pill stay out', () => {
     const body = groupBody(club, '<FilterGroup>');
-    for (const label of ['label="Type"', 'label="Status"', 'label="Category"']) assert.ok(body.includes(label), `Club: ${label}`);
+    for (const label of ['label="Type"', 'label="Status"', 'label="Category"', 'label="Item"']) assert.ok(body.includes(label), `Club: ${label}`);
+    assert.ok(body.indexOf('label="Category"') < body.indexOf('label="Item"'), 'Club: Category, then Item');
     assert.match(body, /<DateRangeDropdown\b/);
     assert.doesNotMatch(body, /moneyKit\.balance|SingleSelectDropdown/);
     // Balance joins the Filter line on a phone: the rule that gave it a line of its own is gone.

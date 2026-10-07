@@ -1082,6 +1082,10 @@ function MoneyRecordsPanel({
   /** Narrowing by budget word(s), multi-select, empty = every item. Shares the balance rule with
    *  the type filter — any narrowing at all takes the Balance column away. */
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  /** ⚖ Narrowing by budget CATEGORY (owner 2026-10-07): the club's Ledger had a Category filter and this one didn't,
+   *  a difference nobody had ruled; it sits left of Item, as on the club's. Multi-select, empty = every category,
+   *  and it takes the Balance away like every other narrowing. */
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   /* ⚠⚠ ONE STATUS DROPDOWN, NOT TWO SEPARATE CONTROLS (owner call, 2026-08-19 — folded "Overdue"
      and "Include scheduled" together, matching the multi-select shape of Show/Item). Every row is
      exactly one of the three: Actual (settled), Overdue (unsettled, due date in the past),
@@ -3114,8 +3118,8 @@ function MoneyRecordsPanel({
    * identity on every render and silently defeat the memo it is an input to.
    */
   const {
-    showBalance, bookRows, bookStartingBalance, bookOpensSeason, bookEmpty, registerItemNames, statusCounts,
-    registerTagCounts,
+    showBalance, bookRows, bookStartingBalance, bookOpensSeason, bookEmpty, registerCategoryNames, registerItemNames,
+    statusCounts, registerTagCounts,
   } = useMemo(() => {
     /* ⚠⚠ WHEN A FILTER HIDES ROWS, THE BALANCE COLUMN HIDES WITH IT (plan §4.3). A running balance
        over a subset is a number that looks like cash and isn't — a coach reading "Expenses only"
@@ -3131,12 +3135,13 @@ function MoneyRecordsPanel({
        Overdue row never moves the balance and Scheduled rows only continue it past Today, so
        dropping either keeps it honest. */
     const balanceShown = balanceIsMeaningful(
-      selectedKinds.size === 0 ? 'all' : 'expense', selectedItems.size > 0 ? 'x' : '',
-      filterTagIds.size > 0 ? 'x' : '',
+      selectedKinds.size === 0 ? 'all' : 'expense', selectedCategories.size > 0 ? 'x' : '',
+      selectedItems.size > 0 ? 'x' : '', filterTagIds.size > 0 ? 'x' : '',
       selectedStatus.size > 0 && !selectedStatus.has('actual') ? 'x' : '',
     );
     const matchesKindItem = (r: RegisterBookRow) => {
       if (selectedKinds.size > 0 && !selectedKinds.has(r.kind)) return false;
+      if (selectedCategories.size > 0 && (!r.categoryName || !selectedCategories.has(r.categoryName))) return false;
       if (selectedItems.size > 0 && (!r.itemName || !selectedItems.has(r.itemName))) return false;
       return true;
     };
@@ -3226,11 +3231,14 @@ function MoneyRecordsPanel({
       statusCounts: counts,
       /* The words actually ON the book, not the whole library: a filter offering a category the
          season never spent against is a control that can only ever empty the screen. */
+      registerCategoryNames: [...new Set(
+        (book?.book ?? []).map(r => r.categoryName).filter((n): n is string => !!n),
+      )].sort((a, b) => a.localeCompare(b)),
       registerItemNames: [...new Set(
         (book?.book ?? []).map(r => r.itemName).filter((n): n is string => !!n),
       )].sort((a, b) => a.localeCompare(b)),
     };
-  }, [book, selectedKinds, selectedItems, filterTagIds, selectedStatus, dateRange, tagsByExpenseId]);
+  }, [book, selectedKinds, selectedCategories, selectedItems, filterTagIds, selectedStatus, dateRange, tagsByExpenseId]);
 
   /* ⚠ HOISTED ABOVE THE MEMO THAT READS THEM. These used to sit below the access guard with the
      rest of the render-time derivations — fine for JSX, illegal for a hook's dependency list. */
@@ -6312,7 +6320,7 @@ function MoneyRecordsPanel({
   const singleSelectedKind = selectedKinds.size === 1 ? [...selectedKinds][0] : null;
   /** Nothing narrowing the register at all — the season genuinely has no rows yet, as opposed to
    *  a filter combination that happens to match none. */
-  const noNarrowing = selectedKinds.size === 0 && selectedItems.size === 0 && filterTagIds.size === 0;
+  const noNarrowing = selectedKinds.size === 0 && selectedCategories.size === 0 && selectedItems.size === 0 && filterTagIds.size === 0;
   const registerExportLabel = selectedKinds.size === 0 ? 'Register'
     : singleSelectedKind ? REGISTER_FILTERS.find(f => f.id === singleSelectedKind)!.label
     : `Register (${selectedKinds.size} kinds)`;
@@ -7300,7 +7308,7 @@ function MoneyRecordsPanel({
              exist at all — neither of the old lists could carry one, because half the money was
              always on the other.
 
-             ⚖ ON A PHONE ALL FIVE GO BEHIND ONE FILTER BUTTON (Ledger Phone Filter D1–D7, owner
+             ⚖ ON A PHONE ALL SIX GO BEHIND ONE FILTER BUTTON (Ledger Phone Filter D1–D7, owner
              2026-10-02): this toolbar is sticky, and at 390px two lines of pills plus Cash on hand pinned
              207px of every screen. A desk keeps the pills — they fit one line there. */
           <FilterGroup key="timeline">
@@ -7339,6 +7347,18 @@ function MoneyRecordsPanel({
             {/* ⚠ MERGED IN (reversed 2026-08-19, reading-order ruling follow-up) — Item, Date and Tags were
                 a second sticky row of their own. Two rows of filters never needed to be two ROWS OF STICKY
                 CHROME; they share this one, wrapping onto a second line on a narrow desk. */}
+            {/* ⚖ CATEGORY, LEFT OF ITEM (owner 2026-10-07) — both Ledgers now read Type · Status · Category ·
+                Item · Date. The categories on the book; a row with none is in no category. */}
+            {registerCategoryNames.length > 0 && (
+              <MultiSelectDropdown
+                restQuiet
+                label="Category"
+                options={registerCategoryNames.map(n => ({ id: n, label: n }))}
+                selected={selectedCategories}
+                onChange={setSelectedCategories}
+                allLabel="Every category"
+              />
+            )}
             {/* ⚠ MULTI-SELECT, DEFAULT "ALL" (owner call, matching the type filter). Narrow to
                 one or several budget words at once rather than one at a time. */}
             {registerItemNames.length > 0 && (
@@ -7367,8 +7387,8 @@ function MoneyRecordsPanel({
               seasonBounds={dateRange.seasonBounds}
               onChange={onDateRangeChange}
             />
-            {/* ⚠ THE FIFTH PILL, and the last of the chip rows this strip used to carry. Show,
-                Status, Item, Date and now Tags: five controls of one shape, which is the whole
+            {/* ⚠ THE LAST PILL, and the last of the chip rows this strip used to carry. Show,
+                Status, Category, Item, Date and Tags: six controls of one shape, which is the whole
                 reason the chips went — a tag row beside four dropdowns read as a different KIND
                 of control for what is the same act of narrowing. */}
             {tagFilterPill}

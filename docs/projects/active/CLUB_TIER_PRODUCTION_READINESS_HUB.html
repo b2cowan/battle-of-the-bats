@@ -6544,7 +6544,7 @@ dialog.truesize::backdrop{background:#16201899}
  <div class="qwwrap">
   <div class="eyebrow">Owner QA</div>
   <h1>Club Tier Readiness — QA walks</h1>
-  <p class="qwlead">Stage 3b — the club’s budget, Budget vs. Actual and the board summary — is walked as <strong>eleven short walks</strong> (ledger §271) — <strong>all eleven passed 2026-10-07</strong> (walk 2 on the owner’s call: step 9’s allocation never reached dev, so a create from a line is proven in Stage 3c’s New allocation walk instead); <strong>walk 12</strong>, the Ledger’s Item column (ledger §279, added the same day), passed 2026-10-07 on the owner’s word. Each one tests one job, says what it’s for before you start, and is signed off on its own — a walk can pass while another is still open. Any order works; walk 1 first reads best. Walks 2, 3 and 9 write test data (an allocation, next year’s plan, a ledger entry), so rebuild the club to walk them again. Stage 3a’s six walks, Stage 2’s ten and Stage 1’s eight all passed and are kept below.</p>
+  <p class="qwlead">Stage 3b — the club’s budget, Budget vs. Actual and the board summary — is walked as <strong>eleven short walks</strong> (ledger §271) — <strong>all eleven passed 2026-10-07</strong> (walk 2 on the owner’s call: step 9’s allocation never reached dev, so a create from a line is proven in Stage 3c’s New allocation walk instead); <strong>walk 12</strong>, the Ledger’s Item column (ledger §279, added the same day), passed 2026-10-07 on the owner’s word; <strong>walk 13</strong>, the coach’s Ledger gaining a Category filter (ledger §280), is owed. Each one tests one job, says what it’s for before you start, and is signed off on its own — a walk can pass while another is still open. Any order works; walk 1 first reads best. Walks 2, 3 and 9 write test data (an allocation, next year’s plan, a ledger entry), so rebuild the club to walk them again. Stage 3a’s six walks, Stage 2’s ten and Stage 1’s eight all passed and are kept below.</p>
   <div class="signin" id="qwFound"><strong>The test club is ready — walk it as it is.</strong> It was rebuilt on 2026-10-06 with Stage 3b’s money: revenue on the 2026 plan (Club sponsors, and a Town recreation grant with no date yet); Diamond permits billed twice (Diamond fees 2026 and Fall ball diamond fees 2026) with some of it still left to allocate; the club’s General ledger lines filed under the plan’s words (the helmets under a word with no plan line, so off-plan) and two older lines left Not filed; the tournament’s book taking in its registrations; 15U AAA and 13U AAA paying Town of Milton, the payee the club shares; and money in on 15U AAA, 13U AAA and 16U AA (on its closed season). Stage 3a’s money is all still there. The dev server was restarted and the test sign-ins refreshed the same day. Walks 2, 3 and 9 write test data, so each can be walked once — to walk one again, ask the chat to rebuild the club (<code>node --env-file=.env.local scripts/seed-club-fixture.mjs --reset</code>, then <code>node --env-file=.env.local scripts/seed-uat-coach-fixture.mjs</code>). ⚠ A rebuild resets the test accounts’ passwords, which signs every open window out: sign in again after one.</div>
   <details class="qwsetup" open>
    <summary>Before any walk — sign-in accounts</summary>
@@ -6872,6 +6872,21 @@ const WALKS=[
    {do:'Export → Excel.',see:'An Item column right after Category, blank on the lines not filed and the transfer.'},
    {do:'Budget vs. Actual → Facilities › Field Equipment → its Actual → Open these lines in the Ledger.',see:'The Ledger opens on 2026 with Category Facilities and Item Field Equipment ticked: the helmets and the practice balls, and not the Diamond permit beside them in Facilities.'},
    {do:'Narrow to phone width.',see:'Practice balls’ card carries a Category line and an Item line; the Tournament float’s card carries neither. Widen again.'}
+  ]},
+ {id:'S3BW13',n:13,ledger:'§280',title:'The coach’s Ledger gains a Category filter',who:'A coach',minutes:5,
+  short:'The coach’s Timeline filters by Category, left of Item, as the club’s Ledger does.',
+  intent:'Walk 12 found that the club’s Ledger had a Category filter and the coach’s didn’t, a difference nobody had ruled. The owner ruled it the same day: the coach’s Ledger gains one, left of Item, so both strips read Type · Status · Category · Item · Date. It lists the categories on this season’s book and, like every other narrowing, takes the Balance away while it is on.',
+  passes:'Category sits between Status and Item; it narrows to the ticked categories; the Balance column and Cash on hand leave while it is on and come back when it is off; on a phone it is inside the Filter button.',
+  notIn:'The club’s Ledger — walk 12. Shortening the Item list by category (not built; the club’s doesn’t either).',
+  signIn:'The UAT coach — uat-coach@uat-test-org.local, UAT Test Team.',
+  where:'Desktop browser: Money → Ledger, on the Timeline; the last step at phone width. Read-only: nothing is written.',
+  steps:[
+   {who:'The UAT coach',do:'Money → Ledger, Timeline. Date → Whole season.',see:'The filter strip reads Type · Status · Category · Item · Date · Tags, with Cash on hand at its right.'},
+   {do:'Open Category.',see:'Every category, then this season’s categories in A–Z order, among them Facilities, Officials, Team Gear and Tournaments.'},
+   {do:'Tick Team Gear.',see:'Only Socks and “bat 2”; the Balance column and Cash on hand go away, and Category names what it is set to.'},
+   {do:'Tick Facilities as well.',see:'Those two plus “Spring classic entry” and “Permits — spring block” (the Facilities ones; the Tournaments line of the same name stays out).'},
+   {do:'Back to Every category.',see:'The whole season again, with the Balance column and Cash on hand back.'},
+   {do:'Narrow to phone width; tap Filter.',see:'Category sits between Status and Item in the sheet. Pick one: the Filter button counts it; Reset filters puts it back. Widen again.'}
   ]}
 ];
 const WALKS_S3A=[
