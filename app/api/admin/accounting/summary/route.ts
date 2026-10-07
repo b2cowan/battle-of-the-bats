@@ -32,9 +32,9 @@ export const GET = withObservability(async (req: Request) => {
 
   const today = tournamentToday();
   const year = readYearParam(req, today);
-  const [summary, { years, yearLines }] = await Promise.all([
+  const [summary, { years }] = await Promise.all([
     readBoardSummary(ctx.org.id, year, teamIdsInScope(ctx), today),
     clubPlanYears(ctx.org.id, today),
   ]);
-  return NextResponse.json({ year, years, yearLines, summary });
+  return NextResponse.json({ year, years, summary });
 }, { route: '/api/admin/accounting/summary' });

@@ -153,7 +153,7 @@ export default function SharedPayeeReportPage({ params }: { params: Promise<{ or
       {header}
       {notice && <PageNotice notice={notice} />}
       <CoachListToolbar actions={<ClubMoneyExport run={runExport} formats={['xlsx', 'csv']} disabled={report.teams.length === 0} />}>
-        <YearPill year={report.year} years={years} thisYear={thisYear} onChange={y => { setYear(y); setOpen(new Set()); }} />
+        <YearPill year={report.year} years={years} onChange={y => { setYear(y); setOpen(new Set()); }} />
       </CoachListToolbar>
       <Callout tone="info" role="note" icon={<Lock size={16} aria-hidden />}>
         {isPhone ? PAYEE_REPORT_WORDS.calloutShort(sharedOn) : PAYEE_REPORT_WORDS.callout(report.payee.name, report.year, sharedOn)}

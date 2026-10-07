@@ -56,7 +56,7 @@ import type { ReportNote } from '@/lib/coach-money-report-notes';
 import type { MoneyRowKind } from '@/lib/coach-money-exports';
 import { formatStoredDate } from '@/lib/timezone';
 
-interface Read { year: number; years: number[]; yearLines: Record<number, number>; summary: BoardSummary }
+interface Read { year: number; years: number[]; summary: BoardSummary }
 
 const KIND_TONE: Record<LedgerKind, ChipTone> = { org: 'good', tournament: 'neutral', league_season: 'neutral', team: 'info' };
 
@@ -196,7 +196,7 @@ export default function AccountingOverviewPage() {
     <>
       {notice && <PageNotice notice={notice} />}
       <CoachListToolbar actions={<ClubMoneyExport run={runExport} formats={['xlsx', 'pdf', 'csv']} />}>
-        <YearPill year={summary.year} years={read.years} yearLines={read.yearLines} thisYear={thisYear} onChange={setYear} />
+        <YearPill year={summary.year} years={read.years} onChange={setYear} />
       </CoachListToolbar>
 
       {/* ── Where the club stands · today ── */}

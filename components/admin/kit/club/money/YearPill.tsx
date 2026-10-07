@@ -4,9 +4,12 @@
  *
  * The scope pill that leads the toolbar on Budget, Budget vs. Actual and the Overview — the same pill on
  * all three, and the three REMEMBER ONE CHOICE PER VISIT (the hub's own words): pick 2025 on the Budget and
- * Budget vs. Actual opens on 2025 too, until the tab is closed. It lists every year with a plan, this year
- * marked, and ALWAYS the next year ("plan ahead"), so a plan can be started before its year — never an
- * empty year two ahead. The server decides the list (`planYears`); this only draws it.
+ * Budget vs. Actual opens on 2025 too, until the tab is closed. It lists every year with a plan, this year,
+ * and ALWAYS the next year, so a plan can be started before its year — never an empty year two ahead. The
+ * server decides the list (`planYears`); this only draws it.
+ *
+ * Each year is its bare number (§271, 2026-10-07). The second line it used to carry — "this year · 6 lines",
+ * "plan ahead · no lines yet" — was noise in a list of years; the open year's plan says the rest.
  *
  * ⚠ 3c gives the year its name ("2026–27") and its first month; the pill keeps its place and will show the
  * name. Until then a year is the calendar year.
@@ -15,7 +18,6 @@
  */
 import { useCallback, useState } from 'react';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
-import { yearPillDetail } from '@/lib/club-money-words';
 
 const storageKey = (slug: string) => `club-money-year:${slug}`;
 
@@ -40,14 +42,10 @@ export function useClubYear(slug: string): [number | null, (year: number) => voi
   return [year, pick];
 }
 
-export default function YearPill({ year, years, yearLines, thisYear, onChange }: {
+export default function YearPill({ year, years, onChange }: {
   year: number;
   /** Any order: the pill lists them oldest first. */
   years: readonly number[];
-  /** The plan's line count per year — Budget, Budget vs. Actual and the Overview. Absent, a year says only
-   *  whether it is this year (the payee report: plan lines mean nothing there). */
-  yearLines?: Readonly<Record<number, number>>;
-  thisYear: number;
   onChange: (year: number) => void;
 }) {
   return (
@@ -55,11 +53,7 @@ export default function YearPill({ year, years, yearLines, thisYear, onChange }:
       label="Year"
       lead
       value={String(year)}
-      options={[...years].sort((a, b) => a - b).map(y => ({
-        id: String(y),
-        label: String(y),
-        detail: yearLines ? yearPillDetail(y, thisYear, yearLines[y] ?? 0) : (y === thisYear ? 'this year' : undefined),
-      }))}
+      options={[...years].sort((a, b) => a - b).map(y => ({ id: String(y), label: String(y) }))}
       onChange={next => onChange(Number(next))}
     />
   );

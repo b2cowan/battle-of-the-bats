@@ -201,7 +201,6 @@ export default function BudgetTab() {
   if (failed) return <LoadFailed title="We couldn’t load the budget." onRetry={() => void load()} />;
   if (!read || !plan) return <p className={ck.loading}>Loading…</p>;
 
-  const thisYear = Number(read.today.slice(0, 4));
   const isEmpty = allLines.length === 0 && plan.revenue.fromTheTeams.allocations.length === 0;
   const fromYear = read.years.filter(y => y < plan.year && (read.yearLines[y] ?? 0) > 0).sort((a, b) => b - a)[0] ?? null;
   const words = emptyYearWords(plan.year, fromYear);
@@ -285,7 +284,7 @@ export default function BudgetTab() {
           </>
         )}
       >
-        <YearPill year={plan.year} years={read.years} yearLines={read.yearLines} thisYear={thisYear}
+        <YearPill year={plan.year} years={read.years}
           onChange={y => { setYear(y); setLineId(null); setWhen('all'); }} />
         <SingleSelectDropdown label="View" lead value={view}
           options={[{ id: 'list', label: 'List' }, { id: 'period', label: 'By period' }]}

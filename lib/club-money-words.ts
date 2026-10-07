@@ -367,14 +367,6 @@ export const FILED_UNDER_REFUSAL = {
 //    summary, a team's money, the payee report and the coach's Club tab print. ⚠ DRAFTS FOR /marketing,
 //    tagged on the hub (specimens 1–6); the drawings fixed what each must CARRY — the words are placement. ──
 
-/** The Year pill's second line for a year (C10's planning half): this year, the year ahead, or a count. */
-export function yearPillDetail(year: number, thisYear: number, lines: number): string {
-  const count = lines === 0 ? 'no lines yet' : `${lines} ${lines === 1 ? 'line' : 'lines'}`;
-  if (year === thisYear) return `this year · ${count}`;
-  if (year === thisYear + 1) return `plan ahead · ${count}`;
-  return count;
-}
-
 /** A partly billed cost line, under its name: the part the club pays itself unless it allocates it. */
 export const notAllocatedCaption = (amount: number) =>
   `${fmt(amount)} not allocated · the club pays it unless you allocate it`;

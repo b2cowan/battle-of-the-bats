@@ -27,7 +27,7 @@ import { canMoveClubMoney } from '@/lib/member-access';
  *
  * `plan` — the year's plan (the same `ClubPlan` the Budget reads, from the same load): a Budgeted figure opens
  * its line's own window right here (hub specimen 2, "a Budgeted figure opens the line's own window").
- * `years` / `yearLines`: the Year pill (the same on the Budget and the Overview). `canMove`: the line's window
+ * `years`: the Year pill (the same on the Budget and the Overview). `canMove`: the line's window
  * offers its edit to someone who can change the plan (3a's one money rule).
  *
  * ⚰ The OLD page's top-level fields (`availableYears`, `summary`, `categories`, `uncategorized`, `orgActuals`,
@@ -41,10 +41,10 @@ export const GET = withObservability(async (req: Request) => {
   const today = tournamentToday();
   const year = readYearParam(req, today);
   // The report and the plan it reads against, from ONE load of the year's rows.
-  const [{ plan, report }, { years, yearLines }] = await Promise.all([
+  const [{ plan, report }, { years }] = await Promise.all([
     readClubYear(ctx.org.id, year, today, teamIdsInScope(ctx)),
     clubPlanYears(ctx.org.id, today),
   ]);
 
-  return NextResponse.json({ year, years, yearLines, canMove: canMoveClubMoney(ctx, ctx.org), report, plan });
+  return NextResponse.json({ year, years, canMove: canMoveClubMoney(ctx, ctx.org), report, plan });
 }, { route: '/api/admin/accounting/budget-vs-actual' });

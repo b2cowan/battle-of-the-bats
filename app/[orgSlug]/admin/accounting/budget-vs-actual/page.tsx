@@ -64,7 +64,6 @@ import type { BudgetCategoryWithItems } from '@/lib/types';
 interface Read {
   year: number;
   years: number[];
-  yearLines: Record<number, number>;
   canMove: boolean;
   report: ClubReport;
   plan: ClubPlan;
@@ -207,7 +206,6 @@ export default function BudgetVsActualTab() {
   if (failed) return <LoadFailed title="We couldn’t load Budget vs. Actual." onRetry={() => void load()} />;
   if (!read || !report || !statement) return <p className={ck.loading}>Loading…</p>;
 
-  const thisYear = Number(today.slice(0, 4));
   const { band } = report;
   const empty = statement.revenue.categories.length === 0 && statement.expenses.categories.length === 0;
   const plan = read.plan;
@@ -269,7 +267,7 @@ export default function BudgetVsActualTab() {
             />
           )}
         >
-          <YearPill year={report.year} years={read.years} yearLines={read.yearLines} thisYear={thisYear}
+          <YearPill year={report.year} years={read.years}
             onChange={y => { setYear(y); setBehind(null); setLineId(null); }} />
           <SingleSelectDropdown label="View" lead value={view}
             options={[{ id: 'statement', label: 'Statement' }, { id: 'months', label: 'Months' }]}

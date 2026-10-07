@@ -17,7 +17,8 @@ import { clubPlanYears, readClubPlan } from '@/lib/club-budget-read';
  * the By period view (the coach's own period builder fed the plan, months and quarters). Every figure
  * is the definitions module's (`club-money-one-definition-guard`). A team outside the reader's groups is
  * counted on an allocation, never named (B11; `otherTeams`). `years`: every year with a line, this year,
- * and always next year; `yearLines` how many lines each holds (the Year pill's second line). `canMove`:
+ * and always next year; `yearLines` how many lines each holds (the empty year's "Start from 2026's plan"
+ * offers the newest earlier year that has any). `canMove`:
  * the reader may write the Budget (3a's one money rule, Ask 4d).
  *
  * ⚰ The old Budget and Allocate pages' top-level fields (`availableYears`, `summary`, `categories`,

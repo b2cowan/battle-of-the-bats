@@ -33,8 +33,8 @@ import {
 
 /**
  * The years the Year pill offers (`planYears`): every year with a line, this year, and always the next year —
- * and how many lines each holds, for the pill's second line ("this year · 12 lines", "plan ahead · no lines
- * yet"; session 2).
+ * and how many lines each holds, for the Budget's empty year (it offers to start from the newest earlier year
+ * that has lines).
  */
 export async function clubPlanYears(orgId: string, today: string = tournamentToday()): Promise<{ years: number[]; yearLines: Record<number, number> }> {
   const rows = await fetchAll<{ season_year: number }>((a, b) => supabaseAdmin
