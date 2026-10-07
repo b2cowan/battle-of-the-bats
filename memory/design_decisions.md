@@ -122,6 +122,33 @@ could read. The bills lead and reference goes last (2026-09-06) — a coach come
 standing card above the work is text a coach reads past every visit (the owner, 2026-09-04).
 **Applies to:** the coach's Money › Club tab; the club's team page; /marketing owns the words.
 
+### 2026-10-05 — AFTER THE EVENT: ONE LIST PER PHASE, A STRIP GIVES WAY TO THE PAGE'S OWN DOOR, A FIGURE COUNTS WHAT IT NAMES (owner, "go ahead" to the `/design` review of the Tournament admin redesign's Stage 4 drawing — the drawing's own asks A19–A24 are still open) — hub https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM, plan `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §6d
+
+**Decision:** (1) **A record lives in ONE list, by where it is in its life** — the Tournaments list holds what's ahead
+(Live · Draft); Past tournaments holds every finished event (Completed · Archived · Sealed records); both open the same
+record, and an olive door at the first list's foot names the second. (2) **A context strip gives way where the page
+already carries the same door, and never offers a page the plan locks** — extending the strip's own "never point at the
+page you're on" (J1-116); it stays on the other pages, where it is the only way there on a phone. (3) **A figure counts
+what it names:** a recap's "teams" are the teams that played, not the registrations. (4) **A copy or share icon on a
+phone is the boxed 44px icon — an action — never a bare olive glyph, which is a door's look.** (5) **One name per page:**
+"Summary", the rail's word, for its title, door card, lock lines and printout. (6) **A record's Status sentence never
+repeats its chip;** it opens with what the state means. (7) **A confirm's button repeats the verb of the button that
+opened it** ("Move back to draft", not "Move to draft").
+**Rationale:** the first drawing kept a Completed band on BOTH lists — same rows, same action, same record — as a
+stop-gap for the list having no door from inside an event (F48), a duplicate that would have outlived its reason. The
+phone strip put a second door to Summary 140px under the board's door card, and on the free plan invited the organizer
+into a locked page right under the line saying it was locked. "9 teams · 8 accepted" carried today's registration
+census onto a recap whose own printed standings listed 8 teams. ⚠ An "Archived Jun 15" status was proposed and NOT
+drawn: no archive date is stored, so the sentence uses the event's end date — check the schema before drawing a date.
+Re-checking the pictures also found the desk record and its confirm drawn with 44px buttons (34 on a computer, 3 Oct).
+**Applies to:** the tournament admin's after-event screens first; (1)–(3) are general — any admin list split by phase,
+any context strip, any recap figure.
+**⚖ Ratified 2026-10-06** with the drawing itself (owner's paste-back: D1–D3, D5 as drawn, A19–A24 as recommended).
+Two more rules came with it: **a status change that takes a public site down or uses a plan slot is a worded action in
+the record that asks first, naming what it does to the site and the slot — never a menu that writes on change** (A20;
+"create asks" read for status); and **a change the plan cannot make is said before the tap**, naming what holds the
+slot, never refused after it (A20, A21).
+
 ### 2026-10-05 — A NOTIFICATION OPENS WHERE YOU ARE; READ, DONE AND DELETE ARE THREE WORDS FOR THREE THINGS (owner: "looks good" on round 3, all nine as recommended) — hub https://claude.ai/artifact/X78EK19TCyba8wTLAfCfyZ, plan `docs/projects/archive/NOTIFICATIONS_OPEN_IN_PLACE_PLAN.md`
 
 **Decision:** (D1) a click on a notification OPENS it (kind, day + clock, whole message) and marks it read; the page is a
