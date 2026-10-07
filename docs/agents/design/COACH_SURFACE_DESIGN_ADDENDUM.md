@@ -61,6 +61,10 @@ TIER 2 — btn-ghost  : secondary/destructive, "View all", cancel
         — btn-ghost btn-sm : low-prominence secondary links (section-header "View all") ONLY
 BANNED — btn-outline (all coach-portal uses) · btn-primary (gradient) · btn-sm as primary CTA · circle buttons · gradient on functional elements
 ```
+**A close × is a plain glyph** — no outline, no filled card behind it, no circle, no square; its tap
+area is 44px wherever the bar shows, and on a computer the pointer tints it (owner ruling 2026-10-07,
+`memory/design_decisions.md`). Whether a sheet carries a × at all is the Sheet Frame's D2.
+
 The most journey-critical button is the LOUDEST (btn-lime), never the quietest. **Publish this rule to `CLAUDE.md`/`AGENTS.md` before new coach surfaces are built** (or builders default to `btn-outline`).
 
 > **Section Add buttons vs empty-state CTAs (reconciled):** a section-header ghost-pill Add button (zero-data shortcut, `btn btn-ghost; font-size:0.82rem; padding:0.3rem 0.75rem; --radius-sm`, hidden when N>0) is TIER-2; an empty-state primary CTA (Section iii) is TIER-1 `btn-lime`. Both rules hold — they are different buttons.

@@ -7,6 +7,30 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-07 — A CLOSE × IS A PLAIN GLYPH: NO OUTLINE, NO CIRCLE, NO SQUARE (owner, on screenshots of the lineup builder's Print, Copy from and Save as template sheets: *"why do some of these have no X, some have an X with no border, some have an X with a round border, and some have an X with a square border"*; then *"I agree with borderless, I think its small enough to go ahead and build without needing to be drawn up"*)
+
+**Decision:** a close × is the bare glyph in its tap area — 44px wherever the bar shows, and on a computer
+the pointer tints it (the notification drawer's ×). No outline, no filled card behind it, no circle, no
+square. Whether a sheet carries a × at all is unchanged — the Sheet Frame's D2 (2026-10-05): a menu has a
+small-capitals label and no ×, a form has a title and a 44px ×.
+**Rationale:** one control had four looks. The sheet rulings said WHEN a × appears and how big its tap
+area is, never what it looks like, and D2 defined the form head by pointing at the lineup builder's,
+so that head's round outline became the reference by accident. Most of the portal already drew the
+bare glyph (the game-day sheets, every centred window, the tag manager, the practice library, the
+notification drawer); the builder's round one also broke the coach portal's standing ban on circle
+buttons (`docs/agents/design/COACH_SURFACE_DESIGN_ADDENDUM.md` CP-1), and Copy from carried a private
+square copy. The honest counter-argument, put to the owner before the ruling: an outline shows where
+the tap target is, and a bare glyph does not.
+**Built and committed `4f3fe9cd` 2026-10-07:** the builder's four sheets that carry a × (Lineup setup, Call up a player, Save as
+template, Copy from) wear ONE button (`LineupDrawerClose`) — Copy from's own class deleted. Every
+other node in all four kept its place at 390 warm and dark and at 1280; Copy from's glyph rose 6px
+(it now lines up with its title as the other three do) and drew at 16 rather than 18.
+**⚠ NOT YET REACHED — an open question, not drift to sweep:** the side panels still draw an outlined
+square × — Help (also 30px, under the floor), chat's Rooms and Manage panels and its New room window,
+the portal tour, the plan-details panel. Help and chat are shared with the club and tournament admin,
+so extending the ruling there is the owner's call (TODO, Sheet frame follow-ups).
+**Applies to:** every × in the coach portal; `components/coaches/LineupDrawerHead.tsx`, OQA §278.
+
 ### 2026-10-06 — A ROW'S FLAGS GO UNDER THE NAME ON A PHONE, AND A CALL-UP IS THE INK OF THE NAME, NOT A WORD (owner, on a screenshot of the game-day board: *"I don't like how much space this takes up"*, then *"the coach knows who is their own player vs a call up they don't need these words on each one"*) — mockup + walk https://claude.ai/artifact/WaY9Wi25z4gefJk4ET2msz, ledger §274
 
 **Decision:** (1) on a phone (≤640) a game-day board row's flags — innings pitched, the sitting streak, Out — sit on
