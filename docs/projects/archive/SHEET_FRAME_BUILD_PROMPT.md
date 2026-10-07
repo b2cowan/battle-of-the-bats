@@ -1,5 +1,7 @@
 # Prompt — build the Sheet Frame, one step per chat
 
+**✅ COMPLETE 2026-10-07 — all five steps built and walked; nothing is left to build from this prompt.** Kept as the record of how the steps were asked for.
+
 Paste everything below the line into a new Claude Code session in this repo, and replace `STEP` with the step to
 build (1 to 5). Build ONE step per session.
 
@@ -12,10 +14,10 @@ your recommendations"), so this is a build, not a design round — except where 
 
 - `CLAUDE.md`, `AGENTS.md`, `AGENCY_RULES.md`. Work on `dev`; stage explicit pathspecs only; other sessions share this
   working copy.
-- The plan: `docs/projects/active/SHEET_FRAME_PLAN.md` — the rulings (D1–D8), what every sheet shares, the five steps,
+- The plan: `docs/projects/archive/SHEET_FRAME_PLAN.md` — the rulings (D1–D8), what every sheet shares, the five steps,
   the guards, the defects and the step each closes, and the *Build record* of every step so far (read step 3's: it
   added the form layer this step builds on). The hub (https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, source
-  `docs/projects/active/SHEET_FRAME_HUB.html`) holds the drawings, the measured facts (`sheet-frame/facts.json`) and the
+  `docs/projects/archive/SHEET_FRAME_HUB.html`) holds the drawings, the measured facts (`sheet-frame/facts.json`) and the
   Decisions tab.
 - `memory/design_decisions.md`, the 2026-10-05 entry "PHONE SHEETS: ONE FRAME, TWO LAYERS SORTED BY ONE TEST, THREE
   HEADS" (with its 2026-10-06 addendum: a sheet may switch layer while open), and the 2026-09-23 drawer-layers ruling it
@@ -155,7 +157,7 @@ lends its trigger through an optional `triggerRef`. Step 4 added:
    (both portals) and the player row menus onto the frame, contents unmoved; the frame's own dim, `ownsKeys`,
    `overWindow`, `grabCloses`. **Built** (`2a304b52`; owner QA §273 ✅ PASSED 19/19). The Schedule day list is not a phone sheet —
    reported, not built.
-5. **Last: the lineup builder's drawers.** **Built and committed `be092f9b` 2026-10-06** (owner QA §277; the plan's *Build record*). Setup, Save as template, Call up, Copy from and Print onto the frame, so
+5. **Last: the lineup builder's drawers.** **Built and committed `be092f9b` 2026-10-06** (owner QA §277 ✅ passed 24/24 2026-10-07; the plan's *Build record*). Setup, Save as template, Call up, Copy from and Print onto the frame, so
    `LineupSheetScrim` retires (its last five users: Print and Save as template in `lineups/[eventId]/page.tsx`, Setup
    and Call up in `_LineupEditor.tsx`, and `LineupCopyFrom.tsx`). Call up takes the shared form head
    (`LineupDrawerHead`) instead of its own `<h3>`; the three forms (Setup, Save as template, Call up) keep the keyboard

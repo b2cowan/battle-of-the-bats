@@ -1,14 +1,15 @@
 # Sheet Frame — plan
 
 **Status:** D1–D6 accepted 2026-10-05 (owner: "I agree with all of your recommendations"). Hub (Mockup · Decisions ·
-PM Brief · Plan notes): https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, source `docs/projects/active/SHEET_FRAME_HUB.html`,
+PM Brief · Plan notes): https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, source `docs/projects/archive/SHEET_FRAME_HUB.html`,
 frames and measured facts in `sheet-frame/` (`facts.json`). PM brief `SHEET_FRAME_PM_BRIEF.md`. Build prompt
 `SHEET_FRAME_BUILD_PROMPT.md` (one step per chat). Ruling recorded in `memory/design_decisions.md` (2026-10-05).
 **Step 1 built 2026-10-05, committed `9ab32b23`; ✅ owner QA §264 PASSED 9/9 2026-10-05** (see *Build record*).
 **Step 2 built 2026-10-05, committed `91986b7c`; ✅ owner QA §266 PASSED 17/17 2026-10-06** (see *Build record*).
 **Step 3 built 2026-10-06, committed `5d036eeb`; ✅ owner QA §268 PASSED 19/19 2026-10-06** (see *Build record*).
 **Step 4 built 2026-10-06, committed `2a304b52`; ✅ owner QA §273 PASSED 19/19 2026-10-06** (see *Build record*).
-**Step 5 built and committed `be092f9b` 2026-10-06; owner QA §277** (see *Build record*) — the last step; the project closes when its walk passes.
+**Step 5 built and committed `be092f9b` 2026-10-06; ✅ owner QA §277 PASSED 24/24 2026-10-07** (see *Build record*).
+**✅ PROJECT COMPLETE 2026-10-07 — archived.** Every phone sheet in the coaches portal comes from one frame, sorted into two layers by one test, with three heads; the frame answers every sheet's Escape and Back. Carried to TODO as one group (*Sheet frame follow-ups*): the grab line's contrast; Help's 30px ×; the club admin's own sheet (D4); focus after the reader's Done or Delete; Setup's "Game rules ▾" at 641–900; Back from Copy from's question; the frame's `overflow-wrap: anywhere` → `break-word`. Already its own TODO line: the Schedule's day list on a tablet.
 
 ## The rulings
 
@@ -620,7 +621,7 @@ keyboard in a way this step makes wrong; no edits.
 W2 a tap on the bar closes the sheet first (5/5) · W3 the keyboard (5/5). No notes. The probe award was removed after
 the pass.
 
-### Step 5 — the lineup builder's drawers, and the frame answers every sheet (built 2026-10-06, committed `be092f9b`; owner QA §277)
+### Step 5 — the lineup builder's drawers, and the frame answers every sheet (built 2026-10-06, committed `be092f9b`; ✅ owner QA §277 PASSED 24/24 2026-10-07)
 
 **Before building — what the code and the measurements said (raised in the plan presented to the owner).**
 - **Back left the page from seven sheets, measured.** With the lineup builder's Tools, the Ledger's Tools, the Ledger's

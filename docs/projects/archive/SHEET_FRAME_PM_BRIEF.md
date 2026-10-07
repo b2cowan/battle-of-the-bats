@@ -53,7 +53,12 @@ does on a computer, and every way out returns it to what opened the drawer. Two 
 Back cannot cancel them. The step's review found and fixed one slip before it shipped: a window opened from a phone
 menu (the practice plan's Save as template…) lost its typing cursor as the menu closed — it now opens ready to type, on
 a phone and on a computer. **Found, not fixed:** on a tablet, Lineup setup's small "Game rules" toggle is under the tap
-floor (unchanged by this step, newly measured) — a small follow-up for the owner. Owner QA §277.
+floor (unchanged by this step, newly measured) — a small follow-up for the owner. Owner QA §277 ✅ passed 24/24 2026-10-07.
+
+**✅ Complete 2026-10-07.** All five steps built and walked (§264 · §266 · §268 · §273 · §277, with the game-day button row's
+§269 · §270). Every phone sheet in the coaches portal now comes from one frame: a menu sits on the bar and leaves it live,
+a form covers it and keeps the keyboard inside, and on a phone Back closes the sheet before it ever leaves the page. The
+small follow-ups are one TODO group.
 
 ## What changes for a coach
 

@@ -7,7 +7,7 @@ import styles from './SheetFrame.module.css';
 
 /**
  * ONE FRAME FOR THE PORTAL'S PHONE SHEETS (Sheet Frame, owner rulings D1–D6, 2026-10-05 — plan
- * docs/projects/active/SHEET_FRAME_PLAN.md, the geometry and its reasons in `SheetFrame.module.css`).
+ * docs/projects/archive/SHEET_FRAME_PLAN.md, the geometry and its reasons in `SheetFrame.module.css`).
  * The dim and the sheet come together, so neither can be rendered without the other.
  *
  * ⚠⚠ THE DIM IS INSIDE THE BOUNDARY THE FRAME WATCHES. The dim is what a tap off the sheet lands on. A

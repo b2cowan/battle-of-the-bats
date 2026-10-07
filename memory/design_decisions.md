@@ -132,7 +132,7 @@ says a filter is narrowed, not how. Measured: naming costs ~50px a pill; three n
 1024px. The club's counts were a census of the date window ("Expenses (7)" listed 5 rows) — moving a wrong number is not
 a fix. **Applies to:** every `MultiSelectDropdown` (both Ledgers, payment requests, Awards, the practice library).
 
-### 2026-10-05 — PHONE SHEETS: ONE FRAME, TWO LAYERS SORTED BY ONE TEST, THREE HEADS (owner: "I agree with all of your recommendations") — hub https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, plan `docs/projects/active/SHEET_FRAME_PLAN.md`
+### 2026-10-05 — PHONE SHEETS: ONE FRAME, TWO LAYERS SORTED BY ONE TEST, THREE HEADS (owner: "I agree with all of your recommendations") — hub https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc, plan `docs/projects/archive/SHEET_FRAME_PLAN.md`
 
 **Decision:** (D1) every phone sheet is one of two layers, sorted by the 2026-09-23 ruling's OWN REASON — **"would a
 stray tap on the bar lose something?"** No → MENU layer: on top of the bar, bar live, not modal (this includes sheets
@@ -162,6 +162,13 @@ keyboard and claimed `aria-modal` over a live bar until step 4.) Two sorts the t
 full-screen window has no bar under it** — it sits at the screen's foot above the window, and it is a FORM when the
 window beneath is modal and the sheet is its sibling (RSVP), a menu when it renders inside the window's own DOM (the
 depth chart's row menu); and **a surface that cannot open on a phone is not a phone sheet** (the Schedule's day list).
+**Added 2026-10-07 (step 5, the last; the project CLOSED — owner QA §277 ✅ 24/24):** **the frame answers every
+sheet's Escape and Back, so no consumer does** — Back with a menu open closes the menu, one level, and never leaves the
+page (seven menus did); the sheet marks itself as Escape's owner and a floor underneath yields to it. **A floor's focus
+hand-back yields to focus that went somewhere on its own** — a window opened from a menu sheet keeps its own field's
+cursor (the menu closes in the window's commit). **A row that leaves the page from a sheet is a LINK**, never a code
+navigation — a back step cancels one. The lineup builder's five drawers ride the frame through one shell
+(`LineupDrawer`); the 2026-09-23 entry's builder-only recipe (`.lineupDrawerOverNav`, `LineupSheetScrim`) is retired.
 
 ### 2026-10-03 — ONE CONTROL HEIGHT, THE PORTAL'S BUTTON: 34px ON A COMPUTER (owner: "looks good, go for it. I agree with your recommendations") — hub https://claude.ai/artifact/GFfHZkFRiXAxxybnAiGrWd, plan `docs/projects/active/ADMIN_CONTROL_HEIGHT_PLAN.md`
 
@@ -623,6 +630,10 @@ close spelled once; `desktopClose` is a **prop**, not an ancestor — asking "is
 five drawers. **Build-enforced** by `tests/unit/coach-lineup-phone-guard.test.ts` → *"The two drawer
 layers"*, which asserts the split **both ways** — the three that enrol and the two that must not —
 so a sixth drawer added without a decision fails whichever side it lands on.
+**⚰ Applies-to retired 2026-10-06 (Sheet Frame step 5) — the RULE stands.** `.lineupDrawerOverNav`, `--lineup-drawer-foot-pad`
+and `LineupSheetScrim` are gone: the builder's drawers are the portal's sheet frame (its form layer for the three that
+cover the nav) through `LineupDrawer`, and the guard's *"The two drawer layers"* counts them on the frame. See the
+2026-10-05 PHONE SHEETS entry.
 
 ---
 

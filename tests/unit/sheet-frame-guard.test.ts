@@ -13,7 +13,7 @@ function toolsRowFiles(dir: string): string[] {
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
  * SHEET FRAME — one frame for the portal's phone sheets (owner rulings D1–D6, 2026-10-05; plan
- * docs/projects/active/SHEET_FRAME_PLAN.md, hub https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc).
+ * docs/projects/archive/SHEET_FRAME_PLAN.md, hub https://claude.ai/artifact/GDVi8DXFYsxrbq1rLarstc).
  *
  * The test that sorts every sheet (D1): "would a stray tap on the bottom bar lose something?" No → the
  * MENU layer (on top of the bar, the bar live, not modal). Yes → the FORM layer (covers the bar, modal,
