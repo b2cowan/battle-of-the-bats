@@ -76,9 +76,14 @@ describe('3. a team’s cash is read and labelled, never added in', () => {
     assert.match(body, /isClubOwnedBook\(b\.kind\)/);
     assert.match(readCode('lib/club-budget-report.ts'), /const cashOnHand = clubCashOnHand\(books\);/);
   });
-  it('the held-by column’s closing cell is blank on the Overview', () => {
+  it('the held-by column’s closing cell is blank on the Overview, and the column wears no coloured edge', () => {
     const code = readCode(OVERVIEW);
-    assert.match(code, /<td className=\{`\$\{repKit\.num\} \$\{cr\.heldCell\}`\} \/>/, 'the closing row’s held cell carries no figure');
+    // The closing row: the Requests total, then the held cell — blank (standard §3.5, Ask 4e).
+    assert.match(code, /waitingOnYou\.count : ''\}<\/td>\s*<td className=\{repKit\.num\} \/>/, 'the closing row’s held cell carries no figure');
+    /* ⚖ No edge on the column's cells (owner 2026-10-07): it was never ruled or drawn, and the heading row and
+       the group bands broke it into a stray divider. The lock and the heading's words carry the meaning. */
+    assert.doesNotMatch(code, /heldCell/, 'the held-by column’s cells carry no coloured edge');
+    assert.doesNotMatch(readCode('components/admin/kit/club/money/ClubReport.module.css'), /\.heldCell\b/);
   });
   it('a team’s page labels the figure as held, on its own card', () => {
     assert.match(readCode('app/[orgSlug]/admin/accounting/teams/[teamId]/page.tsx'), /held: true/);

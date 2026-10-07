@@ -379,7 +379,7 @@ function TeamsTable({ summary, hrefOf }: { summary: BoardSummary; hrefOf: (id: s
                       {t.requestsWaiting.count > 0 && <WaitingCount n={t.requestsWaiting.count} />}
                       {t.holdingPayout && <span className={cr.lateCaption}>holding up a payout</span>}
                     </td>
-                    <td className={`${repKit.num} ${cr.heldCell}`}>
+                    <td className={repKit.num}>
                       {t.cash.cash == null ? '' : <span className={t.cash.cash < -0.005 ? cr.negative : undefined}>{fmtSigned(t.cash.cash)}</span>}
                       {t.cash.cash != null && t.cash.season && !t.cash.season.live && <span className={cr.heldCaption}>{teamCashClosedWord(t.cash.season.closedOn)}</span>}
                     </td>
@@ -396,7 +396,7 @@ function TeamsTable({ summary, hrefOf }: { summary: BoardSummary; hrefOf: (id: s
             <td className={repKit.num}>{money(sum(t => t.collected))}</td>
             <td className={repKit.num}>{money(sum(t => t.outstanding))}</td>
             <td className={repKit.num}>{summary.position.waitingOnYou.count > 0 ? summary.position.waitingOnYou.count : ''}</td>
-            <td className={`${repKit.num} ${cr.heldCell}`} />
+            <td className={repKit.num} />
             <td />
           </tr>
         </tbody>

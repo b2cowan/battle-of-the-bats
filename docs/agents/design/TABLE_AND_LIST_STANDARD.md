@@ -213,8 +213,10 @@ the basis, the caveats and the doors — never a sentence inside a money column.
   When a table shows a figure that belongs to someone else — the club's board summary reading each
   team's cash on hand from its coaches' books — that column says so and is never added in:
   - its heading carries a **lock** and **the owner's name** ("Cash on hand · held by the team");
-  - its cells carry the same **blue edge** as the "held by" callout, so the column reads as one
-    thing top to bottom;
+  - its cells carry **no coloured edge** (owner, 2026-10-07: a blue edge on the cells was added when
+    this rule was written down, never ruled or drawn, and came out). The heading row and every group
+    band break it, so it reads as a stray divider, and a coloured edge is a callout card's mark, not
+    a column's. The lock and the heading's words carry the meaning;
   - the table's **closing row is blank under it** — the closing row is the screen's own totals, and
     a figure it does not own is never one of them;
   - its own total, when the reader needs one, sits in a **separate band under the closing row**,
