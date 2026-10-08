@@ -2,11 +2,11 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { refused, type Refused } from './club-money-route';
 import {
-  closedThrough, fiscalYearOf, latestClosedYear, previousFiscalYear, readFiscalYearParam,
+  closedThrough, fiscalYearOf, isAddressableDay, latestClosedYear, previousFiscalYear, readFiscalYearParam,
   type FiscalSetting, type FiscalYear, type FiscalYearRead, type FiscalYearRow,
 } from './club-fiscal-year';
 import { planClosedWords, recordedInClosedYearWords, yearClosedWords } from './club-money-words';
-import { addCalendarDays, isCalendarDate } from './timezone';
+import { addCalendarDays } from './timezone';
 import { resolvePersonNamer } from './db';
 
 /**
@@ -47,9 +47,10 @@ export async function loadFiscalSetting(orgId: string): Promise<FiscalSetting> {
  *  today falls in. */
 export function fiscalYearForRequest(req: Request, setting: FiscalSetting, today: string): FiscalYear {
   const params = new URL(req.url).searchParams;
-  // `?day=` — the fiscal year a DAY falls in (the Ledger's "Filed under" hint asks about an entry's date).
+  // `?day=` — the fiscal year a DAY falls in (the Ledger's "Filed under" hint asks about an entry's date). Only a
+  // club's years: a half-typed one (0202-09-15) is ignored like a malformed day.
   const day = params.get('day');
-  if (day && isCalendarDate(day)) return fiscalYearOf(day, setting);
+  if (isAddressableDay(day)) return fiscalYearOf(day, setting);
   return readFiscalYearParam(params.get('year'), setting) ?? fiscalYearOf(today, setting);
 }
 

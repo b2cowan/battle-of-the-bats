@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   calendarYearsTouched, closedThrough, fiscalQuarters, fiscalYearAt, fiscalYearFileName, fiscalYearMonths,
-  fiscalYearName, fiscalYearOf, fiscalYearOptions, nextFiscalYear, previousFiscalYear, readFiscalYearParam,
+  fiscalYearName, fiscalYearOf, fiscalYearOptions, isAddressableDay, nextFiscalYear, previousFiscalYear, readFiscalYearParam,
   shiftMonthsBack, shiftMonthsOn, type FiscalSetting, type FiscalYearRow,
 } from '../../lib/club-fiscal-year.ts';
 
@@ -46,6 +46,55 @@ describe('the fiscal year a day falls in', () => {
     const y = fiscalYearOf('2026-10-07', SEP);
     assert.equal(nextFiscalYear(y, SEP).name, '2027–28');
     assert.equal(previousFiscalYear(y, SEP).name, '2025–26');
+  });
+  // §283 W4, 2026-10-08: typing "2025" into a date input sends 0002-09-15, 0020-09-15, 0202-09-15 first, and the
+  // Ledger's "Filed under" hint asked the server about each. The walk back a year at a time wrote year 999 as
+  // "999-09-01", could not read it back, and never ended — the dev server hung until it was killed.
+  it('a half-typed year answers at once, with every year in four digits', () => {
+    const s: FiscalSetting = { firstMonth: 9, rows: [row('2025-09-01', '2026-08-31'), row('2026-09-01', '2027-08-31')] };
+    for (const [day, key] of [['0002-09-15', '0002-09-01'], ['0020-09-15', '0020-09-01'], ['0202-09-15', '0202-09-01'], ['0202-03-15', '0201-09-01']]) {
+      const y = fiscalYearOf(day, s);
+      assert.equal(y.key, key, day);
+      assert.match(y.firstDay, /^\d{4}-\d{2}-01$/, day);
+    }
+    assert.equal(fiscalYearOf('0202-09-15', { firstMonth: 9, rows: [] }).key, '0202-09-01', 'no rows: four digits too');
+    assert.ok(fiscalYearOf('0000-01-15', s), 'year 0 returns rather than spinning');
+  });
+  it('counting years outward lands where walking them did, a century either side of the rows', () => {
+    // The walk the count replaced, kept here as the reference (with a guard so a regression fails, never hangs).
+    const walk = (day: string, rows: readonly FiscalYearRow[]) => {
+      const m = (d: string) => Number(d.slice(0, 4)) * 12 + Number(d.slice(5, 7)) - 1;
+      const at = (i: number) => `${String(Math.floor(i / 12)).padStart(4, '0')}-${String((i % 12) + 1).padStart(2, '0')}-01`;
+      const lastIdx = m(rows[rows.length - 1].lastDay), d = m(day);
+      let i: number, guard = 0;
+      if (day > rows[rows.length - 1].lastDay) { i = lastIdx + 1; while (d >= i + 12 && guard++ < 5000) i += 12; }
+      else { i = m(rows[0].firstDay) - 12; while (d < i && guard++ < 5000) i -= 12; }
+      return at(i);
+    };
+    const settings: FiscalSetting[] = [
+      { firstMonth: 9, rows: [row('2025-09-01', '2026-08-31'), row('2026-09-01', '2027-08-31')] },
+      { firstMonth: 9, rows: [row('2026-01-01', '2026-12-31'), row('2027-01-01', '2027-08-31')] },
+      { firstMonth: 4, rows: [row('2024-04-01', '2025-03-31')] },
+    ];
+    for (const s of settings) {
+      for (let y = 1925; y <= 2130; y += 1) {
+        for (const md of ['01-01', '03-31', '04-01', '08-31', '09-01', '12-31']) {
+          const day = `${y}-${md}`;
+          if (s.rows.some(r => day >= r.firstDay && day <= r.lastDay)) continue;
+          assert.equal(fiscalYearOf(day, s).key, walk(day, s.rows), `${day} on rows from ${s.rows[0].firstDay}`);
+        }
+      }
+    }
+  });
+});
+
+describe('the days a request may ask about', () => {
+  it('a real date in a club’s years only', () => {
+    assert.equal(isAddressableDay('2025-09-15'), true);
+    assert.equal(isAddressableDay('1990-01-01'), true);
+    assert.equal(isAddressableDay('2199-12-31'), true);
+    for (const half of ['0002-09-15', '0020-09-15', '0202-09-15', '1989-12-31', '2200-01-01']) assert.equal(isAddressableDay(half), false, half);
+    for (const bad of ['2025-02-30', '2025-9-15', '', null, undefined]) assert.equal(isAddressableDay(bad), false, String(bad));
   });
 });
 

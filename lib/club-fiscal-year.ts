@@ -34,7 +34,7 @@
  * Pure and client-safe: no database, no server imports, no Date.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-import { addCalendarDays } from './timezone';
+import { addCalendarDays, isCalendarDate } from './timezone';
 
 /** A year's row, as the database keeps it (`org_fiscal_years`). */
 export interface FiscalYearRow {
@@ -76,13 +76,29 @@ export interface FiscalYear {
 export const FISCAL_YEAR_WORD = 'Fiscal year';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
+// A year is written in four digits, or `yearOf` cannot read it back: "999-09-01" read as NaN, and the walk that
+// found a year of 0202 never ended (§283 W4, 2026-10-08 — a date input passes through 0002-, 0020-, 0202- while its
+// year is typed, and the Ledger's "Filed under" hint asked about each).
+const pad4 = (n: number) => String(n).padStart(4, '0');
 const yearOf = (day: string) => Number(day.slice(0, 4));
 const monthOf = (day: string) => Number(day.slice(5, 7));
 
 /** The first day of the month `n` months after `day`'s month. */
 function monthStart(day: string, n: number): string {
   const total = yearOf(day) * 12 + (monthOf(day) - 1) + n;
-  return `${Math.floor(total / 12)}-${pad2((total % 12) + 1)}-01`;
+  return `${pad4(Math.floor(total / 12))}-${pad2((total % 12) + 1)}-01`;
+}
+
+/** The years a club's address may name — `?year=` and `?day=` (and the dates a screen asks the server about). */
+const FIRST_ADDRESSABLE_YEAR = 1990;
+const LAST_ADDRESSABLE_YEAR = 2199;
+
+/** A real calendar date in a year a club's address may name: what a request may ask about. A date input's
+ *  half-typed year (0002-, 0020-, 0202-) is a real date but not a club's year, so it is never asked. */
+export function isAddressableDay(day: string | null | undefined): day is string {
+  if (!isCalendarDate(day)) return false;
+  const y = yearOf(day as string);
+  return y >= FIRST_ADDRESSABLE_YEAR && y <= LAST_ADDRESSABLE_YEAR;
 }
 
 /** The last day of a twelve-month year starting `first`. */
@@ -167,16 +183,18 @@ export function fiscalYearOf(day: string, setting: FiscalSetting): FiscalYear {
   const hit = rows.find(r => day >= r.firstDay && day <= r.lastDay);
   if (hit) return yearFrom(hit, through, hit);
 
+  // Twelve-month years outward from the rows, counted rather than walked: no day, however far out, can make it
+  // spin (a walk a year at a time is what hung the dev server on a half-typed year).
   let first: string;
   if (rows.length === 0) {
     const m = setting.firstMonth;
-    first = `${yearOf(day) - (monthOf(day) < m ? 1 : 0)}-${pad2(m)}-01`;
+    first = `${pad4(yearOf(day) - (monthOf(day) < m ? 1 : 0))}-${pad2(m)}-01`;
   } else if (day > rows[rows.length - 1].lastDay) {
-    first = addCalendarDays(rows[rows.length - 1].lastDay, 1);
-    while (day > twelveMonthsFrom(first)) first = monthStart(first, 12);
+    const after = addCalendarDays(rows[rows.length - 1].lastDay, 1);
+    first = monthStart(after, 12 * Math.floor((monthsBetween(after, day) - 1) / 12));
   } else {
-    first = monthStart(rows[0].firstDay, -12);
-    while (day < first) first = monthStart(first, -12);
+    const oldest = rows[0].firstDay;
+    first = monthStart(oldest, -12 * Math.ceil((monthsBetween(day, oldest) - 1) / 12));
   }
   const last = twelveMonthsFrom(first);
   return yearFrom({ id: null, name: freeName(rows, first, last), firstDay: first, lastDay: last }, through, null);
@@ -240,12 +258,12 @@ export function readFiscalYearParam(raw: string | null | undefined, setting: Fis
   const v = (raw ?? '').trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
     const y = Number(v.slice(0, 4));
-    if (y < 1990 || y > 2199) return null;
+    if (y < FIRST_ADDRESSABLE_YEAR || y > LAST_ADDRESSABLE_YEAR) return null;
     return fiscalYearAt(v, setting);
   }
   if (/^\d{4}$/.test(v)) {
     const n = Number(v);
-    if (n < 1990 || n > 2199) return null;
+    if (n < FIRST_ADDRESSABLE_YEAR || n > LAST_ADDRESSABLE_YEAR) return null;
     const named = setting.rows.find(r => r.name === v);
     if (named) return fiscalYearOf(named.firstDay, setting);
     // The year that starts in that calendar year (a January club: Jan 1–Dec 31 of it).

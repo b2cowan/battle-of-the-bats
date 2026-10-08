@@ -39,7 +39,7 @@ import BudgetItemPicker, { type BudgetItemSelection } from '@/components/account
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import type { Filing } from '@/lib/club-ledger';
 import { addCalendarDays, tournamentToday } from '@/lib/timezone';
-import { closedThrough, lockedIn, type FiscalSetting } from '@/lib/club-fiscal-year';
+import { closedThrough, isAddressableDay, lockedIn, type FiscalSetting } from '@/lib/club-fiscal-year';
 import type { BookRowOut } from '@/lib/club-ledger-read';
 import {
   FormError, MethodField, ReasonQuestion, TextField, day, jsonInit, money, moneyFetch, moneyKit, moneyMove, parseAmount, refusalText,
@@ -72,7 +72,8 @@ interface PlanWords { words: Map<string, number>; yearName: string }
 function usePlanWords(q: string, day: string): PlanWords | null {
   const [byDay, setByDay] = useState<Record<string, PlanWords>>({});
   useEffect(() => {
-    if (byDay[day]) return;
+    // A year still being typed (0002-, 0020-, 0202-) is not asked about: no hint until it is a club's year.
+    if (byDay[day] || !isAddressableDay(day)) return;
     let live = true;
     // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
     void moneyFetch<{ year?: { name: string }; plan?: { revenue: { categories: { lines: { itemId: string | null; planned: number }[] }[] }; expenses: { categories: { lines: { itemId: string | null; planned: number }[] }[] } } }>(`/api/admin/accounting/budget-plan?${q}&day=${day}`)
