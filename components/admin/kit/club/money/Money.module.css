@@ -268,6 +268,8 @@
 .ownPayments { display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: center; font-size: var(--type-support); color: var(--text-secondary); }
 .ownCount { display: inline-flex; align-items: center; gap: 0.5rem; }
 .ownCount > select { min-width: 12rem; }
+/* "Use the bill's schedule" (§283 W8): a text button, thumb-sized where a thumb presses it (/review). */
+@media (max-width: 768px) { .ownBack { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); } }
 .ownRow { display: inline-flex; gap: 0.35rem; }
 .ownRow > input { width: 9rem; }
 

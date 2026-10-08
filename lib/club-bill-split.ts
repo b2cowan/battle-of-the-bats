@@ -71,6 +71,24 @@ export function shareCents(totalC: number, weights: readonly number[]): number[]
 }
 
 /**
+ * A team's OWN payments follow its share (§283 W8, owner 2026-10-08). New allocation's own payments keep their
+ * SHAPE — how many, when, and how the share divides between them — not their dollars: when the team's share moves
+ * (the split, a percentage, the amount, a team ticked), payments that added up to the share they were made for
+ * redivide in the same proportions ($112.50 + $112.50 of $225.00 → $90.00 + $90.00 of $180.00). Payments that
+ * didn't add up are mid-edit, and stay as typed (null). An EVEN division — payments within a cent of each other, or
+ * of nothing — divides evenly again: its leftover cent is rounding, not a proportion ($28.13 + $28.12 of $56.25 →
+ * $225.00 + $225.00, never $225.04 + $224.96). All in cents.
+ */
+export function followShare(paymentsC: readonly number[], forC: number, shareC: number): number[] | null {
+  // A share with no figure yet (a percentage being retyped) divides nothing: the payments hold still until it has one.
+  if (forC === shareC || shareC <= 0 || paymentsC.length === 0) return null;
+  const sum = paymentsC.reduce((a, b) => a + b, 0);
+  if (sum !== forC) return null;
+  const even = Math.max(...paymentsC) - Math.min(...paymentsC) <= 1;
+  return shareCents(shareC, even ? paymentsC.map(() => 1) : paymentsC);
+}
+
+/**
  * Turn New allocation's body (Ask 6) into each team's share and payments — the closing row adds up to the amount,
  * to the cent. Pure: no database. Refusals carry the figure (the difference for By amount).
  */

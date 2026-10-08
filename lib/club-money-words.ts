@@ -827,8 +827,12 @@ export const NEW_ALLOCATION_WORDS = {
   ownPayments: (team: string) => `${team}’s own payments`,
   ownPaymentsHead: 'Own payments',
   paysIn: 'This team pays in',
-  /** A team's own-payments choice that keeps the bill's schedule. */
-  billsSchedule: (schedule: string) => `${schedule}, as the bill`,
+  /** A team's own-payments choices (§283 W8, owner 2026-10-08): the bill's schedule leads and says so, and every
+   *  other choice says it is the team's own — "2 installments" twice, one of them the bill's, read as one choice. */
+  billsSchedule: (schedule: string) => `As the bill · ${schedule}`,
+  ownSchedule: (n: number) => `Its own · ${n} installments`,
+  /** The way back from a team's own payments: drops them and folds the row. */
+  useBillsSchedule: 'Use the bill’s schedule',
   paymentsCount: (n: number) => `${n} payments`,
   paymentsAddUp: (sum: string, share: string) => `These add up to ${sum} of its ${share} share.`,
   teamsCount: (n: number) => pluralize(n, 'team', 'teams'),

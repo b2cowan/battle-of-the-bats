@@ -17,7 +17,8 @@
  * the teams as a FORM TABLE (the shared part, `components/shared/FormTable`): Team · Season · Share · Due; every team
  * that can be billed ticked; a team with no open season listed, unticked and dim, with the reason (S3C-09 — only a
  * team's RUNNING season is billed, the server refuses another); Share an input under By amount, By percentage or By
- * sessions; a row expands in place to give that team its own payments; the closing row sums the ticked teams and says
+ * sessions; a row expands in place to give that team its own payments, which keep their shape as its share moves
+ * (`followShare`, §283 W8) and have a plain way back ("Use the bill's schedule"); the closing row sums the ticked teams and says
  * the difference from the amount. Labels in sentence case; no "(optional)"; required marked with the asterisk;
  * "Season", never "Program Year".
  *
@@ -31,7 +32,7 @@ import ck from '../ClubKit.module.css';
 import { repKit, useDeferredLoad } from '../RepKit';
 import FormTable, { type FormTableRow } from '@/components/shared/FormTable';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { shareCents } from '@/lib/club-bill-split';
+import { followShare, shareCents } from '@/lib/club-bill-split';
 import { toCents, toDollars } from '@/lib/coach-register';
 import { NEW_ALLOCATION_WORDS as W } from '@/lib/club-money-words';
 import { FormError, day, jsonInit, money, moneyFetch, moneyKit, parseAmount, refusalText } from './MoneyKit';
@@ -51,6 +52,8 @@ interface TeamOption {
   lastSeason: { name: string; closedOn: string | null } | null;
 }
 interface BillFromLine { id: string; description: string; categoryName: string; itemName: string | null; planned: number; allocated: number; left: number }
+/** One of a team's own payments, as typed. */
+interface OwnPayment { dueDate: string; amount: string }
 
 /** What the window bills from, when opened from a line: the line, its year, what's left and what's allocated. */
 export interface AllocateFromLine {
@@ -115,7 +118,8 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
   const [dates, setDates] = useState<string[]>(['']);
   const payments = dates.length;
   const [values, setValues] = useState<Record<string, string>>({});
-  const [own, setOwn] = useState<Record<string, { dueDate: string; amount: string }[]>>({});
+  /** A team's own payments, and the share they were last made for (`forC`, cents): see `ownRows`. */
+  const [own, setOwn] = useState<Record<string, { rows: OwnPayment[]; forC: number }>>({});
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
@@ -150,6 +154,16 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
     return out;
   }, [inBill, split, values, totalC]);
 
+  /** A team's own payments as they stand: redivided to its share when the share has moved since they were made
+   *  (`followShare` — they keep their shape, not their dollars); null when it pays on the bill's schedule. */
+  const ownRows = (id: string): OwnPayment[] | null => {
+    const o = own[id];
+    if (!o) return null;
+    const next = followShare(o.rows.map(r => toCents(positive(r.amount) ?? 0)), o.forC, sharesC.get(id) ?? 0);
+    return next ? o.rows.map((r, i) => ({ ...r, amount: toDollars(next[i]).toFixed(2) })) : o.rows;
+  };
+  const dropOwn = (id: string) => setOwn(o => { const x = { ...o }; delete x[id]; return x; });
+
   const sumC = [...sharesC.values()].reduce((a, b) => a + b, 0);
   // In hundredths of a percent, the server's own rule (club-bill-split): 33.33 × 3 is 99.99, within a hundredth.
   const percentHundredths = split === 'percentage'
@@ -180,7 +194,7 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
     }
     if (diff.bad) return `The teams’ shares don’t add up: ${diff.words}.`;
     for (const t of inBill) {
-      const rows = own[t.id];
+      const rows = ownRows(t.id);
       if (!rows) continue;
       if (rows.some(r => !r.dueDate || positive(r.amount) == null)) return `Each of ${t.name}’s own payments needs a date and an amount.`;
       const c = rows.reduce((s, r) => s + toCents(positive(r.amount) ?? 0), 0);
@@ -200,12 +214,15 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
         amount,
         split: { method: split },
         schedule: payments === 1 ? { kind: 'one', dueDate: dates[0] } : { kind: 'installments', dueDates: dates },
-        teams: inBill.map(t => ({
-          teamId: t.id,
-          programYearId: t.season!.id,
-          ...(split !== 'even' ? { value: positive(values[t.id] ?? '') } : {}),
-          ...(own[t.id] ? { installments: own[t.id].map(r => ({ dueDate: r.dueDate, amount: positive(r.amount) })) } : {}),
-        })),
+        teams: inBill.map(t => {
+          const mine = ownRows(t.id);
+          return {
+            teamId: t.id,
+            programYearId: t.season!.id,
+            ...(split !== 'even' ? { value: positive(values[t.id] ?? '') } : {}),
+            ...(mine ? { installments: mine.map(r => ({ dueDate: r.dueDate, amount: positive(r.amount) })) } : {}),
+          };
+        }),
         sourceBudgetLineId: source?.id ?? null,
         notes: notes.trim() || null,
       };
@@ -221,7 +238,7 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
 
   // ── The teams' rows ──
   const dueWords = (t: TeamOption) => {
-    const rows = own[t.id];
+    const rows = ownRows(t.id);
     if (rows) return W.paymentsCount(rows.length);
     if (payments > 1) return W.paymentsCount(payments);
     return dates[0] ? day(dates[0]) : '';
@@ -241,9 +258,12 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
     );
   };
   const ownForm = (t: TeamOption) => {
-    const rows = own[t.id] ?? Array.from({ length: Math.max(payments, 2) }, (_, i) => ({ dueDate: dates[i] ?? '', amount: '' }));
-    const setRows = (next: { dueDate: string; amount: string }[]) => setOwn(o => ({ ...o, [t.id]: next }));
+    const mine = ownRows(t.id);
+    const rows = mine ?? Array.from({ length: Math.max(payments, 2) }, (_, i) => ({ dueDate: dates[i] ?? '', amount: '' }));
     const shareC = sharesC.get(t.id) ?? 0;
+    // An edit is made for the share as it stands now: if the share moves later, these redivide (`ownRows`). While the
+    // share has no figure (a percentage being retyped) an edit keeps the share the payments were made for (/review).
+    const setRows = (next: OwnPayment[]) => setOwn(o => ({ ...o, [t.id]: { rows: next, forC: shareC > 0 ? shareC : o[t.id]?.forC ?? 0 } }));
     const evenly = (n: number) => {
       const cents = shareCents(shareC, Array.from({ length: n }, () => 1));
       return cents.map((c, i) => ({ dueDate: rows[i]?.dueDate ?? dates[i] ?? '', amount: toDollars(c).toFixed(2) }));
@@ -253,17 +273,17 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
       <div className={moneyKit.ownPayments}>
         <label className={moneyKit.ownCount}>
           <span>{W.paysIn}</span>
-          <select className={ck.select} value={own[t.id] ? rows.length : 0}
+          <select className={ck.select} value={mine ? rows.length : 0}
             onChange={e => {
               const n = Number(e.target.value);
-              if (n === 0) { setOwn(o => { const x = { ...o }; delete x[t.id]; return x; }); return; }
+              if (n === 0) { dropOwn(t.id); return; }
               setRows(evenly(n));
             }}>
             <option value={0}>{W.billsSchedule(payments === 1 ? W.payOne : W.payInstallments(payments))}</option>
-            {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{W.payInstallments(n)}</option>)}
+            {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{W.ownSchedule(n)}</option>)}
           </select>
         </label>
-        {own[t.id] && rows.map((r, i) => (
+        {mine && rows.map((r, i) => (
           <span key={i} className={moneyKit.ownRow}>
             <input type="date" className={ck.input} value={r.dueDate} aria-label={`${t.name}, payment ${i + 1} due`}
               onChange={e => setRows(rows.map((x, k) => (k === i ? { ...x, dueDate: e.target.value } : x)))} />
@@ -271,7 +291,21 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
               onChange={e => setRows(rows.map((x, k) => (k === i ? { ...x, amount: e.target.value } : x)))} />
           </span>
         ))}
-        {own[t.id] && sum !== shareC && <span className={cr.lateCaption}>{W.paymentsAddUp(money(toDollars(sum)), money(toDollars(shareC)))}</span>}
+        {mine && sum !== shareC && <span className={cr.lateCaption}>{W.paymentsAddUp(money(toDollars(sum)), money(toDollars(shareC)))}</span>}
+        {/* The way back, said plainly: the team pays on the bill's schedule again, and its row folds. */}
+        {mine && (
+          <button type="button" className={`${ck.link} ${moneyKit.ownBack}`}
+            onClick={e => {
+              // The row folds and this button goes with it: hand the focus to the row's chevron, not the page (/review).
+              const dialog = e.currentTarget.closest('[role="dialog"]');
+              dropOwn(t.id);
+              setOpen(s => { const n = new Set(s); n.delete(t.id); return n; });
+              requestAnimationFrame(() => dialog?.querySelector<HTMLButtonElement>(
+                `button[aria-expanded][aria-label="${CSS.escape(W.ownPayments(t.name))}"]`)?.focus());
+            }}>
+            {W.useBillsSchedule}
+          </button>
+        )}
       </div>
     );
   };

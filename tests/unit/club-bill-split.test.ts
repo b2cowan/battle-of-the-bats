@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { billSplits, shareCents } from '../../lib/club-bill-split.ts';
+import { billSplits, followShare, shareCents } from '../../lib/club-bill-split.ts';
 
 /**
  * Club Tier Stage 3c, Ask 6 — New allocation's split and schedule, chosen ONCE per bill (lib/club-bill-split.ts).
@@ -22,6 +22,33 @@ describe('shareCents — leftover cents to the largest remainders, ties to the f
     const c = shareCents(100000, [3, 2, 2]);
     assert.equal(c.reduce((a, b) => a + b, 0), 100000);
     assert.deepEqual(c, [42857, 28572, 28571], 'the largest remainder takes the cent, a tie to the earlier row');
+  });
+});
+
+// §283 W8 (owner, 2026-10-08): a team's own payments made at an Evenly share of $225.00 kept $112.50 + $112.50 when
+// the split moved to By percentage (40% = $180.00), and the form could neither save nor say how to get out.
+describe('followShare — a team’s own payments keep their shape as its share moves', () => {
+  it('payments that added up to the old share redivide in the same proportions', () => {
+    assert.deepEqual(followShare([11250, 11250], 22500, 18000), [9000, 9000]);
+    assert.deepEqual(followShare([10000, 12500], 22500, 18000), [8000, 10000], 'an uneven split keeps its 4:5');
+    const odd = followShare([10000, 10000, 10000], 30000, 10000)!;
+    assert.equal(odd.reduce((a, b) => a + b, 0), 10000, 'to the cent');
+    assert.deepEqual(odd, [3334, 3333, 3333], 'the leftover cent to the first, as shareCents');
+  });
+  it('payments mid-edit (not adding up) stay as typed; nothing moves when the share has not', () => {
+    assert.equal(followShare([11250, 10000], 22500, 18000), null);
+    assert.equal(followShare([11250, 11250], 22500, 22500), null);
+    assert.equal(followShare([], 0, 18000), null);
+  });
+  it('a share with no figure yet (a percentage being retyped) leaves the payments as they were (/review)', () => {
+    assert.equal(followShare([10000, 12500], 22500, 0), null);
+  });
+  it('payments of nothing, made before the share had a figure, divide evenly once it has one', () => {
+    assert.deepEqual(followShare([0, 0, 0], 0, 18000), [6000, 6000, 6000]);
+  });
+  it('an even division stays even: its leftover cent is rounding, not a proportion (found replaying the walk)', () => {
+    assert.deepEqual(followShare([2813, 2812], 5625, 45000), [22500, 22500], 'never $225.04 + $224.96');
+    assert.deepEqual(followShare([2813, 2812], 5625, 45001), [22501, 22500], 'a new leftover cent to the first');
   });
 });
 
