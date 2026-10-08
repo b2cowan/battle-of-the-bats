@@ -23940,6 +23940,17 @@ Unit tests: 15/15 on the split, with five new ones for the rule; all 524 club te
 
 That is the way out of the trap above. The own payments were stuck at the old share, so the walk ended on the bill's schedule. W8 proves the definition of done for a two-team bill: a bill made from a line reads back on the line, on Allocations and on 13U AAA's Club tab. **It does not prove that a team's own payments save and read back.** No allocation on dev holds a team paying on a schedule of its own, and W13 checks the fix read-only and cancels. **Owed (owner call):** one create, after the fix, that saves a team's own payments and reads them back on Allocations and on the coach's Club tab. Recommended: W13's last step creates instead of cancelling (*Umpire fees — home games* has $1,500.00 left). **W8 is spent:** *Diamond permits — city fields* has nothing left.
 
+**Ask 11 · New allocation, round 2: DRAWN 2026-10-08, hub v54, owner ruling owed.** After W8 the owner opened New allocation from Allocations, unticked every team and pressed Create. Nothing seemed to happen: the refusal, "Tick at least one team.", sits at the top of the window, out of view once the list is scrolled. The owner asked for less manual ticking, a way to pick groups (*"40% to one group and 60% to another and update manually after"*), the teams with no season out of the middle of the list, and any other ideas. Drawn on the hub (Stage 3c → *6 · New allocation, round 2*) from UAT Rep Club's groups on dev (Senior, then Junior, plus two teams in no group), billing *Umpire fees — home games* ($1,500.00 left). Recommended:
+- the refusal beside the button, in every club money window (they share it);
+- **A**: teams under their group headings, each heading ticking its group, All · None, and under By percentage or By amount a group figure that spreads evenly over its ticked teams and can be retyped per team;
+- teams with no season moved to one line under the list that opens to name them;
+- age order (a fix: 9U AA sorts after 16U AA today);
+- the button says what it bills ("Bill 7 teams · $1,500.00");
+- the season beside the name rather than its own column;
+- Due shown only for a team paying on a schedule of its own.
+
+Also drawn: B (headings that only tick; 60/40 becomes two allocations), C (a chooser above a flat list), the refusal scrolled into view at the top, and the no-season teams listed last in their group. Nothing new is stored; the build reads each team's group. **The build waits for the uncommitted W8 own-payments fix in the same window.**
+
 Also drawn: B (headings that only tick; 60/40 becomes two allocations), C (a chooser above a flat list), the refusal scrolled into view at the top, and the no-season teams listed last in their group. Nothing new is stored; the build reads each team's group. **The build waits for the uncommitted W8 own-payments fix in the same window.**
 
 **W9 ✅ PASSED 2026-10-08, 8 of 8** (paste-back against hub v53's text). Its one write, read on dev: *Tournament jerseys*, $300.00, billed from no line (no budget line, no ledger-entry id), to 11U AA and 12U AA at $150.00 each on the bill's one payment, due Nov 1, 2026. It was saved at 3:35 p.m., after the W8 fix (`1c199d1a`). Steps 2, 5 and 6 refused in words and saved nothing; step 8's old address only opens the window. **W9 is spent** for this bill's name; the walk can run again with another name. *Read alongside W8, a correction to its record above:* dev holds *Spring diamond top-up*'s two shares as each team's **own** schedule (`custom`), two payments each on the bill's own dates (Nov 1, Dec 2). So own payments did save, identical to the bill's. A team paying on a schedule that **differs** from the bill's is still not on dev, which is the owner call W8's record raises.
@@ -23965,3 +23976,40 @@ Step 6 no longer cancels.
 **W12 ✅ PASSED 2026-10-08, 8 of 8** (paste-back against hub v56's text). This was the first walk of the redrawn close question (Ask 10). Its writes, read on dev and in the dev server's request log: 2025–26 reopened at 3:56 p.m. with the reason "Walk 12: the redrawn question" (the third reopening on dev; the record keeps all three), and closed again at 3:57 p.m. at $1,685.00, "Same as last close".
 
 **⚠ W13 NOT RECORDED AS PASSED — the paste-back reads 10 of 10, but steps 9 and 10 left nothing on dev.** No allocation named *Umpire top-up* exists in any club, and the dev server's request log has **no create request at all** during the walk: it opened New allocation (the bill-from and team-options reads) and never sent one. The same log shows, during the walk, a compile error in the shared table that New allocation's teams are drawn with (`FormTable.tsx`, another session's in-progress group-heading work for Ask 11, uncommitted), and the page reloading again and again. The window was most likely rebuilt under the walk, so Create never reached the server. Steps 1–8 write nothing and can't be read back. The window renders and typechecks again since. Put to the owner once. Recommended: re-walk W13's steps 7–10 once the Ask 11 session has finished with this window, because its group headings change the same team table. **W13 ✅ PASSED 2026-10-08 on the owner's word** ("you can mark 13 as passed, I will be doing another walk on that same screen when the new updates take effect"). The gap stands: a team paying on a schedule different from the bill's has still never been saved and read back on dev; the owner's next walk of New allocation (after Ask 11) is where it gets proved. **§283 ✅ — all thirteen walks done 2026-10-08.**
+
+**Ask 11 · New allocation, picked by group: RULED and BUILT 2026-10-08, committed `4f942b03`, walk W14 added (hub v58).** The owner ruled every recommendation on the hub v54 drawing: *"I agree with your recommendations, go ahead."* Built:
+- the teams under their groups in the club's own order, each heading's box ticking its group (a dash when partly ticked), with All · None beside Team;
+- under By percentage or By amount, a heading figure shared evenly among its ticked teams, to the hundredth or the cent, so 40% over 7 adds up to 40.00, and any team retypable;
+- age order inside a group;
+- the season beside the name, not in a column;
+- Due only for a team paying on its own schedule ("Its own · 3 payments");
+- the teams with no season moved to one line under the list that names them;
+- the button saying what it bills ("Bill 7 teams · $1,500.00"; on a phone, "Bill 7 teams");
+- **the reason a button was refused sits beside it in every club money window**, and goes on the next change. The four reasons that belong to one field stay under that field: the fiscal year's month, the close question's refusal, a cheque's clear, a payee's sharing switch.
+
+A group is never stored on a bill. Driven read-only on dev as the treasurer at 1440 and 390, with nothing created:
+- 60 and 40 on the headings filled 20/20/20 and 10/10/10/10;
+- retyping 13U AAA made Junior read 39.99;
+- None and then the button showed "Tick at least one team." beside it, in view;
+- ticking a group cleared it;
+- the no-season line named 16U AA and UAT Between Seasons (2025 Seasons closed Oct 7);
+- Decline with no reason said "Say why — the coach reads it." in the window's foot.
+
+Typecheck, lint, spelling, CSS purity and selectors, tokens and contrast all pass; the club guards and split tests pass, including six new spread tests. **W14** (13 steps; step 10 writes) walks all of it and ends by saving 13U AAA on three payments of its own, which closes the gap W8 and W13 left. **⚠ My in-progress edits to the shared team table broke W13's walk:** the compile error in its log was this build, part-written on the dev server the owner was walking. Lesson: a shared component under a screen being walked is not edited on that dev server mid-walk. /review (high-risk; correctness, regression, data/security and state lenses) found no Critical or High. Fixed:
+- the Categories window's rename reason stays under its field (Medium: its Save and Enter are in the body, so beside Done it read as Done's, and typing hid it);
+- the foot reason's spacing no longer depends on stylesheet order;
+- a reason is revealed before paint, so a screen reader announces it;
+- a click on a button in the body (All, None, a row's chevron) quiets a stale reason;
+- two groups that tie on order and name never interleave;
+- "no one to bill" is said when no team runs a season;
+- the help names the phone's shorter button.
+
+Dropped: the cent rounding matches the product's one rule. Not fixed (pre-existing): a split change keeps the per-team figures typed under the old split. check:layout was skipped: the shared window frame widens it to 248 screens and the sweep never opens a window; the window was driven read-only on dev at 1440 and 390 instead, before and after the fixes. /simplify was not run (the owner asked for review and commit).
+
+**W14 ✅ PASSED 2026-10-08, 13 of 13** (paste-back against hub v58's text). Its write, read on dev:
+- *Umpires by group*, $1,500.00 billed from *Umpire fees — home games*, at 4:46 p.m., By percentage, to 7 teams on their 2026 or 2027 Season.
+- Senior (14U AA, 15U AA, 15U AAA): 20% and $300.00 each. Junior (9U AA, 11U AA, 12U AA, 13U AAA): 10% and $150.00 each.
+- Six teams pay in the bill's two installments, due Nov 15 and Dec 15, 2026.
+- **13U AAA pays in its own three: $50.00 each, due Nov 15 and Dec 15, 2026 and Jan 15, 2027.**
+
+**This closes the gap W8 and W13 left: a team paying on a schedule different from the bill's is now saved on dev,** and the owner read it back on Allocations and on Priya's Club tab. Nothing else was written: no request declined (step 13 refused an empty reason), and nothing billed from Club insurance (step 12 cancelled). **W14 is spent:** *Umpire fees — home games* has nothing left. To walk it again, bill from another line.
