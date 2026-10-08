@@ -92,7 +92,11 @@ export default function LedgerTab() {
   /* ⚖ "ALL" MEANS ALL (Filter Counts D5, owner 2026-10-05). The pill's own rule is "empty = All"; this used to map
      an empty pick back to Posted + Pending, so ticking All left the voided lines hidden and All never ticked. The
      pick is kept as picked; the statuses the book reads are derived from it. */
-  const [pickedStatuses, setPickedStatuses] = useState<Set<string>>(() => new Set(STATUS_REST));
+  /* A door may arrive narrowed to a status (Stage 3c: the close question's "not cleared" row sends `?status=pending`). */
+  const [pickedStatuses, setPickedStatuses] = useState<Set<string>>(() => {
+    const wanted = (search.get('status') ?? '').split(',').filter(x => STATUS_ALL.has(x));
+    return new Set(wanted.length ? wanted : STATUS_REST);
+  });
   const statuses = pickedStatuses.size ? pickedStatuses : STATUS_ALL;
   /* ⚖ A DOOR CAN NARROW THE BOOK ON ARRIVAL (Club Tier Stage 3b): Budget vs. Actual's "behind the figure"
      panel opens "these lines in the Ledger" — `?category=&item=` (the filing) and `?from=&to=` (the year). */
@@ -320,11 +324,11 @@ export default function LedgerTab() {
       {open && read && (
         <LineWindow
           row={open} book={ref} q={q} orgSlug={slug} words={words} accountingBase={base} payeesHref={payeesHref}
-          canMove={canMove} onChanged={changed} onClose={() => setOpen(null)}
+          canMove={canMove} fiscal={read.fiscal} onChanged={changed} onClose={() => setOpen(null)}
         />
       )}
       {win === 'add' && read && (
-        <AddEntryWindow book={ref} q={q} orgSlug={slug} words={words} payeesHref={payeesHref}
+        <AddEntryWindow book={ref} q={q} orgSlug={slug} words={words} payeesHref={payeesHref} fiscal={read.fiscal} canMove={canMove}
           onClose={() => setWin(null)} onAdded={text => { setWin(null); changed(text); }} />
       )}
       {win === 'ledger' && (
@@ -336,7 +340,7 @@ export default function LedgerTab() {
         />
       )}
       {win === 'transfer' && (
-        <TransferWindow book={ref} books={allRefs} q={q}
+        <TransferWindow book={ref} books={allRefs} q={q} fiscal={read?.fiscal ?? null} canMove={canMove}
           onClose={() => setWin(null)} onDone={text => { setWin(null); changed(text); }} />
       )}
     </>

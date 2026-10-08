@@ -1399,10 +1399,12 @@ export function monthYearBands(months: readonly MonthKey[]): MonthYearBand[] {
   return bands;
 }
 
+/** The twelve months' names, January first — the one list (the club's fiscal-year words read it too). */
+export const MONTH_NAMES_LONG = ['January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'] as const;
+
 /** "2026-03" → "March 2026", for prose (the shortfall sentence, a drill-in panel title). */
 export function formatMonthLong(month: MonthKey): string {
-  const names = ['January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'];
   const m = Number(month.slice(5, 7));
-  return `${names[m - 1] ?? month} ${month.slice(0, 4)}`;
+  return `${MONTH_NAMES_LONG[m - 1] ?? month} ${month.slice(0, 4)}`;
 }

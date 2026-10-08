@@ -4,8 +4,10 @@
  *
  *   one toolbar line — the View pill (By allocation · Coming due — the treasurer's two questions are two
  *                      views of one list), in Coming due the Due pill beside it, then Send reminders,
- *                      Export, and New allocation (lime; today's form, unchanged). No count line: the band
- *                      and closing rows say how many.
+ *                      Export, and New allocation (lime). No count line: the band and closing rows say how many.
+ *                      ⚖ Stage 3c (Ask 6): New allocation opens the line window's own form as a window here
+ *                      (`AllocationWindow`), asking first what it bills from — a cost line with something left, or
+ *                      an off-plan bill. The old page retired; its address forwards here with `?new=1` (proxy.ts).
  *   By allocation    — Allocation (its schedule as a caption) · Teams (in words) · Allocated · Collected ·
  *                      Outstanding · State · chevron, a closing row. Collected is plain ink (a figure is
  *                      never green because it is a figure). The state chip uses the ONE overdue definition.
@@ -38,6 +40,7 @@ import FilterGroup from '@/components/coaches/FilterGroup';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import { BillChip, LateChip, day, installmentsWord, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import RemindersWindow from '@/components/admin/kit/club/money/RemindersWindow';
+import AllocationWindow from '@/components/admin/kit/club/money/AllocationWindow';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import {
   COMING_DUE_MONTH_DAYS, comingDueLater, comingDueWindowEnd,
@@ -46,6 +49,8 @@ import {
 
 interface AllocationRow {
   id: string; description: string; createdAt: string; teamIds: string[]; teamNames: string[]; teamsWord: string;
+  /** The fiscal year it counts in (Stage 3c — the server's one definition, never a stamp's first four characters). */
+  year: { key: string; name: string; locked: boolean };
   allocated: number; figures: ClubBillFigures; chip: ClubBillChip; firstDue: string | null; lastDue: string | null;
   installmentsPerTeam: number;
 }
@@ -107,9 +112,15 @@ export default function AllocationsTab() {
   const view: (typeof VIEWS)[number]['id'] = search.get('view') === 'coming-due' ? 'coming-due' : 'allocation';
 
   const [rows, setRows] = useState<AllocationRow[] | null>(null);
+  /** The fiscal year today falls in (the totals line names it when every allocation counts in it). */
+  const [thisYear, setThisYear] = useState<{ key: string; name: string } | null>(null);
+  /** Whether this reader may make an allocation (the one money rule) — New allocation is absent otherwise. */
+  const [canMove, setCanMove] = useState(false);
   const [due, setDue] = useState<ComingDueRead | null>(null);
   const [failed, setFailed] = useState(false);
   const [reminding, setReminding] = useState(false);
+  /** New allocation's window — opened by the toolbar, or by the old page's forwarded address (`?new=1`). */
+  const [creating, setCreating] = useState(() => search.get('new') === '1');
   // The Due window opens on the 14 days, the Overview's own count. Kept while you stay on the page (By allocation
   // and back finds it where you left it); a fresh visit starts on the 14 days again.
   const [dueWindow, setDueWindow] = useState<ComingDueWindow>('soon');
@@ -120,34 +131,36 @@ export default function AllocationsTab() {
     if (!slug) return;
     const current = beginRead();
     const [a, d] = await Promise.all([
-      moneyFetch<{ allocations?: AllocationRow[] }>(`/api/admin/accounting/allocations?${q}`),
+      moneyFetch<{ allocations?: AllocationRow[]; year?: { key: string; name: string }; canMove?: boolean }>(`/api/admin/accounting/allocations?${q}`),
       moneyFetch<ComingDueRead>(`/api/admin/accounting/coming-due?${q}`),
     ]).catch(() => [null, null] as const);
     if (!current()) return;
     if (!a?.ok || !d?.ok) { setFailed(true); return; }
     setFailed(false);
     setRows(a.data.allocations ?? []);
+    setThisYear(a.data.year ?? null);
+    setCanMove(!!a.data.canMove);
     setDue(d.data);
   }, [slug, q, beginRead]);
   useDeferredLoad(!orgLoading && !!slug, load);
 
   const setView = (next: string) => router.replace(next === 'coming-due' ? `${base}?view=coming-due` : base);
 
-  const year = due?.asOf.slice(0, 4) ?? '';
   const totals = useMemo(() => {
     const list = rows ?? [];
     return {
       allocated: list.reduce((s, r) => s + r.allocated, 0),
       collected: list.reduce((s, r) => s + r.figures.collected, 0),
       outstanding: list.reduce((s, r) => s + r.figures.outstanding, 0),
-      thisYearOnly: list.every(r => r.createdAt.slice(0, 4) === year),
+      // Every allocation counts in the fiscal year today falls in (each row's `year`, the server's one definition).
+      thisYearOnly: !!thisYear && list.every(r => r.year.key === thisYear.key),
     };
-  }, [rows, year]);
+  }, [rows, thisYear]);
 
   if (failed) return <LoadFailed title="We couldn’t load the club’s allocations." onRetry={() => void load()} />;
   if (!rows || !due) return <p className={ck.loading}>Loading…</p>;
 
-  const closingWord = totals.thisYearOnly ? 'This year' : 'Every allocation';
+  const closingWord = totals.thisYearOnly && thisYear ? thisYear.name : 'Every allocation';
   const toolbar = (
     <CoachListToolbar
       actions={
@@ -156,9 +169,11 @@ export default function AllocationsTab() {
             <Mail size={14} aria-hidden /><span className={ck.btnWord}>Send reminders</span>
           </button>
           <AllocationsExport view={view} rows={rows} due={due} dueWindow={dueWindow} orgSlug={slug} />
-          <Link href={`${base}/new`} className={`btn btn-lime ${ck.iconOnlyPhone}`} aria-label="New allocation">
-            <Plus size={15} aria-hidden /><span className={ck.btnWord}>New allocation</span>
-          </Link>
+          {canMove && (
+            <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} aria-label="New allocation" onClick={() => setCreating(true)}>
+              <Plus size={15} aria-hidden /><span className={ck.btnWord}>New allocation</span>
+            </button>
+          )}
         </>
       }
     >
@@ -189,7 +204,7 @@ export default function AllocationsTab() {
       {toolbar}
       {view === 'allocation' ? (
         rows.length === 0 ? (
-          <EmptyCard title="No allocations yet" action={<Link href={`${base}/new`} className="btn btn-lime"><Plus size={14} aria-hidden /> New allocation</Link>}>
+          <EmptyCard title="No allocations yet" action={canMove ? <button type="button" className="btn btn-lime" onClick={() => setCreating(true)}><Plus size={14} aria-hidden /> New allocation</button> : undefined}>
             An allocation bills the club’s teams for a shared cost — diamond fees, insurance, a uniform order — in one or more installments.
           </EmptyCard>
         ) : (
@@ -254,6 +269,13 @@ export default function AllocationsTab() {
         <ComingDue due={due} dueWindow={dueWindow} base={base} />
       )}
 
+      {creating && canMove && (
+        <AllocationWindow
+          q={q}
+          onCancel={() => { setCreating(false); if (search.get('new')) router.replace(base); }}
+          onMade={text => { setCreating(false); if (search.get('new')) router.replace(base); setNotice({ tone: 'good', text }); void load(); }}
+        />
+      )}
       {reminding && currentOrg && (
         <RemindersWindow
           q={q}

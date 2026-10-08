@@ -1,0 +1,166 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   FormTable — a table whose rows are a create form's fields (Club Tier Stage 3c, Ask 6; the table standard
+   §3.6). The admin's compact table recipe — hairlines, the 13px heading in small capitals, tabular figures —
+   with the one thing a display table never has: a control in a cell. On a phone, one frame of short records.
+   ⚠ TOKENS ONLY — every value here is a token both shells define.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.frame {
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--card-bg);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.table th,
+.table td {
+  padding: 0.45rem 0.7rem;
+  border-top: 1px solid var(--home-line);
+  text-align: left;
+  vertical-align: middle;
+  font-weight: 400;
+}
+.table thead th {
+  border-top: 0;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* A row's lead cell is a row HEADER (a real <th scope="row">, so the name labels its row), never a column
+   heading: it reads in the body's face, not the global <th>'s condensed capitals (the design review, 2026-10-07). */
+.table tbody th {
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  color: inherit;
+}
+
+/* The lead cell: a real checkbox and the record's name, one label (so the name is the tap target too). */
+.tickLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  cursor: pointer;
+}
+/* At a touch width the LABEL is the tap target — the box and the name, the floor's full height. */
+@media (max-width: 768px) {
+  .tickLabel { min-height: var(--tap-min, 44px); }
+}
+.tick {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--home-olive);
+  cursor: pointer;
+}
+.tick:disabled { cursor: default; }
+.tickOff { cursor: default; }
+.name { font-weight: 650; overflow-wrap: anywhere; }
+
+/* A row that can't be in: listed, dim, its reason across the cells it would have filled. */
+.off th,
+.off td { color: var(--text-tertiary); }
+.off .name { font-weight: 500; }
+.reason { font-size: var(--type-support); }
+
+/* A row open in place: the row and its form share a raised ground. */
+.rowOpen > th,
+.rowOpen > td { background: var(--home-paper); }
+.table .formCell { padding: 0.25rem 0.7rem 0.6rem 2.6rem; border-top: 0; }
+
+/* The expand column is the button's own width plus a little air: at a touch width the button grows to the tap
+   floor, and a cell narrower than it spilled the row sideways (the layout sweep, 2026-10-07). */
+.table .expandCell { text-align: right; padding: 0 0.35rem; }
+.expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.expand:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.expand:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
+.expandOpen { transform: rotate(180deg); }
+
+/* The closing row: the ticked rows' sum, and the difference in words. */
+.closing > th,
+.closing > td {
+  border-top: 2px solid var(--home-line-strong);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.closing > .bad,
+.recordNote.bad { color: var(--danger-light); }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── A phone: one frame of short records ── */
+.band {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--home-line);
+  background: var(--home-paper);
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.record {
+  padding: 0.4rem 0.75rem 0.5rem;
+  border-top: 1px solid var(--home-line);
+}
+.band + .record { border-top: 0; }
+.recordOpen { background: var(--home-paper); }
+.recordHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap-min, 44px);
+}
+.recordHead .tickLabel { flex: 1; min-height: var(--tap-min, 44px); }
+.figure { flex: none; font-weight: 650; font-variant-numeric: tabular-nums; }
+.recordLine {
+  padding-left: calc(18px + 0.55rem);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.recordForm { padding: 0.4rem 0 0.1rem calc(18px + 0.55rem); }
+.recordNote {
+  padding: 0.5rem 0.75rem;
+  border-top: 2px solid var(--home-line-strong);
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-primary);
+}
+@media (max-width: 768px) {
+  .expand { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+}

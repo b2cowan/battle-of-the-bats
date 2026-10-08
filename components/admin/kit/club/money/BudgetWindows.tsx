@@ -5,7 +5,10 @@
  *   a line            — READS FIRST AND EDITS WHOLE (owner, 2026-10-01, the standard): it opens to read —
  *                       what it plans, when, what it is filed under, its notes, and its allocations as a
  *                       section of the record with the unbilled part under them and its one action,
- *                       Allocate $X (white: it opens a page). The head's pencil turns the whole line into
+ *                       Allocate $X (outlined: it opens a form). ⚖ Stage 3c (Ask 6): Allocate TURNS THE WINDOW INTO
+ *                       THE ALLOCATION FORM, in place (`AllocationWindow`) — no page; Cancel comes back to the line,
+ *                       and Create comes back to it READING, the new allocation listed, Allocated updated, and the
+ *                       floating pill saying what was made, once. The head's pencil turns the whole line into
  *                       its form; ✓ in the same spot turns it back. Edits save as you go (2026-09-24) with
  *                       the floating pill; a value the server would refuse is HELD and the pill says why,
  *                       once (the line-total floor: a total below what is allocated never saves — C11).
@@ -28,7 +31,8 @@ import Link from 'next/link';
 import { ChevronRight, Plus, X } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
-import { SavePill, repKit, useDeferredLoad } from '../RepKit';
+import { NoticePill, SavePill, repKit, useDeferredLoad } from '../RepKit';
+import AllocationWindow from './AllocationWindow';
 import { RecordFacts } from '@/components/coaches/kit';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import TeamBudgetItems from '@/components/accounting/TeamBudgetItems';
@@ -36,7 +40,7 @@ import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { NO_DATE_LABEL, whenSummary, whenMonthsText } from '@/lib/coach-budget-periods-view';
 import { formatMonthLong, type MonthKey } from '@/lib/coach-budget-months';
 import {
-  CLUB_BUDGET_REFUSAL, FROM_THE_TEAMS_WORD, LINE_ALLOCATIONS_WORD, NOT_ALLOCATED_LEAD, allocationRowCaption,
+  CLUB_BUDGET_REFUSAL, FROM_THE_TEAMS_WORD, LINE_ALLOCATIONS_WORD, NOT_ALLOCATED_LEAD, YEAR_LINE_WORDS, allocationRowCaption,
 } from '@/lib/club-money-words';
 import { formatStoredDate } from '@/lib/timezone';
 import { clubYearMonths, type ClubPlanPeriod, type PlanAllocationRow, type PlanLineRow } from '@/lib/club-budget-report';
@@ -235,8 +239,11 @@ const draftOfLine = (l: PlanLineRow): LineDraft => ({
   name: l.description, total: l.planned.toFixed(2), word: selectionOf(l), when: whenFromPeriods(l.periods, l.planned), notes: l.notes ?? '',
 });
 
-export function BudgetLineWindow({ line, year, q, orgSlug, canMove, categories, accountingBase, onChanged, onClose }: {
+export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = false, categories, accountingBase, onChanged, onClose }: {
   line: PlanLineRow; year: FiscalYearRef; q: string; orgSlug: string; canMove: boolean;
+  /** The line's fiscal year is CLOSED (Ask 1): it reads with its two writes gone (no pencil — `canMove` is false —
+   *  and no Allocate), and its unbilled part says the club paid it. */
+  locked?: boolean;
   categories: BudgetCategoryWithItems[]; accountingBase: string;
   /** A write landed (or was refused because the line changed): re-read the plan; the text is the notice. */
   onChanged: (text: string | null) => void;
@@ -245,6 +252,9 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, categories, 
   const isCost = line.direction === 'out';
   const [editing, setEditing] = useState(false);
   const [removing, setRemoving] = useState(false);
+  /** The window turned into New allocation (Ask 6), and what it made — said once in the floating pill on return. */
+  const [allocating, setAllocating] = useState(false);
+  const [made, setMade] = useState<string | null>(null);
   const original = useMemo(() => draftOfLine(line), [line]);
   const [d, setD] = useState<LineDraft>(original);
   const updatedAt = useRef(line.updatedAt);
@@ -307,10 +317,22 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, categories, 
   const toggleEdit = async () => {
     if (editing && dirty && !blocked && !(await handleSave())) return;
     if (editing && saved.current) onChanged(null);
+    setMade(null); // said once: the pencil ends it, and ✓ never says it again
     setEditing(e => !e);
   };
 
   const whenWords = line.periods.length === 0 ? NO_DATE_LABEL : null;
+
+  if (allocating) {
+    return (
+      <AllocationWindow
+        q={q}
+        line={{ id: line.id, description: line.description, left: line.notAllocated ?? 0, allocated: line.allocated ?? 0, yearName: year.name }}
+        onCancel={() => setAllocating(false)}
+        onMade={text => { setAllocating(false); setMade(text); onChanged(null); }}
+      />
+    );
+  }
 
   return (
     <>
@@ -320,7 +342,8 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, categories, 
         title={line.description}
         onClose={() => void close()}
         edit={canMove ? { editing, onToggle: () => void toggleEdit(), label: `Edit ${line.description}` } : undefined}
-        status={editing ? <SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} /> : undefined}
+        status={editing ? <SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} />
+          : made ? <NoticePill inline key={made} message={made} onDone={() => setMade(null)} /> : undefined}
         footerStart={editing && canMove && line.allocations.length === 0 ? (
           <button type="button" className="btn btn-outline" onClick={() => setRemoving(true)}>Remove this line</button>
         ) : undefined}
@@ -330,6 +353,8 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, categories, 
           <>
             <RecordFacts rows={[
               ['Planned', money(line.planned)],
+              // What the teams were billed from it — the figure Create updates when the window comes back (Ask 6).
+              isCost && line.allocations.length > 0 ? ['Allocated', money(line.allocated)] : null,
               ['Filed under', line.categoryName && line.itemName ? `${line.categoryName} › ${line.itemName}` : 'Not filed under a word yet'],
               ['When', whenWords ?? (
                 <span>
@@ -353,12 +378,12 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, categories, 
                   <div className={cr.leftBox}>
                     <span className={cr.leftBoxText}>
                       <span className={cr.leftBoxFigure}>{money(line.notAllocated)} not allocated</span>
-                      <span className={cr.leftBoxSub}>{NOT_ALLOCATED_LEAD}</span>
+                      <span className={cr.leftBoxSub}>{locked ? YEAR_LINE_WORDS.clubPaidLead : NOT_ALLOCATED_LEAD}</span>
                     </span>
                     {canMove && (
-                      <Link className="btn btn-outline" href={`${accountingBase}/allocations/new?line=${line.id}&year=${year.key}`}>
+                      <button type="button" className="btn btn-outline" onClick={() => setAllocating(true)}>
                         Allocate {money(line.notAllocated)}
-                      </Link>
+                      </button>
                     )}
                   </div>
                 )}

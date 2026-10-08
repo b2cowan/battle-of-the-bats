@@ -862,6 +862,75 @@ export async function buildDocuments() {
     });
   }
 
+  /* ⚖ THE YEAR-END REPORT (Club Tier Stage 3c, specimen 5): on a CLOSED fiscal year the Overview's one Export writes
+   * it — the Statement against its budget and against last year as the table, then the year at a glance, the books
+   * at both ends, the teams' standing at the close and what carried, each a section of its own, landscape. Built
+   * through the REAL builder (`clubYearEndFile`) from the drawing's figures (hub `#s3c-papers`). */
+  {
+    const cat = (categoryName, budgeted, actual, inPlan = true) => ({
+      categoryId: categoryName, categoryName, direction: 'in', budgeted, actual, variance: Math.round((actual - budgeted) * 100) / 100, inPlan, items: [],
+    });
+    const cost = (categoryName, budgeted, actual, inPlan = true) => ({
+      ...cat(categoryName, budgeted, actual, inPlan), direction: 'out', variance: Math.round((budgeted - actual) * 100) / 100,
+    });
+    const revenue = [cat('From the teams', 21600, 20700), cat('Fundraising', 1500, 1710), cat('Grants', 2500, 2500), cat('Sponsorship', 4640, 5500)];
+    const expenses = [cost('Field & facilities', 18200, 18350), cost('Insurance', 3100, 3100), cost('Uniforms & equipment', 4600, 3880),
+      cost('Officials', 1200, 1340), cost('Team support', 1800, 1620), cost('Administration', 900, 750), cost('Not filed', 0, 310, false)];
+    const sec = (direction, categories) => {
+      const b = categories.reduce((s, c) => s + c.budgeted, 0), a = categories.reduce((s, c) => s + c.actual, 0);
+      return { direction, categories, budgeted: b, actual: a, variance: direction === 'in' ? a - b : b - a };
+    };
+    const last = (categoryName, lastYear) => ({ categoryId: categoryName, categoryName, thisYear: 0, lastYear, change: 0, items: [] });
+    const statement = { revenue: sec('in', revenue), expenses: sec('out', expenses), net: { budgeted: 440, actual: 1060, variance: 620 } };
+    const yearEnd = {
+      year: { key: '2025-09-01', name: '2025–26', firstDay: '2025-09-01', lastDay: '2026-08-31' },
+      closed: { at: '2026-10-07T15:00:00Z', byName: 'Priya Nair' },
+      atAGlance: { opening: 15880, revenue: 30410, expenses: 29350, net: 1060, closing: 16940 },
+      statement,
+      againstLastYear: {
+        lastYear: { key: '2024-09-01', name: '2024–25' }, thisSpan: { from: '2025-09-01', to: '2026-08-31' }, lastSpan: { from: '2024-09-01', to: '2025-08-31' },
+        revenue: { direction: 'in', categories: [last('From the teams', 19800), last('Fundraising', 1380), last('Grants', 2000), last('Sponsorship', 4250)], thisYear: 30410, lastYear: 27430, change: 2980 },
+        expenses: { direction: 'out', categories: [last('Field & facilities', 17100), last('Insurance', 2950), last('Uniforms & equipment', 5200), last('Officials', 1150), last('Team support', 1400), last('Administration', 880)], thisYear: 29350, lastYear: 28680, change: 670 },
+        net: { thisYear: 1060, lastYear: -1250, change: 2310 },
+      },
+      books: [
+        { id: 'g', name: 'General ledger', kind: 'org', atStart: 11880, atEnd: 12940 },
+        { id: 'r', name: 'Equipment reserve', kind: 'org', atStart: 3000, atEnd: 3000 },
+        { id: 't', name: 'Harvest Classic 2025', kind: 'tournament', atStart: 1000, atEnd: 1000 },
+      ],
+      booksTotal: { atStart: 15880, atEnd: 16940 },
+      teams: [
+        { teamId: 'a', teamName: '10U A', billed: 2400, collected: 1950, owed: 450 },
+        { teamId: 'b', teamName: '16U Girls', billed: 2400, collected: 1950, owed: 450 },
+        { teamId: 'c', teamName: '12U Girls', billed: 2400, collected: 1950, owed: 450 },
+        { teamId: 'd', teamName: '15U AAA', billed: 2400, collected: 2400, owed: 0 },
+      ],
+      teamsTotal: { billed: 9600, collected: 8250, owed: 1350 },
+      carried: {
+        nextYear: { key: '2026-09-01', name: '2026–27' }, closing: 16940,
+        stillOpen: {
+          installments: { count: 3, amount: 1350, overdue: 900, sent: 450, upcoming: 0 }, requests: { count: 1, amount: 125 }, pending: { count: 1, amount: 640 },
+          installmentTeams: ['10U A', '16U Girls', '12U Girls'], requestTeams: ['9U A'], pendingPayees: ['Northfield Umpires’ Association'],
+        },
+      },
+    };
+    const built = clubReports$.clubYearEndFile(yearEnd);
+    doc({
+      id: 'admin-year-end-report',
+      label: 'Club year-end report',
+      screens: ['app/[orgSlug]/admin/accounting/page.tsx'],
+      headings: built.columns.map((c) => c.label),
+      render: (name, settings) => money$.downloadMoneyExport('pdf', {
+        dataset: 'year-end-report', title: 'The year against its budget and against 2024–25',
+        columns: built.columns, rows: built.rows, rowKinds: built.kinds, sections: built.sections, notes: built.notes,
+        shape: { orientation: 'landscape' },
+        orgLabel: 'riverdale-ridge', scopeLabel: '2025–26', teamName: ORG,
+        masthead: { title: `${ORG} · Year-end report · 2025–26`, subtitle: 'Sep 1, 2025 to Aug 31, 2026 · Closed Oct 7, 2026 by Priya Nair', meta: 'Prepared Oct 7, 2026' },
+        pdfSettings: settings, emptyMessage: 'There is nothing to report yet.',
+      }),
+    });
+  }
+
   doc({
     id: 'coach-family-statements',
     label: 'Family dues statements',
@@ -1310,10 +1379,8 @@ export const NO_PDF_SCREENS = [
     file: 'app/[orgSlug]/admin/accounting/budget/page.tsx',
     reason: 'The club\'s plan exports as xlsx/csv only — a dataset in the coach\'s Budget shape (Club Tier 3b); the club\'s documents are Budget vs. Actual and the board report.',
   },
-  {
-    file: 'app/[orgSlug]/admin/accounting/payees/[payeeId]/page.tsx',
-    reason: 'The shared-payee report exports as xlsx/csv only (Club Tier 3b).',
-  },
+  /* ⚰ The shared-payee report page (Club Tier 3b) retired in Stage 3c with its Export: the report is the payee
+     window's body now, and is read there (Ask 7). */
 ];
 
 /**

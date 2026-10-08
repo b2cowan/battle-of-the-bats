@@ -19,6 +19,8 @@ import { DUES_PAYMENT_METHOD_LABEL, DUES_PAYMENT_METHODS, type DuesPaymentMethod
 import { formatStoredDate } from './timezone';
 import { fmt } from './coach-money-summary';
 import { sumMoney } from './club-money-figures';
+import { MONTH_NAMES_LONG, formatMonthLong, type MonthKey } from './coach-budget-months';
+import { pluralize } from './utils';
 
 /** The product's one method list (the dues tokens) — the club's money moves take exactly these. */
 export function isClubMoneyMethod(v: unknown): v is DuesPaymentMethod {
@@ -429,14 +431,19 @@ export const SUMMARY_WORDS = {
     count === 0 ? 'nothing waiting'
       : `${count} ${count === 1 ? 'request' : 'requests'}${holding > 0 ? ` · ${holding} holding up a payout` : ''}`,
   againstHeading: (year: string) => `${year} against the budget`,
-  /** Headroom said once, with its arithmetic (its one definition). */
-  headroom: (headroom: number, revenueUnder: number, owed: number) => {
+  /** Headroom said once, with its arithmetic (its one definition). `ended`: the year is over (3c), so it is said in
+   *  the past — nothing is "left" of a year that has ended. */
+  headroom: (headroom: number, revenueUnder: number, owed: number, ended = false) => {
     const head = headroom >= -0.005
-      ? `Headroom: ${fmt(headroom)} of the year’s planned spending is left.`
-      : `Headroom: spending is ${fmt(Math.abs(headroom))} over the year’s plan.`;
+      ? (ended ? `Headroom: ${fmt(headroom)} of the year’s planned spending went unspent.` : `Headroom: ${fmt(headroom)} of the year’s planned spending is left.`)
+      : (ended ? `Headroom: spending ran ${fmt(Math.abs(headroom))} over the year’s plan.` : `Headroom: spending is ${fmt(Math.abs(headroom))} over the year’s plan.`);
     if (revenueUnder <= 0.005) return head;
-    return `${head} Revenue is ${fmt(revenueUnder)} under plan so far${owed > 0.005 ? `, and ${fmt(Math.min(owed, revenueUnder))} of that is what the teams still owe` : ''}.`;
+    return ended
+      ? `${head} Revenue came in ${fmt(revenueUnder)} under plan${owed > 0.005 ? `, and ${fmt(Math.min(owed, revenueUnder))} of that is what the teams still owe` : ''}.`
+      : `${head} Revenue is ${fmt(revenueUnder)} under plan so far${owed > 0.005 ? `, and ${fmt(Math.min(owed, revenueUnder))} of that is what the teams still owe` : ''}.`;
   },
+  /** The year column's heading: what has come in so far, or — once the year has ended — its actual. */
+  actualHead: (ended: boolean) => (ended ? 'Actual' : 'So far'),
   teamsCashBand: (total: number, teams: number) =>
     `Held by the teams: ${fmt(total)} across ${teams} ${teams === 1 ? 'team' : 'teams'}. The coaches’ own books; never part of the club’s figures above.`,
   teamsCashBandShort: (total: number) =>
@@ -496,7 +503,7 @@ export const FILED_BY_ITS_SOURCE = 'Filed by where it came from';
 export const wasCategoryWord = (legacy: string) => `was: ${legacy}`;
 
 // ── Club Tier Stage 3c: the fiscal year (Ask 9 — "fiscal year", the club side only, never "financial
-//    year"). DRAFTS for /marketing: every sentence below is owed its pass before the screens ship. ──
+//    year"). ✓ SETTLED BY /marketing 2026-10-08 (the 3c words pass), with the screens' block below. ──
 
 /** A write dated into a closed fiscal year (call 2; the hub's specimen 3 words). `day` the date it was given,
  *  `year` the closed year it falls in, `nextDay` the first day of the first OPEN year. */
@@ -509,7 +516,7 @@ export const recordedInClosedYearWords = (year: string, reopen: string | null) =
 
 /** A plan line, its dates, or an allocation from it, on a closed fiscal year. */
 export const planClosedWords = (year: string, reopen: string | null) =>
-  `${year} is closed, so its plan can’t change.${reopen ? ` Reopen ${reopen} to change it.` : ''}`;
+  `${year} is closed, so its plan can’t change.${reopen ? ` To change it, reopen ${reopen}.` : ''}`;
 
 /** The fiscal year's window, Close and Reopen: refusals in words. */
 export const FISCAL_YEAR_REFUSAL = {
@@ -521,13 +528,13 @@ export const FISCAL_YEAR_REFUSAL = {
   not_latest: (latest: string) => `Only the latest closed year can be reopened. Reopen ${latest} first.`,
   reason_required: 'Say why you’re reopening it. The reason is kept with the year.',
   bad_reason: 'Keep the reason to 500 characters.',
-  bad_name: 'A fiscal year’s name is 1 to 40 characters.',
+  bad_name: 'A name is needed, 40 characters at most.',
   name_taken: (name: string) => `Another fiscal year is already called ${name}.`,
   year_closed: (year: string) => `${year} is closed, so its name can’t change.`,
   first_close_done: 'The first month can’t change once a fiscal year has been closed.',
   bad_month: 'Choose the month the fiscal year starts in.',
   split_below_allocated: (line: string, allocated: number, staying: number) =>
-    `${line} bills ${fmt(allocated)} to teams, and only ${fmt(staying)} of it would stay in this year. Change the line’s dates first.`,
+    `${line} has ${fmt(allocated)} billed to teams, and only ${fmt(staying)} of the line would stay in this year. Change its dates first.`,
 } as const;
 
 /** Only an open season is billed (S3C-09). */
@@ -546,7 +553,7 @@ export const lastYearsBillsCaption = (yearBefore: string) => `planned and billed
 
 /** The Overview, once a fiscal year has ended and is still open (Ask 2's door). */
 export const yearEndedWords = (year: string, lastDay: string) =>
-  `${year} ended on ${formatStoredDate(lastDay, { withYear: false })} and is still open. Close it to lock its books before you print its papers.`;
+  `${year} ended on ${formatStoredDate(lastDay, { withYear: false })} and is still open. Close it to lock its books before you print its year-end report.`;
 
 /** The Overview's "From 2025–26, still open" (Ask 4). */
 export const stillOpenFromWord = (year: string) => `From ${year}, still open`;
@@ -556,7 +563,306 @@ export const stillOwedFromSeasonWord = (seasonName: string) => `Still owed from 
 
 /** Compare › Against last year: an earlier year's bills paid in either year, as one row (so the columns compare
  *  like with like). */
-export const EARLIER_YEARS_BILLS_WORD = 'Earlier years’ bills, paid in the year';
+export const EARLIER_YEARS_BILLS_WORD = 'Earlier years’ bills, paid that year';
 
 /** The year-end report: the one line instead of the teams' cash (specimen 5). */
-export const YEAR_END_NO_TEAM_CASH = 'Each team’s own cash is its coaches’ money, not the club’s, and isn’t part of these papers.';
+export const YEAR_END_NO_TEAM_CASH = 'Each team’s own cash is its coaches’ money, not the club’s, and isn’t part of this report.';
+
+// ── Club Tier Stage 3c, the screens (session 2): the fiscal year's window, the close and Reopen, a closed year's
+//    line, the year that opens, New allocation in the line's window, a payee's window. ✓ SETTLED BY /marketing
+//    2026-10-08 — the drawings (hub v46, Mockups → Stage 3c) fixed what each must CARRY; the pass settled the words. ──
+
+const day3c = (d: string, withYear = false) => formatStoredDate(d, { withYear });
+/** A month's name from its number (1–12) or from a day ("2026-09-01"). */
+export const monthName = (m: number | string) => MONTH_NAMES_LONG[(typeof m === 'number' ? m : Number(m.slice(5, 7))) - 1] ?? '';
+/** "Sep 1, 2025 to Aug 31, 2026" — a fiscal year's two days. */
+export const fiscalYearSpanWords = (y: { firstDay: string; lastDay: string }) => `${day3c(y.firstDay, true)} to ${day3c(y.lastDay, true)}`;
+
+/** Budget › Tools › Fiscal year (specimen 1; Ask 5). */
+export const FISCAL_YEAR_WINDOW_WORDS = {
+  eyebrow: 'Budget · Tools',
+  toolsHint: 'When the year starts, and its name',
+  startsIn: 'Starts in',
+  thisYear: 'This year',
+  nextYear: 'Next year',
+  closedYears: 'Closed years',
+  noneClosed: 'None yet',
+  nextYearHint: 'plan ahead on the Fiscal year pill',
+  januaryDefault: 'January, where every club starts until it sets its own',
+  firstMonthHint: 'The month the club’s plan and books start each year. You can change it until the first fiscal year is closed.',
+  firstMonthLocked: 'It can’t change once a fiscal year has been closed.',
+  nameLabel: 'This year’s name',
+  nameHint: 'Shown on every money tab and in every export. You can rename it while the year is open.',
+  whatChanges: 'What changes',
+  keepsWhy: 'it has begun, so it keeps its months',
+  shortWhy: 'the year that changes',
+  thenWhy: 'and every year after',
+  /** The consequence of a first-month change, said before the save. */
+  moves: (p: { shortName: string; moved: number; split: number; movedFrom: string | null; movedTo: string | null; toName: string }) => {
+    const parts: string[] = [];
+    if (p.moved > 0) {
+      const from = p.movedFrom, to = p.movedTo;
+      // "dated September to December 2027" — the months through the shared month formatter (never a year taken apart here).
+      const when = from && to
+        ? (from.slice(0, 7) === to.slice(0, 7)
+          ? ` dated ${formatMonthLong(from.slice(0, 7) as MonthKey)}`
+          : ` dated ${formatMonthLong(from.slice(0, 7) as MonthKey)} to ${formatMonthLong(to.slice(0, 7) as MonthKey)}`)
+        : '';
+      parts.push(`${p.shortName}’s plan has ${pluralize(p.moved, 'line', 'lines')}${when}. ${p.moved === 1 ? 'It moves' : 'They move'} to ${p.toName}’s plan with ${p.moved === 1 ? 'its' : 'their'} dates.`);
+    }
+    if (p.split > 0) {
+      parts.push(`${pluralize(p.split, 'line crosses', 'lines cross')} the new end, so ${p.split === 1 ? 'it is' : 'each is'} split by its dates, one line in each year.`);
+    }
+    parts.push('No ledger line moves: each counts in the year its date falls in.');
+    return parts.join(' ');
+  },
+  fresh: (month: string, name: string, span: string) => `Nothing is planned or recorded yet, so the fiscal year starts in ${month}: ${name}, ${span}.`,
+  wholeNext: (current: string, next: string, month: string) => `${current} keeps its months, and ${next} already starts in ${month}. No plan line or ledger line moves.`,
+  keep: (month: string) => `Keep ${month}`,
+  change: (month: string) => `Start the year in ${month}`,
+  changeShort: (month: string) => `Start in ${month}`,
+  changing: 'Changing…',
+  changed: (month: string) => `The fiscal year now starts in ${month}.`,
+  /** Under a new club's empty first plan: one quiet line with an olive door. */
+  newClub: 'The fiscal year runs January to December. If yours starts in another month, set it before you plan.',
+  newClubDoor: 'Set the fiscal year',
+} as const;
+
+/** A closed (or reopened) year's one line under the toolbar (specimen 3; Asks 1, 3). */
+export const YEAR_LINE_WORDS = {
+  closed: (name: string, by: string | null, on: string) =>
+    `${by ?? 'Someone'} closed it on ${day3c(on, true)}. Its books and its plan are locked.`,
+  closedAgain: (at: string, by: string | null, reason: string) => ` It was reopened ${day3c(at)} by ${by ?? 'someone'} (“${reason}”) and closed again.`,
+  reopenedLead: (name: string) => `${name} was reopened`,
+  reopened: (at: string, by: string | null, reason: string) =>
+    ` ${day3c(at)} by ${by ?? 'someone'}: “${reason}”. Its books and its plan are open until it is closed again.`,
+  closedLead: (name: string) => `${name} is closed.`,
+  onlyLatest: (latest: string) => `Only ${latest}, the latest closed year, can be reopened.`,
+  /** A year before the club's first close: inside the closed stretch, with no close of its own. */
+  lockedBeforeLead: (name: string) => `${name} is locked.`,
+  lockedBefore: ' It comes before the club’s first closed fiscal year, so its books and its plan can’t change.',
+  /** The Overview's line once a year has ended and until someone closes it (Ask 2's door). */
+  endedLead: (name: string, lastDay: string) => `${name} ended on ${day3c(lastDay)} and is still open.`,
+  endedRest: ' Close it to lock its books before you print its year-end report.',
+  reopen: 'Reopen',
+  /** A closed year's line can no longer be allocated: the unbilled part says what happened. */
+  clubPaid: 'the club paid it',
+  clubPaidLead: 'The club paid this part itself.',
+} as const;
+
+/** The close question (specimen 3; Asks 2, 4). */
+export const CLOSE_YEAR_WORDS = {
+  eyebrow: (name: string) => `Accounting · ${name}`,
+  title: (name: string) => `Close ${name}?`,
+  lead: 'Closing locks the year’s books and its plan, so its figures stop moving. Nothing is deleted, and you can reopen it while it is the latest closed year.',
+  stillOpen: 'Still open · these don’t stop the close',
+  nothingOpen: (name: string) => `Nothing is still open in ${name}.`,
+  installments: (n: number) => `${pluralize(n, 'installment', 'installments')} still owed by the teams`,
+  installmentsShort: (n: number) => `${pluralize(n, 'installment', 'installments')} owed`,
+  /** One state's installments in a sentence: "10U A and 16U Girls, $450.00 each, overdue since Aug 15". */
+  installmentGroup: (teams: string, amount: string, each: boolean, state: 'overdue' | 'sent' | 'upcoming', on: string) =>
+    `${teams}, ${amount}${each ? ' each' : ''}, ${state === 'overdue' ? `overdue since ${day3c(on)}`
+      : state === 'sent' ? `sent ${day3c(on)}, waiting for you to confirm` : `due ${day3c(on)}`}`,
+  installmentGroupShort: (teams: string, state: 'overdue' | 'sent' | 'upcoming') =>
+    `${teams} ${state === 'overdue' ? 'overdue' : state === 'sent' ? 'sent, waiting for you' : 'still to come'}`,
+  requests: (n: number) => `${pluralize(n, 'request', 'requests')} waiting on you`,
+  requestsShort: (n: number) => `${pluralize(n, 'request', 'requests')} waiting`,
+  holdingPayout: (n: number) => (n === 1 ? 'holding up the team’s payout' : `${n} holding up a payout`),
+  unfiled: (n: number) => `${pluralize(n, 'line', 'lines')} not filed under a word`,
+  unfiledShort: (n: number) => `${pluralize(n, 'line', 'lines')} not filed`,
+  unfiledWhy: (name: string) => `They count as off-plan in ${name}’s statement`,
+  pending: (n: number) => `${pluralize(n, 'line', 'lines')} not cleared`,
+  pendingWhy: (next: string) => `A line that clears later is dated that day, in ${next}`,
+  pendingWhyShort: (next: string) => `Clears in ${next}`,
+  locks: 'What it locks',
+  carries: 'What carries',
+  locksAndCarries: 'Locks · carries',
+  locksBooks: (books: number, span: string) => `The club’s ${pluralize(books, 'book', 'books')}, ${span}`,
+  locksBooksWhy: (lines: number) => `${pluralize(lines, 'line', 'lines')}: nothing added, changed or voided in those dates`,
+  locksPlan: (name: string) => `${name}’s plan`,
+  locksPlanWhy: (lines: number) => `${pluralize(lines, 'line', 'lines')}, and allocating from them`,
+  locksPhone: (books: number, span: string, name: string) => `The club’s ${pluralize(books, 'book', 'books')}, ${span}, and ${name}’s plan.`,
+  closing: 'The closing balance',
+  closingWhy: (next: string) => `${next} opens on it, locked`,
+  opensOn: (next: string) => `${next} opens on`,
+  plan: 'The plan',
+  planWhy: (next: string, lines: number) => (lines > 0 ? `${next} has its own plan: ${pluralize(lines, 'line', 'lines')}` : `${next} has no plan yet. Start it from this one on the Budget.`),
+  teamBooks: 'A team’s own book is its coaches’: it follows the team’s season, and closing the club’s year never touches it.',
+  sinceLastClose: (at: string, by: string | null, reason: string, was: string, now: string) =>
+    `Reopened ${day3c(at)} by ${by ?? 'someone'}: “${reason}”. It closed at ${was} last time, and closes at ${now} now.`,
+  notYet: 'Not yet',
+  close: (name: string) => `Close ${name}`,
+  closingNow: 'Closing…',
+  done: (name: string, next: string, closing: string) => `${name} is closed. ${next} opens on ${closing}, locked.`,
+  failed: 'The year couldn’t be closed. Please try again.',
+  offline: 'The year couldn’t be closed. Check your connection and try again.',
+  loadFailed: 'What closing the year would do couldn’t be loaded. Please try again.',
+} as const;
+
+/** Reopen (specimen 3; Ask 3). The button is white: reopening is neither a money move nor destructive. */
+export const REOPEN_YEAR_WORDS = {
+  title: (name: string) => `Reopen ${name}?`,
+  lead: (name: string, next: string) =>
+    `Its books and plan unlock until you close it again. Meanwhile ${next ? `${next}’s` : 'the next year’s'} opening balance follows the books, and ${name}’s year-end report can change.`,
+  label: 'Why',
+  hint: 'Kept with the year: who reopened it, when, and why.',
+  keep: 'Keep it closed',
+  confirm: (name: string) => `Reopen ${name}`,
+  busy: 'Reopening…',
+  failText: 'The year couldn’t be reopened.',
+  done: (name: string) => `${name} is open again. Close it from the Overview when it’s ready.`,
+} as const;
+
+/** A record dated in a closed year: its corrections are absent, one locked sentence in their place (S3C-07). */
+export const lockedRecordWords = (verb: 'undo' | 'change' | 'reverse' | 'void', year: string, reopen: string | null) =>
+  `Recorded in ${year}, which is closed.${reopen ? ` To ${verb} it, reopen ${reopen}.` : ''}`;
+
+/** The Ledger's locked line (S3C-07): a closed year's pending line keeps one action — it clears into the open year. */
+export const LEDGER_LOCK_WORDS = {
+  clear: 'It cleared today',
+  clearing: 'Clearing…',
+  clearsNote: 'It can still clear: it is then posted and dated the day it clears, in the open year.',
+  cleared: (what: string) => `${what} cleared today. It counts in the open year; the day it was written stays with it.`,
+  clearFailed: 'It couldn’t be cleared. Please try again.',
+  clearOffline: 'It couldn’t be cleared. Check your connection and try again.',
+} as const;
+
+/** The Budget's opening row once the year before is closed (Ask 4). */
+export const carriedOpeningWords = (prior: string, closedOn: string) => `${prior}’s closing, locked when it closed on ${day3c(closedOn)}`;
+export const carriedOpeningNote = (opening: string, prior: string) =>
+  `The year opened with ${opening}, ${prior}’s closing balance, locked when ${prior} was closed. Revenue and expenses are planned; money is assumed to arrive and leave in its planned months.`;
+
+/** Budget vs. Actual's band on a closed year: Cash on hand is the year's closing. */
+export const cashAtCloseCaption = (lastDay: string) => `the club’s books · at the close, ${day3c(lastDay)}`;
+
+/** The Overview's "From 2025–26, still open" (Ask 4): each row's state. */
+export const STILL_OPEN_WORDS = {
+  overdue: (due: string) => `Overdue since ${day3c(due)}`,
+  sent: (on: string) => `Sent ${day3c(on)}, waiting for you`,
+  upcoming: (due: string) => `Due ${day3c(due)}`,
+  holding: 'holding up a payout',
+  request: (what: string) => `Request · ${what}`,
+} as const;
+
+/** Compare › Against last year (Ask 8c): the pill's choice, and the heading that names the spans compared. */
+export const AGAINST_LAST_YEAR_WORDS = {
+  option: (lastYear: string) => `Against ${lastYear}`,
+  change: 'Change',
+  /** Under a year's heading: the span its figures cover (the server's spans — the same months, a year apart). */
+  columnSpan: (from: string, to: string) => `${day3c(from)} to ${day3c(to)}`,
+  bothClosed: 'Both years are closed, so neither column can move: each shows its books as they were closed.',
+  frozen: 'Last year is closed, so its column can’t move: it shows the books as they were closed.',
+  open: 'Both columns follow the books until each year is closed.',
+  key: 'Change is this year less last year. More revenue and less spending are better (green); the reverse is worse (red).',
+} as const;
+
+/** The year-end report (specimen 5): its titles and sections. */
+export const YEAR_END_WORDS = {
+  title: 'Year-end report',
+  closedBy: (by: string | null, on: string) => `Closed ${day3c(on, true)}${by ? ` by ${by}` : ''}`,
+  prepared: (on: string) => `Prepared ${day3c(on, true)}`,
+  atAGlance: 'The year at a glance',
+  openingOn: (d: string) => `Opening balance · ${day3c(d, true)}`,
+  closingOn: (d: string) => `Closing balance · ${day3c(d, true)}`,
+  againstBoth: (lastYear: string | null) => (lastYear ? `The year against its budget and against ${lastYear}` : 'The year against its budget'),
+  varianceKey: 'A + Variance is better than the budget, a − worse. Money counts in the year it came into or left the club’s books.',
+  books: 'The club’s books at the close',
+  booksTotal: 'The club’s cash',
+  teams: 'The teams’ standing with the club',
+  carried: (next: string) => `Still open at the close, carried into ${next}`,
+  carriedInstallments: (n: number, teams: string) => `${pluralize(n, 'installment', 'installments')} still owed${teams ? ` (${teams})` : ''}`,
+  carriedRequests: (n: number, teams: string) => `${pluralize(n, 'request', 'requests')} waiting for the club${teams ? ` (${teams})` : ''}`,
+  carriedPending: (n: number, payees: string) => `${pluralize(n, 'line', 'lines')} not yet cleared${payees ? ` (${payees})` : ''}`,
+  nothingCarried: 'Nothing was still open at the close.',
+  foot: (name: string) => `Year-end report ${name} · the year is closed and its figures are locked`,
+} as const;
+
+/** New allocation, in the line's window (specimen 6; Ask 6). */
+export const NEW_ALLOCATION_WORDS = {
+  fromLineEyebrow: (line: string, year: string, left: string, allocated: string | null) =>
+    `${line} · ${year} · ${left} left${allocated ? ` · ${allocated} already allocated` : ''}`,
+  fromLineTitle: (line: string) => `Allocate from ${line}`,
+  eyebrow: 'Allocations',
+  title: 'New allocation',
+  billFrom: 'Bill from',
+  billFromPick: (year: string) => `Choose a line on the ${year} plan, or none`,
+  billFromLines: (year: string) => `${year} plan · cost lines with something left`,
+  billFromNone: 'Not on the plan',
+  offPlan: 'An off-plan bill',
+  offPlanDetail: 'no line',
+  lineLeft: (left: string) => `${left} left`,
+  noLinesLeft: (year: string) => `Nothing is left to allocate on the ${year} plan.`,
+  name: 'Name',
+  amount: 'Amount',
+  amountUpTo: (left: string) => `Up to ${left}. What you don’t allocate stays on the line.`,
+  split: 'Split',
+  payBy: 'Pay by',
+  splitEven: 'Evenly',
+  splitFixed: 'By amount',
+  splitPercent: 'By percentage',
+  splitSessions: 'By sessions',
+  payOne: 'One payment',
+  payInstallments: (n: number) => `${n} installments`,
+  dueOn: 'Due',
+  team: 'Team',
+  season: 'Season',
+  share: 'Share',
+  teamsLabel: 'Teams billed',
+  tick: (team: string) => `Bill ${team}`,
+  noSeason: (last: { name: string; closedOn: string | null } | null) =>
+    (last ? `No season running: its ${last.name} closed${last.closedOn ? ` on ${day3c(last.closedOn)}` : ''}` : 'No season running yet'),
+  ownPayments: (team: string) => `${team}’s own payments`,
+  ownPaymentsHead: 'Own payments',
+  paysIn: 'This team pays in',
+  /** A team's own-payments choice that keeps the bill's schedule. */
+  billsSchedule: (schedule: string) => `${schedule}, as the bill`,
+  paymentsCount: (n: number) => `${n} payments`,
+  paymentsAddUp: (sum: string, share: string) => `These add up to ${sum} of its ${share} share.`,
+  teamsCount: (n: number) => pluralize(n, 'team', 'teams'),
+  nothingLeft: 'nothing left over',
+  short: (d: string) => `${d} short`,
+  over: (d: string) => `${d} over`,
+  percentShort: (d: string) => `${d}% short of 100%`,
+  percentOver: (d: string) => `${d}% over 100%`,
+  notes: 'Notes',
+  notesHint: 'For the club’s own reference; teams don’t see it',
+  cancel: 'Cancel',
+  create: 'Create allocation',
+  creating: 'Creating…',
+  made: (amount: string, teams: number) => `Allocated ${amount} to ${pluralize(teams, 'team', 'teams')}`,
+  pickTeams: 'Tick at least one team.',
+  pickDue: 'Give each payment a due date.',
+  pickLine: 'Choose what this bills from.',
+  failed: 'The allocation couldn’t be made. Please try again.',
+  offline: 'The allocation couldn’t be made. Check your connection and try again.',
+} as const;
+
+/** A payee's window (specimen 7; Ask 7): it reads first, its report inside. */
+export const PAYEE_WINDOW_WORDS = {
+  eyebrowShared: 'Payee · shared with teams',
+  eyebrow: 'Payee',
+  sharedLabel: 'Shared with teams',
+  sharedSince: (on: string) => `Since ${day3c(on, true)}. Every team can pick it; the club sees what they record paying it.`,
+  notShared: 'No: the club’s own',
+  ownLabel: 'The club’s own entries',
+  named: (uses: number, last: string | null) => (uses === 0 ? 'Named on none' : `Named on ${uses}${last ? ` · last ${day3c(last)}` : ''}`),
+  phoneLine: (since: string | null, uses: number) =>
+    `${since ? `Shared with teams since ${day3c(since, true)} · ` : ''}named on ${uses} of the club’s own entries.`,
+  recorded: 'What the teams recorded',
+  recordedFolded: (year: string) => `What the teams recorded · ${year}`,
+  foldedCaption: (teams: number, total: string) => `${pluralize(teams, 'team', 'teams')} · ${total} · reads in full when you’re done editing`,
+  note: (since: string | null) => `Each team’s own record of paying it${since ? ` since you shared it on ${day3c(since)}` : ''}. Not proof that a payment was made.`,
+  noteShort: (since: string | null) => `The teams’ own records${since ? ` since ${day3c(since)}` : ''}. Not proof of payment.`,
+  payments: 'Payments',
+  firstLatest: 'First · latest',
+  amountRecorded: 'Recorded',
+  nothingInYear: (payee: string, year: string) => `No team recorded paying ${payee} in ${year}.`,
+} as const;
+
+/** The coach's Club tab: the earlier-season band and its tile's caption (Ask 8b). */
+export const EARLIER_SEASON_WORDS = {
+  caption: (count: number, seasonName: string | null) =>
+    `${pluralize(count, 'installment', 'installments')}, from ${seasonName ? `the ${seasonName}` : 'an earlier season'}`,
+  withThisSeason: (earlier: number, seasonName: string | null) =>
+    `${pluralize(earlier, 'installment', 'installments')} from ${seasonName ? `the ${seasonName}` : 'an earlier season'} included`,
+} as const;

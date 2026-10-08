@@ -342,6 +342,14 @@ describe('the board summary reads Budget vs. Actual, never computes it again (As
     assert.deepEqual([s.position.owedByTheTeams.amount, s.position.owedByTheTeams.overdue.count], [600, 1]);
     assert.deepEqual(s.position.waitingOnYou, { ...waitingOnYou(waiting), holdingPayout: 1 });
   });
+  it('on a CLOSED year, Where the club stands is still today: Budget vs. Actual\'s band reads the closing, the summary never does', () => {
+    const closedYear = { ...YEAR, closed: { at: '2027-01-05T15:00:00Z', by: null, closingBalance: 999 }, locked: true };
+    const closed = buildBoardSummary({
+      report: report({ year: closedYear }), setting: JAN, allocations: [], requests: [], books, teams: [], teamCash: [],
+    });
+    assert.equal(report({ year: closedYear }).band.cashOnHand, 999, 'the band reads the locked closing');
+    assert.equal(closed.position.cashOnHand, clubCashOnHand(books), 'the position reads the books today');
+  });
   it('the teams\' cash is its own total, never in a club figure; the team that needs the club comes first', () => {
     assert.equal(s.teamsCash.total, 1120);
     assert.equal(s.position.cashOnHand, 6440, 'the teams\' cash is not in Cash on hand');

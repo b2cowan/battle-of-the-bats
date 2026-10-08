@@ -35,6 +35,8 @@
 }
 .question { max-width: 26rem; }
 .form { max-width: 40rem; }
+/* A form whose body is a table (New allocation’s teams): wide enough for Team · Season · Share · Due. */
+.form.wide { max-width: 50rem; }
 
 .head {
   display: flex;
@@ -132,7 +134,8 @@
   .foot button,
   .foot a,
   .close,
-  .back { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+  .back,
+  .edit { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
 }
 
 /* ── A RECORD opened from a list (Tournament admin redesign Stage 2, design decisions 2026-09-30) ── */

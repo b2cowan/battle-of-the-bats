@@ -141,12 +141,9 @@ const YEAR_BY_HAND: [string, RegExp][] = [
  * PAGES that still work a year out by hand, each with its lines and the session that empties it. ⚠ THIS LIST
  * ONLY SHRINKS. (3c session 1 moved the rest onto the server's year: Budget vs. Actual's current-year test and
  * Ledger doors, StatementBehindWindow, the Overview, the Filed-under hint, and both payee pages.)
+ * EMPTY since 3c session 2: Allocations' totals line reads each row's fiscal `year` and the read's own year.
  */
-const YEAR_NOT_YET: Record<string, string> = {
-  'app/[orgSlug]/admin/accounting/allocations/page.tsx':
-    'lines 136, 143 — "This year" from today\'s first four characters and each allocation\'s creation stamp in UTC; '
-    + 'the allocations read now returns each one\'s fiscal `year` (3c session 1). Session 2 reads it.',
-};
+const YEAR_NOT_YET: Record<string, string> = {};
 
 describe('one definition of the year — nothing in the club\'s money files works a year out by hand', () => {
   const repo = path.join(import.meta.dirname, '..', '..');

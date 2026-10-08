@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { loadFiscalSetting } from '@/lib/club-fiscal-year-server';
+import { lockedIn } from '@/lib/club-fiscal-year';
 import { withObservability } from '@/lib/observability';
 import { resolveClubMoney } from '@/lib/club-money-route';
 import { canMoveClubMoney } from '@/lib/member-access';
@@ -16,6 +18,10 @@ import { sumMoney } from '@/lib/club-money-figures';
  * back — the coach's answer; a pre-271 request says it was filed before we asked), the budget item in
  * the team's plan, who asked and when, how they'd like to be paid, and the decision with its reason,
  * who and when. Words: To club / From club; Approved / Declined / Reversed — the coach's own.
+ *
+ * ⚖ Stage 3c (Ask 8d): an approval whose lines sit in a CLOSED fiscal year carries `lockedIn` — the year's name and
+ * Reopen's (the latest closed year, for a money mover) — so Reverse is absent and one locked sentence stands in its
+ * place. The server refuses a Reverse there anyway (409 `year_closed`).
  */
 export const GET = withObservability(async (req: Request) => {
   const r = await resolveClubMoney(req, { scope: 'loop', write: false });
@@ -23,7 +29,13 @@ export const GET = withObservability(async (req: Request) => {
   const { ctx } = r;
   const teamId = new URL(req.url).searchParams.get('teamId') ?? undefined;
   const today = tournamentToday();
-  const rows = await clubRequests(ctx.org.id, await teamIdsInScope(ctx), { teamId }, today);
+  const settingP = loadFiscalSetting(ctx.org.id);
+  const [rawRows, setting] = await Promise.all([
+    teamIdsInScope(ctx).then(scope => clubRequests(ctx.org.id, scope, { teamId }, today)),
+    settingP,
+  ]);
+  const canMove = canMoveClubMoney(ctx, ctx.org);
+  const rows = rawRows.map(x => ({ ...x, lockedIn: x.status === 'approved' ? lockedIn(x.paidOn, setting, canMove) : null }));
 
   const waiting = rows.filter(x => x.status === 'pending');
   const decided = rows.filter(x => x.status !== 'pending')
@@ -33,7 +45,7 @@ export const GET = withObservability(async (req: Request) => {
   return NextResponse.json({
     asOf: today,
     // Whether this member may answer them (Ask 1's one rule) — the screen offers Approve only then.
-    canMove: canMoveClubMoney(ctx, ctx.org),
+    canMove,
     waiting: { count: waiting.length, total, holdingPayout: waiting.filter(x => x.holdingPayout).length, requests: waiting },
     decided: { count: decided.length, requests: decided },
   });

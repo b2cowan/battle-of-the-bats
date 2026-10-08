@@ -22,7 +22,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { AlertCircle, ChevronRight, Lock } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { RepChip, SavePill, repKit } from '../RepKit';
@@ -30,14 +30,19 @@ import PayeeCombobox, { type PayeeSelection } from '@/components/accounting/Paye
 import { LedgerLineRead } from '@/components/coaches/kit';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
-import { FILED_BY_ITS_SOURCE, filedUnderHint, howItCame, wasCategoryWord, CLUB_BUDGET_REFUSAL } from '@/lib/club-money-words';
+import {
+  FILED_BY_ITS_SOURCE, LEDGER_LOCK_WORDS, filedUnderHint, howItCame, lockedRecordWords, wasCategoryWord, yearClosedWords, CLUB_BUDGET_REFUSAL,
+} from '@/lib/club-money-words';
+import fy from './FiscalYear.module.css';
+import cr from './ClubReport.module.css';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import type { Filing } from '@/lib/club-ledger';
-import { tournamentToday } from '@/lib/timezone';
+import { addCalendarDays, tournamentToday } from '@/lib/timezone';
+import { closedThrough, lockedIn, type FiscalSetting } from '@/lib/club-fiscal-year';
 import type { BookRowOut } from '@/lib/club-ledger-read';
 import {
-  DayField, FormError, MethodField, ReasonQuestion, TextField, day, jsonInit, money, moneyFetch, moneyKit, moneyMove, parseAmount, refusalText,
+  FormError, MethodField, ReasonQuestion, TextField, day, jsonInit, money, moneyFetch, moneyKit, moneyMove, parseAmount, refusalText,
   type MoveResult,
 } from './MoneyKit';
 
@@ -63,8 +68,9 @@ export type WordList = BudgetCategoryWithItems[];
  * on the plan? The SERVER decides the year (`?day=`, Stage 3c — never a date's first four characters), and names
  * it. Read once per day the window asks about.
  */
-function usePlanWords(q: string, day: string): { words: Map<string, number>; yearName: string } | null {
-  const [byDay, setByDay] = useState<Record<string, { words: Map<string, number>; yearName: string }>>({});
+interface PlanWords { words: Map<string, number>; yearName: string }
+function usePlanWords(q: string, day: string): PlanWords | null {
+  const [byDay, setByDay] = useState<Record<string, PlanWords>>({});
   useEffect(() => {
     if (byDay[day]) return;
     let live = true;
@@ -93,11 +99,10 @@ const selectionOfFiling = (f: Filing | null): BudgetItemSelection | null =>
 
 /** FILED UNDER — the budget word picker (Ask 4a), money-out words for money out, money-in for money in, with
  *  the hint whether the word is on the year's plan. */
-function FiledUnderField({ id, words, value, onChange, direction, orgSlug, q, date, hint }: {
+function FiledUnderField({ id, words, value, onChange, direction, orgSlug, plan, hint }: {
   id: string; words: WordList | null; value: BudgetItemSelection | null; onChange: (v: BudgetItemSelection) => void;
-  direction: 'in' | 'out'; orgSlug: string; q: string; date: string; hint?: string | null;
+  direction: 'in' | 'out'; orgSlug: string; plan: PlanWords | null; hint?: string | null;
 }) {
-  const plan = usePlanWords(q, /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : tournamentToday());
   const onPlan = value?.itemId && plan ? (plan.words.has(value.itemId) ? { planned: plan.words.get(value.itemId)! } : null) : undefined;
   return (
     <div className={ck.field}>
@@ -119,6 +124,35 @@ function FiledUnderField({ id, words, value, onChange, direction, orgSlug, q, da
       {hint && <p className={ck.hint}>{hint}</p>}
     </div>
   );
+}
+
+/** A day field that says, under itself, when its day is in a CLOSED fiscal year (Stage 3c, specimen 3): why, and the
+ *  two ways out — date it on or after the first open day, or reopen the latest closed year first. The window keeps
+ *  its add disabled while the day is refused; the server refuses it too (409 `year_closed`). */
+function ClosedDayField({ id, label, value, onChange, refusal }: {
+  id: string; label: string; value: string; onChange: (v: string) => void; refusal: string | null;
+}) {
+  return (
+    <label className={ck.field} htmlFor={id}>
+      <span className={ck.label}>{label}<span className={repKit.req} aria-hidden>*</span></span>
+      <input id={id} type="date" className={`${ck.input}${refusal ? ` ${cr.held}` : ''}`} value={value}
+        aria-invalid={refusal ? true : undefined} aria-describedby={refusal ? `${id}-closed` : undefined}
+        onChange={e => onChange(e.target.value)} />
+      {refusal && (
+        <span className={fy.refuse} id={`${id}-closed`} role="alert">
+          <AlertCircle size={14} aria-hidden className={fy.refuseIcon} /><span>{refusal}</span>
+        </span>
+      )}
+    </label>
+  );
+}
+
+/** The refusal a day in the closed stretch reads, or null — the one rule (`lockedIn`), from the book's own read. */
+function closedDayWords(day: string, fiscal: FiscalSetting | null, canMove: boolean): string | null {
+  if (!fiscal || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+  const hit = lockedIn(day, fiscal, canMove);
+  const through = closedThrough(fiscal);
+  return hit && through ? yearClosedWords({ day, year: hit.yearName, nextDay: addCalendarDays(through, 1), reopen: hit.reopen }) : null;
 }
 
 /** Money In or Out — never a transfer half (C12): a transfer has its own door. */
@@ -166,8 +200,12 @@ function PayeeField({ id, q, value, onChange, payeesHref, label }: {
 
 // ── Add an entry ─────────────────────────────────────────────────────────────────────────────────
 
-export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, onAdded, onClose }: {
+export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, fiscal = null, canMove = false, onAdded, onClose }: {
   book: BookRef; q: string; orgSlug: string; words: WordList | null; payeesHref: string;
+  /** The club's fiscal years (Stage 3c) — a date in a closed one is refused under the field. */
+  fiscal?: FiscalSetting | null;
+  /** Can this reader reopen a year (the refusal's second way out)? */
+  canMove?: boolean;
   onAdded: (text: string) => void; onClose: () => void;
 }) {
   const [entryType, setEntryType] = useState<'income' | 'expense'>('expense');
@@ -183,9 +221,11 @@ export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, onAdded, o
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const n = parseAmount(amount);
+  const plan = usePlanWords(q, /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : tournamentToday());
+  const dateRefusal = closedDayWords(date, fiscal, canMove);
 
   async function add() {
-    if (busy) return;
+    if (busy || dateRefusal) return;
     if (!what.trim()) { setError('Say what it was for.'); return; }
     if (n == null) { setError('Give an amount between $0.01 and $999,999.99.'); return; }
     if (!word?.itemId) { setError(CLUB_BUDGET_REFUSAL.word_required); return; }
@@ -216,20 +256,20 @@ export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, onAdded, o
       footer={
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Cancel</button>
-          <button type="button" className="btn btn-lime" onClick={() => void add()} disabled={busy}>{busy ? 'Adding…' : 'Add entry'}</button>
+          <button type="button" className="btn btn-lime" onClick={() => void add()} disabled={busy || !!dateRefusal}>{busy ? 'Adding…' : 'Add entry'}</button>
         </>
       }
     >
       <FormError>{error}</FormError>
       <div className={moneyKit.pair}>
         <DirectionField id="ae-money" value={entryType} onChange={v => { setEntryType(v); setWord(null); }} />
-        <DayField id="ae-date" label="Date" value={date} onChange={setDate} />
+        <ClosedDayField id="ae-date" label="Date" value={date} onChange={setDate} refusal={dateRefusal} />
       </div>
       <TextField id="ae-what" label="What" required value={what} onChange={setWhat} maxLength={500}
         placeholder="For example: Diamond permit" />
       <TextField id="ae-amount" label="Amount" required value={amount} onChange={setAmount} placeholder="$0.00" />
       <FiledUnderField id="ae-word" words={words} value={word} onChange={setWord} direction={entryType === 'income' ? 'in' : 'out'}
-        orgSlug={orgSlug} q={q} date={date} />
+        orgSlug={orgSlug} plan={plan} />
       <PayeeField id="ae-payee" q={q} value={payee} onChange={setPayee} payeesHref={payeesHref}
         label={entryType === 'income' ? 'Paid by' : 'Paid to'} />
       <div className={moneyKit.pair}>
@@ -247,8 +287,9 @@ export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, onAdded, o
 
 // ── A transfer between the club's own books ─────────────────────────────────────────────────────
 
-export function TransferWindow({ book, books, q, onDone, onClose }: {
-  book: BookRef; books: readonly BookRef[]; q: string; onDone: (text: string) => void; onClose: () => void;
+export function TransferWindow({ book, books, q, fiscal = null, canMove = false, onDone, onClose }: {
+  book: BookRef; books: readonly BookRef[]; q: string; fiscal?: FiscalSetting | null; canMove?: boolean;
+  onDone: (text: string) => void; onClose: () => void;
 }) {
   const others = books.filter(b => b.id !== book.id && b.kind !== 'team');
   const [to, setTo] = useState('');
@@ -257,9 +298,10 @@ export function TransferWindow({ book, books, q, onDone, onClose }: {
   const [what, setWhat] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const dateRefusal = closedDayWords(date, fiscal, canMove);
 
   async function move() {
-    if (busy) return;
+    if (busy || dateRefusal) return;
     const n = parseAmount(amount);
     if (!to) { setError('Choose the book it goes to.'); return; }
     if (n == null) { setError('Give an amount between $0.01 and $999,999.99.'); return; }
@@ -289,7 +331,7 @@ export function TransferWindow({ book, books, q, onDone, onClose }: {
       footer={
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Cancel</button>
-          <button type="button" className="btn btn-lime" onClick={() => void move()} disabled={busy || others.length === 0}>{busy ? 'Recording…' : 'Record the transfer'}</button>
+          <button type="button" className="btn btn-lime" onClick={() => void move()} disabled={busy || others.length === 0 || !!dateRefusal}>{busy ? 'Recording…' : 'Record the transfer'}</button>
         </>
       }
     >
@@ -307,7 +349,7 @@ export function TransferWindow({ book, books, q, onDone, onClose }: {
           </label>
           <div className={moneyKit.pair}>
             <TextField id="tr-amount" label="Amount" required value={amount} onChange={setAmount} placeholder="$0.00" />
-            <DayField id="tr-date" label="Date" value={date} onChange={setDate} />
+            <ClosedDayField id="tr-date" label="Date" value={date} onChange={setDate} refusal={dateRefusal} />
           </div>
           <TextField id="tr-what" label="What it’s for" required value={what} onChange={setWhat} maxLength={500} placeholder="For example: tournament float" />
           <p className={ck.hint}>Both books get a line: money out of {book.name}, money in to the other. A team’s book is its coaches’ and is never a transfer’s other side.</p>
@@ -333,17 +375,20 @@ function sourceDoor(row: BookRowOut, accountingBase: string): { href: string; la
  * The window a line opens. Which one is the server's to say (`row.can`): a typed line is editable, a
  * transfer half voids both halves, a line from a source (or on a team's book) is read here only.
  */
-export function LineWindow({ row, book, q, orgSlug, words, accountingBase, payeesHref, canMove, onChanged, onClose }: {
+export function LineWindow({ row, book, q, orgSlug, words, accountingBase, payeesHref, canMove, fiscal = null, onChanged, onClose }: {
   row: BookRowOut; book: BookRef; q: string; orgSlug: string; words: WordList | null; accountingBase: string; payeesHref: string;
   canMove: boolean;
+  /** The club's fiscal years (Stage 3c): a line moved into a closed one is refused under its date; a locked line
+   *  names its year. */
+  fiscal?: FiscalSetting | null;
   /** A write landed (or was refused because the line changed): re-read the book; the text is the notice. */
   onChanged: (text: string | null) => void;
   onClose: () => void;
 }) {
   if (row.status !== 'void' && canMove && row.can.edit) {
-    return <EditLineWindow row={row} book={book} q={q} orgSlug={orgSlug} words={words} payeesHref={payeesHref} onChanged={onChanged} onClose={onClose} />;
+    return <EditLineWindow row={row} book={book} q={q} orgSlug={orgSlug} words={words} payeesHref={payeesHref} fiscal={fiscal} onChanged={onChanged} onClose={onClose} />;
   }
-  return <ReadLineWindow row={row} book={book} q={q} accountingBase={accountingBase} canMove={canMove} onChanged={onChanged} onClose={onClose} />;
+  return <ReadLineWindow row={row} book={book} q={q} accountingBase={accountingBase} canMove={canMove} fiscal={fiscal} onChanged={onChanged} onClose={onClose} />;
 }
 
 type Draft = {
@@ -362,8 +407,9 @@ const draftOf = (row: BookRowOut): Draft => {
 const draftSig = (d: Draft) => JSON.stringify({ ...d, what: d.what.trim(), amount: d.amount.trim(), word: d.word?.itemId ?? null, payee: d.payee?.payeeId ?? d.payee?.displayName ?? null });
 
 /** A line you typed: it saves as you go; Void asks, with a reason. */
-function EditLineWindow({ row, book, q, orgSlug, words, payeesHref, onChanged, onClose }: {
+function EditLineWindow({ row, book, q, orgSlug, words, payeesHref, fiscal, onChanged, onClose }: {
   row: BookRowOut; book: BookRef; q: string; orgSlug: string; words: WordList | null; payeesHref: string;
+  fiscal: FiscalSetting | null;
   onChanged: (text: string | null) => void; onClose: () => void;
 }) {
   const [d, setD] = useState<Draft>(() => draftOf(row));
@@ -373,7 +419,11 @@ function EditLineWindow({ row, book, q, orgSlug, words, payeesHref, onChanged, o
   const n = parseAmount(d.amount);
   /* The word the server holds now: the line's own, then each save's (an old line stays Not filed until filed). */
   const [filedItemId, setFiledItemId] = useState<string | null>(row.filedUnder?.itemId ?? null);
-  const blocked = !d.what.trim() ? 'Give the entry a name to save it.'
+  const plan = usePlanWords(q, /^\d{4}-\d{2}-\d{2}$/.test(d.date) ? d.date : tournamentToday());
+  // An edit window opens only for a money mover (`LineWindow`), so Reopen is theirs to offer.
+  const dateRefusal = closedDayWords(d.date, fiscal, true);
+  const blocked = dateRefusal ? dateRefusal
+    : !d.what.trim() ? 'Give the entry a name to save it.'
     : n == null ? 'Give an amount between $0.01 and $999,999.99 to save it.'
     : !d.date ? 'Give the entry a date to save it.'
     : filedItemId && !d.word?.itemId ? CLUB_BUDGET_REFUSAL.word_required : null;
@@ -428,12 +478,12 @@ function EditLineWindow({ row, book, q, orgSlug, words, payeesHref, onChanged, o
       >
         <div className={moneyKit.pair}>
           <DirectionField id="le-money" value={d.entryType} onChange={v => set({ entryType: v, word: v === d.entryType ? d.word : null })} />
-          <DayField id="le-date" label="Date" value={d.date} onChange={v => set({ date: v })} />
+          <ClosedDayField id="le-date" label="Date" value={d.date} onChange={v => set({ date: v })} refusal={dateRefusal} />
         </div>
         <TextField id="le-what" label="What" required value={d.what} onChange={v => set({ what: v })} maxLength={500} />
         <TextField id="le-amount" label="Amount" required value={d.amount} onChange={v => set({ amount: v })} />
         <FiledUnderField id="le-word" words={words} value={d.word} onChange={v => set({ word: v })}
-          direction={d.entryType === 'income' ? 'in' : 'out'} orgSlug={orgSlug} q={q} date={d.date}
+          direction={d.entryType === 'income' ? 'in' : 'out'} orgSlug={orgSlug} plan={plan}
           hint={!row.filedUnder && row.legacyCategory ? wasCategoryWord(row.legacyCategory) : null} />
         <PayeeField id="le-payee" q={q} value={d.payee} onChange={v => set({ payee: v })} payeesHref={payeesHref}
           label={d.entryType === 'income' ? 'Paid by' : 'Paid to'} />
@@ -497,19 +547,44 @@ function VoidLineQuestion({ row, book, q, onClose, onDone }: {
  * a line another tab wrote into the same read shape (facts, where it is changed, one door), so the two
  * windows cannot drift; the frame stays the admin's `KitDialog`.
  */
-function ReadLineWindow({ row, book, q, accountingBase, canMove, onChanged, onClose }: {
-  row: BookRowOut; book: BookRef; q: string; accountingBase: string; canMove: boolean;
+function ReadLineWindow({ row, book, q, accountingBase, canMove, fiscal, onChanged, onClose }: {
+  row: BookRowOut; book: BookRef; q: string; accountingBase: string; canMove: boolean; fiscal: FiscalSetting | null;
   onChanged: (text: string | null) => void; onClose: () => void;
 }) {
   const [voiding, setVoiding] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [clearError, setClearError] = useState('');
   const door = sourceDoor(row, accountingBase);
   const isTransfer = row.source.kind === 'transfer';
+  /* ⚖ A LINE IN A CLOSED FISCAL YEAR (Stage 3c, Ask 8d / S3C-07): Void, Undo and Reverse are ABSENT, one locked
+     sentence in their place pointing at Reopen. Its one action, for a pending line, is to clear — posted, dated the
+     day it clears, in the open year (the server's one exception to the lock). */
+  const lockedYear = row.locked && fiscal ? lockedIn(row.date, fiscal, canMove) : null;
+  const lockedWords = lockedYear
+    ? lockedRecordWords(row.source.kind === 'allocation' ? 'undo' : row.source.kind === 'request' ? 'reverse' : isTransfer ? 'void' : 'change',
+      lockedYear.yearName, lockedYear.reopen)
+    : null;
+  async function clearToday() {
+    if (clearing) return;
+    setClearing(true); setClearError('');
+    try {
+      // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
+      const r = await moneyFetch(`/api/admin/accounting/ledgers/${book.id}/entries/${row.id}?${q}`, jsonInit('PATCH', { status: 'posted', entryDate: tournamentToday() }));
+      if (!r.ok) { setClearError(refusalText(r.data, LEDGER_LOCK_WORDS.clearFailed)); return; }
+      onChanged(LEDGER_LOCK_WORDS.cleared(row.what));
+      onClose();
+    } catch {
+      setClearError(LEDGER_LOCK_WORDS.clearOffline);
+    } finally {
+      setClearing(false);
+    }
+  }
   const amount = `${money(row.moneyIn ?? row.moneyOut)} ${row.moneyIn != null ? 'in' : 'out'}`;
   const sourceWord = row.source.kind === 'allocation' ? 'Allocation' : row.source.kind === 'request' ? 'Payment request'
     : row.source.kind === 'league_fee' ? 'House league fee' : isTransfer ? 'Transfer' : book.name;
   const teamSide = row.source.kind === 'allocation' ? 'On their Club page as received'
     : row.source.kind === 'request' ? 'On their Club page as decided' : null;
-  const canVoidBoth = canMove && row.status !== 'void' && row.can.void === 'both_halves';
+  const canVoidBoth = canMove && !row.locked && row.status !== 'void' && row.can.void === 'both_halves';
 
   return (
     <>
@@ -518,8 +593,11 @@ function ReadLineWindow({ row, book, q, accountingBase, canMove, onChanged, onCl
         eyebrow={`${sourceWord} · ${day(row.date)}`}
         title={row.what}
         onClose={onClose}
+        busy={clearing}
         footerStart={canVoidBoth ? (
           <button type="button" className="btn btn-outline" onClick={() => setVoiding(true)}>Void this transfer</button>
+        ) : row.clears && canMove ? (
+          <button type="button" className="btn btn-outline" onClick={() => void clearToday()} disabled={clearing}>{clearing ? LEDGER_LOCK_WORDS.clearing : LEDGER_LOCK_WORDS.clear}</button>
         ) : undefined}
         footer={
           <>
@@ -544,8 +622,11 @@ function ReadLineWindow({ row, book, q, accountingBase, canMove, onChanged, onCl
             ['Recorded by', `${row.recordedBy ?? 'Someone at the club'}, ${day(row.recordedAt)}`],
             teamSide ? ['The team’s side', teamSide] : null,
             row.status === 'pending' ? ['Status', 'Pending — not cleared yet'] : null,
+            row.writtenOn ? ['Written', day(row.writtenOn)] : null,
           ]}
-          where={book.kind === 'team'
+          where={lockedWords
+            ? <span className={fy.lockedNote}><Lock size={13} aria-hidden className={fy.lockedNoteIcon} /><span>{lockedWords}{row.clears ? ` ${LEDGER_LOCK_WORDS.clearsNote}` : ''}</span></span>
+            : book.kind === 'team'
             ? 'A team’s book is kept by its coaches and is read-only here. Money moves between the club and a team through allocations and payment requests.'
             : row.source.kind === 'allocation'
               ? 'This line was written when the payment was recorded. To change it, undo the payment on the allocation, and both books follow.'
@@ -557,6 +638,7 @@ function ReadLineWindow({ row, book, q, accountingBase, canMove, onChanged, onCl
                     ? 'A transfer is changed by voiding both halves and entering it again.'
                     : null}
         />
+        <FormError>{clearError}</FormError>
       </KitDialog>
       {voiding && row.source.kind === 'transfer' && (
         <VoidTransferQuestion row={row} book={book} q={q}

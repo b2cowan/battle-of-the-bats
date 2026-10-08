@@ -1445,17 +1445,17 @@ export const SCREENS = [
   { id: 'admin-accounting-treasurer',  area: 'accounting', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting` },
   { id: 'admin-accounting-budget',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget` },
   { id: 'admin-accounting-bva',        area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget-vs-actual` },
-  { id: 'admin-accounting-allocate',   area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations/new?line=${c.clubBudgetLineId}` },
+  { id: 'admin-accounting-allocate',   area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget?line=${c.clubBudgetLineId}` },
   // Club Tier Stage 3a: Accounting is one page with tabs. The Ledger tab IS the book (the Book pill
   // switches it); Allocations and Payment requests moved here from Rep Teams (the old addresses
   // forward, so they are no longer screens of their own); a team's account and Payees sit one level down.
   { id: 'admin-accounting-ledger',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/ledger?book=${c.clubLedgerId}` },
   { id: 'admin-accounting-payees',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payees` },
-  { id: 'admin-accounting-payee-report', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payees/${c.clubSharedPayeeId}` },
+  { id: 'admin-accounting-payee-report', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payees?payee=${c.clubSharedPayeeId}` },
   { id: 'admin-accounting-allocations', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations` },
   { id: 'admin-accounting-coming-due', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?view=coming-due` },
   { id: 'admin-accounting-allocation', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations/${c.clubAllocationId}` },
-  { id: 'admin-accounting-allocation-new', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations/new` },
+  { id: 'admin-accounting-allocation-new', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?new=1` },
   { id: 'admin-accounting-payment-requests', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payment-requests` },
   { id: 'admin-accounting-team',       area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}` },
   { id: 'admin-accounting-team-closed', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubClosedTeamId}` },

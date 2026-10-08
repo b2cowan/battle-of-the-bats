@@ -250,3 +250,28 @@
    edge of the "held by the team" callout, and a lock before its label. ── */
 .figures .heldCard { border-left: 3px solid var(--info); }
 .heldLock { vertical-align: -1px; margin-right: 0.3rem; }
+
+/* ── New allocation in the line's window (Stage 3c, specimen 6): the four fields once per bill, then the teams ── */
+.allocFields { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 0 1rem; }
+@media (max-width: 640px) { .allocFields { grid-template-columns: minmax(0, 1fr); } }
+.amountInput { text-align: right; font-variant-numeric: tabular-nums; }
+/* Pay by: the schedule, then its dates, wrapping. */
+.payBy { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.payBy > select { flex: 1 1 9rem; }
+.payBy > input { flex: 1 1 9rem; }
+/* A team's Share: an input under By amount, By percentage or By sessions; the worked-out figure beside a weight. */
+.shareCell { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.35rem; max-width: 100%; }
+.shareInput { width: 6.5rem; min-height: 32px; padding: 0.2rem 0.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+.shareUnit { color: var(--text-tertiary); font-size: var(--type-support); }
+.shareFigure { color: var(--text-tertiary); font-size: var(--type-support); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* A team's own payments, opened in place under its row. */
+.ownPayments { display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: center; font-size: var(--type-support); color: var(--text-secondary); }
+.ownCount { display: inline-flex; align-items: center; gap: 0.5rem; }
+.ownCount > select { min-width: 12rem; }
+.ownRow { display: inline-flex; gap: 0.35rem; }
+.ownRow > input { width: 9rem; }
+
+/* A payee window's report head: its title, and a small Year pill at the right only when there is more than one year. */
+.reportHead { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; margin: 1rem 0 0.5rem; }
+.reportHead > h3 { margin: 0; }
+.reportHead > details { margin-left: auto; }

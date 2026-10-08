@@ -19,12 +19,13 @@
  */
 import { useState } from 'react';
 import Link from 'next/link';
-import { Users } from 'lucide-react';
+import { Lock, Users } from 'lucide-react';
 import KitDialog, { type KitStep } from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { kit } from '@/components/coaches/kit';
 import { Callout, RepChip, RowAction, repKit } from '../RepKit';
-import { UNLINKED_PAYMENT } from '@/lib/club-money-words';
+import { UNLINKED_PAYMENT, lockedRecordWords } from '@/lib/club-money-words';
+import fy from './FiscalYear.module.css';
 import { daysBetweenDateStrings, tournamentToday } from '@/lib/timezone';
 import { DUES_PAYMENT_METHODS, type DuesPaymentMethod } from '@/lib/types';
 import type { ClubBillFigures, ClubInstallmentState } from '@/lib/club-money-figures';
@@ -34,7 +35,12 @@ import {
 
 export interface BillInstallment {
   id: string; installmentNumber: number; amount: number; dueDate: string; state: ClubInstallmentState; daysLate: number;
-  received: null | { on: string; how: string | null; method: string | null; reference: string | null; recordedBy: string | null; recordedAt: string };
+  received: null | {
+    on: string; how: string | null; method: string | null; reference: string | null; recordedBy: string | null; recordedAt: string;
+    /** Its line sits in a CLOSED fiscal year (Stage 3c, Ask 8d): Undo is not offered — to undo it, reopen the year. */
+    locked?: boolean;
+    lockedIn?: { yearName: string; reopen: string | null } | null;
+  };
   sent: null | { on: string; how: string | null; method: string | null; reference: string | null; sentBy: string | null; sentAt: string };
   undone: null | { at: string; by: string | null; reason: string };
 }
@@ -72,7 +78,10 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
   const asOf = tournamentToday();
   const f = bill.figures;
   const nextDue = f.oldestOverdueDate ?? f.nextDue?.dueDate ?? null;
-  const anyReceived = bill.installments.some(i => i.received);
+  // ⚖ A payment recorded in a CLOSED fiscal year can't be undone here (Ask 8d): its Undo is absent, one locked
+  // sentence in its place. A payment still OWED on a closed year's bill stays receivable (dated today, in the open year).
+  const anyReceived = bill.installments.some(i => i.received && !i.received.locked);
+  const lockedIn = bill.installments.find(i => i.received?.locked)?.received?.lockedIn ?? null;
   const owes = f.outstanding > 0;
   return (
     <KitDialog
@@ -121,6 +130,12 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
       {canMove && anyReceived && (
         <p className={moneyKit.quietDoor}>
           <RowAction quiet onClick={onUndo}>Undo a payment</RowAction>
+        </p>
+      )}
+      {lockedIn && (
+        <p className={fy.lockedNote}>
+          <Lock size={13} aria-hidden className={fy.lockedNoteIcon} />
+          <span>{lockedRecordWords('undo', lockedIn.yearName, lockedIn.reopen)}</span>
         </p>
       )}
     </KitDialog>
@@ -222,7 +237,7 @@ export function UndoWindow({ allocation, bill, q, onClose, onDone }: {
   onClose: () => void;
   onDone: (text: string | null, keepOpen?: boolean) => void;
 }) {
-  const received = bill.installments.filter(i => i.received);
+  const received = bill.installments.filter(i => i.received && !i.received.locked);
   const [pick, setPick] = useState(received[received.length - 1]?.id ?? '');
   // Never falls back to another payment: after a re-read the picked one may be gone, and the
   // question then waits, disabled, rather than quietly aiming at a different installment.

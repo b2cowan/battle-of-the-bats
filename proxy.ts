@@ -115,22 +115,38 @@ export async function proxy(request: NextRequest) {
   // Teams layout — which sends a treasurer away, so a page-level forward would never reach the person
   // these pages now belong to (an old bookmark, a notification sent before the move). One hop each.
   if (segments.length >= 4 && segments[0] !== 'api' && segments[1] === 'admin') {
+    /* ⚖ Stage 3c retired the New allocation PAGE into the line's window (Ask 6) and the shared payee's report page
+       into the payee's window (Ask 7). Their addresses — and the older ones that forwarded to them — land in one hop:
+       New allocation → Allocations with the window open (`?new=1`), or, from a line (`?line=`), the Budget with that
+       line open; a payee's report → Payees with that payee's window open (`?payee=`). */
+    const newAllocation = (segments[2] === 'rep-teams' || segments[2] === 'accounting') && segments[3] === 'allocations'
+      && segments[4] === 'new' && segments.length === 5;
+    const fromLine = newAllocation ? request.nextUrl.searchParams.get('line') : null;
     const moved =
-      segments[2] === 'rep-teams' && segments[3] === 'allocations'
+      newAllocation
+        ? `/${segments[0]}/admin/accounting/${fromLine ? 'budget' : 'allocations'}`
+      : segments[2] === 'rep-teams' && segments[3] === 'allocations'
         ? `/${segments[0]}/admin/accounting/allocations${segments.length > 4 ? `/${segments.slice(4).join('/')}` : ''}`
       : segments[2] === 'rep-teams' && segments[3] === 'payment-requests' && segments.length === 4
         ? `/${segments[0]}/admin/accounting/payment-requests`
       : segments[2] === 'accounting' && segments[3] === 'ledger' && segments.length === 5
         ? `/${segments[0]}/admin/accounting/ledger`
-      // Stage 3b retired the budget line's own Allocate page into New allocation, opened from the line.
+      : segments[2] === 'accounting' && segments[3] === 'payees' && segments.length === 5
+        ? `/${segments[0]}/admin/accounting/payees`
+      // Stage 3b retired the budget line's own Allocate page into New allocation, opened from the line (3c: its window).
       : segments[2] === 'accounting' && segments[3] === 'budget' && segments[4] === 'allocate' && segments.length === 6
-        ? `/${segments[0]}/admin/accounting/allocations/new`
+        ? `/${segments[0]}/admin/accounting/budget`
       : null;
     if (moved) {
       const url = request.nextUrl.clone();
       url.pathname = moved;
       if (segments[3] === 'ledger') url.searchParams.set('book', segments[4]);
       if (segments[3] === 'budget') url.searchParams.set('line', segments[5]);
+      if (segments[3] === 'payees') url.searchParams.set('payee', segments[4]);
+      if (newAllocation) {
+        url.searchParams.delete('year');
+        if (!fromLine) url.searchParams.set('new', '1');
+      }
       return NextResponse.redirect(url, { status: 307 });
     }
   }

@@ -27,7 +27,8 @@ const REPO = path.join(import.meta.dirname, '..', '..');
 const BVA = 'app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx';
 const BUDGET = 'app/[orgSlug]/admin/accounting/budget/page.tsx';
 const OVERVIEW = 'app/[orgSlug]/admin/accounting/page.tsx';
-const NEW_ALLOC = 'app/[orgSlug]/admin/accounting/allocations/new/page.tsx';
+/* Stage 3c retired the New allocation PAGE into the line window's one form (Ask 6); "one way to bill teams" lives there. */
+const NEW_ALLOC = 'components/admin/kit/club/money/AllocationWindow.tsx';
 const COACH_BVA = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx';
 const COACH_BUDGET = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx';
 const COACH_CLUB = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx';
@@ -115,14 +116,13 @@ describe('4. the drawn removals stay removed', () => {
 
 describe('5. one way to bill teams', () => {
   const code = readCode(NEW_ALLOC);
-  it('from a line, the line is the source — never an entry id', () => {
-    assert.match(code, /\.\.\.\(line \? \{ sourceBudgetLineId: line\.id \} : \{ sourceEntryId:/);
-    assert.match(code, /\{!fromLine && <div className=\{styles\.field\}>\s*<label className=\{styles\.label\} htmlFor="alloc-entry">/);
-    assert.match(code, /const fromLine = !!lineId && lineProblem !== 'missing';/, 'the line\'s form from the first paint, never the plain form while the line loads');
+  it('the line is the source — never an entry id (3c: the pasted ledger-entry id left the form, C17)', () => {
+    assert.match(code, /sourceBudgetLineId: source\?\.id \?\? null/);
+    assert.doesNotMatch(code, /sourceEntryId|alloc-entry|Org Ledger Entry ID/);
   });
-  it('the amount is capped at what is left on the line, and Back returns to the Budget', () => {
-    assert.match(code, /line && t > \(line\.notAllocated \?\? 0\)/);
-    assert.match(code, /backTo=\{lineId \? \{ href: `\$\{base\}\/accounting\/budget`, label: 'Budget' \}/);
+  it('the amount is capped at what is left on the line, and Cancel returns to the line (the window, no page)', () => {
+    assert.match(code, /if \(source && amount > source\.left \+ 0\.005\) return W\.amountUpTo/);
+    assert.match(readCode('components/admin/kit/club/money/BudgetWindows.tsx'), /onCancel=\{\(\) => setAllocating\(false\)\}/);
   });
 });
 

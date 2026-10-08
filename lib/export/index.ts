@@ -12,7 +12,7 @@ export { generateCSV, downloadCSVBlob } from './csv';
 
 export type { XlsxRowStyle } from './xlsx';
 export { downloadXLSX } from './xlsx';
-export type { XlsxNote, XlsxMasthead, XlsxFooterMark } from './xlsx';
+export type { XlsxNote, XlsxMasthead, XlsxFooterMark, XlsxExtraSheet } from './xlsx';
 export { loadBrandMark, BRAND_MARK_SRC } from './brand-mark';
 
 export type { ICSEventInput, ICSInstantEventInput } from './ics';

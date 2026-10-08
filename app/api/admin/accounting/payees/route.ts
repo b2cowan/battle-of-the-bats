@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { resolveClubMoney } from '@/lib/club-money-route';
+import { canMoveClubMoney } from '@/lib/member-access';
 import { searchOrgPayees, createOrgPayee } from '@/lib/db';
 import { listClubPayees } from '@/lib/club-payees';
 
@@ -18,7 +19,9 @@ export const GET = withObservability(async (req: Request) => {
   const { ctx } = r;
   const url = new URL(req.url);
   if (url.searchParams.get('all') === '1') {
-    return NextResponse.json({ payees: await listClubPayees(ctx.org.id) });
+    // `canMove`: whether this reader may rename, share, merge or delete (3a’s one money rule) — a payee’s window
+    // shows its pencil only then (the record standard: no pencil for a reader).
+    return NextResponse.json({ payees: await listClubPayees(ctx.org.id), canMove: canMoveClubMoney(ctx, ctx.org) });
   }
   const payees = await searchOrgPayees(ctx.org.id, url.searchParams.get('q') ?? '');
   return NextResponse.json({ payees });

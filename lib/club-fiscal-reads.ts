@@ -19,7 +19,7 @@ import {
 } from './club-fiscal-year';
 import { closerNames } from './club-fiscal-year-server';
 import { NOT_FILED_ID } from './club-ledger';
-import { OUTSIDE_YOUR_GROUPS_WORD } from './club-money-words';
+import { NOT_FILED_WORD, OUTSIDE_YOUR_GROUPS_WORD } from './club-money-words';
 import {
   buildAgainstLastYear, buildYearEndReport, compareSpans, holdsBooks, scopeCloseSnapshot, statementOrder,
   type AgainstLastYear, type CloseSnapshot, type YearEndReport,
@@ -100,9 +100,9 @@ export interface YearOpenMoney {
   installments: { count: number; amount: number; overdue: CountAndAmount; sent: CountAndAmount; upcoming: CountAndAmount; rows: OpenInstallmentRow[] };
   requests: { count: number; amount: number; holdingPayout: number; rows: OpenRequestRow[] };
   /** Lines in the year filed under no budget word (the Statement's "Not filed"); the door is the Ledger narrowed to them. */
-  unfiled: { count: number; amount: number; moneyIn: number; moneyOut: number; ledger: { from: string; to: string; category: string } };
+  unfiled: { count: number; amount: number; moneyIn: number; moneyOut: number; ledger: { from: string; to: string; category: string; book?: string } };
   /** Lines still pending in the year (a cheque not cleared); the door is the Ledger narrowed to pending. */
-  pending: { count: number; amount: number; rows: OpenLineRow[]; ledger: { from: string; to: string; status: 'pending' } };
+  pending: { count: number; amount: number; rows: OpenLineRow[]; ledger: { from: string; to: string; status: 'pending'; book?: string } };
 }
 
 export interface CloseQuestion {
@@ -163,6 +163,16 @@ async function planLineCount(yearId: string | null): Promise<number> {
   return r.count ?? 0;
 }
 
+/** The Ledger opens on ONE book: a door to a year's lines opens on the book holding most of them (the General
+ *  ledger by default when there are none). Lines spread over several books leave the rest one Book pill away. */
+function busiestBook(lines: readonly { ledgerId: string }[]): { book?: string } {
+  const count = new Map<string, number>();
+  for (const l of lines) count.set(l.ledgerId, (count.get(l.ledgerId) ?? 0) + 1);
+  let best: string | undefined, most = 0;
+  for (const [id, n] of count) if (n > most) { best = id; most = n; }
+  return best ? { book: best } : {};
+}
+
 /**
  * THE CLOSE QUESTION: what closing `year` locks, what carries, and the four kinds of open money still in it —
  * each counted, totalled, and a door. Never blocks (Ask 2); `canClose`/`refusal` say only what the step itself
@@ -214,12 +224,13 @@ export async function closeQuestion(
     unfiled: {
       count: unfiled.length, amount: sumMoney(unfiled),
       moneyIn: sumMoney(unfiled.filter(l => clubMovement(l) === 'in')), moneyOut: sumMoney(unfiled.filter(l => clubMovement(l) === 'out')),
-      ledger: { from: year.firstDay, to: year.lastDay, category: NOT_FILED_ID },
+      // The Ledger narrows by the Category's WORD (its filter's own value), never the filing's id.
+      ledger: { from: year.firstDay, to: year.lastDay, category: NOT_FILED_WORD, ...busiestBook(unfiled) },
     },
     pending: {
       count: pending.length, amount: sumMoney(pending),
       rows: pending.map(l => ({ entryId: l.id, ledgerId: l.ledgerId, bookName: l.bookName, date: l.entryDate, description: l.description, amount: l.amount, direction: clubMovement(l) as 'in' | 'out' })),
-      ledger: { from: year.firstDay, to: year.lastDay, status: 'pending' },
+      ledger: { from: year.firstDay, to: year.lastDay, status: 'pending', ...busiestBook(pending) },
     },
   };
 

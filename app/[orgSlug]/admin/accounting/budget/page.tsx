@@ -24,6 +24,18 @@
  * WHO WRITES: 3a's one money rule (owner, treasurer, an admin with Accounting — Ask 4d), answered by the
  * server as `canMove`. Everyone who can open Accounting reads.
  *
+ * ⚖ STAGE 3c — THE FISCAL YEAR (hub v46, specimens 1–4; Asks 1, 4, 5, 9):
+ *   · Tools › Fiscal year, the FIRST row above Categories: the year's record (when it starts, its name, the closed
+ *     years) — read by anyone who opens Accounting, edited by a money mover (`FiscalYearWindow`).
+ *   · a CLOSED year reads IN PLACE (Ask 1): the pill's lock, one line under the toolbar (closed by / on, Reopen on
+ *     the latest), and every write ABSENT, never greyed — the server answers `canMove` false, so Add line, Start
+ *     from, the line's pencil and Allocate are not drawn, and Tools keeps only its reads; an unbilled part says the
+ *     club paid it. Nothing here asks "is it closed?" a second way: `canMove` is the one answer.
+ *   · the year that opens (Ask 4): once the year before is closed, the opening row wears the lock and says where
+ *     it came from.
+ *   · a new club (Ask 5): under its first, empty plan, one quiet line with an olive door to the window — only while
+ *     the club has never set its year (it still reads January) and nothing is planned in any year.
+ *
  * ⚰ THE OLD PAGE (four cards, the in-row ✎ / 🗑 / "View Allocation →" / "Allocate to Teams", the periods
  * fold, the foot panels) and its stylesheet retired with this page, and so did the old Allocate page.
  */
@@ -46,6 +58,8 @@ import BudgetPlanList, { lineHasUndated, planFoldKeys, type WhenFilter } from '@
 import {
   AddLineWindow, BudgetLineWindow, CategoriesWindow, FromTheTeamsWindow, TeamWordsWindow,
 } from '@/components/admin/kit/club/money/BudgetWindows';
+import { FiscalYearWindow, ReopenYearQuestion, YearLine } from '@/components/admin/kit/club/money/FiscalYearParts';
+import fy from '@/components/admin/kit/club/money/FiscalYear.module.css';
 import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/components/admin/kit/club/money/ClubMoneyExport';
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -55,9 +69,10 @@ import { PLAN_LADDER_LABEL } from '@/lib/coach-budget-totals';
 import { GRANULARITY_LABEL, PERIOD_GRANULARITIES, whenSummary, whenSummaryText, type PeriodGranularity } from '@/lib/coach-budget-periods-view';
 import { budgetPeriodGridColumns, budgetPeriodGridRows, type MoneyRowKind } from '@/lib/coach-money-exports';
 import {
-  BUDGET_BAND_WORDS, FROM_THE_TEAMS_SPREAD_NOTE, FROM_THE_TEAMS_WORD, budgetOpeningNote, emptyYearWords,
-  netForYearWord, openingBalanceRowWord, outsideTheYearNote,
+  BUDGET_BAND_WORDS, FISCAL_YEAR_WINDOW_WORDS, FROM_THE_TEAMS_SPREAD_NOTE, FROM_THE_TEAMS_WORD, budgetOpeningNote,
+  carriedOpeningNote, emptyYearWords, netForYearWord, openingBalanceRowWord, outsideTheYearNote,
 } from '@/lib/club-money-words';
+import { FISCAL_YEAR_WORD } from '@/lib/club-fiscal-year';
 import { clubYearSpan } from '@/lib/club-money-figures';
 import type { FiscalYearOption, FiscalYearRead } from '@/lib/club-fiscal-year';
 import type { ClubPlan, ClubPlanWithPeriods, PlanLineRow } from '@/lib/club-budget-report';
@@ -74,7 +89,7 @@ interface PlanRead {
   plan: ClubPlanWithPeriods;
 }
 
-type Win = 'add' | 'teams' | 'categories' | 'words' | null;
+type Win = 'add' | 'teams' | 'categories' | 'words' | 'year' | 'reopen' | null;
 
 /** The List's file: the plan as it reads, revenue first, each line with its word, When and the plan's three money
  *  columns; the plan's close under it (session 1's call list: "its rows gain Allocated and Collected, and Revenue"). */
@@ -207,6 +222,11 @@ export default function BudgetTab() {
   // The newest earlier fiscal year that has lines (keys are first days, so they sort as dates).
   const fromYear = read.years.filter(y => y.key < plan.year.key && y.lines > 0).sort((a, b) => b.key.localeCompare(a.key))[0] ?? null;
   const words = emptyYearWords(plan.year.name, fromYear?.name ?? null);
+  /* A new club meets the year on its first, empty plan (Ask 5): only while it still reads January (it has never set
+     a first month), nothing is planned in any year and nothing is closed — so nothing has to move. */
+  const newClub = isEmpty && canMove && read.years.every(y => y.lines === 0 && !y.locked)
+    && plan.year.firstDay.slice(5, 7) === '01' && plan.year.months === 12;
+  const nextYearName = read.years.filter(y => y.key > plan.year.key).sort((a, b) => a.key.localeCompare(b.key))[0]?.name ?? '';
   const firstDay = clubYearSpan(plan.year).first;
   const toggle = (set: (fn: (s: Set<string>) => Set<string>) => void) => (key: string) =>
     set(s => { const n = new Set(s); if (n.has(key)) n.delete(key); else n.add(key); return n; });
@@ -270,6 +290,7 @@ export default function BudgetTab() {
             {!isPhone && exportButton}
             <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={15} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools">
               {isPhone && foldKeys.length > 0 && <CoachToolbarMenuItem label={foldWord} onSelect={foldAll} />}
+              <CoachToolbarMenuItem label={FISCAL_YEAR_WORD} hint={FISCAL_YEAR_WINDOW_WORDS.toolsHint} onSelect={() => setWin('year')} />
               <CoachToolbarMenuItem label="Categories" hint="Rename the club’s shared headings" onSelect={() => setWin('categories')} />
               <CoachToolbarMenuItem label="Words your teams use" hint="Publish a team’s word to every team" onSelect={() => setWin('words')} />
               {isPhone && !isEmpty && (
@@ -307,6 +328,7 @@ export default function BudgetTab() {
           <button type="button" className={`${shared.btnGhost} ${bud.collapseAllBtn}`} onClick={foldAll}>{foldWord}</button>
         )}
       </CoachListToolbar>
+      <YearLine year={read.year} onReopen={() => setWin('reopen')} />
 
       {isEmpty ? (
         /* C10: an empty year — the compact tier: one sentence, the fact, the one lime action. */
@@ -323,12 +345,20 @@ export default function BudgetTab() {
               <button type="button" className={words.start ? 'btn btn-outline' : 'btn btn-lime'} onClick={() => setWin('add')}>Add a line</button>
             </div>
           )}
+          {newClub && (
+            <p className={cr.emptyYearBody}>
+              {FISCAL_YEAR_WINDOW_WORDS.newClub}{' '}
+              <button type="button" className={fy.inlineDoor} onClick={() => setWin('year')}>{FISCAL_YEAR_WINDOW_WORDS.newClubDoor}</button>
+            </p>
+          )}
         </div>
       ) : (
         <div className={cr.report}>
           {view === 'list' ? (
             <BudgetPlanList
               plan={plan}
+              locked={plan.year.locked}
+              carriedFrom={read.year.carriedFrom}
               when={hasUndated ? when : 'all'}
               closed={closed}
               onToggle={toggle(setClosed)}
@@ -347,7 +377,9 @@ export default function BudgetTab() {
               duesHref={`${base}/allocations`}
               leadRow={{ name: FROM_THE_TEAMS_WORD, title: 'See the allocations it adds up', onOpen: () => setWin('teams') }}
               spanWord="year"
-              openingNote={budgetOpeningNote(plan.openingBalance, firstDay)}
+              openingNote={read.year.carriedFrom
+                ? carriedOpeningNote(fmtSigned(plan.openingBalance), read.year.carriedFrom.name)
+                : budgetOpeningNote(plan.openingBalance, firstDay)}
               beyondNote={outsideTheYearNote(plan.year.name)}
               closingNote={plan.revenue.fromTheTeams.allocations.length > 0 ? FROM_THE_TEAMS_SPREAD_NOTE : undefined}
             />
@@ -363,11 +395,17 @@ export default function BudgetTab() {
           q={q}
           orgSlug={slug}
           canMove={canMove}
+          locked={plan.year.locked}
           categories={categories ?? []}
           accountingBase={base}
           onChanged={changed}
           onClose={() => setLineId(null)}
         />
+      )}
+      {win === 'year' && <FiscalYearWindow q={q} onChanged={changed} onClose={() => setWin(null)} />}
+      {win === 'reopen' && (
+        <ReopenYearQuestion q={q} year={read.year} nextName={nextYearName}
+          onDone={text => { setWin(null); changed(text); }} onClose={() => setWin(null)} />
       )}
       {win === 'add' && (
         <AddLineWindow

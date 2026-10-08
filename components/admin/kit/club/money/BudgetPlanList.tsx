@@ -19,7 +19,10 @@
  *     in a cell (the table standard as amended 2026-09-29). A category row folds — right while folded,
  *     down while open — and starts open (the coach's closed-set rule: a new category arrives showing).
  *   · The plan closes on the coach's three rows: the year's opening balance (worked out from the books —
- *     Ask 5), its net, its closing balance — red brackets only below zero (a balance's rule).
+ *     Ask 5), its net, its closing balance — red brackets only below zero (a balance's rule). ⚖ Stage 3c (Ask 4):
+ *     once the year before is CLOSED the opening is its closing, locked — the row wears the lock and one caption
+ *     saying where it came from. On a CLOSED year (Ask 1) a line's unbilled part can no longer be allocated, so its
+ *     caption says what happened: the club paid it.
  *   · On a phone it is the coach's scrolling table under pinned names, the When column riding under each
  *     line's name, categories kept as rows.
  *
@@ -33,7 +36,11 @@ import CoachScrollX from '@/components/coaches/CoachScrollX';
 import { balanceFigure } from '@/components/coaches/MoneyPeriodGrid';
 import { PLAN_LADDER_LABEL } from '@/lib/coach-budget-totals';
 import { REVENUE_EMPTY_PROMPT, whenSummary } from '@/lib/coach-budget-periods-view';
-import { FROM_THE_TEAMS_WORD, netForYearWord, notAllocatedCaption, openingBalanceRowWord } from '@/lib/club-money-words';
+import {
+  FROM_THE_TEAMS_WORD, YEAR_LINE_WORDS, carriedOpeningWords, netForYearWord, notAllocatedCaption, openingBalanceRowWord,
+} from '@/lib/club-money-words';
+import { LockMark } from './YearPill';
+import fy from './FiscalYear.module.css';
 import { clubYearSpan, sumMoney } from '@/lib/club-money-figures';
 import type { ClubPlan, ClubPlanPeriod, PlanCategory, PlanLineRow } from '@/lib/club-budget-report';
 import { money } from './MoneyKit';
@@ -72,8 +79,12 @@ function WhenChip({ periods, total, className }: { periods: readonly ClubPlanPer
 
 const sumOf = (xs: readonly number[]) => sumMoney(xs.map(amount => ({ amount })));
 
-export default function BudgetPlanList({ plan, when, closed, onToggle, onOpenLine, onOpenTeams }: {
+export default function BudgetPlanList({ plan, when, closed, onToggle, onOpenLine, onOpenTeams, locked = false, carriedFrom = null }: {
   plan: ClubPlan;
+  /** The year is CLOSED (Ask 1): an unbilled part reads "the club paid it". */
+  locked?: boolean;
+  /** The year before, when it is closed: the opening row is its closing, locked (Ask 4). */
+  carriedFrom?: { name: string; closedAt: string } | null;
   when: WhenFilter;
   /** The categories folded shut (the coach's closed-set: a new category arrives open). */
   closed: ReadonlySet<string>;
@@ -134,7 +145,9 @@ export default function BudgetPlanList({ plan, when, closed, onToggle, onOpenLin
           <span className={shared.moneyGridExpandSpacer} />
           <span className={bud.lineStack}>
             <span className={bud.lineName}>{l.description}</span>
-            {left && <span className={cr.notAllocated}>{notAllocatedCaption(l.notAllocated ?? 0)}</span>}
+            {left && <span className={cr.notAllocated}>{locked
+              ? `${money(l.notAllocated ?? 0)} not allocated · ${YEAR_LINE_WORDS.clubPaid}`
+              : notAllocatedCaption(l.notAllocated ?? 0)}</span>}
             <WhenChip periods={l.periods} total={l.planned} className={bud.whenUnderName} />
           </span>
         </th>
@@ -243,7 +256,10 @@ export default function BudgetPlanList({ plan, when, closed, onToggle, onOpenLin
           {!filtered && (
             <>
               <tr className={`${shared.moneyGridFlow} ${shared.moneyGridFlowFirst}`}>
-                <th scope="row" className={bud.lead}>{openingBalanceRowWord(firstDay)}</th>
+                <th scope="row" className={bud.lead}>
+                  {openingBalanceRowWord(firstDay)}
+                  {carriedFrom && <><LockMark size={12} /><span className={fy.carried}>{carriedOpeningWords(carriedFrom.name, carriedFrom.closedAt)}</span></>}
+                </th>
                 <td className={bud.schedCell} /><td>{balanceFigure(plan.openingBalance, false)}</td><td /><td /><td />
               </tr>
               <tr className={shared.moneyGridFlow}>

@@ -2,7 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { refused, type Refused } from './club-money-route';
 import {
-  closedThrough, fiscalYearOf, readFiscalYearParam,
+  closedThrough, fiscalYearOf, latestClosedYear, previousFiscalYear, readFiscalYearParam,
   type FiscalSetting, type FiscalYear, type FiscalYearRead, type FiscalYearRow,
 } from './club-fiscal-year';
 import { planClosedWords, recordedInClosedYearWords, yearClosedWords } from './club-money-words';
@@ -56,12 +56,27 @@ export function fiscalYearForRequest(req: Request, setting: FiscalSetting, today
 export async function describeFiscalYear(
   orgId: string, year: FiscalYear, setting: FiscalSetting, today: string, canMove: boolean,
 ): Promise<FiscalYearRead> {
-  const names = year.closed?.by ? await closerNames(orgId, setting) : {};
+  // Its latest Reopen (a year with no row was never closed, so has none), then ONE name lookup for both people.
+  const lastReopen = year.id
+    ? await supabaseAdmin.from('org_fiscal_year_reopenings').select('reopened_at, reopened_by, reason')
+      .eq('fiscal_year_id', year.id).order('reopened_at', { ascending: false }).limit(1)
+      .then(r => { if (r.error) throw r.error; return r.data?.[0] ?? null; })
+    : null;
+  const people = [year.closed?.by, lastReopen?.reopened_by].filter((x): x is string => !!x);
+  const nameOf = people.length ? await resolvePersonNamer(orgId, people) : null;
+  const reopenerName = lastReopen?.reopened_by ? nameOf?.(lastReopen.reopened_by) ?? null : null;
+  const before = previousFiscalYear(year, setting);
+  const latest = latestClosedYear(setting);
   return {
     ...year,
-    closedByName: year.closed?.by ? names[year.closed.by] ?? null : null,
+    closedByName: year.closed?.by ? nameOf?.(year.closed.by) ?? null : null,
     current: fiscalYearOf(today, setting).key === year.key,
     canWrite: canMove && !year.locked,
+    reopened: lastReopen ? { at: lastReopen.reopened_at, byName: reopenerName, reason: lastReopen.reason } : null,
+    latestClosed: latest ? { key: latest.key, name: latest.name } : null,
+    canReopen: canMove && latest !== null && latest.key === year.key,
+    canMove,
+    carriedFrom: before.closed ? { key: before.key, name: before.name, closedAt: before.closed.at } : null,
   };
 }
 
@@ -80,12 +95,7 @@ export async function closerNames(orgId: string, setting: FiscalSetting): Promis
 }
 
 /** The year Reopen would unlock: the latest closed year, when this person can move the club's money. */
-function reopenable(setting: FiscalSetting, canMove: boolean): FiscalYear | null {
-  const through = closedThrough(setting);
-  if (!through || !canMove) return null;
-  const latest = setting.rows.find(r => r.closedAt && r.lastDay === through);
-  return latest ? fiscalYearOf(latest.firstDay, setting) : null;
-}
+const reopenable = (setting: FiscalSetting, canMove: boolean): FiscalYear | null => (canMove ? latestClosedYear(setting) : null);
 
 /** What a closed-year refusal says, and the figures the screen reads beside it. */
 function closedRefusal(

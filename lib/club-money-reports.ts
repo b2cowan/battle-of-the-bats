@@ -29,7 +29,10 @@ import { PLAN_LADDER_LABEL } from './coach-budget-totals';
 import type { ExportColumnDef } from './export';
 import type { ExportRow, MoneyRowKind } from './coach-money-exports';
 import type { ClubMonthsFeed } from './club-budget-report';
-import { OTHER_BOOKS_WORD, netForYearWord } from './club-money-words';
+import type { AgainstLastYear, YearEndReport } from './club-year-compare';
+import { AGAINST_LAST_YEAR_WORDS, OTHER_BOOKS_WORD, YEAR_END_NO_TEAM_CASH, YEAR_END_WORDS, netForYearWord } from './club-money-words';
+import { fmt as paperMoney } from './coach-money-summary';
+import { formatStoredDate } from './timezone';
 import { sumMoney } from './club-money-figures';
 
 const note = (id: string, segments: NoteSegment[]): ReportNote => ({ id, tone: 'note', segments });
@@ -270,4 +273,128 @@ export function clubMonthsFile(
     push(open, 'total'); push(net, 'total'); push(close, 'total');
   }
   return { columns, rows, kinds };
+}
+
+/**
+ * Compare › Against last year as a file (Stage 3c, Ask 8c) — the shape on screen: Category / line · this year · last
+ * year · Change (this − last, signed), revenue then expenses then the net. The two year columns are headed by the
+ * years' names, as the screen's are.
+ */
+export function clubAgainstLastYearFile(
+  compare: AgainstLastYear, thisYear: string,
+): { columns: ExportColumnDef[]; rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[] } {
+  const columns: ExportColumnDef[] = [
+    { label: 'Category / line item', key: 'item', format: 'text' },
+    { label: thisYear, key: 'thisYear', format: 'currency' },
+    { label: compare.lastYear.name, key: 'lastYear', format: 'currency' },
+    { label: AGAINST_LAST_YEAR_WORDS.change, key: 'change', format: 'currency' },
+  ];
+  const rows: ExportRow[] = [];
+  const kinds: (MoneyRowKind | undefined)[] = [];
+  const push = (r: ExportRow, k?: MoneyRowKind) => { rows.push(r); kinds.push(k); };
+  const band = (label: string, sec: AgainstLastYear['revenue'], total: string) => {
+    push({ item: label.toUpperCase() }, 'section');
+    for (const c of sec.categories) {
+      push({ item: c.categoryName, thisYear: c.thisYear, lastYear: c.lastYear, change: c.change }, 'category');
+      for (const i of c.items) push({ item: `  — ${i.itemName}`, thisYear: i.thisYear, lastYear: i.lastYear, change: i.change }, 'item');
+    }
+    push({ item: total, thisYear: sec.thisYear, lastYear: sec.lastYear, change: sec.change }, 'total');
+  };
+  band(PLAN_LADDER_LABEL.revenueBand, compare.revenue, PLAN_LADDER_LABEL.totalRevenue);
+  band(PLAN_LADDER_LABEL.expensesBand, compare.expenses, PLAN_LADDER_LABEL.totalExpenses);
+  push({ item: 'Net for the year', thisYear: compare.net.thisYear, lastYear: compare.net.lastYear, change: compare.net.change }, 'total');
+  return { columns, rows, kinds };
+}
+
+// ── The year-end report (Club Tier Stage 3c, specimen 5) ────────────────────────────────────────
+
+/** A variance or a change on paper, signed (a figure is the board report's own money cell, `paperMoney`). */
+const paperSigned = (n: number) => (Math.abs(n) <= 0.005 ? '$0.00' : `${n > 0 ? '+' : '−'}${paperMoney(Math.abs(n))}`);
+
+/** A section of a report of several (`MoneyDownload.sections`): its heading, its columns, its rows. */
+type ReportSectionFile = { label: string; headers: string[]; rows: (string | number)[][] };
+
+/**
+ * THE YEAR-END REPORT AS A FILE, in the drawing's order (hub `#s3c-papers`): the Statement against its budget and
+ * against last year is the data table (category by category, as the printed page reads it); then the year at a
+ * glance, the club's books at both ends, the teams' standing with the club at the close, and what carried — each a
+ * section of its own (a PDF table, an Excel sheet). The one line in place of the teams' cash rides the notes, with
+ * the variance key. Read only from locked figures (the server's `YearEndReport`).
+ */
+export function clubYearEndFile(r: YearEndReport): {
+  columns: ExportColumnDef[]; rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[];
+  sections: ReportSectionFile[];
+  notes: ReportNote[];
+} {
+  const W = YEAR_END_WORDS;
+  const last = r.againstLastYear;
+  const columns: ExportColumnDef[] = [
+    { label: 'Category', key: 'item', format: 'text' },
+    { label: 'Budgeted', key: 'budgeted', format: 'currency' },
+    { label: 'Actual', key: 'actual', format: 'currency' },
+    { label: 'Variance', key: 'variance', format: 'currency' },
+    ...(last ? [{ label: last.lastYear.name, key: 'lastYear', format: 'currency' } as ExportColumnDef] : []),
+  ];
+  const sameCategory = (a: { categoryId: string | null; categoryName: string }, b: { categoryId: string | null; categoryName: string }) =>
+    (a.categoryId ? b.categoryId === a.categoryId : b.categoryName === a.categoryName);
+  const lastOf = (dir: 'in' | 'out', c: { categoryId: string | null; categoryName: string }) => {
+    const sec = dir === 'in' ? last?.revenue : last?.expenses;
+    const hit = sec?.categories.find(x => sameCategory(c, x));
+    return hit ? hit.lastYear : last ? 0 : '';
+  };
+  const rows: ExportRow[] = [];
+  const kinds: (MoneyRowKind | undefined)[] = [];
+  const push = (row: ExportRow, k?: MoneyRowKind) => { rows.push(row); kinds.push(k); };
+  const band = (label: string, total: string, dir: 'in' | 'out') => {
+    const sec = dir === 'in' ? r.statement.revenue : r.statement.expenses;
+    const lastSec = dir === 'in' ? last?.revenue : last?.expenses;
+    push({ item: label.toUpperCase() }, 'section');
+    for (const c of sec.categories) {
+      push({ item: c.categoryName, budgeted: c.inPlan ? c.budgeted : '', actual: c.actual, variance: c.variance, lastYear: lastOf(dir, c) }, 'category');
+    }
+    // A category only LAST year had (nothing planned, nothing spent this year) still gets its row — or the
+    // last-year column would not add up to its total.
+    for (const x of lastSec?.categories ?? []) {
+      if (sec.categories.some(c => sameCategory(c, x))) continue;
+      push({ item: x.categoryName, budgeted: '', actual: 0, variance: '', lastYear: x.lastYear }, 'category');
+    }
+    push({ item: total, budgeted: sec.budgeted, actual: sec.actual, variance: sec.variance, lastYear: lastSec ? lastSec.lastYear : '' }, 'total');
+  };
+  band(PLAN_LADDER_LABEL.revenueBand, PLAN_LADDER_LABEL.totalRevenue, 'in');
+  band(PLAN_LADDER_LABEL.expensesBand, PLAN_LADDER_LABEL.totalExpenses, 'out');
+  push({ item: 'Net for the year', budgeted: r.statement.net.budgeted, actual: r.statement.net.actual, variance: r.statement.net.variance, lastYear: last ? last.net.lastYear : '' }, 'total');
+
+  const span = { first: formatStoredDate(r.year.firstDay, { withYear: true }), last: formatStoredDate(r.year.lastDay, { withYear: true }) };
+  const sections: ReportSectionFile[] = [
+    {
+      label: W.atAGlance,
+      headers: [W.openingOn(r.year.firstDay), 'Revenue', 'Expenses', 'Net for the year', W.closingOn(r.year.lastDay)],
+      rows: [[paperMoney(r.atAGlance.opening), paperMoney(r.atAGlance.revenue), paperMoney(r.atAGlance.expenses), paperSigned(r.atAGlance.net), paperMoney(r.atAGlance.closing)]],
+    },
+    {
+      label: W.books,
+      headers: ['Book', span.first, span.last],
+      rows: [
+        ...r.books.map(b => [b.name, paperMoney(b.atStart), paperMoney(b.atEnd)]),
+        [W.booksTotal, paperMoney(r.booksTotal.atStart), paperMoney(r.booksTotal.atEnd)],
+      ],
+    },
+    {
+      label: W.teams,
+      headers: ['Team', 'Billed', 'Collected', 'Still owed'],
+      rows: [
+        ...r.teams.map(t => [t.teamName, paperMoney(t.billed), paperMoney(t.collected), paperMoney(t.owed)]),
+        [`${r.teams.length} ${r.teams.length === 1 ? 'team' : 'teams'}`, paperMoney(r.teamsTotal.billed), paperMoney(r.teamsTotal.collected), paperMoney(r.teamsTotal.owed)],
+      ],
+    },
+  ];
+  const o = r.carried.stillOpen;
+  const carried: (string | number)[][] = [];
+  if (o.installments.count > 0) carried.push([W.carriedInstallments(o.installments.count, (o.installmentTeams ?? []).join(', ')), paperMoney(o.installments.amount)]);
+  if (o.requests.count > 0) carried.push([W.carriedRequests(o.requests.count, (o.requestTeams ?? []).join(', ')), paperMoney(o.requests.amount)]);
+  if (o.pending.count > 0) carried.push([W.carriedPending(o.pending.count, (o.pendingPayees ?? []).join(', ')), paperMoney(o.pending.amount)]);
+  sections.push({ label: W.carried(r.carried.nextYear.name), headers: ['', 'Amount'], rows: carried.length ? carried : [[W.nothingCarried, '']] });
+
+  const note = (id: string, text: string): ReportNote => ({ id, tone: 'note', segments: [{ text }] });
+  return { columns, rows, kinds, sections, notes: [note('year-end-variance', W.varianceKey), note('year-end-team-cash', YEAR_END_NO_TEAM_CASH)] };
 }

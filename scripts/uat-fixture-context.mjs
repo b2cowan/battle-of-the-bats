@@ -511,8 +511,14 @@ export async function resolveAdminContext() {
   // The payee the club SHARES with its teams (Ledger Parity D7) — its report is Club Tier 3b's.
   const sharedPayee = await need('shared payee "Town of Milton"', db.from('org_payees').select('id')
     .eq('org_id', club.id).is('team_id', null).eq('name', 'Town of Milton').eq('shared_with_teams', true).maybeSingle());
-  const line = await need('budget line "Diamond permits — city fields"', db.from('org_budget_lines').select('id')
-    .eq('org_id', club.id).eq('description', 'Diamond permits — city fields').maybeSingle());
+  // ⚠ One per FISCAL year since Club Tier Stage 3c (the closed 2025–26 plan and the open 2026–27 one share the word):
+  // the open year's — the one with money left to allocate, which the Budget opens on.
+  const lines = await need('budget line "Diamond permits — city fields"', db.from('org_budget_lines')
+    .select('id, org_fiscal_years ( first_day, closed_at )')
+    .eq('org_id', club.id).eq('description', 'Diamond permits — city fields'));
+  const line = lines.filter(l => !l.org_fiscal_years?.closed_at)
+    .sort((x, y) => String(y.org_fiscal_years?.first_day ?? '').localeCompare(String(x.org_fiscal_years?.first_day ?? '')))[0];
+  if (!line) throw new FixtureError('No open fiscal year holds the budget line "Diamond permits — city fields" in the admin fixture.', CLUB_REPAIR);
   // The fixture names it for its year ("Diamond fees 2026", Club Tier Stage 3a's money loop).
   const allocation = await need('allocation "Diamond fees <year>"', db.from('rep_cost_allocations').select('id')
     .eq('org_id', club.id).like('description', 'Diamond fees %').order('created_at', { ascending: false }).limit(1).maybeSingle());

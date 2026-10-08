@@ -90,6 +90,7 @@ export default function KitDialog({
   footerStart,
   steps,
   busy = false,
+  wide = false,
 }: {
   kind: 'question' | 'form';
   title: ReactNode;
@@ -121,6 +122,9 @@ export default function KitDialog({
   steps?: { prev: KitStep | null; next: KitStep | null; position: string; positionWide?: string; noun: string };
   /** While a save runs, Escape and the scrim do nothing. */
   busy?: boolean;
+  /** A form whose body is a TABLE widens to fit it (Club Tier 3c: New allocation’s teams, “the window widens to fit
+   *  its table”). A phone fills the screen either way. */
+  wide?: boolean;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -159,7 +163,7 @@ export default function KitDialog({
     >
       <div
         ref={panelRef}
-        className={`${styles.panel} ${kind === 'question' ? styles.question : styles.form}`}
+        className={`${styles.panel} ${kind === 'question' ? styles.question : styles.form}${wide ? ` ${styles.wide}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={ariaLabel ? undefined : titleId}

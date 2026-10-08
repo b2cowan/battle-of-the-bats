@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo, useRef, use, type ReactNode } from 'react';
+import { Fragment, useState, useEffect, useCallback, useMemo, useRef, use, type ReactNode } from 'react';
 import { newMoneyInWordNote } from '@/lib/coach-budget-totals';
 import {
   Building2, ArrowUpRight, ArrowDownLeft, Plus, Trash2, Clock,
   ChevronRight, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
-import { coachWhatTheClubReads } from '@/lib/club-money-words';
+import { EARLIER_SEASON_WORDS, coachWhatTheClubReads, stillOwedFromSeasonWord } from '@/lib/club-money-words';
 import { useOrg } from '@/lib/org-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -610,6 +610,16 @@ export function ClubPanel({
   const bumpMoneyRevision = useBumpMoneyRevision();
 
   const [splits, setSplits] = useState<AllocationSplit[]>([]);
+  /* ⚖ AN UNPAID BILL FROM AN EARLIER SEASON STAYS (Club Tier Stage 3c, Ask 8b — owner 2026-10-07; S3C-05). A bill made
+     on a season that then rolled over used to leave this tab while it was still owed. The read's `earlierSplits` are
+     the team's bills on an EARLIER season with an installment the team hasn't paid; they sit ABOVE this season's
+     bills, under one band per season naming it, until paid. Still to pay the club counts them and says where they are
+     from; Settled this season stays this season's. Paid, an old bill leaves the tab and lives with its season. No
+     year or season is asked for — the read is "still owed" (`coach-history-endpoint-guard` stays green). The club's
+     fiscal year is never named here. */
+  const [earlier, setEarlier] = useState<(AllocationSplit & { season: { id: string; name: string } })[]>([]);
+  /** Every bill on the tab — an earlier season's still owed, then this season's — built once for the reads below. */
+  const allBills = useMemo(() => [...earlier, ...splits], [earlier, splits]);
   const [requests, setRequests] = useState<ClubRequest[]>([]);
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
   const [seasonName, setSeasonName] = useState('');
@@ -809,11 +819,13 @@ export function ClubPanel({
 
       setError(''); // a winning load that succeeded means there is no error any more — see the convention
       const fetchedSplits: AllocationSplit[] = allocData.splits ?? [];
+      const fetchedEarlier: (AllocationSplit & { season: { id: string; name: string } })[] = allocData.earlierSplits ?? [];
       setSplits(fetchedSplits);
+      setEarlier(fetchedEarlier);
       /* A send's mark SETTLES HERE, by value: the first winning read with the installment out of the
          team's hands drops it. Left standing, it came back to life the moment the row went the other
          way (taken back, or undone by the club) and held "We've sent it" at "…". */
-      const left = new Set(fetchedSplits.flatMap(s => s.installments.filter(i => clubInstallmentLeftTeamOn(i)).map(i => i.id)));
+      const left = new Set([...fetchedSplits, ...fetchedEarlier].flatMap(s => s.installments.filter(i => clubInstallmentLeftTeamOn(i)).map(i => i.id)));
       setMarking(prev => (Object.keys(prev).some(id => left.has(id))
         ? Object.fromEntries(Object.entries(prev).filter(([id]) => !left.has(id)))
         : prev));
@@ -859,9 +871,14 @@ export function ClubPanel({
     /* ⚖ THE CLUB'S ONE DEFINITION (Club Tier Stage 3a): Paid and Left mean "the club has it", and a
        payment the team has SENT is never overdue — the same figures the club reads. */
     const all = clubBillFigures(splits.flatMap(s => s.installments), today);
-    const owed = all.outstanding;
-    const owedCount = all.installmentCount - all.receivedCount;
-    const overdueCount = all.overdue.count;
+    const old = clubBillFigures(earlier.flatMap(s => s.installments), today);
+    // Still to pay the club: this season's AND an earlier season's still owed (Ask 8b) — one figure, two parts said.
+    const thisOwed = all.outstanding;
+    const thisOwedCount = all.installmentCount - all.receivedCount;
+    const earlierOwedCount = old.installmentCount - old.receivedCount;
+    const owed = Math.round((thisOwed + old.outstanding) * 100) / 100;
+    const owedCount = thisOwedCount + earlierOwedCount;
+    const overdueCount = all.overdue.count + old.overdue.count;
     const allocationsPaid = all.collected;
 
     const pending = requests.filter(r => r.status === 'pending');
@@ -873,12 +890,13 @@ export function ClubPanel({
       + approved.filter(r => r.requestType === 'payment_to_org').reduce((s, r) => s + r.amount, 0);
 
     return {
-      owed, owedCount, overdueCount,
+      owed, owedCount, overdueCount, thisOwed, earlierOwedCount,
+      earlierSeason: earlier.length > 0 && new Set(earlier.map(e => e.season.id)).size === 1 ? earlier[0].season.name : null,
       waiting: pending.reduce((s, r) => s + r.amount, 0),
       waitingCount: pending.length,
       settledIn, settledOut, settledNet: settledOut - settledIn,
     };
-  }, [splits, requests, today]);
+  }, [splits, earlier, requests, today]);
 
   /* ⚠ PENDING FIRST, ALWAYS, THEN NEWEST. A request awaiting an answer is the only row on this table
      a coach may still act on, and the server already returns the list newest-first — so this is a
@@ -902,13 +920,13 @@ export function ClubPanel({
    */
   const splitFigures = useMemo(() => {
     const byId = new Map<string, typeof EMPTY_FIGURES>();
-    for (const s of splits) {
+    for (const s of allBills) {
       // The club's one definition, per bill (Club Tier Stage 3a) — one pass, to the cent.
       const f = clubBillFigures(s.installments, today);
       byId.set(s.id, { paid: f.collected, outstanding: f.outstanding, overdue: f.overdue.count });
     }
     return byId;
-  }, [splits, today]);
+  }, [allBills, today]);
 
   /** A write on this installment is in flight AND the list has not yet read it back as sent. Since
    *  Club Tier Stage 3a the coach's tap records SENT; the club confirms. */
@@ -930,7 +948,7 @@ export function ClubPanel({
    */
   const rowStates = useMemo(() => {
     const billIs = new Map<string, { attention: boolean; unfiled: boolean; settled: boolean; amount: number }>();
-    for (const s of splits) {
+    for (const s of allBills) {
       const f = splitFigures.get(s.id) ?? { paid: 0, outstanding: 0, overdue: 0 };
       billIs.set(s.id, {
         attention: f.overdue > 0,
@@ -951,7 +969,7 @@ export function ClubPanel({
       });
     }
     return { billIs, reqIs };
-  }, [splits, requests, splitFigures]);
+  }, [allBills, requests, splitFigures]);
 
   /** Does this row survive the chip that is on? `all` never hides anything. */
   const passes = useCallback(
@@ -963,6 +981,18 @@ export function ClubPanel({
   const shownSplits = useMemo(
     () => splits.filter(s => passes(rowStates.billIs.get(s.id))),
     [splits, rowStates, passes]);
+  const shownEarlierBills = useMemo(
+    () => earlier.filter(s => passes(rowStates.billIs.get(s.id))),
+    [earlier, rowStates, passes]);
+  /** An earlier season's still-owed bills, one band per season (oldest first, as the read sends them). */
+  const earlierBands = useMemo(() => {
+    const bands: { season: { id: string; name: string }; splits: (AllocationSplit & { season: { id: string; name: string } })[] }[] = [];
+    for (const e of earlier) {
+      const b = bands.find(x => x.season.id === e.season.id);
+      if (b) b.splits.push(e); else bands.push({ season: e.season, splits: [e] });
+    }
+    return bands;
+  }, [earlier]);
   const shownRequests = useMemo(
     () => orderedRequests.filter(r => passes(rowStates.reqIs.get(r.id))),
     [orderedRequests, rowStates, passes]);
@@ -981,15 +1011,15 @@ export function ClubPanel({
       [...rowStates.billIs.values()].filter(v => v[key]).length
       + [...rowStates.reqIs.values()].filter(v => v[key]).length;
     return {
-      all: splits.length + requests.length,
+      all: earlier.length + splits.length + requests.length,
       attention: count('attention'),
       unfiled: count('unfiled'),
       settled: count('settled'),
     } as Record<ClubFilter, number>;
-  }, [rowStates, splits.length, requests.length]);
+  }, [rowStates, earlier.length, splits.length, requests.length]);
 
-  const recordCount = splits.length + requests.length;
-  const shownCount = shownSplits.length + shownRequests.length;
+  const recordCount = earlier.length + splits.length + requests.length;
+  const shownCount = shownEarlierBills.length + shownSplits.length + shownRequests.length;
   const showFilters = recordCount >= CLUB_FILTER_FLOOR;
 
   /**
@@ -1001,12 +1031,12 @@ export function ClubPanel({
   const hiddenTotal = useMemo(() => {
     if (filter === 'all') return 0;
     const hidden = (
-      splits.filter(s => !passes(rowStates.billIs.get(s.id))).map(s => rowStates.billIs.get(s.id)?.amount ?? 0)
+      allBills.filter(s => !passes(rowStates.billIs.get(s.id))).map(s => rowStates.billIs.get(s.id)?.amount ?? 0)
     ).concat(
       requests.filter(r => !passes(rowStates.reqIs.get(r.id))).map(r => rowStates.reqIs.get(r.id)?.amount ?? 0),
     );
     return Math.round(hidden.reduce((a, b) => a + b, 0) * 100) / 100;
-  }, [filter, splits, requests, rowStates, passes]);
+  }, [filter, allBills, requests, rowStates, passes]);
 
   /* ⚠ A FILTER MUST NOT SURVIVE THE LIST SHRINKING BELOW ITS OWN DOOR. If records are withdrawn or a
      season changes and the chip row stops rendering, a filter left on would hide rows with nothing
@@ -1015,10 +1045,10 @@ export function ClubPanel({
     if (!showFilters && filter !== 'all') setFilter('all');
   }, [showFilters, filter]);
 
-  const hasAnything = splits.length > 0 || requests.length > 0;
+  const hasAnything = earlier.length > 0 || splits.length > 0 || requests.length > 0;
 
   /** The bill whose room is open, from the loaded list — the address alone opens nothing. */
-  const openSplit = useMemo(() => splits.find(s => s.id === openBillId) ?? null, [splits, openBillId]);
+  const openSplit = useMemo(() => allBills.find(s => s.id === openBillId) ?? null, [allBills, openBillId]);
   /* A stale address — a bill from another season, one the club withdrew — must not leave a room
      "open" on nothing. Once the list has loaded without it, the key is dropped, quietly. */
   useEffect(() => {
@@ -1053,13 +1083,86 @@ export function ClubPanel({
        last overdue piece under "Needs attention", filing under "Not filed") has just moved this
        bill out of the active filter. Then the walk falls back to every bill, so Prev/Next keep
        working instead of collapsing to "0 of N" on the very record on screen (`/review`). */
-    const walkList = shownSplits.some(s => s.id === openSplit.id) ? shownSplits : splits;
+    // An earlier season's bill walks with the earlier ones (its band), a this-season bill with this season's.
+    const walkList = shownEarlierBills.some(e => e.id === openSplit.id) ? shownEarlierBills
+      : earlier.some(e => e.id === openSplit.id) ? earlier
+      : shownSplits.some(s => s.id === openSplit.id) ? shownSplits : splits;
     const walk = roomNeighbours(walkList, openSplit.id, s => s.id, s => s.allocationDescription);
     /* The Note column shows only on a bill with something to say — a new bill's three unpaid
        installments would otherwise sit beside an empty heading. */
     const hasNotes = openSplit.installments.some(i => installmentNote(i) != null);
     return { figures, tiles, walk, hasNotes };
-  }, [openSplit, splitFigures, shownSplits, splits]);
+  }, [openSplit, splitFigures, shownSplits, splits, shownEarlierBills, earlier]);
+
+  /** A bill's row on the table — this season's, or an earlier season's still owed (one row, two bands). */
+  const billRow = (split: AllocationSplit) => {
+    const { paid, outstanding, overdue: splitOverdue } =
+      splitFigures.get(split.id) ?? EMPTY_FIGURES;
+    return (
+      <tr
+        key={split.id}
+        className={`${styles.tr} ${styles.rowTappable}`}
+        onClick={() => { if (window.getSelection()?.toString()) return; setOpenBillId(split.id); }}
+      >
+        {/* ⚠ NO `data-label` — DELIBERATE, AND THE RULE IS GENERAL (owner + /design,
+            §134 walk): the lead cell of a card is the card's TITLE, and a title
+            takes no caption. "What" earns its place as a column header, where it
+            tells you what a column of names is; printed above a single name on a
+            phone it is a whole line of chrome saying nothing the name doesn't.
+            The other three labels stay, because "$450.00", "Not filed" and a bare
+            badge genuinely cannot say what they are. The test is that sentence. */}
+        <td className={`${styles.td} ${styles.cardStackCell}`}>
+          {split.allocationDescription}
+          <span className={styles.listRowSub}>{fmt(paid)} paid of {fmt(split.amount)}</span>
+        </td>
+        {/* ⚠ THE CELL READS, IT DOES NOT ACT. The picker that changes this lives in
+            the bill's room, one tap away — see the filing note at the top of this
+            component. */}
+        <td className={styles.td} data-label="Files under">
+          <Filing category={split.budgetCategoryName} item={split.budgetItemName} />
+        </td>
+        <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>
+          {outstanding > 0.005 ? fmt(outstanding) : <span className={styles.mutedInline}>—</span>}
+        </td>
+        <td className={`${styles.td} ${styles.clubStatusCell}`} data-label="Status">
+          <BillStatusBadge overdue={splitOverdue} outstanding={outstanding} />
+        </td>
+        <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
+          <span className={styles.listRowActions}>
+            {/* ⚰ THE ONE-TAP "RECORD AS PAID · $x" PILL STOOD HERE AND IS DELETED
+                (owner, §134 walk — reversing D5 of the 2026-09-02 ruling).
+                It fired on a bill with exactly one unpaid installment, which is a
+                MINORITY of rows, and the cost was paid by all of them: the widest
+                cell sizes the column, so one exceptional row was holding ~260px of
+                table width hostage from "What", "Files under" and "Status" — every
+                row, every render. Against that it saved one tap, on a journey a
+                coach already knows (open the bill, record the piece), and it made
+                the action column say two different things on adjacent rows.
+                ⚠ RECORDING A PAYMENT DID NOT MOVE — it is where it always was, on
+                the installment itself inside the bill's room, and every installment
+                offers it rather than only the last one. That also puts this screen
+                in step with Player Dues, where the one-tap has always lived on the
+                installment and never on the family's list row.
+                ⚠ Do not reintroduce a conditional control in this cell. If a bill
+                ever needs a second action, it belongs in the room beside the first.
+
+                ⚠⚠ A REAL BUTTON — the row's accessible door to its room. A bare
+                clickable <tr> is mouse-only (the 2026-09-02 lesson), and now the
+                room holds the filing control, the door has to be reachable. One
+                glyph on every bill: they all open the same thing. */}
+            <button
+              type="button"
+              className={`${styles.linkBtn} ${styles.listRowToggle}`}
+              onClick={e => { e.stopPropagation(); setOpenBillId(split.id); }}
+              aria-label={`Open ${split.allocationDescription}`}
+            >
+              <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
+            </button>
+          </span>
+        </td>
+      </tr>
+    );
+  };
 
   // ── Writes ───────────────────────────────────────────────────────────────
   /** A 409 on an installment write: the server's sentence, the mark released, the bill re-read quietly. */
@@ -1454,7 +1557,11 @@ export function ClubPanel({
                   <>
                     {standing.owedCount === 0
                       ? 'nothing outstanding'
-                      : `${standing.owedCount} installment${standing.owedCount === 1 ? '' : 's'}`}
+                      : standing.earlierOwedCount === 0
+                        ? `${standing.owedCount} installment${standing.owedCount === 1 ? '' : 's'}`
+                        : standing.earlierOwedCount === standing.owedCount
+                          ? EARLIER_SEASON_WORDS.caption(standing.earlierOwedCount, standing.earlierSeason)
+                          : `${standing.owedCount} installments · ${EARLIER_SEASON_WORDS.withThisSeason(standing.earlierOwedCount, standing.earlierSeason)}`}
                     {standing.overdueCount > 0 && (
                       <> · <span className={styles.clubBandOverdue}>
                         <AlertTriangle size={11} aria-hidden /> {standing.overdueCount} overdue
@@ -1580,7 +1687,8 @@ export function ClubPanel({
                     teamName,
                     emptyMessage: 'Nothing has moved between this team and the club this season.',
                   })}
-                  disabled={recordCount === 0}
+                  // The file is this season’s club money; an earlier season’s bill lives with its season (Ask 8b).
+                  disabled={splits.length + requests.length === 0}
                 />
                 {/* ⚠ RENDERS AT EVERY STATE INCLUDING THE EMPTY ONE: a team with no requests must
                     still have a way to make a first one. */}
@@ -1661,6 +1769,28 @@ export function ClubPanel({
                     </tr>
                   </thead>
                   <tbody>
+                    {/* ── AN EARLIER SEASON'S BILLS STILL OWED (Ask 8b): above this season's, one band per season ── */}
+                    {earlierBands.map(b => {
+                      const shown = b.splits.filter(x => passes(rowStates.billIs.get(x.id)));
+                      const owedHere = Math.round(b.splits.reduce((sum, x) => sum + (splitFigures.get(x.id)?.outstanding ?? 0), 0) * 100) / 100;
+                      return (
+                        <Fragment key={b.season.id}>
+                          <tr className={styles.clubGroupRow}>
+                            <td className={styles.clubGroupCell} colSpan={5}>
+                              <div className={styles.clubGroupInner}>
+                                <span className={styles.clubGroupName}>{stillOwedFromSeasonWord(b.season.name)}</span>
+                                <span className={styles.clubGroupMeta}>
+                                  {b.splits.length} {b.splits.length === 1 ? 'bill' : 'bills'} · {fmt(owedHere)} still to pay
+                                  {filter !== 'all' && <> · {shown.length} of {b.splits.length} shown</>}
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                          {shown.map(billRow)}
+                        </Fragment>
+                      );
+                    })}
+
                     {/* ── BAND ONE: what the club has billed us ─────────────────────────────── */}
                     <tr className={styles.clubGroupRow}>
                       <td className={styles.clubGroupCell} colSpan={5}>
@@ -1671,7 +1801,7 @@ export function ClubPanel({
                               group heading reporting a filtered figure would be a wrong number on a
                               money screen. When a filter is on it says how many of how many. */}
                           {splits.length} {splits.length === 1 ? 'bill' : 'bills'}
-                          {standing.owed > 0.005 && <> · {fmt(standing.owed)} still to pay</>}
+                          {standing.thisOwed > 0.005 && <> · {fmt(standing.thisOwed)} still to pay</>}
                           {filter !== 'all' && <> · {shownSplits.length} of {splits.length} shown</>}
                         </span>
                         </div>
@@ -1694,74 +1824,7 @@ export function ClubPanel({
                           <span className={styles.mutedInline}>No bills match this filter.</span>
                         </td>
                       </tr>
-                    ) : shownSplits.map(split => {
-                      const { paid, outstanding, overdue: splitOverdue } =
-                        splitFigures.get(split.id) ?? EMPTY_FIGURES;
-                      return (
-                        <tr
-                          key={split.id}
-                          className={`${styles.tr} ${styles.rowTappable}`}
-                          onClick={() => { if (window.getSelection()?.toString()) return; setOpenBillId(split.id); }}
-                        >
-                          {/* ⚠ NO `data-label` — DELIBERATE, AND THE RULE IS GENERAL (owner + /design,
-                              §134 walk): the lead cell of a card is the card's TITLE, and a title
-                              takes no caption. "What" earns its place as a column header, where it
-                              tells you what a column of names is; printed above a single name on a
-                              phone it is a whole line of chrome saying nothing the name doesn't.
-                              The other three labels stay, because "$450.00", "Not filed" and a bare
-                              badge genuinely cannot say what they are. The test is that sentence. */}
-                          <td className={`${styles.td} ${styles.cardStackCell}`}>
-                            {split.allocationDescription}
-                            <span className={styles.listRowSub}>{fmt(paid)} paid of {fmt(split.amount)}</span>
-                          </td>
-                          {/* ⚠ THE CELL READS, IT DOES NOT ACT. The picker that changes this lives in
-                              the bill's room, one tap away — see the filing note at the top of this
-                              component. */}
-                          <td className={styles.td} data-label="Files under">
-                            <Filing category={split.budgetCategoryName} item={split.budgetItemName} />
-                          </td>
-                          <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>
-                            {outstanding > 0.005 ? fmt(outstanding) : <span className={styles.mutedInline}>—</span>}
-                          </td>
-                          <td className={`${styles.td} ${styles.clubStatusCell}`} data-label="Status">
-                            <BillStatusBadge overdue={splitOverdue} outstanding={outstanding} />
-                          </td>
-                          <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
-                            <span className={styles.listRowActions}>
-                              {/* ⚰ THE ONE-TAP "RECORD AS PAID · $x" PILL STOOD HERE AND IS DELETED
-                                  (owner, §134 walk — reversing D5 of the 2026-09-02 ruling).
-                                  It fired on a bill with exactly one unpaid installment, which is a
-                                  MINORITY of rows, and the cost was paid by all of them: the widest
-                                  cell sizes the column, so one exceptional row was holding ~260px of
-                                  table width hostage from "What", "Files under" and "Status" — every
-                                  row, every render. Against that it saved one tap, on a journey a
-                                  coach already knows (open the bill, record the piece), and it made
-                                  the action column say two different things on adjacent rows.
-                                  ⚠ RECORDING A PAYMENT DID NOT MOVE — it is where it always was, on
-                                  the installment itself inside the bill's room, and every installment
-                                  offers it rather than only the last one. That also puts this screen
-                                  in step with Player Dues, where the one-tap has always lived on the
-                                  installment and never on the family's list row.
-                                  ⚠ Do not reintroduce a conditional control in this cell. If a bill
-                                  ever needs a second action, it belongs in the room beside the first.
-
-                                  ⚠⚠ A REAL BUTTON — the row's accessible door to its room. A bare
-                                  clickable <tr> is mouse-only (the 2026-09-02 lesson), and now the
-                                  room holds the filing control, the door has to be reachable. One
-                                  glyph on every bill: they all open the same thing. */}
-                              <button
-                                type="button"
-                                className={`${styles.linkBtn} ${styles.listRowToggle}`}
-                                onClick={e => { e.stopPropagation(); setOpenBillId(split.id); }}
-                                aria-label={`Open ${split.allocationDescription}`}
-                              >
-                                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
-                              </button>
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    ) : shownSplits.map(billRow)}
 
                     {/* ── BAND TWO: what we've asked the club ───────────────────────────────── */}
                     <tr className={styles.clubGroupRow}>

@@ -40,8 +40,10 @@ export default function SingleSelectDropdown({
 }: {
   /** Sits to the left of the chosen value — "Group by", "View", "Showing". */
   label: string;
-  /** `detail` is a quiet figure at the option's end (a book's balance — the club's Book pill, Stage 3a). */
-  options: readonly { id: string; label: string; detail?: string }[];
+  /** `detail` is a quiet figure at the option's end (a book's balance — the club's Book pill, Stage 3a). `mark` is a
+   *  GLYPH after the label with its own spoken name (the club's Year pill: a lock on a closed year, a dot on the year
+   *  today falls in — Stage 3c), drawn beside the chosen value in the pill too. Opt-in; no portal strip passes one. */
+  options: readonly { id: string; label: string; detail?: string; mark?: ReactNode }[];
   value: string;
   onChange: (next: string) => void;
   /**
@@ -97,6 +99,7 @@ export default function SingleSelectDropdown({
       }}
     >
       {o.label}
+      {o.mark}
       {o.detail != null && <span className={styles.multiSelectCount}>{o.detail}</span>}
     </button>
   ));
@@ -109,7 +112,7 @@ export default function SingleSelectDropdown({
     <details ref={ref} className={`${styles.multiSelect} ${lead ? styles.multiSelectLead : ''}${shrink ? ` ${styles.multiSelectShrink}` : ''}`}>
       <summary data-pill="summary" className={`${styles.multiSelectSummary}${restQuiet && !atRest ? ` ${styles.multiSelectActive}` : ''}`}>
         <span className={styles.multiSelectLabel}>{label}</span>
-        {!atRest && <span className={styles.multiSelectValue}>{chosenLabel}</span>}
+        {!atRest && <span className={styles.multiSelectValue}>{chosenLabel}{chosen?.mark}</span>}
         <ChevronDown size={14} aria-hidden />
       </summary>
       <div data-pill="panel" className={styles.multiSelectPanel} role="group" aria-label={label}>

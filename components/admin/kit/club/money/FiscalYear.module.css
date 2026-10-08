@@ -1,0 +1,241 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE CLUB'S FISCAL YEAR ON SCREEN (Club Tier Stage 3c, session 2 — built to hub v46, Mockups → Stage 3c).
+   The parts the year adds to the money tabs and their windows, each drawn once:
+
+   · the Year pill's two glyphs — a lock on a closed year, the olive dot on the year today falls in (specimen 2);
+   · a closed year's ONE quiet line under the toolbar, and the Overview's "ended, still open" line (specimen 3);
+   · the Fiscal year window: its reading rows, the months strip, the years a first-month change reshapes
+     (specimen 1);
+   · a question's short-record lists — what is still open, what it locks, what carries (specimen 3);
+   · a field's refusal under it (specimen 3: a date in a closed year).
+
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder strictly.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── The Year pill's glyphs: a mark after the year's name, each with its own spoken name ── */
+.lockMark {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35rem;
+  color: var(--text-tertiary);
+  vertical-align: -1px;
+}
+.nowDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 0.45rem;
+  border-radius: 50%;
+  background: var(--home-olive);
+  vertical-align: 1px;
+}
+
+/* ── A closed (or reopened) year's line, under the toolbar: the lock, who and when, its one action ── */
+.yearLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.yearLine b { color: var(--text-primary); font-weight: 650; }
+.yearLineIcon { flex: none; color: var(--text-tertiary); }
+.yearLineText { flex: 1 1 18rem; min-width: 0; }
+.yearLineAct { margin-left: auto; flex: none; }
+
+/* ── The Overview's ended-year line: once a year has ended and until someone closes it ── */
+.endedLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+  margin: 0 0 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--home-olive);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.endedLine b { color: var(--text-primary); font-weight: 650; }
+.endedIcon { flex: none; color: var(--home-olive); }
+
+/* ── The Fiscal year window ── */
+.read {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9.5rem) 1fr;
+  gap: 0.4rem 0.9rem;
+  margin: 0 0 0.6rem;
+  font-size: var(--type-body);
+}
+.read dt { color: var(--text-tertiary); }
+.read dd { margin: 0; color: var(--text-primary); font-weight: 550; }
+@media (max-width: 640px) { .read { grid-template-columns: 1fr; gap: 0.1rem; } .read dd { margin-bottom: 0.45rem; } }
+
+/* The months strip: a year's twelve (or fewer) months, its first outlined. Initials on a phone. */
+.months {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0.4rem 0 0.15rem;
+}
+.month {
+  padding: 0.38rem 0;
+  border-radius: 4px;
+  background: var(--home-paper);
+  color: var(--text-tertiary);
+  font-size: var(--type-label);
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+}
+.monthOn { background: var(--home-olive-soft); color: var(--home-olive); }
+.monthFirst { box-shadow: inset 0 0 0 1.5px var(--home-olive); }
+.monthWord { display: inline; }
+.monthInitial { display: none; }
+@media (max-width: 640px) { .monthWord { display: none; } .monthInitial { display: inline; } }
+
+/* A question's small-capitals heading (What changes · Still open · What it locks · What carries). */
+.qHead {
+  margin: 0 0 0.3rem;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* The years a first-month change reshapes: one frame of short records, the short one tinted. */
+.years {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 0.5rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+.yearRow {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.yearRow:first-child { border-top: 0; }
+.yearRow b { font-weight: 700; }
+.yearRowSub { font-size: var(--type-support); color: var(--text-tertiary); }
+.yearShort { background: rgba(var(--warning-rgb), 0.07); }
+@media (max-width: 640px) {
+  .yearRow { grid-template-columns: 1fr; gap: 0.1rem; }
+}
+
+/* The question inside the record: its consequence sentence, then its two answers. */
+.consequence { margin: 0.5rem 0 0.75rem; font-size: var(--type-support); line-height: 1.5; color: var(--text-secondary); }
+.answers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+  padding: 0.65rem 0 0.25rem;
+  border-top: 1px solid var(--home-line);
+}
+@media (max-width: 640px) {
+  .answers > * { flex: 1 1 100%; min-height: var(--tap-min, 44px); }
+}
+
+/* ── A question's lists: one frame of short records, each with its figure at the row's end ── */
+.list {
+  margin: 0 0 0.85rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+.listRow {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  width: 100%;
+  padding: 0.45rem 0.7rem;
+  border: 0;
+  border-top: 1px solid var(--home-line);
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  text-align: left;
+  text-decoration: none;
+}
+.listRow:first-child { border-top: 0; }
+a.listRow, button.listRow { cursor: pointer; }
+a.listRow:hover, button.listRow:hover { background: var(--home-olive-soft); }
+a.listRow:focus-visible, button.listRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.listMain { flex: 1; min-width: 0; }
+.listSub { display: block; margin-top: 1px; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+.listFigure { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.listFigureBad { color: var(--danger-light); }
+.listFigureWarn { color: var(--warning); }
+.listEnd { flex: none; align-self: center; color: var(--text-tertiary); }
+@media (max-width: 768px) { a.listRow, button.listRow { min-height: var(--tap-min, 44px); } }
+.twoCol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.9rem; }
+@media (max-width: 640px) { .twoCol { grid-template-columns: 1fr; } }
+
+/* ── A field's refusal under it: why, and the ways out (a date in a closed year) ── */
+.refuse {
+  display: flex;
+  gap: 0.45rem;
+  align-items: flex-start;
+  margin: 0.35rem 0 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--danger-light);
+}
+.refuseIcon { flex: none; margin-top: 2px; }
+/* The refused field itself takes the kit's held edge (ClubReport `.held`), never a second recipe. */
+
+/* A record's one locked sentence where its corrections would be (Undo, Reverse, Void on a closed year). */
+.lockedNote {
+  display: flex;
+  gap: 0.45rem;
+  align-items: flex-start;
+  margin: 0.75rem 0 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.lockedNoteIcon { flex: none; margin-top: 2px; color: var(--text-tertiary); }
+
+/* The Budget's opening row once the year before is closed: the lock, and where it came from. */
+.carried { display: block; margin-top: 1px; font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); }
+
+/* A door inside a sentence (a new club's "Set the fiscal year"): olive text, the button's box stripped. A door is
+   olive text; an action that opens a window is an outlined button (2026-10-01) — this one names the place it opens. */
+.inlineDoor {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 650;
+  color: var(--home-olive);
+  cursor: pointer;
+  text-decoration: none;
+}
+.inlineDoor:hover { text-decoration: underline; }
+.inlineDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 3px; }
+@media (max-width: 768px) {
+  .inlineDoor { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}

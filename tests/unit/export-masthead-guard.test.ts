@@ -34,8 +34,8 @@ const ALLOWED = new Map([
     'the same report one level up, for the club board; no admin-side budget importer exists'],
   ['app/[orgSlug]/admin/accounting/page.tsx',
     'the board report (Club Tier 3b): the Overview written as a document for the board; nothing imports it'],
-  ['app/[orgSlug]/admin/accounting/payees/[payeeId]/page.tsx',
-    'the shared-payee report (Club Tier 3b): what the teams recorded paying one payee; nothing imports it'],
+  /* ⚰ The shared-payee report PAGE (Club Tier 3b) left this list with its Export: Stage 3c moved the report into the
+     payee's window and dropped the file (Ask 7 — one payee's team records are read there). */
 ]);
 
 /** Named so a future reader meets them before they meet the temptation. */

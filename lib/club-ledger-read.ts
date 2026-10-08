@@ -1,6 +1,6 @@
 import 'server-only';
 import { loadFiscalSetting } from './club-fiscal-year-server';
-import { closedThrough } from './club-fiscal-year';
+import { closedThrough, type FiscalSetting } from './club-fiscal-year';
 import { supabaseAdmin } from './supabase-admin';
 import { getClubOwnedLedgers, getLedgerById, resolvePersonNamer } from './db';
 import { fetchAll, fetchAllIn } from './supabase-paging';
@@ -106,6 +106,10 @@ export interface BookRead {
   /** The club's books are closed through this day (its newest closed fiscal year's last day), or null — a line on
    *  or before it is `locked` (Stage 3c). Null on a team's book (the coaches', never locked for the club's year). */
   closedThrough: string | null;
+  /** The club's fiscal years as the screen needs them (Stage 3c): its first month and its rows, without who closed
+   *  them or the closings — so every window answers "is this day locked, in which year, can it be reopened" with the
+   *  one rule (`lockedIn`), never a fetch per date. Null on a team's book. */
+  fiscal: FiscalSetting | null;
   balance: number;
   startingBalance: number;
   endingBalance: number;
@@ -416,6 +420,7 @@ export async function readBook(
   return {
     ledger: { id: ledger.id, name: ledger.name, kind, entityId: ledger.entityId },
     closedThrough: through,
+    fiscal: setting ? { firstMonth: setting.firstMonth, rows: setting.rows.map(r => ({ ...r, closedBy: null, closingBalance: null })) } : null,
     balance: win.balance,
     startingBalance: win.startingBalance,
     endingBalance: win.endingBalance,

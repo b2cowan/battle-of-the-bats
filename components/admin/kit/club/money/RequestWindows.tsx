@@ -16,10 +16,11 @@
  * On a phone the request opens full-screen (a form covers the nav), its answers docked at its foot.
  */
 import { useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Lock } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import { Callout, RepChip, RowAction } from '../RepKit';
-import { REQUEST_DIRECTION_WORD, UNLINKED_APPROVAL, methodWord, requestStatusWord } from '@/lib/club-money-words';
+import { REQUEST_DIRECTION_WORD, UNLINKED_APPROVAL, lockedRecordWords, methodWord, requestStatusWord } from '@/lib/club-money-words';
+import fy from './FiscalYear.module.css';
 import { clubMoneyInWord } from '@/lib/coach-club-money';
 import { tournamentToday } from '@/lib/timezone';
 import { DUES_PAYMENT_METHODS, type DuesPaymentMethod } from '@/lib/types';
@@ -40,6 +41,8 @@ export interface RequestRow {
   reversedAt: string | null; reversedReason: string | null;
   askedBy: string | null; decidedBy: string | null; reversedByName: string | null;
   waitingDays: number | null; holdingPayout: boolean;
+  /** An approval whose lines sit in a CLOSED fiscal year (Stage 3c, Ask 8d): Reverse is absent; this says why. */
+  lockedIn?: { yearName: string; reopen: string | null } | null;
 }
 
 export const toClub = (r: Pick<RequestRow, 'requestType'>) => r.requestType === 'payment_to_org';
@@ -87,7 +90,7 @@ export function RequestWindow({ r, canMove, onAsk, onClose }: {
       eyebrow={eyebrow}
       title={title}
       onClose={onClose}
-      footerStart={canMove && r.status === 'approved'
+      footerStart={canMove && r.status === 'approved' && !r.lockedIn
         ? <RowAction quiet onClick={() => onAsk('reverse')}>Reverse this approval</RowAction>
         : undefined}
       footer={canMove && waiting ? (
@@ -118,6 +121,12 @@ export function RequestWindow({ r, canMove, onAsk, onClose }: {
       ]} />
       {!out && waiting && filed.word === 'New money' && (
         <p className={moneyKit.who}>New money adds to what {r.teamName}’s season has. Money back would instead repay a cost the team already spent.</p>
+      )}
+      {canMove && r.status === 'approved' && r.lockedIn && (
+        <p className={fy.lockedNote}>
+          <Lock size={13} aria-hidden className={fy.lockedNoteIcon} />
+          <span>{lockedRecordWords('reverse', r.lockedIn.yearName, r.lockedIn.reopen)}</span>
+        </p>
       )}
     </KitDialog>
   );

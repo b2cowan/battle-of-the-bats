@@ -868,8 +868,10 @@ export function buildBoardSummary(input: {
   const { report, allocations, requests, books, teams, teamCash } = input;
   const { year, today, statement } = report;
 
+  // "Where the club stands · today" is TODAY, whatever year is picked (3b, Ask 1): the club's books now, never
+  // Budget vs. Actual's band, which on a CLOSED year reads the year's locked closing (3c, Ask 1).
   const position = {
-    cashOnHand: report.band.cashOnHand,
+    cashOnHand: clubCashOnHand(books),
     pending: report.pending,
     owedByTheTeams: owedByTheTeams(allocations.flatMap(installmentsOf), today),
     waitingOnYou: { ...waitingOnYou(requests), holdingPayout: requests.filter(r => r.status === 'pending' && r.holdingPayout).length },

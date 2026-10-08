@@ -25,6 +25,17 @@
  * pill is the summary's period; the Ledger's Date pill reads any other window).
  * ⚖ The tournament rail's Accounting door still arrives with `?tournamentId=` and forwards to that
  * tournament's book on the Ledger (3a's behaviour, kept).
+ *
+ * ⚖ STAGE 3c — THE FISCAL YEAR (hub v46, specimens 3–5; Asks 1–4, 8c):
+ *   · the ENDED year's line (Ask 2's door): from the day after a year ends until someone closes it, one quiet line
+ *     under the toolbar names it and the day it ended, with an outlined "Close 2025–26" opening the close question.
+ *     Money movers only (the server sends `endedOpen` only to them). Gone once the year is closed.
+ *   · a CLOSED year reads in place: its one line (closed by / on; Reopen on the latest, for a money mover).
+ *   · "From 2025–26, still open" (Ask 4): under Where the club stands, while anything from a closed year is unpaid
+ *     or waiting — each row opens the page that settles it, a waiting count the amber pill; it leaves with the last.
+ *   · the one Export: on a CLOSED year it writes the YEAR-END REPORT (Excel first, then PDF) — read only from
+ *     locked figures, in the drawing's order, with one line in place of the teams' cash; on an open year it is
+ *     3b's board report, its title carrying the year's name and its two days.
  */
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -44,13 +55,18 @@ import frame from '@/components/admin/kit/AdminKitFrame.module.css';
 import { money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import AddLedgerWindow from '@/components/admin/kit/club/money/AddLedgerWindow';
 import YearPill, { useClubYear } from '@/components/admin/kit/club/money/YearPill';
+import { CloseYearQuestion, EndedYearLine, ReopenYearQuestion, YearLine } from '@/components/admin/kit/club/money/FiscalYearParts';
 import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/components/admin/kit/club/money/ClubMoneyExport';
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 import { fmt as fmtSigned } from '@/lib/coach-money-summary';
 import { LEDGER_KIND_WORD, type LedgerKind } from '@/lib/club-ledger';
 import {
-  HELD_BY_THE_TEAM_WORD, SUMMARY_WORDS, netForYearWord, teamCashClosedWord,
+  HELD_BY_THE_TEAM_WORD, STILL_OPEN_WORDS, SUMMARY_WORDS, YEAR_END_WORDS, fiscalYearSpanWords, netForYearWord,
+  stillOpenFromWord, teamCashClosedWord,
 } from '@/lib/club-money-words';
+import { clubYearEndFile } from '@/lib/club-money-reports';
+import type { StillOpenRow } from '@/lib/club-fiscal-reads';
+import { joinWithAnd } from '@/lib/utils';
 import { BOARD_TEAMS_EXPORT_COLUMNS, boardTeamsExportRows, type BoardSummary, type SummaryTeamRow } from '@/lib/club-budget-report';
 import type { ReportNote } from '@/lib/coach-money-report-notes';
 import type { MoneyRowKind } from '@/lib/coach-money-exports';
@@ -105,6 +121,8 @@ export default function AccountingOverviewPage() {
   const [read, setRead] = useState<Read | null>(null);
   const [failed, setFailed] = useState(false);
   const [adding, setAdding] = useState(false);
+  /** The close question (for the ended year) or Reopen (for the closed year on screen). */
+  const [win, setWin] = useState<'close' | 'reopen' | null>(null);
   const [notice, setNotice] = useNotice();
 
   const beginRead = useLatestRead();
@@ -141,7 +159,7 @@ export default function AccountingOverviewPage() {
     // "so far": against what the plan expected by today (the whole year's plan read as nearly all "under" in January).
     const under = Math.max(0, Math.round((a.revenue.plannedToDate - a.revenue.actual) * 100) / 100);
     return {
-      headroom: SUMMARY_WORDS.headroom(a.headroom, under, summary.position.owedByTheTeams.amount),
+      headroom: SUMMARY_WORDS.headroom(a.headroom, under, summary.position.owedByTheTeams.amount, summary.year.lastDay < summary.today),
       held: SUMMARY_WORDS.teamsCashBand(summary.teamsCash.total, summary.teamsCash.teamCount),
     };
   }, [summary]);
@@ -149,7 +167,29 @@ export default function AccountingOverviewPage() {
   /* The board report: the teams table, the cash labelled exactly as on screen (its closing row blank under
      the cash, its own row saying it is not the club's — `boardTeamsExportRows`), and the page's position,
      year and books as the PDF's opening block and the Excel's notes. */
+  const yearEnd = read?.yearEnd ?? null;
   const buildExport = useCallback((): ClubMoneyFile => {
+    if (yearEnd) {
+      const built = clubYearEndFile(yearEnd);
+      return {
+        dataset: 'year-end-report',
+        title: YEAR_END_WORDS.againstBoth(yearEnd.againstLastYear?.lastYear.name ?? null),
+        columns: built.columns,
+        rows: built.rows,
+        rowKinds: built.kinds,
+        sections: built.sections,
+        shape: { orientation: 'landscape' },
+        scopeLabel: yearEnd.year.name,
+        teamName: currentOrg?.name ?? '',
+        notes: built.notes,
+        masthead: {
+          title: `${currentOrg?.name ?? ''} · ${YEAR_END_WORDS.title} · ${yearEnd.year.name}`,
+          subtitle: `${fiscalYearSpanWords(yearEnd.year)} · ${YEAR_END_WORDS.closedBy(yearEnd.closed.byName, yearEnd.closed.at)}`,
+          meta: YEAR_END_WORDS.prepared(read?.summary.today ?? yearEnd.closed.at.slice(0, 10)),
+        },
+        emptyMessage: 'There is nothing to report yet.',
+      };
+    }
     if (!summary || !words) throw new Error('The summary is still loading.');
     const p = summary.position;
     const a = summary.againstBudget;
@@ -173,8 +213,8 @@ export default function AccountingOverviewPage() {
           ['Cash on hand · the club’s books, today', fmtSigned(p.cashOnHand)],
           ['Owed by the teams', money(p.owedByTheTeams.amount)],
           ['Waiting on you', money(p.waitingOnYou.amount)],
-          [`Revenue ${summary.year.name} · so far of planned`, `${money(a.revenue.actual)} of ${money(a.revenue.planned)}`],
-          [`Expenses ${summary.year.name} · so far of planned`, `${money(a.expenses.actual)} of ${money(a.expenses.planned)}`],
+          [`Revenue ${summary.year.name} · ${summary.year.lastDay < summary.today ? 'actual' : 'so far'} of planned`, `${money(a.revenue.actual)} of ${money(a.revenue.planned)}`],
+          [`Expenses ${summary.year.name} · ${summary.year.lastDay < summary.today ? 'actual' : 'so far'} of planned`, `${money(a.expenses.actual)} of ${money(a.expenses.planned)}`],
           ['Off-plan spending', money(a.offPlan)],
           ['Headroom', fmtSigned(a.headroom)],
           ...summary.books.map(b => [`${b.name} · ${LEDGER_KIND_WORD[b.kind as LedgerKind] ?? 'Club'}`, fmtSigned(b.balance)] as [string, string]),
@@ -183,11 +223,11 @@ export default function AccountingOverviewPage() {
       masthead: {
         title: `${currentOrg?.name ?? ''} · ${summary.year.name}`,
         subtitle: 'Board report — where the club stands, the year against the budget, the teams and the books',
-        meta: `As at ${formatStoredDate(summary.today, { withYear: true, longMonth: true })}`,
+        meta: `${fiscalYearSpanWords(summary.year)} · as at ${formatStoredDate(summary.today, { withYear: true, longMonth: true })}`,
       },
       emptyMessage: 'There is nothing to report yet.',
     };
-  }, [summary, words, currentOrg?.name]);
+  }, [summary, words, yearEnd, read?.summary.today, currentOrg?.name]);
   const exportFailed = useCallback((text: string) => setNotice({ tone: 'bad', text }), [setNotice]);
   const runExport = useClubMoneyFile(q, slug, buildExport, exportFailed);
 
@@ -205,9 +245,14 @@ export default function AccountingOverviewPage() {
   return (
     <>
       {notice && <PageNotice notice={notice} />}
-      <CoachListToolbar actions={<ClubMoneyExport run={runExport} formats={['xlsx', 'pdf', 'csv']} />}>
+      <CoachListToolbar actions={(
+        <ClubMoneyExport run={runExport} formats={yearEnd ? ['xlsx', 'pdf'] : ['xlsx', 'pdf', 'csv']}
+          holds={yearEnd ? { title: YEAR_END_WORDS.title, lines: [YEAR_END_WORDS.atAGlance, YEAR_END_WORDS.againstBoth(yearEnd.againstLastYear?.lastYear.name ?? null), YEAR_END_WORDS.books, YEAR_END_WORDS.teams, YEAR_END_WORDS.carried(yearEnd.carried.nextYear.name)] } : undefined} />
+      )}>
         <YearPill year={summary.year.key} years={read.years} onChange={setYear} />
       </CoachListToolbar>
+      {read.endedOpen && <EndedYearLine year={read.endedOpen} onClose={() => setWin('close')} />}
+      <YearLine year={read.year} onReopen={() => setWin('reopen')} />
 
       {/* ── Where the club stands · today ── */}
       <p className={cr.recordSectionTitle}>{SUMMARY_WORDS.standsHeading(summary.today)}</p>
@@ -231,6 +276,9 @@ export default function AccountingOverviewPage() {
         />
       </div>
 
+      {/* ── From 2025–26, still open (Ask 4) — only while something from a closed year is unpaid or waiting ── */}
+      {read.stillOpen.count > 0 && <StillOpen stillOpen={read.stillOpen} base={base} isPhone={isPhone} />}
+
       {/* ── The year against the budget (read from Budget vs. Actual's report) ── */}
       {isPhone ? (
         <ClubRowList label={SUMMARY_WORDS.againstHeading(summary.year.name)}>
@@ -246,7 +294,7 @@ export default function AccountingOverviewPage() {
                 <tr>
                   <th scope="col"><span className={repKit.srOnly}>Line</span></th>
                   <th scope="col" className={repKit.num}>Planned</th>
-                  <th scope="col" className={repKit.num}>So far</th>
+                  <th scope="col" className={repKit.num}>{SUMMARY_WORDS.actualHead(summary.year.lastDay < summary.today)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -330,6 +378,15 @@ export default function AccountingOverviewPage() {
         )}
       </ClubSection>
 
+      {win === 'close' && read.endedOpen && (
+        <CloseYearQuestion q={q} year={read.endedOpen} accountingBase={base}
+          onClosed={text => { setWin(null); setNotice({ tone: 'good', text }); void load(); }} onClose={() => setWin(null)} />
+      )}
+      {win === 'reopen' && (
+        <ReopenYearQuestion q={q} year={read.year}
+          nextName={read.years.filter(y => y.key > read.year.key).sort((a, b) => a.key.localeCompare(b.key))[0]?.name ?? ''}
+          onDone={text => { setWin(null); setNotice({ tone: 'good', text }); void load(); }} onClose={() => setWin(null)} />
+      )}
       {adding && currentOrg && (
         <AddLedgerWindow
           q={q}
@@ -450,5 +507,99 @@ function BooksTable({ summary, hrefOf }: { summary: BoardSummary; hrefOf: (id: s
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** A still-open row's state, in words and ink (overdue red; a waiting request the amber pill). */
+function stillOpenState(r: StillOpenRow): { text: string; late: boolean } {
+  if (r.kind === 'request') return { text: '', late: false };
+  if (r.state === 'overdue') return { text: STILL_OPEN_WORDS.overdue(r.dueDate ?? ''), late: true };
+  if (r.state === 'sent') return { text: STILL_OPEN_WORDS.sent(r.sentOn ?? r.dueDate ?? ''), late: false };
+  return { text: STILL_OPEN_WORDS.upcoming(r.dueDate ?? ''), late: false };
+}
+
+/** Where a still-open row opens: the team's bill on its allocation, or the request. */
+function stillOpenHref(r: StillOpenRow, base: string): string {
+  return 'requestId' in r.door
+    ? `${base}/payment-requests?request=${r.door.requestId}`
+    : `${base}/allocations/${r.door.allocationId}?bill=${r.door.splitId}`;
+}
+
+/**
+ * "FROM 2025–26, STILL OPEN" (Ask 4): the closed years' installments still owed and requests still waiting, until
+ * each is settled — the close never hides a debt. They stay their own year's (they count on its plan, as billed);
+ * Where the club stands already counts them in today's figures.
+ */
+function StillOpen({ stillOpen, base, isPhone }: {
+  stillOpen: OverviewYearReads['stillOpen']; base: string; isPhone: boolean;
+}) {
+  const router = useRouter();
+  const title = stillOpenFromWord(joinWithAnd(stillOpen.years.map(y => y.name)));
+  const meta = `${stillOpen.count} · ${money(stillOpen.amount)}`;
+  return (
+    <ClubSection id="still-open" title={title} meta={meta} list>
+      {!isPhone ? (
+        <div className={repKit.tableFrame}>
+          <table className={repKit.table}>
+            <thead>
+              <tr>
+                <th scope="col">Team</th>
+                <th scope="col">What</th>
+                <th scope="col">State</th>
+                <th scope="col" className={repKit.num}>Amount</th>
+                <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {stillOpen.rows.map(r => {
+                const href = stillOpenHref(r, base);
+                const st = stillOpenState(r);
+                const key = 'requestId' in r.door ? r.door.requestId : `${r.door.splitId}|${r.what}`;
+                return (
+                  <tr key={key} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; router.push(href); }}>
+                    <td><Link href={href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{r.teamName}</Link></td>
+                    <td>{r.kind === 'request' ? STILL_OPEN_WORDS.request(r.what) : r.what}</td>
+                    <td>
+                      {r.kind === 'request'
+                        ? <>{<WaitingCount n={1} />}{r.holdingPayout && <span className={cr.lateCaption}>{STILL_OPEN_WORDS.holding}</span>}</>
+                        : <span className={st.late ? cr.negative : undefined}>{st.text}</span>}
+                    </td>
+                    <td className={repKit.num}>{money(r.amount)}</td>
+                    <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <ClubRowList inset label={title}>
+          {stillOpen.rows.map(r => {
+            const st = stillOpenState(r);
+            const key = 'requestId' in r.door ? r.door.requestId : `${r.door.splitId}|${r.what}`;
+            return (
+              <ClubRow
+                key={key}
+                as="link"
+                href={stillOpenHref(r, base)}
+                title={<>{r.teamName} {r.kind === 'request' && <WaitingCount n={1} />}</>}
+                caption={(
+                  <>
+                    {r.kind === 'request' ? STILL_OPEN_WORDS.request(r.what) : r.what}
+                    {'\u00a0· '}
+                    {r.kind === 'request'
+                      ? (r.holdingPayout ? <span className={moneyLate}>{STILL_OPEN_WORDS.holding}</span> : null)
+                      : <span className={st.late ? cr.negative : undefined}>{st.text}</span>}
+                    {r.kind === 'request' && r.holdingPayout ? '\u00a0· ' : r.kind === 'request' ? '' : '\u00a0· '}
+                    {money(r.amount)}
+                  </>
+                )}
+                chevron
+              />
+            );
+          })}
+        </ClubRowList>
+      )}
+    </ClubSection>
   );
 }

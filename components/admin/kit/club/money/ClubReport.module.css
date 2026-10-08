@@ -154,3 +154,7 @@
 /* ── The shared-payee report (specimen 5): a team's payments, folded open under it ── */
 .subRowLead { padding-left: 2.4rem; }
 .payLine { display: block; margin-top: 0.15rem; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+
+/* ── Compare › Against last year (Stage 3c, Ask 8c): each year's heading names the span it covers ── */
+.compareHead { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 1px; line-height: 1.2; }
+.compareSpan { font-size: var(--type-label); font-weight: 500; letter-spacing: normal; text-transform: none; color: var(--text-tertiary); white-space: nowrap; }

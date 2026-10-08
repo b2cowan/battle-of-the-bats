@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-06T23:36:27.601Z",
+  "generated": "2026-10-08T03:10:47.176Z",
   "entries": {
     "admin-rep-assistant-coaches|361|tap-floor|a·Public site": {
       "reason": null,
@@ -2972,42 +2972,6 @@
     "admin-rep-team-history-year|361|content-overflow|div·RosterSchedule & ResultsCoachesDocuments": {
       "reason": null,
       "detail": "content spills 56px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-accounting-allocate|361|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-allocate|361|tap-floor|input·e.g. 3000.00": {
-      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-allocate|361|tap-floor|button·Team Splits": {
-      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|input·e.g. 3000.00": {
-      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-allocate|390|tap-floor|button·Team Splits": {
-      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|input·e.g. 3000.00": {
-      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-accounting-allocate|768|tap-floor|button·Team Splits": {
-      "reason": "Club Tier 3b: New allocation opened from a budget line (the old Allocate page retired into it). The same form as admin-accounting-allocation-new, whose inputs and step tab carry this size as 3a debt; recorded under this screen id, not new debt.",
-      "detail": "31px tall (floor 44)"
     },
     "admin-families|361|tap-floor|a·Public site": {
       "reason": null,
@@ -12646,53 +12610,125 @@
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
       "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|361|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "35px tall (floor 44)"
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 11U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|361|tap-floor|input·e.g. 3000.00": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "35px tall (floor 44)"
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 12U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|361|tap-floor|input·Paste accounting entry ID to link": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "35px tall (floor 44)"
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 13U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|361|tap-floor|button·Team Splits": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "31px tall (floor 44)"
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 14U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|390|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "35px tall (floor 44)"
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 15U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|390|tap-floor|input·e.g. 3000.00": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "35px tall (floor 44)"
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 15U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|390|tap-floor|input·Paste accounting entry ID to link": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "35px tall (floor 44)"
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 16U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|390|tap-floor|button·Team Splits": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "31px tall (floor 44)"
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 9U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|768|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "35px tall (floor 44)"
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill UAT Between Seasons": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|768|tap-floor|input·e.g. 3000.00": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "35px tall (floor 44)"
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill UAT Test Team": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|768|tap-floor|input·Paste accounting entry ID to link": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "35px tall (floor 44)"
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 11U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|768|tap-floor|button·Team Splits": {
-      "reason": "Today's New allocation form, moved UNCHANGED from Rep Teams to Accounting in Club Tier Stage 3a (the build prompt kept it today's form); these controls were baselined there as admin-rep-allocation-new. A redraw is a later stage's.",
-      "detail": "31px tall (floor 44)"
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 12U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 13U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 14U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 15U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 15U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 16U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 9U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill UAT Between Seasons": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill UAT Test Team": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 11U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 12U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 13U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 14U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 15U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 15U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 16U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 9U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill UAT Between Seasons": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill UAT Test Team": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
     },
     "admin-accounting-payment-requests|361|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",

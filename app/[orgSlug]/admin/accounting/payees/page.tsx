@@ -15,15 +15,22 @@
  * picker lists a shared payee under "Shared by your club" and tells the coach the club sees payments to
  * it.
  *
- * ⚖ WHAT THE TEAMS RECORDED (Club Tier Stage 3b, specimen 5 — S3B-06): a SHARED payee's window gains ONE door,
- * a row opening the report one level down (`payees/[payeeId]`), captioned with the report's own count and
- * total for the year — the one place a team figure touches the payee. The Payees list keeps showing the
- * club's own entries only (mig 316). Unsharing removes the door; the report keeps what was recorded while
- * it was shared.
+ * ⚖ A PAYEE'S WINDOW READS FIRST, AND WHAT THE TEAMS RECORDED IS INSIDE IT (Club Tier Stage 3c, specimen 7 — Ask 7,
+ * S3C-10; the record standard 2026-10-01). It opens to READ: whether it is shared and since when, how many of the
+ * club's own entries name it. One borderless pencil (a money mover's only) turns Name and the Shared with teams switch
+ * into the form — the name saves as you go (the floating pill), the switch on the tap — and ✓ turns it back. Merge
+ * and Delete are actions, in the foot in both modes. For a SHARED payee the report is the window's BODY (3b's
+ * definition, S3B-06): the teams' own-records note, each team folding to its payments in place, the total, Nothing
+ * recorded and the counting rule — a small Year pill in its head only when the payee has records in more than one
+ * fiscal year. While editing, the report folds to its one line. An unshared payee has no report and nothing in its
+ * place. NO EXPORT (Ask 7: one payee's team records are read here; nobody named receives that file).
+ * ⚰ The report PAGE (`payees/[payeeId]`) and its Export retired; its address forwards here with `?payee=` (proxy.ts).
+ * The Payees list keeps showing the club's own entries only (mig 316).
  */
-import { use, useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { ChevronRight, Plus } from 'lucide-react';
+import { Fragment, use, useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronDown, ChevronRight, Lock, Plus } from 'lucide-react';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -31,13 +38,16 @@ import KitDialog from '@/components/admin/kit/club/KitDialog';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
-  ClubRow, ClubRowList, ClubSection, EmptyCard, LoadFailed, PageLoading, RepChip, SavePill, repKit, useDeferredLoad, useLatestRead,
+  Callout, ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, ClubSection, EmptyCard, LoadFailed, PageLoading, RepChip, SavePill, repKit,
+  useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
-import { FormError, TextField, day, jsonInit, moneyFetch, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
+import { FormError, TextField, day, jsonInit, money, moneyFetch, moneyKit, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
+import YearPill from '@/components/admin/kit/club/money/YearPill';
+import fy from '@/components/admin/kit/club/money/FiscalYear.module.css';
 import { pluralize } from '@/lib/utils';
-import { PAYEE_REPORT_WORDS } from '@/lib/club-money-words';
-import { formatStoredDate } from '@/lib/timezone';
+import { PAYEE_REPORT_WORDS, PAYEE_WINDOW_WORDS } from '@/lib/club-money-words';
+import type { PayeeReport, PayeeReportTeam } from '@/lib/club-payee-report';
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 import { clubSharesPayees } from '@/lib/team-payee-scope';
 
@@ -62,7 +72,11 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
   const ledgerHref = `/${orgSlug}/admin/accounting/ledger`;
   usePageTitle('Payees');
 
+  const router = useRouter();
+  const search = useSearchParams();
   const [payees, setPayees] = useState<Payee[] | null>(null);
+  /** This reader may rename, share, merge or delete (3a's one money rule) — the window's pencil shows only then. */
+  const [canMove, setCanMove] = useState(false);
   const [failed, setFailed] = useState(false);
   const [open, setOpen] = useState<Payee | null>(null);
   const [adding, setAdding] = useState(false);
@@ -71,12 +85,20 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
     const current = beginRead();
-    const r = await moneyFetch<{ payees?: Payee[] }>(`/api/admin/accounting/payees?${q}&all=1`).catch(() => null);
+    const r = await moneyFetch<{ payees?: Payee[]; canMove?: boolean }>(`/api/admin/accounting/payees?${q}&all=1`).catch(() => null);
     if (!current()) return;
     if (!r?.ok) { setFailed(true); return; }
     setFailed(false);
     setPayees(r.data.payees ?? []);
-  }, [q, beginRead]);
+    setCanMove(!!r.data.canMove);
+    // A payee asked for by address (`?payee=` — the retired report page forwards here): its window opens, once.
+    const wanted = search.get('payee');
+    if (wanted) {
+      const hit = (r.data.payees ?? []).find(x => x.id === wanted);
+      if (hit) setOpen(hit);
+      router.replace(`/${orgSlug}/admin/accounting/payees`);
+    }
+  }, [q, beginRead, search, router, orgSlug]);
   useDeferredLoad(!orgLoading, load);
 
   const header = (
@@ -150,8 +172,8 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
           payee={open}
           others={payees.filter(p => p.id !== open.id)}
           canShare={canShare}
+          canMove={canMove}
           q={q}
-          reportHref={`/${orgSlug}/admin/accounting/payees/${open.id}`}
           onClose={changed => { setOpen(null); if (changed) void load(); }}
           onDone={text => { setOpen(null); setNotice({ tone: 'good', text }); void load(); }}
         />
@@ -164,11 +186,18 @@ export default function PayeesPage({ params }: { params: Promise<{ orgSlug: stri
   );
 }
 
-/** A payee: its name saves as you type; merge asks; delete only when no line names it. */
-function PayeeWindow({ payee, others, canShare, q, reportHref, onClose, onDone }: {
-  payee: Payee; others: Payee[]; canShare: boolean; q: string; reportHref: string; onClose: (changed: boolean) => void; onDone: (text: string) => void;
+/**
+ * A payee's window: it READS FIRST (the record standard); the pencil turns Name and the switch into its form. For a
+ * shared payee, what the teams recorded paying it is the window's body. Merge asks; Delete only when nothing names it.
+ */
+function PayeeWindow({ payee, others, canShare, canMove, q, onClose, onDone }: {
+  payee: Payee; others: Payee[]; canShare: boolean; canMove: boolean; q: string; onClose: (changed: boolean) => void; onDone: (text: string) => void;
 }) {
+  const W = PAYEE_WINDOW_WORDS;
+  const isPhone = useIsPhone();
+  const [editing, setEditing] = useState(false);
   const [name, setName] = useState(payee.name);
+  const [savedName, setSavedName] = useState(payee.name);
   const [saved, setSaved] = useState(false);
   const [shared, setShared] = useState(payee.sharedWithTeams);
   const [sharing, setSharing] = useState(false);
@@ -197,50 +226,103 @@ function PayeeWindow({ payee, others, canShare, q, reportHref, onClose, onDone }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(refusalText(data, 'Couldn’t save'));
     setSaved(true);
+    setSavedName(name.trim());
   }, [payee.id, q, name]);
   // The rename holds while Merge or Delete asks, so it never PATCHes under either.
   const { saving, dirty, saveError, touch, handleSave } = useRecordAutosave({
-    enabled: true, loading: asking != null, sig: name.trim(), blocked, write, failText: 'Couldn’t save',
+    enabled: canMove && editing, loading: asking != null, sig: name.trim(), blocked, write, failText: 'Couldn’t save',
   });
+
+  // What the teams recorded (a shared payee): read for the year today falls in, then the year picked.
+  const [year, setYear] = useState<string | null>(null);
+  const [report, setReport] = useState<PayeeReport | null>(null);
+  const [reportFailed, setReportFailed] = useState(false);
+  useEffect(() => {
+    if (!canShare || !shared) return;
+    let live = true;
+    void moneyFetch<{ report: PayeeReport }>(`/api/admin/accounting/payees/${payee.id}/report?${q}${year ? `&year=${year}` : ''}`)
+      .then(r => { if (!live) return; if (!r.ok) { setReportFailed(true); return; } setReportFailed(false); setReport(r.data.report); })
+      .catch(() => { if (live) setReportFailed(true); });
+    return () => { live = false; };
+  }, [canShare, shared, payee.id, q, year]);
+
   // ⚠ A refused rename (the name is taken, the payee merged away elsewhere) holds the window once, with
   // the reason in its pill; closing again leaves it unsaved — never a window that cannot be closed.
   const closeRefused = useRef(false);
   const close = async () => {
-    if (dirty && !blocked && !closeRefused.current && !(await handleSave())) { closeRefused.current = true; return; }
+    if (editing && dirty && !blocked && !closeRefused.current && !(await handleSave())) { closeRefused.current = true; return; }
     onClose(saved || dirty);
   };
+  const toggleEdit = async () => {
+    if (editing && dirty && !blocked && !(await handleSave())) return;
+    setEditing(e => !e);
+  };
+
+  const sharedSince = report?.payee.sharedAt ?? null;
+  const reportYearName = report?.year.name ?? '';
+  const footStart = canMove ? (!payee.inUse
+    ? <button type="button" className="btn btn-danger" onClick={() => setAsking('delete')}>Delete this payee</button>
+    : others.length > 0 ? <button type="button" className="btn btn-outline" onClick={() => setAsking('merge')}>Merge into another payee</button> : undefined) : undefined;
 
   return (
     <>
       <KitDialog
         kind="form"
-        eyebrow="Payee"
-        title={payee.name}
-        status={<SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} />}
+        eyebrow={canShare && shared ? W.eyebrowShared : W.eyebrow}
+        title={savedName}
         onClose={() => void close()}
         busy={sharing}
-        footerStart={!payee.inUse
-          ? <button type="button" className="btn btn-danger" onClick={() => setAsking('delete')}>Delete this payee</button>
-          : others.length > 0 ? <button type="button" className="btn btn-outline" onClick={() => setAsking('merge')}>Merge into another payee</button> : undefined}
+        edit={canMove ? { editing, onToggle: () => void toggleEdit(), label: `Edit ${savedName}` } : undefined}
+        status={editing ? <SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} /> : undefined}
+        footerStart={footStart}
         footer={<button type="button" className="btn btn-outline" onClick={() => void close()}>Done</button>}
       >
-        <TextField id="payee-name" label="Name" required value={name} onChange={v => { setName(v); touch(); closeRefused.current = false; }} maxLength={200}
-          hint={payee.uses === 0
-            ? 'Named on none of the club’s own entries.'
-            : `Named on ${pluralize(payee.uses, 'entry', 'entries')} of the club’s own. A new name shows wherever it is named.`} />
-        {canShare && (
-          <div className={ck.switchRow}>
-            <div className={ck.switchText}>
-              <span className={ck.switchName} id="payee-shared-label">{SHARED_WORD}</span>
-              <p className={ck.hint}>Every team can pick it as a payee. Teams can’t rename or merge it, and their payee list tells them the club sees payments to it.</p>
-              <FormError>{shareError}</FormError>
-            </div>
-            <button type="button" role="switch" aria-checked={shared} aria-labelledby="payee-shared-label"
-              className={ck.switch} disabled={sharing} onClick={() => void share(!shared)} />
-          </div>
+        {!editing ? (
+          isPhone ? (
+            <p className={ck.hint}>{W.phoneLine(canShare && shared ? sharedSince : null, payee.uses)}</p>
+          ) : (
+            <dl className={fy.read}>
+              {canShare && (
+                <><dt>{W.sharedLabel}</dt><dd>{shared ? (sharedSince ? W.sharedSince(sharedSince) : 'Yes') : W.notShared}</dd></>
+              )}
+              <dt>{W.ownLabel}</dt><dd>{W.named(payee.uses, payee.lastUsed)}</dd>
+            </dl>
+          )
+        ) : (
+          <>
+            <TextField id="payee-name" label="Name" required value={name} onChange={v => { setName(v); touch(); closeRefused.current = false; }} maxLength={200}
+              hint={payee.uses === 0
+                ? 'Named on none of the club’s own entries.'
+                : `Named on ${pluralize(payee.uses, 'entry', 'entries')} of the club’s own. A new name shows wherever it is named.`} />
+            {canShare && (
+              <div className={ck.switchRow}>
+                <div className={ck.switchText}>
+                  <span className={ck.switchName} id="payee-shared-label">{SHARED_WORD}</span>
+                  <p className={ck.hint}>Every team can pick it as a payee. Teams can’t rename or merge it, and their payee list tells them the club sees payments to it.</p>
+                  <FormError>{shareError}</FormError>
+                </div>
+                <button type="button" role="switch" aria-checked={shared} aria-labelledby="payee-shared-label"
+                  className={ck.switch} disabled={sharing} onClick={() => void share(!shared)} />
+              </div>
+            )}
+          </>
         )}
-        {canShare && shared && <RecordedDoor payeeId={payee.id} q={q} href={reportHref} />}
-        {payee.inUse && others.length > 0 && (
+        {canShare && shared && (editing ? (
+          report && (
+            <div className={cr.windowRows}>
+              <div className={cr.windowRow}>
+                <span className={cr.windowRowMain}>
+                  <span className={cr.windowRowTitle}>{W.recordedFolded(reportYearName)}</span>
+                  <span className={cr.windowRowSub}>{W.foldedCaption(report.teams.length, money(report.total))}</span>
+                </span>
+              </div>
+            </div>
+          )
+        ) : (
+          <TeamsRecorded report={report} failed={reportFailed} isPhone={isPhone}
+            onYear={y => setYear(y)} />
+        ))}
+        {payee.inUse && others.length > 0 && editing && (
           <p className={ck.hint}>Two spellings of one payee? Merge this one into the other: every entry moves to the one you keep.</p>
         )}
       </KitDialog>
@@ -254,39 +336,132 @@ function PayeeWindow({ payee, others, canShare, q, reportHref, onClose, onDone }
   );
 }
 
+/** "May 23 · Jun 13 · Jul 11 · Aug 8 · $180.00 each" when every payment is the same; else one line each. */
+function paymentsLines(t: PayeeReportTeam): { key: string; text: string; amount: string }[] {
+  const same = t.payments.every(p => Math.abs(p.amount - t.payments[0].amount) < 0.005);
+  if (same && t.payments.length > 1) {
+    return [{ key: 'all', text: t.payments.map(p => day(p.paidDate)).join(' · '), amount: `${money(t.payments[0].amount)} each` }];
+  }
+  return t.payments.map(p => ({
+    key: p.id,
+    text: `${day(p.paidDate)}${p.outOfPocket ? ` · ${PAYEE_REPORT_WORDS.outOfPocket}` : ''}`,
+    amount: money(p.amount),
+  }));
+}
+
 /**
- * The door to what the teams recorded paying a shared payee: a row inside the window that opens a page (a row
- * list's door, register K-19), captioned with the report's count and total for this year. It reads the report
- * when it appears — a payee shared a moment ago shows "Nothing recorded" until a team records a payment.
+ * WHAT THE TEAMS RECORDED, as the payee window's body (3b's report, S3B-06; Ask 7): the note, each team folding to its
+ * payments in place (a right ↔ down chevron before the name; nothing opens a page — the records are the team's), the
+ * total, Nothing recorded, the counting rule. A Year pill in the section's head only when there is more than one year.
  */
-function RecordedDoor({ payeeId, q, href }: { payeeId: string; q: string; href: string }) {
-  // The server reads the fiscal year today falls in, and names it (Stage 3c — no year worked out here).
-  const [caption, setCaption] = useState<string | null>(null);
-  const [since, setSince] = useState<string | null>(null);
-  useEffect(() => {
-    let live = true;
-    void moneyFetch<{ report?: { teams: unknown[]; total: number; payee: { sharedAt: string }; year: { name: string } } }>(`/api/admin/accounting/payees/${payeeId}/report?${q}`)
-      .then(r => {
-        if (!live || !r.ok || !r.data.report) return;
-        setCaption(PAYEE_REPORT_WORDS.doorCaption(r.data.report.teams.length, r.data.report.total, r.data.report.year.name));
-        setSince(r.data.report.payee.sharedAt);
-      })
-      .catch(() => {});
-    return () => { live = false; };
-  }, [payeeId, q]);
+function TeamsRecorded({ report, failed, isPhone, onYear }: {
+  report: PayeeReport | null; failed: boolean; isPhone: boolean; onYear: (yearKey: string) => void;
+}) {
+  const W = PAYEE_WINDOW_WORDS;
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
+  const toggle = (id: string) => setOpen(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  if (failed) return <p className={ck.hint}>What the teams recorded couldn’t be loaded.</p>;
+  if (!report) return <p className={ck.loading}>Loading…</p>;
+  const years = report.years.some(y => y.key === report.year.key) ? report.years : [...report.years, { key: report.year.key, name: report.year.name }];
+  const since = report.payee.sharedAt;
   return (
-    <>
-      {since && <p className={ck.hint}>Shared since {formatStoredDate(since, { withYear: false })}.</p>}
-      <div className={cr.windowRows}>
-        <Link href={href} className={cr.windowRow}>
-          <span className={cr.windowRowMain}>
-            <span className={cr.windowRowTitle}>{PAYEE_REPORT_WORDS.door}</span>
-            <span className={cr.windowRowSub}>{caption ?? 'Loading…'}</span>
-          </span>
-          <ChevronRight size={16} aria-hidden className={cr.windowRowEnd} />
-        </Link>
+    <section className={cr.recordSection} aria-label={W.recorded}>
+      <div className={moneyKit.reportHead}>
+        <h3 className={cr.recordSectionTitle}>{W.recorded}</h3>
+        {years.length > 1 && <YearPill year={report.year.key} years={years} onChange={y => { setOpen(new Set()); onYear(y); }} />}
       </div>
-    </>
+      <Callout tone="info" role="note" icon={<Lock size={16} aria-hidden />}>{isPhone ? W.noteShort(since) : W.note(since)}</Callout>
+      {!isPhone ? (
+        <div className={repKit.tableFrame}>
+          <table className={repKit.table}>
+            <thead>
+              <tr>
+                <th scope="col">Team</th>
+                <th scope="col" className={repKit.num}>{W.payments}</th>
+                <th scope="col">{W.firstLatest}</th>
+                <th scope="col" className={repKit.num}>{W.amountRecorded}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.teams.map(t => {
+                const isOpen = open.has(t.teamId);
+                return (
+                  <Fragment key={t.teamId}>
+                    <tr className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; toggle(t.teamId); }}>
+                      <td>
+                        <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} aria-expanded={isOpen}
+                          onClick={e => { e.stopPropagation(); toggle(t.teamId); }}>
+                          {isOpen ? <ChevronDown size={14} aria-hidden /> : <ChevronRight size={14} aria-hidden />} {t.teamName}
+                        </button>
+                      </td>
+                      <td className={repKit.num}>{t.count}</td>
+                      <td className={repKit.dim}>{day(t.firstDay)}{t.lastDay !== t.firstDay ? ` · ${day(t.lastDay)}` : ''}</td>
+                      <td className={repKit.num}>{money(t.total)}</td>
+                    </tr>
+                    {isOpen && paymentsLines(t).map(l => (
+                      <tr key={l.key}>
+                        <td className={`${repKit.dim} ${cr.subRowLead}`} colSpan={3}>{l.text}</td>
+                        <td className={`${repKit.num} ${repKit.dim}`}>{l.amount}</td>
+                      </tr>
+                    ))}
+                  </Fragment>
+                );
+              })}
+              {report.teams.length === 0 && (
+                <tr><td colSpan={4} className={repKit.dim}>{W.nothingInYear(report.payee.name, report.year.name)}</td></tr>
+              )}
+              {report.teams.length > 0 && (
+                <tr className={moneyKit.closeRow}>
+                  <td>{pluralize(report.teams.length, 'team')} recorded</td>
+                  <td className={repKit.num}>{report.count}</td>
+                  <td />
+                  <td className={repKit.num}>{money(report.total)}</td>
+                </tr>
+              )}
+              {report.nothingRecorded.length > 0 && (
+                <>
+                  <tr className={repKit.band}><td colSpan={4}>{PAYEE_REPORT_WORDS.nothingBand(report.nothingRecorded.length)}</td></tr>
+                  <tr><td colSpan={4} className={repKit.dim}>{report.nothingRecorded.map(t => t.teamName).join(' · ')}</td></tr>
+                </>
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <ClubRowFrame>
+          <ClubRowList inset label={W.recorded}>
+            <ClubRowBand>{PAYEE_REPORT_WORDS.recordedBand(report.teams.length, report.total)}</ClubRowBand>
+            {report.teams.map(t => {
+              const isOpen = open.has(t.teamId);
+              return (
+                <li key={t.teamId} className={repKit.rowItem} data-row-list-row>
+                  <button type="button" className={`${repKit.row} ${repKit.rowDoor}`} aria-expanded={isOpen} onClick={() => toggle(t.teamId)}>
+                    {/* The fold chevron is the row's MARK (an icon kept at its start), not its LEAD (/design, 2026-10-06). */}
+                    <span className={repKit.rowMark} aria-hidden>{isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+                    <span className={repKit.rowMain}>
+                      <span className={repKit.rowTitle}>{t.teamName}</span>
+                      <span className={repKit.rowCaption}>
+                        {PAYEE_REPORT_WORDS.rowSpan(t.count, t.firstDay, t.lastDay)} · {money(t.total)}
+                        {isOpen && paymentsLines(t).map(l => <span key={l.key} className={cr.payLine}>{l.text} · {l.amount}</span>)}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+            {report.nothingRecorded.length > 0 && (
+              <>
+                <ClubRowBand>{PAYEE_REPORT_WORDS.nothingBand(report.nothingRecorded.length)}</ClubRowBand>
+                <li className={repKit.rowItem} data-row-list-row>
+                  <div className={repKit.row}><span className={repKit.rowMain}><span className={repKit.rowCaption}>{report.nothingRecorded.map(t => t.teamName).join(' · ')}</span></span></div>
+                </li>
+              </>
+            )}
+          </ClubRowList>
+        </ClubRowFrame>
+      )}
+      <p className={repKit.notes}>{PAYEE_REPORT_WORDS.foot(since)}</p>
+    </section>
   );
 }
 

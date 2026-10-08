@@ -7,7 +7,7 @@ import { canMoveClubMoney } from '@/lib/member-access';
 import { tournamentToday } from '@/lib/timezone';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { loadFiscalSetting } from '@/lib/club-fiscal-year-server';
-import { closedThrough, fiscalYearOf } from '@/lib/club-fiscal-year';
+import { fiscalYearOf, lockedIn } from '@/lib/club-fiscal-year';
 import { orgDayKey } from '@/lib/timezone';
 
 type Params = { params: Promise<{ allocationId: string }> };
@@ -47,11 +47,15 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   const setting = await settingP;
   const firstDue = detail.teams.flatMap(t => t.installments.map(i => i.dueDate)).sort()[0] ?? null;
   const year = fiscalYearOf(lineYearKey ?? firstDue ?? orgDayKey(detail.allocation.createdAt), setting);
-  const through = closedThrough(setting);
   const canMove = canMoveClubMoney(ctx, ctx.org);
+  // A received installment whose line sits in a closed year: the year’s name, and Reopen’s (the bill room’s locked sentence).
   const teams = detail.teams.map(t => ({
     ...t,
-    installments: t.installments.map(i => (i.received ? { ...i, received: { ...i.received, locked: through !== null && i.received.on <= through } } : i)),
+    installments: t.installments.map(i => {
+      if (!i.received) return i;
+      const lockedInYear = lockedIn(i.received.on, setting, canMove);
+      return { ...i, received: { ...i.received, locked: lockedInYear !== null, lockedIn: lockedInYear } };
+    }),
   }));
   return NextResponse.json({
     asOf: today, canMove, canEdit: canMove && !year.locked, budgetLineName,

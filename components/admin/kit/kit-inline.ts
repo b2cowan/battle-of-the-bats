@@ -48,14 +48,8 @@ export const KIT_SURFACE = {
   menu: { background: 'var(--card-bg)', border: '1px solid var(--home-line)', borderRadius: '8px', boxShadow: 'var(--home-shadow)' },
 } satisfies Record<string, CSSProperties>;
 
-/** A numbered step (Allocate to teams, New cost allocation): the one you are on or have passed wears the
- *  portal's primary (ink on lime); one still ahead is quiet. Its label: ink when current, tertiary when not. */
-export const KIT_STEP = {
-  reached: { background: 'var(--home-lime)', color: 'var(--home-lime-ink)' },
-  ahead: { background: 'var(--home-olive-soft)', color: 'var(--text-tertiary)' },
-  current: { color: 'var(--text-primary)' },
-  other: { color: 'var(--text-tertiary)' },
-} satisfies Record<string, CSSProperties>;
+/* ⚰ KIT_STEP (a numbered step's patch) retired with its last caller, the three-step New allocation page — Club Tier
+   Stage 3c turned it into the line window's one-screen form (Ask 6). */
 
 /** Ink. */
 export const KIT_INK = {

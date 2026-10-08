@@ -99,7 +99,9 @@ describe('2. an allocation is ONE step, and its money rules live in the step (C1
     const repo = path.join(import.meta.dirname, '..', '..');
     assert.equal(existsSync(path.join(repo, 'app/api/admin/accounting/budget-plan/lines/[lineId]/allocate-to-teams/route.ts')), false);
     assert.equal(existsSync(path.join(repo, 'app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx')), false);
-    assert.match(readCode('app/[orgSlug]/admin/accounting/allocations/new/page.tsx'), /sourceBudgetLineId: line\.id/);
+    // 3c: the New allocation page itself retired into the line window's one form (Ask 6), which sends the line.
+    assert.equal(existsSync(path.join(repo, 'app/[orgSlug]/admin/accounting/allocations/new/page.tsx')), false);
+    assert.match(readCode('components/admin/kit/club/money/AllocationWindow.tsx'), /sourceBudgetLineId: source\?\.id/);
   });
   it('a line\'s total and periods are one step: a CHANGED total below allocated is refused with the figure; periods must add up', () => {
     const save = sqlFunction('club_budget_line_save');

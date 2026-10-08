@@ -392,7 +392,11 @@ export function SavePill({ saving, dirty, error, held, onRetry, inline = false }
  * `news`: something the reader did NOT just do — the organizer sending a volunteer's score back (Stage 6,
  * A32) — lingers as long as a sentence notice (~8s, the standing rule), because nobody is looking for it.
  */
-export function NoticePill({ message, onDone, news = false }: { message: string; onDone: () => void; news?: boolean }) {
+export function NoticePill({ message, onDone, news = false, inline = false }: {
+  message: string; onDone: () => void; news?: boolean;
+  /** INSIDE A WINDOW (KitDialog's `status`): pinned by the window to its body's corner, as `SavePill inline` is. */
+  inline?: boolean;
+}) {
   const [phase, setPhase] = useState<'shown' | 'fading'>('shown');
   const done = useRef(onDone);
   useEffect(() => { done.current = onDone; }, [onDone]);
@@ -403,7 +407,7 @@ export function NoticePill({ message, onDone, news = false }: { message: string;
     return () => { window.clearTimeout(fade); window.clearTimeout(leave); };
   }, [news]);
   return (
-    <div className={styles.savePill} data-state="saved" data-phase={phase} role="status">
+    <div className={inline ? `${styles.savePill} ${styles.savePillInline}` : styles.savePill} data-state="saved" data-phase={phase} role="status">
       <span className={`${styles.saveStatus}${news ? ` ${styles.saveStatusNews}` : ''}`}>{news ? <Info size={13} aria-hidden /> : <Check size={13} aria-hidden />} {message}</span>
     </div>
   );

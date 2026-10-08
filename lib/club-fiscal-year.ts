@@ -138,6 +138,14 @@ export function closedThrough(setting: FiscalSetting): string | null {
   return through;
 }
 
+/** The club's LATEST closed year — the only one Reopen unlocks (Ask 3) — or null before the first close. The ONE
+ *  answer the Reopen button, the locked sentences and the server's refusal read. */
+export function latestClosedYear(setting: FiscalSetting): FiscalYear | null {
+  const through = closedThrough(setting);
+  const row = through ? setting.rows.find(r => r.closedAt && r.lastDay === through) ?? null : null;
+  return row ? fiscalYearOf(row.firstDay, setting) : null;
+}
+
 function yearFrom(row: { id: string | null; name: string; firstDay: string; lastDay: string }, through: string | null,
   close: FiscalYearRow | null): FiscalYear {
   const months = monthsBetween(row.firstDay, row.lastDay);
@@ -255,6 +263,8 @@ export interface FiscalYearOption {
   locked: boolean;
   /** The year today falls in: the pill's dot. */
   current: boolean;
+  /** How many months it runs: a SHORT year's menu row says it ("8 months" — the one exception to the bare rows). */
+  months: number;
   /** Plan lines on it (the Budget's empty year offers to start from the newest earlier year that has some). */
   lines: number;
 }
@@ -273,7 +283,7 @@ export function fiscalYearOptions(
   for (const r of setting.rows) if (r.closedAt) keys.add(r.firstDay);
   return [...keys].sort((a, b) => b.localeCompare(a)).map(k => {
     const y = fiscalYearOf(k, setting);
-    return { key: y.key, name: y.name, locked: y.locked, current: y.key === current.key, lines: linesByYearKey[y.key] ?? 0 };
+    return { key: y.key, name: y.name, locked: y.locked, current: y.key === current.key, months: y.months, lines: linesByYearKey[y.key] ?? 0 };
   });
 }
 
@@ -287,4 +297,29 @@ export interface FiscalYearRead extends FiscalYear {
   closedByName: string | null;
   current: boolean;
   canWrite: boolean;
+  /** Its latest Reopen (who, when, why) — the closed-year line names it, and so does an open year that was reopened
+   *  and not yet closed again (Ask 3: "Reopened Oct 9 by Priya Nair: A bounced cheque from 10U A"). */
+  reopened: { at: string; byName: string | null; reason: string } | null;
+  /** The club's LATEST closed year (only it can be reopened — Ask 3); null before the first close. */
+  latestClosed: { key: string; name: string } | null;
+  /** This reader may reopen THIS year: it is the latest closed year and they can move the club's money. */
+  canReopen: boolean;
+  /** This reader moves the club's money (3a's one rule), whatever the year — `canWrite` adds "and it is open". */
+  canMove: boolean;
+  /** The year before, when it is CLOSED: this year's opening is its closing, locked (Ask 4 — the Budget's opening
+   *  row says where it came from). */
+  carriedFrom: { key: string; name: string; closedAt: string } | null;
+}
+
+/**
+ * A record dated in the club's CLOSED stretch (Stage 3c, Ask 8d — S3C-07): the closed year it sits in, and Reopen's
+ * year when that is the LATEST closed year and this reader moves the club's money (Ask 3). Null for an open day. The
+ * screens put one locked sentence where its corrections (Undo, Reverse, Void) would be.
+ */
+export function lockedIn(day: string | null | undefined, setting: FiscalSetting, canMove: boolean): { yearName: string; reopen: string | null } | null {
+  const through = closedThrough(setting);
+  if (!day || !through || day > through) return null;
+  const y = fiscalYearOf(day, setting);
+  const latest = latestClosedYear(setting);
+  return { yearName: y.name, reopen: canMove && latest && day >= latest.firstDay ? y.name : null };
 }

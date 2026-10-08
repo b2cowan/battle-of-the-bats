@@ -16,7 +16,7 @@
  * are called, and how a row is built from a record. One definition each, so the same dataset can
  * never come out two different ways.
  */
-import type { ExportColumnDef, ReportShape, XlsxRowStyle } from './export';
+import type { ExportColumnDef, ReportShape, XlsxExtraSheet, XlsxRowStyle } from './export';
 import {
   buildFilename, serializeHeaders, serializeRows, generateCSV, downloadCSVBlob, downloadXLSX,
   downloadPDF, DEFAULT_PDF_SETTINGS, BRANDING_TEXT, loadBrandMark, type OrgPdfSettings,
@@ -1623,6 +1623,16 @@ export interface MoneyDownload {
    * club's branding; a second title block under it would be the title twice.
    */
   masthead?: MoneyMasthead;
+  /**
+   * A REPORT OF SEVERAL SECTIONS (Club Tier Stage 3c — the club's year-end report): each a table with its own
+   * columns. The PDF prints them in order, each under its own heading (the engine's grouped mode, every group its own
+   * headers); Excel writes the data sheet as usual and each section as a sheet of its own after it. Absent, every
+   * export is byte-identical to what it always produced.
+   */
+  sections?: { label: string; headers: string[]; rows: (string | number)[][] }[];
+  /** The PDF's shape, declared by a report whose columns are built per file (the year-end report names last year in
+   *  a heading, so no constant column list can key `REPORT_SHAPES`). */
+  shape?: ReportShape;
   orgLabel: string;
   /** Season name — in the filename, and under a PDF's title. */
   scopeLabel: string;
@@ -1665,7 +1675,7 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
       settings,
       {
         identity: spec.teamName,
-        ...(REPORT_SHAPES.has(spec.columns) ? { shape: REPORT_SHAPES.get(spec.columns) } : {}),
+        ...((spec.shape ?? REPORT_SHAPES.get(spec.columns)) ? { shape: spec.shape ?? REPORT_SHAPES.get(spec.columns) } : {}),
         // Flattened to plain sentences here — the PDF engine has no rich text inside a wrapped
         // paragraph, and the screen-only clauses are already gone.
         ...(spec.notes?.length
@@ -1674,11 +1684,12 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
         /* The opening block rides the engine's grouped mode: its own blank-header group first
            (a key/value block), then the table under the report's own title. Absent, the flat
            path is byte-identical to what every export always produced. */
-        ...(spec.pdfIntro
+        ...(spec.pdfIntro || spec.sections?.length
           ? {
             groups: [
-              { label: spec.pdfIntro.label, headers: ['', ''], rows: spec.pdfIntro.rows },
+              ...(spec.pdfIntro ? [{ label: spec.pdfIntro.label, headers: ['', ''], rows: spec.pdfIntro.rows }] : []),
               { label: spec.title, rows: body },
+              ...(spec.sections ?? []).map(sec => ({ label: sec.label, headers: sec.headers, rows: sec.rows })),
             ],
           }
           : {}),
@@ -1753,5 +1764,9 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
     footer: spec.masthead && settings.showBranding
       ? { text: BRANDING_TEXT, logoDataUrl: brandMark ?? undefined }
       : undefined,
+    // A report of several sections writes each as its own sheet (Excel names cap at 31 characters).
+    ...(spec.sections?.length
+      ? { extraSheets: spec.sections.map((sec): XlsxExtraSheet => ({ name: sec.label.slice(0, 31), headers: sec.headers, rows: sec.rows })) }
+      : {}),
   });
 }

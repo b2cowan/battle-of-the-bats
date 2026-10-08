@@ -8,6 +8,7 @@ import { allocationsOf } from '@/lib/club-budget-read';
 import { allocationYearKey } from '@/lib/club-budget-report';
 import { loadFiscalSetting } from '@/lib/club-fiscal-year-server';
 import { fiscalYearOf } from '@/lib/club-fiscal-year';
+import { canMoveClubMoney } from '@/lib/member-access';
 
 /**
  * GET /api/admin/accounting/allocations?orgSlug= — Accounting › Allocations, "By allocation"
@@ -17,7 +18,9 @@ import { fiscalYearOf } from '@/lib/club-fiscal-year';
  *
  * ⚖ Stage 3c: each row carries `year` = { key, name, locked } — the FISCAL year it counts in (its line's; without
  * one, its first installment's), read through the one definition. It replaces the screen's "This year" worked out
- * from each allocation's creation stamp in UTC (S3C-01): session 2 groups and totals by this.
+ * from each allocation's creation stamp in UTC (S3C-01): session 2 groups and totals by this. `year` at the top is
+ * the fiscal year today falls in (the totals line names it when every allocation counts in it). `canMove`: whether
+ * this reader may make one (3a's one money rule) — New allocation is absent otherwise.
  */
 export const GET = withObservability(async (req: Request) => {
   const r = await resolveClubMoney(req, { scope: 'loop', write: false });
@@ -34,5 +37,6 @@ export const GET = withObservability(async (req: Request) => {
     const y = fiscalYearOf(a ? allocationYearKey(a, setting) : today, setting);
     return { ...row, year: { key: y.key, name: y.name, locked: y.locked } };
   });
-  return NextResponse.json({ asOf: today, allocations });
+  const current = fiscalYearOf(today, setting);
+  return NextResponse.json({ asOf: today, year: { key: current.key, name: current.name }, allocations, canMove: canMoveClubMoney(ctx, ctx.org) });
 }, { route: '/api/admin/accounting/allocations' });
