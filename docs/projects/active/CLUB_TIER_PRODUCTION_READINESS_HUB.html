@@ -904,6 +904,45 @@ dialog.truesize::backdrop{background:#16201899}
 .s3c .c3-ql .r .v{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .s3c .c3-ql .r .v.warn{color:var(--w-amber)}
 .s3c .c3-ql .r .v.bad{color:var(--w-live)}
+/* §283 W5, round 2 (owner 2026-10-08, at true size: "a lot of text"): the close question redrawn — the outcome first,
+   one line per kind of open money, the state in its word and never in the figure. Ask 10. */
+.s3c .cq{display:flex;flex-direction:column;gap:14px}
+.s3c .cq-note{display:flex;gap:8px;align-items:flex-start;padding:9px 12px;border:1px solid var(--w-line);border-left:3px solid var(--w-olive);border-radius:8px;background:var(--w-card);font-size:13px;line-height:1.4;color:var(--w-soft)}
+.s3c .cq-note .i{width:15px;height:15px;color:var(--w-olive);flex:none;margin-top:1px}
+.s3c .cq-note b{color:var(--w-ink);font-weight:650}
+.s3c .cq-strip{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1.1fr) 20px minmax(0,1fr);align-items:stretch;padding:6px;border:1px solid var(--w-line);border-radius:10px;background:var(--w-card)}
+.s3c .cq-cell{display:flex;flex-direction:column;gap:3px;padding:8px;min-width:0}
+.s3c .cq-k{font:700 10.5px/1.2 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--w-dim)}
+.s3c .cq-y{display:flex;align-items:center;gap:6px;font:700 19px/1.15 'Barlow Condensed',Inter,sans-serif;color:var(--w-ink)}
+.s3c .cq-y .i{width:14px;height:14px;color:var(--w-dim)}
+.s3c .cq-s{font-size:12px;line-height:1.35;color:var(--w-dim)}
+.s3c .cq-mid{background:var(--w-fill);border-radius:7px;align-items:center;justify-content:center;text-align:center;padding:10px}
+.s3c .cq-fig{font:750 26px/1.1 Inter,sans-serif;letter-spacing:-.3px;font-variant-numeric:tabular-nums;color:var(--w-ink)}
+.s3c .cq-delta{display:inline-flex;align-items:center;margin-top:4px;padding:2px 8px;border-radius:999px;background:var(--w-olsoft);color:var(--w-olive);font:650 11.5px/1.4 Inter,sans-serif;font-variant-numeric:tabular-nums}
+.s3c .cq-arrow{display:flex;align-items:center;justify-content:center;color:var(--w-faint)}
+.s3c .cq-arrow .i{width:16px;height:16px}
+.s3c .cq-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin-bottom:-8px}
+.s3c .cq-head .c3-qh{margin:0}
+.s3c .cq-head .cq-s{font-size:12.5px}
+.s3c .cq-list{border:1px solid var(--w-line);border-radius:8px;background:var(--w-card)}
+.s3c .cq-row{display:grid;grid-template-columns:24px minmax(0,1fr) auto 16px;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--w-line);font-size:13.5px;line-height:1.35;min-height:40px}
+.s3c .cq-row:first-child{border-top:0}
+.s3c .cq-n{justify-self:center;font:700 13px/1 Inter,sans-serif;font-variant-numeric:tabular-nums;color:var(--w-soft)}
+.s3c .cq-n.wait{min-width:20px;height:20px;border-radius:999px;background:color-mix(in srgb,var(--w-amber) 11%,transparent);color:var(--w-amber);border:1px solid color-mix(in srgb,var(--w-amber) 32%,transparent);font:700 11px/18px Inter,sans-serif;text-align:center;padding:0 5px}
+.s3c .cq-w{min-width:0}
+.s3c .cq-w b{font-weight:650;color:var(--w-ink)}
+.s3c .cq-w span{color:var(--w-dim)}
+.s3c .cq-w .late{color:var(--w-live)}
+.s3c .cq-v{font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--w-ink)}
+.s3c .cq-row>.i{width:16px;height:16px;color:var(--w-dim)}
+.s3c .cq-fine{margin:0;font-size:12px;line-height:1.45;color:var(--w-dim)}
+.s3c .cq-pcard{border:1px solid var(--w-line);border-radius:10px;background:var(--w-card);padding:6px}
+.s3c .cq-pcard .cq-mid{display:flex;flex-direction:column;gap:2px}
+.s3c .cq-prow{display:flex;gap:9px;align-items:flex-start;padding:9px 8px 7px;font-size:13.5px;line-height:1.35}
+.s3c .cq-prow+.cq-prow{border-top:1px solid var(--w-line)}
+.s3c .cq-prow>.i{width:15px;height:15px;color:var(--w-dim);flex:none;margin-top:2px}
+.s3c .cq-prow b{font-weight:650}
+.s3c .phone .cq-row{grid-template-columns:22px minmax(0,1fr) auto 14px;gap:8px;padding:10px;min-height:44px}
 /* a field's refusal under it (a create asks; a refused value says why, once, under its field) */
 .s3c .c3-refuse{display:flex;gap:7px;align-items:flex-start;font-size:12.5px;line-height:1.45;color:var(--w-live);margin-top:6px}
 .s3c .c3-refuse .i{width:14px;height:14px;flex:none;margin-top:1px}
@@ -1109,6 +1148,7 @@ dialog.truesize::backdrop{background:#16201899}
       <a href="#s3c-setup">1 · The club’s year</a>
       <a href="#s3c-named">2 · A named year</a>
       <a href="#s3c-close">3 · Closing a year</a>
+      <a href="#s3c-closeq">3 · The close question, round 2</a>
       <a href="#s3c-opens">4 · The year that opens</a>
       <a href="#s3c-papers">5 · Year-end papers</a>
       <a href="#s3c-alloc">6 · New allocation</a>
@@ -7051,6 +7091,157 @@ dialog.truesize::backdrop{background:#16201899}
       </section>
 
 
+      <!-- ═══════════════ STAGE 3c · §283 W5 ROUND 2 — THE CLOSE QUESTION, REDRAWN (2026-10-08) ═══════════════ -->
+      <section class="screen s3b s3c" id="s3c-closeq" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 3c · round 2 of specimen 3 · the question window, desktop and phone · from the §283 walk 5</div>
+          <h1 tabindex="-1">The close question, redrawn: the outcome first, then one line for each thing still open</h1>
+          <p class="sub">Walking §283 walk 5 at true size, the owner liked what the question says and found it hard to read: <em>“there seems to be a lot of text, is there a way to make this more visually appealing and easier to read and organize?”</em> The build follows the round-1 drawing exactly, so the drawing is what changes. Everything it says stays. What moves is the order and the weight: the figure a treasurer is deciding on comes first, each thing still open takes one line, and nothing is said twice. The figures below are UAT Rep Club’s on dev today, the same ones on the owner’s screen.</p>
+        </div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Before · as built</span><h2>Close 2025–26?, as the owner saw it in walk 5</h2><span class="aside">True size: the window is 640 px wide on a computer.</span></div>
+          <div class="scroller" id="s3c-q2-before"><div class="wm std" style="width:1110px;padding:26px;display:flex;justify-content:center;background:var(--w-scrim)">
+            <div class="wdialog" style="width:640px">
+              <div class="wdh"><div><div class="weye">Accounting · 2025–26</div><div class="wtitle">Close 2025–26?</div></div><span class="xbtn"><svg class="i"><use href="#i-x"/></svg></span></div>
+              <div class="wdb c3-q">
+                <p class="lead1" style="margin:0">Closing locks the year’s books and its plan, so its figures stop moving. Nothing is deleted, and you can reopen it while it is the latest closed year.</p>
+                <p class="wsm" style="margin:0">Reopened Oct 8 by Avery Chen: “A September sponsor cheque was never entered”. It closed at $1,185.00 last time, and closes at $1,685.00 now.</p>
+                <div><div class="c3-qh">Still open · these don’t stop the close</div>
+                  <div class="c3-ql">
+                    <div class="r"><span class="n">2 installments still owed by the teams<small>13U AAA and 14U AA, $600.00 each, overdue since Jul 15</small></span><span class="v bad">$1,200.00</span><svg class="i" style="width:16px;height:16px;color:var(--w-dim)"><use href="#i-chev"/></svg></div>
+                    <div class="r"><span class="n">1 request waiting on you<small>15U AAA · holding up the team’s payout</small></span><span class="v warn">$260.00</span><svg class="i" style="width:16px;height:16px;color:var(--w-dim)"><use href="#i-chev"/></svg></div>
+                    <div class="r"><span class="n">2 lines not filed under a word<small>They count as off-plan in 2025–26’s statement</small></span><span class="v">$2,185.00</span><svg class="i" style="width:16px;height:16px;color:var(--w-dim)"><use href="#i-chev"/></svg></div>
+                    <div class="r"><span class="n">1 line not cleared<small>A line that clears later is dated that day, in 2026–27</small></span><span class="v">$420.00</span><svg class="i" style="width:16px;height:16px;color:var(--w-dim)"><use href="#i-chev"/></svg></div>
+                  </div></div>
+                <div class="twocol" style="gap:14px">
+                  <div><div class="c3-qh">What it locks</div>
+                    <div class="c3-ql"><div class="r"><span class="n">The club’s 2 books, Sep 1, 2025 to Aug 31, 2026<small>17 lines: nothing added, changed or voided in those dates</small></span></div><div class="r"><span class="n">2025–26’s plan<small>4 lines, and allocating from them</small></span></div></div></div>
+                  <div><div class="c3-qh">What carries</div>
+                    <div class="c3-ql"><div class="r"><span class="n">The closing balance<small>2026–27 opens on it, locked</small></span><span class="v">$1,685.00</span></div><div class="r"><span class="n">The plan<small>2026–27 has its own plan: 6 lines</small></span></div></div></div>
+                </div>
+                <p class="wsm" style="margin:0">A team’s own book is its coaches’: it follows the team’s season, and closing the club’s year never touches it.</p>
+              </div>
+              <div class="wdf"><span class="wbtn left">Not yet</span><span class="wbtn lime">Close 2025–26</span></div>
+            </div>
+          </div></div>
+          <p class="speccap">Thirteen pieces of explanation in one window: a two-sentence lead, a two-sentence reopen note, a second line on all eight rows and a closing paragraph. Five boxes carry the same weight, so nothing leads. The figure being decided, what 2025–26 closes at, is said twice (in the grey note and in the bottom-right row) and read last both times. The red and amber figures read as a ranking under a heading that says none of them stops the close.</p>
+        </div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · A · ruled 2026-10-08, in the wide window</span><h2>The outcome first</h2><span class="askchip">Ask 10</span><span class="aside">The owner chose A and asked for it wider, so the strip isn’t squeezed. It now uses the kit’s wide window, 800 px, the one New allocation already uses. Built the same day.</span></div>
+          <div class="coltags">Parts:
+            <span>The year’s path<span class="mk" data-k="new" data-note="What it locks and what carries become one strip: the year that locks, its closing balance, and the year it carries into, read left to right with arrows between them. The closing balance is the one large figure in the window, because it is what the close fixes. The four rows that explained the same mechanism every year in sentences become three facts. The plan's line count moves out: the Budget is where a plan is read. 'Carries into' keeps Ask 4's ruling: the next year's opening is this closing, locked.">New</span></span>
+            <span>Reopened<span class="mk" data-k="re" data-note="Shown only on a year that was reopened: who, when and the reason, in one line with the olive edge every club callout uses now (tinted panels are retired). 'It closed at $1,185.00 last time, and closes at $1,685.00 now' becomes the chip under the figure, '+$500.00 since last close', so the closing balance is said once. A year closing for the first time has neither the line nor the chip.">Restyled</span></span>
+            <span>One line each<span class="mk" data-k="re" data-note="Count · what it is · whose and when · figure · chevron. The count gets its own column, so the four kinds scan down one edge. The second line of explanation is gone from every row: who and when sit after the name in the secondary ink. Each row is still a door to the page that settles it (Ask 2). With many teams the names wrap under themselves rather than push the figure; past three teams they read '13U AAA, 14U AA and 3 more'.">Restyled</span></span>
+            <span>The state in its word<span class="mk" data-k="re" data-note="Round 1 coloured the figures red and amber, which ranked the four kinds under a heading that says none of them stops the close. Now every figure is ink. The red goes on the words that are late ('overdue since Jul 15'), and the request's count is the rail's amber waiting pill (owner, 2026-10-01: a waiting count is the amber pill). A status is said once.">Restyled</span></span>
+            <span>The promises<span class="mk" data-k="re" data-note="Three promises: nothing is deleted, the year can be reopened while it is the latest closed year, and a team's own book is never touched. Round 1 spread them over a two-sentence lead and a closing paragraph. Here they are one quiet paragraph at the foot, read just before the button that relies on them. Every sentence in the window is /marketing's to word; the drawing fixes what each part must say.">Restyled</span></span>
+          </div>
+          <div class="scroller" id="s3c-q2-a"><div class="wm std" style="width:1110px;padding:26px;display:flex;justify-content:center;background:var(--w-scrim)">
+            <div class="wdialog" style="width:800px">
+              <div class="wdh"><div><div class="weye">Accounting · 2025–26</div><div class="wtitle">Close 2025–26?</div></div><span class="xbtn"><svg class="i"><use href="#i-x"/></svg></span></div>
+              <div class="wdb cq">
+                <div class="cq-note"><svg class="i"><use href="#i-undo"/></svg><span><b>Reopened Oct 8 by Avery Chen</b> · “A September sponsor cheque was never entered”</span></div>
+                <div class="cq-strip">
+                  <div class="cq-cell"><span class="cq-k">Locks</span><span class="cq-y"><svg class="i"><use href="#i-lock"/></svg>2025–26</span><span class="cq-s">Sep 1, 2025 to Aug 31, 2026</span><span class="cq-s">2 books, 17 lines, and its plan</span></div>
+                  <span class="cq-arrow"><svg class="i"><use href="#i-right"/></svg></span>
+                  <div class="cq-cell cq-mid"><span class="cq-k">Closing balance</span><span class="cq-fig">$1,685.00</span><span class="cq-delta">+$500.00 since last close</span></div>
+                  <span class="cq-arrow"><svg class="i"><use href="#i-right"/></svg></span>
+                  <div class="cq-cell"><span class="cq-k">Carries into</span><span class="cq-y">2026–27</span><span class="cq-s">As its opening balance, locked</span><span class="cq-s">Its own plan · 6 lines</span></div>
+                </div>
+                <div class="cq-head"><span class="c3-qh">Still open</span><span class="cq-s">None of these stop the close.</span></div>
+                <div class="cq-list">
+                  <div class="cq-row"><span class="cq-n">2</span><span class="cq-w"><b>installments owed</b> <span>· 13U AAA, 14U AA · $600.00 each · <span class="late">overdue since Jul 15</span></span></span><span class="cq-v">$1,200.00</span><svg class="i"><use href="#i-chev"/></svg></div>
+                  <div class="cq-row"><span class="cq-n wait">1</span><span class="cq-w"><b>request waiting on you</b> <span>· 15U AAA · holding up its payout</span></span><span class="cq-v">$260.00</span><svg class="i"><use href="#i-chev"/></svg></div>
+                  <div class="cq-row"><span class="cq-n">2</span><span class="cq-w"><b>lines not filed under a word</b> <span>· off-plan in 2025–26</span></span><span class="cq-v">$2,185.00</span><svg class="i"><use href="#i-chev"/></svg></div>
+                  <div class="cq-row"><span class="cq-n">1</span><span class="cq-w"><b>line not cleared</b> <span>· counts in 2026–27 when it clears</span></span><span class="cq-v">$420.00</span><svg class="i"><use href="#i-chev"/></svg></div>
+                </div>
+                <p class="cq-fine">Nothing is deleted, and you can reopen it while it is the latest closed year. Closing the club’s year never touches a team’s own book.</p>
+              </div>
+              <div class="wdf"><span class="wbtn left">Not yet</span><span class="wbtn lime">Close 2025–26</span></div>
+            </div>
+          </div></div>
+          <p class="speccap">Five pieces of explanation where round 1 had thirteen, and one figure large enough to find without reading. Nothing round 1 said is gone: the plan's line counts move to the Budget, where a plan is read. At 800 px the strip's cells stop wrapping. Measured in the build at 1440 wide, the window is 579 px tall where round 1's was 739, so on a laptop the whole question and its two buttons fit without scrolling.</p>
+        </div>
+        <div class="spec darkcopy" data-src="s3c-q2-a" data-title="A, dark theme"></div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · A · on a phone, at true size</span><h2>The same order, stacked</h2><span class="aside">Open the hub on your phone for this one.</span></div>
+          <div class="row2" id="s3c-q2-aphone">
+            <div class="phonecol"><div class="phonebox">
+              <div class="phone wm std" id="s3c-ph-q2">
+                <div class="pstatus" style="color:var(--w-soft)"><span>9:41</span><span>●●● ▮</span></div>
+                <div class="pscroll" style="bottom:76px">
+                  <div class="pformhead"><span class="xbtn" aria-label="Back"><svg class="i"><use href="#i-left"/></svg></span><div><div class="weye">Accounting · 2025–26</div><div class="wtitle">Close 2025–26?</div></div></div>
+                  <div class="cq" style="gap:12px">
+                    <div class="cq-note"><svg class="i"><use href="#i-undo"/></svg><span><b>Reopened Oct 8 by Avery Chen</b> · “A September sponsor cheque was never entered”</span></div>
+                    <div class="cq-pcard">
+                      <div class="cq-cell cq-mid"><span class="cq-k">Closing balance</span><span class="cq-fig">$1,685.00</span><span class="cq-delta">+$500.00 since last close</span></div>
+                      <div class="cq-prow"><svg class="i"><use href="#i-lock"/></svg><div><b>Locks 2025–26</b><div class="cq-s">Sep 1, 2025 to Aug 31, 2026 · 2 books, 17 lines, and its plan</div></div></div>
+                      <div class="cq-prow"><svg class="i"><use href="#i-right"/></svg><div><b>2026–27 opens on it, locked</b><div class="cq-s">Its own plan · 6 lines</div></div></div>
+                    </div>
+                    <div class="cq-head"><span class="c3-qh">Still open</span><span class="cq-s">None of these stop the close.</span></div>
+                    <div class="cq-list">
+                      <div class="cq-row"><span class="cq-n">2</span><span class="cq-w"><b>installments owed</b> <span>· 13U AAA, 14U AA · <span class="late">overdue</span></span></span><span class="cq-v">$1,200.00</span><svg class="i"><use href="#i-chev"/></svg></div>
+                      <div class="cq-row"><span class="cq-n wait">1</span><span class="cq-w"><b>request waiting</b> <span>· 15U AAA · holding up its payout</span></span><span class="cq-v">$260.00</span><svg class="i"><use href="#i-chev"/></svg></div>
+                      <div class="cq-row"><span class="cq-n">2</span><span class="cq-w"><b>lines not filed</b> <span>· off-plan</span></span><span class="cq-v">$2,185.00</span><svg class="i"><use href="#i-chev"/></svg></div>
+                      <div class="cq-row"><span class="cq-n">1</span><span class="cq-w"><b>line not cleared</b> <span>· clears in <span style="white-space:nowrap">2026–27</span></span></span><span class="cq-v">$420.00</span><svg class="i"><use href="#i-chev"/></svg></div>
+                    </div>
+                    <p class="cq-fine">Nothing is deleted, and you can reopen it. A team’s own book is never touched.</p>
+                  </div>
+                </div>
+                <div class="pfoot"><span class="wbtn">Not yet</span><span class="wbtn lime">Close 2025–26</span></div>
+              </div>
+              <span class="ref44"><i></i>44 px</span>
+            </div><button class="tsbtn" type="button" data-truesize="s3c-ph-q2">Open at true size</button>
+            <p class="meta" style="max-width:390px">The strip turns on its side: the figure first, then what locks and what opens on it, in that order.<span class="mk" data-k="re" data-note="On a phone the three cells stack. The closing balance leads, then two rows: what locks (with the lock) and the year that opens on it (with the arrow). The window keeps the ← of the kit's phone form, which is how it was built (round 1's departure 1). Each row of the open list is at least 44 px tall, and the short words are the build's own phone words.">Restyled</span></p></div>
+          </div>
+        </div>
+        <div class="spec darkcopy" data-src="s3c-q2-aphone" data-title="A on a phone, dark theme"></div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · B · the smaller change</span><h2>The same layout, with less to read</h2><span class="askchip">Ask 10</span><span class="aside">Round 1's boxes, each row cut to one line.</span></div>
+          <div class="coltags">Parts:
+            <span>Trimmed<span class="mk" data-k="re" data-note="The build's shape is kept. The lead becomes one sentence, the reopen note loses its second sentence, every row loses its second line, and What it locks and What carries merge into two rows. It is the smallest change to the build and the walk. What it does not fix: four boxes still carry the same weight, so the closing balance is still read last, in the bottom-right corner.">Restyled</span></span>
+          </div>
+          <div class="scroller" id="s3c-q2-b"><div class="wm std" style="width:1110px;padding:26px;display:flex;justify-content:center;background:var(--w-scrim)">
+            <div class="wdialog" style="width:640px">
+              <div class="wdh"><div><div class="weye">Accounting · 2025–26</div><div class="wtitle">Close 2025–26?</div></div><span class="xbtn"><svg class="i"><use href="#i-x"/></svg></span></div>
+              <div class="wdb c3-q">
+                <p class="lead1" style="margin:0">Closing locks the year’s books and its plan. Nothing is deleted, and you can reopen it.</p>
+                <p class="wsm" style="margin:0">Reopened Oct 8 by Avery Chen: “A September sponsor cheque was never entered”.</p>
+                <div><div class="c3-qh">Still open · these don’t stop the close</div>
+                  <div class="c3-ql">
+                    <div class="r"><span class="n">2 installments owed <span class="wsm">· 13U AAA, 14U AA, overdue</span></span><span class="v bad">$1,200.00</span><svg class="i" style="width:16px;height:16px;color:var(--w-dim)"><use href="#i-chev"/></svg></div>
+                    <div class="r"><span class="n">1 request waiting on you <span class="wsm">· 15U AAA</span></span><span class="v warn">$260.00</span><svg class="i" style="width:16px;height:16px;color:var(--w-dim)"><use href="#i-chev"/></svg></div>
+                    <div class="r"><span class="n">2 lines not filed <span class="wsm">· off-plan in 2025–26</span></span><span class="v">$2,185.00</span><svg class="i" style="width:16px;height:16px;color:var(--w-dim)"><use href="#i-chev"/></svg></div>
+                    <div class="r"><span class="n">1 line not cleared <span class="wsm">· clears in 2026–27</span></span><span class="v">$420.00</span><svg class="i" style="width:16px;height:16px;color:var(--w-dim)"><use href="#i-chev"/></svg></div>
+                  </div></div>
+                <div><div class="c3-qh">Locks · carries</div>
+                  <div class="c3-ql">
+                    <div class="r"><span class="n">The club’s 2 books and its plan <span class="wsm">· Sep 1, 2025 to Aug 31, 2026</span></span></div>
+                    <div class="r"><span class="n">2026–27 opens on it, locked <span class="wsm">· $500.00 more than last close</span></span><span class="v">$1,685.00</span></div>
+                  </div></div>
+                <p class="wsm" style="margin:0">A team’s own book is never touched.</p>
+              </div>
+              <div class="wdf"><span class="wbtn left">Not yet</span><span class="wbtn lime">Close 2025–26</span></div>
+            </div>
+          </div></div>
+          <p class="speccap">Half the text of round 1 and the same build. It reads faster but is organized the same way: the figure the close fixes is still the last thing you reach.</p>
+        </div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl place">Ask 10 · ruled 2026-10-08</span><h2>Which question should 2025–26 ask?</h2></div>
+          <div class="speccap" style="max-width:880px;font-size:14px;line-height:1.55">
+            <p style="margin:0 0 8px"><b>Ruled: A, in the wide window.</b> Owner: <em>“I like option A but if you could make it a bit wider I think it would help this section look less jumbled and squished.”</em> Built the same day at the kit’s wide size (800 px). The checks are walk 12 on the QA tab.</p>
+            <p style="margin:0 0 8px"><b>A, as recommended.</b> It fixes what made round 1 hard to read, which is that every part carried the same weight, and not only the length. The decision becomes a figure you can find at a glance and four lines you can scan. B is quicker to build and still puts the answer last.</p>
+            <p style="margin:0 0 8px"><b>Either way, the rules don’t change.</b> Closing still warns and never blocks (Ask 2), the next year still opens on the closing, locked (Ask 4), and each open row is still a door. Only the window is redrawn: no figure, route or permission moves.</p>
+            <p style="margin:0"><b>For the walk:</b> walk 5's steps 2 to 7 read this window's words. Pressing <b>Not yet</b> now and walking 8 to 11 while the redraw is built lets walk 5 run once, on the new window, with 6 and 7 after it. If you close now instead, seeing the new window means reopening 2025–26 a second time.</p>
+          </div>
+        </div>
+      </section>
+
+
       <!-- ═══════════════ STAGE 3c SPECIMEN 4 — THE YEAR THAT OPENS ═══════════════ -->
       <section class="screen s3b s3c" id="s3c-opens" hidden>
         <div class="shead">
@@ -8110,21 +8301,22 @@ const WALKS=[
   before:{short:'Writes · walk once',long:'this walk moves UAT Calendar Club’s fiscal year from January to September. To walk it again, ask the chat to rebuild only that club (node --env-file=.env.local scripts/seed-club-fixture.mjs --calendar-club); UAT Rep Club is not touched.'},
   short:'A club on January moves its year to September: one window that reads first, says what changes before it changes it, and keeps the year already under way.',
   intent:'Every club starts on a January-to-December year. A club whose board runs September to August sets its first month once, in Budget › Tools › Fiscal year. The window reads first and edits whole under its pencil. Picking a month changes nothing until you answer: it first says what the change does. A year that has begun keeps its months, the NEXT year is the short one (never a long one), plan lines dated past the short year’s end move to the year after with their dates, and ledger lines never move. You are judging whether a treasurer could make this change without fear, and whether what it says is what they would expect.',
-  passes:'The window reads before it edits; a picked month says what changes before anything is saved, and Keep changes nothing; after the change the Year pill lists 2027 as an 8-month year, 2026 keeps its months, and the year’s name can change while the year is open.',
+  passes:'The window reads before it edits; a picked month says what changes before anything is saved, and Keep changes nothing; after the change the Year pill lists 2027 as an 8-month year, 2026 keeps its months, and this year’s and next year’s names can change while the year is open.',
   notIn:'UAT Rep Club, which already runs September to August and has closed a year, so its first month can’t change (walk 2 shows that). The line a brand-new club sees under its first empty plan: neither test club has an empty plan, so it can’t be walked here. A line split across two years: the calendar club has no line with dates on both sides of a new year-end.',
   signIn:'UAT Calendar Club’s owner — Jamie Laurent — uat-calendar-owner@uat-rep-club.local (the same password as every test account).',
   where:'Desktop browser: http://localhost:3000/uat-calendar-club/admin/accounting/budget — the last step at phone width.',
   steps:[
-   {who:'Jamie · owner',do:'Accounting → Budget → Tools → Fiscal year.',see:'A window titled Fiscal year that reads first: Starts in “January, where every club starts until it sets its own”; This year 2026 with its months; Next year 2027, “plan ahead on the Fiscal year pill”; Closed years “None yet”; and a strip of twelve months starting at January. Nothing in it can be typed yet.'},
-   {do:'Press the pencil in the window’s header.',see:'Starts in becomes a dropdown, marked required, with “You can change it until the first fiscal year is closed.” under it, and This year’s name becomes a field holding 2026. There is no Save button.'},
+   {who:'Jamie · owner',do:'Accounting → Budget → Tools → Fiscal year.',see:'A window titled Fiscal year that reads first: Starts in January; This year 2026 with its months; Next year 2027; Closed years “None yet”; and a strip of twelve months starting at January. Nothing in it can be typed yet.'},
+   {do:'Press the pencil in the window’s header.',see:'Starts in becomes a dropdown, marked required, with “You can change it until the first fiscal year is closed.” under it, This year’s name becomes a field holding 2026, and Next year’s name a field holding 2027 with Jan 1, 2027 to Dec 31, 2027 under it. There is no Save button.'},
    {do:'Choose April. Press nothing else yet.',see:'“What changes”, three rows: 2026 keeps its months (“it has begun”); 2027 runs January to March 2027 · 3 months (“the year that changes”); 2027–28 runs April 2027 to March 2028 (“and every year after”). Under them: 2027’s plan has 1 line dated May 2027, and it moves to 2027–28’s plan with its dates; no ledger line moves. Two buttons: Keep January and Start the year in April.'},
    {do:'Press Keep January.',see:'The question goes and Starts in reads January again. Nothing has changed.'},
    {do:'Choose September. Read the question, then press Start the year in September.',see:'Before you press it: 2027 runs January to August 2027 · 8 months, and only the ledger sentence is left, because 2027’s one line (in May) stays in 2027. After: “The fiscal year now starts in September.”'},
-   {do:'Press ✓, then Done. Open the Year pill.',see:'2026 with the dot (the year today falls in) and 2027 saying 8 months. Close the pill without choosing.'},
+   {do:'Press ✓, then Done. Open the Year pill.',see:'The pill reads Fiscal year 2026 with an olive dot after it (the year today falls in). Its list: 2026, picked, and 2027 saying 8 months, with no dot after either name. Close the pill without choosing.'},
    {do:'Pick 2027 on the Year pill.',see:'Its plan still holds Diamond permits — city fields, dated May. The foot reads Opening balance · Jan 1, Net for 2027, Closing balance. Pick 2026 again.'},
    {do:'Tools → Fiscal year → pencil. Change This year’s name to “Calendar 2026”, wait a moment, then ✓ and Done.',see:'A “Saved” mark that fades. The Year pill now reads Fiscal year Calendar 2026, and the foot Net for Calendar 2026.'},
    {do:'Put the name back to 2026 the same way.',see:'Every place reads 2026 again.'},
-   {do:'Narrow to phone width; open Tools → Fiscal year.',see:'The window fills the screen with ← at the top left, and the month strip shows initials. The pill reads Fiscal year 2026 on one line.'}
+   {do:'Narrow to phone width; open Tools → Fiscal year.',see:'The window fills the screen with ← at the top left, and the month strip shows initials. The pill reads Fiscal year 2026 on one line.'},
+   {do:'Back at computer width: Tools → Fiscal year → pencil. Read under Next year’s name, then change it to “2027 changeover”; ✓, Done, and open the Year pill. Put it back to 2027 the same way.',see:'Under the field: Jan 1, 2027 to Aug 31, 2027 · 8 months. The pill’s list reads 2027 changeover · 8 months, and 2027 again once it is put back.'}
   ]},
  {id:'S3CW2',stage:'3c',n:2,ledger:'§283',title:'Every money tab reads a named year',who:'The treasurer',minutes:8,
   short:'UAT Rep Club’s year runs September to August, and every money tab prints it the same way: “Fiscal year 2026–27”.',
@@ -8135,9 +8327,9 @@ const WALKS=[
   where:'Desktop browser: http://localhost:3000/uat-rep-club/admin/accounting/budget — the last step at phone width.',
   steps:[
    {who:'Avery · treasurer',do:'Accounting → Budget.',see:'The Year pill reads “Fiscal year 2026–27”. The foot reads Opening balance · Sep 1, Net for 2026–27, Closing balance.'},
-   {do:'Open the Year pill.',see:'2027–28, 2026–27 with a dot (the year today falls in) and 2025–26 with a lock (closed). Close it without choosing.'},
+   {do:'Open the Year pill.',see:'The pill reads Fiscal year 2026–27 with a dot after it (the year today falls in). Its list: 2025–26 with a lock (closed), 2026–27, picked, and 2027–28. Close it without choosing.'},
    {do:'View → By period.',see:'The months run September to August across two calendar years, and the quarters read Sep–Nov · Dec–Feb · Mar–May · Jun–Aug, with no Q1 to Q4. Back to List.'},
-   {do:'Tools → Fiscal year.',see:'It reads first: Starts in September; This year 2026–27; Next year 2027–28; Closed years 2025–26. Press the pencil: Starts in is no longer a choice (“September. It can’t change once a fiscal year has been closed.”), and only This year’s name can change. Close it without changing anything.'},
+   {do:'Tools → Fiscal year.',see:'It reads first: Starts in September; This year 2026–27; Next year 2027–28; Closed years 2025–26. Press the pencil: Starts in is no longer a choice (“September. It can’t change once a fiscal year has been closed.”), and only the names can change: This year’s name and Next year’s name, with Sep 1, 2027 to Aug 31, 2028 under it. Close it without changing anything.'},
    {do:'Budget vs. Actual.',see:'The same pill on 2026–27, and Net for 2026–27 at the foot of the Statement.'},
    {do:'View → Months; open any month’s cell, then its Open the Ledger.',see:'The Ledger opens with its dates set to Sep 1, 2026 to Aug 31, 2027 — the fiscal year, not the calendar one.'},
    {do:'Overview.',see:'The year’s section is headed “2026–27 against the budget”, with today’s date beside it.'},
@@ -8219,7 +8411,7 @@ const WALKS=[
   before:{short:'After walk 4',long:'walk it after walk 4. The September 2025 sponsor cheque added there is what gives last year something to compare with at this point in the year: before it, nothing had been recorded between Sep 1 and today’s date in 2025, and Compare offers last year only when last year holds books in the months it would compare.'},
   short:'Budget vs. Actual compares this year with last, and a closed year’s Export on the Overview is the year-end report for the annual meeting.',
   intent:'An annual meeting asks two questions: how did the year go against its budget, and against last year? Budget vs. Actual’s Compare gains a third choice, the club’s only: this year’s Actual beside last year’s, and the Change. The open year compares with last year to the same day; a closed year with its whole predecessor. And a closed year’s Export on the Overview writes the year-end report, Excel then PDF, from figures that can’t move, with no team’s own cash in it.',
-  passes:'Against 2025–26 is offered on 2026–27 and reads the same months a year apart; it isn’t offered where last year has nothing to compare; and the year-end report holds what its Export says it holds, from the closed figures, with no team’s cash.',
+  passes:'Against 2025–26 is offered on 2026–27 and reads the same months a year apart; it isn’t offered where last year has nothing to compare; and the year-end report holds the year at a glance, the year against its budget, the books at the close, the teams’ standing and what carried, from the closed figures, with no team’s cash.',
   notIn:'The board report for an open year (Stage 3b’s walk 7).',
   signIn:'Treasurer — Avery Chen.',
   where:'Desktop browser: Accounting → Budget vs. Actual, then the Overview. One step at phone width.',
@@ -8229,7 +8421,7 @@ const WALKS=[
    {see:'A key: Change is this year less last year; more revenue and less spending are better (green), the reverse worse (red). Earlier years’ bills, paid that year, are one row in both columns.'},
    {do:'Narrow to phone width.',see:'The three columns stay readable inside their frame, the line names pinned. Widen again.'},
    {do:'Year pill → 2025–26 → Compare.',see:'No Against 2024–25: 2024–25 holds no books on the test club, so there is nothing to compare with.'},
-   {do:'Overview → Year pill → 2025–26 → Export.',see:'It says what it holds: the Year-end report — the year at a glance, the year against its budget, the club’s books at the close, the teams’ standing with the club, and what was still open at the close, carried into 2026–27. Excel and PDF only.'},
+   {do:'Overview → Year pill → 2025–26 → Export.',see:'One line names it, “Year-end report · 2025–26”, then Excel and PDF only: no CSV, and no sentence under either.'},
    {do:'Excel.',see:'Year-end report 2025–26, closed by Avery Chen: the opening and closing balances; the statement with Budgeted, Actual and Variance; the club’s books at the close; each team’s standing; and what carried, as it stood at the close. One line says each team’s own cash is its coaches’ money and isn’t part of this report.'},
    {do:'PDF.',see:'The same report as a printed page, its foot reading “Year-end report 2025–26 · the year is closed and its figures are locked”.'},
    {do:'Year pill → 2026–27 → Export.',see:'The ordinary board report again (Excel, PDF or CSV): the year-end report is a closed year’s only.'}
@@ -8301,6 +8493,39 @@ const WALKS=[
    {see:'Still to pay the club includes it, its caption naming the installment and “from the 2026 Season”.'},
    {do:'Open Permit share 2025–26.',see:'Two payments: the first received by the club this fall (it counts in 14U AA’s 2027 Season, the season running when the money moved), the second still owed, with We’ve sent it offered. Don’t press it; close the bill.'},
    {do:'Narrow to phone width; Money → Club.',see:'The band and the bill read the same way.'}
+  ]},
+ {id:'S3CW12',stage:'3c',n:12,ledger:'§283',title:'The close question, redrawn',who:'The treasurer',minutes:6,
+  before:{short:'After walks 6 and 7',long:'this walk reopens 2025–26 and closes it again, so walk it after walks 6 and 7, which read the year closed. It leaves the year closed, as it found it.'},
+  short:'The question before a year closes, in the order a treasurer decides: what it closes at, then what is still open, one line each.',
+  intent:'In walk 5 you found the close question hard to read. It had five boxes of equal weight and thirteen pieces of explanation, and the closing balance came last. Ask 10 redrew it, and you picked A in the wide window: the year’s path first (what locks, the closing balance in large type, the year that opens on it), then one line for each kind of money still open with its state on its word, and the three promises in one line at the foot. Nothing it says changed, only the order and the weight. You are judging whether it now reads at a glance.',
+  passes:'The closing balance is the first figure you read; each thing still open is one line; only the late words are red and the request’s count is the amber pill; the window fits on a computer screen without scrolling and stacks with the figure first on a phone; and Close still closes.',
+  notIn:'Where each row leads: walk 5 opened them, and nothing behind them changed. A year closing for the first time, which shows neither the reopened line nor the “since last close” tag: 2025–26 has been closed before, so that can’t be seen here.',
+  signIn:'Treasurer — Avery Chen (the same password as every test account).',
+  where:'Desktop browser: http://localhost:3000/uat-rep-club/admin/accounting — step 6 in Dark, step 7 at phone width.',
+  steps:[
+   {who:'Avery · treasurer',do:'Budget → Year pill → 2025–26 → Reopen. Why: “Walk 12: the redrawn question”; press Reopen 2025–26.',see:'“2025–26 is open again.” Its line says you reopened it today.'},
+   {do:'Overview → Close 2025–26, on the line that says the year has ended.',see:'A wider window than in walk 5. At the top, one line with an olive edge: “Reopened Oct 8 by Avery Chen · “Walk 12: the redrawn question””.'},
+   {see:'Under it, one frame read left to right: Locks · 2025–26 with a lock, its dates, and how many books and lines, “and its plan” → Closing balance, $1,685.00 in large type, with the tag “Same as last close” → Carries into · 2026–27 · “As its opening balance, locked” · “Its own plan · 6 lines”.'},
+   {see:'“Still open · None of these stop the close.”, then one line for each kind, with its count in its own column: 2 installments owed · 13U AAA, 14U AA · $600.00 each · overdue since Jul 15 (only those words in red) · $1,200.00; a request waiting on you, its 1 in an amber pill · 15U AAA · holding up its payout · $260.00; 2 lines not filed under a word · off-plan in 2025–26 · $2,185.00. Every amount is in plain ink, and the line not cleared is gone (walk 6 cleared it).'},
+   {see:'At the foot, one small paragraph: nothing is deleted, it can be reopened while it is the latest closed year, and a team’s own book is never touched. The whole window fits on the screen with Not yet and Close 2025–26 in view.'},
+   {do:'Press Not yet; switch to Dark; open the question again.',see:'The same window. The closing balance’s panel and its tag read clearly, and “overdue since Jul 15” is a light red.'},
+   {do:'Back to your usual theme; narrow to phone width and open it again.',see:'The window fills the screen with ← at the top left. The closing balance comes first, then two rows, “Locks 2025–26” and “2026–27 opens on it, locked”, then one row for each kind still open, each at least a thumb tall.'},
+   {do:'Back at computer width: Close 2025–26.',see:'“2025–26 is closed. 2026–27 opens on $1,685.00, locked.” The year is closed again, as walks 6 and 7 left it.'}
+  ]},
+ {id:'S3CW13',stage:'3c',n:13,ledger:'§283',title:'A team’s own payments follow its share',who:'The treasurer',minutes:4,
+  short:'Give a team its own payments, then change the split: the payments follow its share, and one button puts it back on the bill’s schedule.',
+  intent:'In walk 8 you opened a team’s own payments first and changed the split after. The payments kept the dollars they were made with ($225.00 of a $180.00 share), the form refused to save, and the only way back was a choice labelled almost the same as the one already showing. Now a team’s own payments keep their shape (how many, when, and how its share divides), not their dollars, so they redivide when its share moves. The choices say which schedule is the bill’s and which are the team’s own, and “Use the bill’s schedule” puts the team back in one press. You are judging whether a treasurer who wanders into a team’s own payments can always get out.',
+  passes:'The payments follow the share with no warning; a warning appears only for an amount you type yourself; and Use the bill’s schedule removes the payments and folds the row. Nothing is created.',
+  notIn:'Creating the allocation: walk 8 does that, from Diamond permits — city fields, and this walk cancels. Why this walk bills from another line: walk 8 bills everything left on Diamond permits.',
+  signIn:'Treasurer — Avery Chen (the same password as every test account).',
+  where:'Desktop browser: http://localhost:3000/uat-rep-club/admin/accounting/allocations',
+  steps:[
+   {who:'Avery · treasurer',do:'New allocation. Bill from: any cost line with something left (Umpire fees — home games, say). Pay by → 2 installments; give both dates.',see:'Every ticked team’s Due reads “2 payments”.'},
+   {do:'Open 13U AAA’s row with the chevron at its end, and open This team pays in.',see:'The bill’s schedule first, saying so: “As the bill · 2 installments”, then “Its own · 2 installments” to “Its own · 6 installments”. No two choices read the same.'},
+   {do:'Pick Its own · 2 installments.',see:'Two dates and two amounts, each half of 13U AAA’s share, with “Use the bill’s schedule” beside them.'},
+   {do:'Split → By amount; type 100 for 13U AAA.',see:'Its own payments become $50.00 and $50.00 as you type: they follow its share. No “These add up to …” warning.'},
+   {do:'Type 60 in its first payment.',see:'“These add up to $110.00 of its $100.00 share.” An amount you type is yours to fix. Put it back to 50, and the warning goes.'},
+   {do:'Press Use the bill’s schedule, then Cancel.',see:'The payments go and the row folds; 13U AAA’s Due reads “2 payments”, the bill’s. Cancel makes nothing.'}
   ]},
  {id:'S3BW13',stage:'3b',n:13,ledger:'§280',title:'The coach’s Ledger gains a Category filter',who:'A coach',minutes:5,
   short:'The coach’s Timeline filters by Category, left of Item, as the club’s Ledger does.',
@@ -9152,6 +9377,7 @@ const INTENTS={
   's3c-setup':'<strong>Design intent:</strong> the club names its year and picks its first month once, in one window that reads first; a change that reshapes years says what moves before it is made, and a year that has begun keeps its months.',
   's3c-named':'<strong>Design intent:</strong> the year is a name, not a number, everywhere a year is printed, through one definition, so nothing works the year out by hand again.',
   's3c-close':'<strong>Design intent:</strong> one question that says what it locks, what carries and what is still open, warns and never blocks; a closed year reads in place with every write absent, and a write into it is refused in words.',
+  's3c-closeq':'<strong>Design intent:</strong> the same facts, read in the order a treasurer decides: what the year closes at first, then what is still open, one line each, with nothing that says the same thing twice.',
   's3c-opens':'<strong>Design intent:</strong> the next year opens on last year’s closing, locked; nothing still owed disappears at the close; money from last year’s bills is named where it lands.',
   's3c-papers':'<strong>Design intent:</strong> the annual meeting’s two questions answered on one screen and one printed page: the year against its budget, and against last year, from figures that can’t move.',
   's3c-alloc':'<strong>Design intent:</strong> bill the teams from the line that planned the cost, on one screen, and come back to that line; one form for both doors; only open seasons.',
@@ -9405,6 +9631,8 @@ Object.assign(FINDINGS,{
 
 /* The Stage 3c asks: RATIFIED 2026-10-07, every one as recommended, with Ask 9 (the word) added the same day. Put first, as the newest rows. */
 DECISIONS.unshift(
+  {date:"2026-10-08 · Stage 3c · §283 walk 7 · the build’s departure 6",ask:"Against last year: offered when last year holds books in the months it would compare (as built), or whenever it holds any books (Ask 8c’s words)?",ruling:"accepted",label:"Accepted 2026-10-08 · keep as built",why:"Owner, after walk 7: “keep as built”. Compare offers Against last year only when last year holds books in the months it would compare. The reason: in a club’s first year on FieldLogicHQ, last year’s same months are usually unrecorded, and a column of zeros would read as growth. Walk 7 was the table’s first look rendered (offered on 2026–27 because walk 4’s Sep 15, 2025 cheque gave last year books in the compared months); its step 5 could not tell the two rules apart, because 2024–25 holds no books at all."},
+  {date:"2026-10-08 · Stage 3c · §283 walk 5 · round 2 of specimen 3",ask:"Ask 10 · The close question: the outcome first (A), or the same layout with less to read (B)?",ruling:"accepted",label:"Accepted 2026-10-08 · A, in the wide window",why:"Ruled 2026-10-08. Owner: “I like option A but if you could make it a bit wider I think it would help this section look less jumbled and squished.” Built the same day in the kit’s wide window (800 px, New allocation’s), and walked as walk 12. The ask as put: owner at true size in walk 5: “I like the information that this conveys but there seems to be a lot of text, is there a way to make this more visually appealing and easier to read and organize?” Recommended: A. The closing balance leads as the one large figure, on a strip from the year that locks to the year that opens on it. Each thing still open takes one line with its count in its own column. The state goes on its word (‘overdue’ in red, the waiting count as the amber pill), never on the figure. The three promises sit in one line at the foot. Thirteen pieces of explanation become five, and nothing is lost: the plan’s line counts move to the Budget. B keeps the build’s boxes and cuts each row to one line. It is smaller, but it still reads the answer last. No rule changes either way (Asks 2 and 4 stand). Mockup: Stage 3c › 3 · The close question, round 2."},
   {date:"2026-10-07 · Stage 3c build prompts · S3C-11 · the coach’s books",ask:"S3C-11 · When an old season’s club bill is paid after that season closed, whose books carry the money?",ruling:"accepted",label:"Accepted 2026-10-07 · the season running when the money moves",why:"Ruled 2026-10-07 as recommended. Owner: “I agree with your recommendation on the payment counting in the season that’s running when the money actually moved. If a user wants to adjust the past books, they can open a past season and backdate the transaction.” How that reads against the rules already in force: the season that carries a payment is the one running when it is RECORDED, whatever date is typed on it; to put a payment in a past season, that season is reopened and the payment recorded there, with its real date. A team’s season can be reopened only while no season is running (the 2026-08-18 ruling; for a club team the club holds the door), so once the next season has started the late payment always counts in the running season, and undoing a rollover stays unbuilt. The club’s own books follow the same pattern through Ask 3: reopen the latest closed fiscal year, then backdate. Found writing the build prompts, in the code: the coach’s register counts a club bill’s payment in the BILL’s season. So a bill made on a season and paid after that season closed (the coach says “We’ve sent it”, which Ask 8b now offers, or the club records it received, possible today) lands in the CLOSED season’s books: its cash at close moves, the coach’s closed-season page moves, and the club’s “held by the team · at close” figure moves. A September fiscal year makes it ordinary, because the fall’s bills land on the season that is ending. Recommended: the payment counts in the season that is running when the money moves, recorded on the installment at that moment, while the bill itself stays on its own season; every existing payment keeps its bill’s season, so no figure moves when it ships. It is the coach-side twin of the club’s rule (money lands in the year it arrives) and keeps a closed season a record. The alternative (today’s filing) lets a closed season change after its close. The server session presents it before any code."},
   {date:"2026-10-07 · Stage 3c · asked by the owner after the drawings · every specimen that names the year",ask:"Ask 9 · Is the club’s year called its “fiscal year”?",ruling:"accepted",label:"Accepted 2026-10-07 · “fiscal year”, on the club side only",why:"Asked by the owner: “does it make sense to call the club’s year that they set ‘fiscal year’? typically that is the accounting language and how they organize their books.” Recommended yes, and ruled: it is the word the board, its bylaws and its annual meeting already use, and only the treasurer, the president and an admin with Accounting ever read it; it names both halves of the job (the plan and the books the year-end locks), where “budget year” names only the plan; and it keeps the club’s period apart from the coach’s “season”, the confusion a September year invites (a team’s 2026 Season sits inside fiscal 2025–26 and fiscal 2026–27). Conditions: never on the coach’s side; one spelling everywhere it is read, the Year pill included (“Fiscal year 2025–26”, checked at 390px), the year’s window, the close question, the refusals and the year-end report; “fiscal year”, never also “financial year”; the word names the period and promises nothing D2 left out (no fiscal periods, no closing entries). Nothing customer-visible used “fiscal”, “financial year” or “budget year” on 2026-10-07, so there is no older spelling to retire. Where the drawings say “The club’s year”, the built screens say “Fiscal year”; the sentences are /marketing’s."},
   {date:"2026-10-07 · Stage 3c mockups · Ask 1 screen, specimens 3 to 5 · departs from a binding precedent",ask:"Ask 1 · What is a closed club year: read in place, or one page?",ruling:"accepted",label:"Accepted 2026-10-07 · read in place",why:"Ratified 2026-10-07 as recommended (owner: “agree with this recommendation and also all recommendations on the mockup”). Option 1, recommended: a closed year is read where a year is already read, through the Year pill on the Budget, Budget vs. Actual and the Overview, locked, with one line saying who closed it and when, and every write absent (not greyed). Option 2: one page per closed year, like the coach’s closed season. This departs from the coach’s ruling (2026-08-18, binding), argued on that ruling’s own reasons: it exists to stop a year reaching thirty screens that never needed one, and here only the money tabs read a year, and they already do; a club book runs on across years, so the Ledger shows a closed year’s lines whichever shape is chosen; and the lock rides the “can this person write here?” answer the Budget already reads, so no new read-only branch is added to a screen. Nothing in the coaches portal changes. Tradeoff: two shapes for a finished period across the two portals, softened by the same words (Closed, Reopen, warns and never blocks)."},
