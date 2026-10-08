@@ -650,46 +650,57 @@ export const YEAR_LINE_WORDS = {
   clubPaidLead: 'The club paid this part itself.',
 } as const;
 
-/** The close question (specimen 3; Asks 2, 4). */
+/** The close question (specimen 3; Asks 2, 4; redrawn as Ask 10, §283 walk 5, 2026-10-08 — the outcome first:
+ *  the year's path, then one line for each kind of money still open, then the promises). */
 export const CLOSE_YEAR_WORDS = {
   eyebrow: (name: string) => `Accounting · ${name}`,
   title: (name: string) => `Close ${name}?`,
-  lead: 'Closing locks the year’s books and its plan, so its figures stop moving. Nothing is deleted, and you can reopen it while it is the latest closed year.',
-  stillOpen: 'Still open · these don’t stop the close',
+  /** A re-close: who reopened it, when, and why — one line above the path. */
+  reopenedBy: (at: string, by: string | null) => `Reopened ${day3c(at)} by ${by ?? 'someone'}`,
+  reopenedWhy: (reason: string) => `“${reason}”`,
+  // The year's path: what locks → what it closes at → the year that opens on it.
+  pathLocks: 'Locks',
+  pathLocksWhat: (books: number, lines: number) => `${pluralize(books, 'book', 'books')}, ${pluralize(lines, 'line', 'lines')}, and its plan`,
+  pathClosing: 'Closing balance',
+  /** The change since the close a Reopen undid. */
+  pathChange: (change: number) => (Math.abs(change) < 0.005 ? 'Same as last close'
+    : `${change > 0 ? '+' : '−'}${fmt(Math.abs(change))} since last close`),
+  // "Carries into" (/marketing, 2026-10-08): the path's last stop is where the closing balance goes, Ask 4's word.
+  pathOpens: 'Carries into',
+  pathOpensWhat: 'As its opening balance, locked',
+  pathNextPlan: (lines: number) => (lines > 0 ? `Its own plan · ${pluralize(lines, 'line', 'lines')}` : 'No plan yet · start it on the Budget'),
+  // On a phone the path stacks: the figure, then what locks, then the year that opens on it.
+  pathLocksPhone: (name: string) => `Locks ${name}`,
+  pathLocksPhoneWhat: (span: string, books: number, lines: number) =>
+    `${span} · ${pluralize(books, 'book', 'books')}, ${pluralize(lines, 'line', 'lines')}, and its plan`,
+  pathOpensPhone: (next: string) => `${next} opens on it, locked`,
+  stillOpen: 'Still open',
+  stillOpenNote: 'None of these stop the close.',
   nothingOpen: (name: string) => `Nothing is still open in ${name}.`,
-  installments: (n: number) => `${pluralize(n, 'installment', 'installments')} still owed by the teams`,
-  installmentsShort: (n: number) => `${pluralize(n, 'installment', 'installments')} owed`,
-  /** One state's installments in a sentence: "10U A and 16U Girls, $450.00 each, overdue since Aug 15". */
-  installmentGroup: (teams: string, amount: string, each: boolean, state: 'overdue' | 'sent' | 'upcoming', on: string) =>
-    `${teams}, ${amount}${each ? ' each' : ''}, ${state === 'overdue' ? `overdue since ${day3c(on)}`
-      : state === 'sent' ? `sent ${day3c(on)}, waiting for you to confirm` : `due ${day3c(on)}`}`,
-  installmentGroupShort: (teams: string, state: 'overdue' | 'sent' | 'upcoming') =>
-    `${teams} ${state === 'overdue' ? 'overdue' : state === 'sent' ? 'sent, waiting for you' : 'still to come'}`,
-  requests: (n: number) => `${pluralize(n, 'request', 'requests')} waiting on you`,
-  requestsShort: (n: number) => `${pluralize(n, 'request', 'requests')} waiting`,
-  holdingPayout: (n: number) => (n === 1 ? 'holding up the team’s payout' : `${n} holding up a payout`),
-  unfiled: (n: number) => `${pluralize(n, 'line', 'lines')} not filed under a word`,
-  unfiledShort: (n: number) => `${pluralize(n, 'line', 'lines')} not filed`,
-  unfiledWhy: (name: string) => `They count as off-plan in ${name}’s statement`,
-  pending: (n: number) => `${pluralize(n, 'line', 'lines')} not cleared`,
-  pendingWhy: (next: string) => `A line that clears later is dated that day, in ${next}`,
-  pendingWhyShort: (next: string) => `Clears in ${next}`,
-  locks: 'What it locks',
-  carries: 'What carries',
-  locksAndCarries: 'Locks · carries',
-  locksBooks: (books: number, span: string) => `The club’s ${pluralize(books, 'book', 'books')}, ${span}`,
-  locksBooksWhy: (lines: number) => `${pluralize(lines, 'line', 'lines')}: nothing added, changed or voided in those dates`,
-  locksPlan: (name: string) => `${name}’s plan`,
-  locksPlanWhy: (lines: number) => `${pluralize(lines, 'line', 'lines')}, and allocating from them`,
-  locksPhone: (books: number, span: string, name: string) => `The club’s ${pluralize(books, 'book', 'books')}, ${span}, and ${name}’s plan.`,
-  closing: 'The closing balance',
-  closingWhy: (next: string) => `${next} opens on it, locked`,
-  opensOn: (next: string) => `${next} opens on`,
-  plan: 'The plan',
-  planWhy: (next: string, lines: number) => (lines > 0 ? `${next} has its own plan: ${pluralize(lines, 'line', 'lines')}` : `${next} has no plan yet. Start it from this one on the Budget.`),
-  teamBooks: 'A team’s own book is its coaches’: it follows the team’s season, and closing the club’s year never touches it.',
-  sinceLastClose: (at: string, by: string | null, reason: string, was: string, now: string) =>
-    `Reopened ${day3c(at)} by ${by ?? 'someone'}: “${reason}”. It closed at ${was} last time, and closes at ${now} now.`,
+  // One line each: the count sits in its own column, so each noun follows it.
+  installmentsNoun: (n: number) => (n === 1 ? 'installment owed' : 'installments owed'),
+  requestsNoun: (n: number) => (n === 1 ? 'request waiting on you' : 'requests waiting on you'),
+  requestsNounShort: (n: number) => (n === 1 ? 'request waiting' : 'requests waiting'),
+  unfiledNoun: (n: number) => (n === 1 ? 'line not filed under a word' : 'lines not filed under a word'),
+  unfiledNounShort: (n: number) => (n === 1 ? 'line not filed' : 'lines not filed'),
+  pendingNoun: (n: number) => (n === 1 ? 'line not cleared' : 'lines not cleared'),
+  /** An installment state, said once on its word (red when late). */
+  installmentState: (state: 'overdue' | 'sent' | 'upcoming', on: string) =>
+    (state === 'overdue' ? `overdue since ${day3c(on)}` : state === 'sent' ? `sent ${day3c(on)}, waiting for you` : `due ${day3c(on)}`),
+  installmentStateShort: (state: 'overdue' | 'sent' | 'upcoming') =>
+    (state === 'overdue' ? 'overdue' : state === 'sent' ? 'sent, waiting for you' : 'still to come'),
+  /** A state's amount, when the row's one figure can't say it: several installments of one size ("$600.00 each"). */
+  installmentEach: (amount: string) => `${amount} each`,
+  /** Past three teams the names stop: "13U AAA, 14U AA, 15U AAA and 2 more". */
+  moreTeams: (n: number) => `and ${n} more`,
+  holdingPayout: (n: number) => (n === 1 ? 'holding up its payout' : `${n} holding up a payout`),
+  unfiledWhy: (name: string) => `off-plan in ${name}`,
+  unfiledWhyShort: 'off-plan',
+  pendingWhy: (next: string) => `counts in ${next} when it clears`,
+  pendingWhyShort: (next: string) => `clears in ${next}`,
+  /** The three promises, in one line at the foot, read just before the button that relies on them. */
+  promises: 'Nothing is deleted, and you can reopen it while it is the latest closed year. Closing the club’s year never touches a team’s own book.',
+  promisesShort: 'Nothing is deleted, and you can reopen it. A team’s own book is never touched.',
   notYet: 'Not yet',
   close: (name: string) => `Close ${name}`,
   closingNow: 'Closing…',

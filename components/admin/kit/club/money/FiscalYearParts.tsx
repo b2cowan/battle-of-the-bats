@@ -14,8 +14,11 @@
  *                       its form; ✓ turns it back. The name saves as you go (the floating pill); the FIRST MONTH ASKS
  *                       — the consequence is shown before the save (the server's preview: the very step, rolled
  *                       back), decided by two buttons, a question inside the record (Ask 5).
- *   CloseYearQuestion — what closing locks, what carries, and the four kinds of open money, each counted, totalled
- *                       and a door. Warns, never blocks (Ask 2). A form on a phone (it covers the bar).
+ *   CloseYearQuestion — the outcome first (Ask 10, §283 walk 5): the year's path (what locks → the closing balance →
+ *                       the year that opens on it), then one line for each of the four kinds of open money, each
+ *                       counted, totalled and a door, the state on its word and never on the figure; the promises in
+ *                       one line at the foot. The kit's WIDE form (the path needs the room). Warns, never blocks
+ *                       (Ask 2). A form on a phone (it covers the bar); there the path stacks, figure first.
  *   ReopenYearQuestion — the latest closed year only, with a required reason that is kept (Ask 3). White, never lime
  *                       and never red: reopening is neither a money move nor destructive.
  *
@@ -23,15 +26,15 @@
  * /marketing's draft in lib/club-money-words.ts. Nothing here works a year out: every year, span and lock comes from
  * the server's one definition (lib/club-fiscal-year.ts).
  */
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { CalendarClock, ChevronRight, History, Lock } from 'lucide-react';
+import { ArrowRight, CalendarClock, ChevronRight, History, Lock } from 'lucide-react';
 import KitDialog from '../KitDialog';
+import frame from '../../AdminKitFrame.module.css';
 import ck from '../ClubKit.module.css';
 import { SavePill, repKit, useDeferredLoad } from '../RepKit';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { joinWithAnd } from '@/lib/utils';
 import {
   FISCAL_YEAR_WORD, fiscalYearName, monthsBetween, shiftMonthsOn,
   type FiscalYearRead,
@@ -43,7 +46,7 @@ import {
 } from '@/lib/club-money-words';
 import type { FiscalYearWindow as WindowRead, FirstMonthChange } from '@/lib/club-fiscal-year-moves';
 import type { CloseQuestion, OpenInstallmentRow } from '@/lib/club-fiscal-reads';
-import { FormError, ReasonQuestion, jsonInit, money, moneyFetch, moneyKit, refusalText } from './MoneyKit';
+import { FormError, ReasonQuestion, jsonInit, money, moneyFetch, refusalText } from './MoneyKit';
 import fy from './FiscalYear.module.css';
 
 // ── A closed (or reopened) year's line ────────────────────────────────────────────────────────
@@ -362,36 +365,105 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
 
 // ── Closing a fiscal year ─────────────────────────────────────────────────────────────────────
 
-/** One state's installments, said as one sentence ("10U A and 16U Girls, $450.00 each, overdue since Aug 15"). */
-function installmentLines(rows: readonly OpenInstallmentRow[], short: boolean): string {
-  const parts: string[] = [];
-  for (const state of ['overdue', 'sent', 'upcoming'] as const) {
-    const list = rows.filter(r => r.state === state);
-    if (list.length === 0) continue;
-    const teams = joinWithAnd([...new Set(list.map(r => r.teamName))]);
-    if (short) { parts.push(CLOSE_YEAR_WORDS.installmentGroupShort(teams, state)); continue; }
-    const same = list.every(r => Math.abs(r.amount - list[0].amount) < 0.005);
-    const amount = same ? money(list[0].amount) : money(list.reduce((s, r) => s + r.amount, 0));
+/** Team names on one line: three, then "and 2 more". */
+function teamNames(names: readonly string[]): string {
+  const list = [...new Set(names)];
+  return list.length <= 3 ? list.join(', ') : `${list.slice(0, 3).join(', ')} ${CLOSE_YEAR_WORDS.moreTeams(list.length - 3)}`;
+}
+
+/** The installments still owed, by state: whose, what (when the row's one figure can't say it), then the state said
+ *  once on its word (red when late, amber when it waits on the club). Never on the figure: none of these stops the
+ *  close (Ask 10). States are parted by "; " so a team list never reads as the next state's. */
+function installmentDetail(rows: readonly OpenInstallmentRow[], short: boolean): ReactNode {
+  const groups = (['overdue', 'sent', 'upcoming'] as const)
+    .map(state => ({ state, list: rows.filter(r => r.state === state) }))
+    .filter(g => g.list.length > 0);
+  return groups.map(({ state, list }, i) => {
     const on = state === 'sent'
       ? list.map(r => r.sentOn ?? r.dueDate).sort()[0]
       : list.map(r => r.dueDate).sort()[0];
-    parts.push(CLOSE_YEAR_WORDS.installmentGroup(teams, amount, same && list.length > 1, state, on));
-  }
-  return parts.join(' · ');
+    const words = short ? CLOSE_YEAR_WORDS.installmentStateShort(state) : CLOSE_YEAR_WORDS.installmentState(state, on);
+    // Round 1's "$450.00 each" (§283 /review): said when several share one size, or when states split the row's
+    // one figure — never when the figure already says it (one state, one size or one installment).
+    const same = list.every(r => Math.abs(r.amount - list[0].amount) < 0.005);
+    const each = same && list.length > 1;
+    const amount = short || (!each && groups.length === 1) ? null
+      : each ? CLOSE_YEAR_WORDS.installmentEach(money(list[0].amount)) : money(list.reduce((s, r) => s + r.amount, 0));
+    return (
+      <Fragment key={state}>
+        {i > 0 && '; '}{teamNames(list.map(r => r.teamName))} · {amount && `${amount} · `}<span className={state === 'overdue' ? fy.openLate : state === 'sent' ? fy.openWait : undefined}>{words}</span>
+      </Fragment>
+    );
+  });
 }
 
-/** A short-record row: what, its detail, its figure, and (a door) the chevron. */
-function ListRow({ title, sub, figure, tone, href }: {
-  title: ReactNode; sub?: ReactNode; figure?: string; tone?: 'bad' | 'warn'; href?: string;
+/** One kind of money still open: its count, what it is, whose and when, its figure, and the chevron — a door to the
+ *  page that settles it (Ask 2). A count that waits on the club is the rail's amber pill (owner, 2026-10-01). */
+function OpenRow({ count, noun, detail, figure, href, waiting }: {
+  count: number; noun: string; detail?: ReactNode; figure: string; href: string; waiting?: boolean;
 }) {
-  const inner = (
-    <>
-      <span className={fy.listMain}>{title}{sub != null && <span className={fy.listSub}>{sub}</span>}</span>
-      {figure != null && <span className={`${fy.listFigure}${tone === 'bad' ? ` ${fy.listFigureBad}` : tone === 'warn' ? ` ${fy.listFigureWarn}` : ''}`}>{figure}</span>}
-      {href && <ChevronRight size={16} aria-hidden className={fy.listEnd} />}
-    </>
+  // A detail with nothing in it draws no " · " (an empty list or an empty string).
+  const hasDetail = detail != null && detail !== '' && !(Array.isArray(detail) && detail.length === 0);
+  return (
+    <Link href={href} className={fy.openRow}>
+      {/* The exact count, pill or not: the row states it, where the rail's "9+" only signals. */}
+      <span className={fy.openCount}>
+        {waiting ? <span className={frame.count} style={{ marginLeft: 0 }}>{count}</span> : count}
+      </span>
+      <span className={fy.openWhat}><b>{noun}</b>{hasDetail && <span className={fy.openDetail}> · {detail}</span>}</span>
+      <span className={fy.openFigure}>{figure}</span>
+      <ChevronRight size={16} aria-hidden className={fy.openEnd} />
+    </Link>
   );
-  return href ? <Link href={href} className={fy.listRow}>{inner}</Link> : <div className={fy.listRow}>{inner}</div>;
+}
+
+/** THE YEAR'S PATH (Ask 10): what locks → what it closes at → the year that opens on it. The closing balance is the
+ *  one large figure, because it is what the close fixes; on a phone the path stacks with the figure first. */
+function YearPath({ question, phone }: { question: CloseQuestion; phone: boolean }) {
+  const W = CLOSE_YEAR_WORDS;
+  const { locks, carries, sinceLastClose } = question;
+  const span = fiscalYearSpanWords(question.year);
+  const closing = (
+    <div className={fy.pathClosing}>
+      <span className={fy.pathKey}>{W.pathClosing}</span>
+      <span className={fy.pathFigure}>{money(carries.closingBalance)}</span>
+      {sinceLastClose && <span className={fy.pathChange}>{W.pathChange(sinceLastClose.change)}</span>}
+    </div>
+  );
+  if (phone) {
+    return (
+      <div className={fy.pathStack}>
+        {closing}
+        <div className={fy.pathRow}>
+          <Lock size={15} aria-hidden />
+          <div><b>{W.pathLocksPhone(question.year.name)}</b><span className={fy.pathSub}>{W.pathLocksPhoneWhat(span, locks.books, locks.lines)}</span></div>
+        </div>
+        <div className={fy.pathRow}>
+          <ArrowRight size={15} aria-hidden />
+          <div><b>{W.pathOpensPhone(carries.nextYear.name)}</b><span className={fy.pathSub}>{W.pathNextPlan(carries.nextPlanLines)}</span></div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className={fy.path}>
+      <div className={fy.pathCell}>
+        <span className={fy.pathKey}>{W.pathLocks}</span>
+        <span className={fy.pathYear}><Lock size={14} aria-hidden />{question.year.name}</span>
+        <span className={fy.pathSub}>{span}</span>
+        <span className={fy.pathSub}>{W.pathLocksWhat(locks.books, locks.lines)}</span>
+      </div>
+      <ArrowRight size={16} aria-hidden className={fy.pathArrow} />
+      {closing}
+      <ArrowRight size={16} aria-hidden className={fy.pathArrow} />
+      <div className={fy.pathCell}>
+        <span className={fy.pathKey}>{W.pathOpens}</span>
+        <span className={fy.pathYear}>{carries.nextYear.name}</span>
+        <span className={fy.pathSub}>{W.pathOpensWhat}</span>
+        <span className={fy.pathSub}>{W.pathNextPlan(carries.nextPlanLines)}</span>
+      </div>
+    </div>
+  );
 }
 
 export function CloseYearQuestion({ q, year, accountingBase, onClosed, onClose }: {
@@ -439,18 +511,15 @@ export function CloseYearQuestion({ q, year, accountingBase, onClosed, onClose }
     return FISCAL_YEAR_REFUSAL.already_closed(qn.year.name);
   };
 
-  // What the body reads off the question, once it has come.
-  const body = question ? {
-    o: question.open,
-    next: question.carries.nextYear.name,
-    span: fiscalYearSpanWords(question.year),
-    anyOpen: question.open.installments.count + question.open.requests.count + question.open.unfiled.count + question.open.pending.count > 0,
-    ledgerDoor: (p: Record<string, string>) => `${accountingBase}/ledger?${new URLSearchParams(p)}`,
-  } : null;
+  const o = question?.open;
+  const next = question?.carries.nextYear.name ?? '';
+  const anyOpen = !!o && o.installments.count + o.requests.count + o.unfiled.count + o.pending.count > 0;
+  const ledgerDoor = (p: Record<string, string>) => `${accountingBase}/ledger?${new URLSearchParams(p)}`;
 
   return (
     <KitDialog
       kind="form"
+      wide
       eyebrow={W.eyebrow(year.name)}
       title={W.title(year.name)}
       onClose={onClose}
@@ -463,82 +532,62 @@ export function CloseYearQuestion({ q, year, accountingBase, onClosed, onClose }
       )}
     >
       <FormError>{error}</FormError>
-      {failed ? <p className={ck.hint}>{W.loadFailed}</p> : !question || !body ? <p className={ck.loading}>Loading…</p> : (
-        <>
-          <p className={moneyKit.lead1}>{W.lead}</p>
+      {failed ? <p className={ck.hint}>{W.loadFailed}</p> : !question || !o ? <p className={ck.loading}>Loading…</p> : (
+        <div className={fy.closeBody}>
           {question.refusal && <FormError>{refusalWords(question)}</FormError>}
           {question.sinceLastClose && (
-            <p className={ck.hint}>{W.sinceLastClose(question.sinceLastClose.reopenedAt, question.sinceLastClose.reopenedByName,
-              question.sinceLastClose.reason, money(question.sinceLastClose.wasClosingBalance), money(question.carries.closingBalance))}</p>
+            <p className={fy.reopenedNote}>
+              <History size={15} aria-hidden />
+              <span><b>{W.reopenedBy(question.sinceLastClose.reopenedAt, question.sinceLastClose.reopenedByName)}</b> · {W.reopenedWhy(question.sinceLastClose.reason)}</span>
+            </p>
           )}
 
-          <p className={fy.qHead}>{W.stillOpen}</p>
-          {!body.anyOpen ? <p className={ck.hint}>{W.nothingOpen(year.name)}</p> : (
-            <div className={fy.list}>
-              {body.o.installments.count > 0 && (
-                <ListRow
-                  title={isPhone ? W.installmentsShort(body.o.installments.count) : W.installments(body.o.installments.count)}
-                  sub={installmentLines(body.o.installments.rows, isPhone)}
-                  figure={money(body.o.installments.amount)} tone={body.o.installments.overdue.count > 0 ? 'bad' : undefined}
-                  href={`${accountingBase}/allocations?view=coming-due`}
-                />
-              )}
-              {body.o.requests.count > 0 && (
-                <ListRow
-                  title={isPhone ? W.requestsShort(body.o.requests.count) : W.requests(body.o.requests.count)}
-                  sub={[joinWithAnd([...new Set(body.o.requests.rows.map(r => r.teamName))]),
-                    body.o.requests.holdingPayout > 0 ? W.holdingPayout(body.o.requests.holdingPayout) : null].filter(Boolean).join(' · ')}
-                  figure={money(body.o.requests.amount)} tone="warn"
-                  href={`${accountingBase}/payment-requests`}
-                />
-              )}
-              {body.o.unfiled.count > 0 && (
-                <ListRow
-                  title={isPhone ? W.unfiledShort(body.o.unfiled.count) : W.unfiled(body.o.unfiled.count)}
-                  sub={W.unfiledWhy(year.name)}
-                  figure={money(body.o.unfiled.amount)}
-                  href={body.ledgerDoor(body.o.unfiled.ledger)}
-                />
-              )}
-              {body.o.pending.count > 0 && (
-                <ListRow
-                  title={W.pending(body.o.pending.count)}
-                  sub={isPhone ? W.pendingWhyShort(body.next) : W.pendingWhy(body.next)}
-                  figure={money(body.o.pending.amount)}
-                  href={body.ledgerDoor(body.o.pending.ledger)}
-                />
-              )}
-            </div>
-          )}
+          <YearPath question={question} phone={isPhone} />
 
-          {isPhone ? (
-            <>
-              <p className={fy.qHead}>{W.locksAndCarries}</p>
+          <div>
+            <p className={fy.openHead}>
+              <span className={fy.qHead}>{W.stillOpen}</span>
+              {anyOpen && <span>{W.stillOpenNote}</span>}
+            </p>
+            {!anyOpen ? <p className={ck.hint}>{W.nothingOpen(year.name)}</p> : (
               <div className={fy.list}>
-                <ListRow title={W.locksPhone(question.locks.books, body.span, year.name)} />
-                <ListRow title={W.opensOn(body.next)} sub="locked" figure={money(question.carries.closingBalance)} />
+                {o.installments.count > 0 && (
+                  <OpenRow
+                    count={o.installments.count} noun={W.installmentsNoun(o.installments.count)}
+                    detail={installmentDetail(o.installments.rows, isPhone)}
+                    figure={money(o.installments.amount)} href={`${accountingBase}/allocations?view=coming-due`}
+                  />
+                )}
+                {o.requests.count > 0 && (
+                  <OpenRow
+                    waiting count={o.requests.count}
+                    noun={isPhone ? W.requestsNounShort(o.requests.count) : W.requestsNoun(o.requests.count)}
+                    detail={[teamNames(o.requests.rows.map(r => r.teamName)),
+                      o.requests.holdingPayout > 0 ? W.holdingPayout(o.requests.holdingPayout) : null].filter(Boolean).join(' · ')}
+                    figure={money(o.requests.amount)} href={`${accountingBase}/payment-requests`}
+                  />
+                )}
+                {o.unfiled.count > 0 && (
+                  <OpenRow
+                    count={o.unfiled.count}
+                    noun={isPhone ? W.unfiledNounShort(o.unfiled.count) : W.unfiledNoun(o.unfiled.count)}
+                    detail={isPhone ? W.unfiledWhyShort : W.unfiledWhy(year.name)}
+                    figure={money(o.unfiled.amount)} href={ledgerDoor(o.unfiled.ledger)}
+                  />
+                )}
+                {o.pending.count > 0 && (
+                  <OpenRow
+                    count={o.pending.count} noun={W.pendingNoun(o.pending.count)}
+                    detail={isPhone ? W.pendingWhyShort(next) : W.pendingWhy(next)}
+                    figure={money(o.pending.amount)} href={ledgerDoor(o.pending.ledger)}
+                  />
+                )}
               </div>
-            </>
-          ) : (
-            <div className={fy.twoCol}>
-              <div>
-                <p className={fy.qHead}>{W.locks}</p>
-                <div className={fy.list}>
-                  <ListRow title={W.locksBooks(question.locks.books, body.span)} sub={W.locksBooksWhy(question.locks.lines)} />
-                  <ListRow title={W.locksPlan(year.name)} sub={W.locksPlanWhy(question.locks.planLines)} />
-                </div>
-              </div>
-              <div>
-                <p className={fy.qHead}>{W.carries}</p>
-                <div className={fy.list}>
-                  <ListRow title={W.closing} sub={W.closingWhy(body.next)} figure={money(question.carries.closingBalance)} />
-                  <ListRow title={W.plan} sub={W.planWhy(body.next, question.carries.nextPlanLines)} />
-                </div>
-              </div>
-            </div>
-          )}
-          <p className={ck.hint}>{W.teamBooks}</p>
-        </>
+            )}
+          </div>
+
+          <p className={fy.promises}>{isPhone ? W.promisesShort : W.promises}</p>
+        </div>
       )}
     </KitDialog>
   );

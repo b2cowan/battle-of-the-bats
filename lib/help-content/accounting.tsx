@@ -486,8 +486,8 @@ const accountingHelp: HelpPageContent = {
       id: 'fiscal-year',
       heading: 'The fiscal year: setting it, closing it, and the year that opens',
       summary: 'The club’s year — when it starts and its name; closing a year so its figures stop moving; reading a closed year; reopening it.',
-      keywords: ['fiscal year', 'fiscal year pill', 'first month', 'starts in', 'short year', 'close the year', 'close 2025–26', 'year-end', 'reopen', 'closed year', 'locked', 'year-end report', 'still open', 'carried', 'opening balance locked'],
-      searchText: 'fiscal year club year when does the year start first month starts in september august year name rename the year short year 8 months the year that changes plan lines move ledger lines never move set the fiscal year new club budget tools fiscal year close the year close 2025–26 ended and still open close question still open installments owed requests waiting lines not filed lines not cleared warns never blocks what it locks what carries closing balance locked year-end report annual meeting papers board closed year read in place locked lock on the pill writes absent date refused reopen the latest closed year reason why kept with the year from 2025–26 still open last year’s bills paid this year',
+      keywords: ['fiscal year', 'fiscal year pill', 'first month', 'starts in', 'short year', 'close the year', 'close 2025–26', 'year-end', 'reopen', 'closed year', 'locked', 'year-end report', 'still open', 'carried', 'carries into', 'closing balance', 'opening balance locked'],
+      searchText: 'fiscal year club year when does the year start first month starts in september august year name rename the year short year 8 months the year that changes plan lines move ledger lines never move set the fiscal year new club budget tools fiscal year close the year close 2025–26 ended and still open close question still open installments owed requests waiting lines not filed lines not cleared warns never blocks what it locks what carries locks closing balance carries into opening balance locked since last close same as last close reopened by year-end report annual meeting papers board closed year read in place locked lock on the pill writes absent date refused reopen the latest closed year reason why kept with the year from 2025–26 still open last year’s bills paid this year',
       content: (
         <p>The club’s <strong>fiscal year</strong> is the period its plan and its books are read in: twelve months from a first month you choose, named from its months (<em>2026</em>, or <em>2026–27</em> when it crosses a New Year). Every money tab reads one fiscal year at a time, on the <strong>Fiscal year</strong> pill.</p>
       ),
@@ -512,10 +512,12 @@ const accountingHelp: HelpPageContent = {
           content: (
             <>
               <p>From the day after a year ends, the Overview shows one line naming it, with <strong>Close 2025–26</strong> (for the owner, treasurer or an admin with Accounting). Closing stops the year’s figures moving before you print its year-end report. It deletes nothing.</p>
-              <p>The question lists what is still open — installments the teams still owe, requests waiting on you, lines not filed under a word, and lines not cleared — each counted, totalled, and opening the page that settles it. They don’t stop the close: a bill a team pays next month is fine to leave open.</p>
+              <p>The question reads in the order you decide, with the figure first:</p>
               <HelpDefs>
-                <HelpDef term="What it locks">Every line dated in the year on every book the club owns, and the year’s plan. A team’s own book is its coaches’ and is never touched.</HelpDef>
-                <HelpDef term="What carries">The closing balance, as next year’s opening, locked. What was still open stays the year’s own, and the open year’s Overview lists it until it is settled.</HelpDef>
+                <HelpDef term="Locks">The year: every line dated in it on every book the club owns, and its plan. A team’s own book is its coaches’ and is never touched.</HelpDef>
+                <HelpDef term="Closing balance">The figure the close fixes, in large type. On a year that was reopened, it says how far it moved since the last close, and a line above it names who reopened the year and why.</HelpDef>
+                <HelpDef term="Carries into">The next year, which opens on the closing balance, locked. What was still open stays the closed year’s own, and the open year’s Overview lists it until it is settled.</HelpDef>
+                <HelpDef term="Still open">Installments the teams still owe, requests waiting on you, lines not filed under a word, and lines not cleared: one line each, with its count and amount, opening the page that settles it. None of them stop the close; a bill a team pays next month is fine to leave open.</HelpDef>
               </HelpDefs>
               <p>Years close oldest first.</p>
             </>
