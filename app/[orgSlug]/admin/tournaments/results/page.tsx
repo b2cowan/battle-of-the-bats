@@ -17,6 +17,7 @@ import { ExternalLink, SlidersHorizontal, Trophy, RefreshCw, Search } from 'luci
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { hasCapability } from '@/lib/roles';
 import { usePageTitle } from '@/lib/usePageTitle';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
@@ -88,8 +89,10 @@ const STAGE_OPTIONS: Array<{ value: Stage; label: string }> = [
 
 export default function AdminResultsPage() {
   const { currentTournament, loading: tournamentLoading } = useTournament();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
   usePageTitle('Results & Scoring');
+  // Finalizing a pending score and changing a final one are the same power (the games route enforces it).
+  const canFinalize = !!userRole && hasCapability(userRole, userCapabilities, 'seal_tournaments');
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
   const searchParams = useSearchParams();
@@ -620,6 +623,7 @@ export default function AdminResultsPage() {
           openGameId={openGameId}
           onOpen={setOpenGameId}
           finalizingId={finalizingId}
+          canFinalize={canFinalize}
           actions={{
             onSaveScore: handleSaveScore,
             onForfeit: handleForfeit,

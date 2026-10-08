@@ -96,10 +96,11 @@ function TeamName({ ctx, id, placeholder }: { ctx: Ctx; id?: string; placeholder
   );
 }
 
-function ResultRow({ ctx, g, band, onOpen, onFinalize, finalizing }: {
+function ResultRow({ ctx, g, band, canFinalize, onOpen, onFinalize, finalizing }: {
   ctx: Ctx;
   g: Game;
   band: ResultsBand;
+  canFinalize: boolean;
   onOpen: (id: string) => void;
   onFinalize: (id: string) => void;
   finalizing: boolean;
@@ -129,7 +130,7 @@ function ResultRow({ ctx, g, band, onOpen, onFinalize, finalizing }: {
       caption={where || undefined}
       trail={chip ? <RepChip>{chip}</RepChip> : undefined}
       chevron
-      beside={band === 'toFinalize' ? (
+      beside={band === 'toFinalize' && canFinalize ? (
         <RowAction onClick={() => onFinalize(g.id)} disabled={finalizing} icon={<Check size={14} aria-hidden />}>
           {GAME_DAY_WORDS.finalize}
         </RowAction>
@@ -152,7 +153,7 @@ type EditorActions = {
  * scorekeeper submitted and the organizer hasn't changed, Finalize (the board's two taps: the row,
  * then Finalize). Forfeit keeps its red (§245).
  */
-function ScoreEditor({ ctx, g, band, actions, onClose }: { ctx: Ctx; g: Game; band: ResultsBand; actions: EditorActions; onClose: () => void }) {
+function ScoreEditor({ ctx, g, band, canFinalize, actions, onClose }: { ctx: Ctx; g: Game; band: ResultsBand; canFinalize: boolean; actions: EditorActions; onClose: () => void }) {
   const initialAway = g.awayScore != null ? String(g.awayScore) : '';
   const initialHome = g.homeScore != null ? String(g.homeScore) : '';
   const [away, setAway] = useState(initialAway);
@@ -161,14 +162,23 @@ function ScoreEditor({ ctx, g, band, actions, onClose }: { ctx: Ctx; g: Game; ba
   const [error, setError] = useState<string | null>(null);
   const [forfeitMode, setForfeitMode] = useState(false);
   const firstInput = useRef<HTMLInputElement>(null);
-  useEffect(() => { firstInput.current?.focus({ preventScroll: true }); }, []);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => { (firstInput.current ?? closeButton.current)?.focus({ preventScroll: true }); }, []);
+
+  // A final result is the finalizer's to change (owner 2026-10-07; the games route refuses anyone else).
+  // Without that power the editor reads the result rather than offering controls the server would refuse.
+  const locked = band === 'final' && !canFinalize;
 
   const hasScore = g.status === 'completed' || g.status === 'submitted';
   const canForfeit = !!g.homeTeamId && !!g.awayTeamId && g.status === 'scheduled';
   const edited = away !== initialAway || home !== initialHome;
   // A pending forfeit too: Finalize promotes it to a forfeit, where Save score would record the nominal
   // margin as a played result (and lose the forfeit — its chip, and its exclusion from the tie-breakers).
-  const finalizeFirst = band === 'toFinalize' && !edited;
+  const finalizeFirst = band === 'toFinalize' && !edited && canFinalize;
+  // Without Finalize, an UNCHANGED waiting score has nothing to save: re-saving it would re-stamp the
+  // scorekeeper's name on the audit line as this person's, and on a pending forfeit record the nominal
+  // margin as a played result (the hazard above). Save wakes once the score is actually corrected.
+  const nothingToSave = band === 'toFinalize' && !edited && !canFinalize;
   const level = away !== '' && home !== '' && Number(away) === Number(home);
   const audit = hasScore ? scoreSubmissionSummary({ source: g.scoreSubmissionSource, email: g.scoreSubmittedByEmail, submittedAt: g.scoreSubmittedAt }) : '';
   const awayName = teamName(ctx, g.awayTeamId, g.awayPlaceholder);
@@ -227,6 +237,8 @@ function ScoreEditor({ ctx, g, band, actions, onClose }: { ctx: Ctx; g: Game; ba
           >
             Forfeited
           </button>
+        ) : locked ? (
+          <span className={styles.teamScore}>{value}</span>
         ) : stepper(side, value, name)}
       </div>
     );
@@ -238,12 +250,19 @@ function ScoreEditor({ ctx, g, band, actions, onClose }: { ctx: Ctx; g: Game; ba
       {when && <div className={styles.editorWhen}>{when}</div>}
       {teamLine('away', g.awayTeamId, g.awayPlaceholder, away, awayName, homeName)}
       {teamLine('home', g.homeTeamId, g.homePlaceholder, home, homeName, awayName)}
-      {level && !forfeitMode && (
+      {level && !forfeitMode && !locked && (
         <p className={styles.editorTie}>
           <RepChip>{GAME_STATE_WORD.tie}</RepChip> {g.isPlayoff ? GAME_DAY_WORDS.tiePlayoff : GAME_DAY_WORDS.tiePool}
         </p>
       )}
-      {forfeitMode ? (
+      {locked ? (
+        <div className={styles.editorActions}>
+          {/* A forfeit's numbers are a nominal margin, not a score played — name it, as its row does. */}
+          {g.status === 'forfeit' && <RepChip>{GAME_STATE_WORD.forfeit}</RepChip>}
+          <span className={styles.editorPrompt}>{GAME_DAY_WORDS.finalLocked}</span>
+          <button ref={closeButton} type="button" className={`btn btn-ghost ${styles.editorBtn}`} onClick={onClose}>Close</button>
+        </div>
+      ) : forfeitMode ? (
         <div className={styles.editorActions}>
           <span className={styles.editorPrompt}>Tap the team that forfeited</span>
           <button type="button" className={`btn btn-ghost ${styles.editorBtn}`} onClick={() => setForfeitMode(false)}>Cancel</button>
@@ -260,7 +279,7 @@ function ScoreEditor({ ctx, g, band, actions, onClose }: { ctx: Ctx; g: Game; ba
               <Check size={15} aria-hidden /> {GAME_DAY_WORDS.finalize}
             </button>
           ) : (
-            <button type="button" className={`btn btn-lime ${styles.editorBtn} ${styles.editorPrimary}`} disabled={busy} onClick={save}>
+            <button type="button" className={`btn btn-lime ${styles.editorBtn} ${styles.editorPrimary}`} disabled={busy || nothingToSave} onClick={save}>
               {busy ? 'Saving…' : GAME_DAY_WORDS.saveScore}
             </button>
           )}
@@ -286,7 +305,7 @@ function ScoreEditor({ ctx, g, band, actions, onClose }: { ctx: Ctx; g: Game; ba
 }
 
 export default function ResultsList({
-  games, bands, bandOf, teams, divisions, venues, today, openGameId, onOpen, finalizingId, actions, empty,
+  games, bands, bandOf, teams, divisions, venues, today, openGameId, onOpen, finalizingId, canFinalize, actions, empty,
 }: {
   /** Already narrowed by division, stage and search. */
   games: Game[];
@@ -301,6 +320,8 @@ export default function ResultsList({
   openGameId: string | null;
   onOpen: (id: string | null) => void;
   finalizingId: string | null;
+  /** Holds `seal_tournaments`: finalizes a pending score, and changes a final one. */
+  canFinalize: boolean;
   actions: EditorActions & { onRowFinalize: (id: string) => void };
   /** What to say when no band has a game. */
   empty: ReactNode;
@@ -330,13 +351,14 @@ export default function ResultsList({
           <ClubRowList key={band} inset label={BAND_LABEL[band]}>
             <ClubRowBand count={list.length}>{BAND_LABEL[band]}</ClubRowBand>
             {list.map(g => g.id === openGameId ? (
-              <ScoreEditor key={g.id} ctx={ctx} g={g} band={band} actions={actions} onClose={() => onOpen(null)} />
+              <ScoreEditor key={g.id} ctx={ctx} g={g} band={band} canFinalize={canFinalize} actions={actions} onClose={() => onOpen(null)} />
             ) : (
               <ResultRow
                 key={g.id}
                 ctx={ctx}
                 g={g}
                 band={band}
+                canFinalize={canFinalize}
                 onOpen={onOpen}
                 onFinalize={actions.onRowFinalize}
                 finalizing={finalizingId === g.id}

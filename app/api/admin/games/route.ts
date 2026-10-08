@@ -33,6 +33,7 @@ import {
   type TournamentVenueCatalog,
 } from '@/lib/tournament-venue';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
+import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 
 /**
  * Resolve one game's venue selection against its tournament's catalog and spread the result
@@ -74,6 +75,18 @@ function tournamentLockedResponse() {
   return new Response(
     JSON.stringify({ error: LOCKED_RESULTS }),
     { status: 409, headers: { 'Content-Type': 'application/json' } },
+  );
+}
+
+// A FINAL result — a completed game, or a final forfeit — changes only in the hands of someone who can
+// finalize (`seal_tournaments`, owner ruling 2026-10-07). Entering a score is `submit_scores`, which
+// staff and field volunteers hold; before this rule, every per-game action below let them overwrite,
+// flip, cancel or clear a final result by calling this route directly. A PENDING score (`submitted`)
+// is not final, and stays correctable by whoever can score.
+function finalResultLockedResponse() {
+  return new Response(
+    JSON.stringify({ error: GAME_DAY_WORDS.finalLocked }),
+    { status: 403, headers: { 'Content-Type': 'application/json' } },
   );
 }
 
@@ -968,6 +981,10 @@ export const PATCH = withObservability(async (req: Request) => {
 
     if (await isTournamentLocked(gameRow.tournamentId)) return tournamentLockedResponse();
 
+    // See finalResultLockedResponse. `finalLocked` = this game's result is final AND the caller can't finalize.
+    const canChangeFinal = hasCapability(ctx.role, ctx.capabilities, 'seal_tournaments');
+    const finalLocked = (gameRow.status === 'completed' || gameRow.status === 'forfeit') && !canChangeFinal;
+
     // B2.3: the pre-change state for the three actions that can move a game in a way a person
     // has to act on. Null on every other action — score paths pay no extra read.
     let scheduleBefore: ScheduleSnapshotRow | null = null;
@@ -975,6 +992,13 @@ export const PATCH = withObservability(async (req: Request) => {
     // ── update (time / diamond / location) ───────────────────────────────────
     if (action === 'update') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
+      // Swapping a team on a played game rewrites who won; a time, field or note edit does not. Compared
+      // to the stored ids, so a save that re-sends the same teams alongside a time change still passes.
+      const teamChanged = (sent: unknown, stored: string | null | undefined) =>
+        sent !== undefined && ((sent as string | null) || null) !== (stored ?? null);
+      if (finalLocked && (teamChanged(body.homeTeamId, gameRow.homeTeamId) || teamChanged(body.awayTeamId, gameRow.awayTeamId))) {
+        return finalResultLockedResponse();
+      }
       scheduleBefore = await readScheduleSnapshot(id);
 
       const updates: Record<string, unknown> = {};
@@ -1039,6 +1063,7 @@ export const PATCH = withObservability(async (req: Request) => {
     // ── cancel (scheduled → cancelled) ───────────────────────────────────────
     else if (action === 'cancel') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
+      if (finalLocked) return finalResultLockedResponse();
       scheduleBefore = await readScheduleSnapshot(id);
       const { error } = await supabase.from('games').update({ status: 'cancelled' }).eq('id', id);
       if (error) throw error;
@@ -1049,6 +1074,8 @@ export const PATCH = withObservability(async (req: Request) => {
     // notice becomes the last thing they heard.
     else if (action === 'revert-to-scheduled') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
+      // Meant for a cancelled game, but nothing checks that — on a final game it would reopen the result.
+      if (finalLocked) return finalResultLockedResponse();
       scheduleBefore = await readScheduleSnapshot(id);
       const { error } = await supabase.from('games').update({ status: 'scheduled' }).eq('id', id);
       if (error) throw error;
@@ -1065,6 +1092,7 @@ export const PATCH = withObservability(async (req: Request) => {
     // excluded from RF/RA/RD in the tie-breaker engine (J1-091).
     else if (action === 'forfeit') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
+      if (finalLocked) return finalResultLockedResponse();
       const winningSide = body.winningSide;
       if (winningSide !== 'home' && winningSide !== 'away') {
         return new Response(JSON.stringify({ error: "winningSide must be 'home' or 'away'" }), {
@@ -1100,6 +1128,7 @@ export const PATCH = withObservability(async (req: Request) => {
     // ── submit-score ─────────────────────────────────────────────────────────
     else if (action === 'submit-score') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
+      if (finalLocked) return finalResultLockedResponse();
       await submitTournamentScore({
         gameId: id,
         game: gameRow,
@@ -1112,7 +1141,7 @@ export const PATCH = withObservability(async (req: Request) => {
           orgRequireScoreFinalization: ctx.org.requireScoreFinalization,
         },
         source: 'admin_results',
-        allowFinalizedEdit: true,
+        allowFinalizedEdit: canChangeFinal,
       });
       // Notify org admins of submitted score (fire-and-forget)
       notify({
@@ -1136,6 +1165,7 @@ export const PATCH = withObservability(async (req: Request) => {
     // Revert a scored game back to scheduled and clear the recorded result.
     else if (action === 'revert-score') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
+      if (finalLocked) return finalResultLockedResponse();
       await revertTournamentScore(id);
     }
 

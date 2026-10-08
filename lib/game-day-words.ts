@@ -110,6 +110,9 @@ export const GAME_DAY_WORDS = {
   forfeit: 'Forfeit…',
   discard: 'Discard',
   revertScore: 'Revert score',
+  /** A final result (completed, or a final forfeit) changes only in the hands of someone who can
+   *  finalize (owner 2026-10-07). Results says it on a final game; the games route refuses with it. */
+  finalLocked: 'This game is final. Only someone who can finalize scores can change it.',
   /** Shown in the editor while the two scores are level (owner 2026-09-29: say the true thing — a
    *  tied playoff score SAVES, and `advancePlayoffs` leaves the next round on "Winner of …"). */
   tiePool: 'Scores are level — this game will save as a tie.',
