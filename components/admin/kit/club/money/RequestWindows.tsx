@@ -111,7 +111,7 @@ export function RequestWindow({ r, canMove, onAsk, onClose }: {
       {r.notes?.trim() && <Quote>{r.notes.trim()}</Quote>}
       <Facts rows={[
         ['Direction', out ? `${REQUEST_DIRECTION_WORD.payment_to_org} — ${r.teamName} pays the club` : `${REQUEST_DIRECTION_WORD.charge_to_org} — the club pays ${r.teamName}`],
-        out ? ['For', r.description] : null,
+        ['For', r.description],
         !out ? ['Filed by the coach as', filed.legacy ? '— (filed before we asked)' : filed.word === 'New money' ? 'New money for the season' : 'Money back for a cost'] : null,
         budget ? ['In the team’s budget', budget] : null,
         ['Asked by', `${r.askedBy ?? 'A coach'} · ${day(r.createdAt)}`],
