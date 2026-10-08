@@ -280,6 +280,13 @@ ruling, and the recommendation reads a finished club year in place instead, beca
 a year and they already do. Success: a treasurer closes a year, prints its papers, and the figures the board
 reads are the figures that stay.
 
+**Stage 3c built 2026-10-07 and committed 2026-10-08** (the server half, then the screens; both reviewed, the screens' words settled by /marketing). The owner's eleven walks
+are on the hub's QA tab (§283); the one that proves it is done makes an allocation from a budget line and
+reads it back. One question for the owner came out of writing the walks: comparing a year with last year is
+offered only once last year has money recorded in the same months. That keeps a club in its first year on
+FieldLogicHQ from seeing a column of zeros that reads as growth, but it also means the comparison appears
+part-way into a year rather than on its first day. Recommended: keep it.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money
