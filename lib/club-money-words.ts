@@ -847,8 +847,28 @@ export const NEW_ALLOCATION_WORDS = {
   pickTeams: 'Tick at least one team.',
   pickDue: 'Give each payment a due date.',
   pickLine: 'Choose what this bills from.',
+  /** Ask 11 (owner 2026-10-08): the button says what it bills — the house pattern for a money action. A phone
+   *  leaves the amount to the closing row. */
+  bill: (teams: number, amount: string | null) => `Bill ${pluralize(teams, 'team', 'teams')}${amount ? ` · ${amount}` : ''}`,
+  billing: 'Billing…',
+  /** The teams under their groups (Ask 11). */
+  all: 'All',
+  none: 'None',
+  allLabel: 'Tick every team that can be billed',
+  noneLabel: 'Untick every team',
+  teams: 'Teams',
+  notInGroup: 'Not in a group',
+  tickGroup: (group: string) => `Bill every team in ${group}`,
+  groupFigure: (group: string, what: 'percentage' | 'share') => `${group}’s ${what}`,
+  /** Due says something only for a team paying on a schedule of its own. */
+  ownDue: (n: number) => `Its own · ${n} payments`,
+  /** The teams that can't be billed, out of the list: one line that opens to name them. */
+  noSeasonCount: (n: number) => `${pluralize(n, 'team', 'teams')} ${n === 1 ? 'isn’t' : 'aren’t'} running a season`,
+  noSeasonWhy: (last: { name: string; closedOn: string | null } | null) =>
+    (last ? `its ${last.name} closed${last.closedOn ? ` on ${day3c(last.closedOn)}` : ''}` : 'no season running yet'),
   failed: 'The allocation couldn’t be made. Please try again.',
   offline: 'The allocation couldn’t be made. Check your connection and try again.',
+  nothingToBill: 'No team is running a season, so there is no one to bill yet.',
 } as const;
 
 /** A payee's window (specimen 7; Ask 7): it reads first, its report inside. */

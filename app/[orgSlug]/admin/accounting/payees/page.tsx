@@ -295,7 +295,7 @@ function PayeeWindow({ payee, others, canShare, canMove, q, onClose, onDone }: {
                 <div className={ck.switchText}>
                   <span className={ck.switchName} id="payee-shared-label">{SHARED_WORD}</span>
                   <p className={ck.hint}>Every team can pick it as a payee. Teams can’t rename or merge it, and their payee list tells them the club sees payments to it.</p>
-                  <FormError>{shareError}</FormError>
+                  <FormError inPlace>{shareError}</FormError>
                 </div>
                 <button type="button" role="switch" aria-checked={shared} aria-labelledby="payee-shared-label"
                   className={ck.switch} disabled={sharing} onClick={() => void share(!shared)} />

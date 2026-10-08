@@ -110,7 +110,7 @@ describe('3. New allocation, in the line\'s window (Ask 6)', () => {
     assert.doesNotMatch(words.slice(words.indexOf('NEW_ALLOCATION_WORDS')), /Program Year|\(optional\)/i);
   });
   it('the teams are the SHARED form table — never a table of its own', () => {
-    assert.match(code, /import FormTable, \{ type FormTableRow \} from '@\/components\/shared\/FormTable'/);
+    assert.match(code, /import FormTable, \{[^}]*type FormTableRow[^}]*\} from '@\/components\/shared\/FormTable'/);
     assert.doesNotMatch(code, /<table\b/);
   });
   it('one window: no page, no step bar; the old page retired and its addresses forward', () => {
@@ -120,9 +120,51 @@ describe('3. New allocation, in the line\'s window (Ask 6)', () => {
     assert.match(proxy, /url\.searchParams\.set\('new', '1'\)/);
     assert.match(readCode('app/[orgSlug]/admin/accounting/allocations/page.tsx'), /search\.get\('new'\) === '1'/);
   });
-  it('only a team\'s running season is offered; one without is listed, unticked, with its reason', () => {
-    assert.match(code, /onTick: t\.season \? /);
-    assert.match(code, /reason: t\.season \? undefined : W\.noSeason\(t\.lastSeason\)/);
+  it('only a team\'s running season is offered; one without leaves the list, named under it with why (Ask 11)', () => {
+    assert.match(code, /const billable = useMemo\(\(\) => \(teams \?\? \[\]\)\.filter\(t => t\.season\)/);
+    assert.match(code, /const rows: FormTableRow\[\] = billable\.map\(/, 'only a team that can be billed is a row');
+    assert.match(code, /W\.noSeasonCount\(noSeason\.length\)/);
+    assert.match(code, /W\.noSeasonWhy\(t\.lastSeason\)/);
+    assert.match(code, /aria-expanded=\{noSeasonOpen\}/, 'the line opens and closes like a door');
+  });
+  it('the teams sit under their groups, a heading ticks its group, All · None beside "Team" (Ask 11)', () => {
+    assert.match(code, /groups=\{groups\}/);
+    assert.match(code, /state: on === 0 \? 'none' : on === members\.length \? 'all' : 'some'/);
+    assert.match(code, /leadLabel=\{<>\{W\.team\}\{allNone\}<\/>\}/);
+    assert.match(code, /billable\.some\(t => t\.group\) \?/, 'a club with no groups keeps the flat list');
+    assert.match(code, /localeCompare\(b, undefined, \{ numeric: true/, 'age order: 9U before 11U');
+    const options = readCode('app/api/admin/accounting/team-options/route.ts');
+    assert.match(options, /group: t\.group_id \? groupOf\.get/);
+  });
+  it('a group figure is a typing aid — spread exactly by the pure module, one value per team sent (Ask 11)', () => {
+    assert.match(code, /spreadGroupFigure\(typed, members\.length, split\)/);
+    assert.match(code, /\.\.\.\(split !== 'even' \? \{ value: positive\(values\[t\.id\] \?\? ''\) \} : \{\}\)/);
+    assert.doesNotMatch(code, /groupId:|group_id/, 'the group is never sent with the bill');
+  });
+  it('the button says what it bills; Due speaks only for a team on its own schedule (Ask 11)', () => {
+    assert.match(code, /W\.bill\(inBill\.length, isPhone \? null : amountWords\)/, 'a phone leaves the amount to the closing row');
+    assert.match(code, /due: own \? <span className=\{moneyKit\.ownDue\}>\{own\}<\/span> : ''/);
+    assert.doesNotMatch(code, /key: 'season'/, 'the season is a note beside the name, not a column');
+  });
+});
+
+describe('3b. why a button was refused sits beside it, in every club money window (Ask 11)', () => {
+  const dialog = readCode('components/admin/kit/club/KitDialog.tsx');
+  const moneyKit = readCode(`${KIT}/MoneyKit.tsx`);
+  it('the window has a reason slot in its foot, quiet after a change and speaking again on a press', () => {
+    assert.match(dialog, /<div ref=\{setReasonSlot\} className=/);
+    assert.match(dialog, /onInputCapture=\{hasFoot \? \(\) => setReasonQuiet\(true\) : undefined\}/);
+    assert.match(dialog, /onClickCapture=\{\(\) => setReasonQuiet\(false\)\}/);
+  });
+  it('FormError writes into the slot unless it belongs to one field (inPlace)', () => {
+    assert.match(moneyKit, /if \(!inPlace && reason\?\.slot\) \{\s*return createPortal\(/);
+  });
+  it('the reasons that belong to ONE field stay under it', () => {
+    assert.match(readCode(PARTS), /<FormError inPlace>\{monthError\}<\/FormError>/);
+    assert.match(readCode(PARTS), /<FormError inPlace>\{refusalWords\(question\)\}<\/FormError>/);
+    assert.match(readCode(`${KIT}/LedgerWindows.tsx`), /<FormError inPlace>\{clearError\}<\/FormError>/);
+    assert.match(readCode(PAYEES), /<FormError inPlace>\{shareError\}<\/FormError>/);
+    assert.match(readCode(`${KIT}/BudgetWindows.tsx`), /<FormError inPlace>\{error\}<\/FormError>/, 'the Categories rename: its Save is in the body');
   });
 });
 

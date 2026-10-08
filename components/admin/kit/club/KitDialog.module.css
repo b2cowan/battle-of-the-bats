@@ -130,6 +130,24 @@
 .footStart { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-right: auto; }
 .footEnd { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-left: auto; justify-content: flex-end; }
 
+/* Why the button was refused, beside it (Ask 11, 2026-10-08): between the foot's two ends at a desk, a line above
+   the buttons on a phone. Empty, it takes no room; quiet after a change in the body until a foot button is pressed. */
+.footReason { flex: 1 1 12rem; min-width: 0; }
+.footReason:empty,
+.footReasonQuiet { display: none; }
+/* Two classes, so it wins over the money kit's error row (`.formError`, one class) whatever the bundle order. */
+.foot .footReason > * {
+  display: flex;
+  gap: 0.45rem;
+  align-items: flex-start;
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.35;
+}
+@media (max-width: 640px) {
+  .footReason { order: -1; flex-basis: 100%; }
+}
+
 @media (max-width: 768px) {
   .foot button,
   .foot a,

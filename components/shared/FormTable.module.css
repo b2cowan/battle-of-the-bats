@@ -71,6 +71,23 @@
 .tick:disabled { cursor: default; }
 .tickOff { cursor: default; }
 .name { font-weight: 650; overflow-wrap: anywhere; }
+/* A quiet fact beside the name (a team's season), read without a column of its own (Ask 11). */
+.nameNote { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); white-space: nowrap; }
+
+/* A group heading (Ask 11): its own box for the whole group, the name in the heading's small capitals, its count,
+   and cells of its own — on the paper ground, so a group reads as one block; its rows are set in under it. */
+.groupRow > th,
+.groupRow > td { background: var(--home-paper); }
+.groupName {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.groupCount { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); }
+.table .inGroup > th { padding-left: 2.1rem; }
 
 /* A row that can't be in: listed, dim, its reason across the cells it would have filled. */
 .off th,
@@ -139,6 +156,17 @@
   border-top: 1px solid var(--home-line);
 }
 .band + .record { border-top: 0; }
+/* A group's band in the frame: its box, name and count, and the group's figure at its end. */
+.groupBand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+  border-top: 1px solid var(--home-line);
+  background: var(--home-paper);
+}
+.band + .groupBand { border-top: 0; }
+.groupBand .tickLabel { flex: 1; min-height: var(--tap-min, 44px); }
 .recordOpen { background: var(--home-paper); }
 .recordHead {
   display: flex;

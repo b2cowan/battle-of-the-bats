@@ -52,8 +52,15 @@
  *     word (owner, 2026-10-01: "our portal standard … the floating pill in the bottom right"; until then
  *     it sat in the head beside the name). The PAGE's pill sits under a window (250 < 400) and on a
  *     phone would cover Previous / Next, so the window carries its own, as the portal's award sheet does.
+ *
+ * WHY A BUTTON WAS REFUSED SITS BESIDE IT (owner, Ask 11, 2026-10-08: "when clicking create and I can't the error
+ * message is not visible if I have scrolled"). A window with a foot carries a REASON SLOT between its two ends (on a
+ * phone, a line above the buttons); the club money kit's window refusal (`FormError`) lands there, so it is seen at
+ * any scroll and the window never jumps away from the row being fixed. It quiets on the next change inside the body
+ * — a stale reason beside the button would mislead — and speaks again when a foot button is pressed or the reason
+ * itself changes. A reason that belongs to ONE field stays under that field (`FormError inPlace`).
  */
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { createContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import styles from './KitDialog.module.css';
@@ -75,6 +82,10 @@ function unlockPageScroll() {
 
 /** One neighbour of a record in the list it was opened from. */
 export type KitStep = { name: string; onStep: () => void };
+
+/** The window's foot slot for why its button was refused (see the header), and a way to speak again. Null outside
+ *  a window with a foot: a refusal there stays where it is written. */
+export const KitReasonSlot = createContext<{ slot: HTMLElement | null; reveal: () => void } | null>(null);
 
 export default function KitDialog({
   kind,
@@ -130,6 +141,10 @@ export default function KitDialog({
   const panelRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const isRecord = steps != null;
+  const hasFoot = footer != null || footerStart != null;
+  const [reasonSlot, setReasonSlot] = useState<HTMLDivElement | null>(null);
+  const [reasonQuiet, setReasonQuiet] = useState(false);
+  const reason = useMemo(() => (hasFoot ? { slot: reasonSlot, reveal: () => setReasonQuiet(false) } : null), [hasFoot, reasonSlot]);
   // Mounted = open. Called BEFORE the focus effect below, so the floor records the opener while it
   // still has focus, then that effect moves the cursor into the first field.
   useDialogFloor(true, panelRef, { onClose, busy });
@@ -195,16 +210,24 @@ export default function KitDialog({
             </button>
           )}
         </div>
-        <div className={styles.bodyWrap} data-has-status={status != null || undefined}>
-          <div ref={bodyRef} className={styles.body}>{children}</div>
-          {status != null && <div className={styles.status}>{status}</div>}
-        </div>
-        {(footer != null || footerStart != null) && (
-          <div className={styles.foot}>
-            {footerStart && <div className={styles.footStart}>{footerStart}</div>}
-            {footer != null && <div className={styles.footEnd}>{footer}</div>}
+        <KitReasonSlot.Provider value={reason}>
+          <div className={styles.bodyWrap} data-has-status={status != null || undefined}>
+            {/* Any change in the body quiets the reason beside the button: it was about what was there before. */}
+            <div ref={bodyRef} className={styles.body}
+              onInputCapture={hasFoot ? () => setReasonQuiet(true) : undefined}
+              onChangeCapture={hasFoot ? () => setReasonQuiet(true) : undefined}
+              // A button in the body changes the form too (All, None, a row's chevron, "Use the bill's schedule").
+              onClickCapture={hasFoot ? e => { if ((e.target as HTMLElement).closest('button')) setReasonQuiet(true); } : undefined}>{children}</div>
+            {status != null && <div className={styles.status}>{status}</div>}
           </div>
-        )}
+          {hasFoot && (
+            <div className={styles.foot} onClickCapture={() => setReasonQuiet(false)}>
+              {footerStart && <div className={styles.footStart}>{footerStart}</div>}
+              <div ref={setReasonSlot} className={`${styles.footReason}${reasonQuiet ? ` ${styles.footReasonQuiet}` : ''}`} />
+              {footer != null && <div className={styles.footEnd}>{footer}</div>}
+            </div>
+          )}
+        </KitReasonSlot.Provider>
         {steps && (
           <nav className={`${styles.foot} ${styles.steps}`} aria-label={`Other ${steps.noun}s in this list`}>
             {steps.prev && (

@@ -338,7 +338,7 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
                 <dt>{W.startsIn}</dt><dd>{monthName(read.firstMonth)}. {W.firstMonthLocked}</dd>
               </dl>
             )}
-            <FormError>{monthError}</FormError>
+            <FormError inPlace>{monthError}</FormError>
             {asking && <p className={ck.hint}>Working out what would change…</p>}
             {asksNow && shownChange && (
               <>
@@ -534,7 +534,7 @@ export function CloseYearQuestion({ q, year, accountingBase, onClosed, onClose }
       <FormError>{error}</FormError>
       {failed ? <p className={ck.hint}>{W.loadFailed}</p> : !question || !o ? <p className={ck.loading}>Loading…</p> : (
         <div className={fy.closeBody}>
-          {question.refusal && <FormError>{refusalWords(question)}</FormError>}
+          {question.refusal && <FormError inPlace>{refusalWords(question)}</FormError>}
           {question.sinceLastClose && (
             <p className={fy.reopenedNote}>
               <History size={15} aria-hidden />

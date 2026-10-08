@@ -29,6 +29,11 @@ import { withObservability, captureAndJson } from '@/lib/observability';
  * session 2 retires) now holds that open season only. A team with no open season carries `lastSeason` — its most
  * recent season's name and the day it was last changed (a season stores no close date: S3C-04, `updated_at`) — so
  * New allocation can say why it can't be billed ("No open season: its 2026 Season closed on Sep 20").
+ *
+ * ⚖ EACH TEAM'S GROUP (Ask 11, owner 2026-10-08): `group` — its rep-team group's name and the club's own order for it
+ * (`display_order`, the order Rep Teams shows), or null — so New allocation can list the teams under their groups and
+ * tick a group at once. A read only: the group is never stored on a bill. A group-scoped member's teams are already
+ * limited to their groups above, so a group they can't see is never named.
  */
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -53,6 +58,13 @@ export const GET = withObservability(async (req: Request) => {
   const { data: teams, error: teamsError } = await teamQuery;
   if (teamsError) return captureAndJson(teamsError, { error: 'Could not load the club’s teams.' }, 500);
   if (!teams?.length) return NextResponse.json({ teams: [] });
+
+  const groupIds = [...new Set(teams.map(t => t.group_id as string | null).filter((g): g is string => !!g))];
+  const { data: groups, error: groupsError } = groupIds.length
+    ? await supabaseAdmin.from('rep_team_groups').select('id, name, display_order').eq('org_id', ctx.org.id).in('id', groupIds)
+    : { data: [], error: null };
+  if (groupsError) return captureAndJson(groupsError, { error: 'Could not load the club’s team groups.' }, 500);
+  const groupOf = new Map((groups ?? []).map(g => [g.id as string, { id: g.id as string, name: g.name as string, order: (g.display_order as number | null) ?? 0 }]));
 
   const { data: years, error: yearsError } = await supabaseAdmin
     .from('rep_program_years')
@@ -81,6 +93,7 @@ export const GET = withObservability(async (req: Request) => {
       return {
         id: t.id as string,
         name: t.name as string,
+        group: t.group_id ? groupOf.get(t.group_id as string) ?? null : null,
         season: open ? { id: open.id, name: open.name } : null,
         noSeason: open ? null : NO_SEASON_RUNNING_WORD,
         lastSeason: last ? { name: last.name, closedOn: last.updatedAt ? orgDayKey(last.updatedAt) : null } : null,

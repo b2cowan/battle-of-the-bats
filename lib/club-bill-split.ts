@@ -71,6 +71,22 @@ export function shareCents(totalC: number, weights: readonly number[]): number[]
 }
 
 /**
+ * A GROUP'S FIGURE, spread over its ticked teams (Ask 11, owner 2026-10-08 — "40% to one group and 60% to another
+ * and update manually after"). New allocation's group heading takes one figure under By percentage or By amount and
+ * hands each ticked team in the group an even part of it — to the hundredth of a percent, or to the cent — so the
+ * group adds up EXACTLY (40% over 7 teams → 5.72 × 3 + 5.71 × 4; the leftover goes to the first teams, Evenly's
+ * rule). A typing aid only: each team's part is then an ordinary per-team value the treasurer can retype, and the
+ * server splits from those values as it always has. Null when `typed` is not a figure above zero or no team is ticked.
+ */
+export function spreadGroupFigure(typed: string, teams: number, method: 'percentage' | 'fixed'): string[] | null {
+  const n = Number(typed.replace(/[$,%\s]/g, ''));
+  if (teams <= 0 || !Number.isFinite(n) || n <= 0) return null;
+  const units = Math.round(n * 100); // hundredths of a percent, or cents
+  return shareCents(units, Array.from({ length: teams }, () => 1)).map(u =>
+    method === 'fixed' ? (u / 100).toFixed(2) : String(Number((u / 100).toFixed(2))));
+}
+
+/**
  * A team's OWN payments follow its share (§283 W8, owner 2026-10-08). New allocation's own payments keep their
  * SHAPE — how many, when, and how the share divides between them — not their dollars: when the team's share moves
  * (the split, a percentage, the amount, a team ticked), payments that added up to the share they were made for

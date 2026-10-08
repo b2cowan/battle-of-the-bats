@@ -9,9 +9,10 @@
  * from the server, which takes them from lib/club-money-figures.ts (the "same figure, one definition"
  * guard holds it). A screen formats; it never re-adds.
  */
-import { useState, type ReactNode } from 'react';
-import { Lock } from 'lucide-react';
-import KitDialog from '../KitDialog';
+import { useContext, useLayoutEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { AlertCircle, Lock } from 'lucide-react';
+import KitDialog, { KitReasonSlot } from '../KitDialog';
 import { CoachCard, CoachEyebrow, CoachFigure, kit } from '@/components/coaches/kit';
 import { fmt } from '@/lib/coach-money-summary';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
@@ -280,6 +281,26 @@ export function ReasonField({ id, label = 'Why?', value, onChange, placeholder, 
   );
 }
 
-/** A refusal line inside a window (standard §3.7's error row). */
-export const FormError = ({ children }: { children: ReactNode }) =>
-  children ? <p className={repKit.formError} role="alert">{children}</p> : null;
+/**
+ * A refusal line inside a window (standard §3.7's error row). In a window with a foot it sits BESIDE THE BUTTON
+ * (Ask 11, owner 2026-10-08 — the reason was printed at the top, out of view once the window was scrolled): it is
+ * written into the window's reason slot (`KitReasonSlot`), seen at any scroll. A reason that belongs to ONE field —
+ * a month that can't change, a cheque that can't clear, a switch that didn't save — passes `inPlace` and stays
+ * under that field (the held-reason rule). A new reason speaks even when a change in the body had quieted the old.
+ */
+export function FormError({ children, inPlace = false }: { children: ReactNode; inPlace?: boolean }) {
+  const reason = useContext(KitReasonSlot);
+  const text = typeof children === 'string' ? children : children ? 'node' : '';
+  const reveal = reason?.reveal;
+  // Before paint: a reason written into a slot still hidden by an earlier change must be shown in the same frame,
+  // or a screen reader may not announce it (/review, Ask 11).
+  useLayoutEffect(() => { if (text && !inPlace) reveal?.(); }, [text, inPlace, reveal]);
+  if (!children) return null;
+  if (!inPlace && reason?.slot) {
+    return createPortal(
+      <p className={repKit.formError} role="alert"><AlertCircle size={15} aria-hidden className={styles.reasonIcon} />{children}</p>,
+      reason.slot,
+    );
+  }
+  return <p className={repKit.formError} role="alert">{children}</p>;
+}

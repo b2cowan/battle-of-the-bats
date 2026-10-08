@@ -641,7 +641,8 @@ export function CategoriesWindow({ q, canMove, onRenamed, onClose }: {
     <KitDialog kind="form" title="Categories" onClose={onClose} busy={busy}
       footer={<button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Done</button>}>
       <p className={ck.hint}>The headings every budget in the club sits under — yours and your teams’. Rename one of the club’s own and every team’s plan follows.</p>
-      <FormError>{error}</FormError>
+      {/* The rename's own reason: its Save and Enter are in the body, not the foot (Done) — so it stays here (/review, Ask 11). */}
+      <FormError inPlace>{error}</FormError>
       {failed ? <p className={ck.hint}>The categories couldn’t be loaded.</p> : !cats ? <p className={ck.loading}>Loading…</p> : groups.map(g => (
         <section key={g.key} className={cr.recordSection}>
           <h3 className={cr.recordSectionTitle}>{g.label}</h3>

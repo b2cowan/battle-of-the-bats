@@ -226,6 +226,9 @@
 /* ── A window's quiet door at its foot (Undo a payment, Reverse this approval): not red — a correction ── */
 .quietDoor { margin: 0.25rem 0 0; }
 
+/* Why a window's button was refused, beside the button (Ask 11): its alert mark, in the reason's own red. */
+.reasonIcon { flex: none; margin-top: 0.12rem; }
+
 /* A window's "what will be written and where" lines sit in the facts box; its lead sentence above. */
 .lead1 { margin: 0 0 0.85rem; line-height: 1.5; color: var(--text-primary); }
 
@@ -272,6 +275,46 @@
 @media (max-width: 768px) { .ownBack { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); } }
 .ownRow { display: inline-flex; gap: 0.35rem; }
 .ownRow > input { width: 9rem; }
+/* Ask 11 (owner 2026-10-08) — the teams under their groups. "All · None" beside the Team heading (and above the
+   frame on a phone), in the body's face, not the heading's capitals. */
+.allNone {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  margin-left: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+.allNone > button { text-decoration: none; }
+.allNone > button:hover { text-decoration: underline; }
+@media (max-width: 768px) { .allNone > button { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); } }
+.teamsHead { display: flex; align-items: center; justify-content: space-between; margin: 0.25rem 0 0.25rem; }
+/* A team paying on a schedule of its own — the one Due that says something. */
+.ownDue { font-weight: 650; color: var(--text-primary); }
+/* The teams that can't be billed, out of the list: one line that opens to name them. */
+.noSeason { margin: 0.6rem 0 0.9rem; font-size: var(--type-support); color: var(--text-secondary); }
+.noSeasonToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+}
+.noSeasonToggle:hover { color: var(--text-primary); }
+.noSeasonToggle:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+@media (max-width: 768px) { .noSeasonToggle { min-height: var(--tap-min, 44px); } }
+.noSeasonOpen { transform: rotate(180deg); }
+.noSeasonList { margin: 0.3rem 0 0; padding: 0 0 0 1.35rem; list-style: none; display: grid; gap: 0.2rem; color: var(--text-tertiary); }
+.noSeasonList b { font-weight: 600; color: var(--text-secondary); }
 
 /* A payee window's report head: its title, and a small Year pill at the right only when there is more than one year. */
 .reportHead { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; margin: 1rem 0 0.5rem; }

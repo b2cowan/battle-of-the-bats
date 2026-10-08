@@ -639,7 +639,7 @@ function ReadLineWindow({ row, book, q, accountingBase, canMove, fiscal, onChang
                     ? 'A transfer is changed by voiding both halves and entering it again.'
                     : null}
         />
-        <FormError>{clearError}</FormError>
+        <FormError inPlace>{clearError}</FormError>
       </KitDialog>
       {voiding && row.source.kind === 'transfer' && (
         <VoidTransferQuestion row={row} book={book} q={q}

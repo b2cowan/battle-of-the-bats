@@ -14,28 +14,44 @@
  *
  * The form (a create ASKS — nothing saves until Create, 2026-09-24): Name, Amount, Split (Evenly · By amount · By
  * percentage · By sessions) and Pay by (One payment, or installments with their dates), chosen ONCE per bill; then
- * the teams as a FORM TABLE (the shared part, `components/shared/FormTable`): Team · Season · Share · Due; every team
- * that can be billed ticked; a team with no open season listed, unticked and dim, with the reason (S3C-09 — only a
- * team's RUNNING season is billed, the server refuses another); Share an input under By amount, By percentage or By
- * sessions; a row expands in place to give that team its own payments, which keep their shape as its share moves
- * (`followShare`, §283 W8) and have a plain way back ("Use the bill's schedule"); the closing row sums the ticked teams and says
- * the difference from the amount. Labels in sentence case; no "(optional)"; required marked with the asterisk;
- * "Season", never "Program Year".
+ * the teams as a FORM TABLE (the shared part, `components/shared/FormTable`): Team · Share · Due; every team that can
+ * be billed ticked; Share an input under By amount, By percentage or By sessions; a row expands in place to give that
+ * team its own payments, which keep their shape as its share moves (`followShare`, §283 W8) and have a plain way back
+ * ("Use the bill's schedule"); the closing row sums the ticked teams and says the difference from the amount. Labels in
+ * sentence case; no "(optional)"; required marked with the asterisk; "Season", never "Program Year".
+ *
+ * PICKED BY GROUP (Ask 11, owner 2026-10-08 — "it is very manual to tick and untick every team … can we select groups
+ * (i.e. … 40% to one group and 60% to another and update manually after)?"):
+ *   · the teams sit under their rep-team GROUPS, in the club's own group order (Rep Teams'), teams in no group last
+ *     under "Not in a group"; a heading's box ticks its group (checked, mixed, empty); All · None beside "Team". A club
+ *     with no groups keeps the flat list with All · None;
+ *   · under By percentage or By amount a heading takes a figure of its own and spreads it evenly over its ticked teams
+ *     (`spreadGroupFigure`, exact to the hundredth or the cent); retype any team and the heading shows the group's sum;
+ *     tick or untick a team and a typed group figure spreads again. A typing aid only: the body still sends one value
+ *     per team, and the group is never stored on the bill;
+ *   · teams in age order inside a group (9U before 11U — the list sorted as text, 9U AA after 16U AA);
+ *   · the season is a quiet note beside the team's name, not a column; Due speaks only for a team paying on its own
+ *     schedule ("Its own · 3 payments") — Pay by already says when the bill is due;
+ *   · a team with no running season leaves the list (S3C-09 still holds: only a RUNNING season is billed, the server
+ *     refuses another): one line under it, "2 teams aren't running a season", opens to name each and when it closed;
+ *   · the button says what it bills ("Bill 7 teams · $1,500.00"), and a refusal sits beside it (`FormError` in the
+ *     window's foot, KitDialog's reason slot).
  *
  * ⚠ NO FIGURE IS AUTHORITATIVE HERE: the shares shown are worked out in cents the server's way (`shareCents`, the
  * one split rule in lib/club-bill-split.ts) so the table adds up as typed; the server splits again and is the one
  * that writes (`club_allocation_create`, the allocation and its line link in ONE step).
  */
 import { useCallback, useMemo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { repKit, useDeferredLoad } from '../RepKit';
-import FormTable, { type FormTableRow } from '@/components/shared/FormTable';
+import FormTable, { type FormTableGroup, type FormTableRow } from '@/components/shared/FormTable';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { followShare, shareCents } from '@/lib/club-bill-split';
+import { followShare, shareCents, spreadGroupFigure } from '@/lib/club-bill-split';
 import { toCents, toDollars } from '@/lib/coach-register';
 import { NEW_ALLOCATION_WORDS as W } from '@/lib/club-money-words';
-import { FormError, day, jsonInit, money, moneyFetch, moneyKit, parseAmount, refusalText } from './MoneyKit';
+import { FormError, jsonInit, money, moneyFetch, moneyKit, parseAmount, refusalText } from './MoneyKit';
 import cr from './ClubReport.module.css';
 
 type Split = 'even' | 'fixed' | 'percentage' | 'sessions';
@@ -48,9 +64,25 @@ const SPLITS: { id: Split; label: string }[] = [
 
 interface TeamOption {
   id: string; name: string;
+  /** Its rep-team group and the club's order for it (Ask 11), or null. */
+  group: { id: string; name: string; order: number } | null;
   season: { id: string; name: string } | null;
   lastSeason: { name: string; closedOn: string | null } | null;
 }
+
+/** The heading key of the teams in no group. */
+const NO_GROUP = '~none';
+/** Age order: "9U AA" before "11U AA" (a text sort put it after "16U AA"), then the name. */
+const byName = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+/** The club's group order (Rep Teams'), then age order inside each group; teams in no group last. */
+const teamOrder = (a: TeamOption, b: TeamOption) => {
+  if (!a.group !== !b.group) return a.group ? -1 : 1;
+  if (a.group && b.group && a.group.id !== b.group.id) {
+    return a.group.order - b.group.order || byName(a.group.name, b.group.name) || a.group.id.localeCompare(b.group.id);
+  }
+  return byName(a.name, b.name);
+};
+const groupKeyOf = (t: TeamOption) => t.group?.id ?? NO_GROUP;
 interface BillFromLine { id: string; description: string; categoryName: string; itemName: string | null; planned: number; allocated: number; left: number }
 /** One of a team's own payments, as typed. */
 interface OwnPayment { dueDate: string; amount: string }
@@ -123,9 +155,63 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
+  /** A group's figure as typed on its heading (Ask 11), by group key — spread over the group's ticked teams. */
+  const [groupTyped, setGroupTyped] = useState<Record<string, string>>({});
+  /** The line naming the teams with no running season, opened. */
+  const [noSeasonOpen, setNoSeasonOpen] = useState(false);
+
+  // ── The teams that can be billed, in the club's group order and age order; the rest named under the list ──
+  const billable = useMemo(() => (teams ?? []).filter(t => t.season).sort(teamOrder), [teams]);
+  const noSeason = useMemo(() => (teams ?? []).filter(t => !t.season).sort((a, b) => byName(a.name, b.name)), [teams]);
+  /** Headings only when the club sorts its teams into groups; a club with none keeps the flat list. */
+  const groupKeys = useMemo(
+    () => (billable.some(t => t.group) ? [...new Set(billable.map(groupKeyOf))] : []),
+    [billable],
+  );
+  const membersOf = (key: string) => billable.filter(t => groupKeyOf(t) === key);
+
+  /** Spread a group's typed figure over its ticked teams (exact to the hundredth or the cent). */
+  const fillGroup = (key: string, typed: string, tickedNow: ReadonlySet<string>) => {
+    if (split !== 'percentage' && split !== 'fixed') return;
+    const members = membersOf(key).filter(t => tickedNow.has(t.id));
+    const parts = spreadGroupFigure(typed, members.length, split);
+    setValues(v => {
+      const next = { ...v };
+      members.forEach((t, i) => { next[t.id] = parts ? parts[i] : ''; });
+      return next;
+    });
+  };
+  /** A new set of ticked teams: every group with a typed figure spreads it again over its teams now ticked. */
+  const tickTo = (next: Set<string>) => {
+    setTicked(next);
+    for (const [key, typed] of Object.entries(groupTyped)) fillGroup(key, typed, next);
+  };
+  const tickTeam = (id: string, on: boolean) => {
+    const next = new Set(ticked ?? []);
+    if (on) next.add(id); else next.delete(id);
+    tickTo(next);
+  };
+  const tickGroup = (key: string, on: boolean) => {
+    const next = new Set(ticked ?? []);
+    for (const t of membersOf(key)) { if (on) next.add(t.id); else next.delete(t.id); }
+    tickTo(next);
+  };
+  /** A team's own figure, retyped: its group heading now shows the group's sum instead of what was typed there. */
+  const setTeamValue = (t: TeamOption, text: string) => {
+    setValues(v => ({ ...v, [t.id]: text }));
+    const key = groupKeyOf(t);
+    if (groupTyped[key] != null) setGroupTyped(g => { const x = { ...g }; delete x[key]; return x; });
+  };
+  const setGroupFigure = (key: string, text: string) => {
+    setGroupTyped(g => ({ ...g, [key]: text }));
+    fillGroup(key, text, ticked ?? new Set());
+  };
 
   const amount = parseAmount(amountText, MAX_AMOUNT);
   const totalC = amount != null ? toCents(amount) : 0;
+  // In a memo of its own: the React compiler can't tell `amount` is a number, so a bare call reading it in render
+  // counts as a possible change to it, and the window's memos are skipped (react-hooks/preserve-manual-memoization).
+  const amountWords = useMemo(() => (amount != null ? money(amount) : null), [amount]);
 
   const pickLine = (id: string) => {
     setPick(id);
@@ -138,7 +224,8 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
 
   const setPaymentCount = (n: number) => setDates(d => Array.from({ length: n }, (_, i) => d[i] ?? ''));
 
-  const inBill = useMemo(() => (teams ?? []).filter(t => t.season && ticked?.has(t.id)), [teams, ticked]);
+  // In the order on screen, so the server's leftover cent goes to the first team the treasurer sees (Evenly's rule).
+  const inBill = useMemo(() => billable.filter(t => ticked?.has(t.id)), [billable, ticked]);
 
   /** Each ticked team's share, in cents — the server's one rule (`shareCents`), so the closing row adds up exactly. */
   const sharesC = useMemo((): Map<string, number> => {
@@ -187,6 +274,7 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
     if (!name.trim()) return 'Give the allocation a name.';
     if (amount == null) return 'The amount must be above zero.';
     if (source && amount > source.left + 0.005) return W.amountUpTo(money(source.left));
+    if (billable.length === 0) return W.nothingToBill;
     if (inBill.length === 0) return W.pickTeams;
     if (dates.some(d => !d)) return W.pickDue;
     if (split !== 'even' && inBill.some(t => positive(values[t.id] ?? '') == null)) {
@@ -237,11 +325,10 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
   }
 
   // ── The teams' rows ──
-  const dueWords = (t: TeamOption) => {
+  /** Due speaks only for a team paying on a schedule of its own: Pay by already says when the bill is due. */
+  const ownDue = (t: TeamOption) => {
     const rows = ownRows(t.id);
-    if (rows) return W.paymentsCount(rows.length);
-    if (payments > 1) return W.paymentsCount(payments);
-    return dates[0] ? day(dates[0]) : '';
+    return rows ? W.ownDue(rows.length) : null;
   };
   const shareCell = (t: TeamOption) => {
     const c = sharesC.get(t.id) ?? 0;
@@ -251,9 +338,31 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
         <input className={`${ck.input} ${moneyKit.shareInput}`} inputMode="decimal" value={values[t.id] ?? ''}
           aria-label={`${t.name}’s ${split === 'fixed' ? 'share' : split === 'percentage' ? 'percentage' : 'sessions'}`}
           placeholder={split === 'fixed' ? '$0.00' : '0'}
-          onChange={e => setValues(v => ({ ...v, [t.id]: e.target.value }))} />
+          onChange={e => setTeamValue(t, e.target.value)} />
         {split === 'percentage' && <span className={moneyKit.shareUnit}>%</span>}
         {split !== 'fixed' && <span className={moneyKit.shareFigure}>{money(toDollars(c))}</span>}
+      </span>
+    );
+  };
+  /** A group heading's Share: its own figure under By percentage or By amount (spread over its ticked teams), and
+   *  the group's total. What it shows: the figure as typed, or — once a team was retyped — the group's sum. */
+  const groupShareCell = (key: string, label: string, compact = false) => {
+    const on = membersOf(key).filter(t => ticked?.has(t.id));
+    const totalOn = on.reduce((s, t) => s + (sharesC.get(t.id) ?? 0), 0);
+    if (on.length === 0) return '';
+    if (split !== 'percentage' && split !== 'fixed') return money(toDollars(totalOn));
+    const typed = groupTyped[key];
+    const sumUnits = on.every(t => positive(values[t.id] ?? '') != null)
+      ? on.reduce((s, t) => s + Math.round((positive(values[t.id] ?? '') ?? 0) * 100), 0) : null;
+    const shown = typed ?? (sumUnits == null ? '' : split === 'fixed' ? (sumUnits / 100).toFixed(2) : String(sumUnits / 100));
+    return (
+      <span className={moneyKit.shareCell}>
+        <input className={`${ck.input} ${moneyKit.shareInput}`} inputMode="decimal" value={shown}
+          aria-label={W.groupFigure(label, split === 'fixed' ? 'share' : 'percentage')}
+          placeholder={split === 'fixed' ? '$0.00' : '0'}
+          onChange={e => setGroupFigure(key, e.target.value)} />
+        {split === 'percentage' && <span className={moneyKit.shareUnit}>%</span>}
+        {split === 'percentage' && !compact && <span className={moneyKit.shareFigure}>{money(toDollars(totalOn))}</span>}
       </span>
     );
   };
@@ -310,23 +419,26 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
     );
   };
 
-  const rows: FormTableRow[] = (teams ?? []).map(t => {
+  // Only teams with a running season are rows (S3C-09); the rest are named under the list.
+  const rows: FormTableRow[] = billable.map(t => {
     const isIn = !!ticked?.has(t.id);
+    const own = isIn ? ownDue(t) : null;
     return {
       key: t.id,
       name: t.name,
-      ticked: isIn && !!t.season,
+      group: groupKeys.length ? groupKeyOf(t) : undefined,
+      nameNote: t.season!.name,
+      ticked: isIn,
       tickLabel: W.tick(t.name),
-      onTick: t.season ? next => setTicked(s => { const n = new Set(s); if (next) n.add(t.id); else n.delete(t.id); return n; }) : undefined,
-      reason: t.season ? undefined : W.noSeason(t.lastSeason),
+      onTick: next => tickTeam(t.id, next),
       cells: {
-        season: t.season?.name ?? '',
         share: isIn ? shareCell(t) : '',
-        due: isIn ? <span className={repKit.dim}>{dueWords(t)}</span> : '',
+        due: own ? <span className={moneyKit.ownDue}>{own}</span> : '',
       },
-      phoneLine: t.season ? [t.season.name, isIn ? dueWords(t) : ''].filter(Boolean).join(' · ') : undefined,
+      // The share is at the record's end (its figure, and the dollars beside a percentage), so the line is the season.
+      phoneLine: [t.season!.name, own].filter(Boolean).join(' · '),
       phoneFigure: isIn ? (split === 'even' ? money(toDollars(sharesC.get(t.id) ?? 0)) : shareCell(t)) : undefined,
-      expand: t.season && isIn ? {
+      expand: isIn ? {
         open: open.has(t.id),
         label: W.ownPayments(t.name),
         onToggle: () => setOpen(s => { const n = new Set(s); if (n.has(t.id)) n.delete(t.id); else n.add(t.id); return n; }),
@@ -334,6 +446,31 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
       } : undefined,
     };
   });
+  const groups: FormTableGroup[] = groupKeys.map(key => {
+    const members = membersOf(key);
+    const label = key === NO_GROUP ? W.notInGroup : members[0].group!.name;
+    const on = members.filter(t => ticked?.has(t.id)).length;
+    const cell = groupShareCell(key, label);
+    // A phone band has room for the figure only: the closing band above already says the total.
+    const band = isPhone ? groupShareCell(key, label, true) : cell;
+    return {
+      key,
+      label,
+      count: W.teamsCount(members.length),
+      state: on === 0 ? 'none' : on === members.length ? 'all' : 'some',
+      onTick: next => tickGroup(key, next),
+      tickLabel: W.tickGroup(label),
+      cells: { share: cell },
+      phoneFigure: band || undefined,
+    };
+  });
+  const allNone = (
+    <span className={moneyKit.allNone}>
+      <button type="button" className={ck.link} aria-label={W.allLabel} onClick={() => tickTo(new Set(billable.map(t => t.id)))}>{W.all}</button>
+      <span aria-hidden>·</span>
+      <button type="button" className={ck.link} aria-label={W.noneLabel} onClick={() => tickTo(new Set())}>{W.none}</button>
+    </span>
+  );
 
   const eyebrow = source && line
     ? W.fromLineEyebrow(source.description, source.yearName, money(source.left), source.allocated > 0.005 ? money(source.allocated) : null)
@@ -352,7 +489,9 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
       footer={(
         <>
           {isPhone && <button type="button" className="btn btn-outline" onClick={onCancel} disabled={busy}>{W.cancel}</button>}
-          <button type="button" className="btn btn-lime" onClick={() => void create()} disabled={busy}>{busy ? W.creating : W.create}</button>
+          <button type="button" className="btn btn-lime" onClick={() => void create()} disabled={busy}>
+            {busy ? W.billing : W.bill(inBill.length, isPhone ? null : amountWords)}
+          </button>
         </>
       )}
     >
@@ -387,7 +526,8 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
         </label>
         <label className={ck.field} htmlFor="na-split">
           <span className={ck.label}>{W.split}</span>
-          <select id="na-split" className={ck.select} value={split} onChange={e => setSplit(e.target.value as Split)}>
+          {/* A group's figure was a percentage or an amount: a new split starts the headings over. */}
+          <select id="na-split" className={ck.select} value={split} onChange={e => { setSplit(e.target.value as Split); setGroupTyped({}); }}>
             {SPLITS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
           </select>
         </label>
@@ -410,27 +550,46 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
         : !teams ? <p className={ck.loading}>Loading the teams…</p>
         : teams.length === 0 ? <p className={ck.hint}>The club has no teams to bill yet.</p>
         : (
-          <FormTable
-            ariaLabel={W.teamsLabel}
-            expandLabel={W.ownPaymentsHead}
-            leadLabel={W.team}
-            columns={[
-              { key: 'season', label: W.season, width: '22%' },
-              { key: 'share', label: W.share, numeric: true, width: '24%' },
-              { key: 'due', label: W.dueOn, width: '18%' },
-            ]}
-            rows={rows}
-            closing={{
-              label: W.teamsCount(inBill.length),
-              cells: {
-                share: money(toDollars(sumC)),
-                due: <span className={diff.bad ? cr.negative : repKit.dim}>{diff.words}</span>,
-              },
-              phone: `${W.teamsCount(inBill.length)} · ${money(toDollars(sumC))}`,
-              note: diff.words,
-              noteBad: diff.bad,
-            }}
-          />
+          <>
+            {isPhone && billable.length > 0 && <div className={moneyKit.teamsHead}><span className={ck.label}>{W.teams}</span>{allNone}</div>}
+            {billable.length > 0 && (
+              <FormTable
+                ariaLabel={W.teamsLabel}
+                expandLabel={W.ownPaymentsHead}
+                leadLabel={<>{W.team}{allNone}</>}
+                columns={[
+                  { key: 'share', label: W.share, numeric: true, width: '34%' },
+                  { key: 'due', label: W.dueOn, width: '22%' },
+                ]}
+                rows={rows}
+                groups={groups}
+                closing={{
+                  label: W.teamsCount(inBill.length),
+                  cells: {
+                    share: money(toDollars(sumC)),
+                    due: <span className={diff.bad ? cr.negative : repKit.dim}>{diff.words}</span>,
+                  },
+                  phone: `${W.teamsCount(inBill.length)} · ${money(toDollars(sumC))}`,
+                  note: diff.words,
+                  noteBad: diff.bad,
+                }}
+              />
+            )}
+            {/* The teams that can't be billed: out of the list, one line that opens to name them (Ask 11). */}
+            {noSeason.length > 0 && (
+              <div className={moneyKit.noSeason}>
+                <button type="button" className={moneyKit.noSeasonToggle} aria-expanded={noSeasonOpen} onClick={() => setNoSeasonOpen(o => !o)}>
+                  <ChevronDown size={15} aria-hidden className={noSeasonOpen ? moneyKit.noSeasonOpen : undefined} />
+                  {W.noSeasonCount(noSeason.length)}
+                </button>
+                {noSeasonOpen && (
+                  <ul className={moneyKit.noSeasonList}>
+                    {noSeason.map(t => <li key={t.id}><b>{t.name}</b> · {W.noSeasonWhy(t.lastSeason)}</li>)}
+                  </ul>
+                )}
+              </div>
+            )}
+          </>
         )}
 
       <label className={ck.field} htmlFor="na-notes">

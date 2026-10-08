@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { billSplits, followShare, shareCents } from '../../lib/club-bill-split.ts';
+import { billSplits, followShare, shareCents, spreadGroupFigure } from '../../lib/club-bill-split.ts';
 
 /**
  * Club Tier Stage 3c, Ask 6 — New allocation's split and schedule, chosen ONCE per bill (lib/club-bill-split.ts).
@@ -108,5 +108,35 @@ describe('billSplits — the split and the schedule once per bill', () => {
     assert.equal(code(billSplits({ amount: 100, split: { method: 'even' }, schedule: { kind: 'one', dueDate: '2026-11-15' }, teams: [team('a'), team('a')] })), 'bad_split');
     assert.equal(code(billSplits({ amount: 100, split: { method: 'even' }, schedule: { kind: 'one' }, teams: [team('a')] })), 'bad_installment');
     assert.equal(code(billSplits({ amount: 0, split: { method: 'even' }, schedule: { kind: 'one', dueDate: '2026-11-15' }, teams: [team('a')] })), 'bad_total');
+  });
+});
+
+describe('spreadGroupFigure — a group heading’s figure, spread over its ticked teams (Ask 11)', () => {
+  const sum = (xs: string[]) => Math.round(xs.reduce((a, x) => a + Number(x) * 100, 0));
+  it('60% over 3 teams is 20 each; 40% over 4 is 10 each (the drawing)', () => {
+    assert.deepEqual(spreadGroupFigure('60', 3, 'percentage'), ['20', '20', '20']);
+    assert.deepEqual(spreadGroupFigure('40', 4, 'percentage'), ['10', '10', '10', '10']);
+  });
+  it('40% over 7 teams adds up to 40.00 exactly: 5.72 to the first three, 5.71 to the other four', () => {
+    const parts = spreadGroupFigure('40', 7, 'percentage')!;
+    assert.deepEqual(parts, ['5.72', '5.72', '5.72', '5.71', '5.71', '5.71', '5.71']);
+    assert.equal(sum(parts), 4000);
+  });
+  it('39.99% over 4 teams: 10, 10, 10, 9.99 — the group says exactly what was typed', () => {
+    assert.deepEqual(spreadGroupFigure('39.99', 4, 'percentage'), ['10', '10', '10', '9.99']);
+  });
+  it('By amount, to the cent: $900.00 over 7 adds up to $900.00', () => {
+    const parts = spreadGroupFigure('$900', 7, 'fixed')!;
+    assert.deepEqual(parts, ['128.58', '128.57', '128.57', '128.57', '128.57', '128.57', '128.57']);
+    assert.equal(sum(parts), 90000);
+  });
+  it('nothing to spread: a blank, a zero, a word, or no team ticked', () => {
+    for (const typed of ['', '0', 'abc', '-5']) assert.equal(spreadGroupFigure(typed, 3, 'percentage'), null, typed);
+    assert.equal(spreadGroupFigure('60', 0, 'percentage'), null);
+  });
+  it('every spread adds up to the figure, for every figure and team count tried', () => {
+    for (const typed of ['1', '33.33', '50', '99.99', '100']) {
+      for (let n = 1; n <= 12; n++) assert.equal(sum(spreadGroupFigure(typed, n, 'percentage')!), Math.round(Number(typed) * 100), `${typed} over ${n}`);
+    }
   });
 });

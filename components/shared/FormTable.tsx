@@ -15,7 +15,13 @@
  *   · the CLOSING row states the sum of the ticked rows and the difference from what they must add up to — never a
  *     separate warning;
  *   · on a phone it is ONE FRAME OF SHORT RECORDS: the tick and the name with the figure at the row's end, the row's
- *     other fields as one line under it, a row opening in place the same way.
+ *     other fields as one line under it, a row opening in place the same way;
+ *   · rows may sit under GROUP HEADINGS (Ask 11, owner 2026-10-08 — New allocation's teams under their rep-team
+ *     groups): a heading row before its group's first row, its own box ticking the whole group (checked, mixed or
+ *     empty), its name and count, and cells of its own (a group's figure, its total); on a phone a band in the frame.
+ *     The caller sorts the rows by group; a row's `group` names its heading;
+ *   · a row may carry a quiet NOTE BESIDE ITS NAME (New allocation: the team's season) — a fact every row has, read
+ *     without a column of its own; on a phone it belongs in `phoneLine`.
  *
  * ⚠ TOKENS ONLY: both shells (the coaches portal and the admin) define every value its stylesheet reads.
  */
@@ -50,10 +56,35 @@ export interface FormTableRow {
   phoneFigure?: ReactNode;
   /** The row's own form, opened in place. */
   expand?: { open: boolean; onToggle: () => void; label: string; content: ReactNode };
+  /** The heading (`FormTableGroup.key`) the row sits under. */
+  group?: string;
+  /** A quiet fact beside the name at a desk ("2027 Season"). */
+  nameNote?: ReactNode;
 }
 
-export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', columns, rows, closing }: {
+/** A group heading: one box for the whole group, its name and count, and cells of its own. */
+export interface FormTableGroup {
+  key: string;
+  /** The group's name ("Senior"). */
+  label: string;
+  /** Beside the name: how many rows the group holds ("3 teams"). */
+  count: string;
+  /** How many of its rows are ticked: every one, some or none — the box is checked, mixed or empty. */
+  state: 'all' | 'some' | 'none';
+  /** Ticks or unticks every row in the group that can be ticked. */
+  onTick?: (next: boolean) => void;
+  /** The box's accessible name ("Bill every team in Senior"). */
+  tickLabel: string;
+  /** The heading's cells, by column key (a group's figure, its total). */
+  cells?: Record<string, ReactNode>;
+  /** On a phone: the band's figure at its end. */
+  phoneFigure?: ReactNode;
+}
+
+export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', columns, rows, groups, closing }: {
   ariaLabel: string;
+  /** Headings the rows sit under (each row's `group`), in the order the rows come. */
+  groups?: readonly FormTableGroup[];
   /** The expand column's heading, read by a screen reader only ("Own payments"). */
   expandLabel?: string;
   /** The lead column's heading ("Team"). */
@@ -67,7 +98,19 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
   const isPhone = useIsPhone();
   const anyExpand = rows.some(r => r.expand);
 
-  const tick = (r: FormTableRow, id: string) => (
+  const groupOf = new Map((groups ?? []).map(g => [g.key, g]));
+  /** Each group's heading goes before the first row that names it. */
+  const headsBefore = (() => {
+    const out = new Map<string, FormTableGroup>();
+    let last: string | undefined;
+    for (const r of rows) {
+      if (r.group && r.group !== last && groupOf.has(r.group)) out.set(r.key, groupOf.get(r.group)!);
+      last = r.group;
+    }
+    return out;
+  })();
+
+  const tick = (r: FormTableRow, id: string, withNote = false) => (
     <label className={`${styles.tickLabel}${r.onTick ? '' : ` ${styles.tickOff}`}`} htmlFor={id}>
       <input
         id={id}
@@ -79,6 +122,24 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
         onChange={e => r.onTick?.(e.target.checked)}
       />
       <span className={styles.name}>{r.name}</span>
+      {withNote && r.nameNote != null && <span className={styles.nameNote}>{r.nameNote}</span>}
+    </label>
+  );
+  // A heading's box: checked when every row is in, MIXED when some are; pressing a mixed box ticks the whole group.
+  const groupTick = (g: FormTableGroup) => (
+    <label className={`${styles.tickLabel}${g.onTick ? '' : ` ${styles.tickOff}`}`} htmlFor={`ftg-${g.key}`}>
+      <input
+        id={`ftg-${g.key}`}
+        type="checkbox"
+        className={styles.tick}
+        ref={el => { if (el) el.indeterminate = g.state === 'some'; }}
+        checked={g.state === 'all'}
+        disabled={!g.onTick}
+        aria-label={g.tickLabel}
+        onChange={() => g.onTick?.(g.state !== 'all')}
+      />
+      <span className={styles.groupName}>{g.label}</span>
+      <span className={styles.groupCount}>· {g.count}</span>
     </label>
   );
   const toggle = (r: FormTableRow) => r.expand && (
@@ -91,17 +152,26 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
     return (
       <div className={styles.frame} role="group" aria-label={ariaLabel}>
         <div className={styles.band}>{closing.phone ?? closing.label}</div>
-        {rows.map(r => (
-          <div key={r.key} className={`${styles.record}${r.onTick ? '' : ` ${styles.off}`}${r.expand?.open ? ` ${styles.recordOpen}` : ''}`}>
-            <div className={styles.recordHead}>
-              {tick(r, `ft-${r.key}`)}
-              {r.onTick && r.phoneFigure != null && <span className={styles.figure}>{r.phoneFigure}</span>}
-              {toggle(r)}
-            </div>
-            <div className={styles.recordLine}>{r.onTick ? r.phoneLine : r.reason}</div>
-            {r.expand?.open && <div className={styles.recordForm}>{r.expand.content}</div>}
-          </div>
-        ))}
+        {rows.map(r => {
+          const g = headsBefore.get(r.key);
+          return [
+            g ? (
+              <div key={`g-${g.key}`} className={styles.groupBand}>
+                {groupTick(g)}
+                {g.phoneFigure != null && <span className={styles.figure}>{g.phoneFigure}</span>}
+              </div>
+            ) : null,
+            <div key={r.key} className={`${styles.record}${r.onTick ? '' : ` ${styles.off}`}${r.expand?.open ? ` ${styles.recordOpen}` : ''}`}>
+              <div className={styles.recordHead}>
+                {tick(r, `ft-${r.key}`)}
+                {r.onTick && r.phoneFigure != null && <span className={styles.figure}>{r.phoneFigure}</span>}
+                {toggle(r)}
+              </div>
+              <div className={styles.recordLine}>{r.onTick ? r.phoneLine : r.reason}</div>
+              {r.expand?.open && <div className={styles.recordForm}>{r.expand.content}</div>}
+            </div>,
+          ];
+        })}
         {closing.note != null && (
           <div className={`${styles.recordNote}${closing.noteBad ? ` ${styles.bad}` : ''}`}>{closing.note}</div>
         )}
@@ -126,20 +196,30 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
           </tr>
         </thead>
         <tbody>
-          {rows.map(r => [
-            <tr key={r.key} className={`${r.onTick ? '' : styles.off}${r.expand?.open ? ` ${styles.rowOpen}` : ''}`}>
-              <th scope="row">{tick(r, `ft-${r.key}`)}</th>
-              {r.onTick
-                ? columns.map(c => <td key={c.key} className={c.numeric ? styles.num : undefined}>{r.cells[c.key]}</td>)
-                : <td colSpan={columns.length} className={styles.reason}>{r.reason}</td>}
-              {anyExpand && <td className={styles.expandCell}>{r.onTick && toggle(r)}</td>}
-            </tr>,
-            r.expand?.open ? (
-              <tr key={`${r.key}-form`} className={styles.rowOpen}>
-                <td colSpan={span + 1} className={styles.formCell}>{r.expand.content}</td>
-              </tr>
-            ) : null,
-          ])}
+          {rows.map(r => {
+            const g = headsBefore.get(r.key);
+            return [
+              g ? (
+                <tr key={`g-${g.key}`} className={styles.groupRow}>
+                  <th scope="rowgroup">{groupTick(g)}</th>
+                  {columns.map(c => <td key={c.key} className={c.numeric ? styles.num : undefined}>{g.cells?.[c.key]}</td>)}
+                  {anyExpand && <td />}
+                </tr>
+              ) : null,
+              <tr key={r.key} className={`${r.onTick ? '' : styles.off}${r.expand?.open ? ` ${styles.rowOpen}` : ''}${r.group && groupOf.has(r.group) ? ` ${styles.inGroup}` : ''}`}>
+                <th scope="row">{tick(r, `ft-${r.key}`, true)}</th>
+                {r.onTick
+                  ? columns.map(c => <td key={c.key} className={c.numeric ? styles.num : undefined}>{r.cells[c.key]}</td>)
+                  : <td colSpan={columns.length} className={styles.reason}>{r.reason}</td>}
+                {anyExpand && <td className={styles.expandCell}>{r.onTick && toggle(r)}</td>}
+              </tr>,
+              r.expand?.open ? (
+                <tr key={`${r.key}-form`} className={styles.rowOpen}>
+                  <td colSpan={span + 1} className={styles.formCell}>{r.expand.content}</td>
+                </tr>
+              ) : null,
+            ];
+          })}
           <tr className={styles.closing}>
             <th scope="row">{closing.label}</th>
             {columns.map(c => <td key={c.key} className={c.numeric ? styles.num : undefined}>{closing.cells[c.key]}</td>)}
