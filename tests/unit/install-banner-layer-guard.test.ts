@@ -12,10 +12,16 @@
  * a banner that creeps back up — fails here instead of on a phone.
  *
  * ⚠ What this does NOT cover (recorded with the fix): surfaces OUTSIDE the portals' sheet convention that
- * sit below 255 — the scorekeeper's and the gate's bottom sheets, chat's confirm windows, the tryout day
- * scrims, a coach window on a tablet (200 above 640px), the lineup builder's popovers on a tablet (60 above
- * 900px — on a phone they are drawers over the 259 dim, checked below), the public schedule's day jump. Raising each to the
- * sheet layer, or hiding the banner while a window is open, is its own decision.
+ * sit below 255 — chat's confirm windows, the tryout day scrims, a coach window on a tablet (200 above
+ * 640px), the lineup builder's popovers on a tablet (60 above 900px — on a phone they are drawers over the
+ * 259 dim, checked below), the public schedule's day jump. Raising each to the sheet layer, or hiding the
+ * banner while a window is open, is its own decision.
+ *
+ * ✓ The VOLUNTEER SHELLS joined on 2026-10-07 (Tournament admin redesign Stage 6, A31): their score sheet
+ * and Account sheet moved onto the Sheet Frame (the form and the menu layers, above), the score sheet's
+ * card above 900 sits at the form layer, the gate's team sheet is the admin's bottom sheet (600) — and the
+ * shells say where the banner STANDS (`--install-banner-bottom`: their buckets + tabs + the home bar), so it
+ * sits on top of the buckets instead of on them.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import assert from 'node:assert/strict';
@@ -56,11 +62,30 @@ describe('the install banner sits under every sheet and over the page chrome it 
       ['the bottom bar and its More sheet', 'components/coaches/CoachesBottomNav.module.css', '.bottomNav'],
       ['the RSVP dialog on a computer', 'components/coaches/CoachRsvpSheet.module.css', '.floor.floor'],
       ['the admin kit\'s windows', 'components/admin/kit/club/KitDialog.module.css', '.overlayQuestion'],
+      // Stage 6 (2026-10-07): the gate's team sheet — the admin's bottom sheet, the organizer's Check-in's too.
+      ['the admin bottom sheet (the check-in board’s team sheet)', 'components/admin/BottomSheet.module.css', '.backdrop'],
+      // …and the scorekeeper's score sheet above 900 (the frame is its sheet below; this is its card).
+      ['the scorekeeper’s score card above 900', 'app/[orgSlug]/scorekeeper/scorekeeper.module.css', '.deskSheet'],
+      ['the scorekeeper’s score card’s dim', 'app/[orgSlug]/scorekeeper/scorekeeper.module.css', '.deskDim'],
     ];
     const over = opened
       .map(([what, file, sel]) => ({ what, z: lowest(file, sel) }))
       .filter(({ z }) => z <= BANNER);
     assert.deepEqual(over, [], `the banner (${BANNER}) would cover: ${over.map(o => `${o.what} (${o.z})`).join(', ')}`);
+  });
+
+  it('the volunteer shells: their sheets are the frame’s, and the banner stands on their bars (Stage 6, A31)', () => {
+    // The score sheet is the frame's FORM at ≤900 (covers the bars — 390 over the banner) and the Account
+    // sheet its MENU (260): both were their own sheets at 100 and 90, under the banner (F58).
+    const page = stripComments(readSource('app/[orgSlug]/scorekeeper/page.tsx'));
+    assert.match(page, /<SheetFrame\s+form\s+holdDim\s+keypad/, 'the score sheet is the frame’s form, its dim inert, on the keypad’s edge');
+    assert.doesNotMatch(page, /sheetBackdrop/, 'its own 100-layer backdrop is gone');
+    const bars = stripComments(readSource('components/volunteer/DayOfBottomBars.tsx'));
+    assert.match(bars, /<SheetFrame label="Account"/, 'the Account sheet is the frame’s menu');
+    // The shells publish where the banner stands — from their budget, never a number — and the banner reads it.
+    const shell = stripComments(readSource('components/volunteer/DayOfShell.module.css'));
+    assert.match(cssRule(shell, '.shell'), /--install-banner-bottom: var\(--dayof-bottom-h\);/);
+    assert.match(stripComments(readSource('components/InstallAppPrompt.module.css')), /bottom: var\(--install-banner-bottom, max\(/);
   });
 
   it('a coach window on a phone covers it (the phone rule, not the 200 desktop base)', () => {

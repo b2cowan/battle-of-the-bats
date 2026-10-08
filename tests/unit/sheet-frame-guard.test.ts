@@ -114,7 +114,11 @@ describe('step 1 · the frame is ONE place', () => {
 describe('step 1 · the dim travels with the sheet, inside the dismiss boundary', () => {
   it('the frame renders the portal dim, then the sheet, as siblings — never portalled', () => {
     const body = frame.slice(frame.indexOf('return ('));
-    const dim = body.indexOf('<div ref={dimRef} className={`${styles.dim}${layer}`} aria-hidden="true" onClick={close} />');
+    const dim = body.indexOf('<div ref={dimRef} className={`${styles.dim}${layer}`} aria-hidden="true" onClick={holdDim ? undefined : close} />');
+    // `holdDim` (Tournament admin redesign Stage 6, 2026-10-07): the score sheet's named exception — a tap on its
+    // dim does nothing (owner 2026-08-08: Cancel is the way out). Every other sheet's dim closes it.
+    assert.match(frame, /\n {2}holdDim\?: boolean;/);
+    assert.match(frame, /holdDim = false, keypad = false,/, 'off by default');
     const sheet = body.indexOf('ref={setPanel}');
     assert.ok(dim > 0 && sheet > dim, 'the dim, then the sheet');
     // A tap on the dim closes and waits for a write in flight; the floor (standing for every sheet since step 5)
@@ -270,7 +274,7 @@ describe('step 3 · the form layer, and the game day on the frame', () => {
     // 390: over the nav (300), under `.modalOverlay` (400), so a dialog opened from a form lands on top of it.
     // The sheet and its dim wear the same layer classes, so the two can never disagree (step 4: one string).
     assert.ok(frame.includes("const layer = `${form ? ` ${styles.form}` : ''}${overWindow ? ` ${styles.overWindow}` : ''}`;"));
-    assert.ok(frame.includes('className={`${styles.sheet}${layer}${grabCloses ? ` ${styles.grabCloses}` : \'\'}${full ? ` ${styles.full}` : \'\'}`}'));
+    assert.ok(frame.includes('className={`${styles.sheet}${layer}${grabCloses ? ` ${styles.grabCloses}` : \'\'}${full ? ` ${styles.full}` : \'\'}${keypad ? ` ${styles.keypad}` : \'\'}`}'));
   });
 
   it('the form layer takes the bar away from the thumb, the keyboard AND the screen reader, and keeps the keyboard inside', () => {

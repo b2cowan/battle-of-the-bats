@@ -1,151 +1,162 @@
+/* ═══ THE STAFF KIT (Tournament admin redesign Stage 6, V7 — ruled 2026-10-07; F65) ═══════════════════
+   An admin page: it follows the Warm/Dark setting, so every colour on screen is a kit token (its old look
+   and its 10 kit-scoped rules were folded in by Stage 6). The title band and the white buttons are the
+   kit's (`AdminPageHeader`, `ScreenParts`). The QR squares stay dark on a FIXED white in both themes —
+   scanners read contrast, not a theme. The printed page at the foot is paper: its inks are fixed. */
+
+.page {
+  max-width: 1200px;
+}
+
 .empty {
   padding: 3rem 1.5rem;
   text-align: center;
-  color: var(--white-50);
-  font-family: var(--font-data);
+  font-size: var(--type-body);
+  color: var(--text-tertiary);
 }
 
+/* One sentence under the title (it was four lines). */
 .intro {
-  margin: 0 0 1.25rem;
   max-width: 640px;
-  color: var(--white-60);
-  font-size: 0.9rem;
-  line-height: 1.55;
+  margin: 0 0 0.875rem;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.25rem;
+  gap: 0.875rem;
+  margin-bottom: 0.5rem;
 }
 
 .card {
-  border: 1px solid var(--border-2);
-  background: var(--hud-surface);
-  padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow: clip;
 }
 
 .cardHead {
   display: flex;
   align-items: flex-start;
-  gap: 0.6rem;
-  color: var(--logic-lime);
+  gap: 0.625rem;
+  padding: 0.875rem 0.875rem 0.25rem;
+  color: var(--home-olive);
 }
+.cardHead svg { flex-shrink: 0; margin-top: 0.1rem; }
 
 .cardTitle {
   margin: 0;
-  font-size: 1rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
   font-weight: 700;
-  color: var(--white);
+  line-height: 1.25;
+  color: var(--text-primary);
 }
 
 .cardBlurb {
-  margin: 0.15rem 0 0;
-  color: var(--white-50);
-  font-size: 0.82rem;
+  margin: 0.125rem 0 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
 }
 
+/* The QR's backing — pinned white whatever the theme (`--white-fixed` is never remapped by a theme gate). */
 .qrWrap {
   display: flex;
   justify-content: center;
-  padding: 0.5rem;
-  background: var(--white);
-  border-radius: 2px;
+  padding: 0.625rem 0.875rem;
 }
 
-.qr {
-  width: 220px;
-  height: 220px;
+.qr,
+.qrPlaceholder {
   display: block;
+  width: 180px;
+  height: 180px;
+  box-sizing: content-box;
+  border: 10px solid var(--white-fixed);
+  background: var(--white-fixed);
+  outline: 1px solid var(--home-line);
 }
 
 .qrPlaceholder {
-  width: 220px;
-  height: 220px;
-  background: repeating-linear-gradient(45deg, rgba(0,0,0,0.04), rgba(0,0,0,0.04) 6px, rgba(0,0,0,0.08) 6px, rgba(0,0,0,0.08) 12px);
+  background-image: repeating-linear-gradient(45deg, var(--home-line) 0 6px, transparent 6px 12px);
 }
 
-.urlRow {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
+/* The link breaks only at a slash (each slash carries a <wbr>; nothing else may break it). */
 .url {
+  margin: 0;
+  padding: 0.125rem 0.875rem 0.625rem;
   font-family: var(--font-data);
-  font-size: 0.74rem;
-  color: var(--white-60);
-  word-break: break-all;
+  font-size: var(--type-support);
   line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: normal;
+  color: var(--text-secondary);
 }
 
-.urlActions {
+.cardFoot {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
+  margin-top: auto;
+  padding: 0 0.875rem 0.875rem;
 }
 
-.note {
-  margin: 1.5rem 0 0;
-  max-width: 640px;
-  color: var(--white-50);
-  font-size: 0.82rem;
-  line-height: 1.55;
+/* A door — olive text with its arrow (Open: a new tab; Invite a volunteer: Members). An action is the
+   white button; a door is olive text (2026-10-01). The tap floor on touch. */
+.door {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: var(--admin-control-h);
+  padding: 0 0.375rem;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: none;
+}
+.door:hover { color: var(--text-primary); }
+.door:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 6px; }
+@media (max-width: 768px) {
+  .door { min-height: var(--tap-min, 44px); }
 }
 
-.note strong {
-  color: var(--white-70);
+/* ═══ THE PRINTED PAGE — the shared `PrintedPage` (components/admin/tournament) draws the Letter sheet, its head
+   and its foot, and keeps everything else off the paper; these are the parts the Staff kit draws between them.
+   Paper inks, fixed whatever the admin's theme. ═══ */
+.paperCodes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-top: 6px;
 }
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
-   ⚠ The QR itself must stay dark-on-light for scanners in BOTH themes: `.qrWrap`'s backing takes
-   `--white-fixed` (never remapped by any theme gate), not the kit's card ground. `.qr`/`.qrPlaceholder`
-   are untouched — the placeholder's own dark stripes already assume the same fixed light backing.
-   ⚠ TOKENS ONLY — checkAdminKit fails on a literal colour here. Print rules below are untouched. */
-:global([data-admin-kit]) .empty {
-  color: var(--text-tertiary);
-  font-family: var(--font-sans, system-ui, sans-serif);
+.paperCode {
+  padding: 20px;
+  border: 1px solid #D9D2C4; /* token-exempt: print rule, independent of the screen's theme */
+  border-radius: 10px;
+  text-align: center;
+  break-inside: avoid;
 }
-:global([data-admin-kit]) .intro { color: var(--text-secondary); }
-:global([data-admin-kit]) .card {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-  border-radius: 8px;
+.paperCode h2 { margin: 0 0 4px; font-family: var(--font-sans, system-ui, sans-serif); font-size: 18px; font-weight: 700; }
+.paperCode p { margin: 0 0 12px; font-size: 12.5px; color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */ }
+.paperQr { display: block; width: 210px; height: 210px; margin: 6px auto 12px; }
+.paperCode code {
+  font-family: var(--font-data);
+  font-size: 11.5px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  color: #3D372D; /* token-exempt: print ink, independent of the screen's theme */
 }
-:global([data-admin-kit]) .cardHead { color: var(--home-olive); }
-:global([data-admin-kit]) .cardTitle {
-  font-family: var(--font-display);
-  font-size: var(--type-heading);
-  color: var(--text-primary);
+/* Three NUMBERED steps (the product's base styles strip a list's markers — put them back for paper). */
+.paperSteps {
+  margin: 22px 0 0;
+  padding-left: 18px;
+  list-style: decimal;
+  font-size: 14px;
+  color: #3D372D; /* token-exempt: print ink, independent of the screen's theme */
 }
-:global([data-admin-kit]) .cardBlurb { color: var(--text-secondary); }
-/* The QR's immediate backing — pinned white regardless of theme (see note above). */
-:global([data-admin-kit]) .qrWrap { background: var(--white-fixed); }
-:global([data-admin-kit]) .url { color: var(--text-secondary); }
-:global([data-admin-kit]) .note { color: var(--text-secondary); }
-:global([data-admin-kit]) .note strong { color: var(--text-primary); }
-
-/* Printable one-pager — drop the app chrome, lay the two cards out for the gate table. */
-@media print {
-  /* Intentional print-only ink literals (#333/#ccc/#000 below) — fixed values for paper output,
-     independent of the on-screen dark theme. Keep literal. */
-  .intro,
-  .note {
-    color: #333; /* token-exempt: print-only ink, independent of dark theme */
-  }
-  .grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-  }
-  .card {
-    border: 1px solid #ccc; /* token-exempt: print-only ink, independent of dark theme */
-    background: var(--white);
-    break-inside: avoid;
-  }
-  .cardTitle { color: #000; /* token-exempt: print-only ink, independent of dark theme */ }
-  .cardBlurb,
-  .url { color: #333; /* token-exempt: print-only ink, independent of dark theme */ }
-  .urlActions { display: none; }
-}
+.paperSteps li { margin: 4px 0; }

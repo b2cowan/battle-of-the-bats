@@ -79,7 +79,8 @@ import styles from './SheetFrame.module.css';
  * knows what opened the sheet.
  */
 export default function SheetFrame({
-  label, onClose, opener, form = false, busy = false, overWindow = false, grabCloses = false, full = false, ref, children, ...sheet
+  label, onClose, opener, form = false, busy = false, overWindow = false, grabCloses = false, full = false,
+  holdDim = false, keypad = false, ref, children, ...sheet
 }: Omit<HTMLAttributes<HTMLDivElement>, 'aria-modal' | 'className' | 'style' | 'children'> & {
   /** The menu label (D2): small capitals at the head, because the dim hides the row that opened it. */
   label?: string;
@@ -97,6 +98,20 @@ export default function SheetFrame({
   grabCloses?: boolean;
   /** On a phone (≤640) the sheet fills the screen above the bar — Copy from's list (2026-10-02 D7, kept by D3). */
   full?: boolean;
+  /**
+   * A tap on the dim does NOTHING — the scorekeeper's score sheet, a named exception (owner 2026-08-08,
+   * kept by Tournament admin redesign A30): the dim was the one exit that could throw away a half-typed
+   * score by accident, a sliver where the thumb rests with the keypad up. Cancel is the way out; Escape
+   * and Back still close, as Cancel's twins.
+   */
+  holdDim?: boolean;
+  /**
+   * A FORM that raises the phone's keypad as it opens (the score sheet focuses its first box) sits on the
+   * VISUAL viewport's foot, so the keypad never covers its foot — the stylesheet's `.keypad`. Opt-in on
+   * purpose: the portal's other forms open without a focused field and were walked at `bottom: 0`; moving
+   * every form onto the visual viewport is its own change, with its own walk.
+   */
+  keypad?: boolean;
   ref?: Ref<HTMLDivElement>;
   children: ReactNode;
 }) {
@@ -122,10 +137,10 @@ export default function SheetFrame({
   const layer = `${form ? ` ${styles.form}` : ''}${overWindow ? ` ${styles.overWindow}` : ''}`;
   return (
     <>
-      <div ref={dimRef} className={`${styles.dim}${layer}`} aria-hidden="true" onClick={close} />
+      <div ref={dimRef} className={`${styles.dim}${layer}`} aria-hidden="true" onClick={holdDim ? undefined : close} />
       <div
         ref={setPanel}
-        className={`${styles.sheet}${layer}${grabCloses ? ` ${styles.grabCloses}` : ''}${full ? ` ${styles.full}` : ''}`}
+        className={`${styles.sheet}${layer}${grabCloses ? ` ${styles.grabCloses}` : ''}${full ? ` ${styles.full}` : ''}${keypad ? ` ${styles.keypad}` : ''}`}
         tabIndex={-1}
         {...sheet}
         data-escape-owner=""

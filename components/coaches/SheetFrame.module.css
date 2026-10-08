@@ -91,6 +91,19 @@
     --sheet-foot-pad: calc(14px + env(safe-area-inset-bottom, 0px));
     padding-bottom: var(--sheet-foot-pad);
   }
+  /* ══ ON THE KEYPAD'S EDGE (`keypad`, Tournament admin redesign Stage 6, 2026-10-07) ═════════════════
+     A form that raises the phone's number pad as it opens — the scorekeeper's score sheet focuses its
+     first box — sits on the VISUAL viewport's foot, not the layout viewport's: at `bottom: 0` iOS leaves
+     the sheet under the pad, its one button with it (the score sheet's own backdrop solved this before it
+     moved onto the frame). `--vvh` / `--vv-offset-top` are published for every page by
+     ViewportKeyboardVars (root layout); without them the sheet sits where any form does. Three classes, so
+     it beats `.sheet.form` whatever the source order. */
+  .sheet.form.keypad {
+    bottom: auto;
+    top: calc(var(--vv-offset-top, 0px) + var(--vvh, 100dvh));
+    transform: translateY(-100%);
+    max-height: calc(var(--vvh, 100dvh) - 12px);
+  }
   /* The form takes focus itself when it opens (a dialog that never takes focus is never announced); the
      sheet is the frame of what is focused, not a control, so it draws no ring — its controls draw theirs.
      Since step 5 every sheet takes focus the same way in either layer (the frame answers every sheet's

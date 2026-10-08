@@ -1,70 +1,47 @@
+/* ═══ THE SCOREKEEPER (Tournament admin redesign Stage 6, V1 + V2, ruled 2026-10-07) ═════════════════
+   A volunteer's list of the day's games and the score sheet, in the kit's warm palette, FIXED (ruling
+   R3): the shell carries [data-admin-kit] + [data-guest-kit], and app/globals.css pins the warm block on
+   the second whatever the phone's own Warm/Dark setting — a gate phone is shared. Every colour is a kit
+   token. The old console look, its `--sk-*` palette and its `[data-admin-kit]` layer (58 rules) were
+   folded into these rules by Stage 6.
+
+   The kit's own parts carry the rest: the white button and the lime (`.btn btn-outline`, `.btn btn-lime`,
+   app/globals.css), the chip and the callout and the floating notice (RepKit), the score sheet's frame
+   (the Sheet Frame, at ≤900). This sheet sizes them for a thumb — nothing a volunteer taps is under 44px,
+   on a phone or a tablet (A27): these screens have no computer case for the admin's 34px rule. */
+
 .page {
   width: min(100%, 920px);
   margin: 0 auto;
-  /* The shell owns the bottom budget now (its fixed bars publish `--dayof-bottom-h`, and the
-     layout's <main> composes from it). This is ordinary breathing room, nothing more. */
+  /* The shell owns the bottom budget (its fixed bars publish `--dayof-bottom-h`, and the layout's <main>
+     composes from it). This is ordinary breathing room, nothing more. */
   padding-bottom: 1.5rem;
-
-  /* --sk-*: scorekeeper's bespoke dark-only slate/status palette. Component-scoped so the
-     warm-portal program can remap this surface independently. P3 token pass: values unchanged. */
-  --sk-ink: #f8fafc;       /* brightest text — titles, big numbers, active labels; token-exempt: matches --pa-option-text (console-only) */
-  --sk-ink-dim: #e2e8f0;   /* secondary text — icon-button glyphs; token-exempt: secondary ink, no global match */
-  --sk-ink-faint: #cbd5e1; /* token-exempt: scorekeeper tertiary ink (buttons/notices/captions) */
-  --sk-bg: #172036;        /* token-exempt: scorekeeper raised tier, loading-shimmer stop */
-  --sk-bg-deep: #020617;   /* token-exempt: scorekeeper deepest tier, recessed score-input well */
-  --sk-amber: var(--warning-light); /* status — "submitted" badge */
-  --sk-warm: #fcd9a3;      /* status — policy-note "review" tone; token-exempt: warm status tint, no global match */
-  --sk-lime-tint: #e6f5c4; /* status — policy-note "final" tone; token-exempt: lime status tint, no global match */
-  --sk-red: #fca5a5;       /* status — form-error text; token-exempt: matches --pa-neg (console-only) */
 }
 
+/* ── The title band: "Field scores" at the 20px every page title takes, Refresh on its line ── */
 .header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.kicker {
-  margin: 0 0 0.25rem;
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
 }
 
 .title {
+  flex: 1;
   margin: 0;
-  color: var(--sk-ink);
-  font-size: clamp(1.7rem, 4vw, 2.35rem);
-  line-height: 1;
+  font-family: var(--font-display, sans-serif);
+  font-size: var(--type-title);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-primary);
 }
 
-.iconButton,
-.todayButton,
-.secondaryButton,
-.primaryButton,
-.filtersToggle {
-  min-height: 42px;
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 6px;
-  font-family: var(--font-data);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
+/* The boxed icon action: the kit's white button, square at the tap floor. */
 .iconButton {
-  width: 42px;
-  display: inline-flex;
-  align-items: center;
+  width: var(--tap-min, 44px);
+  min-height: var(--tap-min, 44px);
+  padding: 0;
   justify-content: center;
-  background: var(--surface);
-  color: var(--sk-ink-dim);
 }
 
 /**
@@ -83,8 +60,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.65rem;
-  margin-bottom: 0.65rem;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .dateRow .dateControl {
@@ -92,9 +69,15 @@
   min-width: 9.5rem;
 }
 
+/* Today, Filters, Clear filters — the kit's white button at the tap floor. */
+.dayButton {
+  flex: 0 0 auto;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.75rem;
+}
+
 /* The browser draws the only calendar button on this field (we removed ours — two calendar icons
-   on one control is one icon explaining the other). Give it a gloved-thumb target and enough
-   contrast to read as pressable on the dark ground. */
+   on one control is one icon explaining the other). Give it a gloved-thumb target. */
 .dateControl input[type='date']::-webkit-calendar-picker-indicator {
   padding: 0.4rem;
   margin-right: -0.35rem;
@@ -105,11 +88,6 @@
 .dateControl input[type='date']::-webkit-calendar-picker-indicator:hover,
 .dateControl input[type='date']:focus-within::-webkit-calendar-picker-indicator {
   opacity: 1;
-}
-
-.dateRow .todayButton,
-.dateRow .filtersToggle {
-  flex: 0 0 auto;
 }
 
 .filtersToggle {
@@ -131,32 +109,33 @@
   place-items: center;
   padding: 0 0.25rem;
   border-radius: 999px;
-  background: var(--logic-lime);
-  color: var(--bg);
+  background: var(--home-olive);
+  /* The page ground as ink: it inverts with the theme exactly as the olive fill does. */
+  color: var(--home-paper);
   font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 900;
+  font-size: var(--type-token);
+  font-weight: 800;
   line-height: 1;
 }
 
 .controls {
   display: grid;
   grid-template-columns: minmax(190px, 1.2fr) minmax(150px, 0.85fr) minmax(150px, 0.85fr);
-  gap: 0.65rem;
-  margin-bottom: 0.85rem;
+  gap: 0.625rem;
+  margin-bottom: 0.875rem;
 }
 
 .dateControl,
 .searchControl {
-  min-height: 44px;
+  min-height: var(--tap-min, 44px);
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0 0.75rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.55);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--data-gray);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-tertiary);
 }
 
 .dateControl input,
@@ -167,75 +146,29 @@
   border: 0;
   outline: 0;
   background: transparent;
-  color: var(--sk-ink);
-  font-family: var(--font-data);
-  font-size: 0.82rem;
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
 }
 
 .select {
-  min-height: 44px;
+  min-height: var(--tap-min, 44px);
   padding: 0 0.75rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.55);
-  border-radius: 6px;
-  background: var(--surface);
-}
-
-.todayButton,
-.secondaryButton {
-  background: transparent;
-  color: var(--sk-ink-faint);
-  padding: 0 0.85rem;
-}
-
-/* The status buckets moved to the shared day-of filter bar (DayOfShell.module.css) — a plain
-   block in this same position on desktop, pinned above the tab bar on a phone. */
-
-.notice {
-  display: grid;
-  gap: 0.2rem;
-  margin-bottom: 1rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  border: 1px solid var(--home-line-strong);
   border-radius: 8px;
-  background: var(--surface);
-  color: var(--sk-ink-faint);
-  font-size: 0.83rem;
-  line-height: 1.45;
+  background: var(--card-bg);
 }
 
-.notice strong {
-  color: var(--sk-ink);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+/* The status buckets live in the shared day-of filter bar (DayOfShell.module.css) — a plain block in
+   this same position above 640px, pinned above the tab bar on a phone. */
 
-.notice_success { border-color: rgba(var(--logic-lime-rgb), 0.42); }
-.notice_warning { border-color: rgba(var(--warning-rgb), 0.52); }
-.notice_danger { border-color: rgba(var(--danger-rgb), 0.48); }
-.notice_info { border-color: rgba(var(--info-rgb), 0.42); }
+/* ── The sign-in recovery and an error: the kit's callout (they need an answer, so they stay) ── */
+.noticeTitle { display: block; font-weight: 700; }
+.noticeText { display: block; margin-top: 0.15rem; color: var(--text-secondary); }
+/* J8-002: "Sign in" when the session lapses — the recovery, and the one thing to do. */
+.noticeAction { margin-top: 0.6rem; min-height: var(--tap-min, 44px); }
 
-/* J8-002: recovery CTA inside a notice (e.g. "Sign in" when the session lapses). Field-friendly
-   tap target, visually distinct from the body copy. */
-.noticeAction {
-  justify-self: start;
-  margin-top: 0.5rem;
-  padding: 0.5rem 1rem;
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  border-radius: 6px;
-  background: var(--logic-lime);
-  color: var(--bg);
-  font-family: var(--font-data);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-decoration: none;
-}
-
+/* ── Loading and empty ── */
 .loadingState,
 .gameList {
   display: grid;
@@ -245,8 +178,9 @@
 .loadingState span {
   min-height: 126px;
   border-radius: 8px;
-  background: linear-gradient(90deg, var(--surface) 0%, var(--sk-bg) 50%, var(--surface) 100%);
+  background-image: linear-gradient(90deg, var(--card-bg) 0%, var(--home-paper) 50%, var(--card-bg) 100%);
   background-size: 200% 100%;
+  box-shadow: inset 0 0 0 1px var(--home-line);
   animation: shimmer 1.6s infinite;
 }
 
@@ -255,104 +189,94 @@
   justify-items: center;
   gap: 0.65rem;
   padding: 2.2rem 1rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
+  border: 1px dashed var(--home-line-strong);
   border-radius: 8px;
-  background: var(--surface);
-  color: var(--data-gray);
+  background: var(--card-bg);
+  color: var(--text-tertiary);
   text-align: center;
 }
 
 .emptyState h2 {
   margin: 0;
-  color: var(--sk-ink);
-  font-size: 1.05rem;
+  font-size: var(--type-heading);
+  color: var(--text-primary);
 }
 
 .emptyState p {
   max-width: 34rem;
   margin: 0;
-  font-size: 0.87rem;
+  font-size: var(--type-body);
   line-height: 1.55;
 }
 
+/* ── The game cards (V1 — today's shape, kept: ADC specimen 7, the formatting check's named keep) ──
+   A whole-card button — the field-grade target June praised — the volunteer's register, a card with
+   gaps rather than S.7's one frame. No wash over a waiting or finished card: its chip carries the state
+   (the tinted-panel retirement, 2026-09-21). */
 .gameCard {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 0.75rem;
+  gap: 0.6rem 0.75rem;
   width: 100%;
   min-height: 142px;
-  padding: 1rem;
-  border: 1px solid var(--blueprint-blue);
+  padding: 0.875rem;
+  border: 1px solid var(--home-line);
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--card-bg);
+  box-shadow: var(--home-shadow);
   color: inherit;
+  font: inherit;
   text-align: left;
+  cursor: pointer;
 }
 
-.gameCard:disabled {
-  cursor: default;
+.gameCard:not(:disabled):hover { border-color: var(--home-olive); }
+.gameCard:disabled { cursor: default; }
+.gameCard:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.gameCardCancelled { opacity: 0.72; }
+
+/* The game to score next: the olive stripe on its leading edge. */
+.gameCardNow {
+  border-left: 4px solid var(--home-olive);
+  padding-left: calc(0.875rem - 3px);
 }
 
-.gameCard_scheduled:hover,
-.gameCard_submitted:hover {
-  border-color: var(--logic-lime);
-}
-
-.gameCard_submitted {
-  border-color: rgba(var(--warning-rgb), 0.58);
-  background: rgba(var(--warning-rgb), 0.08);
-}
-
-.gameCard_completed {
-  border-color: rgba(var(--logic-lime-rgb), 0.32);
-  background: rgba(var(--blueprint-blue-rgb), 0.18);
-}
-
-.gameCard_cancelled {
-  border-color: rgba(148, 163, 184, 0.22);
-  opacity: 0.72;
-}
-
+/* Time · field · division — the BODY face, sentence case, 12px (F61: in the console face's capitals
+   "11:30 a.m." read "11:30 A.M.", which the spelling gate cannot see). Never `text-transform` here. */
 .gameMeta {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.375rem;
   min-width: 0;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-secondary);
 }
+.gameMeta svg { flex-shrink: 0; color: var(--text-tertiary); }
 
-.statusBadge {
+.chip {
   justify-self: end;
   align-self: start;
-  padding: 0.24rem 0.45rem;
-  border: 1px solid rgba(148, 163, 184, 0.32);
-  border-radius: 4px;
-  color: var(--sk-ink-faint);
+}
+
+/* "Up next" — the accent chip at the kit chip's own size (10px capitals, the console face), olive:
+   specimen 7's mark for the game to score next. The other states are the kit's one chip (RepChip). */
+.nowBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  background: var(--home-olive-soft);
+  box-shadow: inset 0 0 0 1px rgba(var(--home-olive-rgb), 0.32);
+  color: var(--home-olive);
   font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
-}
-
-.status_submitted {
-  border-color: rgba(var(--warning-rgb), 0.58);
-  color: var(--sk-amber);
-}
-
-.status_completed {
-  border-color: rgba(var(--logic-lime-rgb), 0.45);
-  color: var(--logic-lime);
-}
-
-.status_cancelled {
-  color: var(--data-gray);
 }
 
 .matchup {
@@ -373,106 +297,83 @@
   text-align: right;
 }
 
+/* A team's name — a name, not a readout: the body face. */
 .teamBlock span {
-  color: var(--sk-ink);
-  font-family: var(--font-data);
-  font-size: 1rem;
-  font-weight: 900;
-  line-height: 1.15;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
   overflow-wrap: anywhere;
 }
 
 .teamBlock strong {
-  color: var(--logic-lime);
   font-family: var(--font-data);
-  font-size: 2.2rem;
+  font-size: var(--type-figure);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 
 .versus {
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-size: var(--type-support);
+  font-weight: 500;
   text-align: center;
-  text-transform: uppercase;
+  color: var(--text-tertiary);
 }
 
+/* What a tap does — a line of words in the body face, at the support size. */
 .cardAction {
   grid-column: 1 / -1;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-size: var(--type-support);
+  font-weight: 600;
+  line-height: 1.3;
   text-align: center;
-  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.gameCardNow .cardAction {
+  color: var(--home-olive);
+  font-weight: 650;
 }
 
-.sheetBackdrop {
-  position: fixed;
-  left: 0;
-  right: 0;
-  /* Sized to the REAL visible area, not the layout viewport: the sheet autofocuses a score field,
-     so the number pad is up before the volunteer has seen anything, and a `inset: 0` backdrop puts
-     Finalize underneath it on a short phone. Same idiom as the tournament chat composer — --vvh /
-     --vv-offset-top are published globally by ViewportKeyboardVars; 100dvh covers first paint. */
-  top: var(--vv-offset-top, 0px);
-  height: var(--vvh, 100dvh);
-  /* Above both bottom bars (46) deliberately: entering a score is a modal act, and the sheet
-     covering the navigation is what stops a volunteer wandering off mid-entry. */
-  z-index: 100;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 1rem;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-  background: rgba(2, 6, 23, 0.86);
+/* ── The score sheet (V2): ONE form inside the Sheet Frame (≤900) or the centred card above ──
+   The frame draws the surface, the 18px corners, the grab line and the dim, and holds the inset of
+   nothing — a sheet's own inset is its content's (SheetFrame.module.css), so this form takes it. */
+.scoreForm {
+  padding: 0.375rem 0.75rem 0;
 }
 
-.scoreSheet {
-  width: min(100%, 520px);
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
-  border: 1px solid var(--blueprint-blue);
-  border-radius: 8px;
-  background: var(--surface);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-}
-
-/* Only this scrolls. The action row is a flex sibling and never leaves the sheet's bottom edge. */
-.sheetBody {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-/* Pinned, like the actions — nothing that orients the volunteer scrolls away mid-entry. With the
-   close button retired the row has one occupant, so the game line gets the full width and stays on
-   one line down to 320px. */
-.sheetHeader {
-  flex: none;
+/* The head: a sentence ("Enter the score") and the game's line under it. No × — Cancel is the way out
+   (owner 2026-08-08, A30's named exception to the form head). */
+.sheetHead {
   margin-bottom: 1rem;
 }
 
-/* Time - field - division. Replaces a title that repeated the two team names printed on the
-   labels below it: chrome earns its line by carrying what the surface does not already show. */
-.sheetMeta {
+.sheetTitle {
   margin: 0;
-  color: var(--sk-ink-faint);
-  font-family: var(--font-data);
-  font-size: 0.76rem;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+/* Time · field · division — which game, so a volunteer can confirm they opened the right one of eight. */
+.sheetMeta {
+  margin: 0.2rem 0 0;
+  font-size: var(--type-support);
   line-height: 1.35;
+  color: var(--text-tertiary);
+}
+
+.sheetNotice {
+  margin-bottom: 0.25rem;
 }
 
 .scoreGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 1.75rem minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 1.375rem minmax(0, 1fr);
   align-items: end;
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 
 .scoreGrid label {
@@ -480,163 +381,115 @@
   gap: 0.45rem;
 }
 
+/* The two team names over the boxes — each box's label, in the body face. */
 .scoreGrid label span {
-  min-height: 2.4em;
-  color: var(--sk-ink-faint);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  line-height: 1.2;
+  min-height: 2.5em;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-size: var(--type-support);
+  font-weight: 700;
+  line-height: 1.25;
   text-align: center;
-  text-transform: uppercase;
+  color: var(--text-secondary);
 }
 
-/* The field is the whole column. The −/+ steppers that used to flank it (J8-007) took 109 of the
-   138px each team gets on a 390px phone, leaving ~29px for a numeral drawn at 38px. */
+/* The box is the whole column. The −/+ steppers that used to flank it (J8-007) took 109 of the
+   138px each team gets on a 390px phone, leaving ~29px for the numeral. 64px on a phone, 72 wider;
+   the numeral at 38px — a field's figure, the one size off the ladder (the formatting check's keep). */
 .scoreInput {
   width: 100%;
   min-height: 72px;
   padding: 0;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.55);
+  border: 1px solid var(--home-line-strong);
   border-radius: 8px;
-  background: var(--sk-bg-deep);
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 2.8rem;
-  font-weight: 900;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 2.375rem;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   text-align: center;
   outline: 0;
 }
 
 .scoreInput:focus-visible {
-  border-color: var(--logic-lime);
-  box-shadow: 0 0 0 2px rgba(var(--logic-lime-rgb), 0.35);
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 2px rgba(var(--home-olive-rgb), 0.3);
 }
 
 .scoreInput.inputError {
   border-color: var(--danger);
 }
 
-/* Sits on the fields' centre line, not the row's: the labels above are 1-2 lines depending on the
+/* Sits on the boxes' centre line, not the row's: the labels above are 1-2 lines depending on the
    club name, so anything centred on the whole column drifts with the longest team name. */
 .scoreDivider {
   align-self: end;
-  margin-bottom: 1.4rem;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 1.4rem;
-  font-weight: 900;
+  margin-bottom: 1.25rem;
+  font-size: var(--type-figure);
+  font-weight: 700;
+  line-height: 1;
   text-align: center;
+  color: var(--text-tertiary);
 }
 
-.formError,
-/* J8-008: the consequence note was centred grey body text, easy to skip under pressure. Now an
-   iconed, bordered callout, colour-toned by consequence (amber = needs review, lime = final now). */
-.policyNote {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  margin: 0.9rem 0 0;
-  padding: 0.65rem 0.8rem;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 8px;
-  background: rgba(148, 163, 184, 0.08);
-  color: var(--sk-ink-faint);
-  font-size: 0.84rem;
-  line-height: 1.4;
-  text-align: left;
-}
-.policyNote svg { flex-shrink: 0; margin-top: 0.1rem; }
-.policyNote[data-tone='review'] {
-  border-color: rgba(var(--warning-rgb), 0.5);
-  background: rgba(var(--warning-rgb), 0.1);
-  color: var(--sk-warm);
-}
-.policyNote[data-tone='final'] {
-  border-color: rgba(var(--logic-lime-rgb), 0.45);
-  background: rgba(var(--logic-lime-rgb), 0.09);
-  color: var(--sk-lime-tint);
+/* The note that says what the button does (and an error), directly above the button. */
+.sheetNote {
+  margin-top: 0.875rem;
 }
 
-/* J8-006: "now" / up-next signal on the soonest un-scored card — a left stripe + a lime chip so the
-   volunteer can tell at a glance which game to score, instead of an undifferentiated stack. */
-.gameCardNow {
-  border-color: rgba(var(--logic-lime-rgb), 0.6);
-  border-left-width: 4px;
-  box-shadow: 0 0 0 1px rgba(var(--logic-lime-rgb), 0.25);
-}
-.nowBadge {
-  justify-self: end;
-  align-self: start;
-  padding: 0.24rem 0.5rem;
-  border-radius: 4px;
-  background: var(--logic-lime);
-  color: var(--bg);
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.formError {
-  border-color: rgba(var(--danger-rgb), 0.5);
-  background: rgba(var(--danger-rgb), 0.1);
-  color: var(--sk-red);
-}
-.formError svg { flex-shrink: 0; margin-top: 0.1rem; }
-
-/* Cancel takes only what it needs; Finalize takes the rest and stays under the thumb. Stacking
-   these on a phone cost ~54px of the height that keeps the primary clear of the keypad — and the
-   header already carries a close button, so the full-width Cancel was the second way to do one thing. */
+/* Cancel takes only what it needs; the one lime takes the rest and stays under the thumb. Pinned to the
+   sheet's foot while the rest scrolls; the frame hands it its bottom padding (`data-sheet-foot`). */
 .sheetActions {
+  position: sticky;
+  bottom: 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.75rem;
+  gap: 0.625rem;
   margin-top: 1rem;
-  flex: none;
+  padding-bottom: var(--sheet-foot-pad, 1rem);
+  background: var(--card-bg);
 }
 
-/* These two inherit 16px everywhere else in the page, which is fine for a full-width control but
-   not for two on one row: measured with the real font, "Submit for Review" beside Cancel needs
-   259px against the 257px a 320px phone offers, and clears every other width by only ~4px — one
-   larger system font setting from breaking at any size. 0.78rem is what the approved mockup drew,
-   and it restores ~32px of slack. Scoped to the sheet so the list's own buttons are untouched. */
-.sheetActions .secondaryButton,
-.sheetActions .primaryButton {
-  font-size: 0.78rem;
+/* Both at the tap floor, the words on one line: "Submit for review" beside Cancel must fit a 320px
+   phone (measured with the real font when the sizes were the console's; the body step keeps the slack). */
+.sheetButton {
   min-width: 0;
+  min-height: var(--tap-min, 44px);
 }
 
-.primaryButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  padding: 0 1rem;
-  border-color: var(--logic-lime);
-  background: var(--logic-lime);
-  color: var(--bg);
+/* ── Above 900: the same form in a centred card (a laptop or a landscape tablet at the scoring table),
+   as the coaches' game day keeps a card above the bar's breakpoint. Its dim does nothing when tapped. */
+.deskDim {
+  position: fixed;
+  inset: 0;
+  z-index: 389;
+  background: var(--sheet-dim);
 }
 
-.primaryButton:disabled,
-.secondaryButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
+.deskSheet {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 390;
+  width: min(520px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform: translate(-50%, -50%);
+  padding: 1rem 0.5rem 0;
+  border: 1px solid var(--home-line);
+  border-radius: 12px;
+  background: var(--card-bg);
+  box-shadow: var(--shadow-lg);
+  --sheet-foot-pad: 1rem;
 }
+.deskSheet:focus { outline: none; }
 
 @keyframes shimmer {
   from { background-position: 200% 0; }
   to { background-position: -200% 0; }
-}
-
-@media (min-width: 760px) {
-  .sheetBackdrop {
-    align-items: center;
-  }
 }
 
 @media (max-width: 760px) {
@@ -649,30 +502,17 @@
    stand down at the same width, because they are two halves of one decision about what a phone
    shows first. Above it `.controlsClosed` does nothing and the panel is always open. */
 @media (max-width: 640px) {
-  .dateRow {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 0.5rem;
-  }
-
-  .todayButton,
-  .filtersToggle {
-    padding: 0 0.7rem;
-    font-size: 0.66rem;
-  }
-
   .filtersToggle {
     /* `relative` anchors the count badge — see `.filterCount`. */
     position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    background: transparent;
-    color: var(--sk-ink-faint);
   }
 
   .filtersToggle[aria-expanded='true'] {
-    border-color: var(--logic-lime);
-    color: var(--sk-ink);
+    border-color: var(--home-olive);
+    color: var(--text-primary);
   }
 
   .controlsClosed {
@@ -683,21 +523,17 @@
 @media (max-width: 520px) {
   .gameCard {
     min-height: 156px;
-    padding: 0.85rem;
   }
 
-  .gameMeta {
-    grid-column: 1 / -1;
-  }
-
-  .statusBadge, .nowBadge {
+  .gameMeta,
+  .chip {
     grid-column: 1 / -1;
     justify-self: start;
   }
 
   .matchup {
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.5rem;
+    gap: 0.25rem;
   }
 
   .teamBlock:first-child,
@@ -715,278 +551,14 @@
   }
 
   .teamBlock strong {
-    font-size: 1.8rem;
-  }
-
-  .scoreSheet {
-    padding: 0.9rem;
-  }
-
-  .scoreGrid {
-    gap: 0.5rem;
+    font-size: var(--type-figure);
   }
 
   .scoreInput {
     min-height: 64px;
-    font-size: 2.35rem;
   }
 
   .scoreDivider {
-    margin-bottom: 1.15rem;
+    margin-bottom: 1.1rem;
   }
-}
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 5 — only with the switch on) ═══════════════════════
-   The scorekeeper in the kit's warm palette, FIXED (ruling R3): the volunteer shell carries
-   [data-admin-kit] + [data-guest-kit], and app/globals.css pins the warm block on the second whatever
-   the phone's own Warm/Dark setting — a gate phone is shared, and the setting is the device's, so the
-   last person's choice must not decide the next volunteer's screen. ADC specimen 7: the same cards,
-   the same four filters at the thumb, the same score sheet (a form: it covers, it dims, Cancel is the
-   way out). A restyle — the words, the order and the layout are today's.
-   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
-
-/* R3's "a warm palette from the kit replaces the --sk-* set": every rule that reads an --sk-* token is
-   restated below with the kit's own token (the program's one convention — each colour on its own rule), so
-   the set itself is never consulted on the kit and needs no remap. */
-
-/* ── The header: the kit's eyebrow over the page title ── */
-:global([data-admin-kit]) .kicker {
-  color: var(--text-secondary);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-}
-:global([data-admin-kit]) .title { color: var(--text-primary); }
-
-/* ── The quiet buttons (refresh, Today, Filters, Cancel, Clear filters) and the one primary ──
-   F2: the console face leaves the buttons; the portal's buttons are the body face, 650, as written. */
-:global([data-admin-kit]) .iconButton,
-:global([data-admin-kit]) .todayButton,
-:global([data-admin-kit]) .secondaryButton,
-:global([data-admin-kit]) .primaryButton,
-:global([data-admin-kit]) .filtersToggle {
-  border-color: var(--home-line-strong);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-}
-:global([data-admin-kit]) .iconButton {
-  background: var(--card-bg);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .todayButton,
-:global([data-admin-kit]) .secondaryButton {
-  background: var(--card-bg);
-  color: var(--text-secondary);
-}
-/* Finalize / Submit for Review / Save Correction — the sheet's one primary: ink on lime. */
-:global([data-admin-kit]) .primaryButton {
-  border-color: var(--home-lime);
-  background: var(--home-lime);
-  color: var(--home-lime-ink);
-}
-:global([data-admin-kit]) .filterCount {
-  background: var(--home-olive);
-  /* The page ground as ink: it inverts with the theme exactly as the olive fill does (slice 4c). */
-  color: var(--home-paper);
-  font-family: var(--font-data);
-}
-@media (max-width: 640px) {
-  :global([data-admin-kit]) .filtersToggle {
-    background: var(--card-bg);
-    color: var(--text-secondary);
-  }
-  :global([data-admin-kit]) .filtersToggle[aria-expanded='true'] {
-    border-color: var(--home-olive);
-    color: var(--text-primary);
-  }
-}
-
-/* ── The fields: the day, the team search, the two pickers ── */
-:global([data-admin-kit]) .dateControl,
-:global([data-admin-kit]) .searchControl {
-  border-color: var(--home-line-strong);
-  background: var(--card-bg);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .dateControl input,
-:global([data-admin-kit]) .searchControl input,
-:global([data-admin-kit]) .select {
-  color: var(--text-primary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-:global([data-admin-kit]) .select {
-  border-color: var(--home-line-strong);
-  background: var(--card-bg);
-}
-
-/* ── Notices: a card with its tone on the edge, as today (no tint fill) ── */
-:global([data-admin-kit]) .notice {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .notice strong { color: var(--text-primary); }
-/* The tones, restated: the base above weighs the same as the legacy tone rules and comes later. */
-:global([data-admin-kit]) .notice_success { border-color: rgba(var(--success-rgb), 0.35); }
-:global([data-admin-kit]) .notice_warning { border-color: rgba(var(--warning-rgb), 0.4); }
-:global([data-admin-kit]) .notice_danger { border-color: rgba(var(--danger-rgb), 0.35); }
-:global([data-admin-kit]) .notice_info { border-color: rgba(var(--info-rgb), 0.35); }
-/* "Sign in" when the session lapses — the recovery, and the one thing to do: the kit's primary. */
-:global([data-admin-kit]) .noticeAction {
-  background: var(--home-lime);
-  color: var(--home-lime-ink);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-}
-
-/* ── Loading and empty ── */
-:global([data-admin-kit]) .loadingState span {
-  /* `background-image`, not the shorthand — the legacy `background-size` drives the shimmer. */
-  background-image: linear-gradient(90deg, var(--card-bg) 0%, var(--home-paper) 50%, var(--card-bg) 100%);
-  box-shadow: inset 0 0 0 1px var(--home-line);
-}
-:global([data-admin-kit]) .emptyState {
-  border: 1px dashed var(--home-line-strong);
-  background: var(--card-bg);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .emptyState h2 { color: var(--text-primary); }
-
-/* ── The game cards: the kit's door card (the whole card is the tap) ── */
-:global([data-admin-kit]) .gameCard {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-  box-shadow: var(--home-shadow);
-}
-/* A pending or finalized card is a plain card on the kit, as drawn: its chip carries the state, not a
-   wash over the whole card (the portal's tinted-panel retirement, 2026-09-21). Cancelled keeps its fade. */
-:global([data-admin-kit]) .gameCard_scheduled:hover,
-:global([data-admin-kit]) .gameCard_submitted:hover { border-color: var(--home-olive); }
-/* The game to score next: the olive stripe on its leading edge (the legacy 4px width), no glow. */
-:global([data-admin-kit]) .gameCardNow {
-  border-left-color: var(--home-olive);
-  box-shadow: var(--home-shadow);
-}
-:global([data-admin-kit]) .gameMeta {
-  color: var(--text-secondary);
-  font-weight: 700;
-}
-/* The status tag → the kit's chip (the words as written). */
-:global([data-admin-kit]) .statusBadge {
-  border-color: var(--home-line-strong);
-  border-radius: 999px;
-  color: var(--text-secondary);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: none;
-}
-:global([data-admin-kit]) .status_submitted {
-  border-color: rgba(var(--warning-rgb), 0.3);
-  background: rgba(var(--warning-rgb), 0.08);
-  color: var(--warning-light);
-}
-:global([data-admin-kit]) .status_completed {
-  border-color: rgba(var(--success-rgb), 0.28);
-  background: rgba(var(--success-rgb), 0.07);
-  color: var(--success-light);
-}
-:global([data-admin-kit]) .status_cancelled { color: var(--text-tertiary); }
-/* "Up next" — the accent chip (specimen 7's olive), its edge drawn inset so the chip keeps today's size. */
-:global([data-admin-kit]) .nowBadge {
-  border-radius: 999px;
-  background: var(--home-olive-soft);
-  box-shadow: inset 0 0 0 1px rgba(var(--home-olive-rgb), 0.32);
-  color: var(--home-olive);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: none;
-}
-/* The matchup: team names in the body face (a name, not a readout); the scores stay the console face. */
-:global([data-admin-kit]) .teamBlock span {
-  color: var(--text-primary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 700;
-}
-:global([data-admin-kit]) .teamBlock strong { color: var(--text-primary); }
-:global([data-admin-kit]) .versus {
-  color: var(--text-tertiary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 500;
-  letter-spacing: normal;
-  text-transform: none;
-}
-/* What a tap does — a line of words in the body face, at the portal's support size (the console's
-   capitals read larger than their size; mixed case at the same number would shrink it). */
-:global([data-admin-kit]) .cardAction {
-  color: var(--text-secondary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  font-weight: 600;
-  letter-spacing: normal;
-  text-transform: none;
-}
-:global([data-admin-kit]) .gameCardNow .cardAction {
-  color: var(--home-olive);
-  font-weight: 650;
-}
-
-/* ── The score sheet: a window over a scrim ── */
-:global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }
-:global([data-admin-kit]) .scoreSheet {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-  box-shadow: var(--home-shadow);
-}
-:global([data-admin-kit]) .sheetMeta { color: var(--text-secondary); }
-/* The two team names over the fields — the field's label, in the body face. */
-:global([data-admin-kit]) .scoreGrid label span {
-  color: var(--text-secondary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  font-weight: 700;
-  letter-spacing: normal;
-  text-transform: none;
-}
-/* The two big fields: the kit's field, the numeral in the body face as drawn. */
-:global([data-admin-kit]) .scoreInput {
-  border-color: var(--home-line-strong);
-  background: var(--card-bg);
-  color: var(--text-primary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 800;
-}
-:global([data-admin-kit]) .scoreInput:focus-visible {
-  border-color: var(--home-olive);
-  box-shadow: 0 0 0 2px rgba(var(--home-olive-rgb), 0.3);
-}
-:global([data-admin-kit]) .scoreInput.inputError { border-color: var(--danger); }
-:global([data-admin-kit]) .scoreDivider {
-  color: var(--text-tertiary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-/* The consequence note and the error: status said in a box — the kit's tint and its light ink. */
-:global([data-admin-kit]) .policyNote,
-:global([data-admin-kit]) .formError {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .policyNote[data-tone='review'] {
-  border-color: rgba(var(--warning-rgb), 0.3);
-  background: rgba(var(--warning-rgb), 0.08);
-  color: var(--warning-light);
-}
-/* "Becomes final immediately" — a lime tint today, so the kit's olive accent (slice 4b's rule). */
-:global([data-admin-kit]) .policyNote[data-tone='final'] {
-  border-color: rgba(var(--home-olive-rgb), 0.3);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .formError {
-  border-color: rgba(var(--danger-rgb), 0.3);
-  background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger-light);
 }

@@ -5,13 +5,14 @@ import { Trophy } from 'lucide-react';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import ShellSignOutButton from '@/components/volunteer/ShellSignOutButton';
 import { getOrganizationBySlug } from '@/lib/db';
-import { hasCapability } from '@/lib/roles';
+import { canGate as holdsGate, canScore as holdsScoring } from '@/lib/volunteer-jobs';
+import { VOLUNTEER_DUTY, VOLUNTEER_HOP, VOLUNTEER_WALL } from '@/lib/volunteer-words';
+import VolunteerWall from '@/components/volunteer/VolunteerWall';
 import { suspendedOrgWall } from '@/components/billing/SubscriptionEndedWall';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import DayOfTabBar from '@/components/volunteer/DayOfBottomBars';
 import { getUserDisplayName } from '@/lib/user-display';
 import { GuestKitRoot } from '@/components/admin/AdminKitProvider';
-import { DAYOF_KIT } from '@/components/volunteer/day-of-kit';
 import shell from '@/components/volunteer/DayOfShell.module.css';
 
 export async function generateMetadata({
@@ -62,26 +63,22 @@ export default async function CheckInVolunteerLayout({
   const suspendedWall = suspendedOrgWall(authCtx.org, 'check-in');
   if (suspendedWall) return <GuestKitRoot>{suspendedWall}</GuestKitRoot>;
 
-  // Gate volunteers (check_in_teams) and organizers (manage_registrations) both qualify.
-  const allowed = hasCapability(authCtx.role, authCtx.capabilities, 'check_in_teams')
-    || hasCapability(authCtx.role, authCtx.capabilities, 'manage_registrations');
-  if (!allowed) {
+  // Gate volunteers (check_in_teams) and organizers (manage_registrations) both qualify — the gate's
+  // one question, shared with every landing (Stage 6, A26).
+  const canScore = holdsScoring(authCtx.role, authCtx.capabilities);
+  if (!holdsGate(authCtx.role, authCtx.capabilities)) {
+    // The wrong-job wall: a scoring volunteer on the gate's address.
     return (
-    <GuestKitRoot>
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', ...DAYOF_KIT.refusalPage }}>
-        <div style={{ padding: '2rem', maxWidth: '420px', width: '100%', ...DAYOF_KIT.refusalCard }}>
-          <div className="hud-label" style={{ marginBottom: '0.75rem', ...DAYOF_KIT.refusalLabel }}>Access Denied</div>
-          <p className="data-mono" style={{ fontSize: '0.875rem', lineHeight: 1.6, ...DAYOF_KIT.refusalText }}>
-            This account does not have check-in access. Contact your organization admin if you need to check teams in at the gate.
-          </p>
-        </div>
-      </div>
-    </GuestKitRoot>
+      <GuestKitRoot>
+        <VolunteerWall
+          message={VOLUNTEER_WALL.gate}
+          hop={canScore ? { href: `/${orgSlug}/scorekeeper`, label: VOLUNTEER_HOP.toScoring } : null}
+        />
+      </GuestKitRoot>
     );
   }
 
-  const canScore = hasCapability(authCtx.role, authCtx.capabilities, 'submit_scores');
-  const duties = [canScore ? 'Scorekeeper' : null, 'Gate'].filter(Boolean) as string[];
+  const duties = [canScore ? VOLUNTEER_DUTY.scoring : null, VOLUNTEER_DUTY.gate].filter(Boolean) as string[];
 
   return (
     <GuestKitRoot>
@@ -96,40 +93,31 @@ export default async function CheckInVolunteerLayout({
        scorekeeper's flip resolves to the public side of the EVENT, not to a mirror of the scoring
        board, and a gate volunteer stands at the same event. Settled 2026-08-07 (owner): the public
        door lives in the Account sheet on BOTH shells, and no ⇄ pill is added to this row. */}
-    <div className={shell.shell} style={{ minHeight: '100vh', ...DAYOF_KIT.shell }}>
-      <header style={{
-        padding: '0 1.25rem', minHeight: 'var(--dayof-bar-h)', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', gap: '1.25rem', position: 'sticky', top: 0, zIndex: 40, ...DAYOF_KIT.header,
-      }}>
+    <div className={shell.shell} style={{ minHeight: '100vh' }}>
+      <header className={shell.header}>
         {/* `identity` clips — see the scorekeeper twin: the wordmark is `nowrap` and the actions
             beside it cannot shrink, so a narrow row made the mark paint across them. */}
-        <div className={shell.identity} style={{ flex: '1 1 auto', minWidth: 0 }}>
-          <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap' }}>
-            <span style={DAYOF_KIT.markField}>FIELD</span>
-            <span style={DAYOF_KIT.markLogic}>LOGIC</span>
-            <span style={DAYOF_KIT.markHq}>HQ</span>
+        <div className={shell.identity}>
+          <div className={shell.wordmark}>
+            <span>FIELD</span>
+            <span className={shell.markLogic}>LOGIC</span>
+            <span className={shell.markHq}>HQ</span>
           </div>
-          <div style={{
-            fontFamily: 'var(--font-data)', fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...DAYOF_KIT.orgName,
-          }}>
-            {authCtx.org.name}
-          </div>
+          <div className={shell.orgName}>{authCtx.org.name}</div>
         </div>
         {/* On a phone both of these live in the tab bar instead — marked `deskOnly`, not deleted.
             Shared with the scorekeeper twin (DayOfShell.module.css). */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexShrink: 0 }}>
+        <div className={shell.doors}>
           {/* J1-077: one-tap hop to the scorekeeper screen for volunteers who also score. */}
           {canScore && (
             <Link
               href={`/${orgSlug}/scorekeeper`}
               aria-label="Scorekeeper"
               className={`${shell.hop} ${shell.deskOnly}`}
-              style={{ textDecoration: 'none', whiteSpace: 'nowrap', ...DAYOF_KIT.hop }}
             >
               {/* The admin nav's Results icon — score entry is where this door goes. */}
               <Trophy size={15} aria-hidden />
-              <span>Scorekeeper →</span>
+              <span>{VOLUNTEER_HOP.toScoring}</span>
             </Link>
           )}
           {/* No "Send feedback" here — see the scorekeeper twin (owner call 2026-08-07). */}

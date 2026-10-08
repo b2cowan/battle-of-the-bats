@@ -8,6 +8,14 @@
  * migrate onto this in a follow-up). Handles backdrop, drag handle, sticky
  * footer, safe-area, Esc-to-close, and body scroll-lock. The slide-up animation
  * settles instantly under the global prefers-reduced-motion guard (globals.css).
+ *
+ * On the Sheet Frame's terms since Tournament admin redesign Stage 6 (A29, ruled 2026-10-07 — "the next
+ * time it is touched", Sheet Frame D4): its own component still, with the frame's 18px corners and the
+ * portal's dim, a RECORD head (the record's name at 16/700 and, when given, one context line under it —
+ * `subtitle`) and the plain × in a 44px tap area (the 2026-10-07 ruling). One sheet, FIVE users, all moved
+ * together: the check-in board (the gate's and the organizer's), Teams' view settings on a phone, the
+ * schedule's reschedule sheet, and the public site's two follow sheets (the public skin keeps its own
+ * colours; only the shape is shared).
  */
 
 import { useEffect, useRef, type ReactNode } from 'react';
@@ -20,6 +28,7 @@ export default function BottomSheet({
   open,
   onClose,
   title,
+  subtitle,
   footer,
   children,
   ariaLabel,
@@ -28,6 +37,8 @@ export default function BottomSheet({
   open: boolean;
   onClose: () => void;
   title?: ReactNode;
+  /** The record head's one context line under the title ("U11 Girls · Not arrived"). */
+  subtitle?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
   ariaLabel?: string;
@@ -85,9 +96,12 @@ export default function BottomSheet({
         <div className={styles.handle} aria-hidden />
         {title && (
           <div className={styles.header}>
-            <span className={styles.title}>{title}</span>
+            <div className={styles.headText}>
+              <span className={styles.title}>{title}</span>
+              {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
+            </div>
             <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
-              <X size={16} aria-hidden />
+              <X size={20} aria-hidden />
             </button>
           </div>
         )}

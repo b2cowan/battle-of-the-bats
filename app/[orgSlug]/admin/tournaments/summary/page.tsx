@@ -23,8 +23,7 @@
  * THE TOURNAMENT PLAN: the title, one sentence, one plain lock line (no full-page upsell, F38). Nothing
  * a free organizer had is lost: How it finished is on their board.
  */
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useState } from 'react';
 import { Printer } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { isDemoOrgSlug } from '@/lib/demo-org';
@@ -37,6 +36,7 @@ import type { HelpRequest } from '@/components/help/help-drawer-context';
 import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { ClubSection, LoadFailed } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
+import PrintedPage from '@/components/admin/tournament/PrintedPage';
 import {
   EventInNumbers, HowItFinished, NextYear, ReuseButton, ShareAction,
 } from '@/components/admin/tournament/AfterEventParts';
@@ -60,8 +60,6 @@ type SummaryData = {
   publicHome: string | null;
 };
 
-const noSubscribe = () => () => {};
-
 const SUMMARY_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'closeout-summary' };
 
 export default function TournamentSummaryPage() {
@@ -72,8 +70,6 @@ export default function TournamentSummaryPage() {
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [error, setError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
-  // The printed page is a portal onto <body>: only in the browser (the certificate's form).
-  const inBrowser = useSyncExternalStore(noSubscribe, () => true, () => false);
 
   const tournamentId = currentTournament?.id;
   const hasSummary = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'post_tournament_summary'));
@@ -194,31 +190,26 @@ export default function TournamentSummaryPage() {
         <a href="/pricing" target="_blank" rel="noopener noreferrer" className={styles.closingLink}>{SUMMARY_WORDS.closingLink}</a>
       </p>
 
-      {inBrowser && createPortal(
-        <PrintedSummary club={currentOrg?.name ?? ''} data={ready} />,
-        document.body,
-      )}
+      <PrintedSummary club={currentOrg?.name ?? ''} data={ready} />
     </div>
   );
 }
 
-/** The printed page (D3): hidden on screen; in print, the only thing on the paper. */
+/** The printed page (D3): hidden on screen; in print, the only thing on the paper (`PrintedPage`). */
 function PrintedSummary({ club, data }: { club: string; data: SummaryData }) {
   const { tournament, recap, publicHome } = data;
   const W = SUMMARY_WORDS;
   const C = W.printColumns;
   const dates = formatEventDateRange(tournament.startDate, tournament.endDate, true, { longMonth: true });
-  const link = publicHome ? `${window.location.host}${publicHome}` : null;
+  const link = publicHome && typeof window !== 'undefined' ? `${window.location.host}${publicHome}` : null;
   return (
-    <div className={styles.printCopy} data-summary-print>
-      {/* Letter, no @page margin: the browser's own header and footer print IN the margin, so a page
-          with none has nowhere to put them; the sheet carries its own padding. */}
-      <style>{'@page { size: 8.5in 11in; margin: 0; }'}</style>
-      <div className={styles.paper}>
-        <p className={styles.paperEyebrow}>{W.printEyebrow(club)}</p>
-        <h1 className={styles.paperTitle}>{tournament.name}</h1>
-        {dates && <p className={styles.paperDates}>{dates}</p>}
-
+    <PrintedPage
+      name="summary"
+      eyebrow={W.printEyebrow(club)}
+      title={tournament.name}
+      dates={dates}
+      foot={<><span>{link}</span><span>{W.printed(formatStoredDate(tournamentToday()))}</span></>}
+    >
         {recap.finishes.length > 0 && (
           <>
             <h2 className={styles.paperHeading}>{FINISH_WORDS.heading}</h2>
@@ -266,12 +257,6 @@ function PrintedSummary({ club, data }: { club: string; data: SummaryData }) {
             </table>
           </>
         )}
-
-        <div className={styles.paperFoot}>
-          <span>{link}</span>
-          <span>{W.printed(formatStoredDate(tournamentToday()))}</span>
-        </div>
-      </div>
-    </div>
+    </PrintedPage>
   );
 }

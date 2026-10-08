@@ -138,7 +138,10 @@
 
 /* ── A team's facts (the phone row's caption) and its arrival ── */
 .facts { display: inline; }
-/* "In · 9:58 a.m." — the kit's chip at its 10px step, in the arrived green. */
+/* "IN 9:58 a.m." — the kit's chip at its 10px step, in the arrived green, and the time BESIDE it in the
+   caption's ink (F61, Stage 6: inside the chip's capitals the clock read "9:58 A.M."). */
+.arrival { display: inline-flex; align-items: center; gap: 0.35rem; }
+.inTime { white-space: nowrap; color: var(--text-secondary); }
 .inChip {
   display: inline-flex;
   align-items: center;
@@ -160,94 +163,43 @@
 .actionCell { width: 1%; white-space: nowrap; text-align: right; }
 .actionCellInner { display: inline-flex; align-items: center; gap: 0.5rem; justify-content: flex-end; }
 
-/* ── The team's sheet (unchanged by ruling; its two layers folded into one) ── */
-.sheetMeta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  font-size: 0.78rem;
-  color: var(--text-tertiary);
-}
-.sheetStatus {
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.15rem 0.45rem;
-  border-radius: 999px;
-}
-.sheetStatus[data-status="not_arrived"] { background: var(--home-olive-soft); color: var(--text-secondary); }
-.sheetStatus[data-status="checked_in"] { background: rgba(var(--success-rgb), 0.14); color: var(--success-light); }
-.sheetStatus[data-status="no_show"] { background: rgba(var(--danger-rgb), 0.14); color: var(--danger-light); }
-.sheetBy { font-size: 0.7rem; }
-
+/* ── The team's sheet (Stage 6 V3, A29 — the gate's and the organizer's, one board) ──
+   The record head (the team, one context line) is the shared bottom sheet's; these are its two sections:
+   a small-capitals label, then a line — the fact on the left, the action as the kit's white button at the
+   tap floor on the right (Mark paid was an amber-tinted 35px box, Add roster an olive-tinted panel;
+   tinted panels are retired, 2026-09-21). */
 .sheetSection {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 0.9rem;
-  margin-top: 0.9rem;
-  border-top: 1px solid var(--home-line);
+  gap: 0.55rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--home-line);
 }
+.sheetSection:first-child { padding-top: 0; }
+/* The sheet's foot draws its own rule — one line between the last section and the foot, not two. */
+.sheetSection:last-child { border-bottom: 0; }
 .sheetLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
   font-family: var(--font-data);
-  font-size: 0.64rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-
-.paidRow {
+.sheetLine {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--success-light);
-}
-.paidRow > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-/* J8-016: quiet secondary "Un-pay" — reversible like the other gate actions, without competing
-   with the positive Paid state. */
-.unpayBtn {
-  flex-shrink: 0;
-  min-height: 36px;
-  padding: 0.35rem 0.7rem;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 2px;
-  background: transparent;
+  gap: 0.625rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.72rem;
-  font-weight: 700;
-  cursor: pointer;
 }
-.unpayBtn:disabled { opacity: 0.45; cursor: default; }
-
-.markPaidBtn {
-  align-self: flex-start;
-  padding: 0.55rem 0.9rem;
-  border: 1px solid rgba(var(--warning-rgb), 0.3);
-  border-radius: 2px;
-  background: rgba(var(--warning-rgb), 0.08);
-  color: var(--warning-light);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.8rem;
-  font-weight: 800;
-  cursor: pointer;
+.sheetLine > span { display: inline-flex; align-items: center; gap: 0.35rem; min-width: 0; }
+.paidMark { color: var(--success); }
+.sheetAction {
+  flex-shrink: 0;
+  margin-left: auto;
+  min-height: var(--tap-min, 44px);
 }
-.markPaidBtn:disabled { opacity: 0.45; cursor: default; }
 
 .rosterList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
 .rosterItem {
@@ -286,7 +238,7 @@
 }
 .confirmBtn:disabled { opacity: 0.45; cursor: default; }
 .rosterConfirmed { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 700; color: var(--success-light); }
-.editRosterBtn, .addRosterBtn {
+.editRosterBtn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -300,16 +252,7 @@
   font-weight: 700;
   cursor: pointer;
 }
-/* J8-011: "Add roster at the gate" creates a new roster from scratch — a consequential gate action,
-   louder than the quiet "Edit" (>=44px target), never a second primary: the olive accent. */
-.addRosterBtn {
-  min-height: 44px;
-  padding: 0.6rem 1rem;
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-.editRosterBtn:disabled, .addRosterBtn:disabled { opacity: 0.45; cursor: default; }
+.editRosterBtn:disabled { opacity: 0.45; cursor: default; }
 
 /* roster editor */
 .rosterEditor { display: flex; flex-direction: column; gap: 0.45rem; }

@@ -1,3 +1,12 @@
+/* ═══ THE ADMIN'S BOTTOM SHEET — on the Sheet Frame's terms (Tournament admin redesign Stage 6, A29,
+   ruled 2026-10-07; Sheet Frame D4: "its own component, the frame's 18px corners and the portal's dim the
+   next time it is touched"). The SHAPE below is every user's — the gate's and the organizer's check-in
+   board, Teams' view settings on a phone, the schedule's reschedule sheet, and the public site's two
+   follow sheets: the 18px corners, the portal's dim (`--sheet-dim`, globals.css — defined at :root for
+   the public pages too), a RECORD head (the name at 16/700, one context line) and the plain × in a 44px
+   tap area (owner, 2026-10-07: a close × is a plain glyph). The COLOURS here are the public skin's (the
+   follow sheets wear these base rules); the admin and the gate get theirs from the kit layer below. ═══ */
+
 .backdrop {
   position: fixed;
   inset: 0;
@@ -5,9 +14,8 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.62);
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  /* The portal's dim, no blur (the frame's — D4). */
+  background: var(--sheet-dim);
 }
 
 .sheet {
@@ -19,7 +27,7 @@
   background: var(--hud-surface);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
   border-bottom: none;
-  border-radius: 12px 12px 0 0;
+  border-radius: 18px 18px 0 0;
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55), var(--highlight-top);
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
   outline: none;
@@ -31,52 +39,73 @@
   to   { transform: translateY(0); }
 }
 
+/* The grab line every sheet carries — the frame's 38×4. A mark only: a drag does not close this sheet. */
 .handle {
   flex-shrink: 0;
-  width: 36px;
+  width: 38px;
   height: 4px;
-  margin: 0.6rem auto 0;
+  margin: 0.625rem auto 0;
   border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb), 0.4);
 }
 
+/* The record head: the name and its context line, the × at the right edge in its 44px tap area. */
 .header {
   display: flex;
   flex-shrink: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.65rem 1.25rem 0.5rem;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0.375rem 0.75rem 1.25rem;
   border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
 }
 
-.title {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.75);
+.headText {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0.5625rem;
 }
 
+.title {
+  display: block;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading, 1rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--fl-text);
+  overflow-wrap: anywhere;
+}
+
+.subtitle {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: var(--type-support, 0.75rem);
+  line-height: 1.35;
+  color: var(--data-gray);
+}
+
+/* The plain glyph in a 44px square — no box, no outline (owner, 2026-10-07). */
 .close {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 2px;
-  background: transparent;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--data-gray);
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
 }
 
 .close:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.45);
-  color: var(--logic-lime);
+  color: var(--fl-text);
+}
+
+.close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -4px;
+  border-radius: 8px;
 }
 
 .body {
@@ -91,10 +120,10 @@
   border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
 }
 
-/* ═══ ON THE KIT (Admin Design Continuity slice 4c — only with the switch on) ═══════════════════════
-   The shared admin bottom sheet — used by the schedule's reschedule sheet, the check-in board, AND
-   two PUBLIC components (FollowAccountNudge, UnfollowConfirmSheet). Two things make this sheet
-   different from every other kit-restyled surface in this program:
+/* ═══ ON THE KIT (Admin Design Continuity slice 4c) ═══════════════════════════════════════════════════
+   The shared admin bottom sheet — used by the schedule's reschedule sheet, the check-in board, Teams'
+   view settings, AND two PUBLIC components (FollowAccountNudge, UnfollowConfirmSheet). Two things make
+   this sheet different from every other kit-restyled surface in this program:
    1. It `createPortal`s to `document.body` (BottomSheet.tsx), so it is a DOM SIBLING of the admin
       shell, never its descendant — `[data-admin-kit]` as a plain ancestor selector cannot reach a
       portaled node. BottomSheet.tsx now carries the marker pair onto its own portaled root when the
@@ -107,8 +136,9 @@
       portal hook (`usePortalKitAttr`) then applies no marker at all — R2 holds by the attribute never
       being applied. The `:where()` clauses below stay as the documented convention and a harmless
       second guard.
+   It stays scoped (a SHARED SURFACE — the public follow sheets wear the base rules above), so only its
+   colours live here; the shape is the base's, for every user.
    ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
-:global([data-admin-kit]) .backdrop:where(:not([data-public-preview] *)) { background: var(--home-scrim); }
 :global([data-admin-kit]) .sheet:where(:not([data-public-preview] *)) {
   background: var(--card-bg);
   border-color: var(--home-line);
@@ -116,15 +146,9 @@
 }
 :global([data-admin-kit]) .handle:where(:not([data-public-preview] *)) { background: var(--home-line-strong); }
 :global([data-admin-kit]) .header:where(:not([data-public-preview] *)) { border-bottom-color: var(--home-line); }
-/* The sheet's title is an eyebrow (uppercase, letter-spaced) — face stays mono; its accent ink
-   moves from the raw brand lime to the portal's olive. */
-:global([data-admin-kit]) .title:where(:not([data-public-preview] *)) { color: var(--home-olive); }
-:global([data-admin-kit]) .close:where(:not([data-public-preview] *)) {
-  border-color: var(--home-line);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .close:where(:not([data-public-preview] *)):hover {
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
+/* The record's name in the kit's ink (it was an olive eyebrow in capitals). */
+:global([data-admin-kit]) .title:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .subtitle:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .close:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .close:where(:not([data-public-preview] *)):hover { color: var(--text-primary); }
 :global([data-admin-kit]) .footer:where(:not([data-public-preview] *)) { border-top-color: var(--home-line); }

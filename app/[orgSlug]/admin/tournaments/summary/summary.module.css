@@ -33,54 +33,8 @@
   .closingLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
 }
 
-/* ── THE PRINTED PAGE (J1-110): a copy portalled onto <body>, hidden on screen; in print every other
-   child of <body> leaves the paper (the coaches portal's certificate form), so no strip, rail, header,
-   button, bar or demo bar prints around it. One Letter page at the drawing's sizes. ── */
-.printCopy { display: none; }
-@media print {
-  :global(body):has(> .printCopy) > :global(*):not(.printCopy) { display: none !important; }
-  :global(body):has(> .printCopy) {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #FFFFFF !important; /* token-exempt: paper, whatever the admin's theme */
-  }
-  .printCopy {
-    display: block;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-}
-.paper {
-  box-sizing: border-box;
-  width: 8.5in;
-  min-height: 10.9in;
-  padding: 0.67in 0.75in;
-  background: #FFFFFF; /* token-exempt: paper, whatever the admin's theme */
-  color: #1F1B14; /* token-exempt: print ink, independent of the screen's theme */
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 13px;
-  line-height: 1.5;
-}
-.paperEyebrow {
-  margin: 0;
-  font-family: var(--font-data);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */
-}
-.paperTitle {
-  margin: 6px 0 2px;
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: 0;
-  text-transform: none;
-  color: #1F1B14; /* token-exempt: print ink, independent of the screen's theme */
-}
-.paperDates { margin: 0 0 26px; color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */ }
+/* ── THE PRINTED PAGE (J1-110): the shared `PrintedPage` (components/admin/tournament) draws the paper, its
+   head and its foot and keeps everything else off it; these are the parts Summary draws between them. ── */
 .paperHeading {
   margin: 22px 0 8px;
   padding-bottom: 6px;
@@ -114,13 +68,5 @@
 .paperFigures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .paperFigures b { display: block; font-size: 22px; font-weight: 800; line-height: 1.1; }
 .paperFigures span { font-size: 11.5px; color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */ }
-.paperFoot {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 40px;
-  font-size: 11px;
-  color: #7A7266; /* token-exempt: print ink, independent of the screen's theme */
-}
 /* Each division's standings stay together where they can; the page never splits a row. */
 .paperTable tr { break-inside: avoid; }

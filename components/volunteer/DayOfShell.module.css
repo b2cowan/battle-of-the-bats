@@ -1,12 +1,17 @@
 /**
- * The day-of volunteer shells (/{org}/scorekeeper + /{org}/check-in) — header, bottom bars, and
- * the one geometry budget they all compose from.
+ * The day-of volunteer shells (/{org}/scorekeeper + /{org}/check-in) — header, bottom bars, the Account
+ * sheet's contents, the wrong-job wall, and the one geometry budget they all compose from.
  *
- * These two shells are inline-styled by design: single-purpose gloved-hands tools, a ruled
- * exception to the platform nav grammar (top-nav audit §3). This module holds what inline styles
- * cannot express — media queries and fixed furniture — and is SHARED so the twins cannot drift.
- * They already drifted once on colour (§D9): a volunteer who does both jobs watched the whole
- * screen change shade crossing between them.
+ * These two shells are a ruled exception to the platform nav grammar (top-nav audit §3): single-purpose
+ * gloved-hands tools, an inert wordmark, the doors in the tab bar on a phone and in the header above 640.
+ * This module is SHARED so the twins cannot drift. They already drifted once on colour (§D9): a volunteer
+ * who does both jobs watched the whole screen change shade crossing between them.
+ *
+ * ⚖ FIXED WARM (ruling R3). Both shells wrap `GuestKitRoot`, whose marker pins the kit's warm palette
+ * whatever the phone's Warm/Dark setting — a gate phone is shared, and a light screen reads in the sun.
+ * Every colour here is a kit token; the old console look and its `[data-admin-kit]` layer were folded
+ * into these rules by Tournament admin redesign Stage 6 (2026-10-07). The organizer's Check-in wears the
+ * same bucket bar inline inside the admin, which carries the same tokens in both of its themes.
  *
  * ── THE GEOMETRY BUDGET (read before adding anything to the bottom of these screens) ──────────
  *
@@ -17,9 +22,8 @@
  * and two pop-ups lost their primary button on six of eight phone sizes. The failure mode is
  * silent — everything renders, it is just underneath something.
  *
- * Both bars are PHONE-ONLY (≤640px, the breakpoint this shell already uses). Above it the tokens
- * are 0px, every `calc()` collapses to today's geometry exactly, and the header keeps the doors
- * the bars would otherwise carry — a desktop row has the room.
+ * Both bars are PHONE-ONLY (≤640px). Above it the tokens are 0px, every `calc()` collapses, and the
+ * header keeps the doors the bars would otherwise carry — a tablet's row has the room (at 44px, A27).
  */
 
 .shell {
@@ -29,38 +33,123 @@
   --dayof-bottom-h: calc(
     var(--dayof-tabbar-h) + var(--dayof-filterbar-h) + env(safe-area-inset-bottom, 0px)
   );
+  /* ── What the shells PUBLISH for the product's floating parts (Stage 6, 2026-10-07) ──
+     Three parts that are not the shells' own read the bottom of the screen from a token the shells
+     never used to set, so each sat where the PUBLIC site's 72px bar would be — the install banner on
+     top of the four buckets (F58). Each is stated here, from the budget above, never as a number:
+       · the product's notices (`NoticePill`, the save word) stand on `--bottom-nav-height` — the BAR,
+         the home indicator NOT included, as every bar in the product states it (they add the inset);
+       · the install banner stands on `--install-banner-bottom` — the bars AND the home indicator, so it
+         sits on the buckets' top edge, and above the indicator where there are no bars (above 640);
+       · a frame MENU (the Account sheet) sits on `--coach-foot-clear` — the TAB bar and the indicator:
+         a menu covers the buckets, as a menu covers the page, and leaves the tabs live (Sheet Frame D1). */
+  --bottom-nav-height: calc(var(--dayof-tabbar-h) + var(--dayof-filterbar-h));
+  --install-banner-bottom: var(--dayof-bottom-h);
+  --coach-foot-clear: calc(var(--dayof-tabbar-h) + env(safe-area-inset-bottom, 0px));
+  background: var(--home-paper);
 }
 
 @media (max-width: 640px) {
   .shell {
     --dayof-tabbar-h: 62px;
-    --dayof-filterbar-h: 46px;
+    /* 46px buckets (the tap floor) + the bar's padding (0.35rem × 2) + its top edge. */
+    --dayof-filterbar-h: 58px;
   }
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────────────────────── */
+/* The coaches portal's strip: a white bar over the paper, a hairline under it. Sticky, as before. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  min-height: var(--dayof-bar-h);
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--home-line);
+  background: var(--card-bg);
+}
 
 .identity {
+  flex: 1 1 auto;
+  min-width: 0;
   /* The wordmark is `nowrap` and the actions beside it cannot shrink, so without a clip here the
      mark paints straight across them the moment the row runs out of width. */
   overflow: hidden;
 }
 
-.hop {
+/* The INERT wordmark — text, never a door (top-nav audit §3: a gloved volunteer mid-game is never one
+   mis-tap from the consumer app). Its three parts in the strip's warm inks. */
+.wordmark {
+  font-family: var(--font-data);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+.markLogic { color: var(--home-olive); }
+.markHq { color: var(--text-tertiary); }
+
+/* The club's name under the wordmark — a label, so it keeps the console face and its capitals. */
+.orgName {
+  overflow: hidden;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-tertiary);
+}
+
+.doors {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* The hop to the other job ("Check-in →" / "Scorekeeper →") — a door, olive text — and Sign out beside
+   it, an action in the secondary ink. Above 640 only (the tab bar carries both on a phone), and at 44px:
+   a tablet at the scoring table is a touch screen, and these shells have no computer case (A27; today's
+   were 19px and 15px tall). */
+.hop,
+.signOut {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.375rem;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 650;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
 }
+.hop { color: var(--home-olive); }
+.signOut { color: var(--text-secondary); }
+.signOut:disabled { cursor: default; opacity: 0.65; }
+
+/* The ⇄ door to this event's public schedule (owner, 24 July): the 44px square it is drawn as (it was
+   41×30) — the admin header's own rule for the same pill (AdminKitEventHeader `.pill`). */
+.flip { flex-shrink: 0; }
+.flip :is(a, button) { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); justify-content: center; }
 
 /*
- * Doors the phone's tab bar now carries: the cross-role hop and Sign Out. They stay on desktop,
+ * Doors the phone's tab bar now carries: the cross-role hop and Sign out. They stay above 640px,
  * where the row has room and there is no tab bar to hold them.
  *
- * ⚠ Sign Out disappearing from this row is the one change here with a safety history. It was a
+ * ⚠ Sign out disappearing from this row is the one change here with a safety history. It was a
  * dead `/auth/logout` link that 404'd (J8-001), leaving a volunteer on a borrowed or shared phone
  * with no way to end their session — a privacy hole, not a broken link. It is now one tap behind
  * a permanently visible, labelled Account tab. If that ever proves too deep in owner QA, the fix
- * is to drop this class from the Sign Out wrapper, NOT to remove the Account tab.
+ * is to drop this class from the Sign out wrapper, NOT to remove the Account tab.
  */
 @media (max-width: 640px) {
   .deskOnly {
@@ -72,9 +161,9 @@
 /*
  * The surface's own status buckets. Above 640px this is a plain block sitting exactly where it
  * has always sat in the page's flow; below it, it pins itself above the tab bar. Rendering it in
- * its natural DOM position and letting the media query lift it is what keeps the desktop layout
- * byte-identical — the alternative (rendering it last and un-fixing it) would drop the buckets to
- * the bottom of a desktop page.
+ * its natural DOM position and letting the media query lift it is what keeps the tablet layout
+ * whole — the alternative (rendering it last and un-fixing it) would drop the buckets to the
+ * bottom of a tablet's page.
  */
 .filterBar {
   display: grid;
@@ -93,65 +182,89 @@
     margin: 0;
     gap: 0.4rem;
     padding: 0.35rem 0.6rem;
-    background: var(--hud-surface);
-    border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+    /* OPAQUE — the page's paper (F59). It wore the coaches bar's 97% ground without that bar's blur, so
+       a team's name read through it under the thumb. */
+    background: var(--home-paper);
+    border-top: 1px solid var(--home-line-strong);
   }
 }
 
-/* One bucket. Sized for a gloved thumb, not a mouse. */
+/* One bucket. Sized for a gloved thumb — 44px on a tablet, 46 on a phone (A27). */
 .barBtn {
-  min-height: 42px;
+  min-height: var(--tap-min, 44px);
   display: grid;
   place-content: center;
+  justify-items: center;
   gap: 0.1rem;
   padding: 0 0.4rem;
-  border: 1px solid rgba(148, 163, 184, 0.24);
+  border: 1px solid var(--home-line-strong);
   border-radius: 6px;
-  background: var(--surface-2);
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
   text-align: center;
   cursor: pointer;
 }
 
+/* The bucket you are in — the kit's chosen state (every chosen filter is olive; lime is the one primary
+   per view, which here is the score sheet's). */
 .barBtn[aria-pressed='true'] {
-  border-color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.12);
-  color: var(--fl-text);
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
 }
 
 .barBtn:focus-visible {
-  outline: 2px solid var(--logic-lime);
+  outline: 2px solid var(--home-olive);
   outline-offset: 2px;
 }
 
 /* The count leads on a phone, where the bar is the only place the numbers still live — the three
-   counter tiles that used to carry them are retired. On desktop the bucket keeps its one-line
-   "To Score 2" shape, because there the bar is a filter row, not a summary. */
-.barCount {
+   counter tiles that used to carry them are retired. Above 640 the bucket keeps its one-line
+   "To score 2" shape, because there the bar is a filter row, not a summary. The count is a readout,
+   so it keeps the console face the button no longer has.
+   ⚠ Two classes on every show/hide below: a waiting count also wears the rail's `.count` (another
+   module, `display: inline-flex`), and at equal weight BUNDLE ORDER would decide which count shows. */
+.barBtn .barCount {
   display: none;
+  font-family: var(--font-data);
 }
 
-@media (max-width: 640px) {
-  .barBtn {
-    min-height: 40px;
-    font-size: 0.58rem;
-    letter-spacing: 0.05em;
-  }
+.barBtnInline {
+  margin-left: 0.35em;
+  font-family: var(--font-data);
+}
 
-  .barCount {
+/* ⚖ A WAITING COUNT IS THE AMBER PILL (A28; the 1 October ruling). The Review bucket's count wears the
+   rail's waiting mark — `AdminKitFrame.module.css` `.count`, as the Teams division picker does — only
+   while it is above zero. The pill IS the count, never a second number beside it. Sized here to the
+   bucket's figure (two classes, so it beats the rail's row geometry whatever the bundle order). */
+.barBtn .barWaiting {
+  min-width: 22px;
+  height: 20px;
+  margin: 0 auto;
+  padding: 0 6px;
+  font-size: var(--type-support);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.barBtn .barBtnInline.barWaiting { margin: 0 0 0 0.35em; }
+
+@media (max-width: 640px) {
+  .barBtn { min-height: 46px; }
+
+  .barBtn .barCount {
     display: block;
-    font-size: 1rem;
+    font-size: var(--type-heading);
     font-weight: 900;
     line-height: 1;
-    color: inherit;
   }
+  .barBtn .barCount.barWaiting { display: inline-flex; font-size: var(--type-support); font-weight: 800; }
 
-  .barBtnInline {
+  .barBtn .barBtnInline {
     display: none;
   }
 }
@@ -172,12 +285,14 @@
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
-    background: var(--hud-surface);
-    border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.55);
+    /* OPAQUE — the page's paper (F59; it was 92% with no blur). */
+    background: var(--home-paper);
+    border-top: 1px solid var(--home-line);
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 
+/* The coaches portal's bar: the quiet tier for a tab you are not on, olive for where you are. */
 .tab {
   min-height: var(--dayof-tabbar-h);
   display: grid;
@@ -189,277 +304,125 @@
   border-top: 2px solid transparent;
   margin-top: -1px;
   background: transparent;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.01em;
   text-decoration: none;
   cursor: pointer;
 }
 
 .tab[aria-current='page'],
 .tab[aria-expanded='true'] {
-  color: var(--logic-lime);
-  border-top-color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.07);
-}
-
-.tab:focus-visible {
-  outline: 2px solid var(--logic-lime);
-  outline-offset: -2px;
-}
-
-/* ── The Account sheet ───────────────────────────────────────────────────────────────────── */
-
-.sheetBackdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  background: rgba(2, 6, 23, 0.86);
-}
-
-.sheet {
-  width: min(100%, 520px);
-  max-height: 82vh;
-  overflow-y: auto;
-  display: grid;
-  gap: 0.6rem;
-  padding: 1rem;
-  /* Clears the tab bar it opened from, plus the phone's home indicator. */
-  padding-bottom: calc(var(--dayof-tabbar-h) + env(safe-area-inset-bottom, 0px) + 1rem);
-  background: var(--surface);
-  border: 1px solid var(--blueprint-blue);
-  border-radius: 10px 10px 0 0;
-  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.45);
-}
-
-.sheetHead {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.sheetTitle {
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.sheetClose {
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 6px;
-  background: var(--surface-2);
-  color: var(--fl-text);
-  cursor: pointer;
-}
-
-/* Who is signed in. On a borrowed or shared phone at a gate this is the question the sheet exists
-   to answer first — the doors below it are secondary. */
-.whoCard {
-  display: grid;
-  gap: 0.3rem;
-  padding: 0.85rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
-  border-radius: 8px;
-  background: var(--surface-2);
-}
-
-.whoName {
-  font-family: var(--font-data);
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--fl-text);
-  overflow-wrap: anywhere;
-}
-
-.whoLine {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  color: var(--data-gray);
-  overflow-wrap: anywhere;
-}
-
-.sheetRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 48px;
-  padding: 0 0.85rem;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.sheetRow:focus-visible {
-  outline: 2px solid var(--logic-lime);
-  outline-offset: 2px;
-}
-
-.sheetRow .chev {
-  margin-left: auto;
-  color: var(--data-gray);
-}
-
-.sheetRowOut {
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  color: var(--logic-lime);
-}
-
-.sheetRow:disabled {
-  opacity: 0.65;
-  cursor: default;
-}
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 5 — only with the switch on) ═══════════════════════
-   The day-of shells' furniture in the kit's FIXED warm palette (ruling R3 — see the scorekeeper sheet's
-   kit section for why it is fixed): the four status buckets at the thumb, the tab bar (the coaches
-   portal's bar: the quiet tier for a tab you are not on, mixed case, olive for where you are), and the
-   Account sheet. Only the volunteer shells render these — the admin's check-in board mounts the filter
-   bar for the gate alone.
-   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
-
-/* ── The filter buckets ── */
-:global([data-admin-kit]) .barBtn {
-  border-color: var(--home-line-strong);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-}
-/* The bucket you are in — the kit's chosen state (every chosen filter in the admin is olive, 4a/4c;
-   lime is the one primary per view, which here is the score sheet's Finalize). */
-:global([data-admin-kit]) .barBtn[aria-pressed='true'] {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .barBtn:focus-visible { outline-color: var(--home-olive); }
-/* The count is a readout — it keeps the console face the button no longer has. */
-:global([data-admin-kit]) .barCount,
-:global([data-admin-kit]) .barBtnInline { font-family: var(--font-data); }
-
-@media (max-width: 640px) {
-  /* 46px buckets, as specimen 7 draws them — today's 40px is under the 44px tap floor. The budget every
-     bottom clearance composes from grows with the bar: 46 + its padding (0.35rem × 2) + its top edge. */
-  :global([data-admin-kit]) .shell { --dayof-filterbar-h: 58px; }
-  :global([data-admin-kit]) .filterBar {
-    background: rgba(var(--home-paper-rgb), 0.97);
-    border-top-color: var(--home-line-strong);
-  }
-  :global([data-admin-kit]) .barBtn {
-    min-height: 46px;
-    font-size: var(--type-support);
-    letter-spacing: normal;
-  }
-  :global([data-admin-kit]) .tabBar {
-    /* The coaches portal's bar ground (CoachesBottomNav's warm rule). */
-    background: rgba(var(--home-paper-rgb), 0.92);
-    border-top-color: var(--home-line);
-  }
-}
-
-/* ── The tab bar ── */
-:global([data-admin-kit]) .tab {
-  color: var(--text-tertiary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  text-transform: none;
-}
-:global([data-admin-kit]) .tab[aria-current='page'],
-:global([data-admin-kit]) .tab[aria-expanded='true'] {
   color: var(--home-olive);
   border-top-color: var(--home-olive);
   background: var(--home-olive-soft);
 }
-:global([data-admin-kit]) .tab:focus-visible { outline-color: var(--home-olive); }
 
-/* ── The Account sheet ── */
-:global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }
-:global([data-admin-kit]) .sheet {
-  border-color: var(--home-line);
+.tab:focus-visible {
+  outline: 2px solid var(--home-olive);
+  outline-offset: -2px;
+}
+
+/* ── The Account sheet's contents (the Sheet Frame's MENU — Stage 6 V4, A30) ──────────────────
+   The frame draws the sheet, its grab line, its dim and its small-capitals label; this is what it holds:
+   the person as the menu's head (on a borrowed gate phone "who am I signed in as, and what may I do?"
+   is the first question), then two menu rows in ONE treatment — ink words, a soft icon, 48px. Neither is
+   a door and Sign out deletes nothing, so neither is coloured. */
+.account {
+  padding: 0.25rem 0.5rem 0;
+}
+
+.who {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.125rem 0.125rem 0.75rem;
+  margin-bottom: 0.375rem;
+  border-bottom: 1px solid var(--home-line);
+}
+
+.whoName {
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.whoLine {
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  overflow-wrap: anywhere;
+}
+
+.menuRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 0.25rem;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.menuRow svg { flex-shrink: 0; color: var(--text-secondary); }
+.menuRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; border-radius: 6px; }
+.menuRow:disabled { cursor: default; opacity: 0.65; }
+
+/* ── The wrong-job wall ──────────────────────────────────────────────────────────────────────
+   A volunteer on the other job's screen — a gate volunteer who scanned the scorekeeper's code (A26 makes
+   a one-job volunteer). The paper, one card, a label, the sentence, and a door to the job they DO hold. */
+.wall {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--home-paper);
+}
+
+.wallCard {
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
   background: var(--card-bg);
   box-shadow: var(--home-shadow);
 }
-:global([data-admin-kit]) .sheetTitle {
-  color: var(--text-secondary);
+
+.wallLabel {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;
-}
-:global([data-admin-kit]) .sheetClose {
-  border-color: var(--home-line-strong);
-  background: var(--card-bg);
+  text-transform: uppercase;
   color: var(--text-secondary);
 }
-/* Who is signed in — a card inside the white sheet keeps its hairline, no fill of its own. */
-:global([data-admin-kit]) .whoCard {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-}
-:global([data-admin-kit]) .whoName {
-  color: var(--text-primary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 700;
-}
-:global([data-admin-kit]) .whoLine {
-  color: var(--text-tertiary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  letter-spacing: normal;
-}
-:global([data-admin-kit]) .sheetRow {
-  border-color: var(--home-line-strong);
-  color: var(--text-primary);
-  font-family: var(--font-sans, system-ui, sans-serif);
+
+.wallText {
+  margin: 0;
   font-size: var(--type-body);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
-:global([data-admin-kit]) .sheetRow:focus-visible { outline-color: var(--home-olive); }
-:global([data-admin-kit]) .sheetRow .chev { color: var(--text-tertiary); }
-/* Sign out — a lime tint today, so the olive accent on the kit (slice 4b's rule); after the base row. */
-:global([data-admin-kit]) .sheetRowOut {
-  border-color: rgba(var(--home-olive-rgb), 0.5);
-  color: var(--home-olive);
-}
+
+.wallCard .hop { margin-top: 0.75rem; padding-left: 0; }
 
 /* ── The bar INLINE (the organizer's Check-in — Tournament admin redesign G7, 2026-09-29) ──
    The same four buckets at the top of the organizer's board: never pinned (the admin has its own
    bottom nav). On a phone the count still leads (46px, one line at 390); at a desk the bar is one
-   line of auto-width buttons at the admin's control height — "Not arrived 16". It outranks the pinned rules
-   above by WEIGHT, not by its place in the file: the kit-scoped selector beats the kit's pinned
-   ground (`[data-admin-kit] .filterBar`), the plain one the base. The gate never wears this class. */
-.filterBar.filterBarInline,
-:global([data-admin-kit]) .filterBar.filterBarInline {
+   line of auto-width buttons at the admin's control height — "Not arrived 16". Two classes, so it
+   outranks the pinned rules above by weight. The gate never wears this class. */
+.filterBar.filterBarInline {
   position: static;
   margin: 0;
   padding: 0;

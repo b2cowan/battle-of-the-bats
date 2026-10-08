@@ -48,8 +48,8 @@ export function useScorekeeperFlip(): ScorekeeperFlipState['setTournaments'] {
  * morphing — the same resolve-then-mount rule the public pill follows. Error paths publish [] →
  * the org-site fallback still renders, so the door never stays missing on a working shell.
  */
-export function ScorekeeperFlipPill({ orgSlug }: { orgSlug: string }) {
+export function ScorekeeperFlipPill({ orgSlug, className }: { orgSlug: string; className?: string }) {
   const tournaments = useContext(ScorekeeperFlipContext)?.tournaments;
   if (!tournaments) return null;
-  return <FlipPill resolution={resolveScorekeeperFlip({ orgSlug, tournaments })} />;
+  return <FlipPill resolution={resolveScorekeeperFlip({ orgSlug, tournaments })} className={className} />;
 }

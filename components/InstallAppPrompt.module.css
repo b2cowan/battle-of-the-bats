@@ -2,11 +2,15 @@
   position: fixed;
   /* Clear the bottom nav / admin strip — and the My Team dock when it's up
      (--dock-clearance is the dock's own published viewport clearance, which
-     already includes the nav + safe area beneath it). */
-  bottom: max(
+     already includes the nav + safe area beneath it).
+     ⚠ A shell with bars of its own says EXACTLY where the banner stands (`--install-banner-bottom`): the
+     volunteer shells publish their buckets + tabs + the home indicator (Stage 6, A31). Read from
+     `--bottom-nav-height` — the public site's 72px, which they never set — it sat ON the four buckets
+     on an iPhone, and a tap on "To score" hit the banner (F58). */
+  bottom: var(--install-banner-bottom, max(
     calc(var(--bottom-nav-height, 0px) + var(--admin-strip-h, 0px)),
     var(--dock-clearance, 0px)
-  );
+  ));
   left: 0;
   right: 0;
   /* ⚠ UNDER EVERY SHEET, OVER THE PAGE (2026-10-06). A nudge never covers a surface someone opened.
@@ -121,6 +125,53 @@
   background: var(--white-10);
   color: var(--white-85);
 }
+
+/* ── The FIXED-WARM shells' skin (Tournament admin redesign Stage 6, V6 — ruled 2026-10-07) ──────────
+   The volunteer shells are warm whatever the phone says (ruling R3, the guest marker), and the
+   pref-gated skin below answers only the user's theme — so on them the banner wore the dark product's
+   blue edge and console capitals. Under the guest marker it is the shells' own: a white bar with the
+   olive edge, the title in sentence case, the instructions in the body face, a plain × at 44px. The
+   banner is the whole product's; this is its look where the page is fixed warm, not a fork. Its foot
+   pads no home indicator: the shells' `--install-banner-bottom` already stands it above the indicator
+   (on their bars, or above it where there are none). ⚠ TOKENS ONLY. */
+:global([data-guest-kit]) .banner {
+  gap: 0.75rem;
+  padding: 0.625rem 0.375rem 0.625rem 1rem;
+  background: var(--card-bg);
+  border-top: 2px solid var(--home-olive);
+  box-shadow: 0 -6px 18px rgba(var(--home-line-rgb), 0.1);
+}
+:global([data-guest-kit]) .icon { width: 40px; height: 40px; border-radius: 9px; }
+:global([data-guest-kit]) .title {
+  margin: 0;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+:global([data-guest-kit]) .instructions {
+  font-size: var(--type-support);
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+:global([data-guest-kit]) .instructions strong { color: var(--text-primary); }
+:global([data-guest-kit]) .install {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  box-shadow: none;
+}
+:global([data-guest-kit]) .install:hover { background: var(--home-lime); box-shadow: none; transform: none; }
+/* The plain × (owner, 2026-10-07): the glyph in its 44px square, no disc behind it. */
+:global([data-guest-kit]) .dismiss { background: none; color: var(--text-secondary); }
+:global([data-guest-kit]) .dismiss:hover { background: none; color: var(--text-primary); }
 
 /* ── Pref-gated warm skin (design_decisions 2026-07-23) ───────────────────────
    Worn ONLY by instances passed `followsUserTheme` (the consumer shell), which

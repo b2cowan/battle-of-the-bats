@@ -25,11 +25,12 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { usePathname } from 'next/navigation';
-import { UserCheck, UserX, RotateCcw, Search, DollarSign, ClipboardList, Plus, Trash2, Check, ChevronRight } from 'lucide-react';
+import { UserCheck, UserX, RotateCcw, Search, Plus, Trash2, Check, ChevronRight } from 'lucide-react';
 import BottomSheet from '@/components/admin/BottomSheet';
 import { DayOfFilterBar, DayOfFilterButton } from '@/components/volunteer/DayOfBottomBars';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, RepChip, RowAction, repKit } from '@/components/admin/kit/club/RepKit';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import { TEAM_RECORD_WORDS } from '@/lib/registration-words';
 import { formatTime } from '@/lib/utils';
 import { formatInOrgZone } from '@/lib/timezone';
 import { useVisiblePoll } from '@/lib/hooks/useVisiblePoll';
@@ -113,10 +114,18 @@ function PaymentFact({ team, fee }: { team: CheckInTeam; fee: number | null }) {
   return <span className={styles.owes}>{fee ? `Owes ${formatMoney(fee)}` : 'Unpaid'}</span>;
 }
 
-/** Where the team is: in at a time, or a no-show; nothing while it has not arrived. */
+/** Where the team is: in at a time, or a no-show; nothing while it has not arrived. The chip keeps its
+ *  capitals ("IN") and the time sits beside it in the caption's ink — never inside a capitals style, where
+ *  "8:59 a.m." read "8:59 A.M." (F61, Stage 6 — the clock ruling has no carve-out). */
 function ArrivalChip({ team }: { team: CheckInTeam }) {
   if (team.checkInStatus === 'checked_in') {
-    return <span className={styles.inChip}>{team.checkedInAt ? GAME_DAY_WORDS.arrivedAt(timeOf(team.checkedInAt)) : STATUS_META.checked_in.label}</span>;
+    if (!team.checkedInAt) return <span className={styles.inChip}>{STATUS_META.checked_in.label}</span>;
+    return (
+      <span className={styles.arrival}>
+        <span className={styles.inChip}>{GAME_DAY_WORDS.arrived}</span>
+        <span className={styles.inTime}>{timeOf(team.checkedInAt)}</span>
+      </span>
+    );
   }
   if (team.checkInStatus === 'no_show') return <RepChip tone="bad">{STATUS_META.no_show.label}</RepChip>;
   return null;
@@ -542,11 +551,18 @@ function CheckInSheet({ team, fee, divisionName, locked, busy, onAction, onClose
     setEditing(false);
   }
 
+  // The record head's one context line (Stage 6 V3, A29): the division and where the team is, in the
+  // buckets' own words — the status said once (its eyebrow and a "CHECKED IN" chip said it twice).
+  const where = team.checkInStatus === 'checked_in'
+    ? GAME_DAY_WORDS.checkedInAt(team.checkedInAt ? timeOf(team.checkedInAt) : null, team.checkedInByName)
+    : STATUS_META[team.checkInStatus].label;
+
   return (
     <BottomSheet
       open
       onClose={onClose}
       title={team.name}
+      subtitle={GAME_DAY_WORDS.sheetContext(divisionName, where)}
       footer={
         <div className={styles.sheetFooter}>
           {team.checkInStatus === 'not_arrived' ? (
@@ -566,33 +582,29 @@ function CheckInSheet({ team, fee, divisionName, locked, busy, onAction, onClose
         </div>
       }
     >
-      <div className={styles.sheetMeta}>
-        <span>{divisionName}</span>
-        <span className={styles.sheetStatus} data-status={team.checkInStatus}>{STATUS_META[team.checkInStatus].label}</span>
-        {team.checkInStatus === 'checked_in' && team.checkedInByName && (
-          <span className={styles.sheetBy}>by {team.checkedInByName} {team.checkedInAt ? `· ${timeOf(team.checkedInAt)}` : ''}</span>
-        )}
-      </div>
-
+      {/* Payment: what is owed in the amber of money owed, then the action as the white button at 44px
+          (it was an amber-tinted 35px box). Mark unpaid is J8-016's reversal, in the Teams record's word. */}
       <div className={styles.sheetSection}>
-        <span className={styles.sheetLabel}><DollarSign size={13} aria-hidden /> Payment</span>
+        <span className={styles.sheetLabel}>Payment</span>
         {team.paymentStatus === 'paid' ? (
-          <div className={styles.paidRow}>
-            <span><Check size={15} aria-hidden /> Paid{team.paymentCollectedAt ? ` · collected at gate ${timeOf(team.paymentCollectedAt)}` : ''}</span>
-            {/* J8-016: gate mark-paid is now reversible like every other gate action. */}
-            <button type="button" className={styles.unpayBtn} disabled={locked || busy} onClick={handleUnmarkPaid}>
-              Un-pay
+          <div className={styles.sheetLine}>
+            <span><Check size={15} aria-hidden className={styles.paidMark} /> {GAME_DAY_WORDS.paidAt(team.paymentCollectedAt ? timeOf(team.paymentCollectedAt) : null)}</span>
+            <button type="button" className={`btn btn-outline ${styles.sheetAction}`} disabled={locked || busy} onClick={handleUnmarkPaid}>
+              {TEAM_RECORD_WORDS.markUnpaid}
             </button>
           </div>
         ) : (
-          <button type="button" className={styles.markPaidBtn} disabled={locked || busy} onClick={handleMarkPaid}>
-            Mark paid {fee ? `· ${formatMoney(fee)}` : ''}
-          </button>
+          <div className={styles.sheetLine}>
+            <PaymentFact team={team} fee={fee} />
+            <button type="button" className={`btn btn-outline ${styles.sheetAction}`} disabled={locked || busy} onClick={handleMarkPaid}>
+              {TEAM_RECORD_WORDS.markPaid(fee ? formatMoney(fee) : null)}
+            </button>
+          </div>
         )}
       </div>
 
       <div className={styles.sheetSection}>
-        <span className={styles.sheetLabel}><ClipboardList size={13} aria-hidden /> Roster</span>
+        <span className={styles.sheetLabel}>Roster</span>
 
         {!editing && team.roster.length > 0 && (
           <>
@@ -617,10 +629,14 @@ function CheckInSheet({ team, fee, divisionName, locked, busy, onAction, onClose
           </>
         )}
 
+        {/* J8-011: a real button (no tinted panel — they are retired), the white action at 44px. */}
         {!editing && team.roster.length === 0 && (
-          <button type="button" className={styles.addRosterBtn} disabled={locked} onClick={() => { setRows([{ name: '', jerseyNumber: '', dateOfBirth: '', position: '' }]); setEditing(true); }}>
-            <Plus size={15} aria-hidden /> Add roster at the gate
-          </button>
+          <div className={styles.sheetLine}>
+            <span>{GAME_DAY_WORDS.noRosterYet}</span>
+            <button type="button" className={`btn btn-outline ${styles.sheetAction}`} disabled={locked} onClick={() => { setRows([{ name: '', jerseyNumber: '', dateOfBirth: '', position: '' }]); setEditing(true); }}>
+              <Plus size={15} aria-hidden /> {GAME_DAY_WORDS.addRoster}
+            </button>
+          </div>
         )}
 
         {editing && (

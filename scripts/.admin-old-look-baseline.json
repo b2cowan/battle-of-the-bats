@@ -174,18 +174,9 @@
   "app/[orgSlug]/admin/tournaments/settings/settings-access.module.css": {
     "kitScope": 6
   },
-  "app/[orgSlug]/admin/tournaments/staff-kit/staff-kit.module.css": {
-    "kitScope": 10
-  },
   "app/[orgSlug]/admin/tournaments/venues/page.tsx": {
     "kx": 8,
     "helpers": 3
-  },
-  "app/[orgSlug]/check-in/check-in-volunteer.module.css": {
-    "kitScope": 6
-  },
-  "app/[orgSlug]/scorekeeper/scorekeeper.module.css": {
-    "kitScope": 58
   },
   "components/admin/LiveEventLog.tsx": {
     "kx": 6,
@@ -227,12 +218,5 @@
   },
   "components/chat/NewRoomDialog.module.css": {
     "kitScope": 21
-  },
-  "components/volunteer/DayOfShell.module.css": {
-    "kitScope": 25
-  },
-  "components/volunteer/ShellSignOutButton.tsx": {
-    "kx": 1,
-    "helpers": 1
   }
 }

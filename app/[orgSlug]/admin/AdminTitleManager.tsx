@@ -28,6 +28,8 @@ const ROUTE_LABELS: Array<[RegExp, string]> = [
   [/\/admin\/tournaments\/communication(?:\/.*)?$/, 'Communication'],
   [/\/admin\/tournaments\/branding(?:\/.*)?$/, 'Tournament Branding'],
   [/\/admin\/tournaments\/summary(?:\/.*)?$/, 'Summary'],
+  // Stage 6 (2026-10-07): the tab said "Admin" — and "Staff Kit" before that; one spelling, the title's.
+  [/\/admin\/tournaments\/staff-kit(?:\/.*)?$/, 'Staff kit'],
   [/\/admin\/tournaments\/settings\/event(?:\/.*)?$/, 'Event Settings'],
   [/\/admin\/tournaments\/settings(?:\/.*)?$/, 'Tournament Settings'],
   [/\/admin\/tournaments(?:\/)?$/, 'Tournaments'],

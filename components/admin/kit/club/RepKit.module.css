@@ -568,10 +568,14 @@
    one shows), exactly as the portal's clears its own — ⚠ /review 2026-09-29 caught the first version
    sitting at the window's foot UNDER that nav (300 over 250), so a failed save on a phone was
    invisible. The word never blocks a tap on what is under it — except Retry, which is a button. ── */
+/* ⚠ It stands ON the install banner while one shows (`--install-banner-h`, published by InstallAppPrompt
+   while it is up — Stage 6, 2026-10-07): the banner sits over this pill (255 over 250, pinned by the
+   banner's layer guard), so a volunteer's first score on an iPhone, which arrives with the banner,
+   confirmed itself behind it. */
 .savePill {
   position: fixed;
   right: 1.25rem;
-  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px) + var(--install-banner-h, 0px));
   z-index: 250;
   display: inline-flex;
   align-items: center;
@@ -600,6 +604,8 @@
   white-space: nowrap;
 }
 .saveStatus svg { color: var(--success); }
+/* A notice the reader did not cause (`NoticePill news` — a score sent back) is not a success: no green tick. */
+.saveStatusNews svg { color: var(--text-tertiary); }
 .savePill[data-state='error'] .saveStatus,
 .savePill[data-state='held'] .saveStatus { color: var(--danger-light); }
 .saveRetry { background: none; border: none; padding: 0; cursor: pointer; font: inherit; color: inherit; text-decoration: underline; }
@@ -609,7 +615,7 @@
 @media (max-width: 900px) {
   .savePill {
     right: 0.75rem;
-    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + var(--admin-strip-h, 0px) + 0.6rem);
+    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + var(--admin-strip-h, 0px) + 0.6rem + var(--install-banner-h, 0px));
   }
 }
 /* A long failure sentence wraps on a phone rather than running off the window. */

@@ -2,8 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from '@/lib/auth';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { DAYOF_KIT } from './day-of-kit';
+import styles from './DayOfShell.module.css';
 
 /**
  * Sign-out control for the volunteer shells (scorekeeper + gate check-in) — J8-001.
@@ -13,15 +12,12 @@ import { DAYOF_KIT } from './day-of-kit';
  * to end their session (a privacy hole, not just a dead link). This signs out via the same
  * `signOut()` client call every other shell uses, then sends them to login.
  *
- * Styled to match the header's existing "Sign Out" link (the shells use inline styles, not CSS
- * modules), so the visual stays identical — only the dead Link becomes a working button.
+ * Shown above 640px only (the Account sheet carries Sign out on a phone), at 44px — a tablet at the
+ * scoring table is a touch screen (Stage 6, A27; it was 15px tall). Its look is the shell's `.signOut`.
  */
 export default function ShellSignOutButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  // Admin Design Continuity slice 5: the kit's patch while the switch is on (the shell's layout says so),
-  // today's style object untouched while it is off.
-  const kx = useKitStyle();
 
   async function handleSignOut() {
     if (loading) return;
@@ -32,25 +28,8 @@ export default function ShellSignOutButton() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleSignOut}
-      disabled={loading}
-      style={kx({
-        fontFamily: 'var(--font-data)',
-        fontSize: '0.7rem',
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        color: '#94A3B8',
-        background: 'none',
-        border: 'none',
-        padding: 0,
-        cursor: loading ? 'default' : 'pointer',
-        flexShrink: 0,
-      }, DAYOF_KIT.signOut)}
-    >
-      {/* "Sign out" — the Account sheet's spelling. Drawn in capitals with the switch off, so the two
-          only disagreed once the kit showed them in mixed case. */}
+    <button type="button" className={styles.signOut} onClick={handleSignOut} disabled={loading}>
+      {/* "Sign out" — the Account sheet's spelling. */}
       {loading ? 'Signing out…' : 'Sign out'}
     </button>
   );

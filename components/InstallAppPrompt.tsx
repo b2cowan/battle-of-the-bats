@@ -234,10 +234,34 @@ export default function InstallAppPrompt({
     setMode('hidden');
   }
 
+  // While it shows, the banner says how tall it is (`--install-banner-h` on the root), so a notice that
+  // floats above the same bars — the product's `NoticePill` and save word — stands on it instead of
+  // under it (Stage 6, 2026-10-07: a volunteer's first score on an iPhone arrives with the banner up, and
+  // its confirmation sat behind it). Cleared the moment it hides.
+  const bannerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = bannerRef.current;
+    if (mode === 'hidden' || !el) return;
+    const root = document.documentElement;
+    const publish = () => root.style.setProperty('--install-banner-h', `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    publish();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(publish);
+    observer?.observe(el);
+    return () => {
+      observer?.disconnect();
+      // Two prompts can be mounted at once (the coaches portal's layout and its live schedule): if another
+      // is still showing, it keeps its height published rather than this one clearing it.
+      const other = document.querySelector<HTMLElement>('[aria-label="Install app prompt"]');
+      if (other && other !== el) root.style.setProperty('--install-banner-h', `${Math.ceil(other.getBoundingClientRect().height)}px`);
+      else root.style.removeProperty('--install-banner-h');
+    };
+  }, [mode]);
+
   if (mode === 'hidden') return null;
 
   return (
     <div
+      ref={bannerRef}
       className={`${styles.banner}${followsUserTheme ? ` ${warm.warmVars} ${styles.bannerWarmTab}` : ''}`}
       role="complementary"
       aria-label="Install app prompt"
@@ -254,7 +278,8 @@ export default function InstallAppPrompt({
           ) : mode === 'ios-chrome' ? (
             <>Tap <strong>⋯</strong> in the top-right, then <strong>Add to Home Screen</strong></>
           ) : (
-            <>Tap <strong>Share</strong> <ShareIcon /> in Safari&apos;s toolbar, then <strong>Add to Home Screen</strong></>
+            // "Add to Home Screen" keeps Apple's capitals: it is the name of the button they look for. spelling-ok
+            <>Tap <strong>Share</strong> <ShareIcon />, then <strong>Add to Home Screen</strong>.</>
           )}
         </p>
       </div>

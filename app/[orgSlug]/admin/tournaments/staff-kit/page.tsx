@@ -1,59 +1,86 @@
 'use client';
 
 /**
- * J1-080 — Day-of Staff Kit. One screen that hands out the two volunteer
- * surfaces (Scorekeeper + Gate/Check-in) as QR codes + copy-links, with a
- * printable one-pager for the volunteer table. Aggregates links/screens that
- * already exist; volunteers still authenticate on landing.
+ * J1-080 — Day-of Staff kit. One screen that hands out the two volunteer surfaces (Scorekeeper + Gate)
+ * as QR codes + copy-links, and a printed page of its own for the volunteer table. Aggregates links and
+ * screens that already exist; volunteers still authenticate on landing.
+ *
+ * Tournament admin redesign Stage 6, V7 (ruled 2026-10-07; F65):
+ *   · the title band every Stage 1 page wears — "Staff kit", Print the boxed 44px icon on a phone and the
+ *     white button at a desk (it was the retired grey button); one sentence under it (it was four lines);
+ *   · two cards, each its QR code (dark on a FIXED white square in both themes — scanners), one line, the
+ *     link breaking only at a slash (it broke "scorekeep / er"), Copy link (an action: the white button)
+ *     and Open (a door: olive text, a new tab);
+ *   · "Invite a volunteer" — a door to Members' invite with the volunteer role chosen (A26). The closing
+ *     paragraph it replaces named a path in another spelling than the rail's, a role that no longer
+ *     exists by that name, and a promise the product kept only for existing accounts (F62);
+ *   · a PRINTED PAGE of its own (Letter, one page): the club, the event and its dates, the two codes at
+ *     210px with their links, three steps, a footer — nothing of the admin. It printed the rail, the strip
+ *     and the event header around the codes (Summary's J1-110 again). Summary's printed page and this one
+ *     share one frame (`PrintedPage`): a copy portalled to <body>, hidden on screen, the only thing on paper.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useSyncExternalStore, type ReactNode } from 'react';
+import Link from 'next/link';
 import QRCode from 'qrcode';
-import { ClipboardList, ScanLine, Check, Copy, Printer, ExternalLink } from 'lucide-react';
+import { ClipboardList, ScanLine, Check, Copy, Printer, ExternalLink, ChevronRight } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { TournamentAdminHeader } from '@/components/admin/tournament';
-import s from '../../admin-common.module.css';
+import { hasCapability } from '@/lib/roles';
+import { getMembersHref } from '@/lib/billing-urls';
+import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { STAFF_KIT_WORDS } from '@/lib/volunteer-words';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { screenParts } from '@/components/admin/tournament/ScreenParts';
+import PrintedPage from '@/components/admin/tournament/PrintedPage';
 import styles from './staff-kit.module.css';
 
-type Surface = {
-  key: 'scorekeeper' | 'check-in';
-  title: string;
-  blurb: string;
-  path: string;
-};
+type SurfaceKey = 'scorekeeper' | 'gate';
+type Surface = { key: SurfaceKey; path: string; icon: ReactNode };
 
 const SURFACES: Surface[] = [
-  { key: 'scorekeeper', title: 'Scorekeeper', blurb: 'Enter game scores from any field.', path: 'scorekeeper' },
-  { key: 'check-in', title: 'Gate / Check-in', blurb: 'Check teams in at the gate.', path: 'check-in' },
+  { key: 'scorekeeper', path: 'scorekeeper', icon: <ScanLine size={16} aria-hidden /> },
+  { key: 'gate', path: 'check-in', icon: <ClipboardList size={16} aria-hidden /> },
 ];
 
-export default function StaffKitPage() {
-  usePageTitle('Staff Kit');
-  const { currentTournament, loading } = useTournament();
-  const { currentOrg } = useOrg();
+const noSubscribe = () => () => {};
 
-  const [qr, setQr] = useState<Record<string, string>>({});
-  const [copied, setCopied] = useState<string | null>(null);
+/** "fieldlogichq.ca/club/scorekeeper" with a break opportunity after each slash — and nowhere else. */
+function BreakAtSlash({ text }: { text: string }) {
+  const parts = text.split('/');
+  return <>{parts.map((part, i) => (i < parts.length - 1 ? <span key={i}>{part}/<wbr /></span> : <span key={i}>{part}</span>))}</>;
+}
+
+export default function StaffKitPage() {
+  usePageTitle(STAFF_KIT_WORDS.title);
+  const { currentTournament, loading } = useTournament();
+  const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
+  // The links are this browser's own address — read only once there is a window.
+  const inBrowser = useSyncExternalStore(noSubscribe, () => true, () => false);
+
+  const [qr, setQr] = useState<Partial<Record<SurfaceKey, string>>>({});
+  const [copied, setCopied] = useState<SurfaceKey | null>(null);
 
   // Absolute URLs are resolved on the client (we need window.location.origin).
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const origin = inBrowser ? window.location.origin : '';
+  const host = inBrowser ? window.location.host : '';
   const urlFor = useCallback(
     (path: string) => (currentOrg ? `${origin}/${currentOrg.slug}/${path}` : ''),
     [origin, currentOrg],
   );
 
   useEffect(() => {
-    if (!currentOrg) return;
+    if (!currentOrg || !origin) return;
     let cancelled = false;
     (async () => {
-      const next: Record<string, string> = {};
+      const next: Partial<Record<SurfaceKey, string>> = {};
       for (const surface of SURFACES) {
         try {
           next[surface.key] = await QRCode.toDataURL(urlFor(surface.path), {
-            width: 320,
+            width: 420,
             margin: 1,
+            // Dark on light for scanners, in both themes — the square they sit on is fixed white too.
             color: { dark: '#0a0a0a', light: '#ffffff' },
           });
         } catch {
@@ -63,9 +90,9 @@ export default function StaffKitPage() {
       if (!cancelled) setQr(next);
     })();
     return () => { cancelled = true; };
-  }, [currentOrg, urlFor]);
+  }, [currentOrg, origin, urlFor]);
 
-  const copy = useCallback(async (key: string, text: string) => {
+  const copy = useCallback(async (key: SurfaceKey, text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(key);
@@ -75,82 +102,138 @@ export default function StaffKitPage() {
     }
   }, []);
 
+  // The door to Members' invite, the volunteer role chosen (A26) — only for someone who may invite.
+  const canInvite = !!userRole && canOpen('module_members') && hasCapability(userRole, userCapabilities, 'manage_members');
+  const inviteHref = currentOrg ? `${getMembersHref(currentOrg.slug, currentOrg.planId)}?invite=volunteer` : null;
+  /** "fieldlogichq.ca/club/scorekeeper" — the link as the card and the printed page show it. */
+  const displayUrl = (path: string) => (currentOrg ? `${host}/${currentOrg.slug}/${path}` : '');
+
+  const ready = Boolean(currentTournament && currentOrg);
+  const W = STAFF_KIT_WORDS;
+
   return (
-    <div className={s.page}>
-      <TournamentAdminHeader
-        eyebrow="Game Day"
-        title="Staff Kit"
-        kitTitle="Staff kit"
-        subtitle={currentTournament ? currentTournament.name : 'Select a tournament'}
-        mobileActionsInline
-        actions={
-          <button type="button" className="btn btn-ghost btn-data" onClick={() => window.print()} aria-label="Print the staff kit one-pager">
-            <Printer size={13} />
-            <span>Print</span>
+    <div className={styles.page}>
+      <AdminPageHeader
+        inlineActions
+        title={W.title}
+        actions={ready ? (
+          <button
+            type="button"
+            className={`${screenParts.plainButton} ${screenParts.headerButton}`}
+            onClick={() => window.print()}
+            aria-label={W.print}
+            title={W.print}
+          >
+            <Printer size={15} aria-hidden />
+            <span className={screenParts.headerButtonLabel}>{W.print}</span>
           </button>
-        }
+        ) : undefined}
       />
 
-      {!loading && !currentTournament && (
-        <div className={styles.empty}>Select a tournament to hand out volunteer links.</div>
-      )}
+      {!loading && !currentTournament && <p className={styles.empty}>{W.noEvent}</p>}
 
-      {currentTournament && currentOrg && (
+      {ready && currentOrg && (
         <>
-          <p className={styles.intro}>
-            Set your volunteers up before game day. Each volunteer needs a sign-in first — invite them once
-            (see below); then they scan the code or open the link, sign in, and see only their job
-            (scoring or the gate), nothing else in your admin.
-          </p>
+          <p className={styles.intro}>{W.intro}</p>
 
           <div className={styles.grid}>
             {SURFACES.map(surface => {
               const url = urlFor(surface.path);
-              const Icon = surface.key === 'scorekeeper' ? ScanLine : ClipboardList;
+              const card = W.card[surface.key];
               return (
-                <section key={surface.key} className={styles.card}>
+                <section key={surface.key} className={styles.card} aria-labelledby={`staff-kit-${surface.key}`}>
                   <div className={styles.cardHead}>
-                    <Icon size={16} aria-hidden />
+                    {surface.icon}
                     <div>
-                      <h2 className={styles.cardTitle}>{surface.title}</h2>
-                      <p className={styles.cardBlurb}>{surface.blurb}</p>
+                      <h2 id={`staff-kit-${surface.key}`} className={styles.cardTitle}>{card.title}</h2>
+                      <p className={styles.cardBlurb}>{card.blurb}</p>
                     </div>
                   </div>
 
                   <div className={styles.qrWrap}>
                     {qr[surface.key] ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={qr[surface.key]} alt={`QR code linking to the ${surface.title} screen`} className={styles.qr} />
+                      <img src={qr[surface.key]} alt={`QR code linking to the ${card.title} screen`} className={styles.qr} />
                     ) : (
                       <div className={styles.qrPlaceholder} aria-hidden />
                     )}
                   </div>
 
-                  <div className={styles.urlRow}>
-                    <span className={styles.url} title={url}>{url}</span>
-                    <div className={styles.urlActions}>
-                      <button type="button" className="btn btn-ghost btn-data" onClick={() => copy(surface.key, url)} aria-label={`Copy the ${surface.title} link`}>
-                        {copied === surface.key ? <Check size={13} /> : <Copy size={13} />}
-                        <span>{copied === surface.key ? 'Copied' : 'Copy'}</span>
-                      </button>
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-data" aria-label={`Open the ${surface.title} screen`}>
-                        <ExternalLink size={13} />
-                        <span>Open</span>
-                      </a>
-                    </div>
+                  <p className={styles.url}><BreakAtSlash text={displayUrl(surface.path)} /></p>
+
+                  <div className={styles.cardFoot}>
+                    <button type="button" className={screenParts.plainButton} onClick={() => copy(surface.key, url)} aria-label={`${W.copy}: ${card.title}`}>
+                      {copied === surface.key ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
+                      <span>{copied === surface.key ? W.copied : W.copy}</span>
+                    </button>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className={styles.door} aria-label={`${W.open}: ${card.title} (opens in a new tab)`}>
+                      {W.open}
+                      <ExternalLink size={16} aria-hidden />
+                    </a>
                   </div>
                 </section>
               );
             })}
           </div>
 
-          <p className={styles.note}>
-            Inviting a volunteer? Add them under <strong>Settings &amp; Access → Members</strong>{' '}
-            as a Volunteer and pick whether they&apos;re scorekeeping, on the gate, or both — the invite email links them
-            straight to the right screen.
-          </p>
+          {canInvite && inviteHref && (
+            <Link href={inviteHref} className={styles.door}>
+              {W.invite}
+              <ChevronRight size={16} aria-hidden />
+            </Link>
+          )}
+
+          {currentTournament && (
+            <PrintedKit
+              club={currentOrg.name}
+              event={currentTournament.name}
+              dates={formatEventDateRange(currentTournament.startDate, currentTournament.endDate, true)}
+              displayUrl={displayUrl}
+              qr={qr}
+            />
+          )}
         </>
       )}
     </div>
+  );
+}
+
+/** The printed page for the volunteer table: hidden on screen; in print, the only thing on the paper. */
+function PrintedKit({ club, event, dates, displayUrl, qr }: {
+  club: string;
+  event: string;
+  dates: string | null;
+  displayUrl: (path: string) => string;
+  qr: Partial<Record<SurfaceKey, string>>;
+}) {
+  const W = STAFF_KIT_WORDS;
+  return (
+    <PrintedPage
+      name="staff-kit"
+      eyebrow={W.printEyebrow(club)}
+      title={event}
+      dates={dates}
+      foot={<><span>FieldLogicHQ</span><span>{W.printedOn(formatStoredDate(tournamentToday()))}</span></>}
+    >
+      <div className={styles.paperCodes}>
+        {SURFACES.map(surface => {
+          const card = W.card[surface.key];
+          return (
+            <div key={surface.key} className={styles.paperCode}>
+              <h2>{card.title}</h2>
+              <p>{card.blurb}</p>
+              {qr[surface.key]
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={qr[surface.key]} alt="" className={styles.paperQr} />
+                : <div className={styles.paperQr} aria-hidden />}
+              <code>{displayUrl(surface.path)}</code>
+            </div>
+          );
+        })}
+      </div>
+      <ol className={styles.paperSteps}>
+        {W.steps.map(step => <li key={step}>{step}</li>)}
+      </ol>
+    </PrintedPage>
   );
 }

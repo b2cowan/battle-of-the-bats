@@ -8,23 +8,25 @@
  * tab bar is not rendered at all (the header keeps the doors there — see DayOfShell.module.css).
  *
  * Owner decision 2026-08-07 (Option C, from mockup artifact 2bf781e7-…): a volunteer gets the
- * status buckets under their thumb AND their duties as tabs. The known price is ~110px of fixed
- * bottom chrome; it was chosen with that cost stated.
+ * status buckets under their thumb AND their duties as tabs. The known price is the fixed bottom
+ * chrome (120px since the kit's 46px buckets — Stage 6 re-measured it); it was chosen with that cost
+ * stated.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ClipboardList, Download, LogOut, UserCheck, UserRound, X } from 'lucide-react';
+import { ClipboardList, Download, LogOut, UserCheck, UserRound } from 'lucide-react';
 import { signOut } from '@/lib/auth';
-import { useDismissable } from '@/lib/overlay-hooks';
+import SheetFrame from '@/components/coaches/SheetFrame';
+import kit from '@/components/admin/kit/AdminKitFrame.module.css';
 import styles from './DayOfShell.module.css';
 
 /**
  * One pinned row of status buckets.
  *
  * Rendered in its NATURAL position in the page's flow — the media query lifts it. Rendering it
- * last and un-fixing it above 640px would drop the buckets to the bottom of a desktop page.
+ * last and un-fixing it above 640px would drop the buckets to the bottom of a tablet's page.
  */
 export function DayOfFilterBar({ label, children, inline = false }: {
   label: string;
@@ -45,23 +47,29 @@ export function DayOfFilterBar({ label, children, inline = false }: {
 
 /**
  * One bucket. `count` leads on a phone (where this bar is the only place the numbers live, the
- * counter tiles having been retired) and folds into the label on desktop, where the bar is a
+ * counter tiles having been retired) and folds into the label above 640px, where the bar is a
  * filter row rather than a summary.
+ *
+ * `waiting` (Stage 6, A28 — the 1 October ruling): the count is something waiting on someone, so it
+ * wears the rail's amber pill while it is above zero (the scorekeeper's Review — scores the organizer
+ * has not finalized). The pill IS the count, never a second number beside it; at zero it is plain.
  */
 export function DayOfFilterButton({
-  label, count, active, onClick,
+  label, count, active, onClick, waiting = false,
 }: {
   label: string;
   count?: number;
   active: boolean;
   onClick: () => void;
+  waiting?: boolean;
 }) {
+  const pill = waiting && count != null && count > 0 ? ` ${kit.count} ${styles.barWaiting}` : '';
   return (
     <button type="button" className={styles.barBtn} aria-pressed={active} onClick={onClick}>
-      {count != null && <span className={styles.barCount}>{count}</span>}
+      {count != null && <span className={`${styles.barCount}${pill}`}>{count}</span>}
       <span>
         {label}
-        {count != null && <span className={styles.barBtnInline}> {count}</span>}
+        {count != null && <span className={`${styles.barBtnInline}${pill}`}>{count}</span>}
       </span>
     </button>
   );
@@ -88,31 +96,23 @@ export interface DayOfTabBarProps {
  * ⚠ A volunteer holding ONE duty sees two tabs (their surface + Account), not three. A permanently
  * disabled tab teaches nothing and invites a tap that does nothing; absence is the honest form.
  * This is the design's weakest case and is flagged for owner QA — if it reads as hollow, the
- * fallback is the filter bar alone for those volunteers, with Sign Out back in the header.
+ * fallback is the filter bar alone for those volunteers, with Sign out back in the header. (Stage 6
+ * drew it unchanged, V4: nothing measured argued against it. Since A26 a one-job volunteer is real.)
+ *
+ * The Account sheet is the Sheet Frame's MENU (Stage 6 V4, A30): it acts and closes, so it sits ON TOP
+ * of the tab bar and leaves the bar live — a second tap on Account, or Score or Gate, closes it (today's
+ * dim covered the very tabs it was opened from). Its small-capitals label is its head; no ×. The frame
+ * answers Escape and the phone's Back and hands focus back to the tab — this component answers neither.
  */
 export default function DayOfTabBar({
   orgSlug, current, canScore, canGate, displayName, email, duties, orgName,
 }: DayOfTabBarProps) {
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const sheetRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
 
-  const close = useCallback(() => setOpen(false), []);
-  useDismissable(open, [sheetRef, triggerRef], close, () => {
-    setOpen(false);
-    triggerRef.current?.focus();
-  });
-
-  // A sheet over a scrollable board must not let the board scroll behind it — on a phone that
-  // reads as the sheet sliding around. Restores whatever the document had, not a hardcoded value.
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previous; };
-  }, [open]);
+  const close = () => setOpen(false);
 
   async function handleSignOut() {
     if (signingOut) return;
@@ -159,18 +159,11 @@ export default function DayOfTabBar({
       </nav>
 
       {open && (
-        <div className={styles.sheetBackdrop} role="presentation">
-          <div className={styles.sheet} ref={sheetRef} role="dialog" aria-modal="true" aria-label="Account">
-            <div className={styles.sheetHead}>
-              <span className={styles.sheetTitle}>Account</span>
-              <button type="button" className={styles.sheetClose} onClick={close} aria-label="Close account">
-                <X size={18} aria-hidden />
-              </button>
-            </div>
-
+        <SheetFrame label="Account" role="dialog" aria-label="Account" onClose={close} opener={triggerRef}>
+          <div className={styles.account}>
             {/* Identity first. At a gate the phone is often borrowed or shared, and "who am I
                 signed in as, and what am I allowed to do?" is the question that matters most. */}
-            <div className={styles.whoCard}>
+            <div className={styles.who}>
               <span className={styles.whoName}>{displayName}</span>
               {email && email !== displayName && <span className={styles.whoLine}>{email}</span>}
               <span className={styles.whoLine}>
@@ -182,15 +175,14 @@ export default function DayOfTabBar({
                 no second copy of the platform detection lives here. */}
             <button
               type="button"
-              className={styles.sheetRow}
+              className={styles.menuRow}
               onClick={() => {
                 close();
                 window.dispatchEvent(new CustomEvent('flhq:show-install'));
               }}
             >
-              <Download size={16} aria-hidden />
+              <Download size={19} aria-hidden />
               Install this app
-              <span className={styles.chev} aria-hidden>→</span>
             </button>
 
             {/* ⚠ NO "open the public site" row here, deliberately (owner call 2026-08-07).
@@ -203,15 +195,15 @@ export default function DayOfTabBar({
 
             <button
               type="button"
-              className={`${styles.sheetRow} ${styles.sheetRowOut}`}
+              className={styles.menuRow}
               onClick={handleSignOut}
               disabled={signingOut}
             >
-              <LogOut size={16} aria-hidden />
+              <LogOut size={19} aria-hidden />
               {signingOut ? 'Signing out…' : 'Sign out'}
             </button>
           </div>
-        </div>
+        </SheetFrame>
       )}
     </>
   );

@@ -19,7 +19,7 @@
  */
 import { useCallback, useEffect, useRef, useState, type MouseEventHandler, type ReactNode } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Check, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Check, ChevronRight, Info } from 'lucide-react';
 import { isLiveSeasonStatus } from '@/lib/season-live';
 import { twoOpenPageNote, twoOpenTitle } from '@/lib/club-season-words';
 import styles from './RepKit.module.css';
@@ -307,6 +307,8 @@ export function EmptyCard({ icon, title, children, action }: { icon?: ReactNode;
 }
 
 const LINGER_MS = 2500;
+/** A sentence notice the reader didn't cause (the standing rule's ~8s). */
+const NEWS_LINGER_MS = 8000;
 const FADE_MS = 300;
 type SaveState = 'held' | 'error' | 'saving' | 'dirty' | 'saved';
 
@@ -386,19 +388,23 @@ export function SavePill({ saving, dirty, error, held, onRetry, inline = false }
  * (Tournament admin redesign Stage 4). The save word's pill, look and fade, for a thing that just
  * HAPPENED rather than a save: the same transient rule (it lingers ~2.5s, fades, then `onDone` unmounts
  * it), never furniture over the work. Give it a `key` per notice so a second one restarts the linger.
+ *
+ * `news`: something the reader did NOT just do — the organizer sending a volunteer's score back (Stage 6,
+ * A32) — lingers as long as a sentence notice (~8s, the standing rule), because nobody is looking for it.
  */
-export function NoticePill({ message, onDone }: { message: string; onDone: () => void }) {
+export function NoticePill({ message, onDone, news = false }: { message: string; onDone: () => void; news?: boolean }) {
   const [phase, setPhase] = useState<'shown' | 'fading'>('shown');
   const done = useRef(onDone);
   useEffect(() => { done.current = onDone; }, [onDone]);
   useEffect(() => {
-    const fade = window.setTimeout(() => setPhase('fading'), LINGER_MS);
-    const leave = window.setTimeout(() => done.current(), LINGER_MS + FADE_MS);
+    const linger = news ? NEWS_LINGER_MS : LINGER_MS;
+    const fade = window.setTimeout(() => setPhase('fading'), linger);
+    const leave = window.setTimeout(() => done.current(), linger + FADE_MS);
     return () => { window.clearTimeout(fade); window.clearTimeout(leave); };
-  }, []);
+  }, [news]);
   return (
     <div className={styles.savePill} data-state="saved" data-phase={phase} role="status">
-      <span className={styles.saveStatus}><Check size={13} aria-hidden /> {message}</span>
+      <span className={`${styles.saveStatus}${news ? ` ${styles.saveStatusNews}` : ''}`}>{news ? <Info size={13} aria-hidden /> : <Check size={13} aria-hidden />} {message}</span>
     </div>
   );
 }

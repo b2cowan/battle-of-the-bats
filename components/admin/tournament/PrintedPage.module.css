@@ -1,0 +1,56 @@
+/* ── THE PRINTED PAGE (PrintedPage.tsx): Summary's and the Staff kit's paper, one home. Hidden on screen;
+   in print every other child of <body> leaves the paper, so only this copy prints. Its inks are paper's,
+   fixed whatever the admin's theme — the literals below are deliberate. ── */
+.printCopy { display: none; }
+@media print {
+  :global(body):has(> .printCopy) > :global(*):not(.printCopy) { display: none !important; }
+  :global(body):has(> .printCopy) {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important; /* token-exempt: paper, whatever the admin's theme */
+  }
+  .printCopy {
+    display: block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+.paper {
+  box-sizing: border-box;
+  width: 8.5in;
+  min-height: 10.9in;
+  padding: 0.67in 0.75in;
+  background: #FFFFFF; /* token-exempt: paper, whatever the admin's theme */
+  color: #1F1B14; /* token-exempt: print ink, independent of the screen's theme */
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */
+}
+.title {
+  margin: 6px 0 2px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #1F1B14; /* token-exempt: print ink, independent of the screen's theme */
+}
+.dates { margin: 0 0 26px; color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */ }
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 40px;
+  font-size: 11px;
+  color: #7A7266; /* token-exempt: print ink, independent of the screen's theme */
+}

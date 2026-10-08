@@ -1,24 +1,40 @@
 'use client';
 
+/**
+ * The scorekeeper — a volunteer's list of the day's games, and the score sheet (Tournament admin
+ * redesign Stage 6, V1 + V2, ruled 2026-10-07; the shapes ADC specimen 7 ruled stay: the cards, the
+ * buckets under the thumb, the one big box per team, Cancel as the way out).
+ *
+ *   · The list: the whole card is the tap, the first game to score marked Up next with the olive edge.
+ *     The state chips are the kit's one chip; the time line is in the body face, never capitals (F61);
+ *     the Review bucket's count wears the amber pill while a score waits (A28).
+ *   · The score sheet is the Sheet Frame's FORM (A30) at ≤900 — over the bars, 18px corners, the grab
+ *     line, the portal's dim — with a sentence head and NO ×: Cancel is the way out (owner 2026-08-08), a
+ *     tap on the dim does nothing (`holdDim`), and it stands on the visual viewport so the number pad
+ *     never covers its button (`keypad`). Above 900 (a laptop or a landscape tablet at the scoring table)
+ *     the same form sits in a centred card, as the coaches' game day does.
+ *   · After a save, the product's one-off notice floats above the bars and fades (`NoticePill`, ~2.5s:
+ *     the volunteer's own action) — the list no longer drops under a box that stayed (F64). A score the
+ *     organizer sends back while the screen is open gets the same notice for ~8s, naming the game (A32).
+ *     Nothing is stored: after a reload it is simply a game to score again. Errors and the sign-in
+ *     recovery stay where they are, and stay — they need an answer.
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import {
-  Info,
-  MapPin,
-  RefreshCw,
-  Save,
-  Search,
-  SlidersHorizontal,
-  Trophy,
-  X,
-} from 'lucide-react';
+import { AlertCircle, Info, MapPin, RefreshCw, Search, SlidersHorizontal, Trophy } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
 import { useScorekeeperFlip } from '@/components/volunteer/ScorekeeperFlip';
 import { DayOfFilterBar, DayOfFilterButton } from '@/components/volunteer/DayOfBottomBars';
+import SheetFrame from '@/components/coaches/SheetFrame';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import { Callout, NoticePill, RepChip, type ChipTone } from '@/components/admin/kit/club/RepKit';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { GAME_DAY_LIST, GAME_STATE_WORD, SCOREKEEPER_BUCKET } from '@/lib/game-day-words';
+import { SCOREKEEPER_WORDS } from '@/lib/volunteer-words';
 import { gameWindowState } from '@/lib/game-live-state';
 import { resolveGameTiming } from '@/lib/schedule-conflict';
 import { tournamentToday } from '@/lib/timezone';
@@ -45,6 +61,9 @@ type StatusFilter = 'open' | 'pending' | 'final' | 'all';
 // survives the sign-in navigation; precedent: TeamSignupClient's draft) so the volunteer's numbers
 // come back after they sign in, on the same game and date.
 const PENDING_KEY = 'sk:pendingScore';
+
+/** The score sheet's head, which names the dialog. */
+const SHEET_TITLE_ID = 'sk-score-sheet-title';
 
 type PendingScore = {
   orgSlug: string;
@@ -95,13 +114,22 @@ type RealtimeGameUpdate = {
   status?: unknown;
 };
 
+/** Only what needs an answer stays on the page: the sign-in recovery and an error. */
 type Notice = {
-  kind: 'info' | 'success' | 'warning' | 'danger';
+  kind: 'info' | 'warning' | 'danger';
   title: string;
   message: string;
   /** Optional recovery CTA (J8-002): e.g. a sign-in link when the session lapses mid-shift. */
   action?: { label: string; href: string };
 };
+
+const NOTICE_TONE: Record<Notice['kind'], 'info' | 'warn' | 'bad'> = { info: 'info', warning: 'warn', danger: 'bad' };
+
+/** A floating notice that fades — the volunteer's own save (`news: false`) or the organizer's send-back. */
+type Pill = { id: number; message: string; news: boolean };
+
+/** A game whose score left the volunteer's hands: a send-back returns it to `scheduled`. */
+const SCORED: ReadonlySet<GameStatus> = new Set<GameStatus>(['submitted', 'completed', 'forfeit']);
 
 function todayString() {
   const date = new Date();
@@ -125,8 +153,9 @@ function scoreFromRealtime(value: unknown, fallback: number | null | undefined) 
   return fallback;
 }
 
+/** Every status a game can hold — a finalized forfeit too (F63: it used to keep Pending Review until a refresh). */
 function statusFromRealtime(value: unknown, fallback: GameStatus): GameStatus {
-  if (value === 'scheduled' || value === 'submitted' || value === 'completed' || value === 'cancelled') {
+  if (value === 'scheduled' || value === 'submitted' || value === 'completed' || value === 'cancelled' || value === 'forfeit') {
     return value;
   }
   return fallback;
@@ -138,6 +167,11 @@ function normalizedText(value: string | null | undefined) {
 
 function canEdit(game: Game) {
   return game.status === 'scheduled' || game.status === 'submitted';
+}
+
+/** A finished game is Final — a forfeit the organizer approved is one too (F63: it sat in All alone). */
+function isFinal(game: Game) {
+  return game.status === 'completed' || game.status === 'forfeit';
 }
 
 // Game day's one word per state (Tournament admin redesign G5, /marketing 2026-09-29) — the same words
@@ -156,6 +190,21 @@ function statusLabel(game: Game, divisions: Division[], readAt: number) {
   return w === 'overdue' ? GAME_STATE_WORD.needsScore : GAME_DAY_LIST.scheduled;
 }
 
+/** What a tap on a card does, in the card's own words. */
+function cardActionWord(game: Game, policyReview: boolean): string {
+  const W = SCOREKEEPER_WORDS.cardAction;
+  if (game.status === 'submitted') return W.correct;
+  if (canEdit(game)) return policyReview ? W.review : W.final;
+  return game.status === 'cancelled' ? W.cancelled : W.locked;
+}
+
+/** The kit's one chip, toned by the state it names. */
+function statusTone(status: GameStatus): ChipTone {
+  if (status === 'submitted') return 'warn';
+  if (status === 'completed' || status === 'forfeit') return 'good';
+  return 'neutral';
+}
+
 export default function ScorekeeperPage() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
@@ -172,6 +221,7 @@ export default function ScorekeeperPage() {
   const [emptyState, setEmptyState] = useState<ScorekeeperEmptyState | null>(null);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [pill, setPill] = useState<Pill | null>(null);
 
   const [fieldFilter, setFieldFilter] = useState('');
   const [divisionFilter, setDivisionFilter] = useState('');
@@ -189,10 +239,21 @@ export default function ScorekeeperPage() {
   const awayScoreRef = useRef<HTMLInputElement | null>(null);
   /** Where Enter in the away field lands: dismisses the keypad AND keeps a keyboard user in the sheet. */
   const submitButtonRef = useRef<HTMLButtonElement | null>(null);
+  /** The card that opened the sheet — focus goes back to it however the sheet closes (iOS never focuses a tapped button). */
+  const openerRef = useRef<HTMLElement | null>(null);
+  /** The centred card above 900, which the dialog floor watches. */
+  const deskSheetRef = useRef<HTMLDivElement | null>(null);
   const [homeScore, setHomeScore] = useState('');
   const [awayScore, setAwayScore] = useState('');
   const [scoreState, setScoreState] = useState<ScoreState>('idle');
   const [showScoreErrors, setShowScoreErrors] = useState(false);
+
+  // The score sheet is the frame at the bar's breakpoint and a centred card above it.
+  const isPhoneNav = useIsPhoneNav();
+
+  // The cards as the screen shows them NOW — the live update reads what a game WAS, to say a send-back.
+  const cardsRef = useRef<GameCard[]>([]);
+  useEffect(() => { cardsRef.current = cards; }, [cards]);
 
   // "The Flip" P3: publish the board's publicly-visible tournaments to the header pill.
   const setFlipTournaments = useScorekeeperFlip();
@@ -296,6 +357,16 @@ export default function ScorekeeperPage() {
           const updated = payload.new as RealtimeGameUpdate;
           if (typeof updated.id !== 'string') return;
 
+          // A32: a score the organizer sends back (Results' Revert returns the game to `scheduled`, its
+          // numbers cleared) is news the volunteer didn't cause — say it, name the game, while the screen
+          // is open. Read from what the screen shows now, outside the state update (no side effect there).
+          const before = cardsRef.current.find(card => card.game.id === updated.id);
+          if (before && SCORED.has(before.game.status) && statusFromRealtime(updated.status, before.game.status) === 'scheduled') {
+            setPill({ id: Date.now(), news: true, message: SCOREKEEPER_WORDS.sentBack(`${before.homeName} vs ${before.awayName}`) });
+            // Open on that very game? It is no longer a correction — its sheet says so (its typed boxes stay).
+            setEditingCard(open => (open && open.game.id === updated.id ? { ...open, game: { ...open.game, status: 'scheduled' } } : open));
+          }
+
           setCards(previous => previous.map(card => (
             card.game.id === updated.id
               ? {
@@ -369,7 +440,7 @@ export default function ScorekeeperPage() {
   const counts = useMemo(() => ({
     open: cards.filter(card => card.game.status === 'scheduled').length,
     pending: cards.filter(card => card.game.status === 'submitted').length,
-    final: cards.filter(card => card.game.status === 'completed').length,
+    final: cards.filter(card => isFinal(card.game)).length,
     cancelled: cards.filter(card => card.game.status === 'cancelled').length,
   }), [cards]);
 
@@ -391,7 +462,7 @@ export default function ScorekeeperPage() {
 
       if (statusFilter === 'open' && card.game.status !== 'scheduled') return false;
       if (statusFilter === 'pending' && card.game.status !== 'submitted') return false;
-      if (statusFilter === 'final' && card.game.status !== 'completed') return false;
+      if (statusFilter === 'final' && !isFinal(card.game)) return false;
 
       if (query) {
         const haystack = [
@@ -436,6 +507,7 @@ export default function ScorekeeperPage() {
    * one). The card and the score sheet share it deliberately: the sheet's title used to repeat the
    * two team names printed on the labels directly beneath it, so the one line it owns said nothing
    * the volunteer could use to confirm they had opened the right game out of eight on the field.
+   * The clock is `formatTime`'s "11:30 a.m." and is never set in capitals (F61).
    */
   function gameMetaLine(card: GameCard) {
     return [
@@ -474,13 +546,18 @@ export default function ScorekeeperPage() {
     else submitButtonRef.current?.focus();
   }
 
-  function closeScoreEntry() {
-    if (scoreState === 'saving') return;
+  /** The sheet and its numbers gone — after a save, or on Cancel (which `closeScoreEntry` holds while saving). */
+  function resetScoreEntry() {
     setEditingCard(null);
     setHomeScore('');
     setAwayScore('');
     setShowScoreErrors(false);
     setScoreState('idle');
+  }
+
+  function closeScoreEntry() {
+    if (scoreState === 'saving') return;
+    resetScoreEntry();
   }
 
   async function submitScore() {
@@ -548,14 +625,17 @@ export default function ScorekeeperPage() {
           : card
       )));
 
-      setNotice({
-        kind: nextStatus === 'submitted' ? 'warning' : 'success',
-        title: nextStatus === 'submitted' ? 'Score sent for review' : 'Score finalized',
-        message: nextStatus === 'submitted'
-          ? 'An admin can now review and finalize this result from Results & Scoring.'
-          : 'This result is now final.',
+      // F64: what happened, to which game, in a notice that floats above the bars and fades — never a box
+      // at the top of the list that pushes every card down until the next tap.
+      const score = `${editingCard.homeName} ${Number(homeScore)}, ${editingCard.awayName} ${Number(awayScore)}`;
+      setNotice(null);
+      setPill({
+        id: Date.now(),
+        news: false,
+        message: nextStatus === 'submitted' ? SCOREKEEPER_WORDS.saved.review(score) : SCOREKEEPER_WORDS.saved.final(score),
       });
-      closeScoreEntry();
+      // The save is done: reset directly (`closeScoreEntry` holds while the state still says saving).
+      resetScoreEntry();
     } catch (error) {
       setNotice({
         kind: 'danger',
@@ -573,42 +653,146 @@ export default function ScorekeeperPage() {
       : 'No games to score';
 
   const emptyMessage = cards.length === 0
-    ? emptyState?.message ?? 'Try another date or contact your tournament admin.'
+    ? emptyState?.message ?? SCOREKEEPER_WORDS.emptyNoGames
     : hasFilters
       ? 'Clear filters or switch status buckets to widen the list.'
       : 'All available games are outside this bucket.';
 
-  const submitLabel = editingCard?.game.status === 'submitted'
-    ? 'Save Correction'
+  const isCorrection = editingCard?.game.status === 'submitted';
+  const submitLabel = isCorrection
+    ? SCOREKEEPER_WORDS.submit.correction
     : selectedPolicyRequiresReview
-      ? 'Submit for Review'
-      : 'Finalize Score';
+      ? SCOREKEEPER_WORDS.submit.review
+      : SCOREKEEPER_WORDS.submit.final;
+  const policyNote = isCorrection
+    ? SCOREKEEPER_WORDS.note.correction
+    : selectedPolicyRequiresReview
+      ? SCOREKEEPER_WORDS.note.review
+      : SCOREKEEPER_WORDS.note.final;
 
   // WI-3: the notice (incl. the session-lapsed "Sign in" recovery) must be visible where the
   // volunteer's eyes are. When the score sheet is open it renders INSIDE the sheet, above the
   // numbers; otherwise it renders in its usual place in the list.
   const sheetOpen = Boolean(editingCard) && scoreState !== 'idle';
   const noticeBlock = notice ? (
-    <div className={`${styles.notice} ${styles[`notice_${notice.kind}`] ?? ''}`}>
-      <strong>{notice.title}</strong>
-      <span>{notice.message}</span>
+    <Callout tone={NOTICE_TONE[notice.kind]} role={notice.kind === 'danger' ? 'alert' : 'status'}>
+      <strong className={styles.noticeTitle}>{notice.title}</strong>
+      <span className={styles.noticeText}>{notice.message}</span>
       {notice.action && (
-        <a href={notice.action.href} className={styles.noticeAction}>
+        <a href={notice.action.href} className={`btn btn-lime ${styles.noticeAction}`}>
           {notice.action.label}
         </a>
       )}
-    </div>
+    </Callout>
+  ) : null;
+
+  // The centred card above 900 stands the same dialog floor the frame stands below it: Escape (Cancel's
+  // twin), Back, focus in on open and home to the card on close, the keyboard kept inside.
+  useDialogFloor(sheetOpen && !isPhoneNav, deskSheetRef, {
+    onClose: closeScoreEntry,
+    busy: scoreState === 'saving',
+    opener: openerRef,
+    trap: true,
+  });
+
+  const scoreForm = editingCard ? (
+    <form
+      className={styles.scoreForm}
+      onSubmit={event => {
+        event.preventDefault();
+        void submitScore();
+      }}
+    >
+      {/* The head: what the volunteer is entering, as a sentence, and which game — time, field,
+          division. The team names are on the boxes' labels. No ×: Cancel is the way out. */}
+      <div className={styles.sheetHead}>
+        <h2 id={SHEET_TITLE_ID} className={styles.sheetTitle}>{SCOREKEEPER_WORDS.sheetHead}</h2>
+        <p className={styles.sheetMeta}>{gameMetaLine(editingCard)}</p>
+      </div>
+
+      {/* WI-3: session-lapsed (and other) notices render here, above the score, while the sheet is
+          open — so the volunteer sees the "Sign in" recovery without closing it. */}
+      {noticeBlock && <div className={styles.sheetNotice}>{noticeBlock}</div>}
+
+      {/* Two big fields, nothing beside them. The −/+ steppers this replaces (J8-007) were
+          meant to spare a volunteer the keyboard, but at 48px each they left the number
+          itself ~29px on a 390px phone — and the score is entered once, after the game, so
+          there was never a running tally to step. `text` + `inputMode` + `pattern` is what
+          reliably raises the 0-9 keypad; `type=number` also let a stray character blank the
+          field and let a laptop scroll wheel change a final score. */}
+      <div className={styles.scoreGrid}>
+        <label>
+          <span>{editingCard.homeName}</span>
+          <input
+            autoFocus
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            enterKeyHint="next"
+            value={homeScore}
+            onFocus={event => event.currentTarget.select()}
+            onKeyDown={event => onScoreKeyDown(event, 'home')}
+            onChange={event => setHomeScore(sanitizeScore(event.target.value))}
+            className={`${styles.scoreInput} ${showScoreErrors && homeScore === '' ? styles.inputError : ''}`}
+          />
+        </label>
+        <span className={styles.scoreDivider} aria-hidden>–</span>
+        <label>
+          <span>{editingCard.awayName}</span>
+          <input
+            ref={awayScoreRef}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            enterKeyHint="done"
+            value={awayScore}
+            onFocus={event => event.currentTarget.select()}
+            onKeyDown={event => onScoreKeyDown(event, 'away')}
+            onChange={event => setAwayScore(sanitizeScore(event.target.value))}
+            className={`${styles.scoreInput} ${showScoreErrors && awayScore === '' ? styles.inputError : ''}`}
+          />
+        </label>
+      </div>
+
+      {showScoreErrors && (homeScore === '' || awayScore === '') && (
+        <div className={styles.sheetNote}>
+          <Callout tone="bad" role="alert" icon={<AlertCircle size={16} aria-hidden />} flush>
+            {SCOREKEEPER_WORDS.bothRequired}
+          </Callout>
+        </div>
+      )}
+
+      {/* J8-008: what Submit will do, said before the press, directly above the button it explains —
+          a white callout with an amber edge (the organizer reviews) or an olive one (final at once). */}
+      <div className={styles.sheetNote}>
+        <Callout tone={isCorrection || selectedPolicyRequiresReview ? 'warn' : 'olive'} icon={<Info size={16} aria-hidden />} flush>
+          {policyNote}
+        </Callout>
+      </div>
+
+      {/* Cancel takes only what it needs; the one lime takes the rest and stays under the thumb.
+          Pinned to the sheet's foot (`data-sheet-foot`), so a long head never scrolls it away. */}
+      <div className={styles.sheetActions} data-sheet-foot="">
+        <button type="button" className={`btn btn-outline ${styles.sheetButton}`} onClick={closeScoreEntry} disabled={scoreState === 'saving'}>
+          Cancel
+        </button>
+        <button ref={submitButtonRef} type="submit" className={`btn btn-lime ${styles.sheetButton}`} disabled={scoreState === 'saving'}>
+          {scoreState === 'saving' ? 'Saving…' : submitLabel}
+        </button>
+      </div>
+    </form>
   ) : null;
 
   return (
     <div className={styles.page}>
+      {/* The title band: "Field scores" at the 20px every page title takes, Refresh on its line. No
+          eyebrow — the tab under the thumb and the title already name the job. */}
       <section className={styles.header}>
-        <div>
-          <p className={styles.kicker}>Scorekeeper</p>
-          <h1 className={styles.title}>Field scores</h1>
-        </div>
-        <button type="button" className={styles.iconButton} onClick={loadGames} aria-label="Refresh games">
-          <RefreshCw size={18} />
+        <h1 className={styles.title}>{SCOREKEEPER_WORDS.title}</h1>
+        <button type="button" className={`btn btn-outline ${styles.iconButton}`} onClick={loadGames} aria-label="Refresh games">
+          <RefreshCw size={18} aria-hidden />
         </button>
       </section>
 
@@ -637,12 +821,12 @@ export default function ScorekeeperPage() {
             onChange={event => setDate(event.target.value || todayString())}
           />
         </label>
-        <button type="button" className={styles.todayButton} onClick={() => setDate(todayString())}>
+        <button type="button" className={`btn btn-outline ${styles.dayButton}`} onClick={() => setDate(todayString())}>
           Today
         </button>
         <button
           type="button"
-          className={styles.filtersToggle}
+          className={`btn btn-outline ${styles.dayButton} ${styles.filtersToggle}`}
           aria-expanded={filtersOpen}
           aria-controls="sk-find-games"
           /* The badge is decoration to a screen reader; the count belongs in the name. */
@@ -665,7 +849,7 @@ export default function ScorekeeperPage() {
         aria-label="Find games"
       >
         <label className={styles.searchControl}>
-          <Search size={16} />
+          <Search size={16} aria-hidden />
           <input
             type="search"
             value={teamSearch}
@@ -674,14 +858,14 @@ export default function ScorekeeperPage() {
           />
         </label>
 
-        <select className={styles.select} value={fieldFilter} onChange={event => setFieldFilter(event.target.value)}>
+        <select className={styles.select} value={fieldFilter} onChange={event => setFieldFilter(event.target.value)} aria-label="Field">
           <option value="">All fields</option>
           {venues.map(venue => (
             <option key={venue.id} value={venue.id}>{venue.name}</option>
           ))}
         </select>
 
-        <select className={styles.select} value={divisionFilter} onChange={event => setDivisionFilter(event.target.value)}>
+        <select className={styles.select} value={divisionFilter} onChange={event => setDivisionFilter(event.target.value)} aria-label="Division">
           <option value="">All divisions</option>
           {divisions.map(division => (
             <option key={division.id} value={division.id}>{division.name}</option>
@@ -691,7 +875,7 @@ export default function ScorekeeperPage() {
 
       {/* Rendered HERE, in its natural place in the flow, and lifted to the bottom of the phone's
           screen by the shared stylesheet. Rendering it last instead would put the buckets at the
-          foot of a desktop page. */}
+          foot of a tablet's page. Review's count is a waiting count: the amber pill while above zero. */}
       <DayOfFilterBar label="Status filter">
         {([
           ['open', SCOREKEEPER_BUCKET.open, counts.open],
@@ -703,6 +887,7 @@ export default function ScorekeeperPage() {
             key={filter}
             label={label}
             count={count}
+            waiting={filter === 'pending'}
             active={statusFilter === filter}
             onClick={() => setStatusFilter(filter)}
           />
@@ -719,11 +904,11 @@ export default function ScorekeeperPage() {
         </section>
       ) : visibleCards.length === 0 ? (
         <section className={styles.emptyState}>
-          <Trophy size={22} />
+          <Trophy size={22} aria-hidden />
           <h2>{emptyTitle}</h2>
           <p>{emptyMessage}</p>
           {hasFilters && (
-            <button type="button" className={styles.secondaryButton} onClick={resetFilters}>
+            <button type="button" className={`btn btn-outline ${styles.dayButton}`} onClick={resetFilters}>
               Clear filters
             </button>
           )}
@@ -742,21 +927,22 @@ export default function ScorekeeperPage() {
               <button
                 key={game.id}
                 type="button"
-                className={`${styles.gameCard} ${styles[`gameCard_${game.status}`] ?? ''} ${isNow ? styles.gameCardNow : ''}`}
-                onClick={() => openScoreEntry(card)}
+                className={`${styles.gameCard} ${isNow ? styles.gameCardNow : ''} ${game.status === 'cancelled' ? styles.gameCardCancelled : ''}`}
+                onClick={event => {
+                  openerRef.current = event.currentTarget;
+                  openScoreEntry(card);
+                }}
                 disabled={!editable}
               >
                 <span className={styles.gameMeta}>
-                  <MapPin size={13} />
+                  <MapPin size={14} aria-hidden />
                   {meta}
                 </span>
-                {isNow
-                  ? <span className={styles.nowBadge}>Up next</span>
-                  : (
-                    <span className={`${styles.statusBadge} ${styles[`status_${game.status}`] ?? ''}`}>
-                      {statusLabel(game, divisions, readAt)}
-                    </span>
-                  )}
+                <span className={styles.chip}>
+                  {isNow
+                    ? <span className={styles.nowBadge}>{GAME_DAY_LIST.upNext}</span>
+                    : <RepChip tone={statusTone(game.status)}>{statusLabel(game, divisions, readAt)}</RepChip>}
+                </span>
 
                 <span className={styles.matchup}>
                   <span className={styles.teamBlock}>
@@ -770,128 +956,38 @@ export default function ScorekeeperPage() {
                   </span>
                 </span>
 
-                <span className={styles.cardAction}>
-                  {editable
-                    ? game.status === 'submitted'
-                      ? 'Correct before finalization'
-                      : policyReview
-                        ? 'Enter score for review'
-                        : 'Enter final score'
-                    : game.status === 'cancelled'
-                      ? 'Cancelled game'
-                      : 'Final score locked'}
-                </span>
+                <span className={styles.cardAction}>{cardActionWord(game, policyReview)}</span>
               </button>
             );
           })}
         </section>
       )}
 
-      {/* The backdrop does NOT dismiss (owner ruling 2026-08-08). It was the only exit that could
-          throw away a half-typed score by accident — and with the keypad up it is a ~30px sliver
-          exactly where a thumb rests. Cancel is the way out; Escape is its keyboard twin. */}
-      {editingCard && scoreState !== 'idle' && (
-        <div className={styles.sheetBackdrop}>
-          <form
-            className={styles.scoreSheet}
-            role="dialog"
-            aria-label={`Enter score — ${editingCard.homeName} vs ${editingCard.awayName}`}
-            onSubmit={event => {
-              event.preventDefault();
-              void submitScore();
-            }}
-            onKeyDown={event => {
-              if (event.key === 'Escape') { event.stopPropagation(); closeScoreEntry(); }
-            }}
-          >
-            {/* Header and actions are both pinned; only what sits between them scrolls, so the
-                on-screen keypad can never bury Finalize. */}
-            <div className={styles.sheetHeader}>
-              <p className={styles.kicker}>Enter Score</p>
-              {/* Which game, not who is playing — the team names are on the labels below. */}
-              <p className={styles.sheetMeta}>{gameMetaLine(editingCard)}</p>
-            </div>
+      {/* The score sheet — the frame's form at the bar's breakpoint (over the bars, a tap on its dim does
+          nothing, on the keypad's edge), a centred card above it. ONE form inside either. */}
+      {sheetOpen && (isPhoneNav ? (
+        <SheetFrame
+          form
+          holdDim
+          keypad
+          role="dialog"
+          aria-labelledby={SHEET_TITLE_ID}
+          onClose={closeScoreEntry}
+          opener={openerRef}
+          busy={scoreState === 'saving'}
+        >
+          {scoreForm}
+        </SheetFrame>
+      ) : (
+        <>
+          <div className={styles.deskDim} aria-hidden />
+          <div ref={deskSheetRef} className={styles.deskSheet} role="dialog" aria-modal="true" aria-labelledby={SHEET_TITLE_ID} tabIndex={-1} data-escape-owner="">
+            {scoreForm}
+          </div>
+        </>
+      ))}
 
-            <div className={styles.sheetBody}>
-              {/* WI-3: session-lapsed (and other) notices render here, above the score, while the
-                  sheet is open — so the volunteer sees the "Sign in" recovery without closing it. */}
-              {noticeBlock}
-
-              {/* Two big fields, nothing beside them. The −/+ steppers this replaces (J8-007) were
-                  meant to spare a volunteer the keyboard, but at 48px each they left the number
-                  itself ~29px on a 390px phone — and the score is entered once, after the game, so
-                  there was never a running tally to step. `text` + `inputMode` + `pattern` is what
-                  reliably raises the 0-9 keypad; `type=number` also let a stray character blank the
-                  field and let a laptop scroll wheel change a final score. */}
-              <div className={styles.scoreGrid}>
-                <label>
-                  <span>{editingCard.homeName}</span>
-                  <input
-                    autoFocus
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    autoComplete="off"
-                    enterKeyHint="next"
-                    value={homeScore}
-                    onFocus={event => event.currentTarget.select()}
-                    onKeyDown={event => onScoreKeyDown(event, 'home')}
-                    onChange={event => setHomeScore(sanitizeScore(event.target.value))}
-                    className={`${styles.scoreInput} ${showScoreErrors && homeScore === '' ? styles.inputError : ''}`}
-                  />
-                </label>
-                <span className={styles.scoreDivider} aria-hidden>–</span>
-                <label>
-                  <span>{editingCard.awayName}</span>
-                  <input
-                    ref={awayScoreRef}
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    autoComplete="off"
-                    enterKeyHint="done"
-                    value={awayScore}
-                    onFocus={event => event.currentTarget.select()}
-                    onKeyDown={event => onScoreKeyDown(event, 'away')}
-                    onChange={event => setAwayScore(sanitizeScore(event.target.value))}
-                    className={`${styles.scoreInput} ${showScoreErrors && awayScore === '' ? styles.inputError : ''}`}
-                  />
-                </label>
-              </div>
-
-              {showScoreErrors && (homeScore === '' || awayScore === '') && (
-                <p className={styles.formError}>
-                  <X size={15} aria-hidden />
-                  <span>Both scores are required.</span>
-                </p>
-              )}
-
-              {/* J8-008: the consequence note was grey body text wedged above the button — skippable
-                  under pressure. Now an iconed, separated callout so the volunteer reads it before saving. */}
-              <p className={styles.policyNote} data-tone={selectedPolicyRequiresReview ? 'review' : 'final'}>
-                <Info size={15} aria-hidden />
-                <span>
-                  {editingCard.game.status === 'submitted'
-                    ? 'This replaces the pending score before an admin finalizes it.'
-                    : selectedPolicyRequiresReview
-                      ? 'This tournament requires admin review before scores become final.'
-                      : 'This score becomes final immediately after saving.'}
-                </span>
-              </p>
-            </div>
-
-            <div className={styles.sheetActions}>
-              <button type="button" className={styles.secondaryButton} onClick={closeScoreEntry} disabled={scoreState === 'saving'}>
-                Cancel
-              </button>
-              <button ref={submitButtonRef} type="submit" className={styles.primaryButton} disabled={scoreState === 'saving'}>
-                <Save size={16} />
-                {scoreState === 'saving' ? 'Saving...' : submitLabel}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      {pill && <NoticePill key={pill.id} message={pill.message} news={pill.news} onDone={() => setPill(null)} />}
     </div>
   );
 }
