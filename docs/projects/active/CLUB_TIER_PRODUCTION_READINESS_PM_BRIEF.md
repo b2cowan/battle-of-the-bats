@@ -77,7 +77,7 @@ help articles that describe today's screens, and marketing copy that promises on
 | 0 · Ground truth | A seeded Club fixture, the first end-to-end walk, the six "dead control" fixes, and two owner rulings (team money's source of truth; the club's year) | Every club screen opens for owner, admin and treasurer without a 401, 404 or loop |
 | 1 · The club shell | Provision / buy / cancel / return; board roles assignable; club-shaped hub, nav and phone bar; onboarding checklist; audit log; settings that say what they do. **Two halves (2026-09-25):** the behind-the-screens work runs now; the screens are redesigned out of sight and reach customers on the new admin design's release day | Owner walk |
 | 2 · Rep teams & the coach bridge | Team → coach → portal flow; season lifecycle agreement; documents; tryouts; oversight rollup; Shared Book walk | Owner walk |
-| 3 · Club money | 3a bookkeeping core + allocation/request loop with confirm + reverse · 3b budget, Budget vs. Actual and the whole-club summary, with arithmetic gates · 3c the club year and year-end | Owner walk per part; gates green |
+| 3 · Club money | 3a bookkeeping core + allocation/request loop with confirm + reverse · 3b budget, Budget vs. Actual and the whole-club summary, with arithmetic gates · 3c the club year and year-end · 3d the last money pages become windows (Payees, an allocation) | Owner walk per part; gates green |
 | 4 · The public face | Teams index, tryout funnel, club-first home, editor controls, marketing truth | Owner walk |
 | 5 · Families | The four HIGH defects; P3 mockup session; migrations confirmed on prod | Owner walk (§54/§56) |
 | 6 · Venues, scheduling, permits | One venue book + cross-module clash check; club calendar (decision); permits (decision — new feature) | Owner ruling first |
@@ -286,6 +286,14 @@ reads it back. One question for the owner came out of writing the walks: compari
 offered only once last year has money recorded in the same months. That keeps a club in its first year on
 FieldLogicHQ from seeing a column of zeros that reads as growth, but it also means the comparison appears
 part-way into a year rather than on its first day. Recommended: keep it.
+
+**Stage 3d — added 2026-10-08 (the owner, after the §283 walks).** The last two club money pages become
+windows, as the coaches portal's already are. Payees opens over the Ledger instead of leaving it, and an allocation opens
+as a window that reads first, instead of a page of its own. A team's account stays a page: it gathers one team's
+bills, requests and history in one place. Why it matters: a treasurer stops losing their place, because every money
+record opens where they are, the way coaches already work. Priority: after 3c's last two walks; drawn first,
+ruled, then built. Success: from the Ledger and from Allocations, nothing sends the treasurer to another page to
+read or change one payee or one allocation.
 
 ## Trade-offs made in this plan
 
