@@ -269,6 +269,27 @@ the basis, the caveats and the doors — never a sentence inside a money column.
   lead cell**, not the category's name — a toggle called "Gear" must be as easy to hit as one called
   "Tournament entry fees" (F-08).
 - Delete is never a row action; it lives in the record's editor.
+- **A form table — a table whose rows are a create form's fields** (owner, Club Tier Stage 3c Ask 6,
+  2026-10-07; **shared with the tournament redesign**, which draws entry forms). The one place a cell
+  holds a control, and allowed **only inside a create form** (a window or page whose foot carries the
+  create) — never on a table that displays records, where "no control in a cell" stands.
+  - Each row is one record the create will make (New allocation: one team's share), and its cells
+    are that record's fields: a **tick** in the lead cell (the row is in or out), and an **input only
+    where the form's own choice asks for one** (New allocation's Share under By amount, By
+    percentage or By sessions; under Evenly it is a plain figure). A row that cannot be in is still
+    listed — unticked and dim, its reason across the cells it would have filled.
+  - The rows **open nothing**: no row-end chevron, no row click, no name link. A form table is
+    filled, not navigated.
+  - A row may **expand in place** (a down chevron — a real `<button aria-expanded>` in the last cell)
+    to give that record its own exception (a team's own installments); what opens is the row's form,
+    inside the table.
+  - Its **closing row states the sum of the ticked rows and the difference** from what the form
+    says they must add up to ("nothing left over", "$0.50 short") — never a separate warning above
+    or below the table.
+  - On a phone it is **one frame of short records**: the tick and the lead, the row's other fields
+    as one line under it, the figure at the row's end; a row opens in place the same way.
+  - **One shared component** (`components/shared/FormTable.tsx`), never a class copied per form;
+    `club-stage3c-screens-guard` holds New allocation to it.
 
 ### 3.7 Empty, zero and absent
 

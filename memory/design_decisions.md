@@ -7,6 +7,37 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-07 — THE CLUB'S FISCAL YEAR: SEVEN RULINGS (owner: *"agree with this recommendation and also all recommendations on the mockup"* — Club Tier Stage 3c, every ask as recommended, then Ask 9) — hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 3c, plan `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 3
+
+**Decision:** (1) **The club's period is its "fiscal year"** (Ask 9) — one spelling (never "financial year";
+`check:spelling` refuses it), the CLUB side only (the coach keeps "season"), on every surface that reads a year:
+the window, the Year pill ("Fiscal year 2025–26"), the close question, the refusals, the year-end report. It
+names a period and promises no fiscal-accounting feature (D2: no fiscal periods, no closing entries).
+(2) **A closed fiscal year is READ IN PLACE** on the club's money tabs (Budget, Budget vs. Actual, the Overview)
+through the Year pill — a lock on the pill, one "closed by / on" line under the toolbar, **every write absent,
+not greyed** (Ask 1). A scoped departure from the coach's "a closed season is one page" (CLAUDE.md, 2026-08-18):
+that ruling stops a year reaching thirty screens that never needed one; a club book runs across years, and only
+the club's money tabs read a year, which they already did. CLAUDE.md carries one scoped line so nobody
+"corrects" it back. (3) **Closing and Reopen use the coach's words and rules** — the close warns about open money
+and never blocks; Reopen asks for a reason and is offered on the LATEST closed year only. (4) **A seventh named
+difference** between the club's Budget vs. Actual and the coach's (the 2026-10-06 entry's six): Compare › Against
+last year, club only — this year's Actual, last year's, and the Change, over the same months a year apart.
+(5) **A table that is a form** (Ask 6): New allocation's teams — the one place a cell holds a control; written
+into the table standard §3.6 as a shared part (a tick, an input only where the form's choice asks for one, the
+rows open nothing, a row expands in place, the closing row states the sum and the difference). (6) **A payee's
+window reads first, its report inside, no Export** (Ask 7) — the report page and its Export retire. (7) **An
+unpaid club bill stays on the coach's Club tab under its season until it is paid** (Ask 8b) — one band naming
+the season it was made on; Still to pay the club counts it.
+**Rationale:** (1) the board's own word (bylaws, the annual meeting) for the period both the plan and the locked
+books share, and kept apart from the coach's season so one word never means two periods. (2) Option 2 (one
+page) would have restated three tabs on a new page and still left the Ledger showing every closed-year line,
+because a book cannot be split by year without a second Ledger. (5) the standard's "no control in a cell" was
+written for tables that display records; no rule named a table that IS a form, and the tournament redesign
+draws entry forms too. (7) a debt is live until it is paid, the way a season is live until it is closed —
+paying an old bill is money moving today, which CLAUDE.md keeps on the working season.
+**Applies to:** the club's Accounting tabs, Budget › Tools › Fiscal year, New allocation, Payees, the coach's
+Money › Club; the table standard §3.6; `CLAUDE.md` (the scoped line).
+
 ### 2026-10-07 — A CLUB PAGE CENTRES IN THE WORKING AREA, AT ONE OF THE PORTAL'S TWO WIDTHS (owner, walking §271: *"club pages formatting should match the coaches portal so if coaches portal is centred so should the club pages"*)
 
 **Decision:** every club page wrapper carries `margin-inline: auto` — the club kit (ClubKit `.page` / `.pageNarrow`,

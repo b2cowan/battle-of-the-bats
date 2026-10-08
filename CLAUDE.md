@@ -58,6 +58,12 @@ opponent scouting book (an instrument — today's book, not a snapshot). ⚠ Bot
 **closed-season page**, which is the only surface a finished season is read on; the Insights-hub
 assertions that used to hold them moved there when the hub stopped rendering for a finished season.
 
+**⚖ The CLUB's fiscal year is a different thing, and it is read IN PLACE** (owner ruling 2026-10-07, Club Tier
+Stage 3c Ask 1). A club admin's closed fiscal year reads on the club's money tabs (Budget, Budget vs. Actual,
+the Overview) through the Year pill, locked, every write absent — not as one page. This is deliberate, not drift
+to "correct" back to the season rule above: a club book runs across years, and only those tabs read a year (they
+already did). It never reaches the coaches portal, which keeps everything above unchanged.
+
 # Post-edit review
 
 After completing a **substantive** code change (new logic, API/DB/auth/shared-module edits, anything beyond copy/CSS/docs/config tweaks), proactively offer to run `/review` — the token-tiered adversarial funnel in `.claude/commands/review.md` — before treating the work as done. Offer once per logical chunk of work; don't nag on trivial diffs, and skip the offer if the user has already asked for a review or said to skip it. `/review` runs the deterministic gate first, so it's cheap on clean diffs.
