@@ -67,7 +67,8 @@ These rules apply to all AI coding assistants working in this repository.
   thing two names.
   - **Build-enforced, and the gate is the list.** `npm run check:spelling` (part of
     `verify:changed`) fails on any enforced variant in customer-visible copy. **`installment` (two
-    Ls) is settled and gated.** Escape hatch for a genuine proper noun or a quoted external
+    Ls) is settled and gated.** So is **"fiscal year"** for the club's period — never "financial
+    year" (owner, Club Tier Stage 3c Ask 9, 2026-10-07; the club side only, the coach keeps "season"). Escape hatch for a genuine proper noun or a quoted external
     document: `spelling-ok` in a comment on that line or the one above.
   - **⏰ THE CLOCK IS SETTLED AND GATED TOO — "8:00 a.m.", lowercase, with periods** (owner +
     `/marketing`, 2026-08-26). It applies **everywhere a customer reads a time** — screens, tables,

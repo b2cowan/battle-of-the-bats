@@ -118,6 +118,18 @@ const ENFORCED_PATTERNS = [
     pattern: /\d:\d{2}[\s\u00a0\u202f]*(AM|PM)\b/g,
     right: 'a lowercase "a.m." / "p.m." — see formatTime() in lib/utils.ts',
   },
+  /* ⚖ THE CLUB'S PERIOD IS ITS "FISCAL YEAR" (owner, Club Tier Stage 3c Ask 9, 2026-10-07): one spelling
+     everywhere a club person reads it — the window, the Year pill, the close question, the refusals, the
+     year-end report — and NEVER also "financial year", which would be a second name for the one period the
+     plan and the locked books share. A phrase, not a word, so it is a shape: any space (a no-break one too)
+     or a hyphen between the two words, either case, singular or plural. The word itself has one home,
+     `FISCAL_YEAR_WORD` in lib/club-fiscal-year.ts. A quoted statute or external document that really says
+     "financial year" takes `spelling-ok`. */
+  {
+    id: 'fiscal-year',
+    pattern: /\bfinancial[\s\u00a0\u202f-]+years?\b/gi,
+    right: '"fiscal year" — the club\'s period (FISCAL_YEAR_WORD, lib/club-fiscal-year.ts)',
+  },
 ];
 
 /**
