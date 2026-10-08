@@ -114,15 +114,15 @@ export async function checkCrossOrgJoin(
 /** The refusal sentence for the admin sending an invite or reinstating someone. */
 export function crossOrgJoinRefusalForAdmin(check: Extract<CrossOrgJoinCheck, { blocked: true }>): string {
   return check.reason === 'scorekeeper_elsewhere'
-    ? 'This person keeps score for another organization. A scorekeeper keeps one home organization, so they would need to leave it before joining here.'
-    : 'This person belongs to another organization. A scorekeeper keeps one home organization, so invite them in another role, or ask them to leave it first.';
+    ? 'This person volunteers for another organization. A volunteer keeps one home organization, so they would need to leave it before joining here.'
+    : 'This person belongs to another organization. A volunteer keeps one home organization, so invite them in another role, or ask them to leave it first.';
 }
 
 /** The refusal sentence for the person accepting the invitation. */
 export function crossOrgJoinRefusalForInvitee(check: Extract<CrossOrgJoinCheck, { blocked: true }>): string {
   return check.reason === 'scorekeeper_elsewhere'
-    ? 'You keep score for another organization, and a scorekeeper keeps one home organization. Ask that organization to remove you before joining this one.'
-    : 'This invitation is for a scorekeeper, and a scorekeeper keeps one home organization. Ask the club that invited you to choose another role.';
+    ? 'You volunteer for another organization, and a volunteer keeps one home organization. Ask that organization to remove you before joining this one.'
+    : 'This invitation is for a volunteer, and a volunteer keeps one home organization. Ask the club that invited you to choose another role.';
 }
 
 // getActiveOrgWorkspaceCount was removed here (Nav Unification Stage A): its raw
