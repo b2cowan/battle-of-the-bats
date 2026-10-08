@@ -28,10 +28,10 @@ export default function AdminHelpHubPage() {
   const cards: HelpHubCard[] = [
     {
       title: 'Tournaments',
-      desc:  'Create tournaments, manage the lifecycle, build schedules, run scorekeepers, enter scores, chat with coaches, and seal final results.',
+      desc:  'Create tournaments, manage the lifecycle, build schedules, hand scoring and check-in to volunteers, enter scores, chat with coaches, and seal final results.',
       href:  `${helpBase}/tournaments`,
       topicCount: 26,
-      keywords: ['create tournament', 'schedule', 'scorekeeper', 'scores', 'results', 'archive', 'teams', 'chat', 'coach chat'],
+      keywords: ['create tournament', 'schedule', 'scorekeeper', 'volunteer', 'staff kit', 'check-in', 'scores', 'results', 'archive', 'teams', 'chat', 'coach chat'],
     },
     ...(canHouseLeague ? [
       {
@@ -113,7 +113,8 @@ export default function AdminHelpHubPage() {
         { label: 'Open team registration', href: `${helpBase}/tournaments#recipe-open-tournament-registration` },
         { label: 'Review team registrations', href: `${helpBase}/tournaments#recipe-review-tournament-teams` },
         { label: 'Build and adjust the schedule', href: `${helpBase}/tournaments#recipe-build-tournament-schedule` },
-        { label: 'Set up scorekeepers and finalize scores', href: `${helpBase}/tournaments#recipe-finalize-tournament-scores` },
+        { label: 'Hand scoring and check-in to volunteers', href: `${helpBase}/tournaments#scores-and-results` },
+        { label: 'Review and finalize scores', href: `${helpBase}/tournaments#recipe-finalize-tournament-scores` },
         { label: 'Help fans follow a team and get score alerts', href: `${helpBase}/tournaments#public-site-preview` },
         { label: 'Chat with your coaches', href: `${helpBase}/tournaments#tournament-chat` },
         { label: 'Close out the tournament', href: `${helpBase}/tournaments#recipe-closeout-tournament` },

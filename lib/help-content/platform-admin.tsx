@@ -220,7 +220,7 @@ const platformAdminHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p><strong>Feedback</strong> collects bug reports, feature requests, and general feedback submitted from inside the app — admin, coach, scorekeeper, and anonymous public users. Work it like a queue, oldest-actionable first.</p>
+          <p><strong>Feedback</strong> collects bug reports, feature requests, and general feedback submitted from inside the app — admin, coach, volunteer, and anonymous public users. Work it like a queue, oldest-actionable first.</p>
           <ol>
             <li>Open <strong>Feedback</strong>. It opens on the <strong>New</strong> status by default so you see what is unworked. Use the type, category, and status filters to narrow; choose <strong>All statuses</strong> to widen back out.</li>
             <li>Open a row&apos;s title to read the full body. For a bug, look for the <strong>View related issue →</strong> link — it jumps straight to the matching error group in Observability so you can confirm whether the error is already tracked.</li>

@@ -1131,42 +1131,121 @@ const tournamentsHelp: HelpPageContent = {
     {
       id: 'scores-and-results',
       group: 'Game Day & Scores',
-      heading: 'Hand scoring to scorekeepers',
-      summary: 'Set up scorekeepers and the Staff Kit so volunteers can enter scores from the field.',
-      keywords: ['scorekeepers', 'scorekeeper', 'staff kit', 'volunteer', 'day of scoring', 'submit score', 'game day', 'public site pill', 'not arrived', 'checked in', 'no-show', 'still owe', 'check in button', 'undo button', 'arrival filter'],
-      searchText: 'scorekeepers staff kit qr code volunteer check-in gate scorekeeper view day of game scoring submit score results scoring pending review finalization public site pill flip public schedule chooser all not arrived checked in no-show teams still owe all teams are paid check in button undo button gate table roster payment desk phone bucket bar refreshes every 30 seconds',
+      heading: 'Hand scoring and check-in to volunteers',
+      summary: 'Invite volunteers for scoring, the gate, or both, hand out the Staff kit’s codes, and know what each job looks like on a phone.',
+      keywords: ['volunteers', 'volunteer', 'scorekeepers', 'scorekeeper', 'gate', 'staff kit', 'qr code', 'helping with', 'field scores', 'check-in', 'day of scoring', 'submit score', 'game day', 'public site pill', 'not arrived', 'checked in', 'no-show', 'still owe', 'check in button', 'undo button', 'arrival filter', 'sent back', 'no access', 'install the app', 'print volunteer sheet'],
+      searchText: 'volunteers volunteer role scorekeeper gate jobs helping with scoring the gate both invite a volunteer staff kit qr code copy link open print one page volunteer table three steps field scores to score review final all score gate account tabs today filters date team field division enter the score sheet finalize score submit for review cancel tap outside does nothing notice final sent for review sent back to score again forfeit under final public site pill flip public schedule chooser check-in picker event status finished draft check-in closed all not arrived checked in no-show teams still owe all teams are paid check in button undo button in chip time team sheet division payment mark paid roster add roster gate view table desk phone refreshes every 30 seconds account sheet install this app add to home screen sign out no access wrong code not one of your jobs lands on their job change their job members manage seat limit free',
       links: [
-        { label: 'Staff Kit', href: '../tournaments/staff-kit' },
-        { label: 'Scorekeeper View', href: '../../scorekeeper' },
+        { label: 'Staff kit', href: '../tournaments/staff-kit' },
+        { label: 'Field scores', href: '../../scorekeeper' },
         { label: 'Check-in', href: '../tournaments/check-in' },
       ],
       content: (
-        <>
-          <p>You do not have to enter every score yourself. Scorekeepers use <strong>Scorekeeper View</strong> at <code>/{'{orgSlug}'}/scorekeeper</code> — a field-focused interface that only shows assigned games, no admin access required.</p>
-          <p>Scorekeeper View also carries a <strong>⇄ Public site</strong> pill in its header — one tap opens the public schedule for the event being scored, so a volunteer can confirm a posted score is live without leaving their station. If two of your events run on the same day, the pill opens a small chooser with one row per tournament.</p>
-          <p>Use the <strong>Staff Kit</strong> page to distribute scorekeeper and gate volunteer links. Staff Kit generates a QR code and copy-link for each volunteer surface (Scorekeeper View and Check-in/Gate), so you can print one sheet and post it at the volunteer table.</p>
-          <p>Gate check-in is a separate surface at <code>/{'{orgSlug}'}/check-in</code> — the same board the Check-in admin page uses, so a gate volunteer&rsquo;s work shows up there within 30 seconds, no reload needed. Its filter is four buttons — <strong>All, Not arrived, Checked in, No-show</strong> — each carrying its own count, with a line underneath reading how many teams still owe (or that every team is paid). A team&rsquo;s row carries one worded <strong>Check in</strong> button; once they&rsquo;re in, that becomes <strong>Undo</strong>. <strong>No-show now lives only in the team&rsquo;s own sheet</strong> — tap the row to reach it, alongside payment and the roster. At a desk the board is a table (Team, Roster, Payment); on a phone it&rsquo;s one frame of rows. Open the <strong>Gate view</strong> link from the Check-in admin page to hand volunteers that same board without admin access.</p>
-          <p>Volunteers still authenticate when they arrive at each surface — Staff Kit links do not bypass login.</p>
-        </>
+        <p>You don&rsquo;t have to enter every score or check in every team yourself. Volunteers do both from their own phones, on two screens built for the field — <strong>Field scores</strong> and <strong>Check-in</strong> — with no way into the admin area. This topic covers inviting them, handing out their codes, and what each job looks like.</p>
       ),
+      subtopics: [
+        {
+          id: 'scores-t-invite',
+          title: 'Invite a volunteer and choose their job',
+          content: (
+            <>
+              <p>A volunteer holds one or both of two jobs: <strong>Scorekeeper</strong> (entering scores) and <strong>Gate</strong> (checking teams in). You choose which when you invite them.</p>
+              <HelpSteps>
+                <li>Open the tournament&rsquo;s <strong>Staff kit</strong> and tap <strong>Invite a volunteer</strong>, or go to <strong>Members</strong> and tap <strong>Invite</strong>.</li>
+                <li>Enter their email. From the Staff kit the role is already <strong>Volunteer</strong>; from Members, choose it.</li>
+                <li>Under <strong>Helping with</strong>, choose <strong>Scoring</strong>, <strong>The gate</strong>, or <strong>Both</strong>. The line under it says what they&rsquo;ll be able to do.</li>
+                <li>Send the invite. They get an email with a link to set up their account.</li>
+              </HelpSteps>
+              <p>Whenever they sign in — from the link, the sign-in page or the installed app — they land on their job: <strong>Field scores</strong> for Scoring or Both, <strong>Check-in</strong> for The gate. A volunteer helping with both reaches the other job in one tap.</p>
+              <p>You can change their job any time under <strong>Helping with</strong> in <strong>Members › Manage</strong>, and anyone who can invite members can change it. A volunteer always keeps at least one job; to end their access, remove them. Volunteers never count toward your plan&rsquo;s seat limit.</p>
+            </>
+          ),
+        },
+        {
+          id: 'scores-t-staff-kit',
+          title: 'Hand out the Staff kit',
+          content: (
+            <>
+              <p>The <strong>Staff kit</strong> is how volunteers find their screen on game day. Open the tournament, then <strong>Staff kit</strong> in the side menu.</p>
+              <ul>
+                <li>Two cards, <strong>Scorekeeper</strong> and <strong>Gate</strong>, each with a QR code, its link, <strong>Copy link</strong> and <strong>Open</strong>.</li>
+                <li><strong>Print</strong> gives one page for the volunteer table: your club&rsquo;s name, the tournament and its dates, both codes, and three short steps for the volunteer. Nothing of the admin screen prints.</li>
+                <li><strong>Invite a volunteer</strong> opens the invite with the Volunteer role already chosen.</li>
+              </ul>
+              <HelpNote variant="info">The codes don&rsquo;t skip sign-in. Each volunteer signs in with the email you invited and sees only their own job, so a printed sheet left on a table opens nothing for someone you didn&rsquo;t invite.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'scores-t-field-scores',
+          title: 'What a scorekeeper sees: Field scores',
+          content: (
+            <>
+              <p>Field scores lists the day&rsquo;s games as cards, each with its time, field, division and one status chip. The day sits at the top, with <strong>Today</strong> to jump back to it, and <strong>Filters</strong> narrows the list by team, field or division. On a phone, <strong>To score</strong>, <strong>Review</strong>, <strong>Final</strong> and <strong>All</strong> sort the games at the foot of the screen, above the tabs <strong>Score</strong>, <strong>Gate</strong> (for a volunteer who also works the gate) and <strong>Account</strong>. On a tablet or computer, the other job and <strong>Sign out</strong> sit in the header instead.</p>
+              <HelpSteps>
+                <li>Tap a game under <strong>To score</strong>. A sheet rises with one big box per team.</li>
+                <li>Type both scores. The line above the button says what saving does: <em>This score is final as soon as you save it</em>, or <em>The organizer reviews this score before it&rsquo;s final</em>.</li>
+                <li>Tap <strong>Finalize score</strong> (or <strong>Submit for review</strong>). A short notice confirms it — &ldquo;Final · Wolves 7, Royals 4&rdquo; — and the list stays where it was.</li>
+              </HelpSteps>
+              <p>A tap outside the sheet does nothing, so a stray thumb can&rsquo;t lose a score; <strong>Cancel</strong> (or the phone&rsquo;s Back) closes it. If you send a score back from Results &amp; Scoring while their screen is open, they see &ldquo;Sent back to score again&rdquo; with the game&rsquo;s teams, and the game returns to To score. A forfeit sits under Final and can&rsquo;t be scored there.</p>
+              <p>The <strong>⇄ Public site</strong> pill in the header opens the public schedule for the event being scored, so a volunteer can check a posted score is live. If two of your events run that day, it opens a small chooser.</p>
+            </>
+          ),
+        },
+        {
+          id: 'scores-t-gate',
+          title: 'What a gate volunteer sees: Check-in',
+          content: (
+            <>
+              <p>The volunteer&rsquo;s Check-in is the same board as your admin Check-in page, so a gate volunteer&rsquo;s work shows up there within 30 seconds, without a reload. With more than one event, a picker under the title names each with its status. If the event is finished, or still a draft, the screen says so in words and check-in stays closed.</p>
+              <ul>
+                <li><strong>All</strong>, <strong>Not arrived</strong>, <strong>Checked in</strong> and <strong>No-show</strong> sort the teams, each with its count, and a line says how many teams still owe (or that every team is paid).</li>
+                <li>Each team&rsquo;s row has one <strong>Check in</strong> button. Once they&rsquo;re in, the row shows <strong>IN</strong> with the time, and the button becomes <strong>Undo</strong>.</li>
+                <li>Tapping a team&rsquo;s name opens its sheet: its division and where it stands, <strong>Payment</strong> (with <strong>Mark paid</strong> while it owes), its <strong>Roster</strong>, and <strong>No-show</strong>, which lives only here.</li>
+              </ul>
+              <p>At a desk the board is a table (Team, Roster, Payment); on a phone it&rsquo;s one list of rows. To open the volunteer&rsquo;s board yourself, use <strong>Gate view</strong> on the admin Check-in page.</p>
+            </>
+          ),
+        },
+        {
+          id: 'scores-t-account',
+          title: 'Account, installing the app, and the wrong code',
+          content: (
+            <>
+              <p>On a phone, the <strong>Account</strong> tab opens a sheet showing who is signed in, their jobs and your club, with <strong>Install this app</strong> and <strong>Sign out</strong>. Tapping Account again closes it. On a shared or borrowed phone, it&rsquo;s the quickest way to check whose sign-in it is.</p>
+              <p>Installing puts FieldLogicHQ on the phone&rsquo;s home screen. On an iPhone, a banner shows how: tap Share, then Add to Home Screen.</p>
+              <p>A volunteer who opens the other job&rsquo;s link — a gate volunteer scanning the Scorekeeper code, say — sees <strong>No access</strong>, a line saying it isn&rsquo;t one of their jobs, and a button to the job they do hold. If they should have it, change their job in <strong>Members › Manage</strong>.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-scorekeeper-score-submit',
-          question: 'How do scorekeepers submit scores?',
-          answerText: 'Scorekeepers use Scorekeeper View at the organization scorekeeper route and submit assigned game scores from the field.',
-          keywords: ['scorekeepers', 'scorekeeper', 'submit score'],
+          question: 'How do volunteers enter scores?',
+          answerText: 'A volunteer helping with scoring opens Field scores, from the Staff kit’s Scorekeeper code or simply by signing in. They tap a game under To score, type both scores in the sheet that rises, and tap Finalize score, or Submit for review if this tournament reviews scores first. They can change the day at the top, and Filters narrows it by team, field or division; the field list shows only the places that day’s games are at, and a game whose location was typed rather than picked appears as its own entry.',
+          keywords: ['scorekeepers', 'scorekeeper', 'submit score', 'enter score', 'volunteer', 'field scores', 'finalize score', 'submit for review', 'to score'],
           popular: true,
           answer: (
-            <p>Scorekeepers use <strong>Scorekeeper View</strong> at <code>/{'{orgSlug}'}/scorekeeper</code>. They see the games available to them, filter by date, field, division, team, or status, and submit scores from that focused interface. The field filter lists the places that day&apos;s games are actually at — unused venues don&apos;t pad the list, and a game whose location was typed rather than picked appears as its own entry.</p>
+            <p>A volunteer helping with scoring opens <strong>Field scores</strong>, from the Staff kit&rsquo;s <strong>Scorekeeper</strong> code or simply by signing in. They tap a game under <strong>To score</strong>, type both scores in the sheet that rises, and tap <strong>Finalize score</strong> (or <strong>Submit for review</strong>, if this tournament reviews scores first). They can change the day at the top, and <strong>Filters</strong> narrows it by team, field or division. The field list shows only the places that day&rsquo;s games are at, and a game whose location was typed rather than picked appears as its own entry.</p>
           ),
         },
         {
           id: 'faq-open-scorekeeper-view',
-          question: 'How do admins open the scorekeeper workflow?',
-          answerText: 'Admins can open Scorekeeper View from Results & Scoring or visit the organization scorekeeper route directly if they have scoring access.',
-          keywords: ['open scorekeeper view', 'scorekeeper route', 'day of scoring'],
+          question: 'How do I open the volunteers’ screens myself?',
+          answerText: 'On Results & Scoring, the Scorekeeper button opens Field scores in a new tab. On the admin Check-in page, Gate view opens the gate volunteer’s board. The Staff kit’s Open buttons do the same. They are the volunteers’ own screens, useful for trying the field workflow before game day, and opening them never gives a volunteer admin access.',
+          keywords: ['open scorekeeper view', 'scorekeeper view', 'scorekeeper route', 'day of scoring', 'gate view', 'field scores', 'try the volunteer screen', 'test scoring before game day'],
           answer: (
-            <p>Use the <strong>Open Scorekeeper View</strong> action from Results &amp; Scoring, or visit <code>/{'{orgSlug}'}/scorekeeper</code> directly. Opening the lightweight view does not grant admin access to scorekeepers; route permissions still come from member role and capability checks.</p>
+            <p>On <strong>Results &amp; Scoring</strong>, the <strong>Scorekeeper</strong> button opens <strong>Field scores</strong> in a new tab. On the admin <strong>Check-in</strong> page, <strong>Gate view</strong> opens the gate volunteer&rsquo;s board. The Staff kit&rsquo;s <strong>Open</strong> buttons do the same. They&rsquo;re the volunteers&rsquo; own screens, useful for trying the field workflow before game day, and opening them never gives a volunteer admin access.</p>
+          ),
+        },
+        {
+          id: 'faq-volunteer-no-access',
+          question: 'A volunteer sees “No access” — what happened?',
+          answerText: 'They opened the screen for a job they don’t hold — usually a gate volunteer scanning the Scorekeeper code, or a scoring volunteer scanning the Gate code. The screen says that job isn’t one of theirs and offers a button to the job they do hold. If they should do both, open Members, Manage on their row, and set Helping with to Both.',
+          keywords: ['no access', 'wrong code', 'wrong qr code', 'scoring isn’t one of your jobs', 'check-in isn’t one of your jobs', 'volunteer cannot score', 'volunteer cannot check in', 'helping with'],
+          answer: (
+            <p>They opened the screen for a job they don&rsquo;t hold — usually a gate volunteer scanning the <strong>Scorekeeper</strong> code, or a scoring volunteer scanning the <strong>Gate</strong> code. The screen says that job isn&rsquo;t one of theirs and offers a button to the job they do hold. If they should do both, open <strong>Members</strong>, tap <strong>Manage</strong> on their row, and set <strong>Helping with</strong> to <strong>Both</strong>.</p>
           ),
         },
         {
@@ -1190,10 +1269,10 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'Review and finalize scores',
       summary: 'Record results from admins or scorekeepers, confirm pending reviews, and correct mistakes.',
       keywords: ['enter scores', 'finalize scores', 'pending review', 'scorekeeper submissions', 'results', 'review scores', 'playing now', 'up next', 'needs a score', 'to finalize', 'game-day dashboard', 'needs you', 'all games', 'correct a final score', 'score submitted notification', 'no games found', 'results is empty', 'nothing in results', 'show all games', 'results filters', 'why cant i see my games', 'tie', 'level score', 'who can change a final score', 'who can finalize', 'this game is final', 'read-only final game'],
-      searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring final games public standings correct score revert scheduled score to finalize needs a score playing now up next game day dashboard game-day board overdue live game what is on now lists hidden when empty one tap open score editor needs you all games lens scheduled cancelled correct an already final score score submitted notification opens results with the game ready no games found results is empty nothing shows in results why cant i see my games all my games are missing show all games button tie level score scores are level forfeit pending review final export status column word customize this board show hide checkboxes drag to reorder who can finalize who can change a final score this game is final only someone who can finalize scores can change it read-only final game staff cannot change a final result save score stays off seal archive tournaments permission forfeit under final scorekeeper',
+      searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring final games public standings correct score revert scheduled score to finalize needs a score playing now up next game day dashboard game-day board overdue live game what is on now lists hidden when empty one tap open score editor needs you all games lens scheduled cancelled correct an already final score score submitted notification opens results with the game ready no games found results is empty nothing shows in results why cant i see my games all my games are missing show all games button tie level score scores are level forfeit pending review final export status column word customize this board show hide checkboxes drag to reorder who can finalize who can change a final score this game is final only someone who can finalize scores can change it read-only final game staff cannot change a final result save score stays off seal archive tournaments permission forfeit under final scorekeeper volunteer field scores scorekeeper button opens field scores',
       links: [
         { label: 'Results & Scoring', href: '../tournaments/results' },
-        { label: 'Scorekeeper View', href: '../../scorekeeper' },
+        { label: 'Field scores', href: '../../scorekeeper' },
       ],
       content: (
         <p>Admins can enter, review, finalize, correct, export, or revert scores from <strong>Results &amp; Scoring</strong>. It opens on <strong>Needs you</strong> — games waiting to finalize, needing a score, or playing right now — with <strong>All games</strong> one tap away.</p>
@@ -1203,7 +1282,7 @@ const tournamentsHelp: HelpPageContent = {
           id: 'results-needs-you-all-games',
           title: 'Needs you and All games',
           content: (
-            <p><strong>Results &amp; Scoring</strong> opens on <strong>Needs you</strong> — every division&rsquo;s games waiting to finalize, needing a score, or playing right now. Tap <strong>All games</strong> to also see games not yet due and games already final. Tap any game&rsquo;s row to open its score editor in that same place in the list, or open <strong>Scorekeeper View</strong> for the lightweight day-of workflow.</p>
+            <p><strong>Results &amp; Scoring</strong> opens on <strong>Needs you</strong> — every division&rsquo;s games waiting to finalize, needing a score, or playing right now. Tap <strong>All games</strong> to also see games not yet due and games already final. Tap any game&rsquo;s row to open its score editor in that same place in the list, or tap <strong>Scorekeeper</strong> to open <strong>Field scores</strong>, the volunteers&rsquo; screen, in a new tab.</p>
           ),
         },
         {
@@ -1220,9 +1299,9 @@ const tournamentsHelp: HelpPageContent = {
             <>
               <p>Finalizing a waiting score and changing a result that&rsquo;s already final belong to the same people: owners and admins, plus any member you&rsquo;ve given <strong>Seal (archive) tournaments</strong> in their member settings &mdash; that one permission covers both.</p>
               <ul>
-                <li><strong>Staff and scorekeepers</strong> can enter scores, and correct or revert a score that&rsquo;s still <strong>Pending Review</strong>. On a waiting score they haven&rsquo;t changed, <strong>Save score</strong> stays off until the numbers actually change.</li>
+                <li><strong>Staff</strong> can enter scores, and correct or revert a score that&rsquo;s still <strong>Pending Review</strong>. On a waiting score they haven&rsquo;t changed, <strong>Save score</strong> stays off until the numbers actually change. Volunteers enter scores, and correct one that&rsquo;s still Pending Review, on Field scores instead.</li>
                 <li><strong>A final game</strong> &mdash; Final or Forfeit &mdash; opens read-only for them, saying <em>&ldquo;This game is final. Only someone who can finalize scores can change it.&rdquo;</em> They don&rsquo;t see <strong>Finalize</strong>.</li>
-                <li>On <strong>Scorekeeper View</strong>, a forfeited game sits under <strong>Final</strong>, not To score, and can&rsquo;t be scored there.</li>
+                <li>On <strong>Field scores</strong>, a forfeited game sits under <strong>Final</strong>, not To score, and can&rsquo;t be scored there.</li>
               </ul>
             </>
           ),
@@ -1328,12 +1407,12 @@ const tournamentsHelp: HelpPageContent = {
         },
         {
           id: 'faq-scorekeeper-edit-final',
-          question: 'Can scorekeepers edit submitted scores?',
-          answerText: 'Scorekeepers can correct a Pending Review score before it is finalized, but not a final result — a completed score or a forfeit. On Scorekeeper View a forfeited game sits under Final and cannot be scored. A final result is changed in Results & Scoring by someone who can finalize scores: owners and admins, or a member given Seal (archive) tournaments.',
-          keywords: ['edit score', 'correct score', 'finalized score', 'pending review', 'forfeit', 'final result', 'forfeit under final'],
+          question: 'Can volunteers change a score after submitting it?',
+          answerText: 'Volunteers can correct a Pending Review score before it is finalized, but not a final result — a completed score or a forfeit. On Field scores a forfeited game sits under Final and cannot be scored. A final result is changed in Results & Scoring by someone who can finalize scores: owners and admins, or a member given Seal (archive) tournaments.',
+          keywords: ['edit score', 'correct score', 'finalized score', 'pending review', 'forfeit', 'final result', 'forfeit under final', 'scorekeeper edit score', 'volunteer correct score', 'save correction'],
           answer: (
             <>
-              <p>Scorekeepers can correct a <strong>Pending Review</strong> score before it&rsquo;s finalized, but not a final result &mdash; a completed score or a forfeit. On Scorekeeper View a forfeited game sits under <strong>Final</strong> and can&rsquo;t be scored.</p>
+              <p>Volunteers can correct a <strong>Pending Review</strong> score before it&rsquo;s finalized, but not a final result &mdash; a completed score or a forfeit. On Field scores a forfeited game sits under <strong>Final</strong> and can&rsquo;t be scored.</p>
               <p>A final result is changed in <strong>Results &amp; Scoring</strong> by someone who can finalize scores: owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>.</p>
             </>
           ),
@@ -1693,7 +1772,7 @@ const tournamentsHelp: HelpPageContent = {
               </HelpDefs>
               <p>A signed-out visitor also sees <strong>Sign In</strong> and <strong>Run a Tournament</strong>; a signed-in fan sees a chat icon (only if they&rsquo;re actually in a conversation, carrying any unread count) and a small account avatar; and a signed-in <strong>admin or coach</strong> sees one button straight to their own tools &mdash; <strong>Admin Area</strong> or <strong>Coaches Portal</strong> &mdash; in place of that CTA. It carries your event&rsquo;s colours so it reads as quiet app chrome, never a competing brand.</p>
               <p><strong>Your tournament&rsquo;s own pages</strong> sit in a row of tabs just under the branded header &mdash; <strong>Overview</strong>, News, Schedule, Standings, <strong>Playoffs</strong>, Teams, Rules (only the pages you publish), with a <strong>Share this event</strong> action on the Overview. <strong>Playoffs</strong> appears as soon as you have set up a bracket, sitting straight after Standings, so a parent hunting for &ldquo;who plays who next&rdquo; has somewhere obvious to tap. <strong>Hiding Standings hides Playoffs too</strong>, because the bracket gives the seeding away. Two formats are the exception, in opposite directions: a <strong>bracket-only</strong> event has no round-robin standings to show, so its Playoffs tab stands on its own &mdash; that bracket <em>is</em> the tournament &mdash; while an <strong>Exhibition</strong> event never shows a Playoffs tab at all, because it never has a bracket to point to.</p>
-              <p>A <strong>coach, admin, or scorekeeper</strong> signed in and viewing the public site sees the <strong>flip pill</strong> in the top-right corner &mdash; a small <strong>&#8644;</strong> button &mdash; and one tap flips them straight to their own tools for this event, in the same tab and matched to the page they&rsquo;re on. It&rsquo;s the same control that sits in the top-right of every admin and coach screen, so one predictable spot toggles between the operator side and the public side everywhere. Fans don&rsquo;t see it &mdash; the bottom bar and the follow strip already cover signing in, following, and getting around.</p>
+              <p>A <strong>coach, admin, or volunteer</strong> signed in and viewing the public site sees the <strong>flip pill</strong> in the top-right corner &mdash; a small <strong>&#8644;</strong> button &mdash; and one tap flips them straight to their own tools for this event, in the same tab and matched to the page they&rsquo;re on. It&rsquo;s the same control that sits in the top-right of every admin and coach screen, so one predictable spot toggles between the operator side and the public side everywhere. Fans don&rsquo;t see it &mdash; the bottom bar and the follow strip already cover signing in, following, and getting around.</p>
             </>
           ),
         },
