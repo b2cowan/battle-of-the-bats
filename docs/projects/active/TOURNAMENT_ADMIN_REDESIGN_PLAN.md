@@ -36,6 +36,15 @@
 > (Part 1) · `8237fb15` (Parts 2–3) · `211fcb1d` (Part 4); help and records in the docs commit after them; P1–P5 ruled
 > at its start, all as recommended — §6d "Stage 4 — as built". **Owner walks §275 (the morning after, from a phone)
 > and §276 (statuses and the way back, at a desk) owed** — the hub's QA tab (v25).
+> **Stage 6 (the volunteers) DRAWN 2026-10-07** on the hub's Stage 6 tab (hub v31, §6f), from
+> `TOURNAMENT_ADMIN_REDESIGN_STAGE6_DESIGN_PROMPT.md`: V1–V7, findings F58–F65 (§3), asks A25–A32. **⚖ RULED 2026-10-07**
+> (owner's paste-back): **V1–V7 as drawn, A25–A32 as recommended** (hub v32). Build prompt
+> `TOURNAMENT_ADMIN_REDESIGN_STAGE6_BUILD_PROMPT.md` — P1 (who may change a volunteer's jobs after the invite) and P2 (a
+> volunteer with neither job) go to the owner at its start.
+> **✅ STAGE 6 BUILT and COMMITTED 2026-10-07** (after /simplify + /review): `df49408a` (Part 0, the landing rule and
+> "Helping with") · `1b1546b9` (Parts 1–4, the shells, the sheets, the banner and the Staff kit) · `d5df5e7b` (the
+> pricing pages say "volunteers"); P1 and P2 ruled at its start, both as recommended — §6f "Stage 6 — as built".
+> **Owner walk §282 (a volunteer's game day, from a phone) ✅ PASSED 2026-10-08, 19/19** (step 9 on the owner's word) — the hub's QA tab, walk 7.
 > **Created:** 2026-09-28 · **Branch:** dev · **Companions:** `TOURNAMENT_ADMIN_REDESIGN_PM_BRIEF.md` ·
 > hub `TOURNAMENT_ADMIN_REDESIGN_HUB.html` (republish the same path for the project's life).
 > **Origin:** Phase 3 of `ADMIN_DESIGN_CONTINUITY_PLAN.md` ("Tournament screens — its own project when it
@@ -428,6 +437,85 @@ non-destructive roster. Open: the "Install this app" banner can sit on top of th
 positions itself from variables the volunteer shells never set); Cancel and Submit are 42px; the Review
 filter doesn't signal waiting scores; a `staff` member lands on the full dashboard (J8-021).
 
+**Re-measured 2026-10-07 for Stage 6** (probe `.probe/s6/probe.mjs`, read-only — every non-GET refused and recorded;
+the `plus-official` session on `uat-plus-org`, the free club's scorekeeper signed in once in the probe's own browser,
+the owner signed in the same way for the Staff kit; 390 · 360 · 768 touch, 1440 for the kit; an iPhone user agent for
+the banner). The Plus event's games are in June, so the scorekeeper was read on Jun 14 (4 to score, 1 final, 1
+cancelled) and Jun 12 (1 waiting for review). **Fixed Warm, confirmed:** both shells wrap `GuestKitRoot`, whose
+marker pins the warm palette with no theme attribute in the selector (`app/globals.css` `:root [data-guest-kit]`), and a
+portal opened inside carries the same marker; on a phone set to Dark the gate and its team sheet read white
+(`html[data-user-theme=dark]`). **Measured, 390:** fixed chrome 172px (header 52, buckets 58, tabs 62 — Option C's
+"~110" at the foot is 120 since the kit's 46px buckets); the scorekeeper's first game at 191px, cards 160px, 3 whole on
+screen one (2 at 360); the gate's first team at 226px, 6 whole rows; nothing spills sideways at any width. **Taps:**
+first score from a signed-out link 3 + typing (sign-in → the game → Submit; the sign-in returned to the scorekeeper);
+the next score 2 + typing; check-in 1; switch jobs 1 (2.9 s to the gate's board on dev); copy a link from the board on a
+phone 3 (More → Staff kit → Copy). **F36's four items:** the banner is open and worse (F58); the buttons still 42px
+(F60); the Review count still plain; the staff landing true, read from code — no test club has a staff member, nothing
+was added — and re-framed (A25, A26). **June's J8, re-checked: 16 fixed · 3 partly · 2 changed · 2 open** — fixed:
+001–002 `99e06b26`, 003 and 019 `e567124d`, 004 (the one-app start page opens the volunteer's own screen), 005
+(migration 130), 006–007 `70ce26c9`, 010–011 `a1eafe36`, 012 `890d0aac` (Stage 1 G7), 013 (the sheet's third/two-thirds
+foot), 014 · 016 · 017 `01243f51`, 018 `a0a61835`; partly: 008 (a coloured note under the boxes, covered by the banner on
+an iPhone), 015 ("(completed)" lowercase in a 40px box; a volunteer sees only assigned events), 020 (Home's one card
+opens the scorekeeper, the gate one tap from there); changed: 009 (the tiles became the bucket bar), 023 (the Account
+sheet names who and the duties); open: 021 (staff), 022 (the public home — the public pages' owner). **Exhibition:**
+neither shell reads the format; nothing a volunteer sees changes.
+
+**F58 — The install banner sits on the volunteer's buckets and over an open score sheet.** On an iPhone the banner shows
+on the first visit (the engagement delay applies only on a fan's event page) and positions itself from
+`--bottom-nav-height` — the public site's 72px at ≤900, which the shells never set — so it sits at 681–772px over the
+bucket bar (724–782px): a tap on "To score" hits the banner (`elementFromPoint`). The 2026-10-06 fix put it at layer 255,
+under every portal sheet; the shells' own sheets sit lower (the score sheet's backdrop 100, Account 90), so it floats
+undimmed over an open score sheet, covering the bottom of the boxes and the whole policy note, and over the Account
+sheet. The gate's team sheet (`BottomSheet`, 600) covers it. `tests/unit/install-banner-layer-guard.test.ts` names these
+sheets as not covered. Code: `InstallAppPrompt.module.css` `.banner`, `DayOfShell.module.css`, `scorekeeper.module.css`
+`.sheetBackdrop`. Ask A31.
+
+**F59 — The volunteer bars are see-through.** The bucket bar (`rgba(--home-paper-rgb, .97)`) and the tab bar (`.92`) copy
+the coaches portal bar's ground without its 20px backdrop blur, so the page reads through them under the thumb ("Comets
+U11 Girls … Owes $525" legible behind the gate's tabs at 390). `DayOfShell.module.css` kit block.
+
+**F60 — Controls under 44px on the volunteer screens.** Phone (390 and 360): Cancel 72×42 and Submit 244×42, Refresh
+42×42, Today 56×42, Filters 77×42, the ⇄ pill 41×30, the Account sheet's × 38×38; the gate team sheet's × 32×32 and Mark
+paid 136×35; the gate's event picker 40px tall (only with two or more assigned events). Tablet (768 — no tab bar above
+640px): the header's "Check-in →" 90×19 and "Sign out" 48×15, the four buckets 42. These screens have no computer case:
+the admin's 34px rule does not apply. Ask A27.
+
+**F61 — The clock reads "A.M." in capitals on both volunteer screens.** The scorekeeper card's time line (`.gameMeta`,
+console face, `text-transform: uppercase`) and the gate's arrival chip ("IN · 8:59 A.M.") draw `formatTime()`'s
+"11:30 a.m." in capitals. The clock ruling (2026-08-26: "8:00 a.m.", lowercase, no carve-out) is broken by a style
+the spelling gate cannot see — it reads source text, not rendered text. Stage 1's own drawing carried the same chip.
+
+**F62 — A volunteer invited for the gate lands on the scorekeeper.** Read from code (walking it sends an email). The
+invite's "Helping with" (Both · Scorekeeping · Gate / check-in) is used once: an EXISTING account's "added" email links
+`/auth/login?next=/{org}/check-in`. A new volunteer's invite link goes through `/auth/accept-invite`, which lands where
+the server's resolver says, and `getDestinationForMembership` sends every `official` to `/{org}/scorekeeper`; so do every
+later bare sign-in, the installed app (`/?source=pwa`) and any `/{org}/admin` address (the J8-019 redirect). The choice is
+stored nowhere (only the audit log). The invite dialog's hint ("Opens the gate board to check teams in.") and the Staff
+kit's note ("the invite email links them straight to the right screen") promise otherwise. The role is labelled
+"Scorekeeper" (`ROLE_LABEL.official`), and the invite opens on Staff ("Staff was today's default"). The gate is one tap
+away on the tab bar. Ask A26.
+
+**F63 — A score sent back returns silently; a forfeit sits in no bucket but All.** Results' Revert sets the game back to
+`scheduled` with its scores and submitter cleared (`revertTournamentScore`); the scorekeeper's live update moves it back
+to To score with no word, and after a reload nothing can say it was sent back. A finalized forfeit arriving by live update
+keeps Pending Review until a refresh (`statusFromRealtime` doesn't accept `forfeit`), and the bucket counts read
+`scheduled` / `submitted` / `completed` only, so a forfeit is in All alone. Ask A32.
+
+**F64 — The after-submit notice talks to the organizer and never leaves.** After Submit for Review the list drops about 104px (the notice is 88px tall)
+under "Score sent for review — An admin can now review and finalize this result from Results & Scoring." (88px; the admin
+page is "Results"), which stays until the next action; "Score finalized — This result is now final." 68px. The standing
+rule: the save word fades ~2.5 s, a sentence notice ~8 s, only an error persists.
+
+**F65 — The Staff kit fails the formatting check.** Measured as the owner on the Plus club (390; 1440 with print media):
+its "printable one-pager" prints the rail, the top strip, the event header and the grid ground around the two codes (its
+print rule hides only Copy and Open — Summary's J1-110 again); Print (81×44), Copy (84×38) and Open (85×38) are the
+retired grey `btn-ghost` (every admin action is the white button, 2026-10-01; a door is olive text); on a phone each link
+breaks mid-word ("…/scorekeep / er"); the closing note sends the organizer to "Settings & Access → Members … as a
+Volunteer" (the rail spells "Settings & access"; the role is "Scorekeeper") and promises the invite links them "straight
+to the right screen" (F62); the browser tab says "Staff Kit". Its old look (10 kit-scoped rules in
+`staff-kit.module.css`) was named by no stage in `check:old-look:report`. Phone: 3 taps from the board to copy a link.
+F14's "works" stands for the codes and links.
+
 ### Across the product
 
 **F37 — Controls under 44px, by screen (390, touch).** Game day: Results 16, Check-in 65 (every row's
@@ -472,7 +560,7 @@ which reads as the product changing its mind. Routed to the foundation / Club St
 | 3 · The schedule | Opens on the day; the bracket shows scores and winners; one generator name; drag with undo; the coin toss where seeding happens; the rain delay as Storm Mode's home | Q 8.1 | Both |
 | 4 · After the event — **DRAWN 2026-10-05, RULED 2026-10-06 (§6d); build prompt written** | The finished board says how each division finished and offers Reuse this setup (its one lime); one reuse flow (the wizard's step, every door); Summary on a phone, the champions page shared, a clean printout; Past tournaments as every finished event's list; the Tournaments list (what's ahead) with its statuses as bands and the event's record, every change asking first; the Exhibition; + no door to the list (F48), the one-slot next year (F49) | Q 13.1 (ruled) · A18 (ruled: Stage 5 owns the before-event view) · A19–A24 | Desk first |
 | 5 · Create and set up | One set of creation questions (diamonds in both wizards); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens | Q 1.1, 2.1, 3.1, 4.1 | Desk first, phone usable |
-| 6 · The volunteers | Scorekeeper and gate: the install banner, 44px buttons, a waiting-score signal, the staff landing; the gate inherits Stage 1's check-in board | — | Phone only |
+| 6 · The volunteers — **DRAWN + RULED 2026-10-07 (§6f); build prompt written** | Scorekeeper and gate: the install banner, 44px buttons, a waiting-score signal, the staff landing; the gate inherits Stage 1's check-in board; + the see-through bars (F59), the clock in capitals (F61), the gate volunteer's landing (F62), a sent-back score (F63), the after-submit notice (F64), the Staff kit (F65) | V1–V7 · A25–A32 | Phone only (a scoring-table tablet measured) |
 | D · Defects now | Not a stage: F32 archive promise, F16 pools button, F26 bare Plus notice, F08's "no refresh needed", J1-075 "email will be sent", F34's leader sort, F04's empty box, J1-116 the strip on its own page, "0 champions detected" — **COMMITTED `936655a9` 2026-09-29** (record below; walk §251) | A8 | — |
 
 **D · the defects pass — COMMITTED `936655a9` 2026-09-29** (prompt `TOURNAMENT_ADMIN_REDESIGN_DEFECTS_PROMPT.md`;
@@ -1181,10 +1269,10 @@ Dark with `--dump`): no new findings; 44 entries the old list and old Summary he
 **Gaps against the drawings:** the board's Reuse button at 390 sits ~43px lower than drawn (the champion's caption
 wraps; /marketing's Next year sentence is longer than the placeholder); the first finish row ~8px.
 
-**Routed, not built:** A23 (the one-slot packaging question) → `/strategy` · F51 (an Exhibition's public champions
+**Routed, not built:** A23 (the one-slot packaging question) → `/strategy` (logged 2026-10-07 in `BUSINESS_DECISIONS.md`: the board's sentence Decided; whether a finished event keeps holding the slot Proposed — recommended "one at a time", the owner to rule; a ruling lands in Stage 5) · F51 (an Exhibition's public champions
 page) and **F56** (a bracket-only event's public champions page always says its results are hidden) and a tied final
 reading "final not scored" → the public pages' owner · F52 (the demo club's one slot refuses its own Reuse) →
-`/demos`. **Follow-ups:** one lock helper across the routes; one champions-page predicate shared with the public
+`/demos` (the slot FIXED 2026-10-07 in the demo seed + a checker assertion; the unrung anchor left for the next full pass). **Follow-ups:** one lock helper across the routes; one champions-page predicate shared with the public
 page; a shared print portal (the certificate's and Summary's); a record-form hook shared with Teams; the counts read
 could become one grouped query.
 
@@ -1275,6 +1363,209 @@ into Tournaments with its keywords; the Organization page's "Manage Tournaments"
 is **on hold** and is rewritten for one list (eight of its thirteen steps walk the two lists); §275 stays as passed.
 No data change.
 
+## 6f. Stage 6 — The volunteers, as drawn (2026-10-07)
+
+Drawn at true size on the hub's **Stage 6** tab (hub v31), phone first, a 768 tablet where it differs, from
+`TOURNAMENT_ADMIN_REDESIGN_STAGE6_DESIGN_PROMPT.md`. Before = captures of 7 October (§3 "Re-measured 2026-10-07");
+after = drawn **Warm only**: both volunteer shells ignore the Warm/Dark setting by ruling R3 (confirmed in code and on a
+phone set to Dark, §3), so a Dark copy would draw a screen that cannot exist — only the Staff kit, an admin page, has
+one. Drawn figures are read from the drawing (`.probe/s6/measure6.mjs` → the hub's `{{M:s6-*}}`). §6c and §6e stay for
+Stages 3 and 5. **The shapes the owner ruled stay** (the cards and the score sheet's flow, ADC specimen 7; the buckets
+under the thumb and the jobs as tabs, Option C 2026-08-07; Cancel as the way out, 2026-08-08; the inert wordmark; the
+⇄ door on the scorekeeper only, 2026-07-24 and 2026-08-07); the gate's board is Stage 1's and drawn UNCHANGED.
+
+- **V1 · The scorekeeper's list.** Today's cards (the whole card the tap, Up next with the olive edge), two changes on
+  each: the state chips take the kit's one chip (10px capitals; today mixed case) and the time line leaves the
+  capitals — "11:30 a.m." in the body face (F61). Refresh, Today, Filters and the ⇄ pill at 44px. The "SCOREKEEPER"
+  eyebrow goes (an eyebrow is a trail or nothing; the tab and the title already name the job) and "Field scores" takes
+  the 20px of every title (today 27, off the ladder). **The Review count wears the amber pill while above zero**
+  (2026-10-01; ask A28) — on the count itself, outlined amber as the rail's. Both bars opaque (F59). Measured from the
+  drawing: first game ≈187px (today 191), 3 whole games, 172px fixed chrome (unchanged).
+- **V2 · The score sheet and what follows it.** The Sheet Frame's form (it covers the bars, as today): edge to edge at
+  the foot, 18px corners, the grab line every sheet carries, the portal's dim; a sentence head ("Enter the score", /marketing) with the game's line (time ·
+  field · division) under it; the boxes unchanged (64px on a phone, 72 wider); the policy note a white callout with an
+  amber (review) or olive (final) edge — both drawn — kept directly above the button; Cancel and the one lime at 44px, the lime's words
+  in sentence case (/marketing). **No ×** — Cancel stays the way out (2026-08-08), a named exception to the form head
+  (ask A30). After Submit, a sentence notice floats above the bars and fades (~8 s): "Sent for review · Wolves 7, Royals 4"
+  (/marketing); the list no longer drops (today about 104px, under a box that stays, F64). A sent-back score: the same
+  notice names the game while the screen is open, back under To score (ask A32).
+- **V3 · The gate, around Stage 1's board.** The page head names the event under "Check-in" (today beside it, where a
+  long name wraps the title — costs ≈11px: first team ≈237px, 6 whole rows as today); with two or more assigned events a
+  44px dropdown whose options say each status in the product's words ("Spring Classic 2026 · Completed", J8-015); the
+  finished-event line a white callout with an amber edge in a volunteer's words (today an amber-tinted box). The arrival
+  chip keeps "IN" and the time leaves it ("8:59 a.m.", F61). Bars opaque. **The team sheet** (shared, ask A29): D4's
+  18px corners and the portal dim; a record head (the team, and "U11 Girls · Not arrived" or "In · 8:59 a.m. · by …");
+  the plain 44px × (2026-10-07); Mark paid · $475 and Add roster as 44px white buttons (today a 35px amber-tinted box and
+  an olive-tinted panel); the foot unchanged (No-show a third, the lime Check in two thirds, 48px).
+- **V4 · One volunteer, two jobs.** Measured at 1 tap and kept: the duties as tabs; one duty = two tabs (the bar's own
+  flagged "weakest case", unchanged — the bar comment's fallback is offered as a ruling option). **The tablet** (no
+  tab bar above 640px): the header's "Check-in →" / "Scorekeeper →" and Sign out at 44px (today 19 and 15), the buckets at
+  44 (today 42); the page under it drawn whole at 768 (title band, filters, buckets, cards). **The Account sheet** (ask A30): the frame's menu — on top of the tab bar with the bar live (today its
+  dim covers the tabs it was opened from), its small-capitals label, no × (today an outlined 38px square); contents
+  unchanged (who, the duties and the club, Install this app, Sign out), now as the menu's head and two rows in one
+  ink treatment (today a bordered card and two outlined buttons, Sign out olive).
+- **V5 · Where each volunteer lands** — a flow, with the sign-in a volunteer meets (walked) and the board a staff sign-in
+  lands on (Stage 1's built capture; read from code). The link or QR always lands right and is unchanged. Without a link
+  (the accept, the next morning, the app, a guessed /admin) every official lands on the scorekeeper (F62): drawn, they
+  land on the job they hold (ask A26). Staff: unchanged (ask A25). The public home's missing door (J8-022) is the public
+  pages' owner's, not drawn. The Members invite's volunteer part drawn as A26 would change it (shared, Club Tier roles):
+  a role named for both jobs, "Helping with" as what they can do, its hint true.
+- **V6 · The install banner** (ask A31): above the bars — the shells declare their bottom height (buckets + tabs + the
+  home bar; 0 above 640px) and the banner stands on it — and under every sheet (the score sheet, Account and the team
+  sheet cover it). The warm look on the warm shells (today the dark product's blue edge and console capitals, because its
+  warm skin is gated on the user's theme). When it shows and the 90-day dismissal unchanged. Costs ≈66px with the drawn
+  words (91 with today's two-line instruction): 2 whole games on screen one until dismissed.
+- **V7 · The Staff kit** (it fails the check, F65): the title band with Print (the boxed 44px icon on a phone, a white
+  34px button at a desk), one sentence (/marketing), two cards — the QR (dark on a fixed white square, both themes), the
+  link breaking only at a slash, Copy link (white, an action) and Open (olive text with its arrow, a door) — and "Invite a
+  volunteer" as a door to Members' invite with the volunteer role chosen. **A printed page of its own** (Letter, drawn
+  true size): the club, the event and its dates, the two codes at 210px, three numbered steps, a footer — nothing of the
+  admin. A Dark copy (an admin page).
+
+**The asks — ⚖ ALL RULED 2026-10-07 as recommended** (the owner's paste-back, which also ruled V1–V7 as drawn): **A25** where a `staff` member lands
+(rec.: keep it — staff by default runs the schedule and the posts, so its landing is the board, and a gate-only landing
+rule would never fire on the defaults; fix the volunteer's door instead) · **A26** a volunteer lands on the job they
+were given (rec.: "Helping with" becomes what they can do, through the per-member access that exists, every landing
+follows it, the role named for both jobs, the invite no longer defaults to Staff for a volunteer — shared, Club Tier
+roles; no new data) · **A27** the 44px floor (rec.: phone and tablet) · **A28** the Review count (rec.: the amber pill) ·
+**A29** the gate's team sheet on the frame (rec.: once, for the organizer and the gate together — it also serves the
+schedule's reschedule sheet and two public follow sheets) · **A30** the shells' own sheets (rec.: onto the frame's
+layers, the score sheet without a × as a named exception) · **A31** the banner (rec.: above the bars, under every sheet)
+· **A32** a finalized or sent-back score (rec.: the counts for a finalize; a live notice for a send-back; nothing
+stored). Per drawing: V1–V7.
+
+**Why A25 is not the prompt's recommendation.** The prompt recommended that "someone whose only tournament job is the
+gate lands on the gate". `ROLE_DEFAULTS.staff` holds `update_schedule`, `post_announcements`, `submit_scores`,
+`check_in_teams` and `module_tournaments`, so no default staff member is ever "gate only": the rule fires only when an
+organizer has narrowed a staff member's access by hand, and then the right role was the volunteer one. The wrong landing
+J8-021 describes comes from the invite (it defaults to Staff, and the volunteer role is called Scorekeeper) and from the
+volunteer role forgetting its job (F62) — so the fix is A26, and staff's landing is right for what staff is.
+
+**The formatting check** (the tab's last section, before the owner saw anything): Stage 1's sixteen rows, §3.5–3.7 and
+§3.10, and every ruling since (to 2026-10-07: a close × is a plain glyph; a filter is quiet until it filters; the olive
+pill; a row's flags under the name on a phone). Two named keeps, the owner's to overrule: the scorekeeper's game cards
+stay cards with gaps and no chevron (a whole-card 160px button, the volunteer register — not S.7's one frame), and the
+score numeral at 38px is the one size off the ladder (a field's figure). Flagged for `/marketing`: the score sheet's
+Title Case buttons and "Enter Score"; "admin review"; "Results & Scoring"; "Staff Kit" vs "Staff kit"; "Settings &
+Access" vs the rail's "Settings & access"; the role "Scorekeeper" for a gate volunteer; "Un-pay"; the banner's "Add to
+Home Screen" (Apple's own button name). **A second, independent reviewer** then read the drawing and its rendered
+pictures against the same rules: eight departures, all fixed (type off the ladder in five places — callouts and the
+tablet doors 13, the Account rows 15, two labels 10.5; the Account sheet's contents tagged Unchanged though their shape
+changes; its two rows in two treatments; the tablet drawn as a header strip only; the olive "final" note claimed and not
+drawn; the banner's icon reading as a bug — it is the app's real F-over-L icon, now drawn as itself; the team sheet's
+44px × not stated; the score sheet without the frame's grab line), and four claims that said more than the pictures —
+**"the list drops 208px" had been read off a 2× picture: the notice is 88px and the list drops about 104** (corrected in
+F64, V2 and the taps); "stays put" → "doesn't drop" (the list moves up a card); Mark paid under tinted panels (it is a
+button); a team's arrival said "once" (once per surface). Two points stand, with the reason: the 768 "before" capture is
+clean (the tab bar the reviewer saw came from a screenshot of the hub page), and the after-submit notice is the
+product's toast, the dark pill every stage has drawn.
+
+**Not drawn — the build's work:** any change to a landing or a role's capabilities (A25, A26: shared — the roles and the
+invite are Club Tier's, the resolver the platform's); the banner's position contract and the guard test's new rows; a
+rendered check that no clock sits inside a capitals style; the live update's forfeit and the buckets' forfeit count;
+**the old look's retirement** in every file Stage 6 rebuilds — `scorekeeper.module.css` (58 kit-scoped rules),
+`DayOfShell.module.css` (25), `check-in-volunteer.module.css` (6), `ShellSignOutButton`'s inline patch, the
+`day-of-kit.ts` patches file, `staff-kit.module.css` (10), and the admin `BottomSheet`'s old layer if A29 moves it —
+held by `npm run check:old-look` and the strict admin colour gate.
+
+**Ruled 2026-10-07, and what the build prompt adds.** The owner's paste-back ruled V1–V7 as drawn and A25–A32 as
+recommended; nothing else was ruled. Writing the build prompt (`TOURNAMENT_ADMIN_REDESIGN_STAGE6_BUILD_PROMPT.md`)
+re-read the code A26 rests on and found it holds with **no new data**: `organization_members.capabilities` is the
+per-member override, the shells already show a tab per job held, both screens and both routes already check the job,
+and Members' Manage window already switches the two jobs. What is missing is the invite writing the job (the data
+dictionary says capabilities are *not written at invite time*) and the three landings that send every official to the
+scorekeeper — which today also sends an official an owner has narrowed to the gate onto the scorekeeper's *no access*
+wall. Two placements the drawing does not show go to the owner at the build's start: **P1** who may change a
+volunteer's jobs after the invite (today access changes are owner-only; rec.: whoever may invite may switch an
+`official`'s two jobs, nothing else) and **P2** a volunteer with neither job (rec.: Members refuses switching off the
+last one). Found at writing: the admin bottom sheet A29 moves has **five** users, not four — Teams' phone view
+settings too; the ruling covers the sheet as one component. And the drawing's after-Submit notice reads ~8 s where the
+product's one-off notice (`NoticePill`) lingers ~2.5 s; the prompt keeps 2.5 s for the volunteer's own action and the
+sentence notice's ~8 s for a send-back.
+
+**Stage 6 taps (volunteer, phone):** first score from a signed-out link **3 + typing → 3 + typing** (nothing over the
+buckets or the sheet); the next score **2 → 2**, the list no longer jumps; check a team in **1 → 1**; switch jobs **1 → 1**
+(a tablet's door 19px → 44px); a gate volunteer's next-morning sign-in **lands on the scorekeeper, +1 → lands on the
+gate** (A26); the organizer copying a link from a phone **3 → 3**, the printout the sheet alone.
+
+### Stage 6 — as built (2026-10-07; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE6_BUILD_PROMPT.md`; owner walk §282 ✅ 2026-10-08)
+
+**Committed on dev 2026-10-07, after `/simplify` and `/review`:** `df49408a` Part 0 (shared with Club Tier's Members
+and roles — the one landing rule `lib/volunteer-jobs.ts`, the words `lib/volunteer-words.ts`, the invite writing the
+job, P1 and P2 in the member route, the role named "Volunteer", the data dictionary's note on
+`organization_members.capabilities`) · `1b1546b9` Parts 1–4 (the two shells, the score sheet and the Account sheet on
+the Sheet Frame, the admin bottom sheet for its five users, the install banner above the bars, the Staff kit and its
+printed page on the shared `PrintedPage`, Summary moved onto it; the old look retired in every rebuilt file) ·
+`d5df5e7b` the pricing pages' "volunteers" (words only — the seat rule is untouched). No migration.
+
+**Rulings at the build's start** (owner, 2026-10-07): **P1** — "Helping with" sits in Members' Manage for a volunteer,
+in place of the program table, and anyone who may invite may change it (the server allows a non-owner a change to the
+two job keys of a volunteer, and nothing else) · **P2** — a volunteer left with neither job is refused, in words
+("A volunteer needs at least one job. To end their access, remove them."). Also on the owner's word: probes allowed on
+the dev server; the gate-only proof (the Plus volunteer narrowed to the gate, proven, restored and read back); the
+pricing pages' word as its own commit.
+
+**Calls made while building** (each on the hub's Built part, for the walk to question):
+- A role change away from Volunteer drops the two job keys with the role; an owner's other overrides are kept.
+- "Helping with" reads the two JOB keys only. An owner can also grant a volunteer `manage_registrations`, which opens
+  the gate, but it is not a job — counting it made "Helping with" read "Both" for a scoring volunteer (/review).
+- The wrong-job wall (one component, both shells) offers the job the volunteer does hold, as a door.
+- The score sheet's **Cancel** stays the way out (A30's named exception) and a tap on the dim does nothing — the
+  Sheet Frame gained `holdDim` for it, and `keypad` so the sheet rides the visible screen above a phone's number pad.
+  Above 900px the sheet is a centred card.
+- After a save the product's `NoticePill` (~2.5 s — the volunteer's own action); a send-back while the screen is open
+  is the same pill as news (~8 s, an info mark), and if that game's sheet is open it stops being a correction.
+- The install banner publishes its height, so the product's notice stands on it instead of under it.
+- The Staff kit's tab and title say "Staff kit"; the rail already did.
+
+**Review** (/simplify, then /review at the high-risk tier, five lenses): fixed before the commits — "Helping with"
+counted an owner's `manage_registrations` grant as a job (Medium); two mounted install prompts could clear each
+other's published height (Medium); the public tournament page's role link still sent every volunteer to the
+scorekeeper (Low); a send-back of the open game left its sheet saying "correction" (Low). Left, stated: the member
+route's capabilities write is read-then-write (as every PATCH there already was; the job path only subtracts); an
+owner's extra overrides on a volunteer don't show in Manage (a read-only "also has…" line is offered); the admin's
+save word sits a safe-area higher than the banner on an iPhone (cosmetic).
+
+**Measured** (read-only probes, 2026-10-07, at 390 / 360 / 768 and 1180): the scorekeeper's first game at 186px from
+the top (drawn ≈187), three whole games; nothing a volunteer taps under 44px on a phone or a tablet; no rendered time
+in capitals in either shell; the score sheet edge to edge, 18px corners, the dim inert, the first card not moving after
+Submit, the notice above the buckets; the Account sheet on a live tab bar, closed by a second tap; the gate's band at
+212px (drawn ≈237), six whole rows, the arrival chip "IN" with "8:59 a.m." beside it; the team sheet's head, plain 44px ×
+and white 44px buttons; the iPhone banner 66px tall, its bottom on the buckets' top edge, under every sheet; the Staff
+kit printing one Letter page with nothing of the admin; Summary's print unchanged; the gate-only volunteer landing on
+the gate from every door, two tabs, the score refused (403), restored to Both. Typecheck ✓, 869 unit tests by file ✓,
+the token, old-look, selector, spelling, contrast and date gates ✓.
+
+**Gaps against the drawings:** the gate's band sits ~25px higher than drawn (212 vs ≈237 — more of the list shows,
+not less); the scorekeeper's first game ~1px.
+
+**Not run, stated:** the scoped layout sweep (`check:layout --changed`) could not start — the Club fixture's budget
+lookup ("Diamond permits — city fields") returns more than one row, from another session's fiscal-year data; not
+reseeded from here.
+
+**Found, routed (not built here):** **J8-022** (the public home has no door back for a signed-in volunteer) → the
+public pages' owner · the help articles still say "Staff Kit" (5)
+and "Scorekeeper View" (~22), and the demo's narration and a marketing caption say "Staff Kit" → `/docs` and `/demos`
+(the product's own two buttons were fixed after the build: "See Staff kit →", "Open Staff kit").
+
+**`/docs` done 2026-10-08** (uncommitted when written): the tournaments guide's "Hand scoring to scorekeepers" is now
+"Hand scoring and check-in to volunteers" (anchor `scores-and-results` kept), five sub-topics (invite and choose a job ·
+the Staff kit · Field scores · Check-in · Account, installing, the wrong code) and a new FAQ for "No access"; Results'
+"Scorekeeper View" became Field scores and its "Scorekeeper" button; the org guide's role is Volunteer in the table,
+the list, the invite steps (Helping with), Manage, the one-home-organization line and the seats line; the help hub card
+and quick links (the volunteers' topic gets its own link). No help screenshot showed these screens. **Found while
+writing, not fixed (owner calls):** (1) **a volunteer can't be limited to specific tournaments — and couldn't before
+Stage 6.** First written here as a Stage 6 regression; **corrected the same day:** Manage's tournament list sits under
+the Tournaments program row and shows only for a member who opens Tournaments, which a volunteer's role never does
+(`ROLE_DEFAULTS.official` = the two job keys), so it never showed for one. The help's old "staff and scorekeepers"
+line was stale and is gone. Not a defect; a possible feature if a multi-event club asks. (2) **four refusal messages
+still say "scorekeeper"** (`lib/org-membership-policy.ts` — the invite and accept refusals for one home
+organization; one reads "This person keeps score for another organization", wrong for a gate volunteer). (3) the
+demo's narration (`lib/walkthrough-content.ts`) and the marketing shot caption (`lib/marketing-shots.ts`) still say
+"Scorekeeper View" / "Staff Kit" → `/demos`.
+
+**Owner walk:** the QA tab's walk 7 (Owner QA Ledger §282) — a volunteer's game day, from a phone.
+
 ## 7. The asks
 
 A1 · which stage first · A2 · one event identity · A3 · phone or desk per station · A4 · Storm Mode and
@@ -1282,7 +1573,8 @@ the Big Board stay their own projects with a place left · A5 · the Club seams 
 redesigned screens · A7 · one word per game state · A8 · the defects list now or with their stages · A9 ·
 game-day screens refresh themselves · A10 · Results opens on "needs you, every division". Each is on the
 hub's Walk tab with options, a recommendation, the tradeoff and a checkbox per option; the Stage 1 tab
-carries a ruling per drawn change (G1–G8).
+carries a ruling per drawn change (G1–G8). Later stages' asks live with their drawings: A13–A17 (§6b), A18–A24 (§6d),
+**A25–A32 (§6f, ruled 2026-10-07)**.
 
 The formatting check (§11) added two, both on the Stage 1 tab:
 

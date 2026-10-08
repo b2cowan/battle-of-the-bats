@@ -23,7 +23,13 @@
 > and committed the same day**, after the owner settled five small questions at its start (all as recommended) and
 > after a cleanup pass, a five-way review and the screen probes fixed a dozen things first — the biggest, the board staying blank after
 > Mark complete until a reload. **Two owner walks are open:** the morning after, from a phone (§275), and statuses
-> and the way back, at a desk (§276), on the hub's QA tab.
+> and the way back, at a desk (§276), on the hub's QA tab. **Stage 6 (the volunteers — the scorekeeper and the
+> gate) was drawn on 7 October** on the hub's Stage 6 tab and **ruled the same day, every drawing as drawn and every
+> question as recommended**; the build prompt is written and asks two small placements at its start.
+> **Stage 6 was built on 7 October** (three commits, after a cleanup pass and a five-way review): a volunteer now
+> lands on the job they were given, the organizer can change that job later in Members, the score sheet and the
+> install banner no longer cover anything, and the Staff kit prints one clean page. Its owner walk, a
+> volunteer's game day from a phone (§282), **passed on 8 October 2026**.
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is
@@ -170,6 +176,50 @@ says the plan's one slot is full and shows no event, because the finished event 
 page. With one list it's the first row under that line. Nothing about statuses, slots or data changes; the wording
 that points people to "Past tournaments" changes with it, and the desk walk (§276) waits for the ruling.
 
+## What a volunteer would see and do differently in Stage 6 (the scorekeeper and the gate) — drawn and ruled 2026-10-07
+
+A parent handed a phone and a link — or a QR code taped to the scoring table — does one job, fast. These two screens
+were already the strongest in the tournament product, and the measuring agrees: from the code to a submitted score is
+three taps and the typing, checking a team in is one tap, and switching between scoring and the gate is one tap. So
+the stage keeps every shape the owner ruled (the game cards, the counts under the thumb, the jobs as tabs) and removes
+only what gets in the way. Measured on the test clubs' volunteer accounts on 7 October, read-only.
+
+- **Nothing covers the controls.** On an iPhone today the "Install FieldLogicHQ" banner arrives with the first screen
+  and sits on top of the four count buttons — a tap on "To score" hits the banner — and it stays on top of an open score
+  sheet, hiding the note that says whether the score goes to the organizer for review. After: it sits above the bars
+  and every sheet covers it.
+- **Every button is thumb-sized.** Cancel and Submit, Today, Filters and Refresh are 42px today; on a tablet at the
+  scoring table the link to the gate is 19px tall and Sign out 15px. After: 44px, phone and tablet.
+- **A waiting score is visible.** The Review count wears the same amber mark the organizer sees for waiting work; after
+  submitting, a short notice ("Sent for review · Wolves 7, Royals 4") floats and fades instead of pushing the list down
+  and staying. If the organizer sends a score back while the screen is open, a notice says so.
+- **The screens read cleanly.** The bars stop showing the page through them; "11:30 A.M." becomes "11:30 a.m." as
+  everywhere else; the score sheet and the gate's team sheet take the same sheet shape as the rest of the product.
+- **A gate volunteer lands on the gate.** Today a volunteer invited "for the gate" lands on the scorekeeper after
+  accepting the invite and every time they sign in again (the QR code works; the invite and the next morning don't).
+  The recommendation: what the organizer picks when inviting ("helping with the gate") becomes what the volunteer can
+  do, and every landing follows it — a change to the roles the Club tier shares, so it is the owner's call with them.
+- **Staff keeps its home.** June's walk said a `staff` member lands on the full dashboard. True — but staff is the
+  organizer's helper (it runs the schedule and posts too), so the board is the right home; the gate parent's real
+  problem is the role they were given, which the point above fixes.
+- **The organizer's Staff kit prints one clean page** for the volunteer table (today it prints the whole admin around
+  the QR codes), with white buttons and an "Invite a volunteer" door.
+
+**Why it matters:** volunteers are the least-trained people on the busiest day, often on a borrowed phone. Every
+covered button or wrong landing becomes a question for the organizer at the worst moment. **Ruled 7 October, all as recommended:**
+A25–A32 on the Stage 6 tab; two (where staff lands, and the volunteer's job) touch roles shared with the Club tier.
+The build starts with two small questions the drawing does not show: who may change a volunteer's jobs after the
+invite (today only an owner), and what happens to a volunteer with no job left. **Not affected:** scoring rules, the review policy, check-in itself (Stage 1's board stays
+as built), prices and plans.
+
+**Built 7 October.** The owner answered the two starting questions as recommended: anyone who may invite can change
+a volunteer's job later, in Members, and a volunteer always keeps at least one job (to end their access, remove
+them). The pricing pages now call these people "volunteers" too — the word changed, the free-seat rule did not.
+**Success, measured on the build:** a gate volunteer's next-morning sign-in lands on the gate from every door; nothing
+a volunteer taps is under the thumb size; the first score card sits where it was drawn, and the list no longer jumps
+after a score; the banner covers none of the buttons; the Staff kit prints on one page. The owner's walk (§282)
+passed on 8 October 2026.
+
 ## Why it matters
 
 Game day is the weekend a director is judged on, and it's run from a phone at a diamond. It's also where
@@ -223,3 +273,6 @@ heading and rows together, as the plain team list on the same page already was. 
   from every door; how each division finished is on the **first screen** of the board and of Summary on a phone;
   Share links the champions page and Print prints the recap alone; no status change is written without a question
   that says what it does to the public site.
+- **Stage 6:** on a phone and a tablet nothing a volunteer taps is under **44px** and nothing covers the count buttons
+  or an open sheet; from a QR code to a submitted score stays **three taps and the typing**; a volunteer invited for
+  the gate **lands on the gate** every time; the Staff kit prints **one page** with nothing of the admin on it.

@@ -119,6 +119,12 @@ Each stage below is independently decidable. **Nothing proceeds without an expli
 > (Tournaments · Past tournaments). Its set-status route now holds a sealed event out of Active and Draft from any
 > status. Routed: A23 (the one-slot packaging question) to `/strategy`; F51 and F56 (the public champions page for an
 > Exhibition and a bracket-only event) to the public pages; F52 (the demo club's one slot) to `/demos`.
+> **Stage 6 (the volunteers) COMMITTED 2026-10-07** — `df49408a` · `1b1546b9` · `d5df5e7b` (its plan's §6f "Stage 6 —
+> as built"; owner walk §282 ✅ 2026-10-08): a volunteer lands on the job they were given (`lib/volunteer-jobs.ts` — the invite's
+> "Helping with" writes it, and whoever may invite may change it later in Members), the scorekeeper and the gate rebuilt
+> to the drawings, the install banner above the bars, and the Staff kit with its own printed page. Routed: J8-022 (the
+> public home's missing door for a signed-in volunteer) to the public pages. Stage 6 of THIS ledger (the Big Board) is
+> untouched — the redesign's stage numbers are its own.
 
 ---
 
