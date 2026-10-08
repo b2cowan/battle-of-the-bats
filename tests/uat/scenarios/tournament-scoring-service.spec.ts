@@ -161,6 +161,19 @@ test.describe('tournament scoring service', () => {
       message: 'This score has already been finalized.',
     } satisfies Partial<TournamentScoringError>)
     expect(finalized.updates).toHaveLength(0)
+
+    const forfeited = createHarness({ game: { tournamentId: 'tournament-1', status: 'forfeit' } })
+    await expect(forfeited.service.submitTournamentScore({
+      gameId: 'game-1',
+      homeScore: 7,
+      awayScore: 4,
+      actor: actor(),
+      source: 'scorekeeper',
+    })).rejects.toMatchObject({
+      status: 409,
+      message: 'This game is already final as a forfeit.',
+    } satisfies Partial<TournamentScoringError>)
+    expect(forfeited.updates).toHaveLength(0)
   })
 
   test('allows admin corrections to finalized scores when explicitly enabled', async () => {

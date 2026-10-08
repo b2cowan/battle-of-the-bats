@@ -140,8 +140,10 @@ function accessDeniedResponse(message: string) {
   }, { status: 403 });
 }
 
+// `forfeit` is a final result. Left off this list it fell through to `scheduled`, so a forfeited game
+// sat in the field's "To score" bucket with an "Enter final score" sheet that could overwrite it.
 function toGameStatus(value: string | null): GameStatus {
-  if (value === 'submitted' || value === 'completed' || value === 'cancelled') return value;
+  if (value === 'submitted' || value === 'completed' || value === 'cancelled' || value === 'forfeit') return value;
   return 'scheduled';
 }
 

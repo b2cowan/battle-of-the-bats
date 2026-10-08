@@ -120,6 +120,10 @@ export function createTournamentScoringService(deps: TournamentScoringServiceDep
     if (game.status === 'completed' && !input.allowFinalizedEdit) {
       throw new TournamentScoringError('This score has already been finalized.', 409);
     }
+    // A forfeit is as final as a completed score: only an admin correction may replace it.
+    if (game.status === 'forfeit' && !input.allowFinalizedEdit) {
+      throw new TournamentScoringError('This game is already final as a forfeit.', 409);
+    }
 
     const homeScore = parseScore(input.homeScore);
     const awayScore = parseScore(input.awayScore);

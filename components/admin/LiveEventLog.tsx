@@ -93,7 +93,14 @@ export function LiveEventLog({ tournamentId, orgSlug, className }: { tournamentI
           // change — logging a false "Score updated: 0 – 0" on every game write (e.g. a
           // bracket save). Treat "previous value unknown" as "no change".
           const prevScoreKnown = prev.home_score !== undefined && prev.away_score !== undefined;
-          if (prev.status !== undefined && prev.status !== 'completed' && next.status === 'completed') {
+          // A reverted score is cleared, not 0 – 0. The history lists only games that carry a score,
+          // so a reload shows no line for this game: drop its lines here too rather than log one.
+          const scoreCleared = prevScoreKnown
+            && (prev.home_score != null || prev.away_score != null)
+            && next.home_score == null && next.away_score == null;
+          if (scoreCleared) {
+            setEvents(list => list.filter(e => e.id !== `gc-${id}` && e.id !== `sc-${id}`));
+          } else if (prev.status !== undefined && prev.status !== 'completed' && next.status === 'completed') {
             prepend({ id: `gc-${id}`, type: 'game_complete', message: `Game final: ${home} – ${away}`, timestamp: now, timeAgo: 'just now' });
           } else if (prevScoreKnown && (prev.home_score !== next.home_score || prev.away_score !== next.away_score)) {
             prepend({ id: `sc-${id}`, type: 'score', message: `Score updated: ${home} – ${away}`, timestamp: now, timeAgo: 'just now' });
