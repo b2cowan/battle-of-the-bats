@@ -15,6 +15,7 @@ import {
   countActiveBasicCoachTeamMembershipsForUser,
 } from '@/lib/basic-coach-teams';
 import { withObservability } from '@/lib/observability';
+import { writeOrgAudit } from '@/lib/org-audit';
 
 const VALID_CAPABILITIES = new Set<string>(ALL_CAPABILITY_KEYS);
 
@@ -189,19 +190,13 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
       return NextResponse.json({ error: memberError.message }, { status: 500 });
     }
 
-    void supabaseAdmin.from('org_audit_log').insert({
-      org_id: org.id,
-      actor_id: ctx.user.id,
-      target_id: target.user_id,
-      action: 'member_removed',
-      payload: {
-        email: targetEmail,
-        role: target.role,
-        membershipOnly: true,
-        otherOrgs: otherMembershipCount ?? 0,
-        basicCoachTeams: basicCoachTeamCount,
-        preservedReason: hasOtherOrg ? 'other_org' : 'basic_coach_portal',
-      },
+    await writeOrgAudit(org.id, ctx.user.id, target.user_id, 'member_removed', {
+      email: targetEmail,
+      role: target.role,
+      membershipOnly: true,
+      otherOrgs: otherMembershipCount ?? 0,
+      basicCoachTeams: basicCoachTeamCount,
+      preservedReason: hasOtherOrg ? 'other_org' : 'basic_coach_portal',
     });
 
     // The account survives, so a courtesy "your access was removed" notice is meaningful (mirrors
@@ -240,12 +235,8 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
     return NextResponse.json({ error: authError.message }, { status: 500 });
   }
 
-  void supabaseAdmin.from('org_audit_log').insert({
-    org_id: org.id,
-    actor_id: ctx.user.id,
-    target_id: target.user_id,
-    action: 'member_removed',
-    payload: { email: targetEmail, role: target.role, membershipOnly: false },
+  await writeOrgAudit(org.id, ctx.user.id, target.user_id, 'member_removed', {
+    email: targetEmail, role: target.role, membershipOnly: false,
   });
 
   return NextResponse.json({ ok: true, membershipOnly: false });
@@ -480,11 +471,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
         .insert(newGroupIds.map(gid => ({ member_id: memberId, group_id: gid })));
     }
 
-    void supabaseAdmin.from('org_audit_log').insert({
-      org_id: org.id, actor_id: ctx.user.id, target_id: target.user_id,
-      action: 'rep_group_scope_changed',
-      payload: { groupIds: newGroupIds },
-    });
+    await writeOrgAudit(org.id, ctx.user.id, target.user_id, 'rep_group_scope_changed', { groupIds: newGroupIds });
   }
 
   if (Object.keys(update).length === 0) {
@@ -501,26 +488,29 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Audit log — one row per logical change type
+  // Audit log — one row per logical change type. AWAITED (lib/org-audit.ts): these were `void` inserts,
+  // which never sent, so Members › Audit log stayed empty until 2026-10-08.
   if (roleChanging) {
-    void supabaseAdmin.from('org_audit_log').insert({
-      org_id: org.id, actor_id: ctx.user.id, target_id: target.user_id,
-      action: 'role_changed', payload: { before: target.role, after: update.role },
-    });
+    await writeOrgAudit(org.id, ctx.user.id, target.user_id, 'role_changed', { before: target.role, after: update.role });
   }
-  if ('capabilities' in update) {
-    void supabaseAdmin.from('org_audit_log').insert({
-      org_id: org.id, actor_id: ctx.user.id, target_id: target.user_id,
-      action: 'capabilities_changed',
-      payload: { before: target.capabilities ?? null, after: update.capabilities ?? null },
+  // Only a change someone CHOSE. A volunteer's two job keys leaving with their role (above) is the role
+  // change's own consequence, and the role row already says it — a second "access changed" row would
+  // record a decision nobody made. Nor is a save that sent the overrides already stored (it reads as an
+  // empty "Access changed"). `role` lets the log say a volunteer's job in Helping with's words.
+  const storedCaps = (target.capabilities as Record<string, boolean> | null) ?? {};
+  const savedCaps = (update.capabilities as Record<string, boolean> | null | undefined) ?? {};
+  const capsMoved = [...new Set([...Object.keys(storedCaps), ...Object.keys(savedCaps)])]
+    .some(k => storedCaps[k] !== savedCaps[k]);
+  if ('capabilities' in update && hasCapabilitiesUpdate && capsMoved) {
+    await writeOrgAudit(org.id, ctx.user.id, target.user_id, 'capabilities_changed', {
+      before: target.capabilities ?? null, after: update.capabilities ?? null, role: resultingRole,
     });
   }
   if (hasStatusUpdate && update.status !== target.status) {
-    void supabaseAdmin.from('org_audit_log').insert({
-      org_id: org.id, actor_id: ctx.user.id, target_id: target.user_id,
-      action: update.status === 'suspended' ? 'member_suspended' : 'member_reinstated',
-      payload: {},
-    });
+    await writeOrgAudit(
+      org.id, ctx.user.id, target.user_id,
+      update.status === 'suspended' ? 'member_suspended' : 'member_reinstated', {},
+    );
 
     // J10-019: notify a newly-suspended member by email (transactional account-state notice) so the
     // /auth/suspended wall they'll hit on next sign-in isn't their first signal. Best-effort.

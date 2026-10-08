@@ -1,5 +1,7 @@
 import { roleLabel, MEMBER_PROGRAMS } from './member-access';
 import type { Capability } from './roles';
+import { volunteerJobOf, type VolunteerJob } from './volunteer-jobs';
+import { HELPING_WITH } from './volunteer-words';
 
 /**
  * THE BOARD'S HISTORY, AS SENTENCES (Club Tier Stage 1, specimen 11): "Invited as Admin",
@@ -60,11 +62,39 @@ export function describeOverrideChange(before: Overrides, after: Overrides): str
   return phrases;
 }
 
+/** The two keys a volunteer's job is made of (lib/volunteer-jobs.ts) — the log has no other name for them. */
+const VOLUNTEER_JOB_KEYS = new Set(['submit_scores', 'check_in_teams']);
+
+const isVolunteerJob = (v: unknown): v is VolunteerJob =>
+  typeof v === 'string' && Object.prototype.hasOwnProperty.call(HELPING_WITH.option, v);
+
+/**
+ * A volunteer's job change in the words Manage used to make it — "Helping with: Both → The gate" — or
+ * null when it isn't one: the member is not a volunteer (`role`, written since 2026-10-08), or the change
+ * touched more than the two job keys. Without this the two keys have no program label and read as
+ * "tournament controls changed", which is not what the organizer did.
+ */
+function volunteerJobChange(p: Record<string, unknown>): string | null {
+  if (p.role !== 'official') return null;
+  const b = (p.before as Overrides) ?? {};
+  const a = (p.after as Overrides) ?? {};
+  const changed = [...new Set([...Object.keys(b), ...Object.keys(a)])].filter(k => b[k] !== a[k]);
+  if (changed.length === 0 || changed.some(k => !VOLUNTEER_JOB_KEYS.has(k))) return null;
+  const from = volunteerJobOf(b);
+  const to = volunteerJobOf(a);
+  if (!from || !to || from === to) return null;
+  return `${HELPING_WITH.label}: ${HELPING_WITH.option[from]} → ${HELPING_WITH.option[to]}`;
+}
+
 export function auditChangeSentence(action: string, payload: Record<string, unknown> | null): string {
   const p = payload ?? {};
   switch (action) {
     case 'member_invited':
-      return typeof p.role === 'string' ? `Invited as ${roleLabel(p.role)}` : 'Invited';
+      if (typeof p.role !== 'string') return 'Invited';
+      // A volunteer's invite carries the job chosen under Helping with (`purpose`, officials only).
+      return isVolunteerJob(p.purpose)
+        ? `Invited as ${roleLabel(p.role)} — ${HELPING_WITH.label}: ${HELPING_WITH.option[p.purpose]}`
+        : `Invited as ${roleLabel(p.role)}`;
     case 'member_removed':
       return 'Removed';
     case 'role_changed':
@@ -72,6 +102,8 @@ export function auditChangeSentence(action: string, payload: Record<string, unkn
         ? `Role changed: ${roleLabel(p.before)} → ${roleLabel(p.after)}`
         : 'Role changed';
     case 'capabilities_changed': {
+      const job = volunteerJobChange(p);
+      if (job) return job;
       const phrases = describeOverrideChange(p.before as Overrides, p.after as Overrides);
       if (phrases.length === 0) return 'Access changed';
       const first = phrases[0].charAt(0).toUpperCase() + phrases[0].slice(1);

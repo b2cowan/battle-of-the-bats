@@ -15,6 +15,7 @@ import { writePlatformEvent } from './platform-events';
 import { stripe } from './stripe';
 import { getStripePriceId } from './stripe-prices';
 import { supabaseAdmin } from './supabase-admin';
+import { writeOrgAudit } from './org-audit';
 import {
   mapStripeStatusToOrgStatus,
   mapStripeStatusToTeamEntitlementStatus,
@@ -215,25 +216,6 @@ function validateLinkedBasicLink(params: {
     return { ok: false, status: 409, error: 'This Team workspace billing mode cannot be moved through the org Team add-on flow.' };
   }
   return { ok: true };
-}
-
-async function writeOrgAudit(
-  orgId: string,
-  actorId: string | null,
-  targetId: string,
-  action: string,
-  payload: Record<string, unknown>,
-) {
-  const { error } = await supabaseAdmin.from('org_audit_log').insert({
-    org_id: orgId,
-    actor_id: actorId,
-    target_id: targetId,
-    action,
-    payload,
-  });
-  if (error) {
-    console.error('[team-org-billing] audit write error:', error);
-  }
 }
 
 async function writeBillingLifecycleEvent(params: {

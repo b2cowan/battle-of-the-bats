@@ -13,6 +13,7 @@ import { parseVolunteerJob, volunteerCapabilitiesFor, volunteerHome, type Volunt
 import { INVITE_EMAIL_ACTION, VOLUNTEER_EMAIL_NOTE } from '@/lib/volunteer-words';
 import type { OrgRole } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
+import { writeOrgAudit } from '@/lib/org-audit';
 
 function getActionLink(data: unknown) {
   return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
@@ -140,10 +141,7 @@ export const POST = withObservability(async (req: Request) => {
       return captureAndJson(insertError, { error: insertError.message }, 500);
     }
 
-    void supabaseAdmin.from('org_audit_log').insert({
-      org_id: org.id, actor_id: user.id, target_id: existingUser.id,
-      action: 'member_invited', payload: { email, role, ...(job ? { purpose: job } : {}) },
-    });
+    await writeOrgAudit(org.id, user.id, existingUser.id, 'member_invited', { email, role, ...(job ? { purpose: job } : {}) });
 
     // Notify the existing user that they now have access to this org.
     await sendEmail(
@@ -181,7 +179,9 @@ export const POST = withObservability(async (req: Request) => {
   // Create pending member row (no accepted_at)
   const newUserId = linkData.user?.id;
   if (newUserId) {
-    await supabaseAdmin
+    // Checked (2026-10-08): an unchecked failure here still sent the invitation and answered "ok" —
+    // an email for a membership that doesn't exist — and, once the audit write began landing, logged it.
+    const { error: memberError } = await supabaseAdmin
       .from('organization_members')
       .insert({
         organization_id: org.id,
@@ -195,11 +195,11 @@ export const POST = withObservability(async (req: Request) => {
         // The volunteer's job, from the invite on (null for every other role).
         capabilities,
       });
+    if (memberError) {
+      return captureAndJson(memberError, { error: 'The invitation couldn’t be created. Try again.' }, 500);
+    }
 
-    void supabaseAdmin.from('org_audit_log').insert({
-      org_id: org.id, actor_id: user.id, target_id: newUserId,
-      action: 'member_invited', payload: { email, role, ...(job ? { purpose: job } : {}) },
-    });
+    await writeOrgAudit(org.id, user.id, newUserId, 'member_invited', { email, role, ...(job ? { purpose: job } : {}) });
   }
 
   // Send invite email via Resend

@@ -143,6 +143,44 @@ describe('the audit log reads as sentences (specimen 11)', () => {
     assert.deepEqual(describeOverrideChange(null, { manage_members: true }), ['Managing members turned on']);
   });
 
+  it('a volunteer reads in Helping with’s words — the invite’s job and a job change (Stage 6, 2026-10-08)', () => {
+    assert.equal(
+      auditChangeSentence('member_invited', { role: 'official', purpose: 'gate' }),
+      'Invited as Volunteer — Helping with: The gate',
+    );
+    // Both → The gate: the job is the override that takes scoring away.
+    assert.equal(
+      auditChangeSentence('capabilities_changed', { before: null, after: { submit_scores: false }, role: 'official' }),
+      'Helping with: Both → The gate',
+    );
+    assert.equal(
+      auditChangeSentence('capabilities_changed', { before: { check_in_teams: false }, after: null, role: 'official' }),
+      'Helping with: Scoring → Both',
+    );
+  });
+
+  it('only a volunteer’s two job keys read as Helping with — anything else keeps the program sentence', () => {
+    // A staff member's scoring switch is a tournament control, as Manage shows it.
+    assert.equal(
+      auditChangeSentence('capabilities_changed', { before: null, after: { submit_scores: false }, role: 'staff' }),
+      'Access changed: Tournament controls changed',
+    );
+    // A volunteer given a program as well as a job change: the program is named, never hidden.
+    assert.equal(
+      auditChangeSentence('capabilities_changed', {
+        before: null, after: { submit_scores: false, module_families: true }, role: 'official',
+      }),
+      'Access changed: Families turned on, tournament controls changed',
+    );
+    // A row from before `role` was written (none reached a log, but the shape is honoured).
+    assert.equal(
+      auditChangeSentence('capabilities_changed', { before: null, after: { submit_scores: false } }),
+      'Access changed: Tournament controls changed',
+    );
+    // An invite whose purpose is not a job (any role but a volunteer) says the role alone.
+    assert.equal(auditChangeSentence('member_invited', { role: 'staff', purpose: 'nonsense' }), 'Invited as Staff');
+  });
+
   it('the board\'s log is member changes only — no billing events', () => {
     assert.ok(!MEMBER_AUDIT_ACTIONS.some(a => a.startsWith('plan_') || a.includes('cancel') || a.includes('billing')));
   });
