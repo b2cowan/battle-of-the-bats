@@ -971,6 +971,18 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 
 ### Stage 6 — Venues, scheduling, permits (rulings D3/D4/D5 first)
 **Closes:** D01–D07.
+
+> **⚖ 2026-10-08: drawn beside Stage 3d (owner: "can round 3 happen in parallel with the new club 3d work?" → yes, then "write the club stage 6 mockup prompt").**
+> Mockup prompt: `CLUB_TIER_STAGE6_MOCKUP_PROMPT.md` (written 2026-10-08). It shares no product screen with 3d; the hub, this
+> plan, the PM brief, the TODO, the Owner QA Ledger, the test club and the dev server are shared, and the prompt carries the
+> rules. Why now: tournament Stage 6 finished 2026-10-08, so the tournament redesign's last two stages (3 and 5) wait only on
+> this one. Recommended build split (its Ask 11): **6a** the venue book and the clash check first (what tournament Stages 3
+> and 5 draw against), **6b** the club calendar and the Venue Library. §10 question 2 is answered by D4's amendment (the
+> release waits for Stage 10, which sits on this venue book). The PM brief's permits risk bullet is stale; the session fixes it.
+> The prompt's starting map (read from the code 2026-10-08) corrects §4D: D03's per-program admin schedule is gone (the admin's team
+> schedule already files days in the platform zone; the device clock survives in three week/month groupings), D05's sidebar is gone,
+> and there is **no per-club time zone** (one platform constant, Eastern). The test club has no venues, places or events on a venue.
+
 - [ ] **One venue book:** the coach place book learns to *reference* an org venue (a place can be "one of the club's venues" or free-text; the coach still owns the row), tournaments read `source_org_venue_id` for clashes, and a **cross-module clash check** runs on every write to rep events, league games/practices and tournament games ("Diamond 2 is booked by 12U AA practice 6–8 p.m.") — warn, never block.
 - [ ] Venue Library: role gate matches who schedules (league_admin), errors surface, in-use guard, facility edit, copy for all modules, sidebar link everywhere.
 - [ ] **Club calendar** (D5): one read-only page under `/admin` (all teams · house league · tournaments, filter by venue/team/day, org timezone, `.ics`), and the admin rep schedule fixed to org time and org-day buckets (D03).
