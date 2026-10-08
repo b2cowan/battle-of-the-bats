@@ -489,7 +489,8 @@ function sheet(d: ExportRead): { headers: string[]; body: (string | number | nul
 
 /**
  * The book's Export: the WHOLE period, signed (money out negative), every status, a void marked VOID
- * and left out of the totals — said on the menu before it runs (C14: today's wrote the loaded page).
+ * and left out of the totals. The menu says it is the whole period before it runs (C14: today's wrote the loaded page);
+ * the file shows its own shape (owner, §283 W7 2026-10-08: one line on the menu).
  */
 function BookExport({ q, book, window_, rangeWords: words, total, orgSlug }: {
   q: string; book: BookRef; window_: { from: string | null; to: string | null }; rangeWords: string; total: number;
@@ -513,10 +514,8 @@ function BookExport({ q, book, window_, rangeWords: words, total, orgSlug }: {
       disabled={total === 0}
       holds={{
         title: `Export ${book.name} · ${words}`,
-        lines: [
-          `Every entry in the period, not just what is on screen · ${total} ${total === 1 ? 'entry' : 'entries'}`,
-          'One Amount column, signed: money out is negative. A void line is kept, marked VOID, and left out of the totals.',
-        ],
+        // One line (owner, §283 W7 2026-10-08): the surprise worth saying is the whole period; the file shows its own shape.
+        lines: [`Every entry in the period, not just what is on screen · ${total} ${total === 1 ? 'entry' : 'entries'}`],
       }}
       onExportXLSX={async () => {
         const { headers, body } = sheet(await fetchRows());

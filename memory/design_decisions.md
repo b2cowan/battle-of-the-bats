@@ -7,6 +7,12 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-08 — AN EXPORT MENU NAMES ITS FILE IN ONE LINE, AND NO FORMAT CARRIES A SENTENCE (owner, at a closed year's Export, walking §283 W7: *"this is way too much text for this dropdown"*; three recommended options, all taken)
+
+**Decision:** (1) A menu that says what its file holds says it in **one line**: a closed year's Export reads "Year-end report · 2025–26", then Excel and PDF. The club Ledger's keeps "Every entry in the period, not just what is on screen · N entries" and drops its sentence about signed amounts and voids. (2) **No sentence under a format on any admin Export menu**: "Opens in Google Sheets…", "Plain text…", "Formatted, print-ready…" and the iCal line all go, from all 28 admin export buttons. A second line stays only where it says something the row's name does not: no rows, the plan upgrade, a per-view PDF note, a second document, contact details, the full dataset, import. (3) CSV appears only where a screen asks for it. It had been drawn everywhere, so the year-end report, built as Excel and PDF only, offered one.
+**Rationale:** The coaches portal took the format sentences out on 2026-08-24: three of them make a paragraph in a box whose job is to be quick, and nobody picks Excel for a reason the sentence would change. The admin's shared menu had never had that ruling. A list of a report's contents belongs in the report, and the help article already lists them.
+**Applies to:** `components/admin/ExportMenu.tsx` (every admin Export), the club Overview's closed-year Export, the club Ledger's Export. Record: `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` → *3c SESSION 2* → *The Export menu says less*.
+
 ### 2026-10-07 — THE CLUB'S FISCAL YEAR: SEVEN RULINGS (owner: *"agree with this recommendation and also all recommendations on the mockup"* — Club Tier Stage 3c, every ask as recommended, then Ask 9) — hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 3c, plan `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 3
 
 **Decision:** (1) **The club's period is its "fiscal year"** (Ask 9) — one spelling (never "financial year";

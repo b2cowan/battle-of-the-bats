@@ -41,7 +41,7 @@ export default function ClubMoneyExport({ run, formats, disabled = false, holds,
   formats: MoneyExportFormat[];
   disabled?: boolean;
   /** What the file holds, said on the menu before it runs. */
-  holds?: { title: string; lines: string[] };
+  holds?: { title: string; lines?: string[] };
   /** What the PDF holds when it is not the shape on screen (Months: the PDF is the year's statement). */
   pdfHint?: string;
 }) {

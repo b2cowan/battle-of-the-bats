@@ -7,12 +7,20 @@
  * CONTRACT (from lib/export/catalog.ts Export Standard):
  *  1. One button opens the formats; Excel is the first row (owner, 2026-10-01 — it was a split
  *     button whose left half downloaded Excel in one click, retired for the portal's one control)
- *  2. CSV always present as a secondary option
+ *  2. CSV when formats includes 'csv' — every surface lists it but a closed year's year-end report,
+ *     which is Excel and PDF only (§283 W7: the menu offered CSV there although the year-end report
+ *     never asked for it)
  *  3. iCal available when formats includes 'ics'
  *  4. PDF available when formats includes 'pdf' — gated at tournament_plus+
  *  5. Sensitive opt-in variants shown when hasSensitiveOption is true
  *  6. Upgrade tooltip via requiresPlanCopy() when user's plan is below minimum
  *  7. Disabled when no rows or disabled prop is true
+ *
+ * ⚠ NO SENTENCE UNDER A FORMAT (owner, 2026-10-08 — the coaches portal's 2026-08-24 ruling, carried
+ * here). "Opens in Google Sheets…", "Plain text…", "Formatted, print-ready…" made three rows a
+ * paragraph in a menu whose job is to be quick. A row's second line survives only where it says
+ * something its name does not: a state (no rows, the plan upgrade), a per-view `pdfHint` when the
+ * PDF is not what the row implies, a second document, the contact-details and full-dataset rows.
  */
 
 import { useState, useRef } from 'react';
@@ -26,7 +34,7 @@ import styles from './ExportMenu.module.css';
 export type ExportFormat = 'xlsx' | 'csv' | 'ics' | 'pdf';
 
 export interface ExportMenuProps {
-  /** Formats available on this surface. Always include 'xlsx' and 'csv'. */
+  /** Formats available on this surface. Excel is always shown; CSV, iCal and PDF only when listed. */
   formats: ExportFormat[];
   /** Called when user selects Excel (.xlsx) — the menu's first row. */
   onExportXLSX: () => void | Promise<void>;
@@ -38,7 +46,7 @@ export interface ExportMenuProps {
   onExportPDF?: () => void | Promise<void>;
   /** Override the PDF item label (e.g. "Bracket PDF" when the bracket is on screen). Default: 'PDF report'. */
   pdfLabel?: string;
-  /** Override the PDF item helper text. Default: 'Formatted, print-ready document'. */
+  /** The PDF row's second line — only when the PDF is not what the row's name implies. Default: none. */
   pdfHint?: string;
   /**
    * Optional second PDF item — a different DOCUMENT built from the same rows, shown under the
@@ -117,9 +125,10 @@ export interface ExportMenuProps {
   /**
    * What the export HOLDS, said before it runs (Club Tier Stage 3a, C14: the club's Ledger export is the
    * whole period, signed, voids marked — not the rows on screen). A title and its lines at the top of
-   * the menu. Opt-in; no other surface passes it.
+   * the menu. One line at most (owner, §283 W7 2026-10-08): the club Ledger's "every entry in the period", and a
+   * closed year's "Year-end report · 2025–26" with no lines. Opt-in; no other surface passes it.
    */
-  holds?: { title: string; lines: string[] };
+  holds?: { title: string; lines?: string[] };
 }
 
 export default function ExportMenu({
@@ -129,7 +138,7 @@ export default function ExportMenu({
   onExportICS,
   onExportPDF,
   pdfLabel = 'PDF report',
-  pdfHint = 'Formatted, print-ready document',
+  pdfHint,
   onExportSecondaryPDF,
   secondaryPdfLabel = 'Blank PDF',
   secondaryPdfHint = 'Empty template to print and fill in',
@@ -166,6 +175,7 @@ export default function ExportMenu({
     align: 'end',
   });
 
+  const includesCSV = formats.includes('csv');
   const includesICS = formats.includes('ics');
   const includesPDF = formats.includes('pdf');
 
@@ -173,6 +183,7 @@ export default function ExportMenu({
   const pdfAccessible =
     !planId || hasPlanFeature(planId, pdfFeatureKey);
   const pdfUpgradeCopy = pdfAccessible ? '' : requiresPlanCopy(pdfFeatureKey);
+  const pdfRowHint = !pdfAccessible ? pdfUpgradeCopy : exportDisabled ? 'No rows available to export' : pdfHint;
 
   // Sensitive opt-in gate. Unset key = no plan question on this surface (see the prop's note);
   // the row is then governed by whatever role/grant decided `hasSensitiveOption`.
@@ -232,7 +243,7 @@ export default function ExportMenu({
           {holds && (
             <div className={styles.holds}>
               <span className={styles.menuItemLabel}>{holds.title}</span>
-              {holds.lines.map(l => <span key={l} className={styles.menuItemHint}>{l}</span>)}
+              {holds.lines?.map(l => <span key={l} className={styles.menuItemHint}>{l}</span>)}
             </div>
           )}
           {/* Always: Excel */}
@@ -245,23 +256,25 @@ export default function ExportMenu({
             <FileSpreadsheet size={14} className={styles.menuIcon} aria-hidden />
             <span>
               <span className={styles.menuItemLabel}>Excel (.xlsx)</span>
-              <span className={styles.menuItemHint}>{exportDisabled ? 'No rows available to export' : 'Opens in Google Sheets, Excel, Numbers'}</span>
+              {exportDisabled && <span className={styles.menuItemHint}>No rows available to export</span>}
             </span>
           </button>
 
-          {/* Always: CSV */}
-          <button
-            role="menuitem"
-            className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
-            onClick={() => runExport(onExportCSV)}
-            aria-disabled={exportDisabled}
-          >
-            <FileText size={14} className={styles.menuIcon} aria-hidden />
-            <span>
-              <span className={styles.menuItemLabel}>CSV</span>
-              <span className={styles.menuItemHint}>{exportDisabled ? 'No rows available to export' : 'Plain text - import into any tool'}</span>
-            </span>
-          </button>
+          {/* CSV — when the surface lists it */}
+          {includesCSV && (
+            <button
+              role="menuitem"
+              className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
+              onClick={() => runExport(onExportCSV)}
+              aria-disabled={exportDisabled}
+            >
+              <FileText size={14} className={styles.menuIcon} aria-hidden />
+              <span>
+                <span className={styles.menuItemLabel}>CSV</span>
+                {exportDisabled && <span className={styles.menuItemHint}>No rows available to export</span>}
+              </span>
+            </button>
+          )}
 
           {/* Divider before optional formats */}
           {(includesICS || includesPDF) && (
@@ -279,7 +292,7 @@ export default function ExportMenu({
               <Calendar size={14} className={styles.menuIcon} aria-hidden />
               <span>
                 <span className={styles.menuItemLabel}>Calendar (.ics)</span>
-                <span className={styles.menuItemHint}>{exportDisabled ? 'No rows available to export' : 'Add events to Google Calendar, Outlook, Apple Calendar'}</span>
+                {exportDisabled && <span className={styles.menuItemHint}>No rows available to export</span>}
               </span>
             </button>
           )}
@@ -302,13 +315,7 @@ export default function ExportMenu({
               )}
               <span>
                 <span className={styles.menuItemLabel}>{pdfLabel}</span>
-                <span className={styles.menuItemHint}>
-                  {!pdfAccessible
-                    ? pdfUpgradeCopy
-                    : exportDisabled
-                      ? 'No rows available to export'
-                      : pdfHint}
-                </span>
+                {pdfRowHint && <span className={styles.menuItemHint}>{pdfRowHint}</span>}
               </span>
             </button>
           )}

@@ -573,7 +573,7 @@ const accountingHelp: HelpPageContent = {
         <>
           <p>Each Accounting page has one <strong>Export</strong> button; Excel comes first, then CSV. The <strong>PDF</strong> (on the Overview’s board report and on Budget vs. Actual) needs Tournament Plus or above.</p>
           <HelpDefs>
-            <HelpDef term="A book (Ledger)">Every entry in the period you’re reading — not just what’s on screen — whatever the other filters say. One <strong>Amount</strong> column, signed: money out is negative. A void line is kept, marked VOID, and left out of the totals at the foot: total money in, total money out and the net. The menu says all this before it runs.</HelpDef>
+            <HelpDef term="A book (Ledger)">Every entry in the period you’re reading — not just what’s on screen — whatever the other filters say. One <strong>Amount</strong> column, signed: money out is negative. A void line is kept, marked VOID, and left out of the totals at the foot: total money in, total money out and the net. The menu says it is the whole period, and how many entries, before it runs.</HelpDef>
             <HelpDef term="Allocations">The list, or the Coming due view, whichever you’re reading.</HelpDef>
             <HelpDef term="An allocation">Every team’s share and every installment, with how each payment came.</HelpDef>
             <HelpDef term="Payment requests">Every request with its decision.</HelpDef>

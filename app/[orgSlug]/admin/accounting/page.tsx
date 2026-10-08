@@ -247,7 +247,7 @@ export default function AccountingOverviewPage() {
       {notice && <PageNotice notice={notice} />}
       <CoachListToolbar actions={(
         <ClubMoneyExport run={runExport} formats={yearEnd ? ['xlsx', 'pdf'] : ['xlsx', 'pdf', 'csv']}
-          holds={yearEnd ? { title: YEAR_END_WORDS.title, lines: [YEAR_END_WORDS.atAGlance, YEAR_END_WORDS.againstBoth(yearEnd.againstLastYear?.lastYear.name ?? null), YEAR_END_WORDS.books, YEAR_END_WORDS.teams, YEAR_END_WORDS.carried(yearEnd.carried.nextYear.name)] } : undefined} />
+          holds={yearEnd ? { title: YEAR_END_WORDS.menuTitle(yearEnd.year.name) } : undefined} />
       )}>
         <YearPill year={summary.year.key} years={read.years} onChange={setYear} />
       </CoachListToolbar>

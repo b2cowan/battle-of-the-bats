@@ -759,6 +759,8 @@ export const AGAINST_LAST_YEAR_WORDS = {
 /** The year-end report (specimen 5): its titles and sections. */
 export const YEAR_END_WORDS = {
   title: 'Year-end report',
+  /** The Export menu's one line on a closed year (owner, §283 W7 2026-10-08): the name, never its contents. */
+  menuTitle: (year: string) => `Year-end report · ${year}`,
   closedBy: (by: string | null, on: string) => `Closed ${day3c(on, true)}${by ? ` by ${by}` : ''}`,
   prepared: (on: string) => `Prepared ${day3c(on, true)}`,
   atAGlance: 'The year at a glance',
