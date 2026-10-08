@@ -34,8 +34,8 @@ export default function TournamentSettingsAccessPage() {
       icon: Users2,
       title: 'Staff & access',
       description: isLeagueOrClub
-        ? 'Assign org members to roles on this tournament — admins, staff, and scorekeepers.'
-        : 'Invite admins, staff, and scorekeepers, then assign people to the tournaments they manage.',
+        ? 'Assign org members to roles on this tournament — admins, staff, and volunteers.'
+        : 'Invite admins, staff, and volunteers, then assign people to the tournaments they manage.',
       meta: canManageMembers ? 'Manage access' : 'Owner/admin only',
       enabled: canManageMembers,
     },

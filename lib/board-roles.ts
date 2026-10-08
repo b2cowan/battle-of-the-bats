@@ -11,7 +11,7 @@ import type { OrgRole } from './types';
  * never offer a role the server would refuse.
  *
  * A role is offered when the program it runs exists here:
- *   · Admin, Staff and Scorekeeper — always.
+ *   · Admin, Staff and Volunteer — always.
  *   · Treasurer — when the plan carries Accounting (a treasurer on a plan with no books would be
  *     given a role that opens nothing).
  *   · League admin / League registrar — ⚖ Ask 2 (2026-09-25): only when the club RUNS a house
@@ -41,7 +41,7 @@ const HINT: Partial<Record<OrgRole, string>> = {
   staff: 'game-day help',
   league_admin: 'runs the house league',
   league_registrar: 'league sign-ups',
-  official: 'scores and the gate',
+  official: 'scores or the gate',
 };
 
 /**

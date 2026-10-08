@@ -7,21 +7,38 @@
  * says what the chosen role opens (A13). League roles appear only when the club runs a house league
  * (Ask 2). The Coach row is Stage 2's, with its "Invite a coach" door (ruling D10) — not offered here.
  *
- * A scorekeeper keeps today's "Helping with" field (J1-077): it only chooses where the link lands.
+ * A volunteer's "Helping with" is what they can do (Stage 6, A26, ruled 2026-10-07): the route writes
+ * the job onto their row, every landing follows it, and Members' Manage changes it later. It used to
+ * choose only where the email's link landed (J1-077), and was kept nowhere.
  */
 import { useState, type FormEvent } from 'react';
 import type { OrgRole } from '@/lib/types';
+import { VOLUNTEER_JOBS, type VolunteerJob } from '@/lib/volunteer-jobs';
+import { HELPING_WITH } from '@/lib/volunteer-words';
 import KitDialog from './KitDialog';
 import PageNotice, { refusalNotice } from './PageNotice';
 import type { AssignableRoleOption } from './members-types';
 import ck from './ClubKit.module.css';
 
-const PURPOSES = [
-  { value: 'both', label: 'Both', hint: 'Opens the scorekeeper screen, with a one-tap link to the gate board.' },
-  { value: 'scorekeeping', label: 'Scorekeeping', hint: 'Opens the scorekeeper screen to submit game scores.' },
-  { value: 'gate', label: 'Gate / check-in', hint: 'Opens the gate board to check teams in.' },
-] as const;
-type Purpose = typeof PURPOSES[number]['value'];
+/** "Helping with" — the field the invite and Manage share (one control, one set of words). */
+export function HelpingWithField({ id, value, onChange, hintTail }: {
+  id: string;
+  value: VolunteerJob | null;
+  onChange: (job: VolunteerJob) => void;
+  /** The invite adds "Change it any time in Members."; Manage, which is Members, does not. */
+  hintTail?: string;
+}) {
+  return (
+    <div className={ck.field}>
+      <label className={ck.label} htmlFor={id}>{HELPING_WITH.label}<span className={ck.required} aria-hidden>*</span></label>
+      <select id={id} className={ck.select} value={value ?? ''} onChange={e => onChange(e.target.value as VolunteerJob)} required>
+        {!value && <option value="" disabled>{HELPING_WITH.none}</option>}
+        {VOLUNTEER_JOBS.map(job => <option key={job} value={job}>{HELPING_WITH.option[job]}</option>)}
+      </select>
+      {value && <p className={ck.hint}>{HELPING_WITH.hint[value]}{hintTail ? ` ${hintTail}` : ''}</p>}
+    </div>
+  );
+}
 
 export function roleGroupLabel(group: AssignableRoleOption['group'], noun: string): string {
   if (group === 'house_league') return 'House league';
@@ -55,6 +72,7 @@ export default function InviteMemberDialog({
   roles,
   rolesFailed,
   onRetryRoles,
+  initialRole = null,
   billingHref,
   onClose,
   onInvited,
@@ -65,15 +83,18 @@ export default function InviteMemberDialog({
   roles: AssignableRoleOption[] | null;
   rolesFailed: boolean;
   onRetryRoles: () => void;
+  /** The role to open on — the Staff kit's "Invite a volunteer" door chooses the volunteer role. */
+  initialRole?: OrgRole | null;
   /** Plan & billing, for the owner — offered beside a seat-limit refusal. */
   billingHref: string | null;
   onClose: () => void;
   onInvited: (notice: string) => void;
 }) {
   const [email, setEmail] = useState('');
-  // Staff was today's default; it stays the default where it is offered.
-  const [role, setRole] = useState<OrgRole | ''>('');
-  const [purpose, setPurpose] = useState<Purpose>('both');
+  // Staff was today's default; it stays the default where it is offered (the page's own Invite). The
+  // Staff kit's door opens on the volunteer role instead.
+  const [role, setRole] = useState<OrgRole | ''>(initialRole ?? '');
+  const [job, setJob] = useState<VolunteerJob>('both');
   const [sending, setSending] = useState(false);
   const [refusal, setRefusal] = useState<{ text: string; seat: boolean } | null>(null);
 
@@ -89,7 +110,7 @@ export default function InviteMemberDialog({
       const res = await fetch(`/api/admin/members/invite${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role: chosen, ...(chosen === 'official' ? { purpose } : {}) }),
+        body: JSON.stringify({ email, role: chosen, ...(chosen === 'official' ? { purpose: job } : {}) }),
       });
       const data = await res.json().catch(() => ({})) as { error?: string; code?: string; added?: boolean };
       if (!res.ok) {
@@ -155,13 +176,7 @@ export default function InviteMemberDialog({
           )}
         </div>
         {chosen === 'official' && (
-          <div className={ck.field}>
-            <label className={ck.label} htmlFor="kit-invite-purpose">Helping with</label>
-            <select id="kit-invite-purpose" className={ck.select} value={purpose} onChange={e => setPurpose(e.target.value as Purpose)}>
-              {PURPOSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-            </select>
-            <p className={ck.hint}>{PURPOSES.find(p => p.value === purpose)?.hint}</p>
-          </div>
+          <HelpingWithField id="kit-invite-purpose" value={job} onChange={setJob} hintTail={HELPING_WITH.changeLater} />
         )}
       </form>
     </KitDialog>

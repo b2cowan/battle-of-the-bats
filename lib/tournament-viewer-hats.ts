@@ -10,6 +10,7 @@ import { getActivePremiumPortal } from './coach-team-page';
 import { coachTeamPath, COACHES_TOURNAMENTS_PATH } from './coaches-portal-routes';
 import { getUserDisplayName, getUserInitials } from './user-display';
 import { allowedAdminScreens } from './flip-twins';
+import { officialHome } from './volunteer-jobs';
 
 /**
  * lib/tournament-viewer-hats.ts — Phase 3 "one-home connective tissue."
@@ -229,7 +230,8 @@ export async function getTournamentViewer(params: {
         hats.push({
           kind: 'official',
           label: params.orgName,
-          href: `/${params.orgSlug}/scorekeeper`,
+          // Their job's screen (Stage 6, A26) — a gate volunteer's door opens the gate, by the landing's own rule.
+          href: officialHome(params.orgSlug, staffCtx.capabilities),
         });
       }
     } else if (staffCtx.role !== 'coach' && coversThisTournament) {

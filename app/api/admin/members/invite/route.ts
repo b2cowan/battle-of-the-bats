@@ -9,6 +9,8 @@ import { memberDisplayName } from '@/lib/member-names';
 import { acceptInvitePath } from '@/lib/invite-links';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { sendEmail, orgInviteHtml, orgMemberAddedHtml } from '@/lib/email';
+import { parseVolunteerJob, volunteerCapabilitiesFor, volunteerHome, type VolunteerJob } from '@/lib/volunteer-jobs';
+import { INVITE_EMAIL_ACTION, VOLUNTEER_EMAIL_NOTE } from '@/lib/volunteer-words';
 import type { OrgRole } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
 
@@ -37,13 +39,13 @@ export const POST = withObservability(async (req: Request) => {
     );
   }
   const role: OrgRole = body.role;
-  // J1-077: where the volunteer invite link lands. Officials already permit both
-  // scoring and gate; this only routes the link (default 'both' → scorekeeper +
-  // in-app cross-link to the gate). Ignored for non-official roles.
-  const VOLUNTEER_PURPOSES = ['scorekeeping', 'gate', 'both'] as const;
-  type VolunteerPurpose = typeof VOLUNTEER_PURPOSES[number];
-  const purpose: VolunteerPurpose =
-    role === 'official' && VOLUNTEER_PURPOSES.includes(body.purpose) ? body.purpose : 'both';
+  // "Helping with" (Stage 6, A26, ruled 2026-10-07): a volunteer's job is what they can DO — written
+  // onto the new row as the per-member override (subtractive only: the gate → no scores, scoring → no
+  // gate, both → the role's defaults), so every landing and both shells follow it. It used to route
+  // the email's link only (J1-077) and was stored nowhere, so a gate volunteer landed on the
+  // scorekeeper at every later sign-in (F62). Ignored for every other role.
+  const job: VolunteerJob | null = role === 'official' ? parseVolunteerJob(body.purpose) : null;
+  const capabilities = job ? volunteerCapabilitiesFor(job) : null;
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: 'Valid email required' }, { status: 400 });
@@ -81,16 +83,12 @@ export const POST = withObservability(async (req: Request) => {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
   const roleLabel = roleEmailLabel(role);
-  // J1-077: officials land on the screen matching their purpose. 'gate' → check-in,
-  // otherwise the scorekeeper screen (which carries a cross-link to the gate).
-  const volunteerLanding = purpose === 'gate' ? `/${org.slug}/check-in` : `/${org.slug}/scorekeeper`;
-  const signInPath = role === 'official'
+  // A volunteer's sign-in link opens their job — the same rule as every later sign-in.
+  const volunteerLanding = volunteerHome(org.slug, role, capabilities);
+  const signInPath = volunteerLanding
     ? `/auth/login?next=${encodeURIComponent(volunteerLanding)}`
     : '/auth/login';
   const signInUrl = `${appUrl}${signInPath}`;
-  const signInAction = role === 'official'
-    ? (purpose === 'gate' ? 'Open Check-In' : purpose === 'scorekeeping' ? 'Open Scorekeeper' : 'Open Volunteer View')
-    : 'Sign In';
 
   if (existingUser) {
     // Check they're not already in THIS org
@@ -118,10 +116,11 @@ export const POST = withObservability(async (req: Request) => {
     // coaching lives on their team's staff list and is untouched. (It used to answer "already a
     // member", and the Manage dialog now refuses coach rows — this is the door that works.)
     const nowIso = new Date().toISOString();
+    // Both writes carry the volunteer's job (null for every other role — a coach row is capability-less).
     const { error: insertError } = sameMember
       ? await supabaseAdmin
         .from('organization_members')
-        .update({ role, status: 'active', accepted_at: nowIso })
+        .update({ role, status: 'active', accepted_at: nowIso, capabilities })
         .eq('id', sameMember.id)
         .eq('organization_id', org.id)
         .eq('role', 'coach')
@@ -134,6 +133,7 @@ export const POST = withObservability(async (req: Request) => {
           status: 'active',
           invited_at: nowIso,
           accepted_at: nowIso,
+          capabilities,
         });
 
     if (insertError) {
@@ -142,14 +142,14 @@ export const POST = withObservability(async (req: Request) => {
 
     void supabaseAdmin.from('org_audit_log').insert({
       org_id: org.id, actor_id: user.id, target_id: existingUser.id,
-      action: 'member_invited', payload: { email, role, ...(role === 'official' ? { purpose } : {}) },
+      action: 'member_invited', payload: { email, role, ...(job ? { purpose: job } : {}) },
     });
 
     // Notify the existing user that they now have access to this org.
     await sendEmail(
       email,
       `You've been added to ${org.name} on FieldLogicHQ`,
-      orgMemberAddedHtml({ orgName: org.name, roleLabel, signInUrl, ctaLabel: signInAction, scorekeeperNote: role === 'official' }),
+      orgMemberAddedHtml({ orgName: org.name, roleLabel, signInUrl, ctaLabel: INVITE_EMAIL_ACTION.signIn, note: job ? VOLUNTEER_EMAIL_NOTE.added[job] : null }),
     );
 
     return NextResponse.json({ ok: true, added: true });
@@ -192,24 +192,23 @@ export const POST = withObservability(async (req: Request) => {
         // Persist the invited email so reconciliation can re-attach this pending row
         // if the user self-registers/logs in instead of clicking the email link (mig 128).
         invited_email: email,
+        // The volunteer's job, from the invite on (null for every other role).
+        capabilities,
       });
 
     void supabaseAdmin.from('org_audit_log').insert({
       org_id: org.id, actor_id: user.id, target_id: newUserId,
-      action: 'member_invited', payload: { email, role, ...(role === 'official' ? { purpose } : {}) },
+      action: 'member_invited', payload: { email, role, ...(job ? { purpose: job } : {}) },
     });
   }
 
   // Send invite email via Resend
   const inviteUrl = getActionLink(linkData);
 
-  const inviteAction = role === 'official'
-    ? (purpose === 'gate' ? 'Accept Gate Volunteer Invite' : purpose === 'scorekeeping' ? 'Accept Scorekeeper Invite' : 'Accept Volunteer Invite')
-    : 'Accept Invitation';
   await sendEmail(
     email,
     `You've been invited to ${org.name} on FieldLogicHQ`,
-    orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: inviteAction, scorekeeperNote: role === 'official', inviterName }),
+    orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: INVITE_EMAIL_ACTION.accept, note: job ? VOLUNTEER_EMAIL_NOTE.invite[job] : null, inviterName }),
   );
 
   return NextResponse.json({ ok: true, added: false });

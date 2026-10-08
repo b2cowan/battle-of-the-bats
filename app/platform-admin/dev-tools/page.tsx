@@ -129,7 +129,7 @@ const PLAN_GATES_TOGGLE_ENABLED =
 
 const ROLE_DISPLAY: Record<string, string> = {
   owner: 'Owner', admin: 'Admin', staff: 'Staff', coach: 'Coach',
-  league_admin: 'League Admin', treasurer: 'Treasurer', official: 'Scorekeeper',
+  league_admin: 'League Admin', treasurer: 'Treasurer', official: 'Volunteer',
 };
 
 function LiveCredentials({ data }: { data: MembershipData | null }) {

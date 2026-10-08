@@ -173,7 +173,7 @@ function SignupForm() {
   const ROLE_LABELS: Record<string, string> = {
     admin: 'Administrator',
     staff: 'Staff',
-    official: 'Scorekeeper',
+    official: 'Volunteer',
     league_admin: 'League Administrator',
     league_registrar: 'League Registrar',
     treasurer: 'Treasurer',

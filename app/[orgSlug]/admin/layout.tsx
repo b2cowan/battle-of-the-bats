@@ -4,6 +4,7 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
 import { getOrganizationBySlug } from '@/lib/db';
+import { volunteerHome } from '@/lib/volunteer-jobs';
 import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
 import { LiveLogicProvider } from '@/components/live-logic/LiveLogicProvider';
@@ -80,13 +81,13 @@ export default async function AdminLayout({
     redirect(`/${authCtx.org.slug}/admin`);
   }
 
-  // J8-019: an `official` (scorekeeper) has no admin module capabilities, so the admin hub renders
-  // a blank zero-tile dead-end for them. Send them to their actual surface instead of the empty
-  // shell. (Org-level role→surface routing for other roles is FP-7's call; this is the shell fix
-  // for the one role that can never use the admin hub.)
-  if (authCtx.role === 'official') {
-    redirect(`/${orgSlug}/scorekeeper`);
-  }
+  // J8-019: an `official` (a volunteer) has no admin module capabilities, so the admin hub renders
+  // a blank zero-tile dead-end for them. Send them to their job instead of the empty shell — by the
+  // same rule as a sign-in (Stage 6, A26), so a gate volunteer lands on the gate. (Org-level
+  // role→surface routing for other roles is FP-7's call; this is the shell fix for the one role that
+  // can never use the admin hub.)
+  const volunteer = volunteerHome(orgSlug, authCtx.role, authCtx.capabilities);
+  if (volunteer) redirect(volunteer);
 
   const shell = (
     <OrgProvider

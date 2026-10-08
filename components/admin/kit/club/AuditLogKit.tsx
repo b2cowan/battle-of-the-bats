@@ -17,7 +17,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { isTournamentTier } from '@/lib/billing-urls';
+import { getMembersHref, isTournamentTier } from '@/lib/billing-urls';
 import { formatTime } from '@/lib/utils';
 import { formatStoredDate, orgDayKey, tournamentToday, utcToZonedInputs } from '@/lib/timezone';
 import {
@@ -87,9 +87,7 @@ export default function AuditLogKit() {
   if (loading || !currentOrg || !userRole) return <div className={ck.loading}>Loading…</div>;
 
   const eyebrow = isTournamentTier(currentOrg.planId) ? 'Tournament settings' : 'Organization';
-  const membersHref = isTournamentTier(currentOrg.planId)
-    ? `/${slug}/admin/tournaments/settings/members`
-    : `/${slug}/admin/org/members`;
+  const membersHref = getMembersHref(slug, currentOrg.planId);
 
   if (userRole !== 'owner') {
     return (

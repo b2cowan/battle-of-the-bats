@@ -17,13 +17,17 @@
 import { ROLE_DEFAULTS, type Capability } from '../../../../lib/roles';
 import type { ProgramAccess } from '../../../../lib/member-access';
 import type { OrgRole } from '../../../../lib/types';
+import { volunteerJobOf } from '../../../../lib/volunteer-jobs';
+import { VOLUNTEER_ACCESS } from '../../../../lib/volunteer-words';
 
 /** The programs that make up "every program on the plan" — Families is an explicit grant for every
  *  role (so it is a chip, never part of a role's default), and Members is the board, not a program. */
 const NOT_A_PROGRAM: readonly Capability[] = ['module_families', 'module_members'];
 
-export function accessSummary(role: OrgRole, access: ProgramAccess[]): string {
+export function accessSummary(role: OrgRole, access: ProgramAccess[], capabilities?: Record<string, boolean> | null): string {
   if (role === 'owner') return 'Everything, including plan & billing';
+  // A volunteer's answer is their job (Stage 6, A26) — what "Helping with" left them, not the role's both.
+  if (role === 'official') return VOLUNTEER_ACCESS[volunteerJobOf(capabilities) ?? 'none'].long;
   const programs = access.filter(a => !NOT_A_PROGRAM.includes(a.module));
   const defaults = programs.filter(a => a.roleDefault);
   if (programs.length > 0 && defaults.length === programs.length) return 'Every program on the plan';
@@ -32,7 +36,6 @@ export function accessSummary(role: OrgRole, access: ProgramAccess[]): string {
     // ⚖ D8 + Ask 1: a treasurer runs the books and reads team names inside Accounting — no Rep Teams door.
     case 'treasurer': return carriesRepTeams ? 'Accounting · the team names it allocates to' : 'Accounting';
     case 'staff': return 'Tournaments on game day';
-    case 'official': return 'Scores and the gate';
     case 'league_admin': return 'The house league';
     case 'league_registrar': return 'House league registrations';
     case 'coach': return 'Their team, in the Coaches Portal';
@@ -42,13 +45,13 @@ export function accessSummary(role: OrgRole, access: ProgramAccess[]): string {
 }
 
 /** The phone row's second line: the same answer, in a few words. */
-export function accessShort(role: OrgRole, access: ProgramAccess[]): string {
-  const long = accessSummary(role, access);
+export function accessShort(role: OrgRole, access: ProgramAccess[], capabilities?: Record<string, boolean> | null): string {
+  if (role === 'official') return VOLUNTEER_ACCESS[volunteerJobOf(capabilities) ?? 'none'].short;
+  const long = accessSummary(role, access, capabilities);
   switch (long) {
     case 'Everything, including plan & billing': return 'everything';
     case 'Every program on the plan': return 'every program';
     case 'Tournaments on game day': return 'game day';
-    case 'Scores and the gate': return 'scores and the gate';
     case 'The house league': return 'house league';
     case 'House league registrations': return 'registrations';
     default: return long.split(' · ')[0];

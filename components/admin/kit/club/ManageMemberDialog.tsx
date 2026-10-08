@@ -14,6 +14,11 @@
  *
  * Only an OWNER changes access overrides or suspends (the member route's rule); a board member who
  * can manage members sees the access rows read-only — never a control the server would refuse.
+ *
+ * A VOLUNTEER is the exception (Tournament admin redesign Stage 6, P1 + P2, owner 2026-10-07): in
+ * place of the program table — every row of which is "No" for a volunteer, whom the admin sends to
+ * their job — Manage shows the invite's own "Helping with", and whoever may invite may change it.
+ * It writes only a volunteer's two job keys (`withVolunteerJob`); a volunteer always keeps one job.
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
@@ -23,7 +28,9 @@ import type { Organization, OrgRole } from '@/lib/types';
 import { formatInOrgZone } from '@/lib/timezone';
 import KitDialog from './KitDialog';
 import PageNotice, { refusalNotice } from './PageNotice';
-import { RoleOptions } from './InviteMemberDialog';
+import { RoleOptions, HelpingWithField } from './InviteMemberDialog';
+import { volunteerJobOf, withVolunteerJob, type VolunteerJob } from '@/lib/volunteer-jobs';
+import { HELPING_WITH } from '@/lib/volunteer-words';
 import { consequence } from './member-summary';
 import {
   memberFirstName, memberName, type KitMember, type AssignableRoleOption, type TournamentOption, type RepGroupOption,
@@ -99,6 +106,7 @@ export default function ManageMemberDialog({
   const [title, setTitle] = useState(member.title ?? '');
   const [displayName, setDisplayName] = useState(member.displayName ?? '');
   const [caps, setCaps] = useState<Record<string, boolean>>(() => ({ ...(member.capabilities ?? {}) }));
+  const [job, setJob] = useState<VolunteerJob | null>(() => volunteerJobOf(member.capabilities));
   const [assignments, setAssignments] = useState<string[]>(() => [...member.assignedTournamentIds]);
   const [groupIds, setGroupIds] = useState<string[]>(() => [...member.repGroupIds]);
   const [saving, setSaving] = useState(false);
@@ -121,10 +129,19 @@ export default function ManageMemberDialog({
   const canScopeGroups = (viewerRole === 'owner' || viewerRole === 'admin') && !targetIsOwner && repGroups.length > 0;
   const canScopeTournaments = canManage && !targetIsOwner && tournaments.length > 0;
 
+  // A volunteer's access is their job (P1): "Helping with", for anyone who may invite.
+  const isVolunteer = role === 'official' && !targetIsOwner;
+  const canChangeJob = isVolunteer && canManage && !isSelf;
+
   const roleChanged = role !== member.role;
   const titleChanged = title.trim() !== (member.title ?? '');
   const nameChanged = displayName.trim() !== (member.displayName ?? '');
-  const capsChanged = canChangeAccess && !sameCaps(member.capabilities, caps);
+  const capsChanged = !isVolunteer && canChangeAccess && !sameCaps(member.capabilities, caps);
+  const jobChanged = canChangeJob && job !== null && job !== volunteerJobOf(member.capabilities);
+  // The access this save writes — the owner's program table, or a volunteer's job; undefined when neither moved.
+  const nextCaps = capsChanged
+    ? (Object.keys(caps).length ? caps : null)
+    : jobChanged && job ? withVolunteerJob(member.capabilities, job) : undefined;
   const groupsChanged = canScopeGroups && !sameSet(groupIds, member.repGroupIds);
   const assignmentsChanged = canScopeTournaments && !sameSet(assignments, member.assignedTournamentIds);
 
@@ -158,7 +175,7 @@ export default function ManageMemberDialog({
     if (canChangeRole && roleChanged) body.role = role;
     if (titleChanged) body.title = title.trim() || null;
     if (nameChanged) body.displayName = displayName.trim() || null;
-    if (capsChanged) body.capabilities = Object.keys(caps).length ? caps : null;
+    if (nextCaps !== undefined) body.capabilities = nextCaps;
     if (groupsChanged) body.repGroupIds = groupIds;
     if (Object.keys(body).length === 0 && !assignmentsChanged) { onClose(); return; }
 
@@ -193,7 +210,7 @@ export default function ManageMemberDialog({
       // person can open (`describeAccessChange`), so a change to a tournament control alone sends nothing.
       const emailed = member.status === 'active' && describeAccessChange(
         { role: member.role, capabilities: member.capabilities },
-        { role: canChangeRole ? role : member.role, capabilities: capsChanged ? (Object.keys(caps).length ? caps : null) : member.capabilities },
+        { role: canChangeRole ? role : member.role, capabilities: nextCaps !== undefined ? nextCaps : member.capabilities },
         org,
       ).length > 0;
       await onChanged(`${name}’s changes are saved.${emailed ? ` We’ve emailed ${first === 'They' ? 'them' : first} what changed.` : ''}`, true);
@@ -348,7 +365,16 @@ export default function ManageMemberDialog({
           </div>
         </div>
 
-        {!targetIsOwner && (
+        {isVolunteer && (canChangeJob ? (
+          <HelpingWithField id="kit-manage-purpose" value={job} onChange={setJob} />
+        ) : (
+          <div className={ck.field}>
+            <span className={ck.label}>{HELPING_WITH.label}</span>
+            <p className={styles.readValue}>{job ? HELPING_WITH.option[job] : '—'}</p>
+          </div>
+        ))}
+
+        {!targetIsOwner && !isVolunteer && (
           <div className={styles.accessBlock}>
             <h3 className={styles.accessTitle}>What {first === 'They' ? 'they' : first} can open</h3>
             <table className={`${ck.table} ${styles.accessTable}`}>

@@ -8,6 +8,8 @@ import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { isClubPlan, isTournamentOnlyWorkspace, planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import { WORKSPACE_KIND_LABEL } from './workspace-labels';
 import { getBillingHref } from './billing-urls';
+import { officialHome, volunteerHome, volunteerJobOf } from './volunteer-jobs';
+import { volunteerDuties } from './volunteer-words';
 import type { OrgAccountKind, OrgPlan } from './types';
 
 export type OrgRelation = {
@@ -27,6 +29,8 @@ export type MemberRow = {
   id?: string;
   organization_id: string;
   role: string;
+  /** The per-member override — a volunteer's job lives here (Stage 6, A26), and their landing reads it. */
+  capabilities?: Record<string, boolean> | null;
   organizations: OrgRelation | OrgRelation[] | null;
 };
 
@@ -80,7 +84,7 @@ const ROLE_LABELS: Record<string, string> = {
   owner: 'Owner',
   admin: 'Admin',
   staff: 'Staff',
-  official: 'Scorekeeper',
+  official: 'Volunteer',
   league_admin: 'League Admin',
   league_registrar: 'Registrar',
   treasurer: 'Treasurer',
@@ -166,7 +170,7 @@ async function hasExplicitPlanChoice(orgId: string, planId: OrgPlan): Promise<bo
 const getActiveMembershipRows = cache(async (userId: string): Promise<ActiveMemberRow[]> => {
   const { data } = await supabaseAdmin
     .from('organization_members')
-    .select('id, organization_id, role, organizations(id, slug, name, plan_id, subscription_status, enabled_addons, account_kind, team_workspace_status, onboarding_completed_at, free_floor)')
+    .select('id, organization_id, role, capabilities, organizations(id, slug, name, plan_id, subscription_status, enabled_addons, account_kind, team_workspace_status, onboarding_completed_at, free_floor)')
     .eq('user_id', userId)
     .eq('status', 'active');
 
@@ -184,14 +188,18 @@ function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | nu
   const subscriptionIsActive = isActiveSubscriptionStatus(org?.subscription_status);
 
   if (member.role === 'official') {
+    // A volunteer's card names the role once (the badge) and the jobs they hold ("Scorekeeper · Gate"),
+    // and opens the job they hold — the same rule as a bare sign-in (Stage 6, A26; it used to open the
+    // scorekeeper for a gate volunteer too, J8-020 / F62).
+    const duties = volunteerDuties(volunteerJobOf(member.capabilities));
     return {
       id: `official:${member.id}`,
       kind: 'tournament_official',
       title: org?.name ?? slug,
-      subtitle: 'Tournament operations',
-      detail: roleLabel,
-      badgeLabel: 'Official',
-      destination: `/${slug}/scorekeeper`,
+      subtitle: duties.length > 0 ? duties.join(' · ') : 'Tournament operations',
+      detail: '',
+      badgeLabel: roleLabel,
+      destination: officialHome(slug, member.capabilities),
       sortOrder: 30,
       orgId,
       orgSlug: slug,
@@ -390,9 +398,9 @@ export async function getDestinationForMembership(member: MemberRow): Promise<st
   const accountKind = org?.account_kind ?? 'organization';
   const role = member.role;
 
-  if (role === 'official') {
-    return `/${slug}/scorekeeper`;
-  }
+  // A volunteer lands on the job they hold (Stage 6, A26) — one rule, `volunteerHome`.
+  const volunteer = volunteerHome(slug, role, member.capabilities);
+  if (volunteer) return volunteer;
 
   if (isTeamWorkspaceOrg({ accountKind, planId: planId ?? 'tournament' })) {
     return `/${slug}/coaches`;

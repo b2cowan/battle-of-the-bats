@@ -9,7 +9,7 @@
  */
 
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg, type AuthContextWithScope } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
+import { canGate } from '@/lib/volunteer-jobs';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
@@ -22,8 +22,8 @@ function json(body: unknown, status = 200) {
 
 /** Organizers (manage_registrations) and gate volunteers (check_in_teams) can both run check-in. */
 function canCheckIn(ctx: AuthContextWithScope): boolean {
-  return hasCapability(ctx.role, ctx.capabilities, 'manage_registrations')
-    || hasCapability(ctx.role, ctx.capabilities, 'check_in_teams');
+  // The gate's one rule — the same question the gate's wall and every volunteer landing ask.
+  return canGate(ctx.role, ctx.capabilities);
 }
 
 function lockedResponse() {

@@ -78,7 +78,11 @@ describe('Members — J10-012, J10-021, J10-018, J10-022', () => {
 
   it('access overrides and suspension are the owner\'s, as the member route rules (never a control it refuses)', () => {
     assert.match(manage, /const canChangeAccess = viewerIsOwner && !targetIsOwner;/);
-    assert.match(manage, /if \(capsChanged\) body\.capabilities/);
+    // The program table is the owner's alone; a VOLUNTEER's job (Stage 6 P1, owner 2026-10-07) is anyone's who
+    // may invite — and that path writes only the two job keys, as the member route allows.
+    assert.match(manage, /const capsChanged = !isVolunteer && canChangeAccess && /);
+    assert.match(manage, /: jobChanged && job \? withVolunteerJob\(member\.capabilities, job\) : undefined;/);
+    assert.match(manage, /if \(nextCaps !== undefined\) body\.capabilities = nextCaps;/);
     assert.match(manage, /viewerIsOwner && !targetIsOwner && member\.status === 'active'/, 'Suspend… is the owner\'s');
   });
 

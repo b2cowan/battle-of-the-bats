@@ -2,6 +2,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { sendEmail, orgInviteHtml } from './email';
 import { roleEmailLabel } from './member-access';
 import { invitationSender } from './member-names';
+import { volunteerJobOf } from './volunteer-jobs';
+import { INVITE_EMAIL_ACTION, VOLUNTEER_EMAIL_NOTE } from './volunteer-words';
 
 function getActionLink(data: unknown) {
   return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
@@ -9,7 +11,7 @@ function getActionLink(data: unknown) {
 
 /**
  * The accept page's address, carrying the club, the role and who sent it (J10-010). Those three
- * paint the page's FIRST frame — a scorekeeper sees "Join … as Scorekeeper", never the admin title
+ * paint the page's FIRST frame — a volunteer sees "Join … as Volunteer", never the admin title
  * — and the page then confirms all three from the server once the session lands. The link is a
  * hint, never the authority: a hand-edited link can change only what its own reader sees first.
  */
@@ -54,13 +56,14 @@ export async function sendPendingInviteLink(params: {
   // J10-005: one role vocabulary for every invite mail. This used to build its own and called a
   // treasurer a "team treasurer" and an admin a "team admin".
   const roleLabel = roleEmailLabel(role);
-  const inviteAction = role === 'official' ? 'Accept Scorekeeper Invite' : 'Accept Invitation';
-  // The resend names the ORIGINAL sender, as the first invitation did (J10-010).
+  // The resend names the ORIGINAL sender, as the first invitation did (J10-010), and a volunteer's job
+  // as their row holds it now (Stage 6, A26 — Members may have changed it since the first invitation).
   const { data: memberRow } = await supabaseAdmin
     .from('organization_members')
-    .select('organization_id')
+    .select('organization_id, capabilities')
     .eq('id', memberId)
-    .maybeSingle<{ organization_id: string }>();
+    .maybeSingle<{ organization_id: string; capabilities: Record<string, boolean> | null }>();
+  const job = role === 'official' ? volunteerJobOf(memberRow?.capabilities) : null;
   const sender = memberRow ? await invitationSender(memberRow.organization_id, userId) : null;
   const next = encodeURIComponent(acceptInvitePath({ orgSlug, role, inviterName: sender?.name }));
   const redirectTo = `${appUrl}/auth/callback?next=${next}`;
@@ -80,7 +83,7 @@ export async function sendPendingInviteLink(params: {
   await sendEmail(
     email,
     `You've been invited to ${orgName} on FieldLogicHQ`,
-    orgInviteHtml({ orgName, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: inviteAction, scorekeeperNote: role === 'official', inviterName: sender?.name ?? null }),
+    orgInviteHtml({ orgName, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: INVITE_EMAIL_ACTION.accept, note: job ? VOLUNTEER_EMAIL_NOTE.invite[job] : null, inviterName: sender?.name ?? null }),
   );
 
   // Refresh invited_at (admin sees the re-invite time) + backfill invited_email so the row

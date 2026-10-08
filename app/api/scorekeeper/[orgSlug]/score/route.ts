@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getScore as getOfficialScore } from '@/app/api/official/[orgSlug]/score/get-score';
 import { getAuthContextWithScope, unauthorized, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
+import { canScore } from '@/lib/volunteer-jobs';
 import {
   loadTournamentScoreGame,
   submitTournamentScore,
@@ -24,7 +24,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   if (ctx.org.slug !== orgSlug) {
     return NextResponse.json({ error: 'This scorekeeper link belongs to another organization.' }, { status: 403 });
   }
-  if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) {
+  if (!canScore(ctx.role, ctx.capabilities)) {
     return NextResponse.json({ error: 'You do not have scorekeeper access for this organization.' }, { status: 403 });
   }
 

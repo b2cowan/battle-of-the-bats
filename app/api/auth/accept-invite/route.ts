@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { checkCrossOrgJoin, crossOrgJoinRefusalForInvitee } from '@/lib/org-membership-policy';
-import { roleLabel, roleOpensSentence } from '@/lib/member-access';
+import { roleLabel, memberOpensSentence } from '@/lib/member-access';
 import { invitationSender } from '@/lib/member-names';
 import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { withObservability, captureAndJson } from '@/lib/observability';
@@ -48,7 +48,7 @@ export const GET = withObservability(async (req: Request) => {
   const linkOrg = new URL(req.url).searchParams.get('org');
   let query = supabaseAdmin
     .from('organization_members')
-    .select('role, status, organization_id, organizations!inner(slug, name)')
+    .select('role, status, organization_id, capabilities, organizations!inner(slug, name)')
     .eq('user_id', user.id)
     .in('status', ['invited', 'active']);
   if (linkOrg) query = query.eq('organizations.slug', linkOrg);
@@ -71,7 +71,7 @@ export const GET = withObservability(async (req: Request) => {
     status: member?.status ?? null,
     orgName: org?.name ?? null,
     roleLabel: member?.role ? roleLabel(member.role) : null,
-    roleOpens: member?.role ? roleOpensSentence(member.role) : null,
+    roleOpens: member?.role ? memberOpensSentence(member.role, member.capabilities as Record<string, boolean> | null) : null,
     inviterName: sender?.name ?? null,
     inviterRole: sender?.role ? roleLabel(sender.role) : null,
   });

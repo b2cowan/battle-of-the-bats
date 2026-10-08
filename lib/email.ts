@@ -1032,13 +1032,12 @@ export function orgInviteHtml(p: {
   roleLabel: string;
   inviteUrl: string;
   ctaLabel: string;
-  scorekeeperNote?: boolean;
+  /** A volunteer's job, said to them (`VOLUNTEER_EMAIL_NOTE`, Stage 6) — a fixed sentence, never user text. */
+  note?: string | null;
   /** Who sent it (J10-010, Club Tier Stage 1) — named when known, so the invitee knows who is asking. */
   inviterName?: string | null;
 }) {
-  const note = p.scorekeeperNote
-    ? `<p style="color:rgba(241,245,249,0.7);">As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned tournaments. After setup, you'll land directly in Scorekeeper View.</p>`
-    : '';
+  const note = p.note ? `<p style="color:rgba(241,245,249,0.7);">${p.note}</p>` : '';
   // org.name and the sender's name are editable by other people → escape before interpolating.
   const org = escapeEmailHtml(p.orgName);
   const who = p.inviterName ? `<strong>${escapeEmailHtml(p.inviterName)}</strong> invited you` : "You've been invited";
@@ -1135,11 +1134,10 @@ export function orgMemberAddedHtml(p: {
   roleLabel: string;
   signInUrl: string;
   ctaLabel: string;
-  scorekeeperNote?: boolean;
+  /** A volunteer's job, said to them (`VOLUNTEER_EMAIL_NOTE`, Stage 6) — a fixed sentence, never user text. */
+  note?: string | null;
 }) {
-  const note = p.scorekeeperNote
-    ? 'Sign in to open Scorekeeper View and submit game results.'
-    : 'No action is required — just sign in to get started.';
+  const note = p.note ?? 'No action is required — just sign in to get started.';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">You've been added to ${p.orgName}</h2>
     <p>You now have access to <strong>${p.orgName}</strong> on <strong>FieldLogicHQ</strong> as ${withArticle(p.roleLabel)}.</p>

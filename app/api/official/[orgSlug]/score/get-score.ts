@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, unauthorized } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
+import { canScore } from '@/lib/volunteer-jobs';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
@@ -207,7 +207,7 @@ export async function getScore(req: Request, { params }: Params) {
   if (ctx.org.slug !== orgSlug) {
     return accessDeniedResponse('This scorekeeper link belongs to another organization.');
   }
-  if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) {
+  if (!canScore(ctx.role, ctx.capabilities)) {
     return accessDeniedResponse('You do not have scorekeeper access for this organization.');
   }
 

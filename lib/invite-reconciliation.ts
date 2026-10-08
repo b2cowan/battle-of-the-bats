@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
-import { roleLabel, roleOpensSentence } from './member-access';
+import { roleLabel, memberOpensSentence } from './member-access';
 import { invitationSender } from './member-names';
 
 /**
@@ -225,16 +225,17 @@ export async function withInvitationDetails(invites: ReconciledInvite[]): Promis
   if (invites.length === 0) return [];
   const { data: rows } = await supabaseAdmin
     .from('organization_members')
-    .select('id, user_id')
+    .select('id, user_id, capabilities')
     .in('id', invites.map(i => i.memberId));
   const userByMember = new Map((rows ?? []).map(r => [r.id as string, r.user_id as string]));
+  const capsByMember = new Map((rows ?? []).map(r => [r.id as string, (r.capabilities ?? null) as Record<string, boolean> | null]));
   return Promise.all(invites.map(async invite => {
     const userId = userByMember.get(invite.memberId);
     const sender = userId ? await invitationSender(invite.organizationId, userId) : null;
     return {
       ...invite,
       roleLabel: roleLabel(invite.role),
-      roleOpens: roleOpensSentence(invite.role),
+      roleOpens: memberOpensSentence(invite.role, capsByMember.get(invite.memberId)),
       inviterName: sender?.name ?? null,
       inviterRole: sender?.role ? roleLabel(sender.role) : null,
       invitedAt: sender?.sentAt ?? null,

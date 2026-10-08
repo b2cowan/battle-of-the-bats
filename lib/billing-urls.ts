@@ -17,6 +17,13 @@ export function getBillingHref(orgSlug: string, planId: OrgPlan | string | undef
     : `/${orgSlug}/admin/org/billing`;
 }
 
+/** Members, where the plan keeps it — the tournament's settings on the tournament tiers, the organization elsewhere. */
+export function getMembersHref(orgSlug: string, planId: OrgPlan | string | undefined | null): string {
+  return isTournamentTier(planId)
+    ? `/${orgSlug}/admin/tournaments/settings/members`
+    : `/${orgSlug}/admin/org/members`;
+}
+
 /**
  * Returns the notification-settings URL for an org's admin bell.
  *

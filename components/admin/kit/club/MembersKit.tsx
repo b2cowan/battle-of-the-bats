@@ -6,7 +6,7 @@
  *
  *   The board first — the people who run the organization — with "What they can open", computed by
  *   the one access computation (`whatTheyCanOpen`), never typed, and a chip per change from the
- *   role's defaults (J10-024). Scorekeepers and coaching staff are their own collapsed sections
+ *   role's defaults (J10-024). Volunteers and coaching staff are their own collapsed sections
  *   (Ask 6; S1-03 — coaching staff are managed on each team's staff page). The Role Guide is
  *   rewritten from the role defaults (J10-004 / A13).
  *
@@ -17,8 +17,9 @@
  * (the drawing's rows show only Manage); the coaching-staff count has no "across N teams" (the
  * members read does not carry a coach's teams); the Role Guide is open, below the lists, as drawn.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ScrollText, UserPlus, ChevronRight, AlertTriangle } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -79,8 +80,22 @@ export default function MembersKit() {
   const [tournaments, setTournaments] = useState<TournamentOption[]>([]);
   const [repGroups, setRepGroups] = useState<RepGroupOption[]>([]);
   const [inviteOpen, setInviteOpen] = useState(false);
+  /** The role the invite opens on — the volunteer role when the Staff kit's door sent them (Stage 6, A26). */
+  const [inviteRole, setInviteRole] = useState<'official' | null>(null);
   const [manageId, setManageId] = useState<string | null>(null);
   const [notice, setNotice] = useNotice();
+
+  // The Staff kit's "Invite a volunteer" door lands here with `?invite=volunteer` and opens the invite
+  // with the volunteer role chosen — once per visit (ref-guarded, as the schedule reads `?tool=`). The
+  // page's own Invite keeps its default.
+  const inviteParam = useSearchParams().get('invite');
+  const inviteDoorRef = useRef(false);
+  useEffect(() => {
+    if (inviteParam !== 'volunteer' || inviteDoorRef.current || !canManage) return;
+    inviteDoorRef.current = true;
+    setInviteRole('official');
+    setInviteOpen(true);
+  }, [inviteParam, canManage]);
 
   const loadMembers = useCallback(async () => {
     if (!orgQuery) return;
@@ -198,7 +213,7 @@ export default function MembersKit() {
 
   const canOpenCell = (m: KitMember) => (
     <span className={styles.opens}>
-      <span>{accessSummary(m.role, m.access)}</span>
+      <span>{accessSummary(m.role, m.access, m.capabilities)}</span>
       {overrideChips(m.access).map(c => (
         <span key={c.key} className={`${ck.chip} ${c.tone === 'on' ? ck.chipGood : ck.chipWarn}`}>{c.text}</span>
       ))}
@@ -253,7 +268,7 @@ export default function MembersKit() {
           const isSelf = m.userId === user?.id;
           const line = m.status === 'invited'
             ? `${roleLabel(m.role)} · invited ${dayLabel(m.invitedAt)}`
-            : `${roleLabel(m.role)} · ${accessShort(m.role, m.access)}${overrideChips(m.access).map(c => ` ${c.text}`).join('')}`;
+            : `${roleLabel(m.role)} · ${accessShort(m.role, m.access, m.capabilities)}${overrideChips(m.access).map(c => ` ${c.text}`).join('')}`;
           const body = (
             <>
               <span className={ck.rowMain}>
@@ -314,7 +329,7 @@ export default function MembersKit() {
       {seatLimited && (
         <p className={ck.lede}>
           <span className={ck.strong}>{seatCount} of {planCfg.seatLimit}</span> staff seats used
-          {planCfg.officialsFreeSeats && scorekeepers.length > 0 ? ` · ${scorekeepers.length} scorekeeper${scorekeepers.length === 1 ? '' : 's'}, free on this plan` : ''}.
+          {planCfg.officialsFreeSeats && scorekeepers.length > 0 ? ` · ${scorekeepers.length} volunteer${scorekeepers.length === 1 ? '' : 's'}, free on this plan` : ''}.
           {atSeatLimit && isOwner && <> <Link href={billingHref} className={ck.link}>Upgrade to add more</Link></>}
         </p>
       )}
@@ -349,14 +364,14 @@ export default function MembersKit() {
             <details className={ck.collapse}>
               <summary className={ck.collapseHead}>
                 <span>
-                  Scorekeepers · {scorekeepers.length}
+                  Volunteers · {scorekeepers.length}
                   <span className={ck.collapseNote}>
-                    Volunteers who submit scores and check teams in.{planCfg.officialsFreeSeats ? ' Free on your plan.' : ''}
+                    People who score games or check teams in on game day.{planCfg.officialsFreeSeats ? ' Free on your plan.' : ''}
                   </span>
                 </span>
                 <ChevronRight size={16} className={ck.collapseChevron} aria-hidden />
               </summary>
-              <div className={`${ck.collapseBody} ${styles.collapseRows}`}>{renderRows(scorekeepers, 'Scorekeepers')}</div>
+              <div className={`${ck.collapseBody} ${styles.collapseRows}`}>{renderRows(scorekeepers, 'Volunteers')}</div>
             </details>
           )}
 
@@ -405,10 +420,12 @@ export default function MembersKit() {
           roles={roles}
           rolesFailed={rolesFailed}
           onRetryRoles={() => void loadRoles()}
+          initialRole={inviteRole}
           billingHref={isOwner ? billingHref : null}
-          onClose={() => setInviteOpen(false)}
+          onClose={() => { setInviteOpen(false); setInviteRole(null); }}
           onInvited={(text) => {
             setInviteOpen(false);
+            setInviteRole(null);
             setNotice({ tone: 'good', text });
             void loadMembers();
           }}

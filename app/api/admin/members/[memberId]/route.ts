@@ -5,6 +5,8 @@ import { ALL_CAPABILITY_KEYS, hasCapability, countsAsSeat, seatExemptRoles } fro
 import { checkCrossOrgJoin, crossOrgJoinRefusalForAdmin } from '@/lib/org-membership-policy';
 import { describeAccessChange, isOwnerOnlyCapability } from '@/lib/member-access';
 import { coachingStaffRowRefusal, isAssignableRole } from '@/lib/board-roles';
+import { isVolunteerJobChangeOnly, volunteerJobOf, withoutVolunteerJob } from '@/lib/volunteer-jobs';
+import { VOLUNTEER_REFUSAL } from '@/lib/volunteer-words';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgRole } from '@/lib/types';
 import { sendEmail, memberSuspendedHtml, memberRemovedHtml, memberAccessChangedHtml } from '@/lib/email';
@@ -266,8 +268,8 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   const hasStatusUpdate = 'status' in body;
   const hasRepGroupIdsUpdate = 'repGroupIds' in body;
 
-  // Capabilities, status, and rep group scope changes are owner-only
-  if (hasCapabilitiesUpdate && ctx.role !== 'owner') return forbidden();
+  // Capabilities, status, and rep group scope changes are owner-only — capabilities with ONE exception,
+  // checked once the target is read below (a volunteer's two jobs, P1).
   if (hasStatusUpdate && ctx.role !== 'owner') return forbidden();
   if (hasRepGroupIdsUpdate && ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
 
@@ -306,6 +308,22 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   // A role is changed only when it CHANGES — today's Manage dialog sends `role` only when edited,
   // and re-sending a member's own role must never trip the checks below.
   const roleChanging = hasRoleUpdate && body.role !== target.role;
+
+  // ⚖ P1 (owner, 2026-10-07 — Tournament admin redesign Stage 6): whoever may invite may also switch a
+  // VOLUNTEER's two jobs (submit scores, check teams in at the gate) and nothing else — the body may
+  // differ from the row only in those two keys, and both are within the volunteer role's own defaults,
+  // so nothing can be granted this way. Every other access change stays the owner's.
+  if (hasCapabilitiesUpdate && ctx.role !== 'owner') {
+    const resultingRole = roleChanging ? body.role : target.role;
+    const bodyCaps = body.capabilities === null || (typeof body.capabilities === 'object' && !Array.isArray(body.capabilities))
+      ? (body.capabilities as Record<string, boolean> | null)
+      : undefined;
+    const jobOnly = resultingRole === 'official' && bodyCaps !== undefined
+      && isVolunteerJobChangeOnly(target.capabilities as Record<string, boolean> | null, bodyCaps);
+    if (!jobOnly) {
+      return NextResponse.json({ error: VOLUNTEER_REFUSAL.ownerOnly, code: 'owner_only_access' }, { status: 403 });
+    }
+  }
 
   if (roleChanging) {
     // Only an owner changes an owner's role, and no one below owner changes their OWN: "manage
@@ -403,6 +421,21 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       // Empty object → null (no overrides stored)
       update.capabilities = Object.keys(sanitized).length > 0 ? sanitized : null;
     }
+  } else if (roleChanging && target.role === 'official') {
+    // A volunteer's two job keys were their JOB, not a decision about the role they move to (a gate
+    // volunteer made Staff must not keep "no scores" without anyone choosing it): they go with the role.
+    const kept = withoutVolunteerJob(target.capabilities as Record<string, boolean> | null);
+    if (JSON.stringify(kept) !== JSON.stringify(target.capabilities ?? null)) update.capabilities = kept;
+  }
+
+  // ⚖ P2 (owner, 2026-10-07): a volunteer always keeps one job. Switching off the last one is refused
+  // in words — to end their access, remove them. (Checked before ANY write, the scope rows included.)
+  const resultingRole = (update.role as OrgRole | undefined) ?? (target.role as OrgRole);
+  const resultingCaps = 'capabilities' in update
+    ? (update.capabilities as Record<string, boolean> | null)
+    : (target.capabilities as Record<string, boolean> | null);
+  if (resultingRole === 'official' && (roleChanging || 'capabilities' in update) && !volunteerJobOf(resultingCaps)) {
+    return NextResponse.json({ error: VOLUNTEER_REFUSAL.noJob, code: 'volunteer_no_job' }, { status: 400 });
   }
 
   if (hasDisplayNameUpdate) {
@@ -475,7 +508,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       action: 'role_changed', payload: { before: target.role, after: update.role },
     });
   }
-  if (hasCapabilitiesUpdate) {
+  if ('capabilities' in update) {
     void supabaseAdmin.from('org_audit_log').insert({
       org_id: org.id, actor_id: ctx.user.id, target_id: target.user_id,
       action: 'capabilities_changed',
@@ -518,7 +551,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     const before = { role: target.role as OrgRole, capabilities: (target.capabilities as Record<string, boolean> | null) ?? null };
     const after = {
       role: (update.role as OrgRole | undefined) ?? before.role,
-      capabilities: hasCapabilitiesUpdate ? ((update.capabilities as Record<string, boolean> | null) ?? null) : before.capabilities,
+      capabilities: 'capabilities' in update ? ((update.capabilities as Record<string, boolean> | null) ?? null) : before.capabilities,
     };
     const changes = describeAccessChange(before, after, org);
     if (changes.length > 0) {

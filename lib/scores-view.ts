@@ -20,7 +20,7 @@ export type ScoresReason = 'coach' | 'staff' | 'official' | 'following';
 export const REASON_LABEL: Record<ScoresReason, string> = {
   coach: 'Coach',
   staff: 'Staff',
-  official: 'Official',
+  official: 'Volunteer',
   following: 'Following',
 };
 

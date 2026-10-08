@@ -1,4 +1,6 @@
 import { hasCapability, ROLE_DEFAULTS, type Capability } from './roles';
+import { volunteerJobOf } from './volunteer-jobs';
+import { VOLUNTEER_OPENS } from './volunteer-words';
 import { hasModuleEntitlement, planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import type { OrgRole } from './types';
 
@@ -164,7 +166,9 @@ export const ROLE_LABEL: Record<OrgRole, string> = {
   owner: 'Owner',
   admin: 'Admin',
   staff: 'Staff',
-  official: 'Scorekeeper',
+  // "Volunteer" (/marketing 2026-10-07, Stage 6 A26): the role is named for both jobs. "Scorekeeper" and
+  // "Gate" are its two JOB names (lib/volunteer-words.ts), never the role's.
+  official: 'Volunteer',
   league_admin: 'League admin',
   league_registrar: 'League registrar',
   treasurer: 'Treasurer',
@@ -180,7 +184,7 @@ export const ROLE_EMAIL_LABEL: Record<OrgRole, string> = {
   owner: 'owner',
   admin: 'administrator',
   staff: 'staff member',
-  official: 'scorekeeper',
+  official: 'volunteer',
   league_admin: 'league administrator',
   league_registrar: 'league registrar',
   treasurer: 'treasurer',
@@ -208,7 +212,8 @@ export function roleOpensSentence(role: string): string {
     case 'staff':
       return "You'd help on game day: schedules, scores and check-in.";
     case 'official':
-      return "You'd enter scores and help at the gate on game day.";
+      // Before a job is chosen (the invite's role list). Once it is, `VOLUNTEER_OPENS` says the job.
+      return "You'd help on game day from your phone: entering scores, checking teams in at the gate, or both.";
     case 'league_admin':
       return "You'd run the house league: seasons, registrations, teams and schedules.";
     case 'league_registrar':
@@ -218,4 +223,16 @@ export function roleOpensSentence(role: string): string {
     default:
       return '';
   }
+}
+
+/**
+ * What the role opens for THIS person. A volunteer's job is on their row from the invite on (Stage 6,
+ * A26), so the accept page and the invitation card name the job, not the role's either-or.
+ */
+export function memberOpensSentence(role: string, capabilities: Record<string, boolean> | null | undefined): string {
+  if (role === 'official') {
+    const job = volunteerJobOf(capabilities);
+    if (job) return VOLUNTEER_OPENS[job];
+  }
+  return roleOpensSentence(role);
 }
