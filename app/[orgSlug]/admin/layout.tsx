@@ -7,7 +7,6 @@ import { getOrganizationBySlug } from '@/lib/db';
 import { volunteerHome } from '@/lib/volunteer-jobs';
 import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
-import { LiveLogicProvider } from '@/components/live-logic/LiveLogicProvider';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
@@ -96,14 +95,12 @@ export default async function AdminLayout({
       initialUserCapabilities={authCtx.capabilities}
     >
       <TournamentProvider orgSlug={orgSlug}>
-        <LiveLogicProvider>
-          <AdminChrome>
-            <HelpDrawerProvider>
-              {children}
-            </HelpDrawerProvider>
-          </AdminChrome>
-          <InstallAppPrompt {...MEMBER_INSTALL} />
-        </LiveLogicProvider>
+        <AdminChrome>
+          <HelpDrawerProvider>
+            {children}
+          </HelpDrawerProvider>
+        </AdminChrome>
+        <InstallAppPrompt {...MEMBER_INSTALL} />
       </TournamentProvider>
     </OrgProvider>
   );

@@ -59,16 +59,11 @@ const config: Config = {
       },
       animation: {
         'data-flow':    'data-flow 1.5s ease-in-out',
-        'hud-boot':     'hud-boot 0.4s ease-out',
       },
       keyframes: {
         'data-flow': {
           '0%':   { strokeDashoffset: '100' },
           '100%': { strokeDashoffset: '0' },
-        },
-        'hud-boot': {
-          '0%':   { opacity: '0', transform: 'translateY(-4px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
     },

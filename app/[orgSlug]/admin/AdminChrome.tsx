@@ -9,7 +9,6 @@ import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { CancellationGuard } from '@/components/admin/CancellationGuard';
 import { getBillingHref } from '@/lib/billing-urls';
-import { LiveLogicRail } from '@/components/live-logic/LiveLogicRail';
 import EnablePushBanner from '@/components/notifications/EnablePushBanner';
 import { AdminDensityProvider } from '@/lib/admin-density';
 import { AdminWorklistProvider } from '@/lib/admin-worklist';
@@ -126,9 +125,6 @@ export default function AdminChrome({
             </>
           )}
         </main>
-        {/* Inside the shell so the rail's top offset can read --admin-topstrip-h (custom
-            properties don't reach siblings); position:fixed keeps it out of the flex flow. */}
-        {!isFocused && <LiveLogicRail />}
       </div>
       {!isFocused && <AdminKitBottomNav notifUnread={notif.count} />}
     </>
