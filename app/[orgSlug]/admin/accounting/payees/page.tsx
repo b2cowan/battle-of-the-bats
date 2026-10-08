@@ -16,12 +16,12 @@
  * it.
  *
  * ⚖ A PAYEE'S WINDOW READS FIRST, AND WHAT THE TEAMS RECORDED IS INSIDE IT (Club Tier Stage 3c, specimen 7 — Ask 7,
- * S3C-10; the record standard 2026-10-01). It opens to READ: whether it is shared and since when, how many of the
- * club's own entries name it. One borderless pencil (a money mover's only) turns Name and the Shared with teams switch
+ * S3C-10; the record standard 2026-10-01). It opens to READ one fact: how many of the club's own Ledger entries name it
+ * ("In the club's Ledger"; §283 W10 — that it is shared is the eyebrow's, and since when the teams' heading). One borderless pencil (a money mover's only) turns Name and the Shared with teams switch
  * into the form — the name saves as you go (the floating pill), the switch on the tap — and ✓ turns it back. Merge
  * and Delete are actions, in the foot in both modes. For a SHARED payee the report is the window's BODY (3b's
- * definition, S3B-06): the teams' own-records note, each team folding to its payments in place, the total, Nothing
- * recorded and the counting rule — a small Year pill in its head only when the payee has records in more than one
+ * definition, S3B-06): headed with the day it was shared, each team folding to its payments in place, the total and
+ * Nothing recorded (§283 W10 dropped the note and the counting rule: "recorded" says it) — a small Year pill in its head only when the payee has records in more than one
  * fiscal year. While editing, the report folds to its one line. An unshared payee has no report and nothing in its
  * place. NO EXPORT (Ask 7: one payee's team records are read here; nobody named receives that file).
  * ⚰ The report PAGE (`payees/[payeeId]`) and its Export retired; its address forwards here with `?payee=` (proxy.ts).
@@ -29,7 +29,7 @@
  */
 import { Fragment, use, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronDown, ChevronRight, Lock, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -38,7 +38,7 @@ import KitDialog from '@/components/admin/kit/club/KitDialog';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
-  Callout, ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, ClubSection, EmptyCard, LoadFailed, PageLoading, RepChip, SavePill, repKit,
+  ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, ClubSection, EmptyCard, LoadFailed, PageLoading, RepChip, SavePill, repKit,
   useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
@@ -258,7 +258,6 @@ function PayeeWindow({ payee, others, canShare, canMove, q, onClose, onDone }: {
     setEditing(e => !e);
   };
 
-  const sharedSince = report?.payee.sharedAt ?? null;
   const reportYearName = report?.year.name ?? '';
   const footStart = canMove ? (!payee.inUse
     ? <button type="button" className="btn btn-danger" onClick={() => setAsking('delete')}>Delete this payee</button>
@@ -277,23 +276,20 @@ function PayeeWindow({ payee, others, canShare, canMove, q, onClose, onDone }: {
         footerStart={footStart}
         footer={<button type="button" className="btn btn-outline" onClick={() => void close()}>Done</button>}
       >
+        {/* §283 W10 (owner, 2026-10-08): one fact about the club's own use of the name. That it is shared is the
+            eyebrow's to say, and since when is the teams' section heading. */}
         {!editing ? (
           isPhone ? (
-            <p className={ck.hint}>{W.phoneLine(canShare && shared ? sharedSince : null, payee.uses)}</p>
+            <p className={ck.hint}>{W.phoneLine(payee.uses, payee.lastUsed)}</p>
           ) : (
             <dl className={fy.read}>
-              {canShare && (
-                <><dt>{W.sharedLabel}</dt><dd>{shared ? (sharedSince ? W.sharedSince(sharedSince) : 'Yes') : W.notShared}</dd></>
-              )}
-              <dt>{W.ownLabel}</dt><dd>{W.named(payee.uses, payee.lastUsed)}</dd>
+              <dt>{W.ledgerLabel}</dt><dd>{W.ledgerEntries(payee.uses, payee.lastUsed)}</dd>
             </dl>
           )
         ) : (
           <>
             <TextField id="payee-name" label="Name" required value={name} onChange={v => { setName(v); touch(); closeRefused.current = false; }} maxLength={200}
-              hint={payee.uses === 0
-                ? 'Named on none of the club’s own entries.'
-                : `Named on ${pluralize(payee.uses, 'entry', 'entries')} of the club’s own. A new name shows wherever it is named.`} />
+              hint={W.nameHint(payee.uses)} />
             {canShare && (
               <div className={ck.switchRow}>
                 <div className={ck.switchText}>
@@ -350,9 +346,9 @@ function paymentsLines(t: PayeeReportTeam): { key: string; text: string; amount:
 }
 
 /**
- * WHAT THE TEAMS RECORDED, as the payee window's body (3b's report, S3B-06; Ask 7): the note, each team folding to its
+ * WHAT THE TEAMS RECORDED, as the payee window's body (3b's report, S3B-06; Ask 7): since the day it was shared, each team folding to its
  * payments in place (a right ↔ down chevron before the name; nothing opens a page — the records are the team's), the
- * total, Nothing recorded, the counting rule. A Year pill in the section's head only when there is more than one year.
+ * total, Nothing recorded. A Year pill in the section's head only when there is more than one year.
  */
 function TeamsRecorded({ report, failed, isPhone, onYear }: {
   report: PayeeReport | null; failed: boolean; isPhone: boolean; onYear: (yearKey: string) => void;
@@ -367,10 +363,11 @@ function TeamsRecorded({ report, failed, isPhone, onYear }: {
   return (
     <section className={cr.recordSection} aria-label={W.recorded}>
       <div className={moneyKit.reportHead}>
-        <h3 className={cr.recordSectionTitle}>{W.recorded}</h3>
+        <h3 className={cr.recordSectionTitle}>{W.recordedSince(since)}</h3>
         {years.length > 1 && <YearPill year={report.year.key} years={years} onChange={y => { setOpen(new Set()); onYear(y); }} />}
       </div>
-      <Callout tone="info" role="note" icon={<Lock size={16} aria-hidden />}>{isPhone ? W.noteShort(since) : W.note(since)}</Callout>
+      {/* No note here (owner, 2026-10-08): "recorded", in this heading and the column, already says these are the
+          teams' own records and not proof of payment (3b, S3B-06). */}
       {!isPhone ? (
         <div className={repKit.tableFrame}>
           <table className={repKit.table}>
@@ -460,7 +457,6 @@ function TeamsRecorded({ report, failed, isPhone, onYear }: {
           </ClubRowList>
         </ClubRowFrame>
       )}
-      <p className={repKit.notes}>{PAYEE_REPORT_WORDS.foot(since)}</p>
     </section>
   );
 }

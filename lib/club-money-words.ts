@@ -484,9 +484,6 @@ export const PAYEE_REPORT_WORDS = {
     `What each team recorded paying ${payee} in ${year}${sharedOn ? `, since you shared it with your teams on ${formatStoredDate(sharedOn, { withYear: false })}` : ''}. These are the teams’ own records, not proof that a payment was made.`,
   calloutShort: (sharedOn: string | null) =>
     `What each team recorded paying it${sharedOn ? ` since you shared it on ${formatStoredDate(sharedOn, { withYear: false })}` : ''}. The teams’ own records, not proof of payment.`,
-  foot: (sharedOn: string | null) => (sharedOn
-    ? `A payment counts only when the team recorded it, and the bill it pays, on or after ${formatStoredDate(sharedOn, { withYear: false })}. A team’s other payees and other spending never show.`
-    : 'A team’s other payees and other spending never show.'),
   recordedBand: (teams: number, total: number) => `${teams} ${teams === 1 ? 'team' : 'teams'} recorded · ${fmt(total)}`,
   nothingBand: (n: number) => `Nothing recorded · ${n}`,
   rowSpan: (count: number, first: string | null, last: string | null) =>
@@ -858,18 +855,21 @@ export const NEW_ALLOCATION_WORDS = {
 export const PAYEE_WINDOW_WORDS = {
   eyebrowShared: 'Payee · shared with teams',
   eyebrow: 'Payee',
-  sharedLabel: 'Shared with teams',
-  sharedSince: (on: string) => `Since ${day3c(on, true)}. Every team can pick it; the club sees what they record paying it.`,
-  notShared: 'No: the club’s own',
-  ownLabel: 'The club’s own entries',
-  named: (uses: number, last: string | null) => (uses === 0 ? 'Named on none' : `Named on ${uses}${last ? ` · last ${day3c(last)}` : ''}`),
-  phoneLine: (since: string | null, uses: number) =>
-    `${since ? `Shared with teams since ${day3c(since, true)} · ` : ''}named on ${uses} of the club’s own entries.`,
+  // §283 W10 (owner, 2026-10-08: "declutter … I don't know what 'the club's own entries' even means"): the window says
+  // one fact about the club's own use of the name, in the Ledger's own word; that it is shared is the eyebrow's, and
+  // when it was shared is the section's heading.
+  ledgerLabel: 'In the club’s Ledger',
+  ledgerEntries: (uses: number, last: string | null) =>
+    (uses === 0 ? 'None yet' : `${pluralize(uses, 'entry', 'entries')}${last ? `, the latest ${day3c(last)}` : ''}`),
+  phoneLine: (uses: number, last: string | null) => (uses === 0 ? 'Not on any of the club’s Ledger entries yet.'
+    : `In the club’s Ledger: ${pluralize(uses, 'entry', 'entries')}${last ? `, the latest ${day3c(last)}` : ''}.`),
+  nameHint: (uses: number) => (uses === 0 ? 'Not on any of the club’s Ledger entries yet.'
+    : `On ${pluralize(uses, 'entry', 'entries')} in the club’s Ledger. A new name shows on every one.`),
   recorded: 'What the teams recorded',
+  /** The section's heading: the teams' records count from the day it was shared. */
+  recordedSince: (since: string | null) => (since ? `What the teams recorded · since ${day3c(since)}` : 'What the teams recorded'),
   recordedFolded: (year: string) => `What the teams recorded · ${year}`,
   foldedCaption: (teams: number, total: string) => `${pluralize(teams, 'team', 'teams')} · ${total} · reads in full when you’re done editing`,
-  note: (since: string | null) => `Each team’s own record of paying it${since ? ` since you shared it on ${day3c(since)}` : ''}. Not proof that a payment was made.`,
-  noteShort: (since: string | null) => `The teams’ own records${since ? ` since ${day3c(since)}` : ''}. Not proof of payment.`,
   payments: 'Payments',
   firstLatest: 'First · latest',
   amountRecorded: 'Recorded',
