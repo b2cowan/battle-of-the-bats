@@ -48,7 +48,7 @@ const orgHelp: HelpPageContent = {
       id: 'roles',
       heading: 'Roles explained — who can do what',
       summary: 'What each role can open, at a glance, then Owner, Admin, Treasurer, Staff, League Admin, League Registrar, Coach, and Scorekeeper one by one.',
-      keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'team manager', 'coach', 'scorekeeper', 'what each role can open', 'role guide', 'plan & billing', 'billing', 'audit log', 'families'],
+      keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'team manager', 'coach', 'scorekeeper', 'what each role can open', 'role guide', 'plan & billing', 'billing', 'audit log', 'families', 'who can finalize scores', 'change a final score'],
       searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar rep club no registrar team manager forms documents coach scorekeeper capabilities grant revoke org settings plan and billing subscription owner only what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows',
       content: (
         <p>Every member of your organization holds one of these roles, and the role decides what they can open. Owners can grant or remove individual programs for any member from <strong>Members → Manage</strong>.</p>
@@ -97,7 +97,7 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Owner</strong> — Full access, plus the two things nobody else can hold: <strong>Plan &amp; billing</strong> and <strong>Settings</strong>. Assigned at org creation; ownership can&rsquo;t be transferred through the admin panel.</li>
                 <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and branding. Cannot open <strong>Settings</strong>, <strong>Plan &amp; billing</strong>, or the <strong>audit log</strong> — those stay owner-only — and doesn&rsquo;t see <strong>Families</strong> unless the owner turns it on for them.</li>
                 <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, what the club bills its teams, and the teams’ payment requests. Can see the team names money is allocated to, without a Rep Teams door of their own.</li>
-                <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot create tournaments, manage registrations, or send communications.</li>
+                <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot finalize scores or change a result that&rsquo;s already final, create tournaments, manage registrations, or send communications.</li>
                 <li><strong>League Admin</strong> — Runs the house league: seasons, registrations, teams, and schedules. Can view the member list.</li>
                 <li><strong>League Registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons, schedules, or the member list.</li>
                 <li><strong>Coach</strong> — Accesses the Coaches Portal for their assigned rep team. Cannot access the main admin panel.</li>
@@ -165,10 +165,10 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-scorekeeper-member-access',
           question: 'What access does a scorekeeper get?',
-          answerText: 'Scorekeepers get the lightweight Scorekeeper View for assigned tournaments and do not get the main admin panel.',
-          keywords: ['scorekeeper', 'official', 'scorekeeper access', 'assigned tournaments'],
+          answerText: 'Scorekeepers get the lightweight Scorekeeper View for assigned tournaments and do not get the main admin panel. They can enter scores and correct one that is still Pending Review, but they cannot change a result that is already final.',
+          keywords: ['scorekeeper', 'official', 'scorekeeper access', 'assigned tournaments', 'change a final score'],
           answer: (
-            <p>Scorekeepers get the lightweight <strong>Scorekeeper View</strong> for assigned tournaments. They can enter scores and see scoring states, but they do not get registrations, settings, billing, exports, communications, or the main admin panel.</p>
+            <p>Scorekeepers get the lightweight <strong>Scorekeeper View</strong> for assigned tournaments. They can enter scores, correct one that&rsquo;s still <strong>Pending Review</strong>, and see scoring states — but they can&rsquo;t change a result that&rsquo;s already final, and they do not get registrations, settings, billing, exports, communications, or the main admin panel.</p>
           ),
         },
       ],

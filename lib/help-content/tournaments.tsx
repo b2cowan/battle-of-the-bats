@@ -1189,8 +1189,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Game Day & Scores',
       heading: 'Review and finalize scores',
       summary: 'Record results from admins or scorekeepers, confirm pending reviews, and correct mistakes.',
-      keywords: ['enter scores', 'finalize scores', 'pending review', 'scorekeeper submissions', 'results', 'review scores', 'playing now', 'up next', 'needs a score', 'to finalize', 'game-day dashboard', 'needs you', 'all games', 'correct a final score', 'score submitted notification', 'no games found', 'results is empty', 'nothing in results', 'show all games', 'results filters', 'why cant i see my games', 'tie', 'level score'],
-      searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring final games public standings correct score revert scheduled score to finalize needs a score playing now up next game day dashboard game-day board overdue live game what is on now lists hidden when empty one tap open score editor needs you all games lens scheduled cancelled correct an already final score score submitted notification opens results with the game ready no games found results is empty nothing shows in results why cant i see my games all my games are missing show all games button tie level score scores are level forfeit pending review final export status column word customize this board show hide checkboxes drag to reorder',
+      keywords: ['enter scores', 'finalize scores', 'pending review', 'scorekeeper submissions', 'results', 'review scores', 'playing now', 'up next', 'needs a score', 'to finalize', 'game-day dashboard', 'needs you', 'all games', 'correct a final score', 'score submitted notification', 'no games found', 'results is empty', 'nothing in results', 'show all games', 'results filters', 'why cant i see my games', 'tie', 'level score', 'who can change a final score', 'who can finalize', 'this game is final', 'read-only final game'],
+      searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring final games public standings correct score revert scheduled score to finalize needs a score playing now up next game day dashboard game-day board overdue live game what is on now lists hidden when empty one tap open score editor needs you all games lens scheduled cancelled correct an already final score score submitted notification opens results with the game ready no games found results is empty nothing shows in results why cant i see my games all my games are missing show all games button tie level score scores are level forfeit pending review final export status column word customize this board show hide checkboxes drag to reorder who can finalize who can change a final score this game is final only someone who can finalize scores can change it read-only final game staff cannot change a final result save score stays off seal archive tournaments permission forfeit under final scorekeeper',
       links: [
         { label: 'Results & Scoring', href: '../tournaments/results' },
         { label: 'Scorekeeper View', href: '../../scorekeeper' },
@@ -1211,6 +1211,20 @@ const tournamentsHelp: HelpPageContent = {
           title: 'The score editor',
           content: (
             <p>Enter home and away scores with the − / + steppers. On a score a scorekeeper submitted that you haven&rsquo;t changed, the main button already reads <strong>Finalize</strong> — one tap confirms it; otherwise it reads <strong>Save score</strong>. A row still waiting on your review also carries its own worded <strong>Finalize</strong> button beside its chevron, so a score you&rsquo;re happy with takes two taps total (the row, then Finalize) without opening the full editor. <strong>Discard</strong> closes without saving; <strong>Revert score</strong> clears the score and sends the game back to Scheduled so you can re-enter it.</p>
+          ),
+        },
+        {
+          id: 'results-who-can-change-final',
+          title: 'Who can finalize, and change a final result',
+          content: (
+            <>
+              <p>Finalizing a waiting score and changing a result that&rsquo;s already final belong to the same people: owners and admins, plus any member you&rsquo;ve given <strong>Seal (archive) tournaments</strong> in their member settings &mdash; that one permission covers both.</p>
+              <ul>
+                <li><strong>Staff and scorekeepers</strong> can enter scores, and correct or revert a score that&rsquo;s still <strong>Pending Review</strong>. On a waiting score they haven&rsquo;t changed, <strong>Save score</strong> stays off until the numbers actually change.</li>
+                <li><strong>A final game</strong> &mdash; Final or Forfeit &mdash; opens read-only for them, saying <em>&ldquo;This game is final. Only someone who can finalize scores can change it.&rdquo;</em> They don&rsquo;t see <strong>Finalize</strong>.</li>
+                <li>On <strong>Scorekeeper View</strong>, a forfeited game sits under <strong>Final</strong>, not To score, and can&rsquo;t be scored there.</li>
+              </ul>
+            </>
           ),
         },
         {
@@ -1251,12 +1265,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-correct-final-score-mobile',
           question: 'How do I correct a score that’s already final?',
-          answerText: 'Open Results and tap All games — Final and Forfeit games are there alongside Scheduled ones (Needs you, the view it opens on, only shows what still needs your attention: games waiting to finalize, needing a score, or playing now). Find the game, tap its row to open the score editor in place, and correct it, or use Revert score to send it back to Scheduled and re-enter.',
-          keywords: ['correct final score', 'correct final score on phone', 'mobile results', 'all games', 'needs you', 'fix a final score', 'no games found', 'results looks empty', 'results empty', 'show all games', 'nothing in results'],
+          answerText: 'Open Results and tap All games — Final and Forfeit games are there alongside Scheduled ones (Needs you, the view it opens on, only shows what still needs your attention: games waiting to finalize, needing a score, or playing now). Find the game, tap its row to open the score editor in place, and correct it, or use Revert score to send it back to Scheduled and re-enter. Changing a final result takes someone who can finalize scores — owners and admins, or a member given Seal (archive) tournaments. Anyone else sees the final game read-only.',
+          keywords: ['correct final score', 'correct final score on phone', 'mobile results', 'all games', 'needs you', 'fix a final score', 'no games found', 'results looks empty', 'results empty', 'show all games', 'nothing in results', 'who can change a final score', 'this game is final', 'read-only final game'],
           answer: (
             <>
               <p>Open <strong>Results &amp; Scoring</strong> and tap <strong>All games</strong>. <strong>Final</strong> and <strong>Forfeit</strong> games are there alongside <strong>Scheduled</strong> ones — the page opens on <strong>Needs you</strong>, which only shows what still needs your attention: games waiting to finalize, needing a score, or playing now.</p>
               <p>Find the game and tap its row — the score editor opens in that same place in the list. Correct it there, or use <strong>Revert score</strong> to send it back to Scheduled and re-enter.</p>
+              <p>Changing a final result takes someone who can finalize scores &mdash; owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>. Anyone else sees the final game read-only.</p>
             </>
           ),
         },
@@ -1302,19 +1317,25 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-undo-score',
           question: 'Can I undo a score?',
-          answerText: 'Admins can revert a scored game to scheduled, which clears the score and lets them enter it again.',
-          keywords: ['undo score', 'revert score', 'clear score'],
+          answerText: 'Yes — Revert score in Results & Scoring clears the score and sends the game back to Scheduled so it can be entered again. A score still Pending Review can be reverted by anyone who can score; a final score only by someone who can finalize scores (owners and admins, or a member given Seal (archive) tournaments).',
+          keywords: ['undo score', 'revert score', 'clear score', 'revert a final score'],
           answer: (
-            <p>Yes. Revert the game to Scheduled from Results &amp; Scoring, then enter the corrected score. Reverting clears the existing score and current submission metadata, so confirm before doing it.</p>
+            <>
+              <p>Yes. Revert the game to Scheduled from Results &amp; Scoring, then enter the corrected score. Reverting clears the existing score and current submission metadata, so confirm before doing it.</p>
+              <p>A score still <strong>Pending Review</strong> can be reverted by anyone who can score. A <strong>final</strong> score can be reverted only by someone who can finalize scores &mdash; owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>.</p>
+            </>
           ),
         },
         {
           id: 'faq-scorekeeper-edit-final',
           question: 'Can scorekeepers edit submitted scores?',
-          answerText: 'Scorekeepers can correct a Pending Review score before admin finalization, but they cannot edit finalized scores from Scorekeeper View.',
-          keywords: ['edit score', 'correct score', 'finalized score', 'pending review'],
+          answerText: 'Scorekeepers can correct a Pending Review score before it is finalized, but not a final result — a completed score or a forfeit. On Scorekeeper View a forfeited game sits under Final and cannot be scored. A final result is changed in Results & Scoring by someone who can finalize scores: owners and admins, or a member given Seal (archive) tournaments.',
+          keywords: ['edit score', 'correct score', 'finalized score', 'pending review', 'forfeit', 'final result', 'forfeit under final'],
           answer: (
-            <p>Scorekeepers can correct a Pending Review score before an admin finalizes it. Once a score is completed or finalized, corrections stay in <strong>Results &amp; Scoring</strong> as an admin action.</p>
+            <>
+              <p>Scorekeepers can correct a <strong>Pending Review</strong> score before it&rsquo;s finalized, but not a final result &mdash; a completed score or a forfeit. On Scorekeeper View a forfeited game sits under <strong>Final</strong> and can&rsquo;t be scored.</p>
+              <p>A final result is changed in <strong>Results &amp; Scoring</strong> by someone who can finalize scores: owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>.</p>
+            </>
           ),
         },
       ],
