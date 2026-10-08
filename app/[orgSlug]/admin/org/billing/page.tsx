@@ -104,7 +104,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Automated schedule generation and playoff brackets',
     'Full branding control',
     'Tournament cloning, announcements, and post-event archives',
-    'Unlimited staff seats — scorekeepers always free',
+    'Unlimited staff seats — volunteers always free',
   ],
   league: [
     'Everything in Tournament Plus',
