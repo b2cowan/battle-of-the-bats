@@ -32,6 +32,7 @@ import {
 import { deriveGameName, scrimmageFlagFor } from '@/lib/coach-schedule-vocab';
 import { COACH_GAME_EVENT_TYPES } from '@/lib/coach-tournament-games';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
+import { isVisibleToFamilies } from '@/lib/family-access';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -135,6 +136,9 @@ export const GET = withObservability(async (req: Request,
     usualFacilityByVenue,
     // The team's arrival habit (mig 307) — what a NEW game / practice's Arrival starts at.
     arrivalDefaults: { game: team.arrivalBeforeGameMin, practice: team.arrivalBeforePracticeMin },
+    // Whether a cancel / restore reaches families (`notifyFamiliesOfGameUpdate`'s own gate): the event window asks
+    // once before it tells them, and says nothing extra when nobody is told (owner, 2026-10-09).
+    familiesSeeSchedule: isVisibleToFamilies(team.scheduleVisibility),
     ...(lineupStatusByEvent ? { lineupStatusByEvent } : {}),
     ...(lineupOpenInningsByEvent ? { lineupOpenInningsByEvent } : {}),
     ...(lineupInningsByEvent ? { lineupInningsByEvent } : {}),

@@ -101,6 +101,19 @@ export const EVENT_WORD: Record<RepEventType, string> = {
   team_event:          'team event',
 };
 
+/**
+ * What deleting an event takes with it, by kind — the event window's delete question says it (owner, 2026-10-09).
+ * Read from the cascade: attendance, lineups and tags go with the event, its practice plan lives on it, a
+ * tournament's games hang off it; awards given at it stay (their link is cleared).
+ */
+export const EVENT_DELETE_TAKES: Record<RepEventType, string> = {
+  external_tournament: 'It comes off the schedule with the games under it.',
+  tournament_game:     'It comes off the schedule with its attendance and lineup.',
+  league_game:         'It comes off the schedule with its attendance and lineup.',
+  practice:            'It comes off the schedule with its attendance and practice plan.',
+  team_event:          'It comes off the schedule with its attendance.',
+};
+
 /** The word for ONE event inside a sentence — "scrimmage" when the box is ticked, else the kind's
  *  word. Every sentence-builder reads this, not `EVENT_WORD` directly, so the masthead's
  *  "Next: Sat 1:00 p.m. scrimmage" survived scrimmage ceasing to be a kind. */

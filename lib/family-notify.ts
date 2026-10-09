@@ -114,6 +114,8 @@ export async function notifyFamiliesOfGameUpdate(params: {
       .maybeSingle();
     if (!teamRow) return;
     const team = teamRow as { name: string; schedule_visibility: string | null };
+    // ⚠ MIRRORED: the coach events GET route sends this same test as `familiesSeeSchedule`, and the schedule's event
+    // window asks before a cancel / restore only when it is true. Change who is told here, change that flag with it.
     if (!isVisibleToFamilies(team.schedule_visibility)) return;
 
     const { data: orgRow } = await supabaseAdmin

@@ -281,9 +281,10 @@ test.describe('Batch 4 — tournament games get real tools', () => {
     await row.click();
     await expect(page.getByText(/organizer’s schedule/)).toBeVisible();
     await expect(page.getByRole('heading', { name: /Attendance/ })).toBeVisible();
-    // No Delete / Cancel event on an organizer-owned game.
-    await expect(page.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: /Cancel event/ })).toHaveCount(0);
+    // No Delete / Cancel on an organizer-owned game (the foot's doors, named for the kind since 2026-10-09:
+    // "Delete this game", "Cancel this game").
+    await expect(page.getByRole('button', { name: /^Delete this / })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Cancel this / })).toHaveCount(0);
     await expect(page.getByText(/can cancel or remove this game/)).toBeVisible();
 
     // 5. Attendance saves against the mirrored game.

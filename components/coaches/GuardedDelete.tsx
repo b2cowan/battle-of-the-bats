@@ -47,6 +47,7 @@ export default function GuardedDelete({
   confirmLabel = 'Delete',
   deleting = false,
   onDelete,
+  choices,
 }: {
   /** The door's own words — "Delete this fundraiser". */
   label: string;
@@ -63,8 +64,16 @@ export default function GuardedDelete({
    */
   confirmLabel?: string;
   deleting?: boolean;
-  onDelete: () => void;
-}) {
+} & (
+  | { onDelete: () => void; choices?: undefined }
+  /**
+   * A delete with more than one answer — a weekly series' "This only · This & future · All" (the
+   * schedule's event window, owner 2026-10-09; the edit form's own three words). Each is a delete,
+   * so each wears the danger button, in place of the single `confirmLabel` one. One or the other,
+   * never both: a caller with choices has no `onDelete` to leave dead.
+   */
+  | { choices: { label: string; onPick: () => void }[]; onDelete?: undefined }
+)) {
   const [mode, setMode] = useState<Mode>('rest');
   const refused = refusal != null;
 
@@ -103,9 +112,15 @@ export default function GuardedDelete({
           <button type="button" className={styles.btnGhost} disabled={deleting} onClick={() => setMode('rest')}>
             Keep it
           </button>
-          <button type="button" className={styles.btnDanger} disabled={deleting} onClick={onDelete}>
-            {deleting ? 'Deleting…' : confirmLabel}
-          </button>
+          {choices ? choices.map(c => (
+            <button key={c.label} type="button" className={styles.btnDanger} disabled={deleting} onClick={c.onPick}>
+              {c.label}
+            </button>
+          )) : (
+            <button type="button" className={styles.btnDanger} disabled={deleting} onClick={onDelete}>
+              {deleting ? 'Deleting…' : confirmLabel}
+            </button>
+          )}
         </div>
       </div>
     );

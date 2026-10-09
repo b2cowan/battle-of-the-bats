@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode, readSource, stripComments } from './_source-code.ts';
+import { EVENT_DELETE_TAKES } from '../../lib/coach-schedule-vocab.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
@@ -146,7 +147,7 @@ describe('E5 — the addresses', () => {
   it('a view only opens on a grant — the address never opens a room this coach cannot use', () => {
     assert.match(sheet, /view === 'attendance' && drawerDoors\.attendanceTab \? 'attendance'\s*: view === 'scouting' && scoutingKey \? 'scouting'\s*: null;/);
   });
-  it('Edit details returns to the sheet itself — it lives in the foot row, never inside a view', () => {
+  it('Edit (the head’s pencil) returns to the sheet itself — never to a view inside it', () => {
     assert.match(page, /returnToEventId\.current = event\.id;/);
     assert.match(page, /if \(ev\) openEvent\(ev\);/, 'reopened with no view — the sheet itself');
   });
@@ -175,5 +176,52 @@ describe('E6 — the desk draws the same', () => {
     assert.match(head, /\{backLabel && <span className=\{styles\.modalBackWord\}>\{backLabel\}<\/span>\}/);
     assert.ok(css.includes('.modalBackWord { display: none; }'), 'the word leaves at ≤640, where the name rides the subtitle');
     assert.ok(css.includes('.modalBackEcho { display: inline; }'), 'and the subtitle names the event there');
+  });
+});
+
+/**
+ * THE HEAD'S PENCIL AND THE FOOT'S TWO DOORS (owner, 2026-10-09: "instead of 'edit details' should we have the edit
+ * pencil at the top right like we do in other modals … also evaluate the delete/cancel buttons and make sure they
+ * are portal standard in format and location" → build, and Cancel asks once before it tells families).
+ */
+describe('the event window wears the portal record standard — pencil in the head, the doors in the foot', () => {
+  it('Edit is the head\'s pencil at every width, opening the edit form; the foot has no "Edit details"', () => {
+    const header = sheet.slice(sheet.indexOf('const header = ('), sheet.indexOf('const titleBlock ='));
+    assert.match(header, /className=\{styles\.sheetHeadEnd\}/);
+    assert.match(header, /aria-label=\{`Edit this \$\{eventWord\(ev\)\}`\}/);
+    assert.match(header, /onClick=\{\(\) => onEdit\(ev\)\}/);
+    assert.ok(header.indexOf('styles.sheetHeadEnd') < header.indexOf('styles.modalCloseBtn'), 'the pencil sits before the ✕');
+    assert.ok(!/Edit details/.test(sheet), 'no "Edit details" button anywhere on the sheet');
+    assert.match(css, /\.sheetHeadEnd \{ flex: 1 1 auto; display: flex; justify-content: flex-end;/);
+  });
+  it('Delete is the portal\'s delete door at the foot\'s START, asking in place; a series gets the edit form\'s three answers', () => {
+    const foot = sheet.slice(sheet.indexOf('const actionsBlock = canAddEvents ? ('), sheet.indexOf('const summary ='));
+    assert.match(foot, /<GuardedDelete\s+label=\{`Delete this \$\{word\}`\}/);
+    assert.ok(foot.indexOf('<GuardedDelete') < foot.indexOf('styles.slideOverActionsRight'), 'delete first, Cancel at the end');
+    assert.ok(sheet.includes("const SERIES_DELETE = [['This only', 'one'], ['This & future', 'remaining'], ['All', 'all']] as const;"),
+      'a series answers in the edit form\'s own three words');
+    assert.match(foot, /choices: SERIES_DELETE\.map\(/);
+    assert.match(foot, /\{EVENT_DELETE_TAKES\[ev\.eventType\]\}/, 'what goes with it, from the schedule vocabulary');
+    assert.equal(EVENT_DELETE_TAKES.practice, 'It comes off the schedule with its attendance and practice plan.');
+    assert.equal(EVENT_DELETE_TAKES.external_tournament, 'It comes off the schedule with the games under it.');
+    assert.ok(!/styles\.deleteConfirm/.test(sheet), 'the old hand-built question is gone');
+    assert.ok(!/\.deleteConfirm\b/.test(css), 'and its rules with it');
+  });
+  it('Cancel / Restore is the secondary button at the foot\'s END, and asks once only where families are told', () => {
+    const foot = sheet.slice(sheet.indexOf('const actionsBlock = canAddEvents ? ('), sheet.indexOf('const summary ='));
+    assert.match(foot, /<button className=\{styles\.btnSecondary\} disabled=\{saving\}\s+onClick=\{\(\) => \{ setFootError\(''\); if \(familiesSeeSchedule\) setCancelAsk\(true\); else void handleToggleCancel\(\); \}\}>/);
+    assert.match(sheet, /families who follow the team are told it&rsquo;s off\./);
+    assert.match(readCode('app/api/coaches/[orgSlug]/teams/[teamId]/events/route.ts'), /familiesSeeSchedule: isVisibleToFamilies\(team\.scheduleVisibility\)/,
+      'the same gate the notice itself checks (notifyFamiliesOfGameUpdate)');
+  });
+  it('/review 2026-10-09: the calm question really is calm, an unread flag asks, and a late save never reopens a closed sheet', () => {
+    assert.ok(css.includes('.dangerConfirm.sheetAskCalm {'), 'two classes — `.dangerConfirm` sits below and won on source order');
+    assert.match(page, /const \[familiesSeeSchedule, setFamiliesSeeSchedule\] = useState\(true\);/, 'familiesSeeSchedule starts TRUE: unknown asks');
+    assert.match(page, /setFamiliesSeeSchedule\(data\.familiesSeeSchedule !== false\);/);
+    assert.match(page, /onEventChanged=\{ev => setSelectedEvent\(cur => \(cur\?\.id === ev\.id \? ev : cur\)\)\}/);
+  });
+  it('a question takes the whole foot in place of the controls it suspends; a failed action says so in the foot', () => {
+    assert.ok(css.includes('.slideOverActions:has(> [role="alertdialog"]) > :not([role="alertdialog"]):not([role="alert"]) { display: none; }'));
+    assert.match(sheet, /\{footError && <p className=\{styles\.errorText\} role="alert">\{footError\}<\/p>\}/);
   });
 });

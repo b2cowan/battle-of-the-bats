@@ -197,6 +197,9 @@ export default function CoachesSchedulePage({
   const [clubVenues, setClubVenues] = useState<{ inClub: boolean; venues: ClubVenueOption[] }>({ inClub: false, venues: [] });
   const [usualFacilityByVenue, setUsualFacilityByVenue] = useState<Record<string, string>>({});
   const [arrivalDefaults, setArrivalDefaults] = useState<{ game: number | null; practice: number | null }>({ game: null, practice: null });
+  /** Whether a cancel / restore reaches families — the event window asks once before it tells them. Unknown is
+   *  TRUE (/review 2026-10-09): an unread flag must ask, never tell families on one press. */
+  const [familiesSeeSchedule, setFamiliesSeeSchedule] = useState(true);
   const [tagsByEventId, setTagsByEventId] = useState<Record<string, string[]>>({});
   // Player Awards (Phase 2): the team's award-type library, every award given this season
   // (filtered client-side per event for the slide-over), a minimal PII-free player list for the
@@ -363,6 +366,7 @@ export default function CoachesSchedulePage({
       setClubVenues(data.clubVenues?.inClub ? { inClub: true, venues: data.clubVenues.venues ?? [] } : { inClub: false, venues: [] });
       setUsualFacilityByVenue(data.usualFacilityByVenue ?? {});
       if (data.arrivalDefaults) setArrivalDefaults({ game: data.arrivalDefaults.game ?? null, practice: data.arrivalDefaults.practice ?? null });
+      setFamiliesSeeSchedule(data.familiesSeeSchedule !== false);
       // Tryout sessions are projected onto the calendar as read-only markers. Non-fatal: if this
       // fails the schedule still works, tryout dates just won't show.
       // Tryout markers + real tournament games are both optional read-only overlays keyed only on
@@ -552,8 +556,8 @@ export default function CoachesSchedulePage({
     // it remembers the game it was opened from and returns there — Back, Cancel, Escape or Save
     // (owner, 2026-09-21: "back … brings me back to the schedule, not back to the game where I
     // came from"). The "+ Add" doors never close a sheet, so they have nothing to return to.
-    // Edit details sits in the sheet's foot row, never inside a view (stage 1 · E2), so the coach
-    // returns to the sheet itself.
+    // Edit is the sheet's head pencil, never inside a view (stage 1 · E2; the pencil 2026-10-09), so the
+    // coach returns to the sheet itself.
     returnToEventId.current = event.id;
     setSelectedEvent(null);
     setFormInit({
@@ -1046,6 +1050,7 @@ export default function CoachesSchedulePage({
             : null}
           bookEntry={selectedEvent.opponent ? bookByKey.get(normalizeOpponentName(selectedEvent.opponent)) ?? null : null}
           gameDayLive={gameDayHrefById.has(selectedEvent.id)}
+          familiesSeeSchedule={familiesSeeSchedule}
           onClose={() => setSelectedEvent(null)}
           onEdit={openEditForm}
           onAddGame={ev => {
@@ -1059,7 +1064,9 @@ export default function CoachesSchedulePage({
               endsAt: addHoursLocal(start, 2),
             });
           }}
-          onEventChanged={setSelectedEvent}
+          // Only the event still open takes the fresh record: a cancel or score that lands after the coach closed
+          // the sheet must not reopen it (/review 2026-10-09 — the ✕ never waited on the save).
+          onEventChanged={ev => setSelectedEvent(cur => (cur?.id === ev.id ? ev : cur))}
           onDeleted={() => setSelectedEvent(null)}
           refresh={fetchEvents}
           onBookChanged={() => { void loadBook(); }}

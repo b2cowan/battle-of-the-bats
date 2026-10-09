@@ -7,6 +7,28 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-09 — THE SCHEDULE'S EVENT WINDOW WEARS THE RECORD STANDARD: THE PENCIL IN THE HEAD, DELETE AT THE FOOT'S START, CANCEL AT ITS END AND ASKING ONCE (owner, walking Club Tier §284 W1: *"instead of 'edit details' should we have the edit pencil at the top right like we do in other modals like this in the app? desktop and mobile. also evaluate the delete/cancel buttons and make sure they are portal standard in format and location"* → the evaluation → "Yes, ask once" · "Build it now")
+
+**Decision:** (1) **Edit is the head's pencil at every width** (the award's and the payee's place, the 10-01 record
+standard): beside the ✕ at a desk, alone at the right on a phone where ← replaces the ✕. "Edit details" is gone from
+the foot. **It opens the edit form** rather than flipping the window in place — an event's when / where tells
+families and a series asks which dates, so its Save is held and asks (the ruled exception to "edit autosaves");
+turning the event form into an in-place record is a separate, larger question (the form is also Add's). (2)
+**Delete is the portal's delete door** (`GuardedDelete`, the room foot's): a trash icon and "Delete this practice /
+game / tournament / team event" in red at body weight, **alone at the foot's start**, asking in place, naming what
+goes with it ("with its attendance and lineup", "…and practice plan", "with the games under it"), answering **Keep
+it** — the old question answered "Cancel", in the spot "Cancel event" had just been. A series offers the edit form's
+own three answers (This only · This & future · All). Where families see the schedule, the question adds "Families
+aren't told: to call it off, cancel it instead." (3) **Cancel / Restore is the secondary button at the foot's end**
+("Cancel this practice"), and **asks once where families are told** ("It stays on the schedule, marked Cancelled, and
+families who follow the team are told it's off." Keep it · Cancel practice); where the schedule is staff-only it stays
+one press. Its question takes the whole foot in place of the controls (§134), in the question's shape without the
+danger tint. On a phone the foot is two equal cells (was three). A failed cancel / delete now says so in the foot (it
+was drawn only inside the score form, so a failed cancel said nothing). **Why:** the foot's look and place matched
+nothing else in the portal, and Cancel — the right answer to a rain-out — was its faintest control while telling every
+family on one press; Delete removes a game from families' calendars without a word. Guards:
+`tests/unit/coach-schedule-sheet-guard.test.ts` (the last describe), `coach-schedule-phone-guard.test.ts`.
+
 ### 2026-10-09 — A TEAM'S BILL HAS ONE FOOT ROW AT MOST, AND A LIST OF ONE HAS NO PREVIOUS · NEXT (owner, at 15U AAA's bill on a phone walking §285 W8: *"not a huge fan of the format and size of this footer"* → the recommendation → *"go ahead and build"*) — the window-footer ruling owed since 2026-10-01, for the bill window
 
 **Decision:** (1) **The kit draws no Previous · Next row when the record has no neighbour at either end** — every

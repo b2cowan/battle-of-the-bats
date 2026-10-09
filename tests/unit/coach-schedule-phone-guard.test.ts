@@ -233,6 +233,6 @@ describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a
     // stylesheet's `:has(.modalFooter)` note records eight panels falling into.
     assert.match(fn, /className=\{`\$\{styles\.slideOverActions\}\$\{isPhone \? ` \$\{styles\.slideOverFoot\} \$\{styles\.modalFooter\}` : ''\}`\}/);
     assert.ok(!/\.slideOverFoot\s*\{[^}]*position:\s*sticky/.test(phoneCss), 'the pin is the shared recipe, not a second sticky rule');
-    assert.match(phoneCss, /\.slideOverFoot \.slideOverActionsRight \{ display: contents; \}/, 'three equal cells — the right-hand group dissolves');
+    assert.match(phoneCss, /\.slideOverFoot \.slideOverActionsRight \{ display: contents; \}/, 'two equal cells — the right-hand group dissolves (Edit became the head’s pencil, 2026-10-09)');
   });
 });

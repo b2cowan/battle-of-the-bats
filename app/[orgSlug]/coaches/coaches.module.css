@@ -6485,13 +6485,21 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .slideOverLedger { max-width: min(1040px, 96vw); }
 .slideOverTitle { font-size: var(--type-title); font-weight: 800; color: var(--text-primary); margin: 0.5rem 0 1rem; }
 .slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--home-line, rgba(255,255,255,0.07)); display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-/* Destructive pair pushed to the right, separated from the everyday Edit/Add-game actions. */
+/* The foot's END: Cancel / Restore (and a tournament's "+ Add game" at a desk); the delete door holds the START. */
 .slideOverActionsRight { margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap; }
-/* On mobile the auto-margin pushed Cancel/Delete to the far edge, leaving a big gap that
-   read as an orphaned "Cancel event". Drop the push so the actions group tightly. */
-@media (max-width: 640px) {
-  .slideOverActionsRight { margin-left: 0; }
-}
+/* A question takes the whole foot IN PLACE of the controls it suspends (§134 — the room foot's rule, same words):
+   the delete door's own question, and Cancel / Restore's (its width is `.modalFooter`'s docked-question rule). The
+   foot's error line stays, so a failed delete is said under the question that asked it. */
+.slideOverActions:has(> [role="alertdialog"]) > :not([role="alertdialog"]):not([role="alert"]) { display: none; }
+.slideOverActions > .errorText { flex: 1 1 100%; margin: 0; }
+/* Cancel / Restore's question is not a delete: the question's shape, without the danger tint (it tells families,
+   it destroys nothing — Restore undoes it). ⚠ TWO CLASSES ON PURPOSE (/review 2026-10-09): `.dangerConfirm` is
+   defined ~2,000 lines BELOW this, so a one-class override lost to it on source order and the calm question drew red. */
+.dangerConfirm.sheetAskCalm { background: var(--white-05); border-color: var(--home-line-strong, var(--border-2)); }
+/* THE HEAD'S PENCIL (owner, 2026-10-09): its slot takes the head's slack, so the pencil sits beside the ✕ at a desk
+   and alone at the right on a phone, where ← replaces the ✕ (the payee window's `.headEnd`). The negative block
+   margin keeps the 44px box from growing a head drawn for the 28px ✕. */
+.sheetHeadEnd { flex: 1 1 auto; display: flex; justify-content: flex-end; margin-block: -0.55rem; }
 /* Compact one-line event summary (replaces the tall label/value list). */
 /* Event resource links — editable rows in the form, tappable rows in the detail panel. */
 .resourceRow { display: flex; gap: 0.4rem; align-items: center; }
@@ -8144,9 +8152,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 .lineupNotPlayingTag { font-style: normal; font-size: var(--type-support); color: var(--warning); }
 
-.deleteConfirm { display: flex; flex-direction: column; gap: 0.5rem; }
-.deleteConfirmMsg { font-size: var(--type-body); color: var(--text-secondary); margin: 0; }
-.deleteConfirmBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
 /* Primary action — logic-lime fill, dark text (app-wide convention, matches the
    global .btn-lime and the lime Add Event / Add Player / profile-save buttons). */
@@ -8544,7 +8549,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    A question and the controls it suspends must occupy the same place — that is what makes the
    suspension legible instead of mysterious.
    ⚠ A CONFIRM PLACED ANYWHERE ELSE IN A MODAL IS THE SAME BUG WAITING. Dock it in the footer. */
-.modalFooter > [role="alertdialog"] { flex: 1 1 100%; margin: 0; }
+.modalFooter > [role="alertdialog"],
+.slideOverActions > [role="alertdialog"] { flex: 1 1 100%; margin: 0; }
 
 .dangerConfirm {
   margin-top: 0.9rem;
@@ -16018,10 +16024,12 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
     background: var(--white-5); border: 1px solid var(--border-2); border-radius: 8px;
   }
   .eventScoreAdd:hover::after { background: var(--white-8); }
-  /* THE FOOT ROW: Edit details · Cancel event · Delete as three equal cells under a hairline, no
-     fills, Delete in the danger ink; "+ Add game" (an external tournament) on its own full row
-     beneath; a mirrored game's sentence, and the delete confirmation, take the whole row. The
-     right-hand group dissolves so its two buttons are cells of their own.
+  /* THE FOOT ROW: the delete door · Cancel / Restore as two equal cells under a hairline, no fills
+     (owner, 2026-10-09 — Edit became the head's pencil; it was three cells with "Edit details"
+     first). The delete door keeps its own look in a cell: the trash icon and red words at body
+     weight. "+ Add game" (an external tournament) on its own full row beneath; a mirrored game's
+     sentence, and a question, take the whole row. The right-hand group dissolves so its button is
+     a cell of its own.
      ⚠ PINNED (owner, 2026-09-21): the page also gives it `.modalFooter` on a phone, so it is the
      form sheets' sticky bar — bottom of the scroll box, `margin-top: auto` on a short sheet, the
      0.9rem bleed, the sheet's bottom padding dropped by the `:has(.modalFooter)` rule, the home
@@ -16048,12 +16056,11 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
     color: var(--text-secondary);
   }
   .slideOverFoot .slideOverActionsRight { display: contents; }
-  .slideOverFoot > .btnDanger,
-  .slideOverFoot .slideOverActionsRight > .btnDanger { color: var(--danger); }
+  .slideOverFoot > .deleteRecordBtn { color: var(--danger-light, var(--danger)); font-weight: 400; margin-right: 0; }
   .slideOverFoot .slideOverFootWide { flex-basis: 100%; }
   .slideOverFoot .formHint { flex: 1 1 100%; padding: 0.6rem 0; text-align: center; }
-  .slideOverFoot .deleteConfirm { flex: 1 1 100%; padding-top: 0.6rem; }
-  .slideOverFoot .deleteConfirmBtns button { min-height: var(--tap-min, 44px); }
+  .slideOverFoot > [role="alertdialog"] { margin-top: 0.6rem; }
+  .slideOverFoot > .errorText { padding-bottom: 0.4rem; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════

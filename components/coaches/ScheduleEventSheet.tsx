@@ -11,6 +11,7 @@ import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import CoachRsvpSheet from '@/components/coaches/CoachRsvpSheet';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import GuardedDelete from '@/components/coaches/GuardedDelete';
 import ScheduleAttendanceRoom, { type AttendanceRoomRow } from '@/components/coaches/ScheduleAttendanceRoom';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatStoredClock as fmtClock } from '@/lib/utils';
@@ -29,7 +30,7 @@ import { sheetOrder } from '@/lib/coach-schedule-phone';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { orgDayKey } from '@/lib/timezone';
 import { scheduleDayLabel } from '@/lib/family-schedule-format';
-import { EVENT_LABELS, SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
+import { EVENT_DELETE_TAKES, EVENT_LABELS, SCRIMMAGE_LABEL, eventWord } from '@/lib/coach-schedule-vocab';
 import { GAME_EVENT_TYPES, errorMessage, fmtDate, fmtTime, isLineupEvent, resultColor, shortDate } from '@/lib/coach-schedule-view';
 import {
   attendanceRowWords, lineupDoor, lineupRowWords, scoutingRowWords, sheetAddressFor,
@@ -121,6 +122,9 @@ function resourceIcon(url: string): React.ElementType {
   return Link2;
 }
 
+/** A series' three delete answers — the edit form's own words, and the scope each sends. */
+const SERIES_DELETE = [['This only', 'one'], ['This & future', 'remaining'], ['All', 'all']] as const;
+
 /** DELETE one event. Shared by the sheet's Delete and the page's duplicate-game "Remove my copy"
  *  flow, which surface the error in different places. Refreshing is the CALLER's job — the sheet
  *  must close the instant the delete succeeds, not sit open through a full refetch. */
@@ -135,7 +139,7 @@ export async function deleteEventRequest(orgSlug: string, teamId: string, eventI
 export default function ScheduleEventSheet({
   orgSlug, teamId, base, event: ev, initialView, isPhone, nowMs, sportPack, capabilities, drawerDoors,
   places, teamTags, tagIds, teamAwards, awardTypes, awardPlayers, moved: selectedMoved, mirroredGameHref,
-  bookEntry, gameDayLive,
+  bookEntry, gameDayLive, familiesSeeSchedule,
   onClose, onEdit, onAddGame, onEventChanged, onDeleted, refresh, onBookChanged, onAwardsChanged,
 }: {
   orgSlug: string;
@@ -168,8 +172,10 @@ export default function ScheduleEventSheet({
   bookEntry: OpponentBookEntry | null;
   /** The game-day window holds right now — Game day runs live, not as a recap. */
   gameDayLive: boolean;
+  /** Families can see this team's schedule — a cancel or restore tells them, so it asks once first. */
+  familiesSeeSchedule: boolean;
   onClose: () => void;
-  /** Edit details — the form returns to this event when it closes. */
+  /** The head's pencil — opens the edit form, which returns to this event when it closes. */
   onEdit: (event: RepTeamEvent) => void;
   /** A tournament's "+ Add game". */
   onAddGame: (event: RepTeamEvent) => void;
@@ -187,7 +193,10 @@ export default function ScheduleEventSheet({
   const [view, setView] = useState<SheetView | null>(initialView);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [deleteConfirm, setDeleteConfirm] = useState<{ eventId: string; isRecurring: boolean } | null>(null);
+  /** Cancel / Restore's one question, docked in the foot in place of its controls (it tells families). */
+  const [cancelAsk, setCancelAsk] = useState(false);
+  /** A failed cancel, restore or delete — said in the foot, where it was pressed. */
+  const [footError, setFootError] = useState('');
   /** Ask only for what this coach's grants open (the same answer the rows read). */
   const wantsRead = drawerDoors.lineupTab || drawerDoors.attendanceTab;
   const [attendanceRows, setAttendanceRows] = useState<AttendanceRoomRow[]>([]);
@@ -457,7 +466,7 @@ export default function ScheduleEventSheet({
   async function handleToggleCancel() {
     const nextStatus = ev.status === 'cancelled' ? 'scheduled' : 'cancelled';
     setSaving(true);
-    setSaveError('');
+    setFootError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${ev.id}`, {
         method: 'PATCH',
@@ -466,10 +475,11 @@ export default function ScheduleEventSheet({
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Update failed');
       const { event: updated } = await res.json();
+      setCancelAsk(false);
       onEventChanged(updated);
       await refresh();
     } catch (e: unknown) {
-      setSaveError(errorMessage(e, 'Update failed'));
+      setFootError(errorMessage(e, 'Update failed'));
     } finally {
       setSaving(false);
     }
@@ -479,15 +489,15 @@ export default function ScheduleEventSheet({
 
   async function handleDelete(eventId: string, scope: 'one' | 'remaining' | 'all') {
     setSaving(true);
+    setFootError('');
     try {
       // Closing happens only on success — a failure must leave the slide-over up, since that is
-      // where `saveError` renders — and immediately, with the refresh trailing behind it.
+      // where `footError` renders — and immediately, with the refresh trailing behind it.
       await deleteEventRequest(orgSlug, teamId, eventId, scope);
-      setDeleteConfirm(null);
       onDeleted();
       await refresh();
     } catch (e: unknown) {
-      setSaveError(errorMessage(e, 'Delete failed'));
+      setFootError(errorMessage(e, 'Delete failed'));
     } finally {
       setSaving(false);
     }
@@ -627,7 +637,19 @@ export default function ScheduleEventSheet({
           <span className={styles.eventTypePill} style={{ background: 'color-mix(in srgb, var(--warning) 13.333%, transparent)', color: 'var(--warning)' }}>Cancelled</span>
         )}
       </div>
-      <button className={styles.modalCloseBtn} onClick={requestCloseSlideOver}>
+      {/* THE HEAD'S PENCIL (owner, 2026-10-09 — the award's and the payee's, the 10-01 record standard's place), at
+          every width; it replaced the foot's "Edit details". It opens the edit FORM rather than flipping the sheet in
+          place: an event's when / where tells families and a series asks which dates, so its Save is held and asks —
+          the ruled exception to "edit autosaves". */}
+      {canAddEvents && (
+        <span className={styles.sheetHeadEnd}>
+          <button type="button" className={styles.ppIconBtn} aria-label={`Edit this ${eventWord(ev)}`} title="Edit"
+            disabled={saving} onClick={() => onEdit(ev)}>
+            <Pencil size={18} aria-hidden />
+          </button>
+        </span>
+      )}
+      <button className={styles.modalCloseBtn} aria-label="Close" onClick={requestCloseSlideOver}>
         <X size={18} />
       </button>
     </div>
@@ -802,7 +824,7 @@ export default function ScheduleEventSheet({
     </div>
   ) : null;
 
-  /* Applied tags — read-only here; the picker/manager live in "Edit details". */
+  /* Applied tags — read-only here; the picker/manager live in the edit form (the head's pencil). */
   const tagsBlock = tagIds.length > 0 ? (
     <div className={styles.lineupChips}>
       {tagIds.map(tagId => {
@@ -994,13 +1016,25 @@ export default function ScheduleEventSheet({
     </CoachRowList>
   ) : null;
 
-  /* Actions — Edit (+ tournament Add game) lead; Cancel/Delete grouped to the right so
-     the destructive pair is separated from the everyday action. UNDER THE ROWS at every width
-     (E6 — on the desktop it sat above the tabs); on a phone THE FOOT ROW (C3) — three equal 44px
-     cells under a hairline, Delete in the danger ink, "+ Add game" on its own full row beneath; the
-     delete confirmation renders in its place, and a mirrored game shows its sentence there. PINNED
-     to the foot of the sheet on a phone (owner, 2026-09-21): it joins the form sheets'
-     `.modalFooter` recipe rather than growing a second sticky rule. */
+  /* THE FOOT — the record's once-in-a-record doors, the same at every width (owner, 2026-10-09: "portal standard in
+     format and location"). UNDER THE ROWS (E6); PINNED on a phone (2026-09-21) on the form sheets' `.modalFooter`
+     recipe, as two equal cells. Edit is the head's pencil, not a door here.
+       · Delete — the portal's delete door (`GuardedDelete`) at the foot's START, asking in place and naming what goes;
+         a series offers the edit form's three answers. It tells families nothing, so where they see the schedule the
+         question says so and points at Cancel — the lost rained-out game is the delete worth stopping.
+       · Cancel / Restore — the secondary button at the foot's END. It tells families at once, so where they see the
+         schedule it asks once first ("a change that tells families asks"); elsewhere it stays one press.
+     A question takes the whole foot in place of the controls it suspends (§134). */
+  const word = eventWord(ev);
+  const toggle = ev.status === 'cancelled' ? {
+    door: `Restore this ${word}`, title: `Restore this ${word}?`,
+    body: <>It comes off Cancelled, and families who follow the team are told it&rsquo;s back on.</>,
+    keep: 'Keep it cancelled', go: `Restore ${word}`, goClass: styles.btnSecondary,
+  } : {
+    door: `Cancel this ${word}`, title: `Cancel this ${word}?`,
+    body: <>It stays on the schedule, marked Cancelled, and families who follow the team are told it&rsquo;s off.</>,
+    keep: 'Keep it', go: `Cancel ${word}`, goClass: styles.btnDanger,
+  };
   const addGameButton = ev.eventType === 'external_tournament' ? (
     <button className={`${styles.btnSecondary}${isPhone ? ` ${styles.slideOverFootWide}` : ''}`} disabled={saving} onClick={() => onAddGame(ev)}>
       + Add game
@@ -1008,51 +1042,52 @@ export default function ScheduleEventSheet({
   ) : null;
   const actionsBlock = canAddEvents ? (
     <div className={`${styles.slideOverActions}${isPhone ? ` ${styles.slideOverFoot} ${styles.modalFooter}` : ''}`}>
-      {!deleteConfirm ? (
+      {cancelAsk ? (
+        /* Not a delete: the question's shape without the danger tint (`.sheetAskCalm`). */
+        <div className={`${styles.dangerConfirm} ${styles.sheetAskCalm}`} role="alertdialog" aria-label={toggle.title}>
+          <p className={styles.dangerConfirmTitle}>{toggle.title}</p>
+          <div className={styles.dangerConfirmBody}>{toggle.body}</div>
+          <div className={styles.dangerConfirmActions}>
+            <button type="button" className={styles.btnGhost} disabled={saving} onClick={() => { setCancelAsk(false); setFootError(''); }}>{toggle.keep}</button>
+            <button type="button" className={toggle.goClass} disabled={saving} onClick={() => { void handleToggleCancel(); }}>{toggle.go}</button>
+          </div>
+        </div>
+      ) : mirroredGame ? (
+        /* A mirrored game isn't the coach's to cancel or delete — and it wouldn't stick: the next sync would
+           restore it from the organizer's schedule, minus the attendance and lineup a delete would have
+           cascaded away. Its edit (the coach's own fields) is the head's pencil. */
+        <span className={styles.formHint}>Only {ev.name} can cancel or remove this game.</span>
+      ) : (
         <>
-          <button className={styles.btnSecondary} disabled={saving} onClick={() => onEdit(ev)}>
-            Edit details
-          </button>
-          {!isPhone && addGameButton}
-          {/* A mirrored game isn't the coach's to cancel or delete — and it wouldn't
-              stick: the next sync would restore it from the organizer's schedule, minus
-              the attendance and lineup a delete would have cascaded away. */}
-          {mirroredGame ? (
-            <span className={styles.slideOverActionsRight}>
-              <span className={styles.formHint}>Only {ev.name} can cancel or remove this game.</span>
-            </span>
-          ) : (
-            <div className={styles.slideOverActionsRight}>
-              <button className={styles.btnGhost} disabled={saving} onClick={handleToggleCancel}>
-                {ev.status === 'cancelled' ? 'Restore event' : 'Cancel event'}
-              </button>
-              <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: ev.id, isRecurring: ev.isRecurring })}>
-                Delete
-              </button>
-            </div>
-          )}
+          <GuardedDelete
+            label={`Delete this ${word}`}
+            refusal={null}
+            confirmTitle={`Delete this ${word}?`}
+            confirmBody={<>
+              {EVENT_DELETE_TAKES[ev.eventType]}
+              {ev.isRecurring && <> It&rsquo;s part of a series: delete this date only, this date and the later ones, or all of them.</>}
+              {/* "Cancel it instead" only where Cancel answers it: Cancel acts on one date, a series' delete on many. */}
+              {familiesSeeSchedule && (ev.isRecurring
+                ? <> Families aren&rsquo;t told.</>
+                : <> Families aren&rsquo;t told: to call it off, cancel it instead.</>)}
+            </>}
+            deleting={saving}
+            {...(ev.isRecurring
+              ? { choices: SERIES_DELETE.map(([label, scope]) => ({ label, onPick: () => { void handleDelete(ev.id, scope); } })) }
+              : { onDelete: () => { void handleDelete(ev.id, 'one'); } })}
+          />
+          <div className={styles.slideOverActionsRight}>
+            {!isPhone && addGameButton}
+            <button className={styles.btnSecondary} disabled={saving}
+              onClick={() => { setFootError(''); if (familiesSeeSchedule) setCancelAsk(true); else void handleToggleCancel(); }}>
+              {toggle.door}
+            </button>
+          </div>
           {isPhone && addGameButton}
         </>
-      ) : (
-        <div className={styles.deleteConfirm}>
-          <p className={styles.deleteConfirmMsg}>
-            {deleteConfirm.isRecurring ? 'Delete this recurring practice:' : `Delete "${ev.name}"?`}
-          </p>
-          <div className={styles.deleteConfirmBtns}>
-            {deleteConfirm.isRecurring ? (
-              <>
-                <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'one')}>This only</button>
-                <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'remaining')}>This &amp; future</button>
-                <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'all')}>All</button>
-              </>
-            ) : (
-              <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'one')}>Confirm delete</button>
-            )}
-            <button className={styles.btnGhost} onClick={() => setDeleteConfirm(null)}>Cancel</button>
-          </div>
-          {saveError && <p className={styles.errorText}>{saveError}</p>}
-        </div>
       )}
+      {/* A failed cancel, restore or delete says so HERE — its own line, never the score form's. */}
+      {footError && <p className={styles.errorText} role="alert">{footError}</p>}
     </div>
   ) : null;
 
