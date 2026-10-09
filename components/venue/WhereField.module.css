@@ -23,12 +23,25 @@
 }
 .combo { position: relative; }
 
-/* The quiet line under Venue: where the name came from. */
+/* The quiet line under Venue: where the name came from (a pill, in a club), then the address. */
 .under {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
   margin: 6px 0 0;
   font-size: var(--type-support, 0.8125rem);
   color: var(--home-dim, var(--text-tertiary));
 }
+/* The tag chip's look, by value (the coach sheet's `.tagComboChip` — this field also renders in the admin shell,
+   which never loads that sheet). The dot is the shared one (`FilterPill.module.css`), so blue means the club's and
+   olive the team's own here exactly as on a tag, warm-theme rescue included. Not a control: no ×, no hover. */
+.sourcePill {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  border-radius: 999px; padding: 0.1rem 0.5rem;
+  font-weight: 600; white-space: nowrap;
+  background: var(--home-card, var(--card-bg));
+  border: 1px solid var(--home-line-strong, var(--border-2));
+  color: var(--home-ink, var(--text-primary));
+}
+.underRest { min-width: 0; overflow-wrap: anywhere; }
 
 /* ── The list ── a name, a quiet second line, a count at the end, no icon (the built picker's rows). */
 .list {

@@ -21,6 +21,7 @@ import {
   leagueSeriesLine,
   leagueRefusalLine,
   venueSourceLine,
+  VENUE_SOURCE_PILL,
   NOT_CHECKED_LINE,
 } from '../../lib/venue-clash-words.ts';
 import { formatTimeRange } from '../../lib/utils.ts';
@@ -358,11 +359,14 @@ describe('a weekly series (specimen 1) and house league’s lines (specimen 3)',
     assert.match(`${v.lead}`, /^Kinsmen Park already has Greens vs Golds/);
   });
 
-  it('the quiet line under Venue says where the name came from — in a club; outside one, only an address', () => {
-    assert.equal(venueSourceLine('club', '41 Lions Park Dr', true), 'The club’s venue · 41 Lions Park Dr');
-    assert.equal(venueSourceLine('place', '120 Westfield Rd', true), 'Your own place · 120 Westfield Rd');
-    assert.equal(venueSourceLine('typed', null, true), 'Typed · not checked for clashes');
-    assert.equal(venueSourceLine('place', '120 Westfield Rd', false), '120 Westfield Rd');
-    assert.equal(venueSourceLine('typed', null, false), '');
+  it('the quiet line under Venue says where the name came from — a pill in a club; outside one, only an address', () => {
+    assert.deepEqual(venueSourceLine('club', '41 Lions Park Dr', true), { pill: 'club', rest: '41 Lions Park Dr' });
+    assert.deepEqual(venueSourceLine('place', '120 Westfield Rd', true), { pill: 'place', rest: '120 Westfield Rd' });
+    assert.deepEqual(venueSourceLine('place', null, true), { pill: 'place', rest: '' });
+    // A typed name keeps its one warning: nothing else on the form says it isn't checked.
+    assert.deepEqual(venueSourceLine('typed', null, true), { pill: 'typed', rest: 'Not checked for clashes' });
+    assert.deepEqual(venueSourceLine('place', '120 Westfield Rd', false), { pill: null, rest: '120 Westfield Rd' });
+    assert.deepEqual(venueSourceLine('typed', null, false), { pill: null, rest: '' });
+    assert.deepEqual(VENUE_SOURCE_PILL, { club: 'Club venue', place: 'Your place', typed: 'Typed' });
   });
 });

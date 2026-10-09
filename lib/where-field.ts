@@ -136,12 +136,6 @@ export function venueListGroups<P extends Pick<RepTeamPlace, 'name' | 'address'>
   return { venues, places };
 }
 
-/** A team place that shares a club venue's name — kept, never merged; its row says it isn't checked. */
-export function isSameNameAsClubVenue(place: Pick<RepTeamPlace, 'name'>, venues: readonly ClubVenueOption[]): boolean {
-  const key = placeKey(place.name);
-  return venues.some(v => placeKey(v.name) === key);
-}
-
 /**
  * An imported row's location IS one of the club's venues by name (exact after trim + case-fold — a prefix is a
  * suggestion, not a match), and its field cell picks a facility by name: "Diamond 2", or a bare "2" read with the

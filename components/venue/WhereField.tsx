@@ -5,11 +5,12 @@ import { claimEscape } from '@/components/coaches/escapeOwnership';
 import { fieldNounFor, surfaceLabel } from '@/lib/sports';
 import { matchPlace } from '@/lib/coach-places';
 import {
-  isSameNameAsClubVenue, pickClubFacility, pickClubVenue, pickPlace, typeVenue, venueListGroups,
+  pickClubFacility, pickClubVenue, pickPlace, typeVenue, venueListGroups,
   type WhereValue,
 } from '@/lib/where-field';
-import { venueSourceLine } from '@/lib/venue-clash-words';
+import { VENUE_SOURCE_PILL, venueSourceLine } from '@/lib/venue-clash-words';
 import type { ClubVenueOption, RepTeamPlace } from '@/lib/types';
+import pill from '@/components/shared/FilterPill.module.css';
 import styles from './WhereField.module.css';
 
 /**
@@ -25,13 +26,17 @@ import styles from './WhereField.module.css';
  *     the picked club venue's facilities with "Not set" first, opening on the one this team used there last; for a
  *     typed venue or a coach's own place, a short typed box with the same label.
  * The address belongs to the venue and is never typed on an event: one quiet line under Venue says where the name
- * came from ("The club’s venue · 41 Lions Park Dr"). On a 640px window the two sit on one row (1.5fr / 1fr); on a
- * phone they stack, Venue above. The clash line (amber), a refusal (red) or the quiet "isn't checked" line sits
- * under the row — the host decides which, because only it knows its program's rule (`WhereLine`).
+ * came from — a pill wearing the tag chips' dot ("● Club venue  41 Lions Park Dr"). On a 640px window the two sit
+ * on one row (1.5fr / 1fr); on a phone they stack, Venue above. The clash line (amber), a refusal (red) or the
+ * quiet "isn't checked" line sits under the row — the host decides which, because only it knows its program's
+ * rule (`WhereLine`).
  *
  * The host passes its own label / input / select / hint classes, so the two controls look like the fields beside
  * them on that form; this component owns the shape, the list and the line.
  */
+
+/** The source pill's dot — the tag chips' own: blue the club's, olive the team's own. A typed name is neither: no dot. */
+const SOURCE_DOT = { club: pill.tagComboDotOrg, place: pill.tagComboDotOwn } as const;
 
 export interface WhereFieldClasses {
   field?: string;
@@ -223,10 +228,9 @@ export default function WhereField({
                 {placeRows.length > 0 && <div className={styles.group}>Your places</div>}
                 {placeRows.map((p, pi) => {
                   const n = p.count ?? 0;
-                  const sameName = inClub && isSameNameAsClubVenue(p, clubVenues);
-                  const sub = sameName
-                    ? ['Your own place · not checked for clashes', surfaceLabel(sport, p.fieldNumber)].filter(Boolean).join(' · ')
-                    : [p.address, surfaceLabel(sport, p.fieldNumber)].filter(Boolean).join(' · ');
+                  // A same-named place reads like any other place: the group header says whose it is, and picking it says
+                  // it isn't checked (owner, 2026-10-09 — "Your own place · not checked for clashes" here was clutter).
+                  const sub = [p.address, surfaceLabel(sport, p.fieldNumber)].filter(Boolean).join(' · ');
                   return row(placeStart + pi, { kind: 'place', place: p }, (
                     <>
                       <span className={styles.optText}>
@@ -243,7 +247,17 @@ export default function WhereField({
               </div>
             )}
           </div>
-          {under && <p className={`${classes.hint ?? ''} ${styles.under}`}>{under}</p>}
+          {(under.pill || under.rest) && (
+            <p className={`${classes.hint ?? ''} ${styles.under}`}>
+              {under.pill && (
+                <span className={styles.sourcePill}>
+                  {under.pill !== 'typed' && <span className={`${pill.tagComboDot} ${SOURCE_DOT[under.pill]}`} aria-hidden />}
+                  {VENUE_SOURCE_PILL[under.pill]}
+                </span>
+              )}
+              {under.rest && <span className={styles.underRest}>{under.rest}</span>}
+            </p>
+          )}
         </div>
 
         <div className={`${classes.field ?? ''} ${styles.facilityCol}`}>

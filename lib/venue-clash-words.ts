@@ -240,12 +240,20 @@ export function leagueRefusalLine(opts: {
   };
 }
 
-/** The quiet line under Venue: where the name came from and, for the club's own, its address (Ask 13). */
-export function venueSourceLine(source: 'club' | 'place' | 'typed' | null, address: string | null | undefined, inClub: boolean): string {
+/** The pill's word for where a venue came from — the Venue list's own group names, singular. */
+export const VENUE_SOURCE_PILL = { club: 'Club venue', place: 'Your place', typed: 'Typed' } as const;
+
+/**
+ * The quiet line under Venue (Ask 13): a pill saying where the name came from, then its address — or, typed, the one
+ * warning a typed name gets. The pill only in a club (owner, 2026-10-09: the tag chips' dot, blue the club's, olive
+ * the team's own); outside one there is nothing to tell apart, so a place shows only its address.
+ */
+export function venueSourceLine(
+  source: 'club' | 'place' | 'typed' | null, address: string | null | undefined, inClub: boolean,
+): { pill: 'club' | 'place' | 'typed' | null; rest: string } {
   const addr = address?.trim() ?? '';
-  if (!source) return '';
-  if (!inClub) return source === 'place' ? addr : '';
-  if (source === 'club') return addr ? `The club’s venue · ${addr}` : 'The club’s venue';
-  if (source === 'place') return addr ? `Your own place · ${addr}` : 'Your own place';
-  return 'Typed · not checked for clashes';
+  if (!source) return { pill: null, rest: '' };
+  if (!inClub) return { pill: null, rest: source === 'place' ? addr : '' };
+  if (source === 'typed') return { pill: 'typed', rest: 'Not checked for clashes' };
+  return { pill: source, rest: addr };
 }

@@ -82,8 +82,11 @@ Field when a sport has none; read from the team's, league season's or tournament
 dropdown of the picked venue's facilities with "Not set" first, opening on the facility this team used there last
 time; for a typed venue or a coach's own place, a short typed box with the same label. On a 640px window the two sit
 on one row (1.5fr / 1fr); on a phone they stack, Venue above. **The address belongs to the venue**, never typed on an
-event: it shows as one quiet line under Venue ("The club's venue · 41 Lions Park Dr", "Your own place · 120 Westfield
-Rd", "Typed · not checked for clashes"); the coach form's old Address box stays only on an older event that already
+event: it shows as one quiet line under Venue, led in a club by a pill wearing the TAG CHIPS' dot (owner 2026-10-09,
+replacing the words "The club's venue · …" / "Your own place · …"): **● Club venue** (blue — the club's, as on a
+shared tag) "41 Lions Park Dr", **● Your place** (olive — the team's own) "120 Westfield Rd", **Typed** (no dot,
+neither's) "Not checked for clashes" — the typed name's only warning, so it stays. Outside a club: the address alone,
+no pill. Same dot, same meaning, portal-wide. The coach form's old Address box stays only on an older event that already
 holds one. **Adding a venue asks Name · Address · its facilities · Note** wherever one is added (a coach's place, a
 tournament's new venue, the library). Only what the Venue list offers differs by program. **"Location" is retired as
 a label**: one spelling, Venue. (2) **A clash warns in one amber line under the place, before Save; never a panel,
@@ -94,7 +97,9 @@ sees another team's name, the kind of event and its time, nothing else. **A refu
 a second league booking) **uses the same shape in red, under the field, before Create**, with Create greyed: never a
 pop-up after the fact. (3) **The club's venues sit above a coach's own places, as their own group** (Ask 1): in a club
 with a Venue library, the coach's picker lists "Club venues" first; the coach reads the library and never edits it,
-and a same-named team place stays the team's ("Your own place · not checked for clashes"), never merged. A team
+and a same-named team place stays the team's, under "Your places", never merged (its row reads like any other place:
+owner 2026-10-09 dropped "Your own place · not checked for clashes" from the row as clutter — the group header says
+whose it is, and picking it says so twice: under Venue and in the quiet not-checked line). A team
 outside a club sees only its own places, exactly as built.
 **Rationale:** (1) four forms asked "where" in three shapes and two words, and the coach's diamond lived under More in
 a box with a fixed label; one pair, read from the sport, is the one-spelling rule applied to a form. Option B (house
