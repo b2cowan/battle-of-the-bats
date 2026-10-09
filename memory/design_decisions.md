@@ -81,6 +81,41 @@ private book can never see another team's booking; the club's library is the onl
 ("the admin's library stays admin's") is reversed for club teams only, and its reason (a book the coach owns, with
 nothing to wait for) still holds for everything a club doesn't own.
 
+### 2026-10-08 — THE LAST CLUB MONEY PAGES BECOME WINDOWS: SIX RULINGS (owner: *"I agree with your recommendations"* — Club Tier Stage 3d, all seven asks as recommended — and, on the drawings the same day, *"the new standard is that they are connected"*) — hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 3d, plan `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 3
+
+**Decision:** (1) **The club's Payees is a window over its Ledger** (Ask 1), as the coach's is (Ledger Parity D8):
+Ledger › Tools › Payees opens it over the Book, the filters and the period, which are there again on close. This
+rules D8a, left open on 2026-10-02. The Payees page retires and its address opens the Ledger with the window open.
+(2) **A level inside a window opens IN PLACE, behind a named back** (Asks 2, 4): a payee inside Payees, a team's bill
+inside its allocation. "← Payees" or "← {the allocation}" at the head's top left on a computer, the bare ← on a phone;
+Back goes up one level before it goes out, and × closes the whole window. Never a second form over a form, with one
+exception (5). (3) **An allocation reads the bill first, and edits only its name and its note** (Ask 3): its line and
+the fiscal year it counts in as the eyebrow ("Off-plan · …" without a line; a lock on a closed year), the name, the
+four figures, the schedule in one line, the teams, then the club's note. Its terms (each team's share, the schedule,
+which teams) never change after it is made (Ask 7b). A closed year's allocation reads with no pencil and one locked
+line; its unpaid installments stay receivable. Send reminders is the Allocations tab's alone: on an allocation it
+was always the whole club's wave. Its Export stays, in its window's foot: the one window in Accounting with an
+Export, because its file (which payment paid which installment) has a reader. (4) **A record opens where you are**
+(Ask 5): from a page, the window over it, and × returns to the page; from a window, that window hands off to the
+record and turns back on close (the way Allocate turns a line into New allocation); from outside (a notice, an
+email, an old link), its home tab with the window open. (5) **Payees over the entry being typed** (Ask 7a): the one
+form-over-form layer in the admin kit, between the form layer and the question layer, so "Manage payees…" (D7)
+never throws an entry away; a question opened from it (Merge, Delete, New payee) still lands on top. (6) **A money
+summary is one joined band, in a window too** (owner, on the drawings): the portal's `MoneySummaryBand` (one frame, a
+hairline between figures, two-up on a phone) for an allocation's figures, a team's bill and a team's account;
+separate figure cards with gaps are drift.
+**Rationale:** (1) leaving the Ledger for a page lost the Book, the filters and the period, and the coach's Ledger
+already answers it. (2) the kit lets only a question stand over a form; a second window would need a new layer for
+no gain, and would stack three deep on a phone once Record received opens. (3) the 2026-10-01 standard (a record
+reads first and edits whole) applied honestly: nothing about a bill's terms can change without moving received
+payments, a team's own schedule, the line's "left" and what each coach was told, so the pencil holds only what can.
+The note had been asked for at create and shown nowhere. (4) the 3c walk's complaint about New allocation ("why do
+we have to leave the modal…") applied to every door: Option B (every door → Allocations) would have rebuilt the
+trip back to the budget line. (5) taking the picker's row away would have undone Ledger Parity D7. (6) the first
+drawing copied the bill room's separate boxes as 3a built them, which was itself drift.
+**Applies to:** the club's Payees, an allocation and its team bills, the ten doors into an allocation, the admin
+window kit (`KitDialog`: a named back and a raised form), a team's account's figures.
+
 ### 2026-10-08 — AN EXPORT MENU NAMES ITS FILE IN ONE LINE, AND NO FORMAT CARRIES A SENTENCE (owner, at a closed year's Export, walking §283 W7: *"this is way too much text for this dropdown"*; three recommended options, all taken)
 
 **Decision:** (1) A menu that says what its file holds says it in **one line**: a closed year's Export reads "Year-end report · 2025–26", then Excel and PDF. The club Ledger's keeps "Every entry in the period, not just what is on screen · N entries" and drops its sentence about signed amounts and voids. (2) **No sentence under a format on any admin Export menu**: "Opens in Google Sheets…", "Plain text…", "Formatted, print-ready…" and the iCal line all go, from all 28 admin export buttons. A second line stays only where it says something the row's name does not: no rows, the plan upgrade, a per-view PDF note, a second document, contact details, the full dataset, import. (3) CSV appears only where a screen asks for it. It had been drawn everywhere, so the year-end report, built as Excel and PDF only, offered one.
