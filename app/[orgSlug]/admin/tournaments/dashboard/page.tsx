@@ -617,7 +617,7 @@ export default function AdminDashboard() {
   /** Bumped by a panel-level "Try again" so the stats effect re-runs without a page reload. */
   const [statsReloadKey, setStatsReloadKey] = useState(0);
   /**
-   * Which fetch attempt has settled, as `${tournamentId}:${reloadKey}`. Compared against the
+   * Which fetch attempt has settled (`statsAttemptKey`: tournament · reload · finished). Compared against the
    * current attempt rather than reset on change, so switching tournaments (or hitting Try again)
    * returns to LOADING without setting state inside the effect body.
    *
@@ -625,6 +625,13 @@ export default function AdminDashboard() {
    * Previously both rendered the same sentence, so a slow connection looked like an outage.
    */
   const [statsSettledFor, setStatsSettledFor] = useState<string | null>(null);
+  /**
+   * Which event the figures in `stats` belong to — null until a read has landed. Nothing is drawn
+   * from figures that are not this event's: the board used to draw from the placeholder zeros, so a
+   * game day opened as the after-the-event board ("All the games are done") until its read landed,
+   * and switching events drew the last event's board under the new one's name.
+   */
+  const [statsFor, setStatsFor] = useState<string | null>(null);
 
   // ── Activate / archive ────────────────────────────────────────────────────
   const [activating, setActivating] = useState(false);
@@ -752,11 +759,15 @@ export default function AdminDashboard() {
   // ── Fetch stats ───────────────────────────────────────────────────────────
   /** The current read, for the live refresh below (null while there is no tournament). */
   const pollStatsRef = useRef<(() => void) | null>(null);
+  const boardIsFinished = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
+  // Finished-or-not is part of the read: only a finished event's read carries its recap, and nothing polls once
+  // finished, so the event turning finished (Mark complete, or wherever the tournament list learns it) reads again.
+  const statsAttemptKey = `${currentTournament?.id}:${statsReloadKey}:${boardIsFinished ? 'finished' : 'open'}`;
   useEffect(() => {
     const tournamentId = currentTournament?.id;
     if (!tournamentId) return;
     const controller = new AbortController();
-    const attemptKey = `${tournamentId}:${statsReloadKey}`;
+    const attemptKey = statsAttemptKey;
     async function fetchStats(id: string) {
       try {
         const res = await fetch(`/api/admin/tournament-dashboard?tournamentId=${encodeURIComponent(id)}${orgParam}`, { signal: controller.signal });
@@ -803,11 +814,13 @@ export default function AdminDashboard() {
           },
           registrationAttention: data?.registrationAttention ?? EMPTY_STATS.registrationAttention,
         });
+        setStatsFor(id);
         setStatsError('');
         setStatsSettledFor(attemptKey);
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') return;
-        setStats(EMPTY_STATS);
+        // A failed refresh keeps the last figures that landed: zeroing them redrew a game day as the
+        // after-the-event board until the next read 30 s later.
         setStatsError(err instanceof Error ? err.message : 'Unable to load dashboard stats.');
         setStatsSettledFor(attemptKey);
       }
@@ -819,13 +832,12 @@ export default function AdminDashboard() {
       controller.abort();
       pollStatsRef.current = null;
     };
-  }, [currentTournament?.id, orgParam, statsReloadKey]);
+  }, [currentTournament?.id, orgParam, statsAttemptKey]);
 
   // Live auto-refresh (J1-086, and G6's shared rule): the board's figures move on their own every 30 s
   // while the tab is visible, and at once when it comes back. Cheap (one cached GET).
   // A finished event's board does not poll (Stage 4): nothing on it can change once results are locked,
   // and each read of a finished event also reads its recap — it reads fresh on every visit instead.
-  const boardIsFinished = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
   useVisiblePoll(() => pollStatsRef.current?.(), { enabled: Boolean(currentTournament?.id) && !boardIsFinished });
 
   // Fetch other tournaments for populate-from
@@ -898,9 +910,8 @@ export default function AdminDashboard() {
       const json = await res.json().catch(() => null) as { error?: string } | null;
       if (!res.ok) throw new Error(json?.error ?? 'Failed to mark tournament complete.');
       setShowCompleteConfirm(false);
+      // The event turning finished reads the board again (its recap) — see `statsAttemptKey`.
       await refreshTournaments();
-      // The finished board reads its recap on a fresh read (the poll is off once finished), so read again.
-      setStatsReloadKey(k => k + 1);
       router.refresh();
     } catch (err) {
       setCompleteError(err instanceof Error ? err.message : 'Failed to mark tournament complete.');
@@ -946,7 +957,12 @@ export default function AdminDashboard() {
   // Completed, or archived (the context lists no archived event, so the second is a moment at most).
   const isFinished    = isCompleted || status === 'archived';
 
-  const visibleStats  = currentTournament?.id ? stats : EMPTY_STATS;
+  const statsReady    = Boolean(currentTournament?.id) && statsFor === currentTournament?.id;
+  const visibleStats  = statsReady ? stats : EMPTY_STATS;
+  // The board waits for this event's read — a finished event for the read that carries its recap (right
+  // after Mark complete the figures on hand are still the active event's). Until then: one quiet line.
+  const boardWaiting  = Boolean(currentTournament?.id) && (!statsReady || (isFinished && !visibleStats.recap));
+  const boardFailed   = boardWaiting && Boolean(statsError) && statsSettledFor === statsAttemptKey;
   const checklist     = visibleStats.publishChecklist;
   const reg           = visibleStats.registration;
   const checkIn       = visibleStats.checkIn;
@@ -1264,15 +1280,14 @@ export default function AdminDashboard() {
 
   function renderTournamentChatPanel() {
     const ca = visibleStats.chatAdoption;
-    const statsSettled = statsSettledFor === `${currentTournament?.id}:${statsReloadKey}`;
+    const statsSettled = statsSettledFor === statsAttemptKey;
     // Reminder outcome from this session, but only if it belongs to the tournament on screen.
     const remindSession = chatRemindSession?.tournamentId === currentTournament?.id ? chatRemindSession : null;
     // In-flight only counts for the event that started it.
     const sending = remindingChatFor != null && remindingChatFor === currentTournament?.id;
 
-    // STILL LOADING — this tournament's fetch hasn't settled. Deliberately NOT `!ca && !settled`:
-    // `stats` keeps the previous tournament's numbers until the new fetch lands, so gating on `ca`
-    // alone would show one event's sign-up figures under another event's name.
+    // STILL LOADING — the board only draws once this event's read has landed, so this is the panel's
+    // own "Try again" re-read in flight: show its shape rather than the figures it is replacing.
     if (!statsSettled) {
       return (
         <section className={styles.analyticsPanel}>
@@ -1290,13 +1305,13 @@ export default function AdminDashboard() {
       );
     }
 
-    // GENUINELY FAILED — always render the card, never `return null`.
+    // GENUINELY FAILED — the read landed without the funnel (the route leaves it null when its
+    // compute fails). Always render the card, never `return null`.
     //
     // An earlier revision suppressed this whenever the page-level error banner was showing, to
-    // avoid saying it twice. That was wrong: the banner fires for ANY failure of the combined
-    // stats endpoint, which is the common case, so the panel simply vanished — and in Customize
-    // mode left an unlabelled drag box behind. A duplicated sentence is a far smaller problem
-    // than a panel that disappears, and this is the only place offering a retry.
+    // avoid saying it twice. That was wrong: the panel simply vanished — and in Customize mode left
+    // an unlabelled drag box behind. A duplicated sentence is a far smaller problem than a panel
+    // that disappears, and this is the only place offering a retry.
     if (!ca) {
       return (
         <section className={styles.analyticsPanel}>
@@ -1903,9 +1918,18 @@ export default function AdminDashboard() {
         actions={isFinished ? <HelpButton help={FINISHED_BOARD_HELP} label="Dashboard" iconOnly /> : undefined}
       />
 
-      {currentTournament?.id && statsError && (
-        <div className="mb-4 text-xs" style={kx(ICON_MUTED_LEGACY, KIT_INK.tertiary)}>Dashboard counts are unavailable right now.</div>
+      {statsReady && !boardWaiting && statsError && (
+        <div className="mb-4 text-xs" style={kx(ICON_MUTED_LEGACY, KIT_INK.tertiary)}>Couldn’t refresh the dashboard — these figures may be out of date.</div>
       )}
+
+      {boardWaiting && (boardFailed ? (
+        <div className={styles.boardWaiting} role="alert">
+          <span>Couldn’t load the dashboard.</span>
+          <button type="button" className="btn btn-outline btn-data" onClick={() => setStatsReloadKey(k => k + 1)}>Try again</button>
+        </div>
+      ) : (
+        <p className={styles.boardWaiting} role="status">Loading…</p>
+      ))}
 
       {/* ── COIN TOSS NEEDED — a step the lists can't say, with its one action ── */}
       {currentTournament?.id && visibleStats.coinTossNeeded.length > 0 && (
@@ -1936,7 +1960,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {isDraft && currentTournament?.id && (
+      {isDraft && currentTournament?.id && !boardWaiting && (
         <>
           {otherTournaments.length > 0 && !checklist.hasDivisions && !reuseDismissed && (
             <div className={styles.reuseSetupPrompt}>
@@ -2074,7 +2098,7 @@ export default function AdminDashboard() {
           board (G2 · G3 · G8). The live "It's game day" card retired with it: the lists ARE the day.
           Once every game is final the rail's ready card stays, because it has the one button the day
           needs next (Mark complete). */}
-      {isActive && currentTournament?.id && isGameDay && (
+      {isActive && currentTournament?.id && !boardWaiting && isGameDay && (
         <>
           {guidanceStage === 'ready' ? guidanceRail : datesPassedNote}
           <GameDayBoard
@@ -2100,7 +2124,7 @@ export default function AdminDashboard() {
       )}
 
       {/* ── BEFORE / AFTER THE EVENT (active, no game day yet or none left) — Stage 4's ── */}
-      {isActive && currentTournament?.id && !isGameDay && (
+      {isActive && currentTournament?.id && !boardWaiting && !isGameDay && (
         <>
           {guidanceRail}
           {renderMetricStrip()}

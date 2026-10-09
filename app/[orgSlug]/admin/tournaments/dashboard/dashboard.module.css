@@ -1740,6 +1740,19 @@
   .chatSkelBar { animation: none; }
 }
 
+/* The board's place while this event's read is in flight (or failed): one quiet line under the title,
+   never a board guessed from placeholder zeros. */
+.boardWaiting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 1.25rem 0.1rem;
+  font-size: var(--type-body);
+  color: var(--text-tertiary);
+}
+
 /* ── Activate banner (ready state) ──────────────────── */
 .activateBanner {
   display: flex;
