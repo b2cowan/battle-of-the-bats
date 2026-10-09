@@ -356,7 +356,10 @@ could create a house-league game (or a whole practice series) or a tryout day tw
 have missed clashes; a club that later dropped the venue library could not edit an event already on one of its venues;
 re-importing a schedule sheet could wipe a stored diamond or keep an old venue under new words; and every house-league
 window opened underneath the phone's bottom bar, its Create button out of reach. The owner ruled that a draft tournament's
-games count as bookings: the club's own planned tournament holds the diamond. Next: the owner's walks, then 6b (the
+games count as bookings: the club's own planned tournament holds the diamond. The owner walked all eight checks on
+2026-10-09, and every one passed. Two questions came out of the walks for the owner: whether editing a repeating practice
+should ask "this one or the whole series" up front (so every date it moves is checked for clashes, not just the one opened),
+and whether the series line should say "for every date" instead of "for all". Next: 6b (the
 calendar and the Venue library).
 
 **Stage 11 — the club's schedules: added by the owner 2026-10-08 and ruled the same day; not yet drawn.** A club admin who has to

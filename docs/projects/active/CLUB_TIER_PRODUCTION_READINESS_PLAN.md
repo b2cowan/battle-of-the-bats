@@ -1202,6 +1202,14 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > - **/marketing 2026-10-08:** all eight sentences kept as drawn (voice canon, spelling and clock gates clean), one change
 >   proposed for the owner: the coach's series summary "…or change the time or diamond **for all**" → "**for every date**"
 >   ("for all" could read as all teams or all diamonds).
+> - **✅ WALKED 2026-10-09 — ledger §284, all eight passed** (W1 7/7 · W2 5/5 · W3 5/5 · W4 4/4 · W5 3/3 · W6 7/7 · W7 3/3 ·
+>   W8 4/4), every write and every Cancel read back on dev (`.probe/s6a-w*-readback.mjs`). Found on the walks: the Venue list
+>   ran under a window's top edge (W1, fixed on dev 2026-10-09: it and the tag and opponent pickers hang over the window —
+>   /review + commit owed); two owner calls in W1
+>   (a same-named place's row drops "not checked", the line under Venue becomes a dotted pill — committed `241e1bf5`); the
+>   event window's pencil to its head (an owner call after W1, committed `0366fb04`). **Open, both the owner's call:** a series
+>   edit checks the clashes of the opened date only (W4; proposed: ask the scope from the pencil, mockup offered), and
+>   "for all" → "for every date". Next: mig 319 to prod ahead of the code, then 6b.
 
 - [ ] **One venue book:** the coach place book learns to *reference* an org venue (a place can be "one of the club's venues" or free-text; the coach still owns the row), tournaments read `source_org_venue_id` for clashes, and a **cross-module clash check** runs on every write to rep events, league games/practices and tournament games ("Diamond 2 is booked by 12U AA practice 6–8 p.m.") — warn, never block.
 - [ ] Venue Library: role gate matches who schedules (league_admin), errors surface, in-use guard, facility edit, copy for all modules, sidebar link everywhere.
