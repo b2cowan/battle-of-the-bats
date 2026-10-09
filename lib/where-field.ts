@@ -9,7 +9,7 @@
  */
 import { surfaceLabel } from './sports.ts';
 import { filterPlaces, placeKey } from './coach-places.ts';
-import { formatVenueLocation } from './venue-label.ts';
+import { VENUE_FACILITY_SEPARATOR, formatVenueLocation } from './venue-label.ts';
 import type { ClubVenueOption, OrgVenue, RepTeamPlace } from './types';
 
 /** Where a booking is, as the field holds it. `source` says which book the venue came from. */
@@ -182,9 +182,21 @@ export function whereOfLibraryRow(
   if (!row) return EMPTY_WHERE;
   if (row.orgVenueId) {
     const v = venues.find(x => x.id === row.orgVenueId);
-    const f = v?.facilities.find(x => x.id === row.orgVenueFacilityId) ?? null;
+    if (!v) {
+      // ⚠ A VENUE THE LIST DOESN'T CARRY — an ARCHIVED one (Club Tier 6b, Ask 9: archived venues leave every picker and
+      // keep every booking). Read the booking's own words back, "Venue — Facility" split at its one separator, and keep
+      // BOTH links: rebuilding it from the list would leave the facility unset, and the next save would drop the link.
+      const line = row.location ?? '';
+      const at = row.orgVenueFacilityId ? line.lastIndexOf(VENUE_FACILITY_SEPARATOR) : -1;
+      return {
+        source: 'club', location: at > 0 ? line.slice(0, at) : line, locationAddress: '',
+        fieldNumber: at > 0 ? line.slice(at + VENUE_FACILITY_SEPARATOR.length) : '',
+        placeId: null, orgVenueId: row.orgVenueId, orgVenueFacilityId: row.orgVenueFacilityId ?? null,
+      };
+    }
+    const f = v.facilities.find(x => x.id === row.orgVenueFacilityId) ?? null;
     return {
-      source: 'club', location: v?.name ?? row.location ?? '', locationAddress: v?.address ?? '',
+      source: 'club', location: v.name, locationAddress: v.address ?? '',
       fieldNumber: f?.name ?? '', placeId: null, orgVenueId: row.orgVenueId, orgVenueFacilityId: f?.id ?? null,
     };
   }

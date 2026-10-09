@@ -1,6 +1,18 @@
 {
   "generated": "2026-10-08T03:10:47.176Z",
   "entries": {
+    "admin-calendar|768|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-calendar-list|768|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-calendar-month|768|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
+      "detail": "16px tall (floor 44)"
+    },
     "admin-rep-assistant-coaches|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -2921,14 +2933,6 @@
       "reason": null,
       "detail": "content spills 49px with overflow-x:visible — no scroller owns it"
     },
-    "admin-org-venues|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-org-venues|361|tap-floor|button·Add First Venue": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
     "admin-org-coach-links|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -3776,14 +3780,6 @@
     "admin-org-settings-pdf|390|content-overflow|select·Readable — more spacing, easier to scanC": {
       "reason": null,
       "detail": "content spills 20px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-org-venues|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-org-venues|390|tap-floor|button·Add First Venue": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
     },
     "admin-org-coach-links|390|tap-floor|a·Public site": {
       "reason": null,
@@ -4644,14 +4640,6 @@
     "admin-org-settings-pdf|768|tap-floor|select·Readable — more spacing, easier to scanC": {
       "reason": null,
       "detail": "43px tall (floor 44)"
-    },
-    "admin-org-venues|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-org-venues|768|tap-floor|button·Add First Venue": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
     },
     "admin-org-coach-links|768|tap-floor|a·Public site": {
       "reason": null,

@@ -14,8 +14,11 @@ type GameLike = {
  * corners of the product used to render a plain hyphen and drifted from the
  * live labels.
  */
+/** The one separator between a venue and its facility in a stored line — `whereOfLibraryRow` splits a line at it. */
+export const VENUE_FACILITY_SEPARATOR = ' — ';
+
 export function formatVenueLocation(venueName: string, facilityName?: string | null): string {
-  return facilityName ? `${venueName} — ${facilityName}` : venueName;
+  return facilityName ? `${venueName}${VENUE_FACILITY_SEPARATOR}${facilityName}` : venueName;
 }
 
 /**

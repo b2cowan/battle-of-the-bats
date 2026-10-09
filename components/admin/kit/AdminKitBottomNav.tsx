@@ -51,7 +51,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const pathname = usePathname();
   const router = useRouter();
   const nav = useAdminKitNav();
-  const { base, programs, alsoOnPlan, brief, orgLinks, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups } = nav;
+  const { base, programs, alsoOnPlan, brief, orgLinks, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups, calendarLink } = nav;
   const { currentOrg } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
@@ -136,7 +136,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
 
   const moreLinks: KitLink[] = tournamentBar
     ? tourMoreGroups.flatMap(g => g.items)
-    : [...morePrograms.map(p => ({ key: p.key, label: p.label, href: p.href })), ...orgLinks];
+    : [...(calendarLink ? [calendarLink] : []), ...morePrograms.map(p => ({ key: p.key, label: p.label, href: p.href })), ...orgLinks];
   const moreActive = moreLinks.some(l => isKitLinkActive(pathname, l))
     || (!tournamentBar && nav.section === 'org')
     || pathname === `${base}/notifications`;
@@ -226,6 +226,15 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                     <ArrowLeft size={17} aria-hidden />
                     <span>Back to club</span>
                   </Link>
+                  <div className={styles.dropDivider} />
+                </>
+              )}
+
+              {/* The club calendar (Club Tier 6b, Ask 7): the club bar's More sheet opens on it — its first row, because
+                  the bar holds Overview and the club's first three programs. Not on the tournament bar. */}
+              {!tournamentBar && calendarLink && (
+                <>
+                  {row(calendarLink, calendarLink.icon)}
                   <div className={styles.dropDivider} />
                 </>
               )}

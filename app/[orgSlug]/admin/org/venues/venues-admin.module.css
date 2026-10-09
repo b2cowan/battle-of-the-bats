@@ -1,112 +1,8 @@
 .page { }
 
-.pageHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.headerLeft { display: flex; align-items: flex-start; gap: 1rem; }
-
-.headerIcon {
-  width: 48px;
-  height: 48px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--logic-lime);
-  flex-shrink: 0;
-}
-
-.pageTitle { font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; color: var(--white); }
-.pageSub   { color: var(--white-60); font-size: 0.9rem; }
-
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-/* ── Venue card list ── */
-
-.venueList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  max-width: 860px;
-  margin: 0 auto;
-}
-
-.venueCard {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 4px;
-  background: var(--surface);
-  overflow: hidden;
-}
-
-.venueCard.expanded {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.4);
-}
-
-.venueHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.1s;
-}
-
-.venueHeader:hover {
-  background: rgba(var(--blueprint-blue-rgb), 0.06);
-}
-
-.expandIcon {
-  color: var(--white-40);
-  flex-shrink: 0;
-  transition: transform 0.15s;
-}
-
-.expanded .expandIcon {
-  transform: rotate(90deg);
-}
-
-.venueMeta {
-  flex: 1;
-  min-width: 0;
-}
-
-.venueName {
-  font-weight: 700;
-  color: var(--white);
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.venueName svg {
-  color: var(--logic-lime);
-  flex-shrink: 0;
-}
-
-.venueAddress {
-  color: var(--white-50);
-  font-size: 0.8rem;
-  margin-top: 0.1rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* The Venue library page's header, card list and kit layer retired with its old look (Club Tier Stage 6b, 2026-10-09):
+   that page reads components/admin/kit/club/VenueLibrary.module.css now. What is left here is the tournament's Venues &
+   Facilities screen's (and its Import from Library window's), until Tournament Stage 5 redraws it. */
 
 .facilityCount {
   font-family: var(--font-data);
@@ -117,19 +13,7 @@
   flex-shrink: 0;
 }
 
-.venueActions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
-
 /* ── Facility list (expanded area) ── */
-
-.facilitySection {
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  padding: 0.5rem 1rem 0.75rem;
-}
 
 .facilityList {
   display: flex;
@@ -282,10 +166,6 @@
 }
 
 /* ── Misc ── */
-
-.emptyCta {
-  margin-top: 0.5rem;
-}
 
 .importBar {
   display: flex;
@@ -452,55 +332,6 @@
 /* ────────────────────────────────────────────────────────── */
 
 @media (max-width: 760px) {
-  .pageHeader {
-    align-items: flex-start;
-    flex-direction: column;
-    margin-bottom: 1rem;
-  }
-
-  .headerLeft {
-    align-items: flex-start;
-    width: 100%;
-    min-width: 0;
-  }
-
-  .headerIcon {
-    width: 40px;
-    height: 40px;
-  }
-
-  .pageTitle {
-    font-size: 1.25rem;
-    overflow-wrap: anywhere;
-  }
-
-  .pageSub {
-    margin-top: 0.2rem;
-    font-size: 0.82rem;
-    line-height: 1.4;
-  }
-
-  .headerActions {
-    width: 100%;
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .headerActions :global(.btn),
-  .headerActions :global(button) {
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
-  }
-
-  .venueHeader {
-    padding: 0.65rem 0.75rem;
-  }
-
-  .facilitySection {
-    padding: 0.5rem 0.75rem 0.75rem;
-  }
-
   .addFacilityRow {
     flex-direction: column;
   }
@@ -580,58 +411,16 @@
   .addVenueLabel { display: none; }
 }
 
-/* ═══ Club Tier Stage 1 (A14), with the Admin Design Continuity switch on only ════════════════════
-   The header's line re-homed as the page's lede (F3), and a refused save that SAYS so. Slice 2
-   restyles the rest of this page; these two are Stage 1's. ⚠ TOKENS ONLY (checkAdminKit). */
-:global([data-admin-kit]) .kitLede {
-  margin: 0 0 1rem;
-  max-width: 64ch;
-  font-size: var(--type-support);
-  line-height: 1.45;
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .kitRefusal {
-  margin: 0 0 1rem;
-  padding: 0.65rem 0.85rem;
-  border-radius: 8px;
-  border: 1px solid rgba(var(--danger-rgb), 0.35);
-  background: rgba(var(--danger-rgb), 0.07);
-  font-size: var(--type-support);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .kitRefusalClose {
-  border: none;
-  background: none;
-  padding: 0;
-  font: inherit;
-  font-weight: 650;
-  color: var(--home-olive);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
 /* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
-   The rest of the Venue library (Stage 1 gave it its header, lede and refusal line above): each
-   venue a kit card that opens to its fields, the fields as hairline rows with the kit's quiet chip
-   for their type, the inline add/edit row on the portal's field. Titles and data leave the console
-   face (F2); the facility type stays in the chip's data face. ⚠ TOKENS ONLY (checkAdminKit). */
+   The tournament's Venues & Facilities screen: the fields as hairline rows with the kit's quiet chip for their type,
+   the inline add/edit row on the portal's field. Titles and data leave the console face (F2); the facility type stays in
+   the chip's data face. (The Venue library's own cards and lede were retired with its old look, Club Tier 6b.)
+   ⚠ TOKENS ONLY (checkAdminKit). */
 
-:global([data-admin-kit]) .venueCard {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .venueCard.expanded { border-color: var(--home-line-strong); }
-:global([data-admin-kit]) .venueHeader:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .expandIcon,
 :global([data-admin-kit]) .expandChevron { color: var(--text-tertiary); }
-:global([data-admin-kit]) .venueName { color: var(--text-primary); }
-:global([data-admin-kit]) .venueName svg,
 :global([data-admin-kit]) .venueNameIcon { color: var(--home-olive); }
-:global([data-admin-kit]) .venueAddress { color: var(--text-tertiary); }
 :global([data-admin-kit]) .facilityCount { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-tertiary); }
 
-:global([data-admin-kit]) .facilitySection { border-top-color: var(--home-line); }
 :global([data-admin-kit]) .facilityItem,
 :global([data-admin-kit]) .facilityItemEdit { border-bottom-color: var(--home-line); }
 :global([data-admin-kit]) .facilityName { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-primary); }

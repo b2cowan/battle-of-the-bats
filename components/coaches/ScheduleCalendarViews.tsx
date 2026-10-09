@@ -413,7 +413,9 @@ export function ScheduleWeekView({ data, curWeek }: { data: ScheduleViewData; cu
     return d;
   });
   const cells = days.map(day => {
-    const key = day.toISOString().slice(0, 10);
+    // Built from calendar parts, so read back from calendar parts, as Month's cells are (C0): `toISOString()` on a
+    // locally-built midnight reads the UTC day, a day early on any device east of UTC (Club Tier 6b, Ask 8).
+    const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
     const dayTryouts = tryoutSessions.filter(s => tryoutSessionDay(s.startsAt) === key);
     const dayGames = unmirroredGames

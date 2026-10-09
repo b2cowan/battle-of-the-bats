@@ -359,8 +359,25 @@ window opened underneath the phone's bottom bar, its Create button out of reach.
 games count as bookings: the club's own planned tournament holds the diamond. The owner walked all eight checks on
 2026-10-09, and every one passed. Two questions came out of the walks for the owner: whether editing a repeating practice
 should ask "this one or the whole series" up front (so every date it moves is checked for clashes, not just the one opened),
-and whether the series line should say "for every date" instead of "for all". Next: 6b (the
-calendar and the Venue library).
+and whether the series line should say "for every date" instead of "for all". **6b was built on 2026-10-09**
+(on the test system; not yet released or committed). The club admin gets **Calendar** under Overview: the whole club's
+week on one page — every team's games and practices, house league, and each tournament day as one booking — with the
+clashes marked in amber, a count that filters to them, and a read-only window that shows both sides of a clash with each
+head coach and a link to the schedule that owns it. Times say once that they are Eastern. Export gives Excel, CSV or a
+calendar file of what is on screen. Each person sees only the programs they can open, and nothing on it changes a
+schedule. The **Venue library** became a table that says who books each venue this season; a venue reads first and edits
+whole; the league admin can now save to it (they were refused); renaming a diamond reaches the upcoming bookings, while
+past games keep the name they were played under; a venue anything books is **archived** (it leaves every list, its
+bookings keep it, and it can come back) instead of deleted, so a delete can no longer strip a venue from a season of
+house-league games. Behind it, only the server can now change the library (before, any member could). Three schedules
+that grouped weeks by the phone's or the server's clock now use Eastern time, so a Sunday-night game stays in its own
+week. It was reviewed before any walk; the review's main catches were fixed — chiefly a rename that, if a save failed
+halfway, could have left the bookings with the old name. The same day the screens were checked in both themes against
+the drawings: five things were fixed, the most visible being that on a computer the phone's stacked week also showed under
+the grid, and that in Dark the week's bookings looked like holes in the page. The wording was settled: Delete now says
+"nothing has ever booked it", and Archive says existing bookings keep the venue. Next: the nine walks (ledger §288, on the
+hub's QA tab), the commit on the owner's word, then the joint Stage 10 + 11 mockup session (permits and the club
+scheduler).
 
 **Stage 11 — the club's schedules: added by the owner 2026-10-08 and ruled the same day; not yet drawn.** A club admin who has to
 share out the dome's winter hours, the pitching tunnel's nights or house league's practice slots does it today

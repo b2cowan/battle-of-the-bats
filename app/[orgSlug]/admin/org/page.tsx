@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Users2, RefreshCw, MapPin, CreditCard, Settings, FileText, UserCheck } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 export default function OrgAdminHub() {
@@ -37,12 +38,15 @@ export default function OrgAdminHub() {
       icon: RefreshCw,
       href: `${adminBase}/tournaments/manage`,
     },
-    {
-      label: 'Venues',
-      desc: 'Manage venue locations and field assignments',
+    // ⚖ ONE NAME, AND THE PLAN'S GATE (Club Tier Stage 6b, S6-11): the rail, the page and this tile all say "Venue
+    // library", and the tile shows only on a plan that carries it — a League-or-lower club no longer gets a door to a
+    // page that says it isn't on the plan. Copy for /marketing.
+    ...(hasOrgVenueLibrary(currentOrg?.planId) ? [{
+      label: 'Venue library',
+      desc: 'The club’s venues and their facilities, booked by every program',
       icon: MapPin,
       href: `${base}/venues`,
-    },
+    }] : []),
     ...(userRole === 'owner' || userRole === 'admin' ? [
       {
         label: 'PDF Settings',

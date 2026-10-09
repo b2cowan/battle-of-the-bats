@@ -28,7 +28,7 @@
  * condition on its row too.
  */
 import {
-  Users, DollarSign, Contact, Globe, CalendarDays, Trophy, Building2, Users2, CreditCard, Settings,
+  Users, DollarSign, Contact, Globe, CalendarDays, CalendarClock, Trophy, Building2, Users2, CreditCard, Settings,
   MapPin, FileText, ScrollText,
   type LucideIcon,
 } from 'lucide-react';
@@ -199,6 +199,25 @@ export function kitPrograms({
   return order
     .filter(key => canUse(PROGRAM_CAPABILITY[key]))
     .map(key => ({ key, ...programDef(key, base) }));
+}
+
+/**
+ * ⚖ THE CLUB CALENDAR'S DOOR (Club Tier Stage 6b, Ask 7 — design log 2026-10-09 (1)): "Calendar", directly under Overview
+ * in the rail and the FIRST row of the phone's More sheet. It spans every program, so it belongs to no program's group.
+ * Its glyph is a calendar with a clock, because House league's rail glyph is already the plain calendar. It shows to
+ * whoever can open at least one program whose schedule it reads (rep teams, house league, tournaments — `canUse` is the
+ * same role + plan pair the page's route asks, `calendarPrograms`), and never on a Tournament plan (no club side) or a
+ * cancelled one. Each reader sees only the programs they can open; the page says so by what it shows.
+ */
+export function kitCalendarLink({ base, canUse, isCanceled, tournamentTier }: {
+  base: string;
+  canUse: (capability: Capability) => boolean;
+  isCanceled: boolean;
+  tournamentTier: boolean;
+}): KitLink | null {
+  if (isCanceled || tournamentTier) return null;
+  const reads = canUse('module_rep_teams') || canUse('module_house_league') || canUse('module_tournaments');
+  return reads ? { key: 'calendar', label: 'Calendar', href: `${base}/calendar`, exact: true, icon: CalendarClock } : null;
 }
 
 /** The Organization group's icon (the rail row and the More section share it). */

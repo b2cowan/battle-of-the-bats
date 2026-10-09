@@ -1,6 +1,7 @@
 'use client';
 import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import HelpHubClient, { type HelpHubCard, type HelpHubRolePath } from '@/components/help/HelpHubClient';
 import styles from '@/components/help/help.module.css';
 
@@ -104,6 +105,11 @@ export default function AdminHelpHubPage() {
         { label: 'Fix a member access issue', href: `${helpBase}/org#recipe-fix-member-access` },
         { label: 'Turn on included modules', href: `${helpBase}/org#recipe-enable-modules` },
         ...(isClub ? [{ label: 'Club plan & billing', href: `${helpBase}/org#club-plan-and-billing` }] : []),
+        // Club Tier Stage 6b: the club calendar and the Venue library, where the plan carries the library.
+        ...(hasOrgVenueLibrary(currentOrg?.planId) ? [
+          { label: 'See the whole club’s week', href: `${helpBase}/org#club-calendar` },
+          { label: 'Set up the club’s venues', href: `${helpBase}/org#venue-library` },
+        ] : []),
         { label: 'If your subscription ends', href: `${helpBase}/org#subscription-ends` },
       ],
     }] : []),

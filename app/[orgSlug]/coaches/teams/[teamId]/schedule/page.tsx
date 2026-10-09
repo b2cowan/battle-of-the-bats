@@ -35,10 +35,10 @@ import { gameDayConsolePath, gameDayWindow, isGameDayEvent, toGameDayEventShape,
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { pickTodayRow } from '@/lib/coach-schedule-phone';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
-import { tournamentToday, utcToZonedInputs } from '@/lib/timezone';
+import { mondayOfDay, tournamentToday, utcToZonedInputs } from '@/lib/timezone';
 import { EVENT_LABELS } from '@/lib/coach-schedule-vocab';
 import ScheduleImportSheet from '@/components/coaches/ScheduleImportSheet';
-import { GAME_EVENT_TYPES, dayStr, errorMessage, fmtDate, isLineupEvent, sortDayEvents, weekKey } from '@/lib/coach-schedule-view';
+import { GAME_EVENT_TYPES, dayStr, errorMessage, fmtDate, isLineupEvent, sortDayEvents } from '@/lib/coach-schedule-view';
 import {
   ScheduleEventChip, ScheduleListView, ScheduleMonthView, ScheduleWeekView,
   type ScheduleRowDecor, type ScheduleViewData,
@@ -742,7 +742,7 @@ export default function CoachesSchedulePage({
   }
 
   const curMonth = cursorDate.slice(0, 7);
-  const curWeek  = weekKey(cursorDate + 'T00:00:00');
+  const curWeek  = mondayOfDay(cursorDate); // the cursor is a calendar date: its Monday, never moved through a clock
 
   /** What every event row carries, and what all three views draw from. */
   const rowDecor: ScheduleRowDecor = {

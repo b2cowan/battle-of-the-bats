@@ -81,7 +81,7 @@ export default function AdminKitRail() {
   const nav = useAdminKitNav();
   const {
     base, orgSlug, programs, alsoOnPlan, brief, orgLinks, section, tournamentOnly, isCanceled,
-    onTournaments, coachDoor,
+    onTournaments, coachDoor, calendarLink,
   } = nav;
   const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
@@ -139,6 +139,11 @@ export default function AdminKitRail() {
       <nav className={styles.railScroll} aria-label="Admin navigation">
         {!tournamentOnly && !isCanceled && (
           <RailRow href={base} label="Overview" active={pathname === base} icon={LayoutGrid} />
+        )}
+        {/* The club calendar (Club Tier 6b, Ask 7): directly under Overview — it spans every program, so it is no
+            program's row. `kitCalendarLink` holds its gate. */}
+        {calendarLink && !tournamentOnly && (
+          <RailRow href={calendarLink.href} label={calendarLink.label} active={isKitLinkActive(pathname, calendarLink)} icon={calendarLink.icon} />
         )}
 
         {onTournaments ? (

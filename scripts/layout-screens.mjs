@@ -1425,6 +1425,17 @@ export const SCREENS = [
     interact: openKitTakeOffline, scope: '[data-kit-dialog]' },
   { id: 'admin-org-settings-pdf',      area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings/pdf` },
   { id: 'admin-org-venues',            area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues` },
+  // Club Tier Stage 6b: the Venue library's read-first venue window and Add venue (it asks), and the club calendar's
+  // three views (desk and phone — the sweep's widths). The calendar opens on the sweep clock's week.
+  { id: 'admin-org-venues-window',     area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues`,
+    interact: (page) => openKitDialogBy(page, page.locator('table button:visible, [data-row-list] button:visible')), scope: '[data-kit-dialog]' },
+  { id: 'admin-org-venues-add',        area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues`,
+    interact: (page) => openKitDialogBy(page, page.locator('#org-venue-add-btn:visible')), scope: '[data-kit-dialog]' },
+  { id: 'admin-calendar',              area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar` },
+  { id: 'admin-calendar-list',         area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,
+    interact: async (page) => { const b = page.locator('[aria-label="Show the calendar as"] button:has-text("List"):visible').first(); if (await b.count()) { await b.click(); await page.waitForTimeout(600); } } },
+  { id: 'admin-calendar-month',        area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,
+    interact: async (page) => { const b = page.locator('[aria-label="Show the calendar as"] button:has-text("Month"):visible').first(); if (await b.count()) { await b.click(); await page.waitForTimeout(600); } } },
   { id: 'admin-org-coach-links',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/bring-in` },
   { id: 'admin-org-tournaments',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/tournaments` },
 

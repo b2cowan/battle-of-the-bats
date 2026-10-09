@@ -1210,6 +1210,128 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 >   event window's pencil to its head (an owner call after W1, committed `0366fb04`). **Open, both the owner's call:** a series
 >   edit checks the clashes of the opened date only (W4; proposed: ask the scope from the pencil, mockup offered), and
 >   "for all" → "for every date". Next: mig 319 to prod ahead of the code, then 6b.
+>
+> **🔨 6b BUILT 2026-10-09** (from `CLUB_TIER_STAGE6B_BUILD_PROMPT.md`, to hub v64's specimens 5 and 6; NOT committed — commit on
+> the owner's word, Part 0 its own commit). 6a was committed and walked first (§284 ✅).
+> - **Part 0 (the rulings, design log 2026-10-09):** (1) the club calendar — Calendar under Overview with the calendar-with-clock
+>   glyph, the coach schedule's toolbar, one clock said once, the clash count is the amber pill that doubles as Clashes only, a
+>   booking opens to read both sides; (2) a count that is a STATUS may wear the amber pill; (3) on a club-wide page a booking's
+>   colour is its TEAM; (4) Archive when anything books a record, Delete only when nothing does. In-repo memory index line updated.
+> - **The clock fix (Ask 8, S6-12).** One rule in `lib/timezone.ts` (`mondayOfDay`, `orgWeekKey`, `orgMonthKey`): the coach
+>   schedule's week/month keys (`lib/coach-schedule-view.ts` — an event's INSTANT files by its org day; the page's CURSOR, a
+>   calendar date, is never moved through a clock), house league's admin schedule (its key AND its "Week of" label, which named the
+>   Sunday before on every Eastern device — same cause, found while there), the public league schedule (the server's UTC clock).
+>   Found while there: the coach schedule's WEEK view keyed its seven days by `toISOString()` on a local midnight (a day early on any
+>   device east of UTC) — now calendar parts, as Month already was. The admin team schedule's private date copies point at the
+>   shared helpers (the Stage 2 note "a shared pure module when the club calendar arrives"). Test `org-week-clock.test.ts` (Sunday
+>   9:30 p.m. EST/EDT, run under `TZ=Pacific/Auckland`).
+> - **The Venue library (Ask 9).** Mig **321** (members read; the six member write policies dropped and INSERT/UPDATE/DELETE revoked
+>   from `authenticated`; S6-10) — DEV only, verified (`pg_policies` = the two SELECT policies), `MANUAL_PROD_STEPS.json` entry
+>   (policy-only = invisible to the drift check), order independent of the code. Dictionary updated. **The save rule**
+>   (`canSaveVenueLibrary`, `lib/venue-library.ts`: owner, admin, league admin, or `create_tournaments`) is checked once at the top
+>   of every POST; the route's actions are now save-venue (Add venue with its facilities — create asks), update-venue (the WHOLE
+>   record, validated before any write: names, duplicates, a removed facility refused when a booking holds it), archive-venue,
+>   restore-venue, delete-venue (refused while ANY booking holds the venue, past included, a tournament copy's link included). The
+>   old per-facility actions retired with their only caller. **A rename reaches the upcoming bookings** (`carryWordsForward`,
+>   `lib/venue-library-server.ts`: rep events + tryout days' location / address / field number, house league's "Venue — Facility"
+>   line; starts now or later; `updated_at` stamped as the place book's update-upcoming does; no notice; tournament copies untouched).
+>   **What books it** (`readVenueUsage`): this season = a team's LIVE season, a house-league season not completed/archived, a
+>   tournament not completed/archived (draft tournaments count — the 6a ruling); `anyBooking` = any row ever. **The page**
+>   (1200px): title + eyebrow, Add venue (lime) for savers only, the lede in the toolbar, the table (Venue · Facilities · Booked by
+>   this season · chevron; phone rows), "N archived venues" disclosure, LoadFailed on a failed read, the plan lock as an empty card.
+>   **The venue window** (`VenueLibraryWindows.tsx`): reads first; the pencil edits the whole record, autosaving through
+>   `useRecordAutosave` with the floating pill and the held reasons; facility rows with In use / ✕; Previous · Next; Archive / Bring
+>   back at the foot's start; Delete ends the body (`RecordDelete`) when nothing books it; the Archive / Delete questions. **Pickers
+>   drop archived venues** — the GET a picker calls returns active venues only (house league's Venue field, the tournament's Import
+>   from Library), and 6a's `getClubVenueLibrary` already filtered them; **an edit of a booking already on an archived venue keeps
+>   both links** (`whereOfLibraryRow` reads the booking's own "Venue — Facility" line back when the list no longer carries the venue
+>   — before this, house league's form would have rebuilt it without its facility and the next save dropped the link; the shared
+>   field shows the stored facility instead of a false "Not set"). **The Organization tile** is "Venue library" and plan-gated
+>   (S6-11). **The old look retired**: the page's `useAdminKit` / legacy header gone, its half of `venues-admin.module.css` (header,
+>   cards, the kit layer's lede/refusal/cards) deleted — kitScope 34 → 23, `--init` locked (only this stage's two entries moved).
+> - **The club calendar (Asks 6, 7).** The door: `kitCalendarLink` (lib/admin-kit-nav.ts) — one gate for the rail (directly under
+>   Overview) and the More sheet (its first row): not cancelled, not a Tournament plan, and the reader opens rep teams, house league
+>   or tournaments. The read: `GET /api/admin/club-calendar` → `readClubCalendar` (`lib/club-calendar.ts`): one window (≤ 42 days)
+>   of rep events (no external-tournament containers, no cancelled), tryout days, league games (not cancelled/postponed) and
+>   practices, and the club's tournaments' games aggregated to ONE booking per tournament per day (game count, divisions, span);
+>   a mirrored game inside a tournament the reader sees is not listed again (S6-06); the CLASHES come from 6a's rule —
+>   `findClashPairs` (new, beside `findClubClashes`, the same pair rule `clashKindOf`) over the club's whole linked pool padded a day
+>   each side, whoever can open it; the other side is named as 6a names it (name, kind, time, where) and carries its head coach only
+>   for a reader who opens rep teams. Each reader sees only `calendarPrograms` (the role + plan pair; a staff member's tournament
+>   assignments narrow tournaments). Doors: the admin's team schedule / tryouts, or the Coaches Portal for someone who coaches the
+>   team; a season's schedule; a tournament (sets it current, then opens its dashboard). The page: the coach schedule's toolbar (the
+>   view switch leads, Venue · Program · Team quiet pills with counts, Export right — Excel, CSV, Calendar .ics with one "what it
+>   holds" line), the date row (arrows, "Times in Eastern time.", the amber clash count = Clashes only), Week (team-coloured cards,
+>   amber mark, dashed when busy-then), List (the kit's table, day bands, "Clashes with …" under the place), Month (a count and an
+>   amber mark per day; a day opens its week's List and scrolls to it), the read window (no pencil, no lime, both sides in one
+>   amber-edged white block). Phone: the View drawer in the title row, the stacked week (`groupWeekDays`), white cards with a corner
+>   chevron, Export as a quiet row under the list. Export catalog entry `club-calendar`.
+> - **Departures from the drawings and the prompt, said at build time:** (1) **no "Done"** in the venue window or the read window —
+>   the 2026-10-09 rulings took Close / Done out of record windows (the bill, Payees); (2) the venue window's **Delete ends the body**
+>   (the 2026-09-30 / 10-09 record rule) rather than sitting in the foot; Archive keeps the foot's start, as drawn (the payee's
+>   Merge place); (3) an **archived venue reads with Bring back and no pencil** (bring it back to change it); (4) the calendar's phone
+>   **Filter button sits in the toolbar row** (FilterGroup's phone form, as on the club's Ledger) rather than the title row;
+>   (5) the drawing's abbreviations ("Lions D2") are not invented — a card says the venue's full name and wraps; (6) house-league games
+>   at one time are separate bookings (only a tournament day is aggregated, as the prompt rules); (7) **not on the calendar**: an
+>   outside tournament's dates container (no time, no venue) and cancelled bookings; (8) **no facility archive** (decided from the
+>   data: 0 club venues on production; a booked facility is renamed, never removed); (9) the read window's head coach line for the
+>   OTHER side shows only to a reader who can open rep teams.
+> - **/simplify (4 lenses) and /review (high-risk, 5 lenses) 2026-10-09.** /simplify folded the calendar read's five booking
+>   builders into helpers, retired the dual-purpose `weekKey` (the coach page's cursor takes `mondayOfDay` — a one-line hunk in a
+>   file another session is editing, clear of its hunks), batched the library save's writes and read back one venue, ran the
+>   carry-forward's writes together, made "is this facility booked" an existence check, and patched the library list in place after
+>   an action instead of re-reading every booking. /review: no C/H; **confirmed and fixed** — (M) the save wrote the venue before
+>   carrying its rename, so a failure in between left the bookings behind and the retry saw no change: the carry now runs FIRST with
+>   the final names, the library rows last (guarded); (M) a tournament game the reader can't see showed no clash on the team's copy
+>   they can — the game's clash now notes under the copy's key, counted once; (M) a refused save could be dropped on a second close —
+>   any edit re-arms it (the payee's rule); (M) a chosen filter vanished from its list in a week without it — kept, count 0; (L) the
+>   usage read refuses a coach-role login; Bring back single-press; a stale failure / scroll target clears; duplicate facility ids
+>   refused; the record's save callback stable; the export catalog's stale `org-venues` entry gets its omitted reason; three stale
+>   dictionary lines. **Accepted:** a staff member sees an unassigned tournament's NAME in a clash line (Ask 5's disclosure level); a
+>   facility name holding " — " splits its display words wrongly on an archived read-back (the links never move); a stored booking
+>   longer than a day that starts before the window isn't compared; check-then-act on Delete (tiny window).
+> - **Gates:** typecheck 0; full unit suite green (6,228; 6b's own: `club-stage6b-screens-guard` 24, `club-calendar` 20,
+>   `venue-library` 13, `org-week-clock` 10); verify:changed — every check passes except **schema parity, which fails identically on
+>   HEAD** (migrations 318–320 dev-only, not 6b's; the snapshots other than the manifest are byte-identical to HEAD's, so not
+>   re-baselined — report-only); spelling, contrast, text contrast, old look (lowered), css selectors, export catalog, dictionary,
+>   manual-migrations, observability, org-context all ✓. Lint: 0 errors in 6b's files.
+> - **After the build, same day (owner's go: restart, the seeded week, the sweep in both themes, the design pass).** Dev server
+>   restarted. **The seeded week, read through the API as each identity (read-only):** owner/admin 9 bookings, 4 clash pairs (Tue
+>   Oct 20: 14U AA × 13U AAA's two practices and its tryout on Lions Park · Diamond 2; 11U AA × Reds vs Blues on Kinsmen Park ·
+>   Diamond B); registrar (house league only) 2 bookings, 1 clash; treasurer — calendar refused (403), library reads with no save;
+>   a coach login — calendar and the library's usage read refused, the picker's list served. **`check:layout`, Warm and Dark,** on
+>   the calendar's three views, the library, its window and the Organization page (1440 / 768 / 390 / 361): clean after three
+>   fixes (Open in Maps and Add a facility under the tap floor at ≤768; the calendar's arrows and amber pill the same; Month's
+>   phone cells overflowed — a day now says its counts as numbers there). Baseline: three new entries with the reason (the shared
+>   filter pill's checkbox at 768 — FilterGroup's, every screen that uses it carries the same), six retired (the old page's "Add
+>   First Venue" and its legacy header's "Public site" link). **`/design` against v64 at 1440 and 390, both themes — five
+>   fixes** (the fifth found while writing the walks: on a phone the List · Week · Month switch still showed beside the View
+>   glyph — the coach kit's two-class `.toolbar .toolbarView` outranked the one-class hide; the switch now hides through a
+>   wrapper with no box of its own, the Export menu's way): (1) the phone's stacked week/list ALSO rendered under the desk grid and table at 1440 (the stack's own `display`
+>   overrode the hide; the stack now owns its display); (2) the venue window read its fields in the kit's mono capitals while the
+>   calendar's window and the drawing read plain quiet labels — it now uses the club record windows' list (`fy.read`, the Payees
+>   window's); (3) the window's section heads moved to the drawing's display face; (4) in Dark the week's cards painted the page
+>   ground (`--home-paper`, near-black) and read as holes in their day — now `--surface-2`, the drawing's raised card in both
+>   themes. Held as built: the Export menu's "what it holds" styling (the shared ExportMenu's), the venue window's two foot rows
+>   (as drawn — the payee's). Re-gated after: typecheck 0, 6b's 67 unit tests (under `TZ=Pacific/Auckland`), css selectors, old
+>   look, contrast, spelling ✓.
+> - **/marketing, same day — four sentences reworded, the rest kept:** the library's lede says what is flagged ("two bookings on
+>   the same facility at the same time"); Archive's "Existing bookings keep it" (not "every"); Delete's "Nothing has ever booked
+>   it" (the rule is ever, not this season); the address hint's "map link" (the coaches' help spelling; the org article moved with
+>   it). Kept: the tile's line, the door words, the Export line, the refusals ("Venue library" capitalised as the page's name;
+>   "any more", the product's spelling). **Declined on merit:** naming Club · Association in the plan line — every gate line in
+>   the product says "League Plus and Club" (Club · Association is Club's larger size), and the reader of a lock line is on a
+>   smaller plan. **Drift flagged for `/strategy`:** `PLAN_PRICING_FACTS.md` has no row for the Venue library's gate (League
+>   Plus · Club · Club · Association — `hasOrgVenueLibrary`); the gate is older than 6b, only its tile is new.
+> - **Owed:** the walks §288 (nine — on the hub's QA tab since v71, 2026-10-09, with 6a's status trued to passed); production
+>   counts after the build; the commit (Part 0 its own; the layout baseline staged as HEAD + this stage's nine entries only — the working copy also
+>   holds another session's 53 pruned house-league entries and a key reorder).
+> - **Follow-ups (not built):** the library's usage counts as one database aggregate (today: a scan of the club's linked bookings on
+>   each open); an "archived venues, flagged" list for the Venue field (today the read-back splits the booking's own line); the
+>   List/Week/Month vocabulary shared with the coach schedule (another session's file).
+> - **Found, not fixed:** the blanket REFERENCES/TRIGGER/TRUNCATE grants every table carries for `anon`/`authenticated` (unreachable
+>   through the data API; a platform item, not this stage's); the tournament import action (`app/api/admin/venues`) would still copy
+>   an archived venue if called directly by id (the list hides them; harmless).
 
 - [ ] **One venue book:** the coach place book learns to *reference* an org venue (a place can be "one of the club's venues" or free-text; the coach still owns the row), tournaments read `source_org_venue_id` for clashes, and a **cross-module clash check** runs on every write to rep events, league games/practices and tournament games ("Diamond 2 is booked by 12U AA practice 6–8 p.m.") — warn, never block.
 - [ ] Venue Library: role gate matches who schedules (league_admin), errors surface, in-use guard, facility edit, copy for all modules, sidebar link everywhere.

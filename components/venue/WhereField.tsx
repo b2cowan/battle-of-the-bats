@@ -266,6 +266,11 @@ export default function WhereField({
               {(pickedVenue?.facilities ?? []).map(f => (
                 <option key={f.id} value={f.id}>{surfaceLabel(sport, f.name) || f.name}</option>
               ))}
+              {/* A booking on an ARCHIVED venue (Club Tier 6b): the list no longer carries the venue, so its facilities
+                  are unknown here — show the booking's own, fixed (the box is greyed), never a "Not set" that isn't true. */}
+              {!pickedVenue && value.orgVenueFacilityId && (
+                <option value={value.orgVenueFacilityId}>{surfaceLabel(sport, value.fieldNumber) || value.fieldNumber}</option>
+              )}
             </select>
           ) : (
             <input

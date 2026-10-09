@@ -1,0 +1,99 @@
+/* The Venue library (Club Tier Stage 6b, specimen 6) — what its table and its venue window add to the kit.
+   ⚠ TOKENS ONLY (checkAdminKit). The page's old stylesheet (`app/[orgSlug]/admin/org/venues/venues-admin.module.css`)
+   is the tournament's Venues & Facilities screen's now; this page reads nothing from it. */
+
+/* The quiet "1 archived venue" line under the table — a disclosure, not a button's look. */
+.archivedToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.75rem 0.25rem 0;
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.archivedToggle:hover { color: var(--text-secondary); }
+.archivedToggle svg { transition: transform 0.15s ease; }
+.archivedToggle[aria-expanded='true'] svg { transform: rotate(180deg); }
+.archived { margin-top: 0.5rem; }
+
+/* The window's sections: a quiet heading in the display face (the drawing's), then rows on hairlines. */
+.sectionHead {
+  margin: 1.25rem 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+/* The drawing's facility card: one bordered card, its rows on hairlines (name · kind · upcoming). */
+.facRows { display: flex; flex-direction: column; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.facRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 7rem 8rem;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.facRow:first-child { border-top: 0; }
+.facKind { font-size: var(--type-support); color: var(--text-tertiary); }
+.facUpcoming { font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; min-width: 6.5rem; text-align: right; }
+
+/* A facility in the form: its name, its kind, then "In use" or its ✕ in one fixed column. */
+.facEdit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9rem 4.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+}
+.facEdit input, .facEdit select { width: 100%; }
+.inUse { font-size: var(--type-support); color: var(--text-tertiary); text-align: center; }
+.facRemove {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.facRemove:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.addFacility { margin-top: 0.25rem; }
+
+.uses { display: flex; flex-direction: column; gap: 0.4rem; font-size: var(--type-body); color: var(--text-primary); }
+.uses b { font-weight: 650; }
+.usesRest { color: var(--text-secondary); }
+.quiet { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+.maps { margin-left: 0.5rem; font-size: var(--type-support); color: var(--home-olive); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.maps:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.deleteEnd { margin-top: 1.5rem; }
+
+/* The tap floor below a desk (the layout sweep, 6b): the Maps door and Add a facility. */
+@media (max-width: 768px) {
+  .maps { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  .addFacility { min-height: var(--tap-min, 44px); }
+}
+
+@media (max-width: 640px) {
+  .facEdit { grid-template-columns: minmax(0, 1fr) 7.5rem 3rem; }
+  .facRemove { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .facUpcoming { min-width: 0; }
+  .facRow { grid-template-columns: minmax(0, 1fr) auto; }
+  .facKind { display: none; }
+}

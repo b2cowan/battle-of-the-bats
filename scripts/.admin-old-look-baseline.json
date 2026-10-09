@@ -54,12 +54,8 @@
   "app/[orgSlug]/admin/onboarding/page.tsx": {
     "useAdminKit": 1
   },
-  "app/[orgSlug]/admin/org/venues/page.tsx": {
-    "useAdminKit": 1,
-    "legacy": 1
-  },
   "app/[orgSlug]/admin/org/venues/venues-admin.module.css": {
-    "kitScope": 34
+    "kitScope": 23
   },
   "app/[orgSlug]/admin/public-site/page.tsx": {
     "useAdminKit": 1,

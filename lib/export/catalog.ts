@@ -753,6 +753,24 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
 
   // ── Planned: Phase D3 (P2 new table exports) ────────────────────────────
   {
+    // Club Tier Stage 6b (Ask 7): the club calendar's one Export — what the page shows (the range and its filters),
+    // Excel first, then CSV, then a Calendar file. No PDF week and no subscribable link in the first cut (Ask 10 hands
+    // the feeds to the schedule deep dive's stage 4).
+    id: 'club-calendar',
+    label: 'Club Calendar',
+    module: 'org',
+    page: 'Calendar',
+    file: 'app/[orgSlug]/admin/calendar/page.tsx',
+    formats: ['xlsx', 'csv', 'ics'],
+    defaultFormat: 'xlsx',
+    minPlan: 'league',
+    audiences: ['org_admin'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: true,
+    serverSide: false,
+    helpSummary: 'Export the club’s bookings for the week or month on screen, as filtered, with each booking’s time, program, team, venue, facility and clash. Calendar adds them to your calendar.',
+  },
+  {
     id: 'org-members',
     label: 'Org Members',
     module: 'org',
@@ -784,9 +802,9 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
   {
     id: 'org-venues',
-    label: 'Venues',
+    label: 'Venue library',
     module: 'org',
-    page: 'Venues',
+    page: 'Venue library',
     file: 'app/[orgSlug]/admin/org/venues/page.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
@@ -794,7 +812,11 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     includesSensitiveFields: false,
     respectsCurrentFilters: false,
     serverSide: false,
-    helpSummary: 'Export venue list with name, address, and notes (scoped to the currently selected tournament).',
+    helpSummary: 'The club’s venues and their facilities. No export: it is the club’s set-up, not a data list.',
+    // ⚠ This entry described an export the page never had ("scoped to the currently selected tournament" — the
+    // tournament's Venues & Facilities screen, a different page). Club Tier Stage 6b redrew the library as a table with no
+    // Export (hub v64, specimen 6): its venues are configuration, and the calendar is where their bookings export.
+    omittedReason: 'configuration surface not data surface — the club’s venues and facilities; their bookings export from the club calendar (Club Tier Stage 6b, specimen 6 draws no Export)',
   },
   {
     id: 'platform-admin-orgs',

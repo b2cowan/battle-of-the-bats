@@ -291,6 +291,33 @@ export function addCalendarDays(date: string, days: number): string {
   return shifted.toISOString().slice(0, 10);
 }
 
+/**
+ * The Monday (`YYYY-MM-DD`) of the week a calendar date falls in — weeks run Monday to Sunday, as every schedule
+ * in the product draws them. Pure date arithmetic on the date's own parts: no zone, safe on the client and server.
+ */
+export function mondayOfDay(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  if (!y || !m || !d) return date;
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  return addCalendarDays(date, -((dow + 6) % 7));
+}
+
+/**
+ * ⚠ THE WEEK A STORED INSTANT FALLS IN, IN THE ORG'S ZONE (Club Tier Stage 6b, Ask 8 — S6-12). Three schedules used
+ * to group by the DEVICE's clock (`new Date(iso).getDay()`) or, on a server page, the SERVER's (UTC on the host),
+ * so a Sunday game after 8 p.m. Eastern filed into the next week. Every week grouping reads this instead: the
+ * instant's org-zone day first ({@link orgDayKey}), then its Monday.
+ */
+export function orgWeekKey(iso: string | null | undefined): string {
+  const day = orgDayKey(iso);
+  return day ? mondayOfDay(day) : '';
+}
+
+/** The month (`YYYY-MM`) a stored instant falls in, in the org's zone — the month groupings' one key (Ask 8). */
+export function orgMonthKey(iso: string | null | undefined): string {
+  return orgDayKey(iso).slice(0, 7);
+}
+
 export function daysBetweenDateStrings(from: string, to: string): number {
   const [ay, am, ad] = from.split('-').map(Number);
   const [by, bm, bd] = to.split('-').map(Number);

@@ -1,517 +1,230 @@
 'use client';
-import { useState, useCallback, useEffect, useRef, createContext, useContext } from 'react';
-import {
-  MapPin, Plus, Pencil, Trash2, X, Check,
-  ChevronRight, ExternalLink,
-} from 'lucide-react';
+/**
+ * Organization › VENUE LIBRARY (Club Tier Stage 6b, Ask 9 — hub K4MPu4ni53Ct7yrDcmWJd9 v64, specimen 6; design log
+ * 2026-10-09 (4)). Once the coach's picker reads it (6a), the library is the club's ONE venue book, and it holds up to
+ * that:
+ *
+ *   the page   — the 1200px column. Title "Venue library" (eyebrow Organization), Add venue — the one lime, and it ASKS —
+ *                for whoever saves. The lede in the toolbar names every program. A table: Venue (the name the link, the
+ *                address under it) · Facilities (by name, in the club's order) · Booked by this season (by program, in
+ *                words) · one chevron; the whole row opens. A quiet "N archived venues" line opens them. On a phone the
+ *                table is the kit's white rows with a chevron.
+ *   a venue    — the read-first window (`VenueWindow`): it reads, the pencil edits it whole, saving as you go.
+ *   archive    — a venue anything books (past included) offers Archive; one nothing books offers Delete (red, asks).
+ *
+ * ⚖ WHO SAVES (Ask 9): the owner, an admin, a league admin, and anyone granted the tournament permission. Everyone else
+ * who can open Organization READS it — no Add venue, no pencil, no Archive or Delete. A refused save says why in the
+ * window (the route's words), never silently.
+ * ⚠ A FAILED LOAD says so, with Try again — never an empty library (S6-09: "No venues in your library yet" over a failed
+ * read invited the club to add its venues twice).
+ * ⚠ THE OLD LOOK IS GONE from this page (its legacy header and its kit-scoped layer): the stylesheet it shared is the
+ * tournament's Venues & Facilities screen's alone now, until Tournament Stage 5.
+ */
+import { useCallback, useMemo, useState } from 'react';
+import { ChevronDown, ChevronRight, MapPin, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { getMapsUrl } from '@/components/LocationLink';
-import type { OrgVenue, OrgVenueFacility, FacilityType } from '@/lib/types';
-import { FACILITY_TYPE_LABELS, FACILITY_TYPES } from '@/lib/types';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import styles from './venues-admin.module.css';
+import { CoachListToolbar } from '@/components/coaches/kit';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import {
+  ClubRow, ClubRowFrame, ClubRowList, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead,
+} from '@/components/admin/kit/club/RepKit';
+import { AddVenueWindow, VenueQuestion, VenueWindow } from '@/components/admin/kit/club/VenueLibraryWindows';
+import own from '@/components/admin/kit/club/VenueLibrary.module.css';
+import { NO_USAGE, VENUE_LIBRARY_WORDS as W, bookedBySummary, type LibraryVenue, type VenueUsage } from '@/lib/venue-library';
 
-// Club Tier Stage 1 (A14), behind the Admin Design Continuity switch: a venue save that is refused
-// SAYS so — the routes answer with a code and a sentence (session 1). With the switch off there is no
-// reporter and each save rethrows exactly as it always has.
-const VenueRefusal = createContext<((message: string) => void) | null>(null);
-const refusalText = (e: unknown) => (e instanceof Error ? e.message : 'That didn’t save. Try again.');
+interface LibraryRead { venues: LibraryVenue[]; usage: Record<string, VenueUsage>; canSave: boolean }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+const facilitiesWords = (v: LibraryVenue) =>
+  [...v.facilities].sort((a, b) => a.displayOrder - b.displayOrder).map(f => f.name).join(' · ');
 
-async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
-  const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.error ?? 'Request failed');
-  return data as T;
-}
-
-// ---------------------------------------------------------------------------
-// Add / Edit Venue Modal
-// ---------------------------------------------------------------------------
-
-function VenueModal({
-  orgSlug,
-  existing,
-  onClose,
-  onSaved,
-}: {
-  orgSlug?: string;
-  existing?: OrgVenue;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const isEdit = !!existing;
-  const [name, setName]       = useState(existing?.name    ?? '');
-  const [address, setAddress] = useState(existing?.address ?? '');
-  const [notes, setNotes]     = useState(existing?.notes   ?? '');
-  const [saving, setSaving]   = useState(false);
-  const report = useContext(VenueRefusal);
-  const [refused, setRefused] = useState<string | null>(null);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setSaving(true);
-    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    try {
-      await requestJson(`/api/admin/org/venues${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: isEdit ? 'update-venue' : 'save-venue',
-          ...(isEdit ? { id: existing!.id } : {}),
-          data: {
-            name:    name.trim(),
-            address: address.trim() || null,
-            notes:   notes.trim()   || null,
-          },
-        }),
-      });
-      onSaved();
-    } catch (e) {
-      if (!report) throw e;
-      setRefused(refusalText(e));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>{isEdit ? 'Edit Venue' : 'Add Venue'}</h3>
-          <button type="button" className="btn btn-ghost btn-data" onClick={onClose}><X size={16} /></button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          {refused && <p className={styles.addFacilityError} role="alert">{refused}</p>}
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label className="form-label">Venue Name *</label>
-            <input
-              className="form-input"
-              placeholder="e.g. Lions Park, Canlan Ice Sports"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label className="form-label">Address</label>
-            <input
-              className="form-input"
-              placeholder="123 Main St, Milton ON L9T 2P7"
-              value={address}
-              onChange={e => setAddress(e.target.value)}
-            />
-            <span style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem', display: 'block' }}>
-              Used for Google Maps links on schedules.
-            </span>
-          </div>
-          <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-            <label className="form-label">Notes</label>
-            <textarea
-              className="form-textarea"
-              placeholder="Parking info, gate access, directions…"
-              rows={2}
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-            />
-          </div>
-          <div className="modal-footer">
-            <button type="button" className="btn btn-ghost btn-data" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary btn-data" disabled={!name.trim() || saving}>
-              <Check size={14} /> {saving ? 'Saving…' : 'Save Venue'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Inline Add-Facility row
-// ---------------------------------------------------------------------------
-
-function AddFacilityRow({
-  orgSlug,
-  orgVenueId,
-  existingFacilities,
-  onAdded,
-}: {
-  orgSlug?: string;
-  orgVenueId: string;
-  existingFacilities: OrgVenueFacility[];
-  onAdded: () => void;
-}) {
-  const [name, setName]               = useState('');
-  const [facilityType, setFacilityType] = useState<FacilityType>('other');
-  const [saving, setSaving]           = useState(false);
-  const nameRef                       = useRef<HTMLInputElement>(null);
-  const report                        = useContext(VenueRefusal);
-
-  const isDuplicate = name.trim().length > 0 &&
-    existingFacilities.some(f => f.name.toLowerCase() === name.trim().toLowerCase());
-
-  async function handleAdd() {
-    if (!name.trim() || isDuplicate) return;
-    setSaving(true);
-    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    try {
-      await requestJson(`/api/admin/org/venues${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'add-facility',
-          data: { orgVenueId, name: name.trim(), facilityType },
-        }),
-      });
-      setName('');
-      setFacilityType('other');
-      onAdded();
-      nameRef.current?.focus();
-    } catch (e) {
-      if (!report) throw e;
-      report(refusalText(e));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div className={styles.addFacilityRow}>
-      <div className={styles.addFacilityInputs}>
-        <div className={styles.facilityNameWrap}>
-          <input
-            ref={nameRef}
-            className={`form-input ${styles.addFacilityName}`}
-            placeholder="Facility name (e.g. Diamond 1, Rink North, Court A)"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleAdd(); } }}
-          />
-          {isDuplicate && (
-            <p className={styles.addFacilityError}>
-              A facility named &ldquo;{name.trim()}&rdquo; already exists in this venue.
-            </p>
-          )}
-        </div>
-        <select
-          className={`form-select ${styles.addFacilityType}`}
-          value={facilityType}
-          onChange={e => setFacilityType(e.target.value as FacilityType)}
-        >
-          {FACILITY_TYPES.map(t => (
-            <option key={t} value={t}>{FACILITY_TYPE_LABELS[t]}</option>
-          ))}
-        </select>
-      </div>
-      <div className={styles.addFacilityActions}>
-        <button
-          className="btn btn-lime btn-data"
-          onClick={() => void handleAdd()}
-          disabled={!name.trim() || saving || isDuplicate}
-        >
-          <Plus size={13} /> {saving ? 'Adding…' : 'Add Facility'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Venue card (expandable)
-// ---------------------------------------------------------------------------
-
-function VenueCard({
-  venue,
-  orgSlug,
-  onEdit,
-  onDelete,
-  onRefresh,
-}: {
-  venue: OrgVenue;
-  orgSlug?: string;
-  onEdit: (v: OrgVenue) => void;
-  onDelete: (id: string) => void;
-  onRefresh: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const facilities = venue.facilities ?? [];
-  const report = useContext(VenueRefusal);
-
-  async function deleteFacility(facilityId: string) {
-    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    try {
-      await requestJson(`/api/admin/org/venues${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete-facility', id: facilityId }),
-      });
-    } catch (e) {
-      if (!report) throw e;
-      report(refusalText(e));
-      return;
-    }
-    onRefresh();
-  }
-
-  return (
-    <div className={`${styles.venueCard} ${expanded ? styles.expanded : ''}`}>
-      {/* Header row — click anywhere to expand */}
-      <div className={styles.venueHeader} onClick={() => setExpanded(x => !x)}>
-        <ChevronRight size={14} className={styles.expandIcon} />
-        <div className={styles.venueMeta}>
-          <div className={styles.venueName}>
-            <MapPin size={13} />
-            {venue.name}
-          </div>
-          {venue.address && (
-            <div className={styles.venueAddress}>{venue.address}</div>
-          )}
-        </div>
-        <span className={styles.facilityCount}>
-          {facilities.length} {facilities.length === 1 ? 'facility' : 'facilities'}
-        </span>
-        {/* Stop propagation so action buttons don't toggle expand */}
-        <div className={styles.venueActions} onClick={e => e.stopPropagation()}>
-          {venue.address && (
-            <a
-              href={getMapsUrl(venue.address)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-ghost btn-data"
-              title="Open in Google Maps"
-            >
-              <ExternalLink size={13} />
-            </a>
-          )}
-          <button
-            className="btn btn-ghost btn-data"
-            title="Edit venue"
-            onClick={() => onEdit(venue)}
-          >
-            <Pencil size={13} />
-          </button>
-          <button
-            className="btn btn-danger btn-data"
-            title="Delete venue"
-            onClick={() => onDelete(venue.id)}
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
-      </div>
-
-      {/* Expanded: facility list + add-facility row */}
-      {expanded && (
-        <div className={styles.facilitySection}>
-          <div className={styles.facilityList}>
-            {facilities.length === 0 ? (
-              <p className={styles.facilityEmptyNote}>
-                No facilities yet — add one below. This venue won&apos;t appear in tournament scheduling until it has at least one facility.
-              </p>
-            ) : (
-              facilities.map(f => (
-                <div key={f.id} className={styles.facilityItem}>
-                  <span className={styles.facilityName}>{f.name}</span>
-                  <span className={styles.facilityTypeBadge}>{FACILITY_TYPE_LABELS[f.facilityType]}</span>
-                  {f.notes && <span className={styles.facilityNotes}>{f.notes}</span>}
-                  <div className={styles.facilityActions}>
-                    <button
-                      className="btn btn-danger btn-data"
-                      title="Remove facility"
-                      onClick={() => void deleteFacility(f.id)}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          <AddFacilityRow orgSlug={orgSlug} orgVenueId={venue.id} existingFacilities={facilities} onAdded={onRefresh} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main page — Org Venue Library
-// ---------------------------------------------------------------------------
-
-export default function OrgVenueLibraryPage() {
-  const { currentOrg } = useOrg();
-  usePageTitle('Venue Library');
-  const orgSlug = currentOrg?.slug;
-  const kit = useAdminKit();
-  const [refusal, setRefusal] = useState<string | null>(null);
-
-  // Venue Library is a League/Club feature only
+export default function VenueLibraryPage() {
+  const { currentOrg, loading: orgLoading } = useOrg();
+  usePageTitle('Venue library');
+  const isPhone = useIsPhone();
+  const slug = currentOrg?.slug ?? '';
+  const q = `orgSlug=${encodeURIComponent(slug)}`;
   const planAllowed = hasOrgVenueLibrary(currentOrg?.planId);
 
-  const [venues, setVenues]     = useState<OrgVenue[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing]   = useState<OrgVenue | undefined>(undefined);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [read, setRead] = useState<LibraryRead | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [asking, setAsking] = useState<'add' | 'archive' | 'delete' | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const [said, setSaid] = useState<string | null>(null);
+  /** Why Bring back didn't go through — said beside its button, in the window. */
+  const [actionError, setActionError] = useState('');
+  const [restoring, setRestoring] = useState(false);
 
-  const refresh = useCallback(async () => {
-    if (!orgSlug) return;
-    setLoading(true);
-    try {
-      const data = await requestJson<OrgVenue[]>(
-        `/api/admin/org/venues?orgSlug=${encodeURIComponent(orgSlug)}`
-      );
-      setVenues(data);
-    } finally {
-      setLoading(false);
-    }
-  }, [orgSlug]);
+  const beginRead = useLatestRead();
+  const load = useCallback(async () => {
+    if (!slug || !planAllowed) return;
+    const current = beginRead();
+    // org-slug-ok: `q` is built from the org context's slug above
+    const r = await moneyFetch<LibraryRead>(`/api/admin/org/venues?${q}&library=1`).catch(() => null);
+    if (!current()) return;
+    if (!r?.ok) { setFailed(true); return; }
+    setFailed(false);
+    setRead(r.data);
+  }, [slug, planAllowed, q, beginRead]);
+  useDeferredLoad(!orgLoading && !!slug, load);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  const active = useMemo(() => (read?.venues ?? []).filter(v => v.isActive), [read]);
+  const archived = useMemo(() => (read?.venues ?? []).filter(v => !v.isActive), [read]);
+  const open = openId && read ? read.venues.find(v => v.id === openId) ?? null : null;
+  const canSave = !!read?.canSave;
+  /* Stable across renders: the window's autosave rebuilds its save from it, and a fresh one every page render would
+     restart the autosave's wait (/review 6b). */
+  const replaceVenue = useCallback((v: LibraryVenue) => setRead(r => r && { ...r, venues: r.venues.map(x => (x.id === v.id ? v : x)) }), []);
 
-  function openAdd()          { setEditing(undefined); setModalOpen(true); }
-  function openEdit(v: OrgVenue) { setEditing(v);      setModalOpen(true); }
+  const header = (
+    <AdminPageHeader
+      eyebrow="Organization"
+      title="Venue library"
+      actions={planAllowed && canSave ? (
+        <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add'); }}
+          aria-label="Add venue" id="org-venue-add-btn">
+          <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add venue</span>
+        </button>
+      ) : undefined}
+    />
+  );
 
-  async function confirmDelete() {
-    if (!deleteId || !orgSlug) return;
-    try {
-      await requestJson(`/api/admin/org/venues?orgSlug=${encodeURIComponent(orgSlug)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete-venue', id: deleteId }),
-      });
-    } catch (e) {
-      if (!kit) throw e;
-      setDeleteId(null);
-      setRefusal(refusalText(e));
-      return;
-    }
-    setDeleteId(null);
-    void refresh();
-  }
-
+  if (orgLoading) return <PageLoading header={header} />;
   if (!planAllowed) {
     return (
-      <div className="empty-state">
-        <MapPin size={32} />
-        <h3>Venue Library not available</h3>
-        <p>The Venue Library is included in League Plus and Club plans. Upgrade your subscription to manage a shared venue library across tournaments.</p>
+      <div className={ck.pageWide}>
+        {header}
+        <EmptyCard icon={<MapPin size={28} aria-hidden />} title="The Venue library isn’t on your plan">{W.planLocked}</EmptyCard>
       </div>
     );
   }
 
+  /** An action landed: the window closes, the page says it once, and the list takes the change in place — what books each
+   *  venue did not move, so there is nothing to read again. */
+  const done = (text: string, patch: (r: LibraryRead) => LibraryRead) => {
+    setAsking(null); setOpenId(null); setActionError(''); setSaid(text); setRead(r => r && patch(r));
+  };
+  const setActive = (id: string, isActive: boolean) => (r: LibraryRead) => ({ ...r, venues: r.venues.map(v => (v.id === id ? { ...v, isActive } : v)) });
+  const openVenue = (id: string | null) => { setSaid(null); setActionError(''); setOpenId(id); };
+  async function restore(v: LibraryVenue) {
+    if (restoring) return; // one press, one request
+    setRestoring(true);
+    setActionError('');
+    // org-slug-ok: `q` is built from the org context's slug above
+    const r = await moneyFetch(`/api/admin/org/venues?${q}`, jsonInit('POST', { action: 'restore-venue', id: v.id })).catch(() => null);
+    setRestoring(false);
+    if (!r?.ok) { setActionError(refusalText(r?.data, 'That venue couldn’t be brought back. Check your connection and try again.')); return; }
+    done(W.broughtBack(v.name), setActive(v.id, true));
+  }
+
+  const table = (venues: LibraryVenue[], label: string) => (
+    <>
+      <div className={`${repKit.tableFrame} ${repKit.deskOnly}`}>
+        <table className={repKit.table} aria-label={label}>
+          <thead>
+            <tr>
+              <th scope="col">Venue</th>
+              <th scope="col">Facilities</th>
+              <th scope="col">{W.bookedByHeading}</th>
+              <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {venues.map(v => {
+              const facilities = facilitiesWords(v);
+              const booked = read?.usage[v.id] ? bookedBySummary(read.usage[v.id]) : null;
+              return (
+                <tr key={v.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; openVenue(v.id); }}>
+                  <td>
+                    <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} onClick={e => { e.stopPropagation(); openVenue(v.id); }}>{v.name}</button>
+                    {v.address && <span className={repKit.cellSub}>{v.address}</span>}
+                  </td>
+                  <td className={facilities ? undefined : repKit.dim}>{facilities || W.noFacilities}</td>
+                  <td className={booked ? undefined : repKit.dim}>{booked ?? W.nothingBooked}</td>
+                  <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div className={repKit.phoneOnly}>
+        <ClubRowFrame><ClubRowList inset label={label}>
+          {venues.map(v => {
+            const booked = read?.usage[v.id] ? bookedBySummary(read.usage[v.id]) : null;
+            return (
+              <ClubRow key={v.id} as="button" aria-haspopup="dialog" onClick={() => { openVenue(v.id); }} title={v.name}
+                caption={[facilitiesWords(v) || W.noFacilities, booked ?? W.nothingBooked].join(' · ')} chevron />
+            );
+          })}
+        </ClubRowList></ClubRowFrame>
+      </div>
+    </>
+  );
+
   return (
-    <VenueRefusal.Provider value={kit ? setRefusal : null}>
-    <div className={styles.page}>
-      {/* Page header — today's, unchanged, as `legacy` while the switch is off */}
-      <AdminPageHeader
-        eyebrow="Organization"
-        title="Venue library"
-        actions={
-          <button className="btn btn-lime" onClick={openAdd} id="org-venue-add-btn">
-            <Plus size={16} /> Add venue
-          </button>
-        }
-        legacy={
-          <div className={styles.pageHeader}>
-            <div className={styles.headerLeft}>
-              <div className={styles.headerIcon}><MapPin size={20} /></div>
-              <div>
-                <h1 className={styles.pageTitle}>Venue Library</h1>
-                <p className={styles.pageSub}>Define your org&apos;s playing locations once — import into any tournament</p>
-              </div>
-            </div>
-            <div className={styles.headerActions}>
-              <button className="btn btn-lime btn-data" onClick={openAdd} id="org-venue-add-btn">
-                <Plus size={16} /> Add Venue
-              </button>
-            </div>
-          </div>
-        }
-      />
-      {/* F3's re-home with A14's copy (specimen 9): the header's line becomes the page's lede, covering
-          every module that reads the library today (house league points at it; tournaments import a
-          copy). Rep teams' own place books join in Stage 6, so it does not claim them yet. Kit only. */}
-      {kit && (
-        <p className={styles.kitLede}>
-          Your fields, diamonds and rinks. House league schedules use them, and tournaments import them. Add a
-          place once, with its fields.
-        </p>
-      )}
-      {kit && refusal && (
-        <p className={styles.kitRefusal} role="alert">
-          {refusal}{' '}
-          <button type="button" className={styles.kitRefusalClose} onClick={() => setRefusal(null)}>Dismiss</button>
-        </p>
-      )}
+    <div className={ck.pageWide}>
+      {header}
+      <CoachListToolbar lede={W.lede} />
 
-      {/* Content */}
-      {loading ? null : venues.length === 0 ? (
-        <div className="empty-state">
-          <MapPin size={32} />
-          <h3>No venues in your library yet</h3>
-          <p>Add your playing locations here. You can import them into any tournament instead of re-entering addresses each season.</p>
-          <button className={`btn btn-lime ${styles.emptyCta}`} onClick={openAdd}>
-            <Plus size={16} /> Add First Venue
-          </button>
-        </div>
+      {failed ? (
+        <LoadFailed title={W.loadFailed} onRetry={() => void load()} />
+      ) : !read ? (
+        <p className={ck.loading}>Loading…</p>
+      ) : active.length === 0 && archived.length === 0 ? (
+        <EmptyCard icon={<MapPin size={28} aria-hidden />} title={W.emptyTitle}
+          action={canSave ? <button type="button" className="btn btn-lime" onClick={() => setAsking('add')}><Plus size={14} aria-hidden /> Add venue</button> : undefined}>
+          {W.emptyBody}
+        </EmptyCard>
       ) : (
-        <div className={styles.venueList}>
-          {venues.map(v => (
-            <VenueCard
-              key={v.id}
-              venue={v}
-              orgSlug={orgSlug}
-              onEdit={openEdit}
-              onDelete={id => setDeleteId(id)}
-              onRefresh={refresh}
-            />
-          ))}
-        </div>
+        <>
+          {active.length > 0 ? table(active, 'Venues') : <p className={ck.hint}>Every venue is archived.</p>}
+          {archived.length > 0 && (
+            <>
+              <button type="button" className={own.archivedToggle} aria-expanded={showArchived} onClick={() => setShowArchived(s => !s)}>
+                <ChevronDown size={14} aria-hidden />{W.archivedLine(archived.length)}
+              </button>
+              {showArchived && <div className={own.archived}>{table(archived, 'Archived venues')}</div>}
+            </>
+          )}
+        </>
       )}
 
-      {/* Add / Edit venue modal */}
-      {modalOpen && (
-        <VenueModal
-          orgSlug={orgSlug}
-          existing={editing}
-          onClose={() => setModalOpen(false)}
-          onSaved={() => { setModalOpen(false); void refresh(); }}
+      {open && read && (
+        <VenueWindow
+          q={q}
+          venue={open}
+          usage={read.usage[open.id]}
+          canSave={canSave}
+          list={open.isActive ? active : archived}
+          onOpen={openVenue}
+          actionError={actionError}
+          onSaved={replaceVenue}
+          onArchive={() => setAsking('archive')}
+          onRestore={() => void restore(open)}
+          onDelete={() => setAsking('delete')}
+          onClose={() => openVenue(null)}
         />
       )}
-
-      {/* Delete confirm */}
-      {deleteId && (
-        <div className="modal-overlay" onClick={() => setDeleteId(null)}>
-          <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Delete Venue?</h3>
-              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}><X size={16} /></button>
-            </div>
-            <p style={{ color: 'var(--white-60)' }}>
-              This venue and all its facilities will be removed from the library.
-              Tournaments that already imported this venue are not affected.
-            </p>
-            <div className="modal-footer">
-              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger btn-data" id="confirm-delete-org-venue" onClick={() => void confirmDelete()}>
-                <Trash2 size={14} /> Delete
-              </button>
-            </div>
-          </div>
-        </div>
+      {(asking === 'archive' || asking === 'delete') && open && read && (
+        <VenueQuestion q={q} kind={asking} venue={open} usage={read.usage[open.id]} onClose={() => setAsking(null)}
+          onDone={() => (asking === 'archive'
+            ? done(W.archived(open.name), setActive(open.id, false))
+            : done(W.deleted(open.name), r => ({ ...r, venues: r.venues.filter(v => v.id !== open.id) })))} />
       )}
+      {asking === 'add' && (
+        <AddVenueWindow q={q} onClose={() => setAsking(null)} onAdded={v => done(W.added(v.name), r => ({
+          ...r,
+          venues: [...r.venues, v].sort((a, b) => a.name.localeCompare(b.name, 'en-CA', { numeric: true })),
+          usage: { ...r.usage, [v.id]: NO_USAGE },
+        }))} />
+      )}
+      {said && <NoticePill key={said} message={said} onDone={() => setSaid(null)} />}
     </div>
-    </VenueRefusal.Provider>
   );
 }

@@ -7,7 +7,7 @@ import {
   getGamesForSeason,
 } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
-import { ORG_TIME_ZONE } from '@/lib/timezone';
+import { ORG_TIME_ZONE, addCalendarDays, formatInOrgZone, orgWeekKey } from '@/lib/timezone';
 import type { LeagueDivision, LeagueTeam, LeagueGame } from '@/lib/types';
 import column from '../../league-column.module.css';
 
@@ -25,22 +25,20 @@ function formatDateTime(iso: string | null): { date: string; time: string } | nu
   };
 }
 
+// ⚠ THE WEEK IS THE ORG'S, NOT THE SERVER'S (Club Tier Stage 6b, Ask 8 — S6-12): this is a server page, and
+// `getDay()` here read the host's clock (UTC on Amplify), so a Sunday game after 8 p.m. Eastern filed into the next
+// week for every family. Filed by the game's org-zone day instead.
 function weekKey(iso: string | null): string {
   if (!iso) return 'unscheduled';
-  const d = new Date(iso);
-  const day = d.getDay();
-  const monday = new Date(d);
-  monday.setDate(d.getDate() - ((day + 6) % 7));
-  return monday.toISOString().slice(0, 10);
+  return orgWeekKey(iso);
 }
 
 function weekLabel(key: string): string {
   if (key === 'unscheduled') return 'Unscheduled';
-  const d = new Date(key + 'T12:00:00');
-  const end = new Date(d);
-  end.setDate(d.getDate() + 6);
+  // A week key is a calendar date: name it and its Sunday by date arithmetic, read at noon in the org's zone.
   const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-  return `Week of ${d.toLocaleDateString('en-CA', opts)} – ${end.toLocaleDateString('en-CA', opts)}`;
+  const day = (date: string) => formatInOrgZone(`${date}T12:00:00Z`, opts);
+  return `Week of ${day(key)} – ${day(addCalendarDays(key, 6))}`;
 }
 
 export default async function PublicSchedulePage({

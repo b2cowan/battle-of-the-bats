@@ -1224,7 +1224,7 @@ the studio and mirrored to the platform audit log.
 
 **Purpose:** the (legacy-named) tournament-scoped **VENUE** record — a ballpark/site that games physically reference. Each row maps to a "venue" object throughout the code.
 
-**Gotchas:** (1) **`diamonds` IS the venue table** — don't look for a `venues` table; `venue_facilities.venue_id` and `games.diamond_id` both point here. (2) **`address` drift** — dev nullable / **prod NOT NULL**; a no-address venue saves on dev, fails on prod. (3) Deleting a `diamonds` row **cascade-deletes** its `venue_facilities`. (4) `source_org_venue_id` is a one-time provenance stamp, **not** a live link.
+**Gotchas:** (1) **`diamonds` IS the venue table** — don't look for a `venues` table; `venue_facilities.venue_id` and `games.diamond_id` both point here. (2) **`address` drift** — dev nullable / **prod NOT NULL**; a no-address venue saves on dev, fails on prod. (3) Deleting a `diamonds` row **cascade-deletes** its `venue_facilities`. (4) `source_org_venue_id` is the copy’s LINK to the club’s library venue: library edits do not flow into the copy, but since Club Tier 6a/6b the clash check, the club calendar and the Venue library read it live (see the field below).
 
 **Fields** (boilerplate `id` omitted):
 
@@ -1241,7 +1241,7 @@ the studio and mirrored to the platform audit log.
 **`notes`** (text) — admin notes.
 
 <!-- dict:col:diamonds.source_org_venue_id -->
-**`source_org_venue_id`** (FK → `org_venues.id`, nullable) — provenance stamp from import-from-org; not copied by clone/import-from-past (gotcha 4).
+**`source_org_venue_id`** (FK → `org_venues.id`, nullable) — the copy's link to the club's library venue, from import-from-org. **Kept by clone and import-from-past since Club Tier 6a** (S6-04; gotcha 4 predates it), and **read live since 6a/6b**: the clash check compares a tournament game on a linked copy with the club's other bookings, the club calendar places it, and the Venue library counts a linked copy as booking the venue (so it archives rather than deletes). Library edits still don't flow into the copy.
 
 ### `venue_facilities`
 <!-- dict:table:venue_facilities -->
@@ -1280,9 +1280,11 @@ the studio and mirrored to the platform audit log.
 <!-- dict:table:org_venues -->
 <!-- dict:table:org_venue_facilities -->
 
-**Purpose:** the **org-level venue library** (reusable masters), **League/Club plan only**. Copied into per-tournament `diamonds`/`venue_facilities` via import-from-org (one-time stamp).
+**Purpose:** the **org-level venue library** (reusable masters), **League/Club plan only** — since Club Tier Stage 6 the club's ONE venue book: house-league games/practices and (mig 319) rep events and tryout days link to it directly (`org_venue_id` / `org_venue_facility_id`), and the clash check compares on it. Copied into per-tournament `diamonds`/`venue_facilities` via import-from-org (one-time stamp, kept by clone/import-from-past since 6a).
 
-**Gotchas:** (1) **One-time copy source, not a live link** — editing the library doesn't update tournament copies. (2) **League/Club gate** — both GET/POST reject `tournament`/`tournament_plus` orgs. (3) `org_venues.is_active` is written true but the **live GET route doesn't filter on it** (only a dead `getOrgVenues` helper does); delete is **hard** (the "mark inactive" is only a comment). (4) `updated_at` on `org_venues` is **not** maintained (stays = `created_at`). (5) **Asymmetry:** `org_venue_facilities` has **no `settings` column** (8 cols) vs `venue_facilities` (10 cols) — don't assume library/tournament symmetry.
+**Who writes (mig 321, Club Tier 6b — S6-10):** members READ (SELECT policy + grant); **only the server writes** (`app/api/admin/org/venues/route.ts`, service role), which checks the save rule on every write — owner, admin, league admin, or anyone granted `create_tournaments` (`canSaveVenueLibrary`, `lib/venue-library.ts`). Before 321 any member's session could insert/update/delete directly.
+
+**Gotchas:** (1) **A copy source for tournaments** — editing the library doesn't update a tournament's copy (its names stay the tournament's); the copy keeps a LINK back (`diamonds.source_org_venue_id`) that the clash check, the calendar and the library's usage read. (2) **League/Club gate** — both GET/POST reject `tournament`/`tournament_plus` orgs. (3) **`is_active = false` is ARCHIVED** (Club Tier 6b, Ask 9): an archived venue leaves every picker (the route's GET returns active venues unless the library page asks for archived ones too; `getClubVenueLibrary` filters it) and keeps every booking. **Delete is refused while anything books the venue** — any rep event, tryout day, league game/practice, past included, or a tournament copy that carries its link (`diamonds.source_org_venue_id`); a delete is hard and every link it would clear is ON DELETE SET NULL, which is why the route refuses rather than strips. (4) `updated_at` on `org_venues` is written by the library's route since Club Tier 6b (a save, Archive, Bring back); rows untouched since before then still read `created_at`. (5) **Asymmetry:** `org_venue_facilities` has **no `settings` column** (8 cols) vs `venue_facilities` (10 cols) — don't assume library/tournament symmetry.
 
 **`org_venues` fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -1292,10 +1294,10 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:org_venues.name -->
 <!-- dict:col:org_venues.address -->
 <!-- dict:col:org_venues.notes -->
-**`name`** (NOT NULL) / **`address`** / **`notes`** — copied to `diamonds.*` on import.
+**`name`** (NOT NULL) / **`address`** / **`notes`** — copied to `diamonds.*` on import. ⚠ **A rename (or a new address) is copied onto the UPCOMING bookings that link the venue** (6b): `rep_team_events` / `rep_tryout_sessions` `.location` / `.location_address`, and house league's `location` ("Venue — Facility"), where the booking starts now or later. Past bookings keep the words they were played under; no notice is sent; tournament copies are their own.
 
 <!-- dict:col:org_venues.is_active -->
-**`is_active`** (bool, NOT NULL, default true) — written but unused as a filter (gotcha 3).
+**`is_active`** (bool, NOT NULL, default true) — **false = archived** (gotcha 3): out of every picker, kept by every booking, back with Bring back. Written by the route's `archive-venue` / `restore-venue` only.
 
 **`org_venue_facilities` fields** (boilerplate `id`, `created_at` omitted):
 
@@ -1309,7 +1311,7 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:org_venue_facilities.facility_type -->
 <!-- dict:col:org_venue_facilities.display_order -->
 <!-- dict:col:org_venue_facilities.notes -->
-**`name`** (NOT NULL) / **`facility_type`** (default `'other'`) / **`display_order`** / **`notes`** — copied to `venue_facilities.*` on import.
+**`name`** (NOT NULL) / **`facility_type`** (default `'other'`) / **`display_order`** / **`notes`** — copied to `venue_facilities.*` on import. ⚠ **A facility rename reaches the upcoming bookings that link it** (6b): rep events / tryout days `.field_number`, house league's `location`; past ones keep their words. **No archive of its own** (decided 6b from the data): a facility any booking holds is never removed (the route refuses), one nothing books can be deleted.
 
 ### `schedule_facility_lanes`
 <!-- dict:table:schedule_facility_lanes -->

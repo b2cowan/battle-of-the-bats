@@ -2732,6 +2732,8 @@ const coachesHelp: HelpPageContent = {
       summary: 'Say how long before to arrive, pick the venue (the club’s, or one of your own places) and the diamond beside it, see when a club diamond is already booked, add a uniform, your own game tags, player awards and links to an event — and get a tap-to-open map from the venue’s address.',
       keywords: ['arrival time', 'arrival', 'arrive before', 'how long before', 'lead time', 'call time', 'be there by', 'field number', 'diamond number', 'diamond', 'court', 'uniform', 'jersey', 'location', 'places', 'place book', 'saved location', 'saved locations', 'venue', 'venues', 'club venues', 'venue library', 'add a place', 'manage places',
         // Club Tier Stage 6a — the clash line under the venue.
+        // Club Tier Stage 6b — the club renames or archives one of its venues.
+        'venue renamed', 'new venue name', 'archived venue', 'venue missing from list',
         'clash', 'double booked', 'double-booked', 'already booked', 'booked by', 'diamond taken', 'busy then', 'not checked for clashes', 'two teams same diamond', 'address', 'google maps', 'map link', 'recent locations', 'links', 'attach link', 'resources', 'tags', 'tag a game', 'game tags', 'manage tags', 'merge tags', 'rename tag', 'filter by tag', 'record by tag', 'awards', 'give an award', 'mvp', 'best hitter', 'hustle award', 'award types', 'manage awards', 'retire award',
         // Chunk D Slice 3 — printable certificates live off the awards report.
         'certificate', 'certificates', 'print certificate', 'print certificates', 'print awards',
@@ -2755,7 +2757,7 @@ const coachesHelp: HelpPageContent = {
           title: 'Venue: the club’s venues and the places your team keeps',
           content: (
             <>
-              <p>Type into <strong>Venue</strong> to find where you&apos;re playing. If your team is part of a club that keeps a <strong>Venue library</strong>, the club&rsquo;s venues are listed first under <strong>Club venues</strong>, each with its address and how many diamonds it has. You can pick them but not change them: the club keeps that list. Your own <strong>places</strong> come next, most recently used first. A team outside a club sees only its own places.</p>
+              <p>Type into <strong>Venue</strong> to find where you&apos;re playing. If your team is part of a club that keeps a <strong>Venue library</strong>, the club&rsquo;s venues are listed first under <strong>Club venues</strong>, each with its address and how many diamonds it has. You can pick them but not change them: the club keeps that list. When the club renames one, your upcoming events show the new name and past ones keep the old; a venue the club archives leaves the list, and your events already there keep it. Your own <strong>places</strong> come next, most recently used first. A team outside a club sees only its own places.</p>
               <p>A <strong>place</strong> is somewhere your team goes, kept once: its name, its street address (which powers the map), the diamond you usually play on there, and a note that shows on every event held there (&ldquo;park behind the arena&rdquo;). Pick it and the address and usual diamond come with it.</p>
               <ul>
                 <li><strong>Somewhere new?</strong> Type the name and choose <strong>＋ Add &hellip; as a place</strong>: a small sheet asks for the address, the usual diamond and a note. Only the name is required.</li>

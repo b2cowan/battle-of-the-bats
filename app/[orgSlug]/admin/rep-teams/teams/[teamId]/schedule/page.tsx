@@ -22,7 +22,7 @@ import {
 } from '@/components/admin/kit/club/RepKit';
 import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
 import { SCRIMMAGE_LABEL, EVENT_COLORS } from '@/lib/coach-schedule-vocab';
-import { formatInOrgZone, orgDayKey, tournamentToday } from '@/lib/timezone';
+import { addCalendarDays, formatInOrgZone, mondayOfDay, orgDayKey, tournamentToday } from '@/lib/timezone';
 import { orgClock, orgWeekdayDay } from '@/lib/club-board-view';
 import { formatRecord } from '@/lib/coach-season-record';
 import { hasDecidedGames, seasonRecordOf } from '@/lib/team-season-figures';
@@ -43,16 +43,9 @@ const EVENT_ICONS: Record<RepEventType, React.ElementType> = {
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 type ViewMode = 'list' | 'week' | 'month';
 
-/** Add days to a YYYY-MM-DD calendar date (no zone in it — pure arithmetic on the date). */
-function addDays(date: string, days: number): string {
-  const d = new Date(`${date}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-function mondayOf(date: string): string {
-  const dow = new Date(`${date}T12:00:00Z`).getUTCDay();
-  return addDays(date, -((dow + 6) % 7));
-}
+// The calendar arithmetic is the platform's, shared with the club calendar (Club Tier Stage 6b): one Monday rule.
+const addDays = addCalendarDays;
+const mondayOf = mondayOfDay;
 const monthLabel = (ym: string) => formatInOrgZone(`${ym}-15T12:00:00Z`, { month: 'long', year: 'numeric' });
 const shortDay = (date: string) => formatInOrgZone(`${date}T12:00:00Z`, { month: 'short', day: 'numeric' });
 

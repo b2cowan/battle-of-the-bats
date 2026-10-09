@@ -244,15 +244,45 @@ export function findClubClashes(proposed: ClubBooking, others: readonly ClubBook
   if (!proposed.venueId) return [];
   const out: ClashFinding[] = [];
   for (const o of others) {
-    if (!comparable(proposed, o) || !windowsOverlap(proposed, o)) continue;
-    if (proposed.facilityId && o.facilityId) {
-      // Two different diamonds in one park are not a clash.
-      if (proposed.facilityId === o.facilityId) out.push({ kind: 'booked_by', other: describe(o) });
-    } else {
-      out.push({ kind: 'busy_then', other: describe(o) });
-    }
+    const kind = clashKindOf(proposed, o);
+    if (kind) out.push({ kind, other: describe(o) });
   }
   return out.sort((a, b) => (a.kind === b.kind ? a.other.startMs - b.other.startMs : a.kind === 'booked_by' ? -1 : 1));
+}
+
+/** THE rule for one pair: `booked_by`, `busy_then`, or null (not compared, no overlap, or two different facilities). */
+function clashKindOf(p: ClubBooking, o: ClubBooking): ClashKind | null {
+  if (!comparable(p, o) || !windowsOverlap(p, o)) return null;
+  if (p.facilityId && o.facilityId) {
+    // Two different diamonds in one park are not a clash.
+    return p.facilityId === o.facilityId ? 'booked_by' : null;
+  }
+  return 'busy_then';
+}
+
+/**
+ * Every clashing PAIR among a set of bookings, each once (Club Tier Stage 6b — the club calendar, which marks both
+ * sides of a clash and counts them). The same rule as `findClubClashes`, read over a whole week instead of one
+ * proposed booking; the caller keeps the bookings' keys, which a finding deliberately does not carry (Ask 5).
+ */
+export function findClashPairs(bookings: readonly ClubBooking[]): { a: ClubBooking; b: ClubBooking; kind: ClashKind }[] {
+  const byVenue = new Map<string, ClubBooking[]>();
+  for (const b of bookings) {
+    if (!b.venueId) continue;
+    const list = byVenue.get(b.venueId);
+    if (list) list.push(b); else byVenue.set(b.venueId, [b]);
+  }
+  const out: { a: ClubBooking; b: ClubBooking; kind: ClashKind }[] = [];
+  for (const list of byVenue.values()) {
+    const sorted = [...list].sort((x, y) => x.startMs - y.startMs);
+    for (let i = 0; i < sorted.length; i++) {
+      for (let j = i + 1; j < sorted.length && sorted[j].startMs < sorted[i].endMs; j++) {
+        const kind = clashKindOf(sorted[i], sorted[j]);
+        if (kind) out.push({ a: sorted[i], b: sorted[j], kind });
+      }
+    }
+  }
+  return out;
 }
 
 /** Convenience for a writer that saved several bookings at once (a series, an import, a generator): findings per key. */

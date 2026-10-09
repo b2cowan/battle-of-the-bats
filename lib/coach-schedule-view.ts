@@ -10,7 +10,7 @@
  */
 import type { RepEventType, RepTeamEvent } from './types';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
-import { formatInOrgZone, orgDayKey } from './timezone';
+import { formatInOrgZone, orgDayKey, orgMonthKey } from './timezone';
 
 // Chunk C (C0): every schedule surface reads the stored instant in the ORG'S timezone, never the
 // device's. A game starts when it starts — a coach travelling, or a family watching from another
@@ -41,17 +41,11 @@ export function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-export function monthKey(iso: string) {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
-export function weekKey(iso: string) {
-  const d = new Date(iso);
-  const monday = new Date(d);
-  monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return monday.toISOString().slice(0, 10);
-}
+// ⚠ The month an event files under is the ORG's (Club Tier Stage 6b, Ask 8): this read the device's clock until
+// 2026-10-09, so a coach in another zone saw an evening event filed under the wrong month. One home for the rule:
+// `lib/timezone.ts`. (The week key that sat beside it had one caller, the page's cursor — a calendar date, which now
+// takes its Monday directly with `mondayOfDay`, never through a clock.)
+export const monthKey = (iso: string) => orgMonthKey(iso);
 
 // ── Multi-day tournament spanning ───────────────────────────────────────────────
 // A tournament container (external_tournament) occupies every day from its start date

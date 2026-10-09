@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { AlertTriangle, Calendar, ChevronLeft, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
-import { ORG_TIME_ZONE, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
+import { ORG_TIME_ZONE, formatInOrgZone, orgWeekKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { hasCapability } from '@/lib/roles';
 import { fieldNounFor } from '@/lib/sports';
@@ -126,17 +126,12 @@ function isoToTimeInput(iso: string): string {
   return utcToZonedInputs(iso).time;
 }
 
-function weekKey(iso: string): string {
-  const d = new Date(iso);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(d);
-  monday.setDate(d.getDate() + diff);
-  return monday.toISOString().slice(0, 10);
-}
-
+// ⚠ A game files under the week of its day IN THE ORG'S ZONE (`orgWeekKey`, Club Tier Stage 6b, Ask 8): this page kept its
+// own key on the device's clock, and its label read the key's midnight in UTC — so the heading named the Sunday before
+// ("Week of October 18" over a week that starts Monday the 19th) and a Sunday game after 8 p.m. on a UTC device filed
+// into the next week.
 function weekLabel(key: string): string {
-  return `Week of ${new Date(key).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+  return `Week of ${formatInOrgZone(`${key}T12:00:00Z`, { month: 'long', day: 'numeric', year: 'numeric' })}`;
 }
 
 const STATUS_LABELS: Record<LeagueGameStatus, string> = {
@@ -950,7 +945,7 @@ export default function SchedulePage() {
     const unscheduled: LeagueGame[] = [];
     for (const g of games) {
       if (!g.scheduledAt) { unscheduled.push(g); continue; }
-      const key = weekKey(g.scheduledAt);
+      const key = orgWeekKey(g.scheduledAt);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(g);
     }
@@ -964,7 +959,7 @@ export default function SchedulePage() {
     const unscheduled: LeaguePractice[] = [];
     for (const p of practices) {
       if (!p.scheduledAt) { unscheduled.push(p); continue; }
-      const key = weekKey(p.scheduledAt);
+      const key = orgWeekKey(p.scheduledAt);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(p);
     }

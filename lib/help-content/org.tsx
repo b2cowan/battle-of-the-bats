@@ -460,11 +460,167 @@ const orgHelp: HelpPageContent = {
       ),
     },
     {
+      id: 'club-calendar',
+      heading: 'The club calendar — every program’s week on one page',
+      summary: 'Calendar, under Overview: every team’s games and practices, house league and your tournaments in one read-only week, with clashes marked.',
+      keywords: [
+        'calendar', 'club calendar', 'whole club', 'week', 'month', 'list', 'who is on the diamond', 'clash', 'clashes',
+        'double booked', 'busy then', 'eastern time', 'time zone', 'export calendar', 'ics', 'read only', 'filter by venue',
+      ],
+      searchText: 'calendar club calendar whole club schedule every team one page week view list view month view who is on lions park diamond 2 on tuesday clash clashes only amber pill double booked booked by busy then dashed may clash facility not set read window both sides head coach open the team schedule open in the coaches portal house league season schedule tournament day game count venue program team filter places the club doesn’t own export excel csv calendar ics what the page shows times in eastern time time zone sunday night game week read only cannot edit coaches keep their schedule',
+      content: (
+        <p><strong>Calendar</strong>, directly under <strong>Overview</strong> in the menu (the first row of <strong>More</strong> on a phone), puts the whole club&rsquo;s week on one page and marks where two bookings want the same diamond at once. It is read-only: the coaches and the league keep their own schedules.</p>
+      ),
+      subtopics: [
+        {
+          id: 'club-calendar-t-whats-on-it',
+          title: 'What the calendar shows',
+          content: (
+            <>
+              <p>Every booking of the programs you can open, in <strong>List</strong>, <strong>Week</strong> or <strong>Month</strong>. It opens on this week.</p>
+              <ul>
+                <li><strong>Rep teams:</strong> each team&rsquo;s games, practices, team events and tryout days, as the coaches entered them. A booking&rsquo;s left edge is its team&rsquo;s colour.</li>
+                <li><strong>House league:</strong> games and practices, marked <em>House league</em>.</li>
+                <li><strong>Tournaments:</strong> one booking per tournament day, with its game count. A club team&rsquo;s own games in that tournament sit inside it rather than being listed again.</li>
+              </ul>
+              <p>A place the club doesn&rsquo;t own (an away park, a school field) shows exactly as the coach typed it. Every time is in <strong>Eastern time</strong>, and the page says so once. A Sunday game at 9:30 p.m. stays in its own week, on any device.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-calendar-t-clashes',
+          title: 'Reading a clash',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="Amber mark">Two bookings hold the same diamond at once, for example 13U AAA and 14U AA on Lions Park Diamond 2 on Tuesday. Both sides carry the mark.</HelpDef>
+                <HelpDef term="Dashed edge">The booking <em>may</em> clash: it shares the venue at that time, but one side didn&rsquo;t pick a diamond, so it can&rsquo;t be sure.</HelpDef>
+                <HelpDef term="The amber count">Beside &ldquo;Times in Eastern time.&rdquo;, the week&rsquo;s number of clashes. Click it to show only the clashes; click again to show everything.</HelpDef>
+              </HelpDefs>
+              <p>Open a booking to read both sides together: when, where (with the address), the team and its head coach, then <strong>Clashes with</strong> &mdash; the other booking, its diamond and its head coach. The link at the bottom opens that team&rsquo;s schedule (or <strong>Open in the Coaches Portal</strong>, if you coach the team), a house-league season&rsquo;s schedule, or the tournament. Nobody is notified about a clash; the club settles it.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-calendar-t-filters-export',
+          title: 'Filters and Export',
+          content: (
+            <>
+              <p><strong>Venue</strong>, <strong>Program</strong> and <strong>Team</strong> narrow the page; each choice shows its count. <strong>Places the club doesn&rsquo;t own</strong> collects the bookings that aren&rsquo;t on one of your venues. Filters start fresh each time you open the page. On a phone they sit behind <strong>Filter</strong>, and the view switch is the icon beside the title.</p>
+              <p><strong>Export</strong> saves what the page shows (the week or month on screen, as filtered) as <strong>Excel</strong>, <strong>CSV</strong> or a <strong>Calendar</strong> (.ics) file. The line at the top of its menu says what the file holds.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-calendar-t-who',
+          title: 'Who sees what',
+          content: (
+            <p>Calendar shows to anyone who can open at least one program: the owner and admins see everything; a league admin or registrar sees house league; staff see the tournaments they work. Each person sees only the programs they can open. A clash with a program you can&rsquo;t open still shows, naming the other team, what it is and when, but not its people.</p>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-club-calendar-edit',
+          question: 'Can I move or change a booking from the calendar?',
+          answer: (
+            <p>No. The calendar only reads. A team&rsquo;s coaches keep its schedule in their Coaches Portal, and house league and tournaments keep theirs. Open the booking and use its link to go to the schedule that owns it.</p>
+          ),
+          answerText: 'No. The club calendar is read-only. A team’s coaches keep its schedule in their Coaches Portal, and house league and tournaments keep theirs; open the booking and use its link to the schedule that owns it.',
+          keywords: ['edit booking', 'move booking', 'change practice', 'read only', 'calendar'],
+        },
+        {
+          id: 'faq-club-calendar-no-clash',
+          question: 'Two teams were at the same park and the calendar shows no clash. Why?',
+          answer: (
+            <p>The calendar compares only bookings on one of the club&rsquo;s venues from the <strong>Venue library</strong>. A park typed by hand, or a coach&rsquo;s own place, is shown as written and never compared. Two different diamonds at one venue aren&rsquo;t a clash either. Ask the coaches to pick the club&rsquo;s venue and its diamond.</p>
+          ),
+          answerText: 'Only bookings on one of the club’s venues from the Venue library are compared. A typed park or a coach’s own place is shown as written and never compared, and two different diamonds at one venue are not a clash. Ask the coaches to pick the club’s venue and its diamond.',
+          keywords: ['no clash', 'clash missing', 'typed location', 'not compared', 'calendar'],
+        },
+      ],
+    },
+    {
+      id: 'venue-library',
+      heading: 'The Venue library — your club’s venues and who books them',
+      summary: 'Organization › Venue library: the club’s venues and their facilities, who books each this season, renaming a facility, and Archive or Delete.',
+      keywords: [
+        'venue library', 'venues', 'facilities', 'diamond', 'field', 'court', 'rink', 'add venue', 'rename facility',
+        'archive venue', 'delete venue', 'bring back', 'booked by', 'archived venues', 'who can edit venues',
+      ],
+      searchText: 'venue library venues facilities fields diamonds courts rinks gym add venue name address notes open in maps booked by this season teams house league tournament who books it rename a facility rename a diamond upcoming bookings keep the old name past games families calendar no notice archive a venue bring back archived venues out of every picker delete venue nothing books it cannot delete in use league admin can save treasurer read only refused save says why could not load try again tournament import from library organization tile',
+      content: (
+        <p><strong>Organization › Venue library</strong> is the club&rsquo;s one list of venues and their facilities. Coaches, house league and tournaments pick from it, and two bookings on the same facility at the same time are flagged. It comes with League Plus and Club.</p>
+      ),
+      subtopics: [
+        {
+          id: 'venue-library-t-who',
+          title: 'Who can change it',
+          content: (
+            <p>The owner, admins, league admins and anyone given the tournament permission can add and change venues. Everyone else who can open Organization reads the library, with no <strong>Add venue</strong> and no pencil. If a save is refused, the window says why.</p>
+          ),
+        },
+        {
+          id: 'venue-library-t-add-edit',
+          title: 'Adding and changing a venue',
+          content: (
+            <>
+              <ol>
+                <li>Click <strong>Add venue</strong> and enter its name, its address (it powers the map link on every schedule), its facilities with their kind, and any notes.</li>
+                <li>Press <strong>Add venue</strong>. Nothing saves until you do.</li>
+              </ol>
+              <p>The table shows each venue&rsquo;s facilities and who books it this season. Click a venue to read it: its address, notes, each facility&rsquo;s upcoming bookings, and the teams, house-league season and tournaments that book it. The pencil turns the whole venue into its form, and every change saves as you go; the check mark turns it back.</p>
+            </>
+          ),
+        },
+        {
+          id: 'venue-library-t-rename',
+          title: 'Renaming a venue or a facility',
+          content: (
+            <>
+              <p>Rename &ldquo;Diamond 2&rdquo; to &ldquo;Diamond 2 (big)&rdquo; and every <strong>upcoming</strong> team and house-league booking on it shows the new name, including on families&rsquo; calendars at their next refresh. Past bookings keep the name they were played under. Nobody is notified: the place didn&rsquo;t move.</p>
+              <p>A tournament keeps its own copy of the venues it imported, so a rename doesn&rsquo;t reach it. A facility with bookings can be renamed but not removed; one that nothing books has its ✕.</p>
+            </>
+          ),
+        },
+        {
+          id: 'venue-library-t-archive',
+          title: 'Archive or Delete',
+          content: (
+            <HelpDefs>
+              <HelpDef term="Archive">Offered when anything books the venue, past seasons included. It leaves every picker (coaches, house league, a tournament&rsquo;s Import from Library), and every booking keeps it. Archived venues are listed under the table; open one and choose <strong>Bring back</strong>.</HelpDef>
+              <HelpDef term="Delete">Offered only when nothing books the venue. It asks first, and the venue leaves the library for good.</HelpDef>
+            </HelpDefs>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-venue-library-cant-delete',
+          question: 'Why can’t I delete a venue?',
+          answer: (
+            <p>Something books it, even if only in a past season. Deleting it would take it off those games and practices, so the library offers <strong>Archive</strong> instead: it leaves every picker and every booking keeps it. Delete appears once nothing books the venue.</p>
+          ),
+          answerText: 'Something books it, even in a past season, so the Venue library offers Archive instead of Delete: the venue leaves every picker and every booking keeps it. Delete appears once nothing books the venue.',
+          keywords: ['delete venue', 'cannot delete', 'archive', 'in use', 'venue library'],
+        },
+        {
+          id: 'faq-venue-library-league-admin',
+          question: 'I’m the league admin. Can I add our diamonds?',
+          answer: (
+            <p>Yes. League admins can add and change venues in the Venue library, the list house league&rsquo;s <strong>Set up your diamonds once</strong> link opens.</p>
+          ),
+          answerText: 'Yes. League admins can add and change venues in the Venue library, the list house league’s “Set up your diamonds once” link opens.',
+          keywords: ['league admin', 'add diamonds', 'refused', 'venue library'],
+        },
+      ],
+    },
+    {
       id: 'settings',
       heading: 'Settings and your org slug',
-      summary: 'The owner-only Settings page: your public site switches, URL slug, branding, hero banner, fonts, venue library, and account deletion.',
-      keywords: ['settings', 'org slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo', 'public site switch', 'listed in the directory', 'online offline', 'venue library', 'public site editor'],
-      searchText: 'org settings owner only name url slug change redirect branding logo stock logos hero banner theme font card style colour theme delete organization account deletion danger zone your public site public site switch online offline listed in the directory discover directory public site editor online offline chip venue library fields diamonds rinks refused save says why',
+      summary: 'The owner-only Settings page: your public site switches, URL slug, branding, hero banner, fonts, and account deletion.',
+      keywords: ['settings', 'org slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo', 'public site switch', 'listed in the directory', 'online offline', 'public site editor'],
+      searchText: 'org settings owner only name url slug change redirect branding logo stock logos hero banner theme font card style colour theme delete organization account deletion danger zone your public site public site switch online offline listed in the directory discover directory public site editor online offline chip refused save says why',
       content: (
         <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It controls your organization&rsquo;s name, URL slug, whether your public site is switched on, and the look of your public pages.</p>
       ),
@@ -504,7 +660,6 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> image across the top of your organization&rsquo;s home page. This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization address keeps FieldLogicHQ&rsquo;s default styling.</p>
-              <p>If your plan includes a <strong>venue library</strong>, its own page lets you define your fields, diamonds and rinks once and reuse them — house league schedules use them, and tournaments import them. A save that&rsquo;s refused now says why (for example, the plan doesn&rsquo;t include it, or you don&rsquo;t hold the permission).</p>
             </>
           ),
         },
