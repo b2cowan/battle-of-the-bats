@@ -30,7 +30,7 @@ import { lineupBuilderHref } from '@/lib/lineups-address';
 import { sheetOrder } from '@/lib/coach-schedule-phone';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { orgDayKey } from '@/lib/timezone';
-import { SERIES_EDIT_ROWS, reachHint, type SeriesReach, type SeriesScope } from '@/lib/coach-series-scope';
+import { SERIES_SCOPE_ROWS, reachHint, type SeriesReach, type SeriesScope } from '@/lib/coach-series-scope';
 import { scheduleDayLabel } from '@/lib/family-schedule-format';
 import { EVENT_DELETE_TAKES, EVENT_LABELS, SCRIMMAGE_LABEL, eventWord } from '@/lib/coach-schedule-vocab';
 import { GAME_EVENT_TYPES, errorMessage, fmtDate, fmtTime, isLineupEvent, resultColor, shortDate } from '@/lib/coach-schedule-view';
@@ -124,9 +124,6 @@ function resourceIcon(url: string): React.ElementType {
   return Link2;
 }
 
-/** A series' three delete answers and the scope each sends. (The pencil's menu words its rows by the event —
- *  "This practice only · All practices", `SERIES_EDIT_ROWS`; aligning Delete's is an owner call, raised 2026-10-09.) */
-const SERIES_DELETE = [['This only', 'one'], ['This & future', 'remaining'], ['All', 'all']] as const;
 
 /** DELETE one event. Shared by the sheet's Delete and the page's duplicate-game "Remove my copy"
  *  flow, which surface the error in different places. Refreshing is the CALLER's job — the sheet
@@ -677,7 +674,7 @@ export default function ScheduleEventSheet({
             <CoachToolbarMenu label={`Edit this ${word}`} icon={<Pencil size={18} aria-hidden />} variant="glyph"
               plainTrigger triggerClassName={styles.ppIconBtn} disabled={saving} panelMinWidth={300}
               drawerOnPhone title={`Edit which ${word}s?`} overWindow>
-              {SERIES_EDIT_ROWS.map(row => (
+              {SERIES_SCOPE_ROWS.map(row => (
                 <CoachToolbarMenuItem key={row.scope} label={row.label(word)} hint={reachHint(seriesReach[row.scope], word)}
                   onSelect={() => editFromMenu(row.scope, seriesReach[row.scope])} />
               ))}
@@ -1113,7 +1110,7 @@ export default function ScheduleEventSheet({
             </>}
             deleting={saving}
             {...(ev.isRecurring
-              ? { choices: SERIES_DELETE.map(([label, scope]) => ({ label, onPick: () => { void handleDelete(ev.id, scope); } })) }
+              ? { choices: SERIES_SCOPE_ROWS.map(row => ({ label: row.label(word), onPick: () => { void handleDelete(ev.id, row.scope); } })) }
               : { onDelete: () => { void handleDelete(ev.id, 'one'); } })}
           />
           <div className={styles.slideOverActionsRight}>

@@ -332,7 +332,8 @@ describe('a weekly series (specimen 1) and house league’s lines (specimen 3)',
     assert.equal(seriesDateMark(clash, ctx), 'Diamond 2 · 14U AA practice, 5:30–7:30 p.m.');
     const eight = (hits: typeof clash[]) => [...hits, ...Array.from({ length: 8 - hits.length }, () => [])];
     const s = seriesSummary(eight([clash, clash]), ctx)!;
-    assert.equal(clashLineText(s), '2 of 8 dates clash on Diamond 2. Remove them, or change the time or diamond for all.');
+    // "for every date", never "for all" (/marketing 2026-10-09: all what?).
+    assert.equal(clashLineText(s), '2 of 8 dates clash on Diamond 2. Remove them, or change the time or diamond for every date.');
     assert.equal(s.tone, 'warn');
     const unset = rep({ id: 'u', team: 't13', start: '2026-11-03 18:00', end: '2026-11-03 20:00', fac: null });
     const busy = seriesSummary(eight([findClubClashes(unset, [aa14])]), { ...ctx, facilityName: null })!;
@@ -349,14 +350,20 @@ describe('a weekly series (specimen 1) and house league’s lines (specimen 3)',
       '1 of 2 dates clashes on Diamond 2. Change the time or diamond for both, or edit Nov 10 on its own.');
     const four = ['2026-11-03', '2026-11-10', '2026-11-17', '2026-11-24'];
     const s = seriesSummary([clash, [], clash, []], ctx, four)!;
-    assert.equal(clashLineText(s), '2 of 4 dates clash on Diamond 2. Change the time or diamond for all, or edit those dates on their own.');
+    assert.equal(clashLineText(s), '2 of 4 dates clash on Diamond 2. Change the time or diamond for every date, or edit those dates on their own.');
     assert.equal(s.tone, 'warn');
+    // Every date clashing: said whole, and the way out is the change alone (/marketing 2026-10-09).
+    assert.equal(clashLineText(seriesSummary([clash, clash], ctx, two)), 'Both dates clash on Diamond 2. Change the time or diamond.');
+    assert.equal(clashLineText(seriesSummary([clash, clash, clash, clash], ctx, four)), 'All 4 dates clash on Diamond 2. Change the time or diamond.');
     const unset = rep({ id: 'u', team: 't13', start: '2026-11-03 18:00', end: '2026-11-03 20:00', fac: null });
     const busy = seriesSummary([findClubClashes(unset, [aa14]), []], { ...ctx, facilityName: null }, two)!;
-    assert.equal(clashLineText(busy), '1 of 2 dates is busy at Lions Park. Pick a diamond to be sure, or edit Nov 3 on its own.');
+    assert.equal(clashLineText(busy), '1 of 2 dates is busy at Lions Park. Pick a diamond to be sure.', 'nothing known to clash: nothing to edit alone');
     assert.equal(busy.tone, 'busy');
+    const bothBusy = seriesSummary([findClubClashes(unset, [aa14]), findClubClashes(unset, [aa14])], { ...ctx, facilityName: null }, two)!;
+    assert.equal(clashLineText(bothBusy), 'Both dates are busy at Lions Park. Pick a diamond to be sure.');
     assert.equal(seriesSummary([[], []], ctx, two), null);
     assert.doesNotMatch(clashLineText(s), /remove/i);
+    assert.doesNotMatch(clashLineText(s), /for all\b/, 'never "for all"');
   });
 
   it('house league’s series names the dates: "2 of 4 Tuesdays clash on Diamond B: 11U AA practice, 6:00–7:30 p.m., on Nov 3 and Nov 10."', () => {

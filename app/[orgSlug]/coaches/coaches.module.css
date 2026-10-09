@@ -8572,6 +8572,13 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   justify-content: flex-end;
   margin-top: 0.7rem;
 }
+/* A delete with several answers (a series: "This practice only · This & future · All practices", the pencil's rows,
+   owner 2026-10-09). On a phone the three no longer fit one row — each wrapped onto two or three lines — so they stack
+   full width, one line each, and Keep it goes under them. A desk keeps its one row. */
+@media (max-width: 640px) {
+  .dangerConfirmChoices { flex-direction: column; align-items: stretch; }
+  .dangerConfirmChoices > :first-child { order: 1; }
+}
 
 /* Delete in the form footer, pushed away from Save so the two are never adjacent (Budget Plan's
    pattern — the quiet danger link opposite the primary action). */

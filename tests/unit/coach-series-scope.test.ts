@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode, readSource, stripComments } from './_source-code.ts';
-import { SERIES_EDIT_ROWS, reachHint, seriesReach } from '../../lib/coach-series-scope.ts';
+import { SERIES_SCOPE_ROWS, reachHint, seriesReach } from '../../lib/coach-series-scope.ts';
 import type { RepTeamEvent } from '../../lib/types.ts';
 
 /**
@@ -61,11 +61,16 @@ describe('the line under each answer in the pencil\'s menu', () => {
   });
 });
 
-describe('the pencil\'s three rows (ask 4) — worded by the event, three every time', () => {
+describe('a series\' three rows (ask 4) — worded by the event, three every time, for the pencil and for Delete', () => {
   it('a practice, a game, a scrimmage', () => {
-    assert.deepEqual(SERIES_EDIT_ROWS.map(r => r.scope), ['one', 'remaining', 'all']);
-    assert.deepEqual(SERIES_EDIT_ROWS.map(r => r.label('practice')), ['This practice only', 'This & future', 'All practices']);
-    assert.deepEqual(SERIES_EDIT_ROWS.map(r => r.label('scrimmage')), ['This scrimmage only', 'This & future', 'All scrimmages']);
+    assert.deepEqual(SERIES_SCOPE_ROWS.map(r => r.scope), ['one', 'remaining', 'all']);
+    assert.deepEqual(SERIES_SCOPE_ROWS.map(r => r.label('practice')), ['This practice only', 'This & future', 'All practices']);
+    assert.deepEqual(SERIES_SCOPE_ROWS.map(r => r.label('scrimmage')), ['This scrimmage only', 'This & future', 'All scrimmages']);
+  });
+  it('Delete\'s series question wears the same rows — owner, 2026-10-09: "change delete to match the pencil"', () => {
+    const sheet = readCode('components/coaches/ScheduleEventSheet.tsx');
+    assert.match(sheet, /choices: SERIES_SCOPE_ROWS\.map\(row => \(\{ label: row\.label\(word\), onPick: \(\) => \{ void handleDelete\(ev\.id, row\.scope\); \} \}\)\)/);
+    assert.ok(!/'This only'|SERIES_DELETE/.test(sheet), 'the old words and their list are gone');
   });
 });
 
@@ -88,7 +93,7 @@ describe('the markup — asked at the pencil, never after Save', () => {
     assert.match(menu, /\{title && <CoachToolbarMenuHeading>\{title\}<\/CoachToolbarMenuHeading>\}/, '…and the popover\'s heading at a desk');
   });
   it('4 · the rows are the list above, each naming its dates — and those dates are what the form opens with', () => {
-    assert.match(header, /SERIES_EDIT_ROWS\.map\(row => \(/);
+    assert.match(header, /SERIES_SCOPE_ROWS\.map\(row => \(/);
     assert.match(header, /hint=\{reachHint\(seriesReach\[row\.scope\], word\)\}/);
     assert.match(header, /onSelect=\{\(\) => editFromMenu\(row\.scope, seriesReach\[row\.scope\]\)\}/);
   });

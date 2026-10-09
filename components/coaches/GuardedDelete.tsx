@@ -67,8 +67,8 @@ export default function GuardedDelete({
 } & (
   | { onDelete: () => void; choices?: undefined }
   /**
-   * A delete with more than one answer — a weekly series' "This only · This & future · All" (the
-   * schedule's event window, owner 2026-10-09; the edit form's own three words). Each is a delete,
+   * A delete with more than one answer — a weekly series' "This practice only · This & future · All
+   * practices" (the schedule's event window, owner 2026-10-09; the pencil's own three rows). Each is a delete,
    * so each wears the danger button, in place of the single `confirmLabel` one. One or the other,
    * never both: a caller with choices has no `onDelete` to leave dead.
    */
@@ -108,7 +108,7 @@ export default function GuardedDelete({
             `<p>` inside a `<p>` is invalid markup the browser silently unnests, running the two
             sentences together. Same class, same look; the block simply may hold blocks. */}
         <div className={styles.dangerConfirmBody}>{confirmBody}</div>
-        <div className={styles.dangerConfirmActions}>
+        <div className={`${styles.dangerConfirmActions}${choices ? ` ${styles.dangerConfirmChoices}` : ''}`}>
           <button type="button" className={styles.btnGhost} disabled={deleting} onClick={() => setMode('rest')}>
             Keep it
           </button>

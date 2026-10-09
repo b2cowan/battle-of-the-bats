@@ -25,6 +25,14 @@ was ignored (the series write takes only the time of day). Calendar apps split o
 Outlook at open); what decided it was this product's clash check, not familiarity. The edit's clash line has its own
 way out ("…for both, or edit Nov 10 on its own") because Add's "Remove them" means nothing in an edit — draft words
 for /marketing. Guards: `tests/unit/coach-series-scope.test.ts`; the words in `venue-clash.test.ts`.
+(5) **Delete's series question wears the same three rows** (owner, the same day after /review: *"change delete to match
+the pencil"*) — "This practice only · This & future · All practices", was "This only · This & future · All"; one list
+words both, so they cannot drift. On a phone the three stack full width, one line each, with Keep it under them (in
+one row each wrapped onto two or three lines); a desk keeps its one row. The help's cancel/delete answer says the same.
+(6) **/marketing settled the clash line's words** (owner: "run marketing then commit"): "for every date", never "for
+all" (all what?) — "for both" with two — on Add's line and the edit's alike (Add's was an open owner call since
+10-08, applied on that instruction); an edit where every date clashes says so ("Both dates clash on Diamond B." / "All
+4 dates …") and its way out is the change alone; an edit's busy line stops at "Pick a diamond to be sure."
 
 ### 2026-10-09 — A CREATE FORM KEEPS "CANCEL" BESIDE ITS BUTTON; A WINDOW'S HEAD AND FOOT ARE PINNED (owner, at house league's Add Game walking §284 W6: *"shouldn't the create game button in this modal be pinned to a footer and not need scrolling? also the header title with X should be pinned at the top and we don't need the close button if we have the X"* → the recommendation → "Keep it, renamed Cancel" · "Remove Cancel Game")
 

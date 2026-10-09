@@ -2697,7 +2697,7 @@ const coachesHelp: HelpPageContent = {
           id: 'faq-premium-cancel-or-delete',
           popular: true,
           question: 'Rained out: should I cancel the game or delete it?',
-          answerText: 'Cancel it. Open the game and press Cancel this game at the bottom right. It stays on your schedule marked Cancelled, and families who follow the team are told it is off; when families can see your schedule it asks once before it tells them. Restore this game puts it back on and tells them so. Delete this game, in red at the bottom left, removes it for good with its attendance and lineup (a practice takes its practice plan, a tournament the games under it) and tells families nothing, so keep it for an event that should never have been there. A repeating practice asks which dates: This only, This & future, or All. To change the day, time or place instead, tap the pencil at the top right of the event. A game that comes from a tournament on FieldLogicHQ can only be cancelled or removed by its organizer.',
+          answerText: 'Cancel it. Open the game and press Cancel this game at the bottom right. It stays on your schedule marked Cancelled, and families who follow the team are told it is off; when families can see your schedule it asks once before it tells them. Restore this game puts it back on and tells them so. Delete this game, in red at the bottom left, removes it for good with its attendance and lineup (a practice takes its practice plan, a tournament the games under it) and tells families nothing, so keep it for an event that should never have been there. A repeating practice asks which dates: This practice only, This & future or All practices. To change the day, time or place instead, tap the pencil at the top right of the event. A game that comes from a tournament on FieldLogicHQ can only be cancelled or removed by its organizer.',
           keywords: ['rained out', 'rain out', 'rainout', 'called off', 'cancel a game', 'cancel a practice', 'cancel an event', 'cancel event', 'delete a game', 'delete a practice', 'delete an event', 'remove an event', 'restore', 'restore a cancelled game', 'undo a cancel', 'are families told', 'families notified', 'edit an event', 'edit details', 'pencil', 'delete a series', 'this & future'],
           answer: (
             <>
@@ -2705,7 +2705,7 @@ const coachesHelp: HelpPageContent = {
               <ul>
                 <li>It <strong>stays on your schedule</strong>, marked <strong>Cancelled</strong>, and families who follow the team are told it&rsquo;s off. When families can see your schedule, it asks once before it tells them.</li>
                 <li><strong>Restore this game</strong> puts it back on, and tells them so.</li>
-                <li><strong>Delete this game</strong>, in red at the bottom left, removes it for good with its attendance and lineup (a practice takes its practice plan; a tournament, the games under it) and <strong>tells families nothing</strong>. Keep it for an event that should never have been there. A repeating practice asks which dates: <strong>This only</strong>, <strong>This &amp; future</strong> or <strong>All</strong>.</li>
+                <li><strong>Delete this game</strong>, in red at the bottom left, removes it for good with its attendance and lineup (a practice takes its practice plan; a tournament, the games under it) and <strong>tells families nothing</strong>. Keep it for an event that should never have been there. A repeating practice asks which dates: <strong>This practice only</strong>, <strong>This &amp; future</strong> or <strong>All practices</strong>.</li>
               </ul>
               <p>To change the day, time or place instead, tap the <strong>pencil</strong> at the top right of the event. A game that comes from a tournament on FieldLogicHQ can only be cancelled or removed by its organizer.</p>
             </>
@@ -2781,7 +2781,7 @@ const coachesHelp: HelpPageContent = {
                 <li><strong>Your own place, or typed words,</strong> are never checked. Words can&rsquo;t be trusted to mean the same diamond, and in a club the form tells you so: your own place says <em>&ldquo;Not one of the club&rsquo;s venues, so it isn&rsquo;t checked for clashes.&rdquo;</em>, and typed words show the <strong>Typed</strong> pill with <em>&ldquo;Not checked for clashes&rdquo;</em> under Venue.</li>
                 <li><strong>What you see about another team</strong> is its name, what it&rsquo;s doing (practice, game, tryout) and the time. Nothing else.</li>
               </ul>
-              <p>Editing a repeating series: tap the pencil and choose <strong>This &amp; future</strong> or <strong>All</strong>. The form lists every date it will change, marks each one that clashes, and moves the venue and diamond with all of them when you save.</p>
+              <p>Editing a repeating series: tap the pencil and choose <strong>This &amp; future</strong> or <strong>All practices</strong>. The form lists every date it will change, marks each one that clashes, and moves the venue and diamond with all of them when you save.</p>
             </>
           ),
         },

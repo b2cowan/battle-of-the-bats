@@ -160,9 +160,14 @@ export function seriesDateMark(findings: readonly ClashFinding[], ctx: ClashLine
  * Lions Park." then "Pick a diamond to be sure, …".
  *
  * The way out depends on the list. Add's list can drop a date: "Remove them, or change the time or diamond for
- * all." An EDIT's list (This & future / All, owner ruling 2026-10-09) never removes a date, so its other door is
- * editing a date on its own: pass `editDates` (the list's days, in `byDate`'s order) and the line ends "Change the
- * time or diamond for both, or edit Nov 10 on its own." The edit's words are draft, for /marketing.
+ * every date." An EDIT's list (This & future / All, owner ruling 2026-10-09) never removes a date, so its other door
+ * is editing a date on its own: pass `editDates` (the list's days, in `byDate`'s order) and the line ends "Change the
+ * time or diamond for both, or edit Nov 10 on its own."
+ *
+ * Words settled by /marketing 2026-10-09: "for every date", never "for all" (all what?) — "for both" when the list has
+ * two; when EVERY date of an edit clashes the lead says so ("Both dates clash on Diamond B." / "All 4 dates …") and
+ * the way out is the change alone, since "edit those dates on their own" would be all of them; and an edit's busy
+ * line stops at "Pick a diamond to be sure." — nothing is known to clash yet, so there is nothing to edit alone.
  */
 export function seriesSummary(
   byDate: readonly (readonly ClashFinding[])[],
@@ -174,19 +179,25 @@ export function seriesSummary(
   const total = byDate.length;
   const anyExact = byDate.some(f => f.some(x => x.kind === 'booked_by'));
   const noun = fieldNounFor(ctx.sport).toLowerCase();
-  const of = `${clashing} of ${total} date${total === 1 ? '' : 's'}`;
+  const every = editDates && total === 2 ? 'both' : 'every date';
   const them = clashing === 1 ? 'it' : 'them';
+  // An edit where every date is affected names them all ("Both dates", "All 4 dates"); otherwise "1 of 2 dates".
+  const whole = editDates && clashing === total && total > 1;
+  const of = whole ? (total === 2 ? 'Both dates' : `All ${total} dates`) : `${clashing} of ${total} date${total === 1 ? '' : 's'}`;
+  const plural = whole || clashing !== 1;
   const hit = editDates ? editDates.filter((_, i) => byDate[i]?.length) : [];
   const alone = hit.length === 1 ? `edit ${dateWords(hit[0])} on its own` : 'edit those dates on their own';
   if (anyExact) {
     const fac = facilityWords(ctx.sport, ctx.facilityName) || ctx.venueName;
-    const rest = editDates
-      ? ` Change the time or ${noun} for ${total === 2 ? 'both' : 'all'}, or ${alone}.`
-      : ` Remove ${them}, or change the time or ${noun} for all.`;
-    return { tone: toneOf(true), lead: `${of} clash${clashing === 1 ? 'es' : ''} on ${fac}.`, rest };
+    const rest = !editDates
+      ? ` Remove ${them}, or change the time or ${noun} for ${every}.`
+      : whole
+        ? ` Change the time or ${noun}.`
+        : ` Change the time or ${noun} for ${every}, or ${alone}.`;
+    return { tone: toneOf(true), lead: `${of} clash${plural ? '' : 'es'} on ${fac}.`, rest };
   }
-  const rest = editDates ? ` Pick a ${noun} to be sure, or ${alone}.` : ` Pick a ${noun} to be sure, or remove ${them}.`;
-  return { tone: toneOf(false), lead: `${of} ${clashing === 1 ? 'is' : 'are'} busy at ${ctx.venueName}.`, rest };
+  const rest = editDates ? ` Pick a ${noun} to be sure.` : ` Pick a ${noun} to be sure, or remove ${them}.`;
+  return { tone: toneOf(false), lead: `${of} ${plural ? 'are' : 'is'} busy at ${ctx.venueName}.`, rest };
 }
 
 const WEEKDAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];

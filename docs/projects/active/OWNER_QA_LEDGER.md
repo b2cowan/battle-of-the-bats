@@ -24146,4 +24146,24 @@ Nothing to put back. **Still owed before production:** migration 320 goes on fir
 
 **Writes:** W1's save moves both of W3's practices to end at 8:30 p.m. (read it back after the walk).
 
+**Owner call after the commit (2026-10-09): Delete's series question wears the pencil's rows** (*"change delete to
+match the pencil"*) — **This practice only · This & future · All practices** (it said This only · This & future · All),
+from the one list both now read. On a phone the three stack full width, one line each, with **Keep it** under them —
+in one row each wrapped onto two or three lines (captured on dev at 390 before and after, every delete blocked,
+`.probe/series-delete-shot.mjs`); a desk keeps its one row. Help: the cancel/delete answer. Built 2026-10-09.
+**Re-check (phone, then computer):** open a repeating practice → **Delete this practice** → the three answers read as
+above (stacked on the phone, one row at the computer) → **Keep it** puts the two doors back. Don't confirm a delete on
+W3's practices.
+
+**/marketing 2026-10-09** (owner: *"run marketing then commit"*). Kept: the menu title and rows, their date lines,
+Delete's body, the list head and its hint. Settled the edit's clash line (it was draft): when EVERY date clashes the
+lead says so and the way out is the change alone — **"Both dates clash on Diamond B. Change the time or diamond."**
+("All 4 dates clash …" for more); when no diamond is picked the line stops at **"Pick a diamond to be sure."** (nothing
+is known to clash, so nothing to edit alone); **"for all" → "for every date"** ("for both" with two). The long-open owner
+call on Add's line (2026-10-08) was applied on this instruction: Add now ends **"Remove them, or change the time or
+diamond for every date."** — revert on the owner's word. Help: the clash article names **All practices**; the
+cancel/delete answer's plain-text twin matches its screen (no comma before "or All practices"). **So the re-check's
+W1 step 3 now reads:** Diamond B → both dates marked, and under Diamond **"Both dates clash on Diamond B. Change the
+time or diamond."**
+
 **✅ WALKED AND PASSED 2026-10-09 — 10 of 10, no step flagged** (owner paste-back: "Edit a repeating practice · §287 · walk 1 of 2 · At a computer — Passed · 7 of 7 · walk 2 of 2 · On a phone — Passed · 3 of 3"). W1's write, read on dev afterwards (`.probe/s3d/s287-readback.sql`): 13U AAA's two practices, **Tue Nov 3 and Tue Nov 10, now 6:00–8:30 p.m.**, both still on *Kinsmen Park · Diamond A* with the club links (W1 tried Diamond B and went back to A before Save, as walked), each still on its own Tuesday, still ONE series (Nov 10 hangs off Nov 3), both changed at 4:34 p.m. by the one *Save 2 practices*. Nothing of 13U AAA's changed after it, so W2's Cancel held. **These rows stay** (W3's series now ends 8:30 p.m.; no walk depends on 8:00). **Still owed:** /simplify (new shared menu props) → /review → commit, and /marketing on the edit's clash line.

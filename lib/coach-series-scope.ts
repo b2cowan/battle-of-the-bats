@@ -18,9 +18,10 @@ export interface SeriesReach {
   all: string[];
 }
 
-/** The pencil's three rows, in order — worded by the event ("This practice only", "All games") and the scope each
- *  opens. Three always, as Delete offers (ask 4). */
-export const SERIES_EDIT_ROWS: readonly { scope: SeriesScope; label: (word: string) => string }[] = [
+/** A series' three answers, in order — worded by the event ("This practice only", "All games") and the scope each
+ *  reaches. The pencil's menu asks them (ask 4: three always), and so does Delete's question (owner, 2026-10-09:
+ *  "change delete to match the pencil" — it had said "This only · This & future · All"). */
+export const SERIES_SCOPE_ROWS: readonly { scope: SeriesScope; label: (word: string) => string }[] = [
   { scope: 'one', label: word => `This ${word} only` },
   { scope: 'remaining', label: () => 'This & future' },
   { scope: 'all', label: word => `All ${word}s` },

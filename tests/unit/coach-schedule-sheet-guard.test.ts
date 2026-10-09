@@ -194,13 +194,14 @@ describe('the event window wears the portal record standard — pencil in the he
     assert.ok(!/Edit details/.test(sheet), 'no "Edit details" button anywhere on the sheet');
     assert.match(css, /\.sheetHeadEnd \{ flex: 1 1 auto; display: flex; justify-content: flex-end;/);
   });
-  it('Delete is the portal\'s delete door at the foot\'s START, asking in place; a series gets the edit form\'s three answers', () => {
+  it('Delete is the portal\'s delete door at the foot\'s START, asking in place; a series gets the pencil\'s three rows', () => {
     const foot = sheet.slice(sheet.indexOf('const actionsBlock = canAddEvents ? ('), sheet.indexOf('const summary ='));
     assert.match(foot, /<GuardedDelete\s+label=\{`Delete this \$\{word\}`\}/);
     assert.ok(foot.indexOf('<GuardedDelete') < foot.indexOf('styles.slideOverActionsRight'), 'delete first, Cancel at the end');
-    assert.ok(sheet.includes("const SERIES_DELETE = [['This only', 'one'], ['This & future', 'remaining'], ['All', 'all']] as const;"),
-      'a series answers in the edit form\'s own three words');
-    assert.match(foot, /choices: SERIES_DELETE\.map\(/);
+    // Owner 2026-10-09 ("change delete to match the pencil"): the series' rows are the pencil's — one list for both.
+    assert.ok(sheet.includes('choices: SERIES_SCOPE_ROWS.map(row => ({ label: row.label(word), onPick: () => { void handleDelete(ev.id, row.scope); } }))'),
+      'a series answers in the pencil\'s own three rows');
+    assert.match(foot, /choices: SERIES_SCOPE_ROWS\.map\(/);
     assert.match(foot, /\{EVENT_DELETE_TAKES\[ev\.eventType\]\}/, 'what goes with it, from the schedule vocabulary');
     assert.equal(EVENT_DELETE_TAKES.practice, 'It comes off the schedule with its attendance and practice plan.');
     assert.equal(EVENT_DELETE_TAKES.external_tournament, 'It comes off the schedule with the games under it.');
