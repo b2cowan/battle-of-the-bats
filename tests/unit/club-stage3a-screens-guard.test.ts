@@ -108,7 +108,8 @@ describe('old addresses forward, before the Rep Teams layout can turn a treasure
   });
   it('the notices the club receives open Accounting, on the bill or the request', () => {
     const notify = readCode('lib/club-money-notify.ts');
-    assert.match(notify, /admin\/accounting\/allocations\/\$\{allocationId\}\$\{splitId \? `\?bill=/);
+    // Stage 3d: an allocation is a window on Allocations — the notice carries its address there.
+    assert.match(notify, /admin\/accounting\/allocations\?allocation=\$\{allocationId\}\$\{splitId \? `&bill=/);
     assert.match(notify, /admin\/accounting\/payment-requests\$\{requestId \? `\?request=/);
   });
 });
@@ -231,12 +232,11 @@ describe('one admin button size, the portal’s (owner, 2026-10-01, option A)', 
     // behind one menu on both Ledgers. Still never olive text: that is a card-foot door.
     const ledger = readCode(`${ACCT}/ledger/page.tsx`);
     assert.match(ledger, /<CoachToolbarMenu label="Tools"/);
-    // A LINK since Sheet Frame step 5 (2026-10-06): on a phone Tools is a sheet that stands a Back step, and a step
-    // only knows a tap left the page when the tap was a link — a router.push from a button was cancelled by the
-    // step's own history.back() (the §258 failure).
-    assert.match(ledger, /label="Payees"[\s\S]{0,200}href=\{payeesHref\} \/>/);
+    // ⚖ Stage 3d (Ask 1): Payees is a WINDOW over the Ledger, opened from Tools like Transfer — it leaves nothing, so it
+    // is a row that opens a window, never a link to a page (the Payees page retired; its address forwards here).
+    assert.match(ledger, /label="Payees"[\s\S]{0,200}onSelect=\{\(\) => setPayees\(\{ payee: null \}\)\} \/>/);
     assert.match(ledger, /label="Transfer"/);
-    assert.doesNotMatch(ledger, /<Link href=\{payeesHref\}/, 'no Payees button on the toolbar');
+    assert.doesNotMatch(ledger, /payeesHref/, 'no link to the retired Payees page');
     assert.doesNotMatch(ledger, /className=\{kit\.footLink\}/);
   });
 });

@@ -307,6 +307,9 @@ function adminDestination(rest: string, query: URLSearchParams): string | null {
   if (/^\/accounting\/payment-requests\/?$/.test(rest)) {
     return opens('request') ? 'Open the request' : `Open ${ADMIN_PAGE.paymentRequests}`;
   }
+  // An allocation's window on Allocations (Stage 3d: `?allocation=`, `&bill=`), and its retired page's address, which
+  // notices already in people's bells still carry (the proxy forwards it).
+  if (/^\/accounting\/allocations\/?$/.test(rest) && opens('allocation')) return opens('bill') ? 'Open the bill' : 'Open the allocation';
   if (/^\/accounting\/allocations\/[^/]+\/?$/.test(rest)) return opens('bill') ? 'Open the bill' : 'Open the allocation';
   if (/^\/tournaments\/registrations\/?$/.test(rest)) return `Open ${ADMIN_PAGE.tournamentTeams}`;
   // `?gameId=` opens that game's score editor on arrival (Tournament admin redesign, G3).

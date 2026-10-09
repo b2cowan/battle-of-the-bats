@@ -1471,11 +1471,29 @@ export const SCREENS = [
   // switches it); Allocations and Payment requests moved here from Rep Teams (the old addresses
   // forward, so they are no longer screens of their own); a team's account and Payees sit one level down.
   { id: 'admin-accounting-ledger',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/ledger?book=${c.clubLedgerId}` },
-  { id: 'admin-accounting-payees',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payees` },
-  { id: 'admin-accounting-payee-report', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payees?payee=${c.clubSharedPayeeId}` },
+  // Stage 3d: Payees is a WINDOW over the Ledger (its page retired) — the list (`?payees=1`, the retired page's own
+  // forward) and a shared payee one level in (`?payee=`, which the retired report page forwards to). Each measures the
+  // window, which is what changed; the Ledger under it is `admin-accounting-ledger`'s.
+  { id: 'admin-accounting-payees',     area: 'accounting', session: 'repClubOwner', ready: '[data-kit-dialog] table, [data-kit-dialog] [data-row-list]',
+    path: (c) => `/${c.clubSlug}/admin/accounting/ledger?payees=1`, scope: '[data-kit-dialog]' },
+  { id: 'admin-accounting-payee-report', area: 'accounting', session: 'repClubOwner', ready: '[data-kit-dialog][data-record]',
+    path: (c) => `/${c.clubSlug}/admin/accounting/ledger?payee=${c.clubSharedPayeeId}`, scope: '[data-kit-dialog]' },
   { id: 'admin-accounting-allocations', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations` },
   { id: 'admin-accounting-coming-due', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?view=coming-due` },
-  { id: 'admin-accounting-allocation', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations/${c.clubAllocationId}` },
+  // Stage 3d: an allocation is a WINDOW over Allocations (its page retired; `?allocation=` is its address) — the
+  // allocation, then a team's bill one level in (the first team's, through the window's own row).
+  { id: 'admin-accounting-allocation', area: 'accounting', session: 'repClubOwner', ready: '[data-kit-dialog] [role="group"]',
+    path: (c) => `/${c.clubSlug}/admin/accounting/allocations?allocation=${c.clubAllocationId}`, scope: '[data-kit-dialog]' },
+  { id: 'admin-accounting-allocation-bill', area: 'accounting', session: 'repClubOwner', ready: '[data-kit-dialog] [role="group"]',
+    path: (c) => `/${c.clubSlug}/admin/accounting/allocations?allocation=${c.clubAllocationId}`, scope: '[data-kit-dialog]',
+    interact: async (page) => {
+      const team = page.locator('[data-kit-dialog] tbody button:visible, [data-kit-dialog] [data-row-list] button:visible').first();
+      if (await team.count() === 0) return;
+      await team.click();
+      await page.locator('[data-kit-dialog][data-record]').first().waitFor({ state: 'attached', timeout: 15_000 });
+      await page.waitForTimeout(300);
+    },
+    note: 'A team\'s bill opens IN PLACE inside the allocation\'s window (Ask 4) — no address of its own to land on without a split id, so the window\'s first team row opens it.' },
   { id: 'admin-accounting-allocation-new', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?new=1` },
   { id: 'admin-accounting-payment-requests', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payment-requests` },
   { id: 'admin-accounting-team',       area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}` },

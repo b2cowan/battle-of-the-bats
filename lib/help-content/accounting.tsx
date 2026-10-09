@@ -32,7 +32,7 @@ const accountingHelp: HelpPageContent = {
       heading: 'Finding your way: one page, six tabs',
       summary: 'Overview, Ledger, Allocations, Payment requests, Budget and Budget vs. Actual — tabs across the top of one page.',
       keywords: ['tabs', 'overview', 'board summary', 'ledger tab', 'allocations tab', 'payment requests tab', 'budget', 'budget vs actual', 'navigation', 'where is'],
-      searchText: 'accounting tabs overview ledger allocations payment requests budget budget vs actual one page tab bar rail where is the ledger where are allocations where are payment requests back arrow one level down team account payees',
+      searchText: 'accounting tabs overview ledger allocations payment requests budget budget vs actual one page tab bar rail where is the ledger where are allocations where are payment requests back arrow one level down team account payees payees window allocation window opens over the tab where did the payees page go where did the allocation page go',
       content: (
         <>
           <p>Accounting is one page, and its tabs run across the top:</p>
@@ -44,7 +44,7 @@ const accountingHelp: HelpPageContent = {
             <HelpDef term="Budget">The year’s plan, revenue first and then expenses, line by line.</HelpDef>
             <HelpDef term="Budget vs. Actual">The year’s plan against what the club’s books actually moved.</HelpDef>
           </HelpDefs>
-          <p><strong>Allocations</strong> and <strong>Payment requests</strong> appear only when your club runs rep teams. A page one level down — an allocation, a team’s account, Payees — has no tabs; its back arrow returns you to the tab you came from.</p>
+          <p><strong>Allocations</strong> and <strong>Payment requests</strong> appear only when your club runs rep teams. <strong>Payees</strong> and an <strong>allocation</strong> open as windows over the tab you are on, and closing one puts you back where you were. A team’s account is a page one level down, with no tabs; its back arrow returns you to the tab you came from.</p>
         </>
       ),
     },
@@ -239,14 +239,15 @@ const accountingHelp: HelpPageContent = {
       heading: 'Payees: who the club pays, and who pays it',
       summary: 'Rename a payee, merge two spellings of one, delete one no line uses, and choose which ones the club’s teams can use.',
       keywords: ['payee', 'payees', 'payer', 'vendor', 'merge payees', 'rename payee', 'delete payee', 'two spellings', 'manage payees', 'shared with teams', 'share a payee', 'teams column', 'the club’s own', 'shared payee', 'what the teams paid', 'what the teams recorded paying it'],
-      searchText: 'payee payees payer vendor supplier merge payees two spellings duplicate payee rename payee delete payee manage payees paid to paid by last used tools menu share a payee with teams shared with teams switch teams column the club’s own which payees can teams use team picker shared by your club club sees payments teams cannot rename stop sharing what the teams recorded inside the payee window what the teams paid nothing recorded fiscal year pill reads first pencil edit payee where did the payee report go',
+      searchText: 'payee payees payer vendor supplier merge payees two spellings duplicate payee rename payee delete payee manage payees paid to paid by last used tools menu share a payee with teams shared with teams switch teams column the club’s own which payees can teams use team picker shared by your club club sees payments teams cannot rename stop sharing what the teams recorded inside the payee window what the teams paid nothing recorded fiscal year pill reads first pencil edit payee where did the payee report go payees page payees window over the ledger back to payees previous next manage payees keeps my entry typing kept where did the payees page go',
       content: (
         <>
-          <p><strong>Payees</strong> are the names on the Ledger’s <strong>Paid to</strong> and <strong>Paid by</strong> lines. Open the list from the Ledger’s <strong>Tools → Payees</strong> (on a phone too), or from <strong>Manage payees…</strong>, the last row of the payee picker in any entry.</p>
+          <p><strong>Payees</strong> are the names on the Ledger’s <strong>Paid to</strong> and <strong>Paid by</strong> lines. The list opens as a window over the Ledger, from <strong>Tools → Payees</strong> (on a phone too); close it and the Ledger is as you left it: the same book, filters and dates. You can also open it from <strong>Manage payees…</strong>, the last row of the payee picker in any entry. There it opens over the entry you are typing, and closing it takes you back to that entry with everything you typed still there. If you merge away the payee the entry had picked, the entry switches to the one you kept.</p>
+          <p>A payee opens inside the same window. <strong>← Payees</strong> (on a phone, the arrow at the top left) goes back to the list, and <strong>Previous</strong> and <strong>Next</strong> at the foot walk through it.</p>
           <ul>
             <li><strong>Rename</strong> — a payee opens to read: whether it is shared, and how many of the club’s entries name it. The pencil turns its name (and the Shared with teams switch) into a form; the name saves as you type, and every line that names it follows.</li>
             <li><strong>Merge</strong> — when one supplier has two spellings, open one and choose <strong>Merge into another payee</strong>. Every line moves to the name you keep.</li>
-            <li><strong>Delete</strong> — only a payee no line uses, the club’s or a team’s. One that is in use can be merged instead.</li>
+            <li><strong>Delete</strong> — only a payee no line uses, the club’s or a team’s, at the end of the payee’s window. It asks first. One that is in use can be merged instead.</li>
             <li><strong>Share with teams</strong> — in a club that runs teams, the <strong>Teams</strong> column says which payees are <strong>Shared with teams</strong> and which are <strong>The club’s own</strong>. Open a payee and turn on <strong>Shared with teams</strong>: every team can pick it as a payee, can’t rename or merge it, and their payee list tells them the club sees payments to it. Turn it off and it leaves their picker; a team record that already names it keeps the name.</li>
             <li><strong>What the teams recorded</strong> — a payee you share shows it inside its own window: each team’s payments in the fiscal year (a team folds open to its dates), the total, then the teams that recorded nothing. A small <strong>Fiscal year</strong> pill appears only when it has records in more than one year. Only payments recorded after you shared the payee count, and they are the teams’ own records, not proof that a payment was made. A team’s other payees and other spending never show. There is no separate report page or export.</li>
           </ul>
@@ -275,7 +276,7 @@ const accountingHelp: HelpPageContent = {
       heading: 'Allocations: billing the teams',
       summary: 'Split a shared cost across teams in installments, see what is coming due, and record what arrives.',
       keywords: ['allocation', 'allocations', 'cost allocation', 'rep team', 'shared costs', 'installments', 'coming due', 'due filter', 'record received', 'confirm received', 'undo a payment', 'sent waiting for you to confirm', 'allocate from a line'],
-      searchText: 'allocate from a line allocate from the budget cost allocation allocations rep team shared costs diamond fees insurance association fees installment schedule new allocation one window bill from off-plan bill split evenly by amount by percentage by sessions pay by one payment installments teams table tick a team season share due nothing left over own payments no open season between seasons not running a season team groups group heading tick a group all none split by group 60 40 bill teams bill 7 teams why was it refused reason beside the button create allocation where did the three steps go program year by allocation coming due overdue days late sent waiting for you to confirm due in the next 14 days later due filter next 30 days rest of the season where did show all go head coach filter button on a phone needs you on track record received confirm received received on how it came reference e-transfer cheque undo a payment returned by the bank reason general ledger voided due again coaches told remind this team open the team account where did allocations go rep teams allocations moved',
+      searchText: 'allocate from a line allocate from the budget cost allocation allocations rep team shared costs diamond fees insurance association fees installment schedule new allocation one window bill from off-plan bill split evenly by amount by percentage by sessions pay by one payment installments teams table tick a team season share due nothing left over own payments no open season between seasons not running a season team groups group heading tick a group all none split by group 60 40 bill teams bill 7 teams why was it refused reason beside the button create allocation where did the three steps go program year by allocation coming due overdue days late sent waiting for you to confirm due in the next 14 days later due filter next 30 days rest of the season where did show all go head coach filter button on a phone needs you on track record received confirm received received on how it came reference e-transfer cheque undo a payment returned by the bank reason general ledger voided due again coaches told remind this team open the team account where did allocations go rep teams allocations moved allocation window allocation page where did the allocation page go name and note rename an allocation the club’s note no note closed year counts in which is closed back to the allocation open the allocation from the budget line from the ledger from the overview from a team’s account from a notification',
       content: (
         <p>An <strong>allocation</strong> splits a shared cost — diamond fees, insurance, association dues — across the teams you choose, each share in installments with due dates. The Allocations tab is where you bill the teams, watch what is coming due, and record what arrives.</p>
       ),
@@ -312,7 +313,25 @@ const accountingHelp: HelpPageContent = {
                 <HelpDef term="Later">What falls due after that, when the <strong>Due</strong> pill looks further ahead.</HelpDef>
               </HelpDefs>
               <p>The <strong>Due</strong> pill beside View sets how far ahead Coming due looks: <strong>Next 14 days</strong> (where it opens), <strong>Next 30 days</strong>, or <strong>Rest of the season</strong>. Each choice shows the dates it covers. Overdue and sent installments always show, whatever you pick, and the 14-day group never changes; a wider window adds a <strong>Later</strong> group at the foot. Export writes what the window shows. On a phone, Due is behind the <strong>Filter</strong> button.</p>
-              <p>Open an allocation to see its four figures and its teams, in two bands: <strong>Needs you</strong> and <strong>On track</strong>. A team opens its bill: what it was billed, collected and still owes, and each installment with its state. <strong>Previous</strong> and <strong>Next</strong> walk you from team to team.</p>
+              <p>A row opens its allocation’s window over the tab — at the allocation from By allocation, at that team’s bill from Coming due. See <a href="#allocations-window">An allocation’s window</a>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'allocations-window',
+          title: 'An allocation’s window',
+          content: (
+            <>
+              <p>An allocation opens as a window wherever you are, and closing it puts you back where you were:</p>
+              <ul>
+                <li><strong>From a tab</strong> (the Allocations list, Coming due, the Overview’s still-open bills, a Budget vs. Actual figure, a team’s account): the window opens over the tab.</li>
+                <li><strong>From another window</strong> (a budget line, From the teams, a Ledger line, what is behind a figure): that window turns into the allocation’s, and closing it turns it back.</li>
+                <li><strong>From a notification or an old link</strong>: the Allocations tab opens with the window already open.</li>
+              </ul>
+              <p>It reads the bill first. Above its name: the budget line it bills from and the fiscal year it counts in (<em>Off-plan</em> when it has no line). Then its four figures, <strong>Allocated</strong>, <strong>Collected</strong>, <strong>Outstanding</strong> and <strong>Overdue</strong>; its schedule; its teams, in two bands, <strong>Needs you</strong> and <strong>On track</strong>; and the club’s <strong>Note</strong>. Opened from the Allocations list, <strong>Previous</strong> and <strong>Next</strong> at its foot walk the list. <strong>Export</strong>, at its foot, writes one row per installment: the team, the amount and due date, its state, and once received the day, how it came, the reference and who recorded it.</p>
+              <p><strong>The pencil</strong> changes the allocation’s <strong>Name</strong> and its <strong>Note</strong>, and nothing else: each team’s share, the schedule and which teams it bills never change once it is made. Both save as you type. The new name shows on each team’s Club page and on the bill’s Ledger lines, the club’s and the teams’; notices already sent keep the old name. A note is for the club’s own reference; teams don’t see it.</p>
+              <p>An allocation that counts in a <a href="#fiscal-year-closed">closed fiscal year</a> has no pencil and one locked line that says so. Its unpaid installments can still be recorded as received.</p>
+              <p>A team opens its bill inside the same window: what it was billed, collected and still owes, and each installment with its state. The back link above the team’s name, which names the allocation (on a phone, the arrow at the top left), goes back up to the whole allocation, and <strong>Previous</strong> and <strong>Next</strong> walk you from team to team. To remind every team at once, use <strong>Send reminders</strong> on the Allocations tab; a team’s bill has its own <strong>Remind</strong>.</p>
             </>
           ),
         },
@@ -370,10 +389,10 @@ const accountingHelp: HelpPageContent = {
       heading: 'A team’s account with the club',
       summary: 'What one team has been billed, has paid and still owes the club — the club’s own records.',
       keywords: ['team account', 'what does a team owe', 'team statement', 'held by the team', 'cash on hand', 'outstanding'],
-      searchText: 'team account account with the club what does a team owe team statement held by the team cash on hand lock between seasons last closed season closing figure the coaches records billed received outstanding next due requests the club own records read only never added to club figures export',
+      searchText: 'team account account with the club what does a team owe team statement held by the team cash on hand lock between seasons last closed season closing figure the coaches records billed received outstanding next due requests the club own records read only never added to club figures export four cards figures band open a bill',
       content: (
         <>
-          <p>Open a team from <strong>The teams</strong> on the Overview, or with the <strong>Open … ’s account</strong> button at the foot of its bill on an allocation. Four cards lead — <strong>Outstanding</strong>, <strong>Next due</strong>, <strong>Paid to the team</strong> on its requests, and <strong>Cash on hand</strong>, marked with a lock as held by the team — then the account reads like a statement: what the club billed the team, what the team paid, and what the club paid it.</p>
+          <p>Open a team from <strong>The teams</strong> on the Overview, or with the <strong>Open … ’s account</strong> button at the foot of its bill on an allocation. Four figures lead, side by side — <strong>Outstanding</strong>, <strong>Next due</strong>, <strong>Paid to the team</strong> on its requests, and <strong>Cash on hand</strong>, marked with a lock as held by the team — then the account reads like a statement: what the club billed the team, what the team paid, and what the club paid it. A billed or received line opens that team’s bill in its allocation’s window, over the account; a request opens on Payment requests.</p>
           <p>The three club figures are the club’s own records of the team, read-only here. <strong>Cash on hand</strong> is the one figure read from the coaches’ records: it is today’s figure while the team has a live season, and a team between seasons shows its last closed season’s closing figure, dated. It is never added into the club’s figures — the team’s money is its coaches’, and the rest of this page says where the team stands with the club. <strong>Export</strong> gives you the statement as a file.</p>
         </>
       ),

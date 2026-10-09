@@ -118,7 +118,8 @@ if (sent) {
       teamName: teamName(split.team_id), amount: Number(sent.amount), what, sentOn: sent.sent_on,
       how: howItCame(sent.sent_method, sent.sent_reference),
     }),
-    link: `/${org.slug}/admin/accounting/allocations/${split.allocation_id}?bill=${sent.split_id}`,
+    // Allocations with the allocation's window open at that team's bill (Stage 3d) — `clubMoneyLinks.allocation`'s shape.
+    link: `/${org.slug}/admin/accounting/allocations?allocation=${split.allocation_id}&bill=${sent.split_id}`,
     created_at: ago(30 * H), read_at: ago(29 * H),
     metadata: { seed: SEED, installmentId: sent.id, splitId: sent.split_id },
   });

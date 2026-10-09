@@ -3,8 +3,9 @@
  * A TEAM'S BILL, AND THE THREE THINGS THE CLUB DOES WITH IT (Club Tier Stage 3a, specimen 3 — Asks 1
  * and 3; J4-013, C07, C08, S3A-01, C17).
  *
- *   the bill   — a ROOM in the portal's money grammar (List · Room · Question, owner 2026-09-02): four
- *                tiles, then the installments, each with its due date and, once received, the day, how,
+ *   the bill   — a ROOM in the portal's money grammar (List · Room · Question, owner 2026-09-02): its four
+ *                figures as the portal's ONE joined band (Stage 3d, owner 2026-10-08 — they were four separate
+ *                tiles), then the installments, each with its due date and, once received, the day, how,
  *                the reference and who recorded it. "Record received" sits on each unpaid installment,
  *                OLIVE (it repeats down the rows — lime is one main action per screen). Named neighbours
  *                at its foot through the teams on the same band ("‹ 10U A · 1 of 3 · 16U Girls ›",
@@ -17,20 +18,21 @@
  * Who: whoever holds the club's accounting (`canMove`, Ask 1). A tap on a bill that changed under the
  * screen is refused in words and the bill re-reads in place (409 `money_state_changed`).
  */
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Lock, Users } from 'lucide-react';
 import KitDialog, { type KitStep } from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { kit } from '@/components/coaches/kit';
 import { Callout, RepChip, RowAction, repKit } from '../RepKit';
+import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import { UNLINKED_PAYMENT, lockedRecordWords } from '@/lib/club-money-words';
 import fy from './FiscalYear.module.css';
 import { daysBetweenDateStrings, tournamentToday } from '@/lib/timezone';
 import { DUES_PAYMENT_METHODS, type DuesPaymentMethod } from '@/lib/types';
 import type { ClubBillFigures, ClubInstallmentState } from '@/lib/club-money-figures';
 import {
-  DayField, Facts, FormError, MethodField, ReasonQuestion, TextField, Tiles, day, isStale, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
+  DayField, Facts, FormError, MethodField, ReasonQuestion, TextField, day, isStale, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
 } from './MoneyKit';
 
 export interface BillInstallment {
@@ -60,7 +62,12 @@ function installmentLine(i: BillInstallment): string {
   return parts.filter(Boolean).join(' · ');
 }
 
-export function BillRoom({ allocation, bill, bandWord, position, steps, canMove, accountingBase, onRecord, onUndo, onRemind, onClose }: {
+/**
+ * ⚖ Stage 3d (Ask 4): the bill opens ONE LEVEL INSIDE its allocation's window, in place — `back` names the allocation
+ * ("← Diamond fees 2026"), and the window keeps the allocation's 800 px (`wide`), so the two levels of one window never
+ * jump in size. `status` is the window's floating pill (what a money move just did, said once).
+ */
+export function BillRoom({ allocation, bill, bandWord, position, steps, canMove, accountingBase, back, wide = false, status, address, onRecord, onUndo, onRemind, onClose }: {
   allocation: { id: string; description: string };
   bill: TeamBill;
   /** "needs you" / "on track". */
@@ -70,6 +77,12 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
   steps: { prev: KitStep | null; next: KitStep | null };
   canMove: boolean;
   accountingBase: string;
+  /** The allocation behind it, named — the way up one level (Stage 3d). */
+  back?: { label: string; onBack: () => void };
+  wide?: boolean;
+  status?: ReactNode;
+  /** The bill as a place in the URL bar (the allocation window over Allocations — KitDialog `address`). */
+  address?: string;
   onRecord: (i: BillInstallment, mode: 'receive' | 'confirm') => void;
   onUndo: () => void;
   onRemind: () => void;
@@ -89,6 +102,11 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
       eyebrow={`${allocation.description} · ${bandWord} · ${position}`}
       title={bill.teamName}
       onClose={onClose}
+      back={back}
+      levelKey={bill.splitId}
+      wide={wide}
+      status={status}
+      address={address}
       steps={{ ...steps, position, positionWide: `${position} ${bandWord}`, noun: 'team' }}
       footerStart={<Link href={`${accountingBase}/teams/${bill.teamId}`} className={kit.footLink}>Open {bill.teamName}’s account</Link>}
       footer={
@@ -98,12 +116,18 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
         </>
       }
     >
-      <Tiles items={[
-        { label: 'Billed', value: money(f.billed) },
-        { label: 'Collected', value: money(f.collected) },
-        { label: 'Outstanding', value: money(f.outstanding) },
-        { label: 'Next due', value: nextDue ? day(nextDue) : '—' },
-      ]} />
+      <div className={moneyKit.windowBand}>
+        <MoneySummaryBand
+          ariaLabel={`${bill.teamName}’s bill`}
+          tiles={[
+            { key: 'billed', label: 'Billed', figure: money(f.billed) },
+            { key: 'collected', label: 'Collected', figure: money(f.collected) },
+            { key: 'outstanding', label: 'Outstanding', figure: money(f.outstanding) },
+            // A payment already late is the bill's verdict: its date in the verdict tone (the drawing's red Aug 23).
+            { key: 'next', label: 'Next due', figure: nextDue ? day(nextDue) : '—', tone: f.oldestOverdueDate ? 'danger' : 'plain' },
+          ]}
+        />
+      </div>
       {bill.headCoaches.length === 0 && owes && (
         <Callout role="note" icon={<Users size={16} aria-hidden />}>
           {bill.teamName} has no head coach yet, so there is nobody to remind. Invite one from the team’s page.

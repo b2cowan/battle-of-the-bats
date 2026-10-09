@@ -583,7 +583,8 @@ describe('step 5 · the frame answers every sheet, and the lineup builder\'s dra
     for (const file of rowFiles) {
       assert.doesNotMatch(readCode(file), /onSelect=\{\(\) => \{?\s*router\.(push|replace)\(/, `${file}: a Tools row that navigates is an href`);
     }
-    assert.match(readCode('app/[orgSlug]/admin/accounting/ledger/page.tsx'), /label="Payees"[\s\S]{0,200}href=\{payeesHref\} \/>/);
+    // Club Tier Stage 3d: the club Ledger's Payees row opens a WINDOW over the Ledger (it navigates nowhere), as Transfer does.
+    assert.match(readCode('app/[orgSlug]/admin/accounting/ledger/page.tsx'), /label="Payees"[\s\S]{0,200}onSelect=\{\(\) => setPayees\(\{ payee: null \}\)\} \/>/);
     assert.match(readCode('app/[orgSlug]/admin/tournaments/registrations/page.tsx'), /label=\{TEAMS_WORDS\.registrationQuestions\}\s+href=\{questionsHref\} \/>/);
   });
 

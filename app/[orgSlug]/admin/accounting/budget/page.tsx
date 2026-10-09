@@ -397,7 +397,6 @@ export default function BudgetTab() {
           canMove={canMove}
           locked={plan.year.locked}
           categories={categories ?? []}
-          accountingBase={base}
           onChanged={changed}
           onClose={() => setLineId(null)}
         />
@@ -427,7 +426,10 @@ export default function BudgetTab() {
           rows={plan.revenue.fromTheTeams.allocations}
           planned={plan.revenue.fromTheTeams.planned}
           periods={plan.revenue.fromTheTeams.periods}
+          q={q}
+          orgSlug={slug}
           accountingBase={base}
+          onChanged={() => changed(null)}
           onClose={() => setWin(null)}
         />
       )}

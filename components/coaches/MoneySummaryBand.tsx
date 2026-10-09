@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Lock } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -70,6 +71,13 @@ export interface MoneyTile {
    * money past due. The band re-fits from 4 to 3 rather than printing a decorative zero.
    */
   hidden?: boolean;
+  /**
+   * ⚠ A FIGURE THE SCREEN READS BUT DOESN'T OWN (Club Tier Stage 3b, Ask 4e): a team's Cash on hand on the club's team
+   * account — the coaches' own figure, read each time, never added into a club figure. A lock before its label and the
+   * blue edge of "held by the team", inside its tile, so the band stays one frame (Stage 3d joined that page's cards
+   * into this band, owner 2026-10-08). The caption says whose figure it is.
+   */
+  held?: boolean;
 }
 
 /**
@@ -113,8 +121,8 @@ export default function MoneySummaryBand({
         aria-label={ariaLabel}
       >
         {shown.map(t => (
-          <div key={t.key} className={styles.moneyBandTile}>
-            <span className={styles.moneyBandLabel}>{t.label}</span>
+          <div key={t.key} className={styles.moneyBandTile} data-held={t.held || undefined}>
+            <span className={styles.moneyBandLabel}>{t.held && <Lock size={11} aria-hidden className={styles.moneyBandHeldLock} />}{t.label}</span>
             <span className={styles.moneyBandFigure} data-tone={t.tone ?? 'plain'}>{t.figure}</span>
             {/* ⚠ RENDERED ONLY WHEN THERE IS ONE. An empty caption element still occupies a line
                 box, which is what left two of Fundraising's four cards a row shorter than their

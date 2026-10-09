@@ -122,17 +122,25 @@ export async function proxy(request: NextRequest) {
     const newAllocation = (segments[2] === 'rep-teams' || segments[2] === 'accounting') && segments[3] === 'allocations'
       && segments[4] === 'new' && segments.length === 5;
     const fromLine = newAllocation ? request.nextUrl.searchParams.get('line') : null;
+    /* ⚖ Stage 3d retired the Payees PAGE and an allocation's PAGE into windows (Asks 1 and 3). Payees opens over the
+       Ledger — `?payees=1` for the list, `?payee=` at one payee (the report page 3c retired goes straight there, and
+       `accounting/payees?payee=` keeps its payee). An allocation opens over Allocations — `?allocation=`, its `?bill=`
+       kept — from its own old address and from the Rep Teams one 3a moved. Notices already in people's bells carry
+       these addresses. */
+    const allocationId = (segments[2] === 'rep-teams' || segments[2] === 'accounting') && segments[3] === 'allocations'
+      && segments.length >= 5 && !newAllocation ? segments[4] : null;
+    const payees = segments[2] === 'accounting' && segments[3] === 'payees' && segments.length <= 5;
     const moved =
       newAllocation
         ? `/${segments[0]}/admin/accounting/${fromLine ? 'budget' : 'allocations'}`
-      : segments[2] === 'rep-teams' && segments[3] === 'allocations'
-        ? `/${segments[0]}/admin/accounting/allocations${segments.length > 4 ? `/${segments.slice(4).join('/')}` : ''}`
+      : allocationId || (segments[2] === 'rep-teams' && segments[3] === 'allocations')
+        ? `/${segments[0]}/admin/accounting/allocations`
       : segments[2] === 'rep-teams' && segments[3] === 'payment-requests' && segments.length === 4
         ? `/${segments[0]}/admin/accounting/payment-requests`
       : segments[2] === 'accounting' && segments[3] === 'ledger' && segments.length === 5
         ? `/${segments[0]}/admin/accounting/ledger`
-      : segments[2] === 'accounting' && segments[3] === 'payees' && segments.length === 5
-        ? `/${segments[0]}/admin/accounting/payees`
+      : payees
+        ? `/${segments[0]}/admin/accounting/ledger`
       // Stage 3b retired the budget line's own Allocate page into New allocation, opened from the line (3c: its window).
       : segments[2] === 'accounting' && segments[3] === 'budget' && segments[4] === 'allocate' && segments.length === 6
         ? `/${segments[0]}/admin/accounting/budget`
@@ -142,7 +150,11 @@ export async function proxy(request: NextRequest) {
       url.pathname = moved;
       if (segments[3] === 'ledger') url.searchParams.set('book', segments[4]);
       if (segments[3] === 'budget') url.searchParams.set('line', segments[5]);
-      if (segments[3] === 'payees') url.searchParams.set('payee', segments[4]);
+      if (payees) {
+        if (segments.length === 5) url.searchParams.set('payee', segments[4]);
+        else if (!url.searchParams.get('payee')) url.searchParams.set('payees', '1');
+      }
+      if (allocationId) url.searchParams.set('allocation', allocationId);
       if (newAllocation) {
         url.searchParams.delete('year');
         if (!fromLine) url.searchParams.set('new', '1');

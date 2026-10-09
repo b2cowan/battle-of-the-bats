@@ -1,0 +1,50 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   AN ALLOCATION'S WINDOW (Club Tier Stage 3d, specimen 2 — hub Mockups → Stage 3d, version 61). Only what the
+   kit and RepKit don't already draw: the closed year's lock beside the eyebrow, its one locked line, the teams
+   table's Next column kept on one line, and the club's note. The band is the portal's `MoneySummaryBand`
+   (Money.module.css `.windowBand` spaces it); the table, the row list and the read line are RepKit's and 3c's.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder strictly.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* The lock after "… · 2025–26" in the eyebrow: a closed year, said once more where the year is named. */
+.eyebrowLock { vertical-align: -1px; margin-left: 0.35rem; color: var(--text-tertiary); }
+
+/* A closed year's one locked line, at the top of the body: the drawing's quiet bordered line (3c's lock words,
+   reworded for a bill that COUNTS in a year). Not a tinted panel (retired 2026-09-21): the card ground, a hairline. */
+.lockLine {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.lockLineIcon { flex: none; margin-top: 2px; color: var(--text-tertiary); }
+
+/* Next keeps its date and amount on one line at 800 px; Head coach is the column that gives way (the drawing). */
+.teams .next { white-space: nowrap; }
+/* A team's name stays on one line too ("13U AAA", not "13U" over "AAA") — the drawing's; Head coach wraps instead. */
+.teams td:first-child { white-space: nowrap; }
+
+/* The club's note (S3D-03), last, under the teams — the read line's shape (3c), a little air above it. */
+.note { margin-top: 0.9rem; }
+/* Two classes: the read line's own dd rule (3c) inks every value primary at 550 — "No note." is quiet, as drawn. */
+.note .noteText { white-space: pre-wrap; overflow-wrap: anywhere; }
+.note .noNote { color: var(--text-tertiary); font-weight: 400; }
+/* A phone: the label over the note, as the read line stacks there. */
+.notePhone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0.9rem 0 0;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.noteLabel { font-size: var(--type-body); color: var(--text-tertiary); white-space: normal; }

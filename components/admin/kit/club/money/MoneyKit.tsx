@@ -1,8 +1,8 @@
 'use client';
 /**
  * THE CLUB'S MONEY SCREENS' SHARED PARTS (Club Tier Stage 3a, session 2). Small, and only what RepKit
- * does not already draw: a money figure and a day in the club's words, the figure cards and tiles, a
- * window's facts, a coach's quote, the state chip an allocation or a bill carries, the method picker,
+ * does not already draw: a money figure and a day in the club's words, a window's facts, a coach's quote, the
+ * state chip an allocation or a bill carries, the method picker,
  * and the one way a refused money move is read back to the screen.
  *
  * ⚠ NO FIGURE IS COMPUTED HERE. Collected, Outstanding, Overdue, Next due, Sent and a book's Balance come
@@ -11,9 +11,8 @@
  */
 import { useContext, useLayoutEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Lock } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import KitDialog, { KitReasonSlot } from '../KitDialog';
-import { CoachCard, CoachEyebrow, CoachFigure, kit } from '@/components/coaches/kit';
 import { fmt } from '@/lib/coach-money-summary';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { formatStoredDate } from '@/lib/timezone';
@@ -145,40 +144,10 @@ export function ReasonQuestion({
   );
 }
 
-/** A page's figure cards (an allocation's four, a team's four): the label, the figure, one fact. */
-export function FigureCards({ items, three = false }: {
-  /** `tone` colours the figure — `bad` for money that is late (an allocation's Overdue, as drawn). `held`: a
-   *  figure the club READS but doesn't own (a team's cash on hand, Club Tier Stage 3b Ask 4e) — the lock in its
-   *  label and the blue edge of "held by the team". */
-  items: { label: string; value: ReactNode; sub?: ReactNode; tone?: 'good' | 'bad' | 'muted'; held?: boolean }[];
-  three?: boolean;
-}) {
-  return (
-    <div className={`${three ? styles.cards3 : repKit.cards4} ${styles.figures}`}>
-      {items.map(i => (
-        <CoachCard key={i.label} className={i.held ? styles.heldCard : undefined}>
-          <CoachEyebrow>{i.held && <Lock size={11} aria-hidden className={styles.heldLock} />}{i.label}</CoachEyebrow>
-          <CoachFigure className={styles.figure} tone={i.tone}>{i.value}</CoachFigure>
-          {i.sub != null && <p className={kit.sub}>{i.sub}</p>}
-        </CoachCard>
-      ))}
-    </div>
-  );
-}
-
-/** The four tiles at the top of a window (a team's bill). */
-export function Tiles({ items }: { items: { label: string; value: ReactNode }[] }) {
-  return (
-    <div className={styles.tiles}>
-      {items.map(i => (
-        <div key={i.label} className={styles.tile}>
-          <span className={styles.tileLabel}>{i.label}</span>
-          <span className={styles.tileValue}>{i.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
+/* ⚰ `FigureCards` (a page's figure cards) and `Tiles` (a window's) STOOD HERE (retired Club Tier Stage 3d, owner
+   2026-10-08: "the new standard is that they are connected"). Every club money summary — an allocation's figures, a
+   team's bill, a team's account — is the portal's ONE joined band, `MoneySummaryBand` (a figure the club reads but
+   doesn't own carries `held`). */
 
 /**
  * A window's facts: a label on the left, its value on the right (the drawing's record box). ⚠ The

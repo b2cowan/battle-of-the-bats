@@ -65,6 +65,8 @@ describe('in the admin, the button names the club’s page and lands on the reco
 
   it('names the RECORD when the link opens one', () => {
     assert.equal(admin('/o/admin/accounting/payment-requests?request=r-1'), 'Open the request');
+    // An allocation's window on Allocations (Stage 3d) — and its retired page's address, still in stored notices.
+    assert.equal(admin('/o/admin/accounting/allocations?allocation=a-1&bill=s-1'), 'Open the bill');
     assert.equal(admin('/o/admin/accounting/allocations/a-1?bill=s-1'), 'Open the bill');
     // Results with `?gameId=` opens that game's score editor (owner, 2026-10-05, Q3).
     assert.equal(admin('/o/admin/tournaments/results?tournamentId=t&gameId=g'), 'Open the game');
@@ -74,6 +76,7 @@ describe('in the admin, the button names the club’s page and lands on the reco
 
   it('names the PAGE when the link opens a list', () => {
     assert.equal(admin('/o/admin/accounting/payment-requests'), 'Open Payment requests');
+    assert.equal(admin('/o/admin/accounting/allocations?allocation=a-1'), 'Open the allocation');
     assert.equal(admin('/o/admin/accounting/allocations/a-1'), 'Open the allocation');
     assert.equal(admin('/o/admin/tournaments/results?tournamentId=t'), 'Open Results');
     assert.equal(admin('/o/admin/tournaments/check-in'), 'Open Check-in');

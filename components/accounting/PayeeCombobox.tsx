@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import Link from 'next/link';
 import { X, ChevronDown } from 'lucide-react';
 import type { OrgPayee } from '@/lib/types';
 import styles from './PayeeCombobox.module.css';
@@ -37,15 +36,10 @@ interface Props {
    *  pickers (one word, "club", never "org": /marketing 2026-10-02). */
   saveScope?: string;
   /**
-   * The list's last row, "Manage payees…" — the door to the Payees page (Club Tier Stage 3a C01 on the club's
-   * Ledger; Ledger Parity D6 on the coach's). Opt-in; one spelling for both portals, held here.
-   */
-  manageHref?: string;
-  /**
-   * The same last row as a BUTTON that opens the Payees window over the form (Ledger Parity D8, owner
-   * 2026-10-02): the coach's Payees is a window over the Ledger, and this picker sits inside the bill window
-   * and the Add a bill form, so a link here left an open form — the trip refused for tags. Wins over
-   * `manageHref` when both are given.
+   * The list's last row, "Manage payees…" (Club Tier Stage 3a C01; Ledger Parity D6/D7) — a BUTTON that opens the
+   * Payees window over the form the picker sits in (Ledger Parity D8 on the coach's, Club Tier Stage 3d Ask 7a on the
+   * club's): a link here left an open form, and an entry being added was lost. Opt-in; one spelling for both
+   * portals, held here. ⚰ The page link (`manageHref`) retired with the club's Payees page (Stage 3d).
    */
   onManage?: () => void;
   /**
@@ -63,7 +57,6 @@ export default function PayeeCombobox({
   placeholder = 'Search or enter payee…',
   disabled,
   saveScope = 'club',
-  manageHref,
   onManage,
   kitField = false,
 }: Props) {
@@ -247,15 +240,11 @@ export default function PayeeCombobox({
           {!trimmed && results.length === 0 && (
             <p className={styles.empty}>Type to search or enter a new payee name</p>
           )}
-          {(onManage || manageHref) && (
+          {onManage && (
             <div className={styles.foot}>
               {/* onMouseDown keeps the input from blurring first, as every option above does. */}
-              {onManage ? (
-                <button type="button" className={`${styles.manage} ${styles.manageBtn}`} onMouseDown={e => e.preventDefault()}
-                  onClick={() => { setOpen(false); onManage(); }}>Manage payees…</button>
-              ) : (
-                <Link href={manageHref!} className={styles.manage} onMouseDown={e => e.preventDefault()}>Manage payees…</Link>
-              )}
+              <button type="button" className={`${styles.manage} ${styles.manageBtn}`} onMouseDown={e => e.preventDefault()}
+                onClick={() => { setOpen(false); onManage(); }}>Manage payees…</button>
             </div>
           )}
         </div>

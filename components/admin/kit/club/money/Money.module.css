@@ -13,23 +13,17 @@
      ⚖ THE PHONE CARD (K-25), THE WHAT'S NAME AND A WINDOW'S FACTS BOX MOVED TO THE SHARED KIT
      (`components/coaches/kit/Ledger.module.css`, Ledger Parity D3/D4, 2026-10-02): the coach's
      Ledger renders the same card and the same read window, so the recipe lives once.
-   · a coach's quote, the figure tiles in a window.
+   · a coach's quote; a window's money band's spacing (the band is the portal's `MoneySummaryBand`).
 
    ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder strictly.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-/* ── A page's figure cards: three across for a team's account, four for an allocation ── */
-.cards3 {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.8rem;
-  margin: 0 0 0.9rem;
-}
-@media (max-width: 640px) { .cards3 { grid-template-columns: minmax(0, 1fr); } }
-/* A money figure is the widest thing on a phone's half-width card — "($1,490.00)" ran 12px past it at
-   361 (check:layout). On the narrowest phones it steps down ONE ladder rung (title) and the four keep
-   their two columns. Anchored under the grid so it beats the kit's `.big` whatever the bundle order. */
-@media (max-width: 400px) { .figures .figure { font-size: var(--type-title); } }
+/* ⚰ A page's figure cards (`.cards3`, `.figures`) and a window's figure tiles (`.tiles`) STOOD HERE — retired Club Tier
+   Stage 3d (owner 2026-10-08): every club money summary is the portal's ONE joined band (`MoneySummaryBand`). */
+
+/* A money band inside a window (an allocation's figures, a team's bill): the drawing's 14px under it — its own 0.6rem
+   collapses into this. A wrapper, so the shared band's own classes are never reached into. */
+.windowBand { margin: 0 0 0.9rem; }
 
 /* ⚰ The Overview's From/To pair (`.period`, `.periodField`, `.periodInput`) stood here; the Year pill replaced
    it (Club Tier 3b, the board summary). */
@@ -166,42 +160,6 @@
   overflow-wrap: anywhere;
 }
 
-/* ── The figure tiles INSIDE a window (a team's bill: Billed · Collected · Outstanding · Next due) ── */
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin: 0 0 0.85rem;
-}
-@media (max-width: 640px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.tile {
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-  background: var(--card-bg);
-  padding: 0.5rem 0.65rem;
-  min-width: 0;
-}
-.tileLabel {
-  display: block;
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-.tileValue {
-  display: block;
-  margin-top: 0.2rem;
-  font-size: var(--type-heading);
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* ── An installment list inside a bill: one line each, its state or its one worded action at the end ── */
 .lines { border: 1px solid var(--home-line); border-radius: 10px; margin: 0 0 0.85rem; }
 .line {
@@ -248,11 +206,6 @@
 /* The statement's closing row (Outstanding on …) and an allocation's (This year, 9 teams): a group
    row's weight set apart by a 2px rule (K-04's shape, standard §3.5). */
 .closeRow > td { border-top: 2px solid var(--home-line-strong); font-weight: 700; color: var(--text-primary); }
-
-/* ── A figure the club READS but doesn't own (Club Tier Stage 3b, Ask 4e — a team's cash on hand): the blue
-   edge of the "held by the team" callout, and a lock before its label. ── */
-.figures .heldCard { border-left: 3px solid var(--info); }
-.heldLock { vertical-align: -1px; margin-right: 0.3rem; }
 
 /* ── New allocation in the line's window (Stage 3c, specimen 6): the four fields once per bill, then the teams ── */
 .allocFields { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 0 1rem; }

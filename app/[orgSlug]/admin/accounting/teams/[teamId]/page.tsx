@@ -11,6 +11,10 @@
  * seasons, closing on "Outstanding on {today}". A line opens the allocation or the request it came
  * from. Export writes the statement.
  *
+ * ⚖ Stage 3d (Asks 5 and 6): the page STAYS a page (a view of many records); only its doors change. A billed or
+ * received line opens that team's bill in the allocation's window OVER this page, and × comes back here; a request
+ * line still opens Payment requests with that request's window.
+ *
  * ⚖ THE ONE FIGURE THE CLUB READS FROM THE TEAM'S OWN BOOKS (Club Tier Stage 3b, specimen 4 — D1, C15,
  * Ask 4e): the fourth card is the team's Cash on hand, read through the coaches' own function each time
  * the page opens (the figure their Money shows), never stored by the club, never added into a club figure —
@@ -19,6 +23,7 @@
  * callout says which figure is read and that it is never added in. The statement under it is 3a's.
  */
 import { use, useCallback, useState } from 'react';
+import AllocationRecordWindow from '@/components/admin/kit/club/money/AllocationRecordWindow';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, Lock } from 'lucide-react';
@@ -27,13 +32,17 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { Callout, LoadFailed, PageLoading, RepChip, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
-import { FigureCards, day, daysLateWords, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
+import { day, daysLateWords, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
+import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import { ledgerKit } from '@/components/coaches/kit';
 import { howItCame, teamAccountCallout, teamCashCaption } from '@/lib/club-money-words';
 import { fmt as fmtSigned } from '@/lib/coach-money-summary';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import { pluralize } from '@/lib/utils';
 import type { AccountRow, TeamAccount, TeamCashHeld } from '@/lib/club-money-figures';
+
+/** Where a statement line opens: the team's bill in the allocation's window (over this page), or a request's page. */
+type RowDoor = { bill: { allocationId: string; splitId: string } } | { href: string };
 
 interface AccountRead {
   asOf: string;
@@ -81,6 +90,8 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
 
   const [read, setRead] = useState<AccountRead | null>(null);
   const [failed, setFailed] = useState<{ notFound: boolean } | null>(null);
+  /** The team's bill open over the page (Stage 3d). */
+  const [bill, setBill] = useState<{ allocationId: string; splitId: string } | null>(null);
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
     const current = beginRead();
@@ -118,9 +129,10 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
   const f = account.figures;
   const left = f.installmentCount - f.receivedCount;
   const seasonName = new Map(read.seasons.map(s => [s.id, s.name]));
-  const hrefOf = (r: AccountRow) => r.kind === 'billed' || r.kind === 'received'
-    ? (r.allocationId ? `${base}/allocations/${r.allocationId}?bill=${r.sourceId}` : null)
-    : `${base}/payment-requests?request=${r.sourceId}`;
+  const doorOf = (r: AccountRow): RowDoor | null => r.kind === 'billed' || r.kind === 'received'
+    ? (r.allocationId ? { bill: { allocationId: r.allocationId, splitId: r.sourceId } } : null)
+    : { href: `${base}/payment-requests?request=${r.sourceId}` };
+  const open = (door: RowDoor) => { if ('bill' in door) setBill(door.bill); else router.push(door.href); };
   const empty = account.seasons.length === 0;
   const waiting = read.withTheClub?.requestsWaiting ?? 0;
   const cash = read.teamCash;
@@ -132,20 +144,25 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
         {teamAccountCallout(team.name)}
       </Callout>
 
-      <FigureCards items={[
-        { label: 'Outstanding', value: money(account.outstanding), sub: left > 0 ? pluralize(left, 'installment') + ' not yet received' : 'Nothing owed' },
-        { label: 'Next due', value: f.nextDue ? money(f.nextDue.amount) : '—', sub: f.nextDue ? day(f.nextDue.dueDate) : f.overdue.count > 0 ? `${money(f.overdue.amount)} overdue` : 'Nothing coming due' },
-        {
-          label: 'Paid to the team', value: money(account.paidToTeam),
-          sub: `${account.paidToTeamCount > 0 ? pluralize(account.paidToTeamCount, 'request') : 'No requests paid'} · ${waiting > 0 ? `${waiting} waiting` : 'none waiting'}`,
-        },
-        {
-          label: 'Cash on hand', held: true,
-          value: cash?.cash == null ? '—' : fmtSigned(cash.cash),
-          tone: cash?.cash != null && cash.cash < -0.005 ? 'bad' : undefined,
-          sub: teamCashCaption(cash?.cash == null ? null : cash.season),
-        },
-      ]} />
+      {/* ⚖ ONE JOINED BAND (Stage 3d, owner 2026-10-08: "the new standard is that they are connected") — four separate
+          cards until then. Cash on hand keeps the lock and the blue edge of a figure the club reads but doesn't own. */}
+      <MoneySummaryBand
+        ariaLabel={`${team.name}’s account with the club`}
+        tiles={[
+          { key: 'outstanding', label: 'Outstanding', figure: money(account.outstanding), caption: left > 0 ? pluralize(left, 'installment') + ' not yet received' : 'Nothing owed' },
+          { key: 'next', label: 'Next due', figure: f.nextDue ? money(f.nextDue.amount) : '—', caption: f.nextDue ? day(f.nextDue.dueDate) : f.overdue.count > 0 ? `${money(f.overdue.amount)} overdue` : 'Nothing coming due' },
+          {
+            key: 'paid', label: 'Paid to the team', figure: money(account.paidToTeam),
+            caption: `${account.paidToTeamCount > 0 ? pluralize(account.paidToTeamCount, 'request') : 'No requests paid'} · ${waiting > 0 ? `${waiting} waiting` : 'none waiting'}`,
+          },
+          {
+            key: 'cash', label: 'Cash on hand', held: true,
+            figure: cash?.cash == null ? '—' : fmtSigned(cash.cash),
+            tone: cash?.cash != null && cash.cash < -0.005 ? 'danger' : 'plain',
+            caption: teamCashCaption(cash?.cash == null ? null : cash.season),
+          },
+        ]}
+      />
 
       {empty ? (
         <p className={repKit.notes}>The club hasn’t billed {team.name} or paid it on a request yet.</p>
@@ -167,7 +184,7 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
               <tbody>
                 {account.seasons.map(s => (
                   <SeasonRows key={s.programYearId} label={seasonName.get(s.programYearId) ?? 'Season'} rows={s.rows} teamName={team.name}
-                    hrefOf={hrefOf} onOpen={href => router.push(href)} />
+                    doorOf={doorOf} onOpen={open} />
                 ))}
                 <tr className={moneyKit.closeRow} data-close="">
                   <td colSpan={5}>Outstanding on {day(read.asOf)}</td>
@@ -180,34 +197,41 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
           <p className={repKit.notes}>A line opens the allocation or the request it came from. The season band follows the team’s own seasons, so a finished season’s lines stay under its name.</p>
         </>
       )}
+      {bill && (
+        <AllocationRecordWindow q={q} orgSlug={orgSlug} allocationId={bill.allocationId} bill={bill.splitId}
+          onChanged={() => void load()} onClose={() => setBill(null)} />
+      )}
     </div>
   );
 }
 
-function SeasonRows({ label, rows, teamName, hrefOf, onOpen }: {
-  label: string; rows: AccountRow[]; teamName: string; hrefOf: (r: AccountRow) => string | null; onOpen: (href: string) => void;
+function SeasonRows({ label, rows, teamName, doorOf, onOpen }: {
+  label: string; rows: AccountRow[]; teamName: string; doorOf: (r: AccountRow) => RowDoor | null; onOpen: (door: RowDoor) => void;
 }) {
   return (
     <>
       <tr className={repKit.band} data-band=""><td colSpan={7}>{label}</td></tr>
       {rows.map((r, i) => {
         const w = rowWords(r, teamName);
-        const href = hrefOf(r);
+        const door = doorOf(r);
         return (
-          <tr key={`${r.kind}-${r.sourceId}-${r.installmentId ?? ''}-${i}`} className={href ? repKit.rowOpens : undefined}
-            onClick={href ? () => { if (window.getSelection()?.toString()) return; onOpen(href); } : undefined}>
+          <tr key={`${r.kind}-${r.sourceId}-${r.installmentId ?? ''}-${i}`} className={door ? repKit.rowOpens : undefined}
+            onClick={door ? () => { if (window.getSelection()?.toString()) return; onOpen(door); } : undefined}>
             <td className={repKit.dim} data-label="Date">{day(r.date)}</td>
             <td className={ledgerKit.whatCell}>
-              {href
-                ? <Link href={href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{w.name}</Link>
-                : <span className={moneyKit.what}>{w.name}</span>}
+              {/* The name is the row's keyboard door: a window's button for a bill, a link for a request. */}
+              {door && 'bill' in door
+                ? <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} aria-haspopup="dialog" onClick={e => { e.stopPropagation(); onOpen(door); }}>{w.name}</button>
+                : door
+                  ? <Link href={door.href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{w.name}</Link>
+                  : <span className={moneyKit.what}>{w.name}</span>}
               {w.sub && <span className={repKit.cellSub}>{w.sub}</span>}
             </td>
             <td className={repKit.num} data-label={r.billed ? 'Billed' : undefined}>{r.billed ? money(r.billed) : ''}</td>
             <td className={repKit.num} data-label={r.collected || r.receivedOnRequest ? 'Collected' : undefined}>{r.collected ? money(r.collected) : r.receivedOnRequest ? money(r.receivedOnRequest) : ''}</td>
             <td className={repKit.num} data-label={r.paidToTeam ? 'Paid to the team' : undefined}>{r.paidToTeam ? money(r.paidToTeam) : ''}</td>
             <td className={repKit.num} data-label="Outstanding">{money(r.outstanding)}</td>
-            <td className={`${repKit.go} ${ledgerKit.goCell}`}>{href && <span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span>}</td>
+            <td className={`${repKit.go} ${ledgerKit.goCell}`}>{door && <span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span>}</td>
           </tr>
         );
       })}

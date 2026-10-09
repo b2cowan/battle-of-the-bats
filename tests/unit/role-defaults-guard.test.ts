@@ -88,7 +88,7 @@ describe('D8 — the treasurer holds what the allocation loop needs', () => {
     // requests GET/PATCH); the loop's reads and decisions are Accounting's routes now.
     const routes = [
       'app/api/admin/rep-teams/allocations/route.ts',
-      'app/api/admin/rep-teams/allocations/[allocationId]/route.ts',
+      'app/api/admin/accounting/allocations/[allocationId]/route.ts',
       'app/api/admin/accounting/allocations/route.ts',
       'app/api/admin/accounting/allocations/[allocationId]/installments/[installId]/route.ts',
       'app/api/admin/accounting/payment-requests/route.ts',

@@ -22,10 +22,18 @@
  *                      line under View; View stays out of the sheet (CD1b).
  *
  * The Rep Teams board's Upcoming bills panel left that page: Coming due is its home now.
+ *
+ * ⚖ AN ALLOCATION OPENS AS A WINDOW OVER THE LIST (Club Tier Stage 3d, Asks 3–5): By allocation's row opens it with
+ * Previous · Next through the list; a Coming due row opens it at that team's bill (a row several teams share, at the
+ * allocation). This tab is the window's ADDRESS — `?allocation={id}` and `&bill={splitId}` — written into the URL bar
+ * by the window's own Back step while it is open (KitDialog `address`), so a copied link lands on it, and taken away
+ * when it closes. A notice or an old allocation page's address (proxy.ts) opens it here: the address is read whenever
+ * it changes (a notice clicked while already here too), dropped, and the window mounts once the address is clean.
+ * ⚠ Never `router.replace` the window's address while it is open: the router's re-stamp strips the Back step's marker
+ * and the close leaves a dead Back press (/review 2026-10-08). Money moved inside it re-reads the list and Coming due.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { ChevronRight, Mail, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { formatStoredDate, addCalendarDays } from '@/lib/timezone';
@@ -41,6 +49,7 @@ import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import { BillChip, LateChip, day, installmentsWord, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import RemindersWindow from '@/components/admin/kit/club/money/RemindersWindow';
 import AllocationWindow from '@/components/admin/kit/club/money/AllocationWindow';
+import AllocationRecordWindow from '@/components/admin/kit/club/money/AllocationRecordWindow';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import {
   COMING_DUE_MONTH_DAYS, comingDueLater, comingDueWindowEnd,
@@ -68,6 +77,9 @@ interface ComingDueRead {
   bands: { overdue: DueBand; sent: DueBand; due_soon: DueBand };
   later: DueBand;
 }
+
+/** An allocation's window: the allocation, and the team's bill open inside it (null = the allocation itself). */
+type OpenAllocation = { id: string; bill: string | null };
 
 const VIEWS = [
   { id: 'allocation', label: 'By allocation' },
@@ -125,6 +137,35 @@ export default function AllocationsTab() {
   // and back finds it where you left it); a fresh visit starts on the 14 days again.
   const [dueWindow, setDueWindow] = useState<ComingDueWindow>('soon');
   const [notice, setNotice] = useNotice();
+  /** The allocation's window — opened from a row, or by its address (a notice, an old page's link, a copied link). */
+  const [win, setWin] = useState<OpenAllocation | null>(null);
+  const openWin = setWin;
+  // An arriving address opens the window — whenever it changes, so a notice clicked while already here opens it too.
+  const askedId = search.get('allocation');
+  const askedBill = search.get('bill');
+  const asked = askedId ? `${askedId}|${askedBill ?? ''}` : null;
+  const [seenAsk, setSeenAsk] = useState<string | null>(null);
+  if (asked !== seenAsk) {
+    setSeenAsk(asked);
+    if (askedId) setWin({ id: askedId, bill: askedBill });
+  }
+  // …then leaves the address, and the window mounts once it has (its Back step then starts from the clean list).
+  useEffect(() => {
+    if (!askedId) return;
+    const params = new URLSearchParams(search.toString());
+    params.delete('allocation');
+    params.delete('bill');
+    const qs = params.toString();
+    router.replace(qs ? `${base}?${qs}` : base, { scroll: false });
+  }, [askedId, search, router, base]);
+  /** The window's place, at a level — written into the URL bar by its own Back step while it is open. */
+  const addressOf = (id: string) => (bill: string | null) => {
+    const params = new URLSearchParams();
+    if (view === 'coming-due') params.set('view', 'coming-due');
+    params.set('allocation', id);
+    if (bill) params.set('bill', bill);
+    return `${base}?${params}`;
+  };
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
@@ -224,11 +265,11 @@ export default function AllocationsTab() {
                 </thead>
                 <tbody>
                   {rows.map(a => {
-                    const href = `${base}/${a.id}`;
+                    const open = () => openWin({ id: a.id, bill: null });
                     return (
-                      <tr key={a.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; router.push(href); }}>
+                      <tr key={a.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; open(); }}>
                         <td>
-                          <Link href={href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{a.description}</Link>
+                          <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} aria-haspopup="dialog" onClick={e => { e.stopPropagation(); open(); }}>{a.description}</button>
                           <span className={repKit.cellSub}>{scheduleCaption(a)}</span>
                         </td>
                         <td>{a.teamsWord}</td>
@@ -253,7 +294,7 @@ export default function AllocationsTab() {
             <div className={repKit.phoneOnly}>
               <ClubRowList label="Allocations">
                 {rows.map(a => (
-                  <ClubRow key={a.id} as="link" href={`${base}/${a.id}`}
+                  <ClubRow key={a.id} as="button" aria-haspopup="dialog" onClick={() => openWin({ id: a.id, bill: null })}
                     title={<>{a.description} <BillChip chip={a.chip} overdueCount={a.figures.overdue.count} sentCount={a.figures.sent.count} nextDue={a.figures.nextDue?.dueDate ?? null} firstDue={a.figures.receivedCount === 0 ? a.firstDue : null} /></>}
                     caption={a.figures.paidInFull ? `${a.teamsWord} · ${money(a.figures.collected)} in` : `${a.teamsWord} · ${money(a.figures.collected)} of ${money(a.allocated)} in`}
                     chevron />
@@ -266,9 +307,23 @@ export default function AllocationsTab() {
           </>
         )
       ) : (
-        <ComingDue due={due} dueWindow={dueWindow} base={base} />
+        <ComingDue due={due} dueWindow={dueWindow} onOpen={openWin} />
       )}
 
+      {win && !askedId && (
+        <AllocationRecordWindow
+          // Previous · Next (or a notice) swap the allocation: a key per allocation and bill starts it afresh.
+          key={`${win.id}|${win.bill ?? ''}`}
+          q={q}
+          orgSlug={slug}
+          allocationId={win.id}
+          bill={win.bill}
+          steps={allocationSteps(view === 'allocation' ? rows : [], win.id, id => openWin({ id, bill: null }))}
+          addressOf={addressOf(win.id)}
+          onChanged={() => void load()}
+          onClose={() => openWin(null)}
+        />
+      )}
       {creating && canMove && (
         <AllocationWindow
           q={q}
@@ -289,6 +344,14 @@ export default function AllocationsTab() {
   );
 }
 
+/** An allocation opened from the By allocation list names its neighbours there (Ask 3); from anywhere else, none. */
+function allocationSteps(rows: readonly AllocationRow[], id: string, onStep: (id: string) => void) {
+  const at = rows.findIndex(r => r.id === id);
+  if (at < 0) return null;
+  const step = (r: AllocationRow | undefined) => (r ? { name: r.description, onStep: () => onStep(r.id) } : null);
+  return { prev: step(rows[at - 1]), next: step(rows[at + 1]), position: `${at + 1} of ${rows.length}` };
+}
+
 /** The team's word for a group row shared by several teams ("All 9 teams", "3 teams"). */
 function groupTeamsWord(g: DueGroup, activeTeams: number): string {
   if (g.teams.length === 1) return g.teams[0].teamName;
@@ -306,7 +369,9 @@ function groupTeamsWord(g: DueGroup, activeTeams: number): string {
  */
 type DueRow = {
   key: string; title: string; teamCaption: string | null; installment: string; note: string | null;
-  phoneNote: string | null; due: string; amount: number; late: number | null; href: string;
+  phoneNote: string | null; due: string; amount: number; late: number | null;
+  /** Where the row opens: that team's bill in its allocation's window, or the allocation (a row several teams share). */
+  door: OpenAllocation;
 };
 
 const headCoachLine = (headCoach: string | null) => (headCoach ? `${headCoach}, head coach` : 'No head coach yet');
@@ -321,7 +386,7 @@ function sentNote(t: DueTeam, named = false): string {
 
 type DueBandKey = 'overdue' | 'sent' | 'due_soon' | 'later';
 
-function dueRows(band: DueBandKey, b: DueBand, asOf: string, activeTeams: number, base: string): DueRow[] {
+function dueRows(band: DueBandKey, b: DueBand, asOf: string, activeTeams: number): DueRow[] {
   const inst = (g: DueGroup) => `${g.allocationDescription}${g.installmentCount > 1 ? `, ${g.installmentNumber} of ${g.installmentCount}` : ''}`;
   // Overdue and sent are chased team by team; due-soon and later share a row when the teams share it.
   if (band === 'overdue' || band === 'sent') {
@@ -335,7 +400,7 @@ function dueRows(band: DueBandKey, b: DueBand, asOf: string, activeTeams: number
       due: day(g.dueDate),
       amount: t.amount,
       late: band === 'overdue' ? g.daysLate : null,
-      href: `${base}/${g.allocationId}?bill=${t.splitId}`,
+      door: { id: g.allocationId, bill: t.splitId },
     })));
   }
   return b.groups.map(g => ({
@@ -349,7 +414,7 @@ function dueRows(band: DueBandKey, b: DueBand, asOf: string, activeTeams: number
     due: g.dueDate === addCalendarDays(asOf, 1) ? `${day(g.dueDate)} · tomorrow` : day(g.dueDate),
     amount: g.amount,
     late: null,
-    href: g.teams.length === 1 ? `${base}/${g.allocationId}?bill=${g.teams[0].splitId}` : `${base}/${g.allocationId}`,
+    door: { id: g.allocationId, bill: g.teams.length === 1 ? g.teams[0].splitId : null },
   }));
 }
 
@@ -376,10 +441,9 @@ function nothingDueWords(due: ComingDueRead, window: ComingDueWindow): string {
 }
 
 /** Coming due: overdue (with a total), sent and waiting on you, due in the next 14 days, and what the Due window adds. */
-function ComingDue({ due, dueWindow, base }: { due: ComingDueRead; dueWindow: ComingDueWindow; base: string }) {
-  const router = useRouter();
+function ComingDue({ due, dueWindow, onOpen }: { due: ComingDueRead; dueWindow: ComingDueWindow; onOpen: (door: OpenAllocation) => void }) {
   const shown = comingDueBands(due, dueWindow).filter(x => x.b.groups.length > 0)
-    .map(x => ({ ...x, rows: dueRows(x.key, x.b, due.asOf, due.activeTeams, base) }));
+    .map(x => ({ ...x, rows: dueRows(x.key, x.b, due.asOf, due.activeTeams) }));
 
   return (
     <>
@@ -400,7 +464,7 @@ function ComingDue({ due, dueWindow, base }: { due: ComingDueRead; dueWindow: Co
               </thead>
               <tbody>
                 {shown.map(({ key, label, rows }) => (
-                  <BandRows key={key} label={label} rows={rows} onOpen={href => router.push(href)} />
+                  <BandRows key={key} label={label} rows={rows} onOpen={onOpen} />
                 ))}
               </tbody>
             </table>
@@ -408,7 +472,7 @@ function ComingDue({ due, dueWindow, base }: { due: ComingDueRead; dueWindow: Co
           <div className={repKit.phoneOnly}>
             <ClubRowList label="Coming due">
               {shown.map(({ key, label, rows }) => (
-                <PhoneBand key={key} label={label} rows={rows} />
+                <PhoneBand key={key} label={label} rows={rows} onOpen={onOpen} />
               ))}
             </ClubRowList>
           </div>
@@ -420,14 +484,14 @@ function ComingDue({ due, dueWindow, base }: { due: ComingDueRead; dueWindow: Co
   );
 }
 
-function BandRows({ label, rows, onOpen }: { label: string; rows: DueRow[]; onOpen: (href: string) => void }) {
+function BandRows({ label, rows, onOpen }: { label: string; rows: DueRow[]; onOpen: (door: OpenAllocation) => void }) {
   return (
     <>
       <tr className={repKit.band}><td colSpan={5}>{label}</td></tr>
       {rows.map(r => (
-        <tr key={r.key} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; onOpen(r.href); }}>
+        <tr key={r.key} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; onOpen(r.door); }}>
           <td>
-            <Link href={r.href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{r.title}</Link>
+            <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} aria-haspopup="dialog" onClick={e => { e.stopPropagation(); onOpen(r.door); }}>{r.title}</button>
             {r.teamCaption && <span className={repKit.cellSub}>{r.teamCaption}</span>}
           </td>
           <td>{r.installment}{r.note && <span className={repKit.cellSub}>{r.note}</span>}</td>
@@ -440,14 +504,14 @@ function BandRows({ label, rows, onOpen }: { label: string; rows: DueRow[]; onOp
   );
 }
 
-function PhoneBand({ label, rows }: { label: string; rows: DueRow[] }) {
+function PhoneBand({ label, rows, onOpen }: { label: string; rows: DueRow[]; onOpen: (door: OpenAllocation) => void }) {
   return (
     <>
       <ClubRowBand>{label}</ClubRowBand>
       {rows.map(r => {
         const after = r.phoneNote ?? r.teamCaption;
         return (
-          <ClubRow key={r.key} as="link" href={r.href} title={r.late != null ? <>{r.title} <LateChip days={r.late} /></> : r.title}
+          <ClubRow key={r.key} as="button" aria-haspopup="dialog" onClick={() => onOpen(r.door)} title={r.late != null ? <>{r.title} <LateChip days={r.late} /></> : r.title}
             caption={`${r.installment} · ${r.due} · ${money(r.amount)}${after ? ` · ${after}` : ''}`} chevron />
         );
       })}

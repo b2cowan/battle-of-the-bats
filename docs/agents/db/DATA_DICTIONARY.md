@@ -4568,7 +4568,7 @@ schedule was added for it.
 **`source_budget_line_id`** (FK → `org_budget_lines.id` ON DELETE SET NULL, nullable; **org Accounting**) — the plan line the allocation was drawn from. Since mig 317 it is written IN THE SAME STEP as the allocation (`club_allocation_create`), never a second write; any number of allocations may name one line, and the step refuses more than is left on it. It decides the allocation's YEAR (the year rule: the line's year; no line → its first installment's year). Partial index WHERE not null.
 
 <!-- dict:col:rep_cost_allocations.description -->
-**`description`** (text, NOT NULL) — editable via `updateRepCostAllocationDescription`.
+**`description`** (text, NOT NULL) — the allocation's NAME. Changed only on its window (Club Tier Stage 3d, Ask 3) through `PATCH /api/admin/accounting/allocations/[allocationId]` (`lib/club-allocation-edit.ts`: blank refused, ≤ 200, refused on a bill in a closed fiscal year — the lock below — and outside the member's team groups); the Rep Teams route and `updateRepCostAllocationDescription` retired. ⚠ Read LIVE by every screen that names the bill, both Ledgers included: `lib/club-ledger-read.ts` and `lib/coach-register-book.ts` rebuild an allocation line's words from this column as they read, so a rename reaches lines already written (their stored `accounting_entries.description` keeps the old text — and Budget vs. Actual's behind-the-figure list, `lib/club-budget-report.ts`, prints that stored text: found at the 3d build, not changed). Notifications already sent keep the name they were sent with.
 
 <!-- dict:col:rep_cost_allocations.total_amount -->
 **`total_amount`** (numeric, NOT NULL, CHECK `> 0`) — since mig 317 the allocation's teams' SHARES (Σ its splits), never the line's total (C11: the old bridge recorded the line's total even when the shares added to less). Rows written before keep what they recorded; every figure reads the splits, never this column.
@@ -4577,7 +4577,7 @@ schedule was added for it.
 **`created_by`** (FK → `auth.users.id`, nullable; snapshot `foreign_table: null` — cross-schema gap).
 
 <!-- dict:col:rep_cost_allocations.notes -->
-**`notes`** (text, nullable; CHECK ≤ 2000; **mig 318**) — the club's own note on a bill (Stage 3c, Ask 6 — New allocation's Notes): for the club's reference, **never shown to a team** (a team's own note is `rep_allocation_splits.notes`). Written by `club_allocation_create`'s `p_notes`. NULL = none.
+**`notes`** (text, nullable; CHECK ≤ 2000; **mig 318**) — the club's own note on a bill (Stage 3c, Ask 6 — New allocation's Notes): for the club's reference, **never shown to a team** (a team's own note is `rep_allocation_splits.notes`). Written by `club_allocation_create`'s `p_notes`, and changed on the allocation's window (Stage 3d, S3D-03: read by `loadClubLoop` — shown nowhere before 3d) through the same PATCH as `description` (≤ 2000, trimmed, blank → NULL). NULL = none ("No note.").
 
 ### `rep_allocation_splits`
 <!-- dict:table:rep_allocation_splits -->

@@ -171,7 +171,8 @@ describe('the club is shown its own lines only (D7a)', () => {
     assert.match(functionBody(code, 'shareRefusal'), /if \(!clubSharesPayees\(org\)\)/);
     const scope = readCode('lib/team-payee-scope.ts');
     assert.match(functionBody(scope, 'clubSharesPayees'), /return !isTeamWorkspaceOrg\(org\) && hasModuleEntitlement\(org, 'module_rep_teams'\);/);
-    for (const screen of ['app/[orgSlug]/admin/accounting/payees/page.tsx', 'app/[orgSlug]/admin/accounting/ledger/page.tsx']) {
+    // Stage 3d: the Payees page retired into a window over the Ledger.
+    for (const screen of ['components/admin/kit/club/money/PayeesWindow.tsx', 'app/[orgSlug]/admin/accounting/ledger/page.tsx']) {
       assert.match(readCode(screen), /clubSharesPayees\(currentOrg\)/, `${screen}: the screen asks the PATCH's own rule`);
     }
     const route = readCode('app/api/admin/accounting/payees/[payeeId]/route.ts');

@@ -54,6 +54,7 @@ import {
 import frame from '@/components/admin/kit/AdminKitFrame.module.css';
 import { money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import AddLedgerWindow from '@/components/admin/kit/club/money/AddLedgerWindow';
+import AllocationRecordWindow from '@/components/admin/kit/club/money/AllocationRecordWindow';
 import YearPill, { useClubYear } from '@/components/admin/kit/club/money/YearPill';
 import { CloseYearQuestion, EndedYearLine, ReopenYearQuestion, YearLine } from '@/components/admin/kit/club/money/FiscalYearParts';
 import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/components/admin/kit/club/money/ClubMoneyExport';
@@ -123,6 +124,8 @@ export default function AccountingOverviewPage() {
   const [adding, setAdding] = useState(false);
   /** The close question (for the ended year) or Reopen (for the closed year on screen). */
   const [win, setWin] = useState<'close' | 'reopen' | null>(null);
+  /** A still-open bill, open over the Overview in its allocation's window (Stage 3d, Ask 5). */
+  const [bill, setBill] = useState<BillDoor | null>(null);
   const [notice, setNotice] = useNotice();
 
   const beginRead = useLatestRead();
@@ -277,7 +280,7 @@ export default function AccountingOverviewPage() {
       </div>
 
       {/* ── From 2025–26, still open (Ask 4) — only while something from a closed year is unpaid or waiting ── */}
-      {read.stillOpen.count > 0 && <StillOpen stillOpen={read.stillOpen} base={base} isPhone={isPhone} />}
+      {read.stillOpen.count > 0 && <StillOpen stillOpen={read.stillOpen} base={base} isPhone={isPhone} onOpenBill={setBill} />}
 
       {/* ── The year against the budget (read from Budget vs. Actual's report) ── */}
       {isPhone ? (
@@ -386,6 +389,10 @@ export default function AccountingOverviewPage() {
         <ReopenYearQuestion q={q} year={read.year}
           nextName={read.years.filter(y => y.key > read.year.key).sort((a, b) => a.key.localeCompare(b.key))[0]?.name ?? ''}
           onDone={text => { setWin(null); setNotice({ tone: 'good', text }); void load(); }} onClose={() => setWin(null)} />
+      )}
+      {bill && (
+        <AllocationRecordWindow q={q} orgSlug={slug} allocationId={bill.allocationId} bill={bill.splitId}
+          onChanged={() => void load()} onClose={() => setBill(null)} />
       )}
       {adding && currentOrg && (
         <AddLedgerWindow
@@ -518,11 +525,14 @@ function stillOpenState(r: StillOpenRow): { text: string; late: boolean } {
   return { text: STILL_OPEN_WORDS.upcoming(r.dueDate ?? ''), late: false };
 }
 
-/** Where a still-open row opens: the team's bill on its allocation, or the request. */
-function stillOpenHref(r: StillOpenRow, base: string): string {
+/** A still-open installment's door: the team's bill, in its allocation's window over the Overview (Stage 3d). */
+type BillDoor = { allocationId: string; splitId: string };
+
+/** Where a still-open row opens: the team's bill (a window over this page), or the request (its page's window). */
+function stillOpenDoor(r: StillOpenRow, base: string): { bill: BillDoor } | { href: string } {
   return 'requestId' in r.door
-    ? `${base}/payment-requests?request=${r.door.requestId}`
-    : `${base}/allocations/${r.door.allocationId}?bill=${r.door.splitId}`;
+    ? { href: `${base}/payment-requests?request=${r.door.requestId}` }
+    : { bill: { allocationId: r.door.allocationId, splitId: r.door.splitId } };
 }
 
 /**
@@ -530,8 +540,8 @@ function stillOpenHref(r: StillOpenRow, base: string): string {
  * each is settled — the close never hides a debt. They stay their own year's (they count on its plan, as billed);
  * Where the club stands already counts them in today's figures.
  */
-function StillOpen({ stillOpen, base, isPhone }: {
-  stillOpen: OverviewYearReads['stillOpen']; base: string; isPhone: boolean;
+function StillOpen({ stillOpen, base, isPhone, onOpenBill }: {
+  stillOpen: OverviewYearReads['stillOpen']; base: string; isPhone: boolean; onOpenBill: (door: BillDoor) => void;
 }) {
   const router = useRouter();
   const title = stillOpenFromWord(joinWithAnd(stillOpen.years.map(y => y.name)));
@@ -552,12 +562,15 @@ function StillOpen({ stillOpen, base, isPhone }: {
             </thead>
             <tbody>
               {stillOpen.rows.map(r => {
-                const href = stillOpenHref(r, base);
+                const door = stillOpenDoor(r, base);
+                const open = () => { if ('bill' in door) onOpenBill(door.bill); else router.push(door.href); };
                 const st = stillOpenState(r);
                 const key = 'requestId' in r.door ? r.door.requestId : `${r.door.splitId}|${r.what}`;
                 return (
-                  <tr key={key} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; router.push(href); }}>
-                    <td><Link href={href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{r.teamName}</Link></td>
+                  <tr key={key} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; open(); }}>
+                    <td>{'bill' in door
+                      ? <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} aria-haspopup="dialog" onClick={e => { e.stopPropagation(); open(); }}>{r.teamName}</button>
+                      : <Link href={door.href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{r.teamName}</Link>}</td>
                     <td>{r.kind === 'request' ? STILL_OPEN_WORDS.request(r.what) : r.what}</td>
                     <td>
                       {r.kind === 'request'
@@ -577,11 +590,14 @@ function StillOpen({ stillOpen, base, isPhone }: {
           {stillOpen.rows.map(r => {
             const st = stillOpenState(r);
             const key = 'requestId' in r.door ? r.door.requestId : `${r.door.splitId}|${r.what}`;
+            const door = stillOpenDoor(r, base);
+            const as = 'bill' in door
+              ? { as: 'button' as const, 'aria-haspopup': 'dialog' as const, onClick: () => onOpenBill(door.bill) }
+              : { as: 'link' as const, href: door.href };
             return (
               <ClubRow
                 key={key}
-                as="link"
-                href={stillOpenHref(r, base)}
+                {...as}
                 title={<>{r.teamName} {r.kind === 'request' && <WaitingCount n={1} />}</>}
                 caption={(
                   <>

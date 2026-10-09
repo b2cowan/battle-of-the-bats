@@ -57,6 +57,7 @@ import { LoadFailed, useDeferredLoad, useLatestRead } from '@/components/admin/k
 import { money, moneyFetch } from '@/components/admin/kit/club/money/MoneyKit';
 import YearPill, { useClubYear } from '@/components/admin/kit/club/money/YearPill';
 import StatementBehindWindow from '@/components/admin/kit/club/money/StatementBehindWindow';
+import AllocationRecordWindow from '@/components/admin/kit/club/money/AllocationRecordWindow';
 import { BudgetLineWindow } from '@/components/admin/kit/club/money/BudgetWindows';
 import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/components/admin/kit/club/money/ClubMoneyExport';
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
@@ -116,6 +117,8 @@ export default function BudgetVsActualTab() {
      them — the coach's Months gained it the same day (owner, 2026-10-07; see `monthGridFoldKeys`). */
   const [monthOpen, setMonthOpen] = useState<Set<string>>(() => new Set());
   const [behind, setBehind] = useState<{ item: ItemResult; categoryName: string } | null>(null);
+  /** A "from the teams" Budgeted figure's allocation, open over the page (Stage 3d). */
+  const [allocationId, setAllocationId] = useState<string | null>(null);
   const [lineId, setLineId] = useState<string | null>(null);
   const [categories, setCategories] = useState<BudgetCategoryWithItems[] | null>(null);
   const [notice, setNotice] = useNotice();
@@ -163,15 +166,16 @@ export default function BudgetVsActualTab() {
   const toggleCat = (k: string) => setExpanded(s => toggleKey(s, k));
   const toggleAll = () => setOpenSet(prev => toggleAllKeys(prev, foldable));
 
-  /* The two figure doors. Budgeted → the line's own window (or an allocation's page, for From the teams'
-     rows, whose "line" is the allocation); Actual → what it adds up. */
+  /* The two figure doors. Budgeted → the line's own window (or, for From the teams' rows, whose "line" is the
+     allocation, the allocation's window over this page — Stage 3d, its Compare and period kept); Actual → what it
+     adds up. */
   const openBehind = useCallback((item: ItemResult, side: BehindSide, categoryName: string) => {
     if (side === 'actual') { setBehind({ item, categoryName }); return; }
     const id = item.lines?.[0]?.id;
     if (!id) return;
-    if (id.startsWith('allocation:')) { router.push(`${base}/allocations/${id.slice('allocation:'.length)}`); return; }
+    if (id.startsWith('allocation:')) { setAllocationId(id.slice('allocation:'.length)); return; }
     setLineId(id);
-  }, [router, base]);
+  }, []);
 
   // ── The notes and the files ─────────────────────────────────────────────────────────────────
   const statementNoteStack = useMemo(() => {
@@ -302,7 +306,7 @@ export default function BudgetVsActualTab() {
           )}
         >
           <YearPill year={report.year.key} years={read.years}
-            onChange={y => { setYear(y); setBehind(null); setLineId(null); setAgainstLast(false); }} />
+            onChange={y => { setYear(y); setBehind(null); setLineId(null); setAllocationId(null); setAgainstLast(false); }} />
           <SingleSelectDropdown label="View" lead value={view}
             options={[{ id: 'statement', label: 'Statement' }, { id: 'months', label: 'Months' }]}
             onChange={next => setView(next as View)} />
@@ -405,7 +409,12 @@ export default function BudgetVsActualTab() {
       </div>
 
       {behind && (
-        <StatementBehindWindow item={behind.item} categoryName={behind.categoryName} report={report} accountingBase={base} onClose={() => setBehind(null)} />
+        <StatementBehindWindow item={behind.item} categoryName={behind.categoryName} report={report} q={q} orgSlug={slug} accountingBase={base}
+          onChanged={() => void load()} onClose={() => setBehind(null)} />
+      )}
+      {allocationId && (
+        <AllocationRecordWindow q={q} orgSlug={slug} allocationId={allocationId}
+          onChanged={() => void load()} onClose={() => setAllocationId(null)} />
       )}
       {openLine && (
         <BudgetLineWindow
@@ -416,7 +425,6 @@ export default function BudgetVsActualTab() {
           orgSlug={slug}
           canMove={canMove}
           categories={categories ?? []}
-          accountingBase={base}
           onChanged={text => { if (text) setNotice({ tone: 'good', text }); void load(); }}
           onClose={() => setLineId(null)}
         />

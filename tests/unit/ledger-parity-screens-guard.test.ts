@@ -97,9 +97,10 @@ describe('Ledger Parity — the two Ledgers are one recipe', () => {
   });
 
   it('the club’s share switch holds its window while it saves; a corrected name is sent on close (/review 2026-10-02)', () => {
-    const payees = readCode('app/[orgSlug]/admin/accounting/payees/page.tsx');
+    // Stage 3d: the club's Payees is a window over the Ledger now (its page retired) — the same two latches.
+    const payees = readCode('components/admin/kit/club/money/PayeesWindow.tsx');
     assert.match(payees, /busy=\{sharing\}/, 'Done mid-save left the Teams column stale');
-    assert.match(payees, /touch\(\); closeRefused\.current = false;/, 'the club’s: a corrected name after a refusal is sent on close');
+    assert.match(payees, /touch\(\); setRefusedOnce\(false\);/, 'the club’s: a corrected name after a refusal is sent on close');
     // The coach's payee window (round 3): the same latch, on the name AND the note.
     assert.equal((readCode(WINDOW).match(/touch\(\); refusedOnce\.current = false;/g) ?? []).length, 2, 'the coach’s: name and note both re-arm the save');
   });
@@ -153,8 +154,10 @@ describe('Ledger Parity — the two Ledgers are one recipe', () => {
     assert.match(picker, /export const SHARED_PAYEES_NOTICE = 'Your club sees payments to these payees\.';/);
     assert.match(picker, /export const OWN_PAYEES_HEADING = 'Your team’s own';/);
     assert.match(picker, /scoped \? results\.filter\(p => p\.scope === 'club'\)/, 'a standalone team’s rows carry teamId null and are its own');
-    assert.match(picker, />Manage payees…<\/Link>/, 'one spelling of the last row: the club’s link…');
-    assert.match(picker, />Manage payees…<\/button>/, '…and the coach’s button, which opens the Payees window over the form');
+    // One spelling of the last row, and since Club Tier Stage 3d ONE shape on both portals: a button that opens the
+    // Payees window over the form (the club's page link retired with its Payees page).
+    assert.match(picker, />Manage payees…<\/button>/, 'the button, which opens the Payees window over the form');
+    assert.doesNotMatch(picker, />Manage payees…<\/Link>/, 'no page link: an entry being typed was lost through it (S3D-01)');
   });
 });
 

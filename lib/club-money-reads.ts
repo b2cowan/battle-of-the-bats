@@ -1,6 +1,6 @@
 import 'server-only';
 import { loadFiscalSetting } from './club-fiscal-year-server';
-import { closedThrough, fiscalYearOf } from './club-fiscal-year';
+import { closedThrough, fiscalYearOf, type FiscalSetting, type FiscalYear } from './club-fiscal-year';
 import { supabaseAdmin } from './supabase-admin';
 import { orgDayKey, tournamentToday, daysBetweenDateStrings } from './timezone';
 import { getRepProgramYear, getRepTeams, mapRepAllocationInstallment, resolvePersonNamer } from './db';
@@ -41,7 +41,12 @@ import type { RepAllocationInstallment } from './types';
 // ── The loop's rows ────────────────────────────────────────────────────────────────────────────
 
 export interface LoopTeam { id: string; name: string; groupId: string | null; groupName: string | null; isArchived: boolean }
-export interface LoopAllocation { id: string; description: string; createdAt: string; totalAmount: number; sourceBudgetLineId: string | null; sourceEntryId: string | null }
+export interface LoopAllocation {
+  id: string; description: string; createdAt: string; totalAmount: number; sourceBudgetLineId: string | null; sourceEntryId: string | null;
+  /** The club's own note (mig 318 — asked by New allocation, "for the club's own reference"; teams never see it). Read
+   *  and changed on the allocation's window (Stage 3d, S3D-03). */
+  notes: string | null;
+}
 export interface LoopSplit {
   id: string; allocationId: string; teamId: string; programYearId: string; amount: number; paymentSchedule: string;
   /** Its installments, in installment order. */
@@ -85,7 +90,7 @@ export async function loadClubLoop(
   const [allocationRows, installmentRows] = await Promise.all([
     fetchAllIn<Record<string, any>>(visible.map(s => s.allocation_id), (c, a, b) =>
       supabaseAdmin.from('rep_cost_allocations')
-        .select('id, description, created_at, total_amount, source_budget_line_id, source_entry_id')
+        .select('id, description, created_at, total_amount, source_budget_line_id, source_entry_id, notes')
         .eq('org_id', orgId).in('id', c).order('id').range(a, b)),
     fetchAllIn<Record<string, any>>(visible.map(s => s.id), (c, a, b) =>
       supabaseAdmin.from('rep_allocation_installments').select('*')
@@ -94,7 +99,7 @@ export async function loadClubLoop(
 
   const allocations = new Map<string, LoopAllocation>(allocationRows.map(a => [a.id, {
     id: a.id, description: a.description, createdAt: a.created_at, totalAmount: Number(a.total_amount),
-    sourceBudgetLineId: a.source_budget_line_id ?? null, sourceEntryId: a.source_entry_id ?? null,
+    sourceBudgetLineId: a.source_budget_line_id ?? null, sourceEntryId: a.source_entry_id ?? null, notes: a.notes ?? null,
   }]));
   const bySplit = new Map<string, RepAllocationInstallment[]>();
   for (const r of installmentRows) {
@@ -230,6 +235,31 @@ export async function allocationDetail(
   teams.sort((x, y) => (x.band === y.band ? x.teamName.localeCompare(y.teamName) : x.band === 'needs_you' ? -1 : 1));
 
   return { allocation, allocated: splitsAllocated(splits), figures: clubBillFigures(all, today), teams };
+}
+
+/**
+ * THE FISCAL YEAR AN ALLOCATION COUNTS IN (Stage 3c's one rule, the one the database's `club_allocation_locked` holds):
+ * its line's year; without a line, the year its first installment falls due in; with neither, the day it was made. With
+ * the line's name — the allocation window's eyebrow reads both ("Diamond permits — city fields · 2026–27"). ONE place,
+ * read by the window's GET and checked by its edit (Stage 3d), so the lock the screen shows is the lock the edit meets.
+ */
+export async function allocationYear(
+  orgId: string,
+  allocation: Pick<LoopAllocation, 'sourceBudgetLineId' | 'createdAt'>,
+  firstDue: string | null,
+  setting: FiscalSetting,
+): Promise<{ year: FiscalYear; budgetLineName: string | null }> {
+  let budgetLineName: string | null = null;
+  let lineYearKey: string | null = null;
+  if (allocation.sourceBudgetLineId) {
+    const { data, error } = await supabaseAdmin.from('org_budget_lines').select('description, org_fiscal_years ( first_day )')
+      .eq('id', allocation.sourceBudgetLineId).eq('org_id', orgId).maybeSingle();
+    if (error) throw error;
+    const line = data as { description?: string | null; org_fiscal_years?: { first_day?: string } | null } | null;
+    budgetLineName = line?.description ?? null;
+    lineYearKey = line?.org_fiscal_years?.first_day ?? null;
+  }
+  return { year: fiscalYearOf(lineYearKey ?? firstDue ?? orgDayKey(allocation.createdAt), setting), budgetLineName };
 }
 
 function billInstallment(i: RepAllocationInstallment, today: string, nameOf: (id: string | null) => string | null): BillInstallment {

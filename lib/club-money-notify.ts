@@ -154,11 +154,12 @@ export async function tellClubAccounting(p: {
 }
 
 /** Where the club reads a team's money: Accounting's tabs (Club Tier Stage 3a, Ask 2). A notice sent
- *  before the move still lands — the proxy forwards the old Rep Teams addresses here. */
+ *  before a move still lands — the proxy forwards the old addresses (Rep Teams', an allocation's retired page) here. */
 export const clubMoneyLinks = {
-  /** `splitId` opens that team's bill on arrival. */
+  /** Allocations with the allocation's WINDOW open (Stage 3d, Ask 5 — "from outside, its home tab with the window
+   *  open"); `splitId` opens it at that team's bill. */
   allocation: (orgSlug: string, allocationId: string, splitId?: string) =>
-    `/${orgSlug}/admin/accounting/allocations/${allocationId}${splitId ? `?bill=${splitId}` : ''}`,
+    `/${orgSlug}/admin/accounting/allocations?allocation=${allocationId}${splitId ? `&bill=${splitId}` : ''}`,
   /** `requestId` opens that request on arrival. */
   requests: (orgSlug: string, requestId?: string) =>
     `/${orgSlug}/admin/accounting/payment-requests${requestId ? `?request=${requestId}` : ''}`,

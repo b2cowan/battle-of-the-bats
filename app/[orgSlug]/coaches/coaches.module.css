@@ -13938,6 +13938,11 @@ div.gdRow { cursor: default; }
 .moneyBandFigure[data-tone="good"]   { color: var(--success-light); }
 .moneyBandFigure[data-tone="warn"]   { color: var(--badge-warning-ink); }
 .moneyBandFigure[data-tone="danger"] { color: var(--badge-danger-ink); }
+/* A figure the screen READS but doesn't own (`held` — a team's Cash on hand on the club's team account, Club Tier 3b
+   Ask 4e): the blue edge of "held by the team" INSIDE its tile, so the band stays one frame, and a lock before its
+   label. */
+.moneyBandTile[data-held] { box-shadow: inset 3px 0 0 var(--info); }
+.moneyBandHeldLock { vertical-align: -1px; margin-right: 0.3rem; }
 
 .moneyBandCaption {
   font-size: var(--type-support);

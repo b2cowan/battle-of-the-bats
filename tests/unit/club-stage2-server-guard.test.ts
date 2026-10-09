@@ -552,8 +552,13 @@ describe('B09 / B11 / B12 / B13 — the rest of the server list', () => {
     const installment = readCode('app/api/admin/accounting/allocations/[allocationId]/installments/[installId]/route.ts');
     assert.match(installment, /clubReceiveInstallment\(ctx,/);
     assert.doesNotMatch(installment, /create_accounting_transfer/);
-    assert.match(handler(readCode('app/api/admin/rep-teams/allocations/[allocationId]/route.ts'), 'PATCH'),
-      /const inScope = await teamIdsInScope\(ctx!\);[\s\S]*detail\.splits\.some\(s => !inScope\.has\(s\.teamId\)\)/);
+    // An allocation's name and note (Stage 3d): the Rep Teams PATCH retired, and its group guard moved with it — every
+    // team the bill reaches must be the member's (lib/club-allocation-edit.ts), checked before the write.
+    assert.match(handler(readCode('app/api/admin/accounting/allocations/[allocationId]/route.ts'), 'PATCH'), /editClubAllocation\(r\.ctx,/);
+    const edit = readCode('lib/club-allocation-edit.ts');
+    assert.match(edit, /teamIdsInScope\(ctx\)/);
+    assert.match(edit, /if \(inScope && splits\.some\(s => !inScope\.has\(s\.teamId\)\)\) return refused\(403/);
+    assert.ok(edit.indexOf('!inScope.has(s.teamId)') < edit.indexOf(".from('rep_cost_allocations')"), 'the group check comes before the write');
   });
 
   it('B10: coach standing on the four routes and the oversight list is TEAM MEMBERSHIP', () => {

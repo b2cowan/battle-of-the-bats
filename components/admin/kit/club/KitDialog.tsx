@@ -59,6 +59,28 @@
  * any scroll and the window never jumps away from the row being fixed. It quiets on the next change inside the body
  * — a stale reason beside the button would mislead — and speaks again when a foot button is pressed or the reason
  * itself changes. A reason that belongs to ONE field stays under that field (`FormError inPlace`).
+ *
+ * A LEVEL INSIDE A WINDOW OPENS IN PLACE, BEHIND A NAMED BACK (Club Tier Stage 3d, Asks 2 and 4 — design decisions
+ * 2026-10-08; the coaches portal's `RoomShell back`). A payee inside Payees, a team's bill inside its allocation: the
+ * level takes the window's place, never a second window over it.
+ *   - `back` — "← Payees" at the head's top left, above the eyebrow, on a computer; on a phone the head's own ← (which
+ *     otherwise closes the form) goes up instead and names where ("Back to Payees"). The phone's Back gesture goes up
+ *     too (the floor's `onBack`), so Back goes up one level before it goes out. × still closes the whole window.
+ *   - `levelKey` — the level on screen: when it changes the body starts at its top and the keyboard stays in the window
+ *     (the row that opened the level went with the old one).
+ *
+ * ONE FORM OVER ANOTHER (Stage 3d, Ask 7a — the kit's one exception to "a question over a form, nothing else"): `raised`
+ * puts a form window on its own layer between the form layer and the question layer, with its own scrim over the form
+ * beneath, so the payee picker's "Manage payees…" opens Payees over the entry being typed and closes back to it with
+ * the typing kept.
+ *
+ * A WINDOW THAT IS A PLACE (Stage 3d — an allocation over Allocations): `address` writes it into the URL bar through the
+ * window's own Back step (the floor's `address`, `useBackStep`), so Back and a copied link land on it and closing it
+ * takes the address away again. ⚠ NEVER `router.replace` a window's address while it is open: the router's re-stamp of a
+ * NEW url strips the step's marker off its entry, and the close then leaves a dead Back press behind (/review 2026-10-08).
+ * The address is read when the step opens: a window whose level or record changes in place is re-keyed by its host. Escape, × and Back close the TOP window only (the floor answers the newest), the page-scroll lock is
+ * a count, and a question opened from the raised window still lands on top of it. Mount it BESIDE the form it rises
+ * over, never inside that form's body.
  */
 import { createContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
@@ -100,8 +122,12 @@ export default function KitDialog({
   footer,
   footerStart,
   steps,
+  back,
+  levelKey,
+  address,
   busy = false,
   wide = false,
+  raised = false,
 }: {
   kind: 'question' | 'form';
   title: ReactNode;
@@ -131,11 +157,19 @@ export default function KitDialog({
   /** A record opened from a list: its neighbours, named, and where it sits ("3 of 8"; `positionWide`,
    *  "3 of 8 in U11 Girls", above a phone). `noun` names what steps for a screen reader ("team"). */
   steps?: { prev: KitStep | null; next: KitStep | null; position: string; positionWide?: string; noun: string };
+  /** A level inside this window: the level behind it, named ("Payees"), and the way up to it (see the header). */
+  back?: { label: string; onBack: () => void };
+  /** Which level is on screen — a change starts the body at its top and keeps the keyboard inside (see the header). */
+  levelKey?: string;
+  /** The window as a place in the URL bar, written by its Back step (see the header). */
+  address?: string | null;
   /** While a save runs, Escape and the scrim do nothing. */
   busy?: boolean;
   /** A form whose body is a TABLE widens to fit it (Club Tier 3c: New allocation’s teams, “the window widens to fit
    *  its table”). A phone fills the screen either way. */
   wide?: boolean;
+  /** A form opened from INSIDE another form stands one layer above it (see the header; Stage 3d, Ask 7a). */
+  raised?: boolean;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -146,8 +180,17 @@ export default function KitDialog({
   const [reasonQuiet, setReasonQuiet] = useState(false);
   const reason = useMemo(() => (hasFoot ? { slot: reasonSlot, reveal: () => setReasonQuiet(false) } : null), [hasFoot, reasonSlot]);
   // Mounted = open. Called BEFORE the focus effect below, so the floor records the opener while it
-  // still has focus, then that effect moves the cursor into the first field.
-  useDialogFloor(true, panelRef, { onClose, busy });
+  // still has focus, then that effect moves the cursor into the first field. A level inside the window
+  // gives the phone's Back somewhere to go first (`back`); the floor re-seats focus when the level changes.
+  useDialogFloor(true, panelRef, { onClose, onBack: back?.onBack, busy, focusKey: levelKey ?? null, address: address ?? null });
+
+  // A new level starts at its top (Previous / Next do the same through `step` below).
+  const shownLevel = useRef(levelKey);
+  useEffect(() => {
+    if (shownLevel.current === levelKey) return;
+    shownLevel.current = levelKey;
+    bodyRef.current?.scrollTo({ top: 0 });
+  }, [levelKey]);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -171,7 +214,7 @@ export default function KitDialog({
 
   return (
     <div
-      className={`${styles.overlay} ${kind === 'question' ? styles.overlayQuestion : styles.overlayForm}`}
+      className={`${styles.overlay} ${kind === 'question' ? styles.overlayQuestion : styles.overlayForm}${raised && kind === 'form' ? ` ${styles.overlayRaised}` : ''}`}
       onPointerDown={e => {
         if (kind === 'question' && e.target === e.currentTarget && !busy) onClose();
       }}
@@ -186,14 +229,22 @@ export default function KitDialog({
         tabIndex={-1}
         data-kit-dialog=""
         data-record={isRecord || undefined}
+        data-raised={(raised && kind === 'form') || undefined}
       >
         <div className={styles.head}>
           {kind === 'form' && (
-            <button type="button" className={styles.back} onClick={onClose} aria-label="Back" disabled={busy}>
+            /* A phone's ← goes up a level when there is one ("Back to Payees"), else it closes the form. */
+            <button type="button" className={styles.back} onClick={back ? back.onBack : onClose}
+              aria-label={back ? `Back to ${back.label}` : 'Back'} disabled={busy}>
               <ArrowLeft size={20} aria-hidden />
             </button>
           )}
           <div className={styles.titleBlock}>
+            {back && kind === 'form' && (
+              <button type="button" className={styles.namedBack} onClick={back.onBack} disabled={busy}>
+                <ArrowLeft size={14} aria-hidden />{back.label}
+              </button>
+            )}
             {eyebrow && <p className={styles.eyebrow}>{eyebrow}</p>}
             <h2 id={titleId} className={styles.title}>{title}</h2>
             {identity && <p className={styles.identity}>{identity}</p>}

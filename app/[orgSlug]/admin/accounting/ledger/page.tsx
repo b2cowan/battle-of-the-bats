@@ -27,8 +27,13 @@
  *
  * A team's book is NOT a Ledger book any more: the club reads a team through its account (Ask 5a), so
  * the Book pill lists the club's own books only, and a team book's old address forwards to the team.
+ *
+ * ⚖ PAYEES IS A WINDOW OVER THIS LEDGER (Club Tier Stage 3d, Ask 1 — Ledger Parity D8a ruled with D8): Tools › Payees
+ * opens it here, and the Book, the filters and the period are there again when it closes. The retired Payees page's
+ * addresses land here (proxy.ts): `?payees=1` opens the list, `?payee={id}` that payee — each read once on arrival,
+ * then dropped from the address.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronRight, MoreHorizontal, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -54,6 +59,7 @@ import pill from '@/components/shared/FilterPill.module.css';
 import { day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import { AddEntryWindow, LineWindow, TransferWindow, type BookRef, type WordList } from '@/components/admin/kit/club/money/LedgerWindows';
 import AddLedgerWindow from '@/components/admin/kit/club/money/AddLedgerWindow';
+import PayeesWindow from '@/components/admin/kit/club/money/PayeesWindow';
 import type { BookRead, BookRowOut, LineStatus } from '@/lib/club-ledger-read';
 import type { LedgerSummary } from '@/lib/types';
 
@@ -84,7 +90,6 @@ export default function LedgerTab() {
   const shares = !!currentOrg && clubSharesPayees(currentOrg);
   const q = `orgSlug=${encodeURIComponent(slug)}`;
   const base = `/${slug}/admin/accounting`;
-  const payeesHref = `${base}/payees`;
   const today = useMemo(() => tournamentToday(), []);
   const bounds = useMemo(() => seasonBoundsFor(today), [today]);
 
@@ -119,6 +124,29 @@ export default function LedgerTab() {
   const [notice, setNotice] = useNotice();
   /** The budget words a line can be filed under (Ask 4a) — read when a window that files one first opens. */
   const [words, setWords] = useState<WordList | null>(null);
+  /** The Payees window (Stage 3d): from Tools, or by the old page's address (`?payees=1`, `?payee=`) — read whenever it
+   *  changes (a link followed while already here too), dropped below, and the window mounts once the address is clean
+   *  (its Back step then starts from the clean Ledger — /review 2026-10-08). */
+  const [payees, setPayees] = useState<{ payee: string | null } | null>(null);
+  const askedPayee = search.get('payee');
+  const askedList = search.get('payees') === '1';
+  const askPayees = askedPayee ? `payee:${askedPayee}` : askedList ? 'list' : null;
+  const [seenAskPayees, setSeenAskPayees] = useState<string | null>(null);
+  if (askPayees !== seenAskPayees) {
+    setSeenAskPayees(askPayees);
+    if (askPayees) setPayees({ payee: askedPayee });
+  }
+  /** Payees renamed or merged a name the book prints: it re-reads once, when the window closes. */
+  const payeesChanged = useRef(false);
+  // The ask is read, then dropped from the address (the rest of it — the book, a filter — stays).
+  useEffect(() => {
+    if (!askPayees) return;
+    const params = new URLSearchParams(search.toString());
+    params.delete('payees');
+    params.delete('payee');
+    const qs = params.toString();
+    router.replace(qs ? `${base}/ledger?${qs}` : `${base}/ledger`, { scroll: false });
+  }, [askPayees, search, router, base]);
 
   // The club's books (never a team's), for the Book pill; the General ledger by default.
   const loadBooks = useCallback(async () => {
@@ -282,7 +310,7 @@ export default function LedgerTab() {
               )}
               <CoachToolbarMenuItem label="Payees"
                 hint={shares ? 'Rename, merge, or share with teams' : 'Rename a payee or merge two spellings'}
-                href={payeesHref} />
+                onSelect={() => setPayees({ payee: null })} />
             </CoachToolbarMenu>
             {canMove && (
               <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => setWin('add')} aria-label="Add entry">
@@ -343,12 +371,18 @@ export default function LedgerTab() {
 
       {open && read && (
         <LineWindow
-          row={open} book={ref} q={q} orgSlug={slug} words={words} accountingBase={base} payeesHref={payeesHref}
+          // The line as the book now reads it — an allocation opened from it may have moved its money (Stage 3d).
+          row={read.rows.find(r => r.id === open.id) ?? open} book={ref} q={q} orgSlug={slug} words={words} accountingBase={base}
           canMove={canMove} fiscal={read.fiscal} onChanged={changed} onClose={() => setOpen(null)}
         />
       )}
+      {payees && !askPayees && (
+        <PayeesWindow q={q} initialPayee={payees.payee}
+          onChanged={() => { payeesChanged.current = true; }}
+          onClose={() => { setPayees(null); if (payeesChanged.current) { payeesChanged.current = false; changed(null); } }} />
+      )}
       {win === 'add' && read && (
-        <AddEntryWindow book={ref} q={q} orgSlug={slug} words={words} payeesHref={payeesHref} fiscal={read.fiscal} canMove={canMove}
+        <AddEntryWindow book={ref} q={q} orgSlug={slug} words={words} fiscal={read.fiscal} canMove={canMove}
           onClose={() => setWin(null)} onAdded={text => { setWin(null); changed(text); }} />
       )}
       {win === 'ledger' && (

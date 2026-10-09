@@ -12634,15 +12634,7 @@
       "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
       "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill 16U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
     "admin-accounting-allocation-new|361|tap-floor|input·Bill 9U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill UAT Between Seasons": {
       "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
       "detail": "16px tall (floor 44)"
     },
@@ -12674,15 +12666,7 @@
       "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
       "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill 16U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
     "admin-accounting-allocation-new|390|tap-floor|input·Bill 9U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill UAT Between Seasons": {
       "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
       "detail": "16px tall (floor 44)"
     },
@@ -12714,20 +12698,48 @@
       "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
       "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill 16U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
     "admin-accounting-allocation-new|768|tap-floor|input·Bill 9U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill UAT Between Seasons": {
       "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
       "detail": "16px tall (floor 44)"
     },
     "admin-accounting-allocation-new|768|tap-floor|input·Bill UAT Test Team": {
       "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill every team in Senior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill every team in Junior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill every team in Not in a group": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill every team in Senior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill every team in Junior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill every team in Not in a group": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill every team in Senior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill every team in Junior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill every team in Not in a group": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
       "detail": "16px tall (floor 44)"
     },
     "admin-accounting-payment-requests|361|tap-floor|input·<input>": {

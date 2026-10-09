@@ -74,7 +74,8 @@ const R = {
   acctLedgers: 'app/api/admin/accounting/ledgers/route.ts',
   acctLedger: 'app/api/admin/accounting/ledgers/[ledgerId]/route.ts',
   oldAllocations: 'app/api/admin/rep-teams/allocations/route.ts',
-  oldAllocation: 'app/api/admin/rep-teams/allocations/[allocationId]/route.ts',
+  // Stage 3d: an allocation's name and note are changed here (the Rep Teams PATCH kept from 3a retired).
+  acctAllocation: 'app/api/admin/accounting/allocations/[allocationId]/route.ts',
   coachInstallment: 'app/api/coaches/[orgSlug]/teams/[teamId]/allocations/[splitId]/installments/[installId]/route.ts',
   coachRequests: 'app/api/coaches/[orgSlug]/teams/[teamId]/payment-requests/route.ts',
   coachSurplus: 'app/api/coaches/[orgSlug]/teams/[teamId]/season-surplus/route.ts',
@@ -124,7 +125,7 @@ describe('ONE rule for who may move club money (Ask 1, C08)', () => {
     [R.acctLedgers, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
     [R.acctLedger, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
     [R.oldAllocations, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
-    [R.oldAllocation, /canMoveClubMoney\(ctx!, ctx!\.org\)/],
+    [R.acctAllocation, /resolveClubMoney\(req, \{ scope: 'loop', write: true \}\)/],
   ];
   for (const [file, rule] of WRITES) {
     it(`${file.replace('app/api/admin/', '')} asks the one rule, never a role list`, () => {

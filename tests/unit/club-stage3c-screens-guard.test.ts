@@ -29,7 +29,8 @@ const REPO = path.join(import.meta.dirname, '..', '..');
 const KIT = 'components/admin/kit/club/money';
 const PARTS = `${KIT}/FiscalYearParts.tsx`;
 const ALLOC = `${KIT}/AllocationWindow.tsx`;
-const PAYEES = 'app/[orgSlug]/admin/accounting/payees/page.tsx';
+// Stage 3d: the Payees page retired into a window over the Ledger; the payee's window is its second level.
+const PAYEES = 'components/admin/kit/club/money/PayeesWindow.tsx';
 const BUDGET = 'app/[orgSlug]/admin/accounting/budget/page.tsx';
 const BVA = 'app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx';
 const OVERVIEW = 'app/[orgSlug]/admin/accounting/page.tsx';
@@ -176,7 +177,7 @@ describe('4. a payee\'s window reads first, its report inside, no Export (Ask 7)
     assert.match(readCode('proxy.ts'), /url\.searchParams\.set\('payee', segments\[4\]\)/);
   });
   it('the window reads first: the pencil (a money mover\'s) turns it into its form', () => {
-    assert.match(code, /edit=\{canMove \? \{ editing, onToggle/);
+    assert.match(code, /edit=\{current && canMove \? \{ editing, onToggle/);
     assert.match(code, /enabled: canMove && editing/, 'the name autosaves only while editing');
   });
 });

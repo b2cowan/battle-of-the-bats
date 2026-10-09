@@ -84,6 +84,8 @@
   text-decoration: none;
   min-height: var(--tap-min, 44px);
 }
+/* A row that opens a WINDOW in this one's place (an allocation, Stage 3d) is a button, not a link: the same row. */
+button.windowRow { width: 100%; border: 0; border-top: 1px solid var(--home-line); background: none; font: inherit; text-align: left; cursor: pointer; }
 .windowRow:first-child { border-top: 0; }
 .windowRow:hover { background: var(--home-olive-soft); }
 .windowRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }

@@ -14,6 +14,11 @@
  *                           coach money form use, money-out words for money out; the hint says whether the word
  *                           is on the year's plan — a word with no line counts as off-plan), the payee picker
  *                           with Manage payees at its foot (C01), how it was paid and the reference, Pending.
+ *   ⚖ Stage 3d (Ask 7a): "Manage payees…" opens the Payees window RAISED over the entry being typed (or the line's
+ *                           window) and closes back to it with everything typed kept — it was a page link, and an entry
+ *                           being added was lost. A payee merged away there takes the entry's pick to the one kept.
+ *   ⚖ Stage 3d (Ask 5): a line an allocation wrote opens the allocation's window IN THIS ONE'S PLACE, at that team's
+ *                           bill (a hand-off); × turns it back into the line.
  *                           The free-text category retired with 3a's form: a line's word is what gives it an
  *                           Actual on Budget vs. Actual, matched to the plan by word (the coach's rule).
  *   Transfer              — between the club's OWN books only (a team never appears, C12).
@@ -28,6 +33,9 @@ import ck from '../ClubKit.module.css';
 import { RepChip, SavePill, repKit } from '../RepKit';
 import PayeeCombobox, { type PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import { LedgerLineRead } from '@/components/coaches/kit';
+import PayeesWindow from './PayeesWindow';
+import { useAllocationHandOff } from './AllocationRecordWindow';
+import { followPayeeChange } from '@/lib/expense-payee';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
 import {
@@ -181,9 +189,10 @@ function StatusField({ id, value, onChange }: { id: string; value: 'posted' | 'p
   );
 }
 
-/** The payee picker, with "Manage payees…" as its last row (C01: the two spellings get merged there). */
-function PayeeField({ id, q, value, onChange, payeesHref, label }: {
-  id: string; q: string; value: PayeeSelection | null; onChange: (v: PayeeSelection | null) => void; payeesHref: string; label: string;
+/** The payee picker, with "Manage payees…" as its last row (C01: the two spellings get merged there) — it opens the
+ *  Payees window over the form (Stage 3d, Ask 7a; the coach's way, `onManage`), never a page. */
+function PayeeField({ id, q, value, onChange, onManage, label }: {
+  id: string; q: string; value: PayeeSelection | null; onChange: (v: PayeeSelection | null) => void; onManage: () => void; label: string;
 }) {
   return (
     <div className={ck.field}>
@@ -192,7 +201,7 @@ function PayeeField({ id, q, value, onChange, payeesHref, label }: {
         payeesApiUrl={`/api/admin/accounting/payees?${q}`}
         value={value}
         onChange={onChange}
-        manageHref={payeesHref}
+        onManage={onManage}
         kitField
       />
     </div>
@@ -201,8 +210,8 @@ function PayeeField({ id, q, value, onChange, payeesHref, label }: {
 
 // ── Add an entry ─────────────────────────────────────────────────────────────────────────────────
 
-export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, fiscal = null, canMove = false, onAdded, onClose }: {
-  book: BookRef; q: string; orgSlug: string; words: WordList | null; payeesHref: string;
+export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove = false, onAdded, onClose }: {
+  book: BookRef; q: string; orgSlug: string; words: WordList | null;
   /** The club's fiscal years (Stage 3c) — a date in a closed one is refused under the field. */
   fiscal?: FiscalSetting | null;
   /** Can this reader reopen a year (the refusal's second way out)? */
@@ -221,6 +230,8 @@ export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, fiscal = n
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  /** Payees, raised over this entry (Ask 7a) — the entry waits underneath, exactly as typed. */
+  const [managing, setManaging] = useState(false);
   const n = parseAmount(amount);
   const plan = usePlanWords(q, /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : tournamentToday());
   const dateRefusal = closedDayWords(date, fiscal, canMove);
@@ -248,6 +259,7 @@ export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, fiscal = n
   }
 
   return (
+    <>
     <KitDialog
       kind="form"
       eyebrow={book.name}
@@ -271,7 +283,7 @@ export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, fiscal = n
       <TextField id="ae-amount" label="Amount" required value={amount} onChange={setAmount} placeholder="$0.00" />
       <FiledUnderField id="ae-word" words={words} value={word} onChange={setWord} direction={entryType === 'income' ? 'in' : 'out'}
         orgSlug={orgSlug} plan={plan} />
-      <PayeeField id="ae-payee" q={q} value={payee} onChange={setPayee} payeesHref={payeesHref}
+      <PayeeField id="ae-payee" q={q} value={payee} onChange={setPayee} onManage={() => setManaging(true)}
         label={entryType === 'income' ? 'Paid by' : 'Paid to'} />
       <div className={moneyKit.pair}>
         <MethodField id="ae-method" label="How it was paid" value={method} onChange={setMethod} required={false} />
@@ -283,6 +295,10 @@ export function AddEntryWindow({ book, q, orgSlug, words, payeesHref, fiscal = n
         <textarea id="ae-notes" className={ck.textarea} rows={2} maxLength={2000} value={notes} onChange={e => setNotes(e.target.value)} />
       </label>
     </KitDialog>
+    {managing && (
+      <PayeesWindow q={q} raised onChanged={change => setPayee(p => followPayeeChange(p, change))} onClose={() => setManaging(false)} />
+    )}
+    </>
   );
 }
 
@@ -362,12 +378,12 @@ export function TransferWindow({ book, books, q, fiscal = null, canMove = false,
 
 // ── A line's window ──────────────────────────────────────────────────────────────────────────────
 
-/** Where a sourced line is changed: its one door. */
-function sourceDoor(row: BookRowOut, accountingBase: string): { href: string; label: string } | null {
+/** Where a sourced line is changed: its one door — the allocation's window in this one's place, at the team's bill
+ *  (Stage 3d), or the request's page. */
+function sourceDoor(row: BookRowOut, accountingBase: string):
+  { allocation: { id: string; bill: string | null }; label: string } | { href: string; label: string } | null {
   const s = row.source;
-  if (s.kind === 'allocation' && s.allocationId) {
-    return { href: `${accountingBase}/allocations/${s.allocationId}${s.splitId ? `?bill=${s.splitId}` : ''}`, label: 'Open the allocation' };
-  }
+  if (s.kind === 'allocation' && s.allocationId) return { allocation: { id: s.allocationId, bill: s.splitId ?? null }, label: 'Open the allocation' };
   if (s.kind === 'request' && s.requestId) return { href: `${accountingBase}/payment-requests?request=${s.requestId}`, label: 'Open the request' };
   return null;
 }
@@ -376,8 +392,8 @@ function sourceDoor(row: BookRowOut, accountingBase: string): { href: string; la
  * The window a line opens. Which one is the server's to say (`row.can`): a typed line is editable, a
  * transfer half voids both halves, a line from a source (or on a team's book) is read here only.
  */
-export function LineWindow({ row, book, q, orgSlug, words, accountingBase, payeesHref, canMove, fiscal = null, onChanged, onClose }: {
-  row: BookRowOut; book: BookRef; q: string; orgSlug: string; words: WordList | null; accountingBase: string; payeesHref: string;
+export function LineWindow({ row, book, q, orgSlug, words, accountingBase, canMove, fiscal = null, onChanged, onClose }: {
+  row: BookRowOut; book: BookRef; q: string; orgSlug: string; words: WordList | null; accountingBase: string;
   canMove: boolean;
   /** The club's fiscal years (Stage 3c): a line moved into a closed one is refused under its date; a locked line
    *  names its year. */
@@ -387,9 +403,9 @@ export function LineWindow({ row, book, q, orgSlug, words, accountingBase, payee
   onClose: () => void;
 }) {
   if (row.status !== 'void' && canMove && row.can.edit) {
-    return <EditLineWindow row={row} book={book} q={q} orgSlug={orgSlug} words={words} payeesHref={payeesHref} fiscal={fiscal} onChanged={onChanged} onClose={onClose} />;
+    return <EditLineWindow row={row} book={book} q={q} orgSlug={orgSlug} words={words} fiscal={fiscal} onChanged={onChanged} onClose={onClose} />;
   }
-  return <ReadLineWindow row={row} book={book} q={q} accountingBase={accountingBase} canMove={canMove} fiscal={fiscal} onChanged={onChanged} onClose={onClose} />;
+  return <ReadLineWindow row={row} book={book} q={q} orgSlug={orgSlug} accountingBase={accountingBase} canMove={canMove} fiscal={fiscal} onChanged={onChanged} onClose={onClose} />;
 }
 
 type Draft = {
@@ -408,13 +424,15 @@ const draftOf = (row: BookRowOut): Draft => {
 const draftSig = (d: Draft) => JSON.stringify({ ...d, what: d.what.trim(), amount: d.amount.trim(), word: d.word?.itemId ?? null, payee: d.payee?.payeeId ?? d.payee?.displayName ?? null });
 
 /** A line you typed: it saves as you go; Void asks, with a reason. */
-function EditLineWindow({ row, book, q, orgSlug, words, payeesHref, fiscal, onChanged, onClose }: {
-  row: BookRowOut; book: BookRef; q: string; orgSlug: string; words: WordList | null; payeesHref: string;
+function EditLineWindow({ row, book, q, orgSlug, words, fiscal, onChanged, onClose }: {
+  row: BookRowOut; book: BookRef; q: string; orgSlug: string; words: WordList | null;
   fiscal: FiscalSetting | null;
   onChanged: (text: string | null) => void; onClose: () => void;
 }) {
   const [d, setD] = useState<Draft>(() => draftOf(row));
   const [voiding, setVoiding] = useState(false);
+  /** Payees, raised over this line's window (Ask 7a). */
+  const [managing, setManaging] = useState(false);
   const saved = useRef(false);
   const sig = draftSig(d);
   const n = parseAmount(d.amount);
@@ -486,7 +504,7 @@ function EditLineWindow({ row, book, q, orgSlug, words, payeesHref, fiscal, onCh
         <FiledUnderField id="le-word" words={words} value={d.word} onChange={v => set({ word: v })}
           direction={d.entryType === 'income' ? 'in' : 'out'} orgSlug={orgSlug} plan={plan}
           hint={!row.filedUnder && row.legacyCategory ? wasCategoryWord(row.legacyCategory) : null} />
-        <PayeeField id="le-payee" q={q} value={d.payee} onChange={v => set({ payee: v })} payeesHref={payeesHref}
+        <PayeeField id="le-payee" q={q} value={d.payee} onChange={v => set({ payee: v })} onManage={() => setManaging(true)}
           label={d.entryType === 'income' ? 'Paid by' : 'Paid to'} />
         <div className={moneyKit.pair}>
           <MethodField id="le-method" label="How it was paid" value={d.method} onChange={v => set({ method: v })} required={false} />
@@ -499,6 +517,12 @@ function EditLineWindow({ row, book, q, orgSlug, words, payeesHref, fiscal, onCh
         </label>
         <p className={ck.hint}>Recorded by {row.recordedBy ?? 'someone at the club'}, {day(row.recordedAt)}. Changes save as you type.</p>
       </KitDialog>
+      {managing && (
+        /* What Payees changed follows into the pick WITHOUT a save: a merge already moved this line's payee on the
+           server, and a rename is the payee's, not the line's (followPayeeChange — the coach's one rule). */
+        <PayeesWindow q={q} raised onChanged={change => { saved.current = true; setD(x => ({ ...x, payee: followPayeeChange(x.payee, change) })); }}
+          onClose={() => setManaging(false)} />
+      )}
       {voiding && (
         <VoidLineQuestion row={row} book={book} q={q}
           onClose={() => setVoiding(false)}
@@ -548,11 +572,13 @@ function VoidLineQuestion({ row, book, q, onClose, onDone }: {
  * a line another tab wrote into the same read shape (facts, where it is changed, one door), so the two
  * windows cannot drift; the frame stays the admin's `KitDialog`.
  */
-function ReadLineWindow({ row, book, q, accountingBase, canMove, fiscal, onChanged, onClose }: {
-  row: BookRowOut; book: BookRef; q: string; accountingBase: string; canMove: boolean; fiscal: FiscalSetting | null;
+function ReadLineWindow({ row, book, q, orgSlug, accountingBase, canMove, fiscal, onChanged, onClose }: {
+  row: BookRowOut; book: BookRef; q: string; orgSlug: string; accountingBase: string; canMove: boolean; fiscal: FiscalSetting | null;
   onChanged: (text: string | null) => void; onClose: () => void;
 }) {
   const [voiding, setVoiding] = useState(false);
+  /** The allocation that wrote this line, open in this window's place at the team's bill (Stage 3d) — × turns it back. */
+  const allocation = useAllocationHandOff({ q, orgSlug, onChanged: () => onChanged(null) });
   const [clearing, setClearing] = useState(false);
   const [clearError, setClearError] = useState('');
   const door = sourceDoor(row, accountingBase);
@@ -587,6 +613,8 @@ function ReadLineWindow({ row, book, q, accountingBase, canMove, fiscal, onChang
     : row.source.kind === 'request' ? 'On their Club page as decided' : null;
   const canVoidBoth = canMove && !row.locked && row.status !== 'void' && row.can.void === 'both_halves';
 
+  if (allocation.shown) return allocation.shown;
+
   return (
     <>
       <KitDialog
@@ -603,7 +631,9 @@ function ReadLineWindow({ row, book, q, accountingBase, canMove, fiscal, onChang
         footer={
           <>
             <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>
-            {door && <Link href={door.href} className="btn btn-outline">{door.label} <ChevronRight size={14} aria-hidden /></Link>}
+            {door && ('allocation' in door
+              ? <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={() => allocation.open(door.allocation.id, door.allocation.bill)}>{door.label} <ChevronRight size={14} aria-hidden /></button>
+              : <Link href={door.href} className="btn btn-outline">{door.label} <ChevronRight size={14} aria-hidden /></Link>)}
           </>
         }
       >

@@ -10,12 +10,15 @@
  *   · a typed line states itself (the date, its words, its amount); the ONE door is the Ledger, narrowed to
  *     these lines — their book, the year, their category and item;
  *   · a line the money loop wrote names the allocation or the request behind it, and that row IS the door
- *     to its page (the mirror of the coach's drive or sponsor row opening its room).
+ *     to it (the mirror of the coach's drive or sponsor row opening its room). ⚖ Stage 3d (Ask 5): an allocation's row
+ *     turns THIS window into the allocation's (a hand-off, as Allocate turns a line into New allocation), and ×
+ *     turns it back; a request's row still opens Payment requests with that request's window.
  * A Budgeted figure does not open this: it opens the line's own window (the line reads first).
  */
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import KitDialog from '../KitDialog';
+import { useAllocationHandOff } from './AllocationRecordWindow';
 import ck from '../ClubKit.module.css';
 import { formatStoredDate } from '@/lib/timezone';
 import type { ItemResult } from '@/components/coaches/MoneyStatementRows';
@@ -23,14 +26,20 @@ import type { ClubReport } from '@/lib/club-budget-report';
 import { money } from './MoneyKit';
 import cr from './ClubReport.module.css';
 
-export default function StatementBehindWindow({ item, categoryName, report, accountingBase, onClose }: {
+export default function StatementBehindWindow({ item, categoryName, report, q, orgSlug, accountingBase, onChanged, onClose }: {
   item: ItemResult;
   /** The category the row sits under — its filing, and the Ledger's Category to narrow by. */
   categoryName: string;
   report: Pick<ClubReport, 'year' | 'lineSources' | 'lineBooks'>;
+  q: string;
+  orgSlug: string;
   accountingBase: string;
+  /** Money moved inside an allocation opened from here: the page re-reads its figures. */
+  onChanged: () => void;
   onClose: () => void;
 }) {
+  /** An allocation behind a line, open in this window's place (Stage 3d) — × turns it back. */
+  const allocation = useAllocationHandOff({ q, orgSlug, onChanged });
   const costs = item.costs ?? [];
   const moved = item.direction === 'in' ? 'received' : 'paid';
   const books = [...new Set(costs.map(c => report.lineBooks[c.id]?.ledgerId).filter((x): x is string => !!x))];
@@ -46,6 +55,8 @@ export default function StatementBehindWindow({ item, categoryName, report, acco
   const ledgerHref = `${accountingBase}/ledger?${params}`;
   const typed = costs.some(c => !report.lineSources[c.id]);
   const day = (d: string | null) => (d ? formatStoredDate(d, { withYear: false }) : 'no date');
+
+  if (allocation.shown) return allocation.shown;
 
   return (
     <KitDialog
@@ -79,7 +90,10 @@ export default function StatementBehindWindow({ item, categoryName, report, acco
             </>
           );
           if (source?.kind === 'allocation') {
-            return <Link key={c.id} href={`${accountingBase}/allocations/${source.allocationId}`} className={cr.windowRow} title="Open this allocation">{body}</Link>;
+            return (
+              <button key={c.id} type="button" className={cr.windowRow} title="Open this allocation" aria-haspopup="dialog"
+                onClick={() => allocation.open(source.allocationId)}>{body}</button>
+            );
           }
           if (source?.kind === 'request') {
             return <Link key={c.id} href={`${accountingBase}/payment-requests?request=${source.requestId}`} className={cr.windowRow} title="Open this request">{body}</Link>;

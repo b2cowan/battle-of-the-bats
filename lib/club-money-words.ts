@@ -903,3 +903,48 @@ export const EARLIER_SEASON_WORDS = {
   withThisSeason: (earlier: number, seasonName: string | null) =>
     `${pluralize(earlier, 'installment', 'installments')} from ${seasonName ? `the ${seasonName}` : 'an earlier season'} included`,
 } as const;
+
+// ── Club Tier Stage 3d: an allocation's window (Ask 3). ✓ SETTLED BY /marketing 2026-10-08 (the 3d words pass): the
+//    name's hint changed; a closed year's line, the refusals and the labels kept. The figure captions are the page's, moved. ──
+export const ALLOCATION_WINDOW_WORDS = {
+  /** The eyebrow: the line it bills from and the fiscal year it counts in; "Off-plan" without a line. */
+  eyebrow: (line: string | null, year: string) => `${line ?? 'Off-plan'} · ${year}`,
+  /** A closed year's lock beside the eyebrow, for a screen reader. */
+  closedYear: 'closed',
+  allocated: 'Allocated',
+  collected: 'Collected',
+  outstanding: 'Outstanding',
+  overdue: 'Overdue',
+  /** "5 teams × $1,350.00" when every team's share is the same; else "5 teams". */
+  allocatedCaption: (teams: number, perTeam: string | null) => `${pluralize(teams, 'team', 'teams')}${perTeam ? ` × ${perTeam}` : ''}`,
+  collectedCaption: (received: number, installments: number) => `${received} of ${pluralize(installments, 'installment', 'installments')}`,
+  outstandingCaption: (left: number) => pluralize(left, 'installment', 'installments'),
+  /** The late teams, by name; "Nothing late" when none. */
+  overdueCaption: (teams: readonly string[]) => (teams.length ? teams.join(', ') : 'Nothing late'),
+  scheduleLabel: 'Schedule',
+  /** "Three installments: Aug 23, Sep 22, Oct 17" — `count` is the installments word ("Three installments"). */
+  schedule: (count: string, dues: readonly string[]) => (dues.length ? `${count}: ${dues.join(', ')}` : count),
+  noteLabel: 'Note',
+  noNote: 'No note.',
+  nameLabel: 'Name',
+  /** ✓ /marketing 2026-10-08. The drawing's hint said Ledger lines already written keep the old name; they don't — both
+   *  Ledgers rebuild an allocation line's words from the bill's name as they read (put to the owner at build). It names
+   *  the places exactly: Budget vs. Actual's behind-the-figure list still prints the stored text, so never "wherever". */
+  nameHint: 'The new name shows on each team’s Club page and on this bill’s Ledger lines, the club’s and the teams’. Notices already sent keep the old name.',
+  /** A blank name is held, its reason under the field (never sent). */
+  nameMissing: 'Give the allocation a name to save it.',
+  /** ✓ /marketing 2026-10-08, kept: 3c's locked sentence (“Recorded in 2025–26, which is closed…”) for a bill, which
+   *  COUNTS in a year. The screen's locked line and the edit's refusal say the same thing. */
+  closedLine: (year: string, reopen: string | null) =>
+    `Counts in ${year}, which is closed.${reopen ? ` To change it, reopen ${reopen}.` : ''}`,
+  noteTooLong: 'Keep the note to 2,000 characters.',
+  nothingToChange: 'Change the name or the note.',
+  notFound: 'This allocation isn’t one you can open.',
+  notFoundSub: 'It may have been removed, or its teams are in a team group you don’t manage.',
+  loadFailed: 'We couldn’t load this allocation.',
+  loading: 'Loading the allocation…',
+  /** A team's row on a phone: "$450.00 of $1,350.00 in · next Sep 22". */
+  phoneRow: (collected: string, allocated: string, next: string | null) => `${collected} of ${allocated} in${next ? ` · next ${next}` : ''}`,
+  paidInFull: 'Paid in full',
+  noHeadCoach: 'No head coach yet',
+} as const;

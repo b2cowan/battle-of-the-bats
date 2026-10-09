@@ -251,8 +251,9 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     id: 'accounting-allocation',
     label: 'An Allocation',
     module: 'accounting',
-    page: 'Accounting › an allocation',
-    file: 'app/[orgSlug]/admin/accounting/allocations/[allocationId]/page.tsx',
+    // Stage 3d: an allocation is a WINDOW (opened from every door), and its Export sits in the window's foot.
+    page: 'Accounting › an allocation’s window',
+    file: 'components/admin/kit/club/money/AllocationRecordWindow.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     minPlan: 'club',

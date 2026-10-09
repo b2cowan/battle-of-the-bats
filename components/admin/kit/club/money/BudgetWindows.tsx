@@ -17,7 +17,10 @@
  *   Add line          — creates ASK (2026-09-24): Money in or out, Filed under (money-in words too, Ask 4b),
  *                       the name, Planned, When, Notes. Planning a word already on the year ADDS to its line
  *                       (one word, one line, Ask 4a) — the form says so before it happens.
- *   From the teams    — the revenue row nobody types: the allocations it adds up, each opening its page.
+ *   From the teams    — the revenue row nobody types: the allocations it adds up, each opening its window.
+ *   ⚖ Stage 3d (Ask 5): an allocation listed in a line's window or in From the teams opens BY HAND-OFF — this window
+ *                       turns into the allocation's (`AllocationRecordWindow`), the way Allocate turns the line into
+ *                       New allocation, and × turns it back, at the same place. Money moved inside it re-reads the plan.
  *   Tools             — the two rare panels that sat at the old page's foot, each a window: Categories
  *                       (rename the club's shared headings) and Words your teams use (publish a team's word).
  *
@@ -29,6 +32,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Plus, X } from 'lucide-react';
+import { useAllocationHandOff } from './AllocationRecordWindow';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { NoticePill, SavePill, repKit, useDeferredLoad } from '../RepKit';
@@ -216,18 +220,18 @@ function teamsPhrase(a: PlanAllocationRow): string {
   return `${n} ${n === 1 ? 'team' : 'teams'}`;
 }
 
-/** The allocations a line carries, each opening its page on Allocations. */
-export function AllocationRows({ rows, accountingBase }: { rows: readonly PlanAllocationRow[]; accountingBase: string }) {
+/** The allocations a line carries — each opens the allocation's window in this one's place (Stage 3d, Ask 5). */
+export function AllocationRows({ rows, onOpen }: { rows: readonly PlanAllocationRow[]; onOpen: (allocationId: string) => void }) {
   return (
     <div className={cr.windowRows}>
       {rows.map(a => (
-        <Link key={a.id} href={`${accountingBase}/allocations/${a.id}`} className={cr.windowRow}>
+        <button key={a.id} type="button" className={cr.windowRow} aria-haspopup="dialog" onClick={() => onOpen(a.id)}>
           <span className={cr.windowRowMain}>
             <span className={cr.windowRowTitle}>{a.description}</span>
             <span className={cr.windowRowSub}>{allocationRowCaption(teamsPhrase(a), 0, a.allocated, a.collected)}</span>
           </span>
           <ChevronRight size={16} aria-hidden className={cr.windowRowEnd} />
-        </Link>
+        </button>
       ))}
     </div>
   );
@@ -239,12 +243,12 @@ const draftOfLine = (l: PlanLineRow): LineDraft => ({
   name: l.description, total: l.planned.toFixed(2), word: selectionOf(l), when: whenFromPeriods(l.periods, l.planned), notes: l.notes ?? '',
 });
 
-export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = false, categories, accountingBase, onChanged, onClose }: {
+export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = false, categories, onChanged, onClose }: {
   line: PlanLineRow; year: FiscalYearRef; q: string; orgSlug: string; canMove: boolean;
   /** The line's fiscal year is CLOSED (Ask 1): it reads with its two writes gone (no pencil — `canMove` is false —
    *  and no Allocate), and its unbilled part says the club paid it. */
   locked?: boolean;
-  categories: BudgetCategoryWithItems[]; accountingBase: string;
+  categories: BudgetCategoryWithItems[];
   /** A write landed (or was refused because the line changed): re-read the plan; the text is the notice. */
   onChanged: (text: string | null) => void;
   onClose: () => void;
@@ -255,6 +259,8 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
   /** The window turned into New allocation (Ask 6), and what it made — said once in the floating pill on return. */
   const [allocating, setAllocating] = useState(false);
   const [made, setMade] = useState<string | null>(null);
+  /** An allocation from the line's list, open in the window's place (Stage 3d, Ask 5) — × turns it back into the line. */
+  const allocation = useAllocationHandOff({ q, orgSlug, onChanged: () => onChanged(null) });
   const original = useMemo(() => draftOfLine(line), [line]);
   const [d, setD] = useState<LineDraft>(original);
   const updatedAt = useRef(line.updatedAt);
@@ -323,6 +329,8 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
 
   const whenWords = line.periods.length === 0 ? NO_DATE_LABEL : null;
 
+  if (allocation.shown) return allocation.shown;
+
   if (allocating) {
     return (
       <AllocationWindow
@@ -372,7 +380,7 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
               <section className={cr.recordSection} aria-label={LINE_ALLOCATIONS_WORD}>
                 <h3 className={cr.recordSectionTitle}>{LINE_ALLOCATIONS_WORD}</h3>
                 {line.allocations.length > 0
-                  ? <AllocationRows rows={line.allocations} accountingBase={accountingBase} />
+                  ? <AllocationRows rows={line.allocations} onOpen={id => { setMade(null); allocation.open(id); }} />
                   : <p className={ck.hint}>Nothing is allocated from this line yet.</p>}
                 {(line.notAllocated ?? 0) > 0.005 && (
                   <div className={cr.leftBox}>
@@ -550,11 +558,19 @@ export function AddLineWindow({ year, q, orgSlug, categories, onWord, onAdded, o
 
 // ── From the teams: the allocations it adds up ─────────────────────────────────────────────────
 
-export function FromTheTeamsWindow({ year, rows, planned, periods, accountingBase, onClose }: {
+export function FromTheTeamsWindow({ year, rows, planned, periods, q, orgSlug, accountingBase, onChanged, onClose }: {
   year: FiscalYearRef; rows: readonly PlanAllocationRow[]; planned: number; periods: readonly ClubPlanPeriod[];
-  accountingBase: string; onClose: () => void;
+  q: string; orgSlug: string;
+  /** Open Allocations, at the foot. */
+  accountingBase: string;
+  /** Money moved inside an allocation opened from here: re-read the plan. */
+  onChanged: () => void;
+  onClose: () => void;
 }) {
   const months = whenMonthsText(whenSummary(periods.map(p => ({ periodDate: p.date, amount: p.amount })), planned));
+  /** An allocation from the list, open in this window's place (Stage 3d, Ask 5) — × turns it back. */
+  const allocation = useAllocationHandOff({ q, orgSlug, onChanged });
+  if (allocation.shown) return allocation.shown;
   return (
     <KitDialog
       kind="form"
@@ -571,7 +587,7 @@ export function FromTheTeamsWindow({ year, rows, planned, periods, accountingBas
       <RecordFacts rows={[['Planned', money(planned)], ['When', months]]} />
       <p className={ck.hint}>What the club billed its teams from the year’s cost lines. Nobody types it: it is read from the allocations, each due on its installments’ dates.</p>
       {rows.length > 0
-        ? <AllocationRows rows={rows} accountingBase={accountingBase} />
+        ? <AllocationRows rows={rows} onOpen={id => allocation.open(id)} />
         : <p className={ck.hint}>Nothing is allocated from the {year.name} plan yet. A cost line’s window allocates it.</p>}
     </KitDialog>
   );

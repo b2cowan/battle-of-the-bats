@@ -29,7 +29,9 @@ describe('the club windows stand on the dialog floor', () => {
 
   it('KitDialog calls the floor, and hand-rolls no key listener of its own', () => {
     assert.match(dialog, /import \{ useDialogFloor \} from '@\/components\/coaches\/useDialogFloor';/);
-    assert.match(dialog, /useDialogFloor\(true, panelRef, \{ onClose, busy \}\);/);
+    // Stage 3d: a level inside a window gives Back somewhere to go first (`onBack`), and the floor re-seats focus when
+    // the level changes (`focusKey`) — still the floor's own keys, never a listener here.
+    assert.match(dialog, /useDialogFloor\(true, panelRef, \{ onClose, onBack: back\?\.onBack, busy, focusKey: levelKey \?\? null, address: address \?\? null \}\);/);
     assert.doesNotMatch(dialog, /addEventListener\(\s*'keydown'/, 'Escape and Tab belong to the floor — a second listener would answer twice');
   });
 

@@ -25,7 +25,7 @@ import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForP
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
 import { CLUB_OWNED_BOOK_KINDS } from './club-money-figures';
 import { toCents, toDollars } from './coach-register';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
 import { blockToCircuitShape } from './rep-circuits';
@@ -10884,18 +10884,6 @@ export async function deleteRepPlayerDocument(docId: string): Promise<void> {
 
 // Cost Allocations
 
-function mapRepCostAllocation(r: any): RepCostAllocation {
-  return {
-    id: r.id,
-    orgId: r.org_id,
-    sourceEntryId: r.source_entry_id ?? null,
-    description: r.description,
-    totalAmount: Number(r.total_amount),
-    createdBy: r.created_by ?? null,
-    createdAt: r.created_at,
-  };
-}
-
 function mapRepAllocationSplit(r: any): RepAllocationSplit {
   return {
     id: r.id,
@@ -10940,71 +10928,15 @@ export function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
   };
 }
 
-export async function getRepCostAllocationDetail(
-  allocationId: string,
-  orgId: string,
-): Promise<{
-  allocation: RepCostAllocation;
-  splits: Array<RepAllocationSplit & { installments: RepAllocationInstallment[] }>;
-} | null> {
-  const { data: alloc, error: ae } = await supabaseAdmin
-    .from('rep_cost_allocations')
-    .select('*')
-    .eq('id', allocationId)
-    .eq('org_id', orgId)
-    .maybeSingle();
-  if (ae) throw ae;
-  if (!alloc) return null;
-
-  const { data: splits, error: se } = await supabaseAdmin
-    .from('rep_allocation_splits')
-    .select('*')
-    .eq('allocation_id', allocationId)
-    .order('created_at');
-  if (se) throw se;
-
-  const splitIds = (splits ?? []).map((s: any) => s.id);
-  let installments: any[] = [];
-  if (splitIds.length > 0) {
-    const { data: inst, error: ie } = await supabaseAdmin
-      .from('rep_allocation_installments')
-      .select('*')
-      .in('split_id', splitIds)
-      .order('installment_number');
-    if (ie) throw ie;
-    installments = inst ?? [];
-  }
-
-  const mappedSplits = (splits ?? []).map((s: any) => ({
-    ...mapRepAllocationSplit(s),
-    installments: installments
-      .filter((i: any) => i.split_id === s.id)
-      .map(mapRepAllocationInstallment),
-  }));
-
-  return { allocation: mapRepCostAllocation(alloc), splits: mappedSplits };
-}
-
 /* ⚰ `createRepCostAllocationWithSplits` STOOD HERE (removed Club Tier Stage 3b): an allocation, then each
    split, then each installment — separate writes, so a failure part-way left a half-made allocation, and
    the line link was a second, unchecked write after it (C11). Every allocation is now ONE database step,
    `club_allocation_create` (mig 317), through lib/club-budget-writes.ts `createClubAllocation`. */
 
-export async function updateRepCostAllocationDescription(
-  allocationId: string,
-  orgId: string,
-  description: string,
-): Promise<RepCostAllocation> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_cost_allocations')
-    .update({ description })
-    .eq('id', allocationId)
-    .eq('org_id', orgId)
-    .select()
-    .single();
-  if (error) throw error;
-  return mapRepCostAllocation(data);
-}
+/* ⚰ `updateRepCostAllocationDescription` and `getRepCostAllocationDetail` STOOD HERE (removed Club Tier Stage 3d): the
+   Rep Teams rename route kept from 3a was their one caller, and no screen called it. An allocation's name and note are
+   changed on its window through `PATCH /api/admin/accounting/allocations/[allocationId]` (lib/club-allocation-edit.ts),
+   which checks the fiscal-year lock and the member's team groups first. */
 
 /**
  * Settle one club-allocation instalment.

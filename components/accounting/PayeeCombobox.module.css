@@ -206,8 +206,8 @@
   border-color: var(--home-olive, rgba(79,163,224,0.6));
 }
 
-/* The list's last row, "Manage payees…" (`manageHref` — Club Tier Stage 3a C01; Ledger Parity D6 on the coach's
-   picker) — under a hairline, and a real tap target on a touch screen. */
+/* The list's last row, "Manage payees…" (`onManage` — Club Tier Stage 3a C01; Ledger Parity D6 on the coach's picker;
+   a window over the form on both portals since Stage 3d) — under a hairline, and a real tap target on a touch screen. */
 .foot {
   display: flex;
   align-items: center;
