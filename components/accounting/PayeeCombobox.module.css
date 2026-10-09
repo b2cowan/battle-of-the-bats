@@ -90,18 +90,24 @@
 .clearBtn:hover { color: var(--home-ink-soft, rgba(255,255,255,0.7)); }
 
 /* ── Dropdown ─────────────────────────────────────────────────────────────── */
+/* ⚠⚠ VIEWPORT-FIXED, PLACED FROM THE FIELD'S MEASURED RECT by `useFieldMenu` (owner ruling, §80 walk
+   2026-08-23): the list hangs over the window it sits in. It was `position: absolute`, which a
+   window's own `overflow-y: auto` clipped — the club Ledger's Add entry window cut the payee list
+   off at its footer (found 2026-10-09). The hook writes left / width / top-or-bottom / max-height.
+   ⚠ z-index lifts it over everything inside its own window (the footer, the status strip). It is not
+   portaled, so it stays inside that window's layer: a window raised over this one still covers it.
+   ⚠ No `max-height` here: the hook owns it (its cap, narrowed to the room actually there).
+   ⚠ `overscroll-behavior: contain` — flicking the list to its end on a phone must not carry the scroll
+   on into the window behind it. */
 .dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: 100;
+  position: fixed;
+  z-index: 500;
+  overscroll-behavior: contain;
   background: var(--home-card, #1a1f2e); /* token-exempt: native dropdown bg outside warm gate, no root token */
   border: 1px solid var(--home-line, rgba(255,255,255,0.1));
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  overflow: hidden;
-  max-height: 280px;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 

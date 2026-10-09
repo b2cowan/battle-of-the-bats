@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { claimEscape } from '@/components/coaches/escapeOwnership';
 
 /**
@@ -400,4 +400,109 @@ export function useAnchoredMenu(
   }, [open, triggerRef, panelRef, minWidth, narrowMinWidth, align, margin]);
 
   return style;
+}
+
+/** A field list's tallest, and its floor when the room is short (it scrolls rather than shrinking to a sliver). */
+const FIELD_MENU_MAX = 280;
+const FIELD_MENU_MIN = 132;
+/** The space between the field and its list, and the keep-out from the top and bottom of what can be seen. */
+const FIELD_MENU_GAP = 4;
+const FIELD_MENU_MARGIN = 8;
+
+/**
+ * ⚖ A FIELD'S LIST HANGS OVER THE FORM IT SITS IN (owner ruling, §80 walk 2026-08-23): viewport-`fixed`,
+ * placed from the field's measured rect, so a window's scroll box cannot clip it and opening it never
+ * changes the window's size. It opens downwards and flips above the field when there is genuinely more
+ * room there. Writes the placement straight onto the list (`left`, `width`, `top`/`bottom`, `maxHeight`)
+ * before the first paint; the list's CSS supplies `position: fixed` and a z-index over the window. The sizes
+ * are constants until a second shape of list needs its own.
+ *
+ * Built for the payee and payment-method pickers (found 2026-10-09: the club Ledger's Add entry window
+ * cut the payee list off at its footer, under a "Filed under" picker that already hung over it).
+ * `BudgetItemPicker` and `SublinedChoice` carry their own copies of the same rule and predate this.
+ *
+ * ⚠ It FOLLOWS THE FIELD on a scroll rather than closing (those two close). A phone scrolls a focused
+ * field above its keyboard on its own, so closing on any scroll would close the list on the very tap
+ * that opened it. It closes (`onLost`) only once the field has left the box that scrolls it (the screen,
+ * when only the page scrolls), where a list hanging over the window's header would belong to nothing. The list's OWN scroll is the person reading
+ * it, never a reason to move it.
+ * ⚠ Room is measured against the VISUAL viewport, which a phone's keyboard shrinks while the layout
+ * viewport does not — so a list near the keyboard opens above the field instead of behind the keys.
+ * ⚠ No ancestor of the field may gain a `transform` or `filter`: either re-anchors `fixed` to that
+ * element and the list paints somewhere else, with nothing thrown.
+ * ⚠ `open` must mean "the list is MOUNTED" — a caller that renders its list only once it has rows passes
+ * that condition, or the placement runs while there is nothing to place.
+ *
+ * Pair with `useDismissable` — this hook only places the list (and gives it up), it does not close it.
+ */
+export function useFieldMenu(
+  open: boolean,
+  fieldRef: RefObject<HTMLElement | null>,
+  menuRef: RefObject<HTMLElement | null>,
+  onLost: () => void,
+) {
+  const onLostRef = useRef(onLost);
+  useEffect(() => { onLostRef.current = onLost; }, [onLost]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const field = fieldRef.current;
+    if (!field) return;
+    const box = scrollingAncestor(field);
+    let frame = 0;
+
+    const place = () => {
+      frame = 0;
+      const menu = menuRef.current;
+      if (!menu) return;
+      const r = field.getBoundingClientRect();
+      const layoutHeight = document.documentElement.clientHeight;
+      /* The field's boundary: the box that scrolls it, or the LAYOUT viewport when only the page does —
+         never the visual one, which a phone's keyboard covers before it pans the field back into view. */
+      const b = box ? box.getBoundingClientRect() : { top: 0, bottom: layoutHeight };
+      if (r.bottom <= b.top || r.top >= b.bottom) { onLostRef.current(); return; }
+      const vv = window.visualViewport;
+      const seenTop = vv ? vv.offsetTop : 0;
+      const seenBottom = vv ? Math.min(layoutHeight, vv.offsetTop + vv.height) : layoutHeight;
+      const below = seenBottom - r.bottom - FIELD_MENU_GAP - FIELD_MENU_MARGIN;
+      const above = r.top - seenTop - FIELD_MENU_GAP - FIELD_MENU_MARGIN;
+      const up = below < Math.min(FIELD_MENU_MAX, above);
+      /* ⚠ The floor never lifts an UPWARD list past the top of what can be seen: a fixed list cannot be
+         scrolled to, so its first rows would sit there out of reach (a landscape phone with its keyboard
+         up). A downward list may run under the keys — its later rows still scroll up into view. */
+      const floor = up ? Math.min(FIELD_MENU_MIN, Math.max(0, above)) : FIELD_MENU_MIN;
+      const s = menu.style;
+      s.left = `${r.left}px`;
+      s.width = `${r.width}px`;
+      s.maxHeight = `${Math.max(floor, Math.min(FIELD_MENU_MAX, up ? above : below))}px`;
+      s.top = up ? '' : `${r.bottom + FIELD_MENU_GAP}px`;
+      s.bottom = up ? `${layoutHeight - r.top + FIELD_MENU_GAP}px` : '';
+    };
+    const schedule = (e?: Event) => {
+      const t = e?.target;
+      if (t instanceof Node && menuRef.current?.contains(t)) return;
+      if (!frame) frame = window.requestAnimationFrame(place);
+    };
+
+    place();
+    window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', schedule, true);
+    window.visualViewport?.addEventListener('resize', schedule);
+    window.visualViewport?.addEventListener('scroll', schedule);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', schedule, true);
+      window.visualViewport?.removeEventListener('resize', schedule);
+      window.visualViewport?.removeEventListener('scroll', schedule);
+    };
+  }, [open, fieldRef, menuRef]);
+}
+
+/** The nearest ancestor that scrolls its content (a window's body), or null when only the page does. */
+function scrollingAncestor(el: HTMLElement): HTMLElement | null {
+  for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+    if (/(auto|scroll|overlay)/.test(getComputedStyle(p).overflowY)) return p;
+  }
+  return null;
 }

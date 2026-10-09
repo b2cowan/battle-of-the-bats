@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import type { OrgPayee } from '@/lib/types';
 import styles from './PayeeCombobox.module.css';
-import { useDismissable } from '@/lib/overlay-hooks';
+import { useDismissable, useFieldMenu } from '@/lib/overlay-hooks';
 
 /**
  * What either search sends: the club's (every club payee) and a team's (`PickerPayee`, lib/team-payees.ts),
@@ -66,6 +66,7 @@ export default function PayeeCombobox({
   const [saving, setSaving]       = useState(false);
   const [saveError, setSaveError] = useState('');
   const containerRef              = useRef<HTMLDivElement>(null);
+  const menuRef                   = useRef<HTMLDivElement>(null);
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const search = useCallback(async (q: string) => {
@@ -91,6 +92,10 @@ export default function PayeeCombobox({
   // long as the form was mounted, open or not. No page renders two of these at once today, so this
   // retires a latent cost rather than a measured one.
   useDismissable(open, containerRef, () => setOpen(false));
+  // The list hangs over the window the picker sits in, never cut off by it (§80 ruling; see the hook). A chosen
+  // payee shows its row instead of the list, so clearing one brings the list back to be placed.
+  const listShown = open && !value;
+  useFieldMenu(listShown, containerRef, menuRef, () => setOpen(false));
 
   function openDropdown() {
     if (disabled) return;
@@ -195,8 +200,8 @@ export default function PayeeCombobox({
         <ChevronDown size={14} className={styles.chevron} />
       </div>
 
-      {open && (
-        <div className={styles.dropdown}>
+      {listShown && (
+        <div className={styles.dropdown} ref={menuRef}>
           {sharedRows.length > 0 && (
             <div className={styles.section}>
               <p className={styles.sectionLabel}>{scoped ? SHARED_PAYEES_HEADING : 'Organization'}</p>

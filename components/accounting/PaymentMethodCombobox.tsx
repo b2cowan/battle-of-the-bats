@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { PaymentMethodOption } from '@/lib/payment-methods';
-import { useDismissable } from '@/lib/overlay-hooks';
+import { useDismissable, useFieldMenu } from '@/lib/overlay-hooks';
 // ⚠ Shares PayeeCombobox's stylesheet on purpose — the two fields sit side by side in the same
 // Details group, so a second near-identical copy would be drift a coach sees in one glance. See
 // the "Shared with PaymentMethodCombobox" block in that file for which classes are ours.
@@ -41,6 +41,7 @@ export default function PaymentMethodCombobox({
   const [methods, setMethods] = useState<PaymentMethodOption[]>([]);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useDismissable(open, containerRef, () => setOpen(false));
 
@@ -78,6 +79,9 @@ export default function PaymentMethodCombobox({
   // Has the club (or our seed list) seen this exact spelling before? Case-insensitive, matching
   // how the list itself is grouped.
   const isKnown = methods.some(m => m.name.toLowerCase() === needle);
+  // The list renders only once it has something to say, so it is placed from THAT moment, not from `open`.
+  const listShown = open && (used.length > 0 || suggested.length > 0 || (typed !== '' && !isKnown));
+  useFieldMenu(listShown, containerRef, menuRef, () => setOpen(false));
 
   function pick(name: string) {
     onChange(name);
@@ -119,8 +123,8 @@ export default function PaymentMethodCombobox({
         <ChevronDown size={14} className={styles.chevron} />
       </div>
 
-      {open && (used.length > 0 || suggested.length > 0 || (typed && !isKnown)) && (
-        <div className={styles.dropdown}>
+      {listShown && (
+        <div className={styles.dropdown} ref={menuRef}>
           {used.length > 0 && (
             <div className={styles.section}>
               <p className={styles.sectionLabel}>Used in your club</p>
