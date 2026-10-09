@@ -30,6 +30,12 @@
 > lands on the job they were given, the organizer can change that job later in Members, the score sheet and the
 > install banner no longer cover anything, and the Staff kit prints one clean page. Its owner walk, a
 > volunteer's game day from a phone (§282), **passed on 8 October 2026**.
+> **Stage 3 (the schedule) was drawn on 9 October** on the hub's Stage 3 tab, measured on the demo's live game day:
+> eight drawings and fourteen questions, **ruled the same day, every drawing as drawn and every question as
+> recommended**. A small defects pass runs first, then the build. **The defects pass was built on 9 October** (`279f1e5d`): a
+> generator draft never deletes a played game and saves in one step, drafts avoid every diamond already in use, a refused
+> save says why, a moved bracket game tells its teams, and the reminder sentence is true. Its owner walk is §286 (walk 8).
+> One database change goes to production before this code.
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is
@@ -219,6 +225,64 @@ them). The pricing pages now call these people "volunteers" too — the word cha
 a volunteer taps is under the thumb size; the first score card sits where it was drawn, and the list no longer jumps
 after a score; the banner covers none of the buttons; the Staff kit prints on one page. The owner's walk (§282)
 passed on 8 October 2026.
+
+## What an organizer would see and do differently in Stage 3 (the schedule) — drawn and ruled 2026-10-09
+
+A director builds the schedule at a desk the week before and fixes it from a phone on the Saturday. Measured on the
+demo's own game day (9 October), the screen fights the second job: it opens on a round robin whose games are all
+played, today's semifinals and final sit behind a switch, the bracket names no team and no score, and a game dragged on
+the timeline saves at once with no way back.
+
+**On the Saturday, from a phone:**
+- **The schedule opens on today** — every game of the day in time order, every division, the round robin and the
+  playoffs together, played games with their scores and the game being played marked. Today's games from the board:
+  **8 taps today, 1 drawn.** Before the event it opens on the first day, after it on the last.
+- **A game opens that game.** One window reads the game first (when, where, the score, the bracket, who sees it) and its
+  pencil edits the whole thing. Today a row folds into a cramped form and the score lives on another page.
+- **Every move can be taken back.** After a drag, the phone's move sheet, the game window or the rain delay, a notice
+  offers **Undo** for a few seconds. A game that is published asks once before it moves, because its teams are told — and
+  an Undo inside the first ten minutes tells nobody (the product already holds those alerts back).
+- **Two games can't be put on one diamond at once inside the tournament**: every way of moving a game refuses it, with a
+  red line that names the other game. A booking of the club's other programs only warns, in the amber line the club
+  stage built.
+- **A rained-out afternoon** is still one tap from the board ("Running late?") and two from the schedule, now with a check
+  that no pushed game lands on another, and Undo. Storm Mode's place is reserved at the top of that window.
+- **The bracket shows who played, the score, who won and the champion** — as the public bracket already does.
+
+**The week before, at a desk:**
+- **One name** for each generator ("Round-robin generator", "Playoff generator") instead of thirteen.
+- **The generator sees the other divisions** (today it can put U13 on top of U11's games) and **never deletes a played
+  game** (today its default choice deletes final scores). Before saving, the window says in one sentence what saving
+  adds, replaces and keeps.
+- **Publishing says what it does:** what families see, that registration closes, that each linked coach team gets the
+  games on its own schedule, and what a later move does. It stops promising a reminder email it never sends.
+
+**Club coaches** see nothing new: the amber line on their side is the club stage's, unchanged. **The club's scheduler**
+(Club Tier Stage 11) starts from the parts of the generator tagged "shared candidate" — the settings, the ranked drafts,
+the statement of what saving does, adjusting with Undo, publishing — and not from today's generator.
+
+**Fourteen questions, ruled 9 October, all as recommended** (A33–A46). Two departed from what the prompt proposed, and
+both stand: one game length everywhere (the
+dashboard's 60 minutes is the same question as the schedule's), and fixing the generators' two defects **now**, as a small
+pass of its own, instead of waiting for the build.
+
+**First, the defects pass** (before the build, its own release-ready change): no generator deletes a played game or
+double-books another division's diamond, a save the server refuses says so, a game moved in the bracket editor tells its
+teams, and the Publish window tells the truth about the game-day reminder. It starts with one small question for the
+owner: how "replace these games" becomes one step.
+
+**Built 9 October.** The owner chose a database step for the one-step save, so a draft either saves whole or not at all,
+and a second save of the same draft (or a second organizer saving at once) is refused rather than doubling the round
+robin. The drafts now avoid every game the save keeps — the division's own kept games too, which they never avoided
+before. Building it found three more things hidden behind the old default, all fixed: two kinds of kept game crashed the
+draft, and a round-robin game between two teams who also met in a playoff was deleted and never redrawn. Help now says
+each division is published on its own. **Success, measured on the demo:** a division whose games are all played saves
+nothing ("There is nothing to save."); a U13 draft squeezed onto U11's diamonds took exactly the two slots U11 leaves
+free; a refused move puts the game back and says why.
+
+**Success for this stage:** today's games in 1 tap from the board on a phone; a game's score on the schedule without
+leaving it; every move undoable in 1 tap; no overlap inside a tournament can be saved by any door; no generator deletes a
+played game or double-books another division; the organizer's bracket names the winner and the champion.
 
 ## Why it matters
 

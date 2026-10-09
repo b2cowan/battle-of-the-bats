@@ -45,6 +45,14 @@
 > "Helping with") · `1b1546b9` (Parts 1–4, the shells, the sheets, the banner and the Staff kit) · `d5df5e7b` (the
 > pricing pages say "volunteers"); P1 and P2 ruled at its start, both as recommended — §6f "Stage 6 — as built".
 > **Owner walk §282 (a volunteer's game day, from a phone) ✅ PASSED 2026-10-08, 19/19** (step 9 on the owner's word) — the hub's QA tab, walk 7.
+> **Stage 3 (the schedule) DRAWN 2026-10-09** on the hub's Stage 3 tab (hub v35, §6c), from
+> `TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`, measured on the demo's live Summer Classic and the UAT clubs: S1–S8,
+> findings F66–F76 (§3), asks A33–A46 (two departed from the prompt's framing: A39 and A45). **⚖ RULED 2026-10-09**
+> (owner's paste-back): **S1–S8 as drawn, A33–A46 as recommended** (hub v36). Two prompts, in order: the defects pass
+> (A45) `TOURNAMENT_ADMIN_REDESIGN_STAGE3_DEFECTS_PROMPT.md` first, its own commit (P1 to the owner at its start), then
+> `TOURNAMENT_ADMIN_REDESIGN_STAGE3_BUILD_PROMPT.md`. Drawn before Club Tier Stages 10 + 11, whose scheduler starts from
+> the parts tagged "shared candidate" (A40).
+> **✅ The Stage 3 defects pass (A45) COMMITTED `279f1e5d` 2026-10-09** (P1 ruled: a database function — mig 320, dev only, prod BEFORE the code; /simplify + /review first) — §6c "Defects pass — as built"; owner walk §286 (hub walk 8).
 > **Created:** 2026-09-28 · **Branch:** dev · **Companions:** `TOURNAMENT_ADMIN_REDESIGN_PM_BRIEF.md` ·
 > hub `TOURNAMENT_ADMIN_REDESIGN_HUB.html` (republish the same path for the project's life).
 > **Origin:** Phase 3 of `ADMIN_DESIGN_CONTINUITY_PLAN.md` ("Tournament screens — its own project when it
@@ -320,6 +328,79 @@ the bracket builder or Results says a toss is pending (J1-090, open).
 **F24 — The rain-delay tool is three taps from the board, behind Schedule → Tools** (Tournament Plus). It
 is the natural home for Storm Mode (§6 G8).
 
+**Re-measured 2026-10-09 for Stage 3** (probes `.probe/s3/demo.mjs` and `.probe/s3/owner.mjs`, read-only — every non-GET
+refused and recorded, nothing seeded; a "rewrite" altered a GET's JSON in the probe's own read only). Two events: the
+demo's **Riverdale Summer Classic**, live that day (Oct 7–9; on Friday both U11 semifinals played 14–6 and 10–8, the final
+at 4:00 p.m., U13's last round-robin game at 5:00 p.m.), entered once through the demo door and the session reused (the
+door allows ten entries per ten minutes per address); and the **UAT Plus Championship** (June) as the organizer, plus the
+free club's Import Smoke event for the plan locks. 390 · 360 · 768 · 1440, Warm and Dark. **State of the six:** F19 open
+and wider (on the demo's Friday it opens on U11's played-out round robin; on a phone the empty state's words sit behind
+the bottom bar; the Plus event's U11 Girls now holds one unplayed game, so it no longer opens empty there); F20 open and
+wider (F68); F21 open and wider (thirteen names, §6c); F22 open and wider (F71, F72); F23 open (no test event uses the
+coin-toss tie-breaker: read from code); **F24 partly fixed `890d0aac`** — Stage 1's "Running late?" door opens the window
+from the board in 1 tap (measured), but a phone's timeline view draws no Tools at all. **Measured, phone (390):** today's
+four games sit on three screens (one division, one stage, unplayed only): **8 taps** from the board to see them (6 at a
+desk); the title at 87px, a three-row toolbar card 163px, the view strip 27px, the first row at 474px on the Plus event;
+**12 controls under 44, 11 of them under 38** (the page's own 9: the division box, the two stage buttons, Tools and
+Unpublish at 34, the view strip 27, the health rules button 26, the team detail 16, every row's chevron 24); nothing
+spills sideways at any width or theme. **At 768** both stage switches draw at once and Publish is an unlabelled globe;
+**at 1440** two limes (Add Game, Publish). The inline edit (Plus event, 390): fields 28px, five buttons 32px. June's 16
+schedule rows (J1): **8 fixed · 6 partly · 2 open** (§6c). Captures `.probe/s3/shots/` (published as `shots/s3-*`).
+
+**F66 — The schedule shows one division, one stage and only unplayed games at a time.** The division box has no "All"
+(the page picks the first division as soon as they load; its all-divisions branch can't be reached); the Round Robin |
+Playoffs switch puts today's semifinals and final on a different screen from U13's game; the status filter opens on
+Scheduled. Today's four games on the demo's Friday: 8 taps on a phone, 6 at a desk.
+
+**F67 — A score waiting for review, and a forfeit, are hidden by every filter.** Three chips (Scheduled, Cancelled,
+Final); Pending Review and Forfeit belong to none, so "Clear filters" (all three on) still hides them. Probed by flipping a
+game in the read: in no list.
+
+**F68 — The organizer's bracket names no team and hides what has been played.** Every card prints the slot's words
+("Seed #4", "Winner SF2") even after the game is decided — no team, no score, no winner, no champion — and the bracket
+follows the list's status filter: the demo's U11 bracket shows only its final; the Plus event's U11 Girls reads "No
+playoff bracket yet" though its semifinal is played. `BracketColumns.tsx` reads only the placeholders.
+
+**F69 — The generators double-book the tournament's own diamonds** (read from code; not reproduced — a save is a write).
+The round-robin generator builds its slots from every chosen diamond at every time and reads only the division being
+built (`Generator.tsx` `buildTimeSlots`, `existingGames` filtered to the division); the playoff generator likewise. The
+schedule's health score is per division and can't see it either.
+
+**F70 — "Replace all" deletes the division's played games and their scores.** It is the default once a division has
+games (`generationScope` starts `'replace'`); the server's `delete-division-games` removes every round-robin game in the
+division, any state, then the draft is saved — two calls, so a failed save leaves the division empty. Its question says
+"permanently clear any existing games" without naming the played ones (the playoff generator's says "delete all existing
+playoff games and scores").
+
+**F71 — A refused save is silent; a played game moves; the timeline can't change a day.** `handleSaveGame` never reads the
+reply (a 400/403/409 just reloads; the drop's optimistic move snaps back with no word), nor do Cancel and Reinstate; a
+final game's block drags and its new time saves (the server refuses only changing a played game's teams); the drag and the
+phone's sheet move a game only inside the day on screen. **S6-03 confirmed and mapped:** the same-event overlap is refused
+in the browser by the Add window and the inline edit (the inline edit against the games on screen only — one division, the
+ticked states, the search), coloured by the drop, warned and allowed by the phone sheet, unchecked by Reinstate, the
+generators, the rain delay and the bracket editor, and refused on the server only by the import (§6c's writer table).
+
+**F72 — The bracket editor moves published games and tells nobody.** Its save rewrites existing games' day, time and
+diamond and queues no "your game moved" alert; every other move of a published game does.
+
+**F73 — The Publish window promises a reminder it doesn't send.** "Publishing also schedules a game-day reminder … sent even
+if the box above is left unchecked": the publish route returns before scheduling any reminder unless the email box is
+ticked, and the email is Tournament Plus — on the free plan the reminder never goes. A say-the-true-thing defect (rule 9).
+
+**F74 — The Edit Game window can't be opened; the inline edit is the only edit.** `openEdit` is defined and never called.
+A played game's row does nothing; the schedule shows no score anywhere (the list says "✓ Final", the timeline and bracket
+show none).
+
+**F75 — Three widths, three toolbars.** 768: both stage switches, an unlabelled Publish. Phone: the timeline view draws no
+Publish and no Tools (the rain delay with it). Desk: two limes. Title "Schedule management" (desk) vs "Schedule" (phone).
+The timeline's day and the generator's dates print in the device's own words ("Fri 9 Oct", "7 Oct").
+
+**F76 — Three lengths for one game (Club 6a's F1, widened).** The round-robin generator spaces games by its length box and
+saves none on them; the playoff generator saves its own; the dashboard reads game → tournament → 60 (skipping the
+division); the schedule, Results and the clash check read game → division → tournament → 90; the scorekeeper game →
+division → 90. Stage 1's review note "a scheduler-built game carries its own length, so they agree on it" holds for the
+playoff generator only.
+
 ### Create and set up
 
 **F25 — Two ways to create a tournament ask different questions.** The first-run setup asks how many
@@ -561,7 +642,7 @@ which reads as the product changing its mind. Routed to the foundation / Club St
 |---|---|---|---|
 | **1 · Game day** | The dashboard's game-day board, Results, Check-in; the one-event-identity rule (A2) first applied here; one word per game state | A2, A4, A6, A7, A9, A10 | Phone first, desk second |
 | 2 · Teams and registration — **DRAWN + RULED 2026-09-30 (§6b); build prompt written** | Teams (first team on screen one, the pools row, one colour per status, words not glyphs, a row opens the team), registration health, Communications; + the pending team on the board (F41), the email that reaches every team (F42, F43), Communications' formatting (F44), the record (F45) | Q 6.1 (ruled) · T1 T3 · A13–A17 | Both |
-| 3 · The schedule — **design prompt written 2026-10-09** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`; unblocked by Club Tier Stage 6a; drawn before Club Stages 10 + 11, whose scheduler copies this generator) | Opens on the day; the bracket shows scores and winners; one generator name; drag with undo; the coin toss where seeding happens; the rain delay as Storm Mode's home | Q 8.1 | Both |
+| 3 · The schedule — **DRAWN + RULED 2026-10-09 (§6c); defects pass COMMITTED `279f1e5d` 2026-10-09 (mig 320 dev only — prod before the code; walk §286); build prompt written** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`; unblocked by Club Tier Stage 6a; drawn before Club Stages 10 + 11, whose scheduler copies this generator) | Opens on the day; a game opens that game; one generator name; drag with undo; the bracket shows scores and winners; the coin toss where seeding happens; the rain delay as Storm Mode's home; publishing says who is told; + one division/stage at a time (F66), the hidden waiting score (F67), the nameless bracket (F68), the generators' double-booking and score-deleting replace (F69, F70), silent refusals (F71), the bracket editor's silent moves (F72), the false reminder (F73), the dead Edit window (F74), three toolbars (F75), three game lengths (F76) | Q 8.1 · S1–S8 · A33–A46 | Both (the desk first for building, the phone first for fixing) |
 | 4 · After the event — **DRAWN 2026-10-05, RULED 2026-10-06 (§6d); build prompt written** | The finished board says how each division finished and offers Reuse this setup (its one lime); one reuse flow (the wizard's step, every door); Summary on a phone, the champions page shared, a clean printout; Past tournaments as every finished event's list; the Tournaments list (what's ahead) with its statuses as bands and the event's record, every change asking first; the Exhibition; + no door to the list (F48), the one-slot next year (F49) | Q 13.1 (ruled) · A18 (ruled: Stage 5 owns the before-event view) · A19–A24 | Desk first |
 | 5 · Create and set up | One set of creation questions (diamonds in both wizards); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens | Q 1.1, 2.1, 3.1, 4.1 | Desk first, phone usable |
 | 6 · The volunteers — **DRAWN + RULED 2026-10-07 (§6f); build prompt written** | Scorekeeper and gate: the install banner, 44px buttons, a waiting-score signal, the staff landing; the gate inherits Stage 1's check-in board; + the see-through bars (F59), the clock in capitals (F61), the gate volunteer's landing (F62), a sent-back score (F63), the after-submit notice (F64), the Staff kit (F65) | V1–V7 · A25–A32 | Phone only (a scoring-table tablet measured) |
@@ -1063,6 +1144,185 @@ Raised by the owner while walking §252, each ruled in the conversation and buil
   editing, "No notes yet."; and the two held-save words owed since Stage 2's review, "Enter a full email address to
   save it." and "Give the team a name to save it.". Two help sentences warmed ("when you're done"; "Swap comes back
   when every spot is showing again").
+
+## 6c. Stage 3 — The schedule, as drawn (2026-10-09)
+
+Drawn at true size on the hub's **Stage 3** tab (hub v35), both widths — the desk first for building, the phone first for
+fixing — from `TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`. Before = captures of 9 October (§3 "Re-measured
+2026-10-09"); after = drawn on the demo's real Friday at 4:20 p.m., Warm, with Dark copies at load. Drawn figures read
+from the drawing (`.probe/s3/measure3.mjs` → the hub's `{{M:s3-*}}`). Assembled by `.probe/s3/hub-assemble.cjs` from
+`git show HEAD:` of the hub and the parts in `.probe/s3/parts/`. The demo's divisions are unpublished; the game-day
+drawings show U11 and U13 as published (S8 draws the unpublished note), and the club-booking amber lines are illustrative
+(the demo club has no venue library).
+
+- **S1 · The schedule opens on the day.** Today's games in time order — every division, both stages, played (with scores),
+  waiting, playing and still to play — the day on its own row with arrows (the club calendar's week arrows), the event's
+  first day before it and its last after it. One toolbar line in every view (1 October): the view (Day · All games ·
+  Timeline · Bracket, the olive pill) · Search · Filter (Division · Stage · State · Field, quiet until it filters) · Tools.
+  The row is Results' row (Stage 1 G4); it opens the game. Schedule health is one closed row at the foot (the tour anchor
+  stays on it). Title "Schedule" at both widths; Add game the one lime; Publish moves into Tools and a note (S8). Measured
+  from the drawing: the first game at 250px on a 390 phone, all 4 of the day's games on
+  screen one (today: an empty list, its words behind the bar).
+- **S2 · A game opens that game.** One window (a form window: full screen with ← on a phone, 640 at a desk) from the
+  day, the timeline and the bracket. It reads first — when and where, the score (its door opens Results' editor: one
+  editor in the product), the bracket slots with their teams, who sees it — and one pencil edits the whole game (1
+  October). Venue + Diamond is Club Stage 6's field, drawn as built; the tournament's own overlap is refused in red under
+  Diamond before Save (house league's shape), a club booking is the amber line. An unpublished game autosaves; a published
+  game's change to when or where is held until ✓, which asks first (the coaches portal keeps that save for the same reason). Cancel game (amber),
+  Delete (the 9 October look), Previous · Next.
+- **S3 · The generator, one name.** "Round-robin generator", two steps: settings (What it pairs · When · Where · Rules —
+  today's content, plain headings; the other divisions' saved games shown as taken; the length saved on every game) →
+  drafts (three ranked cards that name their measures, clashes inside the tournament and club bookings; the chosen draft's
+  games by day; one statement of what saving does). The Replace all | Build from current switch goes: a draft replaces
+  only games still to play and not kept (a replace asks once). Generic parts tagged **"Shared candidate · Club Stage 11"**
+  (When, Where, Rules, the drafts, the statement, adjust with Undo, publish saying who is told); "The tournament's own"
+  (pairing, games per team, pools, slots, bracket order). The playoff generator and the free Build bracket: names only.
+- **S4 · Moving a game by hand.** The timeline shows every division's games on every diamond of the day; a drop that would
+  overlap another game in the tournament turns the band red with its reason and springs back; a published game asks once
+  before it moves; every move ends in the notice with **Undo** (about 8 seconds); a club booking drops with the amber line;
+  played games don't drag. The phone's move sheet moves onto the Sheet Frame's form (A29) with a **Day** field, Venue +
+  Diamond and the line; its lime names who it tells.
+- **S5 · The rain-delay tool in its home.** Today's tool on the kit's form window: one ×, a row's "Cancel game" (today two
+  "Cancel"s with two meanings), a check of every moved game, Undo after, **Storm Mode's place reserved at the window's top**
+  (not designed). Board → window 1 tap (Stage 1's door, kept); Tools → Rain delay 2 taps in every view.
+- **S6 · The bracket.** The public bracket's reading on the organizer's page: the team with its seed or slot under it,
+  the score, the winner bold with a check, the champion where it ends (the finished board's sentence); every game whatever
+  the filter; a card opens the game; Edit bracket a white button above it. On a phone the rounds as bands in one frame (the
+  diagram one tap away). The finished Season Opener drawn from its real games.
+- **S7 · The coin toss.** A pending toss is the amber waiting count on the Bracket view (and Results), a note on the bracket
+  names the tie and what waits, and "Record the toss" opens today's recorder as a form sheet — from the bracket, Results and
+  the dashboard's nudge. Illustrative (no test event uses the coin-toss tie-breaker).
+- **S8 · Publishing.** A note on the day while divisions are unpublished; one Publish window that says what shows (public
+  site and app), that registration closes, what reaches the linked coach teams ("From {tournament}"), what a later move
+  does, and the reminder's true rule (with the Tournament Plus email). One lime that counts what it publishes.
+
+**The asks — ⚖ ALL RULED 2026-10-09 as recommended** (the owner's paste-back, which also ruled S1–S8 as drawn): **A33** what it opens on (rec. the day) · **A34** one verb, two names (rec.;
+/marketing) · **A35** one game window, the inline edit retires, the score through Results (rec.) · **A36** Undo after every
+move and a published game asks once (rec. "both") · **A37** every door and the server refuse an overlap inside the
+tournament, the club's line stays amber (rec.; the demo tour's step 4 sentence becomes false → /demos) · **A38** the public
+bracket's reading (rec.) · **A39** one game length everywhere, the generators save it (rec.; **departs from 6a's framing**
+that the board's 60 is a different question — read in the code, it decides when a game stops being "Playing now") · **A40**
+name the generator's frame for Club Stage 11, draw the tournament's only (rec.) · **A41** one shape where the Day and the
+club calendar answer the same question; the timeline stays its own (rec.) · **A42** the board's door + Tools in every view,
+the check, Undo, Storm Mode's place (rec.) · **A43** the coin toss where seeding happens (rec.) · **A44** 44px for the
+phone's daily job, locks in words, one toolbar at every width (rec.) · **A45** the generators' two defects (F69, F70) with
+F71–F73 and the gate key as **a defects pass now**, its own prompt (rec.; **departs from the prompt**, which put the server
+refusal with the build) · **A46** the reminder: say the true thing now, the packaging question to /strategy (rec.). Per
+drawing: S1–S8.
+
+**Every writer** (S6-03 and 6a, read from code, two passes): Add window — refuses in the browser · Edit window — nothing
+opens it · inline edit — refuses in the browser against the games on screen · timeline drop — colours, never refuses ·
+phone sheet — warns, saves · Reinstate — nothing · round-robin and playoff generators — nothing (other divisions unread) ·
+bracket editor — bracket order only, **no alert for a published game** · rain delay — bracket order only · typed locations
+resolved (+ the only undo) and temporary lanes — nothing · import — **refuses on the server, the only door that does**.
+Every writer runs 6a's cross-program check on the server and returns `crossProgram`; no tournament screen reads it; the
+only pre-save checks are house league's and the coach's (`useClashCheck` / `WhereField` on three non-tournament screens).
+The 6a guard's "ask where" not-yet list names Add Game and the inline edit (this stage) and the setup wizard (Stage 5).
+
+**Every name for generating** (F21): thirteen — Round-Robin Generator · Schedule Generator · Generate Round Robin Draft ·
+Commit Schedule · Confirm & Save · Auto-Generate Bracket · Playoff Bracket Builder · Preview Bracket · Generate Playoff
+Bracket · Auto-generate instead · the board's "Build schedule →" · help's "Auto-Generate" · the marketing page's "Schedule
+Generator" — plus the free hand-built Build / Edit / Save Bracket.
+
+**Plan gating (A6):** the generators, the rain delay, the "schedule is live" email and phone alerts on a move are
+Tournament Plus; hand scheduling, the timeline and the hand-built bracket are free. A free organizer meets a bare padlock
+in Tools (the plan named only in a hover title); the playoff generator is gated on the round-robin generator's feature
+(`auto_schedule`, not `playoff_generator` — both on Tournament Plus today, so latent). **The Exhibition:** no stage filter,
+no Bracket view, no playoff generator — each absent; otherwise the same, so not drawn separately. **Storm Mode and the Big
+Board:** nothing built (the program plan only).
+
+**June's J1 schedule rows: 8 fixed · 6 partly · 2 open** — open: J1-079 (the drag), J1-090 (the coin toss); partly: J1-081
+(names), J1-082 (styles, hover), J1-097 (no game-day view), J1-098 (the health card), J1-028 (diamonds in the wizard), J1-112
+(no champion on the organizer's bracket); fixed: J1-076 (`bc743762`, but the phone's timeline view hides Publish), J1-083 /
+084 / 091 (`d9aee6cb`), J1-088 (`82cb34cb`, `8564624c`), J1-089 (`82cb34cb`), J1-054 (`39a12876`), J1-056 (`66e5ee37`).
+**Correction found re-reading:** the hub's Stage 1 tab says "playoff games already refuse a tie (June's J1-083 fix)" — the
+code saves a tie and the bracket waits (Stage 1's build already said so; the tab line is stale).
+
+**Ruled 2026-10-09, and what the two prompts add.** The owner's paste-back ruled S1–S8 as drawn and A33–A46 as
+recommended; nothing else was ruled (the paste-back's older sections are unticked browser state for stages ruled
+before, not a reopening). Two prompts, in order: **the defects pass** (A45, `TOURNAMENT_ADMIN_REDESIGN_STAGE3_DEFECTS_PROMPT.md`,
+its own commit, first) and **the build** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_BUILD_PROMPT.md`). Writing them re-read the
+code each rests on:
+- **F70 is today's "Build from current" made the only behaviour.** That scope already replaces only round-robin games
+  still to play and not kept, and fixes everything else (played, waiting, forfeited, cancelled, kept, the playoff games)
+  as taken assignments; "Replace all" (the window's default) sends the division delete, which takes every round-robin
+  game in the division whatever its state (`lib/game-delete-policy.ts`). So the defects pass removes the switch, as S3
+  drew, and narrows the server's division delete to the same rule for any caller. The delete runs before the save, in
+  two requests; **P1** (to the owner at the pass's start): one server action that writes the new games first and then
+  removes the ones they replace, taking its own new games back out if the removal fails (rec., no migration; the worst
+  case is a visible duplicate, never a lost game), or a database function that does both at once (a migration).
+- **F69:** both generators read only the chosen division's games — the round-robin generator filters what the page
+  hands it, the playoff generator fetches the tournament's games and keeps only its division's.
+- **The bracket save already keeps played and submitted games**; only the alert is missing for a game it moves (F72) —
+  the single-game edit is the only writer that records the move today.
+- **F71:** the page's save handler never reads the reply, so a refused drop or inline save snaps back without a word.
+- **F73:** the publish route returns before the reminders when Notify is unticked, and again on a plan without the
+  schedule email.
+- **The gate key:** the playoff generator and the round-robin generator both sit at Tournament Plus, so the playoff
+  window reading its own key changes no one's access; the server already gates the bracket on its own key.
+- **A39 overturns a shared note:** Club 6a's one-booking-length file says the board's 60 minutes is "a different
+  question"; the build corrects that note in the same commit, and the board starts reading the division's length (today
+  game → tournament → 60). A game whose length is set nowhere reads Playing now for 90 minutes, not 60.
+- **A41 meets Club 6b:** 6b's prompt builds the club calendar on the admin team schedule's and the coach schedule's
+  parts ("a second week grid is drift"). The Day wears the same booking row; whichever builds first makes it the shared
+  part, and the other wears it.
+
+**Stage 3 taps (organizer):** today's games from the board, phone **8 → 1** (desk 6 → 1); a game's score from the schedule
+**not on the schedule → 0** (on the row); move a game and take it back **a drag, back by hand → a drag + Undo** (a published
+game +1 for its question); a round robin generated and chosen **6 → 5** (6 when it replaces games); a rained-out afternoon
+from the board **2–3 → 2–3**, then Undo; a bracket game's winner **not on the organizer's bracket → 1** (View → Bracket).
+
+**The formatting check** (the tab's last section, before the owner saw anything): Stage 1's sixteen rows, §3.5–3.7 and
+§3.10, and every ruling to 2026-10-09. A second, independent reviewer then read every drawn frame's rendered picture against the same rules: fourteen departures, all fixed but one kept and flagged (Results' winner green on the day's rows, built in Stage 1, not yet in the exception register — A38): a red rail on the playing row (no rail in a list, §3.10.7); a ✓ and a foot Save on one form (now ✓ only, asking first for a published game); Venue drawn as a dropdown (it is a search box); two choice rows the 22 August dropdown rule covers (the generator's Pair, the rain delay's shift — the latter costs one tap over today's buttons); coloured words in rows; an unruled third "free" line; Delete beside Cancel game at a desk; the bracket's division as a second olive pill and the phone bracket without Filter (the scope now sits beside the line with arrows, as the day does); the drag over the playing game's words; the seed spelled three ways; the retired olive outline on two buttons (1 October retired it for the white button); two wraps — and four over-claims. Seven places where written rules pull apart are listed on the tab for the owner (edit-autosaves vs a when/where change that tells families; dropdowns vs Venue's search box; scope-first vs one line in every view; the whole-row target vs a selection list; no rail vs Stage 1's marking of the live game; the clock vs a range; the 3 October heights).
+
+**Not drawn — the build's work:** the page split first, measured identical (3,529 lines); the old look's retirement in every
+file Stage 3 rebuilds (held by `check:old-look` and the strict colour gate); the server refusal for every writer and a
+tournament pre-save check (A37); Undo for every move (the session's, no new data, resting on today's rule that a move and
+its move-back inside the quiet window send nothing — proved by a test); every tournament screen reading 6a's `crossProgram`;
+the game window replacing the inline edit, the Add window and the dead Edit window (the 6a guard's not-yet list shrinks);
+the game-length answer (A39); health across every division; the defects (A45) if not fixed first; the tour anchors
+(`schedule-health` stays on the health row at the day's foot; step 4's sentence → /demos; the demo's unpublished divisions
+→ /demos). **Routed:** help's "no separate schedule publish step" and "Auto-Generate" → /docs after the ruling; A46's
+packaging question → /strategy. No migration expected.
+
+**Defects pass (A45) — as built 2026-10-09, committed `279f1e5d`** (prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE3_DEFECTS_PROMPT.md`;
+/simplify + /review at the high-risk tier first; owner walk §286, hub walk 8). **P1 ruled: a database function** (owner, at
+the start), and both widenings proposed in the UX summary ruled in.
+- **F70 + P1:** the switch is gone; a draft keeps results, cancelled, kept and playoff games and replaces only round-robin
+  games still to play and not kept. The save is one request to a new route action, `replace-division-round-robin`, which
+  runs migration 320's `replace_division_round_robin_games` in one transaction: it locks the division (one save at a
+  time), refuses a team, pool slot or temporary facility from another tournament, locks the division's games still to
+  play and refuses unless they are **exactly** the ones the draft replaces (so a double submit or a second organizer's save
+  is refused, never doubled — /review), removes them, and inserts the draft. A failure after the removal rolls it back;
+  proved on dev in a rolled-back block with four mutated copies all failing it. The route's `delete-division-games` is
+  narrowed to the same rule for every caller. **Mig 320 is on dev only and ORDER-CRITICAL** (`MANUAL_PROD_STEPS.json`,
+  pending): apply to prod before promoting this.
+- **F69, widened:** both generators drop every draft slot a kept game holds, in any division, by the Add window's overlap
+  rule (`slotsClearOfTakenGames`). Widened because the division's OWN kept games were not blocked either: a stored
+  "10:00:00" never matched a draft's "10:00" slot key (now normalised in `slotKey` too). This division's temporary
+  facilities are matched by label (another division's "Facility 2" is its own lane).
+- **Found building and reviewing, all reachable only once the switch went:** a venue-reference-only game (the demo's all)
+  and an undated kept playoff game crashed the draft's sort; two teams who also meet in a playoff lost their round-robin
+  game (the playoff counted as the matchup, the round-robin game was replaced and never redrawn). All fixed, each with a
+  test that fails without it.
+- **F71, widened:** a refused drag, inline save or phone move shows the server's reason (`refusedWrite`; our words when
+  it has none — /marketing), the game re-reads quietly so the list shows the truth, and the inline row stays open. Cancel
+  Game, Reinstate, Unpublish, Unpublish all (it showed a division unpublished when refused) and the Publish window's
+  close step now report refusals too. The demo sandbox's by-design refusal is unchanged (probed).
+- **F72:** `save-bracket` records the games it moved through the single-game path's recorder (one call; publish gate,
+  quiet window, reminder re-sync); the recorder's pure half moved to `lib/schedule-change-classify.ts` and is tested.
+- **F73:** the reminder sentence shows only when the reminder will be scheduled (`willScheduleGameDayReminder`, the
+  route's own two checks); /marketing's sentence. The route is unchanged (A46 stays /strategy's).
+- **Item 7:** the playoff generator's doors read `playoff_generator`; no one's access changed.
+- **Help (/docs):** the "no separate schedule publish step" sentence corrected (each division is published), a tip and an
+  FAQ that a new draft keeps what was played.
+- **Measured on the demo (read-only, every write stubbed):** U11 (all played) — "There is nothing to save.", no request; U13
+  squeezed onto Friday's Diamonds 1–2 — the draft took exactly the two slots U11's games leave free, zero overlaps, and the
+  save named only U13's two games still to play.
+- **Found, not fixed (the build's):** the playoff window's "Replace bracket" still deletes before it saves (it warns in red);
+  a refused inline save also keeps the row's old "Save failed — please try again." line; the save-bracket loop is not one
+  transaction (a mid-loop failure leaves earlier moves unannounced, as before); DATA_DICTIONARY `games` gotcha 6 still
+  says prod `location` is NOT NULL (the snapshot says nullable).
 
 ## 6d. Stage 4 — After the event, as drawn (2026-10-05)
 
@@ -1578,7 +1838,7 @@ redesigned screens · A7 · one word per game state · A8 · the defects list no
 game-day screens refresh themselves · A10 · Results opens on "needs you, every division". Each is on the
 hub's Walk tab with options, a recommendation, the tradeoff and a checkbox per option; the Stage 1 tab
 carries a ruling per drawn change (G1–G8). Later stages' asks live with their drawings: A13–A17 (§6b), A18–A24 (§6d),
-**A25–A32 (§6f, ruled 2026-10-07)**.
+**A25–A32 (§6f, ruled 2026-10-07)**, **A33–A46 (§6c, ruled 2026-10-09)**.
 
 The formatting check (§11) added two, both on the Stage 1 tab:
 

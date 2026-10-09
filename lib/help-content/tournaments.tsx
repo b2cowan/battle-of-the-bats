@@ -750,14 +750,14 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Build the schedule',
       heading: 'Build and adjust the tournament schedule',
       summary: 'Create games manually or generate round-robin schedules, then edit exceptions before game day.',
-      keywords: ['build schedule', 'generate schedule', 'round robin', 'edit games', 'venues', 'auto-generate', 'adjust today', 'shift the day', 'rain delay', 'running late', 'tools menu', 'move all games', 'bulk reschedule', 'delay games', 'cancel games', 'division filter', 'venue filter', 'exhibition', 'scrimmage day', 'no playoffs', 'notify teams', 'schedule change notification', 'does editing a game notify', 'who gets told', 'edit game warning', 'unpublished schedule silent', 'one message per team', 'double-booked', 'double booking', 'conflict warning', 'buffer warning', 'field picker', 'somewhere else', 'off-site game', 'not being checked', 'no field set', 'schedule health', 'locations typed by hand', 'review locations', 'match typed locations', 'link typed field name', 'create field from name', 'leave as typed text'],
-      searchText: 'build tournament schedule generate round robin auto-generate accepted teams venues time slots edit games cancel restore public schedule pools flat list timeline exhibition tournament scrimmage day no playoffs no bracket to build adjust today shift the day rain delay running late tools menu tournament plus running behind move push all remaining games back bulk reschedule delay cancel today games one step before after preview atomic filter by division venue field diamond editing a published game notifies the teams edit game dialog warning saving alerts followers who gets told coaches and families same message tournament plus reaches phones free plan nobody notified knowing is not the paid part unpublished division is silent build freely nobody has seen those times notes game length bracket wiring do not notify swapping a team into or out of a game is silent no true your game moved already started already played never notifies one message per team not one per game held a few minutes imminent game sent straight away reminder email refreshed stale first game time announcement replaces the automatic alert skip lets it send double-booked two games same field same time conflict warning buffer too close save blocked pick a field somewhere else type it off-site typed location not checked no field set unchecked schedule health score clear a field no diamond locations typed by hand review match typed locations link a typed field name to a real field one row per name exact match no match create field from typed name leave as typed text undo already linked change field for many games at once nobody notified tidy field names greyed out completed tournament dismiss notice',
+      keywords: ['build schedule', 'generate schedule', 'round robin', 'edit games', 'venues', 'auto-generate', 'adjust today', 'shift the day', 'rain delay', 'running late', 'tools menu', 'move all games', 'bulk reschedule', 'delay games', 'cancel games', 'division filter', 'venue filter', 'exhibition', 'scrimmage day', 'no playoffs', 'notify teams', 'schedule change notification', 'does editing a game notify', 'who gets told', 'edit game warning', 'unpublished schedule silent', 'one message per team', 'double-booked', 'double booking', 'conflict warning', 'buffer warning', 'field picker', 'somewhere else', 'off-site game', 'not being checked', 'no field set', 'schedule health', 'locations typed by hand', 'review locations', 'match typed locations', 'link typed field name', 'create field from name', 'leave as typed text', 'generate again', 'keeps played games', 'games still to play', 'publish a division'],
+      searchText: 'build tournament schedule generate round robin auto-generate generate again regenerate keeps played games results cancelled kept playoff games stay replaces only games still to play on save kept replaced new draft never uses a field another game holds any division saving a draft tells no one publish each division schedule separately accepted teams venues time slots edit games cancel restore public schedule pools flat list timeline exhibition tournament scrimmage day no playoffs no bracket to build adjust today shift the day rain delay running late tools menu tournament plus running behind move push all remaining games back bulk reschedule delay cancel today games one step before after preview atomic filter by division venue field diamond editing a published game notifies the teams edit game dialog warning saving alerts followers who gets told coaches and families same message tournament plus reaches phones free plan nobody notified knowing is not the paid part unpublished division is silent build freely nobody has seen those times notes game length bracket wiring do not notify swapping a team into or out of a game is silent no true your game moved already started already played never notifies one message per team not one per game held a few minutes imminent game sent straight away reminder email refreshed stale first game time announcement replaces the automatic alert skip lets it send double-booked two games same field same time conflict warning buffer too close save blocked pick a field somewhere else type it off-site typed location not checked no field set unchecked schedule health score clear a field no diamond locations typed by hand review match typed locations link a typed field name to a real field one row per name exact match no match create field from typed name leave as typed text undo already linked change field for many games at once nobody notified tidy field names greyed out completed tournament dismiss notice',
       links: [
         { label: 'Schedule', href: '../tournaments/schedule' },
       ],
       content: (
         <>
-          <p>Build the schedule after accepted teams, venues, and time slots are ready. There is no separate schedule publish step — saved schedule changes flow to the public tournament pages.</p>
+          <p>Build the schedule after accepted teams, venues, and time slots are ready. Each division&apos;s schedule goes public when you <strong>Publish</strong> it from the Schedule page; after that, saved changes to that division show on the public tournament pages right away.</p>
         </>
       ),
       subtopics: [
@@ -770,11 +770,12 @@ const tournamentsHelp: HelpPageContent = {
                 <li>Open <strong>Schedule</strong>.</li>
                 <li>Add games manually with <strong>Add Game</strong> for small events or special matchups. For an <strong>Exhibition</strong> event (no playoffs) this is the whole job &mdash; a scrimmage day is a handful of rows, and the page shows one list of games with no Playoffs stage.</li>
                 <li>Use <strong>Auto-Generate</strong> for round-robin play (Tournament Plus, League Plus, Club). Accepted teams, division data, venues, and time-slot setup must be complete before generating.</li>
-                <li>Preview generated games before saving.</li>
+                <li>Preview generated games before saving. The preview says what saving will keep, replace, and add.</li>
                 <li>Edit individual games for field changes, rest gaps, weather adjustments, or custom matchups. Generated games are normal schedule records after they are saved.</li>
                 <li>Use the public preview to confirm the schedule is readable for teams.</li>
               </HelpSteps>
               <p>Use <strong>pool view</strong> when a division is split into pools. Use <strong>flat view</strong> when you want one combined list.</p>
+              <HelpNote variant="tip" title="Generating again keeps what was played">Saving a new draft for a division that already has games replaces only its games <strong>still to play</strong>. Games with a result, cancelled games, games you marked <strong>Keep</strong>, and playoff games stay as they are. A draft also never uses a field at a time another game already holds, in any division. Saving a draft tells no one.</HelpNote>
             </>
           ),
         },
@@ -832,6 +833,18 @@ const tournamentsHelp: HelpPageContent = {
           popular: true,
           answer: (
             <p>Open <strong>Schedule</strong>, stay in <strong>Round Robin</strong> mode, and click <strong>Auto-Generate</strong>. Confirm your divisions, accepted teams, venues, and available time slots before saving generated games. Auto-Generate requires Tournament Plus, League Plus, or Club.</p>
+          ),
+        },
+        {
+          id: 'faq-generate-again-keeps-played',
+          question: 'If I generate the schedule again, does it delete games that were already played?',
+          answerText: 'No. Saving a new round-robin draft replaces only the division’s games still to play. Games with a result, cancelled games, games you marked Keep, and playoff games stay as they are, and the save window says how many it keeps and replaces. The save is one step: if a game it would replace was scored or changed since you made the draft, nothing is saved and you generate again. A draft never uses a field at a time another game already holds, in any division. Saving a draft tells no one.',
+          keywords: ['generate again', 'regenerate', 'replace schedule', 'delete played games', 'keep scores', 'keep game', 'games still to play', 'nothing was saved', 'double-booked other division', 'draft'],
+          answer: (
+            <>
+              <p>No. Saving a new round-robin draft replaces only the division&apos;s games <strong>still to play</strong>. Games with a result, cancelled games, games you marked <strong>Keep</strong>, and playoff games stay as they are, and the save window says how many it keeps and replaces.</p>
+              <p>The save is one step: if a game it would replace was scored or changed since you made the draft, <strong>nothing is saved</strong> and you generate the draft again. A draft never uses a field at a time another game already holds, in any division. Saving a draft tells no one.</p>
+            </>
           ),
         },
         {
