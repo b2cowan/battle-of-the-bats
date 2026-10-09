@@ -7,6 +7,31 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-09 — A TEAM'S BILL HAS ONE FOOT ROW AT MOST, AND A LIST OF ONE HAS NO PREVIOUS · NEXT (owner, at 15U AAA's bill on a phone walking §285 W8: *"not a huge fan of the format and size of this footer"* → the recommendation → *"go ahead and build"*) — the window-footer ruling owed since 2026-10-01, for the bill window
+
+**Decision:** (1) **The kit draws no Previous · Next row when the record has no neighbour at either end** — every
+window that steps (a team's bill, an allocation, a payee, the tournament records): "1 of 1" alone on a row said nothing.
+(2) **A team's bill:** Close is gone (× at a desk and ← on a phone already close it — the reason Payees lost Done, 3d
+Ask 2); "Open {team}'s account" moved from the window's foot to the **foot of the payments card**, the portal's card-foot
+door (olive, the tap floor, a hairline above); the window's foot holds only **Remind {team}**, and there is no foot when
+there is nothing to remind; the eyebrow drops the position ("Diamond fees 2026 · On track" — Previous · Next says where).
+On a phone the foot went from three rows (the door, Remind + Close, "1 of 1") to one or none. **Trade-off, accepted:**
+on a phone, closing the whole window from a bill is two presses of ← (as Payees), not one Close. **Why:** a quarter of a
+phone's screen was chrome, two of its three rows saying nothing. Guards: `tests/unit/kit-dialog-record-guard.test.ts`,
+`tests/unit/club-stage3d-screens-guard.test.ts`. **Not in it:** the coach's "We've sent it" window's two-button foot,
+the other half of the owed window-footer ruling.
+
+### 2026-10-09 — AN EXPORT SITS ABOVE WHAT IT EXPORTS, IN A WINDOW TOO (owner, at an allocation's window walking §285 W4: *"why do we have this whole row in the footer dedicated to an export button? … wouldn't the export button make more sense above the table in the top right, same row as the 'Schedule' but aligned right?"* → *"go ahead now"*)
+
+**Decision:** the club allocation window's Export sits at the right end of its schedule line, directly above the teams
+table — the same menu and file; the 44px icon on a phone. The foot row it had to itself is gone: opened from the
+Allocations list the window's only foot is Previous · Next, and from every other door it has none. **Why:** every other
+Export in the app sits above what it exports, on the right (the club's Accounting pages, every coaches-portal money
+tab; the portal's 2026-09-01 "one Export and one create, above the table"). 3d Ask 3 ruled that the window KEEPS an
+Export; the foot was carried from the retired page, never chosen. Only this window was ruled — a payee's Merge keeps
+the foot's left. Guard: `tests/unit/club-stage3d-screens-guard.test.ts`. Amends the
+2026-10-08 Stage 3d entry's (3).
+
 ### 2026-10-09 — AN ADMIN RECORD'S DELETE WEARS THE PORTAL'S LOOK: A TRASH ICON AND RED WORDS AT BODY WEIGHT (owner: *"I don't think this is our standard product format for delete buttons, please review"* → *"go ahead"*, walking Club Tier Stage 3d §285 W1)
 
 **Decision:** Delete at the end of an admin record (the 2026-09-30 place: it ends the body, alone, red, asking first)
@@ -94,7 +119,8 @@ the fiscal year it counts in as the eyebrow ("Off-plan · …" without a line; a
 four figures, the schedule in one line, the teams, then the club's note. Its terms (each team's share, the schedule,
 which teams) never change after it is made (Ask 7b). A closed year's allocation reads with no pencil and one locked
 line; its unpaid installments stay receivable. Send reminders is the Allocations tab's alone: on an allocation it
-was always the whole club's wave. Its Export stays, in its window's foot: the one window in Accounting with an
+was always the whole club's wave. Its Export stays (in its window's foot as ruled; moved 2026-10-09 to the right of
+the schedule line, above the table — see that entry): the one window in Accounting with an
 Export, because its file (which payment paid which installment) has a reader. (4) **A record opens where you are**
 (Ask 5): from a page, the window over it, and × returns to the page; from a window, that window hands off to the
 record and turns back on close (the way Allocate turns a line into New allocation); from outside (a notice, an
@@ -489,7 +515,7 @@ tournament toolbars' selects, search and segmented controls read the same token,
 Schedule's hand-pinned 28px cluster, status chips and venue filter now read the token too. **A door in a toolbar is
 the white button** (Payees on the Ledger) — olive text (`kit.footLink`) is the coaches portal's CARD-FOOT door only;
 this NARROWS the morning's "a door is olive text" (a window-foot door, Bill windows' "Open ‹team›'s account", is left
-for the owed window-footer ruling).
+for the owed window-footer ruling — answered for the bill window 2026-10-09: the door moved to the payments card's foot).
 **Rationale:** the admin had three sizes — `.btn` ~43px (club), `.btn-data` ~30px (tournament page and row actions,
 the shared Export) and `.btn-sm` — so a club toolbar showed Export at 30 beside Transfer at 43; the portal's
 buttons are ~38, which is also the admin's K-18 control height. Measured after (`.probe/btn-sweep.mjs`): every
