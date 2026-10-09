@@ -2781,7 +2781,7 @@ const coachesHelp: HelpPageContent = {
                 <li><strong>Your own place, or typed words,</strong> are never checked. Words can&rsquo;t be trusted to mean the same diamond, and in a club the form tells you so: your own place says <em>&ldquo;Not one of the club&rsquo;s venues, so it isn&rsquo;t checked for clashes.&rdquo;</em>, and typed words show the <strong>Typed</strong> pill with <em>&ldquo;Not checked for clashes&rdquo;</em> under Venue.</li>
                 <li><strong>What you see about another team</strong> is its name, what it&rsquo;s doing (practice, game, tryout) and the time. Nothing else.</li>
               </ul>
-              <p>Editing a repeating series (<strong>This &amp; future</strong> or <strong>All events</strong>) moves the venue and diamond with every date it changes, and checks each one.</p>
+              <p>Editing a repeating series: tap the pencil and choose <strong>This &amp; future</strong> or <strong>All</strong>. The form lists every date it will change, marks each one that clashes, and moves the venue and diamond with all of them when you save.</p>
             </>
           ),
         },
@@ -2992,7 +2992,7 @@ const coachesHelp: HelpPageContent = {
           <ul>
             <li><strong>A different opponent every week</strong> is the normal case for a league, so each date has its own box. Leave one blank and that game simply names itself.</li>
             <li><strong>A bye week?</strong> Tap the <strong>✕</strong> beside that date to drop it before anything is created. Tap <strong>↩</strong> to put it back.</li>
-            <li><strong>Editing later</strong> works as it always has: open any occurrence and choose <strong>This</strong>, <strong>This &amp; future</strong>, or <strong>All</strong>.</li>
+            <li><strong>Editing later:</strong> open any date and tap the pencil. It asks first: <strong>This practice only</strong>, <strong>This &amp; future</strong> or <strong>All practices</strong>, each with the dates it reaches. For more than one date, the form lists them (each keeps its own day; change the time, the venue or the diamond) and checks each for clashes before you save.</li>
           </ul>
         </>
       ),

@@ -341,6 +341,24 @@ describe('a weekly series (specimen 1) and house league’s lines (specimen 3)',
     assert.equal(seriesSummary(eight([]), ctx), null);
   });
 
+  it('a series EDIT sums its dates with an edit’s way out — never "remove", which an edit cannot do (owner ruling 2026-10-09)', () => {
+    const mine = rep({ id: 'd1', team: 't13', start: '2026-11-03 18:00', end: '2026-11-03 20:00' });
+    const clash = findClubClashes(mine, [aa14]);
+    const two = ['2026-11-03', '2026-11-10'];
+    assert.equal(clashLineText(seriesSummary([[], clash], ctx, two)),
+      '1 of 2 dates clashes on Diamond 2. Change the time or diamond for both, or edit Nov 10 on its own.');
+    const four = ['2026-11-03', '2026-11-10', '2026-11-17', '2026-11-24'];
+    const s = seriesSummary([clash, [], clash, []], ctx, four)!;
+    assert.equal(clashLineText(s), '2 of 4 dates clash on Diamond 2. Change the time or diamond for all, or edit those dates on their own.');
+    assert.equal(s.tone, 'warn');
+    const unset = rep({ id: 'u', team: 't13', start: '2026-11-03 18:00', end: '2026-11-03 20:00', fac: null });
+    const busy = seriesSummary([findClubClashes(unset, [aa14]), []], { ...ctx, facilityName: null }, two)!;
+    assert.equal(clashLineText(busy), '1 of 2 dates is busy at Lions Park. Pick a diamond to be sure, or edit Nov 3 on its own.');
+    assert.equal(busy.tone, 'busy');
+    assert.equal(seriesSummary([[], []], ctx, two), null);
+    assert.doesNotMatch(clashLineText(s), /remove/i);
+  });
+
   it('house league’s series names the dates: "2 of 4 Tuesdays clash on Diamond B: 11U AA practice, 6:00–7:30 p.m., on Nov 3 and Nov 10."', () => {
     const aa11 = (d: string) => repEventBooking({ id: `p${d}`, team_id: 't11', event_type: 'practice', starts_at: at(`${d} 18:00`), ends_at: at(`${d} 19:30`), org_venue_id: KINSMEN, org_venue_facility_id: DB }, { team: '11U AA', venue: 'Kinsmen Park', facility: 'Diamond B' })!;
     const hl = (d: string) => leagueBooking({ id: `hl${d}`, kind: 'practice', scheduled_at: at(`${d} 18:00`), ends_at: at(`${d} 19:00`), org_venue_id: KINSMEN, org_venue_facility_id: DB }, { season: '2026 Fall House League' })!;

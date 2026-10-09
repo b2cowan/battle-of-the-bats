@@ -155,11 +155,20 @@ export function seriesDateMark(findings: readonly ClashFinding[], ctx: ClashLine
 }
 
 /**
- * The one summary under a series' list (specimen 1), from each date's findings: "2 of 8 dates clash on Diamond 2."
- * (bold) then "Remove them, or change the time or diamond for all." With no facility picked the dates are only busy:
- * "2 of 8 dates are busy at Lions Park." then "Pick a diamond to be sure, or remove them."
+ * The one summary under a series' list of dates (specimen 1), from each date's findings: "2 of 8 dates clash on
+ * Diamond 2." (bold) then the way out. With no facility picked the dates are only busy: "2 of 8 dates are busy at
+ * Lions Park." then "Pick a diamond to be sure, …".
+ *
+ * The way out depends on the list. Add's list can drop a date: "Remove them, or change the time or diamond for
+ * all." An EDIT's list (This & future / All, owner ruling 2026-10-09) never removes a date, so its other door is
+ * editing a date on its own: pass `editDates` (the list's days, in `byDate`'s order) and the line ends "Change the
+ * time or diamond for both, or edit Nov 10 on its own." The edit's words are draft, for /marketing.
  */
-export function seriesSummary(byDate: readonly (readonly ClashFinding[])[], ctx: ClashLineContext): ClashLine | null {
+export function seriesSummary(
+  byDate: readonly (readonly ClashFinding[])[],
+  ctx: ClashLineContext,
+  editDates?: readonly string[],
+): ClashLine | null {
   const clashing = byDate.filter(f => f.length).length;
   if (!clashing) return null;
   const total = byDate.length;
@@ -167,11 +176,17 @@ export function seriesSummary(byDate: readonly (readonly ClashFinding[])[], ctx:
   const noun = fieldNounFor(ctx.sport).toLowerCase();
   const of = `${clashing} of ${total} date${total === 1 ? '' : 's'}`;
   const them = clashing === 1 ? 'it' : 'them';
+  const hit = editDates ? editDates.filter((_, i) => byDate[i]?.length) : [];
+  const alone = hit.length === 1 ? `edit ${dateWords(hit[0])} on its own` : 'edit those dates on their own';
   if (anyExact) {
     const fac = facilityWords(ctx.sport, ctx.facilityName) || ctx.venueName;
-    return { tone: toneOf(true), lead: `${of} clash${clashing === 1 ? 'es' : ''} on ${fac}.`, rest: ` Remove ${them}, or change the time or ${noun} for all.` };
+    const rest = editDates
+      ? ` Change the time or ${noun} for ${total === 2 ? 'both' : 'all'}, or ${alone}.`
+      : ` Remove ${them}, or change the time or ${noun} for all.`;
+    return { tone: toneOf(true), lead: `${of} clash${clashing === 1 ? 'es' : ''} on ${fac}.`, rest };
   }
-  return { tone: toneOf(false), lead: `${of} ${clashing === 1 ? 'is' : 'are'} busy at ${ctx.venueName}.`, rest: ` Pick a ${noun} to be sure, or remove ${them}.` };
+  const rest = editDates ? ` Pick a ${noun} to be sure, or ${alone}.` : ` Pick a ${noun} to be sure, or remove ${them}.`;
+  return { tone: toneOf(false), lead: `${of} ${clashing === 1 ? 'is' : 'are'} busy at ${ctx.venueName}.`, rest };
 }
 
 const WEEKDAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];

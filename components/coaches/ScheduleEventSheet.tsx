@@ -12,6 +12,7 @@ import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import CoachRsvpSheet from '@/components/coaches/CoachRsvpSheet';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import GuardedDelete from '@/components/coaches/GuardedDelete';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import ScheduleAttendanceRoom, { type AttendanceRoomRow } from '@/components/coaches/ScheduleAttendanceRoom';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatStoredClock as fmtClock } from '@/lib/utils';
@@ -29,6 +30,7 @@ import { lineupBuilderHref } from '@/lib/lineups-address';
 import { sheetOrder } from '@/lib/coach-schedule-phone';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { orgDayKey } from '@/lib/timezone';
+import { SERIES_EDIT_ROWS, reachHint, type SeriesReach, type SeriesScope } from '@/lib/coach-series-scope';
 import { scheduleDayLabel } from '@/lib/family-schedule-format';
 import { EVENT_DELETE_TAKES, EVENT_LABELS, SCRIMMAGE_LABEL, eventWord } from '@/lib/coach-schedule-vocab';
 import { GAME_EVENT_TYPES, errorMessage, fmtDate, fmtTime, isLineupEvent, resultColor, shortDate } from '@/lib/coach-schedule-view';
@@ -122,13 +124,14 @@ function resourceIcon(url: string): React.ElementType {
   return Link2;
 }
 
-/** A series' three delete answers — the edit form's own words, and the scope each sends. */
+/** A series' three delete answers and the scope each sends. (The pencil's menu words its rows by the event —
+ *  "This practice only · All practices", `SERIES_EDIT_ROWS`; aligning Delete's is an owner call, raised 2026-10-09.) */
 const SERIES_DELETE = [['This only', 'one'], ['This & future', 'remaining'], ['All', 'all']] as const;
 
 /** DELETE one event. Shared by the sheet's Delete and the page's duplicate-game "Remove my copy"
  *  flow, which surface the error in different places. Refreshing is the CALLER's job — the sheet
  *  must close the instant the delete succeeds, not sit open through a full refetch. */
-export async function deleteEventRequest(orgSlug: string, teamId: string, eventId: string, scope: 'one' | 'remaining' | 'all') {
+export async function deleteEventRequest(orgSlug: string, teamId: string, eventId: string, scope: SeriesScope) {
   const res = await fetch(
     `/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}?scope=${scope}`,
     { method: 'DELETE' },
@@ -139,7 +142,7 @@ export async function deleteEventRequest(orgSlug: string, teamId: string, eventI
 export default function ScheduleEventSheet({
   orgSlug, teamId, base, event: ev, initialView, isPhone, nowMs, sportPack, capabilities, drawerDoors,
   places, teamTags, tagIds, teamAwards, awardTypes, awardPlayers, moved: selectedMoved, mirroredGameHref,
-  bookEntry, gameDayLive, familiesSeeSchedule,
+  bookEntry, gameDayLive, familiesSeeSchedule, seriesReach,
   onClose, onEdit, onAddGame, onEventChanged, onDeleted, refresh, onBookChanged, onAwardsChanged,
 }: {
   orgSlug: string;
@@ -174,9 +177,12 @@ export default function ScheduleEventSheet({
   gameDayLive: boolean;
   /** Families can see this team's schedule — a cancel or restore tells them, so it asks once first. */
   familiesSeeSchedule: boolean;
+  /** A repeating event's dates, per answer (null on a one-off): the pencil asks which before the form opens. */
+  seriesReach: SeriesReach | null;
   onClose: () => void;
-  /** The head's pencil — opens the edit form, which returns to this event when it closes. */
-  onEdit: (event: RepTeamEvent) => void;
+  /** The head's pencil — opens the edit form for the dates chosen (a series: the days its menu row named), and the form
+   *  returns to this event when it closes. */
+  onEdit: (event: RepTeamEvent, scope?: SeriesScope, dates?: readonly string[]) => void;
   /** A tournament's "+ Add game". */
   onAddGame: (event: RepTeamEvent) => void;
   /** A save changed the event (a score, cancel / restore) — the fresh record. */
@@ -487,7 +493,7 @@ export default function ScheduleEventSheet({
 
   // ── Delete ──────────────────────────────────────────────────────────────────
 
-  async function handleDelete(eventId: string, scope: 'one' | 'remaining' | 'all') {
+  async function handleDelete(eventId: string, scope: SeriesScope) {
     setSaving(true);
     setFootError('');
     try {
@@ -623,6 +629,26 @@ export default function ScheduleEventSheet({
   const mapTitle = ev.locationAddress ? `Open ${ev.locationAddress} in Google Maps` : `Search ${locationLabel} in Google Maps`;
   const mappable = !!locationLabel && !!(ev.locationAddress || ev.location);
 
+  // The word for this event in every sentence the window says ("Edit which practices?", "Delete this practice").
+  const word = eventWord(ev);
+  // ⚠ ON A PHONE THE PENCIL'S MENU IS A SHEET THAT STANDS ITS OWN BACK STEP over this window's (/review 2026-10-09).
+  // Opening the form in the commit that closes both would hand the form only the sheet's history entry and strand the
+  // window's beneath it, still naming the game (`?event=…`): one Back that seems to do nothing, and a reload there
+  // reopens the game. So a pick on a phone lets the sheet give its entry back first (its step pops), then opens the
+  // form exactly as the one-off pencil does — one step handing its entry to the form. A desk's popover stands no step.
+  const editFromMenu = (scope: SeriesScope, dates: readonly string[]) => {
+    if (!isPhone) { onEdit(ev, scope, dates); return; }
+    let fired = false;
+    const open = () => {
+      if (fired) return;
+      fired = true;
+      window.removeEventListener('popstate', open);
+      window.clearTimeout(fallback);
+      window.setTimeout(() => onEdit(ev, scope, dates), 0);
+    };
+    window.addEventListener('popstate', open);
+    const fallback = window.setTimeout(open, 600);
+  };
   const header = (
     <div className={styles.modalHeader}>
       <button className={styles.modalBackBtn} aria-label="Back" onClick={requestCloseSlideOver}><ArrowLeft size={20} /></button>
@@ -639,14 +665,29 @@ export default function ScheduleEventSheet({
       </div>
       {/* THE HEAD'S PENCIL (owner, 2026-10-09 — the award's and the payee's, the 10-01 record standard's place), at
           every width; it replaced the foot's "Edit details". It opens the edit FORM rather than flipping the sheet in
-          place: an event's when / where tells families and a series asks which dates, so its Save is held and asks —
-          the ruled exception to "edit autosaves". */}
+          place: an event's when / where tells families, so its Save is held — the ruled exception to "edit autosaves".
+          A REPEATING event's pencil asks which dates FIRST (owner ruling 2026-10-09, all four asks as recommended), so
+          the form opens knowing them and checks every one for clashes before Save — asked after Save, it had checked
+          only the date it was opened on. The portal's menu, opened by the one-off's own pencil: a panel under it at a
+          desk, a sheet over this window on a phone. Three rows always, as Delete offers; the line under each says which
+          dates it reaches, and those dates are what the form opens with. */}
       {canAddEvents && (
         <span className={styles.sheetHeadEnd}>
-          <button type="button" className={styles.ppIconBtn} aria-label={`Edit this ${eventWord(ev)}`} title="Edit"
-            disabled={saving} onClick={() => onEdit(ev)}>
-            <Pencil size={18} aria-hidden />
-          </button>
+          {seriesReach ? (
+            <CoachToolbarMenu label={`Edit this ${word}`} icon={<Pencil size={18} aria-hidden />} variant="glyph"
+              plainTrigger triggerClassName={styles.ppIconBtn} disabled={saving} panelMinWidth={300}
+              drawerOnPhone title={`Edit which ${word}s?`} overWindow>
+              {SERIES_EDIT_ROWS.map(row => (
+                <CoachToolbarMenuItem key={row.scope} label={row.label(word)} hint={reachHint(seriesReach[row.scope], word)}
+                  onSelect={() => editFromMenu(row.scope, seriesReach[row.scope])} />
+              ))}
+            </CoachToolbarMenu>
+          ) : (
+            <button type="button" className={styles.ppIconBtn} aria-label={`Edit this ${eventWord(ev)}`} title="Edit"
+              disabled={saving} onClick={() => onEdit(ev)}>
+              <Pencil size={18} aria-hidden />
+            </button>
+          )}
         </span>
       )}
       <button className={styles.modalCloseBtn} aria-label="Close" onClick={requestCloseSlideOver}>
@@ -1025,7 +1066,6 @@ export default function ScheduleEventSheet({
        · Cancel / Restore — the secondary button at the foot's END. It tells families at once, so where they see the
          schedule it asks once first ("a change that tells families asks"); elsewhere it stays one press.
      A question takes the whole foot in place of the controls it suspends (§134). */
-  const word = eventWord(ev);
   const toggle = ev.status === 'cancelled' ? {
     door: `Restore this ${word}`, title: `Restore this ${word}?`,
     body: <>It comes off Cancelled, and families who follow the team are told it&rsquo;s back on.</>,

@@ -7,6 +7,25 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-09 — A REPEATING EVENT'S PENCIL ASKS WHICH DATES FIRST; THE FORM THEN LISTS THEM, CHECKS EACH, AND SAVE NAMES THEM (owner, walking Club Tier §284 W4: *"from my experience with calendar apps, this question is posed after clicking the 'edit' button as a pop up. thoughts?"* → the drawing, artifact `1NaTneZ5YFprr9SCt8bESG` → *"1. Yes 2. Yes 3. Yes 4. Keep three"*)
+
+**Decision:** (1) On a repeating practice or game, the event window's head pencil is a **menu**, asked BEFORE the
+edit form opens: *Edit which practices?* · **This practice only** · **This & future** · **All practices**, each with
+a line naming the dates it reaches ("Nov 3 and Nov 10 · 2 practices"). The portal's own menu: a 300px panel under the
+pencil at a desk, the sheet over the window on a phone (`overWindow`). A one-off's pencil opens the form as before.
+(2) **This & future / All** open the form with **no Date box**: the dates are Add's list (without ✕ — an edit never
+removes a date; Delete does), "2 practices · This & future", "Each keeps its own date". **This practice only** keeps
+today's form, Date box included. (3) **Save names its reach** — "Save 2 practices" — and saves in one press. (4) The
+menu **always shows three rows**, as Delete's series question does; the dates under them show when two are the same.
+"Apply your changes to: This event only · This & future · All events" in the form's foot after Save is gone.
+**Why:** asked after Save, the form had believed it was editing one practice, so the clash check looked at one date;
+the server checked the others after the write and the form discarded that answer — a coach moving a season onto a
+taken diamond was warned about one date at most (found on W4). And a Date box changed on a This & future / All edit
+was ignored (the series write takes only the time of day). Calendar apps split on WHEN to ask (Google/Apple at Save,
+Outlook at open); what decided it was this product's clash check, not familiarity. The edit's clash line has its own
+way out ("…for both, or edit Nov 10 on its own") because Add's "Remove them" means nothing in an edit — draft words
+for /marketing. Guards: `tests/unit/coach-series-scope.test.ts`; the words in `venue-clash.test.ts`.
+
 ### 2026-10-09 — A CREATE FORM KEEPS "CANCEL" BESIDE ITS BUTTON; A WINDOW'S HEAD AND FOOT ARE PINNED (owner, at house league's Add Game walking §284 W6: *"shouldn't the create game button in this modal be pinned to a footer and not need scrolling? also the header title with X should be pinned at the top and we don't need the close button if we have the X"* → the recommendation → "Keep it, renamed Cancel" · "Remove Cancel Game")
 
 **Decision:** (1) **A window's title and × stay at the top and its buttons at the bottom; only the fields scroll** —

@@ -63,9 +63,13 @@ export function CoachToolbarMenu({
   bareOnPhone = false,
   drawerOnPhone = false,
   drawerTitle,
+  title,
+  overWindow = false,
+  panelMinWidth,
   open: openProp,
   onOpenChange,
   triggerClassName = '',
+  plainTrigger = false,
   triggerRef: triggerRefProp,
   children,
 }: {
@@ -141,6 +145,25 @@ export function CoachToolbarMenu({
    */
   drawerTitle?: string;
   /**
+   * The menu's own heading at EVERY width: the sheet's label on a phone, a heading over the rows in the popover. For a
+   * menu whose rows only make sense under their question ("Edit which practices?" over This practice only · This &
+   * future · All practices, 2026-10-09). The menu decides which it draws, so a caller never re-derives the drawer's
+   * breakpoint. `drawerTitle` stays the phone-only label for menus whose desktop popover needs none.
+   */
+  title?: string;
+  /**
+   * The drawer opens from INSIDE a full-screen window, which already took the bar (SheetFrame's `overWindow`): it sits
+   * at the screen's foot and stacks over the window. First caller: the event window's pencil on a repeating event,
+   * which asks which dates before the edit form opens (owner ruling 2026-10-09).
+   */
+  overWindow?: boolean;
+  /**
+   * The popover's least width, for a menu whose rows carry a line under them (a glyph trigger's default is sized
+   * for one-word rows, the view menu's). The event window's pencil asks for 300 so "Nov 3 and Nov 10 · 2 practices"
+   * stays on one line, as drawn (2026-10-09). The phone sheet is the screen's width either way.
+   */
+  panelMinWidth?: number;
+  /**
    * ⚠ **CONTROLLED MODE, AND IT EXISTS FOR EXACTLY ONE SHAPE: A DOOR ELSEWHERE ON THE PAGE THAT
    * OPENS THIS MENU** (Schedule's empty state, Phase 4b). Leave both undefined and the menu owns
    * its own state, which is what every other caller wants.
@@ -162,6 +185,12 @@ export function CoachToolbarMenu({
    * specificity, so the caller's rule must out-specify `.triggerChip` (e.g. qualify it by its table).
    */
   triggerClassName?: string;
+  /**
+   * The trigger wears ONLY `triggerClassName` — none of the menu's own trigger looks — for a menu opened by a control
+   * that already has the portal's look, which it must keep: the event window's head pencil on a repeating event is the
+   * one-off's `.ppIconBtn` (2026-10-09). Restyling the glyph trigger from outside would fight it across two modules.
+   */
+  plainTrigger?: boolean;
   /**
    * The trigger button's ref, for a caller that hands focus back to it after something the menu opened
    * (the lineup builder's Print, Copy from and Save as template panels return focus to Tools; Sheet
@@ -294,7 +323,7 @@ export function CoachToolbarMenu({
      and its scroll listener re-measured on every scroll of a long sheet. It places the popover the
      instant the width crosses back, because its open argument flips then. */
   const panelStyle = useAnchoredMenu(open && !asDrawer, rootRef, panelRef, {
-    minWidth: variant === 'glyph' ? 160 : 260,
+    minWidth: panelMinWidth ?? (variant === 'glyph' ? 160 : 260),
     narrowMinWidth: variant === 'glyph' ? 160 : 200,
     align: 'end',
   });
@@ -335,12 +364,12 @@ export function CoachToolbarMenu({
       <button
         ref={triggerRef}
         type="button"
-        className={
+        className={plainTrigger ? triggerClassName : (
           `${styles.trigger}${variant === 'primary' ? ` ${styles.triggerPrimary}` : variant === 'chip' ? ` ${styles.triggerChip}` : variant === 'glyph' ? ` ${styles.triggerGlyph}` : ''}` +
           `${bareOnPhone ? ` ${styles.triggerBare}` : ''}` +
           `${open ? ` ${styles.triggerOpen}` : ''}` +
           `${triggerClassName ? ` ${triggerClassName}` : ''}`
-        }
+        )}
         disabled={disabled}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -357,11 +386,12 @@ export function CoachToolbarMenu({
           for it), and its dim is inside the boundary it watches — `drawerOnPhone` above has the defect a dim
           outside it caused. */}
       {open && (asDrawer ? (
-        <SheetFrame ref={panelRef} label={drawerTitle} onClose={() => setOpen(false)} opener={triggerRef} role="menu" onClick={pickCloses}>
+        <SheetFrame ref={panelRef} label={title ?? drawerTitle} onClose={() => setOpen(false)} opener={triggerRef} role="menu" overWindow={overWindow} onClick={pickCloses}>
           {children}
         </SheetFrame>
       ) : (
         <div ref={panelRef} className={styles.panel} style={panelStyle} role="menu" onClick={pickCloses}>
+          {title && <CoachToolbarMenuHeading>{title}</CoachToolbarMenuHeading>}
           {children}
         </div>
       ))}

@@ -49,6 +49,7 @@ import ScheduleEventForm, {
   addHoursLocal, DEFAULT_EVENT_HOUR, seedAddForm, seedEditForm,
   type EventForm, type ScheduleFormInit,
 } from '@/components/coaches/ScheduleEventForm';
+import { seriesReach, type SeriesScope } from '@/lib/coach-series-scope';
 import type { ClubVenueOption,
   RepTeamEvent,
   RepTeamEventAttendance,
@@ -433,6 +434,12 @@ export default function CoachesSchedulePage({
   // `events` rather than mirrored into state, so the two can never fall out of step. "Keep both"
   // is remembered, and a pair drops out the moment either side stops existing.
   const duplicatePairs = useMemo(() => findDuplicateSelfEntries(events), [events]);
+  // A repeating event's dates per answer, for its pencil's menu (owner ruling 2026-10-09) — worked out once per open
+  // event, not on every render of the page (the minute clock re-renders it).
+  const selectedReach = useMemo(
+    () => (selectedEvent?.isRecurring ? seriesReach(events, selectedEvent) : null),
+    [events, selectedEvent],
+  );
   // The schedule chip's 🏆 badge — derived from `teamAwards` (already refetched by
   // `fetchAwardData` after every give/edit/remove) rather than the events fetch's own snapshot,
   // which only refreshes on a full reload. Two sources of the same count could disagree the
@@ -551,7 +558,7 @@ export default function CoachesSchedulePage({
     setFormInit({ form: seedAddForm(type, { cursorDate, arrivalDefaults, overrides }), editing: null });
   }
 
-  function openEditForm(event: RepTeamEvent) {
+  function openEditForm(event: RepTeamEvent, scope: SeriesScope = 'one', dates: readonly string[] = []) {
     // The form stands where the sheet stood (a modal over a slide-over would be two overlays), so
     // it remembers the game it was opened from and returns there — Back, Cancel, Escape or Save
     // (owner, 2026-09-21: "back … brings me back to the schedule, not back to the game where I
@@ -564,7 +571,9 @@ export default function CoachesSchedulePage({
       form: seedEditForm(event, tagsByEventId[event.id] ?? []),
       // Batch 4: editing a mirrored tournament game opens the form in restricted mode — the
       // organizer's facts render as context, only the coach's own fields are editable.
-      editing: { eventId: event.id, mirrored: isMirroredEvent(event), recurring: event.isRecurring },
+      // A repeating event arrives with the dates its pencil's menu row named (owner ruling 2026-10-09): a This &
+      // future / All edit lists them, checks each for clashes and saves them in one press.
+      editing: { eventId: event.id, mirrored: isMirroredEvent(event), scope, scopeDates: scope === 'one' ? [] : [...dates] },
     });
   }
 
@@ -1051,6 +1060,7 @@ export default function CoachesSchedulePage({
           bookEntry={selectedEvent.opponent ? bookByKey.get(normalizeOpponentName(selectedEvent.opponent)) ?? null : null}
           gameDayLive={gameDayHrefById.has(selectedEvent.id)}
           familiesSeeSchedule={familiesSeeSchedule}
+          seriesReach={selectedReach}
           onClose={() => setSelectedEvent(null)}
           onEdit={openEditForm}
           onAddGame={ev => {

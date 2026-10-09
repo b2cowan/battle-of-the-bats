@@ -55,7 +55,7 @@
                                removed by the orphan sweep. Opt OUT with .centeredOnMobile.
      • .stickyActionBar        safe-area sticky footer (env(safe-area-inset-bottom))
    Existing instances that already embody these: .lineupTableWrap (scrollX),
-   .rosterTable reflow (tableAsCards), .modalFooter/.editScope/
+   .rosterTable reflow (tableAsCards), .modalFooter/
    .saveBar (stickyActionBar). New surfaces should reuse the generic class.
    ════════════════════════════════════════════════════════════════════════ */
 
@@ -4730,7 +4730,7 @@ a.oneChip:hover { border-color: currentColor; }
 
    `.modalFlushFooter` is kept above as a no-op for the panels that already declare it; it now
    asserts what would happen anyway. Do not re-introduce the padding on a modal with a footer. */
-.modal:has(.modalFooter, .editScope) { padding-bottom: 0; }
+.modal:has(.modalFooter) { padding-bottom: 0; }
 .modal:has(.modalFooter) .modalFooter { margin-bottom: 0; }
 /* ⚠ AND THE SLIDE-OVERS (2026-09-01, owner screenshot: the dues drawer's Notes field clipped
    behind Save). The automatic rule above named `.modal` and the drawers are `.slideOver` — same
@@ -4856,21 +4856,8 @@ a.oneChip:hover { border-color: currentColor; }
    container, conditional on it actually overflowing — not on the shared primitive. */
 .modalScrollBody > form > .modalFooter { position: static; margin-top: 1rem; flex-shrink: 0; }
 
-/* Recurring-series save scope chooser — replaces the footer when editing a repeating event. */
-.editScope {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 1.25rem -1.5rem 0;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--home-line, rgba(255,255,255,0.07));
-  background: var(--card-bg);
-}
-.editScopeMsg { margin: 0; font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
-.editScopeBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+/* ⚰ `.editScope` (→ 2026-10-09): the event form's "Apply your changes to:" chooser, which replaced the footer after Save on
+   a repeating event. The question moved to the window's pencil, before the form opens (owner ruling 2026-10-09). */
 
 /* ── Form fields ────────────────────────────────────────────────────────── */
 .formGrid {
@@ -6500,6 +6487,9 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    and alone at the right on a phone, where ← replaces the ✕ (the payee window's `.headEnd`). The negative block
    margin keeps the 44px box from growing a head drawn for the 28px ✕. */
 .sheetHeadEnd { flex: 1 1 auto; display: flex; justify-content: flex-end; margin-block: -0.55rem; }
+/* A series edit's Start · End (2026-10-09): the dates are the list under them, so the two times share the row at every
+   width — the shape the one-off form's times keep on a phone, where `.formSectionGrid` stacks. */
+.formTimesGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
 /* Compact one-line event summary (replaces the tall label/value list). */
 /* Event resource links — editable rows in the form, tappable rows in the detail panel. */
 .resourceRow { display: flex; gap: 0.4rem; align-items: center; }
@@ -6588,8 +6578,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
      -1.5rem BOTTOM bleed is zeroed here: with a sticky footer it shortens the scroll
      extent by 24px, permanently hiding the last 24px of the form (Notes) at max scroll.
      Flushness comes from the panel dropping its own bottom padding instead (below). */
-  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) .modalFooter,
-  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) .editScope {
+  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) .modalFooter {
     margin-left: -0.9rem;
     margin-right: -0.9rem;
     margin-bottom: 0;
@@ -6598,7 +6587,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   }
   /* Only panels that HAVE a sticky action bar go flush — footer-less sheets (pickers,
      tag manager) keep their normal bottom padding. */
-  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) > *:has(.modalFooter, .editScope) {
+  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) > *:has(.modalFooter) {
     padding-bottom: 0;
   }
   /* Back arrow replaces the X by default; header reads left → right. .centeredOnMobile keeps
@@ -10011,6 +10000,10 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   color: var(--text-tertiary); flex-shrink: 0;
 }
 .ppIconBtn:hover:not(:disabled) { color: var(--text-primary); background: var(--white-8); }
+/* Opening a menu (the event window's pencil on a repeating event, a plain menu trigger since 2026-10-09): it stays lit
+   while its menu is open, as a hover. Only a MENU's trigger (aria-haspopup): the practice plan's block chevron is a
+   .ppIconBtn that carries aria-expanded for its block, and must not stay lit (/review 2026-10-09). */
+.ppIconBtn[aria-haspopup][aria-expanded="true"] { color: var(--text-primary); background: var(--white-8); }
 .ppIconBtn:disabled { opacity: 0.3; cursor: default; }
 /* ⚰ `.ppMoveBtn` deleted 2026-09-24 — the reorder pair's button. The gutter's ▲▼ became the block's
    grip at stage 1b, and the station column's ‹ › became the same grip (`.ppStColMove`). */

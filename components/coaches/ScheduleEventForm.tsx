@@ -15,10 +15,11 @@ import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import TagSearchCombobox, { GAME_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import { formatStoredClock as fmtClock } from '@/lib/utils';
+import { formatStoredClock as fmtClock, pluralize } from '@/lib/utils';
 import { fieldNounFor } from '@/lib/sports';
 import { pickPlace, whereBody, whereOf, type WhereValue } from '@/lib/where-field';
 import { clashLine, seriesDateMark, seriesSummary, NOT_CHECKED_LINE } from '@/lib/venue-clash-words';
+import type { SeriesScope } from '@/lib/coach-series-scope';
 import { sessionTitle } from '@/lib/development-session-view';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import type { ClubPickerSpelling } from '@/lib/coach-opponent-picker';
@@ -28,7 +29,7 @@ import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { utcToZonedInputs } from '@/lib/timezone';
 import {
   EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES,
-  needsOpponent, needsRecurrence, deriveGameName, isAutoShapedName,
+  needsOpponent, needsRecurrence, deriveGameName, isAutoShapedName, eventWord,
 } from '@/lib/coach-schedule-vocab';
 import { generateWeeklyOccurrences, type RecurrenceOccurrenceInput } from '@/lib/coach-recurrence';
 import { DAYS_OF_WEEK, dayStr, errorMessage, fmtDate, fmtTime, shortDate } from '@/lib/coach-schedule-view';
@@ -248,8 +249,14 @@ export interface ScheduleFormInit {
     eventId: string;
     /** Batch 4: an organizer-owned mirrored tournament game — the restricted form. */
     mirrored: boolean;
-    /** Drives the "this / future / all" save scope chooser. */
-    recurring: boolean;
+    /**
+     * Which dates of a repeating event the edit reaches — chosen at the pencil, BEFORE the form opens (owner ruling
+     * 2026-10-09). 'one' on a one-off. It replaced the "Apply your changes to:" chooser Save used to open, which came
+     * after the coach had edited a form that checked one date for clashes and offered a Date box a series edit ignores.
+     */
+    scope: SeriesScope;
+    /** The days (YYYY-MM-DD, in order) a This & future / All edit changes; empty for 'one'. */
+    scopeDates: string[];
   } | null;
 }
 
@@ -284,12 +291,13 @@ export default function ScheduleEventForm({
 }) {
   const confirm = useConfirm();
   const editingEventId = init.editing?.eventId ?? null;
-  // Whether the event being edited belongs to a recurring series (drives the "this / future / all"
-  // save scope chooser) and whether that chooser is currently shown.
-  const editingRecurring = init.editing?.recurring ?? false;
+  // A This & future / All edit of a repeating event: the dates it changes are a list (each keeps its own day), every
+  // one is checked for clashes, and Save names how many it saves. Chosen at the pencil (owner ruling 2026-10-09).
+  const editScope: SeriesScope = init.editing?.scope ?? 'one';
+  const scopeDates = init.editing?.scopeDates ?? [];
+  const seriesEdit = scopeDates.length > 0;
   /** Batch 4: the event being edited is an organizer-owned mirrored tournament game. */
   const editingMirrored = init.editing?.mirrored ?? false;
-  const [editScopeOpen, setEditScopeOpen] = useState(false);
   const [form, setForm] = useState<EventForm>(init.form);
   /** ONE structured baseline for the whole event form — the fields AND the recurrence preview's
    *  per-date edits. One mapping per form, per the Chunk A discard-guard contract. */
@@ -500,13 +508,16 @@ export default function ScheduleEventForm({
     } catch { /* offline — the host copy keeps the picker usable */ }
   }
 
+  // The dates a list shows under the times: Add's kept repeat-weekly dates, or the dates a series EDIT changes.
+  const listDates = recurringSeries ? keptDates : seriesEdit ? scopeDates : null;
   // The live check (Ask 5): as soon as the dates, the times and one of the club's venues are set — one date, or
-  // every kept date of a series — and again on any change. A coach's own place or typed words are never compared.
+  // every kept date of a series, or every date a series EDIT changes — and again on any change. A coach's own place or
+  // typed words are never compared.
   const checkOccurrences: { startsAt: string; endsAt: string }[] =
     editingMirrored || form.eventType === 'external_tournament' || where.source !== 'club'
       ? []
-      : recurringSeries
-        ? (form.startTime ? keptDates.map(d => ({ startsAt: `${d}T${form.startTime}`, endsAt: form.endTime ? `${d}T${form.endTime}` : '' })) : [])
+      : listDates
+        ? (form.startTime ? listDates.map(d => ({ startsAt: `${d}T${form.startTime}`, endsAt: form.endTime ? `${d}T${form.endTime}` : '' })) : [])
         : (form.startsAt ? [{ startsAt: form.startsAt, endsAt: form.endsAt }] : []);
   // Save asks again first (`lineIsCurrent`, the hook's one rule): a booking made since the line was read shows as the
   // line and the form stays open on it; a second press saves anyway. (The server checks a third time after the write.)
@@ -521,7 +532,11 @@ export default function ScheduleEventForm({
   const lineCtx = { sport, venueName: where.location, facilityName: where.orgVenueFacilityId ? where.fieldNumber : null };
   let whereLine: ReactNode = null;
   const said = clashResults && countFindings(clashResults)
-    ? (recurringSeries ? seriesSummary(clashResults, lineCtx) : clashLine(clashResults[0] ?? [], lineCtx))
+    ? (recurringSeries
+        ? seriesSummary(clashResults, lineCtx)
+        : scopeDates.length > 1
+          ? seriesSummary(clashResults, lineCtx, scopeDates)
+          : clashLine(clashResults[0] ?? [], lineCtx))
     : null;
   if (said) {
     whereLine = <WhereLine tone={said.tone} lead={said.lead} rest={said.rest} />;
@@ -529,10 +544,11 @@ export default function ScheduleEventForm({
     // The third state, the one a coach could miss (Ask 3): said in place, never silence.
     whereLine = <WhereLine tone="quiet" rest={NOT_CHECKED_LINE} />;
   }
-  // A series marks each clashing date in the list the coach already reviews ("Diamond 2 · 14U AA practice, …").
+  // A series marks each clashing date in the list the coach already reviews ("Diamond 2 · 14U AA practice, …") — the
+  // list Add shows, and the one a series edit shows of the dates it changes.
   const markByDate = new Map<string, string>();
-  if (recurringSeries && clashResults) {
-    keptDates.forEach((d, i) => { const f = clashResults[i]; if (f?.length) markByDate.set(d, seriesDateMark(f, lineCtx)); });
+  if (listDates && clashResults) {
+    listDates.forEach((d, i) => { const f = clashResults[i]; if (f?.length) markByDate.set(d, seriesDateMark(f, lineCtx)); });
   }
 
   // Drives the "More — …" disclosure (Batch 2, P0 #8; relabelled 2026-09-21). `hasEventDetails` is read on
@@ -571,7 +587,7 @@ export default function ScheduleEventForm({
   });
 
   // scope 'one' = just this occurrence; 'remaining' = this + future; 'all' = the whole series.
-  async function handleUpdate(scope: 'one' | 'remaining' | 'all' = 'one') {
+  async function handleUpdate(scope: SeriesScope) {
     if (!editingEventId) return;
     setSaveError('');
     setSaving(true);
@@ -643,10 +659,8 @@ export default function ScheduleEventForm({
 
   async function handleSave() {
     if (editingEventId) {
-      // A recurring edit must always go through the scope chooser (this / future / all), never
-      // silently save one occurrence — guard here too, not only on the button.
-      if (editingRecurring) { setEditScopeOpen(true); return; }
-      return handleUpdate('one');
+      // The dates were chosen at the pencil (owner ruling 2026-10-09): one press saves exactly those.
+      return handleUpdate(editScope);
     }
     setSaveError('');
     setSaving(true);
@@ -716,6 +730,72 @@ export default function ScheduleEventForm({
       setSaving(false);
     }
   }
+
+  // The dates under the times, as rows (Chunk C, P1 #6) — Add's repeat-weekly preview, BEFORE any of them exist (a date
+  // can be removed; a game takes its opponent per date: a recurring series and an imported file are the same shape, a
+  // set of events reviewed before commit), and a series EDIT's dates (owner ruling 2026-10-09: read-only, since an
+  // edit never removes a date — Delete does). Each date is marked when the place is taken that night (Club Tier
+  // Stage 6a, Ask 5).
+  const listRows = recurringSeries ? recurrenceDates : scopeDates;
+  const dateList = listRows.length > 0 ? (
+    <div className={styles.occList}>
+      <div className={styles.occHead}>
+        <p className={styles.occCount}>
+          {recurringSeries
+            ? pluralize(keptDates.length, recurrenceNoun)
+            : `${pluralize(scopeDates.length, eventWord(form))} · ${editScope === 'all' ? 'All' : 'This & future'}`}
+        </p>
+        <p className={styles.formHint}>
+          {seriesEdit
+            ? 'Each keeps its own date. Nothing is saved until you tap Save.'
+            : recurrenceIsGame
+              ? 'Add an opponent to each. Nothing is saved until you tap Add.'
+              : 'Nothing is saved until you tap Add.'}
+        </p>
+      </div>
+      {listRows.map(date => {
+        const removed = removedDates.has(date);
+        const mark = removed ? undefined : markByDate.get(date);
+        return (
+          <div key={date} className={styles.occRow} data-removed={removed || undefined}>
+            <span className={styles.occDate}>{shortDate(date)}</span>
+            {removed ? (
+              <span className={styles.occRemoved}>Removed</span>
+            ) : recurringSeries && recurrenceIsGame ? (
+              <span className={styles.occCol}>
+                <input
+                  className={styles.input}
+                  placeholder="Opponent"
+                  aria-label={`Opponent on ${shortDate(date)}`}
+                  value={occurrenceOpponents[date] ?? ''}
+                  onChange={e => setOccurrenceOpponents(o => ({ ...o, [date]: e.target.value }))}
+                />
+                {mark && <span className={styles.occMark}>{mark}</span>}
+              </span>
+            ) : mark ? (
+              <span className={`${styles.occPlain} ${styles.occMark}`}>{mark}</span>
+            ) : (
+              <span className={styles.occPlain}>{fmtClock(form.startTime) || '—'}</span>
+            )}
+            {recurringSeries && (
+              <button
+                type="button"
+                className={styles.occAction}
+                aria-label={removed ? `Put ${shortDate(date)} back` : `Remove ${shortDate(date)}`}
+                onClick={() => setRemovedDates(prev => {
+                  const next = new Set(prev);
+                  if (removed) next.delete(date); else next.add(date);
+                  return next;
+                })}
+              >
+                {removed ? '↩' : '✕'}
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  ) : null;
 
   return (
     <>
@@ -874,77 +954,23 @@ export default function ScheduleEventForm({
                     </div>
                   </div>
                   <ArrivalSelect startTime={form.startTime} value={form.arrivalTime} onChange={v => setForm(f => ({ ...f, arrivalTime: v }))} />
-                  {/* Chunk C (P1 #6) — the occurrences, as rows, BEFORE any of them exist.
-                      This replaced a one-line summary that was honest about the dates and
-                      silent about the fact that one opponent was about to be stamped onto
-                      every game. A recurring series and an imported file are the same shape:
-                      a set of proposed events reviewed before commit. */}
-                  {recurrenceDates.length > 0 && (
-                    <div className={styles.occList}>
-                      <div className={styles.occHead}>
-                        <p className={styles.occCount}>
-                          {keptDates.length} {recurrenceNoun}{keptDates.length === 1 ? '' : 's'}
-                        </p>
-                        <p className={styles.formHint}>
-                          {recurrenceIsGame
-                            ? 'Add an opponent to each. Nothing is saved until you tap Add.'
-                            : 'Nothing is saved until you tap Add.'}
-                        </p>
-                      </div>
-                      {recurrenceDates.map(date => {
-                        const removed = removedDates.has(date);
-                        // Club Tier Stage 6a (Ask 5): a date that clashes says who has the place that night.
-                        const mark = removed ? undefined : markByDate.get(date);
-                        return (
-                          <div key={date} className={styles.occRow} data-removed={removed || undefined}>
-                            <span className={styles.occDate}>{shortDate(date)}</span>
-                            {removed ? (
-                              <span className={styles.occRemoved}>Removed</span>
-                            ) : recurrenceIsGame ? (
-                              <span className={styles.occCol}>
-                                <input
-                                  className={styles.input}
-                                  placeholder="Opponent"
-                                  aria-label={`Opponent on ${shortDate(date)}`}
-                                  value={occurrenceOpponents[date] ?? ''}
-                                  onChange={e => setOccurrenceOpponents(o => ({ ...o, [date]: e.target.value }))}
-                                />
-                                {mark && <span className={styles.occMark}>{mark}</span>}
-                              </span>
-                            ) : mark ? (
-                              <span className={`${styles.occPlain} ${styles.occMark}`}>{mark}</span>
-                            ) : (
-                              <span className={styles.occPlain}>{fmtClock(form.startTime) || '—'}</span>
-                            )}
-                            <button
-                              type="button"
-                              className={styles.occAction}
-                              aria-label={removed ? `Put ${shortDate(date)} back` : `Remove ${shortDate(date)}`}
-                              onClick={() => setRemovedDates(prev => {
-                                const next = new Set(prev);
-                                if (removed) next.delete(date); else next.add(date);
-                                return next;
-                              })}
-                            >
-                              {removed ? '↩' : '✕'}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  {dateList}
                 </>
               ) : (
                 <>
                   {/* The date ONCE (owner, 2026-09-21) — Date · Start time · End time, the shape the
                       repeat branch above already asks in. Two datetime pickers had the coach type
                       the same date twice. See `withWhenPieces` / `setWhen` for how the pieces and
-                      the canonical datetimes stay in step. */}
-                  <div className={styles.formSectionGrid3}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Date *</label>
-                      <input className={styles.input} type="date" value={form.startDate} onChange={e => setWhen({ startDate: e.target.value })} />
-                    </div>
+                      the canonical datetimes stay in step.
+                      A SERIES edit has no Date box (owner ruling 2026-10-09): each date keeps its own day — the series
+                      write takes only the time — so the box could never move them. Its dates are the list below. */}
+                  <div className={seriesEdit ? styles.formTimesGrid : styles.formSectionGrid3}>
+                    {!seriesEdit && (
+                      <div className={styles.field}>
+                        <label className={styles.label}>Date *</label>
+                        <input className={styles.input} type="date" value={form.startDate} onChange={e => setWhen({ startDate: e.target.value })} />
+                      </div>
+                    )}
                     <div className={styles.field}>
                       <label className={styles.label}>Start time *</label>
                       <input className={styles.input} type="time" value={form.startTime} onChange={e => setWhen({ startTime: e.target.value })} />
@@ -963,6 +989,7 @@ export default function ScheduleEventForm({
                     </div>
                   </div>
                   <ArrivalSelect startTime={form.startTime} value={form.arrivalTime} onChange={v => setForm(f => ({ ...f, arrivalTime: v }))} />
+                  {dateList}
                 </>
               )}
             </section>
@@ -1216,41 +1243,27 @@ export default function ScheduleEventForm({
 
           {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
 
-          {/* Editing one occurrence of a repeating series → choose how far the change reaches. */}
-          {editScopeOpen ? (
-            <div className={styles.editScope}>
-              <p className={styles.editScopeMsg}>Apply your changes to:</p>
-              <div className={styles.editScopeBtns}>
-                {/* The scope buttons SAVE — they hold to the same gate as Save changes, or a
-                    field edited after the chooser opened would slip past it (/review, 2026-09-14). */}
-                <button className={styles.btnSecondary} disabled={saving || !formHasStart || resourcesInvalid || practiceEndInvalid} onClick={() => handleUpdate('one')}>This event only</button>
-                <button className={styles.btnSecondary} disabled={saving || !formHasStart || resourcesInvalid || practiceEndInvalid} onClick={() => handleUpdate('remaining')}>This &amp; future</button>
-                <button className={styles.btnSecondary} disabled={saving || !formHasStart || resourcesInvalid || practiceEndInvalid} onClick={() => handleUpdate('all')}>All events</button>
-                <button className={styles.btnGhost} disabled={saving} onClick={() => setEditScopeOpen(false)}>Back</button>
-              </div>
-              <p className={styles.formHint}>Repeating series — &ldquo;This &amp; future&rdquo; and &ldquo;All&rdquo; keep each event&apos;s own date and shift the rest.</p>
-              {saveError && <p className={styles.errorText}>{saveError}</p>}
-            </div>
-          ) : (
-            <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={requestDiscardForm}>Cancel</button>
-              <button
-                className={styles.btnPrimary}
-                disabled={saving || !formHasStart || tournamentParentMissing || resourcesInvalid || practiceEndInvalid}
-                onClick={editingEventId && editingRecurring ? () => setEditScopeOpen(true) : handleSave}
-              >
-                {saving
-                  ? 'Saving…'
-                  : editingEventId
-                    ? 'Save changes'
-                    // Name the real count: a removed bye week means eleven, not twelve.
-                    : recurringSeries && keptDates.length
-                      ? `Add ${keptDates.length} ${recurrenceNoun}${keptDates.length === 1 ? '' : 's'}`
-                      // The title's verb, in the portal's sentence case: "Add game", "Add practice".
-                      : `Add ${recurrenceNoun}`}
-              </button>
-            </div>
-          )}
+          {/* ⚰ "Apply your changes to: This event only · This & future · All events" (→ 2026-10-09): the question moved to the
+              pencil, before the form opens, so the form knows the dates it checks. Save saves them in one press. */}
+          <div className={styles.modalFooter}>
+            <button className={styles.btnGhost} onClick={requestDiscardForm}>Cancel</button>
+            <button
+              className={styles.btnPrimary}
+              disabled={saving || !formHasStart || tournamentParentMissing || resourcesInvalid || practiceEndInvalid}
+              onClick={handleSave}
+            >
+              {saving
+                ? 'Saving…'
+                : editingEventId
+                  // A series edit names how many it saves, as Add does ("Save 2 practices").
+                  ? seriesEdit ? `Save ${pluralize(scopeDates.length, eventWord(form))}` : 'Save changes'
+                  // Name the real count: a removed bye week means eleven, not twelve.
+                  : recurringSeries && keptDates.length
+                    ? `Add ${keptDates.length} ${recurrenceNoun}${keptDates.length === 1 ? '' : 's'}`
+                    // The title's verb, in the portal's sentence case: "Add game", "Add practice".
+                    : `Add ${recurrenceNoun}`}
+            </button>
+          </div>
       </QuestionShell>
     </>
   );
