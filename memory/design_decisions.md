@@ -7,6 +7,24 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-09 — THE CLUB'S LEDGER FILTERS ON THE SCREEN, AND CATEGORY / ITEM OFFER WHAT IS IN THE DATES ON SCREEN, ON BOTH LEDGERS (owner: *"1. yes 2. yes, just build it now"*, walking Club Tier Stage 3d §285 W1)
+
+**Decision:** (1) **The club's Ledger reads the book once per book and date window and filters on the screen**, as the
+coach's always has: Type, Status, Category and Item narrow at once; only a new book or new dates read again. (2)
+**Category and Item list only the words on the lines in the dates on screen**, on both Ledgers — the dates only (the
+other filters never shorten them; Item follows Category, 10-07, stays the one exception); a ticked word always stays
+listed, outside the window too; a pill with nothing in the dates steps aside (an empty list already hid it).
+**Why:** the owner saw the club table change TWICE per tick — the Balance column and Starting / Ending lines left with
+the pill, the lines a moment later — because the shape followed the pills while the lines waited on a server round
+trip; clearing a filter briefly put balances beside lines they were not worked out for. The server already walked the
+whole book on every tick, so the paging bought almost nothing. And the club's lists were every item EVER on the book
+(an allocation is named for its year, so the list only grew) and every category across EVERY club book — October
+2026's General ledger offered "Permit share 2025–26", Admin, Sponsorship, Tournaments. **This partly reverses
+2026-10-07's "never the other filters (a list that moved with the date window would lose words under the coach)"**:
+that reason was argued for a season-long coach book and does not carry to a book that runs for years; the owner chose
+the same rule on both. **Trade-off:** All time on a years-deep club book is one larger read (what Export already
+did). A voided line in the dates still lends its words to the lists (dates only, by design).
+
 ### 2026-10-08 — AN EXPORT MENU NAMES ITS FILE IN ONE LINE, AND NO FORMAT CARRIES A SENTENCE (owner, at a closed year's Export, walking §283 W7: *"this is way too much text for this dropdown"*; three recommended options, all taken)
 
 **Decision:** (1) A menu that says what its file holds says it in **one line**: a closed year's Export reads "Year-end report · 2025–26", then Excel and PDF. The club Ledger's keeps "Every entry in the period, not just what is on screen · N entries" and drops its sentence about signed amounts and voids. (2) **No sentence under a format on any admin Export menu**: "Opens in Google Sheets…", "Plain text…", "Formatted, print-ready…" and the iCal line all go, from all 28 admin export buttons. A second line stays only where it says something the row's name does not: no rows, the plan upgrade, a per-view PDF note, a second document, contact details, the full dataset, import. (3) CSV appears only where a screen asks for it. It had been drawn everywhere, so the year-end report, built as Excel and PDF only, offered one.
