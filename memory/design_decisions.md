@@ -7,6 +7,20 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-09 — A CREATE FORM KEEPS "CANCEL" BESIDE ITS BUTTON; A WINDOW'S HEAD AND FOOT ARE PINNED (owner, at house league's Add Game walking §284 W6: *"shouldn't the create game button in this modal be pinned to a footer and not need scrolling? also the header title with X should be pinned at the top and we don't need the close button if we have the X"* → the recommendation → "Keep it, renamed Cancel" · "Remove Cancel Game")
+
+**Decision:** (1) **A window's title and × stay at the top and its buttons at the bottom; only the fields scroll** —
+built for every house-league window at once (they predate the admin kit's window, which pins both by layout). (2)
+**A form that CREATES something keeps a Cancel beside its button**, as well as the ×: the portal's pair (the coach's
+Add Practice, every club money form). House league's Add Game said "Close" there — now "Cancel". The no-Close rule
+(the team's bill, Payees, 2026-10-09) is a RECORD window's, where nothing typed can be thrown away; it does not reach
+create forms. A reader who can't change the game has no foot at all. (3) **House league's "Cancel Game" is gone**:
+it only set Status to Cancelled, which the Status field in the same window does, and it would have sat beside the
+form's Cancel meaning the opposite. To call a game off: Status → Cancelled → Save (the help says so).
+**Why:** a create button below the fold is a form you have to scroll to finish; dropping Cancel from one create form
+would have made it the only one without. **Not in it:** house league's windows becoming the kit's window (Club Tier
+Stage 9 owns house league).
+
 ### 2026-10-09 — THE SCHEDULE'S EVENT WINDOW WEARS THE RECORD STANDARD: THE PENCIL IN THE HEAD, DELETE AT THE FOOT'S START, CANCEL AT ITS END AND ASKING ONCE (owner, walking Club Tier §284 W1: *"instead of 'edit details' should we have the edit pencil at the top right like we do in other modals like this in the app? desktop and mobile. also evaluate the delete/cancel buttons and make sure they are portal standard in format and location"* → the evaluation → "Yes, ask once" · "Build it now")
 
 **Decision:** (1) **Edit is the head's pencil at every width** (the award's and the payee's place, the 10-01 record

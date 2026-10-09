@@ -323,7 +323,6 @@ function GameModal({
   canManage,
   saving,
   onSave,
-  onCancel: onCancelGame,
   onClose,
 }: {
   game: LeagueGame | null;
@@ -337,7 +336,6 @@ function GameModal({
   canManage: boolean;
   saving: boolean;
   onSave: (form: GameForm) => Promise<void>;
-  onCancel: () => Promise<void>;
   onClose: () => void;
 }) {
   const B = useKitButtons(LEGACY_BUTTONS);
@@ -457,25 +455,22 @@ function GameModal({
           <textarea className={styles.textarea} value={form.notes} onChange={e => set('notes', e.target.value)} disabled={!canManage} rows={2} />
         </div>
 
-        <div className={styles.modalFooter}>
-          {!isCreate && canManage && (
-            <button style={B.danger} onClick={onCancelGame} disabled={saving}>
-              Cancel Game
+        {/* The foot is the form's: Cancel and the one save (owner, 2026-10-09 — the portal's create-form pair; the ×
+            above also closes). ⚰ "Cancel Game" is gone: it only set Status to Cancelled, which the Status field above
+            already does, and it sat beside this Cancel meaning the opposite. A reader who can't change the game has
+            no foot — the × is the way out, as on every record window. */}
+        {canManage && (
+          <div className={styles.modalFooter}>
+            <button style={B.secondary} onClick={onClose} disabled={saving}>Cancel</button>
+            <button
+              style={refused ? { ...B.primary, ...REFUSED_LOOK } : B.primary}
+              onClick={async () => { if (await lineIsCurrent()) await onSave(form); }}
+              disabled={saving || refused || checking}
+            >
+              {saving ? 'Saving…' : isCreate ? 'Create Game' : 'Save'}
             </button>
-          )}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.6rem' }}>
-            <button style={B.secondary} onClick={onClose} disabled={saving}>Close</button>
-            {canManage && (
-              <button
-                style={refused ? { ...B.primary, ...REFUSED_LOOK } : B.primary}
-                onClick={async () => { if (await lineIsCurrent()) await onSave(form); }}
-                disabled={saving || refused || checking}
-              >
-                {saving ? 'Saving…' : isCreate ? 'Create Game' : 'Save'}
-              </button>
-            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -1085,22 +1080,6 @@ export default function SchedulePage() {
     await loadHealth();
   }
 
-  async function handleCancelGame() {
-    if (!activeGame) return;
-    setSaving(true);
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/${activeGame.id}${orgQuery}`, {
-      method: 'DELETE',
-    });
-    setSaving(false);
-    if (!res.ok) {
-      showError('Could not cancel game', (await res.json()).error ?? 'Unknown error');
-      return;
-    }
-    setGameModalOpen(false);
-    await loadTeamsAndGames(selectedDivId);
-    await loadHealth();
-  }
-
   // ── Practice CRUD ──────────────────────────────────────────────────────────
 
   async function handleSavePractice(form: PracticeForm) {
@@ -1660,7 +1639,6 @@ export default function SchedulePage() {
           canManage={canManage}
           saving={saving}
           onSave={handleSaveGame}
-          onCancel={handleCancelGame}
           onClose={() => setGameModalOpen(false)}
         />
       )}

@@ -24065,6 +24065,7 @@ One thing the tick does not say on its own: **the new game stores no end time.**
 - the Venue list cut off by the window (W1; fixed on dev, /review + commit owed);
 - two owner calls during W1 (committed `241e1bf5`);
 - the event window's pencil (committed `0366fb04`);
+- house league's windows (owner calls during W6, built 2026-10-09, commit owed): the title and × stay at the top and the buttons at the bottom, only the fields scroll, on every house-league window; Add Game's "Close" reads **Cancel** (a create form keeps its Cancel — the no-Close rule is a record window's); **"Cancel Game" is gone** (it only set Status to Cancelled, which the Status field does; to call a game off: Status → Cancelled → Save, the help says so). Design log 2026-10-09. **Re-check:** 2026 Fall House League → Schedule → Add Game in a short window: the title and Create Game stay on screen while the fields scroll; open an existing game: Cancel · Save, no Cancel Game.
 
 **Still the owner's call:** (1) whether a series edit should ask its scope from the pencil, so every moved date is checked before Save (found in W4; mockup offered), and (2) "for all" → "for every date". **Before 6a reaches production:** migration 319 goes on first (its plan's §6 Stage 6).
 
