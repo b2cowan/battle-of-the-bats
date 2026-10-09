@@ -7,8 +7,10 @@
  * step is open). Then:
  *   · `stay`      — we are on the top step's own entry (a forward back onto it, or a deeper pop
  *                   some other listener owns): nothing to do.
- *   · `close-top` — the top step's entry was popped (Back): hold the line by re-pushing its entry,
- *                   then ask the step to go back one level. The step's own exit consumes the entry.
+ *   · `close-top` — the top step's entry was popped (Back): hold the line by stepping FORWARD onto its
+ *                   entry again — a traversal, never a push (`useBackStep`'s header, 2026-10-09) — and
+ *                   ask the step to go back one level once it is standing there. The step's own exit
+ *                   consumes the entry.
  *   · `step-back` — a DEAD entry: one a step left behind when the page was navigated away from
  *                   inside it, or a forward onto a step that has since closed. A Back that lands
  *                   here would otherwise be a press that does nothing, so it is stepped over.
@@ -35,6 +37,17 @@ export function popVerdict(landed: number | null, top: number | null, landedAddr
   if (landed === null || landed < top) return 'close-top';
   if (landed === top) return 'stay';
   return 'step-back';
+}
+
+/**
+ * Where the step FORWARD landed, when a Back that left the top step's entry is answered by stepping onto that entry
+ * again (owner, §285 W1, 2026-10-09 — `useBackStep`'s header). `answer`: on the awaited step's own entry, with the step
+ * still open — the level answers the Back now. `ordinary`: anywhere else (another Back got there first, or the entry
+ * above was not the step's) — the landing is read like any other, and a `close-top` from it is answered by a push, once,
+ * rather than by stepping forward again: a press is answered, never chased.
+ */
+export function reentryLanding(landed: number | null, awaited: number, stillOpen: boolean): 'answer' | 'ordinary' {
+  return stillOpen && landed === awaited ? 'answer' : 'ordinary';
 }
 
 /** The step number an entry carries, or null for a page entry (or no state at all). */

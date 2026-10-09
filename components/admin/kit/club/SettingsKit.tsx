@@ -32,6 +32,7 @@ import { isClubPlan } from '@/lib/module-entitlements';
 import { STOCK_LOGOS, STOCK_LOGO_CATEGORIES, isStockLogoUnlocked } from '@/lib/stock-logos';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { stepOf } from '@/components/coaches/backStep';
 import KitDialog from './KitDialog';
 import PageNotice, { useNotice } from './PageNotice';
 import ck from './ClubKit.module.css';
@@ -151,7 +152,8 @@ export default function SettingsKit() {
     // changes asked "Save your changes?". A pop that lands ON the marked entry came from a window
     // above it (answered by the window's own step); a Back on the page itself lands BELOW it.
     // ⚠ READ THE LANDING OFF THE EVENT, never `history.state` (/review, 2026-09-28). The portal's Back
-    // stack answers the same popstate and, closing a window, re-pushes that window's entry at once —
+    // stack answers the same popstate and, closing a window, puts that window's entry back (a push until
+    // 2026-10-09; a step forward since, which lands here as a popstate of its own — ignored below) —
     // when its listener ran first (any window opened before this listener was last added: a window
     // earlier on the page, or an edit → Save → edit), `history.state` was already the window's, the
     // mark was missed, and a stray guard entry went on top that nothing ever consumed.
@@ -162,6 +164,9 @@ export default function SettingsKit() {
     window.history.pushState(GUARD_ENTRY, '', window.location.href);
     const onPop = (e: PopStateEvent) => {
       if ((e.state as { settingsGuard?: boolean } | null)?.settingsGuard) return;
+      // ⚠ A landing on a WINDOW's entry is the Back stack's own (2026-10-09): it answers a Back pressed in a window by
+      // stepping forward onto the window's entry again (`useBackStep`'s header) — never a Back on this page.
+      if (stepOf(e.state) !== null) return;
       window.history.pushState(GUARD_ENTRY, '', window.location.href);
       // Back while another window is open (the offline question, the stock logos, the deletion
       // request) stays put and asks nothing — never a second question stacked on the first.

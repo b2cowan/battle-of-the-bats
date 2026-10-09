@@ -9,7 +9,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { addressOf, clickLeavesPage, createPressGate, homeOf, popVerdict, PRESS_CLICK_GRACE_MS, stepOf } from '../../components/coaches/backStep.ts';
+import { addressOf, clickLeavesPage, createPressGate, homeOf, popVerdict, PRESS_CLICK_GRACE_MS, reentryLanding, stepOf } from '../../components/coaches/backStep.ts';
 import { readCode } from './_source-code.ts';
 
 describe('popVerdict — what a Back landing means', () => {
@@ -47,6 +47,24 @@ describe('popVerdict — what a Back landing means', () => {
     // screen is the truth, so landing there would leave the coach reading one thing at the address
     // of another. The exception belongs to "nothing is open", not to "it has an address".
     assert.equal(popVerdict(4, 3, true), 'step-back');
+  });
+});
+
+/**
+ * A Back is answered by stepping FORWARD onto the step's entry, never by a push (owner, §285 W1, 2026-10-09 — "the
+ * second closes the window and goes back to a previous page"). A push inside popstate has no user activation, and
+ * Chrome then marks every entry of the document skippable for its own Back button. `reentryLanding` reads where that
+ * step forward landed.
+ */
+describe('reentryLanding — where the step forward landed', () => {
+  it('on the awaited step\'s own entry, still open: the level answers the Back now', () => {
+    assert.equal(reentryLanding(3, 3, true), 'answer');
+  });
+  it('anywhere else — a page entry, another step\'s, or the awaited step since closed — is an ordinary landing', () => {
+    assert.equal(reentryLanding(null, 3, true), 'ordinary', 'another Back got there first');
+    assert.equal(reentryLanding(2, 3, true), 'ordinary', 'a lower entry');
+    assert.equal(reentryLanding(4, 3, true), 'ordinary', 'a leftover above it');
+    assert.equal(reentryLanding(3, 3, false), 'ordinary', 'it closed while the step forward was under way');
   });
 });
 
@@ -303,5 +321,34 @@ describe('the hook wires the gate — five listeners, and the marker kept while 
   });
   it('a registry kept across a hot reload gains the gate on first use', () => {
     assert.match(hook, /if \(!reg\.gate\) watchPresses\(reg\);/);
+  });
+  it('a Back is answered by stepping FORWARD onto the step\'s entry — a push only as the fallback (§285 W1, 2026-10-09)', () => {
+    const pop = hook.slice(hook.indexOf('function onPop('), hook.indexOf('function listen('));
+    // The close-top answer is a traversal.
+    assert.match(pop, /reg\.reentry = \{\s*step,\s*timer: window\.setTimeout\(/);
+    assert.match(pop, /window\.history\.forward\(\);\s*\}\s*$/);
+    // The landing is answered before anything else reads it.
+    assert.ok(pop.indexOf('reentryLanding(') < pop.indexOf('reg.buried'), 'the awaited landing is read first');
+    assert.match(pop, /if \(awaited && reentryLanding\(landedSeq, awaited\.step\.seq, reg\.steps\.includes\(awaited\.step\)\) === 'answer'\) \{\s*settleReentry\(reg\);\s*awaited\.step\.onBack\(\);\s*return;/);
+    // ⚠ Any other landing leaves it PENDING — an unrelated popstate in the gap must not swallow the press (/review):
+    // it is settled only on its own landing, on a close-top (answered by a push), or by its timer.
+    assert.equal(pop.match(/settleReentry\(reg\)/g)?.length, 2, 'settled in exactly two places in onPop');
+    assert.match(pop, /if \(awaited\) settleReentry\(reg\);\s*if \(awaited \|\| step\.address/);
+    // A push happens in exactly one place, the fallback — never straight from a popstate.
+    assert.doesNotMatch(pop, /pushStep\(/, 'onPop never pushes itself');
+    // The fallback timer answers only the level still on top (/review, 2026-10-09).
+    assert.match(pop, /if \(reg\.reentry\?\.step !== step\) return;\s*reg\.reentry = null;\s*if \(topStep\(reg\.steps\) === step\) answerByPush\(step\);/);
+    assert.match(hook, /function answerByPush\(step: Step\): void \{\s*pushStep\(step\);\s*step\.onBack\(\);\s*\}/);
+  });
+  it('a step that NAMES A PLACE still answers by a push — the router hears a step forward onto an address', () => {
+    // At the window the router's popstate listener runs first (registration order, whatever the capture flag), so it
+    // restored the address into useSearchParams and Allocations reopened the bill the Back had just left (driven on
+    // dev, 2026-10-09). An unaddressed entry has the page's own URL, and the same restore changes nothing.
+    const pop = hook.slice(hook.indexOf('function onPop('), hook.indexOf('function listen('));
+    assert.match(pop, /if \(awaited \|\| step\.address !== null \|\| !canStepForward\(\)\) \{ answerByPush\(step\); return; \}/);
+  });
+  it('the Settings page\'s unsaved-changes guard leaves a landing on a window\'s entry to the Back stack', () => {
+    const settings = readCode('components/admin/kit/club/SettingsKit.tsx');
+    assert.match(settings, /if \(\(e\.state as \{ settingsGuard\?: boolean \} \| null\)\?\.settingsGuard\) return;\s*if \(stepOf\(e\.state\) !== null\) return;/);
   });
 });

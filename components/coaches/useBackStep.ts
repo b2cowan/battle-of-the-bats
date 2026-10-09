@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { useLatestRef } from './useLatestRef';
-import { addressOf, clickLeavesPage, createPressGate, homeOf, popVerdict, stepOf, type PressGate } from './backStep';
+import { addressOf, clickLeavesPage, createPressGate, homeOf, popVerdict, reentryLanding, stepOf, type PressGate } from './backStep';
 
 /**
  * BACK GOES UP ONE LEVEL (owner, 2026-09-21 — "when I hit the back button it brings me back to
@@ -99,7 +99,26 @@ import { addressOf, clickLeavesPage, createPressGate, homeOf, popVerdict, stepOf
  * had just closed. The outer step is BURIED instead: when the browser lands on its entry, `onPop`
  * strips the address and steps back once more. Only a step that closed in the same batch counts
  * (the one on top is still `closing`); a page left through a link is `left`, and keeps its entries.
+ *
+ * ⚠⚠ A BACK IS ANSWERED BY STEPPING FORWARD, NEVER BY A PUSH (owner, §285 W1, 2026-10-09 — "the second
+ * closes the window and goes back to a previous page (not the ledger)"). `onPop` used to hold the line by
+ * re-pushing the step's entry inside `popstate`, with no user activation. Chrome's history manipulation
+ * intervention marks EVERY same-document entry skippable when a document adds an entry without an
+ * activation since its last traversal, and the browser's own Back button (and the phone's gesture) then
+ * skips them all: Back went up a level, and the next Back jumped past the page under the window, and past
+ * every page before it in the app, to whatever came before the app. `history.back()` is exempt, which is
+ * why no probe ever saw it. A TRAVERSAL creates no entry, so `onPop` now steps forward onto the step's own
+ * entry — still standing right above, since a Back only moved off it — and the level answers when it lands
+ * there (`reentry`, `reentryLanding`), in exactly the state the push used to leave. A push survives only as
+ * the fallback: nothing to step forward onto, no landing within `REENTRY_WAIT_MS`, a landing somewhere
+ * else (a press is answered once, never chased) — and a step that NAMES A PLACE, which the router would
+ * hear (see `onPop`; those windows keep Chrome's skip, owed). See
+ * https://chromium.googlesource.com/chromium/src/+/main/docs/history_manipulation_intervention.md
  */
+
+/** How long a step forward may take to land before the Back is answered the old way (a push). A same-document
+ *  traversal lands in a task or two; this only catches a forward with nowhere to go. */
+const REENTRY_WAIT_MS = 600;
 
 interface Step {
   seq: number;
@@ -117,6 +136,8 @@ interface Step {
 interface Registry {
   steps: Step[];
   nextSeq: number;
+  /** A Back being answered by stepping forward onto this step's entry, and the fallback's timer — see the header. */
+  reentry?: { step: Step; timer: number } | null;
   /** Steps that have closed and whose exit is held by the press gate — see the header. */
   closing?: Step[];
   /** Steps that closed UNDER another closing step in the same commit, their entry still to be
@@ -225,11 +246,40 @@ function restampStep(step: Step): void {
   window.history.replaceState(entryState(step), '', step.address ?? step.home);
 }
 
+/** The Navigation API's word on it where the browser has one; elsewhere assume yes and let `REENTRY_WAIT_MS` decide. */
+function canStepForward(): boolean {
+  const nav = (window as unknown as { navigation?: { canGoForward?: boolean } }).navigation;
+  return nav?.canGoForward ?? true;
+}
+
+/** A step forward is no longer awaited: its timer goes with it. */
+function settleReentry(reg: Registry): void {
+  if (!reg.reentry) return;
+  window.clearTimeout(reg.reentry.timer);
+  reg.reentry = null;
+}
+
+/** The old answer to a Back — push the step's entry back, then ask the level — kept for when stepping forward can't. */
+function answerByPush(step: Step): void {
+  pushStep(step);
+  step.onBack();
+}
+
 function onPop(reg: Registry): void {
-  const top = topStep(reg.steps);
   const landed = window.history.state;
-  // A step that closed under the one just consumed: its entry is consumed now, address first.
   const landedSeq = stepOf(landed);
+  // The step forward asked for below has landed: the level the Back was pressed in answers it now, standing on its own
+  // entry. Any other landing is read like any other and leaves it PENDING (/review: an unrelated popstate in the gap —
+  // a menu step's exit — must not swallow the press); it settles on its own landing, on a close-top below (answered by
+  // a push), or on its timer.
+  const awaited = reg.reentry ?? null;
+  if (awaited && reentryLanding(landedSeq, awaited.step.seq, reg.steps.includes(awaited.step)) === 'answer') {
+    settleReentry(reg);
+    awaited.step.onBack();
+    return;
+  }
+  const top = topStep(reg.steps);
+  // A step that closed under the one just consumed: its entry is consumed now, address first.
   const buried = landedSeq === null ? -1 : (reg.buried ?? []).findIndex(s => s.seq === landedSeq);
   if (buried >= 0) {
     const [step] = reg.buried!.splice(buried, 1);
@@ -237,14 +287,32 @@ function onPop(reg: Registry): void {
     window.history.back();
     return;
   }
-  const verdict = popVerdict(stepOf(landed), top?.seq ?? null, addressOf(landed) !== null);
+  const verdict = popVerdict(landedSeq, top?.seq ?? null, addressOf(landed) !== null);
   if (verdict === 'stay') return;
   if (verdict === 'step-back') { window.history.back(); return; }
   // close-top: hold the line first, so "Keep editing" — or a save in flight — leaves the coach
   // exactly where they were, with the entry still standing behind them (and, for a step that
-  // names a place, with its address back in the URL bar).
-  pushStep(top!);
-  top!.onBack();
+  // names a place, with its address back in the URL bar). By stepping FORWARD onto it — see the
+  // header: a push here is what made the browser's Back skip the page.
+  const step = top!;
+  // ⚠ A STEP THAT NAMES A PLACE STILL PUSHES (driven on dev, 2026-10-09). At the window the router's popstate listener
+  // runs first, in registration order whatever the capture flag, so a step forward onto an ADDRESSED entry is a
+  // traversal the router answers: it restores the address into `useSearchParams`, and a page that opens its window from
+  // its address (Allocations' `?allocation=…&bill=…`) reopened the level the Back had just left. An unaddressed entry
+  // has the page's own URL, so the same restore changes nothing. Owed: the addressed windows (Allocations, a bill, the
+  // coach schedule's game sheet) keep Chrome's skip until their pages tell their own address from a new ask.
+  if (awaited) settleReentry(reg);
+  if (awaited || step.address !== null || !canStepForward()) { answerByPush(step); return; }
+  reg.reentry = {
+    step,
+    timer: window.setTimeout(() => {
+      if (reg.reentry?.step !== step) return;
+      reg.reentry = null;
+      // Only while it is still the top: a step that opened in the wait pushed over the entry the forward was for (/review).
+      if (topStep(reg.steps) === step) answerByPush(step);
+    }, REENTRY_WAIT_MS),
+  };
+  window.history.forward();
 }
 
 function listen(reg: Registry): void {

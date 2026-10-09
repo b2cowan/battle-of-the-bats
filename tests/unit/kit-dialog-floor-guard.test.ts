@@ -56,7 +56,7 @@ describe('Settings\' unsaved-changes guard shares the Back stack', () => {
     assert.doesNotMatch(settings, /pushState\(null,/, 'an unmarked entry cannot be told apart from a window\'s tidy-up');
   });
 
-  it('the landing is read off the event — the Back stack may already have re-pushed a window\'s entry', () => {
+  it('the landing is read off the event — the Back stack may already have put a window\'s entry back (a push before 2026-10-09, a step forward since)', () => {
     assert.doesNotMatch(settings, /window\.history\.state as \{ settingsGuard/,
       'history.state is the window\'s entry when the stack\'s listener ran first — the mark is missed');
   });
