@@ -31,6 +31,12 @@ describe('the record window names its neighbours', () => {
     assert.match(css, /\.stepPos \{\s*grid-column: 2;/);
   });
 
+  it('draws no Previous · Next row for a list of one — "1 of 1" alone is not a row (owner, 2026-10-09)', () => {
+    assert.match(kit, /\{steps && \(steps\.prev \|\| steps\.next\) && \(\s*<nav /);
+    // With no foot and no row, the body is the window's last child: on a phone it keeps the home indicator clear itself.
+    assert.match(css, /\.form \.bodyWrap:last-child > \.body \{ padding-bottom: calc\(1rem \+ env\(safe-area-inset-bottom\)\); \}/);
+  });
+
   it('names the neighbour to a screen reader, not only on the button face', () => {
     assert.match(kit, /aria-label=\{`Previous \$\{steps\.noun\}, \$\{steps\.prev\.name\}`\}/);
     assert.match(kit, /aria-label=\{`Next \$\{steps\.noun\}, \$\{steps\.next\.name\}`\}/);

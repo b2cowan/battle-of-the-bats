@@ -212,8 +212,18 @@ describe('3. an allocation is ONE window, opened from every door (Asks 3–5)', 
     assert.match(win, /team=\{\{ id: theBill\.teamId, name: theBill\.teamName \}\}/);
   });
 
-  it('its Export stays, in the window\'s foot', () => {
-    assert.match(win, /footerStart=\{<AllocationExport read=\{read\} orgSlug=\{orgSlug\} \/>\}/);
+  it('its Export stays, at the right of the schedule line above the table — never a foot row of its own (owner, 2026-10-09)', () => {
+    assert.match(win, /<div className=\{own\.scheduleRow\}>[\s\S]{0,300}<AllocationExport read=\{read\} orgSlug=\{orgSlug\} \/>\s*<\/div>/);
+    assert.doesNotMatch(win, /footerStart=/);
+  });
+
+  it('a team\'s bill has one foot row at most: Remind alone, no Close; its account door at the payments\' foot (owner, 2026-10-09)', () => {
+    const bills = readCode(`${MONEY}/BillWindows.tsx`);
+    assert.match(bills, /footer=\{canRemind \? <button[^>]*onClick=\{onRemind\}>Remind \{bill\.teamName\}<\/button> : undefined\}/);
+    assert.doesNotMatch(bills, />Close<\/button>/, 'Close was a third way out (× and ← close it)');
+    assert.doesNotMatch(bills.slice(bills.indexOf('export function BillRoom'), bills.indexOf('function inDays')), /footerStart=/);
+    assert.match(bills, /<div className=\{moneyKit\.linesFoot\}>\s*<Link href=\{`\$\{accountingBase\}\/teams\/\$\{bill\.teamId\}`\} className=\{kit\.footLink\}>Open \{bill\.teamName\}’s account<\/Link>/);
+    assert.match(bills, /eyebrow=\{`\$\{allocation\.description\} · \$\{bandWord\}`\}/, 'the position is Previous · Next\'s to say');
   });
 
   it('a team\'s bill opens one level in, behind "← {the allocation}", at the same width', () => {

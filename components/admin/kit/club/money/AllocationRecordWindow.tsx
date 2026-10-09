@@ -13,9 +13,11 @@
  *                    tone), the schedule in one read line, the teams table unchanged from the page (Needs you / On
  *                    track, a chip only where there is something to say, the closing row; a row opens the bill), then
  *                    the club's note. The page's note under the table went (CD4: every list opens that way).
- *                    The foot: Export (the page's file, a row per installment — the one window in Accounting with an
- *                    Export, because which payment paid which installment has a reader) and, opened from the
- *                    Allocations list only, Previous · Next through it. ⚠ NO SEND REMINDERS (S3D-04: it was the whole
+ *                    Export (the page's file, a row per installment — the one window in Accounting with an Export,
+ *                    because which payment paid which installment has a reader) sits at the right of the schedule
+ *                    line, above the table, like every Export in the app (owner, 2026-10-09 — it had a foot row of
+ *                    its own). The foot is only Previous · Next, opened from the Allocations list; from any other
+ *                    door the window has no foot. ⚠ NO SEND REMINDERS (S3D-04: it was the whole
  *                    club's wave); the Allocations tab and each team's bill keep theirs.
  *                    The pencil (a money mover, an open year): the NAME and the NOTE, and nothing else — its terms
  *                    never change after it is made (Ask 7b). They save as you go (the floating pill); a blank name is
@@ -329,7 +331,6 @@ function AllocationLevel({ read, q, orgSlug, isPhone, steps, address, said, onSa
       status={editing
         ? <SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} />
         : said ? <NoticePill inline key={said} message={said} onDone={onSaidDone} /> : undefined}
-      footerStart={<AllocationExport read={read} orgSlug={orgSlug} />}
       steps={steps ? { prev: leaveStep(steps.prev), next: leaveStep(steps.next), position: steps.position, noun: 'allocation' } : undefined}
       address={address}
     >
@@ -365,11 +366,16 @@ function AllocationLevel({ read, q, orgSlug, isPhone, steps, address, said, onSa
           ]}
         />
       </div>
-      {isPhone ? (
-        <p className={ck.hint}>{schedule}</p>
-      ) : (
-        <dl className={fy.read}><dt>{W.scheduleLabel}</dt><dd>{schedule}</dd></dl>
-      )}
+      {/* Export at the right of the schedule line, directly above the table it exports — the app's one place for an
+          Export (owner, 2026-10-09, §285 W4: it had a whole foot row to itself). An icon on a phone (the shared menu's). */}
+      <div className={own.scheduleRow}>
+        {isPhone ? (
+          <p className={ck.hint}>{schedule}</p>
+        ) : (
+          <dl className={fy.read}><dt>{W.scheduleLabel}</dt><dd>{schedule}</dd></dl>
+        )}
+        <AllocationExport read={read} orgSlug={orgSlug} />
+      </div>
 
       <div className={`${repKit.tableFrame} ${repKit.deskOnly}`}>
         <table className={`${repKit.table} ${own.teams}`}>

@@ -170,6 +170,9 @@
   border-top: 1px solid var(--home-line);
 }
 .line:first-child { border-top: 0; }
+/* The card's foot: its door, olive, on the tap floor — the portal's card-foot door (kit.foot / kit.footLink). A team's
+   bill: "Open 13U AAA's account" (owner, 2026-10-09 — it had a window-foot row to itself). */
+.linesFoot { display: flex; padding: 0 0.85rem; border-top: 1px solid var(--home-line); }
 .lineMain { flex: 1; min-width: 0; }
 .lineTitle { font-weight: 650; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .lineSub { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }

@@ -301,4 +301,9 @@
   /* The head's ← goes up a level on a phone and names where (its label), so the named line would say it twice. */
   .form .namedBack { display: none; }
   .form .foot { padding-bottom: calc(0.85rem + env(safe-area-inset-bottom)); }
+  /* A form with NO foot and no Previous · Next row (a bill with nothing to remind, a list of one — 2026-10-09) ends at
+     its body, so the body keeps the home indicator clear itself; the save pill rises with it. */
+  .form .bodyWrap:last-child > .body { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+  .form .bodyWrap:last-child[data-has-status] > .body { padding-bottom: calc(3.75rem + env(safe-area-inset-bottom)); }
+  .form .bodyWrap:last-child > .status { bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
 }

@@ -26,6 +26,13 @@
 }
 .lockLineIcon { flex: none; margin-top: 2px; color: var(--text-tertiary); }
 
+/* The schedule line with Export at its right, directly above the teams table (owner, 2026-10-09: every Export in the
+   app sits above what it exports; this one had a foot row to itself). The read line keeps its own grid; the row
+   takes over its bottom margin so the space above the table is unchanged. */
+.scheduleRow { display: flex; align-items: center; gap: 0.75rem; margin: 0 0 0.6rem; }
+.scheduleRow > :first-child { flex: 1; min-width: 0; margin: 0; }
+.scheduleRow > :last-child { flex: none; }
+
 /* Next keeps its date and amount on one line at 800 px; Head coach is the column that gives way (the drawing). */
 .teams .next { white-space: nowrap; }
 /* A team's name stays on one line too ("13U AAA", not "13U" over "AAA") — the drawing's; Head coach wraps instead. */

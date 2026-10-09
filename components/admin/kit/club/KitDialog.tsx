@@ -40,7 +40,9 @@
  *     position between ("‹ Previous · Falcons U11 Girls · 3 of 8 · Next › · Ravens U11 Girls"; "3 of 8
  *     in U11 Girls" at a desk). Stepping keeps the window open, starts the next record at its top and
  *     puts the keyboard in the window. At either END of the list that button is ABSENT and the position
- *     keeps its place — the depth chart's player (register F-43) does exactly this. A window with
+ *     keeps its place — the depth chart's player (register F-43) does exactly this. With NO neighbour at
+ *     either end (a list of one) the row is not drawn at all: "1 of 1" on a row of its own said nothing
+ *     and took a phone's room (owner, 2026-10-09, §285 W8). It is still a record. A window with
  *     steps opens with the PANEL focused, never a field: a record is read first, and a phone must not
  *     open its keyboard on the name.
  *   - `KitTitleField` as the `title` — the record's name is its one editor (the bill room's title
@@ -279,7 +281,8 @@ export default function KitDialog({
             </div>
           )}
         </KitReasonSlot.Provider>
-        {steps && (
+        {/* A list of ONE has no neighbours: the row would hold only "1 of 1" (owner, 2026-10-09, §285 W8). */}
+        {steps && (steps.prev || steps.next) && (
           <nav className={`${styles.foot} ${styles.steps}`} aria-label={`Other ${steps.noun}s in this list`}>
             {steps.prev && (
               <button type="button" className={styles.step} onClick={() => step(steps.prev!)} disabled={busy}

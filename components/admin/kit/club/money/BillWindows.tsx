@@ -9,7 +9,8 @@
  *                the reference and who recorded it. "Record received" sits on each unpaid installment,
  *                OLIVE (it repeats down the rows — lime is one main action per screen). Named neighbours
  *                at its foot through the teams on the same band ("‹ 10U A · 1 of 3 · 16U Girls ›",
- *                2026-09-30). A quiet Undo, "Remind {team}" and the door to the team's account.
+ *                2026-09-30), drawn only when there is a neighbour. A quiet Undo; the door to the team's account
+ *                at the payments' foot; "Remind {team}" the window's one foot button (2026-10-09, no Close).
  *   record     — asks for the day (the club's), how (a dropdown) and the reference, and says what will
  *                be written and where, naming the team (J4-016). ONE database step behind it.
  *   confirm    — the same window, filled in from the coach's "sent" note (Ask 1).
@@ -96,10 +97,16 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
   const anyReceived = bill.installments.some(i => i.received && !i.received.locked);
   const lockedIn = bill.installments.find(i => i.received?.locked)?.received?.lockedIn ?? null;
   const owes = f.outstanding > 0;
+  // ⚖ ONE FOOT ROW AT MOST (owner, 2026-10-09, §285 W8: "not a huge fan of the format and size of this footer" — on a
+  // phone it was three rows, a quarter of the screen). The foot holds the bill's one act, Remind; with nothing to remind
+  // there is no foot. Close went: × (a desk) and ← (a phone) already close it, the reason Payees lost Done (3d Ask 2).
+  // The door to the team's account is the payments card's foot, the portal's card-foot door. The position left the
+  // eyebrow: Previous · Next says it, and with no neighbour there is nothing to say.
+  const canRemind = canMove && owes && bill.headCoaches.length > 0;
   return (
     <KitDialog
       kind="form"
-      eyebrow={`${allocation.description} · ${bandWord} · ${position}`}
+      eyebrow={`${allocation.description} · ${bandWord}`}
       title={bill.teamName}
       onClose={onClose}
       back={back}
@@ -108,13 +115,7 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
       status={status}
       address={address}
       steps={{ ...steps, position, positionWide: `${position} ${bandWord}`, noun: 'team' }}
-      footerStart={<Link href={`${accountingBase}/teams/${bill.teamId}`} className={kit.footLink}>Open {bill.teamName}’s account</Link>}
-      footer={
-        <>
-          {canMove && owes && bill.headCoaches.length > 0 && <button type="button" className="btn btn-outline" onClick={onRemind}>Remind {bill.teamName}</button>}
-          <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>
-        </>
-      }
+      footer={canRemind ? <button type="button" className="btn btn-outline" onClick={onRemind}>Remind {bill.teamName}</button> : undefined}
     >
       <div className={moneyKit.windowBand}>
         <MoneySummaryBand
@@ -150,6 +151,9 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
             </div>
           </div>
         ))}
+        <div className={moneyKit.linesFoot}>
+          <Link href={`${accountingBase}/teams/${bill.teamId}`} className={kit.footLink}>Open {bill.teamName}’s account</Link>
+        </div>
       </div>
       {canMove && anyReceived && (
         <p className={moneyKit.quietDoor}>
