@@ -11,6 +11,11 @@ import {
   updateRepTeamEvent,
 } from '@/lib/db';
 import { matchPlace } from '@/lib/coach-places';
+import { matchClubVenue } from '@/lib/where-field';
+import { clashesForSavedRepEvents, getClubVenueLibrary } from '@/lib/venue-clash-lookup';
+import { clubVenueFields } from '@/lib/rep-event-where';
+import { clashLine, clashLineText } from '@/lib/venue-clash-words';
+import type { RepTeamEvent } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageSchedule } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
@@ -90,6 +95,17 @@ export const POST = withObservability(async (req: Request,
   const liveEvents = await getRepTeamEvents(programYear.id);
   // The team's place book (mig 307): a row whose location matches a place by name takes its link.
   const places = await getRepTeamPlaces(team.id);
+  // The club's venues (Club Tier Stage 6a): a row whose location IS one of them by name — and is not one of the
+  // team's own places of that name, which wins (nothing is merged) — takes the club link, and its field cell picks
+  // the facility. That is what lets the import warn per row: a typed place is never compared.
+  // A club venue's own words are the record (the where rail's rule); a field cell that names none of its
+  // facilities is kept as the row's words, so nothing the sheet said is lost.
+  const club = await getClubVenueLibrary(ctx!.org);
+  const clubWhere = (location: string, field: string) => {
+    if (!club.inClub || matchPlace(places, location)) return null;
+    const hit = matchClubVenue(club.venues, location, field, team.sport);
+    return hit ? { ...clubVenueFields(hit.venue, hit.facility), fieldNumber: hit.facility?.name ?? (field.trim() || null) } : null;
+  };
   const existing: ExistingScheduleEvent[] = liveEvents.map(e => {
     const zoned = utcToZonedInputs(e.startsAt);
     return {
@@ -125,7 +141,8 @@ export const POST = withObservability(async (req: Request,
   // let a bulk write reach an organizer-owned game.
   const mirroredIds = new Set(existing.filter(e => e.isMirrored).map(e => e.id));
 
-  const results: { rowNumber: number; outcome: string; reason?: string; eventId?: string }[] = [];
+  const results: { rowNumber: number; outcome: string; reason?: string; eventId?: string; clash?: string }[] = [];
+  const saved: RepTeamEvent[] = [];
   let created = 0;
   let updated = 0;
 
@@ -148,12 +165,26 @@ export const POST = withObservability(async (req: Request,
         // A row whose location is one of the team's places takes the link, and the place's address
         // and usual field where the sheet is silent (D9) — a whole imported season map-linked at once.
         const place = matchPlace(places, row.location);
+        const onClub = clubWhere(row.location, row.field);
+        const stored = liveEvents.find(e => e.id === row.matchedEventId);
         if (row.location.trim()) changes.location = row.location.trim();
-        if (place) changes.placeId = place.id;
+        if (place) { changes.placeId = place.id; changes.orgVenueId = null; changes.orgVenueFacilityId = null; }
+        // A location that names neither a place nor a club venue moved the event off its club venue: a link left
+        // under new words would be checked against the diamond it no longer stands on.
+        else if (!onClub && row.location.trim() && stored?.orgVenueId) { changes.orgVenueId = null; changes.orgVenueFacilityId = null; }
         if (row.address.trim()) changes.locationAddress = row.address.trim();
         else if (place?.address) changes.locationAddress = place.address;
         if (row.arrival.trim()) changes.arrivalTime = row.arrival.trim();
         if (row.field.trim()) changes.fieldNumber = row.field.trim();
+        if (onClub) {
+          Object.assign(changes, onClub);
+          // A blank field cell is "not in this sheet" here too: an event staying on the same venue keeps its
+          // facility. (Moving to another venue can't keep one — it was the old venue's.)
+          if (!row.field.trim() && stored?.orgVenueId === onClub.orgVenueId) {
+            delete changes.orgVenueFacilityId;
+            delete changes.fieldNumber;
+          }
+        }
         if (row.uniform.trim()) changes.uniform = row.uniform.trim();
         if (r.opponent !== null) changes.opponent = r.opponent;
         if (r.homeAway !== null) changes.homeAway = r.homeAway as 'home' | 'away' | 'neutral';
@@ -165,10 +196,11 @@ export const POST = withObservability(async (req: Request,
           results.push({ rowNumber: row.rowNumber, outcome: 'unchanged', eventId: row.matchedEventId });
           continue;
         }
-        await updateRepTeamEvent(row.matchedEventId, changes);
+        saved.push(await updateRepTeamEvent(row.matchedEventId, changes));
         updated += 1;
         results.push({ rowNumber: row.rowNumber, outcome: 'updated', eventId: row.matchedEventId });
       } else {
+        const onClub = clubWhere(row.location, row.field);
         const event = await createRepTeamEvent({
           programYearId: programYear.id,
           teamId: team.id,
@@ -176,23 +208,35 @@ export const POST = withObservability(async (req: Request,
           eventType: r.eventType,
           name: r.name,
           startsAt: r.startsAt,
-          location: row.location.trim() || null,
-          locationAddress: row.address.trim() || matchPlace(places, row.location)?.address || null,
-          placeId: matchPlace(places, row.location)?.id ?? null,
+          ...(onClub ?? {
+            location: row.location.trim() || null,
+            locationAddress: row.address.trim() || matchPlace(places, row.location)?.address || null,
+            placeId: matchPlace(places, row.location)?.id ?? null,
+            fieldNumber: row.field.trim() || matchPlace(places, row.location)?.fieldNumber || null,
+          }),
           arrivalTime: row.arrival.trim() || null,
-          fieldNumber: row.field.trim() || matchPlace(places, row.location)?.fieldNumber || null,
           uniform: row.uniform.trim() || null,
           opponent: r.opponent,
           homeAway: (r.homeAway as 'home' | 'away' | 'neutral' | null) ?? null,
           isScrimmage: r.isScrimmage,
         });
         created += 1;
+        saved.push(event);
         results.push({ rowNumber: row.rowNumber, outcome: 'created', eventId: event.id });
       }
     } catch {
       // One bad row must not lose the other twenty-nine — record it and carry on.
       results.push({ rowNumber: row.rowNumber, outcome: 'failed', reason: 'We could not save this one.' });
     }
+  }
+
+  // A warning per row (Club Tier Stage 6a): every imported booking on one of the club's venues is checked, and the
+  // row says who holds the place then. Warns, never refuses — the rows are saved.
+  const clashes = await clashesForSavedRepEvents(ctx!.org.id, team.name, saved);
+  for (const r of results) {
+    const found = r.eventId ? clashes[r.eventId] : undefined;
+    const ev = found && saved.find(e => e.id === r.eventId);
+    if (found && ev) r.clash = clashLineText(clashLine(found, { sport: team.sport, venueName: ev.location ?? '', facilityName: ev.fieldNumber }));
   }
 
   // "Nothing changed" is a real, honest outcome — importing the same sheet twice is a no-op, not

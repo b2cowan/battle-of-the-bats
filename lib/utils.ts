@@ -148,6 +148,19 @@ export function formatTime(timeStr: string): string {
   return `${TO_12(h)}:${m} ${PERIOD(h)}`;
 }
 
+/**
+ * "5:30–7:30 p.m." · "10:00 a.m.–12:00 p.m." — a clock RANGE, the period said once when both ends share it
+ * (the house style's "8:00 a.m." rule, Club Tier Stage 6's drawings). Built from `formatTime`, never by hand:
+ * the period word stays the one formatter's. An end without a start reads as the start alone.
+ */
+export function formatTimeRange(start: string, end: string | null | undefined): string {
+  const a = formatTime(start);
+  const b = end ? formatTime(end) : '';
+  if (!a || !b) return a || b;
+  const pa = a.slice(-4), pb = b.slice(-4);
+  return pa === pb && (pa === 'a.m.' || pa === 'p.m.') ? `${a.slice(0, -5)}–${b}` : `${a}–${b}`;
+}
+
 /** "Today" / "Tomorrow" / short date (e.g. "Jul 16"), relative to a given
  *  YYYY-MM-DD reference date — the "next game" day label used across the
  *  fan-facing followed-team surfaces. */

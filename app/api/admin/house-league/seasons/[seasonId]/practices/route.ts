@@ -10,35 +10,11 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason } from '@/lib/league-season-scope';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
+import { clashReportForLeagueRows } from '@/lib/venue-clash-lookup';
+import { generateOccurrences } from '@/lib/league-practice-series';
 
-function generateOccurrences(
-  startDate: string,
-  endDate: string,
-  dayOfWeek: number,
-  startTime: string,
-  endTime: string,
-): { scheduledAt: string; endsAt: string }[] {
-  const result: { scheduledAt: string; endsAt: string }[] = [];
-  const end = new Date(endDate + 'T23:59:59');
-  const current = new Date(startDate + 'T00:00:00');
-  const daysUntil = (dayOfWeek - current.getDay() + 7) % 7;
-  current.setDate(current.getDate() + daysUntil);
-
-  while (current <= end) {
-    const dateStr = current.toISOString().slice(0, 10);
-    // J3-047: convert each occurrence's wall-clock (org zone, America/Toronto V1) to a
-    // correct UTC instant before it lands in timestamptz — naive strings were previously
-    // interpreted in the DB session zone (UTC on prod), shifting every practice 4–5h.
-    const scheduledAt = zonedWallClockToUtc(dateStr, startTime) ?? `${dateStr}T${startTime}:00`;
-    result.push({
-      scheduledAt,
-      // Overnight-aware: an end at/before the start rolls to the next day (see resolveEndInstant).
-      endsAt: resolveEndInstant(scheduledAt, dateStr, endTime) ?? `${dateStr}T${endTime}:00`,
-    });
-    current.setDate(current.getDate() + 7);
-  }
-  return result;
-}
+// The series generator moved to `lib/league-practice-series.ts` (Club Tier Stage 6a) — the window's live check
+// expands a series with the SAME function, so its line names exactly the dates this route writes.
 
 /** The team must live in this org's season — a foreign team id must read as "not found". */
 async function verifyTeamInSeason(teamId: string, seasonId: string) {
@@ -169,8 +145,11 @@ export const POST = withObservability(async (req: NextRequest,
   }
 
   const practices = await createPractices(inputs);
+  // Across programs (Club Tier Stage 6a): every date of a series against the club's other programs — warns only;
+  // the league's own refusal above is unchanged.
+  const crossProgram = await clashReportForLeagueRows(ctx.org.id, season, 'practice', practices);
   return NextResponse.json(
-    { practices, count: practices.length, warnings: check.warnings.map(w => w.message) },
+    { practices, count: practices.length, warnings: check.warnings.map(w => w.message), crossProgram },
     { status: 201 },
   );
 }, { route: '/api/admin/house-league/seasons/[seasonId]/practices' });

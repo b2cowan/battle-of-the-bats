@@ -25,10 +25,11 @@ import { formatVenueLocation } from './venue-label';
 import {
   findLeagueBookingConflicts,
   isBlockingConflict,
-  DEFAULT_LEAGUE_BOOKING_MINUTES,
   type LeagueBooking,
   type LeagueBookingConflict,
 } from './league-schedule-conflict';
+import { DEFAULT_BOOKING_MINUTES } from './booking-length';
+import { proveLibraryVenue } from './venue-clash-lookup';
 
 // Pure end-time resolution lives with the engine (unit-testable); routes import it from here.
 export { resolveEndInstant } from './league-schedule-conflict';
@@ -65,39 +66,18 @@ export async function resolveLeagueVenueSelection(args: {
     return { ok: true, value: { orgVenueId: null, orgVenueFacilityId: null, location: text } };
   }
 
-  const { data: venue } = await supabaseAdmin
-    .from('org_venues')
-    .select('id, org_id, name')
-    .eq('id', orgVenueId)
-    .single();
+  // The tenant check is the library's ONE proof (Club Tier Stage 6a, shared with the rep teams' resolver); the
+  // refusals keep house league's own words.
+  const proof = await proveLibraryVenue(orgId, orgVenueId, orgVenueFacilityId ?? null);
   // "not found" for a foreign org's venue too — don't confirm it exists.
-  if (!venue || venue.org_id !== orgId) {
-    return { ok: false, error: 'Venue not found.' };
-  }
-
-  if (!orgVenueFacilityId) {
-    return {
-      ok: true,
-      value: { orgVenueId: venue.id, orgVenueFacilityId: null, location: venue.name },
-    };
-  }
-
-  const { data: facility } = await supabaseAdmin
-    .from('org_venue_facilities')
-    .select('id, org_venue_id, org_id, name')
-    .eq('id', orgVenueFacilityId)
-    .single();
-  if (!facility || facility.org_id !== orgId || facility.org_venue_id !== venue.id) {
-    return { ok: false, error: 'Surface not found at that venue.' };
-  }
-
+  if (!proof.ok) return { ok: false, error: proof.missing === 'venue' ? 'Venue not found.' : 'Surface not found at that venue.' };
   return {
     ok: true,
     value: {
-      orgVenueId: venue.id,
-      orgVenueFacilityId: facility.id,
+      orgVenueId: proof.venue.id,
+      orgVenueFacilityId: proof.facility?.id ?? null,
       // Same shape resolveGameVenueLabel renders for tournaments — one label everywhere.
-      location: formatVenueLocation(venue.name, facility.name),
+      location: proof.facility ? formatVenueLocation(proof.venue.name, proof.facility.name) : proof.venue.name,
     },
   };
 }
@@ -113,6 +93,8 @@ export interface LeagueConflictReport {
   partnerLabel: string;
   /** ISO instant of the partner booking's start. */
   partnerStartsAt: string | null;
+  /** …and its end (null = no end recorded: the one booking length applies). The refusal line says the range. */
+  partnerEndsAt: string | null;
   /** The surface both bookings are on, as displayed. */
   fieldLabel: string;
   /** 'text' = both sides carry the same typed name rather than a picked field. */
@@ -161,6 +143,7 @@ function report(
     partnerKind: partner.kind,
     partnerLabel: partner.label ?? `another ${partnerNoun}`,
     partnerStartsAt: partner.startsAt ?? null,
+    partnerEndsAt: partner.endsAt ?? null,
     fieldLabel,
     matchedOn,
     message:
@@ -195,7 +178,7 @@ export async function checkLeagueBookings(args: {
   const DAY = 24 * 60 * 60_000;
   const rangeStart = new Date(Math.min(...starts) - DAY).toISOString();
   const rangeEnd = new Date(
-    Math.max(...starts) + DEFAULT_LEAGUE_BOOKING_MINUTES * 60_000 + DAY,
+    Math.max(...starts) + DEFAULT_BOOKING_MINUTES * 60_000 + DAY,
   ).toISOString();
 
   const [gamesRes, practicesRes] = await Promise.all([

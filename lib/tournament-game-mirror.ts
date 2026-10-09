@@ -164,6 +164,9 @@ export const MIRROR_SYNCED_COLUMNS: (keyof MirrorOwnedFields)[] = [
  */
 export const ORGANIZER_OWNED_API_FIELDS = [
   'name', 'startsAt', 'endsAt', 'location', 'locationAddress',
+  // WHERE, as a link (Club Tier Stage 6a): a mirrored game is never a coach's place nor a club booking of the
+  // team's own — the tournament game IS the booking (S6-06), and the clash check reads it from the tournament.
+  'placeId', 'orgVenueId', 'orgVenueFacilityId',
   'opponent', 'homeAway', 'teamScore', 'opponentScore', 'result', 'status',
 ] as const;
 

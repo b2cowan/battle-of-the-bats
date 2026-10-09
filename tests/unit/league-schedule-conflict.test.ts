@@ -8,9 +8,9 @@ import {
   bookingWindow,
   bookingKey,
   resolveEndInstant,
-  DEFAULT_LEAGUE_BOOKING_MINUTES,
   type LeagueBooking,
 } from '../../lib/league-schedule-conflict.ts';
+import { DEFAULT_BOOKING_MINUTES } from '../../lib/booking-length.ts';
 
 /**
  * House league clash detection — games and practices in ONE pool (owner decision
@@ -45,7 +45,7 @@ describe('bookingWindow', () => {
   });
 
   it('falls back to the default length when the end is missing or before the start', () => {
-    const def = DEFAULT_LEAGUE_BOOKING_MINUTES * 60_000;
+    const def = DEFAULT_BOOKING_MINUTES * 60_000;
     assert.equal(bookingWindow(game({ id: 'g1' }))!.endMs - Date.parse(T18), def);
     const inverted = bookingWindow(game({ id: 'g2', startsAt: T19, endsAt: T18 }))!;
     assert.equal(inverted.endMs - inverted.startMs, def);

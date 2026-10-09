@@ -1,16 +1,16 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-10-07 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-10-09 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 61 divergence(s)** across dev/prod.
+**⚠️ 76 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 2 | 0 | — |
-| Columns | 26 | 0 | 0 |
-| Indexes | 12 | 1 | 0 |
-| Constraints | 12 | 0 | — |
-| RLS / CHECK | 7 | 0 | 0 (RLS state) |
+| Columns | 30 | 0 | 0 |
+| Indexes | 18 | 1 | 0 |
+| Constraints | 16 | 0 | — |
+| RLS / CHECK | 8 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (2)
@@ -21,7 +21,7 @@
 _none_
 
 ## Columns
-### Only in DEV (26)
+### Only in DEV (30)
 - `accounting_entries.written_on`
 - `org_budget_lines.fiscal_year_id`
 - `org_fiscal_year_reopenings.fiscal_year_id`
@@ -48,6 +48,10 @@ _none_
 - `organizations.fiscal_first_month`
 - `rep_allocation_installments.carried_by_program_year_id`
 - `rep_cost_allocations.notes`
+- `rep_team_events.org_venue_facility_id`
+- `rep_team_events.org_venue_id`
+- `rep_tryout_sessions.org_venue_facility_id`
+- `rep_tryout_sessions.org_venue_id`
 
 ### Only in PROD (0)
 _none_
@@ -56,7 +60,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (12)
+### Only in DEV (18)
 - `org_budget_lines_fiscal_year_idx`
 - `org_budget_lines_one_word_per_fiscal_year`
 - `org_fiscal_year_reopenings_by_idx`
@@ -69,6 +73,12 @@ _none_
 - `org_fiscal_years_one_start`
 - `org_fiscal_years_pkey`
 - `rep_allocation_installments_carried_by_idx`
+- `rep_team_events_club_booking_idx`
+- `rep_team_events_org_venue_facility_idx`
+- `rep_team_events_org_venue_idx`
+- `rep_tryout_sessions_club_booking_idx`
+- `rep_tryout_sessions_org_venue_facility_idx`
+- `rep_tryout_sessions_org_venue_idx`
 
 ### Only in PROD (1)
 - `org_budget_lines_one_line_per_item`
@@ -77,7 +87,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (12)
+### Only in DEV (16)
 - `org_budget_lines.org_budget_lines_fiscal_year_id_fkey`
 - `org_fiscal_year_reopenings.org_fiscal_year_reopenings_fiscal_year_id_fkey`
 - `org_fiscal_year_reopenings.org_fiscal_year_reopenings_org_id_fkey`
@@ -90,6 +100,10 @@ _none_
 - `org_fiscal_years.org_fiscal_years_org_id_fkey`
 - `org_fiscal_years.org_fiscal_years_pkey`
 - `rep_allocation_installments.rep_allocation_installments_carried_by_program_year_id_fkey`
+- `rep_team_events.rep_team_events_org_venue_facility_id_fkey`
+- `rep_team_events.rep_team_events_org_venue_id_fkey`
+- `rep_tryout_sessions.rep_tryout_sessions_org_venue_facility_id_fkey`
+- `rep_tryout_sessions.rep_tryout_sessions_org_venue_id_fkey`
 
 ### Only in PROD (0)
 _none_
@@ -98,7 +112,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (7)
+### CHECK only in DEV (8)
 - `org_fiscal_year_reopenings.org_fiscal_year_reopenings_reason_check`
 - `org_fiscal_years.org_fiscal_years_close_whole`
 - `org_fiscal_years.org_fiscal_years_name_check`
@@ -106,6 +120,7 @@ _none_
 - `org_fiscal_years.org_fiscal_years_whole_months`
 - `organizations.organizations_fiscal_first_month_check`
 - `rep_cost_allocations.rep_cost_allocations_notes_length_check`
+- `rep_team_events.rep_team_events_place_or_club_venue`
 
 ### CHECK only in PROD (0)
 _none_

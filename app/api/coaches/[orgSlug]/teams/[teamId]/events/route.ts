@@ -20,7 +20,8 @@ import {
 import type { RepEventType } from '@/lib/types';
 import { sanitizeResources } from '@/lib/rep-event-resources';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
-import { resolvePlaceId } from '@/lib/rep-event-places';
+import { resolveRepEventWhere } from '@/lib/rep-event-where';
+import { clashesForSavedRepEvents, getClubVenuesForTeam } from '@/lib/venue-clash-lookup';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewSchedule, canManageSchedule } from '@/lib/coach-capabilities';
 import { syncTournamentGameMirrorSafely } from '@/lib/rep-tournament-game-mirror';
@@ -108,12 +109,17 @@ export const GET = withObservability(async (req: Request,
   // `schedule` capability already required for this whole route.
   // The place book rides the same read (mig 307) — the form's Location picker and the event
   // page's note both want it, and this route is already the schedule's one round trip.
-  const [tags, tagsByEventId, awardCountByEventId, places] = await Promise.all([
+  // The club's venues (Club Tier Stage 6a, Ask 1) ride the same read: the Venue field lists them above the team's
+  // places, read-only, and only in a club with a Venue library — `inClub: false` keeps a team outside a club's
+  // picker exactly as built. The usual facility per venue is the dropdown's opening pick (Ask 2) — read only in a club.
+  const [tags, tagsByEventId, awardCountByEventId, places, clubBook] = await Promise.all([
     getRepTeamTagLibrary(teamId, 'game', ctx.org.id),
     getRepTeamEventTagsMap(events.map(e => e.id)),
     getRepEventAwardCountsMap(events.map(e => e.id)),
     getRepTeamPlaces(teamId),
+    getClubVenuesForTeam(ctx.org, teamId),
   ]);
+  const { usualFacilityByVenue, ...clubVenues } = clubBook;
   // lineupStatusByEvent is OMITTED (not {}) when the caller can't see lineups, so a client with a
   // stale capability cache can tell "no lineup visibility" apart from "no lineups saved" and
   // render no readiness badges instead of a false "Not started" on every game.
@@ -125,6 +131,8 @@ export const GET = withObservability(async (req: Request,
     tagsByEventId,
     awardCountByEventId,
     places,
+    clubVenues,
+    usualFacilityByVenue,
     // The team's arrival habit (mig 307) — what a NEW game / practice's Arrival starts at.
     arrivalDefaults: { game: team.arrivalBeforeGameMin, practice: team.arrivalBeforePracticeMin },
     ...(lineupStatusByEvent ? { lineupStatusByEvent } : {}),
@@ -150,11 +158,7 @@ export const POST = withObservability(async (req: Request,
     description = null,
     startsAt,
     endsAt = null,
-    location = null,
-    locationAddress = null,
-    placeId = null,
     arrivalTime = null,
-    fieldNumber = null,
     uniform = null,
     opponent = null,
     homeAway = null,
@@ -166,8 +170,11 @@ export const POST = withObservability(async (req: Request,
   // `scrimmageFlagFor`, which the db layer applies again on write.
   const isScrimmage = scrimmageFlagFor(body.eventType, body.isScrimmage);
   const resources = sanitizeResources(body.resources);
-  // The place link, proved to be this team's (mig 307) — a stray id is dropped, the text stays.
-  const validPlaceId = (await resolvePlaceId(team.id, placeId)) ?? null;
+  // WHERE (Club Tier Stage 6a, Ask 13): one of the club's venues (proved, its words copied), the team's own place
+  // (proved to be this team's — a stray id is dropped, the text stays), or typed words. Never both a place and a
+  // club venue. A venue that isn't this club's is refused rather than dropped: it would book someone else's diamond.
+  const where = await resolveRepEventWhere({ org: ctx.org, teamId: team.id, body, partial: false });
+  if (!where.ok) return NextResponse.json({ error: where.error }, { status: 400 });
 
   if (!eventType || !name?.trim()) {
     return NextResponse.json({ error: 'eventType and name are required' }, { status: 400 });
@@ -239,11 +246,8 @@ export const POST = withObservability(async (req: Request,
         description: description?.trim() || null,
         startsAt: `${occ.date}T${startTime}`,
         endsAt: endTime ? `${occ.date}T${endTime}` : null,
-        location: location?.trim() || null,
-        locationAddress: locationAddress?.trim() || null,
-        placeId: validPlaceId,
+        ...where.fields,
         arrivalTime: arrivalTime?.trim() || null,
-        fieldNumber: fieldNumber?.trim() || null,
         uniform: isGame ? (uniform?.trim() || null) : null,
         resources: resources.length ? resources : undefined,
         opponent: isGame ? rowOpponent : null,
@@ -261,7 +265,10 @@ export const POST = withObservability(async (req: Request,
     const [anchor] = await createRepTeamEvents([rows[0]]);
     const children = rows.length > 1 ? await createRepTeamEvents(rows.slice(1)) : [];
     const events = [anchor, ...children];
-    return NextResponse.json({ events, count: events.length }, { status: 201 });
+    // Every date checked (Ask 5): the response marks each clashing date, as the form's list did before Save — a
+    // booking made a moment earlier still comes back. Warns, never refuses: the series is saved.
+    const clashes = await clashesForSavedRepEvents(ctx.org.id, team.name, events);
+    return NextResponse.json({ events, count: events.length, clashes }, { status: 201 });
   }
 
   if (!startsAt) {
@@ -287,11 +294,8 @@ export const POST = withObservability(async (req: Request,
     description: description?.trim() || null,
     startsAt,
     endsAt: endsAt || null,
-    location: location?.trim() || null,
-    locationAddress: locationAddress?.trim() || null,
-    placeId: validPlaceId,
+    ...where.fields,
     arrivalTime: arrivalTime?.trim() || null,
-    fieldNumber: fieldNumber?.trim() || null,
     uniform: uniform?.trim() || null,
     resources: resources.length ? resources : undefined,
     opponent: opponent?.trim() || null,
@@ -304,5 +308,8 @@ export const POST = withObservability(async (req: Request,
     await setRepTeamEventTagsOfKind(event.id, 'game', tagIds);
   }
 
-  return NextResponse.json({ event }, { status: 201 });
+  // The clash check, on the server, after the save (Asks 4–5): the same findings the form's line showed, read
+  // again so a booking made a moment earlier still comes back. Warns, never refuses.
+  const clashes = (await clashesForSavedRepEvents(ctx.org.id, team.name, [event]))[event.id] ?? [];
+  return NextResponse.json({ event, clashes }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events' });

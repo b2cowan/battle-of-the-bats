@@ -5131,8 +5131,8 @@ a.oneChip:hover { border-color: currentColor; }
    Arrival & Places D4). The "Recent" chips under Location, derived from past events. They carried
    the address of the MOST RECENT event with that name — measured on both databases the day they
    retired: not one event held an address — and never the diamond. The place book (mig 307) is the
-   list now, most recently used first, inside the Location picker (`PlaceCombobox`, which wears the
-   tag combobox's rules below). */
+   list now, most recently used first, inside the Venue field (`components/venue/WhereField.tsx`, Club Tier
+   Stage 6a — which retired `PlaceCombobox` on 2026-10-08 and lists the club’s venues above the places). */
 
 /* ── Coach tag picker (autocomplete-or-create chips, Coach Tags Phase 1) ──────
    Mirrored the retired Recent-location chips' tap-to-fill idiom, but chips here are multi-select
@@ -9694,6 +9694,10 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .occRow .input { flex: 1; min-width: 0; }
 
 .occPlain { flex: 1; font-size: var(--type-support); color: var(--text-tertiary); }
+/* Club Tier Stage 6a (Ask 5): a series date that clashes says who has the place that night — amber, in the row the
+   coach already reviews; under the opponent box on a game series. */
+.occMark { color: var(--warning-strong, var(--warning)); font-size: var(--type-support); }
+.occCol { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 
 .occRemoved {
   flex: 1;

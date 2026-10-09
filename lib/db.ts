@@ -355,6 +355,10 @@ export async function cloneTournament(
             name: venue.name,
             address: venue.address,
             notes: venue.notes,
+            // The link to the club's library survives a clone (S6-04, Club Tier Stage 6a): the clash check reads it,
+            // and a clone is always the same club's (the source is read by org above). ⚠ The clone still copies NO
+            // facilities — recorded for Tournament Stage 5, which redraws setup; not fixed here.
+            source_org_venue_id: venue.source_org_venue_id ?? null,
           })))
           .select('id');
         if (insertError) throw insertError;
@@ -739,7 +743,10 @@ export async function populateTournamentFrom(
         name: v.name,
         address: v.address,
         notes: v.notes,
-        // source_org_venue_id intentionally not copied — new tournament gets a fresh local copy
+        // The library link is KEPT (S6-04, Club Tier Stage 6a). It used to be dropped "for a fresh local copy" — but
+        // the copy is a new local row either way; the link only records which of the club's venues it is, which is
+        // what the cross-program clash check reads. Both tournaments are this club's (read by org above).
+        source_org_venue_id: v.source_org_venue_id ?? null,
       }))
     ).select('id');
     if (error) throw error;
@@ -767,7 +774,8 @@ export async function populateTournamentFrom(
             facility_type: f.facility_type,
             display_order: f.display_order,
             notes:         f.notes ?? null,
-            // source_org_facility_id intentionally not copied
+            // Kept with its venue's (S6-04): the facility's link is what makes a game on it an exact clash.
+            source_org_facility_id: f.source_org_facility_id ?? null,
           }));
 
         if (facilityRows.length) {
@@ -4638,6 +4646,8 @@ function mapRepTryoutSession(r: any): RepTryoutSession {
     location: r.location ?? null,
     locationAddress: r.location_address ?? null,
     fieldNumber: r.field_number ?? null,
+    orgVenueId: r.org_venue_id ?? null,
+    orgVenueFacilityId: r.org_venue_facility_id ?? null,
     label: r.label ?? null,
     status: r.status ?? 'scheduled',
     createdAt: r.created_at,
@@ -5074,6 +5084,8 @@ export async function createRepTryoutSession(fields: {
   location?: string | null;
   locationAddress?: string | null;
   fieldNumber?: string | null;
+  orgVenueId?: string | null;
+  orgVenueFacilityId?: string | null;
   label?: string | null;
 }): Promise<RepTryoutSession> {
   const { data, error } = await supabaseAdmin
@@ -5088,6 +5100,8 @@ export async function createRepTryoutSession(fields: {
       location: fields.location ?? null,
       location_address: fields.locationAddress ?? null,
       field_number: fields.fieldNumber ?? null,
+      org_venue_id: fields.orgVenueId ?? null,
+      org_venue_facility_id: fields.orgVenueFacilityId ?? null,
       label: fields.label ?? null,
     })
     .select()
@@ -5104,6 +5118,8 @@ export async function updateRepTryoutSession(
     location?: string | null;
     locationAddress?: string | null;
     fieldNumber?: string | null;
+    orgVenueId?: string | null;
+    orgVenueFacilityId?: string | null;
     label?: string | null;
     status?: 'scheduled' | 'cancelled';
   },
@@ -5114,6 +5130,8 @@ export async function updateRepTryoutSession(
   if (fields.location !== undefined) patch.location = fields.location;
   if (fields.locationAddress !== undefined) patch.location_address = fields.locationAddress;
   if (fields.fieldNumber !== undefined) patch.field_number = fields.fieldNumber;
+  if (fields.orgVenueId !== undefined) patch.org_venue_id = fields.orgVenueId;
+  if (fields.orgVenueFacilityId !== undefined) patch.org_venue_facility_id = fields.orgVenueFacilityId;
   if (fields.label !== undefined) patch.label = fields.label;
   if (fields.status !== undefined) patch.status = fields.status;
   const { data, error } = await supabaseAdmin
@@ -5968,6 +5986,9 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     location: r.location ?? null,
     locationAddress: r.location_address ?? null,
     placeId: r.place_id ?? null,
+    // The club's venue + facility (mig 319). Degrades to null before the migration.
+    orgVenueId: r.org_venue_id ?? null,
+    orgVenueFacilityId: r.org_venue_facility_id ?? null,
     arrivalTime: r.arrival_time ?? null,
     fieldNumber: r.field_number ?? null,
     uniform: r.uniform ?? null,
@@ -6079,6 +6100,9 @@ export interface CreateRepTeamEventFields {
   locationAddress?: string | null;
   /** The place the location was picked from (mig 307) — proved to be this team's by the route. */
   placeId?: string | null;
+  /** The club's venue + facility (mig 319) — proved to be the event's own club's by `resolveClubVenueSelection`. */
+  orgVenueId?: string | null;
+  orgVenueFacilityId?: string | null;
   arrivalTime?: string | null;
   fieldNumber?: string | null;
   uniform?: string | null;
@@ -6110,6 +6134,8 @@ export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Prom
       location: fields.location ?? null,
       location_address: fields.locationAddress ?? null,
       place_id: fields.placeId ?? null,
+      org_venue_id: fields.orgVenueId ?? null,
+      org_venue_facility_id: fields.orgVenueFacilityId ?? null,
       arrival_time: fields.arrivalTime ?? null,
       field_number: fields.fieldNumber ?? null,
       uniform: fields.uniform ?? null,
@@ -6146,6 +6172,8 @@ export async function createRepTeamEvents(rows: CreateRepTeamEventFields[]): Pro
       location: f.location ?? null,
       location_address: f.locationAddress ?? null,
       place_id: f.placeId ?? null,
+      org_venue_id: f.orgVenueId ?? null,
+      org_venue_facility_id: f.orgVenueFacilityId ?? null,
       arrival_time: f.arrivalTime ?? null,
       field_number: f.fieldNumber ?? null,
       uniform: f.uniform ?? null,
@@ -6174,6 +6202,8 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   location?: string | null;
   locationAddress?: string | null;
   placeId?: string | null;
+  orgVenueId?: string | null;
+  orgVenueFacilityId?: string | null;
   arrivalTime?: string | null;
   fieldNumber?: string | null;
   uniform?: string | null;
@@ -6195,6 +6225,8 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   if (fields.location !== undefined)    patch.location = fields.location;
   if (fields.locationAddress !== undefined) patch.location_address = fields.locationAddress;
   if (fields.placeId !== undefined)     patch.place_id = fields.placeId;
+  if (fields.orgVenueId !== undefined)  patch.org_venue_id = fields.orgVenueId;
+  if (fields.orgVenueFacilityId !== undefined) patch.org_venue_facility_id = fields.orgVenueFacilityId;
   if (fields.arrivalTime !== undefined) patch.arrival_time = fields.arrivalTime;
   if (fields.fieldNumber !== undefined) patch.field_number = fields.fieldNumber;
   if (fields.uniform !== undefined)     patch.uniform = fields.uniform;
@@ -6320,7 +6352,10 @@ export async function getRepTeamEventsWithPracticePlans(
 // applied to each occurrence while PRESERVING that occurrence's own date (the series keeps its
 // per-week dates, only the time-of-day shifts). Occurrence dates are never bulk-changed. Resolves
 // occurrences as {anchor row id} ∪ {rows whose recurrence_parent_id = anchor} so a corrected series
-// is fully covered. Returns the number of occurrences updated.
+// is fully covered. Returns every occurrence it wrote, as stored (the clash check reads their new times).
+// ⚠ S6-05 (Club Tier Stage 6a, 2026-10-08): the place LINK and the club-venue links ride with the words. This used
+// to rewrite location / location_address on every date and leave each date's old place_id behind, so the link
+// and the words disagreed for every date after the first — and with club venues the venue link would have too.
 export async function updateRepTeamEventSeries(
   anchorId: string,
   scope: 'all' | 'remaining',
@@ -6330,6 +6365,9 @@ export async function updateRepTeamEventSeries(
     description?: string | null;
     location?: string | null;
     locationAddress?: string | null;
+    placeId?: string | null;
+    orgVenueId?: string | null;
+    orgVenueFacilityId?: string | null;
     fieldNumber?: string | null;
     uniform?: string | null;
     resources?: RepEventResource[];
@@ -6340,7 +6378,7 @@ export async function updateRepTeamEventSeries(
     startTime?: string | null; // 'HH:mm' — applied to each occurrence's own date
     endTime?: string | null;   // 'HH:mm' — applied only when provided (empty leaves ends untouched)
   },
-): Promise<number> {
+): Promise<RepTeamEvent[]> {
   let q = supabaseAdmin
     .from('rep_team_events')
     .select('id, starts_at')
@@ -6354,6 +6392,9 @@ export async function updateRepTeamEventSeries(
   if (fields.description !== undefined)     base.description = fields.description;
   if (fields.location !== undefined)        base.location = fields.location;
   if (fields.locationAddress !== undefined) base.location_address = fields.locationAddress;
+  if (fields.placeId !== undefined)         base.place_id = fields.placeId;
+  if (fields.orgVenueId !== undefined)      base.org_venue_id = fields.orgVenueId;
+  if (fields.orgVenueFacilityId !== undefined) base.org_venue_facility_id = fields.orgVenueFacilityId;
   if (fields.fieldNumber !== undefined)     base.field_number = fields.fieldNumber;
   if (fields.uniform !== undefined)         base.uniform = fields.uniform;
   if (fields.resources !== undefined)       base.resources = fields.resources;
@@ -6362,6 +6403,7 @@ export async function updateRepTeamEventSeries(
   if (fields.isScrimmage !== undefined)     base.is_scrimmage = fields.isScrimmage;
   if (fields.arrivalTime !== undefined)     base.arrival_time = fields.arrivalTime;
 
+  const written: RepTeamEvent[] = [];
   for (const row of rows ?? []) {
     const patch: Record<string, unknown> = { ...base };
     // The occurrence's own calendar day IN THE ORG'S ZONE — never `starts_at.slice(0, 10)`, which
@@ -6374,10 +6416,11 @@ export async function updateRepTeamEventSeries(
     const nextEnd = fields.endTime ? zonedWallClockToUtc(date, fields.endTime) : null;
     if (nextStart) patch.starts_at = nextStart;
     if (nextEnd)   patch.ends_at = nextEnd;
-    const { error: uErr } = await supabaseAdmin.from('rep_team_events').update(patch).eq('id', row.id);
+    const { data: updated, error: uErr } = await supabaseAdmin.from('rep_team_events').update(patch).eq('id', row.id).select().single();
     if (uErr) throw uErr;
+    written.push(mapRepTeamEvent(updated));
   }
-  return (rows ?? []).length;
+  return written;
 }
 
 export async function deleteRepTeamEvent(eventId: string): Promise<void> {

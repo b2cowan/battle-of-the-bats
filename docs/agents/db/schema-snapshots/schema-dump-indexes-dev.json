@@ -2876,6 +2876,11 @@
   },
   {
     "tablename": "rep_team_events",
+    "indexname": "rep_team_events_club_booking_idx",
+    "indexdef": "CREATE INDEX rep_team_events_club_booking_idx ON public.rep_team_events USING btree (org_id, starts_at) WHERE (org_venue_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_events",
     "indexname": "rep_team_events_family_shared_idx",
     "indexdef": "CREATE INDEX rep_team_events_family_shared_idx ON public.rep_team_events USING btree (team_id) WHERE (family_shared_at IS NOT NULL)"
   },
@@ -2883,6 +2888,16 @@
     "tablename": "rep_team_events",
     "indexname": "rep_team_events_org_id_idx",
     "indexdef": "CREATE INDEX rep_team_events_org_id_idx ON public.rep_team_events USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_events",
+    "indexname": "rep_team_events_org_venue_facility_idx",
+    "indexdef": "CREATE INDEX rep_team_events_org_venue_facility_idx ON public.rep_team_events USING btree (org_venue_facility_id) WHERE (org_venue_facility_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_events",
+    "indexname": "rep_team_events_org_venue_idx",
+    "indexdef": "CREATE INDEX rep_team_events_org_venue_idx ON public.rep_team_events USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
   },
   {
     "tablename": "rep_team_events",
@@ -3596,8 +3611,23 @@
   },
   {
     "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_club_booking_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_club_booking_idx ON public.rep_tryout_sessions USING btree (org_id, starts_at) WHERE (org_venue_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
     "indexname": "rep_tryout_sessions_org_idx",
     "indexdef": "CREATE INDEX rep_tryout_sessions_org_idx ON public.rep_tryout_sessions USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_org_venue_facility_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_org_venue_facility_idx ON public.rep_tryout_sessions USING btree (org_venue_facility_id) WHERE (org_venue_facility_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_org_venue_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_org_venue_idx ON public.rep_tryout_sessions USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
   },
   {
     "tablename": "rep_tryout_sessions",

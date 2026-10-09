@@ -49,7 +49,7 @@ import ScheduleEventForm, {
   addHoursLocal, DEFAULT_EVENT_HOUR, seedAddForm, seedEditForm,
   type EventForm, type ScheduleFormInit,
 } from '@/components/coaches/ScheduleEventForm';
-import type {
+import type { ClubVenueOption,
   RepTeamEvent,
   RepTeamEventAttendance,
   RepTryoutSession,
@@ -193,6 +193,9 @@ export default function CoachesSchedulePage({
   const [teamTags, setTeamTags] = useState<RepTeamTag[]>([]);
   // The place book and the team's arrival habit (mig 307) ride the events read.
   const [places, setPlaces] = useState<RepTeamPlace[]>([]);
+  // The club's venues (Club Tier Stage 6a, Ask 1) — the Venue field lists them above the places, in a club only.
+  const [clubVenues, setClubVenues] = useState<{ inClub: boolean; venues: ClubVenueOption[] }>({ inClub: false, venues: [] });
+  const [usualFacilityByVenue, setUsualFacilityByVenue] = useState<Record<string, string>>({});
   const [arrivalDefaults, setArrivalDefaults] = useState<{ game: number | null; practice: number | null }>({ game: null, practice: null });
   const [tagsByEventId, setTagsByEventId] = useState<Record<string, string[]>>({});
   // Player Awards (Phase 2): the team's award-type library, every award given this season
@@ -357,6 +360,8 @@ export default function CoachesSchedulePage({
       setTeamTags(data.tags ?? []);
       setTagsByEventId(data.tagsByEventId ?? {});
       setPlaces(Array.isArray(data.places) ? data.places : []);
+      setClubVenues(data.clubVenues?.inClub ? { inClub: true, venues: data.clubVenues.venues ?? [] } : { inClub: false, venues: [] });
+      setUsualFacilityByVenue(data.usualFacilityByVenue ?? {});
       if (data.arrivalDefaults) setArrivalDefaults({ game: data.arrivalDefaults.game ?? null, practice: data.arrivalDefaults.practice ?? null });
       // Tryout sessions are projected onto the calendar as read-only markers. Non-fatal: if this
       // fails the schedule still works, tryout dates just won't show.
@@ -1104,6 +1109,8 @@ export default function CoachesSchedulePage({
           init={formInit}
           events={events}
           places={places}
+          clubVenues={clubVenues}
+          usualFacilityByVenue={usualFacilityByVenue}
           teamTags={teamTags}
           onTagCreated={tag => setTeamTags(t => [...t, tag])}
           bookEntries={bookEntries}

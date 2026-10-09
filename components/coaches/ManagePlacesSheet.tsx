@@ -80,6 +80,7 @@ export default function ManagePlacesSheet({
   if (editing) {
     return (
       <PlaceSheet
+        sport={sport}
         basePath={basePath}
         editing={editing}
         upcomingCount={upcoming}

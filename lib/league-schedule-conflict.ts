@@ -16,7 +16,7 @@
  * - League rows are timestamptz instants, not date+"HH:MM" strings, so windows are compared
  *   in epoch ms — no timezone re-derivation.
  * - League has no per-division timing config. A game's window is `scheduled_at → ends_at`,
- *   falling back to {@link DEFAULT_LEAGUE_BOOKING_MINUTES} when no end is set (same for a
+ *   falling back to {@link DEFAULT_BOOKING_MINUTES} (the platform's one booking length) when no end is set (same for a
  *   practice missing `ends_at`).
  * - No buffer severity. League play has no configured turnaround time; inventing one would
  *   manufacture warnings. Overlap is the only finding.
@@ -36,9 +36,8 @@ import {
 // Relative + explicit extension for the same reason as above: value imports must resolve
 // under the plain-node test runner.
 import { zonedWallClockToUtc } from './timezone.ts';
+import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
 
-/** Window assumed for a game (or practice) with no recorded end. */
-export const DEFAULT_LEAGUE_BOOKING_MINUTES = 90;
 
 /**
  * An end wall-clock on the booking's own date — rolled forward a day when it lands at or
@@ -69,7 +68,7 @@ export interface LeagueBooking {
   kind: 'game' | 'practice';
   /** ISO instant (timestamptz). Null = unscheduled — never checked. */
   startsAt: string | null;
-  /** ISO instant; null falls back to start + {@link DEFAULT_LEAGUE_BOOKING_MINUTES}. */
+  /** ISO instant; null falls back to start + {@link DEFAULT_BOOKING_MINUTES}. */
   endsAt?: string | null;
   /** 'cancelled' and 'postponed' bookings vacate their slot — excluded from all checks. */
   status?: string | null;
@@ -106,7 +105,7 @@ export function bookingWindow(b: LeagueBooking): { startMs: number; endMs: numbe
   const endParsed = b.endsAt ? Date.parse(b.endsAt) : NaN;
   const endMs = !Number.isNaN(endParsed) && endParsed > startMs
     ? endParsed
-    : startMs + DEFAULT_LEAGUE_BOOKING_MINUTES * 60_000;
+    : startMs + DEFAULT_BOOKING_MINUTES * 60_000;
   return { startMs, endMs };
 }
 

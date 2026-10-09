@@ -1,19 +1,24 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import QuestionShell from '@/components/coaches/QuestionShell';
 import ArrivalSelect from '@/components/coaches/ArrivalSelect';
-import PlaceCombobox from '@/components/coaches/PlaceCombobox';
+import PlaceSheet from '@/components/coaches/PlaceSheet';
+import ManagePlacesSheet from '@/components/coaches/ManagePlacesSheet';
+import WhereField, { WhereLine } from '@/components/venue/WhereField';
+import { useClashCheck, readFindingsPerDate, countFindings } from '@/components/venue/useClashCheck';
 import OpponentCombobox from '@/components/coaches/OpponentCombobox';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import TagSearchCombobox, { GAME_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatStoredClock as fmtClock } from '@/lib/utils';
-import { surfaceLabel } from '@/lib/sports';
+import { fieldNounFor } from '@/lib/sports';
+import { pickPlace, whereBody, whereOf, type WhereValue } from '@/lib/where-field';
+import { clashLine, seriesDateMark, seriesSummary, NOT_CHECKED_LINE } from '@/lib/venue-clash-words';
 import { sessionTitle } from '@/lib/development-session-view';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import type { ClubPickerSpelling } from '@/lib/coach-opponent-picker';
@@ -27,7 +32,7 @@ import {
 } from '@/lib/coach-schedule-vocab';
 import { generateWeeklyOccurrences, type RecurrenceOccurrenceInput } from '@/lib/coach-recurrence';
 import { DAYS_OF_WEEK, dayStr, errorMessage, fmtDate, fmtTime, shortDate } from '@/lib/coach-schedule-view';
-import type { RepEventResource, RepEventType, RepTeamEvent, RepTeamPlace, RepTeamTag } from '@/lib/types';
+import type { ClubVenueOption, RepEventResource, RepEventType, RepTeamEvent, RepTeamPlace, RepTeamTag } from '@/lib/types';
 
 /**
  * THE SCHEDULE'S ADD / EDIT FORM — the QuestionShell form every "Add Event" door and every sheet's
@@ -82,6 +87,9 @@ export interface EventForm {
   locationAddress: string;
   /** The place the location was picked from (mig 307); null for free text. */
   placeId: string | null;
+  /** The club's venue and facility (mig 319, Club Tier Stage 6a); never set with placeId. */
+  orgVenueId: string | null;
+  orgVenueFacilityId: string | null;
   arrivalTime: string;
   fieldNumber: string;
   uniform: string;
@@ -109,6 +117,8 @@ const BLANK_FORM: EventForm = {
   location: '',
   locationAddress: '',
   placeId: null,
+  orgVenueId: null,
+  orgVenueFacilityId: null,
   arrivalTime: '',
   fieldNumber: '',
   uniform: '',
@@ -168,6 +178,8 @@ function eventToForm(e: RepTeamEvent): EventForm {
     location: e.location ?? '',
     locationAddress: e.locationAddress ?? '',
     placeId: e.placeId ?? null,
+    orgVenueId: e.orgVenueId ?? null,
+    orgVenueFacilityId: e.orgVenueFacilityId ?? null,
     arrivalTime: e.arrivalTime ?? '',
     fieldNumber: e.fieldNumber ?? '',
     uniform: e.uniform ?? '',
@@ -242,16 +254,20 @@ export interface ScheduleFormInit {
 }
 
 export default function ScheduleEventForm({
-  orgSlug, teamId, sport, init, events, places, teamTags, onTagCreated,
+  orgSlug, teamId, sport, init, events, places, clubVenues, usualFacilityByVenue, teamTags, onTagCreated,
   bookEntries, clubSpellings, loadBook, refresh, onCancel, onCreated, onUpdated,
 }: {
   orgSlug: string;
   teamId: string;
-  /** The team's sport id — the place picker's field word. */
+  /** The team's sport id — the facility's word (Diamond, Court, Field). */
   sport: string;
   init: ScheduleFormInit;
   events: RepTeamEvent[];
   places: RepTeamPlace[];
+  /** The club's venues (Club Tier Stage 6a, Ask 1): read-only, above the team's places — only in a club with a library. */
+  clubVenues: { inClub: boolean; venues: ClubVenueOption[] };
+  /** The facility this team used last at each club venue (the dropdown's opening pick). */
+  usualFacilityByVenue: Record<string, string>;
   teamTags: RepTeamTag[];
   onTagCreated: (tag: RepTeamTag) => void;
   bookEntries: OpponentBookEntry[];
@@ -423,8 +439,8 @@ export default function ScheduleEventForm({
   // ⚰ `recentLocations` (→ 2026-09-21): the Recent chips under Location, derived from past events.
   // They carried the address of the MOST RECENT event with that name — usually nothing — and never
   // the diamond. The place book (mig 307) is the list now, most recently used first, in the picker.
-  // The place the open form's location came from, for the diamond hint under More.
-  const formPlace = form.placeId ? places.find(p => p.id === form.placeId) ?? null : null;
+  // ⚰ `formPlace` and the "Diamond 2 is Lions Park's usual" hint under More (→ 2026-10-08, Club Tier Stage 6a): the
+  // facility sits beside Venue now, and a place's usual diamond fills that box when it is picked.
   const addingTournamentGame = form.eventType === 'tournament_game' && !editingEventId;
   // Block saving an orphaned game slot: a new tournament game must have a parent. (A parent set
   // via the in-detail "+ Add game" shortcut counts even if its tournament is cancelled and so
@@ -458,11 +474,75 @@ export default function ScheduleEventForm({
   });
   const recurrenceNoun = EVENT_LABELS[form.eventType].toLowerCase();
 
+  // ── WHERE (Club Tier Stage 6a, Ask 13 with Asks 1, 2 and 5) ─────────────────────────────────────────────
+  // Venue, then the facility under the sport's word: the club's venues above the team's own places (in a club),
+  // typed words below. The form keeps its flat fields (the save, the guards and the seeds read them); the field
+  // reads and writes them as one value.
+  const where = whereOf(form);
+  const setWhere = (next: WhereValue) => setForm(f => ({
+    ...f,
+    location: next.location, locationAddress: next.locationAddress, fieldNumber: next.fieldNumber,
+    placeId: next.placeId, orgVenueId: next.orgVenueId, orgVenueFacilityId: next.orgVenueFacilityId,
+  }));
+  // The place book's doors (mig 307, D4–D7) — the field offers them; the form opens the sheets. The book is re-read
+  // when the list opens (the picker's rule), so a place added in another tab is there.
+  const placesPath = `/api/coaches/${orgSlug}/teams/${teamId}/places`;
+  const [freshPlaces, setFreshPlaces] = useState<RepTeamPlace[] | null>(null);
+  const [addingPlace, setAddingPlace] = useState<string | null>(null);
+  const [managingPlaces, setManagingPlaces] = useState(false);
+  const placeBook = freshPlaces ?? places;
+  async function refreshPlaces() {
+    try {
+      const res = await fetch(placesPath);
+      if (!res.ok) return;
+      const data = await res.json().catch(() => null);
+      if (data && Array.isArray(data.places)) setFreshPlaces(data.places as RepTeamPlace[]);
+    } catch { /* offline — the host copy keeps the picker usable */ }
+  }
+
+  // The live check (Ask 5): as soon as the dates, the times and one of the club's venues are set — one date, or
+  // every kept date of a series — and again on any change. A coach's own place or typed words are never compared.
+  const checkOccurrences: { startsAt: string; endsAt: string }[] =
+    editingMirrored || form.eventType === 'external_tournament' || where.source !== 'club'
+      ? []
+      : recurringSeries
+        ? (form.startTime ? keptDates.map(d => ({ startsAt: `${d}T${form.startTime}`, endsAt: form.endTime ? `${d}T${form.endTime}` : '' })) : [])
+        : (form.startsAt ? [{ startsAt: form.startsAt, endsAt: form.endsAt }] : []);
+  // Save asks again first (`lineIsCurrent`, the hook's one rule): a booking made since the line was read shows as the
+  // line and the form stays open on it; a second press saves anyway. (The server checks a third time after the write.)
+  const { result: clashResults, lineIsCurrent } = useClashCheck(
+    checkOccurrences.length ? {
+      path: `/api/coaches/${orgSlug}/teams/${teamId}/venue-clashes`,
+      body: { orgVenueId: where.orgVenueId, orgVenueFacilityId: where.orgVenueFacilityId, occurrences: checkOccurrences },
+    } : null,
+    readFindingsPerDate,
+    countFindings,
+  );
+  const lineCtx = { sport, venueName: where.location, facilityName: where.orgVenueFacilityId ? where.fieldNumber : null };
+  let whereLine: ReactNode = null;
+  const said = clashResults && countFindings(clashResults)
+    ? (recurringSeries ? seriesSummary(clashResults, lineCtx) : clashLine(clashResults[0] ?? [], lineCtx))
+    : null;
+  if (said) {
+    whereLine = <WhereLine tone={said.tone} lead={said.lead} rest={said.rest} />;
+  } else if (clubVenues.inClub && where.source === 'place') {
+    // The third state, the one a coach could miss (Ask 3): said in place, never silence.
+    whereLine = <WhereLine tone="quiet" rest={NOT_CHECKED_LINE} />;
+  }
+  // A series marks each clashing date in the list the coach already reviews ("Diamond 2 · 14U AA practice, …").
+  const markByDate = new Map<string, string>();
+  if (recurringSeries && clashResults) {
+    keptDates.forEach((d, i) => { const f = clashResults[i]; if (f?.length) markByDate.set(d, seriesDateMark(f, lineCtx)); });
+  }
+
   // Drives the "More — …" disclosure (Batch 2, P0 #8; relabelled 2026-09-21). `hasEventDetails` is read on
   // mount only, so editing an event that already carries any of these opens the group; the summary
   // keeps a collapsed group honest about what's inside — especially a link error that blocks Save.
+  // The legacy Address box (D8): only on an older event that holds an address and neither a place nor a club venue.
+  const legacyAddress = !editingMirrored && !form.placeId && !form.orgVenueId && form.locationAddress.trim() !== '';
   const eventDetailCount = [
-    form.fieldNumber.trim(), form.locationAddress.trim(), form.uniform.trim(),
+    // The facility sits beside Venue now (Ask 13) — More keeps it only on a mirrored game, whose venue is the organizer's.
+    editingMirrored ? form.fieldNumber.trim() : '', legacyAddress ? form.locationAddress.trim() : '', form.uniform.trim(),
     form.name.trim(), form.description.trim(),
   ].filter(Boolean).length + (form.tagIds.length ? 1 : 0) + (form.resources.length ? 1 : 0);
   const hasEventDetails = eventDetailCount > 0;
@@ -496,6 +576,7 @@ export default function ScheduleEventForm({
     setSaveError('');
     setSaving(true);
     try {
+      if (!(await lineIsCurrent())) return;
       // Batch 4: on a MIRRORED tournament game only the coach-owned fields are sent. The route
       // rejects an organizer-owned field with a 409 (and the next sync would overwrite it anyway),
       // so sending the whole form would fail a save whose visible fields were all legitimate.
@@ -512,9 +593,8 @@ export default function ScheduleEventForm({
         name: eventNameForSave(form),
         startsAt: form.startsAt || null,
         endsAt: form.endsAt || null,
-        location: form.location.trim() || null,
-        locationAddress: form.locationAddress.trim() || null,
-        placeId: form.placeId,
+        // Where: a club venue (its links — the server copies the club's own words), a place, or typed words.
+        ...whereBody(where),
         opponent: form.opponent.trim() || null,
         homeAway: form.homeAway || null,
         isScrimmage: form.eventType === 'league_game' && form.isScrimmage,
@@ -571,15 +651,14 @@ export default function ScheduleEventForm({
     setSaveError('');
     setSaving(true);
     try {
+      if (!(await lineIsCurrent())) return;
       const body: Record<string, unknown> = {
         eventType: form.eventType,
         name: eventNameForSave(form),
         description: form.description.trim() || null,
-        location: form.location.trim() || null,
-        locationAddress: form.locationAddress.trim() || null,
-        placeId: form.placeId,
+        // Where (Club Tier Stage 6a): a club venue's links, a place, or typed words — never both a place and a venue.
+        ...whereBody(where),
         arrivalTime: form.arrivalTime || null,
-        fieldNumber: form.fieldNumber.trim() || null,
         uniform: form.uniform.trim() || null,
         resources: form.resources,
         opponent: form.opponent.trim() || null,
@@ -814,19 +893,26 @@ export default function ScheduleEventForm({
                       </div>
                       {recurrenceDates.map(date => {
                         const removed = removedDates.has(date);
+                        // Club Tier Stage 6a (Ask 5): a date that clashes says who has the place that night.
+                        const mark = removed ? undefined : markByDate.get(date);
                         return (
                           <div key={date} className={styles.occRow} data-removed={removed || undefined}>
                             <span className={styles.occDate}>{shortDate(date)}</span>
                             {removed ? (
                               <span className={styles.occRemoved}>Removed</span>
                             ) : recurrenceIsGame ? (
-                              <input
-                                className={styles.input}
-                                placeholder="Opponent"
-                                aria-label={`Opponent on ${shortDate(date)}`}
-                                value={occurrenceOpponents[date] ?? ''}
-                                onChange={e => setOccurrenceOpponents(o => ({ ...o, [date]: e.target.value }))}
-                              />
+                              <span className={styles.occCol}>
+                                <input
+                                  className={styles.input}
+                                  placeholder="Opponent"
+                                  aria-label={`Opponent on ${shortDate(date)}`}
+                                  value={occurrenceOpponents[date] ?? ''}
+                                  onChange={e => setOccurrenceOpponents(o => ({ ...o, [date]: e.target.value }))}
+                                />
+                                {mark && <span className={styles.occMark}>{mark}</span>}
+                              </span>
+                            ) : mark ? (
+                              <span className={`${styles.occPlain} ${styles.occMark}`}>{mark}</span>
                             ) : (
                               <span className={styles.occPlain}>{fmtClock(form.startTime) || '—'}</span>
                             )}
@@ -881,23 +967,49 @@ export default function ScheduleEventForm({
               )}
             </section>
 
-            {/* WHERE — the place NAME plus tap-to-fill "recent" chips. The field/diamond # and
-                street address moved into the "More" disclosure (Batch 2, P0 #8): they matter on game day
-                but they don't belong in the four things every event needs. */}
+            {/* WHERE — one way to say where, on every form (Club Tier Stage 6a, Ask 13): Venue, then the facility
+                under the sport's word, on one row; the clash line under them, before Save. The place book's door
+                (mig 307, D4) lives in the Venue list's foot. ⚰ "Location" and the "Field / Diamond #" box under
+                More (→ 2026-10-08): one word, Venue, and the facility beside it. */}
             <section className={styles.formSection}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="event-location">Location</label>
-                {/* The place book's door (mig 307, D4): find a place, add one inline, or just type. Picking
-                    fills the address and the usual diamond; the Recent chips that stood here retired. */}
-                <PlaceCombobox
-                  basePath={`/api/coaches/${orgSlug}/teams/${teamId}/places`}
+              <WhereField
+                idPrefix="event"
+                sport={sport}
+                value={where}
+                onChange={setWhere}
+                clubVenues={clubVenues.venues}
+                inClub={clubVenues.inClub}
+                places={placeBook}
+                usualFacilityByVenue={usualFacilityByVenue}
+                onOpen={() => { void refreshPlaces(); }}
+                onAddPlace={name => setAddingPlace(name)}
+                onManagePlaces={() => setManagingPlaces(true)}
+                classes={{ field: styles.field, label: styles.label, input: styles.input, select: styles.select, hint: styles.formHint }}
+                line={whereLine}
+              />
+              {addingPlace !== null && (
+                <PlaceSheet
+                  basePath={placesPath}
                   sport={sport}
-                  places={places}
-                  value={{ location: form.location, locationAddress: form.locationAddress, fieldNumber: form.fieldNumber, placeId: form.placeId }}
-                  onChange={next => setForm(f => ({ ...f, ...next }))}
-                  onPlacesChanged={moved => { void refresh(); if (moved) setSaveError(''); }}
+                  initialName={addingPlace}
+                  onClose={() => setAddingPlace(null)}
+                  onSaved={place => {
+                    setAddingPlace(null);
+                    setFreshPlaces(prev => (prev && !prev.some(p => p.id === place.id) ? [...prev, place] : prev));
+                    setWhere(pickPlace(where, place));
+                    void refresh();
+                  }}
                 />
-              </div>
+              )}
+              {managingPlaces && (
+                <ManagePlacesSheet
+                  basePath={placesPath}
+                  sport={sport}
+                  places={placeBook}
+                  onClose={() => setManagingPlaces(false)}
+                  onChanged={moved => { void refreshPlaces(); void refresh(); if (moved) setSaveError(''); }}
+                />
+              )}
             </section>
 
             {/* WHO — games only */}
@@ -951,41 +1063,47 @@ export default function ScheduleEventForm({
                 is mount-only, so editing an event that already carries any of these opens the
                 group once and never fights the coach's own toggle afterwards. */}
             <CoachFormDisclosure
-              label={needsOpponent(form.eventType) ? 'More — field, uniform, tags, links, notes' : 'More — field, address, links, notes'}
+              label={editingMirrored
+                ? `More — ${fieldNounFor(sport).toLowerCase()}, uniform, tags, links, notes`
+                : needsOpponent(form.eventType) ? 'More — uniform, tags, links, notes' : 'More — links, notes'}
               title="More"
               meta={eventDetailsSummary}
               defaultOpen={hasEventDetails}
             >
-              <div className={styles.formSectionGrid}>
-                <div className={styles.field}>
-                  <label className={styles.label}>Field / Diamond #</label>
-                  <input
-                    className={styles.input}
-                    value={form.fieldNumber}
-                    onChange={e => setForm(f => ({ ...f, fieldNumber: e.target.value }))}
-                    placeholder="e.g. Diamond 2"
-                  />
+              {(editingMirrored || needsOpponent(form.eventType)) && (
+                <div className={styles.formSectionGrid}>
+                  {/* A mirrored game's venue is the organizer's, so its WHERE row isn't on this form; the coach can
+                      still note which facility the team is on, under the sport's own word. */}
+                  {editingMirrored && (
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="event-facility-note">{fieldNounFor(sport)}</label>
+                      <input
+                        id="event-facility-note"
+                        className={styles.input}
+                        value={form.fieldNumber}
+                        maxLength={40}
+                        onChange={e => setForm(f => ({ ...f, fieldNumber: e.target.value }))}
+                        placeholder={`e.g. ${fieldNounFor(sport)} 2`}
+                      />
+                    </div>
+                  )}
+                  {needsOpponent(form.eventType) && (
+                    <div className={styles.field}>
+                      <label className={styles.label}>Uniform</label>
+                      <input
+                        className={styles.input}
+                        value={form.uniform}
+                        onChange={e => setForm(f => ({ ...f, uniform: e.target.value }))}
+                        placeholder="e.g. Home whites"
+                      />
+                    </div>
+                  )}
                 </div>
-                {needsOpponent(form.eventType) && (
-                  <div className={styles.field}>
-                    <label className={styles.label}>Uniform</label>
-                    <input
-                      className={styles.input}
-                      value={form.uniform}
-                      onChange={e => setForm(f => ({ ...f, uniform: e.target.value }))}
-                      placeholder="e.g. Home whites"
-                    />
-                  </div>
-                )}
-              </div>
-              {/* The diamond came from the place (D8): say so, and that changing it here is this game's own. */}
-              {formPlace?.fieldNumber && form.fieldNumber.trim() === formPlace.fieldNumber && (
-                <p className={styles.formHint}>{surfaceLabel(sport, formPlace.fieldNumber)} is {formPlace.name}&rsquo;s usual — change it above for this game only.</p>
               )}
-              {/* Address LEFT this form (D8): a place carries it. The one case it still shows is an
-                  event from before the book that holds an address and no place — read it, edit it,
-                  or pick a place and let the book carry it from now on. Never on a mirrored game. */}
-              {!editingMirrored && !form.placeId && form.locationAddress.trim() !== '' && (
+              {/* Address LEFT this form (D8): a place or a club venue carries it. The one case it still shows is
+                  an event from before the book that holds an address and neither — read it, edit it, or pick a
+                  venue or place and let it carry the address from now on. Never on a mirrored game. */}
+              {legacyAddress && (
                 <div className={styles.field}>
                   <label className={styles.label}>Address</label>
                   <input
@@ -993,7 +1111,7 @@ export default function ScheduleEventForm({
                     value={form.locationAddress}
                     onChange={e => setForm(f => ({ ...f, locationAddress: e.target.value }))}
                   />
-                  <p className={styles.formHint}>From before places — pick or add a place above and the book carries the address from now on.</p>
+                  <p className={styles.formHint}>From before places — pick a venue or add a place above and it carries the address from now on.</p>
                 </div>
               )}
               {/* TAGS — a coach's own vocabulary ("Rivalry", "Top in the province"); games only.

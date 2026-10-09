@@ -6081,6 +6081,26 @@
   },
   {
     "table_name": "rep_team_events",
+    "constraint_name": "rep_team_events_org_venue_facility_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_venue_facility_id",
+    "foreign_table": "org_venue_facilities",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_events",
+    "constraint_name": "rep_team_events_org_venue_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_venue_id",
+    "foreign_table": "org_venues",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_events",
     "constraint_name": "rep_team_events_parent_event_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "parent_event_id",
@@ -7687,6 +7707,26 @@
     "foreign_table": "organizations",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_tryout_sessions",
+    "constraint_name": "rep_tryout_sessions_org_venue_facility_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_venue_facility_id",
+    "foreign_table": "org_venue_facilities",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_tryout_sessions",
+    "constraint_name": "rep_tryout_sessions_org_venue_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_venue_id",
+    "foreign_table": "org_venues",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {

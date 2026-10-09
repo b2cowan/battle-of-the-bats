@@ -21,6 +21,7 @@ import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
 import { statusConfirm } from '@/lib/tournament-status-words';
 import { willEmailResultsOnComplete } from '@/lib/coach-email-rules';
 import { tournamentToday } from '@/lib/timezone';
+import { DEFAULT_BOOKING_MINUTES } from '@/lib/booking-length';
 import styles from '../../branding/branding.module.css';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -250,7 +251,7 @@ export default function TournamentEventSettingsPage() {
         // Public directory opt-in (migration 158) — absent/false means unlisted.
         const listInDir = t.list_in_directory === true;
         const dirProvince = typeof t.directory_province === 'string' ? t.directory_province : '';
-        const gd = typeof t.settings?.game_duration_minutes === 'number' ? t.settings.game_duration_minutes : 90;
+        const gd = typeof t.settings?.game_duration_minutes === 'number' ? t.settings.game_duration_minutes : DEFAULT_BOOKING_MINUTES;
         const buf = typeof t.settings?.buffer_minutes === 'number' ? t.settings.buffer_minutes : 15;
         const venueMoveBuf = typeof t.settings?.schedule_travel_venue_buffer_minutes === 'number' ? t.settings.schedule_travel_venue_buffer_minutes : 0;
         const facilityMoveBuf = typeof t.settings?.schedule_travel_facility_buffer_minutes === 'number' ? t.settings.schedule_travel_facility_buffer_minutes : 0;

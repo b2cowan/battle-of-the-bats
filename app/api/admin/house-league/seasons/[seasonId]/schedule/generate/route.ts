@@ -9,6 +9,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
+import { clashReportForLeagueRows } from '@/lib/venue-clash-lookup';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -200,8 +201,16 @@ export const POST = withObservability(async (req: Request,
     updatedAt:   row.updated_at,
   }));
 
+  // Its after-save summary counts clashes with the club's other programs too (Club Tier Stage 6a): a rep practice
+  // or a tournament game on the default diamond. Warns only, like everything the generator reports.
+  const crossProgram = await clashReportForLeagueRows(ctx!.org.id, season, 'game', games);
+  const crossMessages = games
+    .filter(gm => crossProgram.lines[gm.id])
+    .map(gm => `${nameOf.get(gm.homeTeamId) ?? 'Home'} vs ${nameOf.get(gm.awayTeamId) ?? 'Away'}: ${crossProgram.lines[gm.id]}`);
+
   return NextResponse.json({
     games, roundCount: rounds.length, gameCount: games.length,
-    warnings: conflictMessages,
+    warnings: [...conflictMessages, ...crossMessages],
+    crossProgram,
   });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/generate' });

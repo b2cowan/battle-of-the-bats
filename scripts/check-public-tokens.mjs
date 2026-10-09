@@ -167,7 +167,8 @@ const SCOPES = {
     // root chrome (error/404/offline) reachable from every shell, so it lives here too.
     // components/sandbox is here for the same reason: the "See it live" chrome mounts over the
     // PUBLIC tournament pages and the OPERATOR admin shell from one place in the org layout.
-    dirs: ['components/chat', 'components/shared', 'components/help', 'components/whats-new', 'components/bracket', 'components/sandbox'],
+    // components/venue (Club Tier Stage 6a): the ONE Venue field — the coach portal's forms AND house league's admin windows.
+    dirs: ['components/chat', 'components/shared', 'components/help', 'components/whats-new', 'components/bracket', 'components/sandbox', 'components/venue'],
     files: [
       'components/InstallAppPrompt.module.css',
       'components/TeamAvatar.module.css',

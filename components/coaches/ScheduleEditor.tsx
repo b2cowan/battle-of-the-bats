@@ -458,11 +458,11 @@ function EventForm({
         <div className={styles.panel}>
           <input
             className={styles.input}
-            placeholder="Location (optional)"
+            placeholder="Venue (optional)"
             maxLength={160}
             value={form.location}
             onChange={e => set({ location: e.target.value })}
-            aria-label="Location"
+            aria-label="Venue"
           />
           {form.eventType === 'game' && (
             <input

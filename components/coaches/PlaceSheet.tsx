@@ -4,6 +4,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import QuestionShell from './QuestionShell';
 import { useDiscardGuard } from './useDiscardGuard';
 import { PLACE_NAME_MAX, PLACE_ADDRESS_MAX, PLACE_FIELD_MAX, PLACE_NOTE_MAX } from '@/lib/coach-places';
+import { fieldNounFor } from '@/lib/sports';
 import type { RepTeamPlace } from '@/lib/types';
 
 /**
@@ -17,6 +18,7 @@ import type { RepTeamPlace } from '@/lib/types';
  */
 export default function PlaceSheet({
   basePath,
+  sport,
   editing,
   initialName = '',
   upcomingCount = 0,
@@ -25,9 +27,11 @@ export default function PlaceSheet({
 }: {
   /** `/api/coaches/{org}/teams/{team}/places` */
   basePath: string;
+  /** The team's sport — the facility's label is its own word ("Diamond", "Court"; Club Tier Stage 6a, Ask 13). */
+  sport: string | null | undefined;
   /** The place to edit; absent = add. */
   editing?: RepTeamPlace | null;
-  /** What the coach had typed into the Location field — the add sheet opens with it as the name. */
+  /** What the coach had typed into the Venue field — the add sheet opens with it as the name. */
   initialName?: string;
   /** How many of the team's upcoming events are at this place (edit only) — drives the offer. */
   upcomingCount?: number;
@@ -50,6 +54,10 @@ export default function PlaceSheet({
   const title = editing ? 'Edit the place' : 'Add a place';
   const identityChanged = !!editing && (name.trim() !== editing.name || (address.trim() || null) !== editing.address);
   const offer = !!editing && upcomingCount > 0;
+  // The facility under the sport's own word — the label the Venue field's second box wears (owner wording ruling,
+  // 2026-10-08: never written in). Adding a place asks the same four things as adding a venue: Name · Address ·
+  // its facility · Note.
+  const noun = fieldNounFor(sport);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -91,9 +99,9 @@ export default function PlaceSheet({
         </div>
         <div className={styles.formSectionGrid}>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="place-field">Field / Diamond</label>
+            <label className={styles.label} htmlFor="place-field">{noun}</label>
             <input id="place-field" className={styles.input} value={fieldNumber} maxLength={PLACE_FIELD_MAX}
-              placeholder="e.g. Diamond 2" onChange={e => setFieldNumber(e.target.value)} />
+              placeholder={`e.g. ${noun} 2`} onChange={e => setFieldNumber(e.target.value)} />
             <p className={styles.formHint}>The usual one — any game can change it.</p>
           </div>
           <div className={styles.field}>

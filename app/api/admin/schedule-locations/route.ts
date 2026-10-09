@@ -28,6 +28,7 @@ import { forbidden, getAuthContextWithScope, requireWritableTournament, unauthor
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { clashReportForTournamentGames } from '@/lib/venue-clash-lookup';
 import {
   createTournamentFacility,
   createTournamentVenue,
@@ -326,7 +327,10 @@ async function applyAssignments(
     };
   }));
 
-  return json({ applied });
+  // Club Tier Stage 6a: games a typed name was resolved onto a real diamond are checked against the club's other
+  // programs. Warns only.
+  const crossProgram = await clashReportForTournamentGames(ctx.org, writes.flatMap(w => w.gameIds));
+  return json({ applied, crossProgram });
 }
 
 /**
@@ -420,7 +424,9 @@ async function revertGames(
     if (error) throw error;
   }));
 
-  return json({ reverted: unchangedIds.size, skipped });
+  // An undo puts games back where they were — on a diamond, perhaps — so it is checked the same way.
+  const crossProgram = await clashReportForTournamentGames(ctx.org, [...unchangedIds]);
+  return json({ reverted: unchangedIds.size, skipped, crossProgram });
 }
 
 /**

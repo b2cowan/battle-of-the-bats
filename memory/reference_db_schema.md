@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-07 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-09 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-07
+# DB Schema Reference — 2026-10-09
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -292,8 +292,8 @@ event_id (uuid) → rep_team_events.id NOT NULL, tag_id (uuid) → rep_team_tags
 - Indexes: rep_team_event_tags_tag_idx
 
 ### rep_team_events
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb), source_tournament_game_id (uuid), practice_plan (jsonb), family_shared_at, family_shared_by (uuid), practice_recap, practice_plan_sent_at, practice_plan_sent_by (uuid), practice_plan_sent_audience, practice_plan_sent_count, practice_plan_sent_email (boolean), practice_plan_sent_to, is_scrimmage (boolean), place_id (uuid) → rep_team_places.id
-- Indexes: rep_team_events_family_shared_idx, rep_team_events_org_id_idx, rep_team_events_parent_idx, rep_team_events_place_idx, rep_team_events_recurrence_parent_id_idx, rep_team_events_src_basic_event_uq, rep_team_events_src_tournament_game_uq, rep_team_events_team_id_idx, rep_team_events_year_idx
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb), source_tournament_game_id (uuid), practice_plan (jsonb), family_shared_at, family_shared_by (uuid), practice_recap, practice_plan_sent_at, practice_plan_sent_by (uuid), practice_plan_sent_audience, practice_plan_sent_count, practice_plan_sent_email (boolean), practice_plan_sent_to, is_scrimmage (boolean), place_id (uuid) → rep_team_places.id, org_venue_id (uuid) → org_venues.id, org_venue_facility_id (uuid) → org_venue_facilities.id
+- Indexes: rep_team_events_club_booking_idx, rep_team_events_family_shared_idx, rep_team_events_org_id_idx, rep_team_events_org_venue_facility_idx, rep_team_events_org_venue_idx, rep_team_events_parent_idx, rep_team_events_place_idx, rep_team_events_recurrence_parent_id_idx, rep_team_events_src_basic_event_uq, rep_team_events_src_tournament_game_uq, rep_team_events_team_id_idx, rep_team_events_year_idx
 
 ### rep_team_expense_tags
 expense_id (uuid) → rep_team_expenses.id NOT NULL, tag_id (uuid) → rep_team_tags.id NOT NULL, created_at
@@ -400,8 +400,8 @@ id (uuid), evaluator_session_id (uuid) → rep_tryout_evaluator_sessions.id NOT 
 - Indexes: rep_tryout_scores_evaluator_session_id_registration_id_cate_key, rep_tryout_scores_org_idx, rep_tryout_scores_reg_idx, rep_tryout_scores_team_id_program_year_id_idx, rep_tryout_scores_tryout_idx
 
 ### rep_tryout_sessions
-id (uuid), tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, starts_at NOT NULL, ends_at, location, location_address, field_number, label, status, created_at, updated_at
-- Indexes: rep_tryout_sessions_org_idx, rep_tryout_sessions_starts_idx, rep_tryout_sessions_team_idx, rep_tryout_sessions_tryout_idx, rep_tryout_sessions_year_idx
+id (uuid), tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, starts_at NOT NULL, ends_at, location, location_address, field_number, label, status, created_at, updated_at, org_venue_id (uuid) → org_venues.id, org_venue_facility_id (uuid) → org_venue_facilities.id
+- Indexes: rep_tryout_sessions_club_booking_idx, rep_tryout_sessions_org_idx, rep_tryout_sessions_org_venue_facility_idx, rep_tryout_sessions_org_venue_idx, rep_tryout_sessions_starts_idx, rep_tryout_sessions_team_idx, rep_tryout_sessions_tryout_idx, rep_tryout_sessions_year_idx
 
 ### rep_tryouts
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, is_anonymous (boolean), scores_locked_at, scores_locked_by (uuid), created_at, updated_at, names_shown_at

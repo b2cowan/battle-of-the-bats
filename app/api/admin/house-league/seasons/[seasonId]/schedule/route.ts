@@ -7,6 +7,7 @@ import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } f
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
+import { clashReportForLeagueRows } from '@/lib/venue-clash-lookup';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -163,8 +164,11 @@ export const POST = withObservability(async (req: Request,
     notes:    body.notes ?? null,
   });
 
+  // Across programs (Club Tier Stage 6a, Ask 4): a rep team's or a tournament's booking on the same diamond WARNS —
+  // the league's own refusal above is unchanged. Read after the save, never fatal.
+  const crossProgram = await clashReportForLeagueRows(ctx!.org.id, season, 'game', [game]);
   return NextResponse.json(
-    { game, warnings: check.warnings.map(w => w.message) },
+    { game, warnings: check.warnings.map(w => w.message), crossProgram },
     { status: 201 },
   );
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule' });

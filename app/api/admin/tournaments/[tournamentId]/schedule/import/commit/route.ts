@@ -20,6 +20,7 @@ import {
   type RouteParams,
 } from '../shared';
 import { withObservability } from '@/lib/observability';
+import { clashReportForTournamentGames } from '@/lib/venue-clash-lookup';
 
 export const runtime = 'nodejs';
 
@@ -58,7 +59,7 @@ async function applyRows(input: {
   createRows: PreparedTournamentScheduleCommitRow[];
   updateRows: PreparedTournamentScheduleCommitRow[];
   unchangedRows: PreparedTournamentScheduleCommitRow[];
-}) {
+}): Promise<string[]> {
   const createdTargetIds = new Map<string, string>();
   const createRecords = input.createRows.map(row => {
     const id = crypto.randomUUID();
@@ -108,6 +109,8 @@ async function applyRows(input: {
       .eq('batch_id', input.batchId);
     if (error) throw new Error(error.message);
   }
+  // The games it wrote, for the cross-program check (Club Tier Stage 6a).
+  return [...createdTargetIds.values(), ...input.updateRows.map(row => row.targetId).filter((id): id is string => !!id)];
 }
 
 export const POST = withObservability(async (req: Request, { params }: RouteParams) => {
@@ -159,7 +162,7 @@ export const POST = withObservability(async (req: Request, { params }: RoutePara
     });
     validateTournamentScheduleCommitAgainstContext(prepared, context);
 
-    await applyRows({
+    const writtenGameIds = await applyRows({
       batchId: batch.id,
       tournamentId,
       createRows: prepared.createRows,
@@ -193,10 +196,14 @@ export const POST = withObservability(async (req: Request, { params }: RoutePara
       },
     });
 
+    // A warning per row (Club Tier Stage 6a): each imported game on one of the club's diamonds, against the club's
+    // other programs. Warns only; the tournament's own server-side check above is unchanged.
+    const crossProgram = await clashReportForTournamentGames(auth.ctx.org, writtenGameIds);
     return NextResponse.json({
       result: {
         batchId: batch.id,
         summary: commitSummary,
+        crossProgram,
       },
     });
   } catch (error) {

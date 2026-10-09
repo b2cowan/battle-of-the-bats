@@ -14663,6 +14663,24 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_events",
+        "pos": 42,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 43,
+        "column_name": "org_venue_facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_expense_tags",
         "pos": 1,
         "column_name": "expense_id",
@@ -17586,6 +17604,24 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 15,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 16,
+        "column_name": "org_venue_facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "rep_tryouts",
@@ -22733,6 +22769,20 @@
       },
       {
         "table_name": "rep_team_events",
+        "column_name": "org_venue_facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_events_org_venue_facility_id_fkey"
+      },
+      {
+        "table_name": "rep_team_events",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_events_org_venue_id_fkey"
+      },
+      {
+        "table_name": "rep_team_events",
         "column_name": "parent_event_id",
         "foreign_table": "rep_team_events",
         "foreign_column": "id",
@@ -23535,6 +23585,20 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "rep_tryout_sessions_org_id_fkey"
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "column_name": "org_venue_facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "rep_tryout_sessions_org_venue_facility_id_fkey"
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "rep_tryout_sessions_org_venue_id_fkey"
       },
       {
         "table_name": "rep_tryout_sessions",
@@ -26835,6 +26899,11 @@
       },
       {
         "tablename": "rep_team_events",
+        "indexname": "rep_team_events_club_booking_idx",
+        "indexdef": "CREATE INDEX rep_team_events_club_booking_idx ON public.rep_team_events USING btree (org_id, starts_at) WHERE (org_venue_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_events",
         "indexname": "rep_team_events_family_shared_idx",
         "indexdef": "CREATE INDEX rep_team_events_family_shared_idx ON public.rep_team_events USING btree (team_id) WHERE (family_shared_at IS NOT NULL)"
       },
@@ -26842,6 +26911,16 @@
         "tablename": "rep_team_events",
         "indexname": "rep_team_events_org_id_idx",
         "indexdef": "CREATE INDEX rep_team_events_org_id_idx ON public.rep_team_events USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_events",
+        "indexname": "rep_team_events_org_venue_facility_idx",
+        "indexdef": "CREATE INDEX rep_team_events_org_venue_facility_idx ON public.rep_team_events USING btree (org_venue_facility_id) WHERE (org_venue_facility_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_events",
+        "indexname": "rep_team_events_org_venue_idx",
+        "indexdef": "CREATE INDEX rep_team_events_org_venue_idx ON public.rep_team_events USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
       },
       {
         "tablename": "rep_team_events",
@@ -27555,8 +27634,23 @@
       },
       {
         "tablename": "rep_tryout_sessions",
+        "indexname": "rep_tryout_sessions_club_booking_idx",
+        "indexdef": "CREATE INDEX rep_tryout_sessions_club_booking_idx ON public.rep_tryout_sessions USING btree (org_id, starts_at) WHERE (org_venue_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_tryout_sessions",
         "indexname": "rep_tryout_sessions_org_idx",
         "indexdef": "CREATE INDEX rep_tryout_sessions_org_idx ON public.rep_tryout_sessions USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_tryout_sessions",
+        "indexname": "rep_tryout_sessions_org_venue_facility_idx",
+        "indexdef": "CREATE INDEX rep_tryout_sessions_org_venue_facility_idx ON public.rep_tryout_sessions USING btree (org_venue_facility_id) WHERE (org_venue_facility_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_tryout_sessions",
+        "indexname": "rep_tryout_sessions_org_venue_idx",
+        "indexdef": "CREATE INDEX rep_tryout_sessions_org_venue_idx ON public.rep_tryout_sessions USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
       },
       {
         "tablename": "rep_tryout_sessions",
@@ -30133,6 +30227,12 @@
         "table_name": "rep_team_events",
         "detail": "rep_team_events_home_away_check",
         "check_clause": "(home_away = ANY (ARRAY['home'::text, 'away'::text, 'neutral'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_events",
+        "detail": "rep_team_events_place_or_club_venue",
+        "check_clause": "((place_id IS NULL) OR (org_venue_id IS NULL))"
       },
       {
         "kind": "CHECK",

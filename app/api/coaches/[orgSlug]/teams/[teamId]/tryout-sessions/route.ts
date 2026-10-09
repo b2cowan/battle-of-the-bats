@@ -14,11 +14,13 @@ import {
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import { wallClockStringToUtc } from '@/lib/timezone';
-import type { RepProgramYear } from '@/lib/types';
+import { resolveRepEventWhere } from '@/lib/rep-event-where';
+import { clashesForSavedTryoutSessions, getClubVenueLibrary } from '@/lib/venue-clash-lookup';
+import type { Organization, RepProgramYear } from '@/lib/types';
 
 type Resolved =
   | { ok: false; res: Response }
-  | { ok: true; orgId: string; teamId: string; userId: string; programYear: RepProgramYear; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
+  | { ok: true; org: Organization; orgId: string; teamId: string; teamName: string; userId: string; programYear: RepProgramYear; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
 
 /** Resolve + authorize the assigned coach for this team, on the team's ACTIVE program year. */
 async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> {
@@ -39,7 +41,7 @@ async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> 
   if (!programYear) {
     return { ok: false, res: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
   }
-  return { ok: true, orgId: ctx.org.id, teamId, userId: ctx.user.id, programYear, assignment };
+  return { ok: true, org: ctx.org, orgId: ctx.org.id, teamId, teamName: team.name, userId: ctx.user.id, programYear, assignment };
 }
 
 export const GET = withObservability(async (_req: Request,
@@ -51,8 +53,12 @@ export const GET = withObservability(async (_req: Request,
   if (denied) return denied;
 
   const tryout = await getRepTryout(r.programYear.id);
-  const sessions = tryout ? await getRepTryoutSessions(tryout.id) : [];
-  return NextResponse.json({ tryout, sessions });
+  const [sessions, clubVenues] = await Promise.all([
+    tryout ? getRepTryoutSessions(tryout.id) : Promise.resolve([]),
+    // The tryout day's Venue field (Club Tier Stage 6a, Ask 13): the club's venues, read-only, in a club only.
+    getClubVenueLibrary(r.org),
+  ]);
+  return NextResponse.json({ tryout, sessions, clubVenues });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-sessions' });
 
 export const POST = withObservability(async (req: Request,
@@ -92,6 +98,11 @@ export const POST = withObservability(async (req: Request,
     }
   }
 
+  // WHERE (Club Tier Stage 6a, Ask 13): one of the club's venues (proved, its words copied) or typed words — the
+  // same rail as the schedule's events. A venue that isn't this club's is refused.
+  const where = await resolveRepEventWhere({ org: r.org, teamId: r.teamId, body, partial: false, withPlace: false });
+  if (!where.ok) return NextResponse.json({ error: where.error }, { status: 400 });
+
   const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
   const session = await createRepTryoutSession({
     tryoutId: tryout.id,
@@ -116,12 +127,12 @@ export const POST = withObservability(async (req: Request,
      */
     startsAt: startsAtUtc,
     endsAt: endsAtUtc,
-    location: body.location?.trim() || null,
-    locationAddress: body.locationAddress?.trim() || null,
-    fieldNumber: body.fieldNumber?.trim() || null,
+    ...where.fields,
     label: body.label?.trim() || null,
   });
-  return NextResponse.json({ session, tryout }, { status: 201 });
+  // A tryout day takes the diamond as surely as a practice (owner, 2026-10-08): checked after it saves. Warns only.
+  const clashes = (await clashesForSavedTryoutSessions(r.orgId, r.teamName, [session]))[session.id] ?? [];
+  return NextResponse.json({ session, tryout, clashes }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-sessions' });
 
 // Update the tryout-cycle config (blind mode). The tryout is created lazily if needed.

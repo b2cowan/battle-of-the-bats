@@ -10,6 +10,7 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { loadTournamentVenueCatalog, resolveVenueSelectionFromCatalog } from '@/lib/tournament-venue';
+import { clashReportForTournamentGames } from '@/lib/venue-clash-lookup';
 
 type LaneRow = {
   id: string;
@@ -194,6 +195,8 @@ export const POST = withObservability(async (req: Request) => {
       // checks and formatting a second time. A lane resolved with no venue keeps its label
       // as the display text, which the rail expresses as the location-text fallback.
       const catalog = await loadTournamentVenueCatalog(tournamentId);
+      // Club Tier Stage 6a: the games a lane lands on a real diamond are checked against the club's other programs.
+      const placedGameIds: string[] = [];
 
       for (const mapping of mappings) {
         const lane = laneById.get(mapping.laneId)!;
@@ -216,20 +219,23 @@ export const POST = withObservability(async (req: Request) => {
           .eq('id', lane.id);
         if (updateLaneError) throw updateLaneError;
 
-        const { error: updateGamesError } = await supabaseAdmin
+        const { data: movedGames, error: updateGamesError } = await supabaseAdmin
           .from('games')
           .update({
             diamond_id: resolvedVenueId,
             venue_facility_id: resolvedFacilityId,
             location,
           })
-          .eq('schedule_facility_lane_id', lane.id);
+          .eq('schedule_facility_lane_id', lane.id)
+          .select('id');
         if (updateGamesError) throw updateGamesError;
+        placedGameIds.push(...(movedGames ?? []).map(g => g.id as string));
       }
+      const crossProgram = await clashReportForTournamentGames(ctx.org, placedGameIds);
 
       const { data: lanes, error } = await fetchLanes(tournamentId, divisionId);
       if (error) throw error;
-      return json({ lanes: (lanes ?? []).map(row => mapLane(row as LaneRow)) });
+      return json({ lanes: (lanes ?? []).map(row => mapLane(row as LaneRow)), crossProgram });
     }
 
     return json({ error: 'Unknown action.' }, 400);

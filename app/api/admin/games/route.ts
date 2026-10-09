@@ -33,6 +33,7 @@ import {
   type TournamentVenueCatalog,
 } from '@/lib/tournament-venue';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
+import { clashReportForTournamentGames } from '@/lib/venue-clash-lookup';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 
 /**
@@ -323,6 +324,11 @@ export const POST = withObservability(async (req: Request) => {
 
     const supabase = createClient(url, key);
     const { action, games, tournamentId, divisionId, gameIds, autoScheduled } = await req.json();
+    // Club Tier Stage 6a: every game a writer below places on a diamond is checked against the club's other
+    // programs after it saves (a rep practice, a house-league game, another of the club's tournaments). Warns
+    // only — the tournament's own rule is untouched (S6-03 is Tournament Stage 3's) — and the screens place the
+    // line in Tournament Stage 3; until then the response carries it.
+    const placedGameIds: string[] = [];
 
     // Scope check: scoped users may only write to their assigned tournaments
     if (tournamentId) {
@@ -404,8 +410,9 @@ export const POST = withObservability(async (req: Request) => {
         return row;
       });
 
-      const { error } = await supabase.from('games').insert(rows);
+      const { data: inserted, error } = await supabase.from('games').insert(rows).select('id');
       if (error) throw error;
+      placedGameIds.push(...(inserted ?? []).map(r => r.id as string));
 
       // First time a bracket is materialized → announce it once (fan push + staff bell).
       if (hasPlayoff) {
@@ -455,8 +462,9 @@ export const POST = withObservability(async (req: Request) => {
         away_slot_id:     g.awaySlotId || null,
         notes:            g.notes || null,
       }));
-      const { error } = await supabase.from('games').insert(rows);
+      const { data: inserted, error } = await supabase.from('games').insert(rows).select('id');
       if (error) throw error;
+      placedGameIds.push(...(inserted ?? []).map(r => r.id as string));
     }
 
     // Delete a single game (any type) — FREE for org members. Used by the row /
@@ -551,6 +559,7 @@ export const POST = withObservability(async (req: Request) => {
           }
           const { error } = await supabase.from('games').update(common).eq('id', g.sourceGameId);
           if (error) throw error;
+          placedGameIds.push(g.sourceGameId);
         } else {
           inserts.push({
             ...common,
@@ -565,8 +574,9 @@ export const POST = withObservability(async (req: Request) => {
         }
       }
       if (inserts.length) {
-        const { error } = await supabase.from('games').insert(inserts);
+        const { data: inserted, error } = await supabase.from('games').insert(inserts).select('id');
         if (error) throw error;
+        placedGameIds.push(...(inserted ?? []).map(r => r.id as string));
       }
       // Remove games dropped from the canvas — only if still removable (scheduled or
       // cancelled, never generator-locked). A scored game (submitted/completed) is
@@ -752,7 +762,8 @@ export const POST = withObservability(async (req: Request) => {
       if (error) throw error;
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    const crossProgram = await clashReportForTournamentGames(ctx.org, placedGameIds);
+    return new Response(JSON.stringify({ success: true, crossProgram }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -953,6 +964,11 @@ export const PATCH = withObservability(async (req: Request) => {
           }),
       });
 
+      // The shift runs in the database (`bulk_reschedule_games`), so the cross-program check runs after it, on
+      // the games it actually moved (Club Tier Stage 6a): its summary can count what landed on a club booking.
+      const movedIds = [...settled.values()].filter(g => g.status === 'scheduled' && plan.shifts.some(sh => sh.id === g.id)).map(g => g.id);
+      const crossProgram = await clashReportForTournamentGames(ctx.org, movedIds);
+
       return new Response(JSON.stringify({
         ok: true,
         shifted,
@@ -961,6 +977,7 @@ export const PATCH = withObservability(async (req: Request) => {
         shifts: plan.shifts,
         skipped: plan.skipped,
         noticeIds,
+        crossProgram,
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
@@ -988,6 +1005,9 @@ export const PATCH = withObservability(async (req: Request) => {
     // B2.3: the pre-change state for the three actions that can move a game in a way a person
     // has to act on. Null on every other action — score paths pay no extra read.
     let scheduleBefore: ScheduleSnapshotRow | null = null;
+    // Club Tier Stage 6a: a game placed or moved (Edit Game, a drop on the timeline) or put back on (un-cancel)
+    // is checked against the club's other programs after the write. Warns only.
+    let placedGameId: string | null = null;
 
     // ── update (time / diamond / location) ───────────────────────────────────
     if (action === 'update') {
@@ -1058,6 +1078,8 @@ export const PATCH = withObservability(async (req: Request) => {
 
       const { error } = await supabase.from('games').update(updates).eq('id', id);
       if (error) throw error;
+      if (updates.game_date !== undefined || updates.game_time !== undefined || updates.diamond_id !== undefined
+        || updates.venue_facility_id !== undefined || updates.duration_minutes !== undefined) placedGameId = id;
     }
 
     // ── cancel (scheduled → cancelled) ───────────────────────────────────────
@@ -1079,6 +1101,7 @@ export const PATCH = withObservability(async (req: Request) => {
       scheduleBefore = await readScheduleSnapshot(id);
       const { error } = await supabase.from('games').update({ status: 'scheduled' }).eq('id', id);
       if (error) throw error;
+      placedGameId = id;
     }
 
     // ── forfeit (no-show → present team wins) ────────────────────────────────
@@ -1182,7 +1205,8 @@ export const PATCH = withObservability(async (req: Request) => {
       await announceScheduleChange(ctx.org, gameRow.tournamentId, id, scheduleBefore);
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    const crossProgram = placedGameId ? await clashReportForTournamentGames(ctx.org, [placedGameId]) : undefined;
+    return new Response(JSON.stringify({ success: true, ...(crossProgram ? { crossProgram } : {}) }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

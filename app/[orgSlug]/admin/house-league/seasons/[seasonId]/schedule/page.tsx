@@ -10,6 +10,11 @@ import { hasCapability } from '@/lib/roles';
 import { fieldNounFor } from '@/lib/sports';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
+import WhereField, { WhereLine } from '@/components/venue/WhereField';
+import { useClashCheck } from '@/components/venue/useClashCheck';
+import { EMPTY_WHERE, clubVenueOptions, whereLibraryBody, whereOfLibraryRow, type WhereValue } from '@/lib/where-field';
+import { clashLine, leagueRefusalLine, leagueSeriesLine } from '@/lib/venue-clash-words';
+import type { ClashFinding } from '@/lib/venue-clash';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICSFromInstants, houseLeagueCalendarEntries,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -19,7 +24,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useAdminKit, useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
-import type { LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice, OrgVenue } from '@/lib/types';
+import type { ClubVenueOption, LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice, OrgVenue } from '@/lib/types';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -51,8 +56,7 @@ interface GameForm {
   scheduledDate: string;
   scheduledTime: string;
   endTime: string;
-  venueKey: string;
-  location: string;
+  where: WhereValue;
   status: LeagueGameStatus;
   homeScore: string;
   awayScore: string;
@@ -63,8 +67,7 @@ interface GenerateConfig {
   startDate: string;
   gamesPerWeek: number;
   gameTime: string;
-  venueKey: string;
-  location: string;
+  where: WhereValue;
 }
 
 interface PracticeForm {
@@ -75,8 +78,7 @@ interface PracticeForm {
   endDate: string;
   startTime: string;
   endTime: string;
-  venueKey: string;
-  location: string;
+  where: WhereValue;
   notes: string;
 }
 
@@ -153,111 +155,137 @@ const STATUS_CLASS: Record<LeagueGameStatus, string> = {
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-// ── Field picker (org venue library) ──────────────────────────────────────────
+// ── Where (Club Tier Stage 6a, Ask 13) ────────────────────────────────────────
 
-/**
- * One dropdown value encodes the whole selection:
- *   ''                       — no field set
- *   `v:<venueId>`            — a venue (no specific surface)
- *   `f:<venueId>:<facId>`    — a specific surface
- *   'text'                   — off-site / typed free text (reveals the text input)
+/*
+ * ⚰ `FieldPicker`, `venueKeyFor` and `decodeVenueKey` (→ 2026-10-08, Club Tier Stage 6a, Ask 13): one select of
+ * "venue — surface" with "(any surface)" rows and "Somewhere else (type it)". Every form that asks where now wears
+ * the ONE Venue field (`components/venue/WhereField.tsx`): Venue (the club's venues, then typed words), then the
+ * facility under the season's sport word with "Not set" first — the old "(any surface)". House league's one pick
+ * became two; the venue it uses every night is the short second pick. Reading a stored booking back into the field
+ * and writing it out (one line of text beside the library links) are the field module's (`lib/where-field.ts`).
  */
-function venueKeyFor(orgVenueId: string | null, orgVenueFacilityId: string | null, location: string | null): string {
-  if (orgVenueId && orgVenueFacilityId) return `f:${orgVenueId}:${orgVenueFacilityId}`;
-  if (orgVenueId) return `v:${orgVenueId}`;
-  return location ? 'text' : '';
-}
 
-function decodeVenueKey(key: string): { orgVenueId: string | null; orgVenueFacilityId: string | null; isText: boolean } {
-  if (key.startsWith('f:')) {
-    const [, venueId, facId] = key.split(':');
-    return { orgVenueId: venueId ?? null, orgVenueFacilityId: facId ?? null, isText: false };
-  }
-  if (key.startsWith('v:')) {
-    return { orgVenueId: key.slice(2) || null, orgVenueFacilityId: null, isText: false };
-  }
-  return { orgVenueId: null, orgVenueFacilityId: null, isText: key === 'text' };
-}
-
-/**
- * Picking a real field is the default path; typing text is the explicit
- * "somewhere else" choice — the same demotion the tournament side is getting.
- */
-function FieldPicker({
-  venues, noun, venueKey, locationText, disabled, orgSlug, canManage,
-  onKeyChange, onTextChange,
+/** The Venue field on house league's windows (the old look keeps its own control classes). */
+function LeagueWhere({
+  venues, sport, value, onChange, orgSlug, canManage, disabled, line, idPrefix,
 }: {
-  venues: OrgVenue[];
-  /** Sport-Pack surface noun, e.g. "Diamond" / "Court". */
-  noun: string;
-  venueKey: string;
-  locationText: string;
-  disabled?: boolean;
+  venues: ClubVenueOption[];
+  sport: string | null | undefined;
+  value: WhereValue;
+  onChange: (next: WhereValue) => void;
   orgSlug: string;
   canManage: boolean;
-  onKeyChange: (key: string) => void;
-  onTextChange: (text: string) => void;
+  disabled?: boolean;
+  line?: React.ReactNode;
+  idPrefix: string;
 }) {
-  const hasLibrary = venues.length > 0;
+  const noun = fieldNounFor(sport);
+  const inClub = venues.length > 0;
   return (
     <div className={`${styles.field} ${styles.formGridFull}`}>
-      <label className={styles.label}>{noun}</label>
-      {hasLibrary ? (
-        <>
-          <select
-            className={styles.select}
-            value={venueKey}
-            onChange={e => onKeyChange(e.target.value)}
-            disabled={disabled}
-          >
-            <option value="">— No {noun.toLowerCase()} set —</option>
-            {venues.map(v => (
-              (v.facilities && v.facilities.length > 0) ? (
-                <optgroup key={v.id} label={v.name}>
-                  <option value={`v:${v.id}`}>{v.name} (any surface)</option>
-                  {v.facilities.map(f => (
-                    <option key={f.id} value={`f:${v.id}:${f.id}`}>{v.name} — {f.name}</option>
-                  ))}
-                </optgroup>
-              ) : (
-                <option key={v.id} value={`v:${v.id}`}>{v.name}</option>
-              )
-            ))}
-            <option value="text">Somewhere else (type it)</option>
-          </select>
-          {venueKey === 'text' && (
-            <input
-              className={styles.input}
-              style={{ marginTop: '0.4rem' }}
-              value={locationText}
-              onChange={e => onTextChange(e.target.value)}
-              placeholder={`${noun} name or address`}
-              disabled={disabled}
-            />
-          )}
-        </>
-      ) : (
-        <>
-          <input
-            className={styles.input}
-            value={locationText}
-            onChange={e => onTextChange(e.target.value)}
-            placeholder={`${noun} name or address`}
-            disabled={disabled}
-          />
-          {canManage && (
-            <p className={styles.hint}>
-              Typed locations can&apos;t be checked for double-bookings.{' '}
-              <Link href={`/${orgSlug}/admin/org/venues`} style={{ color: 'var(--logic-lime)' }}>
-                Set up your {noun.toLowerCase()}s once
-              </Link>{' '}
-              to pick them from a list.
-            </p>
-          )}
-        </>
-      )}
+      <WhereField
+        idPrefix={idPrefix}
+        sport={sport}
+        value={value}
+        onChange={onChange}
+        clubVenues={venues}
+        inClub={inClub}
+        disabled={disabled}
+        classes={{ field: styles.field, label: styles.label, input: styles.input, select: styles.select, hint: styles.hint }}
+        line={line}
+        footHint={!inClub && canManage ? (
+          <p className={styles.hint}>
+            Typed locations can&apos;t be checked for double-bookings.{' '}
+            <Link href={`/${orgSlug}/admin/org/venues`} style={{ color: 'var(--logic-lime)' }}>
+              Set up your {noun.toLowerCase()}s once
+            </Link>{' '}
+            to pick them from a list.
+          </p>
+        ) : null}
+      />
     </div>
   );
+}
+
+/** One live-check answer per date (`/venue-check`). */
+interface LeagueCheckResult {
+  date: string;
+  refusal: {
+    partnerLabel: string; partnerKind: 'game' | 'practice';
+    partnerStartsAt: string | null; partnerEndsAt: string | null; matchedOn: 'facility' | 'venue';
+  } | null;
+  crossProgram: ClashFinding[];
+}
+const readLeagueCheck = (json: unknown): LeagueCheckResult[] => {
+  const results = (json as { results?: unknown } | null)?.results;
+  return Array.isArray(results) ? results as LeagueCheckResult[] : [];
+};
+/** What Create compares with the line on screen: the cross-program findings, and a refusal. */
+const countLeagueCheck = (r: LeagueCheckResult[]) => r.reduce((n, x) => n + x.crossProgram.length + (x.refusal ? 1 : 0), 0);
+
+/**
+ * House league's window line (specimen 3, Asks 4–5): the league's own refusal in red under the field, before
+ * Create (Create greyed) — what it refuses is unchanged — and another program's booking in amber, never blocking.
+ * The check runs as soon as a date, a time and one of the club's venues are set, and again on any change; Create
+ * asks once more first (the hook's one rule). The words are `lib/venue-clash-words.ts`'s.
+ */
+function useLeagueLine(opts: {
+  checkPath: string;
+  sport: string | null | undefined;
+  where: WhereValue;
+  kind: 'game' | 'practice';
+  /** One booking… */
+  occurrence?: { date: string; startTime: string; endTime: string } | null;
+  /** …or a practice series (expanded on the server by the save's own generator). */
+  series?: { dayOfWeek: number; startDate: string; endDate: string; startTime: string; endTime: string } | null;
+  excludeGameId?: string | null;
+  teamId?: string | null;
+}) {
+  const { checkPath, sport, where, kind, occurrence, series, excludeGameId, teamId } = opts;
+  const ready = where.source === 'club' && !!where.orgVenueId && (
+    series ? !!(series.startDate && series.endDate && series.startTime && series.endTime)
+      : !!(occurrence?.date && occurrence.startTime)
+  );
+  const { result, checking, lineIsCurrent } = useClashCheck(
+    ready ? {
+      path: checkPath,
+      body: {
+        kind, orgVenueId: where.orgVenueId, orgVenueFacilityId: where.orgVenueFacilityId,
+        ...(series ? { series } : { occurrences: [occurrence] }),
+        excludeGameId: excludeGameId ?? null, teamId: teamId ?? null,
+      },
+    } : null,
+    readLeagueCheck,
+    countLeagueCheck,
+  );
+
+  const ctx = { sport, venueName: where.location, facilityName: where.orgVenueFacilityId ? where.fieldNumber : null };
+  const refusalAt = (result ?? []).find(r => r.refusal);
+  const refusal = refusalAt?.refusal
+    ? leagueRefusalLine({
+        sport, matchedOn: refusalAt.refusal.matchedOn, venueName: ctx.venueName, facilityName: ctx.facilityName,
+        partnerLabel: refusalAt.refusal.partnerLabel, partnerKind: refusalAt.refusal.partnerKind, proposedKind: kind,
+        startIso: refusalAt.refusal.partnerStartsAt, endIso: refusalAt.refusal.partnerEndsAt,
+        date: series ? refusalAt.date : null,
+      })
+    : null;
+  const cross = result?.some(r => r.crossProgram.length)
+    ? (series
+        ? leagueSeriesLine(result.map(r => ({ date: r.date, findings: r.crossProgram })), ctx)
+        : clashLine(result[0]?.crossProgram ?? [], ctx))
+    : null;
+  return {
+    refused: !!refusal,
+    line: refusal || cross ? (
+      <>
+        {refusal && <WhereLine tone="refuse" lead={refusal.lead} rest={refusal.rest} />}
+        {cross && <WhereLine tone={cross.tone} lead={cross.lead} rest={cross.rest} />}
+      </>
+    ) : null,
+    checking,
+    lineIsCurrent,
+  };
 }
 
 const BTN_PRIMARY: React.CSSProperties = {
@@ -279,6 +307,9 @@ const BTN_DANGER: React.CSSProperties = {
 };
 // The kit's buttons wear these while the Admin Design Continuity switch is on (useKitButtons).
 const LEGACY_BUTTONS = { primary: BTN_PRIMARY, secondary: BTN_SECONDARY, danger: BTN_DANGER };
+/** Create, greyed while the league refuses the slot (specimen 3): these buttons are styled inline, so `disabled` alone
+ *  changes nothing anyone can see. */
+const REFUSED_LOOK: React.CSSProperties = { opacity: 0.45, cursor: 'not-allowed' };
 
 // ── Game Modal (create + edit) ────────────────────────────────────────────────
 
@@ -286,7 +317,8 @@ function GameModal({
   game,
   teams,
   venues,
-  noun,
+  sport,
+  checkPath,
   orgSlug,
   canManage,
   saving,
@@ -296,8 +328,11 @@ function GameModal({
 }: {
   game: LeagueGame | null;
   teams: LeagueTeam[];
-  venues: OrgVenue[];
-  noun: string;
+  venues: ClubVenueOption[];
+  /** The season's sport — the facility's word. */
+  sport: string | null | undefined;
+  /** The window's live check (`/venue-check`). */
+  checkPath: string;
   orgSlug: string;
   canManage: boolean;
   saving: boolean;
@@ -314,8 +349,7 @@ function GameModal({
         scheduledDate: game.scheduledAt ? isoToDateInput(game.scheduledAt) : '',
         scheduledTime: game.scheduledAt ? isoToTimeInput(game.scheduledAt) : '',
         endTime:       game.endsAt ? isoToTimeInput(game.endsAt) : '',
-        venueKey:      venueKeyFor(game.orgVenueId, game.orgVenueFacilityId, game.location),
-        location:      game.location ?? '',
+        where:         whereOfLibraryRow(game, venues),
         status:        game.status,
         homeScore:     game.homeScore != null ? String(game.homeScore) : '',
         awayScore:     game.awayScore != null ? String(game.awayScore) : '',
@@ -326,12 +360,21 @@ function GameModal({
       homeTeamId: teams[0]?.id ?? '',
       awayTeamId: teams[1]?.id ?? '',
       scheduledDate: '', scheduledTime: '18:00', endTime: '',
-      venueKey: '', location: '', status: 'scheduled',
+      where: EMPTY_WHERE, status: 'scheduled',
       homeScore: '', awayScore: '', notes: '',
     };
   });
 
   function set(k: keyof GameForm, v: string) { setForm(f => ({ ...f, [k]: v })); }
+
+  // The line under the field (Club Tier Stage 6a): the league's own refusal before Create, another program's
+  // booking in amber. A cancelled or postponed game holds no slot, so it is never checked.
+  const holdsSlot = form.status !== 'cancelled' && form.status !== 'postponed';
+  const { refused, line, checking, lineIsCurrent } = useLeagueLine({
+    checkPath, sport, where: form.where, kind: 'game',
+    occurrence: holdsSlot ? { date: form.scheduledDate, startTime: form.scheduledTime, endTime: form.endTime } : null,
+    excludeGameId: game?.id ?? null,
+  });
 
   const isCreate = !game;
   const showScores = form.status === 'completed';
@@ -340,7 +383,7 @@ function GameModal({
 
   return (
     <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
-      <div className={styles.modal}>
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={isCreate ? 'Add Game' : 'Edit Game'}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>{isCreate ? 'Add Game' : 'Edit Game'}</h2>
           <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
@@ -374,16 +417,16 @@ function GameModal({
         </div>
 
         <div className={styles.formGrid}>
-          <FieldPicker
+          <LeagueWhere
+            idPrefix="hl-game"
             venues={venues}
-            noun={noun}
-            venueKey={form.venueKey}
-            locationText={form.location}
-            disabled={!canManage}
+            sport={sport}
+            value={form.where}
+            onChange={w => setForm(f => ({ ...f, where: w }))}
             orgSlug={orgSlug}
             canManage={canManage}
-            onKeyChange={k => set('venueKey', k)}
-            onTextChange={t => set('location', t)}
+            disabled={!canManage}
+            line={line}
           />
           <div className={styles.field}>
             <label className={styles.label}>Status</label>
@@ -423,7 +466,11 @@ function GameModal({
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.6rem' }}>
             <button style={B.secondary} onClick={onClose} disabled={saving}>Close</button>
             {canManage && (
-              <button style={B.primary} onClick={() => onSave(form)} disabled={saving}>
+              <button
+                style={refused ? { ...B.primary, ...REFUSED_LOOK } : B.primary}
+                onClick={async () => { if (await lineIsCurrent()) await onSave(form); }}
+                disabled={saving || refused || checking}
+              >
                 {saving ? 'Saving…' : isCreate ? 'Create Game' : 'Save'}
               </button>
             )}
@@ -440,7 +487,7 @@ function GenerateModal({
   divisionName,
   teams,
   venues,
-  noun,
+  sport,
   orgSlug,
   saving,
   onPreview,
@@ -449,8 +496,8 @@ function GenerateModal({
 }: {
   divisionName: string;
   teams: LeagueTeam[];
-  venues: OrgVenue[];
-  noun: string;
+  venues: ClubVenueOption[];
+  sport: string | null | undefined;
   orgSlug: string;
   saving: boolean;
   onPreview: (cfg: GenerateConfig) => Promise<PreviewGame[]>;
@@ -461,12 +508,12 @@ function GenerateModal({
   const kx = useKitStyle();
   const today = tournamentToday();
   const [config, setConfig] = useState<GenerateConfig>({
-    startDate: today, gamesPerWeek: 1, gameTime: '18:00', venueKey: '', location: '',
+    startDate: today, gamesPerWeek: 1, gameTime: '18:00', where: EMPTY_WHERE,
   });
   const [preview, setPreview] = useState<PreviewGame[] | null>(null);
   const [previewing, setPreviewing] = useState(false);
 
-  function setCfg(k: keyof GenerateConfig, v: string | number) {
+  function setCfg<K extends keyof GenerateConfig>(k: K, v: GenerateConfig[K]) {
     setConfig(c => ({ ...c, [k]: v }));
     setPreview(null);
   }
@@ -505,15 +552,16 @@ function GenerateModal({
               onChange={e => setCfg('gamesPerWeek', Math.max(1, Number(e.target.value)))} />
             <p className={styles.hint}>How many game nights per week</p>
           </div>
-          <FieldPicker
+          {/* The generator's default venue — the same Venue field (Ask 13). Its clashes are counted in the
+              after-save summary, with the club's other programs too; it never refuses. */}
+          <LeagueWhere
+            idPrefix="hl-gen"
             venues={venues}
-            noun={`Default ${noun.toLowerCase()}`}
-            venueKey={config.venueKey}
-            locationText={config.location}
+            sport={sport}
+            value={config.where}
+            onChange={w => setCfg('where', w)}
             orgSlug={orgSlug}
             canManage
-            onKeyChange={k => setCfg('venueKey', k)}
-            onTextChange={t => setCfg('location', t)}
           />
         </div>
 
@@ -581,15 +629,17 @@ function GenerateModal({
 function PracticeModal({
   team,
   venues,
-  noun,
+  sport,
+  checkPath,
   orgSlug,
   saving,
   onSave,
   onClose,
 }: {
   team: LeagueTeam;
-  venues: OrgVenue[];
-  noun: string;
+  venues: ClubVenueOption[];
+  sport: string | null | undefined;
+  checkPath: string;
   orgSlug: string;
   saving: boolean;
   onSave: (form: PracticeForm) => Promise<void>;
@@ -605,8 +655,7 @@ function PracticeModal({
     endDate: today,
     startTime: '18:00',
     endTime: '20:00',
-    venueKey: '',
-    location: '',
+    where: EMPTY_WHERE,
     notes: '',
   });
 
@@ -614,9 +663,19 @@ function PracticeModal({
     setForm(f => ({ ...f, [k]: v }));
   }
 
+  // The line under the field (Club Tier Stage 6a): a series is checked date by date — the same dates the save will
+  // write — and its refusal names the date; another program's booking names its dates in amber.
+  const { refused, line, checking, lineIsCurrent } = useLeagueLine({
+    checkPath, sport, where: form.where, kind: 'practice', teamId: team.id,
+    series: form.recurring
+      ? { dayOfWeek: Number(form.dayOfWeek), startDate: form.startDate, endDate: form.endDate, startTime: form.startTime, endTime: form.endTime }
+      : null,
+    occurrence: form.recurring ? null : { date: form.scheduledDate, startTime: form.startTime, endTime: form.endTime },
+  });
+
   return (
     <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
-      <div className={styles.modal}>
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Add Practice — ${team.name}`}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Add Practice — {team.name}</h2>
           <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
@@ -671,15 +730,15 @@ function PracticeModal({
           </div>
         </div>
 
-        <FieldPicker
+        <LeagueWhere
+          idPrefix="hl-practice"
           venues={venues}
-          noun={noun}
-          venueKey={form.venueKey}
-          locationText={form.location}
+          sport={sport}
+          value={form.where}
+          onChange={w => setForm(f => ({ ...f, where: w }))}
           orgSlug={orgSlug}
           canManage
-          onKeyChange={k => set('venueKey', k)}
-          onTextChange={t => set('location', t)}
+          line={line}
         />
 
         <div className={styles.field}>
@@ -689,7 +748,11 @@ function PracticeModal({
 
         <div className={styles.modalFooter}>
           <button style={B.secondary} onClick={onClose} disabled={saving}>Cancel</button>
-          <button style={B.primary} onClick={() => onSave(form)} disabled={saving}>
+          <button
+            style={refused ? { ...B.primary, ...REFUSED_LOOK } : B.primary}
+            onClick={async () => { if (await lineIsCurrent()) await onSave(form); }}
+            disabled={saving || refused || checking}
+          >
             {saving ? 'Saving…' : form.recurring ? 'Create Series' : 'Create Practice'}
           </button>
         </div>
@@ -879,6 +942,9 @@ export default function SchedulePage() {
 
   // Sport-neutral surface noun ("Diamond" / "Court" / "Field") — never hard-coded.
   const noun = fieldNounFor(season?.sport);
+  // The club's venues as the Venue field offers them (Club Tier Stage 6a), and the windows' live check.
+  const clubVenues = useMemo(() => clubVenueOptions(venues), [venues]);
+  const checkPath = `/api/admin/house-league/seasons/${seasonId}/venue-check${orgQuery}`;
   const conflictKeys = useMemo(
     () => new Set((health?.conflicts ?? []).map(c => `${c.kind}:${c.id}`)),
     [health],
@@ -930,7 +996,7 @@ export default function SchedulePage() {
       body: JSON.stringify({
         divisionId: selectedDivId, save: false,
         startDate: cfg.startDate, gamesPerWeek: cfg.gamesPerWeek, gameTime: cfg.gameTime,
-        ...venueBody(cfg.venueKey, cfg.location),
+        ...whereLibraryBody(cfg.where),
       }),
     });
     if (!res.ok) {
@@ -938,17 +1004,6 @@ export default function SchedulePage() {
       return [];
     }
     return (await res.json()).preview ?? [];
-  }
-
-  /** venueKey + typed text → the API's venue fields (text only when nothing is picked). */
-  function venueBody(venueKey: string, locationText: string) {
-    const sel = decodeVenueKey(venueKey);
-    const useText = sel.isText || venues.length === 0;
-    return {
-      orgVenueId: sel.orgVenueId,
-      orgVenueFacilityId: sel.orgVenueFacilityId,
-      location: useText ? (locationText.trim() || null) : null,
-    };
   }
 
   async function handleGenerateSave(cfg: GenerateConfig) {
@@ -959,7 +1014,7 @@ export default function SchedulePage() {
       body: JSON.stringify({
         divisionId: selectedDivId, save: true,
         startDate: cfg.startDate, gamesPerWeek: cfg.gamesPerWeek, gameTime: cfg.gameTime,
-        ...venueBody(cfg.venueKey, cfg.location),
+        ...whereLibraryBody(cfg.where),
       }),
     });
     setSaving(false);
@@ -997,7 +1052,7 @@ export default function SchedulePage() {
       scheduledDate: form.scheduledDate || undefined,
       scheduledTime: form.scheduledTime || undefined,
       endTime:       form.endTime || null,
-      ...venueBody(form.venueKey, form.location),
+      ...whereLibraryBody(form.where),
       status:        form.status,
       notes:         form.notes || null,
     };
@@ -1056,7 +1111,7 @@ export default function SchedulePage() {
       recurring:  form.recurring,
       startTime:  form.startTime,
       endTime:    form.endTime || null,
-      ...venueBody(form.venueKey, form.location),
+      ...whereLibraryBody(form.where),
       notes:      form.notes || null,
     };
 
@@ -1583,8 +1638,8 @@ export default function SchedulePage() {
         <GenerateModal
           divisionName={selectedDiv.name}
           teams={teams}
-          venues={venues}
-          noun={noun}
+          venues={clubVenues}
+          sport={season?.sport}
           orgSlug={orgSlug}
           saving={saving}
           onPreview={handlePreview}
@@ -1598,8 +1653,9 @@ export default function SchedulePage() {
         <GameModal
           game={activeGame}
           teams={teams}
-          venues={venues}
-          noun={noun}
+          venues={clubVenues}
+          sport={season?.sport}
+          checkPath={checkPath}
           orgSlug={orgSlug}
           canManage={canManage}
           saving={saving}
@@ -1613,8 +1669,9 @@ export default function SchedulePage() {
       {showPracticeModal && selectedTeamId && teamMap.get(selectedTeamId) && (
         <PracticeModal
           team={teamMap.get(selectedTeamId)!}
-          venues={venues}
-          noun={noun}
+          venues={clubVenues}
+          sport={season?.sport}
+          checkPath={checkPath}
           orgSlug={orgSlug}
           saving={saving}
           onSave={handleSavePractice}

@@ -431,6 +431,17 @@ export interface OrgVenueFacility {
   notes?: string;
 }
 
+/**
+ * One of the club's venues as a Venue field offers it (Club Tier Stage 6a): its name, address and facilities in
+ * the club's order. Read-only to a coach — the club keeps it in Organization → Venue library.
+ */
+export interface ClubVenueOption {
+  id: string;
+  name: string;
+  address: string | null;
+  facilities: { id: string; name: string }[];
+}
+
 /** An org-level venue library entry (persists across tournaments). */
 export interface OrgVenue {
   id: string;
@@ -1327,6 +1338,9 @@ export interface RepTryoutSession {
   location: string | null;
   locationAddress: string | null;
   fieldNumber: string | null;
+  /** The club's venue and facility (mig 319) — a tryout day joins the clash check (owner, 2026-10-08). */
+  orgVenueId: string | null;
+  orgVenueFacilityId: string | null;
   label: string | null;
   status: RepTryoutSessionStatus;
   createdAt: string;
@@ -1786,6 +1800,13 @@ export interface RepTeamEvent {
   locationAddress: string | null;   // optional street address (mig 161) — powers the Maps link
   /** The place this event's location was picked from (mig 307), or null for a free-typed one. */
   placeId: string | null;
+  /**
+   * The CLUB's venue and facility this event is booked at (mig 319, Club Tier Stage 6a) — set only when the coach
+   * picked one of the club's venues; the event's own location / locationAddress / fieldNumber stay its copy.
+   * Never set together with placeId. The clash check compares only these.
+   */
+  orgVenueId: string | null;
+  orgVenueFacilityId: string | null;
   // Game-day detail (mig 160), all optional / UI-shaped free text:
   arrivalTime: string | null;   // "be there by" clock time, HH:mm (same day as startsAt)
   fieldNumber: string | null;   // diamond/field label within the location, e.g. "Diamond 2"

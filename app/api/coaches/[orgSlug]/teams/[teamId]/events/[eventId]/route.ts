@@ -18,7 +18,8 @@ import { orgDayKey } from '@/lib/timezone';
 import { moveRepSessionDate } from '@/lib/development-session-move';
 import { sanitizeResources } from '@/lib/rep-event-resources';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
-import { resolvePlaceId } from '@/lib/rep-event-places';
+import { resolveRepEventWhere } from '@/lib/rep-event-where';
+import { clashesForSavedRepEvents } from '@/lib/venue-clash-lookup';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageSchedule, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
@@ -54,7 +55,7 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, assignment, programYear } = resolved;
+  const { ctx, team, assignment, programYear } = resolved;
   // Editing an event is the WRITE half of the 2026-08-03 schedule split.
   const denied = denyUnless(canManageSchedule(assignment.capabilities), 'You cannot change this schedule.');
   if (denied) return denied;
@@ -101,6 +102,12 @@ export const PATCH = withObservability(async (req: Request,
     if (!verdict.ok) return NextResponse.json({ error: verdict.reason }, { status: 400 });
   }
 
+  // WHERE (Club Tier Stage 6a, Ask 13): only what the body spoke about — a club venue (proved, its words copied),
+  // the team's own place, or typed words; never both a place and a club venue. A venue that isn't this club's is
+  // refused rather than dropped.
+  const where = await resolveRepEventWhere({ org: ctx.org, teamId, body, partial: true, storedVenueId: event.orgVenueId });
+  if (!where.ok) return NextResponse.json({ error: where.error }, { status: 400 });
+
   // Series edit: when a recurring event is saved with scope 'remaining' (this + future) or 'all',
   // bulk-apply the shared fields + time-of-day across the series (each occurrence keeps its date).
   // A validated QUIET write is score-only and a score belongs to ONE occurrence — routing it into
@@ -114,12 +121,12 @@ export const PATCH = withObservability(async (req: Request,
     const anchorId = event.recurrenceParentId ?? eventId;
     const startTime = typeof body.startsAt === 'string' && body.startsAt ? body.startsAt.slice(11, 16) : null;
     const endTime = typeof body.endsAt === 'string' && body.endsAt ? body.endsAt.slice(11, 16) : null;
-    await updateRepTeamEventSeries(anchorId, scope, scope === 'remaining' ? event.startsAt : null, {
+    // ⚠ S6-05: the place link and the club-venue links ride with the words (`where.fields`) — the words used to
+    // reach every date while each date kept its old place link.
+    const written = await updateRepTeamEventSeries(anchorId, scope, scope === 'remaining' ? event.startsAt : null, {
       name: body.name !== undefined ? (body.name?.trim() || undefined) : undefined,
       description: body.description !== undefined ? (body.description?.trim() || null) : undefined,
-      location: body.location !== undefined ? (body.location?.trim() || null) : undefined,
-      locationAddress: body.locationAddress !== undefined ? (body.locationAddress?.trim() || null) : undefined,
-      fieldNumber: body.fieldNumber !== undefined ? (body.fieldNumber?.trim() || null) : undefined,
+      ...where.fields,
       uniform: body.uniform !== undefined ? (body.uniform?.trim() || null) : undefined,
       resources: body.resources !== undefined ? sanitizeResources(body.resources) : undefined,
       opponent: body.opponent !== undefined ? (body.opponent?.trim() || null) : undefined,
@@ -161,8 +168,10 @@ export const PATCH = withObservability(async (req: Request,
       });
     }
 
+    // Every date the edit moved is checked (Ask 5) — warns, never refuses.
+    const clashes = await clashesForSavedRepEvents(ctx.org.id, team.name, written);
     const refreshed = await getRepTeamEventById(eventId);
-    return NextResponse.json({ event: refreshed });
+    return NextResponse.json({ event: refreshed, clashes });
   }
 
   const fields: Parameters<typeof updateRepTeamEvent>[1] = {};
@@ -171,12 +180,9 @@ export const PATCH = withObservability(async (req: Request,
   if (body.description !== undefined) fields.description = body.description?.trim() || null;
   if (body.startsAt !== undefined)    fields.startsAt = body.startsAt;
   if (body.endsAt !== undefined)      fields.endsAt = body.endsAt || null;
-  if (body.location !== undefined)    fields.location = body.location?.trim() || null;
-  if (body.locationAddress !== undefined) fields.locationAddress = body.locationAddress?.trim() || null;
-  // The place link (mig 307): proved to be this team's, else cleared — the text above is the record.
-  if (body.placeId !== undefined)     fields.placeId = (await resolvePlaceId(teamId, body.placeId)) ?? null;
+  // Where — the place link (mig 307) and the club-venue links (mig 319) through the one rail above.
+  Object.assign(fields, where.fields);
   if (body.arrivalTime !== undefined) fields.arrivalTime = body.arrivalTime?.trim() || null;
-  if (body.fieldNumber !== undefined) fields.fieldNumber = body.fieldNumber?.trim() || null;
   if (body.uniform !== undefined)     fields.uniform = body.uniform?.trim() || null;
   if (body.resources !== undefined)   fields.resources = sanitizeResources(body.resources);
   if (body.opponent !== undefined)    fields.opponent = body.opponent?.trim() || null;
@@ -318,7 +324,12 @@ export const PATCH = withObservability(async (req: Request,
     });
   }
 
-  return NextResponse.json({ event: updated });
+  // Edit, move or un-cancel: checked on the server after the save (Asks 4–5), the same line the form showed. Only a
+  // write that can move the booking is checked — the bench console's running score, saved every few seconds, must
+  // not read the club's bookings each time for a game that hasn't moved.
+  const movesBooking = ['startsAt', 'endsAt', 'status', 'orgVenueId', 'orgVenueFacilityId'].some(k => body[k] !== undefined);
+  const clashes = movesBooking ? (await clashesForSavedRepEvents(ctx.org.id, team.name, [updated]))[updated.id] ?? [] : [];
+  return NextResponse.json({ event: updated, clashes });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]' });
 
 export const DELETE = withObservability(async (req: Request,

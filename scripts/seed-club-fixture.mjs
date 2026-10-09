@@ -70,6 +70,13 @@
  * Run:   node --env-file=.env.local scripts/seed-club-fixture.mjs           (build if absent)
  *        node --env-file=.env.local scripts/seed-club-fixture.mjs --reset   (delete + rebuild)
  *        node --env-file=.env.local scripts/seed-club-fixture.mjs --calendar-club   (rebuild ONLY the calendar club)
+ *        node --env-file=.env.local scripts/seed-club-fixture.mjs --club-venues     (ADD the Stage 6a venues + bookings)
+ *   · Club Tier Stage 6a (the venue book and the clash check, 2026-10-08): the club's Venue library — Lions Park
+ *     (Diamonds 1–3), Kinsmen Park (Diamonds A, B), Westfield School (no facilities) — 13U AAA's own places (its own
+ *     "Lions Park", never merged, and Centennial Park), and a week of bookings on them from the first Tuesday at least
+ *     a week out: 14U AA on Lions Park Diamond 2 against 13U AAA's practice (the hub's clash), 11U AA at Lions Park
+ *     with no diamond set, 11U AA on Kinsmen Park Diamond B, and in the house league Reds vs Blues on Diamond B.
+ *     `--club-venues` adds just this to a fixture that exists — additive, re-runnable, never a reset.
  * Without --reset an existing fixture is left alone (and its sign-ins printed): a walk in progress
  * must never be rebuilt under the walker by an accidental re-run.
  *
@@ -145,6 +152,18 @@ const CAL_OWNER = {
   email: (process.env.UAT_CALENDAR_CLUB_OWNER_EMAIL ?? 'uat-calendar-owner@uat-rep-club.local').toLowerCase(),
   password: process.env.UAT_CALENDAR_CLUB_OWNER_PASSWORD ?? DEFAULT_PASSWORD,
 };
+// Club Tier Stage 6a (`--club-venues` and the full build) — the club's venues and a week of bookings on them; the step
+// itself is `addClubVenues`, at the end of this file.
+/** The one marker on every row this step writes — a re-run deletes exactly these and writes them again. */
+const SIXA_MARK = 'Seeded for the Stage 6 walks (scripts/seed-club-fixture.mjs --club-venues).';
+const SIXA_VENUES = [
+  { name: 'Lions Park', address: '41 Lions Park Dr', facilities: ['Diamond 1', 'Diamond 2', 'Diamond 3'] },
+  { name: 'Kinsmen Park', address: '200 Kinsmen Way', facilities: ['Diamond A', 'Diamond B'] },
+  { name: 'Westfield School', address: '120 Westfield Rd', facilities: [] },
+];
+/** Filled by addClubVenues, read by printClubVenues. */
+let sixaDates = null;
+
 /** The 9U AA head-coach invitation's raw token — set when the fixture is BUILT (printed once, at the end). */
 let inviteToken = null;
 
@@ -220,6 +239,17 @@ async function ensureUser(email, password, fullName) {
   die(`createUser ${email}`, error);
   ok(`sign-in created ${email}`);
   return data.user;
+}
+
+// ── Club Tier Stage 6a — `--club-venues`: ADD the club's venues and a week of bookings on them, and stop ──────
+// Additive, never a reset (a reset ends every session's club sign-ins). Re-running replaces exactly what this
+// step wrote (rows it marks), so it can be run again before a walk without touching anything else.
+if (process.argv.includes('--club-venues')) {
+  head(`Club Tier Stage 6a — venues and bookings for ${ORG_NAME} (added; nothing rebuilt)`);
+  await addClubVenues();
+  head('Done');
+  printClubVenues();
+  process.exit(0);
 }
 
 // ── Club Tier Stage 3c — `--calendar-club`: rebuild ONLY the calendar club, and stop ────────────────
@@ -720,6 +750,9 @@ die('league registrations', (await db.from('league_registrations').insert(league
 })))).error);
 ok(`house league "${Y} Fall House League" open for registration — 5 registrations (Tremblay household among them)`);
 
+// ── Club Tier Stage 6a — the club's venues and a week of bookings on them (the same step `--club-venues` runs) ──
+await addClubVenues();
+
 // ── Club Tier Stage 2 · session 3 — invitations, templates and signatures ──────────────────
 // A pending HEAD-COACH invitation on 9U AA to a brand-new address (the board's amber "Invited", and
 // the arrival walk: its accept link is printed below, because the raw token lives only in a link).
@@ -939,4 +972,148 @@ async function buildCalendarClub() {
 function printCalendarClub() {
   console.log(`  Calendar club: http://localhost:3000/${CAL_SLUG}/admin   (January — walk the move to September)`);
   console.log(`  owner             ${CAL_OWNER.email}  /  ${CAL_OWNER.password}`);
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════════════════
+// Club Tier Stage 6a — the club's venues and a week of bookings on them (the walks of the venue book and the
+// clash check; plan §6 Stage 6, hub K4MPu4ni53Ct7yrDcmWJd9 v64). ADDITIVE: it finds what exists, adds what is
+// missing, and replaces only the rows it wrote itself (each marked), so it can run on a fixture mid-walk.
+// The bookings pin IDENTITIES, never figures: the hub's clash is 13U AAA's Tuesday practice on Lions Park
+// Diamond 2 against 14U AA's; the dates are the first Tuesday at least a week out, so they never fall behind.
+// ════════════════════════════════════════════════════════════════════════════════════════════════════
+
+
+/** A Toronto wall clock → the instant to store (the platform's one conversion; lib/timezone.ts's rule). */
+function torontoInstant(date, time) {
+  const [y, mo, d] = date.split('-').map(Number);
+  const [h, mi] = time.split(':').map(Number);
+  let guess = Date.UTC(y, mo - 1, d, h, mi);
+  for (let i = 0; i < 2; i++) {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(new Date(guess));
+    const g = Object.fromEntries(parts.map(p => [p.type, p.value]));
+    guess += Date.UTC(y, mo - 1, d, h, mi) - Date.UTC(+g.year, +g.month - 1, +g.day, +g.hour, +g.minute);
+  }
+  return new Date(guess).toISOString();
+}
+/** The first `dow` (0 = Sunday) on or after `day`. */
+function onOrAfter(day, dow) {
+  let d = day;
+  while (new Date(`${d}T12:00:00Z`).getUTCDay() !== dow) d = addDays(d, 1);
+  return d;
+}
+
+async function addClubVenues() {
+  const org = await one('find org', db.from('organizations').select('id').eq('slug', ORG_SLUG).single());
+  const orgId = org.id;
+
+  // 1. The Venue library — found by name, or added.
+  const venue = {};
+  for (const spec of SIXA_VENUES) {
+    let row = await one(`venue ${spec.name}`, db.from('org_venues').select('id, name, address').eq('org_id', orgId).eq('name', spec.name).maybeSingle());
+    if (!row) row = await one(`add venue ${spec.name}`, db.from('org_venues').insert({ org_id: orgId, name: spec.name, address: spec.address, notes: SIXA_MARK, is_active: true }).select('id, name, address').single());
+    const facs = await one(`facilities ${spec.name}`, db.from('org_venue_facilities').select('id, name').eq('org_venue_id', row.id));
+    const fac = Object.fromEntries((facs ?? []).map(f => [f.name, f.id]));
+    for (const [i, name] of spec.facilities.entries()) {
+      if (fac[name]) continue;
+      const f = await one(`add ${spec.name} ${name}`, db.from('org_venue_facilities').insert({ org_venue_id: row.id, org_id: orgId, name, facility_type: 'diamond', display_order: i }).select('id').single());
+      fac[name] = f.id;
+    }
+    venue[spec.name] = { ...row, fac };
+  }
+
+  // 2. The teams and their live seasons.
+  const teams = await one('teams', db.from('rep_teams').select('id, name').eq('org_id', orgId));
+  const teamId = (name) => {
+    const t = (teams ?? []).find(x => x.name === name);
+    if (!t) { console.error(`✗ ${name} is not in ${ORG_NAME} — build the fixture first.`); process.exit(1); }
+    return t.id;
+  };
+  const liveYear = async (name) => {
+    const py = await one(`live season ${name}`, db.from('rep_program_years').select('id').eq('team_id', teamId(name)).eq('status', 'active').maybeSingle());
+    if (!py) { console.error(`✗ ${name} has no live season.`); process.exit(1); }
+    return py.id;
+  };
+
+  // 3. 13U AAA's own places: a "Lions Park" of its own (the same name as the club's — kept, never merged) and
+  //    Centennial Park (a park the club doesn't own: the quiet "isn't checked" line).
+  const aaa13 = teamId('13U AAA');
+  const place = {};
+  for (const p of [
+    { name: 'Lions Park', address: '41 Lions Park Dr', field_number: 'Diamond 2' },
+    { name: 'Centennial Park', address: '77 Centennial Rd', field_number: null },
+  ]) {
+    let row = await one(`place ${p.name}`, db.from('rep_team_places').select('id').eq('team_id', aaa13).ilike('name', p.name).maybeSingle());
+    if (!row) row = await one(`add place ${p.name}`, db.from('rep_team_places').insert({ org_id: orgId, team_id: aaa13, ...p, note: null }).select('id').single());
+    place[p.name] = row.id;
+  }
+
+  // 4. A week of bookings on them — the earlier run's rows replaced, nothing else touched.
+  die('clear earlier 6a events', (await db.from('rep_team_events').delete().eq('org_id', orgId).eq('description', SIXA_MARK)).error);
+  const tue = onOrAfter(addDays(TODAY, 7), 2);
+  const wed = addDays(tue, 1);
+  const thu = addDays(tue, 2);
+  const tue2 = addDays(tue, 7);
+  sixaDates = { tue, wed, thu, tue2 };
+  const onClub = (v, f) => ({
+    location: v, location_address: venue[v].address, field_number: f, place_id: null,
+    org_venue_id: venue[v].id, org_venue_facility_id: f ? venue[v].fac[f] : null,
+  });
+  const practice = async (team, day, from, to, where) => ({
+    program_year_id: await liveYear(team), team_id: teamId(team), org_id: orgId,
+    event_type: 'practice', name: 'Practice', description: SIXA_MARK, status: 'scheduled',
+    starts_at: torontoInstant(day, from), ends_at: torontoInstant(day, to), ...where,
+  });
+  const rows = [
+    // The hub's clash: 14U AA holds Lions Park Diamond 2, 5:30–7:30 p.m., two Tuesdays running; 13U AAA's 6:00–8:00
+    // that first Tuesday overlaps it.
+    await practice('14U AA', tue, '17:30', '19:30', onClub('Lions Park', 'Diamond 2')),
+    await practice('14U AA', tue2, '17:30', '19:30', onClub('Lions Park', 'Diamond 2')),
+    await practice('13U AAA', tue, '18:00', '20:00', onClub('Lions Park', 'Diamond 2')),
+    // The softer line: 11U AA at Lions Park on the Wednesday, no diamond set.
+    await practice('11U AA', wed, '18:00', '19:30', onClub('Lions Park', null)),
+    // The house-league walk: 11U AA holds Kinsmen Park Diamond B, 6:00–7:30 p.m., both Tuesdays.
+    await practice('11U AA', tue, '18:00', '19:30', onClub('Kinsmen Park', 'Diamond B')),
+    await practice('11U AA', tue2, '18:00', '19:30', onClub('Kinsmen Park', 'Diamond B')),
+    // The team's own place: never compared, and the form says so.
+    await practice('13U AAA', thu, '18:00', '20:00', {
+      location: 'Centennial Park', location_address: '77 Centennial Rd', field_number: null,
+      place_id: place['Centennial Park'], org_venue_id: null, org_venue_facility_id: null,
+    }),
+  ];
+  die('6a events', (await db.from('rep_team_events').insert(rows)).error);
+
+  // 5. House league: two teams in U9 Rookie and one game on Kinsmen Park Diamond B (the Thursday), so a second
+  //    league game there is refused under the field, while the Tuesday — held by 11U AA — saves with the line.
+  const season = await one('house league season', db.from('league_seasons').select('id, name').eq('org_id', orgId).eq('slug', `${Y}-fall-house-league`).maybeSingle());
+  let leagueNote = 'no house-league season in the fixture — skipped';
+  if (season) {
+    const div = await one('U9 Rookie', db.from('league_divisions').select('id').eq('season_id', season.id).eq('name', 'U9 Rookie').maybeSingle());
+    if (div) {
+      const lt = {};
+      for (const [i, name] of ['Reds', 'Blues'].entries()) {
+        let row = await one(`league team ${name}`, db.from('league_teams').select('id').eq('season_id', season.id).eq('name', name).maybeSingle());
+        if (!row) row = await one(`add league team ${name}`, db.from('league_teams').insert({ season_id: season.id, division_id: div.id, name, sort_order: i }).select('id').single());
+        lt[name] = row.id;
+      }
+      die('clear earlier 6a league game', (await db.from('league_games').delete().eq('season_id', season.id).eq('notes', SIXA_MARK)).error);
+      die('6a league game', (await db.from('league_games').insert({
+        org_id: orgId, season_id: season.id, division_id: div.id, home_team_id: lt.Reds, away_team_id: lt.Blues,
+        scheduled_at: torontoInstant(thu, '18:00'), ends_at: torontoInstant(thu, '19:30'), status: 'scheduled',
+        org_venue_id: venue['Kinsmen Park'].id, org_venue_facility_id: venue['Kinsmen Park'].fac['Diamond B'],
+        location: 'Kinsmen Park — Diamond B', notes: SIXA_MARK,
+      })).error);
+      leagueNote = `${season.name}: Reds and Blues in U9 Rookie · Reds vs Blues on Kinsmen Park Diamond B, ${thu} 6:00–7:30 p.m.`;
+    }
+  }
+  ok('venue library: Lions Park (Diamonds 1–3) · Kinsmen Park (Diamonds A, B) · Westfield School (no facilities)');
+  ok('13U AAA\'s own places: Lions Park (same name as the club\'s, never merged) · Centennial Park');
+  ok(`bookings: 14U AA Lions Park D2 ${tue} + ${tue2} 5:30–7:30 · 13U AAA Lions Park D2 ${tue} 6:00–8:00 (the clash) · 11U AA Lions Park, no diamond, ${wed} · 11U AA Kinsmen D-B ${tue} + ${tue2} 6:00–7:30 · 13U AAA Centennial Park ${thu}`);
+  ok(leagueNote);
+}
+
+function printClubVenues() {
+  if (!sixaDates) return;
+  console.log(`  Stage 6a walks — the seeded Tuesday is ${sixaDates.tue} (and ${sixaDates.tue2}); Wednesday ${sixaDates.wed}; Thursday ${sixaDates.thu}`);
+  console.log(`  head coach 13U AAA   uat-club-coach-13aaa@uat-rep-club.local  /  ${DEFAULT_PASSWORD}`);
+  console.log('  house league         the OWNER (the house-league schedule saves for the owner or a league admin)');
 }

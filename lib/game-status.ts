@@ -23,16 +23,17 @@
 // here more than most: this file is THE definition of "is this game live?", and without it the
 // demo's verification scripts had to hand-copy the time window and hope it stayed in step.
 import { zonedWallClockToUtc } from './timezone.ts';
+import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
 import type { Game, PublicTeam } from './types';
 
 /** Minutes after a game's scheduled end during which it still reads LIVE — covers
  *  extra innings / clock overruns before it settles into its score state. */
 export const LIVE_GRACE_MINUTES = 30;
 
-/** Live-window length used when a game carries no per-game duration override —
- *  matches `SYSTEM_TIMING_DEFAULTS.durationMinutes` in lib/schedule-conflict.ts.
+/** Live-window length used when a game carries no per-game duration override — the platform's one
+ *  booking length (lib/booking-length.ts), the same number every clash check assumes.
  *  Callers pass `game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES`. */
-export const DEFAULT_GAME_DURATION_MINUTES = 90;
+export const DEFAULT_GAME_DURATION_MINUTES = DEFAULT_BOOKING_MINUTES;
 
 export type LiveGameInput = {
   status: string;

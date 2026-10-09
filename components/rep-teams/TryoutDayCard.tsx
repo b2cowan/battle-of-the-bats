@@ -7,8 +7,12 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getTryoutWindowNotice } from '@/lib/tryout-windows';
 import { utcToZonedInputs, addCalendarDays } from '@/lib/timezone';
 import { formatTryoutSessionWhen } from '@/lib/tryout-session-label';
-import { getSportPack, surfaceLabel } from '@/lib/sports';
-import type { RepTryout, RepTryoutSession } from '@/lib/types';
+import { surfaceLabel } from '@/lib/sports';
+import WhereField, { WhereLine } from '@/components/venue/WhereField';
+import { useClashCheck, readFindingsPerDate, countFindings } from '@/components/venue/useClashCheck';
+import { EMPTY_WHERE, whereBody, whereOf, type WhereValue } from '@/lib/where-field';
+import { clashLine } from '@/lib/venue-clash-words';
+import type { ClubVenueOption, RepTryout, RepTryoutSession } from '@/lib/types';
 import type { SetupItemStatus } from './TryoutSetupChecklist';
 import TryoutNamesSwitch from './TryoutNamesSwitch';
 import styles from './TryoutDayCard.module.css';
@@ -46,12 +50,12 @@ interface Props {
 interface SessionForm {
   startsAt: string;   // datetime-local value
   endsAt: string;     // datetime-local value (optional)
-  location: string;
-  fieldNumber: string;
+  /** Where (Club Tier Stage 6a, Ask 13): one of the club's venues and its facility, or typed words. */
+  where: WhereValue;
   label: string;
 }
 
-const BLANK: SessionForm = { startsAt: '', endsAt: '', location: '', fieldNumber: '', label: '' };
+const BLANK: SessionForm = { startsAt: '', endsAt: '', where: EMPTY_WHERE, label: '' };
 
 /**
  * Stored instant → the `YYYY-MM-DDTHH:mm` value `<input type="datetime-local">` wants, read in
@@ -102,6 +106,8 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
 
   const [tryout, setTryout] = useState<RepTryout | null>(null);
   const [sessions, setSessions] = useState<RepTryoutSession[]>([]);
+  // The club's venues (Club Tier Stage 6a): read with the sessions, offered in the Venue field — in a club only.
+  const [clubVenues, setClubVenues] = useState<{ inClub: boolean; venues: ClubVenueOption[] }>({ inClub: false, venues: [] });
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -148,6 +154,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
       if (!res.ok) throw new Error(data.error ?? 'Failed to load tryout day');
       setTryout(data.tryout ?? null);
       setSessions(data.sessions ?? []);
+      setClubVenues(data.clubVenues?.inClub ? { inClub: true, venues: data.clubVenues.venues ?? [] } : { inClub: false, venues: [] });
     } catch (e: any) {
       fail(e.message ?? 'Failed to load tryout day.');
     } finally {
@@ -210,8 +217,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
     const loaded: SessionForm = {
       startsAt: toInputValue(s.startsAt),
       endsAt: toInputValue(s.endsAt),
-      location: s.location ?? '',
-      fieldNumber: s.fieldNumber ?? '',
+      where: whereOf(s),
       label: s.label ?? '',
     };
     setEditingId(s.id);
@@ -221,20 +227,42 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
     setModalOpen(true);
   }
 
+  // The live clash check (Club Tier Stage 6a — the owner's "Join the check"): a tryout day on one of the club's
+  // venues takes the diamond as surely as a practice. The coach's own check, so the line reads the same words.
+  // The tryout-sessions base sits beside the team's other routes; the coach's check is the schedule's own.
+  const { result: clashResults, checking, lineIsCurrent } = useClashCheck(
+    modalOpen && form.where.source === 'club' && form.startsAt ? {
+      path: base.replace(/\/tryout-sessions$/, '/venue-clashes'),
+      body: { orgVenueId: form.where.orgVenueId, orgVenueFacilityId: form.where.orgVenueFacilityId, occurrences: [{ startsAt: form.startsAt, endsAt: form.endsAt }] },
+    } : null,
+    readFindingsPerDate,
+    countFindings,
+  );
+  const said = clashLine(clashResults?.[0] ?? [], { sport, venueName: form.where.location, facilityName: form.where.orgVenueFacilityId ? form.where.fieldNumber : null });
+  const whereLine = said ? <WhereLine tone={said.tone} lead={said.lead} rest={said.rest} /> : null;
+
   async function saveSession() {
     if (!form.startsAt) { setFormError('Pick a date and time.'); return; }
     if (form.endsAt && new Date(form.endsAt).getTime() <= new Date(form.startsAt).getTime()) {
       setFormError('The end time must be after the start time.');
       return;
     }
+    // Save checks again first (Ask 5): a booking made since the line was read comes back as the line, and the
+    // window stays open on it; a second press saves anyway. Never refuses.
+    if (!(await lineIsCurrent())) return;
     setSaving(true);
     setFormError(null);
     try {
+      const where = whereBody(form.where);
       const payload = {
         startsAt: form.startsAt,
         endsAt: form.endsAt || null,
-        location: form.location,
-        fieldNumber: form.fieldNumber,
+        // A club venue's links (the server copies its words) or typed words. A tryout day has no place book.
+        location: where.location,
+        locationAddress: where.locationAddress,
+        fieldNumber: where.fieldNumber,
+        orgVenueId: where.orgVenueId,
+        orgVenueFacilityId: where.orgVenueFacilityId,
         label: form.label,
       };
       const res = editingId
@@ -274,10 +302,8 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
   const startTouched = editingId != null || form.startsAt !== formBaseline.startsAt;
   const windowNotice = form.startsAt && startTouched ? getTryoutWindowNotice(new Date(form.startsAt), { sport }) : null;
 
-  // Venue vocabulary from the sport pack — a basketball tryout shouldn't say "diamond" (WI-9).
-  const facility = getSportPack(sport ?? undefined).defaultFacilityType;
-  const facilityLabel = facility === 'diamond' ? 'Field / diamond' : facility === 'court' ? 'Court' : 'Field / venue';
-  const facilityExample = facility === 'diamond' ? 'e.g. Diamond 3' : facility === 'court' ? 'e.g. Court 2' : 'e.g. Field 3';
+  // ⚰ `facilityLabel` / `facilityExample` (→ 2026-10-08, Club Tier Stage 6a): the Venue field reads the sport's own
+  // word itself (`fieldNounFor`) — "Diamond", "Court", "Field" — the one derivation every form shares (Ask 13).
 
   return (
     <>
@@ -390,17 +416,20 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
               />
             </div>
 
-            <div className={styles.row2}>
-              <div className={styles.field}>
-                <label className={styles.label}>Location</label>
-                <input className={styles.input} type="text" maxLength={120} value={form.location}
-                  onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Centennial Park" />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>{facilityLabel}</label>
-                <input className={styles.input} type="text" maxLength={40} value={form.fieldNumber}
-                  onChange={e => setForm(f => ({ ...f, fieldNumber: e.target.value }))} placeholder={facilityExample} />
-              </div>
+            {/* Where — the one Venue field (Club Tier Stage 6a, Ask 13): the club's venues (in a club), or typed
+                words; the facility under the sport's word beside it; the clash line under them. ⚰ "Location" and
+                the "Field / diamond" box (→ 2026-10-08). */}
+            <div className={styles.field}>
+              <WhereField
+                idPrefix="tryout"
+                sport={sport}
+                value={form.where}
+                onChange={w => setForm(f => ({ ...f, where: w }))}
+                clubVenues={clubVenues.venues}
+                inClub={clubVenues.inClub}
+                classes={{ field: styles.field, label: styles.label, input: styles.input, select: styles.input }}
+                line={whereLine}
+              />
             </div>
 
             <div className={styles.field}>
@@ -413,7 +442,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
 
             <div className={styles.modalActions}>
               <button type="button" className="btn btn-ghost" onClick={() => guardedClose()} disabled={saving}>Cancel</button>
-              <button type="button" className="btn btn-primary" onClick={saveSession} disabled={saving}>
+              <button type="button" className="btn btn-primary" onClick={saveSession} disabled={saving || checking}>
                 {saving ? 'Saving…' : editingId ? 'Save' : 'Add session'}
               </button>
             </div>

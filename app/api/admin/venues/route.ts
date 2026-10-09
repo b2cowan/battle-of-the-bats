@@ -555,6 +555,19 @@ export const POST = withObservability(async (req: Request) => {
         return NextResponse.json({ error: 'Org venue not found' }, { status: 404 });
       }
 
+      // Importing the same library venue twice offers the copy already there (S6-04, Club Tier Stage 6a) — two
+      // copies of one diamond would be two venues to the tournament's own clash check, which compares copy ids.
+      const { data: already } = await supabaseAdmin
+        .from('diamonds').select('*')
+        .eq('tournament_id', data.tournamentId).eq('source_org_venue_id', data.orgVenueId)
+        .order('name', { ascending: true }).limit(1).maybeSingle();
+      if (already) {
+        const { data: facData } = await supabaseAdmin
+          .from('venue_facilities').select('*').eq('venue_id', already.id)
+          .order('display_order', { ascending: true });
+        return NextResponse.json({ success: true, venue: mapVenue(already, facData ?? []), existing: true });
+      }
+
       const { data: newVenue, error: vErr } = await supabaseAdmin.from('diamonds').insert({
         tournament_id:       data.tournamentId,
         name:                ov.name,
@@ -608,6 +621,8 @@ export const POST = withObservability(async (req: Request) => {
         name:          srcVenue.name,
         address:       srcVenue.address ?? null,
         notes:         srcVenue.notes   ?? null,
+        // The club-library link travels with the copy (S6-04): the source is this club's own (checked above).
+        source_org_venue_id: srcVenue.source_org_venue_id ?? null,
       }).select('*').single();
       if (vErr || !newVenue) throw vErr ?? new Error('Failed to create venue');
 
@@ -623,6 +638,7 @@ export const POST = withObservability(async (req: Request) => {
             facility_type: f.facility_type,
             display_order: f.display_order,
             notes:         f.notes ?? null,
+            source_org_facility_id: f.source_org_facility_id ?? null,
           }))
         );
         if (fErr) throw fErr;

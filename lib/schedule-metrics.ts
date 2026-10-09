@@ -1,5 +1,6 @@
 import type { Division, Game, Tournament, Venue } from './types';
 import { computeTournamentStandings } from './tie-breakers.ts';
+import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
 import { isStandardSingleEliminationBracket, nextBracketCodeViaWinner } from './playoff-bracket.ts';
 import {
   resolveVenuePlacement,
@@ -202,7 +203,8 @@ interface ParticipantGame {
   isProjected?: boolean;
 }
 
-const DEFAULT_GAME_DURATION_MINUTES = 90;
+// The one booking length (lib/booking-length.ts) — the clash engines and the live window read the same number.
+const DEFAULT_GAME_DURATION_MINUTES = DEFAULT_BOOKING_MINUTES;
 const DEFAULT_BUFFER_MINUTES = 15;
 const DEFAULT_MAX_GAMES_PER_DAY = 2;
 const EARLY_GAME_CUTOFF_MINUTES = 12 * 60;

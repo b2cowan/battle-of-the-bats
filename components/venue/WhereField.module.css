@@ -1,0 +1,78 @@
+/* ONE WAY TO SAY WHERE (Club Tier Stage 6a, Ask 13) — the shape, the list and the line. The two controls wear the
+   host form's own classes; everything here reads tokens both portals define (the coach portal's warm palette and
+   the admin kit set the --home-* family; the dark fallbacks are the platform's). Drawn on the hub, specimens 1 and 7. */
+
+.where { display: block; }
+
+/* Venue, then the facility: one row in a 640px window (1.5fr / 1fr), stacked on a phone, Venue above. */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 0 12px;
+  align-items: start;
+}
+@media (max-width: 640px) {
+  .row { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+.venueCol, .facilityCol { min-width: 0; }
+/* The columns wear the host's field class for its look; its bottom margin is the HOST's to give, around the whole
+   field, so the line sits 7px under the controls as drawn. (Two classes, to win over the host's one.) */
+.row > .venueCol, .row > .facilityCol { margin-bottom: 0; }
+@media (max-width: 640px) {
+  .row > .venueCol { margin-bottom: 12px; }
+}
+.combo { position: relative; }
+
+/* The quiet line under Venue: where the name came from. */
+.under {
+  margin: 6px 0 0;
+  font-size: var(--type-support, 0.8125rem);
+  color: var(--home-dim, var(--text-tertiary));
+}
+
+/* ── The list ── a name, a quiet second line, a count at the end, no icon (the built picker's rows). */
+.list {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+  background: var(--home-card, var(--card-bg));
+  border: 1px solid var(--home-line-strong, var(--border-2));
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  max-height: 300px; overflow: auto; z-index: 30;
+  padding: 4px 0;
+}
+.listUp { top: auto; bottom: calc(100% + 4px); }
+.group {
+  padding: 10px 12px 4px;
+  font-size: var(--type-label, 0.6875rem);
+  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--home-dim, var(--text-tertiary));
+}
+.opt {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; min-height: 44px; padding: 6px 12px;
+  background: none; border: none; text-align: left; cursor: pointer;
+  font: inherit; font-size: var(--type-body, 0.875rem);
+  color: var(--home-ink, var(--text-primary));
+}
+.opt:hover, .optActive { background: rgba(var(--logic-lime-rgb, 132, 204, 22), 0.1); }
+.optText { display: flex; flex-direction: column; min-width: 0; }
+.optName { font-weight: 600; }
+.optSub { font-size: var(--type-support, 0.75rem); color: var(--home-dim, var(--text-tertiary)); margin-top: 1px; }
+.optCount { margin-left: auto; font-size: var(--type-support, 0.75rem); color: var(--home-dim, var(--text-tertiary)); white-space: nowrap; }
+.optAct { color: var(--home-olive, var(--logic-lime)); font-weight: 650; }
+.optFoot { color: var(--text-secondary); font-size: var(--type-support, 0.8125rem); }
+.sep { height: 1px; margin: 4px 0; background: var(--home-line, var(--border-2)); }
+
+/* ── The line under the row ── one shape, four inks (amber saves anyway · red can't save · quiet isn't checked). */
+.line {
+  display: flex; gap: 7px; align-items: flex-start;
+  margin: 7px 0 0;
+  font-size: var(--type-support, 0.8125rem); line-height: 1.45;
+}
+.line b { font-weight: 650; }
+.lineIcon { flex: none; margin-top: 1px; }
+.line_warn { color: var(--warning-strong, var(--warning)); }
+.line_busy { color: var(--text-secondary); }
+.line_busy .lineIcon { color: var(--warning-strong, var(--warning)); }
+.line_refuse { color: var(--danger-strong, var(--danger)); }
+.line_quiet { color: var(--home-dim, var(--text-tertiary)); }

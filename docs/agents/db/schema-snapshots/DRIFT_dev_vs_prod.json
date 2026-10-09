@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-07",
-  "total": 61,
+  "generated": "2026-10-09",
+  "total": 76,
   "counts": {
     "tables": 2,
-    "columns": 26,
-    "indexes": 13,
-    "constraints": 12,
-    "rls": 8
+    "columns": 30,
+    "indexes": 19,
+    "constraints": 16,
+    "rls": 9
   },
   "items": [
     {
@@ -39,6 +39,10 @@
     },
     {
       "key": "check:only-dev:rep_cost_allocations.rep_cost_allocations_notes_length_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_events.rep_team_events_place_or_club_venue",
       "sig": ""
     },
     {
@@ -146,6 +150,22 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_events.org_venue_facility_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_events.org_venue_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_tryout_sessions.org_venue_facility_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_tryout_sessions.org_venue_id",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:org_budget_lines.org_budget_lines_fiscal_year_id_fkey",
       "sig": ""
     },
@@ -194,6 +214,22 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_team_events.rep_team_events_org_venue_facility_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_events.rep_team_events_org_venue_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_tryout_sessions.rep_tryout_sessions_org_venue_facility_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_tryout_sessions.rep_tryout_sessions_org_venue_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:org_budget_lines_fiscal_year_idx",
       "sig": ""
     },
@@ -239,6 +275,30 @@
     },
     {
       "key": "index:only-dev:rep_allocation_installments_carried_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_events_club_booking_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_events_org_venue_facility_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_events_org_venue_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_tryout_sessions_club_booking_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_tryout_sessions_org_venue_facility_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_tryout_sessions_org_venue_idx",
       "sig": ""
     },
     {

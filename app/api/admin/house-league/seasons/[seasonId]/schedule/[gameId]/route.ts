@@ -7,6 +7,7 @@ import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } f
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
+import { clashReportForLeagueRows, emptyReport } from '@/lib/venue-clash-lookup';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -108,8 +109,10 @@ export const PATCH = withObservability(async (req: Request,
     (game.status === 'cancelled' || game.status === 'postponed')
     && effectiveStatus !== 'cancelled' && effectiveStatus !== 'postponed';
   let warnings: string[] = [];
-  if ((placementChanged || slotRevived)
-      && effectiveStatus !== 'cancelled' && effectiveStatus !== 'postponed') {
+  // Where or when changed (or the slot came back), and the game holds a slot: both checks run, the league's own
+  // refusal before the write and the cross-program report after it.
+  const recheck = (placementChanged || slotRevived) && effectiveStatus !== 'cancelled' && effectiveStatus !== 'postponed';
+  if (recheck) {
     const { data: teamRows } = await supabaseAdmin
       .from('league_teams')
       .select('id, name')
@@ -138,7 +141,20 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   await updateLeagueGame(gameId, patch);
-  return NextResponse.json({ ok: true, warnings });
+
+  // Across programs (Club Tier Stage 6a): the moved or re-opened game against the club's other programs — warns
+  // only, and only when where or when changed (a final score is a record, not a booking).
+  const crossProgram = recheck
+    ? await clashReportForLeagueRows(ctx!.org.id, season, 'game', [{
+        id: gameId,
+        scheduledAt: (patch.scheduledAt !== undefined ? patch.scheduledAt : game.scheduled_at) as string | null,
+        endsAt: (patch.endsAt !== undefined ? patch.endsAt : game.ends_at) as string | null,
+        status: effectiveStatus,
+        orgVenueId: patch.orgVenueId !== undefined ? patch.orgVenueId : game.org_venue_id,
+        orgVenueFacilityId: patch.orgVenueFacilityId !== undefined ? patch.orgVenueFacilityId : game.org_venue_facility_id,
+      }])
+    : emptyReport();
+  return NextResponse.json({ ok: true, warnings, crossProgram });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]' });
 
 // Soft-cancel: sets status = 'cancelled', does not hard-delete

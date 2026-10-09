@@ -29,6 +29,7 @@ import {
   isPlaced,
   type VenuePlacement,
 } from './venue-identity.ts';
+import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
 
 // ---------------------------------------------------------------------------
 // Timing resolution
@@ -40,7 +41,7 @@ export interface GameTiming {
 }
 
 export const SYSTEM_TIMING_DEFAULTS: GameTiming = {
-  durationMinutes: 90,
+  durationMinutes: DEFAULT_BOOKING_MINUTES,
   bufferMinutes: 15,
 };
 

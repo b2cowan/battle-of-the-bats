@@ -10,6 +10,7 @@ import NumberStepper from '@/components/admin/NumberStepper';
 import FeedbackModal from '@/components/FeedbackModal';
 import BracketBuilder from './BracketBuilder';
 import BracketHealthPanel from './BracketHealthPanel';
+import { DEFAULT_BOOKING_MINUTES } from '@/lib/booking-length';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 
@@ -211,7 +212,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
       ? null
       : buildBracketScheduleMetrics(
           preview.map(p => ({ code: p.code, home: p.home, away: p.away, date: p.date || null, time: p.time || null })),
-          { gameDurationMinutes: tournament?.settings?.game_duration_minutes ?? 90, minRestMinutes },
+          { gameDurationMinutes: tournament?.settings?.game_duration_minutes ?? DEFAULT_BOOKING_MINUTES, minRestMinutes },
         ),
     [preview, tournament?.settings?.game_duration_minutes, minRestMinutes],
   );

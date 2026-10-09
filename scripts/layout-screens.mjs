@@ -369,6 +369,21 @@ async function slideScheduleToTop(page) {
   await page.evaluate(() => { const s = document.querySelector('[data-schedule-scroller]'); if (s) s.scrollTop = 0; });
   await page.waitForTimeout(250);
 }
+/** Club Tier Stage 6a: the Venue field's list, open — the club's venues above the team's places, 44px rows. */
+async function openVenueList(page) {
+  const venue = page.locator('#event-venue');
+  await venue.waitFor({ state: 'visible', timeout: 15_000 });
+  await venue.click();
+  await page.waitForTimeout(400);
+}
+/** Club Tier Stage 6a: house league's Add Game window, opened from its toolbar (the field and its line). */
+async function openLeagueAddGame(page) {
+  const add = page.getByRole('button', { name: 'Add Game', exact: true }).first();
+  if (await add.count() === 0) return;
+  await add.click();
+  await page.locator('[role="dialog"][aria-modal="true"]').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
 /** The RSVP sheet, raised from the first attendance row of the open event sheet (C3): a dialog
  *  over a dialog, scoped so the event sheet beneath its scrim is not reported as covered. */
 async function openRsvpSheet(page) {
@@ -718,6 +733,12 @@ export const SCREENS = [
   // its own dialog (the way `coach-team-hub-switcher` scopes to its sheet).
   { id: 'coach-schedule-rsvp', session: 'coach', ready: '[data-field-floor]', scope: '[data-rsvp-sheet] [role="dialog"]', interact: openRsvpSheet,
     path: (c) => `${team(c)}/schedule?event=${c.gameEventId}&tab=attendance` },
+  // Club Tier Stage 6a — Add Practice by its address: the ONE Venue field (Venue, then the sport's word, on one
+  // row; stacked on a phone) and its line; then the same form with the Venue list open.
+  { id: 'coach-schedule-add', session: 'coach', ready: '[role="dialog"][aria-modal="true"]', scope: '[role="dialog"][aria-modal="true"]',
+    path: (c) => `${team(c)}/schedule?add=practice` },
+  { id: 'coach-schedule-add-venue-list', session: 'coach', ready: '[role="dialog"][aria-modal="true"]', scope: '[role="dialog"][aria-modal="true"]',
+    path: (c) => `${team(c)}/schedule?add=practice`, interact: openVenueList },
   /* ⚠ ATTENDANCE MOVED INTO THE INSIGHTS PORTAL (P1, 2026-08-18) — `/attendance` is now a permanent
      redirect, and this entry addresses the TAB. It stays here rather than moving down to the
      Insights block because what it measures is unchanged: the densest table in the week's work, at
@@ -1476,6 +1497,9 @@ export const SCREENS = [
   { id: 'admin-hl-registrations',      area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
   { id: 'admin-hl-registrations-registrar', area: 'house-league', session: 'repClubRegistrar', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
   { id: 'admin-hl-schedule',           area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/schedule` },
+  // Club Tier Stage 6a — the Add Game window: the Venue field on house league's old look, and where its line sits.
+  { id: 'admin-hl-schedule-add-game', area: 'house-league', session: 'repClubOwner', ready: 'h1', scope: '[role="dialog"][aria-modal="true"]',
+    path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/schedule`, interact: openLeagueAddGame },
   { id: 'admin-hl-standings',          area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/standings` },
   { id: 'admin-hl-teams',              area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/teams` },
 

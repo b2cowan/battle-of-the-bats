@@ -11,9 +11,11 @@ import {
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import { wallClockStringToUtc } from '@/lib/timezone';
-import type { RepTryoutSession } from '@/lib/types';
+import { resolveRepEventWhere } from '@/lib/rep-event-where';
+import { clashesForSavedTryoutSessions } from '@/lib/venue-clash-lookup';
+import type { Organization, RepTryoutSession } from '@/lib/types';
 
-type Owned = { ok: false; res: Response } | { ok: true; session: RepTryoutSession; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
+type Owned = { ok: false; res: Response } | { ok: true; org: Organization; teamName: string; session: RepTryoutSession; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
 
 /** Authorize the assigned coach and confirm the session belongs to this org + the path team. */
 async function resolveOwned(orgSlug: string, teamId: string, sessionId: string): Promise<Owned> {
@@ -33,7 +35,7 @@ async function resolveOwned(orgSlug: string, teamId: string, sessionId: string):
   if (!session || session.orgId !== ctx.org.id || session.teamId !== teamId) {
     return { ok: false, res: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   }
-  return { ok: true, session, assignment };
+  return { ok: true, org: ctx.org, teamName: team.name, session, assignment };
 }
 
 export const PATCH = withObservability(async (req: Request,
@@ -72,14 +74,17 @@ export const PATCH = withObservability(async (req: Request,
       return NextResponse.json({ errors: { startsAt: 'The end time must be after the start time' } }, { status: 400 });
     }
   }
-  if (body.location !== undefined) patch.location = body.location?.trim() || null;
-  if (body.locationAddress !== undefined) patch.locationAddress = body.locationAddress?.trim() || null;
-  if (body.fieldNumber !== undefined) patch.fieldNumber = body.fieldNumber?.trim() || null;
+  // Where — through the schedule's one rail (Club Tier Stage 6a): only what the body spoke about.
+  const where = await resolveRepEventWhere({ org: owned.org, teamId, body, partial: true, withPlace: false, storedVenueId: owned.session.orgVenueId });
+  if (!where.ok) return NextResponse.json({ error: where.error }, { status: 400 });
+  Object.assign(patch, where.fields);
   if (body.label !== undefined) patch.label = body.label?.trim() || null;
   if (body.status === 'scheduled' || body.status === 'cancelled') patch.status = body.status;
 
   const session = await updateRepTryoutSession(sessionId, patch);
-  return NextResponse.json({ session });
+  // Edit, move or un-cancel: checked after the save, the same line the form showed. Warns only.
+  const clashes = (await clashesForSavedTryoutSessions(owned.org.id, owned.teamName, [session]))[session.id] ?? [];
+  return NextResponse.json({ session, clashes });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-sessions/[sessionId]' });
 
 export const DELETE = withObservability(async (_req: Request,
