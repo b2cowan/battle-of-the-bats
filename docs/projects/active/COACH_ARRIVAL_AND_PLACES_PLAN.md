@@ -123,5 +123,10 @@ under Location and on the picker's rows).
 
 ## 5. Not built, on purpose
 - No org-level venue library for coaches (admin's `org_venues` stays admin's).
+  ⚖ **Reversed for teams inside a club, 2026-10-08** (Club Tier Stage 6, Ask 1, ratified): in a club the place picker
+  lists the club's venues as their own group above the team's places, and picking one links the EVENT to the club venue
+  and facility; the coach reads the club's library and never edits it. The reason above (a book the coach owns, nothing to
+  wait for from the club) still holds for a team outside a club and for every place the club doesn't own, which are
+  unchanged. Built in `CLUB_TIER_STAGE6A_BUILD_PROMPT.md`.
 - No merge of two places (rename covers the spelling case; the unique index blocks a duplicate).
 - No arrival on tournaments / team events by default (the team default covers games and practices).

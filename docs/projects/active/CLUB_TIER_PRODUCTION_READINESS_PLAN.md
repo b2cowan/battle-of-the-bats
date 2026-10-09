@@ -213,6 +213,18 @@ feed works; team-wide public feed is dead (zero callers). **Permits: nothing bui
 | D06 | M | **Permits / field bookings**: nothing exists; the homepage says orgs manage "field bookings" here. Only "Diamond Permits" as a budget word. | `app/page.tsx:597` | D4 · `/marketing` |
 | D07 | L | Team-wide public calendar feed dead (`ensureTeamCalendarToken` has no callers); stale "STUB" header in `lib/export/ics.ts:5`; help says subscription link "planned for a future release"; public team page skips the cancelled-org/public checks that the feed makes. | `lib/family-access.ts:265` · `lib/help-content/exports.tsx:281-284` · `teams/[teamSlug]/page.tsx:33` | — |
 
+> **Anchors re-verified 2026-10-08 (Stage 6 mockup session; the rows above are kept as written on 2026-09-25):**
+> D01 — `lib/league-venue.ts:181-216` (`checkLeagueBookings`, org-wide, server); `lib/schedule-conflict.ts` (tournament, browser
+> only; refusal in `tournaments/schedule/page.tsx:555` and `GameList.tsx:320`); rep writers check nothing. D02 — the gate is
+> `app/api/admin/org/venues/route.ts:96` (`create_tournaments`, held by owner/admin only: `lib/roles.ts:41,49`; league_admin
+> `:69-72`); the first load has no catch (`org/venues/page.tsx:367-378`). D03 — `app/[orgSlug]/schedule/page.tsx:9-13` still only
+> redirects; the per-program admin schedule is gone; the admin team schedule files days by `orgDayKey`; device/server clock in
+> `lib/coach-schedule-view.ts:44-54`, the house-league admin schedule `:127-134`, the public league schedule `:28-35` (server UTC).
+> D05 — delete copy `org/venues/page.tsx:498-504`; delete `route.ts:134-143` (FKs: facilities CASCADE, league links SET NULL,
+> mig 229); rename exists only in the API (`route.ts:165-180`); the `AdminSidebar` is gone: the rail row is `lib/admin-kit-nav.ts:234`,
+> the ungated tile `app/[orgSlug]/admin/org/page.tsx:40-45`; RLS `094_org_venues.sql:42-57,83-97`. D07 — `ics.ts`'s "STUB" header
+> was trued 2026-09-25; `ensureTeamCalendarToken` (`lib/family-access.ts:265`) still has no caller; help `exports.tsx:350-358`.
+
 **Tests.** None for the Org Venue Library, house-league venue routes (only the pure clash engine),
 admin rep schedule, public rep-team page, team-wide feed, or any club comms. Thin smokes for
 tournament venues and the mirror (which inserts the link with service role, so the admin UI flow is
@@ -444,7 +456,7 @@ of what was proposed; the rulings above govern.
 |---|---|---|---|
 | **D1** | **Whose number is a team's money?** The club hub sums `accounting_entries` team ledgers into Net Position; the coach's Cash on hand is records + opening balance per season; nothing reconciles them (C04, C15, C18). | **The coach's records are the source of truth for team money; the club READS them** (a per-team rollup: allocated / collected / outstanding / requests / cash on hand, labelled "held by the team", never summed into the club's own position). The team `accounting_ledgers` rows become a projection the club never writes (C12 finishes what J4-021 started) and eventually go away. Club money (org ledger, budget, allocations, request decisions) stays club-owned. Reason: three months of hardening + arithmetic gates on the coach side, none on the club side. | Stage 3 |
 | **D2** | **What is the club's year?** Club works in calendar years (budget `season_year`, hub date range, BvA filters); coaches work in program years with close/settlement/carry-forward; the two meet only on a split's `program_year_id` (C10). | **A club "budget year" is a label the club picks ("2026–27") with a start month; allocations bind to program years; the hub defaults to the current budget year; a year-end exists (lock + carry).** No fiscal-accounting features (no periods/close entries) in the first release. | Stage 3c |
-| **D3** | **Can a club admin write a team's schedule?** The franchise ruling (coaches own day-to-day; admin read-only, writes removed in `0406d42e`) still holds in code (D04). | **Keep it** — but give the admin one door that does not exist today: a club-wide read calendar (D5) and the venue clash check (D01). Do not reopen admin writes. | Stage 6 |
+| **D3** | **Can a club admin write a team's schedule?** The franchise ruling (coaches own day-to-day; admin read-only, writes removed in `0406d42e`) still holds in code (D04). | **Keep it** — but give the admin one door that does not exist today: a club-wide read calendar (D5) and the venue clash check (D01). Do not reopen admin writes. ⚖ **Amended narrowly 2026-10-08 (Stage 11 Ask 1):** the club may publish its OWN bookings (a finalized club schedule's slots) onto a team's schedule as "From the club", read-only to the coach, who can hand a slot back — the published-tournament-game pattern. The club still never writes, moves or deletes a coach's events. | Stage 6 · Stage 11 |
 | **D4** | **Permits / field bookings** — nothing exists; the homepage claims it (D06). | **Out of the first Club release.** Fix the homepage claim now (`/marketing`). Scope a "Permits & bookings" feature as its own project after release: a permit is a venue × date-range × slots × cost record the club holds, that the clash check reads and the budget can cite. | Stage 6 (decision only) |
 | **D5** | **A club-wide calendar** (all teams' games/practices, house-league games, tournaments) — internal and/or public. Nothing exists (D03). | **Internal read-only club calendar in the first release** (it is a read over tables that exist); **public club schedule** deferred unless the owner wants it for families now. | Stage 6 |
 | **D6** | **Does Club get a Founding Season offer?** Today the comp leaks onto a Club org by accident (A08); the decided promo covers Tournament Plus + the Premium portal only. Every coach in a club is free until Sept 2027, so a club pays $219 only for the club-side value. | Commercial call → `/strategy`. Options: (a) full price, no promo (current decision), (b) a Club founding comp for a small invited cohort (the 2026-07-28 "5–10 Club" shape preserved as an input). Either way, **fix the leak** (comp must be plan-scoped). | Stage 1 / 8 |
@@ -982,12 +994,200 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > The prompt's starting map (read from the code 2026-10-08) corrects §4D: D03's per-program admin schedule is gone (the admin's team
 > schedule already files days in the platform zone; the device clock survives in three week/month groupings), D05's sidebar is gone,
 > and there is **no per-club time zone** (one platform constant, Eastern). The test club has no venues, places or events on a venue.
+>
+> **🎨 DRAWN 2026-10-08 (hub, Mockups → Stage 6; twelve asks OPEN on the Decisions tab, rows Ask 1–12; Ask 13 and specimen 7 added the same day, below).** Nine screens (ten with specimen 7): *Where the
+> venues stand* (verification), six specimens (1 a head coach picks a club diamond and meets a clash, computer 640 + phone 390;
+> 2 the rule; 3 the house-league scheduler; 4 the tournament director, specimens tagged "Tournament Stage 3/5 places this";
+> 5 the club calendar at true size 1200, Week · List · Month, Day on a phone, the read window, Filter, Export; 6 the Venue
+> library at 1200, the read-first venue window, Archive vs Delete, who saves), a formatting check and *Not drawn*.
+> - **Widened (S6-01):** the release target is a rep club with no house league, so its clashes are between its own teams. The
+>   prompt's three program pairs left rep × rep out; Ask 3 covers it.
+> - **⚖ Wording RULED 2026-10-08 (owner):** *"given these have to select sports, I am ok changing these softball ones being
+>   venue and diamond, as long as we have the capability to change it to another wording once we incorporate other sports
+>   (i.e. court for basketball)."* Applied at the app's two existing levels: where a game is placed (coach form, house league's
+>   windows, a tournament's, the clash line, the calendar) the word is the SPORT's own via `fieldNounFor` / `surfaceLabel`
+>   (lib/sports.ts) read from the team's / league season's / tournament's sport — Diamond for softball and baseball, Court for
+>   basketball, Field when untailored; already live (schedule forms; house league's "Set up your {noun}s once"). The Venue
+>   library has no sport (no org-level sport exists; one venue can mix kinds), so it keeps today's word, **Facilities**, each
+>   facility showing its own kind. The rule reads "same venue, same facility". The drawings were reworded the same day
+>   (`.probe/s6-hub/fix-wording.cjs`: library + rule + notes; facility NAMES like "Diamond 2" untouched). **DoD gains:** no
+>   surface word written in; a test that a basketball team's form and clash line read "Court". Existing debt noticed, not
+>   Stage 6's: the coach form's "Field / Diamond #" label is fixed text.
+> - **➕ Ask 13 ADDED 2026-10-08 (owner), drawn as specimen 7 ("Where, on every form"):** *"when this venue review is done,
+>   can we make sure that how a user enters a venue for an event (tournament game, rep coach calendar, house league
+>   game/practice, etc.) that the entry fields are as consistent as possible across the product?"* Read in the code: four
+>   forms, three shapes. The coach types a place ("Location", `PlaceCombobox`) and finds the diamond under More in a
+>   fixed-text "Field / Diamond #" box; house league (`FieldPicker`, game/practice/series/generator) and the tournament
+>   (`TournamentFieldPicker`, game window + inline edit, "Manage venues", "＋ Add venue…") ALREADY share one shape: a
+>   single sport-word-labelled select of "venue — surface" with "any surface" rows and "Somewhere else (type it)"; a
+>   tryout day (`TryoutDayCard`) is two typed boxes (Location + the sport word). Adding a venue differs three ways (place
+>   sheet; the wizard's full street address; the library). **Specimen 1 as first drawn would have made a third shape**, so
+>   it was relabelled to the recommendation and Ask 2 is now ruled with Ask 13. Recommended (A): every form asks **Venue**
+>   (a search box: the program's venues, then a coach's own places, then typed words that say they aren't checked) then
+>   the **facility under the sport's word** (that venue's facilities, "Not set" first; a short typed box for a typed
+>   venue); the address belongs to the venue, never typed on an event; adding a venue asks Name · Address · facilities ·
+>   Note everywhere; "Location" → "Venue" on the coach form and tryout day (/marketing, one spelling). Only what the
+>   Venue list offers differs by program. 6a builds the shared field and puts it on the coach form, house league's windows
+>   and generator, and the tryout day; the tournament's forms take it in Tournament Stages 3 and 5; a guard lists every
+>   form that asks where, its "not yet" list only shrinking (DoD). Cost: house league's one pick becomes two. Option B
+>   (house league's one list everywhere) changes fewer forms but loses the coach's search and keeps a field called Diamond
+>   whose answer can be a school. Patch: `.probe/s6-hub/s6-sec-8-where.html` + the assembler.
+> - **Recommendations, all open:** (1) in a club the picker lists the club's venues above the team's places (reverses
+>   `COACH_ARRIVAL_AND_PLACES_PLAN.md` §5 for club teams only; a same-named team place stays the team's and says it isn't
+>   checked; nothing merged); (2) a facility dropdown beside Venue (ruled with Ask 13), labelled with the team's sport word ("Diamond" for
+>   softball), opening on the team's last facility there; (3) same venue + same facility + overlap = "booked by", facility
+>   unset = softer "busy then", a place the club doesn't own never clashes and the
+>   form says so, cancelled never, a postponed league game not at its old time, a rep event with no end = 90 min, a tournament
+>   game its own length chain, a mirrored tournament game never against itself, a team against itself no line, one clock
+>   (instants, platform zone); (4) each program keeps its own refusal (house league's moves under the field, before Create),
+>   every crossing warns; (5) one amber line under the place before Save, never blocking, re-checked on the server; a coach sees
+>   another team's name, kind and time only. **Departs from the prompt:** on a form the line opens nothing (its reader may know
+>   nothing more); the calendar opens both sides; (6) clashes marked on the calendar, no notifications; (7) "Calendar" under
+>   Overview (a calendar-with-clock glyph: House league wears the calendar), the coach schedule's toolbar (List · Week · Month,
+>   opening on Week; quiet Venue/Program/Team pills; the week arrows on their own row; the amber clash count = Clashes only),
+>   the portal's phone (View drawer, stacked week; the prompt's Day view not drawn), one Export (Excel, CSV, Calendar), a read window with both sides and each head coach, "Times in Eastern time."; (8) the three device/
+>   server-clock groupings ride 6b; (9) owner, admin, league admin and anyone granted the tournament permission save; a table;
+>   read-first window with facility rename (column and sections say "Facilities", today's word); Archive when in use (`org_venues.is_active`), Delete only when unused; one name
+>   "Venue library"; the Organization tile gated; RLS members-read/server-writes; (10) D07 to the schedule deep dive's stage 4;
+>   (11) 6a then 6b; (12) the findings below.
+> - **Build note that changes this section's migration line:** the link lives on the EVENT (`rep_team_events` club venue +
+>   diamond, the two links a league game holds), not on `rep_team_places`. A place can't carry the diamond, which changes game
+>   by game, and the check needs both.
+> - **Counts (read-only, `.probe/s6-counts.mjs`, dev 2026-10-08):** 0 of 10 library-plan orgs have a venue; 32 places (22 on
+>   teams inside an org), 0 match a club venue; 0 of 28 tournament venue copies carry the library link; 259 timed live rep events,
+>   0 mirrored, **119 with no end**; 0 exact clashes (nothing is on a club venue); **5 rep × rep overlaps on one typed place,
+>   all in the coach demo** (10U and 12U on "Riverdale Park — Diamond 2", Thu and Sat, every week: the seed's `DEMO_HOME_DIAMOND`).
+>   **Production counts OWED:** the session's guard refused production reads; the same probe runs with the owner's go.
+> - **Every writer (verified in code):** rep: add one, weekly series, edit/move/un-cancel, series edit (⚠ never writes
+>   `place_id`, S6-05), file import, the place's "update upcoming events", the tournament mirror (skipped by design, S6-06) — none
+>   checks; house league: game add/edit and practice add/series refuse, the generator warns, no practice move/import/clone/shift
+>   exist; tournaments: add/edit refuse in the browser only, drag colours only, pool generator / playoffs / rain-delay shift
+>   (`bulk_reschedule_games`) / lane finalize check nothing, the import checks on the server, clone copies no games.
+> - **Findings S6-01…S6-13** (hub Full Plan tab and *Not drawn*): S6-01 rep × rep; S6-02 the demo double-books its own diamond
+>   (→ /demos once 6a ships); S6-03 the tournament's own refusal is browser-only, four writers skip it (→ Tournament Stage 3);
+>   S6-04 the tournament venue link is written once, read by nothing, dropped by clone/import-from-past, duplicated by a second
+>   import, and the wizard searches other tournaments' copies (6a keeps the link; the wizard → Tournament Stage 5); S6-05 series
+>   edit drops the place link; S6-06 the mirror writes on every schedule read; S6-07 46% of rep events have no end; S6-08 library
+>   Delete strips house league's bookings; S6-09 a failed load reads as empty; S6-10 RLS lets any member write venues; S6-11 the
+>   Organization tile has no plan gate (and a second name); S6-12 the public league schedule groups weeks by the server's clock
+>   (UTC); S6-13 no org records a zone or province (→ a platform item before the first club outside Eastern).
+> - **§10 question 2 recorded as answered** (Decisions row): the release waits for Stage 10, which sits on this venue book, so it
+>   waits for Stage 6 too. The PM brief's stale permits bullet is corrected (brief and hub).
+> - **⚖ RATIFIED 2026-10-08 — all thirteen asks as recommended** (owner: *"I agree with your recommendations for both
+>   stage 6 and 11 except that the release will wait until this is all done."*; the exception is Stage 11's Ask 5, below).
+>   Hub v64 (Decisions rows Accepted). Consequences recorded the same day: Ask 1 reverses `COACH_ARRIVAL_AND_PLACES_PLAN.md`
+>   §5 for club teams (noted there); Ask 13's one Where field replaces Ask 2's "beside Location".
+> - **Build prompts (Ask 11, two sessions):** `CLUB_TIER_STAGE6A_BUILD_PROMPT.md` (the venue book, the clash check, the one
+>   Where field) then `CLUB_TIER_STAGE6B_BUILD_PROMPT.md` (the club calendar, the Venue library, Ask 8's clock fix). 6b
+>   starts only after 6a is committed; the tournament redesign's Stages 3 and 5 can draw once 6a lands.
+>   Two things found writing the prompts (code read 2026-10-08), both carried in 6a's prompt: **a tryout day is not a
+>   schedule event** (it saves to the tryout sessions), so Ask 13's field alone leaves tryouts out of the check — put to
+>   the owner at 6a's start (recommended: the sessions take the two links and join the check); and **S6-04 is wider**:
+>   the clone copies a venue's name, address and notes but **no facilities**, and drops the link; import-from-past and
+>   populate-from drop it too (the clone's facilities → Tournament Stage 5 unless 6a touches that line).
+>
+> **🔨 6a BUILT 2026-10-08** (from `CLUB_TIER_STAGE6A_BUILD_PROMPT.md`; **COMMITTED 2026-10-09** on the owner's word, from a
+> private index: `8a9dbecd` Part 0 (the rulings), `07aa07ed` the build, then this record; not pushed). Owner answers
+> at the session's start: **tryout days JOIN the check** (precondition 5: the sessions carry the two links, both writers run it);
+> the house-league walk uses the test club's EXISTING season; the production counts ran (below); the 3d session had finished.
+> - **What landed.** Mig **319** (`rep_team_events` + `rep_tryout_sessions` . `org_venue_id` / `org_venue_facility_id`, ON DELETE SET
+>   NULL like the league tables; partial FK indexes + the lookup's `(org_id, starts_at) WHERE org_venue_id IS NOT NULL`), dictionary +
+>   snapshots, applied to DEV only. **The one 90-minute length** (`lib/booking-length.ts`; the four copies + two screen fallbacks read
+>   it). **The one rule** `lib/venue-clash.ts` (findings `booked_by` / `busy_then` — the permit hook) + its words
+>   `lib/venue-clash-words.ts`, tested as the hub's table case by case with the DST and Sunday-9:30 clock cases and basketball's
+>   "Court" (`venue-clash.test.ts`). **The one lookup** `lib/venue-clash-lookup.ts` (the club's linked bookings across rep events,
+>   tryout days, league games + practices and the club's tournaments' games on library-linked copies; the selection rail; per-writer
+>   reports). **Every writer runs it** — rep (add one + series, edit/move/un-cancel + series edit, the import, both tryout writers),
+>   house league (add/edit game, practice one + series, the generator's summary — each KEEPS its own refusal), tournaments (bulk-save,
+>   create, save-bracket, update incl. a timeline drop, un-cancel, the rain-delay shift after `bulk_reschedule_games`, lanes resolved,
+>   typed locations resolved + undone, the import) — held by `club-stage6a-guard.test.ts` (writers / exempt-with-reason / not-yet,
+>   only shrinks). **S6-05 fixed** (a series edit carries the place + venue links and returns the rows it moved). **S6-04**: a clone,
+>   import-from-past and populate-from keep the library link (populate-from keeps the facility's too); a second import of the same
+>   library venue returns the copy already there. **The one Venue field** `components/venue/WhereField.tsx` (+ `lib/where-field.ts`,
+>   `useClashCheck`) on the coach's Add/Edit Event, house league's game / practice / generator windows and the tryout day; the live
+>   checks `POST …/teams/[teamId]/venue-clashes` (a coach sees name, kind, time only) and `POST …/seasons/[seasonId]/venue-check`
+>   (house league's own refusal in red before Create, Create greyed; the cross-program line in amber); the place sheet's facility
+>   reads the sport's word; `PlaceCombobox` retired. Fixture `seed-club-fixture.mjs --club-venues` (additive; run on dev 2026-10-08:
+>   the seeded Tuesday 2026-10-20). Help: the coach's game-day article (+ "When a club diamond is already booked"), the map FAQ,
+>   house league's schedule recipe + its FAQ, the tryout dates line ("Location" kept as a keyword everywhere).
+> - **Production counts (owner go, read-only, 2026-10-08):** 5 orgs; the only library-plan org is the coach demo (riverdale-ridge,
+>   Club) with **0 venues**; 15 places, 0 matching a club venue; 5 tournament venue copies, 0 linked; 132 timed rep events, **0 with
+>   no end**, 6 mirrored; **0 exact clashes**; same-typed-place overlaps: rep × rep 5 (all the demo's 10U × 12U on "Riverdale Park —
+>   Diamond 2"), tournament × tournament 19 (typed names, never compared). **6a changes nothing for a production customer until a
+>   club sets up venues.** **Dev re-count at hand-off (2026-10-08, read-only):** links made — 6 rep events on a club venue (5 with
+>   a diamond), 1 house-league game, 0 tryout days, 0 league practices, 0 tournament copies linked; clashes found — uat-rep-club's 7
+>   linked bookings hold **1, rep × rep, booked by** (14U AA × 13U AAA on Lions Park Diamond 2, the seeded Tuesday). The walks make
+>   the rest (house league × rep on Kinsmen Diamond B; the league refusal on the Thursday). Production unchanged since the counts
+>   above — 6a is not promoted.
+> - **Production order:** apply 319 to prod BEFORE promoting the 6a code (every rep event read maps the two columns; the lookup
+>   selects them). Schema-visible, so `check:migrations` sees it and `MANUAL_PROD_STEPS.json` does not list it (that file is for
+>   changes the drift check can't see — a departure from the prompt's wording). Independent of 315–318's order.
+> - **Departures from the prompt, each said at build time:** (1) the "missing index" on `venue_facilities.source_org_facility_id`
+>   already exists on both databases (mig 249) — not added; (2) **Save checks again first**: if a booking appeared since the line was
+>   read, the line shows and the form stays open; a second press saves (never refuses; the drawing's "Save returns the same line" on a
+>   form that would otherwise close with it unseen); (3) the place's "Also update the upcoming events" is EXEMPT, not a summary: it
+>   only rewrites events on a team's own place, which the rule never compares; (4) the house-league walk is the OWNER's — the league
+>   save routes allow owner / league_admin only (the admin is refused; a pre-existing gap, Stage 9 / D8); (5) the test club already
+>   ran a house league (the prompt said none) — two teams + one game added to it; (6) **two more forms ask where** than the prompt's
+>   four: the free Basic coach's schedule (its box now says Venue; on the not-yet list, the owner rules whether it takes the field)
+>   and the coach import's row cells (they mirror the file's "Location" column — renaming it changes the export ⇄ import contract;
+>   not-yet, a /marketing finding); (7) the import links a row to a club venue by exact name, the team's own same-named place
+>   winning (nothing merged); (8) S6-02 reframed: **the demo will NOT warn after 6a** — its 10U × 12U share a TYPED place and the
+>   demo club has no library, so /demos decides whether the demo gets a library at all, then whether that is its clash story;
+>   (9) "basketball reads Court" is proved by tests, not a walk — no team, season or tournament on dev plays basketball; (10) a
+>   mirrored tournament game keeps the coach's facility note under More (its where is the organizer's); a house-league typed venue
+>   with a typed facility saves as one line "Venue — Facility" (house league keeps one line of text).
+> - **Found, not fixed:** F1 the tournament dashboard's "playing now" window defaults to **60** minutes (`lib/game-live-state.ts`)
+>   while the scheduler assumes 90 for the same game → tournament redesign; F2 the clone copies no facilities → Tournament Stage 5;
+>   F3 the coach schedule's export / import column says "Location" → /marketing (a file-contract change); F4 the admin can't save
+>   house-league games though the fixture grants house league (the routes' role check) → Stage 9 / D8.
+> - **/simplify (4 lenses) + /review (high-risk, 5 lenses) 2026-10-08 — six Confirmed, all fixed, held by the guard's §6:**
+>   (1) **a double press created the booking twice** — house league's Create and the tryout day's Save now start their save after
+>   the awaited re-check, so the button stayed live through it; the check reports `checking` (both disable on it) and a press while
+>   one is out answers false. The coach's form was safe (it marks itself saving first). (2) **the club pool stopped at 1,000 rows
+>   without a word** — a season-long series on a busy club would have dropped clashes; every pool read pages (`fetchAll`, the C14
+>   helper). (3) **a club whose plan stopped carrying the library could not edit an event standing on its venue** ("Venue not
+>   found." on every save) — keeping the stored venue skips the plan gate, never the tenant proof. (4)+(5) **the re-import** wiped a
+>   stored diamond when the field cell was blank (against its own "blank means not in this sheet"), and left a club link under a
+>   location that named nothing — both fixed. (6) **a running score read the club pool** every few seconds from the bench console —
+>   only a write that can move the booking is checked now. Also: one check reaches at most two years past its first date (two dates
+>   years apart read years of bookings, per keystroke). **Refuted:** an unended house-league series unchecked (the save requires the
+>   end); the `.ts` suffix in `league-venue` (its imports are all extensionless; Next-only); a second library-venue import confusing
+>   the screen (it reloads its list). **Carried over unchanged from the retired picker** (not 6a's): the list's 150 ms blur timer.
+>   **⚖ Owner ruled 2026-10-08: a DRAFT tournament's games COUNT as bookings** (its name reaches the club's coaches) — the club's
+>   own planned tournament holds the diamond, and a coach should see it before booking over it. **Open:** a typed name that
+>   exactly matches a club venue stays typed words (the import links an exact name); a direct API edit sending only words keeps the
+>   link (the form always sends the whole field); `sourceOrgVenueId` on the tournament venue POST is stored unvalidated (pre-6a;
+>   every reader filters by org).
+> - **check:layout, both themes (owner go, 2026-10-08)** on every touched screen — the coach's schedule, Add Event + its Venue
+>   list, tryouts, house league's ten screens incl. the Add Game window, the admin rep tryouts — **green in warm**; the dark run
+>   adds nothing on the three 6a windows. **Two real defects found and FIXED (pre-6a, on the window 6a rebuilt):** every
+>   house-league window opened UNDER the admin's phone nav (overlay 200 vs nav 300 — Create unreachable on a phone; now 400, the
+>   kit dialogs' level: a form covers the nav), and the form spilled 27px sideways at 361 (a date box won't shrink — the grid now
+>   stacks ≤640). **Baselined with reasons (newly visible, not newly made):** the Add Event form's and the Add Game window's own
+>   control heights (the Venue field wears each host's input class — the retired picker's 35px box; the footer is the
+>   dialog-footer tap floor still owed a ruling), and the house-league toolbar / team cards the fixture's two teams made visible.
+> - **/design at 1440 and 390 (captures `.probe/s6a-shots/`):** the field, the list, the four lines and the refusal read as
+>   drawn (specimens 1, 3, 7). **Fixed:** house league's Create did not LOOK greyed while refused (inline-styled buttons —
+>   `disabled` showed nothing; specimen 3 says greyed); the Venue row sat on End time's box (two grids back to back — now spaced).
+>   **Nits, kept:** a time range can break after its dash on a phone ("6:00–" / "7:30 p.m."); on a computer the list opens UP
+>   over the times when the window's scroll area is short (the built picker's placement rule).
+> - **Found, not fixed (dark theme, pre-6a, → /design):** F5 the coach schedule's "Game day" link reads **1.06:1** in dark —
+>   effectively invisible; F6 the tryouts card's "Names are hidden" (3.83:1) and "Optional" (4.34:1), house league's "Scheduled"
+>   tag (4.40:1).
+> - **Walks on the hub's QA tab: hub v65 (2026-10-08, the eight walks, "Stage 6a · walk n of 8") + v66 (two wordings matched
+>   to the product).** Writing them corrected ledger §284 W6: its practice series started on the Tuesday the walk had just
+>   given a league game, so house league's own refusal would have answered instead of the amber line — the series now starts
+>   Oct 27 (one clashing date).
+> - **/marketing 2026-10-08:** all eight sentences kept as drawn (voice canon, spelling and clock gates clean), one change
+>   proposed for the owner: the coach's series summary "…or change the time or diamond **for all**" → "**for every date**"
+>   ("for all" could read as all teams or all diamonds).
 
 - [ ] **One venue book:** the coach place book learns to *reference* an org venue (a place can be "one of the club's venues" or free-text; the coach still owns the row), tournaments read `source_org_venue_id` for clashes, and a **cross-module clash check** runs on every write to rep events, league games/practices and tournament games ("Diamond 2 is booked by 12U AA practice 6–8 p.m.") — warn, never block.
 - [ ] Venue Library: role gate matches who schedules (league_admin), errors surface, in-use guard, facility edit, copy for all modules, sidebar link everywhere.
 - [ ] **Club calendar** (D5): one read-only page under `/admin` (all teams · house league · tournaments, filter by venue/team/day, org timezone, `.ics`), and the admin rep schedule fixed to org time and org-day buckets (D03).
 - [ ] **Permits** (⚖ D4 ruled IN scope 2026-09-25): built as **Stage 10** at the end of the walk; Stage 6 leaves the venue book and the clash check shaped so a permit can plug in (a clash check that can answer "is this slot ours?" once permits exist).
-**QA walk §I.** **Migrations:** `rep_team_places.org_venue_id` (nullable FK), clash-check indexes.
+**QA walk §I.** **Migrations:** `rep_team_places.org_venue_id` (nullable FK), clash-check indexes. *(Drawn 2026-10-08, proposed instead: `rep_team_events` club venue + diamond links; `org_venues.is_active` finally used for Archive; RLS members-read/server-writes on the two library tables; the missing index on `venue_facilities.source_org_facility_id`; rep events by org + start time for the lookup. Ruled with Ask 1/9.)*
 
 ### Stage 7 — Tournaments inside a club + one door to every family
 **Closes:** G01–G04 · C18 (decision) · the org-wide announcement gap.
@@ -1040,6 +1240,123 @@ its own owner mockup session** before a line is written. Its shape, as a startin
 budget-line citation, dictionary + snapshots. **Marketing:** the homepage "field bookings" claim
 comes back with this stage, not before.
 
+### Stage 11 — The club's schedules: a scheduler (⚖ added by the owner 2026-10-08; RULED the same day; release-gating; drawn with Stage 10)
+> **⚖ RULED 2026-10-08** (owner: *"I agree with your recommendations for both stage 6 and 11 except that the release will
+> wait until this is all done. house leagues and club plans can hold the scheduler…"*): Asks 1–4 **as recommended** (a club
+> slot = the club's own booking, "From the club", read-only to the coach, handed back by the coach — **D3 amended
+> narrowly**, see §5; one model of the club's time with permits, so **Stages 10 and 11 are drawn in ONE mockup session**;
+> owner + admin build, a league admin for house league's teams; time only). **Ask 5 against the recommendation: the
+> release WAITS for Stage 11.** **Ask 6: League Plus and both Club bands carry it alike, never an upgrade lever** (free
+> League floor Proposed excluded). Both logged with `/strategy` (`BUSINESS_DECISIONS.md` 2026-10-08 ×2; Facts doc
+> inclusions line). Next: its own `_PLAN.md` + `_PM_BRIEF.md` pair with Stage 10 when the joint mockup session opens.
+**Owner, 2026-10-08:** *"now that we are adding a calendar feature, I want to add a section of this club project to
+review building a scheduler where org admins can put in parameters and have a schedule generate where they can manually
+adjust after the fact (like tournament admins can). they should be able to keep scheduled groups that they can reference
+and adjust later (i.e. all house league practices, or the winter offseason dome schedule, pitching practice nights split
+across teams, etc.). it should be able to produce summaries (i.e. full dome schedule) that they can review, finalize, and
+distribute to any key stakeholders (house league admins, rep coaches, etc.). I want this to be simple to use but also
+offer enough parameters and flexibility to make it valuable to the club admin."*
+
+**Outcome:** a club admin hands out the club's shared time (a dome's winter hours, the pitching tunnel's nights, house
+league's practice slots) by entering a few parameters, generating a draft, adjusting it by hand and finalizing it. Each
+schedule is a named record the club keeps and reopens. It reads as summaries (the whole dome, one team, one program), and
+goes to the people who need it.
+
+**Read first (the code, 2026-10-08):**
+- **House league's generator is thin.** Games only, one division per run, one first date, one game time, one diamond, rounds
+  per week; no end date, days of week, game length or dates off; byes automatic. It previews, then saves straight to the
+  season (no draft state). After that a game is edited one at a time in its window (no drag). Clashes warn in a summary.
+  **Practices are made by hand**, per team, single or a weekly series, and afterwards can only be cancelled, never moved.
+  (`house-league/seasons/[seasonId]/schedule/page.tsx` GenerateModal 439–575, PracticeModal 581; `schedule/generate/route.ts`.)
+- **The tournament's generator is the precedent the owner named.** Date rows (date, start, end), game length and turnover,
+  max games a day, minimum rest, preferences and presets, facilities by venue and surface (or temporary lanes resolved later),
+  replace or build; it offers several ranked drafts, the director commits one, then adjusts by dragging on the timeline
+  (a drop saves at once), shifts a rained-out day, and **publishes per division**. Publishing is what puts games on the teams'
+  schedules and turns on "your game moved" notices. (`tournaments/schedule/Generator.tsx`, `lib/schedule-generator.ts`,
+  `ScheduleTimeline.tsx`, `ShiftDayModal.tsx`, `api/admin/schedule-publish`, `lib/schedule-change-notices.ts`.)
+- **Ask 1 has a precedent.** A published tournament game is written into each linked team's schedule as "From {tournament} ·
+  organizer's schedule". The coach can't change its time or place or delete it ("Only {tournament} can cancel or remove this
+  game."), and still sets arrival, uniform, field note, notes, attendance and the lineup. (`lib/rep-tournament-game-mirror.ts`,
+  `lib/coach-tournament-games.ts` `isMirroredEvent`, `ScheduleEventSheet.tsx` 642–650, 1017–1023.)
+- **Nothing holds club time today.** No slot, booking, block or permit record exists; "dome" and "permits" appear only as
+  expense words in demo data. The club's booking pool is worked out on the fly and covers house league only.
+- **Nothing sends to the club's staff.** House league emails its families; a tournament emails its teams' coaches (capped on
+  the free plan); a coach emails their families; the club tells a team's staff only about a season change. No way exists for a
+  club to send one document to every rep coach or every league admin, and no email carries an attachment. A schedule PDF
+  exists for tournaments only; house league exports Excel, CSV and a calendar file.
+- **So the build reuses the tournament engine's shape** (date rows, presets, ranked drafts, the timeline, publish) for time
+  slots, rather than house league's, and writes club slots onto teams the way the mirror writes tournament games.
+
+**What it is, and what it is not (recommended framing, for the mockup session):** it hands out **time**: practice,
+training and facility slots, to teams and programs. It does not pair games. House league's generator and the
+tournament generator keep pairing games (they move onto the same venue book and the same draft → adjust → finalize
+shape when Stage 9 and the tournament redesign redraw them), and a rep team's games are set by outside leagues and entered
+by its coach.
+
+**The shape (a starting proposal; the mockup session draws and tests it):**
+1. **A schedule is a named club record**: "Winter dome 2026–27", "Pitching nights · Jan–Mar", "House league practices ·
+   Spring 2027". It holds what time it hands out, to whom, by what rules, its slots, and a state: Draft → Final (sent) →
+   Changed since sent. It is kept, listed, reopened and adjusted at any time. "Start from last winter's" copies a schedule's
+   parameters a year on, the Budget's "Start from last year's plan" pattern.
+2. **Parameters in four short steps, the rare ones folded away** (simple by default, flexible when opened):
+   - *The time*: venue and facilities from the one venue book (Stage 6), a date range, days and hours, slot length, a
+     changeover gap, dates off (holidays, a tournament weekend), and how many teams share one facility at once (three teams
+     to a pitching lane, half a diamond each). A permit's weekly slots (Stage 10) fill this step in one pick.
+   - *Who*: programs, groups and teams, picked by group as New allocation picks them (3c Ask 11).
+   - *How much*: an equal share, a set number per team per week, or a share by group (60/40, New allocation's group
+     figure).
+   - *Rules* (folded): earliest and latest start by age group, at most N slots per team per week, never on a team's game
+     day or over its existing bookings (Stage 6's one clash rule), the same night each week or prime time rotated, no
+     back-to-back days.
+3. **Generate, then adjust by hand**: a draft grid (facility × week, the club calendar's Week view) with each slot named by
+   its team. Drag a slot, swap two teams, clear a slot, and lock a slot so a regenerate keeps it. Beside it, a fairness
+   summary: hours per team, each team's share of prime time, any team short of its share, and every clash with a booking
+   already on the books.
+4. **Summaries**: the whole schedule (by facility and week), by team, by program; one Export (Excel first, then PDF), and
+   print.
+5. **Finalize and send**: the slots become real bookings (on each team's schedule per Ask 1, on house league's schedule, on
+   the club calendar, and read by the clash check). A Send step picks the stakeholders (house league admins, each team's
+   head coach and staff with schedule access, a named facility contact) and previews who receives what, the way Stage 3a's
+   reminders preview, with a send log ("last sent … by …"). Families are never sent it directly: they see their team's
+   slots on the team schedule and its calendar feed, as they see everything else.
+6. **After it is final**: an edit marks it "changed since sent" and lists what moved; "Send the changes" tells only the
+   teams whose slots moved.
+7. **Money, later**: a dome rental split by the hours each team got is New allocation's "By sessions" split fed from a
+   finalized schedule. Recorded as a tie-in for the session to rule, not first-cut scope.
+
+**Asks for the mockup session (all OPEN, each with a recommendation):**
+- **Ask 1 · What does a finalized club slot become on a team's schedule? ⚠ This touches ruling D3.** D3 (2026-09-25) keeps
+  a team's schedule the coach's: admin writes were removed and not reopened. A scheduler that hands rep teams dome nights
+  has to put something on their schedule. Recommended: **a club booking is the club's own record, shown on the team's
+  schedule as "From the club", read-only to the coach**, never an edit of the coach's own events. It is exactly how a
+  published tournament game already appears: the club owns its time and place, and the coach still sets arrival, notes,
+  attendance and the lineup. The coach can hand a slot back ("we won't use it"), which frees it on the club's schedule. This
+  amends D3 narrowly: the club publishes its own bookings and still never writes, moves or deletes a coach's. Alternatives: (b) ordinary team events the coach may then
+  change or delete, so the club's schedule and the team's drift apart at the first change; (c) proposed slots each coach
+  accepts, which is slow and leaves slots unclaimed.
+- **Ask 2 · One model for "time the club holds", shared with permits?** Stage 10's permit already has "weekly slots (day,
+  start, end, facility)". Recommended: yes, **one block of time** (venue, facility, days, hours, date range). A permit
+  records it with its cost, reference and document, and a schedule hands it out. Never two slot models. So **Stages 10 and
+  11 are drawn in one mockup session** (permit → its time → handed out → on the teams) and built as two.
+- **Ask 3 · Who builds and finalizes a schedule?** Recommended: the owner and an admin for any team or program; a league
+  admin for house league's own teams only (the Venue library's save rule, Stage 6 Ask 9). A head coach reads the club's
+  schedule that includes their team and never edits it.
+- **Ask 4 · Time only, or games too?** Recommended: time only (above); game pairing stays with house league's and the
+  tournaments' generators.
+- **Ask 5 · Does the first Club release wait for it?** Recommended: **no**. It sits on Stage 6 (built) and Stage 10's
+  model, and it is the largest new build in the project. The first release is invite-only and founder-managed, so its
+  clubs can take the scheduler as an update. The owner's 2026-09-25 position ("I am fine waiting on production release until
+  we have the features that we need") makes this a real choice, not a formality.
+- **Ask 6 · Which plans carry it?** Club and Club · Association surely; whether a house-league-only club (League, League
+  Plus) gets it for its practices is packaging, for `/strategy` and the Facts doc, not for the mockup session.
+
+**Sequencing:** after Stage 6 (the scheduler's grid is the calendar's week, and every slot runs the one clash rule) and
+drawn with Stage 10. Independent of Stages 7–9.
+**QA walk §L** (when built). **Migrations** (expected): a schedule (name, season or fiscal year, state, parameters), its
+slots (block, team or program, locked), a send log; the team-schedule link per Ask 1; dictionary + snapshots.
+**Not in the first cut (proposed):** families requesting or swapping slots, coaches trading slots with each other, a
+public schedule page, paying for time per slot, any optimizer beyond the listed rules.
+
 ## 7. Sequencing & dependencies
 
 ```
@@ -1051,12 +1368,15 @@ Stage 0 ─┬─ Stage 1 (shell + 1b buying) ─┬─ Stage 2 (rep teams) ─�
          │                               │                          └─ Stage 7 (tournaments+comms) ─┘
          └─ rulings D1/D2/D8 RULED 2026-09-25 ───────────────────────► Stage 3 may start once Stages 1–2 land
 Stage 9 (house league) ─── its own plan and release track; may run alongside Stage 10
+Stage 6 (built) ─► Stage 10 + Stage 11 drawn in ONE session (permits → the club's schedules) ─► built as two
+                   ─► Stage 8 ─► release (⚖ 2026-10-08: the release waits for Stage 11 too)
 Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─► gates Stage 1's SCREENS (R5 refined:
                          Stage 1's server half runs beside it; its screens build behind the switch after slice 1);
                          Phase 2 = inside each club stage · Phase 3 tournament screens (own project) · Phase 4 with Stage 9
 ```
-⚖ **2026-09-25: the release waits for Stage 10 (permits).** Stage 8's go/no-go therefore comes
-after Stages 3, 6 and 10 at the earliest.
+⚖ **2026-09-25: the release waits for Stage 10 (permits).** ⚖ **2026-10-08: and for Stage 11 (the club scheduler)**
+(owner: *"the release will wait until this is all done"*). Stage 8's go/no-go therefore comes after Stages 3, 6, 10 and
+11 at the earliest.
 - Stage 1 before everything: no other walk is honest while admins/treasurers are tournament-only users.
 - Stage 2 before 3: the allocation loop needs teams, program years and the season rule (D2 ↔ B03).
 - Stages 4, 5, 6, 7 are independent of each other and of 3; pick by what the first club needs.

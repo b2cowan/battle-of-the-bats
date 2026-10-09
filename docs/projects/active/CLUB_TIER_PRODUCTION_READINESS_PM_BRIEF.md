@@ -56,7 +56,7 @@ to the home page. Unlisting the club from the directory no longer takes down its
 follows the child, a merge stays merged, and the family export says honestly what it contains.
 
 **One venue book.** Rep, house-league and tournament games read the same venues, and a diamond
-double-booked across two modules is flagged.
+double-booked across two programs, or between two of the club's own teams, is flagged.
 
 **Tested and documented.** A Club test fixture and browser suite, admin screens in the layout sweep,
 help articles that describe today's screens, and marketing copy that promises only what exists.
@@ -80,10 +80,12 @@ help articles that describe today's screens, and marketing copy that promises on
 | 3 · Club money | 3a bookkeeping core + allocation/request loop with confirm + reverse · 3b budget, Budget vs. Actual and the whole-club summary, with arithmetic gates · 3c the club year and year-end · 3d the last money pages become windows (Payees, an allocation) | Owner walk per part; gates green |
 | 4 · The public face | Teams index, tryout funnel, club-first home, editor controls, marketing truth | Owner walk |
 | 5 · Families | The four HIGH defects; P3 mockup session; migrations confirmed on prod | Owner walk (§54/§56) |
-| 6 · Venues, scheduling, permits | One venue book + cross-module clash check; club calendar (decision); permits (decision — new feature) | Owner ruling first |
+| 6 · Venues, scheduling, permits | One venue book + one clash check across programs and between the club's own teams; the club calendar (in the first release, D5); the Venue library fixed; room left for permits (Stage 10) | Ruled 2026-10-08 (thirteen asks, as recommended); build 6a then 6b |
 | 7 · Tournaments in a club + comms | Host-own-team walk; tournament money into the books (decision); one "message every family" door | Owner walk |
 | 8 · Release readiness | UAT suite, layout sweep, help, demo decision, pricing gate flip, Stripe checkout, support posture | Go/no-go |
 | 9 · House league (last) | Trust-plan defects; un-park League Plus as the standalone plan; coupling check | Separate release |
+| 10 · Permits & bookings | The club records the permits it holds; scheduling and money read them | The release waits for it (D4); drawn with Stage 11 |
+| 11 · The club's schedules (added 2026-10-08) | A scheduler: parameters in, a draft out, adjusted by hand, finalized, kept as a named schedule, summarized and sent | Ruled 2026-10-08; drawn with Stage 10; the release waits for it; League Plus and both Club bands |
 
 **Stage 1, the behind-the-screens half — built 2026-09-25.** A club's admin now opens every
 program the plan carries, and a treasurer's allocation wizard lists the club's teams. The board can
@@ -295,14 +297,73 @@ record opens where they are, the way coaches already work. Priority: after 3c's 
 ruled, then built. Success: from the Ledger and from Allocations, nothing sends the treasurer to another page to
 read or change one payee or one allocation.
 
+**Stage 6 — venues, the clash check and the club calendar: drawn 2026-10-08 beside 3d, all thirteen
+questions ruled as recommended the same day.** On the hub (Mockups → Stage 6), drawn for four people. **A head coach in a club** finds the
+club's diamonds at the top of the place picker they already use, picks a diamond from a list, and sees one amber
+line before saving: "Diamond 2 is booked by 14U AA practice, 5:30–7:30 p.m." It never stops the save. **The
+house-league scheduler** sees the same line when a rep team already holds the diamond. House league's own rule
+against two league games on one diamond stays, and it now says so under the field instead of in a pop-up after
+Create. **A tournament director** gets the same line later, through the tournament redesign's schedule and setup
+stages, which these drawings are made for. **The club admin** gets a read-only club calendar (every team, house
+league and the tournaments, with clashes marked) and a Venue library that the league admin can save to, that says
+who books each venue, and whose Delete becomes Archive once a venue is in use, so no booking ever loses its place.
+**A coach outside a club sees nothing new.** Reading the code first widened one thing: the first release is for a
+rep club with no house league, so the clash it actually has is two of its own teams on one diamond, and the check
+covers that. On the test system the case is already visible: the public coach demo books its 10U and 12U onto the
+same diamond every week, and nothing has ever flagged it. Why it matters: a club finds a double-booked diamond on
+the screen, before two teams meet at the gate. Priority: it comes before the tournament redesign's last two stages,
+which draw against it. It is built in two parts: 6a, the venue book and the clash check; then 6b, the calendar and
+the Venue library. Success: every way an event lands on a diamond, in every program, warns about the club's other
+bookings, and the club can see a week of the whole club on one page. **Added the same day, at the owner's
+request:** one way to enter where an event is, on every form. Today a coach types a place and hunts for the diamond
+under More, while house league and tournaments pick from one list of "venue — diamond". The recommendation is two
+fields everywhere, Venue and then the sport's word (Diamond, or Court for basketball), so a coach, a league
+admin and a tournament director fill in the same thing the same way. **6a was built on 2026-10-08** (on the test
+system; not yet released). A head coach in a club now picks the club's venue and its diamond from two fields side by side,
+sees the amber line before saving, and sees each clashing date marked when repeating a practice. A tryout day takes the
+same two fields and joins the check too (the owner's call at the start of the build). House league's windows say their own
+refusal in red under the field, before Create, and show the amber line when a rep team holds the diamond. Every way a
+tournament game is placed now reports the club's other bookings for the tournament redesign to show. A coach outside a club
+sees only the word Venue where Location was. On the live site nothing changes yet for anyone: no club there has set up a
+venue. Two things learned while building: the public coach demo will **not** start warning on its own (its teams share a
+typed park, and the demo club has no venues), so whether the demo shows the line is a demo decision; and two more screens
+ask "where" than the drawings counted (the free coach's schedule and the schedule import), now listed for later.
+The build was then reviewed and checked on screen, and what that found was fixed before any walk, chiefly: a quick double press
+could create a house-league game (or a whole practice series) or a tryout day twice; a very busy club's check could quietly
+have missed clashes; a club that later dropped the venue library could not edit an event already on one of its venues;
+re-importing a schedule sheet could wipe a stored diamond or keep an old venue under new words; and every house-league
+window opened underneath the phone's bottom bar, its Create button out of reach. The owner ruled that a draft tournament's
+games count as bookings: the club's own planned tournament holds the diamond. Next: the owner's walks, then 6b (the
+calendar and the Venue library).
+
+**Stage 11 — the club's schedules: added by the owner 2026-10-08 and ruled the same day; not yet drawn.** A club admin who has to
+share out the dome's winter hours, the pitching tunnel's nights or house league's practice slots does it today
+in a spreadsheet and a group email. The proposal: they enter a few parameters (which venue and facilities, when,
+which teams, how much each gets, and a few rules folded away until wanted), generate a draft, move slots by hand
+the way a tournament director adjusts a generated schedule, and finalize it. Each schedule is kept by name
+("Winter dome 2026–27") and can be reopened next month or copied next winter. It prints as the whole dome, one
+team or one program, and is sent to the people who need it (house league admins, each team's coaches) with a
+preview of who gets what. Families see their team's slots on the team schedule as they see everything else.
+Ruled: a club slot shows on the team's schedule as "From the club", read-only, and the coach can hand it back
+(the way a tournament's games already appear there); the scheduler and permits share one idea of "time the club
+holds", so Stages 10 and 11 are drawn together; it is carried by League Plus and both Club bands alike, never as a
+reason to move from one to the other. Why it matters: sharing out facility time is one of the most time-consuming jobs a club volunteer does, and
+nothing else in the product does it. Priority: after the venue book and calendar (Stage 6), drawn with permits;
+the first release waits for it (owner, 2026-10-08). Success: a club builds its winter
+dome schedule in one sitting, every team sees its slots on its own schedule, and a change after sending reaches
+only the teams it moved.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money
   model has three months of hardening and build gates; the club's team-ledger copy has neither. The
   plan recommends the coach's records become the source of truth for team money (owner ruling D1).
-- **Permits and a club-wide calendar are new features, not readiness items.** They are in the plan
-  as Stage 6 with an explicit owner decision on whether they gate the first Club release. Nothing for
-  them exists today, and the homepage currently claims "field bookings".
+- **Permits and a club-wide calendar are new features, not readiness items.** Both are decided: the
+  club calendar is in the first release (D5), and permits are Stage 10, which the release waits for
+  (D4, amended 2026-09-25). Stage 10 sits on Stage 6's venue book and clash check, so the release
+  waits for Stage 6 too. On 2026-10-08 the owner added the club scheduler (Stage 11) to what the release
+  waits for. The risk left is size, not a decision. Nothing for permits exists today, and
+  the homepage's "field bookings" claim comes back only with Stage 10.
 - **Families P3 is not release-gating**; the four HIGH defects are.
 - **House league last**, as directed — and because its standalone plan already exists (League Plus,
   parked), no new SKU needs inventing.
