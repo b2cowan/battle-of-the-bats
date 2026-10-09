@@ -10,6 +10,11 @@
 > recommended**. The drawing had been through the formatting check and a second, independent reviewer before the ruling
 > (fourteen departures fixed, one kept and flagged; hub v35).
 >
+> **⚖ Amended by the owner later on 2026-10-09 — A34's doors.** A door names the tool it opens: the Tools rows read
+> *Round-robin generator* and *Playoff generator*, not *Generate round robin…* / *Generate playoffs…*. The Stage 3 tab
+> still draws the verbs (the Tools rows at both widths, the Bracket view's Tools, the free organizer's lock); build the
+> names there. This is a ruling, not a departure for you to argue — Precondition 2 has the words.
+>
 > **The spec is the hub:** https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM → the **Stage 3** tab (v36 or later), read
 > one part at a time from its bar.
 > - Build **to the drawings, exactly** (memory `feedback_build_to_approved_mockups`). Every NEW / RESTYLED / UNCHANGED
@@ -20,7 +25,7 @@
 > - Where you must depart, say so at build time and record why. Never depart silently.
 > - The rulings' **unchosen options** are not built:
 >   - A33 the day for one division / today's opening repaired
->   - A34 one "Schedule generator" / the title only
+>   - A34 one "Schedule generator" / the title only — and, since the amendment, the *Generate…* doors
 >   - A35 keep the inline edit too / the score typed in the window
 >   - A36 Undo only / a draft of moves
 >   - A37 the drop only warns / as today
@@ -59,16 +64,30 @@
    with `npm run dev`, with network access.
 2. **`/marketing` confirms the words before you build them.** The placements are ruled; the words are `/marketing`'s.
    Run it once, on this list:
-   - **The names (A34):**
-     - one verb on every door: *Generate round robin…* · *Generate playoffs…*;
-     - the windows: *Round-robin generator* · *Playoff generator*;
+   - **The names (A34, as amended 2026-10-09):**
+     - **every door carries the tool's name, and so does its window:** *Round-robin generator* · *Playoff generator*.
+       The doors are the Tools rows at both widths, the Bracket view's Tools and the free organizer's lock. No ellipsis,
+       like *Rain delay*. Tools then names its three tools (*Round-robin generator · Playoff generator · Rain delay*)
+       and puts a verb on its two acts (*Publish… · Unpublish a division…*). The ruling's "one verb on every door"
+       (*Generate round robin…* · *Generate playoffs…*) was replaced the same day, so the menu row and the window it
+       opens say the same words;
+     - **"bracket" stays the free tool's word.** The paid tool is the *Playoff generator*, never "Playoff bracket
+       generator" (the owner weighed it on 10-09): beside the free *Build bracket*, a locked "bracket generator"
+       reads as a second bracket tool;
      - the buttons: *Generate drafts* · *Save this schedule* / *Save this bracket* · *Three more drafts* (today
        *Another Set*);
      - the free *Build bracket* · *Edit bracket* · *Save bracket* keep their words;
      - *Auto-generate instead* becomes *Use the playoff generator*.
 
-     The thirteen names to retire are listed in §6c ("Every name for generating"). The marketing page's "Schedule
-     Generator" is `/marketing`'s call, in the same run.
+     The names to retire are §6c's "Every name for generating": the thirteen found when Stage 3 was drawn, **plus the
+     2026-10-09 census beneath them** — the help's six *Playoff Wizard*s, the upgrade message's "playoff bracket
+     generator", the bracket-only format's *Playoff Bracket Builder*, a bracket game row's "Edit in bracket builder"
+     and the help's "schedule builder". Re-run the census at build time (grep the customer-visible copy for *Wizard*,
+     *Generator*, *Builder*, *Auto-generate*), because the drawing's list missed all of these. **`/docs` owns the help
+     articles, and `/demos` the sales walkthrough's *Playoff Wizard* line.** The marketing surfaces' feature lines
+     (the platform page's "Bracket Generator" and "Schedule Generator", the home page, the pricing section, the plan
+     article, the billing page and the plan emails' "What you've unlocked" lists) are `/marketing`'s call, in the
+     same run.
    - **The day (S1):** *Schedule* · the view pill (*Day · All games · Timeline · Bracket*) · the Filter's four facets and
      *Filter, N on* · the day row's words · the health row's closed line · the unpublished note (S8).
    - **The game window (S2):** its head; each section's label; the score's door to Results; *Cancel game*; the
@@ -90,7 +109,7 @@
      waits; *Record the toss*.
    - **Publishing (S8):** the window's sentences (what shows, *registration closes*, what reaches linked coach teams
      *From {tournament}*, what a later move does, the reminder's rule as the defects pass made it true); *Unpublish*.
-   - **The free organizer's locks (A44):** *Generate round robin · Tournament Plus* and the other Tools rows, in words.
+   - **The free organizer's locks (A44):** *Round-robin generator · Tournament Plus* and the other Tools rows, in words.
 3. **Ask the owner whether another session is measuring** before any probe, `auth-setup` or sweep. One browser tester at
    a time; scope sweeps with `--only=`.
 4. **The UX summary for the owner comes first** (AGENCY_RULES). Keep it short, since the drawings are ruled. Cover:
@@ -243,7 +262,7 @@ Commits, one per part. Part 0 first, then Part 1 on its own: it is shared with t
   - 44px for the toolbar, the day's arrows, the rows, the sheets and Undo: today 12 controls under 44 at 390, 11 of them
     under 38.
   - The generator's settings, a desk job, keep the admin's 38 (K-18).
-  - A free organizer's Tools names the plan in words (*Generate round robin · Tournament Plus*); a tap opens that plan's
+  - A free organizer's Tools names the plan in words (*Round-robin generator · Tournament Plus*); a tap opens that plan's
     panel. Today it is a bare padlock with a hover title.
 - **Targets, from the drawing (390):** the first game at 250px; all 4 of the day's games on screen one.
 
@@ -325,8 +344,9 @@ and the bracket.
   change recorder (`recordGameScheduleChanges`): a removed game and its replacement are a change for those teams. Its
   publish gate already tells nobody about an unpublished division. Or, if a replacement can't be told honestly as a
   change, the words say what happens: tell the owner which, before building it.
-- **Every name for generating** follows A34 (Precondition 2). The free hand-built bracket keeps *Build / Edit / Save
-  bracket*.
+- **Every name for generating** follows A34 as amended (Precondition 2): the menu row and the window say the same
+  name, and every surface in the census retires its old one in this build. The free hand-built bracket keeps *Build /
+  Edit / Save bracket*.
 - **The playoff generator:** names only, plus the retired look. Its gate key was fixed in the defects pass.
 - **Not built:** a shared component for Club Stage 11 (A40's unchosen option). The tags on the tab are the club
   session's starting point.

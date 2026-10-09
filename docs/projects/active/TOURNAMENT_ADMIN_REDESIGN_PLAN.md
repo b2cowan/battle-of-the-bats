@@ -52,7 +52,7 @@
 > (A45) `TOURNAMENT_ADMIN_REDESIGN_STAGE3_DEFECTS_PROMPT.md` first, its own commit (P1 to the owner at its start), then
 > `TOURNAMENT_ADMIN_REDESIGN_STAGE3_BUILD_PROMPT.md`. Drawn before Club Tier Stages 10 + 11, whose scheduler starts from
 > the parts tagged "shared candidate" (A40).
-> **✅ The Stage 3 defects pass (A45) COMMITTED `279f1e5d` 2026-10-09** (P1 ruled: a database function — mig 320, dev only, prod BEFORE the code; /simplify + /review first) — §6c "Defects pass — as built"; owner walk §286 (hub walk 8).
+> **✅ The Stage 3 defects pass (A45) COMMITTED `279f1e5d` 2026-10-09** (P1 ruled: a database function — mig 320, dev only, prod BEFORE the code; /simplify + /review first) — §6c "Defects pass — as built"; **owner walk §286 (hub walk 8) ✅ PASSED 2026-10-09, 15 of 15**, read back on dev (nothing saved by the generator, the Keep released, the demo unpublished).
 > **Created:** 2026-09-28 · **Branch:** dev · **Companions:** `TOURNAMENT_ADMIN_REDESIGN_PM_BRIEF.md` ·
 > hub `TOURNAMENT_ADMIN_REDESIGN_HUB.html` (republish the same path for the project's life).
 > **Origin:** Phase 3 of `ADMIN_DESIGN_CONTINUITY_PLAN.md` ("Tournament screens — its own project when it
@@ -336,7 +336,7 @@ door allows ten entries per ten minutes per address); and the **UAT Plus Champio
 free club's Import Smoke event for the plan locks. 390 · 360 · 768 · 1440, Warm and Dark. **State of the six:** F19 open
 and wider (on the demo's Friday it opens on U11's played-out round robin; on a phone the empty state's words sit behind
 the bottom bar; the Plus event's U11 Girls now holds one unplayed game, so it no longer opens empty there); F20 open and
-wider (F68); F21 open and wider (thirteen names, §6c); F22 open and wider (F71, F72); F23 open (no test event uses the
+wider (F68); F21 open and wider (thirteen names, §6c, and more found 2026-10-09); F22 open and wider (F71, F72); F23 open (no test event uses the
 coin-toss tie-breaker: read from code); **F24 partly fixed `890d0aac`** — Stage 1's "Running late?" door opens the window
 from the board in 1 tap (measured), but a phone's timeline view draws no Tools at all. **Measured, phone (390):** today's
 four games sit on three screens (one division, one stage, unplayed only): **8 taps** from the board to see them (6 at a
@@ -1197,7 +1197,7 @@ drawings show U11 and U13 as published (S8 draws the unpublished note), and the 
   does, and the reminder's true rule (with the Tournament Plus email). One lime that counts what it publishes.
 
 **The asks — ⚖ ALL RULED 2026-10-09 as recommended** (the owner's paste-back, which also ruled S1–S8 as drawn): **A33** what it opens on (rec. the day) · **A34** one verb, two names (rec.;
-/marketing) · **A35** one game window, the inline edit retires, the score through Results (rec.) · **A36** Undo after every
+/marketing; **⚖ amended the same day — the doors carry the names**, below) · **A35** one game window, the inline edit retires, the score through Results (rec.) · **A36** Undo after every
 move and a published game asks once (rec. "both") · **A37** every door and the server refuse an overlap inside the
 tournament, the club's line stays amber (rec.; the demo tour's step 4 sentence becomes false → /demos) · **A38** the public
 bracket's reading (rec.) · **A39** one game length everywhere, the generators save it (rec.; **departs from 6a's framing**
@@ -1223,6 +1223,23 @@ The 6a guard's "ask where" not-yet list names Add Game and the inline edit (this
 Commit Schedule · Confirm & Save · Auto-Generate Bracket · Playoff Bracket Builder · Preview Bracket · Generate Playoff
 Bracket · Auto-generate instead · the board's "Build schedule →" · help's "Auto-Generate" · the marketing page's "Schedule
 Generator" — plus the free hand-built Build / Edit / Save Bracket.
+
+**The census missed some (found 2026-10-09, after the ruling, by a grep of the customer-visible copy):** help's
+**"Playoff Wizard"** (six passages in the tournaments help, and the sales walkthrough's bracket line) · the upgrade
+message's **"playoff bracket generator"** · the platform page's **"Bracket Generator"** (beside its "Schedule Generator")
+· "Playoff Bracket Builder" again in the **bracket-only format's description** (setup and settings) · a bracket game
+row's **"Edit in bracket builder"** · help's **"schedule builder"**. The marketing surfaces' feature lines (home page,
+pricing section, plan article, billing page, the plan emails' "What you've unlocked") say "schedule generation" /
+"bracket builder" and go to `/marketing` with the rest.
+
+**⚖ A34 amended by the owner, 2026-10-09 (after the paste-back):** asked whether the Tools rows should read "round
+robin generator" and "playoff bracket generator", the owner took the recommendation: **a door names the tool it opens —
+the Tools rows read *Round-robin generator* and *Playoff generator*, the same words as their windows** — replacing the
+ruled "one verb on every door" (*Generate round robin…* / *Generate playoffs…*). **The reason:** the menu row and the
+window then say one name, and Tools names its three tools (with *Rain delay*) and puts a verb on its two acts
+(*Publish…*, *Unpublish a division…*). **"Playoff bracket generator" was not taken:** "bracket" stays the free tool's
+word, so a free organizer's locked row never reads as a second Build bracket. The Stage 3 tab still draws the verbs;
+the build prompt carries the amendment and names where.
 
 **Plan gating (A6):** the generators, the rain delay, the "schedule is live" email and phone alerts on a move are
 Tournament Plus; hand scheduling, the timeline and the hand-built bracket are free. A free organizer meets a bare padlock
@@ -1286,7 +1303,7 @@ the game-length answer (A39); health across every division; the defects (A45) if
 packaging question → /strategy. No migration expected.
 
 **Defects pass (A45) — as built 2026-10-09, committed `279f1e5d`** (prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE3_DEFECTS_PROMPT.md`;
-/simplify + /review at the high-risk tier first; owner walk §286, hub walk 8). **P1 ruled: a database function** (owner, at
+/simplify + /review at the high-risk tier first; owner walk §286, hub walk 8 — ✅ passed 15 of 15 on 2026-10-09). **P1 ruled: a database function** (owner, at
 the start), and both widenings proposed in the UX summary ruled in.
 - **F70 + P1:** the switch is gone; a draft keeps results, cancelled, kept and playoff games and replaces only round-robin
   games still to play and not kept. The save is one request to a new route action, `replace-division-round-robin`, which

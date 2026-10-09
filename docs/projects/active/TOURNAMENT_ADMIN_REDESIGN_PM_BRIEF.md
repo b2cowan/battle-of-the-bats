@@ -34,7 +34,8 @@
 > eight drawings and fourteen questions, **ruled the same day, every drawing as drawn and every question as
 > recommended**. A small defects pass runs first, then the build. **The defects pass was built on 9 October** (`279f1e5d`): a
 > generator draft never deletes a played game and saves in one step, drafts avoid every diamond already in use, a refused
-> save says why, a moved bracket game tells its teams, and the reminder sentence is true. Its owner walk is §286 (walk 8).
+> save says why, a moved bracket game tells its teams, and the reminder sentence is true. **The owner walked it the same
+> day (§286, walk 8): passed, 15 of 15.**
 > One database change goes to production before this code.
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
@@ -250,7 +251,9 @@ the timeline saves at once with no way back.
 - **The bracket shows who played, the score, who won and the champion** — as the public bracket already does.
 
 **The week before, at a desk:**
-- **One name** for each generator ("Round-robin generator", "Playoff generator") instead of thirteen.
+- **One name** for each generator ("Round-robin generator", "Playoff generator"), the same on the Tools menu as on the
+  window it opens (owner, 2026-10-09), in place of the thirteen names counted when the stage was drawn, and the further
+  ones found since (help still calls the bracket tool the "Playoff Wizard").
 - **The generator sees the other divisions** (today it can put U13 on top of U11's games) and **never deletes a played
   game** (today its default choice deletes final scores). Before saving, the window says in one sentence what saving
   adds, replaces and keeps.
