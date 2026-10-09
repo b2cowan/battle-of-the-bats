@@ -134,9 +134,15 @@ describe('Ledger Parity — the two Ledgers are one recipe', () => {
       assert.match(src, /drawerOnPhone drawerTitle="Tools"/, `${who}: a sheet on a phone`);
       assert.match(src, /label="Payees"/, `${who}: Payees is in it`);
     }
-    assert.match(coach, /<CoachToolbarMenuHeading>The team’s lists<\/CoachToolbarMenuHeading>/);
-    assert.match(club, /<CoachToolbarMenuHeading>This book<\/CoachToolbarMenuHeading>/);
-    assert.match(club, /<CoachToolbarMenuHeading>The club’s lists<\/CoachToolbarMenuHeading>/);
+    // No group headings (owner 2026-10-09): a heading earns its place only over two or more groups, one of them
+    // holding more than one item. The coach's menu is one group; the club's is two groups of one, kept apart by a
+    // divider — Transfer (this book), then Payees (the club's list).
+    for (const [who, src] of [['coach', coach], ['club', club]] as const) {
+      assert.doesNotMatch(src, /CoachToolbarMenuHeading/, `${who}: no heading over the Tools menu`);
+    }
+    // The divider rides with Transfer inside the money-writer's fragment: a reader sees Payees alone, no stray line.
+    assert.match(club, /\{canMove && \(\s*<>\s*<CoachToolbarMenuItem label="Transfer"[\s\S]*?\/>\s*<CoachToolbarMenuSeparator \/>\s*<\/>\s*\)\}\s*<CoachToolbarMenuItem label="Payees"/,
+      'club: Transfer, a divider, then Payees');
     assert.doesNotMatch(functionBody(club, 'LedgerTab').match(/const bookFoot[\s\S]*?;\n/)?.[0] ?? '', /Transfer|Payees/,
       'the Book pill’s foot keeps Add ledger only');
   });

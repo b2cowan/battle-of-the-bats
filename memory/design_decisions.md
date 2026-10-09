@@ -7,6 +7,15 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-09 — A TOOLS MENU NAMES ITS GROUPS ONLY WHEN THERE IS SOMETHING TO TELL APART (owner: *"do we need these headers if they only have 1 item in each of them?"* → *"go ahead"*)
+
+**Decision:** a Tools (⋯) menu shows group headings only when it has **two or more groups AND one of them holds more
+than one item**; below that a divider keeps the grouping and each item's hint says what it acts on. Built on both
+Ledgers (club: Transfer · divider · Payees; coach: no heading). The tournament Teams Tools menu passes the test (Pools
+holds Swap + Randomize) and keeps its headings. **Why:** a heading over one item doubles the menu's rows to say what
+the item's own hint already says, and a single group's heading only repeats the Tools button. The 2026-10-01 ruling
+("grouped by what it acts on") stands — the grouping stays; it loses its words when it is that small.
+
 ### 2026-10-09 — THE CLUB'S LEDGER FILTERS ON THE SCREEN, AND CATEGORY / ITEM OFFER WHAT IS IN THE DATES ON SCREEN, ON BOTH LEDGERS (owner: *"1. yes 2. yes, just build it now"*, walking Club Tier Stage 3d §285 W1)
 
 **Decision:** (1) **The club's Ledger reads the book once per book and date window and filters on the screen**, as the
@@ -366,8 +375,12 @@ the benchmark is exactly as untrustworthy as any other remembered number.
   under it, labelled lines, one corner chevron; the balance lines plain between the cards, never a card. The recipe
   lives in the shared kit and both Ledgers render it.
 - **D6 — a rare tool goes behind Tools (⋯) on both Ledgers; Payees is not a tab.** Both toolbars end: [Book | View] ·
-  Export · Tools · [the one lime add]. Club Tools: "This book" → Transfer, "The club's lists" → Payees. Coach Tools:
-  "The team's lists" → Payees. A sheet on a phone. A tab is a view of the book you work in; Payees is a list you tidy.
+  Export · Tools · [the one lime add]. Club Tools: Transfer, a divider, Payees. Coach Tools: Payees (Categories &
+  items and Money tags for a money-writer). A sheet on a phone. A tab is a view of the book you work in; Payees is a
+  list you tidy. **No group headings** (owner, 2026-10-09: "do we need these headers if they only have 1 item in each
+  of them?"): a Tools heading earns its place only when the menu has two or more groups AND one of them holds more
+  than one item — below that a divider keeps the grouping and each item's hint says what it acts on. The tournament
+  Teams Tools menu passes the test (Pools holds Swap + Randomize) and keeps its headings.
 - **D7 — the picker's words:** a club's shared payees sit under **"Shared by your club"** (the tag legend's own words,
   the club's blue) with the line "Your club sees payments to these payees."; the team's own under **"Your team's
   own"**; **Manage payees…** is the list's last row. A standalone team's picker has no shared section.

@@ -6,8 +6,9 @@
  *   top deck — what stays put whatever the filters say (owner 2026-09-02): the Book pill first (the
  *              club's books with their balances, Add ledger at its foot; opens on the General ledger),
  *              then Export, Tools and Add entry — lime, the one lime. ⚖ TOOLS (Ledger Parity D6, owner
- *              2026-10-02): a rare tool goes behind Tools, never a toolbar button — "This book" →
- *              Transfer, "The club's lists" → Payees; the coach's Ledger ends the same way. On a phone:
+ *              2026-10-02): a rare tool goes behind Tools, never a toolbar button — Transfer, a divider,
+ *              Payees (no group headings over one item each, owner 2026-10-09); the coach's Ledger ends
+ *              the same way. On a phone:
  *              the Book pill, Export, Tools (the ⋯ icon, a sheet) and Add entry as 44px icons.
  *   strip    — Type · Status · Category · Item · Date, quiet at rest (Status opens on Posted + Pending; Date
  *              on This month — the club's difference from the coach's Around today), and the book's
@@ -42,7 +43,7 @@ import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { LoadFailed, RepChip, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { CoachListToolbar, kit, ledgerKit } from '@/components/coaches/kit';
-import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import { ledgerBalanceLabel, ledgerRowDate } from '@/lib/ledger-format';
 import { clubSharesPayees } from '@/lib/team-payee-scope';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
@@ -267,16 +268,18 @@ export default function LedgerTab() {
           <div className={kit.toolbarActions}>
             <BookExport q={q} book={ref} window_={window_} rangeWords={rangeWords(range)} total={view.total} orgSlug={slug} />
             {/* ⚖ TOOLS (Ledger Parity D6, owner 2026-10-02): the rare tools behind one menu, grouped — the
-                coach's Ledger has the same door. A sheet on a phone, its trigger the bare ⋯. */}
+                coach's Ledger has the same door. A sheet on a phone, its trigger the bare ⋯. ⚖ NO HEADINGS
+                (owner 2026-10-09): a group heading earns its place only when there are two or more groups and
+                one of them holds more than one item. Here each group is one item, so a divider keeps the
+                grouping (this book · the club's lists) and each hint says what its item acts on. */}
             <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={15} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools">
               {canMove && (
                 <>
-                  <CoachToolbarMenuHeading>This book</CoachToolbarMenuHeading>
                   <CoachToolbarMenuItem label="Transfer"
                     hint="Move money to another of the club’s books" onSelect={() => setWin('transfer')} />
+                  <CoachToolbarMenuSeparator />
                 </>
               )}
-              <CoachToolbarMenuHeading>The club’s lists</CoachToolbarMenuHeading>
               <CoachToolbarMenuItem label="Payees"
                 hint={shares ? 'Rename, merge, or share with teams' : 'Rename a payee or merge two spellings'}
                 href={payeesHref} />

@@ -65,7 +65,7 @@ import { CLUB_SENT_WAITING_WORD } from '@/lib/club-money-words';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar, kit, ledgerKit } from '@/components/coaches/kit';
-import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { ledgerBalanceLabel, ledgerRowDate } from '@/lib/ledger-format';
 import LedgerLineWindow from '../LedgerLineWindow';
 import PayeesWindow from '../PayeesWindow';
@@ -7225,9 +7225,10 @@ function MoneyRecordsPanel({
               ⚖ AND IT HOLDS THE THREE LISTS A LEDGER ENTRY IS FILED BY (round 3, D10, owner 2026-10-02 —
               "if the payees is the only thing in the tools dropdown then do we need a tools dropdown?"):
               each opens its own window OVER the Ledger. Categories & items and Money tags are editors, so
-              they are the money-writer's; Payees reads for everyone. */}
+              they are the money-writer's; Payees reads for everyone. ⚖ NO HEADING (owner 2026-10-09): a
+              group heading earns its place only when there are two or more groups to tell apart — one group
+              under one heading only repeats what the Tools button says. */}
           <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={15} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools">
-            <CoachToolbarMenuHeading>The team’s lists</CoachToolbarMenuHeading>
             <CoachToolbarMenuItem label="Payees"
               hint="Who the team pays, and what each has been paid" onSelect={() => { setListOpen(null); setPayeesFrom('tools'); }} />
             {canWriteMoney && (
