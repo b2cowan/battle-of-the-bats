@@ -310,7 +310,7 @@ record's figures sit in one connected strip, as every money summary in the produ
 nothing changes. Next: one build session (no database change), whose walks open Payees and an allocation from every
 door, on a phone too.
 
-**Stage 3d built 2026-10-08, waiting on the owner's walks and word to commit.** Payees now opens over the Ledger, from
+**Stage 3d built 2026-10-08 and committed 2026-10-09; the owner's eight walks are next.** Payees now opens over the Ledger, from
 Tools and from inside an entry being typed, and the entry comes back exactly as it was. An allocation opens as one
 window from all ten places that show one, over wherever the treasurer was, and closing it puts them back there. It
 reads the bill first; its name and a club note can now be changed, saving as you type; a team's bill opens inside it.
