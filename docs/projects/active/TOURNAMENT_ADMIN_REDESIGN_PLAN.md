@@ -117,6 +117,10 @@ recommends *Not yet* unless waiting costs something real. Nothing was seeded.
   designed here. Stage 1 leaves them a visible place (§6 G8).
 - **Club Tier owns:** Stage 6 — the one venue book, the cross-module clash check, the club calendar;
   Stage 7 — tournaments inside a club (hub banner, "Add my team" for a club, fees to the club ledger).
+  **Club Stage 6 was RATIFIED 2026-10-08 (all thirteen asks) and 6a is building** (the venue book, the clash
+  check, the one Where field): this redesign's **Stages 3 and 5 can draw now** against the club hub's Stage 6
+  specimens 4 (the amber line under Diamond on Add Game, the drop, the shift, the generator, the import) and 7
+  (Venue, then the sport's word, on every form), and wire to 6a's server check and shared field when it lands.
   **The admin frame** (rail, phone bar, More) is the foundation's and the Club program's. A change wanted
   there is a finding for them (§3 F39), not a drawing here.
 - **Public pages** are out of scope; the organizer's preview of them is in scope only as a door.

@@ -46,6 +46,41 @@ that reason was argued for a season-long coach book and does not carry to a book
 the same rule on both. **Trade-off:** All time on a years-deep club book is one larger read (what Export already
 did). A voided line in the dates still lends its words to the lists (dates only, by design).
 
+### 2026-10-08 — ONE WAY TO SAY WHERE, AND ONE AMBER LINE FOR A CLASH: THREE RULINGS (owner: *"I agree with your recommendations for both stage 6 and 11"* — Club Tier Stage 6, all thirteen asks as recommended; Ask 13 asked by the owner the same day: *"how a user enters a venue for an event … the entry fields are as consistent as possible across the product"*) — hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 6 (v64), plan `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 6
+
+**Decision:** (1) **One way to say where, on every form** (Ask 13, with Ask 2): two fields, in this order, with these
+labels, everywhere an event's place is entered. **Venue** first: a search box (type to find, by name or address)
+whose list is grouped: the program's venues (a club's, or a tournament's own), then a coach's own places (Your
+places), then the typed row. Typed words that name no venue say, once, under the field that they aren't checked for
+clashes. Then **the facility, under the sport's own word** (Diamond for softball and baseball, Court for basketball,
+Field when a sport has none; read from the team's, league season's or tournament's sport, never written in): a
+dropdown of the picked venue's facilities with "Not set" first, opening on the facility this team used there last
+time; for a typed venue or a coach's own place, a short typed box with the same label. On a 640px window the two sit
+on one row (1.5fr / 1fr); on a phone they stack, Venue above. **The address belongs to the venue**, never typed on an
+event: it shows as one quiet line under Venue ("The club's venue · 41 Lions Park Dr", "Your own place · 120 Westfield
+Rd", "Typed · not checked for clashes"); the coach form's old Address box stays only on an older event that already
+holds one. **Adding a venue asks Name · Address · its facilities · Note** wherever one is added (a coach's place, a
+tournament's new venue, the library). Only what the Venue list offers differs by program. **"Location" is retired as
+a label**: one spelling, Venue. (2) **A clash warns in one amber line under the place, before Save; never a panel,
+never blocking** (Asks 4, 5): it appears as soon as the date, times and venue are set, re-checks on any change, goes
+when nothing clashes, and Save checks again on the server and returns the same line. A booking with no facility set
+gets the softer "busy then" words. Another program is named by what it is ("a 2026 Fall House League game"); a coach
+sees another team's name, the kind of event and its time, nothing else. **A refusal** (house league's own rule against
+a second league booking) **uses the same shape in red, under the field, before Create**, with Create greyed: never a
+pop-up after the fact. (3) **The club's venues sit above a coach's own places, as their own group** (Ask 1): in a club
+with a Venue library, the coach's picker lists "Club venues" first; the coach reads the library and never edits it,
+and a same-named team place stays the team's ("Your own place · not checked for clashes"), never merged. A team
+outside a club sees only its own places, exactly as built.
+**Rationale:** (1) four forms asked "where" in three shapes and two words, and the coach's diamond lived under More in
+a box with a fixed label; one pair, read from the sport, is the one-spelling rule applied to a form. Option B (house
+league's one combined list everywhere) changed fewer forms but cost the coach their search and kept a field called
+Diamond whose answer could be a school. (2) a form that refuses one volunteer's booking because another program saved
+first hands one person a veto over another's schedule; the club settles a shared diamond, so across programs the form
+only tells. A program's own double-booking is its own mistake and stays refused, said where it happens. (3) a team's
+private book can never see another team's booking; the club's library is the only shared key. Arrival & Places §5
+("the admin's library stays admin's") is reversed for club teams only, and its reason (a book the coach owns, with
+nothing to wait for) still holds for everything a club doesn't own.
+
 ### 2026-10-08 — AN EXPORT MENU NAMES ITS FILE IN ONE LINE, AND NO FORMAT CARRIES A SENTENCE (owner, at a closed year's Export, walking §283 W7: *"this is way too much text for this dropdown"*; three recommended options, all taken)
 
 **Decision:** (1) A menu that says what its file holds says it in **one line**: a closed year's Export reads "Year-end report · 2025–26", then Excel and PDF. The club Ledger's keeps "Every entry in the period, not just what is on screen · N entries" and drops its sentence about signed amounts and voids. (2) **No sentence under a format on any admin Export menu**: "Opens in Google Sheets…", "Plain text…", "Formatted, print-ready…" and the iCal line all go, from all 28 admin export buttons. A second line stays only where it says something the row's name does not: no rows, the plan upgrade, a per-view PDF note, a second document, contact details, the full dataset, import. (3) CSV appears only where a screen asks for it. It had been drawn everywhere, so the year-end report, built as Excel and PDF only, offered one.
