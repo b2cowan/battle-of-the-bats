@@ -2,6 +2,7 @@
 import { useMemo, useRef, useState } from 'react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { claimEscape } from './escapeOwnership';
+import { useFieldMenu } from '@/lib/overlay-hooks';
 import { normalizeOpponentName, recordChip, recordTone } from '@/lib/coach-opponents';
 import type { OpponentBookEntry } from '@/lib/coach-opponents';
 import {
@@ -56,7 +57,6 @@ export default function OpponentCombobox({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
   /**
    * The highlighted row is remembered by the OPPONENT it points at, never by its row number: the
    * host re-reads the book when the list opens, and a response landing mid-arrow-key would otherwise
@@ -65,6 +65,7 @@ export default function OpponentCombobox({
    */
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // The book's own date format — "Jun 14, 2026" — because the book spans seasons and a bare
   // "Jun 14" for a meeting two summers ago is ambiguous exactly where the coach is trying to
@@ -72,18 +73,6 @@ export default function OpponentCombobox({
   const fmtDay = (iso: string) => formatInOrgZone(iso, { month: 'short', day: 'numeric', year: 'numeric' });
 
   function openDropdown() {
-    const el = inputRef.current;
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      let top = 0, bottom = window.innerHeight;
-      for (let n = el.parentElement; n; n = n.parentElement) {
-        if (getComputedStyle(n).overflowY === 'visible') continue;
-        const r = n.getBoundingClientRect();
-        top = Math.max(top, r.top);
-        bottom = Math.min(bottom, r.bottom);
-      }
-      setDropUp(bottom - rect.bottom < 250 && rect.top - top > 260);
-    }
     // The host's re-read fires when the list OPENS, not on every keystroke — the prop's contract,
     // and a fetch per character with no sequencing is how a stale response overwrites a fresh one.
     if (!open) onOpen?.();
@@ -133,6 +122,9 @@ export default function OpponentCombobox({
   // the Add Game panel never receives (the coach presses twice). Every key branch and the
   // escape-owner marker read this, never the raw flag (/review 2026-09-21, High).
   const showList = open && !disabled && hasBook && (optionCount > 0 || isNew);
+  // The list hangs over the Add Game window, never cut off by it (§80 ruling; see the hook) — it carried the tag
+  // picker's old room-guess, which cut it off wherever neither side of the field had room (2026-10-09, §284).
+  useFieldMenu(showList, inputRef, listRef, () => setOpen(false));
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'ArrowDown') {
@@ -169,7 +161,7 @@ export default function OpponentCombobox({
         onKeyDown={onKeyDown}
       />
       {showList && (
-        <div className={`${styles.tagComboDropdown} ${dropUp ? styles.tagComboDropdownUp : ''}`}>
+        <div ref={listRef} className={styles.tagComboDropdown}>
           {own.length > 0 && <div className={styles.tagComboGroup}>Your opponents</div>}
           {own.map((e, i) => (
             <button

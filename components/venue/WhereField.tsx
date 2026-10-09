@@ -9,6 +9,7 @@ import {
   type WhereValue,
 } from '@/lib/where-field';
 import { VENUE_SOURCE_PILL, venueSourceLine } from '@/lib/venue-clash-words';
+import { useFieldMenu } from '@/lib/overlay-hooks';
 import type { ClubVenueOption, RepTeamPlace } from '@/lib/types';
 import pill from '@/components/shared/FilterPill.module.css';
 import styles from './WhereField.module.css';
@@ -97,9 +98,9 @@ export default function WhereField({
   facilityLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const noun = fieldNounFor(sport);
   const facLabel = facilityLabel ?? noun;
@@ -122,23 +123,14 @@ export default function WhereField({
     ...(onManagePlaces ? [{ kind: 'manage' as const }] : []),
   ];
   const hasList = opts.length > 0;
+  // The list hangs over the window the field sits in, never cut off by it (§80 ruling; see the hook). Found 2026-10-09
+  // (§284): flipped above the field in the coach's Add practice window, its top rows ran under the window's own top.
+  const listShown = open && !disabled && hasList;
+  useFieldMenu(listShown, inputRef, listRef, () => { setOpen(false); setActiveIdx(-1); });
 
   const pickedVenue = value.source === 'club' && value.orgVenueId ? clubVenues.find(v => v.id === value.orgVenueId) ?? null : null;
 
   function openList() {
-    const el = inputRef.current;
-    if (el) {
-      // Flip above the input inside a clipping box when there's no room below (the tag picker's hard-won rule).
-      const rect = el.getBoundingClientRect();
-      let top = 0, bottom = window.innerHeight;
-      for (let n = el.parentElement; n; n = n.parentElement) {
-        if (getComputedStyle(n).overflowY === 'visible') continue;
-        const r = n.getBoundingClientRect();
-        top = Math.max(top, r.top);
-        bottom = Math.min(bottom, r.bottom);
-      }
-      setDropUp(bottom - rect.bottom < 260 && rect.top - top > 270);
-    }
     if (!open) onOpen?.();
     setOpen(true);
   }
@@ -214,8 +206,8 @@ export default function WhereField({
               onBlur={() => setTimeout(close, 150)}
               onKeyDown={onKeyDown}
             />
-            {open && !disabled && hasList && (
-              <div id={`${venueId}-list`} role="listbox" className={`${styles.list} ${dropUp ? styles.listUp : ''}`}>
+            {listShown && (
+              <div id={`${venueId}-list`} ref={listRef} role="listbox" className={styles.list}>
                 {venues.length > 0 && <div className={styles.group}>{clubGroupLabel}</div>}
                 {venues.map((v, vi) => row(vi, { kind: 'venue', venue: v }, (
                   <span className={styles.optText}>

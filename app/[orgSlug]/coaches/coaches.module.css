@@ -8440,15 +8440,20 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    on the bill's fields block — the only place in the product a tag picker hid its own input. Its
    headstone is here so nobody re-derives the rule for a control that no longer exists; the
    reversal's reasoning is on the prop's own headstone in `TagSearchCombobox.tsx`. */
+/* The tag and opponent lists HANG OVER their window (§80): viewport-fixed and placed by `useFieldMenu`, which
+   writes left, width, top or bottom and max-height — so no window's scroll box or footer cuts them off.
+   ⚰ `.tagComboDropdownUp` (the flip above the field) is deleted with the room-guess it dressed (2026-10-09, §284):
+   it still cut the list off wherever neither side of the field had room. */
 .tagComboDropdown {
-  position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+  position: fixed; z-index: 500;
+  overscroll-behavior: contain;
   background: var(--card-bg); border: 1px solid var(--border-2);
   border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  max-height: 220px; overflow: auto; z-index: 30;
+  overflow: auto;
 }
-/* Flip above the input when there's no room below (last field in a scrollable modal) so the
-   menu isn't clipped by the modal's scroll area or hidden behind the sticky footer. */
-.tagComboDropdownUp { top: auto; bottom: calc(100% + 4px); box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5); }
+/* ⚖ The add-a-test list is the ruled exception (C11, 2026-09-15): always BELOW its field, inside the session sheet's
+   pane, which scrolls to hold it — flipping up would cover tonight's plan. Its height is `.addMenu`'s. */
+.tagComboDropdownInPane { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; }
 .tagComboOpt {
   display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
   padding: 0.45rem 0.6rem; font-size: var(--type-body); cursor: pointer; width: 100%;

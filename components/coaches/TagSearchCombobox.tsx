@@ -5,6 +5,7 @@ import TagManagerDrawer, { type TagManagerPolicy } from '@/components/coaches/Ta
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import pill from '@/components/shared/FilterPill.module.css';
 import { claimEscape } from './escapeOwnership';
+import { useFieldMenu } from '@/lib/overlay-hooks';
 
 /**
  * The minimal tag shape the picker (and the drawer) actually read — structural, so both
@@ -163,12 +164,12 @@ export default function TagSearchCombobox({
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [creating, setCreating] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
   const [fresh, setFresh] = useState<ComboTag[] | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   /**
    * ⚠⚠ SIX MONEY SURFACES EACH HOLD THEIR OWN COPY OF THIS LIBRARY, and the hub keeps panels
@@ -192,29 +193,10 @@ export default function TagSearchCombobox({
     } catch { /* offline — the prop copy keeps the picker usable */ }
   }
 
-  // Open the dropdown, flipping it ABOVE the input when there isn't room below (e.g. the Tags
-  // field at the bottom of a scrollable modal, where a downward menu would be clipped by the
-  // modal's scroll area / hidden behind the sticky footer).
-  // ⚠ "Room below" is measured against the NEAREST CLIPPING BOX, not just the window (owner-found
-  // 2026-09-20: the practice sheet's station modal is centred and content-sized, so its last field
-  // — Staff — can sit 300px above the window's bottom and 20px above its scroll pane's; the window
-  // said "plenty of room" and the menu was stuffed into the pane's scroll). Every ancestor whose
-  // overflow-y is not `visible` clips or scrolls, and the tightest of them bounds the menu in both
-  // directions. The menu is absolute, so a host that clips is a host the menu cannot leave — a
-  // card that must hold one does not `overflow: hidden` (see `.ppTlOpen`).
+  // ⚰ The list's own room-guess stood here (flip above when <250px below and >260px above, inside the
+  // nearest clipping box — owner-found 2026-09-20 on the practice station modal). It still cut the list
+  // off wherever neither side had room, so the list now hangs over its window (`useFieldMenu`, below).
   function openDropdown() {
-    const el = inputRef.current;
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      let top = 0, bottom = window.innerHeight;
-      for (let n = el.parentElement; n; n = n.parentElement) {
-        if (getComputedStyle(n).overflowY === 'visible') continue;
-        const r = n.getBoundingClientRect();
-        top = Math.max(top, r.top);
-        bottom = Math.min(bottom, r.bottom);
-      }
-      setDropUp(bottom - rect.bottom < 250 && rect.top - top > 260);
-    }
     setOpen(true);
     void refreshLibrary();
   }
@@ -354,6 +336,11 @@ export default function TagSearchCombobox({
      in the portal has. */
   const full = single && selected.length > 0;
   const showInput = !disabled && !full;
+  // The list hangs over the window the field sits in, never cut off by it (§80 ruling; see the hook) — found again
+  // 2026-10-09 (§284) on the venue field, which carried a copy of this picker's old flip.
+  const listShown = showInput && open
+    && (query.length > 0 || peopleRows.length > 0 || matches.length > 0 || adoptable.length > 0 || !!manage);
+  useFieldMenu(listShown, inputRef, listRef, () => setOpen(false));
 
   return (
     /* ⚠ SAME CONTRACT AS THE FILES-UNDER PICKER (§134 walk): while the suggestion list is open this
@@ -399,8 +386,8 @@ export default function TagSearchCombobox({
             onBlur={() => setTimeout(() => setOpen(false), 150)}
             onKeyDown={onKeyDown}
           />
-          {open && (query.length > 0 || peopleRows.length > 0 || matches.length > 0 || adoptable.length > 0 || !!manage) && (
-            <div className={`${styles.tagComboDropdown} ${dropUp ? styles.tagComboDropdownUp : ''}`}>
+          {listShown && (
+            <div ref={listRef} className={styles.tagComboDropdown}>
               {peopleRows.length > 0 && (
                 /* The people first (mig 303). The group labels read only when both groups show,
                    so a picker with people and no other words is not two headings over one list. */

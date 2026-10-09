@@ -147,7 +147,7 @@ export default function MetricPickerCombobox({
         onKeyDown={onKeyDown}
       />
       {open && (
-        <div className={`${styles.tagComboDropdown} ${css.addMenu}`}>
+        <div className={`${styles.tagComboDropdown} ${styles.tagComboDropdownInPane} ${css.addMenu}`}>
           {renderGroup(q ? `Tests · matching “${query.trim()}”` : 'Tests', tests)}
           {renderGroup(q ? `Skills · matching “${query.trim()}”` : 'Skills', skills)}
           {matches.length === 0 && <div className={styles.tagComboEmpty}>Nothing in the library matches “{query.trim()}”</div>}

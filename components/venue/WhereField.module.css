@@ -43,17 +43,20 @@
 }
 .underRest { min-width: 0; overflow-wrap: anywhere; }
 
-/* ── The list ── a name, a quiet second line, a count at the end, no icon (the built picker's rows). */
+/* ── The list ── a name, a quiet second line, a count at the end, no icon (the built picker's rows).
+   It hangs over the window (§80): viewport-fixed and placed by `useFieldMenu`, which writes its left, width,
+   top or bottom and max-height — so a window's scroll box can never cut it off, above the field or below. */
 .list {
-  position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+  position: fixed;
+  z-index: 500;
+  overscroll-behavior: contain;
   background: var(--home-card, var(--card-bg));
   border: 1px solid var(--home-line-strong, var(--border-2));
   border-radius: 10px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-  max-height: 300px; overflow: auto; z-index: 30;
+  overflow: auto;
   padding: 4px 0;
 }
-.listUp { top: auto; bottom: calc(100% + 4px); }
 .group {
   padding: 10px 12px 4px;
   font-size: var(--type-label, 0.6875rem);

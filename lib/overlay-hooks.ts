@@ -418,7 +418,9 @@ const FIELD_MENU_MARGIN = 8;
  * are constants until a second shape of list needs its own.
  *
  * Built for the payee and payment-method pickers (found 2026-10-09: the club Ledger's Add entry window
- * cut the payee list off at its footer, under a "Filed under" picker that already hung over it).
+ * cut the payee list off at its footer, under a "Filed under" picker that already hung over it). The venue field,
+ * the tag picker and the opponent picker joined the same day (§284: the venue list, flipped above its field, ran
+ * under the coach's Add practice window's top edge — all three carried one copied room-guess).
  * `BudgetItemPicker` and `SublinedChoice` carry their own copies of the same rule and predate this.
  *
  * ⚠ It FOLLOWS THE FIELD on a scroll rather than closing (those two close). A phone scrolls a focused
