@@ -297,6 +297,29 @@ record opens where they are, the way coaches already work. Priority: after 3c's 
 ruled, then built. Success: from the Ledger and from Allocations, nothing sends the treasurer to another page to
 read or change one payee or one allocation.
 
+**Stage 3d — drawn and ruled 2026-10-08, every recommendation accepted.** On the hub (Mockups → Stage 3d), with the test
+club's real figures. Reading the code first changed the picture in three ways. An allocation can be opened from ten
+places, not five. Nothing about an allocation can be changed once it is made: not even its name, and the note New
+allocation asks for is never shown again. And the payee picker's "Manage payees…" throws away an entry being typed.
+The drawings recommend: Payees opens over the Ledger, and a payee opens inside it. An allocation reads the bill first,
+in a window over wherever the treasurer was, and only its name and note can be edited. A team's bill opens one level
+inside its allocation. Every door follows one rule: the window opens where you are, and closing it puts you back there.
+"Manage payees…" opens over the entry and returns to it with the typing kept. A team's account stays a page. Changing
+a bill's amounts or teams after it is made stays out of 3d. And, on the owner's look at the drawings, a money
+record's figures sit in one connected strip, as every money summary in the product now does. What a head coach sees:
+nothing changes. Next: one build session (no database change), whose walks open Payees and an allocation from every
+door, on a phone too.
+
+**Stage 3d built 2026-10-08, waiting on the owner's walks and word to commit.** Payees now opens over the Ledger, from
+Tools and from inside an entry being typed, and the entry comes back exactly as it was. An allocation opens as one
+window from all ten places that show one, over wherever the treasurer was, and closing it puts them back there. It
+reads the bill first; its name and a club note can now be changed, saving as you type; a team's bill opens inside it.
+An allocation that counts in a closed year reads in full but can't be renamed, and a late payment can still be
+recorded on it. Old bookmarks and notices land on the new windows. One thing the drawing said was wrong and the build
+says it honestly instead: renaming a bill renames it on the teams' Club pages and on both Ledgers, not only on the
+teams' pages. A head coach sees the new name; nothing else changes for them. Eight walks are on the hub's QA tab
+(§285); the one that proves it is done opens an allocation from every door and closes back where it started.
+
 **Stage 6 — venues, the clash check and the club calendar: drawn 2026-10-08 beside 3d, all thirteen
 questions ruled as recommended the same day.** On the hub (Mockups → Stage 6), drawn for four people. **A head coach in a club** finds the
 club's diamonds at the top of the place picker they already use, picks a diamond from a list, and sees one amber
