@@ -1047,7 +1047,14 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
    ⚠ A COPY of `--home-paper`, because <body> is outside the marker that declares it (the sandbox
    chrome's `--sandbox-warm-paper` is the same kind of copy for the same reason);
    `warm-palette-contrast.test.ts` fails if the two drift. Only under the warm account theme and only on a
-   page carrying the portal's marker: Dark, the public site and the volunteer shells are untouched. */
+   page carrying the portal's marker: Dark, the public site and the volunteer shells are untouched.
+   The FAN APP had the same black strip (owner, 2026-10-09, a phone screenshot of an empty Home) and
+   shares this one copy rather than adding a second: ConsumerNav marks a warm page `data-warm-base` —
+   'pref' on the tabs, which follow the theme (so Dark keeps the dark base, matching its dark paper),
+   'always' on the sign-up journey, which stays warm under Dark. The workspace switcher (/home) is not
+   warm and carries no marker. Keep the coach selector LAST: the test finds the rule by it. */
+html:not([data-user-theme="dark"]):has([data-warm-base="pref"]) body,
+html:has([data-warm-base="always"]) body,
 html[data-user-theme="warm"]:has([data-coach-warm-enabled]) body { background: #F8F4ED; }
 
 /* ─── Coaches Portal under an explicit DARK preference (Nav Unification Stage G) ────────────
@@ -2681,6 +2688,13 @@ tbody tr:last-child td { border-bottom: none; }
   :root { --bottom-nav-height: 72px; }
   main { padding-bottom: var(--bottom-nav-height); }
   footer { padding-bottom: calc(var(--bottom-nav-height) + 1rem); }
+
+  /* The consumer shell (the fan tabs, /start, the coach sign-up journey) reserves its OWN room for the
+     bar — inside the page, painted the page's ground. This generic reserve then stacked a SECOND 72px
+     under it in the near-black base: every one of those pages was 72px taller than the screen (an empty
+     Home scrolled into nothing), and the dark strip peeked out above the bar at the end of a scroll on
+     a real phone (owner screenshot, 2026-10-09). Same `#main-content` stand-down as the chat rooms. */
+  #main-content:has([data-consumer-shell]) { padding-bottom: 0; }
 
   /* The "See it live" demo hides that bar on the FAN side, because every one of its tabs — Home,
      Scores, Chat, Account — walks the visitor out of the sandbox and into the real platform. With

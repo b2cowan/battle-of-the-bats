@@ -469,10 +469,14 @@ export default function ConsumerNav({
   const coachCls = variant === 'coach' ? ` ${styles.topbarCoach}` : '';
   const topbarCls = `${styles.topbar}${coachCls}${warmRoute ? ` ${warm.warmVars} ${styles.topbarWarm}${prefGated ? ` ${styles.topbarWarmTab}` : ''}` : ''}`;
   const bottomNavCls = `${styles.bottomNav}${warmRoute ? ` ${warm.warmVars} ${styles.bottomNavWarm}${prefGated ? ` ${styles.bottomNavWarmTab}` : ''}` : ''}`;
+  // Tells globals.css to paint <body> the paper under a warm page, so the end-of-page bounce shows
+  // paper instead of the near-black base. 'pref' follows the theme preference (the tabs); 'always'
+  // is the warm journey. The coach variant is left out: the portal paints its own (data-coach-warm-enabled).
+  const warmBase = warmRoute && variant !== 'coach' ? (prefGated ? 'pref' : 'always') : undefined;
 
   return (
     <>
-      <header id="consumer-topbar" className={topbarCls}>{topBarInner}</header>
+      <header id="consumer-topbar" className={topbarCls} data-warm-base={warmBase}>{topBarInner}</header>
       <nav className={bottomNavCls} aria-label="Primary">
         {bottomTabs}
       </nav>

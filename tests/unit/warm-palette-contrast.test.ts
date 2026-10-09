@@ -210,6 +210,26 @@ describe('warm palette — legible by construction', () => {
     assert.deepEqual(parseHex(base[1]), parseHex(paper), 'the page base and --home-paper must move together');
   });
 
+  it('the fan app shares that page base, and its paper agrees with it', () => {
+    // The same black strip, on the consumer tabs (owner, 2026-10-09). ConsumerNav marks a warm page
+    // `data-warm-base`; both markers must stay in the ONE rule that carries the copy, or one shell
+    // gets the fix and the other quietly loses it.
+    const css = readFileSync(COACH_PALETTE, 'utf8');
+    const rule = /([^}]*)html\[data-user-theme="warm"\]:has\(\[data-coach-warm-enabled\]\) body \{ background: (#[0-9a-f]{6}); \}/i.exec(css);
+    assert.ok(rule, 'the warm page-base rule is gone from app/globals.css');
+    assert.ok(
+      rule[1].includes('html:not([data-user-theme="dark"]):has([data-warm-base="pref"]) body,'),
+      'the fan tabs left the warm page-base rule',
+    );
+    assert.ok(
+      rule[1].includes('html:has([data-warm-base="always"]) body,'),
+      'the warm sign-up journey left the warm page-base rule',
+    );
+    const consumerPaper = readPalette(CONSUMER_PALETTE).paper;
+    assert.ok(consumerPaper, '--home-paper not found in the consumer warm theme');
+    assert.deepEqual(parseHex(rule[2]), consumerPaper, 'the page base and the consumer --home-paper must move together');
+  });
+
   it('every prose ink clears AA on every ground', () => {
     const failures: string[] = [];
     for (const name of PROSE_INKS) {

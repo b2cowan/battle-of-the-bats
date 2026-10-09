@@ -39,7 +39,8 @@ export default async function CoachJourneyChrome({ children }: { children: React
   const startMenu = await startMenuPromise;
 
   return (
-    <div className={styles.shell}>
+    // Same shell as app/(consumer)/layout.tsx, so the same marker (see the comment there).
+    <div className={styles.shell} data-consumer-shell>
       <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} workspaces={workspaces} startMenu={startMenu} />
       <div className={styles.content}>{children}</div>
     </div>

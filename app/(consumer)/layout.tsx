@@ -68,7 +68,9 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
   const startMenu = await startMenuPromise;
 
   return (
-    <div className={styles.shell}>
+    // data-consumer-shell: this shell reserves its own room for the phone tab bar, so the root
+    // <main>'s generic reserve stands down under it (globals.css, the ≤900px responsive block).
+    <div className={styles.shell} data-consumer-shell>
       <ConsumerThemeManager accountTheme={accountTheme} />
       <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} workspaces={workspaces} startMenu={startMenu} />
       <div className={styles.content}>{children}</div>
