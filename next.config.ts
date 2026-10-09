@@ -1,6 +1,22 @@
 import type { NextConfig } from "next";
+import { networkInterfaces } from "node:os";
+
+// This PC's own LAN addresses (e.g. 192.168.2.200), read at startup so a new DHCP lease needs only
+// a dev-server restart, never an edit here.
+function ownLanAddresses(): string[] {
+  return Object.values(networkInterfaces())
+    .flat()
+    .filter((a) => !!a && a.family === "IPv4" && !a.internal)
+    .map((a) => a!.address);
+}
 
 const nextConfig: NextConfig = {
+  // Phone testing against `npm run dev` (owner, 2026-10-09). Next 16 answers 403 to its dev-only
+  // scripts and the hot-reload socket for any origin but localhost, so a page opened on a phone at
+  // http://<this PC's LAN IP>:3000 rendered its first server frame and never came alive - the sign-in
+  // screen sat on "CHECKING SESSION..." forever, and every button everywhere was dead. Dev-only:
+  // production never reads this.
+  allowedDevOrigins: ownLanAddresses(),
   // 16.3's `next dev` auto-appends a managed block to AGENTS.md when it detects an AI coding
   // agent. Ours is a governed, hand-authored convention document (its content already points
   // agents at node_modules/next/dist/docs/), so silent framework appends are drift by definition.
