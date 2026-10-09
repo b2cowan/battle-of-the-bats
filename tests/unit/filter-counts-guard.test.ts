@@ -119,12 +119,13 @@ describe('D5 — the club Ledger counts what ticking a choice would list, and Al
     assert.match(page, /const STATUS_ALL: ReadonlySet<string> = new Set\(STATUS_ORDER\);/);
     assert.match(page, /const statuses = pickedStatuses\.size \? pickedStatuses : STATUS_ALL;/);
     assert.doesNotMatch(page, /next\.size \? next : new Set\(STATUS_REST\)/, 'an empty pick must not snap back to rest');
-    assert.match(page, /count: optionCounts\?\.type\?\.\[t\] \?\? 0/);
-    assert.match(page, /count: optionCounts\?\.status\?\.\[s\] \?\? 0/);
-    assert.match(page, /total=\{\(counts\?\.status\.posted \?\? 0\) \+ \(counts\?\.status\.pending \?\? 0\) \+ \(counts\?\.status\.void \?\? 0\)\}/,
-      'the export menu still says every entry in the period');
-    const read = readCode('lib/club-ledger-read.ts');
-    assert.match(read, /optionCounts: ledgerOptionCounts\(/);
+    assert.match(page, /count: optionCounts\.type\[t\] \?\? 0/);
+    assert.match(page, /count: optionCounts\.status\[s\] \?\? 0/);
+    // The read is the whole window, every status (owner 2026-10-09), so its length IS every entry in the period.
+    assert.match(page, /total: lines\.length,/);
+    assert.match(page, /total=\{view\.total\}/, 'the export menu still says every entry in the period');
+    // Counted on the screen now, over the window's lines, with the filters as they are.
+    assert.match(page, /optionCounts: ledgerOptionCounts\(lines, \{ status: statusSet, types: typeSet, categories: catSet, items: itemSet \}\)/);
   });
 });
 

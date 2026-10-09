@@ -8,7 +8,7 @@ import { bookInScope } from './club-team-route';
 import { bookWindow, isMoneyIn, type BookLineFacts } from './club-money-figures';
 import { howItCame, installmentLineWords, requestLineWords } from './club-money-words';
 import {
-  NOT_FILED_ID, SOURCE_MODULE, findLoopRecord, isSourcedLine, isTransfer, ledgerCategory, ledgerFiling, ledgerOptionCounts,
+  NOT_FILED_ID, SOURCE_MODULE, findLoopRecord, isSourcedLine, isTransfer, ledgerCategory, ledgerFiling,
   lineType, type ExportableLine, type Filing, type FilingFacts, type LedgerFiling, type LedgerKind, type LineStatus, type LineType,
 } from './club-ledger';
 
@@ -20,15 +20,15 @@ import {
  *   · a date window, with a Starting balance (everything before it) so the running balance is true
  *     from the first row, and an Ending balance;
  *   · the Balance ALL-TIME — one scope, so the Overview and the Ledger never print two balances;
- *   · Status (posted · pending · void) and Type, each choice counted as what ticking it would list
- *     (`ledgerOptionCounts`), beside the window's census the export reads;
- *   · Type, Category and Item filters (the club's own categories, never the teams'; the items on this book);
- *   · each line on the PAGE worded from its source where it has one, who recorded it, and what may be
- *     done with it on the ledger (the line window's door).
+ *   · every line IN THE WINDOW comes back — every status, every type — each worded from its source where it has
+ *     one, who recorded it, and what may be done with it on the ledger (the line window's door);
+ *   · ⚖ NO FILTER IS APPLIED HERE (owner 2026-10-09, "the club's Ledger filters like the coach's"): Type, Status,
+ *     Category and Item narrow the window on the screen, at once, and their lists and counts are worked out there
+ *     from these rows. Only a new book or a new window reads again. It used to filter and page here, so every tick
+ *     was a round trip, and the table changed twice — its balance with the pills, its lines when the answer landed.
  *
- * The balances need every line; the words need only the page. So the walk is whole, the narrowing
- * reads only each line's own columns, and the lookups behind the words (sources, partners, payees,
- * names) run for the page alone, together.
+ * The balances need every line of the book; the words need only the window's. So the walk is whole, and the
+ * lookups behind the words (sources, partners, payees, names) run for the window alone, together.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -114,19 +114,7 @@ export interface BookRead {
   startingBalance: number;
   endingBalance: number;
   window: { from: string | null; to: string | null };
-  /** The WINDOW's census, before any filter: the export menu's "every entry in the period" and which Types are
-   *  offered at all. Never the numbers beside the choices — those are `optionCounts`. */
-  counts: { status: Record<LineStatus, number>; type: Partial<Record<LineType, number>> };
-  /** What ticking each Status / Type choice would list, given the other filters (`ledgerOptionCounts`). */
-  optionCounts: { status: Partial<Record<LineStatus, number>>; type: Partial<Record<LineType, number>> };
-  categories: string[];
-  /** The Item filter's list: the items this book's lines are filed under, every row (the coach's rule — a choice
-   *  the book never used could only empty the screen), each with the category it sits in, so the list can follow
-   *  the Category filter (owner 2026-10-07). One entry per item AND category: a name may sit in two. */
-  items: { name: string; category: string | null }[];
-  total: number;
-  offset: number;
-  limit: number;
+  /** Every line in the window, oldest first — every status and type; the screen filters them (owner 2026-10-09). */
   rows: BookRowOut[];
 }
 
@@ -363,10 +351,6 @@ export async function readBook(
   ledgerId: string,
   opts: {
     from?: string | null; to?: string | null;
-    status?: LineStatus[] | null; types?: LineType[] | null; categories?: string[] | null; items?: string[] | null;
-    offset?: number; limit?: number;
-    /** Every narrowed row, unpaged — the export's read (never "the loaded page", C14). */
-    all?: boolean;
     /** The reader's teams (`teamIdsInScope`): a team book outside them reads as not found (B11). */
     scope?: Set<string> | null;
   } = {},
@@ -378,10 +362,8 @@ export async function readBook(
   const lines = fetchAll<Record<string, any>>((a, b) =>
     supabaseAdmin.from('accounting_entries').select(`*, ${FILING_SELECT}`).eq('ledger_id', ledgerId)
       .order('entry_date').order('created_at').order('id').range(a, b)).then(rows => rows.map(mapLine));
-  const [all, categories, allocationOf, setting] = await Promise.all([
+  const [all, allocationOf, setting] = await Promise.all([
     lines,
-    // The filter's list: the club's own words. Not for the export or for a team's (read-only) book.
-    opts.all || kind === 'team' ? Promise.resolve([] as string[]) : clubCategories(orgId),
     kind === 'team' ? Promise.resolve(new Map() as AllocationOf) : lines.then(ls => allocationsOf(orgId, ls)),
     kind === 'team' ? Promise.resolve(null) : loadFiscalSetting(orgId),
   ]);
@@ -390,31 +372,9 @@ export async function readBook(
   // Every line filed ONCE (`ledgerFiling`): the Category and Item columns, both filters, the items list and the line
   // window all read this, so none of them can file a line differently from another.
   const filed = new Map(all.map(l => [l.id, ledgerFiling(l, kind, () => allocationOf.get(l.id) ?? null)] as const));
-  // The filter's list: every item on THIS book, with its category. Not for the export or for a team's (read-only) book.
-  const items = opts.all || kind === 'team' ? []
-    : [...new Map([...filed.values()].filter(f => f.item).map(f => [`${f.category}\u0000${f.item}`, { name: f.item!, category: f.category }])).values()]
-      .sort((x, y) => x.name.localeCompare(y.name) || (x.category ?? '').localeCompare(y.category ?? ''));
 
   const win = bookWindow(all, { from: opts.from ?? null, to: opts.to ?? null });
-  const typed = win.rows.map(r => ({ ...r, ...filed.get(r.line.id)!, status: r.line.status, type: lineType(r.line) }));
-  const typeCounts: Partial<Record<LineType, number>> = {};
-  for (const r of typed) typeCounts[r.type] = (typeCounts[r.type] ?? 0) + 1;
-
-  /* An absent status is the book's resting pair — a contract for any caller that does not say. The Ledger page
-     always says (its "All" sends all three, Filter Counts D5), so this default is not the page's "All". */
-  const status = new Set<LineStatus>(opts.status?.length ? opts.status : ['posted', 'pending']);
-  const types = opts.types?.length ? new Set(opts.types) : null;
-  const cats = opts.categories?.length ? new Set(opts.categories) : null;
-  const itemSet = opts.items?.length ? new Set(opts.items) : null;
-  const narrowed = typed.filter(r => status.has(r.status)
-    && (!types || types.has(r.type))
-    && (!cats || (r.category !== null && cats.has(r.category)))
-    && (!itemSet || (r.item !== null && itemSet.has(r.item))));
-
-  const limit = opts.all ? narrowed.length : Math.min(Math.max(opts.limit ?? 100, 1), 500);
-  const offset = opts.all ? 0 : Math.max(opts.offset ?? 0, 0);
-  const page = narrowed.slice(offset, offset + limit);
-  const lookups = await lookupsFor(orgId, page.map(r => r.line));
+  const lookups = await lookupsFor(orgId, win.rows.map(r => r.line));
   const book = { kind, entityId: ledger.entityId, orgName, closedThrough: through };
 
   return {
@@ -425,14 +385,7 @@ export async function readBook(
     startingBalance: win.startingBalance,
     endingBalance: win.endingBalance,
     window: { from: opts.from ?? null, to: opts.to ?? null },
-    counts: { status: win.counts, type: typeCounts },
-    optionCounts: ledgerOptionCounts(typed, { status, types, categories: cats, items: itemSet }),
-    categories,
-    items,
-    total: narrowed.length,
-    offset,
-    limit,
-    rows: page.map(r => shapeLine(r.line, r.balance, book, lookups, r)),
+    rows: win.rows.map(r => shapeLine(r.line, r.balance, book, lookups, filed.get(r.line.id)!)),
   };
 }
 
@@ -441,7 +394,7 @@ export async function readBookForExport(
   orgId: string, orgName: string, ledgerId: string,
   window: { from?: string | null; to?: string | null; scope?: Set<string> | null },
 ): Promise<{ book: BookRead; lines: ExportableLine[] } | null> {
-  const book = await readBook(orgId, orgName, ledgerId, { ...window, status: ['posted', 'pending', 'void'], all: true });
+  const book = await readBook(orgId, orgName, ledgerId, window);
   if (!book) return null;
   const lines: ExportableLine[] = book.rows.map(r => ({
     date: r.date, what: r.what, detail: r.detail, category: r.category, item: r.item, type: r.type,

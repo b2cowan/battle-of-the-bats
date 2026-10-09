@@ -190,7 +190,7 @@ describe('group scope on every club money write (B11)', () => {
     const book = readCode('app/api/admin/accounting/ledgers/[ledgerId]/book/route.ts');
     assert.match(book, /const scope = await teamIdsInScope\(ctx\);/);
     assert.match(book, /readBookForExport\(ctx\.org\.id, ctx\.org\.name, ledgerId, \{ from, to, scope \}\)/);
-    assert.match(book, /from, to, status, types, categories, items, scope,/);
+    assert.match(book, /readBook\(ctx\.org\.id, ctx\.org\.name, ledgerId, \{ from, to, scope \}\)/);
   });
 });
 

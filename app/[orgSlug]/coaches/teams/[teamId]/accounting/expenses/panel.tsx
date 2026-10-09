@@ -3210,6 +3210,14 @@ function MoneyRecordsPanel({
      * the counts before picking anything — costs nothing. Only a live tag filter pays for the
      * second pass, which is the case where the two sets genuinely differ.
      */
+    /* ⚖ THE LISTS OFFER WHAT IS IN THE DATES ON SCREEN (owner 2026-10-09, both Ledgers): Category and Item list the
+       words on the rows the date window shows — an overdue row shows whatever the window and an undated row never
+       vanishes, so both count — never the whole season's: a choice with nothing in view could only empty the
+       screen. The dates only: the other filters never shorten these lists, so a tick never reshuffles them (Item
+       follows Category, below, is the one ruled exception). A TICKED word always stays listed, outside the window
+       too: it is a narrowing in force, and quietly unticking it would change a filter the coach set. */
+    const inDates = (book?.book ?? []).filter(r => r.overdueDays != null || r.date === null
+      || (r.date >= dateRange.from && r.date <= dateRange.to));
     const tagCountRows = filterTagIds.size === 0 ? finalRows : windowRows(kindItemRows).rows;
     const registerTagCounts = new Map<string, number>();
     for (const r of tagCountRows) {
@@ -3229,18 +3237,16 @@ function MoneyRecordsPanel({
       bookOpensSeason: isSeasonOpening && (book?.opening ?? 0) !== 0,
       bookEmpty: finalRows.length === 0,
       statusCounts: counts,
-      /* The words actually ON the book, not the whole library: a filter offering a category the
-         season never spent against is a control that can only ever empty the screen. */
-      registerCategoryNames: [...new Set(
-        (book?.book ?? []).map(r => r.categoryName).filter((n): n is string => !!n),
-      )].sort((a, b) => a.localeCompare(b)),
+      // The words on the rows in the dates on screen (above), and the ticked ones.
+      registerCategoryNames: [...new Set([
+        ...inDates.map(r => r.categoryName).filter((n): n is string => !!n),
+        ...selectedCategories,
+      ])].sort((a, b) => a.localeCompare(b)),
       /* ⚖ ITEM FOLLOWS CATEGORY (owner 2026-10-07): an item is part of a category, so with categories picked the
-         list offers only their items — one way only (an item never shortens Category), and never the other
-         filters (a list that moved with the date window would lose words under the coach). A TICKED item always
-         stays listed, even outside the picked categories: it is a narrowing in force, and quietly unticking it
-         would change a filter the coach set. */
+         list offers only their items — one way only (an item never shortens Category). A ticked item always stays
+         listed, even outside the picked categories. */
       registerItemNames: [...new Set([
-        ...(book?.book ?? [])
+        ...inDates
           .filter(r => selectedCategories.size === 0 || (r.categoryName != null && selectedCategories.has(r.categoryName)))
           .map(r => r.itemName).filter((n): n is string => !!n),
         ...selectedItems,

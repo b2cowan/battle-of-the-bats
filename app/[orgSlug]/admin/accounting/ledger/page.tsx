@@ -35,7 +35,7 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useTournament } from '@/lib/tournament-context';
 import { tournamentToday, addCalendarDays } from '@/lib/timezone';
 import { resolveDateRangePreset, type DateRangeSelection } from '@/lib/coach-date-range';
-import { LINE_TYPE_WORD, type LineType } from '@/lib/club-ledger';
+import { LINE_TYPE_WORD, ledgerOptionCounts, type LineType } from '@/lib/club-ledger';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
@@ -56,6 +56,7 @@ import AddLedgerWindow from '@/components/admin/kit/club/money/AddLedgerWindow';
 import type { BookRead, BookRowOut, LineStatus } from '@/lib/club-ledger-read';
 import type { LedgerSummary } from '@/lib/types';
 
+/** Lines the table draws before "Show more" — the whole window is already here; this only keeps a long one quick. */
 const PAGE = 500;
 const STATUS_REST: ReadonlySet<string> = new Set(['posted', 'pending']);
 const STATUS_ORDER: LineStatus[] = ['posted', 'pending', 'void'];
@@ -109,9 +110,8 @@ export default function LedgerTab() {
     return { selection: 'thisMonth', from: r.from, to: r.to };
   });
   const [read, setRead] = useState<Read | null>(null);
-  const [more, setMore] = useState<BookRowOut[]>([]);
+  const [shownCount, setShownCount] = useState(PAGE);
   const [readFailed, setReadFailed] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [open, setOpen] = useState<BookRowOut | null>(null);
   const [win, setWin] = useState<'add' | 'transfer' | 'ledger' | null>(null);
   const { tournaments } = useTournament();
@@ -143,42 +143,66 @@ export default function LedgerTab() {
   }, [teamBook, router, base]);
 
   const window_ = range.selection === 'season' ? { from: null, to: null } : { from: range.from, to: range.to };
-  // One page of the book under the strip's filters (the first read and every Show more).
-  const bookUrl = useCallback((offset: number) => {
-    const params = new URLSearchParams({ orgSlug: slug, offset: String(offset), limit: String(PAGE) });
-    if (window_.from) params.set('from', window_.from);
-    if (window_.to) params.set('to', window_.to);
-    params.set('status', [...statuses].join(','));
-    if (types.size) params.set('type', [...types].join(','));
-    // One param per choice: a category or an item is a word the club typed, and a comma is fair game in one.
-    for (const c of cats) params.append('category', c);
-    for (const i of items) params.append('item', i);
-    return `/api/admin/accounting/ledgers/${bookId}/book?${params}`;
-  }, [bookId, slug, window_.from, window_.to, statuses, types, cats, items]);
-
+  /* ⚖ THE BOOK IS READ ONCE PER BOOK AND WINDOW, AND FILTERED HERE (owner 2026-10-09: "the club's Ledger filters like
+     the coach's"). The read brings every line in the window — every status, every type — so Type, Status, Category
+     and Item narrow it at once, and only a new book or a new window asks again. It used to send the filters and wait:
+     each tick was a round trip, and the table changed TWICE — the Balance column and lines left with the pill, the
+     lines a moment later when the answer landed. */
   const beginRead = useLatestRead();
   const loadBook = useCallback(async () => {
     if (!bookId || !slug) return;
+    const params = new URLSearchParams({ orgSlug: slug });
+    if (window_.from) params.set('from', window_.from);
+    if (window_.to) params.set('to', window_.to);
     const current = beginRead();
-    const r = await moneyFetch<Read>(bookUrl(0)).catch(() => null);
+    const r = await moneyFetch<Read>(`/api/admin/accounting/ledgers/${bookId}/book?${params}`).catch(() => null);
     if (!current()) return;
     if (!r?.ok) { setReadFailed(true); return; }
     setReadFailed(false);
     setRead(r.data);
-    setMore([]);
-  }, [bookId, slug, bookUrl, beginRead]);
+    setShownCount(PAGE);
+  }, [bookId, slug, window_.from, window_.to, beginRead]);
   useDeferredLoad(!!bookId, loadBook);
 
-  async function showMore() {
-    if (!read || !bookId || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const r = await moneyFetch<Read>(bookUrl(read.rows.length + more.length));
-      if (r.ok) setMore(m => [...m, ...r.data.rows]);
-    } finally {
-      setLoadingMore(false);
-    }
-  }
+  /* The window, as the strip narrows it — and everything the strip offers, worked out from the same lines. */
+  const view = useMemo(() => {
+    const lines = read?.rows ?? [];
+    const typeSet = types.size ? (types as ReadonlySet<LineType>) : null;
+    const catSet = cats.size ? cats : null;
+    const itemSet = items.size ? items : null;
+    const statusSet = statuses as ReadonlySet<LineStatus>;
+    const shown = lines.filter(r => statusSet.has(r.status)
+      && (!typeSet || typeSet.has(r.type))
+      && (!catSet || (r.category !== null && catSet.has(r.category)))
+      && (!itemSet || (r.item !== null && itemSet.has(r.item))));
+    /* The WINDOW's census, before any filter: the export menu's "every entry in the period", and whether house
+       league fees are offered at all. Never the numbers beside the choices — those are `optionCounts`. */
+    const typeCensus: Partial<Record<LineType, number>> = {};
+    for (const r of lines) typeCensus[r.type] = (typeCensus[r.type] ?? 0) + 1;
+    /* ⚖ THE LISTS OFFER WHAT IS IN THE DATES ON SCREEN (owner 2026-10-09, both Ledgers). Category and Item list the
+       words the window's lines are filed under — not every word the book ever used (the club's book runs for years,
+       and an allocation is named for its year, so that list only grew), and not every book's categories. The dates
+       only: the other filters never shorten them, so a tick never reshuffles a list (Item follows Category, below,
+       is the one ruled exception). A TICKED word always stays listed, outside the window too: it is a narrowing in
+       force, and quietly unticking it would change a filter the treasurer set. */
+    const sorted = (words: Iterable<string>) => [...new Set(words)].sort((a, b) => a.localeCompare(b));
+    const categoryNames = sorted([...lines.map(r => r.category).filter((c): c is string => c !== null), ...cats]);
+    /* ⚖ ITEM FOLLOWS CATEGORY (owner 2026-10-07, both Ledgers): with categories picked, the Item list offers only
+       their items — one way only. */
+    const itemNames = sorted([
+      ...lines.filter(r => !catSet || (r.category !== null && catSet.has(r.category))).map(r => r.item).filter((i): i is string => i !== null),
+      ...items,
+    ]);
+    return {
+      shown,
+      total: lines.length,
+      typeCensus,
+      // What ticking each Status / Type choice would list, given the other filters (Filter Counts D1 + D5).
+      optionCounts: ledgerOptionCounts(lines, { status: statusSet, types: typeSet, categories: catSet, items: itemSet }),
+      categoryNames,
+      itemNames,
+    };
+  }, [read, statuses, types, cats, items]);
 
   const changed = useCallback((text: string | null) => {
     if (text) setNotice({ tone: 'good', text });
@@ -203,29 +227,21 @@ export default function LedgerTab() {
   const ref: BookRef = { id: book.ledger.id, name: book.ledger.name, kind: book.ledger.entityType };
   const allRefs: BookRef[] = clubBooks.map(b => ({ id: b.ledger.id, name: b.ledger.name, kind: b.ledger.entityType }));
   const canMove = read?.canMove ?? false;
-  const rows = read ? [...read.rows, ...more] : [];
   /* ⚖ THE BALANCE SHOWS ONLY WHILE EVERY ENTRY THAT MOVES IT IS ON SCREEN (owner, §255, 2026-10-02) —
      the coach's rule, `balanceIsMeaningful`: every narrowing counts. Type, Category and Item hide entries
      that move it, so either takes the column (and the Starting / Ending lines and the strip's figure)
      away; Status takes it only once Posted is off, because a pending or void line never moves the
      balance. The date window never does: the Starting balance carries everything before it. */
   const showBalance = types.size === 0 && cats.size === 0 && items.size === 0 && statuses.has('posted');
-  const counts = read?.counts;
+  const { optionCounts, itemNames, categoryNames } = view;
   /* The window's census decides which Types are OFFERED; the number beside each choice is what ticking it would
      list (Filter Counts D1 + D5): at the row's end, never in the name. */
-  const optionCounts = read?.optionCounts;
   const typeOptions = TYPE_ORDER
-    .filter(t => t !== 'house_league_fees' || (counts?.type?.house_league_fees ?? 0) > 0)
-    .map(t => ({ id: t, label: LINE_TYPE_WORD[t], count: optionCounts?.type?.[t] ?? 0 }));
-  /* ⚖ ITEM FOLLOWS CATEGORY (owner 2026-10-07, both Ledgers): with categories picked, the Item list offers only their
-     items — one way only, and never the other filters. A TICKED item always stays listed, even outside the picked
-     categories: it is a narrowing in force, and quietly unticking it would change a filter the treasurer set. */
-  const itemNames = [...new Set([
-    ...(read?.items ?? []).filter(i => cats.size === 0 || (i.category !== null && cats.has(i.category))).map(i => i.name),
-    ...items,
-  ])].sort((a, b) => a.localeCompare(b));
-  /* The Item list is per BOOK (the items on it), so a picked item leaves with the book it was picked on — kept, it
-     would narrow the next book to nothing. Category stays: its list is the club's, across every book. */
+    .filter(t => t !== 'house_league_fees' || (view.typeCensus.house_league_fees ?? 0) > 0)
+    .map(t => ({ id: t, label: LINE_TYPE_WORD[t], count: optionCounts.type[t] ?? 0 }));
+  /* A picked item leaves with the book it was picked on — an item is a book's own word (an allocation's name, a
+     tournament's line), and kept it would narrow the next book to nothing. Category stays: the club's categories
+     are the same words on every book. */
   const pickBook = (id: string) => { setOpen(null); setItems(new Set()); router.replace(`${base}/ledger?book=${id}`); };
 
   const bookFoot = canMove ? (
@@ -249,7 +265,7 @@ export default function LedgerTab() {
             foot={bookFoot}
           />
           <div className={kit.toolbarActions}>
-            <BookExport q={q} book={ref} window_={window_} rangeWords={rangeWords(range)} total={(counts?.status.posted ?? 0) + (counts?.status.pending ?? 0) + (counts?.status.void ?? 0)} orgSlug={slug} />
+            <BookExport q={q} book={ref} window_={window_} rangeWords={rangeWords(range)} total={view.total} orgSlug={slug} />
             {/* ⚖ TOOLS (Ledger Parity D6, owner 2026-10-02): the rare tools behind one menu, grouped — the
                 coach's Ledger has the same door. A sheet on a phone, its trigger the bare ⋯. */}
             <CoachToolbarMenu label="Tools" icon={<MoreHorizontal size={15} aria-hidden />} collapseOnPhone bareOnPhone drawerOnPhone drawerTitle="Tools">
@@ -280,14 +296,14 @@ export default function LedgerTab() {
             <MultiSelectDropdown
               restQuiet restSelection={STATUS_REST}
               label="Status"
-              options={STATUS_ORDER.map(s => ({ id: s, label: STATUS_WORD[s], count: optionCounts?.status?.[s] ?? 0 }))}
+              options={STATUS_ORDER.map(s => ({ id: s, label: STATUS_WORD[s], count: optionCounts.status[s] ?? 0 }))}
               selected={pickedStatuses}
               onChange={setPickedStatuses}
             />
-            {/* A narrowing that is ON always shows its pill, even with nothing left to offer — else a stale link's
-                filter empties the book with no control to clear it. */}
-            {((read?.categories.length ?? 0) > 0 || cats.size > 0) && (
-              <MultiSelectDropdown restQuiet label="Category" options={(read?.categories ?? []).map(c => ({ id: c, label: c }))}
+            {/* A narrowing that is ON always shows its pill (its ticked words stay listed), even with nothing else to
+                offer — else a stale link's filter empties the book with no control to clear it. */}
+            {categoryNames.length > 0 && (
+              <MultiSelectDropdown restQuiet label="Category" options={categoryNames.map(c => ({ id: c, label: c }))}
                 selected={cats} onChange={setCats} allLabel="Every category" />
             )}
             {itemNames.length > 0 && (
@@ -318,7 +334,8 @@ export default function LedgerTab() {
       ) : !read ? (
         <p className={ck.loading}>Loading…</p>
       ) : (
-        <Book read={read} rows={rows} showBalance={showBalance} onOpen={setOpen} onMore={showMore} loadingMore={loadingMore} />
+        <Book read={read} rows={view.shown.slice(0, shownCount)} total={view.shown.length} showBalance={showBalance}
+          onOpen={setOpen} onMore={() => setShownCount(n => n + PAGE)} />
       )}
 
       {open && read && (
@@ -352,17 +369,18 @@ function rangeWords(range: { selection: DateRangeSelection; from: string; to: st
   return range.from === range.to ? day(range.from) : `${day(range.from)} to ${day(range.to)}`;
 }
 
-/** The book: oldest first between the Starting and Ending balance lines; a card per entry on a phone. */
-function Book({ read, rows, showBalance, onOpen, onMore, loadingMore }: {
-  read: Read; rows: BookRowOut[]; showBalance: boolean; onOpen: (r: BookRowOut) => void;
-  onMore: () => void; loadingMore: boolean;
+/** The book: oldest first between the Starting and Ending balance lines; a card per entry on a phone. `rows` are the
+ *  lines drawn so far, `total` every line the filters admit. */
+function Book({ read, rows, total, showBalance, onOpen, onMore }: {
+  read: Read; rows: BookRowOut[]; total: number; showBalance: boolean; onOpen: (r: BookRowOut) => void;
+  onMore: () => void;
 }) {
   const from = read.window.from;
   const to = read.window.to;
   const startLabel = ledgerBalanceLabel('Starting balance', from);
   const endLabel = ledgerBalanceLabel('Ending balance', to);
   const cols = showBalance ? 8 : 7;
-  if (rows.length === 0 && read.total === 0) {
+  if (total === 0) {
     return (
       <>
         <div className={`${repKit.tableFrame}`}>
@@ -397,13 +415,11 @@ function Book({ read, rows, showBalance, onOpen, onMore, loadingMore }: {
           <tbody>
             {showBalance && <BalanceRow label={startLabel} figure={read.startingBalance} cols={cols} />}
             {rows.map(r => <LineRow key={r.id} row={r} showBalance={showBalance} onOpen={onOpen} />)}
-            {read.total > rows.length && (
+            {total > rows.length && (
               <tr className={`${moneyKit.moreRow} ${ledgerKit.deskRow}`}>
                 <td colSpan={cols}>
-                  Showing {rows.length} of {read.total} lines ·{' '}
-                  <button type="button" className={repKit.inlineLink} onClick={onMore} disabled={loadingMore}>
-                    {loadingMore ? 'Loading…' : 'Show more'}
-                  </button>
+                  Showing {rows.length} of {total} lines ·{' '}
+                  <button type="button" className={repKit.inlineLink} onClick={onMore}>Show more</button>
                 </td>
               </tr>
             )}
@@ -411,10 +427,10 @@ function Book({ read, rows, showBalance, onOpen, onMore, loadingMore }: {
           </tbody>
         </table>
       </div>
-      {read.total > rows.length && (
+      {total > rows.length && (
         <p className={`${repKit.notes} ${repKit.phoneOnly}`}>
-          Showing {rows.length} of {read.total} lines ·{' '}
-          <button type="button" className={repKit.inlineLink} onClick={onMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Show more'}</button>
+          Showing {rows.length} of {total} lines ·{' '}
+          <button type="button" className={repKit.inlineLink} onClick={onMore}>Show more</button>
         </p>
       )}
       {showBalance && <div className={`${ledgerKit.phoneBal} ${ledgerKit.phoneBalEnd}`}><span>{endLabel}</span><span>{money(read.endingBalance)}</span></div>}

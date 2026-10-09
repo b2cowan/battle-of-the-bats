@@ -1,30 +1,22 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { resolveClubMoney } from '@/lib/club-money-route';
-import { readBook, readBookForExport, type LineStatus } from '@/lib/club-ledger-read';
-import { LEDGER_EXPORT_COLUMNS, ledgerExportRows, type LineType } from '@/lib/club-ledger';
+import { readBook, readBookForExport } from '@/lib/club-ledger-read';
+import { LEDGER_EXPORT_COLUMNS, ledgerExportRows } from '@/lib/club-ledger';
 import { canMoveClubMoney } from '@/lib/member-access';
 import { isCalendarDate } from '@/lib/timezone';
 import { teamIdsInScope } from '@/lib/club-team-route';
 
 type Params = { params: Promise<{ ledgerId: string }> };
 
-const STATUSES = new Set<LineStatus>(['posted', 'pending', 'void']);
-const TYPES = new Set<LineType>(['expense', 'income', 'team_allocations', 'team_support', 'transfer', 'house_league_fees']);
-const list = (v: string | null) => (v ? v.split(',').map(s => s.trim()).filter(Boolean) : null);
-/** A filter of words the club typed (a category, an item): one param per choice, never comma-joined — a comma is
- *  fair game in a word, where Status and Type are fixed keys. */
-const words = (url: URL, name: string) => { const v = url.searchParams.getAll(name).map(s => s.trim()).filter(Boolean); return v.length ? v : null; };
-
 /**
- * GET /api/admin/accounting/ledgers/[ledgerId]/book?orgSlug=&from=&to=&status=&type=&category=&item=&offset=&limit=
+ * GET /api/admin/accounting/ledgers/[ledgerId]/book?orgSlug=&from=&to=
  *
  * The Ledger tab's read (Ask 6, C14): one book, oldest first, a Starting balance before the window
  * and an Ending balance at its end, the book's Balance ALL-TIME, each line worded with its source,
- * who recorded it and what may be done with it. Status opens on Posted + Pending (voids off the book
- * until asked); `counts` are the window's census (the export's "every entry"), `optionCounts` what ticking each
- * Status / Type choice would list given the other filters (Filter Counts D5). Paged (`limit` ≤ 500) out of a
- * walk over every row — no 1,000-row cap.
+ * who recorded it and what may be done with it. EVERY line in the window — every status, every type, unpaged, out
+ * of a walk over every row (no 1,000-row cap): ⚖ the Ledger filters on the screen, as the coach's does (owner
+ * 2026-10-09), so a tick never waits on this read and the table changes in one step.
  *
  * `&export=1` — the whole window, every status and type: one signed Amount, voids kept and marked
  * VOID, pending marked PENDING, neither in the totals (the book's own rule). Columns included.
@@ -55,15 +47,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     });
   }
 
-  const status = list(url.searchParams.get('status'))?.filter((s): s is LineStatus => STATUSES.has(s as LineStatus)) ?? null;
-  const types = list(url.searchParams.get('type'))?.filter((t): t is LineType => TYPES.has(t as LineType)) ?? null;
-  const categories = words(url, 'category');
-  const items = words(url, 'item');
-  const book = await readBook(ctx.org.id, ctx.org.name, ledgerId, {
-    from, to, status, types, categories, items, scope,
-    offset: Number(url.searchParams.get('offset') ?? 0) || 0,
-    limit: Number(url.searchParams.get('limit') ?? 100) || 100,
-  });
+  const book = await readBook(ctx.org.id, ctx.org.name, ledgerId, { from, to, scope });
   if (!book) return NextResponse.json({ error: 'Ledger not found' }, { status: 404 });
   // A team's book is the coaches' — read-only from the club whoever is reading (C12).
   return NextResponse.json({ ...book, canMove: canMoveClubMoney(ctx, ctx.org) && book.ledger.kind !== 'team' });

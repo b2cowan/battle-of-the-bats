@@ -42,6 +42,7 @@ describe('the frame — Accounting is one page with tabs (Ask 2 option B)', () =
 
 describe('the Ledger reads like the coach\'s Ledger (Ask 6), on the coach\'s own controls', () => {
   const ledger = readCode(`${ACCT}/ledger/page.tsx`);
+  const coach = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx');
   it('the filter pills are the portal\'s, promoted into a shared module', () => {
     for (const c of ['MultiSelectDropdown', 'SingleSelectDropdown', 'DateRangeDropdown']) {
       assert.match(ledger, new RegExp(`import ${c} from '@/components/coaches/${c}'`));
@@ -59,21 +60,33 @@ describe('the Ledger reads like the coach\'s Ledger (Ask 6), on the coach\'s own
     assert.match(ledger, /router\.replace\(`\$\{base\}\/teams\/\$\{teamBook\.ledger\.entityId\}`\)/, 'a team book\'s old address forwards to the team');
   });
   it('Item follows Category on BOTH Ledgers, one way, and a ticked item never leaves the list (owner 2026-10-07)', () => {
-    // The club's: the server sends each item WITH its category; the page keeps the picked categories' items + the ticked ones.
-    assert.match(readCode('lib/club-ledger-read.ts'), /items: \{ name: string; category: string \| null \}\[\];/);
-    assert.match(ledger, /\.filter\(i => cats\.size === 0 \|\| \(i\.category !== null && cats\.has\(i\.category\)\)\)\.map\(i => i\.name\),\s*\.\.\.items,/);
-    // The coach's: the same rule over the season's rows.
-    const coach = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx');
-    assert.match(coach, /\.filter\(r => selectedCategories\.size === 0 \|\| \(r\.categoryName != null && selectedCategories\.has\(r\.categoryName\)\)\)\s*\.map\(r => r\.itemName\)\.filter\(\(n\): n is string => !!n\),\s*\.\.\.selectedItems,/);
-    // One way: the Category list is the whole book's categories, never narrowed by the Item filter.
-    assert.match(coach, /registerCategoryNames: \[\.\.\.new Set\(\s*\(book\?\.book \?\? \[\]\)\.map\(r => r\.categoryName\)\.filter\(\(n\): n is string => !!n\),\s*\)\]/);
+    // The club's: the window's lines, kept to the picked categories' items, + the ticked ones.
+    assert.match(ledger, /lines\.filter\(r => !catSet \|\| \(r\.category !== null && catSet\.has\(r\.category\)\)\)\.map\(r => r\.item\)\.filter\(\(i\): i is string => i !== null\),\s*\.\.\.items,/);
+    // The coach's: the same rule over the rows in the dates on screen.
+    assert.match(coach, /\.\.\.inDates\s*\.filter\(r => selectedCategories\.size === 0 \|\| \(r\.categoryName != null && selectedCategories\.has\(r\.categoryName\)\)\)\s*\.map\(r => r\.itemName\)\.filter\(\(n\): n is string => !!n\),\s*\.\.\.selectedItems,/);
+    // One way: the Category list is never narrowed by the Item filter.
+    assert.match(coach, /registerCategoryNames: \[\.\.\.new Set\(\[\s*\.\.\.inDates\.map\(r => r\.categoryName\)\.filter\(\(n\): n is string => !!n\),\s*\.\.\.selectedCategories,\s*\]\)\]/);
+    assert.match(ledger, /const categoryNames = sorted\(\[\.\.\.lines\.map\(r => r\.category\)\.filter\(\(c\): c is string => c !== null\), \.\.\.cats\]\);/);
+  });
+  it('Category and Item offer what is in the dates on screen, on BOTH Ledgers; a ticked word stays listed (owner 2026-10-09)', () => {
+    // The club's lists are worked out from the read, and the read IS the window — never every word the book ever
+    // used, never every club book's categories.
+    assert.match(ledger, /const lines = read\?\.rows \?\? \[\];/);
+    const read = readCode('lib/club-ledger-read.ts');
+    assert.doesNotMatch(read.slice(read.indexOf('export async function readBook('), read.indexOf('export async function readBookForExport(')), /clubCategories\(/);
+    // The coach's: the rows the date window shows (an overdue or undated row shows whatever the window).
+    assert.match(coach, /const inDates = \(book\?\.book \?\? \[\]\)\.filter\(r => r\.overdueDays != null \|\| r\.date === null\s*\|\| \(r\.date >= dateRange\.from && r\.date <= dateRange\.to\)\);/);
+  });
+  it('the club\'s Ledger filters on the screen, as the coach\'s does — a tick never waits on the server (owner 2026-10-09)', () => {
+    // The read carries the book and the window only; Type, Status, Category and Item narrow it here.
+    assert.doesNotMatch(ledger, /params\.(set|append)\('(status|type|category|item)'/);
+    assert.match(ledger, /const shown = lines\.filter\(r => statusSet\.has\(r\.status\)/);
+    assert.match(ledger, /\}, \[bookId, slug, window_\.from, window_\.to, beginRead\]\);/, 'only a new book or window reads again');
   });
   it('both halves of the filed word show — Category then Item, as on the coach’s Ledger (owner 2026-10-07)', () => {
     assert.match(ledger, /<th scope="col">Category<\/th>\s*<th scope="col">Item<\/th>/);
     assert.match(ledger, /data-label="Category">\{row\.category \?\? ''\}<\/td>\s*<td className=\{moneyKit\.cat\} data-label="Item">\{row\.item \?\? ''\}<\/td>/);
-    assert.match(ledger, /label="Item" options=\{itemNames\.map\(/, 'the Item filter lists the items on the book');
-    assert.match(ledger, /params\.append\('category', c\)/, 'one category= per choice — a word may carry a comma');
-    assert.match(ledger, /params\.append\('item', i\)/, 'one item= per choice — an item may carry a comma');
+    assert.match(ledger, /label="Item" options=\{itemNames\.map\(/, 'the Item filter lists the items in the window');
   });
   it('the Balance leaves once an entry that moves it is hidden — Type, Category, Item, or Status without Posted (§255); the export holds the whole period', () => {
     assert.match(ledger, /const showBalance = types\.size === 0 && cats\.size === 0 && items\.size === 0 && statuses\.has\('posted'\);/);
