@@ -1192,14 +1192,6 @@
     gap: 0.55rem;
   }
 
-  .scopeButtons {
-    width: 100%;
-  }
-
-  .scopeButton {
-    flex: 1 1 0;
-  }
-
   .partialPreviewSummary {
     grid-template-columns: repeat(2, auto auto);
     justify-content: start;
@@ -1371,72 +1363,9 @@
   line-height: 1.3;
 }
 
-.scopeButtons {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.scopeButton {
-  min-height: 30px;
-  padding: 0 0.7rem;
-  border: none;
-  border-right: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  background: transparent;
-  color: var(--white-55);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  line-height: 1.15;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.scopeButton:last-child {
-  border-right: none;
-}
-
-.scopeButton:hover:not(.scopeButtonActive) {
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--white-80);
-}
-
-.scopeButtonActive {
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  color: var(--logic-lime);
-}
-
-.scopeWarning {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.35rem;
-  padding-top: 0.45rem;
-  border-top: 1px solid rgba(var(--warning-rgb), 0.18);
-  color: var(--warning);
-  font-family: var(--font-data);
-  font-size: 0.64rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1.35;
-  text-transform: uppercase;
-}
-
-.scopeWarning svg {
-  flex: 0 0 auto;
-  margin-top: 0.02rem;
-}
-
-.scopeWarning strong {
-  color: var(--fl-text);
-}
-
 .partialPreviewSummary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) repeat(4, auto auto);
+  grid-template-columns: minmax(0, 1fr) repeat(3, auto auto);
   align-items: baseline;
   gap: 0.22rem 0.42rem;
   margin: 0.55rem 0 0.25rem;
@@ -4586,16 +4515,14 @@
   border-bottom-color: var(--home-line);
 }
 
-/* ── Segmented toggles (Team-based/Slot-based; Replace all/Build from current) — the divided-button
-   structure stays (border-right dividers, not per-pill borders); only chrome + tone move. Chosen =
-   the kit's olive selection. ── */
-:global([data-admin-kit]) .generatorSegmented,
-:global([data-admin-kit]) .scopeButtons {
+/* ── Segmented toggles (Team-based/Slot-based) — the divided-button structure stays (border-right
+   dividers, not per-pill borders); only chrome + tone move. Chosen = the kit's olive selection.
+   (The Replace all/Build from current switch shared these until the Stage 3 defects pass removed it.) ── */
+:global([data-admin-kit]) .generatorSegmented {
   border-color: var(--home-line-strong);
   border-radius: var(--radius-sm);
 }
-:global([data-admin-kit]) .generatorSegBtn,
-:global([data-admin-kit]) .scopeButton {
+:global([data-admin-kit]) .generatorSegBtn {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-weight: 650;
   letter-spacing: normal;
@@ -4603,19 +4530,17 @@
   border-right-color: var(--home-line-strong);
   color: var(--text-tertiary);
 }
-:global([data-admin-kit]) .generatorSegBtn:hover:not(.generatorSegBtnActive),
-:global([data-admin-kit]) .scopeButton:hover:not(.scopeButtonActive) {
+:global([data-admin-kit]) .generatorSegBtn:hover:not(.generatorSegBtnActive) {
   background: var(--home-olive-soft);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .generatorSegBtnActive,
-:global([data-admin-kit]) .scopeButtonActive {
+:global([data-admin-kit]) .generatorSegBtnActive {
   background: var(--home-olive-soft);
   border-right-color: var(--home-olive);
   color: var(--home-olive);
 }
 
-/* ── Schedule Scope strip — a recessed band inside the generator's own card. ── */
+/* ── The "On save" readout strip — a recessed band inside the generator's own card. ── */
 :global([data-admin-kit]) .scopeStrip {
   background: var(--home-paper);
   border-color: var(--home-line);
@@ -4627,19 +4552,8 @@
 :global([data-admin-kit]) .scopeCopy small {
   color: var(--text-tertiary);
 }
-/* A caution SENTENCE, not a label — moves to the body face (F2). */
-:global([data-admin-kit]) .scopeWarning {
-  border-top-color: rgba(var(--warning-rgb), 0.3);
-  color: var(--warning-light);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  letter-spacing: normal;
-  text-transform: none;
-}
-:global([data-admin-kit]) .scopeWarning strong {
-  color: inherit;
-}
 
-/* ── "Build from current" stat strip — neutral recessed band; the counts are readouts (mono stays). ── */
+/* ── The preview's "On save" stat strip — neutral recessed band; the counts are readouts (mono stays). ── */
 :global([data-admin-kit]) .partialPreviewSummary {
   background: var(--home-paper);
   border-color: var(--home-line);

@@ -166,6 +166,52 @@ describe('generateScoredSchedule', () => {
     assert.equal(draft.assignments[0].time, '11:00');
   });
 
+  it('a kept game stored with seconds ("13:00:00") still takes its own slot ("13:00")', () => {
+    // Offered ONLY the kept c–d game's own slot, the a–b draft must find nowhere to go. Before, "13:00:00" never
+    // matched "13:00", so the draft landed on top of the kept game (different teams — the participant check alone
+    // never stopped it; with a free slot also on offer, the draft scoring happened to hide it).
+    const kept: ScheduleDraftAssignment = { ...matchup('c', 'd'), ...slot('2026-07-01', '13:00:00', 'v1'), slotIndex: -1 };
+    const draft = generateScoredSchedule({
+      tournamentId: 't1',
+      divisionId: 'd1',
+      participants,
+      matchups: [matchup('a', 'b')],
+      slots: [slot('2026-07-01', '13:00', 'v1')],
+      fixedAssignments: [kept],
+      expectedGamesPerParticipant: 1,
+      gameDurationMinutes: 90,
+      bufferMinutes: 15,
+      priorities: defaultSchedulePriorities(),
+    });
+    assert.equal(draft, null);
+  });
+
+  it('kept games placed by venue reference (no text name) at one day and time do not crash the draft', () => {
+    // games.location is nullable; the demo's kept games all carry only venue references. Two of them at the same
+    // day and time used to throw in the sort ("Cannot read properties of null (reading 'localeCompare')") — the
+    // Stage 3 defects pass found it once "Build from current" became the generator's only behaviour.
+    const kept = (home: string, away: string, venueId: string): ScheduleDraftAssignment => ({
+      ...matchup(home, away),
+      ...slot('2026-07-01', '09:00:00', venueId),
+      venueName: null as unknown as string,
+      slotIndex: -1,
+    });
+    const draft = generateScoredSchedule({
+      tournamentId: 't1',
+      divisionId: 'd1',
+      participants,
+      matchups: [matchup('a', 'c')],
+      slots: [slot('2026-07-01', '11:00', 'v1')],
+      fixedAssignments: [kept('a', 'b', 'v1'), kept('c', 'd', 'v2')],
+      expectedGamesPerParticipant: 2,
+      gameDurationMinutes: 90,
+      bufferMinutes: 15,
+      priorities: defaultSchedulePriorities(),
+    });
+    assert(draft);
+    assert.equal(draft.assignments[0].time, '11:00');
+  });
+
   it('returns selectable draft options sorted by score', () => {
     const options = {
       tournamentId: 't1',

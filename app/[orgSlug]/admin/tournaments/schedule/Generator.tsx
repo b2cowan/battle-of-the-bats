@@ -1,9 +1,11 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { Sparkles, Check, X, RefreshCw, AlertCircle, Plus, Trash2, Info, SlidersHorizontal, AlertTriangle } from 'lucide-react';
+import { Sparkles, Check, X, RefreshCw, AlertCircle, Plus, Trash2, Info, SlidersHorizontal } from 'lucide-react';
 import { Team, Division, Venue, Game, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
+import { slotsClearOfTakenGames, toConflictGame } from '@/lib/schedule-conflict';
+import { DRAFT_SAVE_BAND, DRAFT_SAVE_FAILED, DRAFT_SAVE_LABEL, draftSaveQuestion, draftSaveReadout, refusalReason } from '@/lib/schedule-words';
 import NumberStepper from '@/components/admin/NumberStepper';
 import FieldHint from '@/components/help/FieldHint';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
@@ -59,8 +61,6 @@ interface DraftOption {
   slotGamesToCommit: SlotGame[];
 }
 
-type GenerationScope = 'replace' | 'build';
-
 type SchedulePresetId = 'balanced' | 'rest' | 'compact' | 'facility' | 'early' | 'custom';
 
 interface SchedulePreset {
@@ -82,8 +82,9 @@ interface ScheduleResource {
 }
 
 interface PartialGenerationContext {
-  enabled: boolean;
   preservedGames: Game[];
+  /** The kept games that have a day and a time — the only ones that can hold a slot or be drawn in the preview. */
+  placedPreservedGames: Game[];
   replaceableGames: Game[];
   fixedAssignments: ScheduleDraftAssignment<unknown>[];
 }
@@ -183,9 +184,11 @@ interface GeneratorProps {
   existingGames?: Game[];
   onComplete: () => void;
   onCancel: () => void;
+  /** A save refused because the schedule changed since the draft was made: reload the games (the window stays open). */
+  onStale?: () => void;
 }
 
-export default function ScheduleGenerator({ tournament, orgSlug, divisions, defaultDivisionId, teams, venues, existingGames = [], onComplete, onCancel }: GeneratorProps) {
+export default function ScheduleGenerator({ tournament, orgSlug, divisions, defaultDivisionId, teams, venues, existingGames = [], onComplete, onCancel, onStale }: GeneratorProps) {
   const kx = useKitStyle();
   // Kit patches for this file's hand-set inline styles (Admin Design Continuity slice 4c) — computed
   // once per render, not inside a loop, so no useMemo/hoisting-out-of-map concern here.
@@ -200,8 +203,6 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     { width: '36px', height: '36px', borderRadius: '2px', background: 'var(--white-5)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.65rem', color: 'var(--logic-lime)' },
     { borderRadius: '8px', background: 'var(--home-olive-soft)', color: 'var(--home-olive)' },
   );
-  const clearWarningTextStyle = kx({ color: 'var(--danger)' }, KIT_INK.danger);
-  const lockedGameWarningTextStyle = kx({ color: 'var(--warning)' }, KIT_INK.warning);
 
   const [selectedGroupId, setSelectedGroupId] = useState(defaultDivisionId || divisions[0]?.id || '');
   // Initialize from tournament settings so generator matches event-level defaults.
@@ -232,7 +233,6 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
   ]);
 
   const [generationMode, setGenerationMode] = useState<'team' | 'slot'>('team');
-  const [generationScope, setGenerationScope] = useState<GenerationScope>('replace');
   const [slotCountOverride, setSlotCountOverride] = useState<Record<string, number>>({});
 
   const [generatedGames, setGeneratedGames] = useState<Omit<Game, 'id'>[]>([]);
@@ -241,7 +241,6 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
   const [slotGamesToCommit, setSlotGamesToCommit] = useState<SlotGame[]>([]);
   const [replaceableGameIds, setReplaceableGameIds] = useState<string[]>([]);
   const [preservedGameCount, setPreservedGameCount] = useState(0);
-  const [lockedGameCount, setLockedGameCount] = useState(0);
   const [replacementGameCount, setReplacementGameCount] = useState(0);
   const [draftSummary, setDraftSummary] = useState<DraftOptimizationSummary | null>(null);
   const [draftOptions, setDraftOptions] = useState<DraftOption[]>([]);
@@ -274,6 +273,10 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     () => existingGames.filter(game => game.divisionId === selectedGroupId),
     [existingGames, selectedGroupId],
   );
+  // F70 (Stage 3 defects pass): a draft replaces ONLY these — round robin, still to play, not kept — and keeps every
+  // other game of the division. This was "Build from current"; the "Replace all" choice beside it (the default, which
+  // deleted played games and their scores) is gone. The server holds the same rule (lib/game-delete-policy.ts and the
+  // one-step save, mig 320).
   const replaceableExistingGames = useMemo(
     () => currentDivisionExistingGames.filter(game => !game.isPlayoff && game.status === 'scheduled' && !game.generatorLocked),
     [currentDivisionExistingGames],
@@ -282,11 +285,22 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     () => currentDivisionExistingGames.filter(game => game.isPlayoff || game.status !== 'scheduled' || game.generatorLocked),
     [currentDivisionExistingGames],
   );
-  const lockedExistingGameCount = useMemo(
-    () => currentDivisionExistingGames.filter(game => !game.isPlayoff && game.status === 'scheduled' && game.generatorLocked).length,
-    [currentDivisionExistingGames],
-  );
-  const canBuildFromCurrent = currentDivisionExistingGames.length > 0;
+  const hasExistingGames = currentDivisionExistingGames.length > 0;
+  // F69: every game the save will KEEP, in any division, holds its surface for its length — a draft is offered only
+  // the slots left. Only the games this save replaces are left out.
+  const takenGames = useMemo(() => {
+    const replaced = new Set(replaceableExistingGames.map(game => game.id));
+    return existingGames.filter(game => !replaced.has(game.id)).map(game => {
+      const taken = toConflictGame(game);
+      // This division's temporary facilities ("Facility 2") ARE the draft's: saving ensures the draft's lane by its
+      // label, per division. A kept game on Facility 2 holds the draft's Facility 2 — matched by label, since the saved
+      // lane's id never equals a draft lane's. (Another division's Facility 2 is its own lane.)
+      const draftLane = game.divisionId === selectedGroupId && game.scheduleFacilityLaneId && !game.venueId && !game.venueFacilityId
+        ? draftFacilityLaneIdForLabel(game.scheduleFacilityLaneLabel ?? game.location)
+        : null;
+      return draftLane ? { ...taken, scheduleFacilityLaneId: draftLane } : taken;
+    });
+  }, [existingGames, replaceableExistingGames, selectedGroupId]);
   const selectedResources = useMemo(() => {
     const resources: ScheduleResource[] = [];
     for (const venue of venues) {
@@ -337,7 +351,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
       bufferMinutes: breakLength,
       manualTravelBuffers,
       maxGamesPerDay: priorities.maxGamesPerDay,
-      includePlayoffs: generationScope === 'build',
+      // The preview carries the division's kept games (playoffs among them) beside the draft's.
+      includePlayoffs: true,
     });
   }, [
     hasPreview,
@@ -354,7 +369,6 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     gameLength,
     breakLength,
     priorities.maxGamesPerDay,
-    generationScope,
   ]);
 
   function defaultSlotCount(poolId: string): number {
@@ -428,19 +442,28 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
         current = roundTo5(new Date(current.getTime() + (gameLength + breakLength) * 60000));
       }
     });
-    return totalSlots;
+    // F69: drop every slot a kept game already holds (any division), by the Add window's own overlap rule. A draft
+    // that no longer fits says so in the "Not enough time slots" words below.
+    return slotsClearOfTakenGames(totalSlots, {
+      takenGames,
+      divisionId: selectedGroupId,
+      draftLengthMinutes: gameLength,
+      divisions,
+      tournament,
+    });
   }
 
+  // Every draft builds from the division's current games (empty when it has none): what it keeps stays, fixed,
+  // and only what it replaces is open to the draft.
   function getPartialContext(): PartialGenerationContext {
-    if (generationScope !== 'build' || !canBuildFromCurrent) {
-      return { enabled: false, preservedGames: [], replaceableGames: [], fixedAssignments: [] };
-    }
-
+    // A kept game with no day or time yet (a bracket game saved before it was placed) takes no slot: it crashed the
+    // draft's sort the moment "Build from current" became the only behaviour (/review, Stage 3 defects pass).
+    const placedPreservedGames = preservedExistingGames.filter(game => game.date && game.time);
     return {
-      enabled: true,
       preservedGames: preservedExistingGames,
+      placedPreservedGames,
       replaceableGames: replaceableExistingGames,
-      fixedAssignments: preservedExistingGames.map(gameToFixedAssignment),
+      fixedAssignments: placedPreservedGames.map(gameToFixedAssignment),
     };
   }
 
@@ -462,7 +485,10 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
       date: game.date,
       time: game.time,
       venueId: game.venueId ?? null,
-      venueName: game.location,
+      // A game placed by venue reference stores no text location (the demo's all are) — and a null name crashed the
+      // draft's sort the moment two kept games shared a day and time. That path was "Build from current" only, so the
+      // default "Replace all" hid it; it is the only path now (Stage 3 defects pass).
+      venueName: game.location ?? '',
       venueFacilityId: game.venueFacilityId ?? null,
       scheduleFacilityLaneId: draftFacilityLaneIdForLabel(game.scheduleFacilityLaneLabel) ?? game.scheduleFacilityLaneId ?? null,
       scheduleFacilityLaneLabel: game.scheduleFacilityLaneLabel ?? null,
@@ -629,14 +655,9 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
   }
 
   function applyPartialPreviewContext(partial: PartialGenerationContext) {
-    setReplaceableGameIds(partial.enabled ? partial.replaceableGames.map(game => game.id) : []);
-    setPreservedGameCount(partial.enabled ? partial.preservedGames.length : 0);
-    setLockedGameCount(
-      partial.enabled
-        ? partial.preservedGames.filter(game => !game.isPlayoff && game.status === 'scheduled' && game.generatorLocked).length
-        : 0,
-    );
-    setReplacementGameCount(partial.enabled ? partial.replaceableGames.length : 0);
+    setReplaceableGameIds(partial.replaceableGames.map(game => game.id));
+    setPreservedGameCount(partial.preservedGames.length);
+    setReplacementGameCount(partial.replaceableGames.length);
   }
 
   function selectDraftOption(index: number) {
@@ -708,18 +729,19 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
       }
     });
 
+    // Only ROUND-ROBIN games cover a round-robin matchup. Two teams who also meet in a playoff game still need their
+    // round-robin game — counting the playoff deleted it (it is replaceable) and never drew it again.
     const preservedMatchupKeys = new Set(
       partial.preservedGames
+        .filter(game => !game.isPlayoff)
         .map(game => teamMatchupKey(game.homeTeamId, game.awayTeamId))
         .filter((key): key is string => Boolean(key)),
     );
-    const matchupsToGenerate = partial.enabled
-      ? allMatchups.filter(match => !preservedMatchupKeys.has(teamMatchupKey(match.home.id, match.away.id) ?? ''))
-      : allMatchups;
+    const matchupsToGenerate = allMatchups.filter(match => !preservedMatchupKeys.has(teamMatchupKey(match.home.id, match.away.id) ?? ''));
 
     if (matchupsToGenerate.length === 0) {
-      if (partial.enabled && partial.preservedGames.length > 0) {
-        const preservedGames = partial.preservedGames.map(stripGameId);
+      if (partial.preservedGames.length > 0) {
+        const preservedGames = partial.placedPreservedGames.map(stripGameId);
         const metrics = buildScheduleMetrics({
           games: preservedGames,
           teams,
@@ -795,7 +817,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     applyDraftOptions(buildDraftOptions(drafts, draft => {
       const gamesToCommit = createTeamGamesFromDraft(draft);
       return {
-        games: partial.enabled ? [...partial.preservedGames.map(stripGameId), ...gamesToCommit] : gamesToCommit,
+        games: [...partial.placedPreservedGames.map(stripGameId), ...gamesToCommit],
         slotGames: [],
         gamesToCommit,
         slotGamesToCommit: [],
@@ -867,19 +889,18 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
 
     const preservedMatchupKeys = new Set(
       partial.preservedGames
+        .filter(game => !game.isPlayoff)
         .map(game => slotMatchupKey(
           game.homePlaceholder || getTeamLabel(game.homeTeamId),
           game.awayPlaceholder || getTeamLabel(game.awayTeamId),
         ))
         .filter((key): key is string => Boolean(key)),
     );
-    const matchupsToGenerate = partial.enabled
-      ? allMatchups.filter(match => !preservedMatchupKeys.has(slotMatchupKey(match.homeLabel, match.awayLabel) ?? ''))
-      : allMatchups;
+    const matchupsToGenerate = allMatchups.filter(match => !preservedMatchupKeys.has(slotMatchupKey(match.homeLabel, match.awayLabel) ?? ''));
 
     if (matchupsToGenerate.length === 0) {
-      if (partial.enabled && partial.preservedGames.length > 0) {
-        const preservedSlotGames = partial.preservedGames.map(stripGameIdToSlotGame);
+      if (partial.preservedGames.length > 0) {
+        const preservedSlotGames = partial.placedPreservedGames.map(stripGameIdToSlotGame);
         const metrics = buildScheduleMetrics({
           games: preservedSlotGames,
           teams: [],
@@ -940,7 +961,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
       const slotGamesToCommit = createSlotGamesFromDraft(draft);
       return {
         games: [],
-        slotGames: partial.enabled ? [...partial.preservedGames.map(stripGameIdToSlotGame), ...slotGamesToCommit] : slotGamesToCommit,
+        slotGames: [...partial.placedPreservedGames.map(stripGameIdToSlotGame), ...slotGamesToCommit],
         gamesToCommit: [],
         slotGamesToCommit,
       };
@@ -961,19 +982,11 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     setCommitting(true);
     try {
       const gamesToSave = await materializeTemporaryFacilityLanes(gamesToCommit);
-      await deleteGamesForCurrentScope();
-      if (gamesToSave.length > 0) {
-        const res = await fetch(`/api/admin/games${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'bulk-save', games: gamesToSave, tournamentId: tournament.id, divisionId: selectedGroupId }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to save games');
-      }
+      await saveDraftInOneStep(gamesToSave);
       onComplete();
     } catch (e: unknown) {
-      setError(`Failed to save games: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      // The draft stays on screen; the route's reply says nothing was saved (one transaction).
+      setError(e instanceof Error ? e.message : 'Unknown error');
     } finally {
       setCommitting(false);
     }
@@ -983,9 +996,9 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     setCommitting(true);
     try {
       const slotGamesToSave = await materializeTemporaryFacilityLanes(slotGamesToCommit);
-      await deleteGamesForCurrentScope();
 
       if (slotGamesToSave.length === 0) {
+        await saveDraftInOneStep([]);
         onComplete();
         return;
       }
@@ -1058,34 +1071,43 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
         });
       }
 
-      const saveRes = await fetch(`/api/admin/games${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId: tournament.id, divisionId: selectedGroupId }),
-      });
-      if (!saveRes.ok) throw new Error((await saveRes.json()).error || 'Failed to save games');
+      await saveDraftInOneStep(gameRows);
       onComplete();
     } catch (e: unknown) {
-      setError(`Failed to save schedule: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      setError(e instanceof Error ? e.message : 'Unknown error');
     } finally {
       setCommitting(false);
     }
   }
 
-  async function deleteGamesForCurrentScope() {
-    const body = generationScope === 'build'
-      ? { action: 'delete-games', tournamentId: tournament.id, gameIds: replaceableGameIds }
-      : { action: 'delete-division-games', divisionId: selectedGroupId };
-
-    if (generationScope === 'build' && replaceableGameIds.length === 0) return;
-
+  /**
+   * F70 + P1 (Stage 3 defects pass): the draft's new games and the removal of the games they replace are ONE request,
+   * run by the server as one transaction (mig 320). It used to be a delete, then a save — a failure between them
+   * left the division with its games deleted and the draft unsaved. The server re-checks that every replaced game is
+   * still to play and not kept, and refuses the whole save if one changed since this draft was made.
+   */
+  async function saveDraftInOneStep(games: Array<Omit<Game, 'id'> | Record<string, unknown>>) {
+    if (games.length === 0 && replaceableGameIds.length === 0) return; // nothing to add, nothing to replace
     const res = await fetch(`/api/admin/games${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        action: 'replace-division-round-robin',
+        tournamentId: tournament.id,
+        divisionId: selectedGroupId,
+        games,
+        replaceGameIds: replaceableGameIds,
+      }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || 'Failed to clear existing games');
+    if (!res.ok) {
+      // "Generate the draft again" must be able to work: the schedule this draft was made from is out of date, so the
+      // page reloads it now (the draft stays on screen; the next Generate builds from what is there).
+      if (data.code === 'schedule_changed') onStale?.();
+      // The route's own sentence, or ours — never a server error's raw text (the save is one transaction, so a failed
+      // one changed nothing, which is what DRAFT_SAVE_FAILED.other says).
+      throw new Error(refusalReason(res.status, data.error, DRAFT_SAVE_FAILED.other));
+    }
   }
 
   function reset() {
@@ -1095,7 +1117,6 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     setSlotGamesToCommit([]);
     setReplaceableGameIds([]);
     setPreservedGameCount(0);
-    setLockedGameCount(0);
     setReplacementGameCount(0);
     setDraftSummary(null);
     setDraftOptions([]);
@@ -1181,9 +1202,6 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
 
   const divisionName = divisions.find(g => g.id === selectedGroupId)?.name ?? '';
   const previewGeneratedCount = generationMode === 'slot' ? slotGamesToCommit.length : gamesToCommit.length;
-  const isBuildPreview = generationScope === 'build' && hasPreview;
-  const replaceAllClearsLockedGames = generationScope === 'replace' && lockedExistingGameCount > 0;
-  const lockedGameLabel = `${lockedExistingGameCount} kept ${lockedExistingGameCount === 1 ? 'game' : 'games'}`;
 
   return (
     <div className={styles.generatorOverlay}>
@@ -1233,43 +1251,14 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
                 )}
               </div>
 
-            {canBuildFromCurrent && (
+            {/* F70: the "Replace all | Build from current" switch is gone — a draft keeps every played, cancelled,
+                kept and playoff game and replaces only games still to play. What a save will touch, said once. */}
+            {hasExistingGames && (
               <div className={styles.scopeStrip}>
                 <div className={styles.scopeCopy}>
-                  <span>Schedule Scope</span>
-                  <small>
-                    {preservedExistingGames.length} protected
-                    {lockedExistingGameCount > 0 ? ` (${lockedExistingGameCount} manually kept)` : ''}
-                    {' - '}
-                    {replaceableExistingGames.length} scheduled replaceable
-                  </small>
+                  <span>{DRAFT_SAVE_LABEL}</span>
+                  <small>{draftSaveReadout(preservedExistingGames.length, replaceableExistingGames.length)}</small>
                 </div>
-                <div className={styles.scopeButtons} role="group" aria-label="Schedule generation scope">
-                  <button
-                    type="button"
-                    className={`${styles.scopeButton} ${generationScope === 'replace' ? styles.scopeButtonActive : ''}`}
-                    title={lockedExistingGameCount > 0 ? 'Clears the division schedule before saving this draft, including manually kept games.' : 'Clears the division schedule before saving this draft.'}
-                    aria-pressed={generationScope === 'replace'}
-                    onClick={() => setGenerationScope('replace')}
-                  >
-                    Replace all
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.scopeButton} ${generationScope === 'build' ? styles.scopeButtonActive : ''}`}
-                    title="Keeps submitted, completed, cancelled, playoff, and manually kept games while replacing unlocked scheduled round-robin drafts."
-                    aria-pressed={generationScope === 'build'}
-                    onClick={() => setGenerationScope('build')}
-                  >
-                    Build from current
-                  </button>
-                </div>
-                {replaceAllClearsLockedGames && (
-                  <div className={styles.scopeWarning}>
-                    <AlertTriangle size={13} />
-                    <span>Replace all will also clear <strong>{lockedGameLabel}</strong>. Use Build from current to preserve kept games.</span>
-                  </div>
-                )}
               </div>
             )}
 
@@ -1590,17 +1579,16 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
               </div>
             </div>
 
-            {isBuildPreview && (
+            {/* The preview's "On save" band, once the division already has games. */}
+            {hasExistingGames && (
               <div className={styles.partialPreviewSummary}>
-                <span>Build from current</span>
+                <span>{DRAFT_SAVE_LABEL}</span>
                 <strong>{preservedGameCount}</strong>
-                <small>kept</small>
-                <strong>{lockedGameCount}</strong>
-                <small>locked</small>
+                <small>{DRAFT_SAVE_BAND.kept}</small>
                 <strong>{replacementGameCount}</strong>
-                <small>replaceable</small>
+                <small>{DRAFT_SAVE_BAND.replaced}</small>
                 <strong>{previewGeneratedCount}</strong>
-                <small>new</small>
+                <small>{DRAFT_SAVE_BAND.added}</small>
               </div>
             )}
 
@@ -1717,13 +1705,20 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
               </div>
               <h3>Commit Schedule?</h3>
             </div>
+            {/* F70: what the save adds, replaces (games still to play) and keeps — never "permanently clear", and
+                never that teams are told (the save records no schedule change). */}
             <p>
-              {generationScope === 'build'
-                ? <>This will keep <strong>{preservedGameCount}</strong> protected games{lockedGameCount > 0 ? <> (<strong>{lockedGameCount}</strong> manually kept)</> : null}, replace <strong>{replacementGameCount}</strong> scheduled round-robin games, and save <strong>{previewGeneratedCount}</strong> newly generated games for <strong>{divisionName}</strong>.</>
-                : generationMode === 'slot'
-                  ? <>This will save a slot-based schedule and <strong style={clearWarningTextStyle}>permanently clear</strong> any existing games for <strong>{divisionName}</strong>{replaceAllClearsLockedGames ? <>, including <strong style={lockedGameWarningTextStyle}>{lockedGameLabel}</strong></> : null}. {poolList.length > 0 ? 'This is a draft — assign real teams to the slots, then publish with real names once registration closes.' : 'Division-wide placeholders will be saved without pool assignments.'}</>
-                  : <>This will save the generated schedule and <strong style={clearWarningTextStyle}>permanently clear</strong> any existing games for the <strong>{divisionName}</strong> division{replaceAllClearsLockedGames ? <>, including <strong style={lockedGameWarningTextStyle}>{lockedGameLabel}</strong></> : null}.</>
-              }
+              {draftSaveQuestion({
+                division: divisionName,
+                added: previewGeneratedCount,
+                replaced: replacementGameCount,
+                kept: preservedGameCount,
+                slotBased: generationMode === 'slot',
+                published: currentGroup?.scheduleVisibility === 'published',
+              })}
+              {generationMode === 'slot' && previewGeneratedCount > 0 && (
+                <>{' '}{poolList.length > 0 ? 'This is a draft — assign real teams to the slots, then publish with real names once registration closes.' : 'Division-wide placeholders will be saved without pool assignments.'}</>
+              )}
             </p>
             <div className="modal-footer" style={{ justifyContent: 'center' }}>
               <button className="btn btn-ghost btn-data" onClick={() => setShowConfirm(false)}>Cancel</button>

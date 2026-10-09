@@ -12,13 +12,21 @@ import {
   ORGANIZER_ANNOUNCE_HOLD_MINUTES,
   type GameScheduleSnapshot,
 } from '@/lib/schedule-change-notices';
+import {
+  SCHEDULE_SNAPSHOT_COLUMNS,
+  scheduleChangesFromRows,
+  type ScheduleSnapshotRow,
+} from '@/lib/schedule-change-classify';
 import { captureError, withObservability } from '@/lib/observability';
 import {
   applyDivisionRoundRobinDeleteScope,
+  draftReplaceReply,
   sanitizeGameIds,
   validateReplaceablePlayoffRows,
   validateReplaceableRoundRobinRows,
 } from '@/lib/game-delete-policy';
+import { DRAFT_SAVE_FAILED } from '@/lib/schedule-words';
+import { isUuid } from '@/lib/utils';
 import {
   finalizeTournamentScore,
   loadTournamentScoreGame,
@@ -101,32 +109,10 @@ async function isTournamentLocked(tournamentId: string): Promise<boolean> {
 }
 
 /**
- * Fire the one-time "Playoffs are set" announcement the FIRST time a bracket is
- * materialized for a tournament (org staff bell/push via notify() + anonymous fan push
- * via notifyFansForPlayoff). Atomically claims tournaments.playoffs_published_at (NULL →
- * now()), so a later bracket edit / regenerate / concurrent save never re-blasts. Only
- * the write that wins the flip sends. Fire-and-forget — never throws.
+ * The columns a schedule change is measured on (SCHEDULE_SNAPSHOT_COLUMNS, lib/schedule-change-classify.ts), read
+ * immediately before and after a mutation so the diff is against what was actually in the row, never against what
+ * the client believed.
  */
-/**
- * The columns a schedule change is measured on, plus what it takes to decide who hears about
- * it. Read immediately before and after a single-game mutation so the diff is against what was
- * actually in the row, never against what the client believed.
- */
-const SCHEDULE_SNAPSHOT_COLUMNS =
-  'game_date, game_time, location, diamond_id, venue_facility_id, status, division_id, home_team_id, away_team_id';
-
-interface ScheduleSnapshotRow {
-  game_date: string | null;
-  game_time: string | null;
-  location: string | null;
-  diamond_id: string | null;
-  venue_facility_id: string | null;
-  status: string | null;
-  division_id: string | null;
-  home_team_id: string | null;
-  away_team_id: string | null;
-}
-
 async function readScheduleSnapshot(gameId: string): Promise<ScheduleSnapshotRow | null> {
   const { data } = await supabaseAdmin
     .from('games')
@@ -136,13 +122,6 @@ async function readScheduleSnapshot(gameId: string): Promise<ScheduleSnapshotRow
   return (data as ScheduleSnapshotRow | null) ?? null;
 }
 
-const toSnapshot = (row: ScheduleSnapshotRow): GameScheduleSnapshot => ({
-  date: row.game_date, time: row.game_time, location: row.location, status: row.status,
-  // The structured refs let classify() tell a real venue change from a cosmetic rewrite of
-  // the derived display string (Phase 2 canonicalizes legacy labels on ordinary saves).
-  venueId: row.diamond_id, venueFacilityId: row.venue_facility_id,
-});
-
 /**
  * B2.3 — a single-game schedule edit used to notify NOBODY: not the coach, not the family who
  * deliberately followed the team and turned alerts on. Queue the change for the batched
@@ -150,37 +129,31 @@ const toSnapshot = (row: ScheduleSnapshotRow): GameScheduleSnapshot => ({
  * the new time — it already existed but was only ever called from the bulk tool, so a
  * hand-moved game left it announcing a time that was no longer true.
  *
+ * F72 (Tournament admin redesign, Stage 3 defects pass): the bracket editor's save moves a whole batch of games and
+ * used to record nothing, so it takes the same path with every game it updated — one call for the batch.
+ *
  * Both halves inherit the publish gate inside recordGameScheduleChanges: a draft schedule tells
  * nobody anything, because nobody has been shown those times yet. Fire-and-forget — a
  * notification hiccup must never affect the edit that already succeeded.
  */
-async function announceScheduleChange(
+async function announceScheduleChanges(
   org: { id: string; contactEmail?: string | null },
   tournamentId: string,
-  gameId: string,
-  before: ScheduleSnapshotRow,
+  beforeById: ReadonlyMap<string, ScheduleSnapshotRow>,
 ): Promise<void> {
   try {
+    if (beforeById.size === 0) return;
     // Read the committed state, not the requested one — the message must describe what is
     // actually in the row. Inside this try/catch on purpose: the edit has already committed, so
     // nothing after this point may turn a successful save into a 500.
-    const after = await readScheduleSnapshot(gameId);
-    if (!after) return;
+    const { data: afterRows } = await supabaseAdmin
+      .from('games')
+      .select(`id, ${SCHEDULE_SNAPSHOT_COLUMNS}`)
+      .in('id', Array.from(beforeById.keys()));
+    const changes = scheduleChangesFromRows(beforeById, (afterRows ?? []) as Array<ScheduleSnapshotRow & { id: string }>);
+    if (changes.length === 0) return;
 
-    const { affectedTeamIds } = await recordGameScheduleChanges({
-      orgId: org.id,
-      tournamentId,
-      changes: [{
-        gameId,
-        divisionId: after.division_id ?? before.division_id,
-        homeTeamId: after.home_team_id,
-        awayTeamId: after.away_team_id,
-        beforeHomeTeamId: before.home_team_id,
-        beforeAwayTeamId: before.away_team_id,
-        before: toSnapshot(before),
-        after: toSnapshot(after),
-      }],
-    });
+    const { affectedTeamIds } = await recordGameScheduleChanges({ orgId: org.id, tournamentId, changes });
     if (affectedTeamIds.length === 0) return;
 
     // ◆S1 — fire-and-forget, matching the bulk path. This makes per-team Resend round trips
@@ -197,6 +170,13 @@ async function announceScheduleChange(
   }
 }
 
+/**
+ * Fire the one-time "Playoffs are set" announcement the FIRST time a bracket is
+ * materialized for a tournament (org staff bell/push via notify() + anonymous fan push
+ * via notifyFansForPlayoff). Atomically claims tournaments.playoffs_published_at (NULL →
+ * now()), so a later bracket edit / regenerate / concurrent save never re-blasts. Only
+ * the write that wins the flip sends. Fire-and-forget — never throws.
+ */
 async function announcePlayoffsIfFirstTime(
   tournamentId: string,
   org: { id: string; slug: string },
@@ -323,7 +303,7 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     const supabase = createClient(url, key);
-    const { action, games, tournamentId, divisionId, gameIds, autoScheduled } = await req.json();
+    const { action, games, tournamentId, divisionId, gameIds, autoScheduled, replaceGameIds } = await req.json();
     // Club Tier Stage 6a: every game a writer below places on a diamond is checked against the club's other
     // programs after it saves (a rep practice, a house-league game, another of the club's tournaments). Warns
     // only — the tournament's own rule is untouched (S6-03 is Tournament Stage 3's) — and the screens place the
@@ -519,6 +499,9 @@ export const POST = withObservability(async (req: Request) => {
       if (exErr) throw exErr;
       const existingById = new Map((existing ?? []).map(e => [e.id, e]));
       const submittedIds = new Set(games.map((g: any) => g.sourceGameId).filter(Boolean));
+      // F72: each game this save updates, as it stood BEFORE the save (the rows were just read in full) — the
+      // "before" half of the change it records once the batch has committed.
+      const bracketBefore = new Map<string, ScheduleSnapshotRow>();
 
       const bracketCatalog = await loadTournamentVenueCatalog(divRow.tournament_id);
       // Resolve EVERY game's venue selection before the first write. The loop below updates
@@ -557,6 +540,7 @@ export const POST = withObservability(async (req: Request) => {
             if ((existingRow.home_placeholder || null) !== (g.homePlaceholder || null)) common.home_team_id = null;
             if ((existingRow.away_placeholder || null) !== (g.awayPlaceholder || null)) common.away_team_id = null;
           }
+          bracketBefore.set(g.sourceGameId, existingRow as ScheduleSnapshotRow);
           const { error } = await supabase.from('games').update(common).eq('id', g.sourceGameId);
           if (error) throw error;
           placedGameIds.push(g.sourceGameId);
@@ -588,8 +572,85 @@ export const POST = withObservability(async (req: Request) => {
         const { error } = await supabase.from('games').delete().in('id', removableIds);
         if (error) throw error;
       }
+      // F72 (Stage 3 defects pass): the editor rewrites existing games' day, time and field, and used to tell
+      // nobody. Record the batch's changes the way a single-game move does — one call; the recorder's publish gate
+      // keeps an unpublished division silent, its quiet window drops a game moved and moved back, and a restructured
+      // matchup (a re-wired placeholder) stays silent. Never fails the save.
+      await announceScheduleChanges(ctx.org, divRow.tournament_id, bracketBefore);
       // Announce once if this is the first bracket for the tournament (no-op on edits).
       void announcePlayoffsIfFirstTime(divRow.tournament_id, { id: ctx.org.id, slug: ctx.org.slug }, ctx.user.id);
+    }
+
+    // F70 + P1 (Tournament admin redesign, Stage 3 defects pass): the round-robin generator's save, as ONE
+    // transaction (`replace_division_round_robin_games`, mig 320) — the draft's new games, and the removal of the
+    // division's games still to play that they replace. It used to be two requests: `delete-division-games` (which
+    // took played games and their scores too) and then `bulk-save`; a failure between them lost the division's
+    // games. The function refuses the whole save if a replaced game was scored, kept or removed since the draft
+    // was made, and every failure reply says nothing was saved — because nothing was.
+    else if (action === 'replace-division-round-robin' && divisionId) {
+      if (!games || !Array.isArray(games)) {
+        return new Response(JSON.stringify({ error: 'Invalid games data' }), { status: 400 });
+      }
+      if (games.some((g: any) => g?.isPlayoff)) {
+        return new Response(JSON.stringify({ error: 'Invalid games data' }), { status: 400 });
+      }
+      const replaceIds = sanitizeGameIds(replaceGameIds ?? []);
+      // A non-uuid would reach the function's uuid[] and fail as a server error rather than a refusal.
+      if (!replaceIds || !replaceIds.every(isUuid)) {
+        return new Response(JSON.stringify({ error: 'Game IDs are required' }), { status: 400 });
+      }
+      if (!hasPlanFeature(ctx.org.planId, 'auto_schedule')) {
+        return planFeatureForbidden('auto_schedule');
+      }
+      const { data: divRow } = await supabaseAdmin.from('divisions').select('tournament_id').eq('id', divisionId).single();
+      if (!divRow) return new Response(JSON.stringify({ error: 'Division not found' }), { status: 404 });
+      if (tournamentId && divRow.tournament_id !== tournamentId) {
+        return new Response(JSON.stringify({ error: 'Division must belong to the selected tournament' }), { status: 400 });
+      }
+      const denied = scopeGuard(ctx, divRow.tournament_id);
+      if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, divRow.tournament_id);
+      if (wrongOrg) return wrongOrg;
+      if (await isTournamentLocked(divRow.tournament_id)) return tournamentLockedResponse();
+
+      // Venue references and the derived `location` resolve against the tournament's own catalog, exactly as
+      // `bulk-save` does; the division and tournament are stamped by the function, never taken from the client.
+      const catalog = await loadTournamentVenueCatalog(divRow.tournament_id);
+      const rows = (games as any[]).map(g => ({
+        home_team_id:              g.homeTeamId || null,
+        away_team_id:              g.awayTeamId || null,
+        game_date:                 g.date || null,
+        game_time:                 g.time || null,
+        duration_minutes:          Number.isInteger(g.durationMinutes) && g.durationMinutes > 0 ? g.durationMinutes : null,
+        ...resolvedVenueColumns(catalog, g),
+        schedule_facility_lane_id: g.scheduleFacilityLaneId || null,
+        home_placeholder:          g.homePlaceholder || null,
+        away_placeholder:          g.awayPlaceholder || null,
+        home_slot_id:              g.homeSlotId || null,
+        away_slot_id:              g.awaySlotId || null,
+        notes:                     g.notes || null,
+        ...(g.generatorLocked !== undefined ? { generator_locked: Boolean(g.generatorLocked) } : {}),
+      }));
+
+      const { data: result, error: rpcError } = await supabase.rpc('replace_division_round_robin_games', {
+        p_division_id: divisionId,
+        p_replace_ids: replaceIds,
+        p_games: rows,
+      });
+      if (rpcError) {
+        console.error('[games] replace-division-round-robin failed:', rpcError);
+        void captureError(rpcError, { ctx, route: '/api/admin/games', method: 'POST', statusCode: 500 });
+      }
+      const reply = draftReplaceReply(result, rpcError, {
+        scheduleChanged: DRAFT_SAVE_FAILED.scheduleChanged,
+        other: DRAFT_SAVE_FAILED.other,
+        divisionNotFound: 'Division not found',
+        invalid: 'Invalid games data',
+      });
+      if (reply.status !== 200) {
+        return new Response(JSON.stringify(reply.body), { status: reply.status, headers: { 'Content-Type': 'application/json' } });
+      }
+      if ('inserted' in reply.body) placedGameIds.push(...reply.body.inserted);
     }
 
     else if (action === 'delete-division-games' && divisionId) {
@@ -1202,7 +1263,7 @@ export const PATCH = withObservability(async (req: Request) => {
     // B2.3 — tell the people whose plans just changed. Fully self-contained: the write above has
     // already committed, so this can never turn a successful edit into a 500.
     if (scheduleBefore) {
-      await announceScheduleChange(ctx.org, gameRow.tournamentId, id, scheduleBefore);
+      await announceScheduleChanges(ctx.org, gameRow.tournamentId, new Map([[id, scheduleBefore]]));
     }
 
     const crossProgram = placedGameId ? await clashReportForTournamentGames(ctx.org, [placedGameId]) : undefined;

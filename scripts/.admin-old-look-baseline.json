@@ -105,7 +105,7 @@
     "kitScope": 75
   },
   "app/[orgSlug]/admin/tournaments/schedule/Generator.tsx": {
-    "kx": 7,
+    "kx": 5,
     "helpers": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx": {
@@ -148,7 +148,7 @@
     "helpers": 7
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
-    "kitScope": 275
+    "kitScope": 269
   },
   "app/[orgSlug]/admin/tournaments/settings/event/page.tsx": {
     "kx": 22,

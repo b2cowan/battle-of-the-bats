@@ -331,6 +331,80 @@ function checkAgainstPlaced(
 }
 
 // ---------------------------------------------------------------------------
+// A generator's free slots (Tournament admin redesign, Stage 3 defects pass — F69)
+// ---------------------------------------------------------------------------
+
+/** The slot shape both generators build (lib/schedule-generator.ts `ScheduleDraftSlot` fits it). */
+export interface DraftSlotPlacement {
+  date: string;
+  time: string;
+  venueId?: string | null;
+  venueFacilityId?: string | null;
+  scheduleFacilityLaneId?: string | null;
+  scheduleFacilityLaneLabel?: string | null;
+}
+
+/**
+ * A draft's candidate slots, minus every slot an existing game already holds — by the SAME rule the Add/Edit window
+ * refuses (`checkAgainstPlaced`'s overlap), so a draft never offers a slot that window would refuse.
+ *
+ * The generators used to emit every date × time × surface with nothing subtracted: the round-robin generator only
+ * ever looked at its own division, the playoff generator at its own division's playoffs, so a U13 draft could land on
+ * a U11 game sharing the diamond. Worse, the division's OWN kept games were only blocked when a slot's key matched
+ * theirs exactly — and a stored game time carries seconds ("10:00:00") while a draft slot doesn't ("10:00"), so they
+ * never did. `takenGames` is therefore every game the save will KEEP, in any division; the caller leaves out only the
+ * games its save replaces. Cancelled games never block (as in the window).
+ *
+ * Taken games only remove slots. They never become a draft's assignments, so another division's games cannot count
+ * toward this division's teams, rest or field figures. A slot inside a game's buffer is still offered (a buffer
+ * warns, it does not refuse — as in the window).
+ *
+ * The draft's length is the LONGER of the generator's own length and the length its saved game will carry (the
+ * division → tournament → shared default chain, since the generators save no per-game length): the window will check
+ * the saved game by the second, and the organizer laid the draft out by the first.
+ */
+export function slotsClearOfTakenGames<T extends DraftSlotPlacement>(
+  slots: T[],
+  params: {
+    takenGames: ConflictGame[];
+    divisionId: string | null;
+    draftLengthMinutes: number;
+    divisions: Division[];
+    tournament: Tournament | null | undefined;
+  },
+): T[] {
+  const placed = params.takenGames
+    .filter(game => game.status !== 'cancelled' && game.gameDate && game.startTime)
+    .map(toPlacedGame)
+    .filter(({ placement }) => isPlaced(placement));
+  if (placed.length === 0) return slots;
+
+  const division = params.divisions.find(d => d.id === params.divisionId);
+  const savedLength = resolveGameTiming(division, params.tournament).durationMinutes;
+  const durationMinutes = Math.max(params.draftLengthMinutes > 0 ? params.draftLengthMinutes : 0, savedLength);
+
+  return slots.filter(slot => {
+    // No typed text: a draft slot is a picked surface or a temporary lane, never words (typed text never matches a
+    // structured reference — lib/venue-identity.ts).
+    const proposed: ConflictGame = {
+      id: '__draft-slot__',
+      gameDate: slot.date,
+      startTime: slot.time,
+      status: 'scheduled',
+      venueId: slot.venueId ?? null,
+      venueFacilityId: slot.venueFacilityId ?? null,
+      scheduleFacilityLaneId: slot.scheduleFacilityLaneId ?? null,
+      scheduleFacilityLaneLabel: slot.scheduleFacilityLaneLabel ?? null,
+      location: null,
+      divisionId: params.divisionId,
+      durationMinutes,
+    };
+    const conflict = checkAgainstPlaced(proposed, resolveVenuePlacement(proposed), placed, params.divisions, params.tournament);
+    return conflict?.kind !== 'overlap';
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Bulk conflict scan (for conflict badges on the schedule list)
 // ---------------------------------------------------------------------------
 

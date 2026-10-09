@@ -13,6 +13,9 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { hasPlanFeature, hasOrgVenueLibrary, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { willScheduleGameDayReminder } from '@/lib/schedule-publish-rules';
+import { GAME_DAY_REMINDER_SENTENCE, SCHEDULE_REFUSAL, SCHEDULE_REFUSAL_TITLE, readRefusal } from '@/lib/schedule-words';
+import { sandboxRefusal } from '@/lib/coach-sandbox-refusal';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -96,6 +99,13 @@ const emptyForm = {
   homePlaceholder: '', awayPlaceholder: '',
   date: '', time: '09:00', durationMinutes: '' as number | '', location: '', venueId: '', venueFacilityId: '', notes: null as string | null,
 };
+
+/**
+ * The demo sandbox refuses every write BY DESIGN (lib/demo-guard.ts), and its own chrome tells the visitor nothing
+ * is saved. A write here that now reports a refusal (F71) keeps today's behaviour for the sandbox's instead, so a
+ * prospect never sees a "Could not…" window over the sandbox's own toast.
+ */
+const isSandboxRefusal = (res: Response): boolean => sandboxRefusal(res, null) !== null;
 
 export default function AdminSchedulePage() {
   const { currentTournament, isLocked, loading: tournamentLoading, setCurrentTournament } = useTournament();
@@ -206,9 +216,11 @@ export default function AdminSchedulePage() {
   const hasOrgLibrary = hasOrgVenueLibrary(currentOrg?.planId);
 
   const canAutoGenerateSchedule = currentOrg ? hasPlanFeature(currentOrg.planId, 'auto_schedule') : false;
-  // Manual playoff bracket building is available on all tournament plans; the
-  // auto-schedule optimizer + tiered auto-split inside the wizard stay Plus
-  // (gated by `auto_schedule`/`playoff_generator` via canAutoGenerateSchedule).
+  // Manual playoff bracket building is available on all tournament plans; the playoff generator (its doors, and
+  // the optimizer + tiered auto-split inside it) reads its OWN feature, `playoff_generator` — the one the games
+  // route gates the generated bracket on. It used to read `auto_schedule` (Stage 3 defects pass, item 7; both sit
+  // at Tournament Plus today, so no one's access changed).
+  const canAutoBracket = currentOrg ? hasPlanFeature(currentOrg.planId, 'playoff_generator') : false;
   const canBuildPlayoffsManually = currentOrg ? hasPlanFeature(currentOrg.planId, 'playoff_manual') : false;
   const canNotify = currentOrg ? hasPlanFeature(currentOrg.planId, 'schedule_notification') : false;
   // Bulk "shift the day" (Rain delay) is a Tournament Plus automation (2026-07-07 decision).
@@ -255,7 +267,7 @@ export default function AdminSchedulePage() {
   // Plus: the full format-based auto-generator (single/double/consolation/placement
   // + crossover, + auto-schedule). Gated to Tournament Plus.
   function openAutoGenerator() {
-    if (!canAutoGenerateSchedule) {
+    if (!canAutoBracket) {
       showScheduleUpgrade('Auto-Generate Bracket Requires Tournament Plus', 'playoff_generator');
       return;
     }
@@ -287,6 +299,15 @@ export default function AdminSchedulePage() {
     if (hasUpcomingGames && !isLocked) openRainDelay();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolParam, tournamentLoading, gamesLoading, tournamentId, currentOrg, hasUpcomingGames, isLocked]);
+
+  // A quiet re-read of the games only — no loading state, so an open inline row or the generator's open draft survives
+  // it. Used after a refusal that can mean the schedule changed underneath (Stage 3 defects pass, /review).
+  const reloadGames = useCallback(async () => {
+    if (!tournamentId) return;
+    const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    const res = await fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).catch(() => null);
+    if (res?.ok) setGames(await res.json());
+  }, [tournamentId, orgSlug]);
 
   const refresh = useCallback(async () => {
     if (tournamentLoading) return;
@@ -467,11 +488,13 @@ export default function AdminSchedulePage() {
       confirmText: 'Unpublish',
       onConfirm: async () => {
         const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-        await fetch(`/api/admin/divisions${orgQuery}`, {
+        const res = await fetch(`/api/admin/divisions${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'set-visibility', data: { id: divisionId, scheduleVisibility: 'unpublished' } }),
         });
+        // F71: a refusal used to be dropped AND the division shown unpublished anyway.
+        if (await refusedWrite(res, SCHEDULE_REFUSAL_TITLE.unpublish, SCHEDULE_REFUSAL.divisionFallback)) return;
         setDivisions(prev => prev.map(g => g.id === divisionId ? { ...g, scheduleVisibility: 'unpublished' } : g));
       },
     });
@@ -489,14 +512,30 @@ export default function AdminSchedulePage() {
       confirmText: `Unpublish All (${published.length})`,
       onConfirm: async () => {
         const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-        await Promise.all(published.map(g =>
+        const replies = await Promise.all(published.map(g =>
           fetch(`/api/admin/divisions${orgQuery}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'set-visibility', data: { id: g.id, scheduleVisibility: 'unpublished' } }),
-          })
+          }).catch(() => null) // a dropped connection: that division is still published, the rest still count
         ));
-        setDivisions(prev => prev.map(g => (g.scheduleVisibility && g.scheduleVisibility !== 'unpublished') ? { ...g, scheduleVisibility: 'unpublished' } : g));
+        // F71: one request per division, so it can partly succeed. Show unpublished only what the server
+        // unpublished; name the divisions still published, with the server's reason.
+        const went = (r: Response | null) => !!r && (r.ok || isSandboxRefusal(r));
+        const done = new Set(published.filter((_, i) => went(replies[i])).map(g => g.id));
+        setDivisions(prev => prev.map(g => done.has(g.id) ? { ...g, scheduleVisibility: 'unpublished' } : g));
+        const refusedAt = replies.findIndex(r => !went(r));
+        if (refusedAt >= 0) {
+          const fallback = done.size === 0 ? SCHEDULE_REFUSAL.divisionFallback : SCHEDULE_REFUSAL.partialFallback;
+          const refused = replies[refusedAt];
+          setFeedback({
+            isOpen: true,
+            title: SCHEDULE_REFUSAL_TITLE.unpublishAll,
+            message: refused ? await readRefusal(refused, fallback) : fallback,
+            items: published.filter(g => !done.has(g.id)).map(g => ({ label: g.name })),
+            type: 'warning',
+          });
+        }
       },
     });
   }
@@ -536,6 +575,17 @@ export default function AdminSchedulePage() {
 
   // All schedule writes go through the service-role games API. Direct browser-client
   // writes 403 — the `authenticated` role has no INSERT/UPDATE/DELETE grant on `games`.
+  /**
+   * F71 (Stage 3 defects pass): a single write the server refused says why, through the page's message window — the
+   * route's own reason, or our words when it has none (lib/schedule-words.ts). The sandbox's by-design refusal is not
+   * a refusal here (its chrome speaks). True when the write was refused, so the caller stops.
+   */
+  async function refusedWrite(res: Response, title: string, fallback?: string): Promise<boolean> {
+    if (res.ok || isSandboxRefusal(res)) return false;
+    setFeedback({ isOpen: true, title, message: await readRefusal(res, fallback), type: 'warning' });
+    return true;
+  }
+
   async function gamesApi(method: 'POST' | 'PATCH', body: Record<string, unknown>) {
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const res = await fetch(`/api/admin/games${orgQuery}`, {
@@ -692,24 +742,19 @@ export default function AdminSchedulePage() {
     }
   }
 
-  async function markCancelled(id: string) {
+  // F71: Cancel Game and Reinstate used to drop a refusal (a final result, a completed event) without a word.
+  async function patchGameStatus(id: string, action: 'cancel' | 'revert-to-scheduled') {
     const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    await fetch(`/api/admin/games${orgParam}`, {
+    const res = await fetch(`/api/admin/games${orgParam}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'cancel', id }),
+      body: JSON.stringify({ action, id }),
     });
+    await refusedWrite(res, action === 'cancel' ? SCHEDULE_REFUSAL_TITLE.cancelGame : SCHEDULE_REFUSAL_TITLE.reinstateGame);
     refresh();
   }
-  async function markScheduled(id: string) {
-    const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    await fetch(`/api/admin/games${orgParam}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'revert-to-scheduled', id }),
-    });
-    refresh();
-  }
+  const markCancelled = (id: string) => patchGameStatus(id, 'cancel');
+  const markScheduled = (id: string) => patchGameStatus(id, 'revert-to-scheduled');
 
   async function toggleGeneratorLock(id: string, nextLocked: boolean) {
     const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
@@ -722,7 +767,7 @@ export default function AdminSchedulePage() {
       const data = await res.json().catch(() => ({}));
       setFeedback({
         isOpen: true,
-        title: nextLocked ? 'Could Not Keep Game' : 'Could Not Release Game',
+        title: nextLocked ? SCHEDULE_REFUSAL_TITLE.keepGame : SCHEDULE_REFUSAL_TITLE.releaseGame,
         message: data.error || 'The schedule could not be updated. Confirm the latest schedule migration has been applied, then try again.',
         type: 'warning',
       });
@@ -820,6 +865,17 @@ export default function AdminSchedulePage() {
         return moved;
       }));
       return;
+    }
+
+    // F71 — a refused save (a final result, a completed event, a venue the event doesn't have, a role that can't
+    // move games) used to fall through to the refresh below and snap back without a word. Say why, and throw so
+    // the inline row stays open and a drag or the phone's move sheet rolls back to where the server has the game —
+    // the same contract as 'bracket-order' above.
+    if (await refusedWrite(saveRes, SCHEDULE_REFUSAL_TITLE.saveGame)) {
+      // The refusal can be BECAUSE the game changed (scored a moment ago): re-read the games, so the list shows the
+      // truth rather than the pre-drag copy the move puts back — quietly, so the open inline row stays open.
+      void reloadGames();
+      throw new Error('refused');
     }
 
     await refresh();
@@ -1561,7 +1617,7 @@ export default function AdminSchedulePage() {
             canAutoGenerate={canAutoGenerateSchedule}
             onAutoGenerate={openGenerator}
             showAutoBracket={hasPlayoffStage}
-            canAutoBracket={canAutoGenerateSchedule}
+            canAutoBracket={canAutoBracket}
             onAutoBracket={openAutoGenerator}
             canRainDelay={canRainDelay}
             onRainDelay={openRainDelay}
@@ -1611,7 +1667,7 @@ export default function AdminSchedulePage() {
             canAutoGenerate={canAutoGenerateSchedule}
             onAutoGenerate={openGenerator}
             showAutoBracket={hasPlayoffStage}
-            canAutoBracket={canAutoGenerateSchedule}
+            canAutoBracket={canAutoBracket}
             onAutoBracket={openAutoGenerator}
             canRainDelay={canRainDelay}
             onRainDelay={openRainDelay}
@@ -1906,7 +1962,7 @@ export default function AdminSchedulePage() {
           tournament={currentTournament}
           orgSlug={orgSlug ?? ''}
           existingGames={games.filter(g => g.isPlayoff && g.divisionId === playoffBuilderDivision.id)}
-          canAutoGenerate={canAutoGenerateSchedule}
+          canAutoGenerate={canAutoBracket}
           focusGameId={bracketFocusGameId}
           minRestMinutes={healthRules.minRestMinutes}
           onUseAutoGenerator={() => { setEditingBracket(false); setBracketFocusGameId(undefined); openAutoGenerator(); }}
@@ -2488,6 +2544,7 @@ export default function AdminSchedulePage() {
           teams={teams}
           venues={venues}
           existingGames={games}
+          onStale={() => { void reloadGames(); }}
           onCancel={() => setShowGenerator(false)}
           onComplete={() => {
             setShowGenerator(false);
@@ -2503,7 +2560,7 @@ export default function AdminSchedulePage() {
           tournamentId={currentTournament.id}
           tournament={currentTournament}
           orgSlug={orgSlug ?? ''}
-          canAutoSchedule={canAutoGenerateSchedule}
+          canAutoSchedule={canAutoBracket}
           initialConfig={playoffWizardConfig}
           onClose={() => setShowPlayoffWizard(false)}
           onComplete={() => {
@@ -2529,6 +2586,7 @@ export default function AdminSchedulePage() {
           divisions={divisions}
           tournament={currentTournament}
           canNotify={canNotify}
+          planId={currentOrg?.planId ?? null}
           orgSlug={currentOrg?.slug ?? ''}
           onClose={() => setPublishModal(null)}
           onPublished={handlePublishDone}
@@ -2650,6 +2708,7 @@ function PublishScheduleModal({
   divisions,
   tournament,
   canNotify,
+  planId,
   orgSlug,
   onClose,
   onPublished,
@@ -2659,6 +2718,8 @@ function PublishScheduleModal({
   divisions: import('@/lib/types').Division[];
   tournament: import('@/lib/types').Tournament;
   canNotify: boolean;
+  /** Read by the reminder sentence's rule — the same checks the publish route makes (F73). */
+  planId: import('@/lib/types').OrgPlan | null;
   orgSlug: string;
   onClose: () => void;
   onPublished: (updates: { id: string; scheduleVisibility: 'published' }[]) => void;
@@ -2691,6 +2752,8 @@ function PublishScheduleModal({
   // selected division will be closed as part of publishing.
   const openTargets = targets.filter(g => !g.isClosed);
   const willCloseOnPublish = openTargets.length > 0;
+  // F73: the reminder sentence shows only when this publish will really schedule the reminder.
+  const willRemind = willScheduleGameDayReminder({ notify, planId, settings: tournament.settings });
 
   function toggleDivision(id: string) {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -2706,14 +2769,18 @@ function PublishScheduleModal({
       // Publishing always uses real team names, so close any still-open selected
       // divisions first — stopping new public submissions.
       if (openTargets.length > 0) {
-        await Promise.all(openTargets.map(g =>
+        const closed = await Promise.all(openTargets.map(g =>
           fetch(`/api/admin/divisions${orgQuery}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'set-closed', id: g.id, data: { isClosed: true } }),
           })
         ));
-        openTargets.forEach(g => onDivisionClosed(g.id));
+        // F71: a refused close used to be ignored and the division shown closed anyway. Mark only what closed,
+        // and stop before publishing with the server's reason.
+        openTargets.forEach((g, i) => { if (closed[i].ok || isSandboxRefusal(closed[i])) onDivisionClosed(g.id); });
+        const refused = closed.find(r => !r.ok && !isSandboxRefusal(r));
+        if (refused) throw new Error(await readRefusal(refused, SCHEDULE_REFUSAL.divisionFallback));
       }
 
       const res = await fetch(`/api/admin/schedule-publish${orgQuery}`, {
@@ -2942,7 +3009,7 @@ function PublishScheduleModal({
                 </label>
               </div>
 
-              {targets.length > 0 && (
+              {targets.length > 0 && willRemind && (
                 <div style={kx({
                   display: 'flex', alignItems: 'flex-start', gap: '0.55rem',
                   marginBottom: '1rem', padding: '0.6rem 0.75rem',
@@ -2953,7 +3020,7 @@ function PublishScheduleModal({
                 })}>
                   <AlertCircle size={14} style={kx({ color: 'var(--white-40)', marginTop: '2px', flexShrink: 0 }, KIT_INK.tertiary)} />
                   <div style={kx({ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }, KIT_INK.tertiary)}>
-                    Publishing also schedules a game-day reminder email to each accepted team for the evening before their first game — this is sent even if the box above is left unchecked.
+                    {GAME_DAY_REMINDER_SENTENCE}
                   </div>
                 </div>
               )}

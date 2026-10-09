@@ -10,7 +10,7 @@ import { formatPoolName } from '@/lib/utils';
 import { resolveManualTravelBuffers } from '@/lib/schedule-metrics';
 import { formatVenueLocation } from '@/lib/venue-label';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
-import { resolveGameTiming } from '@/lib/schedule-conflict';
+import { resolveGameTiming, slotsClearOfTakenGames, toConflictGame } from '@/lib/schedule-conflict';
 import NumberStepper from '@/components/admin/NumberStepper';
 import {
   filterStartsAfterRoundRobinCompletion,
@@ -45,8 +45,9 @@ interface Props {
   orgSlug?: string;
   /**
    * Whether this org can use the auto-schedule optimizer + tiered auto-split
-   * (the `auto_schedule`/`playoff_generator` Plus features). Free tier can still
-   * build the bracket structure and set dates/times/venues by hand.
+   * (the `playoff_generator` Plus feature — the one the games route gates a generated
+   * bracket on). Free tier can still build the bracket structure and set
+   * dates/times/venues by hand.
    */
   canAutoSchedule?: boolean;
   /**
@@ -239,6 +240,8 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   const lastDivisionId = useRef(selectedDivisionId);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [existingGames, setExistingGames] = useState<Game[]>([]);
+  // Every game of the tournament, every division (F69: their surfaces are taken).
+  const [tournamentGames, setTournamentGames] = useState<Game[]>([]);
   const [preview, setPreview] = useState<PlayoffPreviewRow[]>([]);
   const [templatePreview, setTemplatePreview] = useState<PlayoffPreviewRow[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -248,7 +251,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   // close the whole wizard mid-edit. Tracking the mousedown target prevents that.
   const overlayMouseDownRef = useRef(false);
   const [showWarning, setShowWarning] = useState(false);
-  // Free tier (no auto_schedule entitlement) defaults to manual bracket building;
+  // Free tier (no playoff_generator entitlement) defaults to manual bracket building;
   // the auto-schedule optimizer toggle is locked below.
   const [autoSchedule, setAutoSchedule] = useState(canAutoSchedule);
   const [generationScope, setGenerationScope] = useState<GenerationScope>('replace');
@@ -277,6 +280,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
       ));
       setTeams((all as Team[]).filter(t => t.divisionId === division.id && t.status === 'accepted'));
       setExistingGames((games as Game[]).filter(game => game.divisionId === division.id));
+      setTournamentGames(games as Game[]);
     });
   }, [tournamentId, division.id, orgParam]);
 
@@ -533,6 +537,15 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     .filter(game => game.date && game.time)
     .map(gameToFixedAssignment);
   const activeGenerationScope: GenerationScope = canBuildFromCurrent ? generationScope : 'replace';
+  // F69 (Stage 3 defects pass): every game this save KEEPS, in any division, holds its surface for its length. Left
+  // out: only this division's playoff games the save removes (all of them on "Replace bracket", the unkept
+  // still-to-play ones on "Build from current").
+  const takenGames = useMemo(() => {
+    const removed = new Set(
+      (activeGenerationScope === 'replace' ? currentPlayoffGames : replaceablePlayoffGames).map(game => game.id),
+    );
+    return tournamentGames.filter(game => !removed.has(game.id)).map(toConflictGame);
+  }, [tournamentGames, activeGenerationScope, currentPlayoffGames, replaceablePlayoffGames]);
 
   // Bracket-aware health (NOT round-robin per-team rest). A bracket's seeds flow
   // through the tree, so rest is a property of advancement edges, not of the
@@ -763,7 +776,15 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
       }
     });
 
-    return filterStartsAfterRoundRobinCompletion(totalSlots, roundRobinCompletion);
+    // F69: drop every slot a kept game already holds (any division), by the Add window's own overlap rule. A bracket
+    // that no longer fits says so in the "Not Enough Slots" words.
+    return slotsClearOfTakenGames(filterStartsAfterRoundRobinCompletion(totalSlots, roundRobinCompletion), {
+      takenGames,
+      divisionId: division.id,
+      draftLengthMinutes: gameLength,
+      divisions,
+      tournament,
+    });
   }
 
   function playoffMatchupKey(item: Pick<PlayoffPreviewRow, 'code' | 'pool'>) {

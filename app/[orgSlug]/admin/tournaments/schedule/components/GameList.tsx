@@ -23,6 +23,7 @@ import { Pool } from '@/lib/types';
 import s from '../../../admin-common.module.css';
 import styles from '../schedule-admin.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import { KEEP_WORDS } from '@/lib/schedule-words';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 
@@ -416,7 +417,7 @@ export default function GameList({
               <span className="badge badge-neutral" style={{ fontSize: '0.6rem', letterSpacing: '0.04em' }}>SLOT</span>
             )}
             {isGeneratorLocked && g.status === 'scheduled' && !g.isPlayoff && (
-              <span className={styles.generatorLockBadge} title="Kept during Build from current regeneration">
+              <span className={styles.generatorLockBadge} title={KEEP_WORDS.keptBadge}>
                 <Lock size={9} /> KEPT
               </span>
             )}
@@ -726,7 +727,9 @@ export default function GameList({
                   <button
                     type="button"
                     className={`btn btn-ghost btn-data ${styles.generatorLockAction}`}
-                    title={isGeneratorLocked ? 'Allow the generator to replace this game in Build from current mode' : 'Keep this game fixed during Build from current regeneration'}
+                    title={g.isPlayoff
+                      ? (isGeneratorLocked ? 'Allow the generator to replace this game in Build from current mode' : 'Keep this game fixed during Build from current regeneration')
+                      : (isGeneratorLocked ? KEEP_WORDS.release : KEEP_WORDS.keep)}
                     onClick={() => onToggleGeneratorLock?.(g.id, !isGeneratorLocked)}
                   >
                     {isGeneratorLocked ? <Unlock size={13} /> : <Lock size={13} />}

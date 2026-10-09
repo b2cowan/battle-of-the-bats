@@ -777,6 +777,10 @@ Also surfaced read-only on the dashboard funnel payload as `reminderLastSentAt` 
     - **Who reads it:** the public bracket (`LogicSyncBracket`), the scorekeeper board and the admin live rail, all via realtime UPDATE by `tournament_id`. Realtime drops ungranted columns from the payload.
     - **⚠ A column added to `games` later is invisible to those feeds until it is added to the grant.** That is deliberate: it fails closed.
     - **Writes:** the member write policies were dropped. Every write goes through the service role (the scoring service passes `{ admin: true }`).
+11. **⚖ A round-robin draft replaces only games still to play, in ONE transaction (mig 320, dev 2026-10-09; prod-pending — `MANUAL_PROD_STEPS.json`).** Tournament admin redesign, Stage 3 defects pass A45 (F70 + P1).
+    - **The function:** `replace_division_round_robin_games(p_division_id, p_replace_ids, p_games)` — the schedule generator's whole save. It locks the **division row** (one save per division at a time); returns `{ok:false, code:'foreign_reference'}` if a drafted game names a team, pool slot or temporary facility of another tournament; locks the division's `status='scheduled'`, `is_playoff=false`, `generator_locked=false` games and returns `{ok:false, code:'schedule_changed'}` **before any write** unless they are **exactly** `p_replace_ids` (so a double submit or a second organizer's save is refused, never doubled); then deletes them and inserts the draft (`tournament_id`/`division_id` stamped from the division, `status='scheduled'`, `is_playoff=false`). A failure after the delete rolls it back. Service-role EXECUTE only; called by the games route's `replace-division-round-robin` action.
+    - **The rule it holds is `isReplaceableRoundRobinGame`** ([lib/game-delete-policy.ts](../../../lib/game-delete-policy.ts)). The route's older `delete-division-games` was narrowed to the same rule for every caller — it used to delete the division's round-robin games in ANY state (final scores included), as the generator's default "Replace all".
+    - ⚠ **A draft avoids every kept game's surface** (`slotsClearOfTakenGames`, [lib/schedule-conflict.ts](../../../lib/schedule-conflict.ts)) — any division, by the Add window's overlap rule. Before it, a kept game blocked only an identical slot KEY, and `game_time` comes back as `HH:MM:SS` while a draft slot is `HH:MM`, so it never matched.
 
 **Fields** (boilerplate `id` omitted):
 
@@ -835,7 +839,7 @@ Also surfaced read-only on the dashboard funnel payload as `reminderLastSentAt` 
 **`notes`** (text) — free-text admin note; no logic depends on it.
 
 <!-- dict:col:games.generator_locked -->
-**`generator_locked`** (bool, NOT NULL, default false) — locks a game against the auto-schedule generator (manual edits preserved on regenerate).
+**`generator_locked`** (bool, NOT NULL, default false) — locks a game against the auto-schedule generator (manual edits preserved on regenerate). The row action's word is **Keep** (undo: **Release**). A kept game is never replaced by a draft save or the division delete (gotcha 11).
 
 <!-- dict:col:games.score_submitted_by_user_id -->
 <!-- dict:col:games.score_submitted_by_email -->

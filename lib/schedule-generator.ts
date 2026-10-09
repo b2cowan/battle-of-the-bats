@@ -390,7 +390,9 @@ function orderSlots(slots: ScheduleDraftSlot[], pass: number): ScheduleDraftSlot
 }
 
 function compareAssignments(a: ScheduleDraftAssignment, b: ScheduleDraftAssignment): number {
-  return a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.venueName.localeCompare(b.venueName);
+  // A kept game placed by venue reference carries no text name (`games.location` is nullable whatever the type says);
+  // two of them at one day and time crashed this sort (Stage 3 defects pass, found on the demo).
+  return a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || (a.venueName ?? '').localeCompare(b.venueName ?? '');
 }
 
 function compareDrafts(a: ScoredScheduleDraft, b: ScoredScheduleDraft): number {
@@ -414,7 +416,9 @@ function compareSlots(a: ScheduleDraftSlot, b: ScheduleDraftSlot): number {
 }
 
 function slotKey(slot: ScheduleDraftSlot): string {
-  return `${slot.date}|${slot.time}|${slot.venueId ?? ''}|${slot.venueFacilityId ?? ''}|${slot.scheduleFacilityLaneId ?? slot.scheduleFacilityLaneLabel ?? ''}`;
+  // HH:MM — a stored game's time comes back with seconds ("10:00:00") while a draft slot has none ("10:00"), so a kept
+  // game's fixed assignment never matched its own slot and the "slot already used" guard was dead for it.
+  return `${slot.date}|${slot.time.slice(0, 5)}|${slot.venueId ?? ''}|${slot.venueFacilityId ?? ''}|${slot.scheduleFacilityLaneId ?? slot.scheduleFacilityLaneLabel ?? ''}`;
 }
 
 function slotResourceKey(slot: ScheduleDraftSlot): string {

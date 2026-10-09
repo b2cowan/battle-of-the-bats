@@ -48,30 +48,11 @@ export const ORGANIZER_ANNOUNCE_HOLD_MINUTES = 10;
 /** Safety rail on one sweep's blast radius; leftovers ride the next tick five minutes later. */
 const MAX_NOTICES_PER_SWEEP = 2000;
 
-/** Empty-slot sentinel some games use instead of NULL for an unassigned team. */
-const NIL_UUID = '00000000-0000-0000-0000-000000000000';
-
-// The change taxonomy + classifier live in lib/schedule-change-classify.ts (pure,
-// unit-tested — this module is server-only and unreachable from the test runner).
-// Re-exported so existing importers keep one import site.
-import { classifyScheduleChange, type GameChangeKind, type GameScheduleSnapshot } from './schedule-change-classify';
-export type { GameChangeKind, GameScheduleSnapshot } from './schedule-change-classify';
-
-export interface GameChangeInput {
-  gameId: string;
-  divisionId: string | null;
-  homeTeamId: string | null;
-  awayTeamId: string | null;
-  /** Who was in the game BEFORE the edit. When this differs from home/awayTeamId the edit
-   *  restructured the matchup, and no "your game moved" message can be told truthfully — see
-   *  `teamsChanged` in classify's caller. */
-  beforeHomeTeamId?: string | null;
-  beforeAwayTeamId?: string | null;
-  before: GameScheduleSnapshot;
-  after: GameScheduleSnapshot;
-}
-
-const classify = classifyScheduleChange;
+// The change taxonomy, the classifier, the truthfulness filter and the publish gate live in
+// lib/schedule-change-classify.ts (pure, unit-tested — this module is server-only and unreachable from
+// the test runner). Re-exported so existing importers keep one import site.
+import { classifiedChanges, noticeTargets, NIL_TEAM_ID, type GameChangeInput, type GameChangeKind } from './schedule-change-classify';
+export type { GameChangeInput, GameChangeKind, GameScheduleSnapshot } from './schedule-change-classify';
 
 export interface RecordedChanges {
   /** Queue rows created — hand these to supersedeScheduleChangeNotices if the organizer
@@ -100,27 +81,15 @@ export async function recordGameScheduleChanges(params: {
 }): Promise<RecordedChanges> {
   const empty: RecordedChanges = { noticeIds: [], affectedTeamIds: [] };
   try {
-    const candidates = params.changes
-      .filter(c => {
-        // An edit that ALSO reassigned the matchup can't be narrated as "your game moved":
-        // the incoming team was never scheduled at the old time, and the outgoing team is no
-        // longer in this game at all. Telling either of them a time is stating something
-        // false, and a false notification is worse than none. Restructures stay silent; the
-        // schedule itself still shows the truth.
-        const teamsChanged =
-          (c.beforeHomeTeamId !== undefined && c.beforeHomeTeamId !== c.homeTeamId) ||
-          (c.beforeAwayTeamId !== undefined && c.beforeAwayTeamId !== c.awayTeamId);
-        return !teamsChanged;
-      })
-      .map(c => ({ ...c, kind: classify(c.before, c.after) }))
-      .filter((c): c is GameChangeInput & { kind: GameChangeKind } => c.kind !== null);
+    // Only changes that can be told truthfully (a restructured matchup stays silent — see classifiedChanges).
+    const candidates = classifiedChanges(params.changes);
     if (candidates.length === 0) return empty;
 
-    // The publish gate. A division that hasn't published its schedule has shown nobody these
-    // times, so there is no expectation to correct. Games with no division fall through the
-    // same way — they were never on a published division schedule either.
+    // The publish gate (applied by noticeTargets below). A division that hasn't published its schedule has
+    // shown nobody these times, so there is no expectation to correct. Games with no division fall through
+    // the same way — they were never on a published division schedule either.
     const divisionIds = Array.from(
-      new Set(candidates.map(c => c.divisionId).filter((d): d is string => typeof d === 'string' && d.length > 0)),
+      new Set(candidates.map(c => c.change.divisionId).filter((d): d is string => typeof d === 'string' && d.length > 0)),
     );
     if (divisionIds.length === 0) return empty;
     const { data: divisions } = await supabaseAdmin
@@ -140,11 +109,7 @@ export async function recordGameScheduleChanges(params: {
 
     const rows: Record<string, unknown>[] = [];
     const affected = new Set<string>();
-    for (const c of candidates) {
-      if (!c.divisionId || !published.has(c.divisionId)) continue;
-      const teamIds = [c.homeTeamId, c.awayTeamId].filter(
-        (t): t is string => typeof t === 'string' && t.length > 0 && t !== NIL_UUID,
-      );
+    for (const { change: c, kind, teamIds } of noticeTargets(candidates, published)) {
       for (const teamId of teamIds) {
         affected.add(teamId);
         rows.push({
@@ -152,7 +117,7 @@ export async function recordGameScheduleChanges(params: {
           tournament_id: params.tournamentId,
           team_id: teamId,
           game_id: c.gameId,
-          kind: c.kind,
+          kind,
           // The state the follower last had reason to believe.
           was_date: c.before.date,
           was_time: c.before.time,
@@ -476,7 +441,7 @@ export async function sweepScheduleChangeNotices(now: Date = new Date()): Promis
   const opponentIds = new Set<string>();
   for (const g of games.values()) {
     for (const side of [g.home_team_id, g.away_team_id]) {
-      if (side && side !== NIL_UUID && !teamNames.has(side)) opponentIds.add(side);
+      if (side && side !== NIL_TEAM_ID && !teamNames.has(side)) opponentIds.add(side);
     }
   }
   if (opponentIds.size > 0) {
@@ -551,7 +516,7 @@ export async function sweepScheduleChangeNotices(now: Date = new Date()): Promis
       const payload = compose(entries, teamName, tournamentName, (entry) => {
         const isHome = entry.now.home_team_id === teamId;
         const oppId = isHome ? entry.now.away_team_id : entry.now.home_team_id;
-        const name = oppId && oppId !== NIL_UUID ? teamNames.get(oppId) ?? 'your opponent' : 'your opponent';
+        const name = oppId && oppId !== NIL_TEAM_ID ? teamNames.get(oppId) ?? 'your opponent' : 'your opponent';
         return { name, isHome };
       });
 
