@@ -7,6 +7,18 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-09 — AN ADMIN RECORD'S DELETE WEARS THE PORTAL'S LOOK: A TRASH ICON AND RED WORDS AT BODY WEIGHT (owner: *"I don't think this is our standard product format for delete buttons, please review"* → *"go ahead"*, walking Club Tier Stage 3d §285 W1)
+
+**Decision:** Delete at the end of an admin record (the 2026-09-30 place: it ends the body, alone, red, asking first)
+is drawn as the coaches portal's `GuardedDelete` door — a 13px trash icon and the words, red, at **body weight**,
+underlined **only on hover** — and it is ONE part, RepKit's `RecordDelete`, which the tournament record, a tournament
+team and a club payee all render. **Kept:** the place, and the admin's way of asking (its question opens on top; the
+portal asks inside the control). **Why:** the 09-30 ruling said "red" and nothing of the look, so the tournament
+redesign spelled bold, icon-less red words and the payee window copied them — three copies of one rule that read as a
+link, not the portal's control. Guard: `tests/unit/admin-record-delete-guard.test.ts`. **Not in it:** the older admin
+screens' filled red Delete buttons in rows and toolbars (Divisions, the schedule's game list, Venues) — the tournament
+redesign replaces those screens one by one.
+
 ### 2026-10-09 — A TOOLS MENU NAMES ITS GROUPS ONLY WHEN THERE IS SOMETHING TO TELL APART (owner: *"do we need these headers if they only have 1 item in each of them?"* → *"go ahead"*)
 
 **Decision:** a Tools (⋯) menu shows group headings only when it has **two or more groups AND one of them holds more

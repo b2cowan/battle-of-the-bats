@@ -24,7 +24,7 @@
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
-import { RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
+import { RecordDelete, RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
 import { RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
@@ -422,7 +422,7 @@ export default function TournamentRecord(props: TournamentRecordProps) {
 
         {canWrite && status !== 'active' && (
           <RecordSection>
-            <button type="button" className={screenParts.recordDelete} onClick={askFor('delete')} disabled={busy}>{W.deleteTournament}</button>
+            <RecordDelete onClick={askFor('delete')} disabled={busy}>{W.deleteTournament}</RecordDelete>
           </RecordSection>
         )}
       </KitDialog>

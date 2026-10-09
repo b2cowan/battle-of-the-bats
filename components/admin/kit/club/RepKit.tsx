@@ -16,10 +16,11 @@
  *   <LoadFailed title onRetry /> · <PageLoading header />        — a screen's read failed / in flight
  *   useDeferredLoad(ready, load) · useLatestRead()               — the first read; only the newest writes
  *   <SavePill saving dirty error held onRetry />                 — pinned to the window, transient; only a failure stays
+ *   <RecordDelete onClick>Delete this payee</RecordDelete>       — a record's Delete, at the end of its body
  */
 import { useCallback, useEffect, useRef, useState, type MouseEventHandler, type ReactNode } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Check, ChevronRight, Info } from 'lucide-react';
+import { AlertTriangle, Check, ChevronRight, Info, Trash2 } from 'lucide-react';
 import { isLiveSeasonStatus } from '@/lib/season-live';
 import { twoOpenPageNote, twoOpenTitle } from '@/lib/club-season-words';
 import styles from './RepKit.module.css';
@@ -200,6 +201,26 @@ export function RowAction({
       aria-label={ariaLabel}
     >
       {icon}{children}
+    </button>
+  );
+}
+
+/**
+ * A record's Delete — where the 2026-09-30 ruling puts it (it ends the record's body, alone, red, asking first) in
+ * the coaches portal's look: `GuardedDelete`'s door, a trash icon and the words, red at body weight, underlined only
+ * on hover (owner 2026-10-09: "I don't think this is our standard product format for delete buttons" — the admin's
+ * records had each spelled their own bold, icon-less red words, which read as a link). ONE part for every admin
+ * record (a tournament, a team, a club payee), so the three cannot drift apart again. The asking is the caller's: its
+ * question opens on top, as every admin question does. 44px on a phone, the admin's control height above.
+ */
+export function RecordDelete({ children, onClick, disabled }: {
+  children: ReactNode;
+  onClick: MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
+}) {
+  return (
+    <button type="button" className={styles.recordDelete} onClick={onClick} disabled={disabled}>
+      <Trash2 size={13} aria-hidden /> {children}
     </button>
   );
 }

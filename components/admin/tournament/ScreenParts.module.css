@@ -70,19 +70,7 @@ input[type='checkbox'].check22::before { width: 6px; height: 11px; border-width:
 @media (max-width: 640px) {
   .recordFields { grid-template-columns: minmax(0, 1fr); }
 }
-.recordDelete {
-  min-height: var(--admin-control-h);
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: var(--type-body);
-  font-weight: 650;
-  color: var(--danger-light);
-  cursor: pointer;
-}
-.recordDelete:hover { text-decoration: underline; text-underline-offset: 3px; }
-@media (max-width: 768px) { .recordDelete { min-height: var(--tap-min, 44px); } }
+/* A record's Delete is RepKit's `RecordDelete` — one part for every admin record (owner 2026-10-09). */
 /* A line said before a tap, in place of the button it stands for (a full plan, a link taken). */
 .recordBefore { margin: 0 0 0.25rem; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
 

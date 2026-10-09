@@ -232,10 +232,31 @@
 .rowAction:disabled { opacity: 0.5; cursor: default; }
 .rowActionQuiet { border-color: var(--home-line-strong); color: var(--text-secondary); font-weight: 650; }
 
+/* A record's Delete (`RecordDelete`) — the portal's `.deleteRecordBtn` restated by value (the admin shell does not
+   load the portal's stylesheet): icon + words, red at body weight, underlined only on hover. The admin's control
+   height, and the touch floor on a phone (below). */
+.recordDelete {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: var(--admin-control-h);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--danger-light, var(--danger));
+  cursor: pointer;
+}
+.recordDelete:hover { text-decoration: underline; }
+.recordDelete:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.recordDelete:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
+
 @media (max-width: 768px) {
   a.row, button.row { min-height: var(--tap-min, 44px); }
   .rowActions button { min-height: var(--tap-min, 44px); }
   .rowAction { min-height: var(--tap-min, 44px); }
+  .recordDelete { min-height: var(--tap-min, 44px); }
 }
 
 /* ≤ 640 — ONE FRAME, THE ROWS HAIRLINED (owner ruling P1, 2026-09-29, "Phone lists in one frame",

@@ -25,7 +25,7 @@
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
-import { RepChip, RowAction, SavePill } from '@/components/admin/kit/club/RepKit';
+import { RecordDelete, RepChip, RowAction, SavePill } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
 import { RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
@@ -481,7 +481,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
 
         {canWrite && (
           <RecordSection>
-            <button type="button" className={styles.recordDelete} onClick={() => void flushThen(() => props.onDelete(t))} disabled={props.busy}>{W.deleteTeam}</button>
+            <RecordDelete onClick={() => void flushThen(() => props.onDelete(t))} disabled={props.busy}>{W.deleteTeam}</RecordDelete>
           </RecordSection>
         )}
       </div>
