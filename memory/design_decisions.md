@@ -7,6 +7,35 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-09 — THE CLUB CALENDAR AND THE VENUE LIBRARY: FOUR RULINGS (owner: *"I agree with your recommendations for both stage 6 and 11"* — Club Tier Stage 6, Asks 6, 7 and 9 as recommended, ratified 2026-10-08; recorded at the start of the 6b build) — hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 6 (v64), plan `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 6
+
+**Decision:** (1) **The club calendar** (Asks 6, 7): "Calendar" sits in the admin rail directly under Overview,
+wearing the calendar-with-clock glyph (House league keeps the plain calendar), and is the first row of the phone's
+More sheet. It shows to whoever can open at least one program's schedule, and each person sees only the programs they
+can open. It wears the **coach schedule's toolbar**: List · Week · Month in the portal's order, opening on Week; then
+Venue · Program · Team as quiet pills; Export pinned right; the week's arrows on their own row beneath; no Today, no
+Search. **One clock, said once** on the date row ("Times in Eastern time."). The week's **clash count is the amber
+pill** on the date row and doubles as "Clashes only": a click narrows to the clashes, a second click shows everything.
+Nothing on the page writes (D3): a booking opens a **read window** with both sides of a clash, each with its head coach
+(or its season, or its tournament), and a door to that booking's own schedule. (2) **A count that is a STATUS, not
+work waiting, may wear the amber pill** (format check "not written yet (a)"): a clash is something someone should look
+at, so it takes the waiting count's shape rather than a third mark. (3) **On a club-wide page a booking's colour is its
+TEAM** (format check "not written yet (c)"): the portal's one-team schedule colours an event by its kind because it
+shows one team; the club's question is who, so a booking's edge is its team's colour and the kind is said in words.
+House league and tournaments say their program in words. (4) **Archive when anything books a record; Delete only when
+nothing does** (Ask 9): a venue any booking holds, past bookings included, offers Archive, which takes it out of every
+picker while every booking keeps it, and it can come back; a venue nothing books offers Delete, red, asking first. A
+facility a booking holds can be renamed, never removed; one nothing books gets its ✕. Red only for the destructive
+one, and only when nothing would be lost.
+**Rationale:** (1) "who is on Lions Park Diamond 2 on Tuesday?" took eight team pages and two other programs; one
+read-only week answers it and shows the clashes the check finds. The toolbar is the portal's because the portal is the
+benchmark: the first drawing's own order, Today button and Search were drift the /design pass removed. (2) a third mark
+for "look at this" would be a legend to learn. (3) colouring by kind on a club page paints every practice the same and
+hides whose it is. (4) the old Delete stripped the venue from every house-league game and practice on it without a word
+(S6-08); with Archive nothing a booking holds ever disappears.
+**Applies to:** the club calendar (`app/[orgSlug]/admin/calendar`) and the Venue library (`app/[orgSlug]/admin/org/venues`);
+(4) is the pattern for any club record a booking can point at.
+
 ### 2026-10-09 — A REPEATING EVENT'S PENCIL ASKS WHICH DATES FIRST; THE FORM THEN LISTS THEM, CHECKS EACH, AND SAVE NAMES THEM (owner, walking Club Tier §284 W4: *"from my experience with calendar apps, this question is posed after clicking the 'edit' button as a pop up. thoughts?"* → the drawing, artifact `1NaTneZ5YFprr9SCt8bESG` → *"1. Yes 2. Yes 3. Yes 4. Keep three"*)
 
 **Decision:** (1) On a repeating practice or game, the event window's head pencil is a **menu**, asked BEFORE the
