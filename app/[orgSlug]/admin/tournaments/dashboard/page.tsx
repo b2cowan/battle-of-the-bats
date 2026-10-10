@@ -39,10 +39,8 @@ import { tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import { Callout, repKit } from '@/components/admin/kit/club/RepKit';
-import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
+import CoinTossRecorder, { CoinTossNote } from '@/components/admin/CoinTossRecorder';
 import type { PendingToss } from '@/lib/coin-toss';
-import { COIN_TOSS_WORDS as CT } from '@/lib/schedule-words';
-import { bracketGameLabel } from '@/lib/playoff-bracket';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
@@ -1940,13 +1938,7 @@ export default function AdminDashboard() {
 
       {/* ── A COIN TOSS STILL OWED — the bracket's note, with its one action: the recorder, here (S7) ── */}
       {currentTournament?.id && visibleStats.coinTossNeeded.map(t => (
-        <Callout key={t.groupKey} tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />}>
-          <b>{CT.inDivision(t.divisionName, CT.title(t.places, t.pool))}</b>
-          <span className={repKit.calloutSub}>{CT.body(t.teams.map(x => x.name), t.waits.map(w => bracketGameLabel(w.bracketCode)))}</span>
-          <div className={repKit.calloutActions}>
-            <button type="button" className="btn btn-outline" onClick={() => setTossOpen(t)}>{CT.record}</button>
-          </div>
-        </Callout>
+        <CoinTossNote key={t.groupKey} toss={t} named onRecord={setTossOpen} />
       ))}
       {tossOpen && (
         <CoinTossRecorder

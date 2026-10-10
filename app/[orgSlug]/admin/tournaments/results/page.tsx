@@ -16,7 +16,7 @@
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { AlertCircle, ExternalLink, SlidersHorizontal, Trophy, RefreshCw, Search } from 'lucide-react';
+import { ExternalLink, SlidersHorizontal, Trophy, RefreshCw, Search } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -41,11 +41,8 @@ import styles from './results-admin.module.css';
 import ResultsList, { ALL_BANDS, NEEDS_YOU_BANDS, bandFor, gameStateWord, type ResultsBand } from './ResultsList';
 import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
 import { COIN_TOSS_WORDS as CT } from '@/lib/schedule-words';
-import { bracketGameLabel } from '@/lib/playoff-bracket';
-import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
+import CoinTossRecorder, { CoinTossNote } from '@/components/admin/CoinTossRecorder';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
-import { Callout } from '@/components/admin/kit/club/RepKit';
-import repKit from '@/components/admin/kit/club/RepKit.module.css';
 
 /**
  * Signal that a game's score just became public (finalize / forfeit) so the mobile AdminContextStrip
@@ -499,13 +496,7 @@ export default function AdminResultsPage() {
   const tossNotes = lens === 'needs' && tosses.length > 0 ? (
     <div className={styles.tossNotes}>
       {tosses.filter(t => !filterGroup || t.divisionId === filterGroup).map(t => (
-        <Callout key={t.groupKey} tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />} flush>
-          <b>{divisions.length > 1 ? CT.inDivision(t.divisionName, CT.title(t.places, t.pool)) : CT.title(t.places, t.pool)}</b>
-          <span className={repKit.calloutSub}>{CT.body(t.teams.map(x => x.name), t.waits.map(w => bracketGameLabel(w.bracketCode)))}</span>
-          <div className={repKit.calloutActions}>
-            <button type="button" className="btn btn-outline" onClick={() => setTossOpen(t)}>{CT.record}</button>
-          </div>
-        </Callout>
+        <CoinTossNote key={t.groupKey} toss={t} named={divisions.length > 1} flush onRecord={setTossOpen} />
       ))}
     </div>
   ) : null;

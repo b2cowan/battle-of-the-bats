@@ -132,7 +132,7 @@ export interface ScheduleSnapshotRow {
 export const SCHEDULE_SNAPSHOT_COLUMNS =
   'game_date, game_time, location, diamond_id, venue_facility_id, status, division_id, home_team_id, away_team_id';
 
-export function snapshotOfRow(row: ScheduleSnapshotRow): GameScheduleSnapshot {
+function snapshotOfRow(row: ScheduleSnapshotRow): GameScheduleSnapshot {
   return {
     date: row.game_date, time: row.game_time, location: row.location, status: row.status,
     // The structured refs let classify tell a real venue change from a cosmetic rewrite of the derived display
@@ -263,13 +263,14 @@ export interface ReplaceRow extends ScheduleSnapshotRow {
   away_slot_id?: string | null;
 }
 
-/** The two sides of a game as one unordered key: its teams, or its pool slots before the teams are known. */
-function pairKey(r: ReplaceRow): string | null {
-  const side = (team: string | null, slot: string | null | undefined) =>
-    (team && team !== NIL_TEAM_ID ? `t:${team}` : slot ? `s:${slot}` : null);
-  const a = side(r.home_team_id, r.home_slot_id);
-  const b = side(r.away_team_id, r.away_slot_id);
-  return a && b ? [a, b].sort().join('|') : null;
+/** The two sides of a game as unordered keys: its teams, and its pool slots — a game built from slots keeps its slot
+ *  ids after its teams are assigned, and a slot draft inserts slots only, so a pairing is found by either. */
+function pairKeys(r: ReplaceRow): string[] {
+  const realTeam = (t: string | null) => !!t && t !== NIL_TEAM_ID;
+  const keys: string[] = [];
+  if (realTeam(r.home_team_id) && realTeam(r.away_team_id)) keys.push(`t:${[r.home_team_id, r.away_team_id].sort().join('|')}`);
+  if (r.home_slot_id && r.away_slot_id) keys.push(`s:${[r.home_slot_id, r.away_slot_id].sort().join('|')}`);
+  return keys;
 }
 
 const byWhen = (x: ReplaceRow, y: ReplaceRow) =>
@@ -291,16 +292,26 @@ export function matchReplacedGames<O extends ReplaceRow, N extends ReplaceRow>(r
 } {
   const open = new Map<string, N[]>();
   for (const r of [...inserted].sort(byWhen)) {
-    const key = pairKey(r);
-    if (!key) continue;
-    const list = open.get(key);
-    if (list) list.push(r); else open.set(key, [r]);
+    for (const key of pairKeys(r)) {
+      const list = open.get(key);
+      if (list) list.push(r); else open.set(key, [r]);
+    }
   }
+  const taken = new Set<string>();
+  // The earliest still-open new game under a key (a new game listed under both of its keys is taken once).
+  const take = (key: string): N | undefined => {
+    const list = open.get(key);
+    while (list?.length) {
+      const next = list.shift()!;
+      if (!taken.has(next.id)) { taken.add(next.id); return next; }
+    }
+    return undefined;
+  };
   const moves: Array<{ before: O; after: N }> = [];
   const dropped: O[] = [];
   for (const old of [...replaced].sort(byWhen)) {
-    const key = pairKey(old);
-    const next = key ? open.get(key)?.shift() : undefined;
+    let next: N | undefined;
+    for (const key of pairKeys(old)) { next = take(key); if (next) break; } // its teams first, then its slots
     if (next) moves.push({ before: { ...old, home_team_id: next.home_team_id, away_team_id: next.away_team_id }, after: next });
     else dropped.push(old);
   }

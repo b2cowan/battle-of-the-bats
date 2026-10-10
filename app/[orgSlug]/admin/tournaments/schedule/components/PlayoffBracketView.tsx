@@ -14,17 +14,17 @@
  *   · Split pools and tiers keep one diagram per bracket, named; the champion card ends the division's TOP bracket.
  */
 import { Fragment, useState } from 'react';
-import { AlertCircle, Pencil, Trophy } from 'lucide-react';
+import { Pencil, Trophy } from 'lucide-react';
 import type { Division, Game, Team, Venue } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
-import { bracketGameLabel, groupGamesByBracketId, displayRoundTitle } from '@/lib/playoff-bracket';
+import { groupGamesByBracketId, displayRoundTitle } from '@/lib/playoff-bracket';
 import { playoffFormatLabel } from '@/lib/playoff-picture';
 import { bracketChampion, bracketSides, playedCount, type BracketChampion } from '@/lib/bracket-reading';
 import { gamesWaitingOnToss, type PendingToss } from '@/lib/coin-toss';
 import type { ScheduleState } from '@/lib/schedule-day';
 import { BRACKET_WORDS as B, COIN_TOSS_WORDS as CT, SCHEDULE_DAY_WORDS as W, bracketWhen } from '@/lib/schedule-words';
-import { Callout, ClubRow, ClubRowBand, ClubRowFrame, ClubRowList } from '@/components/admin/kit/club/RepKit';
-import repKit from '@/components/admin/kit/club/RepKit.module.css';
+import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList } from '@/components/admin/kit/club/RepKit';
+import { CoinTossNote } from '@/components/admin/CoinTossRecorder';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import BracketColumns, { buildBracketColumns, type BracketColumn } from './BracketColumns';
 import { ScheduleGameRow } from './ScheduleDayList';
@@ -182,15 +182,7 @@ export default function PlayoffBracketView({
       )}
 
       {tosses.map(t => (
-        <div key={t.groupKey} className={bv.tossNote}>
-          <Callout tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />} flush>
-            <b>{CT.title(t.places, t.pool)}</b>
-            <span className={repKit.calloutSub}>{CT.body(t.teams.map(x => x.name), t.waits.map(w => bracketGameLabel(w.bracketCode)))}</span>
-            <div className={repKit.calloutActions}>
-              <button type="button" className="btn btn-outline" onClick={() => onRecordToss(t)}>{CT.record}</button>
-            </div>
-          </Callout>
-        </div>
+        <div key={t.groupKey} className={bv.tossNote}><CoinTossNote toss={t} flush onRecord={onRecordToss} /></div>
       ))}
 
       {games.length === 0 ? (

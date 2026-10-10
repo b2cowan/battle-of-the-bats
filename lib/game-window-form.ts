@@ -76,14 +76,19 @@ export function whenWhereChanged(f: GameWindowForm, s: GameWindowForm): boolean 
 }
 
 /** The patch for what changed. `whenWhere` false leaves day, start and place out (held for ✓, or refused). */
-export function changesOf(f: GameWindowForm, s: GameWindowForm, opts: { whenWhere: boolean; playoff: boolean }): GamePatch {
+export function changesOf(
+  f: GameWindowForm,
+  s: GameWindowForm,
+  /** `length`: false while a refused overlap holds the length too (it places the game as surely as its start does). */
+  opts: { whenWhere: boolean; playoff: boolean; length?: boolean },
+): GamePatch {
   const out: GamePatch = {};
   if (opts.whenWhere) {
     if (f.date !== s.date && f.date) out.date = f.date;
     if (f.time !== s.time && f.time) out.time = f.time;
     if (!samePlace(f.where, s.where)) Object.assign(out, placeOfWhere(f.where));
   }
-  if (f.durationMinutes !== s.durationMinutes) out.durationMinutes = lengthOfBox(f.durationMinutes);
+  if (opts.length !== false && f.durationMinutes !== s.durationMinutes) out.durationMinutes = lengthOfBox(f.durationMinutes);
   if (f.notes !== s.notes) out.notes = f.notes.trim() || null;
   if (opts.playoff) {
     // A playoff side is a team OR its slot (a seed, a winner, a loser): both keys go together.

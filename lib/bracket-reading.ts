@@ -17,10 +17,10 @@ import type { Division, Game } from './types';
 import { isDecided } from './champions.ts';
 import { championFinish } from './event-recap.ts';
 import { FINISH_WORDS } from './after-event-words.ts';
-import { slotWords } from './schedule-words.ts';
+import { slotWords, teamOrSlotWords } from './schedule-words.ts';
+import { NIL_TEAM_ID } from './schedule-change-classify.ts';
 
-const NIL_UUID = '00000000-0000-0000-0000-000000000000';
-const isReal = (id?: string | null) => !!id && id !== NIL_UUID;
+const isReal = (id?: string | null) => !!id && id !== NIL_TEAM_ID;
 
 export interface BracketSide {
   /** The team once it is known; the slot's words while it is a slot ("Seed 2", "Semifinal 1 winner"). */
@@ -43,7 +43,7 @@ function side(g: Game, which: 'home' | 'away', teams: readonly TeamRef[], winner
   const played = g.status === 'completed' || g.status === 'submitted';
   const score = which === 'home' ? g.homeScore : g.awayScore;
   return {
-    name: team?.name ?? (slot || 'TBD'),
+    name: teamOrSlotWords(team?.name, placeholder),
     slot: team && slot ? slot : null,
     score: played && score != null ? score : null,
     won: !!winnerId && winnerId === id,
@@ -59,7 +59,7 @@ export function bracketSides(g: Game, teams: readonly TeamRef[]): { away: Bracke
 }
 
 /** A game with a result in (played, waiting on review, or forfeited) — a round band's "2 of 2 played". */
-export const isPlayedBracketGame = (g: Pick<Game, 'status'>) =>
+const isPlayedBracketGame = (g: Pick<Game, 'status'>) =>
   g.status === 'completed' || g.status === 'submitted' || g.status === 'forfeit';
 
 export const playedCount = (games: readonly Pick<Game, 'status'>[]) => games.filter(isPlayedBracketGame).length;

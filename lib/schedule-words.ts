@@ -16,7 +16,7 @@ import { formatTime, joinWithAnd, pluralize as count } from './utils.ts';
 import { GAME_DAY_LIST, GAME_STATE_WORD } from './game-day-words.ts';
 import { TEAMS_WORDS } from './registration-words.ts';
 import { formatShortWeekdayDate } from './timezone.ts';
-import { fanSlotLabel, ordinal } from './playoff-bracket.ts';
+import { fanSlotLabel, ordinal, parseStandingsSlot } from './playoff-bracket.ts';
 import type { ScheduleStage, ScheduleState, ScheduleView } from './schedule-day.ts';
 
 /** A division's (or a team's) possessive: "U13's", but "U11 Girls'" — a name ending in s takes the apostrophe alone. */
@@ -426,6 +426,8 @@ export const MOVE_WORDS = {
   moved: (when: string, where: string) => `Moved to ${[when, where].filter(Boolean).join(' · ')}`,
   /** After Undo (no action): "Put back at 5:00 p.m. · Diamond 4"; another day, "Put back on Sat, Oct 10, 5:00 p.m. …". */
   putBack: (when: string, where: string, otherDay: boolean) => `Put back ${otherDay ? 'on' : 'at'} ${[when, where].filter(Boolean).join(' · ')}`,
+  /** Undo found the game somewhere else (moved again, or by someone else): it is left where it is. */
+  movedSince: 'That game has moved since — nothing was put back.',
   cancelled: 'Game cancelled',
   backOn: 'Game back on',
   undo: 'Undo',
@@ -436,7 +438,6 @@ export const MOVE_WORDS = {
   moveTells: 'Move · tells both teams',
   sheetCaption: (division: string, stage: string, when: string, where: string) =>
     [division, stage, when ? `now ${when}` : '', where].filter(Boolean).join(' · '),
-  nextFree: (time: string) => `Use the next free time, ${time}`,
 } as const;
 
 // ── THE RAIN DELAY (Stage 3 build, Part 6 — S5, A42; /marketing 2026-10-09) ───────────────────────────────────────
@@ -522,9 +523,14 @@ export const RAIN_DELAY_WORDS = {
 export function slotWords(placeholder: string | null | undefined): string {
   const p = (placeholder ?? '').trim();
   if (!p) return '';
-  const seed = /^Seed #(\d+)$/.exec(p);
-  return seed ? `Seed ${seed[1]}` : fanSlotLabel(p);
+  // Only a slot that is exactly "Seed #N" reads "Seed N"; anything else keeps its own words.
+  const slot = parseStandingsSlot(p);
+  return slot?.kind === 'seed' && p === `Seed #${slot.place}` ? `Seed ${slot.place}` : fanSlotLabel(p);
 }
+
+/** A side of a game in words: the team's name once it is known, else the slot it waits on, else "TBD". */
+export const teamOrSlotWords = (name: string | null | undefined, placeholder: string | null | undefined) =>
+  name?.trim() || slotWords(placeholder) || 'TBD';
 
 // ── THE BRACKET (Stage 3 build, Part 7 — S6, A38; /marketing 2026-10-09) ─────────────────────────────────────────
 

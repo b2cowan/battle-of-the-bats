@@ -22,7 +22,7 @@ import { ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Plus } from 'lu
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, pointerWithin, type DragEndEvent, type DragMoveEvent } from '@dnd-kit/core';
 import type { Game, Division, Venue, Tournament, Team } from '@/lib/types';
 import { resolveGameTiming, buildConflictMap, checkVenueConflict, type ConflictInfo, type ConflictResult } from '@/lib/schedule-conflict';
-import { isRefusedOverlap, overlapGameOf, overlapOtherName, overlapOtherTimes, type OverlapGame } from '@/lib/tournament-overlap';
+import { isRefusedOverlap, overlapOtherName, overlapOtherTimes, overlapPool, type OverlapGame } from '@/lib/tournament-overlap';
 import { MOVE_WORDS as M, slotWords } from '@/lib/schedule-words';
 import { bracketGameLabel } from '@/lib/playoff-bracket';
 import { teamAvatarHue } from '@/lib/team-color';
@@ -298,10 +298,7 @@ export default function ScheduleTimeline({
 
   // Lightweight conflict shape for ALL games — shared by the conflict map and the
   // mobile reschedule sheet's live check.
-  const conflictGames = useMemo<OverlapGame[]>(
-    () => games.map(g => overlapGameOf(g, id => (id ? teams.find(t => t.id === id)?.name : null))),
-    [games, teams],
-  );
+  const conflictGames = useMemo<OverlapGame[]>(() => overlapPool(games, teams), [games, teams]);
 
   // Conflict map over ALL games (global) — always on, even in single-division scope.
   const conflictMap = useMemo<Map<string, ConflictInfo>>(() => {

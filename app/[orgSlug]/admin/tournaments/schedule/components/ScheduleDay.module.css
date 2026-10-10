@@ -92,6 +92,11 @@
   .arrow { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
   .scopeLabel { min-height: var(--tap-min, 44px); }
 }
+/* The narrowest phones: the pill's word names the view, so its leading icon gives the line its room (361px). */
+@media (max-width: 380px) {
+  .viewPill { padding: 0 0.6rem; }
+  .viewPill > svg:first-child { display: none; }
+}
 @media (max-width: 900px) {
   .scopeInline { display: none; }
   .scopeRow { display: flex; margin: 0 0 0.75rem; }

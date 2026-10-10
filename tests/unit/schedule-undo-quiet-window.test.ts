@@ -89,7 +89,16 @@ describe('the rain delay can be undone inside the window (S5, A42)', () => {
   test('its Undo is a writer like any other: told, and refused when its old place is taken', () => {
     const restore = route.slice(route.indexOf("if (action === 'bulk-restore')"), route.indexOf('    if (!id) {'));
     assert.match(restore, /overlapRefused\(restoreTournamentId,/);
-    assert.match(restore, /await announceScheduleChanges\(ctx\.org, restoreTournamentId,/);
+    assert.match(restore, /return announceScheduleChanges\(ctx\.org, restoreTournamentId,/);
+    assert.match(restore, /await tell\(restoredIds\);/);
     assert.match(restore, /\.eq\('status', 'cancelled'\)/, 'only a game still cancelled is put back on');
+  });
+
+  test('its Undo is all or nothing, and puts back only games still where the delay left them (/review 2026-10-09)', () => {
+    const restore = route.slice(route.indexOf("if (action === 'bulk-restore')"), route.indexOf('    if (!id) {'));
+    assert.match(restore, /row\.game_date === r\.at\.date && String\(row\.game_time \?\? ''\)\.slice\(0, 5\) === r\.at\.time/);
+    assert.match(restore, /if \(movable\.length !== restores\.length \|\| back\.length !== reinstateIds\.length\) \{/);
+    // The times that went back are told even when the un-cancel after them fails.
+    assert.match(restore, /if \(backErr\) \{ await tell\(movable\.map/);
   });
 });

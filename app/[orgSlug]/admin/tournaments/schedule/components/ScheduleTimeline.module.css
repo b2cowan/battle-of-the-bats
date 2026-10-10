@@ -562,6 +562,8 @@
   align-items: center;
   text-align: center;
 }
+/* A long venue name ellipsizes inside the pager rather than pushing past it (the layout check, 361px). */
+.fieldPagerLabel > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .mobileHint {
   margin: 0;

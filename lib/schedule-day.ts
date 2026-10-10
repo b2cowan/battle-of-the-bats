@@ -13,6 +13,7 @@
 import type { Division, Game, Tournament } from './types';
 import { resolveGameTiming } from './schedule-conflict.ts';
 import { gameWindowState } from './game-live-state.ts';
+import { addCalendarDays } from './timezone.ts';
 
 export type ScheduleView = 'day' | 'all' | 'timeline' | 'bracket';
 export type ScheduleStage = 'pool' | 'playoff';
@@ -43,10 +44,6 @@ export function scheduleStateOf(
 }
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const addDays = (day: string, n: number): string => {
-  const [y, m, d] = day.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
-};
 /** A sane cap on the event's stated span (a typo'd end date must not make a year of empty days). */
 const MAX_SPAN_DAYS = 31;
 
@@ -63,7 +60,7 @@ export function eventDays(
   const start = tournament?.startDate && DATE.test(tournament.startDate) ? tournament.startDate : null;
   const end = tournament?.endDate && DATE.test(tournament.endDate) ? tournament.endDate : start;
   if (start && end && end >= start) {
-    for (let day = start, n = 0; day <= end && n < MAX_SPAN_DAYS; day = addDays(day, 1), n++) set.add(day);
+    for (let day = start, n = 0; day <= end && n < MAX_SPAN_DAYS; day = addCalendarDays(day, 1), n++) set.add(day);
   } else if (start) {
     set.add(start);
   }
@@ -135,7 +132,7 @@ export function matchesScheduleSearch(homeName: string, awayName: string, query:
 }
 
 /** Time order: the day, then the start (an untimed game last on its day), then the field's words, then the id. */
-export function byStart(
+function byStart(
   a: Pick<Game, 'id' | 'date' | 'time'> & { field?: string },
   b: Pick<Game, 'id' | 'date' | 'time'> & { field?: string },
 ): number {

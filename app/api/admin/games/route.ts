@@ -227,7 +227,9 @@ async function tellTheReplace(
       : [];
     const { moves, dropped } = matchReplacedGames(replaced, insertedRows);
     const beforeById = new Map<string, ScheduleSnapshotRow>(moves.map(m => [m.after.id, m.before]));
-    if (dropped.length) {
+    // A pairing the draft drops is kept as a cancelled game, so its teams are told it's off. If that fails, the moves are
+    // still told — and the failure reaches us, since those games are gone with nobody told.
+    if (dropped.length) try {
       const { data: kept, error } = await supabaseAdmin.from('games').insert(dropped.map(d => ({
         tournament_id: tournamentId, division_id: d.division_id, home_team_id: d.home_team_id, away_team_id: d.away_team_id,
         game_date: d.game_date, game_time: d.game_time, duration_minutes: d.duration_minutes, location: d.location,
@@ -244,6 +246,9 @@ async function tellTheReplace(
         const at = waiting.findIndex(d => keyOf(d) === keyOf(k as Parameters<typeof keyOf>[0]));
         if (at >= 0) beforeById.set(k.id as string, waiting.splice(at, 1)[0]);
       }
+    } catch (keepErr) {
+      console.error('[games] keeping the dropped round-robin games failed (they are gone, untold):', keepErr);
+      void captureError(keepErr, { route: '/api/admin/games', method: 'POST', statusCode: 200 });
     }
     await announceScheduleChanges(org, tournamentId, beforeById);
   } catch (err) {
@@ -735,10 +740,24 @@ export const POST = withObservability(async (req: Request) => {
       );
       if (refusedDraft) return refusedDraft;
       // The replace is TOLD (Stage 3 Part 5, owner 2026-10-09): what it replaces is read BEFORE it goes.
-      const replacedRows = replaceIds.length
-        ? ((await supabaseAdmin.from('games').select(REPLACED_COLUMNS).in('id', replaceIds)).data ?? []) as unknown as ReplacedRow[]
-        : [];
-      const { data: divisionShown } = await supabaseAdmin.from('divisions').select('schedule_visibility').eq('id', divisionId).maybeSingle();
+      const [replacedRead, { data: divisionShown }, queuedRead] = await Promise.all([
+        // The division's own games only (the RPC refuses any other id; this read never depends on it).
+        replaceIds.length ? supabaseAdmin.from('games').select(REPLACED_COLUMNS).eq('division_id', divisionId).in('id', replaceIds) : null,
+        supabaseAdmin.from('divisions').select('schedule_visibility').eq('id', divisionId).maybeSingle(),
+        // An alert still queued for a replaced game (moved inside the quiet window) goes with its game when the replace
+        // deletes it: its "was" — where followers last heard the game — is the move's real "before".
+        replaceIds.length ? supabaseAdmin.from('game_change_notices').select('game_id, was_date, was_time, was_location, created_at')
+          .eq('tournament_id', divRow.tournament_id).in('game_id', replaceIds).is('sent_at', null).is('superseded_at', null)
+          .order('created_at', { ascending: true }) : null,
+      ]);
+      const lastHeard = new Map<string, { was_date: string | null; was_time: string | null; was_location: string | null }>();
+      for (const q of (queuedRead?.data ?? []) as Array<{ game_id: string; was_date: string | null; was_time: string | null; was_location: string | null }>) {
+        if (!lastHeard.has(q.game_id)) lastHeard.set(q.game_id, q); // the earliest queued alert holds the oldest "was"
+      }
+      const replacedRows = ((replacedRead?.data ?? []) as unknown as ReplacedRow[]).map(r => {
+        const heard = lastHeard.get(r.id);
+        return heard ? { ...r, game_date: heard.was_date, game_time: heard.was_time, location: heard.was_location } : r;
+      });
       const { data: result, error: rpcError } = await supabase.rpc('replace_division_round_robin_games', {
         p_division_id: divisionId,
         p_replace_ids: replaceIds,
@@ -1179,22 +1198,35 @@ export const PATCH = withObservability(async (req: Request) => {
       if (restoreWrongOrg) return restoreWrongOrg;
       if (await isTournamentLocked(restoreTournamentId)) return tournamentLockedResponse();
 
+      // Each game goes back to `date`/`time`, and only if it is still `at` the place the rain delay left it.
+      const isDay = (v: unknown) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+      const isClock = (v: unknown) => typeof v === 'string' && /^\d{2}:\d{2}/.test(v);
       const restores = (Array.isArray(body.restores) ? body.restores : [])
-        .filter((r: any) => typeof r?.id === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r?.date ?? '') && /^\d{2}:\d{2}/.test(r?.time ?? ''))
-        .map((r: any) => ({ id: r.id as string, date: r.date as string, time: (r.time as string).slice(0, 5) }));
+        .filter((r: any) => typeof r?.id === 'string' && isDay(r?.date) && isClock(r?.time) && isDay(r?.at?.date) && isClock(r?.at?.time))
+        .map((r: any) => ({ id: r.id as string, date: r.date as string, time: (r.time as string).slice(0, 5), at: { date: r.at.date as string, time: (r.at.time as string).slice(0, 5) } }));
       const reinstateIds: string[] = Array.isArray(body.reinstateIds)
         ? body.reinstateIds.filter((x: unknown): x is string => typeof x === 'string') : [];
       if (restores.length === 0 && reinstateIds.length === 0) {
         return new Response(JSON.stringify({ error: 'Nothing to put back.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+      // A day's games, never a flood: the rain delay itself moves one day.
+      if (restores.length + reinstateIds.length > 1000) {
+        return new Response(JSON.stringify({ error: 'Too many games to put back at once.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
       }
       const ids = [...new Set([...restores.map((r: { id: string }) => r.id), ...reinstateIds])];
       const { data: beforeRows, error: beforeErr } = await supabaseAdmin
         .from('games').select(`id, ${SCHEDULE_SNAPSHOT_COLUMNS}`).eq('tournament_id', restoreTournamentId).in('id', ids);
       if (beforeErr) throw beforeErr;
       const beforeById = new Map(((beforeRows ?? []) as Array<ScheduleSnapshotRow & { id: string }>).map(r => [r.id, r]));
-      const movable = restores.filter((r: { id: string }) => beforeById.get(r.id)?.status === 'scheduled');
+      // All or nothing, as the rain delay was: a game moved, played or cancelled since (a second admin, a stale Undo)
+      // refuses the whole Undo rather than putting back part of the day.
+      const stillDelayed = (r: { id: string; at: { date: string; time: string } }) => {
+        const row = beforeById.get(r.id);
+        return row?.status === 'scheduled' && row.game_date === r.at.date && String(row.game_time ?? '').slice(0, 5) === r.at.time;
+      };
+      const movable = restores.filter(stillDelayed);
       const back = reinstateIds.filter(rid => beforeById.get(rid)?.status === 'cancelled');
-      if (movable.length === 0 && back.length === 0) {
+      if (movable.length !== restores.length || back.length !== reinstateIds.length) {
         return new Response(JSON.stringify({ error: 'Those games have changed since — nothing was put back.' }), { status: 409, headers: { 'Content-Type': 'application/json' } });
       }
       const refusedRestore = await overlapRefused(restoreTournamentId, [
@@ -1210,14 +1242,19 @@ export const PATCH = withObservability(async (req: Request) => {
         });
         if (rpcErr) throw rpcErr;
       }
+      const tell = (gids: Iterable<string>) => {
+        const told = new Set(gids);
+        return announceScheduleChanges(ctx.org, restoreTournamentId, new Map([...beforeById].filter(([gid]) => told.has(gid))));
+      };
       if (back.length) {
         const { error: backErr } = await supabaseAdmin.from('games').update({ status: 'scheduled' })
           .in('id', back).eq('tournament_id', restoreTournamentId).eq('status', 'cancelled');
-        if (backErr) throw backErr;
+        // The times already went back: those are told even when the un-cancel fails.
+        if (backErr) { await tell(movable.map((r: { id: string }) => r.id)); throw backErr; }
       }
       // The same telling as every writer; game-day reminders follow the times put back.
       const restoredIds = new Set<string>([...movable.map((r: { id: string }) => r.id), ...back]);
-      await announceScheduleChanges(ctx.org, restoreTournamentId, new Map([...beforeById].filter(([gid]) => restoredIds.has(gid))));
+      await tell(restoredIds);
       const crossProgram = await clashReportForTournamentGames(ctx.org, [...restoredIds]);
       return new Response(JSON.stringify({ ok: true, restored: movable.length, reinstated: back.length, crossProgram }), {
         status: 200, headers: { 'Content-Type': 'application/json' },

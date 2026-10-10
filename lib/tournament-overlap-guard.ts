@@ -37,7 +37,7 @@ export interface ProposedGameRow {
 }
 
 /** The columns that place a game in time and space: a write that touches none of them can't make an overlap. */
-export const PLACING_COLUMNS = [
+const PLACING_COLUMNS = [
   'game_date', 'game_time', 'duration_minutes', 'diamond_id', 'venue_facility_id', 'location', 'schedule_facility_lane_id', 'status',
 ] as const;
 export const placesAGame = (updates: Record<string, unknown>) => PLACING_COLUMNS.some(c => c in updates);
@@ -55,6 +55,25 @@ async function readAll<T>(page: (from: number, to: number) => PromiseLike<{ data
   }
 }
 
+/** The stored value a proposed column is compared with (a time is stored "14:00:00" and proposed "14:00"). */
+const placingValue = (column: (typeof PLACING_COLUMNS)[number], v: unknown) =>
+  v == null || v === '' ? null : column === 'game_time' ? String(v).slice(0, 5) : v;
+
+/**
+ * Whether a write moves this game in time or space: a new game always does; a stored one when a placing column it names
+ * differs from the stored value. A row that leaves its placement as it was is never re-judged — so a notes-only save,
+ * or a generator re-saving a game it kept, never trips on an overlap that predates the rule (the game window's own
+ * rule: it holds only when the edit places the game).
+ */
+export function changesPlacement(proposed: ProposedGameRow, stored: ProposedGameRow | undefined): boolean {
+  if (!stored) return true;
+  // On a picked diamond the location is its display words, re-derived on every save (a renamed venue, a legacy dash):
+  // the diamond's ids say whether it moved. Only a typed place is its words.
+  const picked = !!(proposed.venue_facility_id ?? stored.venue_facility_id ?? proposed.diamond_id ?? stored.diamond_id);
+  return PLACING_COLUMNS.some(c => proposed[c] !== undefined && !(c === 'location' && picked)
+    && placingValue(c, proposed[c]) !== placingValue(c, stored[c]));
+}
+
 /**
  * The refusal for these placements, or null. `removedIds` are games the same write deletes (they free their diamonds).
  * New games may carry any id the caller likes (`new:0`, …) — it only names them inside the batch.
@@ -65,24 +84,14 @@ export async function tournamentOverlapRefusal(
   opts: { removedIds?: Iterable<string> } = {},
 ): Promise<{ status: 409; body: { error: string; code: 'overlap'; gameId: string; otherGameId: string } } | null> {
   if (!proposedRows.length) return null;
-  const [games, divisionsRes, tournamentRes, venuesRes, facilitiesRes, lanesRes] = await Promise.all([
+  // What the check needs: the games as they stand, and the length rules (division, then tournament).
+  const [games, divisionsRes, tournamentRes] = await Promise.all([
     readAll<ProposedGameRow & { id: string }>((a, b) => supabaseAdmin.from('games').select(GAME_COLUMNS)
       .eq('tournament_id', tournamentId).order('id').range(a, b)),
     supabaseAdmin.from('divisions').select('id, name, settings').eq('tournament_id', tournamentId),
     supabaseAdmin.from('tournaments').select('id, sport, settings').eq('id', tournamentId).maybeSingle(),
-    supabaseAdmin.from('diamonds').select('id, name').eq('tournament_id', tournamentId),
-    supabaseAdmin.from('venue_facilities').select('id, name').eq('tournament_id', tournamentId),
-    supabaseAdmin.from('schedule_facility_lanes').select('id, label').eq('tournament_id', tournamentId),
   ]);
-  for (const r of [divisionsRes, tournamentRes, venuesRes, facilitiesRes, lanesRes]) if (r.error) throw r.error;
-
-  const teamIds = [...new Set([...games, ...proposedRows].flatMap(g => [g.home_team_id, g.away_team_id]).filter((x): x is string => !!x))];
-  const teamName = new Map<string, string>();
-  for (let i = 0; i < teamIds.length; i += 200) {
-    const { data, error } = await supabaseAdmin.from('teams').select('id, name').in('id', teamIds.slice(i, i + 200));
-    if (error) throw error;
-    for (const t of data ?? []) teamName.set(t.id as string, t.name as string);
-  }
+  for (const r of [divisionsRes, tournamentRes]) if (r.error) throw r.error;
 
   const toOverlapGame = (g: ProposedGameRow, id: string): OverlapGame => ({
     id,
@@ -97,19 +106,22 @@ export async function tournamentOverlapRefusal(
     durationMinutes: g.duration_minutes ?? null,
     isPlayoff: g.is_playoff ?? false,
     bracketCode: g.bracket_code ?? null,
-    homeName: g.home_team_id ? teamName.get(g.home_team_id) ?? null : null,
-    awayName: g.away_team_id ? teamName.get(g.away_team_id) ?? null : null,
+    homeName: null,
+    awayName: null,
     homePlaceholder: g.home_placeholder ?? null,
     awayPlaceholder: g.away_placeholder ?? null,
   });
 
   const stored = new Map(games.map(g => [g.id, g]));
-  // A proposed row over a stored game keeps every column it does not name.
-  const merged = proposedRows.map((p, i) => {
+  // A proposed row over a stored game keeps every column it does not name; one that leaves its placement as it was
+  // stays in the pool as stored instead of being judged.
+  const merged = proposedRows.flatMap((p, i) => {
     const before = p.id ? stored.get(p.id) : undefined;
+    if (!changesPlacement(p, before)) return [];
     const defined = Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined)) as ProposedGameRow;
-    return { row: { ...(before ?? {}), ...defined }, id: before ? before.id : (p.id || `new:${i}`) };
+    return [{ row: { ...(before ?? {}), ...defined }, id: before ? before.id : (p.id || `new:${i}`) }];
   });
+  if (!merged.length) return null;
 
   const divisions = (divisionsRes.data ?? []) as unknown as Division[];
   const tournament = (tournamentRes.data ?? null) as unknown as Tournament | null;
@@ -122,20 +134,30 @@ export async function tournamentOverlapRefusal(
   });
   if (!found) return null;
 
-  // The surface in the game's own words: its diamond, else its venue, else its temporary lane, else what was typed.
+  // A refusal names the other game ("the U11 final", "Storm vs Mustangs") and the surface in the game's own words —
+  // its diamond, else its venue, else its temporary lane, else what was typed. Read only for the refusal.
   const g = found.game;
-  const facility = (facilitiesRes.data ?? []).find(f => f.id === g.venueFacilityId)?.name as string | undefined;
-  const venue = (venuesRes.data ?? []).find(v => v.id === g.venueId)?.name as string | undefined;
-  const lane = (lanesRes.data ?? []).find(l => l.id === g.scheduleFacilityLaneId)?.label as string | undefined;
+  const other = found.conflict.conflictingGame as OverlapGame;
+  const otherRow = stored.get(other.id) ?? merged.find(m => m.id === other.id)?.row;
+  const teamIds = [otherRow?.home_team_id, otherRow?.away_team_id].filter((x): x is string => !!x);
+  const [teamsRes, facilityRes, venueRes, laneRes] = await Promise.all([
+    teamIds.length ? supabaseAdmin.from('teams').select('id, name').eq('tournament_id', tournamentId).in('id', teamIds) : null,
+    g.venueFacilityId ? supabaseAdmin.from('venue_facilities').select('name').eq('tournament_id', tournamentId).eq('id', g.venueFacilityId).maybeSingle() : null,
+    g.venueId ? supabaseAdmin.from('diamonds').select('name').eq('tournament_id', tournamentId).eq('id', g.venueId).maybeSingle() : null,
+    g.scheduleFacilityLaneId ? supabaseAdmin.from('schedule_facility_lanes').select('label').eq('tournament_id', tournamentId).eq('id', g.scheduleFacilityLaneId).maybeSingle() : null,
+  ]);
+  const teamName = new Map((teamsRes?.data ?? []).map(t => [t.id as string, t.name as string]));
+  const named: OverlapGame = {
+    ...other,
+    homeName: otherRow?.home_team_id ? teamName.get(otherRow.home_team_id) ?? null : null,
+    awayName: otherRow?.away_team_id ? teamName.get(otherRow.away_team_id) ?? null : null,
+  };
   const noun = fieldNounFor((tournament as { sport?: string | null } | null)?.sport);
-  const words = overlapRefusalWords(found.conflict, {
-    field: facility || venue || lane || g.location?.trim() || noun,
-    noun,
-    divisions,
-    tournament,
-  });
+  const field = (facilityRes?.data?.name as string | undefined) || (venueRes?.data?.name as string | undefined)
+    || (laneRes?.data?.label as string | undefined) || g.location?.trim() || noun;
+  const words = overlapRefusalWords({ ...found.conflict, conflictingGame: named }, { field, noun, divisions, tournament });
   return {
     status: 409,
-    body: { error: `${words.lead}${words.rest}`, code: 'overlap', gameId: g.id, otherGameId: found.conflict.conflictingGame.id },
+    body: { error: `${words.lead}${words.rest}`, code: 'overlap', gameId: g.id, otherGameId: other.id },
   };
 }

@@ -131,7 +131,7 @@ export default function GameWindow({
   // ── The tournament's own overlap (A37), checked as the form changes — the rule every writer and the server read.
   // Refused on a known diamond; two matching TYPED names only warn (the field says a typed place isn't checked). ──
   const { refused: overlaps, line: overlapLine } = useOverlapLine({
-    active: editing, id: game?.id ?? '__new__', date: form.date, time: form.time, where: form.where,
+    active: editing, id: game?.id ?? '__new__', status: game?.status ?? 'scheduled', date: form.date, time: form.time, where: form.where,
     divisionId: form.divisionId || null, durationMinutes: lengthOfBox(form.durationMinutes),
     games: ctx.games, teams: ctx.teams, divisions: ctx.divisions, tournament: ctx.tournament, noun,
   });
@@ -151,12 +151,17 @@ export default function GameWindow({
       if (!id || forRef.current !== id) return;
       const f = formRef.current;
       const s = savedRef.current;
-      const patch = changesOf(f, s, { whenWhere: !holdWhenWhere, playoff: isPlayoff });
+      // A refused overlap holds the length as well as the day, start and place: the server would refuse it too.
+      const patch = changesOf(f, s, { whenWhere: !holdWhenWhere, playoff: isPlayoff, length: !refused });
       if (Object.keys(patch).length === 0) return;
       const reply = await onSave(id, patch);
       if (forRef.current !== id) return;
       // The SAVED game moves by what was sent; held fields keep their saved values.
-      const next: GameWindowForm = holdWhenWhere ? { ...f, date: s.date, time: s.time, where: s.where } : { ...f };
+      const next: GameWindowForm = {
+        ...f,
+        ...(holdWhenWhere ? { date: s.date, time: s.time, where: s.where } : {}),
+        ...(refused ? { durationMinutes: s.durationMinutes } : {}),
+      };
       savedRef.current = next;
       setSaved(next);
       if ('date' in patch || 'venueId' in patch || 'time' in patch) setCrossLine(reply.crossLine);
@@ -164,7 +169,7 @@ export default function GameWindow({
     });
     chain.current = run;
     return run;
-  }, [game?.id, holdWhenWhere, isPlayoff, onSave]);
+  }, [game?.id, holdWhenWhere, refused, isPlayoff, onSave]);
   const sig = JSON.stringify(form);
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: canWrite && !creating, loading: false, sig, blocked: null, write, failText: 'Couldn’t save',
@@ -202,12 +207,17 @@ export default function GameWindow({
       return true;
     }
     try {
-      const f = formRef.current;
-      const reply = await onSave(game.id, changesOf(f, savedRef.current, { whenWhere: true, playoff: isPlayoff }));
-      const next = { ...f };
-      savedRef.current = next;
-      setSaved(next);
-      setCrossLine(reply.crossLine);
+      // Through the window's one-save-at-a-time chain, after any autosave already sent (never beside it).
+      const run = chain.current.catch(() => {}).then(async () => {
+        const f = formRef.current;
+        const reply = await onSave(game.id, changesOf(f, savedRef.current, { whenWhere: true, playoff: isPlayoff }));
+        const next = { ...f };
+        savedRef.current = next;
+        setSaved(next);
+        setCrossLine(reply.crossLine);
+      });
+      chain.current = run;
+      await run;
       return true;
     } catch (e) {
       setLeaveError(e instanceof Error ? e.message : 'Couldn’t save');

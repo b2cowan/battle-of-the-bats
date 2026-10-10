@@ -24,7 +24,8 @@ import { Callout, ClubRow, ClubRowList, RowAction } from '@/components/admin/kit
 import { CheckChoice, screenParts } from '@/components/admin/tournament/ScreenParts';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { formatTime } from '@/lib/utils';
-import { tournamentToday } from '@/lib/timezone';
+import { addCalendarDays, tournamentToday } from '@/lib/timezone';
+import { NIL_TEAM_ID } from '@/lib/schedule-change-classify';
 import { planBulkReschedule, SHIFT_PRESET_MINUTES, type PlannedShift, type ReschedulableGame } from '@/lib/schedule-shift';
 import { gameLengthMinutes } from '@/lib/booking-length';
 import { bracketGameLabel } from '@/lib/playoff-bracket';
@@ -32,11 +33,12 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { overlapGameOf, overlapRefusalWords, refusedOverlapsById } from '@/lib/tournament-overlap';
 import { clashLine, clashLineText } from '@/lib/venue-clash-words';
 import type { ClashFinding } from '@/lib/venue-clash';
-import { RAIN_DELAY_WORDS as RW, SCHEDULE_DAY_WORDS as W, rainDelayMove, slotWords } from '@/lib/schedule-words';
+import { RAIN_DELAY_WORDS as RW, SCHEDULE_DAY_WORDS as W, rainDelayMove, shiftWords, teamOrSlotWords } from '@/lib/schedule-words';
 import type { Game, Team, Division, Tournament, Venue, OrgPlan } from '@/lib/types';
 import rd from './RainDelay.module.css';
 
-const NIL_UUID = '00000000-0000-0000-0000-000000000000';
+/** A club line belongs to a game at a proposed time: one found for another push amount never shows on this one. */
+const clubKey = (id: string, to: { date: string; time: string }) => `${id}@${to.date}T${to.time}`;
 
 /** What the rain delay did, for the page's notice and its Undo. */
 export interface RainDelayDone {
@@ -71,13 +73,6 @@ interface ShiftDayModalProps {
   onFinished: (done: RainDelayDone) => void;
 }
 
-/** 'YYYY-MM-DD' + N calendar days, as a 'YYYY-MM-DD' string. */
-function addDaysStr(dateStr: string, days: number): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
-  if (!m) return dateStr;
-  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + days));
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-}
 function weekdayName(dateStr: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
   return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-CA', { weekday: 'long', timeZone: 'UTC' }) : 'that day';
@@ -85,19 +80,13 @@ function weekdayName(dateStr: string): string {
 /** The announcement's lead-in for a day that isn't today ("For tomorrow, "). */
 function dayContextPhrase(dateStr: string, today: string): string {
   if (dateStr === today) return '';
-  if (dateStr === addDaysStr(today, 1)) return 'For tomorrow, ';
+  if (dateStr === addCalendarDays(today, 1)) return 'For tomorrow, ';
   return `For ${weekdayName(dateStr)}, `;
-}
-/** "1 hour 30 minutes" — the prefilled message's own duration words. */
-function humanDuration(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return [h ? `${h} hour${h !== 1 ? 's' : ''}` : '', m ? `${m} minute${m !== 1 ? 's' : ''}` : ''].filter(Boolean).join(' ') || '0 minutes';
 }
 /** Prefill an editable day-of message from what actually changed (kept from today's tool). */
 function buildAnnouncementDraft(shifted: number, cancelled: number, shiftMinutes: number, dayCtx: string): { title: string; body: string } {
   const clauses: string[] = [];
-  if (shifted > 0) clauses.push(`${shifted} game${shifted !== 1 ? 's have' : ' has'} been pushed back ${humanDuration(shiftMinutes)}`);
+  if (shifted > 0) clauses.push(`${shifted} game${shifted !== 1 ? 's have' : ' has'} been pushed back ${shiftWords(shiftMinutes)}`);
   if (cancelled > 0) clauses.push(`${cancelled} game${cancelled !== 1 ? 's have' : ' has'} been cancelled`);
   const core = clauses.length ? clauses.join(', ') : 'the schedule has changed';
   const sentence = dayCtx ? `${dayCtx}${core}.` : `${core.charAt(0).toUpperCase()}${core.slice(1)}.`;
@@ -190,7 +179,7 @@ export default function ShiftDayModal({
       if (!g?.venueId) return [];
       const division = divisions.find(d => d.id === g.divisionId);
       return [{
-        key: g.id, date: s.to.date, time: s.to.time, venueId: g.venueId, venueFacilityId: g.venueFacilityId ?? null,
+        key: clubKey(g.id, s.to), date: s.to.date, time: s.to.time, venueId: g.venueId, venueFacilityId: g.venueFacilityId ?? null,
         durationMinutes: gameLengthMinutes(g.durationMinutes, division?.settings?.game_duration_minutes, tournament.settings?.game_duration_minutes),
       }];
     });
@@ -208,7 +197,7 @@ export default function ShiftDayModal({
   }, [canCheckClub, plan, games, divisions, tournament, orgQuery]);
 
   const team = (id?: string | null, placeholder?: string | null) =>
-    (id && id !== NIL_UUID ? nameOfTeam(id) : null) || slotWords(placeholder) || 'TBD';
+    teamOrSlotWords(id && id !== NIL_TEAM_ID ? nameOfTeam(id) : null, placeholder);
   const fieldWords = (g: Game) => {
     const { name, sublabel } = getVenueLabel(g);
     return sublabel && sublabel !== name ? sublabel : name;
@@ -357,14 +346,15 @@ export default function ShiftDayModal({
       {visibleGames.length === 0 ? (
         <p className={rd.empty}>{RW.noMatch}</p>
       ) : (
-        <ClubRowList label={dayLabel}>
+        <ClubRowList inset label={dayLabel}>
           {visibleGames.map(g => {
             const isCancel = cancelling.has(g.id);
             const to = shiftToById.get(g.id);
             const flagged = !!g.bracketCode && violationCodes.has(g.bracketCode);
             const refusal = refusals.get(g.id);
-            const club = !isCancel && clubFindings[g.id]?.length
-              ? clashLineText(clashLine(clubFindings[g.id], {
+            const found = to ? clubFindings[clubKey(g.id, to)] : undefined;
+            const club = !isCancel && found?.length
+              ? clashLineText(clashLine(found, {
                 sport: tournament.sport, venueName: venues.find(v => v.id === g.venueId)?.name ?? '',
                 facilityName: g.venueFacilityId ? venues.find(v => v.id === g.venueId)?.facilities?.find(f => f.id === g.venueFacilityId)?.name ?? null : null,
               }))

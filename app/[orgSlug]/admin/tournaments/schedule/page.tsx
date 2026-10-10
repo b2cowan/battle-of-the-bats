@@ -100,6 +100,9 @@ export default function AdminSchedulePage() {
   // Every move ends in a notice with Undo (A36) — the browser session's, like the location resolver's: no new data.
   const [notice, setNotice] = useState<{ key: number; message: string; action?: { label: string; onAction: () => void } } | null>(null);
   const say = (message: string, action?: { label: string; onAction: () => void }) => setNotice({ key: Date.now(), message, action });
+  // The games as they stand, for an Undo pressed after a re-read (its closure's copy is older).
+  const gamesRef = useRef(games);
+  useEffect(() => { gamesRef.current = games; }, [games]);
   // A move on the timeline that lands on another of the club's bookings: 6a's amber line, above the grid (S4).
   const [crossNote, setCrossNote] = useState<ClashLine | null>(null);
   // The rain delay's Undo after a posted message asks first (the message stays posted).
@@ -315,6 +318,16 @@ export default function AdminSchedulePage() {
     say(PW.done(divisions.filter(d => ids.includes(d.id)).map(d => d.name), emailed));
   }
 
+  /** One division's games off the public schedule — Unpublish's request, and each of Unpublish all's. */
+  function unpublishDivision(divisionId: string): Promise<Response> {
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    return fetch(`/api/admin/divisions${orgQuery}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set-visibility', data: { id: divisionId, scheduleVisibility: 'unpublished' } }),
+    });
+  }
+
   function handleUnpublish(divisionId: string) {
     const name = divisions.find(d => d.id === divisionId)?.name ?? '';
     setFeedback({
@@ -324,12 +337,7 @@ export default function AdminSchedulePage() {
       type: 'warning',
       confirmText: W.unpublishConfirm(name),
       onConfirm: async () => {
-        const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-        const res = await fetch(`/api/admin/divisions${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'set-visibility', data: { id: divisionId, scheduleVisibility: 'unpublished' } }),
-        });
+        const res = await unpublishDivision(divisionId);
         // F71: a refusal used to be dropped AND the division shown unpublished anyway.
         if (await refusedWrite(res, SCHEDULE_REFUSAL_TITLE.unpublish, SCHEDULE_REFUSAL.divisionFallback)) return;
         setDivisions(prev => prev.map(g => g.id === divisionId ? { ...g, scheduleVisibility: 'unpublished' } : g));
@@ -348,14 +356,8 @@ export default function AdminSchedulePage() {
       type: 'warning',
       confirmText: W.unpublishAllConfirm(published.length),
       onConfirm: async () => {
-        const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-        const replies = await Promise.all(published.map(g =>
-          fetch(`/api/admin/divisions${orgQuery}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'set-visibility', data: { id: g.id, scheduleVisibility: 'unpublished' } }),
-          }).catch(() => null) // a dropped connection: that division is still published, the rest still count
-        ));
+        // A dropped connection: that division is still published, the rest still count.
+        const replies = await Promise.all(published.map(g => unpublishDivision(g.id).catch(() => null)));
         // F71: one request per division, so it can partly succeed. Show unpublished only what the server
         // unpublished; name the divisions still published, with the server's reason.
         const went = (r: Response | null) => !!r && (r.ok || isSandboxRefusal(r));
@@ -506,7 +508,7 @@ export default function AdminSchedulePage() {
       };
       const otherDay = (after.date ?? '') !== (before.date ?? '');
       const w = placeWords(after, otherDay);
-      say(MW.moved(w.when, w.where), { label: MW.undo, onAction: () => { void putBack(gameId, before, otherDay); } });
+      say(MW.moved(w.when, w.where), { label: MW.undo, onAction: () => { void putBack(gameId, before, after, otherDay); } });
     }
     return reply;
   }
@@ -525,8 +527,16 @@ export default function AdminSchedulePage() {
     const where = resolveGameFieldLabel({ venueId: p.venueId ?? undefined, venueFacilityId: p.venueFacilityId ?? undefined, location: p.location ?? '' }, venues);
     return { when, where };
   }
-  /** Undo: the game back where it was — the same writer, so the overlap rule holds (its old place may be taken). */
-  async function putBack(gameId: string, before: ReturnType<typeof placeOf>, otherDay: boolean) {
+  /** Undo: the game back where it was — the same writer, so the overlap rule holds (its old place may be taken) — and
+   *  only while it is still where this move left it: a second move, or another admin's, is never undone by this one. */
+  async function putBack(gameId: string, before: ReturnType<typeof placeOf>, after: ReturnType<typeof placeOf>, otherDay: boolean) {
+    const now = gamesRef.current.find(g => g.id === gameId);
+    const here = now ? placeOf(now) : null;
+    if (!here || here.date !== after.date || here.time !== (after.time ? after.time.slice(0, 5) : null)
+      || (here.venueFacilityId ?? null) !== (after.venueFacilityId ?? null) || (here.venueId ?? null) !== (after.venueId ?? null)) {
+      say(MW.movedSince);
+      return;
+    }
     try {
       await saveGameFields(gameId, {
         ...(before.date ? { date: before.date } : {}), ...(before.time ? { time: before.time } : {}),
@@ -557,6 +567,8 @@ export default function AdminSchedulePage() {
     } catch (e) {
       setGames(prev => prev.map(x => (x.id === gameId ? g : x)));
       setFeedback({ isOpen: true, title: SCHEDULE_REFUSAL_TITLE.saveGame, message: e instanceof Error ? e.message : SCHEDULE_REFUSAL.gameFallback, type: 'warning' });
+      // The copy put back was taken before any question: the schedule as it stands now replaces it.
+      void reloadGames();
     }
   }
   /** The rain delay is done (posted or skipped): the notice says what changed, with Undo for the whole batch (A42). */
@@ -575,7 +587,8 @@ export default function AdminSchedulePage() {
       body: JSON.stringify({
         action: 'bulk-restore',
         tournamentId,
-        restores: done.shifts.map(sh => ({ id: sh.id, date: sh.from.date, time: sh.from.time })),
+        // Back to where each game was — and only if it is still where the delay put it.
+        restores: done.shifts.map(sh => ({ id: sh.id, date: sh.from.date, time: sh.from.time, at: sh.to })),
         reinstateIds: done.cancelIds,
       }),
     });
@@ -1155,8 +1168,20 @@ export default function AdminSchedulePage() {
     position: GW.position(stepAt + 1, stepOrder.length),
     positionWide: GW.positionWide(GW.position(stepAt + 1, stepOrder.length), stepScope),
   } : undefined;
-  const askMove = useCallback((game: Game, near: boolean) => new Promise<boolean>(answer => setMoveAsk({ game, near, answer })), []);
-  const answerMove = (move: boolean) => { moveAsk?.answer(move); setMoveAsk(null); };
+  // One question at a time, and it never hangs: a second question answers the first "no".
+  const moveAskRef = useRef<{ game: Game; near: boolean; answer: (move: boolean) => void } | null>(null);
+  const askMove = useCallback((game: Game, near: boolean) => new Promise<boolean>(answer => {
+    moveAskRef.current?.answer(false);
+    const ask = { game, near, answer };
+    moveAskRef.current = ask;
+    setMoveAsk(ask);
+  }), []);
+  const answerMove = (move: boolean) => { moveAskRef.current?.answer(move); moveAskRef.current = null; setMoveAsk(null); };
+  // The game went away under the question (another admin deleted it): that is a "no".
+  useEffect(() => {
+    if (moveAsk && !games.some(g => g.id === moveAsk.game.id)) answerMove(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [games, moveAsk]);
 
   // ── Tools: its tools by name, then its two acts (A34 as amended; A44: a plan lock in words, never a bare padlock) ──
   const tPlusHref = orgSlug ? tournamentPlusPanelHref(orgSlug) : '#';

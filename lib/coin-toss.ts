@@ -8,13 +8,15 @@
  * name a different tie. It ranks with the engine itself (`computeTournamentStandings`); it never ranks on its own.
  *
  * A place is what a playoff slot reads: a "Seed #N" slot takes the division table's Nth team, an "Nth Pool X" slot
- * the pool table's Nth team — the same two rules `resolveAndFillPlayoffSeeds` (lib/db.ts) fills the bracket by.
+ * the pool table's Nth team — read by `parseStandingsSlot`, the grammar `resolveAndFillPlayoffSeeds` (lib/db.ts)
+ * fills the bracket by.
  *
  * Pure: no React, no reads.
  */
 import { computeTournamentStandings, resolveTieBreakers, type StandingsGameInput, type StandingsTeamInput } from './tie-breakers.ts';
 import type { PlayoffConfig, TournamentSettings } from './types';
 import { formatPoolName } from './utils.ts';
+import { parseStandingsSlot, samePoolName } from './playoff-bracket.ts';
 
 export interface CoinTossDivision {
   id: string;
@@ -47,7 +49,6 @@ export interface PendingToss {
 }
 
 const STARTED = new Set(['submitted', 'completed', 'forfeit', 'cancelled']);
-const POOL_SLOT = /^(\d+)\w+ Pool (.+)$/;
 
 /** Every coin toss still owed in the tournament, by division in the order given. */
 export function pendingCoinTosses(input: {
@@ -74,15 +75,15 @@ export function pendingCoinTosses(input: {
       const poolRows = pool ? rows.filter(r => r.poolId === pool.id) : [];
       const poolPlaces = pool ? tied.map(r => poolRows.indexOf(r) + 1) : [];
 
-      const waitsOnPool = (ph: string) => {
-        const m = POOL_SLOT.exec(ph);
-        return !!m && !!pool && m[2] === pool.name && poolPlaces.includes(parseInt(m[1], 10));
+      const waitsOnPool = (ph: string | null | undefined) => {
+        const slot = parseStandingsSlot(ph);
+        return slot?.kind === 'pool' && !!pool && samePoolName(slot.pool, pool.name) && poolPlaces.includes(slot.place);
       };
-      const waitsOnSeed = (ph: string) => {
-        const m = /^Seed #(\d+)$/.exec(ph);
-        return !!m && seeds.includes(parseInt(m[1], 10));
+      const waitsOnSeed = (ph: string | null | undefined) => {
+        const slot = parseStandingsSlot(ph);
+        return slot?.kind === 'seed' && seeds.includes(slot.place);
       };
-      const slots = (g: CoinTossGame) => [g.homePlaceholder ?? '', g.awayPlaceholder ?? ''].map(s => s.trim());
+      const slots = (g: CoinTossGame) => [g.homePlaceholder, g.awayPlaceholder];
       const byPool = playoffGames.filter(g => slots(g).some(waitsOnPool));
       const bySeed = playoffGames.filter(g => slots(g).some(waitsOnSeed));
       // The bracket says which table it reads: pool slots when it names them, the division's seeds otherwise.

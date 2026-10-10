@@ -8,12 +8,12 @@
  *   busy            — the same TYPED place (not checked, so not refused), or a gap shorter than the buffer.
  * The club's amber line (6a) is not here: it comes from the save's own reply.
  */
-import { useCallback, useMemo, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { WhereLine } from '@/components/venue/WhereField';
 import type { Division, Game, Team, Tournament } from '@/lib/types';
 import { checkVenueConflict, resolveGameTiming, toConflictGame, type ConflictResult } from '@/lib/schedule-conflict';
 import { hasKnownPlacement } from '@/lib/venue-identity';
-import { isRefusedOverlap, overlapGameOf, overlapOtherName, overlapOtherTimes, overlapRefusalWords, type OverlapGame } from '@/lib/tournament-overlap';
+import { isRefusedOverlap, overlapOtherName, overlapOtherTimes, overlapPool, overlapRefusalWords, type OverlapGame } from '@/lib/tournament-overlap';
 import { placeOfWhere } from '@/lib/tournament-where';
 import type { WhereValue } from '@/lib/where-field';
 import { GAME_WINDOW_WORDS as G } from '@/lib/schedule-words';
@@ -22,6 +22,8 @@ export function useOverlapLine(args: {
   /** Off while the form is not being edited: nothing is checked. */
   active: boolean;
   id: string;
+  /** The game's status: a cancelled game holds no diamond, so it is never refused (the server's rule). */
+  status?: string | null;
   date: string;
   time: string;
   where: WhereValue;
@@ -35,11 +37,11 @@ export function useOverlapLine(args: {
   /** The sport's surface word ("Diamond"). */
   noun: string;
 }): { conflict: ConflictResult | null; refused: boolean; line: ReactNode } {
-  const { active, id, date, time, where, divisionId, durationMinutes, games, teams, divisions, tournament, noun } = args;
-  const nameOfTeam = useCallback((tid: string | null | undefined) => (tid ? teams.find(t => t.id === tid)?.name : null), [teams]);
-  const pool = useMemo(() => games.map(g => overlapGameOf(g, nameOfTeam)), [games, nameOfTeam]);
+  const { active, id, status, date, time, where, divisionId, durationMinutes, games, teams, divisions, tournament, noun } = args;
+  const pool = useMemo(() => overlapPool(games, teams), [games, teams]);
   const conflict = useMemo((): ConflictResult | null => {
-    if (!active || !date || !time) return null;
+    // A cancelled game holds no diamond — the server's walk skips it too.
+    if (!active || status === 'cancelled' || !date || !time) return null;
     const place = placeOfWhere(where);
     const proposed = toConflictGame({
       id, date, time, status: 'scheduled', venueId: place.venueId, venueFacilityId: place.venueFacilityId,
@@ -47,7 +49,7 @@ export function useOverlapLine(args: {
     });
     if (!hasKnownPlacement(proposed)) return null;
     return checkVenueConflict({ proposedGame: proposed, allGames: pool, divisions, tournament });
-  }, [active, id, date, time, where, divisionId, durationMinutes, pool, divisions, tournament]);
+  }, [active, id, status, date, time, where, divisionId, durationMinutes, pool, divisions, tournament]);
 
   const refused = isRefusedOverlap(conflict);
   let line: ReactNode = null;

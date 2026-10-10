@@ -216,13 +216,23 @@ export function checkVenueConflict(params: CheckConflictParams): ConflictResult 
 }
 
 /** A game paired with its resolved placement, so a scan never re-resolves the same row. */
-interface PlacedGame {
+export interface PlacedGame {
   game: ConflictGame;
   placement: VenuePlacement;
 }
 
-function toPlacedGame(game: ConflictGame): PlacedGame {
+export function toPlacedGame(game: ConflictGame): PlacedGame {
   return { game, placement: resolveVenuePlacement(game) };
+}
+
+/** `checkVenueConflict` for a walk that grows its own pool (lib/tournament-overlap.ts): every game resolved once. */
+export function checkPlacedConflict(
+  proposed: PlacedGame,
+  pool: PlacedGame[],
+  divisions: Division[],
+  tournament: Tournament | null | undefined,
+): ConflictResult | null {
+  return checkAgainstPlaced(proposed.game, proposed.placement, pool, divisions, tournament);
 }
 
 /**

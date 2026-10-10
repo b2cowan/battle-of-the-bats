@@ -12,11 +12,38 @@
  */
 
 import { useState } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { AlertCircle, RotateCcw } from 'lucide-react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { Callout } from '@/components/admin/kit/club/RepKit';
+import repKit from '@/components/admin/kit/club/RepKit.module.css';
+import { bracketGameLabel } from '@/lib/playoff-bracket';
 import type { PendingToss } from '@/lib/coin-toss';
 import { COIN_TOSS_WORDS as CT, readRefusal } from '@/lib/schedule-words';
 import styles from './CoinTossRecorder.module.css';
+
+/**
+ * The note that says a toss is owed, with its one action — on the Bracket view, at the top of Results' "Needs you", and
+ * as the dashboard's nudge: one note, so the three never word a tie differently. `named` puts the division first where
+ * the screen shows more than one ("U13 · a coin toss decides seeds 1 and 2").
+ */
+export function CoinTossNote({ toss, named = false, flush = false, onRecord }: {
+  toss: PendingToss;
+  named?: boolean;
+  /** No margin of its own, for a host that spaces its notes with `gap`. */
+  flush?: boolean;
+  onRecord: (toss: PendingToss) => void;
+}) {
+  const title = CT.title(toss.places, toss.pool);
+  return (
+    <Callout tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />} flush={flush}>
+      <b>{named ? CT.inDivision(toss.divisionName, title) : title}</b>
+      <span className={repKit.calloutSub}>{CT.body(toss.teams.map(x => x.name), toss.waits.map(w => bracketGameLabel(w.bracketCode)))}</span>
+      <div className={repKit.calloutActions}>
+        <button type="button" className="btn btn-outline" onClick={() => onRecord(toss)}>{CT.record}</button>
+      </div>
+    </Callout>
+  );
+}
 
 export default function CoinTossRecorder({ orgSlug, toss, onClose, onRecorded }: {
   orgSlug: string;

@@ -30,7 +30,7 @@ import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './
 import { planToTemplateShape } from './rep-plan-templates';
 import { blockToCircuitShape } from './rep-circuits';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
-import { resolvePlayoffWinner } from './playoff-bracket';
+import { parseStandingsSlot, resolvePlayoffWinner, samePoolName } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
 import { SELF_TOKEN_HASH_PREFIX } from './tryout-evaluator-token';
 import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabilityGrants } from './coach-capabilities';
@@ -1621,24 +1621,13 @@ export async function resolveAndFillPlayoffSeeds(
 
     const updates: Partial<Game> = {};
 
+    // The slot grammar is parseStandingsSlot's — the coin toss's waiting games read the same one.
     const resolvePlaceholder = (ph?: string) => {
-      if (!ph) return null;
-
-      if (ph.startsWith('Seed #')) {
-        const rank = parseInt(ph.replace('Seed #', ''));
-        return standings[rank - 1]?.teamId;
-      }
-
-      const match = ph.match(/(\d+)\w+ Pool (.+)/);
-      if (match) {
-        const rank = parseInt(match[1]);
-        const poolName = match[2];
-        const pool = pools.find(p => p.name === poolName);
-        const poolStandings = standings.filter(s => s.poolId === pool?.id);
-        return poolStandings[rank - 1]?.teamId;
-      }
-
-      return null;
+      const slot = parseStandingsSlot(ph);
+      if (!slot) return null;
+      if (slot.kind === 'seed') return standings[slot.place - 1]?.teamId;
+      const pool = pools.find(p => samePoolName(p.name, slot.pool));
+      return standings.filter(s => s.poolId === pool?.id)[slot.place - 1]?.teamId;
     };
 
     const hId = resolvePlaceholder(pg.homePlaceholder);

@@ -124,7 +124,8 @@ describe('a coin toss still owed (S7) — the standings engine\'s flag, read onc
   test('a bracket that reads a pool\'s table says places in the pool', () => {
     const pooled = teams.map(t => ({ ...t, poolId: 'pa' }));
     const sf = game({ id: 'sfp', bracketCode: 'SF2', awayPlaceholder: '2nd Pool A', homePlaceholder: '3rd Pool A' });
-    const div = { ...division(), pools: [{ id: 'pa', name: 'A' }, { id: 'pb', name: 'B' }] };
+    // The pool is stored as 'Pool A' and its slot says '2nd Pool A': one pool, however it is spelled.
+    const div = { ...division(), pools: [{ id: 'pa', name: 'Pool A' }, { id: 'pb', name: 'Pool B' }] };
     const [toss] = pendingCoinTosses({ divisions: [div], teams: pooled, games: [...roundRobin, sf] });
     assert.equal(toss.pool, 'A Pool');
     assert.deepEqual(toss.places, [2, 3]);
@@ -164,5 +165,18 @@ describe('the words (/marketing 2026-10-09)', () => {
     assert.equal(PUBLISH_WORDS.done(['U11', 'U13'], 8), 'Published U11 and U13 · emailed 8 teams');
     assert.equal(PUBLISH_WORDS.done(['U11'], 0), 'Published U11');
     assert.match(PUBLISH_WORDS.seesMoves(false), /Phone alerts to followers are on Tournament Plus\.$/);
+  });
+});
+
+describe('the slot grammar keeps the fill\'s old leniency (/review 2026-10-09)', () => {
+  test('a seed slot with trailing words still fills; the words keep "Seed N" for the exact slot only', async () => {
+    const { parseStandingsSlot, samePoolName } = await import('../../lib/playoff-bracket.ts');
+    const { slotWords } = await import('../../lib/schedule-words.ts');
+    assert.deepEqual(parseStandingsSlot('Seed #1 (A)'), { kind: 'seed', place: 1 });
+    assert.deepEqual(parseStandingsSlot('2nd Pool Pool A'), { kind: 'pool', place: 2, pool: 'Pool A' });
+    assert.equal(samePoolName('Pool A', 'A'), true);
+    assert.equal(samePoolName('Pool A', 'B'), false);
+    assert.equal(slotWords('Seed #3'), 'Seed 3');
+    assert.equal(slotWords('Seed #1 (A)'), 'Seed #1 (A)');
   });
 });

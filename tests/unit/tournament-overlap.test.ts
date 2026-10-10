@@ -145,3 +145,32 @@ describe('every writer refuses before its first write (A37 — fails when a new 
     assert.deepEqual(unknown, [], 'a new action that places a game must ask the overlap rule before it writes');
   });
 });
+
+describe('an unchanged placement is never re-judged (/simplify 2026-10-09: the window\'s rule, made the server\'s)', () => {
+  const stored = { id: 'g1', game_date: '2026-10-09', game_time: '16:00:00', diamond_id: 'lions', venue_facility_id: 'd2', status: 'scheduled' };
+  test('a new game always places itself', async () => {
+    const { changesPlacement } = await import('../../lib/tournament-overlap-guard.ts');
+    assert.equal(changesPlacement({ game_date: '2026-10-09' }, undefined), true);
+  });
+  test('a notes-only save, or the same time written back ("16:00" for "16:00:00"), changes nothing', async () => {
+    const { changesPlacement } = await import('../../lib/tournament-overlap-guard.ts');
+    assert.equal(changesPlacement({ id: 'g1' }, stored), false);
+    assert.equal(changesPlacement({ id: 'g1', game_time: '16:00', game_date: '2026-10-09' }, stored), false);
+  });
+  test('a new time, a new diamond, or putting a cancelled game back on does', async () => {
+    const { changesPlacement } = await import('../../lib/tournament-overlap-guard.ts');
+    assert.equal(changesPlacement({ id: 'g1', game_time: '17:00' }, stored), true);
+    assert.equal(changesPlacement({ id: 'g1', venue_facility_id: 'd3' }, stored), true);
+    assert.equal(changesPlacement({ id: 'g1', status: 'scheduled' }, { ...stored, status: 'cancelled' }), true);
+  });
+});
+
+describe('a picked diamond\'s display words are not a move (/review 2026-10-09)', () => {
+  test('a re-derived location on the same diamond changes nothing; a typed place is its words', async () => {
+    const { changesPlacement } = await import('../../lib/tournament-overlap-guard.ts');
+    const picked = { id: 'g1', game_date: '2026-10-09', game_time: '16:00:00', diamond_id: 'lions', venue_facility_id: 'd2', location: 'Lions Park - Diamond 2', status: 'scheduled' };
+    assert.equal(changesPlacement({ id: 'g1', location: 'Lions Park — Diamond 2', venue_facility_id: 'd2' }, picked), false);
+    const typed = { id: 'g2', game_date: '2026-10-09', game_time: '16:00:00', diamond_id: null, venue_facility_id: null, location: 'Away park', status: 'scheduled' };
+    assert.equal(changesPlacement({ id: 'g2', location: 'Other park' }, typed), true);
+  });
+});

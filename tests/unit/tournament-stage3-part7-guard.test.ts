@@ -54,6 +54,10 @@ describe('S7 — the coin toss is said and recorded where the seeds wait', () =>
     assert.match(dash, /<CoinTossRecorder/);
     assert.doesNotMatch(dash, /preview\/\$\{currentTournament\.slug\}\/standings/);
   });
+  it('the three say it in ONE note (/simplify 2026-10-09: never three hand-synced copies)', () => {
+    for (const file of [VIEW, RESULTS, DASHBOARD]) assert.match(readCode(file), /<CoinTossNote /, file);
+    for (const file of [VIEW, RESULTS, DASHBOARD]) assert.doesNotMatch(readCode(file), /CT\.title\(/, file);
+  });
   it('the waiting count is the rail\'s amber count — on the view pill, and on Results\' division list (never a browser list)', () => {
     assert.match(readCode(PAGE), /waiting: \{ count: tosses\.length, words: CT\.pending\(tosses\.length\) \}/);
     const results = readCode(RESULTS);
@@ -70,6 +74,11 @@ describe('S8 — one Publish window that says what publishing does', () => {
   });
   it('a refused publish says the server\'s reason', () => {
     assert.match(publish, /if \(!res\.ok\) throw new Error\(await readRefusal\(res, PW\.failed\)\);/);
+  });
+  it('the route refuses a completed tournament, and an email failure never reports a landed publish as failed (/review)', () => {
+    const route = readCode('app/api/admin/schedule-publish/route.ts');
+    assert.match(route, /if \(lockRow\?\.status === 'completed'\) return Response\.json\(\{ error: LOCKED_RESULTS \}, \{ status: 409 \}\);/);
+    assert.match(route, /return Response\.json\(\{ success: true, notified: 0, notifyFailed: true \}\);/);
   });
   it('the Tournament plan\'s email is one plain lock line', () => {
     assert.match(publish, /<PlanLockLine href=\{tournamentPlusPanelHref\(orgSlug\)\} plan=\{W\.lockedPlan\}>\{PW\.emailLocked\}<\/PlanLockLine>/);

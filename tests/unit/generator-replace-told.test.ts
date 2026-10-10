@@ -89,3 +89,21 @@ describe('the route reads what it replaces before the replace, and tells it afte
     assert.match(fn, /catch \(err\)/, 'never fails the save');
   });
 });
+
+describe('a slot draft over games that got their teams (/review 2026-10-09)', () => {
+  test('matched by the pool slots when the new game has slots only — told as a move, not a drop', () => {
+    const old = row({ id: 'oldS', home_slot_id: 'sA', away_slot_id: 'sB' });
+    const fresh = row({ id: 'newS', home_team_id: null, away_team_id: null, home_slot_id: 'sB', away_slot_id: 'sA', game_time: '13:00:00' });
+    const { moves, dropped } = matchReplacedGames([old], [fresh]);
+    assert.equal(dropped.length, 0);
+    assert.equal(moves[0]?.after.id, 'newS');
+  });
+  test('a new game is never taken twice, even when both its keys match', () => {
+    const a = row({ id: 'a', home_slot_id: 'sA', away_slot_id: 'sB' });
+    const b = row({ id: 'b', home_slot_id: 'sA', away_slot_id: 'sB' });
+    const fresh = row({ id: 'n1', home_slot_id: 'sA', away_slot_id: 'sB' });
+    const { moves, dropped } = matchReplacedGames([a, b], [fresh]);
+    assert.equal(moves.length, 1);
+    assert.equal(dropped.length, 1);
+  });
+});

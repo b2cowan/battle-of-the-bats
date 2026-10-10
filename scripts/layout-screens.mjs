@@ -190,89 +190,54 @@ async function openHelpDrawer(page) {
 }
 
 /**
- * THE TOURNAMENT SCHEDULE'S OTHER SURFACES (Admin Design Continuity slice 4c, 2026-09-27). The page
- * opens on the round robin's filtered list — on the Championship, "No games match your filters" — so
- * `admin-t-schedule` alone pictures almost none of the schedule. The timeline, the bracket, the
- * bracket editor, the two generators, the rain-delay window, the game form and the health panel
- * each sit behind a control; these gestures open them by the product's own names. Opening any of
- * them writes nothing: the generators write on their last step, the editor and the form on Save.
- * Each is tolerant of a door the fixture does not show (the entry then measures the page) — so the
- * playoff entries (timeline, bracket, bracket editor) depend on the Championship keeping BOTH stages
- * (`resolveAdminContext` in `scripts/uat-fixture-context.mjs`); without playoffs they quietly measure
- * the round robin again.
+ * THE TOURNAMENT SCHEDULE'S OTHER SURFACES (Admin Design Continuity slice 4c, 2026-09-27; re-pointed at the
+ * redesigned schedule, Tournament admin redesign Stage 3, 2026-10-09). The page opens on THE DAY (A33 — and it
+ * remembers nothing between visits), so `admin-t-schedule` pictures one day's games. The timeline, the bracket, the
+ * bracket editor, the two generators, the rain delay, the game window (Add game) and the health row each sit behind a
+ * control; these gestures open them by the product's own names. Opening any of them writes nothing: the generators
+ * write on their last step, the editor on Save, a new game on Add. A door that is not there FAILS the entry (it never
+ * quietly measures the page behind it — the old stage switch's openers did exactly that once the switch was gone).
+ * The playoff entries depend on the Championship keeping BOTH stages (`resolveAdminContext` in
+ * `scripts/uat-fixture-context.mjs`).
  */
-async function pickScheduleStage(page, word) {
-  const btn = page.locator('[role="group"][aria-label="Stage"] button:visible', { hasText: word }).first();
-  if (await btn.count() === 0 || (await btn.getAttribute('aria-pressed')) === 'true') return;
-  await btn.click();
-  // Wait on the product: the stage's own button says it is chosen.
-  await page.locator('[role="group"][aria-label="Stage"] button[aria-pressed="true"]:visible', { hasText: word })
-    .first().waitFor({ timeout: 15_000 });
+/** The view pill (Day · All games · Timeline · Bracket): a menu at a desk, a sheet on a phone. */
+async function pickTournamentScheduleView(page, label) {
+  const pill = page.locator('button[aria-label^="View:"]:visible').first();
+  await pill.waitFor({ timeout: 15_000 });
+  if ((await pill.getAttribute('aria-label'))?.startsWith(`View: ${label}`)) return;
+  await pill.click();
+  await page.locator('[role="menuitemradio"]:visible', { hasText: label }).first().click();
+  // Wait on the product: the pill names the view it now shows.
+  await page.locator(`button[aria-label^="View: ${label}"]:visible`).first().waitFor({ timeout: 15_000 });
 }
-/** List · Bracket · Timeline. Above 900 a segmented control; below it the view lives in the settings
- *  sheet behind the summary strip. */
-async function pickScheduleLayout(page, word) {
-  const seg = page.locator('[role="group"][aria-label="View"] button:visible', { hasText: word }).first();
-  if (await seg.count()) {
-    if ((await seg.getAttribute('aria-pressed')) === 'true') return;
-    await seg.click();
-    await page.locator('[role="group"][aria-label="View"] button[aria-pressed="true"]:visible', { hasText: word })
-      .first().waitFor({ timeout: 15_000 });
-  } else {
-    const strip = page.locator('button[aria-label^="View settings:"]:visible').first();
-    if (await strip.count() === 0) return;
-    if ((await strip.getAttribute('aria-label'))?.startsWith(`View settings: ${word}`)) return;
-    await strip.click();
-    const sheet = page.locator('[role="dialog"][aria-label="View settings"]');
-    await sheet.getByRole('button', { name: word, exact: true }).click();
-    await sheet.getByRole('button', { name: 'Done', exact: true }).click();
-    // The strip names the view it now shows once the sheet has closed.
-    await page.locator(`button[aria-label^="View settings: ${word}"]:visible`).first().waitFor({ timeout: 15_000 });
-  }
+/** One stage through the Filter ("Round robin" · "Playoffs"); the pill then reads "Filter, 1 on". */
+async function filterTournamentScheduleStage(page, stage) {
+  await page.locator('button[aria-haspopup="menu"]:visible', { hasText: 'Filter' }).first().click();
+  await page.locator('[role="menuitemcheckbox"]:visible', { hasText: stage }).first().click();
+  await page.keyboard.press('Escape');
+  await page.locator('button[aria-label^="Filter, "]:visible').first().waitFor({ timeout: 15_000 });
 }
-/**
- * ⚠ THE PAGE REMEMBERS ITS VIEW (`flhq-schedule-<id>` in localStorage), and the sweep keeps ONE
- * browser context per session: the first 4c sweep measured `admin-t-schedule` at 390/768 in the
- * PLAYOFF BRACKET (left there by the bracket entries at 361), and the game form in Playoffs, where
- * "Add game" is not offered. So every schedule entry states its stage and view first. Each step is
- * a no-op when the page is already there — the identity check's fresh context never moves.
- */
-async function setScheduleView(page, stage, layout) {
-  await pickScheduleStage(page, stage);
-  await pickScheduleLayout(page, layout);
-}
-/** An item of the Tools menu (desktop "Tools", phone wrench — both titled "Schedule tools"), from the
- *  round robin's list; `ready` is the window it opens (the entry's own `scope`). */
+/** A Tools row (the tools by name, A34): worded "Tools" at a desk, the bare "⋯" (named by its aria-label) on a phone.
+ *  `ready` is the window it opens (the entry's own `scope`). */
 async function openScheduleTool(page, item, ready) {
-  await setScheduleView(page, 'Round Robin', 'List');
-  const trigger = page.locator('button[title="Schedule tools"]:visible').first();
-  if (await trigger.count() === 0) return;
-  await trigger.click();
-  const row = page.locator('[role="menu"] [role="menuitem"]:visible', { hasText: item }).first();
-  if (await row.count() === 0) return;
-  await row.click();
+  await page.locator('button[aria-haspopup="menu"][aria-label="Tools"]:visible')
+    .or(page.locator('button[aria-haspopup="menu"]:visible', { hasText: 'Tools' })).first().click();
+  await page.locator('[role="menu"] [role="menuitem"]:visible', { hasText: item }).first().click();
   await page.locator(ready).first().waitFor({ state: 'attached', timeout: 15_000 });
 }
 async function openScheduleBracketEditor(page) {
-  await setScheduleView(page, 'Playoffs', 'List');
-  const btn = page.locator('button[aria-label="Edit bracket"]:visible, button[aria-label="Build bracket"]:visible').first();
-  if (await btn.count() === 0) return;
-  await btn.click();
+  await pickTournamentScheduleView(page, 'Bracket');
+  await page.locator('button:visible', { hasText: /(Edit|Build) bracket/ }).first().click();
   await page.getByText(/^Editing bracket/).first().waitFor({ timeout: 15_000 });
 }
 async function openScheduleAddGame(page) {
-  await setScheduleView(page, 'Round Robin', 'List');
-  const btn = page.locator('button[aria-label="Add game"]:visible').first();
-  if (await btn.count() === 0) return;
-  await btn.click();
-  await page.locator('.modal').first().waitFor({ state: 'attached', timeout: 15_000 });
+  await page.locator('button[aria-label="Add game"]:visible').first().click();
+  await page.locator('[role="dialog"]').first().waitFor({ state: 'attached', timeout: 15_000 });
 }
 async function openScheduleHealth(page) {
-  await setScheduleView(page, 'Round Robin', 'List');
-  const summary = page.locator('summary[aria-label^="Expand"]:visible').first();
-  if (await summary.count() === 0) return;
-  await summary.click();
-  await page.locator('details[open] > summary[aria-label^="Collapse"]').first().waitFor({ timeout: 15_000 });
+  const row = page.locator('button[aria-expanded="false"]:visible', { hasText: 'Schedule health' }).first();
+  await row.click();
+  await page.locator('button[aria-expanded="true"]:visible', { hasText: 'Schedule health' }).first().waitFor({ timeout: 15_000 });
 }
 /** The team's Payees window, from the Ledger's Tools menu (Ledger Parity round 3, D8) — and, with
  *  `firstPayee`, the first payee opened inside it. Like the import windows, a window that does not appear
@@ -1545,8 +1510,8 @@ export const SCREENS = [
     ['/settings/registration-fields', 'admin-t-settings-fields'], ['/settings/subscription', 'admin-t-settings-subscription'],
     ['/staff-kit', 'admin-t-staff-kit'], ['/summary', 'admin-t-summary'], ['/venues', 'admin-t-venues'],
   ].map(([sub, id]) => ({ id, area: 'tournaments', session: 'orgOwner', ready: 'h1',
-    // The Schedule opens on its REMEMBERED view — state it (see `setScheduleView`), a no-op when fresh.
-    ...(id === 'admin-t-schedule' ? { interact: (p) => setScheduleView(p, 'Round Robin', 'List') } : {}),
+    // The Schedule opens on the day (it remembers nothing between visits) — stated, a no-op when fresh.
+    ...(id === 'admin-t-schedule' ? { interact: (p) => pickTournamentScheduleView(p, 'Day') } : {}),
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments${sub}?tournamentId=${c.tournamentId}` })),
   // Plan & subscription's "See what … includes" panel (Admin Design Continuity slice 6 restyled it with
   // the page — every plan but Club renders the legacy billing page, on the kit).
@@ -1571,24 +1536,24 @@ export const SCREENS = [
   { id: 'admin-t-preview-schedule', area: 'tournaments', session: 'orgOwner', ready: 'h1',
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/preview/${c.tournamentSlug}/schedule`,
     route: 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]' },
-  // The schedule's surfaces behind a control (slice 4c) — see `pickScheduleStage` above. The rain
+  // The schedule's surfaces behind a control (slice 4c; Stage 3) — see `pickTournamentScheduleView` above. The rain
   // delay is offered only while a scheduled game lies ahead, so its entry pins the clock to the
   // Championship's busiest game day, first thing in the morning.
   ...[
     ['admin-t-schedule-health', openScheduleHealth],
-    ['admin-t-schedule-timeline', (p) => setScheduleView(p, 'Round Robin', 'Timeline')],
-    ['admin-t-schedule-playoff-timeline', (p) => setScheduleView(p, 'Playoffs', 'Timeline')],
-    ['admin-t-schedule-bracket', (p) => setScheduleView(p, 'Playoffs', 'Bracket')],
+    ['admin-t-schedule-timeline', (p) => pickTournamentScheduleView(p, 'Timeline')],
+    ['admin-t-schedule-playoff-timeline', async (p) => { await pickTournamentScheduleView(p, 'Timeline'); await filterTournamentScheduleStage(p, 'Playoffs'); }],
+    ['admin-t-schedule-bracket', (p) => pickTournamentScheduleView(p, 'Bracket')],
     ['admin-t-schedule-bracket-editor', openScheduleBracketEditor],
-    ['admin-t-schedule-generator', (p) => openScheduleTool(p, 'Round-Robin Generator', '[class*="generatorModal"]'), '[class*="generatorModal"]'],
-    ['admin-t-schedule-playoff-wizard', (p) => openScheduleTool(p, 'Auto-Generate Bracket', '.modal'), '.modal'],
-    ['admin-t-schedule-add-game', openScheduleAddGame, '.modal'],
+    ['admin-t-schedule-generator', (p) => openScheduleTool(p, 'Round-robin generator', '[role="dialog"]'), '[role="dialog"]'],
+    ['admin-t-schedule-playoff-wizard', (p) => openScheduleTool(p, 'Playoff generator', '.modal'), '.modal'],
+    ['admin-t-schedule-add-game', openScheduleAddGame, '[role="dialog"]'],
   ].map(([id, interact, scope]) => ({ id, area: 'tournaments', session: 'orgOwner', ready: 'h1', interact,
     ...(scope ? { scope } : {}),
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/schedule?tournamentId=${c.tournamentId}` })),
-  { id: 'admin-t-schedule-rain-delay', area: 'tournaments', session: 'orgOwner', ready: 'h1', scope: '.modal',
+  { id: 'admin-t-schedule-rain-delay', area: 'tournaments', session: 'orgOwner', ready: 'h1', scope: '[role="dialog"]',
     clock: (c) => `${c.tournamentGameDay}T07:00:00-04:00`,
-    interact: (p) => openScheduleTool(p, 'Rain delay', '.modal'),
+    interact: (p) => openScheduleTool(p, 'Rain delay', '[role="dialog"]'),
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/schedule?tournamentId=${c.tournamentId}` },
   // Data tools' two import windows (Admin Design Continuity Part B, area 3), each opened by its own item
   // under the Import menu, nothing chosen or uploaded. They share one sheet and serve Data tools alone.
