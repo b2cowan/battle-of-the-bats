@@ -519,6 +519,28 @@ export function fanRoundLabel(code: string | null | undefined): string {
 }
 
 /**
+ * A STANDINGS slot read: "Seed #2" is the division table's 2nd team, "2nd Pool A" the pool table's 2nd. Null for a
+ * Winner/Loser reference or custom text. ONE grammar for the bracket's fill (`resolveAndFillPlayoffSeeds`), the coin
+ * toss's waiting games (lib/coin-toss.ts) and the slot's words (`slotWords`) — so the three can never disagree.
+ */
+export type StandingsSlot = { kind: 'seed'; place: number } | { kind: 'pool'; place: number; pool: string };
+export function parseStandingsSlot(placeholder: string | null | undefined): StandingsSlot | null {
+  // The fill's own grammar, as lenient as it always was: a slot that starts "Seed #N", or that names "Nth Pool X".
+  const p = placeholder ?? '';
+  const seed = /^Seed #(\d+)/.exec(p);
+  if (seed) return { kind: 'seed', place: parseInt(seed[1], 10) };
+  const pool = /(\d+)\w+ Pool (.+)/.exec(p);
+  if (pool) return { kind: 'pool', place: parseInt(pool[1], 10), pool: pool[2] };
+  return null;
+}
+
+/** One pool, however a slot spells it: "Pool A" and "A" (the bracket's slot writers use both). */
+export const samePoolName = (a: string, b: string) => {
+  const bare = (x: string) => x.trim().replace(/^Pool\s+/i, '').trim().toLowerCase();
+  return bare(a) === bare(b);
+};
+
+/**
  * Numbered fan label for ONE game — bracketGameLabel plus the fan-facing
  * Final → Championship rename. "SF1" → "Semifinal 1", so a "Winner of
  * Semifinal 1" reference has a findable target on the same screen.
