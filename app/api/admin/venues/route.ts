@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { copyLibraryVenue, copyPastVenue, createTournamentVenue } from '@/lib/tournament-venue-copy';
-import { facilityKindForSport } from '@/lib/venue-facilities';
+import { facilityKindForSport, facilityNoun } from '@/lib/venue-facilities';
 import { FACILITY_TYPES, type FacilityType } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
@@ -342,22 +342,105 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     // -- update-venue -------------------------------------------------------
+    // With `facilities` (the venue's record, Tournament admin redesign Stage 5, E5): the venue AND its lanes in one save,
+    // as the club's Venue library saves its venue — rename in place, add, take out (never one with a played game; an
+    // upcoming game on a lane taken out falls back to the venue). Every write's failure is reported (the old per-lane
+    // edits failed silently, F87). `created` maps each new lane's client key to its id.
     if (action === 'update-venue' && id) {
       const { data: existing } = await supabaseAdmin
-        .from('diamonds').select('tournament_id').eq('id', id).single();
-      if (existing) {
-        const denied = scopeGuard(ctx, existing.tournament_id);
-        if (denied) return denied;
-        const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
-        if (wrongOrg) return wrongOrg;
-      }
+        .from('diamonds').select('tournament_id').eq('id', id).maybeSingle();
+      if (!existing) return NextResponse.json({ error: 'That venue isn’t here any more.' }, { status: 404 });
+      const denied = scopeGuard(ctx, existing.tournament_id);
+      if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
+      if (wrongOrg) return wrongOrg;
       const updates: Record<string, unknown> = {};
-      if (data.name    !== undefined) updates.name    = data.name;
-      if (data.address !== undefined) updates.address = data.address ?? null;
-      if (data.notes   !== undefined) updates.notes   = data.notes   ?? null;
-      const { error } = await supabaseAdmin.from('diamonds').update(updates).eq('id', id);
-      if (error) throw error;
-      return NextResponse.json({ success: true });
+      if (data.name !== undefined) {
+        if (typeof data.name !== 'string' || !data.name.trim()) return NextResponse.json({ error: 'Give the venue a name.' }, { status: 400 });
+        updates.name = data.name.trim();
+      }
+      if (data.address !== undefined) updates.address = typeof data.address === 'string' && data.address.trim() ? data.address.trim() : null;
+      if (data.notes   !== undefined) updates.notes   = typeof data.notes === 'string' && data.notes.trim() ? data.notes.trim() : null;
+
+      const created: Record<string, string> = {};
+      if (Array.isArray(data.facilities)) {
+        const { data: t } = await supabaseAdmin.from('tournaments').select('sport').eq('id', existing.tournament_id).maybeSingle();
+        const sportKind = facilityKindForSport(t?.sport ?? null);
+        type Incoming = { id: string | null; key: string; name: string };
+        const incoming: Incoming[] = (data.facilities as unknown[]).map((f, i) => {
+          const r = (f ?? {}) as Record<string, unknown>;
+          return { id: typeof r.id === 'string' ? r.id : null, key: typeof r.key === 'string' ? r.key : `new-${i}`, name: typeof r.name === 'string' ? r.name.trim() : '' };
+        });
+        if (incoming.some(f => !f.name)) return NextResponse.json({ error: `Give every ${facilityNoun(sportKind, 1)} a name.` }, { status: 400 });
+        const seen = new Set<string>();
+        for (const f of incoming) {
+          const k = f.name.toLowerCase();
+          if (seen.has(k)) return NextResponse.json({ error: `Two ${facilityNoun(sportKind, 2)} are called ${f.name}.` }, { status: 400 });
+          seen.add(k);
+        }
+        try {
+          const { data: current, error: curErr } = await supabaseAdmin
+            .from('venue_facilities').select('id, name, display_order, facility_type').eq('venue_id', id).order('display_order', { ascending: true });
+          if (curErr) throw curErr;
+          const currentIds = new Set((current ?? []).map(f => f.id as string));
+          if (incoming.some(f => f.id && !currentIds.has(f.id))) {
+            return NextResponse.json({ error: 'That venue changed since you opened it. Close it and open it again.' }, { status: 409 });
+          }
+          // Taken out: never a lane with a played game (said before the tap in the record; refused here too).
+          const removed = (current ?? []).filter(f => !incoming.some(i => i.id === f.id));
+          for (const f of removed) {
+            const blocked = await blockIfPlayedFacility(f.id as string);
+            if (blocked) return NextResponse.json({ error: `${f.name} has played games, so it stays.` }, { status: 409 });
+          }
+          if (Object.keys(updates).length) {
+            const { error } = await supabaseAdmin.from('diamonds').update(updates).eq('id', id);
+            if (error) throw error;
+          }
+          for (const f of removed) {
+            // Asked again at the last moment: a score entered since the check above keeps its lane.
+            if (await blockIfPlayedFacility(f.id as string)) {
+              return NextResponse.json({ error: `${f.name} has played games, so it stays.` }, { status: 409 });
+            }
+            await clearFacilityFromGames(f.id as string);
+            const { error } = await supabaseAdmin.from('venue_facilities').delete().eq('id', f.id);
+            if (error) throw error;
+          }
+          // Renamed or moved: written one at a time, each failure reported.
+          const byId = new Map((current ?? []).map(f => [f.id as string, f]));
+          for (const [order, f] of incoming.entries()) {
+            if (!f.id) continue;
+            const was = byId.get(f.id)!;
+            if (was.name !== f.name || was.display_order !== order) {
+              const { error } = await supabaseAdmin.from('venue_facilities').update({ name: f.name, display_order: order }).eq('id', f.id);
+              if (error) throw error;
+            }
+          }
+          // Added: in ONE insert, so a failure adds none and a retry can't add the same lane twice.
+          const kind = ((current ?? [])[0]?.facility_type as string | undefined) ?? sportKind;
+          const fresh = [...incoming.entries()].filter(([, f]) => !f.id);
+          if (fresh.length) {
+            const { data: rows, error } = await supabaseAdmin.from('venue_facilities').insert(fresh.map(([order, f]) => ({
+              venue_id: id,
+              // Derived from the parent venue, never trusted from the client.
+              tournament_id: existing.tournament_id,
+              name: f.name,
+              facility_type: kind,
+              display_order: order,
+            }))).select('id, display_order');
+            if (error || !rows) throw error ?? new Error('insert');
+            for (const [order, f] of fresh) {
+              const row = rows.find(r => r.display_order === order);
+              if (row) created[f.key] = row.id as string;
+            }
+          }
+        } catch {
+          return NextResponse.json({ error: 'Couldn’t save the venue. Try again.' }, { status: 500 });
+        }
+      } else if (Object.keys(updates).length) {
+        const { error } = await supabaseAdmin.from('diamonds').update(updates).eq('id', id);
+        if (error) throw error;
+      }
+      return NextResponse.json({ success: true, created });
     }
 
     // -- delete-venue -------------------------------------------------------

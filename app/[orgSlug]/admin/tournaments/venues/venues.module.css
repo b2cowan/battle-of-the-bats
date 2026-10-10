@@ -1,0 +1,16 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   VENUES & FACILITIES — the few words the kit's row list and table have no slot for (page.tsx, Tournament
+   admin redesign Stage 5, E5). The rows, the table, the record and the Add a venue window are the kit's.
+   Born on the kit (the page wore the Venue library's old sheet before): TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* "No diamonds yet" — a schedule can't put a game there: amber, in words. */
+.none { font-weight: 600; color: var(--warning-light); }
+
+/* A venue's games, on the row's right. */
+.games { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+
+/* "From the club's Venue library", under the venue's name in the table. */
+.from { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+
+.quiet { margin: 0; padding: 1.25rem 0.1rem; font-size: var(--type-body); color: var(--text-tertiary); }

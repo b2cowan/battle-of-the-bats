@@ -328,6 +328,20 @@ const tournamentsHelp: HelpPageContent = {
           <p>Use <strong>Communications</strong> to publish news posts and send email updates to teams. Rules and resources are for durable documents and tournament policies.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'venues-records',
+          title: 'Venues & facilities: each venue with its diamonds',
+          content: (
+            <>
+              <p><strong>Venues &amp; facilities</strong> lists each venue with its diamonds (or fields, courts, rinks) and how many games it holds. A venue with none says <strong>No diamonds yet</strong>: the schedule can&rsquo;t put a game there until you add one.</p>
+              <p>Tap a venue to open it. It shows its address with <strong>Open in Maps</strong>, its note, and each diamond with its games. The pencil lets you change all of it at once: rename the venue or a diamond, add a diamond, or take one out. Your changes save as you go. A diamond with played games can be renamed but not taken out, and renaming it renames it on every game that uses it.</p>
+              <p><strong>Add a venue</strong> opens one window. On League Plus and Club plans it lists your club&rsquo;s Venue library first, each venue with its diamonds; tick the ones you play at. A venue already in this tournament says so. On other plans it lists the venues your past tournaments used. Either way you can add a new one: its name, its address, and how many diamonds it has (they are named Diamond 1, Diamond 2, and so on).</p>
+              <p>A venue brought in from the Venue library is this tournament&rsquo;s own copy: a change here or in the library stays where it&rsquo;s made. A venue with played games can&rsquo;t be deleted; one with upcoming games can, and those games show as TBD until you give them a new venue.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-rename-venue-updates',

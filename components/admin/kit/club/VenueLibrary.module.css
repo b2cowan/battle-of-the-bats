@@ -1,6 +1,6 @@
 /* The Venue library (Club Tier Stage 6b, specimen 6) — what its table and its venue window add to the kit.
-   ⚠ TOKENS ONLY (checkAdminKit). The page's old stylesheet (`app/[orgSlug]/admin/org/venues/venues-admin.module.css`)
-   is the tournament's Venues & Facilities screen's now; this page reads nothing from it. */
+   ⚠ TOKENS ONLY (checkAdminKit). The page's old stylesheet (venues-admin.module.css) was the tournament's Venues &
+   Facilities screen's last; it retired when that screen was rebuilt (Tournament admin redesign Stage 5, E5). */
 
 /* The quiet "1 archived venue" line under the table — a disclosure, not a button's look. */
 .archivedToggle {

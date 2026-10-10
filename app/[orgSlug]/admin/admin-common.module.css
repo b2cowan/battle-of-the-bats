@@ -250,14 +250,6 @@
   flex-direction: column;
 }
 
-/* ─── Flat Table Container ─────────────────────────────────────────────────── */
-/* Wraps header + rows so the table has a defined boundary; mirrors teams-admin */
-.flatList {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
 .groupHeader {
   padding: 0.38rem 1.5rem;
   background: var(--surface-2);
@@ -278,25 +270,6 @@
   .compactList { gap: 1.25rem; }
 }
 
-/* ─── Table Header ────────────────────────────────────────────────────────── */
-/* The flat list's label row takes the standard's heading type — `--type-support`, 0.05em,
-   secondary ink — in the shell's data face (table standard §3.2, register F-07 / K-13). It was
-   0.58rem (9.3px) at 0.12em: one of five heading treatments the tournament admin shipped. */
-.tableHeader {
-  display: flex;
-  align-items: center;
-  padding: 0.4rem 1.5rem;
-  font-family: var(--font-data);
-  font-size: var(--type-support);
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  background: var(--surface-2);
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
-  user-select: none;
-}
-
 /* ─── Row Layout ──────────────────────────────────────────────────────────── */
 .row { border-bottom: 1px solid var(--border-2); transition: background 0.2s ease; }
 .row:last-child { border-bottom: none; }
@@ -305,8 +278,6 @@
 /* Touch press feedback (compact stays visually unchanged — min-height dominates) */
 .rowMain:active { background: var(--white-5); }
 
-.primaryCell { font-family: var(--font-data); font-size: 0.8rem; color: var(--fl-text); font-weight: 500; letter-spacing: 0.02em; }
-.secondaryCell { font-family: var(--font-data); font-size: 0.72rem; color: var(--data-gray); letter-spacing: 0.02em; }
 
 /* ─── Game-row responsive columns ─────────────────────────────────────────── */
 /* Venue is now stacked inside the date cell — no separate venue column.       */
@@ -414,9 +385,7 @@
   .controlsBar { flex-direction: column; align-items: stretch; }
   .controlsRight { flex-direction: column; align-items: stretch; }
   .controlsLeft { flex-direction: column; align-items: stretch; }
-  .tableHeader { display: none; }
   .rowMain { padding: 1rem; align-items: flex-start; flex-wrap: wrap; }
-  .secondaryCell { display: none; }
   .expandedRow { padding: 1.5rem; }
   .expandedContent { flex-direction: column; gap: 2rem; }
   .expandedActions { width: 100%; min-width: 0; }
@@ -514,34 +483,8 @@
 }
 
 /* ── The list → the table standard's ground: a kit card, quiet body-face heads, hairline rows ── */
-:global([data-admin-kit]) .flatList {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .tableHeader {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-tertiary);
-  background: var(--card-bg);
-  border-bottom-color: var(--home-line-strong);
-}
 :global([data-admin-kit]) .row { border-bottom-color: var(--home-line); }
 :global([data-admin-kit]) .rowMain:active { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .primaryCell {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-body);
-  letter-spacing: normal;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .secondaryCell {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  letter-spacing: normal;
-  color: var(--text-tertiary);
-}
 
 /* ── Division and pool headings → the kit eyebrow on a quiet band ── */
 :global([data-admin-kit]) .groupHeader {

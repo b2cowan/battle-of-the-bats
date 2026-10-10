@@ -1,6 +1,6 @@
 {
   "app/[orgSlug]/admin/admin-common.module.css": {
-    "kitScope": 39
+    "kitScope": 35
   },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
     "kitScope": 130
@@ -47,9 +47,6 @@
     "kx": 2,
     "helpers": 6,
     "legacy": 1
-  },
-  "app/[orgSlug]/admin/org/venues/venues-admin.module.css": {
-    "kitScope": 23
   },
   "app/[orgSlug]/admin/public-site/page.tsx": {
     "useAdminKit": 1,
@@ -119,10 +116,6 @@
   },
   "app/[orgSlug]/admin/tournaments/settings/settings-access.module.css": {
     "kitScope": 6
-  },
-  "app/[orgSlug]/admin/tournaments/venues/page.tsx": {
-    "kx": 8,
-    "helpers": 3
   },
   "components/admin/NumberStepper.module.css": {
     "kitScope": 5

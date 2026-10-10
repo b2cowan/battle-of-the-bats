@@ -32,7 +32,7 @@ import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import HelpCallout from '@/components/help/HelpCallout';
-import AddVenueModal from '@/components/admin/AddVenueModal';
+import AddVenuesWindow from '@/components/admin/tournament/AddVenuesWindow';
 import { TournamentAdminHeader } from '@/components/admin/tournament/TournamentAdminUI';
 // The page's own parts (Stage 3 Part 0 split them out; none brings a stylesheet the lines above don't).
 import GameWindow, { type GameSaveReply } from './components/GameWindow';
@@ -1640,13 +1640,15 @@ export default function AdminSchedulePage() {
         />
       )}
 
+      {/* The one Add a venue window (Stage 5, E5): the club's library or "your venues", and a new venue with its count. */}
       {addVenueOpen && currentTournament && (
-        <AddVenueModal
-          tournamentId={currentTournament.id}
+        <AddVenuesWindow
           orgSlug={orgSlug ?? ''}
+          planId={currentOrg?.planId}
+          tournament={{ id: currentTournament.id, name: currentTournament.name, sport: currentTournament.sport ?? null }}
+          here={venues.map(v => ({ name: v.name, sourceOrgVenueId: v.sourceOrgVenueId ?? null }))}
           onClose={() => setAddVenueOpen(false)}
-          onSaved={handleVenueSaved}
-          zIndex={1100}
+          onAdded={handleVenueSaved}
         />
       )}
 

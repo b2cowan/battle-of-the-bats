@@ -1,0 +1,80 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   A TOURNAMENT'S VENUE, AS A RECORD (VenueRecord.tsx — Tournament admin redesign Stage 5, E5). The club's Venue
+   library venue's look (Club Tier 6b, VenueLibrary.module.css), restated for a tournament's copy — its lanes
+   carry their games (name · games) where the library's carry their kind and bookings. Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+.sectionHead {
+  margin: 1.25rem 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.quiet { color: var(--text-tertiary); }
+.maps { margin-left: 0.5rem; font-size: var(--type-support); color: var(--home-olive); font-weight: 600; text-decoration: none; }
+.maps:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Its lanes, reading: one bordered card, its rows on hairlines (name · games). */
+.lanes { display: flex; flex-direction: column; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.lane {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.lane:first-child { border-top: 0; }
+.laneGames { font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; text-align: right; }
+/* "No diamonds yet" — the state a schedule can't put a game in: amber. */
+.noLanes { margin: 0; font-size: var(--type-body); font-weight: 600; color: var(--warning-light); }
+
+/* A lane in the form: its name, then "2 played" (never taken out) or its ✕, in one fixed column. */
+.laneEdit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+}
+.laneEdit input { width: 100%; }
+.inUse { font-size: var(--type-support); color: var(--text-tertiary); text-align: center; }
+.remove {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.remove:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.remove:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.addLane { margin-top: 0.25rem; min-height: var(--admin-control-h); }
+
+/* The library's door. */
+.door {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--admin-control-h);
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .remove { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .addLane,
+  .door { min-height: var(--tap-min, 44px); }
+}
