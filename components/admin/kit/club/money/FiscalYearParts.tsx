@@ -11,7 +11,8 @@
  *                       day it ended, and an outlined "Close 2025–26" (Ask 2's door). Money movers only.
  *   FiscalYearWindow  — Budget › Tools › Fiscal year: a RECORD (2026-10-01, the standard). It reads first (when the
  *                       year starts, this year, next year, the closed years); one borderless pencil turns it into
- *                       its form; ✓ turns it back. The name saves as you go (the floating pill); the FIRST MONTH ASKS
+ *                       its form; ✓ turns it back. The names — this year's and next year's, any OPEN year's (Ask 5;
+ *                       next year's joined in the §283 walk) — save as you go (the floating pill); the FIRST MONTH ASKS
  *                       — the consequence is shown before the save (the server's preview: the very step, rolled
  *                       back), decided by two buttons, a question inside the record (Ask 5).
  *   CloseYearQuestion — the outcome first (Ask 10, §283 walk 5): the year's path (what locks → the closing balance →
@@ -26,9 +27,9 @@
  * /marketing's draft in lib/club-money-words.ts. Nothing here works a year out: every year, span and lock comes from
  * the server's one definition (lib/club-fiscal-year.ts).
  */
-import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowRight, CalendarClock, ChevronRight, History, Lock } from 'lucide-react';
+import { AlertCircle, ArrowRight, CalendarClock, ChevronRight, History, Lock } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import frame from '../../AdminKitFrame.module.css';
 import ck from '../ClubKit.module.css';
@@ -166,6 +167,13 @@ function YearRows({ change }: { change: FirstMonthChange }) {
   );
 }
 
+/** A blank name's reason, under its field — the save pill says only that a save is held (the ledger's rule: a held
+ *  autosave's reason sits under the field it is about). The 3c date refusal's look, without its alert: the pill is
+ *  the live region, and a field being retyped is not a refusal. */
+const NameMissing = ({ id, children }: { id: string; children: ReactNode }) => (
+  <span className={fy.refuse} id={id}><AlertCircle size={14} aria-hidden className={fy.refuseIcon} /><span>{children}</span></span>
+);
+
 function consequenceOf(change: FirstMonthChange, month: number): string | null {
   const W = FISCAL_YEAR_WINDOW_WORDS;
   if (change.mode === 'fresh' && change.current) return W.fresh(monthName(month), change.current.name, fiscalYearSpanWords(change.current));
@@ -191,11 +199,18 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
   const [read, setRead] = useState<WindowRead | null>(null);
   const [failed, setFailed] = useState(false);
   const [editing, setEditing] = useState(false);
+  /** Each year's name as saved this visit, by key, until the next read: a field falls back to it (never to the
+   *  read's older name — /review 2026-10-08: the pencil pressed again before the re-read landed sent the old name
+   *  back), and only a name that differs from it is sent. */
+  const [held, setHeld] = useState<Record<string, string>>({});
+  /** A name landed this visit: the page re-reads on the way out (the Year pill prints the names). */
+  const renamed = useRef(false);
   const load = useCallback(async () => {
     // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
     const r = await moneyFetch<WindowRead>(`/api/admin/accounting/fiscal-years?${q}`).catch(() => null);
     if (!r?.ok) { setFailed(true); return; }
     setFailed(false);
+    setHeld({});
     setRead(r.data);
   }, [q]);
   useDeferredLoad(true, load);
@@ -227,14 +242,14 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
 
   async function applyMonth() {
     if (pendingMonth == null || changing) return;
-    // A name still saving lands first: its save is addressed to this year, and the change re-reads the years.
+    // A name still saving lands first: its save is addressed to its year's key, and the change re-reads the years.
     if (dirty && !blocked && !(await handleSave())) return;
     setChanging(true); setMonthError('');
     try {
       // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
       const r = await moneyFetch(`/api/admin/accounting/fiscal-years/first-month?${q}`, jsonInit('POST', { month: pendingMonth }));
       if (!r.ok) { setMonthError(refusalText(r.data, 'The first month couldn’t change. Please try again.')); return; }
-      setMonth(null); setName(null);
+      setMonth(null); setName(null); setNextName(null);
       await load();
       onChanged(W.changed(monthName(pendingMonth)));
     } catch {
@@ -244,32 +259,55 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
     }
   }
 
-  // ── This year's name: an edit, so it saves as you go ──
+  // ── This year's and next year's names: edits, so they save as you go — one record, one pill ──
+  // Next year can be named before it starts (§283 walk, owner 2026-10-08): Ask 5 lets an OPEN year's name change,
+  // and the drawing had drawn only this year's field. (A chosen name stays through a first-month change once the
+  // club holds a plan or books; a club holding nothing starts every year over, and a rule-shaped name is re-suggested.)
   const current = read?.current ?? null;
+  const next = read?.next ?? null;
   const [name, setName] = useState<string | null>(null);
-  const draftName = name ?? current?.name ?? '';
-  const savedName = useRef<string | null>(null);
-  const blocked = !draftName.trim() ? 'Give the year a name to save it.' : null;
+  const [nextName, setNextName] = useState<string | null>(null);
+  const draftName = name ?? (current ? held[current.key] ?? current.name : '');
+  const draftNext = nextName ?? (next ? held[next.key] ?? next.name : '');
+  // A blank name is never sent: its reason sits under its own field and the other year's name still saves. The
+  // whole save is held only when a blank is all there is to send (/review, 2026-10-08 — one blank field used to
+  // hold both, and ✓ then dropped the other year's valid rename).
+  const blankThis = !!current?.canRename && !draftName.trim();
+  const blankNext = !!next?.canRename && !draftNext.trim();
+  const renames = useMemo(() => {
+    const out: { key: string; name: string }[] = [];
+    for (const [year, draft] of [[current, draftName.trim()], [next, draftNext.trim()]] as const) {
+      if (year?.canRename && draft && draft !== (held[year.key] ?? year.name)) out.push({ key: year.key, name: draft });
+    }
+    // A shift — this year takes the name next year holds, next year a new one — frees the name first. (A straight
+    // swap is refused either way round: the name is taken, and the refusal says so.)
+    if (out.length === 2 && next && out[0].name.toLowerCase() === (held[next.key] ?? next.name).toLowerCase()) out.reverse();
+    return out;
+  }, [current, next, draftName, draftNext, held]);
+  const blocked = renames.length > 0 ? null : blankThis ? W.nameMissingThis : blankNext ? W.nameMissingNext : null;
   const write = useCallback(async (signal: AbortSignal) => {
-    if (!current) return;
-    // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
-    const res = await fetch(`/api/admin/accounting/fiscal-years/${current.key}?${q}`, { ...jsonInit('PATCH', { name: draftName.trim() }), signal });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(refusalText(data, 'Couldn’t save'));
-    savedName.current = data?.year?.name ?? draftName.trim();
-  }, [current, draftName, q]);
+    for (const r of renames) {
+      // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
+      const res = await fetch(`/api/admin/accounting/fiscal-years/${r.key}?${q}`, { ...jsonInit('PATCH', { name: r.name }), signal });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(refusalText(data, 'Couldn’t save'));
+      const saved: string = data?.year?.name ?? r.name;
+      setHeld(h => ({ ...h, [r.key]: saved }));
+      renamed.current = true;
+    }
+  }, [renames, q]);
   const { saving, dirty, saveError, touch, handleSave } = useRecordAutosave({
-    enabled: editing && !!current?.canRename, loading: changing, sig: draftName.trim(), blocked, write, failText: 'Couldn’t save',
+    enabled: editing && !!(current?.canRename || next?.canRename), loading: changing,
+    sig: `${draftName.trim()}\n${draftNext.trim()}`, blocked, write, failText: 'Couldn’t save',
   });
-
   const finish = async () => {
     if (dirty && !blocked && !(await handleSave())) return false;
-    if (savedName.current) { onChanged(null); savedName.current = null; }
+    if (renamed.current) { onChanged(null); renamed.current = false; }
     return true;
   };
   const toggleEdit = async () => {
     if (editing && !(await finish())) return;
-    if (editing) { setMonth(null); setName(null); void load(); }
+    if (editing) { setMonth(null); setName(null); setNextName(null); void load(); }
     setEditing(e => !e);
   };
   // A refused rename (the name is taken; the year closed in another tab) holds the window ONCE, with the reason in
@@ -277,7 +315,7 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
   const closeRefused = useRef(false);
   const close = async () => {
     if (editing && dirty && !blocked && !closeRefused.current && !(await handleSave())) { closeRefused.current = true; return; }
-    if (savedName.current) { onChanged(null); savedName.current = null; }
+    if (renamed.current) { onChanged(null); renamed.current = false; }
     onClose();
   };
 
@@ -293,7 +331,6 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
     </>
   ) : null;
 
-  const startsInWords = read ? (read.firstMonth === 1 && read.firstMonthCanChange ? W.januaryDefault : monthName(read.firstMonth)) : '';
   const spanOf = (y: { name: string; firstDay: string; lastDay: string; months: number; short: boolean }) =>
     `${y.name} · ${fiscalYearSpanWords(y)}${y.short ? ` · ${y.months} months` : ''}`;
 
@@ -313,9 +350,10 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
         : !editing ? (
           <>
             <dl className={fy.read}>
-              <dt>{W.startsIn}</dt><dd>{startsInWords}</dd>
+              {/* Bare facts — the default-January and "plan ahead" asides came out in the §283 walk (owner, 2026-10-08). */}
+              <dt>{W.startsIn}</dt><dd>{monthName(read.firstMonth)}</dd>
               <dt>{W.thisYear}</dt><dd>{spanOf(current)}</dd>
-              <dt>{W.nextYear}</dt><dd>{read.next.name} · {W.nextYearHint}</dd>
+              <dt>{W.nextYear}</dt><dd>{read.next.name}</dd>
               <dt>{W.closedYears}</dt>
               <dd>{read.closed.length === 0 ? W.noneClosed : read.closed.map(c => c.name).join(' · ')}</dd>
             </dl>
@@ -351,11 +389,24 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
               <label className={ck.field} htmlFor="fy-name">
                 <span className={ck.label}>{W.nameLabel}<span className={repKit.req} aria-hidden>*</span></span>
                 <input id="fy-name" className={ck.input} value={draftName} maxLength={40}
+                  aria-invalid={blankThis || undefined} aria-describedby={blankThis ? 'fy-name-missing' : undefined}
                   onChange={e => { setName(e.target.value); touch(); closeRefused.current = false; }} />
-                <span className={ck.hint}>{W.nameHint}</span>
+                {blankThis ? <NameMissing id="fy-name-missing">{W.nameMissingThis}</NameMissing>
+                  : <span className={ck.hint}>{W.nameHint}</span>}
               </label>
             ) : (
               <dl className={fy.read}><dt>{W.thisYear}</dt><dd>{spanOf(current)}</dd></dl>
+            )}
+            {next?.canRename && (
+              <label className={ck.field} htmlFor="fy-next-name">
+                <span className={ck.label}>{W.nextNameLabel}<span className={repKit.req} aria-hidden>*</span></span>
+                <input id="fy-next-name" className={ck.input} value={draftNext} maxLength={40}
+                  aria-invalid={blankNext || undefined} aria-describedby={blankNext ? 'fy-next-name-missing' : undefined}
+                  onChange={e => { setNextName(e.target.value); touch(); closeRefused.current = false; }} />
+                {/* The span alone: which months the name is for (a short year says its count). */}
+                {blankNext ? <NameMissing id="fy-next-name-missing">{W.nameMissingNext}</NameMissing>
+                  : <span className={ck.hint}>{fiscalYearSpanWords(next)}{next.short ? ` · ${next.months} months` : ''}</span>}
+              </label>
             )}
           </>
         )}

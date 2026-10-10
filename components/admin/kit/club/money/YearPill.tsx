@@ -10,9 +10,12 @@
  *
  * ⚖ Stage 3c: a year is the club's FISCAL year (Ask 9 — "Fiscal year", the club side's word). Each option is
  * the year's NAME ("2025–26"); its value is the year's KEY, its first day — a key survives a rename and is never
- * the name. The rows stay BARE (the §271 ruling) and add two GLYPHS with spoken names, never words (specimen 2):
- * a lock on a closed year (on the pill itself too, when one is picked) and the olive dot on the year today falls
- * in. The one fact a name can't say is a SHORT year's length, so its row adds "8 months".
+ * the name. The rows stay BARE (the §271 ruling) and the pill adds two GLYPHS with spoken names, never words
+ * (specimen 2): a lock on a closed year (in its row, and on the pill when it is picked) and the olive dot on the year
+ * today falls in — on the PILL ONLY. ⚖ The dot left the rows in the §283 walk (owner, 2026-10-08): the specimen drew
+ * the picked row with a check, but every pick-one menu marks it with a dot, so the year that was both picked and
+ * current wore two dots meaning two things. The one fact a name can't say is a SHORT year's length, so its row
+ * adds "8 months".
  * ⚠ The remembered year lives in sessionStorage — a per-visit convenience, never state that must persist:
  * it can come back empty (a private window, cleared site data) and the tab then opens on the server's year. A
  * key remembered from before 3c (a bare year) still lands: the server reads a number as the year with that name.
@@ -68,7 +71,8 @@ export default function YearPill({ year, years, onChange }: {
       options={[...years].sort((a, b) => a.key.localeCompare(b.key)).map(y => ({
         id: y.key,
         label: y.name,
-        mark: y.locked ? <LockMark /> : y.current ? <NowDot /> : undefined,
+        mark: y.locked ? <LockMark /> : undefined,
+        pillMark: !y.locked && y.current ? <NowDot /> : undefined,
         detail: y.months != null && y.months < 12 ? `${y.months} months` : undefined,
       }))}
       onChange={next => onChange(next)}

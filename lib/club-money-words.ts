@@ -584,12 +584,16 @@ export const FISCAL_YEAR_WINDOW_WORDS = {
   nextYear: 'Next year',
   closedYears: 'Closed years',
   noneClosed: 'None yet',
-  nextYearHint: 'plan ahead on the Fiscal year pill',
-  januaryDefault: 'January, where every club starts until it sets its own',
   firstMonthHint: 'The month the club’s plan and books start each year. You can change it until the first fiscal year is closed.',
   firstMonthLocked: 'It can’t change once a fiscal year has been closed.',
   nameLabel: 'This year’s name',
   nameHint: 'Shown on every money tab and in every export. You can rename it while the year is open.',
+  /** Next year can be named before it starts (§283 walk, owner 2026-10-08) — above all the short year a new first
+   *  month makes. Its hint is the span alone, so the treasurer sees which months the name is for. */
+  nextNameLabel: 'Next year’s name',
+  /** A blank name is held (never sent), its reason under its field; the other year's name still saves. */
+  nameMissingThis: 'Give this year a name to save it.',
+  nameMissingNext: 'Give next year a name to save it.',
   whatChanges: 'What changes',
   keepsWhy: 'it has begun, so it keeps its months',
   shortWhy: 'the year that changes',

@@ -188,6 +188,27 @@ describe('5. the Year pill\'s glyphs speak their names', () => {
     assert.match(pill, /role="img" aria-label="closed"/);
     assert.match(pill, /role="img" aria-label="this year"/);
   });
+  it('the "this year" dot is on the pill only — never in a row beside the picked row\'s own dot (§283, 2026-10-08)', () => {
+    const pill = readCode(`${KIT}/YearPill.tsx`);
+    assert.match(pill, /pillMark: [^\n]*<NowDot \/>/);
+    assert.doesNotMatch(pill, /\bmark: [^\n]*<NowDot \/>/);
+  });
+  it('the Fiscal year window names next year too — any OPEN year\'s name can change (Ask 5; §283, 2026-10-08)', () => {
+    const parts = readCode(PARTS);
+    assert.match(parts, /W\.nextNameLabel/);
+    assert.match(parts, /next\?\.canRename\s*&&\s*\(/, 'the field is offered only while next year can be renamed');
+  });
+  it('a blank name holds only itself, its reason under its field; a shift sends next year first (/review, 2026-10-08)', () => {
+    const parts = readCode(PARTS);
+    // The whole save is held only when nothing else is left to send — one blank used to drop the other's rename.
+    assert.match(parts, /const blocked\s*=\s*renames\.length\s*>\s*0\s*\?\s*null/);
+    assert.match(parts, /<NameMissing[^>]*>\{W\.nameMissingThis\}/);
+    assert.match(parts, /<NameMissing[^>]*>\{W\.nameMissingNext\}/);
+    // This year taking the name next year holds: next year's rename goes first, freeing it.
+    assert.match(parts, /out\.reverse\(\)/);
+    // A field falls back to the name saved this visit, never to the read's older one.
+    assert.match(parts, /held\[current\.key\]\s*\?\?\s*current\.name/);
+  });
 });
 
 describe('6. the close warns and never blocks (Ask 2)', () => {
