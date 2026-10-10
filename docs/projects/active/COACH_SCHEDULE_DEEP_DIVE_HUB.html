@@ -349,7 +349,7 @@ dialog::backdrop{background:#16201880}
     <ul class="stagestrip" aria-label="Project lifecycle">
       <li class="stage done" title="Walk published and stage 1 drawn — 25 Sep 2026">Design</li>
       <li class="stage done" title="Stage 1 ruled as drawn (E1–E6, split first, calendar fix now) — 25 Sep 2026">Ruled</li>
-      <li class="stage done" title="Stage 1 built on dev and committed — 25 Sep 2026 (part 0 1265bbca the calendar fix · part 1 13929db2 the split · part 2 the sheet)">Build</li>
+      <li class="stage done" title="Stage 1 built on dev and committed — 25 Sep 2026 (part 0 1265bbca the calendar fix · part 1 13929db2 the split · part 2 3e7c667b the sheet)">Build</li>
       <li class="stage done" title="Stage 1: /simplify, /review (four lenses; three defects fixed) and /docs done — 25 Sep 2026">Review</li>
       <li class="stage current" title="Stage 1 walk published — ledger §242, the QA walks tab — 25 Sep 2026">QA</li>
       <li class="stage" title="—">Shipped</li>
@@ -384,6 +384,7 @@ dialog::backdrop{background:#16201880}
 </aside>
 
 <main>
+<div class="callout ok" role="note" style="margin:28px 0 0;max-width:none"><b>Merged into Club Tier Production Readiness on 9 October 2026.</b> The rest of this work continues there: the desktop schedule (stage 2) is drawn inside a review of every calendar in the app (Club Stage 6c), the calendar subscription (stage 4) becomes Stage 6d, the form corrections (stage 5) Stage 6e, and the Tournaments pages (stage 3) are drawn with Stage 7. None of it holds the Club release. This page stays as the record of the walk and of stage 1. <b>Stage 1’s walk (§242) is still owed, on the QA walks tab here.</b> New drawings: <a href="https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9" target="_blank" rel="noopener">the Club Tier hub</a>.</div>
 <header class="masthead">
   <div class="eyebrow">Coaches Portal · the Schedule · a deep dive</div>
   <h1>The schedule, end to end, on a phone and at a desk</h1>
@@ -1317,6 +1318,7 @@ dialog::backdrop{background:#16201880}
 
   /* decisions */
   var DEC = [
+    {date:'2026-10-09', ask:'The project merges into Club Tier Production Readiness', tag:'Ruled', why:'Owner: “can you incorporate the work from the coaches portal schedule project (stages 1-5) so this all becomes 1 project? you can slot it in where you think it makes the most sense in our project sequence”. Stage 2 is drawn inside Club Stage 6c, a review of every calendar in the app (one recipe and a register of deliberate differences) that comes before the club scheduler is drawn; stage 4 becomes Club Stage 6d (calendar feeds); stage 5 becomes Club Stage 6e, re-read first because the 9 October rulings already changed the form; stage 3 is drawn with Club Stage 7. None of it holds the Club release. Stage 1 is built; its walk (§242) stays here. This page is now the record; new drawings go on the Club Tier hub.'},
     {date:'2026-09-25', ask:'Stage 1 reviewed before commit: /simplify, /review, /docs', tag:'Built', why:'The review’s four lenses found three things, each confirmed before it was fixed. The Attendance row’s names folded every overflow into the last group (3 out + 2 late read as five out); now “and N more” is only ever more of that answer, and an unnamed group is counted (“2 late”). At a desk the × on the room or on Scouting left the game’s address behind, so a reload reopened a game just closed; fixed in the shared back-button rule, walk G4. A failed read said “No lineup yet”; it now shows the error. Kept: a saved order with an Out player in it reads Needs a look even before positions are set, as the list’s ⚠ and the builder already do. The coach guide now describes the rows and the room, with a new FAQ: “Where did the Attendance, Lineup and Scouting tabs go?”'},
     {date:'2026-09-25', ask:'Stage 1 built on dev — four calls made at build, said before the code', tag:'Built', why:'The Lineup row on a finished game that disagrees with attendance opens the builder (E4 over E3 where Game day is only a recap); a tournament keeps its dates and "+ Add game" (the sheet never listed its games); the row says "Has a lineup", never "Ready"; three names on a row at most, then "and N more". Widened: the Excel/CSV date column had the calendar defect too, fixed with it. Found driving it: a link that opened the event AND the room left a dead history entry under React’s dev strict mode — fixed. Calls 1–3 on the QA walk ask for your ruling.'},
     {date:'2026-09-25', ask:'Stage 1 · E1–E6: one shape for every event, attendance in its own room, Lineup and Scouting as rows, the warning in the row, the links open the room, the desk takes the same rows', tag:'Ruled', why:'Owner paste-back: every ask as drawn (E2 the full-screen room; E3 rows, the peek retires).'},

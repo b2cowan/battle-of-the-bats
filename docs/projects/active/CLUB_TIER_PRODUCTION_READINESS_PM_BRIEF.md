@@ -81,7 +81,10 @@ help articles that describe today's screens, and marketing copy that promises on
 | 4 · The public face | Teams index, tryout funnel, club-first home, editor controls, marketing truth | Owner walk |
 | 5 · Families | The four HIGH defects; P3 mockup session; migrations confirmed on prod | Owner walk (§54/§56) |
 | 6 · Venues, scheduling, permits | One venue book + one clash check across programs and between the club's own teams; the club calendar (in the first release, D5); the Venue library fixed; room left for permits (Stage 10) | Ruled 2026-10-08 (thirteen asks, as recommended); build 6a then 6b |
-| 7 · Tournaments in a club + comms | Host-own-team walk; tournament money into the books (decision); one "message every family" door | Owner walk |
+| 6c · One calendar (added 2026-10-09) | Every calendar in the app compared side by side on a computer and a phone, one written recipe for how a calendar reads, a list of where screens differ on purpose and why; the coach's desktop schedule (opens on today, a Month that says what and when) drawn inside it | Before the Stage 10 + 11 drawing session; its rulings come first, its builds don't hold the release |
+| 6d · Calendar feeds (added 2026-10-09) | A coach subscribes once and their calendar stays current; the club calendar and the team feed get the same | Before Stage 11 is built; doesn't hold the release |
+| 6e · The event form's last corrections (added 2026-10-09) | The coach's add/edit form: the few corrections the schedule deep dive found that the 10-09 rulings haven't already settled | Any gap; doesn't hold the release |
+| 7 · Tournaments in a club + comms | Host-own-team walk; tournament money into the books (decision); one "message every family" door; the Coaches Portal's Tournaments pages given a proper phone pass (from the schedule deep dive) | Owner walk |
 | 8 · Release readiness | UAT suite, layout sweep, help, demo decision, pricing gate flip, Stripe checkout, support posture | Go/no-go |
 | 9 · House league (last) | Trust-plan defects; un-park League Plus as the standalone plan; coupling check | Separate release |
 | 10 · Permits & bookings | The club records the permits it holds; scheduling and money read them | The release waits for it (D4); drawn with Stage 11 |
@@ -396,6 +399,23 @@ the first release waits for it (owner, 2026-10-08). Success: a club builds its w
 dome schedule in one sitting, every team sees its slots on its own schedule, and a change after sending reaches
 only the teams it moved.
 
+**The coach Schedule deep dive joins this project, and one calendar review comes first (owner, 2026-10-09).** The
+product has seven calendars: the coach's schedule, the club calendar, house league's schedule, the tournament admin's
+schedule, the public league and tournament schedules, and the family app. Each one was designed on its own. Some copy
+parts from each other without the reason behind them: on 10-09 the club calendar's phone had Export at the bottom of the
+week and a List that repeated the Week, both copied from the coach schedule, where the same choices made sense. So before
+the scheduler is drawn (its grid is the club calendar's week), one session lays every calendar side by side on a
+computer and a phone and settles one recipe: which views a calendar offers and what each means, the toolbar, how a
+booking reads, how a clash is marked, and where Filter and Export sit. It also lists where a screen differs on purpose
+and why. Each screen's own project then makes its changes; the review rebuilds nothing itself. The coach's own schedule
+work, a separate project until now, folds in: its desktop fixes (open on today, a Month that says what and when) are
+drawn inside that review, its calendar subscription becomes Stage 6d, its form corrections Stage 6e, and its Tournaments
+pages are drawn with Stage 7. Its first stage, the event sheet, is already built; its walk is still owed. Why it
+matters: a coach, a club admin and a parent should read a schedule the same way wherever they open one, and the
+scheduler should be built on settled parts. Priority: the review's rulings come before the Stage 10 + 11 session; none
+of the coach work holds the release. Success: one written calendar recipe that every calendar either follows or departs
+from with a stated reason, and no screen whose calendar part was copied without one.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money
@@ -408,6 +428,10 @@ only the teams it moved.
   waits for. The risk left is size, not a decision. Nothing for permits exists today, and
   the homepage's "field bookings" claim comes back only with Stage 10.
 - **Families P3 is not release-gating**; the four HIGH defects are.
+- **The coach schedule work joins the project but not the release.** Merging it (2026-10-09) keeps every calendar
+  decision in one place. The cost is a longer project, so each merged piece is marked as not holding the release. Only
+  the calendar review's rulings sit on the release path, because the scheduler, which the release waits for, is drawn on
+  them.
 - **House league last**, as directed — and because its standalone plan already exists (League Plus,
   parked), no new SKU needs inventing.
 

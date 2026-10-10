@@ -1,5 +1,13 @@
 # The Schedule deep dive — the coach's schedule at both widths, re-evaluated
 
+> **⚖ MERGED into Club Tier Production Readiness, 2026-10-09 (owner: "can you incorporate the work from the coaches portal
+> schedule project (stages 1-5) so this all becomes 1 project?").** Its sequence and state now live in
+> `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6: stage 2 → **Stage 6c** (one calendar, every schedule in the app side by side —
+> this stage is drawn inside it), stage 4 → **Stage 6d** (calendar feeds), stage 5 → **Stage 6e** (re-read first), stage 3 →
+> drawn with **Stage 7**; stage 1 is built and its walk **§242** is still owed. New drawings go on the Club Tier hub
+> (https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9). **This document stays the record** of the walk (stations F01–F14,
+> rules R1–R6), stage 1's rulings and build, and the defects table — read it; do not plan from its §3 / §5 any more.
+
 **Created:** 2026-09-25 · **Owner:** product owner · **Hub (walk · stage drawings · brief · plan · decisions · QA, one artifact for the project's life):** `docs/projects/active/COACH_SCHEDULE_DEEP_DIVE_HUB.html` — published as a Claude Artifact at `https://claude.ai/artifact/5yvmCESNKNWnpFiHg8b7Lc` (republish the same file path to stack a version).
 **PM brief:** `COACH_SCHEDULE_DEEP_DIVE_PM_BRIEF.md` · **TODO:** one line under Active Tasks · **Ledger:** no § until a stage is built (a planning entry is not a §).
 

@@ -2,6 +2,12 @@
 
 **Plan:** `COACH_SCHEDULE_DEEP_DIVE_PLAN.md` · **Hub:** `https://claude.ai/artifact/5yvmCESNKNWnpFiHg8b7Lc` · **Created:** 2026-09-25
 
+> **Merged into the Club Tier project on 2026-10-09** (the owner's call). The rest of this work now runs as part of Club Tier
+> Production Readiness: the desktop schedule is drawn inside a new review of every calendar in the app (Stage 6c), the
+> calendar subscription becomes Stage 6d, the form corrections Stage 6e, and the Tournaments pages are drawn with Stage 7.
+> None of it holds the Club release. Stage 1 (below) is built; its walk is still owed. See
+> `CLUB_TIER_PRODUCTION_READINESS_PM_BRIEF.md`.
+
 ## What changes for the coach
 
 The Schedule is the screen a coach opens most, and after this project every event reads the same way at every width. You get what it is, when and where, and then the jobs, each on one row that already tells you where things stand. "Attendance: Out: #12 Logan · Late: #11 Kai". "Lineup: Has a lineup" — or, when attendance and the lineup disagree, "Kai and Logan are in, but not in the lineup". "Scouting: 2-1 vs them".

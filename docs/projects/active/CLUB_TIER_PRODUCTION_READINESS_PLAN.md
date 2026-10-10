@@ -9,7 +9,9 @@
 > `docs/projects/archive/LEAGUE_CLUB_EARLY_ACCESS_READINESS_PLAN.md`; the Club half of
 > `ADMIN_IA_MULTIMODULE_NAV_PLAN.md` (Phases A–C fold into Stage 1/4 here); the archived
 > `BILLING_ACCOUNTING_COHERENCE_PLAN.md` (folds into Stage 3); `CLUB_FAMILIES_BOOK_PLAN.md` P3 (Stage 5);
-> `HOUSE_LEAGUE_INSEASON_TRUST_PLAN.md` (Stage 9, last by owner direction).
+> `HOUSE_LEAGUE_INSEASON_TRUST_PLAN.md` (Stage 9, last by owner direction); **the coach Schedule deep dive**
+> (`COACH_SCHEDULE_DEEP_DIVE_PLAN.md`, merged by the owner 2026-10-09 — its stages 2, 4 and 5 become Stages 6c, 6d and 6e,
+> its stage 3 is drawn with Stage 7, its built stage 1 carries its §242 walk here; see Stage 6c).
 > **Release target:** the **Club plan for rep clubs that run no house league.** House league is
 > evaluated last and is expected to ship as its own standalone plan (= un-park **League Plus** — the SKU
 > already exists; see D11) and as a feature of Club. **⚖ 2026-09-25: the release also waits for
@@ -1388,11 +1390,85 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 - [ ] **Permits** (⚖ D4 ruled IN scope 2026-09-25): built as **Stage 10** at the end of the walk; Stage 6 leaves the venue book and the clash check shaped so a permit can plug in (a clash check that can answer "is this slot ours?" once permits exist).
 **QA walk §I.** **Migrations:** `rep_team_places.org_venue_id` (nullable FK), clash-check indexes. *(Drawn 2026-10-08, proposed instead: `rep_team_events` club venue + diamond links; `org_venues.is_active` finally used for Archive; RLS members-read/server-writes on the two library tables; the missing index on `venue_facilities.source_org_facility_id`; rep events by org + start time for the lookup. Ruled with Ask 1/9.)*
 
+### Stage 6c — One calendar: every schedule in the app, side by side (⚖ owner 2026-10-09; merges the coach Schedule deep dive)
+> **⚖ Owner 2026-10-09**, walking §288 W4 after two phone fixes: *"is there going to be a part of this project that reviews
+> the calendars in the app to ensure formatting consistency where it makes sense (tournaments, coaches portal, club, etc.)?"*
+> → recommended (a review, before Stage 11 is drawn) → *"ok, can you incorporate the work from the coaches portal schedule
+> project (stages 1-5) so this all becomes 1 project? you can slot it in where you think it makes the most sense in our
+> project sequence"*. Slotted here 2026-10-09; nothing below is ruled beyond the merge itself.
+
+**Why, and why here.** Both of §288 W4's phone calls (Export under the list; List repeating Week) came from copying the coach
+schedule's calendar without the reason behind each choice. Three plans each share a calendar part pairwise and nothing
+looks across them: 6b took the coach schedule's toolbar; the tournament redesign's **A41** makes the Day and the club
+calendar "one shape" — "whichever builds first makes it the shared part, and the other wears it"; **Stage 11**'s draft grid
+is "the club calendar's Week view". No app-wide calendar standard exists (the design log's 2026-10-09 entry names the club
+calendar and the Venue library only). Stage 11 holds the release and is the next big drawing session, so this is the last
+cheap moment.
+
+**The merge — the coach Schedule deep dive is now part of this project.** Its plan `COACH_SCHEDULE_DEEP_DIVE_PLAN.md` stays
+the RECORD of its walk (stations F01–F14, rules R1–R6) and of stage 1's build; this plan holds its sequence and state from
+2026-10-09. Its hub (https://claude.ai/artifact/5yvmCESNKNWnpFiHg8b7Lc) keeps stage 1's drawings and walk §242; new
+drawings go on THIS hub.
+
+| Deep-dive stage | State at the merge | Where it sits now | Holds the release? |
+|---|---|---|---|
+| 1 The event sheet (one shape; attendance in its own room) | ruled + built + committed 2026-09-25 (`1265bbca` · `13929db2` · part 2); **§242 walk owed** | carried as is; §242 joins this project's QA | no |
+| 2 The desktop schedule — open on today (F01), Month says what and when (F09), the toolbar's two rows as one, the 641–768 Month | walked, not drawn | **inside 6c** — the coach schedule is the benchmark the other calendars copy, so its own fixes are ruled in the same session | no (its build) |
+| 3 Tournaments — the coach portal's list + record at 390/1440, titled by the tournament, one help door, the road to its games (shared with the free portal) | walked, not drawn | **drawn with Stage 7** (tournaments inside a club) | no |
+| 4 The coach's calendar — a subscribe row; every kind; cancelled marked (D-1/D-2 already fixed 2026-09-25) | walked, not drawn | **6d**, with D07 and the club calendar's feed (6b Ask 10) | no (recommended) |
+| 5 The forms — Edit details keeps its Save, the practice's More label, the series' opponent boxes, an arrival after the start | walked; partly overtaken 2026-10-09 | **6e**, re-read first | no |
+
+**Scope of the review.** Every calendar and schedule at 1440, 390 and the 641–768 band: the coach Schedule (List · Week ·
+Month and the event sheet), the club calendar (6b), house league's admin schedule, the tournament admin schedule (the Day and
+the timeline — redesign Stage 3), the public league schedule, the public tournament schedule, the family/fan app's
+schedule, and Stage 11's draft grid as proposed. For each: the views offered and what each one MEANS (its range); the toolbar
+and its order; the date row (arrows, range words, the clock note); how a booking or game reads (time · who · what · where,
+the program word, colour); clash and conflict marks; empty days and today; the open-on date; the phone form (the view
+drawer, the stack, where Filter and Export sit); Export.
+
+**What it produces.**
+1. **A calendar recipe**, written into the formatting standard (§6 "Across every stage — formatting"): what is ONE recipe
+   everywhere.
+2. **A deliberate-differences register**: what differs on purpose, each with its reason (already known: the coach's List is
+   the season, the club's is a week; the tournament timeline is its own; the family app reads and never edits).
+3. **Per-surface deltas, each ruled, each built by the project that owns the screen**: the coach desk schedule (stage 2) and
+   the club calendar here (6c's build); house league → Stage 9; the tournament screens → the tournament redesign; the public
+   and family schedules → a named owner or parked with a reason. 6c rebuilds nobody else's screen.
+
+**The rule it carries (the 2026-10-09 lesson):** a shared part travels WITH its reason. The register names the reason for
+every shared part, so a page that lacks the reason drops the part instead of copying it.
+
+**Sequencing.** After 6b; **before the Stage 10 + 11 drawing session** (the scheduler's grid wears the recipe), its asks ruled
+before that session opens. The tournament redesign's Stage 3 is being built now under A41: what it builds is an input to
+6c, not something 6c overwrites. **Holds the release?** The review and its rulings, in effect yes (they come before Stage
+11, which holds it); the builds they produce, no, unless a delta is ruled otherwise. **QA walk §** when built.
+**Migrations:** none expected.
+
+### Stage 6d — Calendar feeds (the deep dive's stage 4 + D07 + 6b Ask 10)
+**Outcome:** a coach — and through the team's feed, a family — subscribes once to a calendar that stays current, instead of
+downloading a file that goes stale. From the deep dive's stage 4: a "Subscribe on this phone" row beside the download;
+every kind (organizer games included); cancelled events marked cancelled; tryout sessions only when the coach runs them.
+D07: the team-wide feed's token has had no caller since 2026-09-12, `ics.ts` still says "STUB", and help says "planned for a
+future release". 6b Ask 10 handed the club calendar's subscribable link here (6b shipped the download only). Stage 11's
+finalized club slots reach families through the team's feed (Stage 11, item 5), so the feed is settled before 11 is built.
+⚠ A coach-scoped feed token is new storage — a migration may appear; decided when drawn. Out: two-way sync.
+**Sequencing:** after 6c (the feed carries the recipe's words); before Stage 11's build. **Holds the release?** No,
+recommended — unless the owner wants clubs to launch with a subscribable club calendar.
+
+### Stage 6e — The event form's last corrections (the deep dive's stage 5)
+**Re-read against the product first: 2026-10-09 changed this form.** The event window reads first and its pencil opens the
+form with a held save (`0366fb04`); a change that tells families is held until ✓ and asks (Tournament Stage 3 A36, the
+edit-autosaves exception); a series edit asks its scope at the pencil (§287). So R6 ("Edit details keeps its Save") is
+likely settled. Left to check: the practice's More label still promising an address (F13); the series' per-date opponent
+boxes taking the Opponent Picker (F13); an arrival after the start flagged under the field and on the sheet (D-6, F12).
+Small; it fills any gap in the sequence. **Holds the release?** No.
+
 ### Stage 7 — Tournaments inside a club + one door to every family
 **Closes:** G01–G04 · C18 (decision) · the org-wide announcement gap.
 - [ ] Hub banner logic for a club (G01); "Add my team" for a club org (one click; today two steps — G03); tournament fees → the club ledger **by decision** (recommend: an automatic income entry on the org ledger when a fee is marked paid, source_module `tournament_fee`, voided with the payment — the house-league pattern done right, fixing the fire-and-forget/void/revive defects with it).
 - [ ] **Message every family** (G02): one org-wide announcement door on the hub (audience = every guardian across rep rosters + league registrations + Families, through the family-email choke point with suppression, a preview count, a send log, a cap). Reuses the house-league broadcast sender once it is batched.
 - [ ] **By activity on the club's Budget vs. Actual** (from 3b, Ask 5): the coach's third report shape ("did this event pay for itself?") joins once a hosted tournament's money joins the budget.
+- [ ] **The coach portal's Tournaments** (the coach Schedule deep dive's stage 3, merged 2026-10-09 — see Stage 6c): the list and the record at 390 and 1440 (the card runs off a 390 screen, D-3; the record is 2,139px with 11 of 17 controls under 44 and no help door); titled by the tournament with the team as its meta; the head-coach editor to autosave or to Settings; a "Games on your Schedule" row and a "← Tournament" back; the 600/901 breakpoints onto 640/768/900. **The record is shared with the free portal through flag props — every change lands on both.** Drawn with this stage, after the tournament redesign's Stage 2 (teams). **Does not hold the release.**
 **QA walk §J.** **Migrations:** `org_announcements` (+ send log) if the broadcast is recorded.
 
 ### Stage 8 — Release readiness
@@ -1567,8 +1643,11 @@ Stage 0 ─┬─ Stage 1 (shell + 1b buying) ─┬─ Stage 2 (rep teams) ─�
          │                               │                          └─ Stage 7 (tournaments+comms) ─┘
          └─ rulings D1/D2/D8 RULED 2026-09-25 ───────────────────────► Stage 3 may start once Stages 1–2 land
 Stage 9 (house league) ─── its own plan and release track; may run alongside Stage 10
-Stage 6 (built) ─► Stage 10 + Stage 11 drawn in ONE session (permits → the club's schedules) ─► built as two
-                   ─► Stage 8 ─► release (⚖ 2026-10-08: the release waits for Stage 11 too)
+Stage 6 (built) ─► 6c one calendar (review + the coach desk schedule) ─► Stage 10 + Stage 11 drawn in ONE session
+                   (permits → the club's schedules) ─► built as two ─► Stage 8 ─► release (⚖ 2026-10-08: the release
+                   waits for Stage 11 too)
+                   6c ─► 6d calendar feeds (before Stage 11's build) · 6e the event form (any gap) — neither holds the release
+                   the coach portal's Tournaments (merged deep-dive stage 3) ─► drawn with Stage 7
 Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─► gates Stage 1's SCREENS (R5 refined:
                          Stage 1's server half runs beside it; its screens build behind the switch after slice 1);
                          Phase 2 = inside each club stage · Phase 3 tournament screens (own project) · Phase 4 with Stage 9
@@ -1580,6 +1659,11 @@ Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─
 - Stage 2 before 3: the allocation loop needs teams, program years and the season rule (D2 ↔ B03).
 - Stages 4, 5, 6, 7 are independent of each other and of 3; pick by what the first club needs.
 - Stage 6's venue book is a prerequisite for Stage 9's league scheduling, not for the Club release.
+- **⚖ 2026-10-09 — the coach Schedule deep dive merged in (owner).** 6c (one calendar, with the deep dive's stage 2 drawn
+  inside it) comes **before** the Stage 10 + 11 drawing session, because Stage 11's draft grid wears the club calendar's
+  Week and three plans already share calendar parts pairwise. 6d (feeds) follows 6c and lands before Stage 11's build (11's
+  slots reach families through the team feed). 6e and the coach portal's Tournaments (with Stage 7) are fillers. None of
+  the merged coach work holds the release; only 6c's RULINGS sit on the release path, because Stage 11 waits on them.
 - Every stage that adds a migration lands it **with** its dictionary line and snapshot refresh; prod
   application order is recorded in `MANUAL_PROD_STEPS.json` as usual.
 - **⚖ Joint sequence with the tournament admin redesign and Admin Design Continuity's cleanup (proposed
