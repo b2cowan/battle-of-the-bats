@@ -33,11 +33,18 @@ describe('an admin record’s Delete', () => {
   it('is RepKit’s RecordDelete: the trash icon and the words, at body weight', () => {
     assert.match(KIT, /export function RecordDelete\(/);
     assert.match(KIT, /className=\{styles\.recordDelete\}[^>]*>\s*<Trash2 size=\{13\} aria-hidden \/> \{children\}/);
-    const rule = KIT_CSS.match(/\.recordDelete \{[^}]*\}/)?.[0] ?? '';
-    assert.ok(rule, 'the rule exists');
-    assert.doesNotMatch(rule, /font-weight/, 'body weight — the portal’s, never bold');
-    assert.doesNotMatch(rule, /text-decoration/, 'underlined only on hover');
-    assert.match(rule, /color: var\(--danger-light/);
+    // The shape is ONE rule shared with RecordAction (2026-10-09); each colour is its own line after it. Every rule that
+    // styles either door at rest is held — not only the first match, which since the split is the one-line colour rule.
+    const rule = KIT_CSS.match(/\.recordDelete,\r?\n\.recordAction \{[^}]*\}/)?.[0] ?? '';
+    assert.ok(rule, 'the shared shape rule exists');
+    const atRest = [...KIT_CSS.matchAll(/([^{}]*)\{([^{}]*)\}/g)]
+      .filter(([, sel]) => /\.record(Delete|Action)\b/.test(sel) && !/:(hover|focus-visible|disabled)/.test(sel));
+    assert.ok(atRest.length >= 4, 'the shape, both colours and the phone floors');
+    for (const [, sel, body] of atRest) {
+      assert.doesNotMatch(body, /font-weight/, `body weight — the portal’s, never bold (${sel.trim()})`);
+      assert.doesNotMatch(body, /text-decoration/, `underlined only on hover (${sel.trim()})`);
+    }
+    assert.match(KIT_CSS, /\.recordDelete \{ color: var\(--danger-light, var\(--danger\)\); \}/);
     assert.match(KIT_CSS, /\.recordDelete:hover \{ text-decoration: underline; \}/);
     assert.match(KIT_CSS, /\n {2}\.recordDelete \{ min-height: var\(--tap-min, 44px\); \}\n/, 'the touch floor, inside the phone block');
   });
@@ -47,6 +54,15 @@ describe('an admin record’s Delete', () => {
       assert.match(readCode(file), call);
     });
   }
+
+  it('its rare non-destructive twin, RecordAction (Archive, Bring back, Merge), is the same shape in the text’s colour', () => {
+    assert.match(KIT, /export function RecordAction\(/);
+    assert.match(KIT, /className=\{styles\.recordAction\}[^>]*>\s*\{icon\} \{children\}/);
+    assert.match(KIT_CSS, /\.recordDelete,\r?\n\.recordAction \{[^}]*font-size: var\(--type-body\);[^}]*\}/, 'one shared shape');
+    assert.match(KIT_CSS, /\.recordAction \{ color: var\(--text-primary\); \}/, 'never red: it can be undone');
+    assert.match(KIT_CSS, /\.recordAction:hover \{ text-decoration: underline; \}/);
+    assert.match(KIT_CSS, /\n {2}\.recordAction \{ min-height: var\(--tap-min, 44px\); \}\r?\n/, 'the touch floor, inside the phone block');
+  });
 
   it('no record keeps a Delete style of its own', () => {
     for (const sheet of OLD_SHEETS) {

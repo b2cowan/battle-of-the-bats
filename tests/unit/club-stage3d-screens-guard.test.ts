@@ -103,10 +103,11 @@ describe('2. Payees is a window over the Ledger (Asks 1, 2, 7a)', () => {
     assert.match(payees, /back=\{current \? \{ label: 'Payees', onBack: \(\) => void toList\(\) \} : undefined\}/);
     assert.match(payees, /noun: 'payee'/);
     assert.doesNotMatch(payees, />Done</, 'no Done: ← Payees goes back and × closes');
-    // Merge in the foot's start; Delete at the end of the body, alone, red.
-    assert.match(payees, /footerStart: canMove && current\.inUse && others\.length > 0/);
-    assert.match(payees, /canMove && !current\.inUse && \(\s*<div className=\{own\.deleteEnd\}>/);
-    assert.doesNotMatch(payees, /footerStart[^;]*Delete this payee/);
+    // Merge and Delete both end the body (owner 2026-10-09, walking §288: no pinned foot row for one rare door) —
+    // Merge in RecordDelete's uncoloured twin; the foot is Previous · Next only.
+    assert.match(payees, /\{canMove && current\.inUse && others\.length > 0 && \(\s*<div className=\{own\.recordEnd\}>\s*<RecordAction icon=\{<GitMerge size=\{13\} aria-hidden \/>\} onClick=\{\(\) => setAsking\('merge'\)\}>Merge into another payee<\/RecordAction>/);
+    assert.match(payees, /canMove && !current\.inUse && \(\s*<div className=\{own\.recordEnd\}>/);
+    assert.doesNotMatch(payees, /footerStart/, 'no door of the payee’s sits in a foot row of its own');
     // …in every admin record's ONE Delete (owner 2026-10-09 — `admin-record-delete-guard`), never a style of its own.
     assert.match(payees, /<RecordDelete onClick=\{\(\) => setAsking\('delete'\)\}>Delete this payee<\/RecordDelete>/);
     assert.doesNotMatch(readCode(`${MONEY}/PayeesWindow.module.css`), /\.deleteButton\b/);

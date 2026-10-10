@@ -161,10 +161,14 @@ describe('5. the Venue library — who saves, Archive vs Delete, archived out of
     assert.match(get, /else if \(!which\.withArchived\) q = q\.eq\('is_active', true\);/);
     assert.match(route, /return NextResponse\.json\(await readVenues\(ctx\.org\.id, \{ withArchived: false \}\)\);/);
   });
-  it('the window offers Archive when booked, and Delete — ending the body — only when nothing books it', () => {
+  it('the window offers Archive when booked, and Delete only when nothing books it — both ending the body', () => {
     const win = readCode(LIB_WINDOWS);
-    assert.match(win, /: u\.anyBooking\s*\? <button type="button" className="btn btn-outline" onClick=\{\(\) => void leave\(onArchive\)\}>/);
-    assert.match(win, /\{canSave && !u\.anyBooking && \(\s*<div className=\{own\.deleteEnd\}>\s*<RecordDelete/);
+    // Archive / Bring back end the body with Delete, never a foot row (owner 2026-10-09, walking §288 W6).
+    assert.match(win, /: archived \? <RecordAction icon=\{<ArchiveRestore size=\{13\} aria-hidden \/>\} onClick=\{\(\) => void leave\(onRestore\)\}>Bring back this venue<\/RecordAction>/);
+    assert.match(win, /: u\.anyBooking \? <RecordAction icon=\{<Archive size=\{13\} aria-hidden \/>\} onClick=\{\(\) => void leave\(onArchive\)\}>Archive this venue<\/RecordAction>/);
+    assert.match(win, /const canDelete = canSave && !u\.anyBooking;/);
+    assert.match(win, /\{\(lifeDoor \|\| canDelete\) && \(\s*<div className=\{own\.recordEnd\}>\s*\{lifeDoor\}\s*\{canDelete && <RecordDelete/);
+    assert.doesNotMatch(win, /footerStart/, 'no venue door sits in a foot row of its own');
     assert.match(win, /inUse=\{f => !!usageOf\(f\.id\)\?\.anyBooking\}/);
   });
   it('a reader who cannot save sees no Add venue and no pencil', () => {

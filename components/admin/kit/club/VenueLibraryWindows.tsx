@@ -16,17 +16,20 @@
  *
  * ⚠ DEPARTURES FROM THE DRAWING, from the rulings made after it (said at build time, 2026-10-09):
  *   · NO "Done" in the foot — a record window's × (a phone's ←) closes it; the 2026-10-09 rulings took Close / Done out
- *     of every record window (the team's bill, Payees). The foot holds Archive / Bring back at its start (the payee's
- *     Merge has that place) and Previous · Next through the list it was opened from (the 2026-09-30 ruling).
- *   · DELETE ENDS THE BODY, alone, red, asking first (`RecordDelete`, the 2026-09-30 / 2026-10-09 place for a record's
- *     Delete) — the drawing put it in the foot.
+ *     of every record window (the team's bill, Payees). The foot is Previous · Next through the list it was opened from
+ *     (the 2026-09-30 ruling) and nothing else.
+ *   · THE VENUE'S DOORS END THE BODY — Archive (anything books it), Bring back (archived), Delete (nothing books it: red,
+ *     asking first). Delete's place is the 2026-09-30 / 2026-10-09 one for a record's Delete (the drawing put it in the
+ *     foot); Archive and Bring back joined it on the owner's word, walking §288 W6 (2026-10-09): "does archive need to
+ *     have a full pinned row above the footer?" — no: a rare door alone in a pinned row, the one the reader can't
+ *     predict from what they see (booked → there, unbooked → the body's end). `RecordAction`, Delete's shape uncoloured.
  *   · An ARCHIVED venue reads, with Bring back; it has no pencil. Bring it back to change it.
  */
 import { useCallback, useRef, useState } from 'react';
 import { Archive, ArchiveRestore, Plus, X } from 'lucide-react';
 import KitDialog from './KitDialog';
 import ck from './ClubKit.module.css';
-import { RecordDelete, SavePill } from './RepKit';
+import { RecordAction, RecordDelete, SavePill } from './RepKit';
 import { FormError, TextField } from './money/MoneyKit';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { getMapsUrl } from '@/components/LocationLink';
@@ -125,7 +128,7 @@ export function VenueWindow({ q, venue, usage, canSave, list, actionError, onOpe
   canSave: boolean;
   /** The list it was opened from (the active venues, or the archived ones) — its Previous · Next. */
   list: readonly LibraryVenue[];
-  /** Why the foot's action (Bring back) didn't go through — said beside it. */
+  /** Why Bring back didn't go through — said under it, at the body's end. */
   actionError?: string;
   onOpen: (id: string) => void;
   /** A save landed: the venue as the server now holds it. */
@@ -201,6 +204,12 @@ export function VenueWindow({ q, venue, usage, canSave, list, actionError, onOpe
     : undefined;
   const facilities = [...venue.facilities].sort((a, b) => a.displayOrder - b.displayOrder);
   const usageOf = (id: string | null) => (id ? u.facilities[id] : undefined);
+  // The venue's way out of the library, in both modes: Bring back once archived, Archive while anything books it.
+  const lifeDoor = !canSave ? null
+    : archived ? <RecordAction icon={<ArchiveRestore size={13} aria-hidden />} onClick={() => void leave(onRestore)}>Bring back this venue</RecordAction>
+    : u.anyBooking ? <RecordAction icon={<Archive size={13} aria-hidden />} onClick={() => void leave(onArchive)}>Archive this venue</RecordAction>
+    : null;
+  const canDelete = canSave && !u.anyBooking;
 
   return (
     <KitDialog
@@ -212,13 +221,7 @@ export function VenueWindow({ q, venue, usage, canSave, list, actionError, onOpe
       status={editing ? <SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} /> : undefined}
       steps={steps}
       levelKey={venue.id}
-      footerStart={canSave ? (archived
-        ? <button type="button" className="btn btn-outline" onClick={() => void leave(onRestore)}><ArchiveRestore size={14} aria-hidden /> Bring back</button>
-        : u.anyBooking
-          ? <button type="button" className="btn btn-outline" onClick={() => void leave(onArchive)}><Archive size={14} aria-hidden /> Archive</button>
-          : undefined) : undefined}
     >
-      <FormError>{actionError ?? ''}</FormError>
       {editing ? (
         <>
           <TextField id="venue-name" label="Name" required value={draft.name} maxLength={120} onChange={v => change({ ...draft, name: v })} />
@@ -262,12 +265,15 @@ export function VenueWindow({ q, venue, usage, canSave, list, actionError, onOpe
           <BookedBy usage={u} />
         </>
       )}
-      {/* ⚖ Delete ends the body, alone, red, asking first — offered only when NOTHING books the venue (Ask 9). */}
-      {canSave && !u.anyBooking && (
-        <div className={own.deleteEnd}>
-          <RecordDelete onClick={() => void leave(onDelete)}>Delete this venue</RecordDelete>
+      {/* ⚖ The venue's doors end the body, never a foot row (owner, 2026-10-09): Archive / Bring back, and Delete — red,
+          asking first — only when NOTHING books the venue (Ask 9). A refused Bring back says why under it. */}
+      {(lifeDoor || canDelete) && (
+        <div className={own.recordEnd}>
+          {lifeDoor}
+          {canDelete && <RecordDelete onClick={() => void leave(onDelete)}>Delete this venue</RecordDelete>}
         </div>
       )}
+      {actionError && <FormError inPlace>{actionError}</FormError>}
     </KitDialog>
   );
 }

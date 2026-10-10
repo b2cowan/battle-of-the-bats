@@ -17,6 +17,7 @@
  *   useDeferredLoad(ready, load) · useLatestRead()               — the first read; only the newest writes
  *   <SavePill saving dirty error held onRetry />                 — pinned to the window, transient; only a failure stays
  *   <RecordDelete onClick>Delete this payee</RecordDelete>       — a record's Delete, at the end of its body
+ *   <RecordAction icon={…} onClick>Archive this venue</RecordAction> — its rare door that undoes or moves (same place)
  */
 import { useCallback, useEffect, useRef, useState, type MouseEventHandler, type ReactNode } from 'react';
 import Link from 'next/link';
@@ -221,6 +222,26 @@ export function RecordDelete({ children, onClick, disabled }: {
   return (
     <button type="button" className={styles.recordDelete} onClick={onClick} disabled={disabled}>
       <Trash2 size={13} aria-hidden /> {children}
+    </button>
+  );
+}
+
+/**
+ * A RECORD'S RARE DOOR THAT IS NOT A DELETE — Archive, Bring back, Merge (owner, 2026-10-09, at a venue's window walking
+ * Club Tier §288: "does archive need to have a full pinned row above the footer?" → no). RecordDelete's shape and place —
+ * icon and words at body weight, underlined only on hover, ending the body — in the text's own colour, because it can be
+ * undone or moves the record rather than destroying it. It never takes a foot row of its own: a rare button alone in a
+ * pinned row kept a whole bar of chrome on screen at every scroll for something pressed once in a record's life.
+ */
+export function RecordAction({ icon, children, onClick, disabled }: {
+  icon: ReactNode;
+  children: ReactNode;
+  onClick: MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
+}) {
+  return (
+    <button type="button" className={styles.recordAction} onClick={onClick} disabled={disabled}>
+      {icon} {children}
     </button>
   );
 }

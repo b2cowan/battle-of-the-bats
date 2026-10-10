@@ -15,8 +15,10 @@
  *               back. Three chrome changes from the page's window: Previous · Next through the list in the foot (the
  *               2026-09-30 ruling for an admin record opened from a list); no Done (← Payees and × already exist);
  *               Delete — only when nothing names the payee — LEAVES THE FOOT and ends the body, alone, red, asking first.
- *               Merge stays at the foot's left. A refused rename holds the window once; leaving the level, stepping and
- *               closing all go through the same hold.
+ *               Merge — while something names it — takes the same place (owner, 2026-10-09, walking §288: a rare door
+ *               alone in a pinned row above Previous · Next is a bar of chrome at every scroll); the foot is Previous ·
+ *               Next only. A refused rename holds the window once; leaving the level, stepping and closing all go
+ *               through the same hold.
  *
  * ⚠ IT OPENS OVER WHATEVER OPENED IT. From Ledger › Tools it sits over the Ledger, which is there again on close (the
  * Book, the filters, the period). From the payee picker's "Manage payees…" inside Add entry or a line's window it is
@@ -27,11 +29,11 @@
  * accounting's (3a's one rule — `canMove` from the read).
  */
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, GitMerge, Plus } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import {
-  ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, EmptyCard, LoadFailed, NoticePill, RecordDelete, RepChip, SavePill, repKit, useDeferredLoad,
+  ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, EmptyCard, LoadFailed, NoticePill, RecordAction, RecordDelete, RepChip, SavePill, repKit, useDeferredLoad,
   useLatestRead,
 } from '../RepKit';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
@@ -230,7 +232,8 @@ export default function PayeesWindow({ q, raised = false, initialPayee = null, o
 
   let body: ReactNode;
   let head: { eyebrow: string; title: string };
-  let foot: { footer?: ReactNode; footerStart?: ReactNode } = {};
+  // The list's foot holds New payee; a payee's foot is Previous · Next only (its doors end its body).
+  let foot: { footer?: ReactNode } = {};
   let steps;
   if (failed) {
     head = { eyebrow: 'Ledger', title: 'Payees' };
@@ -243,12 +246,6 @@ export default function PayeesWindow({ q, raised = false, initialPayee = null, o
     const at = payees.findIndex(p => p.id === current.id);
     const stepTo = (p: Payee | undefined) => (p ? { name: p.name, onStep: () => void openPayee(p.id) } : null);
     steps = payees.length > 1 ? { prev: stepTo(payees[at - 1]), next: stepTo(payees[at + 1]), position: `${at + 1} of ${payees.length}`, noun: 'payee' } : undefined;
-    foot = {
-      // Merge stays at the foot's left, in both modes (Ask 2); Delete ends the body instead.
-      footerStart: canMove && current.inUse && others.length > 0
-        ? <button type="button" className="btn btn-outline" onClick={() => setAsking('merge')}>Merge into another payee</button>
-        : undefined,
-    };
     const reportYearName = report?.year.name ?? '';
     body = (
       <>
@@ -296,10 +293,15 @@ export default function PayeesWindow({ q, raised = false, initialPayee = null, o
         {current.inUse && others.length > 0 && editing && (
           <p className={ck.hint}>Two spellings of one payee? Merge this one into the other: every entry moves to the one you keep.</p>
         )}
-        {/* ⚖ Delete leaves the foot and ends the body, alone, red, asking first (the 2026-09-30 ruling for an admin record
-            opened from a list) — offered only when nothing names the payee. */}
+        {/* ⚖ The payee's door ends the body, in both modes, never a foot row (owner, 2026-10-09): Merge while something
+            names it; Delete — alone, red, asking first (the 2026-09-30 ruling) — only when nothing does. */}
+        {canMove && current.inUse && others.length > 0 && (
+          <div className={own.recordEnd}>
+            <RecordAction icon={<GitMerge size={13} aria-hidden />} onClick={() => setAsking('merge')}>Merge into another payee</RecordAction>
+          </div>
+        )}
         {canMove && !current.inUse && (
-          <div className={own.deleteEnd}>
+          <div className={own.recordEnd}>
             <RecordDelete onClick={() => setAsking('delete')}>Delete this payee</RecordDelete>
           </div>
         )}

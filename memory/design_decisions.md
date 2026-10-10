@@ -7,6 +7,46 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-09 — HOUSE LEAGUE'S EDIT GAME GAINS "DELETE THIS GAME"; ITS PINNED HEAD AND FOOT SIT FLUSH (owner, at Edit Game walking Club Tier §288 W9: *"why is there so much white space at the bottom and top of this modal? also, I don't see delete anywhere on here to be able to delete the game"* → the recommendation → *"go ahead and build it"*)
+
+**Decision:** (1) **Delete this game** ends Edit Game's body — `RecordDelete`, red, never in the foot (the rare-door
+entry below) — for owners and league admins, not on Add Game. It asks on top of the window: "Delete Reds vs Blues?" —
+"It leaves the schedule and the public page for good. To call a game off but keep it listed, set Status to Cancelled
+instead.", plus "Its score comes out of the standings." for a played game · Keep it · Delete. A scored game can be
+deleted (the tournament's game window allows it too). The route's DELETE now removes the row. (2) The window's pinned
+head and foot stick at **minus the window's padding**, not 0. **Why:** (1) house league had no way to remove a game
+added by mistake: the route's DELETE was a soft cancel behind "Cancel Game", which §284's call removed the same
+afternoon, and Cancelled keeps a game on the public schedule — telling families a game that never existed was called
+off. Cancel and Delete are two different acts (called off vs never should have been there); the question names both so
+the reader picks the right one. (2) A sticky band stops at its scroll box's CONTENT edge: at 0, once the window scrolled,
+each band parked 1.5rem inside it, leaving an empty strip above the title and below the buttons with the fields showing
+through. A window short enough not to scroll never showed it, which is how §284's walk passed it. Guard:
+`house-league-game-window-guard.test.ts`.
+
+### 2026-10-09 — A RECORD'S RARE DOOR ENDS ITS BODY, NEVER A FOOT ROW OF ITS OWN: ARCHIVE, BRING BACK AND MERGE JOIN DELETE (owner, at Kinsmen Park's window walking Club Tier §288 W6: *"does archive need to have a full pinned row above the footer?"* → the recommendation → *"go ahead with both"*)
+
+**Decision:** in the club's two record windows that step through a list, the record's way out of the list ends the
+body with Delete, and the foot is Previous · Next only. **The Venue library:** *Archive this venue* (anything books it),
+*Bring back this venue* (archived) and *Delete this venue* (nothing books it) all sit at the end of the window's body;
+an archived venue nothing books carries Bring back and Delete side by side. **A payee:** *Merge into another payee*
+(something names it) sits where *Delete this payee* (nothing does) already sat. The new door is RepKit's
+**`RecordAction`** — `RecordDelete`'s shape (icon + words at body weight, underlined only on hover, the admin's control
+height, the phone's touch floor) in the text's own colour, because it can be undone or moves the record rather than
+destroying it. A refused Bring back says why directly under its door. **Why:** (1) Archive and Delete answer one
+question (how this record leaves the list) and the window offers exactly one of them, yet they sat in two places
+chosen by a fact the reader can't see from the button (booked → a pinned row, unbooked → the body's end). (2) A door
+pressed once in a record's life held a whole pinned bar on screen at every scroll — on Kinsmen Park's edit form it
+covered "Add a facility" — and on a phone it stacked on Previous · Next. (3) It was left over: the row held Archive /
+Merge at one end and Done at the other until Done left every record window (3d Ask 2, the bill 10-09); a single rare
+button stranded in the row was never ruled. Same complaint as the bill's foot and the allocation's Export earlier the
+same day. **Words:** "Archive" → "Archive this venue", "Bring back" → "Bring back this venue", matching "Delete this
+venue" in the same place (the portal's "Retire this drill" / "Restore this drill"); the questions they open are
+unchanged. **Not in it:** the calendar's read window, whose ONE foot door is the window's purpose and has no row
+under it; any window whose foot start sits beside a foot end (Manage's Suspend, a ledger line's Void — a two-ended
+row). Guards: `admin-record-delete-guard.test.ts` (RecordAction's look), `club-stage3d-screens-guard.test.ts` (the
+payee), `club-stage6b-screens-guard.test.ts` (the venue). Amends the 2026-10-09 "an export sits above what it
+exports" entry's last sentence ("a payee's Merge keeps the foot's left").
+
 ### 2026-10-09 — THE CLUB CALENDAR AND THE VENUE LIBRARY: FOUR RULINGS (owner: *"I agree with your recommendations for both stage 6 and 11"* — Club Tier Stage 6, Asks 6, 7 and 9 as recommended, ratified 2026-10-08; recorded at the start of the 6b build) — hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 6 (v64), plan `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 6
 
 **Decision:** (1) **The club calendar** (Asks 6, 7): "Calendar" sits in the admin rail directly under Overview,

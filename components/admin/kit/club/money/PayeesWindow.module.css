@@ -1,11 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
    THE CLUB'S PAYEES WINDOW (Club Tier Stage 3d, specimen 1). Only what the kit and RepKit don't draw: a payee's
-   Delete at the END of its body — alone, red, asking first (the 2026-09-30 ruling for an admin record opened from a
-   list; it sat in the window's foot until 3d). The button is RepKit's `RecordDelete`, the one every admin record
-   uses (the portal's look: trash icon + red words at body weight — owner 2026-10-09); only its place is drawn here.
+   door at the END of its body — Delete (alone, red, asking first: the 2026-09-30 ruling for an admin record opened from
+   a list; it sat in the window's foot until 3d) or Merge (it joined Delete's place on the owner's word, 2026-10-09 — a
+   rare door never takes a pinned foot row of its own). The buttons are RepKit's `RecordDelete` / `RecordAction`, the
+   ones every admin record uses (the portal's look — owner 2026-10-09); only their place is drawn here.
    ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder strictly.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
-.deleteEnd {
+.recordEnd {
   margin: 1.1rem 0 0;
   padding-top: 0.6rem;
   border-top: 1px solid var(--home-line);

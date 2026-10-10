@@ -588,8 +588,8 @@ const orgHelp: HelpPageContent = {
           title: 'Archive or Delete',
           content: (
             <HelpDefs>
-              <HelpDef term="Archive">Offered when anything books the venue, past seasons included. It leaves every picker (coaches, house league, a tournament&rsquo;s Import from Library), and every booking keeps it. Archived venues are listed under the table; open one and choose <strong>Bring back</strong>.</HelpDef>
-              <HelpDef term="Delete">Offered only when nothing books the venue. It asks first, and the venue leaves the library for good.</HelpDef>
+              <HelpDef term="Archive">At the end of a venue&rsquo;s window, <strong>Archive this venue</strong> is offered when anything books it, past seasons included. It leaves every picker (coaches, house league, a tournament&rsquo;s Import from Library), and every booking keeps it. Archived venues are listed under the table; open one and choose <strong>Bring back this venue</strong>.</HelpDef>
+              <HelpDef term="Delete">Offered in the same place, only when nothing books the venue. It asks first, and the venue leaves the library for good.</HelpDef>
             </HelpDefs>
           ),
         },
