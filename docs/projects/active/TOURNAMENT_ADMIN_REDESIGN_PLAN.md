@@ -53,6 +53,12 @@
 > `TOURNAMENT_ADMIN_REDESIGN_STAGE3_BUILD_PROMPT.md`. Drawn before Club Tier Stages 10 + 11, whose scheduler starts from
 > the parts tagged "shared candidate" (A40).
 > **✅ The Stage 3 defects pass (A45) COMMITTED `279f1e5d` 2026-10-09** (P1 ruled: a database function — mig 320, dev only, prod BEFORE the code; /simplify + /review first) — §6c "Defects pass — as built"; **owner walk §286 (hub walk 8) ✅ PASSED 2026-10-09, 15 of 15**, read back on dev (nothing saved by the generator, the Keep released, the demo unpublished).
+> **Stage 5 (create and set up — the last stage) DRAWN 2026-10-10** on the hub's Stage 5 tab (hub v39, §6e), from
+> `TOURNAMENT_ADMIN_REDESIGN_STAGE5_DESIGN_PROMPT.md`: E1–E9, findings F77–F91 (§3), asks A47–A58 (two depart from the
+> prompt: A51 and A57). **A23 RULED at its start (owner, 2026-10-10): B, one at a time** — logged Decided, not built, by
+> /strategy. **⚖ RULED the same day** (owner's paste-back): **E1–E7 as drawn, A47–A58 as recommended**; A56 with a note
+> (the "?" in the other portals' one format — the bare glyph, the same size, no box or circle; the drawings fixed). Next:
+> the A57 addendum (Chat and Data tools) on the Stage 5 tab, then the build prompt — the redesign's last build.
 > **Created:** 2026-09-28 · **Branch:** dev · **Companions:** `TOURNAMENT_ADMIN_REDESIGN_PM_BRIEF.md` ·
 > hub `TOURNAMENT_ADMIN_REDESIGN_HUB.html` (republish the same path for the project's life).
 > **Origin:** Phase 3 of `ADMIN_DESIGN_CONTINUITY_PLAN.md` ("Tournament screens — its own project when it
@@ -431,6 +437,70 @@ bottom Save.
 36×27 on every question; notification switches 36×20; Rules' Browse samples and Add section 36×26; Venues'
 export 32×32. These are desk-first screens (A3); the phone floor still applies wherever a phone reaches them.
 
+**Re-measured for Stage 5 (2026-10-10, read-only, the Plus club, the free club at its slot limit, the club fixture and
+the demo's Invitational; no draft exists on any test club, so the draft board and the first run were read from the code,
+owner ruling the same day).** F25 is wider (the copy paths lose a park's diamonds: the demo's Invitational, copied from
+the Season Opener, holds Riverdale Community Park with none). F26 was fixed in the defects pass (`936655a9`) and stays
+unreachable until one at a time (A23). F27 holds: Free ends at 375 on a 360 screen. F28 is partly fixed (a non-empty
+division's delete asks again with counts, `719d84c4`). F29 is partly fixed (a header pill reaches the site at a desk).
+F30 is six save models once Registration questions and Notifications are counted. F55 sits on the weeks-before board,
+not the draft (F81).
+
+**F77 — The first run's diamonds are named after the park.** It makes N lanes named "Lions Park — Diamond 1…N", so the
+schedule's Venue field reads "Lions Park · Lions Park — Diamond 2"; a one-diamond park's only lane is named "Lions Park".
+Its screen promises "Diamond 1…N" (the venues route's legacy `save` action).
+
+**F78 — The tournament's style can silently fail to save.** Both wizards save the tournament, then the style in a second
+call whose failure is swallowed; an Exhibition can quietly become round robin + playoffs.
+
+**F79 — The wizard's venue search lists every copy and drops diamonds.** New tournament searches every tournament's
+venue copies (archived events included, duplicates unmerged: "Ma" on the Plus club lists Maple Field 1 twice, Maple
+Field 2 twice), with no diamonds; a pick keeps name and address and saves one lane named after the venue. Neither wizard
+reaches the club's Venue library (S6-04's wizard half).
+
+**F80 — Copy into this draft replaces the draft's setup wholesale.** The draft board's populate-from deletes the draft's
+venues, rules, resources, questions and welcome before copying, offers no areas, has no rollback if it stops halfway,
+needs only the module (not `create_tournaments`), and ends in its own window. Its banner says "Manage Tournaments".
+
+**F81 — "No fee schedule configured" before the first accepted team.** The weeks-before board's Payments panel says it
+whenever no team is accepted (fees set or not), and "Set up fees →" (17px) opens the Tournaments list (F55).
+
+**F82 — The board's "ready" is not Activate's.** The board's ready = dates + a division; Activate also requires a public
+contact (usually the club's email). The board's own Activate question says it "opens registration to teams" even with
+no division open; the record says "in its open divisions".
+
+**F83 — ?create=1 at the slot limit opens the whole wizard.** The rail's + and the list refuse before anything opens; the
+address (the first run's League path, the coach portal's hosted section) opens every step and refuses at Save setup.
+
+**F84 — The clone checks neither the name nor a past date** (New tournament refuses both).
+
+**F85 — No "?" on most boards and setup screens.** Only the finished board and Divisions have one; the help drawer counts
+days with a different clock from the board's.
+
+**F86 — Chat and Data tools were never drawn by any stage.** Chat: no title (F14), a full-page Plus wall (F38); its old look
+is "named by no stage". Data tools: imports and exports in Admin, 1,462px on a phone. Stage 5 is the last stage.
+
+**F87 — Venues & facilities: silent failures and a split address.** Facility saves have no error path; editing a venue puts
+the whole address in Street; Add Venue's result is unchecked; a repeat library import says nothing; its hint "e.g. Lions
+Park — Field 1" teaches one venue per field (the Plus club's venues show it).
+
+**F88 — An Exhibition's divisions still speak of playoffs** ("standings and playoff seeding", a playoff setting saved).
+
+**F89 — Registration questions has no door from the rail or the settings hub** (the frame's; routed).
+
+**F90 — No door to the public site on a phone or a tablet.** The event header's pill is desk-only and 119×25.
+
+**F91 — The first run asks a question nothing reads** ("how many tournaments a year"), and shows a Tournament Plus
+Founding Season offer to an organizer who just chose free (J1-019).
+
+**F92 — "No fees set up" is called Free, and teams told they aren't charged** (found with the owner, 2026-10-10, on the
+drawn draft board). Event settings' Fee model offers "Free"; the card's summary then says "Free" and its line says "teams
+are not charged a registration fee for this tournament". It only means no fees are set up or tracked in the product: the
+event may charge, collected outside it. **Owner ruling the same day:** never tell anyone the event or registering is free
+when it is a matter of tracking — say the payments aren't tracked here (the public registration form already does:
+"Payment handled by organizer … outside the platform"). Stage 5's build changes the choice, its summary and its line;
+the drawing's draft Fees row and weeks-before Payments card say it that way (words for `/marketing`).
+
 ### After the event
 
 **F32 — The dashboard's archive confirm promises a restore that doesn't exist.** "You can restore it later
@@ -644,7 +714,7 @@ which reads as the product changing its mind. Routed to the foundation / Club St
 | 2 · Teams and registration — **DRAWN + RULED 2026-09-30 (§6b); build prompt written** | Teams (first team on screen one, the pools row, one colour per status, words not glyphs, a row opens the team), registration health, Communications; + the pending team on the board (F41), the email that reaches every team (F42, F43), Communications' formatting (F44), the record (F45) | Q 6.1 (ruled) · T1 T3 · A13–A17 | Both |
 | 3 · The schedule — **DRAWN + RULED 2026-10-09 (§6c); defects pass COMMITTED `279f1e5d` 2026-10-09 (mig 320 dev only — prod before the code; walk §286); build prompt written** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`; unblocked by Club Tier Stage 6a; drawn before Club Stages 10 + 11, whose scheduler copies this generator) | Opens on the day; a game opens that game; one generator name; drag with undo; the bracket shows scores and winners; the coin toss where seeding happens; the rain delay as Storm Mode's home; publishing says who is told; + one division/stage at a time (F66), the hidden waiting score (F67), the nameless bracket (F68), the generators' double-booking and score-deleting replace (F69, F70), silent refusals (F71), the bracket editor's silent moves (F72), the false reminder (F73), the dead Edit window (F74), three toolbars (F75), three game lengths (F76) | Q 8.1 · S1–S8 · A33–A46 | Both (the desk first for building, the phone first for fixing) |
 | 4 · After the event — **DRAWN 2026-10-05, RULED 2026-10-06 (§6d); build prompt written** | The finished board says how each division finished and offers Reuse this setup (its one lime); one reuse flow (the wizard's step, every door); Summary on a phone, the champions page shared, a clean printout; Past tournaments as every finished event's list; the Tournaments list (what's ahead) with its statuses as bands and the event's record, every change asking first; the Exhibition; + no door to the list (F48), the one-slot next year (F49) | Q 13.1 (ruled) · A18 (ruled: Stage 5 owns the before-event view) · A19–A24 | Desk first |
-| 5 · Create and set up — **design prompt written 2026-10-10** (`TOURNAMENT_ADMIN_REDESIGN_STAGE5_DESIGN_PROMPT.md`; the last stage; Q 1.1–4.1 ruled on the walk) | One set of creation questions (diamonds in both wizards); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens | Q 1.1, 2.1, 3.1, 4.1 | Desk first, phone usable |
+| 5 · Create and set up — **DRAWN + RULED 2026-10-10 (§6e); next the A57 addendum (Chat + Data tools), then the build prompt** (`TOURNAMENT_ADMIN_REDESIGN_STAGE5_DESIGN_PROMPT.md`; the last stage; Q 1.1–4.1 ruled on the walk; A23 ruled one at a time at its start) | One set of creation questions (diamonds in both wizards); the board before the event (A18); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens; next year on a one-slot plan; + the first run's misnamed lanes (F77), the silent style save (F78), the venue search (F79), copy-into-draft (F80), the untrue fees sentence (F81), the board's ready (F82), ?create=1 (F83), the clone's checks (F84), the "?" (F85), two screens no stage drew (F86), Venues' silent failures (F87), the Exhibition's divisions (F88), two frame findings (F89, F90), the unread question (F91) | Q 1.1, 2.1, 3.1, 4.1 · E1–E9 · A47–A58 | Desk first, phone usable |
 | 6 · The volunteers — **DRAWN + RULED 2026-10-07 (§6f); build prompt written** | Scorekeeper and gate: the install banner, 44px buttons, a waiting-score signal, the staff landing; the gate inherits Stage 1's check-in board; + the see-through bars (F59), the clock in capitals (F61), the gate volunteer's landing (F62), a sent-back score (F63), the after-submit notice (F64), the Staff kit (F65) | V1–V7 · A25–A32 | Phone only (a scoring-table tablet measured) |
 | D · Defects now | Not a stage: F32 archive promise, F16 pools button, F26 bare Plus notice, F08's "no refresh needed", J1-075 "email will be sent", F34's leader sort, F04's empty box, J1-116 the strip on its own page, "0 champions detected" — **COMMITTED `936655a9` 2026-09-29** (record below; walk §251) | A8 | — |
 
@@ -1644,6 +1714,103 @@ into Tournaments with its keywords; the Organization page's "Manage Tournaments"
 is **on hold** and is rewritten for one list (eight of its thirteen steps walk the two lists); §275 stays as passed.
 No data change.
 
+## 6e. Stage 5 — Create and set up, as drawn (2026-10-10)
+
+Drawn at true size on the hub's **Stage 5** tab (hub v39), desk first with every screen at 390, from
+`TOURNAMENT_ADMIN_REDESIGN_STAGE5_DESIGN_PROMPT.md`. **The redesign's last stage.** Before = captures of 10 October,
+read-only (`.probe/s5/before.mjs`; every non-GET refused and recorded, nothing created, seeded or moved) on the Plus
+club's Championship, the free club at its slot limit, the club fixture (a Venue library) and the demo's Invitational 21
+days out. **No draft exists on any test club; the owner ruled the draft's board and the first run be drawn from the code**
+(marked "not captured"). After = drawn Warm, a Dark copy of each main drawing cloned at load. Drawn figures are read from
+the rendered drawing (`.probe/s5/measure5.mjs` → `{{M:s5-*}}`).
+
+**Ruled at the start (owner, 2026-10-10):** **A23 → B, one at a time** — on the one-slot plans only Draft and Active
+events hold the slot; a finished event no longer does. Logged Decided (not built) by `/strategy` in
+`BUSINESS_DECISIONS.md` (2026-10-10) and the Facts doc. Found while logging it: last year's finished event keeps its name
+and public link (both unique among non-archived events), so the creation path must answer it (A55).
+
+- **E1 · One set of creation questions** (F25, F77–F79, F83, F91; Q 1.1). One window for both doors (the kit's form window:
+  full screen on a phone, 640 at a desk with the live preview at 1280+): the tournament (name, dates, style, link — each
+  marked required, the style saved with it) · divisions (each a labelled card on a phone) · venues (the one Venue field,
+  shared Club Stage 6: the club's library for a club; "your venues" — each past venue once, with its diamonds — for
+  everyone else; or a new venue with the four things the library asks plus How many and the sport's word → Diamond 1…N) ·
+  review (the welcome message a switch). Fees not asked. "How many tournaments a year" leaves the flow. Taps to a draft:
+  first run 7 → 5, New tournament 6 → 5 (7 → 6 with past events), plus typing.
+- **E2 · The board before the event** (A18, F33, F55, F80–F82, F85). The draft: one card "Before you activate" — dates, a
+  division and the contact Activate requires, then the rest quiet in one band, every row a door to the exact place; one
+  preview door; Activate the board's one lime once it can work, asking in the event record's words with the link and Copy;
+  the guidance card, "What everyone else sees" and the reuse banner go. "Copy into this draft" becomes Stage 4's reuse step
+  filling this draft (areas to choose, nothing replaced unasked, all-or-nothing). The weeks before: the guidance as a
+  one-line note, five kit cards each one row a door, Payments saying the true thing and opening Fees & Payments; the
+  `schedule-health` anchor kept on its card. First card ≈232px (today 593).
+- **E3 · Event settings stays the model** (F27, F30, P5; Q 2.1). Cards unchanged; status said once with Change opening the
+  event's record (A49); the Fee model a dropdown at every width (the 2026-08-22 convention — Q 2.1 said "on a phone");
+  which divisions set their own fee said in the card (J1-042); the save word the floating pill.
+- **E4 · Divisions** (F28, F88; Q 3.1). A row per division ("6 of 6 · Full" in the row's ink, registration in words), the
+  record drawn both ways for A50 (A: reads first, the pencil edits whole; B: straight into the form), Delete at its end
+  asking once with the counts, no alert box; a desk table.
+- **E5 · Venues & facilities** (F87, 6a's F2, S6-04). A venue is a record with its diamonds inside it (the Venue library's
+  window, shared Club Stage 6); one form edits the venue and its diamonds; the in-use guard said before the tap; Add a venue
+  = the club's library first, "your venues" for the rest, a new venue with its count; every copy path keeps diamonds and the
+  library link (A51).
+- **E6 · Rules & resources and the settings screens** (F30, F31). Rules' sections and resources as records (no per-section
+  Save, no three-way leave dialog); Registration questions as rows with Reorder behind Tools; Notifications as 52px rows
+  with the pill; no browser alert or confirm anywhere; the settings hub kept.
+- **E7 · Public site** (F29, F38, F90; Q 4.1). "See your public site" in the title band at every width (a door: a boxed
+  icon on a phone, a white button at a desk); Pages first, the six branding parts as closed cards that save themselves; the
+  Tournament plan's view left as today (free tier review); the drawn theme mock gone. **E8:** every board and setup screen ends its title band
+  with the "?" (A56).
+- **E9 · Next year on a one-slot plan, one at a time** (A23 as ruled, F83). The Tournaments list the week after: 0 of 1 slot
+  in use, New tournament its lime, last year online; while last year is still live, the list says why in words (mark it
+  complete; it stays online); the name field offers "…2027" when last year's holds the name; the record says Reopen and Move
+  back to draft need a free slot; the sentences that change with the rule listed. The free wizard's first step is left as today.
+- **⚠ The prompt changed mid-session (2026-10-10):** a free tournament tier review (`FREE_TOURNAMENT_TIER_REVIEW_PLAN.md`,
+  queued after this redesign) decides what a free organizer gets, shows locked or hides. So every free-plan lock and hidden
+  part on Stage 5's screens is left as it is today, tagged "free tier review", and listed on the tab's overview for that
+  project to start from. The first draft had redrawn several (Public site's six Locked cards as one line, the free
+  wizard's first step, three lock lines); those were put back before the owner saw the tab.
+
+**⚖ RULED 2026-10-10** (the owner's paste-back): **E1–E7 as drawn, A47–A58 all as recommended.** One note, on A56: *"make
+sure its in the same format as the the other portals (same size, no additional circle border around it, etc.)"* — the
+drawings had boxed the "?"; every one is now the portals' bare circled-question glyph (`HelpButton iconOnly`: no box, no
+fill, a 44px tap area on a touch width, 34px at a desk), which the admin's title bands already build (2026-10-01). Also
+ruled on the drawing the same day: **F92** — no fees set up means "not tracked here", never "free" (owner; design log
+2026-10-10). **A57 means an addendum before the build prompt:** Chat and Data tools drawn on this tab (title band, one
+toolbar, 44px controls, a lock line for Chat on the free plan — that lock is the free tier review's, so left as today and
+listed), then the build prompt. **The `/design` review of the same day** offered eleven changes, two of them High (desk
+drawings at true size, not half; true-size desk drawings for the desk-first screens it lacks) — not ruled in the
+paste-back; put to the owner with the addendum.
+
+**The asks:** A47 one question set · A48 the board before the event · A49 the status switch and the
+Fee model · A50 Q 3.1 × the record standard · A51 venues and the copy paths (**departs from the prompt**: keep
+import-from-past and give it a door — it is the only route that brings a past venue's diamonds to an organizer without a
+library, and one at a time makes that the free organizer's yearly path) · A52 Divisions · A53 Public site · A54 the small
+controls · A55 next year on a one-slot plan · A56 the "?" · A57 **Chat and Data tools, the two screens no stage drew**
+(found by the measuring: the prompt's "every tournament screen redrawn" is not true without them; recommended: a short
+addendum on the Stage 5 tab before the build prompt) · A58 what else the measuring found. Per drawing: E1–E7.
+
+**The formatting check** (the tab's last part, before the owner saw anything): the written rules, Stage 1's sixteen
+departures and every ruling through 9 October. Fixed by it: "See your public site" and "Message teams" were drawn as
+outlined buttons (they are doors); the lock line at 13px and the style rows at 41px; the before-board's off-ladder sizes.
+**A second, independent reviewer** then read every rendered picture against the same rules (its result on the tab).
+Flagged for `/marketing`: the rail's Title Case labels vs the pages' sentence case; "Manage Tournaments" in the draft
+board and help.
+
+**Not drawn — the build's work:** the old look's retirement in every file Stage 5 rebuilds (the board's before-event share
+— about 184 of the dashboard sheet's 192 rules, its owner label moving from "Stage 4" to Stage 5 — the wizard, the first
+run, Divisions, Public site, Rules, the settings screens, Venues); the copy paths keeping diamonds (A51); the wizard off
+the 6a guard's not-yet list; one at a time at every limit check and the downgrade (with `/billing`, `/marketing`, `/docs`);
+the style saved with the tournament; the clone's checks; layout-sweep ids for the wizard and a draft board (a draft
+fixture: `/uat`, the owner's word); the help drawer's day count; the demo's tour anchors (`schedule-health` kept). The
+shared tournament header (47 rules) waits for Schedule and Results; `admin-common` is the club's too. **The project's
+close-out:** the final walk, the plan and brief archived, the follow-ups as one TODO group. No migration expected.
+
+**Stage 5 taps:** a first tournament to a draft ready to open registration **8 → 7** + typing (Diamond 1…N, not one lane
+or "Park — Diamond 1") · next year from last year on Tournament Plus **2 + dates, then 6 to re-add a four-diamond park →
+2 + dates** · next year on the Tournament plan **9 + typing, last year taken offline → 6 + typing, last year online** · a
+venue with three diamonds **6 + four typings → 2 + typing** · the game length **3 → 3** on a phone · the public site from
+its editor **desk 1, phone none → 1 at every width**.
+
 ## 6f. Stage 6 — The volunteers, as drawn (2026-10-07)
 
 Drawn at true size on the hub's **Stage 6** tab (hub v31), phone first, a 768 tablet where it differs, from
@@ -1855,7 +2022,7 @@ redesigned screens · A7 · one word per game state · A8 · the defects list no
 game-day screens refresh themselves · A10 · Results opens on "needs you, every division". Each is on the
 hub's Walk tab with options, a recommendation, the tradeoff and a checkbox per option; the Stage 1 tab
 carries a ruling per drawn change (G1–G8). Later stages' asks live with their drawings: A13–A17 (§6b), A18–A24 (§6d),
-**A25–A32 (§6f, ruled 2026-10-07)**, **A33–A46 (§6c, ruled 2026-10-09)**.
+**A25–A32 (§6f, ruled 2026-10-07)**, **A33–A46 (§6c, ruled 2026-10-09)**, **A47–A58 (§6e, ruled 2026-10-10)**.
 
 The formatting check (§11) added two, both on the Stage 1 tab:
 

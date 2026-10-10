@@ -7,6 +7,41 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-10 — SETUP SCREENS: ONE CREATION WINDOW, RECORDS THAT READ FIRST, ONE CHECKLIST, AND THE PORTAL'S BARE "?" EVERYWHERE (owner, ruling the Tournament admin redesign's Stage 5 from the hub's paste-back: E1–E7 as drawn, A47–A58 as recommended, A56 with a note) — hub https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM → Stage 5 tab, plan `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §6e
+
+**Decision:** (1) **One window creates a tournament from either door** (the first run and New tournament): the
+tournament, divisions, venues, a review. A venue is added with **how many** surfaces and the sport's word, named
+"Diamond 1…N" — never "Park — Diamond 1", never one lane named after the park; a club picks from its Venue library, an
+organization without one from **its own past venues, once each, with their diamonds**; never other tournaments' raw copies
+(A47, A51). (2) **Every way a venue arrives keeps its facilities and its library link** — the clone included (A51).
+(3) **A setup record reads first and edits whole**: a division, a venue, a rule section, a resource, a registration
+question — the head's pencil, autosave inside, Delete/Archive ends the body, creating asks; Rules' per-section Save and
+three-way leave dialog retire (A50; the 2026-10-01 standard reaching the setup screens). (4) **Settings cards save
+themselves with the floating pill** (Event settings, Public site, Notifications); Event settings says the event's status
+once and opens the event's record to change it — no second status switch (A49); a one-of-N form choice is a dropdown at
+every width (A49, the 2026-08-22 convention over Q 2.1's "on a phone"). (5) **The board before the event is one
+checklist**: what Activate requires first (dates, a division, a contact), the rest quiet, every row a door to the exact
+place it is done; Activate is the board's one lime once it can work (A48). (6) **Every board and setup screen ends its
+title band with the "?"** — and it is **the other portals' one format: the bare circled-question glyph, the same size, no
+box or circle around it** (A56, the owner's note; `HelpButton iconOnly`, 44px tap area on a touch width, 34px at a desk).
+**Why:** the stage measured one creation path that made a three-diamond park one lane, six setup screens saving six
+ways, and a draft board with four "what next" blocks; the owner ruled every recommendation. The "?" note: the drawing
+had boxed the glyph, which the portal retired on 2026-09-24 ("extra area" around the symbol).
+**Applies to:** the tournament admin's setup screens, the dashboard before the event, and any new admin title band.
+
+### 2026-10-10 — NO FEES SET UP MEANS "NOT TRACKED HERE", NEVER "FREE" (owner, on the Tournament admin redesign's Stage 5 drawing of the draft board, whose Fees row read "None yet — registering is free until you set them": *"can we update this wording to more reflect that the app will not collect/track fees instead of the tournament being free? it could be a tournament that they pay for but don't want to track payments with us, we don't want to tell teams the event is free if its just a matter of tracking"*)
+
+**Decision:** when an event has no fees set up in the product, every surface says the payments **aren't tracked here** —
+never that the event, or registering, is free. The event may charge; the organizer may simply collect outside the
+product. Applies to the drawn draft board's Fees row and the weeks-before board's Payments card, and to today's Event
+settings Fee model, whose fourth choice is "Free" (its summary "Free", its line "teams are not charged a registration
+fee for this tournament") — Stage 5's build changes all three (finding F92). The words are /marketing's.
+**Why:** "free" is a promise to families the product can't know is true; "not set up" is only a fact about tracking.
+**Already right:** the public registration form says "Payment handled by organizer … Payments are made directly to
+the organizer, outside the platform."
+**Applies to:** every tournament surface that describes an event without a fee schedule (admin and public); worth the
+same check on house league's and the coach portal's fee screens when they are next touched.
+
 ### 2026-10-09 — HOUSE LEAGUE'S EDIT GAME GAINS "DELETE THIS GAME"; ITS PINNED HEAD AND FOOT SIT FLUSH (owner, at Edit Game walking Club Tier §288 W9: *"why is there so much white space at the bottom and top of this modal? also, I don't see delete anywhere on here to be able to delete the game"* → the recommendation → *"go ahead and build it"*)
 
 **Decision:** (1) **Delete this game** ends Edit Game's body — `RecordDelete`, red, never in the foot (the rare-door

@@ -37,6 +37,10 @@
 > save says why, a moved bracket game tells its teams, and the reminder sentence is true. **The owner walked it the same
 > day (§286, walk 8): passed, 15 of 15.**
 > One database change goes to production before this code.
+> **Stage 5 (create and set up — the last stage) was drawn on 10 October** on the hub's Stage 5 tab: nine drawings,
+> twelve questions, **ruled the same day, every drawing as drawn and every question as recommended** (the help "?" in
+> the other portals' plain format). Next: Chat and Data tools drawn as a short addendum, then the build. Its first question was ruled at the start: on the free Tournament
+> plan, **one tournament at a time** — a finished event no longer holds the one slot (recorded as decided, not yet built).
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is
@@ -286,6 +290,52 @@ free; a refused move puts the game back and says why.
 **Success for this stage:** today's games in 1 tap from the board on a phone; a game's score on the schedule without
 leaving it; every move undoable in 1 tap; no overlap inside a tournament can be saved by any door; no generator deletes a
 played game or double-books another division; the organizer's bracket names the winner and the champion.
+
+## What an organizer would see and do differently in Stage 5 (create and set up) — drawn and ruled 2026-10-10
+
+The last stage: creating a tournament and setting it up. Measured on 10 October on the test clubs and the demo (the
+draft's board and the first-run setup drawn from the code, since no test club holds a draft). Today a first-time
+organizer meets a different wizard from the one they'll use every year after. The first run asks how many diamonds a
+park has; New tournament asks only an address, so a three-diamond park becomes one scheduling lane. They then set the
+event up across six screens that save six different ways.
+
+**A first-time organizer:**
+- **One window to create a tournament, from either door**: the tournament, its divisions, its venues, then a review —
+  three steps where there were five or six. A park is added with **how many diamonds it has**, named Diamond 1, 2, 3
+  (today the first run names them "Lions Park — Diamond 1" and New tournament makes one lane). A club picks from its
+  **Venue library**. Fees stay optional and unasked.
+- **The board says what's left, once.** One card: the three things Activate needs (dates, a division, someone teams can
+  write to), then the rest, each row opening the exact place it is done ("Fees" opens Event settings' fees, not the
+  Tournaments list). **Activate is the board's one main button**, shown when it can work. Today four blocks say "what's
+  next" and two of them count differently.
+- **One way to save.** Settings save themselves, with the "Saved" that fades; a division, a venue, a rule or a
+  registration question opens to read and its pencil edits all of it; adding something asks; nothing pops up the
+  browser's alert box. "Full" on a division reads as good news, not in red.
+- **Public site gets a door to the site it edits**, on a phone too (today none on a phone), and stops hiding its only
+  Save 1,466px down the page.
+
+**A returning organizer:**
+- **On Tournament Plus**, next year from last year stays two taps and the dates, and **the parks come with their
+  diamonds** (today they arrive with none: the demo's Invitational shows it).
+- **On the free Tournament plan**, ruled at this session's start: **one tournament at a time.** Last year's finished
+  event no longer holds the one slot, so next year starts the morning after with last year's results still online.
+  Today the only way is to archive last year, which takes its results and every shared link offline. Last year's park
+  comes back with its diamonds in one tap, and if last year's name is taken the wizard offers it with "2027".
+
+**What a free organizer sees locked is left alone.** A free tournament tier review comes right after this redesign and
+decides what the free plan has, shows locked or hides (the owner expects it to serve small exhibition tournaments). So
+every free-plan lock on these screens stays exactly as it is today; the hub lists each one for that project to start from.
+
+**Twelve questions** (A47–A58), each with a recommendation. Two depart from what the prompt proposed. **Keep the unused
+"import a venue from a past event" route and give it a door** (A51): it is the only way a free organizer's park comes
+back with its diamonds, and one at a time makes that a yearly job. **Chat and Data tools were never drawn by any
+stage** (A57): this stage would not leave "every tournament screen redrawn" without them; the recommendation is a short
+addendum before the build.
+
+**Success for this stage:** a first tournament ready to open registration in 7 taps with its diamonds named right; one
+window and one set of questions for both ways in; every copy of a venue keeps its diamonds; every setup screen saves one
+of two ways; the public site one tap from its editor at every width; next year on the free plan without taking last year
+offline.
 
 ## Why it matters
 
