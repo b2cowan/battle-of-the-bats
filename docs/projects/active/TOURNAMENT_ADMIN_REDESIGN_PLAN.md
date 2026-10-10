@@ -59,6 +59,10 @@
 > /strategy. **⚖ RULED the same day** (owner's paste-back): **E1–E7 as drawn, A47–A58 as recommended**; A56 with a note
 > (the "?" in the other portals' one format — the bare glyph, the same size, no box or circle; the drawings fixed). Next:
 > the A57 addendum (Chat and Data tools) on the Stage 5 tab, then the build prompt — the redesign's last build.
+> **The same day:** the `/design` review's eleven changes applied (owner: "All 11"; desk drawings at true size first); the
+> addendum drawn and ruled — **Data tools retires** (the owner's question; imports live with their data: Teams' Export and
+> the schedule's Tools, one import sheet in the coach budget's shape), **Chat gets its title**, its free wall as today.
+> **Build prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE5_BUILD_PROMPT.md` written 2026-10-10** — the redesign's last build.
 > **Created:** 2026-09-28 · **Branch:** dev · **Companions:** `TOURNAMENT_ADMIN_REDESIGN_PM_BRIEF.md` ·
 > hub `TOURNAMENT_ADMIN_REDESIGN_HUB.html` (republish the same path for the project's life).
 > **Origin:** Phase 3 of `ADMIN_DESIGN_CONTINUITY_PLAN.md` ("Tournament screens — its own project when it
@@ -714,7 +718,7 @@ which reads as the product changing its mind. Routed to the foundation / Club St
 | 2 · Teams and registration — **DRAWN + RULED 2026-09-30 (§6b); build prompt written** | Teams (first team on screen one, the pools row, one colour per status, words not glyphs, a row opens the team), registration health, Communications; + the pending team on the board (F41), the email that reaches every team (F42, F43), Communications' formatting (F44), the record (F45) | Q 6.1 (ruled) · T1 T3 · A13–A17 | Both |
 | 3 · The schedule — **DRAWN + RULED 2026-10-09 (§6c); defects pass COMMITTED `279f1e5d` 2026-10-09 (mig 320 dev only — prod before the code; walk §286); build prompt written** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`; unblocked by Club Tier Stage 6a; drawn before Club Stages 10 + 11, whose scheduler copies this generator) | Opens on the day; a game opens that game; one generator name; drag with undo; the bracket shows scores and winners; the coin toss where seeding happens; the rain delay as Storm Mode's home; publishing says who is told; + one division/stage at a time (F66), the hidden waiting score (F67), the nameless bracket (F68), the generators' double-booking and score-deleting replace (F69, F70), silent refusals (F71), the bracket editor's silent moves (F72), the false reminder (F73), the dead Edit window (F74), three toolbars (F75), three game lengths (F76) | Q 8.1 · S1–S8 · A33–A46 | Both (the desk first for building, the phone first for fixing) |
 | 4 · After the event — **DRAWN 2026-10-05, RULED 2026-10-06 (§6d); build prompt written** | The finished board says how each division finished and offers Reuse this setup (its one lime); one reuse flow (the wizard's step, every door); Summary on a phone, the champions page shared, a clean printout; Past tournaments as every finished event's list; the Tournaments list (what's ahead) with its statuses as bands and the event's record, every change asking first; the Exhibition; + no door to the list (F48), the one-slot next year (F49) | Q 13.1 (ruled) · A18 (ruled: Stage 5 owns the before-event view) · A19–A24 | Desk first |
-| 5 · Create and set up — **DRAWN + RULED 2026-10-10 (§6e); next the A57 addendum (Chat + Data tools), then the build prompt** (`TOURNAMENT_ADMIN_REDESIGN_STAGE5_DESIGN_PROMPT.md`; the last stage; Q 1.1–4.1 ruled on the walk; A23 ruled one at a time at its start) | One set of creation questions (diamonds in both wizards); the board before the event (A18); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens; next year on a one-slot plan; + the first run's misnamed lanes (F77), the silent style save (F78), the venue search (F79), copy-into-draft (F80), the untrue fees sentence (F81), the board's ready (F82), ?create=1 (F83), the clone's checks (F84), the "?" (F85), two screens no stage drew (F86), Venues' silent failures (F87), the Exhibition's divisions (F88), two frame findings (F89, F90), the unread question (F91) | Q 1.1, 2.1, 3.1, 4.1 · E1–E9 · A47–A58 | Desk first, phone usable |
+| 5 · Create and set up — **DRAWN + RULED 2026-10-10 (§6e) with its addendum (Data tools retires, Chat titled); build prompt written** (`TOURNAMENT_ADMIN_REDESIGN_STAGE5_DESIGN_PROMPT.md`; the last stage; Q 1.1–4.1 ruled on the walk; A23 ruled one at a time at its start) | One set of creation questions (diamonds in both wizards); the board before the event (A18); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens; next year on a one-slot plan; + the first run's misnamed lanes (F77), the silent style save (F78), the venue search (F79), copy-into-draft (F80), the untrue fees sentence (F81), the board's ready (F82), ?create=1 (F83), the clone's checks (F84), the "?" (F85), two screens no stage drew (F86), Venues' silent failures (F87), the Exhibition's divisions (F88), two frame findings (F89, F90), the unread question (F91) | Q 1.1, 2.1, 3.1, 4.1 · E1–E9 · A47–A58 | Desk first, phone usable |
 | 6 · The volunteers — **DRAWN + RULED 2026-10-07 (§6f); build prompt written** | Scorekeeper and gate: the install banner, 44px buttons, a waiting-score signal, the staff landing; the gate inherits Stage 1's check-in board; + the see-through bars (F59), the clock in capitals (F61), the gate volunteer's landing (F62), a sent-back score (F63), the after-submit notice (F64), the Staff kit (F65) | V1–V7 · A25–A32 | Phone only (a scoring-table tablet measured) |
 | D · Defects now | Not a stage: F32 archive promise, F16 pools button, F26 bare Plus notice, F08's "no refresh needed", J1-075 "email will be sent", F34's leader sort, F04's empty box, J1-116 the strip on its own page, "0 champions detected" — **COMMITTED `936655a9` 2026-09-29** (record below; walk §251) | A8 | — |
 
@@ -1780,6 +1784,30 @@ toolbar, 44px controls, a lock line for Chat on the free plan — that lock is t
 listed), then the build prompt. **The `/design` review of the same day** offered eleven changes, two of them High (desk
 drawings at true size, not half; true-size desk drawings for the desk-first screens it lacks) — not ruled in the
 paste-back; put to the owner with the addendum.
+
+**The `/design` review (2026-10-10), eleven changes — ALL APPLIED on the owner's word ("All 11"), hub v43:** (1) every
+desk drawing at TRUE size in the hub's sideways frame, today's desk captures beside them with the 900px fold (they had
+been drawn at half size — missed by the formatting check and the second reviewer); (2) true-size desk drawings added for
+the board three weeks out, Event settings, Divisions and Venues with their record window open over the table, Rules and
+Public site; (3) a ready draft's Activate ABOVE the checklist on a phone; (4) Event settings' summaries under their
+titles on a phone, never cut off; (5) ONE way to pick venues — a ticked list from the start (the club's library, or "your
+venues"), no second "this tournament's venues" list; (6) "See your public site" as a door card, not an anonymous ↗ icon;
+(7) Reorder as a mode of the same list; (8) the review step's rows as doors; (9) the venue's edit view keeps Previous ·
+Next; (10) "How many" on its own row; (11) the delete button names the games and the teams; "18 of 18 spots taken" in the
+frame's foot.
+
+**The A57 addendum (E10–E11), drawn 2026-10-10 on the Stage 5 tab.** **E11 · Chat** gets its title band (F14), the room
+as the olive pill, Manage room restyled, a docked rooms column at a desk — **ruled as drawn** (owner, 10 Oct); **A60 ruled**:
+its free-plan wall stays as today for the free tier review. **E10 · Data tools** was first drawn as an imports-only page
+(its two unique jobs: import teams, import a schedule). The owner then asked whether it should exist at all — *"does it
+make sense to do something like what we have for the coaches budget, where we can provide an import on the schedule page
+(and any other imports in data tools) and offer templates … then we can remove the whole data tools section"* — agreed on
+merit and **redrawn: no Data tools.** Teams' one Export menu (which already lists an import row, today opening Data tools)
+imports teams; the schedule's Tools imports games; both open **one import sheet in the coach budget's shape**
+(`BudgetImportSheet`: start from a template — this event's rows to update or an empty one, Excel or CSV — choose the file,
+a preview saying what each row will do, Apply; a blocked row is fixed in the file; the earlier imports inside it). The
+registration workbook stays on Teams' Export. Data tools' rail row and page go (its address opens Teams; help and the
+guidance shortcut re-pointed; its old look retires with it). **⚖ A59 and E10 RULED 2026-10-10 (owner): Data tools retires, as drawn.**
 
 **The asks:** A47 one question set · A48 the board before the event · A49 the status switch and the
 Fee model · A50 Q 3.1 × the record standard · A51 venues and the copy paths (**departs from the prompt**: keep

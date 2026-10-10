@@ -39,7 +39,8 @@
 > One database change goes to production before this code.
 > **Stage 5 (create and set up — the last stage) was drawn on 10 October** on the hub's Stage 5 tab: nine drawings,
 > twelve questions, **ruled the same day, every drawing as drawn and every question as recommended** (the help "?" in
-> the other portals' plain format). Next: Chat and Data tools drawn as a short addendum, then the build. Its first question was ruled at the start: on the free Tournament
+> the other portals' plain format). The same day a design review's eleven changes were applied (every desk screen drawn at true size first) and the
+> addendum drawn: Data tools as its two imports, Chat with a title. Two small questions on it, then the build. Its first question was ruled at the start: on the free Tournament
 > plan, **one tournament at a time** — a finished event no longer holds the one slot (recorded as decided, not yet built).
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 

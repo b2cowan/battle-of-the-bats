@@ -7,6 +7,18 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-10 — AN IMPORT LIVES WITH ITS DATA: NO "DATA TOOLS" PAGE (owner, at the Tournament admin redesign's Stage 5 addendum, asked about the imports-only Data tools drawing: *"should we re-evaluate our need for data tools? does it make sense to do something like what we have for the coaches budget, where we can provide an import on the schedule page (and any other imports in data tools) and offer templates to ensure they load in the proper format? then we can remove the whole data tools section"* → the redrawing → "Retire it, as drawn")
+
+**Decision:** a spreadsheet import is a door on the screen whose data it fills — the tournament's teams from Teams' one
+Export menu (its existing import row), its games from the schedule's Tools — never a page of imports. Every import is
+**one sheet in the coach budget's shape** (`BudgetImportSheet`): start from a template (the event's rows to update, or an
+empty one; Excel or CSV), choose the file, read a preview that says what each row will do (new, updated, blocked and why),
+Apply; nothing changes until a clean preview is applied; the earlier imports live inside the sheet. The tournament's Data
+tools page and its rail row retire (its address opens Teams); its export (the registration workbook) was already Teams'.
+**Why:** an import's result appears where the data lives; a page of imports is one more destination to learn, and the
+product then imports two ways across its two portals. **Applies to:** every future import (rosters, officials, a club's
+lists) — a door where its data lives, the same sheet.
+
 ### 2026-10-10 — SETUP SCREENS: ONE CREATION WINDOW, RECORDS THAT READ FIRST, ONE CHECKLIST, AND THE PORTAL'S BARE "?" EVERYWHERE (owner, ruling the Tournament admin redesign's Stage 5 from the hub's paste-back: E1–E7 as drawn, A47–A58 as recommended, A56 with a note) — hub https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM → Stage 5 tab, plan `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §6e
 
 **Decision:** (1) **One window creates a tournament from either door** (the first run and New tournament): the
