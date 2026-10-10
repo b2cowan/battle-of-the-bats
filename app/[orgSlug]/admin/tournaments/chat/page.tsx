@@ -1,19 +1,42 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { UserCog, Loader2, ChevronRight, PanelLeft } from 'lucide-react';
+/**
+ * TOURNAMENT CHAT, THE ORGANIZER'S — Tournament admin redesign Stage 5 (E11, A57, A60; F14), built to hub v45, ruled
+ * as drawn 2026-10-10.
+ *
+ *   title band   "Chat", Manage room (a boxed icon on a phone, an outlined button at a desk: it opens the room's
+ *                panel) and the bare "?" — the page had no title (F14)
+ *   the room     chosen by the olive pill on a phone ("All coaches ▾ · 22 coaches", opening today's Rooms sheet), a
+ *                docked column at a desk (the chosen room on the olive wash, New room at its foot)
+ *   the talk     the conversation and its composer, unchanged in what they do
+ *   asking       close, rename, delete and a name already taken ask in the product's windows — the browser's own
+ *                confirm and prompt boxes went
+ *   free plan    the full-page Tournament Plus wall, as today (A60: the free tournament tier review decides it)
+ */
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
+import { ChevronDown, Loader2, Plus, UserCog } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { Callout, repKit } from '@/components/admin/kit/club/RepKit';
+import { TextField } from '@/components/admin/kit/club/money/MoneyKit';
+import { screenParts } from '@/components/admin/tournament/ScreenParts';
+import HelpButton from '@/components/help/HelpButton';
+import type { HelpRequest } from '@/components/help/help-drawer-context';
 import UpgradeGate from '@/components/billing/UpgradeGate';
 import ChatPanel from '@/components/chat/ChatPanel';
 import ChatManagePanel, { type ChatMember, type ChatPending, type ChatReport } from '@/components/chat/ChatManagePanel';
 import { roomDisplayName } from '@/lib/chat-display';
 import ChatRoomsPanel from '@/components/chat/ChatRoomsPanel';
 import NewRoomDialog, { type DivisionOption } from '@/components/chat/NewRoomDialog';
-import s from '../../admin-common.module.css';
+import { CHAT_WORDS as W } from '@/lib/tournament-chat-words';
 import styles from './chat-admin.module.css';
+
+/** Chat's "?" (A56): the tournament chat topic. */
+const CHAT_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['tournament-chat'] };
 
 type RoomSummary = {
   id: string;
@@ -36,18 +59,17 @@ type RosterResponse = {
   reports: ChatReport[];
 };
 
-/**
- * Organizer chat with DIVISION ROOMS ("channels"). The conversation fills the screen like a messaging
- * app. Two collapsible side panels frame it, each toggled from the chat header: "Rooms" on the LEFT
- * (switch rooms + create/rename/close/delete) and "Members" on the RIGHT (roster + moderation). On
- * desktop they dock as side columns; on mobile each is a slide-over (Rooms is full-screen, WhatsApp-style).
- */
+/** A question this page asks in its own window (never the browser's box). */
+type Ask =
+  | { kind: 'close' }
+  | { kind: 'delete' }
+  | { kind: 'rename'; name: string; warned: boolean }
+  | { kind: 'taken'; name: string; divisionIds: string[] };
+
 function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; orgParam: string }) {
-  const kx = useKitStyle();
-  // `--danger` as TEXT misses AA on the kit's Dark ground — the -light tier clears it (unchanged legacy).
-  const loadErrorStyle = kx({ color: 'var(--danger)' }, KIT_INK.danger);
   const [list, setList] = useState<RoomListResponse | null>(null);
   const [listError, setListError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   const [roster, setRoster] = useState<RosterResponse | null>(null);
@@ -55,27 +77,26 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
   const [manageOpen, setManageOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [ask, setAsk] = useState<Ask | null>(null);
 
   const [composerOpen, setComposerOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [composerError, setComposerError] = useState<string | null>(null);
 
-  // The conversation is the default view; Rooms (switch) and Manage room (admin) open on demand as
-  // overlays — and only one at a time (opening one closes the other). Close handlers are memoized so
-  // each panel's focus-trap effect (deps include onClose) doesn't tear down + re-focus on every parent
-  // re-render while it's open (e.g. a mute toggling `busy`).
+  // Rooms (the phone's sheet) and Manage room open one at a time. Close handlers are memoized so each panel's
+  // focus-trap effect (deps include onClose) doesn't tear down and re-focus on every parent re-render.
   const openRooms = () => { setManageOpen(false); setRoomsOpen((o) => !o); };
   const openManage = () => { setRoomsOpen(false); setManageOpen((o) => !o); };
   const closeRooms = useCallback(() => setRoomsOpen(false), []);
   const closeManage = useCallback(() => setManageOpen(false), []);
 
-  // Load the room list; preserve the current selection if it still exists, else fall back to All-coaches.
+  // Load the room list; keep the current selection if it still exists, else fall back to All coaches.
   const loadList = useCallback(async (): Promise<RoomListResponse | null> => {
     setListError(null);
     try {
       const res = await fetch(`/api/admin/tournaments/${tournamentId}/chat/rooms?${orgParam}`, { cache: 'no-store' });
       if (!res.ok) {
-        setListError(res.status === 403 ? 'You do not have access to chat moderation.' : 'Unable to load chat.');
+        setListError(res.status === 403 ? W.noAccess : W.loadFailed);
         return null;
       }
       const data = (await res.json()) as RoomListResponse;
@@ -87,7 +108,7 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
       );
       return data;
     } catch {
-      setListError('Unable to load chat.');
+      setListError(W.loadFailed);
       return null;
     }
   }, [tournamentId, orgParam]);
@@ -102,9 +123,9 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
     }
   }, [tournamentId, orgParam]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- the page reads its rooms
   useEffect(() => { void loadList(); }, [loadList]);
-  // Load the selected room's roster, guarded against out-of-order responses: on a rapid room switch the
-  // previous fetch is cancelled so a late reply can't overwrite the current room's roster with a stale one.
+  // The selected room's roster, guarded against out-of-order replies on a rapid room switch.
   useEffect(() => {
     if (!selectedRoomId) return;
     let cancelled = false;
@@ -112,14 +133,8 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
     return () => { cancelled = true; };
   }, [selectedRoomId, fetchRoster]);
 
-  const selected = useMemo(
-    () => list?.rooms.find((r) => r.id === selectedRoomId) ?? null,
-    [list, selectedRoomId],
-  );
-  const divisionNameById = useMemo(
-    () => new Map((list?.divisions ?? []).map((d) => [d.id, d.name])),
-    [list],
-  );
+  const selected = useMemo(() => list?.rooms.find((r) => r.id === selectedRoomId) ?? null, [list, selectedRoomId]);
+  const divisionNameById = useMemo(() => new Map((list?.divisions ?? []).map((d) => [d.id, d.name])), [list]);
   const divisionName = useCallback((id: string) => divisionNameById.get(id), [divisionNameById]);
 
   const moderate = useCallback(
@@ -147,41 +162,40 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
     if (fresh) setRoster(fresh);
   }
 
-  // Shared moderation runner: busy toggle + moderate() + refresh + error surface. Each handler supplies
-  // only the action payload and its error message.
-  async function runModeration(action: Record<string, unknown>, errorMsg: string) {
+  // One moderation runner: busy, the action, a re-read, a failure said in the page.
+  async function runModeration(action: Record<string, unknown>, errorMsg: string): Promise<boolean> {
     setBusy(true);
+    setActionError(null);
     try {
       await moderate(action);
       await refreshSelected();
+      return true;
     } catch {
-      setListError(errorMsg);
+      setActionError(errorMsg);
+      return false;
     } finally {
       setBusy(false);
     }
   }
 
+  /** An ask opened from Manage room: the panel steps aside first (it sits above every window). */
+  const askFromPanel = (a: Ask) => { setManageOpen(false); setAsk(a); };
+
   function toggleClose(close: boolean) {
-    if (close && typeof window !== 'undefined' &&
-      !window.confirm('Close this room? Coaches can read it but cannot post until you reopen it.')) {
-      return;
-    }
-    void runModeration({ action: close ? 'close' : 'reopen' }, 'Could not update the room.');
+    if (close) { askFromPanel({ kind: 'close' }); return; }
+    void runModeration({ action: 'reopen' }, W.updateFailed);
   }
 
   function toggleMute(member: ChatMember, mute: boolean) {
     void runModeration(
       mute ? { action: 'mute', targetUserId: member.userId, hours: 72 } : { action: 'unmute', targetUserId: member.userId },
-      'Could not update the member.',
+      W.memberFailed,
     );
   }
 
-  // Reported-message queue (R3-2): remove the message (soft-delete; the API also clears its reports) or
-  // dismiss the report without touching the message.
-  const handleRemoveReported = (messageId: string) =>
-    void runModeration({ action: 'delete', messageId }, 'Could not remove the message.');
-  const handleDismissReport = (reportId: string) =>
-    void runModeration({ action: 'dismiss_report', reportId }, 'Could not update the report.');
+  // Reported-message queue (R3-2): remove the message (soft-delete; the API also clears its reports) or dismiss.
+  const handleRemoveReported = (messageId: string) => void runModeration({ action: 'delete', messageId }, W.removeFailed);
+  const handleDismissReport = (reportId: string) => void runModeration({ action: 'dismiss_report', reportId }, W.reportFailed);
 
   function copyInvite(p: ChatPending) {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -193,75 +207,53 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
   }
 
   /**
-   * F5 (owner-ratified 2026-07-29) — WARN, never block, when a room name is already taken in this
-   * tournament. Two identically-named rooms are indistinguishable to a coach, which matters more
-   * now that the coach's only other signal is the division label (F2).
-   *
-   * Compares DISPLAY names: the All-coaches room is stored as "{Tournament} — Coaches" but shows as
-   * "All coaches", so a raw-name comparison would miss someone typing "All coaches" verbatim.
-   * Case- and whitespace-insensitive — an exact-bytes check would miss the very confusions this
-   * exists to prevent. Excludes the room being renamed BY ID, so re-casing its own name never warns
-   * against itself. Fails open if the list hasn't loaded: a missing comparison set must never gate
-   * the action.
+   * F5 (owner-ratified 2026-07-29) — WARN, never block, when a room name is already taken in this tournament: two
+   * identically-named rooms are indistinguishable to a coach. Compares DISPLAY names (the All coaches room is stored as
+   * "{Tournament} — Coaches"), case- and space-insensitive, excluding the room being renamed. Fails open before the
+   * list has loaded.
    */
-  function confirmDuplicateName(name: string, excludeRoomId?: string): boolean {
-    if (typeof window === 'undefined') return true;
+  function nameTaken(name: string, excludeRoomId?: string): boolean {
     const key = name.trim().toLowerCase();
-    const clash = (list?.rooms ?? []).some(
-      (r) => r.id !== excludeRoomId && roomDisplayName(r).trim().toLowerCase() === key,
-    );
-    if (!clash) return true;
-    return window.confirm(
-      `A room named “${name.trim()}” already exists in this tournament. ${excludeRoomId ? 'Rename' : 'Create'} anyway?`,
-    );
+    return (list?.rooms ?? []).some((r) => r.id !== excludeRoomId && roomDisplayName(r).trim().toLowerCase() === key);
   }
 
-  function handleRename() {
-    if (!selected || typeof window === 'undefined') return;
-    const next = window.prompt('Rename room', selected.name);
-    if (next == null) return;
-    const trimmed = next.trim();
-    if (!trimmed || trimmed === selected.name) return;
-    if (!confirmDuplicateName(trimmed, selected.id)) return;
-    void (async () => {
-      setBusy(true);
-      try {
-        const res = await fetch(`/api/admin/tournaments/${tournamentId}/chat/rooms/${selected.id}?${orgParam}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: trimmed }),
-        });
-        if (!res.ok) throw new Error();
-        await refreshSelected();
-      } catch {
-        setListError('Could not rename the room.');
-      } finally {
-        setBusy(false);
-      }
-    })();
+  async function doRename(name: string) {
+    if (!selected) return;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/admin/tournaments/${tournamentId}/chat/rooms/${selected.id}?${orgParam}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error();
+      setAsk(null);
+      await refreshSelected();
+    } catch {
+      setActionError(W.renameFailed);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function handleDeleteRoom() {
-    if (!selected?.refSubId || typeof window === 'undefined') return;
-    if (!window.confirm(`Delete the empty room "${selected.name}"? This can't be undone. The All coaches room is unaffected.`)) return;
-    void (async () => {
-      setBusy(true);
-      try {
-        const res = await fetch(`/api/admin/tournaments/${tournamentId}/chat/rooms/${selected.id}?${orgParam}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error();
-        await loadList(); // selection auto-falls-back to All-coaches (the deleted id is gone)
-      } catch {
-        setListError('Could not delete the room.');
-      } finally {
-        setBusy(false);
-      }
-    })();
+  async function doDeleteRoom() {
+    if (!selected?.refSubId) return;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/admin/tournaments/${tournamentId}/chat/rooms/${selected.id}?${orgParam}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setAsk(null);
+      await loadList(); // the selection falls back to All coaches (the deleted id is gone)
+    } catch {
+      setActionError(W.deleteFailed);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function handleCreate(name: string, divisionIds: string[]) {
-    // F5 — flag a name already in use before firing the request; declining leaves the composer
-    // open with the typed name intact so the organizer can just edit it.
-    if (!confirmDuplicateName(name)) return;
+  function createRoom(name: string, divisionIds: string[]) {
     setCreating(true);
     setComposerError(null);
     void (async () => {
@@ -273,34 +265,30 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
         });
         const json = (await res.json().catch(() => ({}))) as { roomId?: string; error?: string };
         if (!res.ok) {
-          setComposerError(json.error ?? 'Could not create the room.');
+          setComposerError(json.error ?? W.createFailed);
           return;
         }
         setComposerOpen(false);
         await loadList();
         if (json.roomId) setSelectedRoomId(json.roomId);
       } catch {
-        setComposerError('Could not create the room.');
+        setComposerError(W.createFailed);
       } finally {
         setCreating(false);
       }
     })();
   }
-
-  if (list === null && !listError) {
-    return <div className={styles.state}><Loader2 size={16} className={styles.spin} aria-hidden /> Loading chat…</div>;
-  }
-  if (listError || !list) {
-    return <div className={styles.state} style={loadErrorStyle}>{listError ?? 'Unable to load chat.'}</div>;
+  // A name already in use asks first; declining leaves the composer open with the typed name.
+  function handleCreate(name: string, divisionIds: string[]) {
+    if (nameTaken(name)) { setAsk({ kind: 'taken', name: name.trim(), divisionIds }); return; }
+    createRoom(name, divisionIds);
   }
 
-  // Is the loaded roster for the currently-selected room? (Guards against a stale roster from a rapid
-  // room switch.) Hoisted once — used by isArchived / openReports and the ChatManagePanel props below.
   const rosterFresh = roster?.room.id === selectedRoomId;
   const isArchived = rosterFresh ? roster!.room.isArchived : (selected?.isArchived ?? false);
   const openReports = rosterFresh ? (roster!.reports?.length ?? 0) : 0;
   const isDivisionRoom = Boolean(selected?.refSubId);
-  // Delete protects history: only an empty division room (no messages) can be removed; otherwise close it.
+  // Delete protects history: only an empty division room can be removed; otherwise close it.
   const isEmptyRoom = (selected?.lastMessageAt ?? null) === null;
   const canDelete = isDivisionRoom && isEmptyRoom;
   const deleteNote = !selected
@@ -310,10 +298,84 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
       : !isEmptyRoom
         ? 'Rooms with messages can be closed but not deleted.'
         : undefined;
+  const roomLine = (r: RoomSummary) => (r.refSubId == null
+    ? W.allCoachesLine
+    : r.divisionIds.map((id) => divisionName(id)).filter(Boolean).join(', ') || W.divisionRoom);
+
+  const manageButton = (
+    <button
+      type="button"
+      className={`btn btn-outline btn-data ${screenParts.headerButton}`}
+      onClick={openManage}
+      disabled={!selectedRoomId}
+      aria-expanded={manageOpen}
+      aria-controls="chat-manage-panel"
+      aria-label={openReports > 0 ? `${W.manage}, ${W.reported(openReports)}` : W.manage}
+      title={W.manage}
+    >
+      <UserCog size={15} aria-hidden />
+      <span className={screenParts.headerButtonLabel}>{W.manage}</span>
+      {openReports > 0 && <span className={styles.manageReportsBadge} aria-hidden>{openReports > 9 ? '9+' : openReports}</span>}
+    </button>
+  );
+  const header = (
+    <div className={styles.head}>
+      <AdminPageHeader
+        title={W.title}
+        inlineActions
+        actions={<>{list && manageButton}<HelpButton help={CHAT_HELP} label={W.title} iconOnly /></>}
+      />
+    </div>
+  );
+
+  if (list === null && !listError) {
+    return <>{header}<div className={styles.state}><Loader2 size={16} className={styles.spin} aria-hidden /> {W.loading}</div></>;
+  }
+  if (!list) {
+    return <>{header}<div className={styles.state} role="alert">{listError ?? W.loadFailed}</div></>;
+  }
 
   return (
     <>
+      {header}
+      {(actionError || listError) && (
+        <div className={styles.notice}><Callout tone="bad" role="alert" flush>{actionError ?? listError}</Callout></div>
+      )}
+
+      {/* A phone: the room is the olive pill, with its coaches beside it; it opens today's Rooms sheet. */}
+      {selected && (
+        <div className={styles.pillRow}>
+          <button type="button" className={styles.pill} onClick={openRooms} aria-haspopup="dialog" aria-expanded={roomsOpen}
+            aria-controls="chat-rooms-panel">
+            <span className={styles.pillName}>{roomDisplayName(selected)}</span>
+            <ChevronDown size={15} aria-hidden />
+          </button>
+          <span className={styles.pillCount}>{W.coaches(selected.memberCount)}</span>
+        </div>
+      )}
+
       <div className={styles.chatLayout}>
+        {/* A desk: the rooms docked, the chosen one on the olive wash, New room at the foot. */}
+        <nav className={styles.dock} aria-label={W.rooms}>
+          <div className={styles.dockBand}>{W.rooms} <span className={styles.dockCount}>{list.rooms.length}</span></div>
+          <ul className={styles.dockList}>
+            {list.rooms.map((r) => (
+              <li key={r.id}>
+                <button type="button" className={styles.dockRow} aria-current={r.id === selectedRoomId ? 'true' : undefined}
+                  onClick={() => setSelectedRoomId(r.id)}>
+                  <span className={styles.dockName}>{roomDisplayName(r)}</span>
+                  <span className={styles.dockSub}>
+                    {[W.coaches(r.memberCount), r.pendingCount > 0 ? W.notJoined(r.pendingCount) : null].filter(Boolean).join(' · ')}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button type="button" className={styles.dockNew} onClick={() => { setComposerError(null); setComposerOpen(true); }}>
+            <Plus size={15} aria-hidden /> {W.newRoom}
+          </button>
+        </nav>
+
         <ChatRoomsPanel
           open={roomsOpen}
           onClose={closeRooms}
@@ -329,45 +391,12 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
               key={selectedRoomId}
               roomId={selectedRoomId}
               roomName={selected ? roomDisplayName(selected) : undefined}
-              iconBefore={
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-data ${styles.roomsBtn}`}
-                  onClick={openRooms}
-                  aria-expanded={roomsOpen}
-                  aria-controls="chat-rooms-panel"
-                  aria-label="Rooms"
-                  title="Rooms"
-                >
-                  <PanelLeft size={14} aria-hidden />
-                  <span className={styles.roomsBtnLabel}>Rooms</span>
-                </button>
-              }
+              roomSubtitle={selected ? roomLine(selected) : undefined}
               onModerateDelete={handleDelete}
               onPin={handlePin}
-              headerRight={
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-data ${styles.manageBtn}`}
-                  onClick={openManage}
-                  aria-expanded={manageOpen}
-                  aria-controls="chat-manage-panel"
-                  aria-label="Manage room"
-                  title="Manage room"
-                >
-                  <UserCog size={14} aria-hidden />
-                  <span className={styles.manageBtnLabel}>Manage room</span>
-                  {openReports > 0 && (
-                    <span className={styles.manageReportsBadge} aria-label={`${openReports} reported message${openReports === 1 ? '' : 's'}`}>
-                      {openReports > 9 ? '9+' : openReports}
-                    </span>
-                  )}
-                  <ChevronRight size={13} aria-hidden className={styles.manageBtnChevron} />
-                </button>
-              }
             />
           ) : (
-            <div className={styles.state}>Select a room.</div>
+            <div className={styles.state}>{W.selectRoom}</div>
           )}
         </div>
         <ChatManagePanel
@@ -384,12 +413,13 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
           onDismissReport={handleDismissReport}
           isArchived={isArchived}
           onToggleClose={toggleClose}
-          onRename={isDivisionRoom ? handleRename : undefined}
-          onDelete={canDelete ? handleDeleteRoom : undefined}
+          onRename={isDivisionRoom && selected ? () => askFromPanel({ kind: 'rename', name: selected.name, warned: false }) : undefined}
+          onDelete={canDelete ? () => askFromPanel({ kind: 'delete' }) : undefined}
           deleteNote={deleteNote}
         />
       </div>
 
+      <TopLayer>
       {composerOpen && (
         <NewRoomDialog
           divisions={list.divisions}
@@ -399,30 +429,113 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
           onCreate={handleCreate}
         />
       )}
+
+      {ask?.kind === 'close' && selected && (
+        <KitDialog kind="question" raised title={W.closeTitle(roomDisplayName(selected))} onClose={() => { if (!busy) setAsk(null); }} busy={busy}
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setAsk(null)} disabled={busy}>{W.keep}</button>
+              <button type="button" className="btn btn-danger" disabled={busy}
+                onClick={() => void runModeration({ action: 'close' }, W.updateFailed).then(ok => { if (ok) setAsk(null); })}>
+                {W.closeAction}
+              </button>
+            </>
+          )}>
+          <p>{W.closeBody}</p>
+        </KitDialog>
+      )}
+
+      {ask?.kind === 'delete' && selected && (
+        <KitDialog kind="question" raised title={W.deleteTitle(selected.name)} onClose={() => { if (!busy) setAsk(null); }} busy={busy}
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setAsk(null)} disabled={busy}>{W.keep}</button>
+              <button type="button" className="btn btn-danger" onClick={() => void doDeleteRoom()} disabled={busy}>{W.deleteAction}</button>
+            </>
+          )}>
+          <p>{W.deleteBody}</p>
+        </KitDialog>
+      )}
+
+      {ask?.kind === 'rename' && selected && (() => {
+        const trimmed = ask.name.trim();
+        const taken = trimmed !== '' && trimmed !== selected.name && nameTaken(trimmed, selected.id);
+        const submit = () => {
+          if (!trimmed || trimmed === selected.name) { setAsk(null); return; }
+          if (taken && !ask.warned) { setAsk({ ...ask, warned: true }); return; }
+          void doRename(trimmed);
+        };
+        return (
+          <KitDialog kind="form" raised title={W.renameTitle} identity={roomDisplayName(selected)} onClose={() => { if (!busy) setAsk(null); }} busy={busy}
+            footer={(
+              <>
+                <button type="button" className="btn btn-outline" onClick={() => setAsk(null)} disabled={busy}>{W.cancel}</button>
+                <button type="button" className="btn btn-lime" onClick={submit} disabled={busy || !trimmed}>
+                  {taken && ask.warned ? W.renameAnyway : W.rename}
+                </button>
+              </>
+            )}>
+            <TextField id="chat-room-name" label={W.roomName} value={ask.name} maxLength={80}
+              onChange={v => setAsk({ kind: 'rename', name: v, warned: false })} />
+            {taken && ask.warned && <p className={styles.taken} role="alert">{W.takenTitle(trimmed)}. {W.takenBody}</p>}
+          </KitDialog>
+        );
+      })()}
+
+      {ask?.kind === 'taken' && (
+        <KitDialog kind="question" raised title={W.takenTitle(ask.name)} onClose={() => setAsk(null)}
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setAsk(null)}>{W.cancel}</button>
+              <button type="button" className="btn btn-lime" onClick={() => { const a = ask; setAsk(null); createRoom(a.name, a.divisionIds); }}>
+                {W.createAnyway}
+              </button>
+            </>
+          )}>
+          <p>{W.takenBody}</p>
+        </KitDialog>
+      )}
+      </TopLayer>
     </>
   );
+}
+
+/** The chat's windows, at the page's top layer (with the admin kit's marker): never under the Manage panel or, on a
+ *  phone, under the bars the pinned chat sits between. */
+function TopLayer({ children }: { children: ReactNode }) {
+  if (typeof document === 'undefined') return null;
+  return createPortal(<PortalKitRoot>{children}</PortalKitRoot>, document.body);
 }
 
 export default function AdminTournamentChatPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
   usePageTitle('Chat');
-  const kx = useKitStyle();
-  const noTournamentStyle = kx({ color: 'var(--white-40)' }, KIT_INK.tertiary);
   const orgSlug = currentOrg?.slug;
   const orgParam = orgSlug ? `orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const tournamentId = currentTournament?.id;
 
+  // A phone pins the chat between the bars: it starts where the event header ENDS, measured (the header grew past
+  // the old fixed 48px top and covered the chat's top, its title band included).
+  const pageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = pageRef.current;
+    const banner = document.querySelector<HTMLElement>('header[role="banner"]');
+    if (!el || !banner) return;
+    const apply = () => el.style.setProperty('--chat-top', `${Math.max(0, Math.round(banner.getBoundingClientRect().bottom))}px`);
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(banner);
+    window.addEventListener('resize', apply);
+    return () => { observer.disconnect(); window.removeEventListener('resize', apply); };
+  }, [tournamentId]);
+
   if (!tournamentId) {
-    return (
-      <div className={s.page ?? ''} style={{ padding: '2rem' }}>
-        <p style={noTournamentStyle}>Select a tournament to manage its chat.</p>
-      </div>
-    );
+    return <div className={repKit.page}><p className={styles.quiet}>{W.noTournament}</p></div>;
   }
 
   return (
-    <div className={styles.chatPage} data-chat-fullbleed-mobile>
+    <div ref={pageRef} className={styles.chatPage} data-chat-fullbleed-mobile>
       <UpgradeGate feature="tournament_chat" label="Tournament Chat">
         <ChatRoomsManager tournamentId={tournamentId} orgParam={orgParam} />
       </UpgradeGate>

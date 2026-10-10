@@ -55,13 +55,6 @@
   "app/[orgSlug]/admin/public-site/public-site.module.css": {
     "kitScope": 25
   },
-  "app/[orgSlug]/admin/tournaments/chat/chat-admin.module.css": {
-    "kitScope": 2
-  },
-  "app/[orgSlug]/admin/tournaments/chat/page.tsx": {
-    "kx": 2,
-    "helpers": 2
-  },
   "app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx": {
     "kx": 35,
     "helpers": 2
@@ -91,14 +84,5 @@
   },
   "components/admin/tournament/TournamentAdminUI.tsx": {
     "useAdminKit": 1
-  },
-  "components/chat/ChatManagePanel.module.css": {
-    "kitScope": 24
-  },
-  "components/chat/ChatRoomsPanel.module.css": {
-    "kitScope": 15
-  },
-  "components/chat/NewRoomDialog.module.css": {
-    "kitScope": 21
   }
 }

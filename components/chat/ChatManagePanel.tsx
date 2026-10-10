@@ -176,7 +176,7 @@ export default function ChatManagePanel({
                     </div>
                     <div className={styles.reportActions}>
                       {r.message && !removed && (
-                        <button type="button" className="btn btn-danger btn-data" onClick={() => onRemoveReported(r.messageId)} disabled={busy}>
+                        <button type="button" className={styles.removeWords} onClick={() => onRemoveReported(r.messageId)} disabled={busy}>
                           <Trash2 size={13} aria-hidden /> Remove
                         </button>
                       )}

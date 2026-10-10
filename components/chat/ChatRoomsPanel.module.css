@@ -5,7 +5,6 @@
   position: fixed;
   inset: 0;
   z-index: 700;
-  background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(2px);
   animation: chatRoomsFade 0.2s ease;
 }
@@ -21,7 +20,6 @@
   flex-direction: column;
   background: var(--card-bg);
   border-right: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  box-shadow: 8px 0 48px rgba(0, 0, 0, 0.55);
   outline: none;
   animation: chatRoomsIn 0.22s ease;
 }
@@ -44,9 +42,6 @@
 .headTitle {
   font-weight: 700;
   font-size: 0.82rem;
-  color: var(--white-90);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 .closeBtn {
   display: inline-flex;
@@ -54,13 +49,11 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: var(--white-5);
   border: 1px solid var(--white-10);
   border-radius: var(--radius-md);
-  color: var(--white-90);
   cursor: pointer;
 }
-.closeBtn:hover { background: var(--white-10); }
+
 .closeBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 
 .body {
@@ -84,20 +77,15 @@
   width: 100%;
   text-align: left;
   padding: 0.55rem 0.6rem;
-  background: var(--white-5);
   border: 1px solid var(--white-10);
   border-radius: var(--radius-md);
-  color: var(--white-90);
   cursor: pointer;
 }
-.row:hover { background: var(--white-10); }
+
 .row:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 1px; }
-.rowActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.55);
-  background: rgba(var(--logic-lime-rgb), 0.12);
-}
-.rowIcon { flex: 0 0 auto; display: inline-flex; color: var(--white-45); }
-.rowActive .rowIcon { color: var(--logic-lime); }
+
+.rowIcon { flex: 0 0 auto; display: inline-flex; }
+
 .rowMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
 /* Single-line name + sublabel → every row is the SAME height, so switching rooms never resizes the
    panel. The full name shows in the chat header + the Manage panel. */
@@ -110,10 +98,9 @@
   min-width: 0;
 }
 .rowNameText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rowLock { flex: 0 0 auto; color: var(--white-45); }
+.rowLock { flex: 0 0 auto; }
 .rowSub {
   font-size: 0.72rem;
-  color: var(--white-45);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -127,40 +114,45 @@
    for `.row` and one for `.rowActive` carry equal specificity (both one class under the marker
    attribute), so whichever is positioned LATER in this file wins per property; putting the modifier
    after the base is what keeps the active room lit once the switch is on. TOKENS ONLY. */
-:global([data-admin-kit]) .backdrop { background: var(--home-scrim); }
-:global([data-admin-kit]) .panel {
+.backdrop { background: var(--home-scrim); }
+.panel {
   border-right-color: var(--home-line);
   box-shadow: var(--home-shadow);
 }
-:global([data-admin-kit]) .head { border-bottom-color: var(--home-line); }
+.head { border-bottom-color: var(--home-line); }
 /* The panel's own name, not a label over content beneath it — a compact heading, not an eyebrow. */
-:global([data-admin-kit]) .headTitle {
+.headTitle {
   font-family: var(--font-display);
   text-transform: none;
   letter-spacing: normal;
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .closeBtn {
+.closeBtn {
   background: var(--card-bg);
   border-color: var(--home-line);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .closeBtn:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .closeBtn:focus-visible { outline-color: var(--home-olive); }
+.closeBtn:hover { background: var(--home-olive-soft); }
+.closeBtn:focus-visible { outline-color: var(--home-olive); }
 
 /* Room rows — a quiet option surface; the chosen room is the olive selection, never a second lime. */
-:global([data-admin-kit]) .row {
+.row {
   background: var(--card-bg);
   border-color: var(--home-line);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .row:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .row:focus-visible { outline-color: var(--home-olive); }
-:global([data-admin-kit]) .rowActive {
+.row:hover { background: var(--home-olive-soft); }
+.row:focus-visible { outline-color: var(--home-olive); }
+.rowActive {
   border-color: var(--home-olive);
   background: var(--home-olive-soft);
 }
-:global([data-admin-kit]) .rowIcon { color: var(--text-tertiary); }
-:global([data-admin-kit]) .rowActive .rowIcon { color: var(--home-olive); }
-:global([data-admin-kit]) .rowLock { color: var(--text-tertiary); }
-:global([data-admin-kit]) .rowSub { color: var(--text-tertiary); }
+.rowIcon { color: var(--text-tertiary); }
+.rowActive .rowIcon { color: var(--home-olive); }
+.rowLock { color: var(--text-tertiary); }
+.rowSub { color: var(--text-tertiary); }
+
+/* The panel's close × meets the tap floor on a phone (Stage 5, A54: 32px before). */
+@media (max-width: 768px) {
+  .closeBtn { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+}

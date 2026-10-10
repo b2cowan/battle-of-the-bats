@@ -1,3 +1,9 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   TOURNAMENT CHAT, THE ORGANIZER'S (page.tsx — Tournament admin redesign Stage 5, E11): the title band, the room
+   chosen by the olive pill on a phone and a docked column at a desk, then the conversation filling what is left.
+   The page's old look folded (its two kit rules); TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
 .chatPage {
   height: 100%;
   min-height: 0;
@@ -5,96 +11,147 @@
   flex-direction: column;
 }
 
-/* Desktop: the admin main is flex-grown (no definite height), so a child's height:100% collapses to
-   its content height — the conversation shrank to a short box and the (taller) Manage roster dictated
-   the page height. Give the chat area a DEFINITE viewport-based height so the chain resolves: the
-   conversation fills it and the docked Manage panel scrolls inside its own body instead of growing
-   the page. (Mobile main is a fixed-height scroll container, so height:100% already resolves there —
-   don't apply this below 901px or it would fight the fixed bars.) */
+/* Desktop: the admin main is flex-grown (no definite height), so a child's height:100% collapses to its content
+   height. A DEFINITE viewport-based height lets the chain resolve: the title band, then the rooms and the
+   conversation filling the rest, the docked Manage panel scrolling inside its own body. */
 @media (min-width: 901px) {
+  /* From the event header's measured bottom (--chat-top, page.tsx) to the window's foot, less the content's own
+     top and bottom space — so the composer sits on screen, never below the fold. */
   .chatPage {
-    height: calc(100dvh - 4rem);
-    min-height: 0;
+    height: calc(100dvh - var(--chat-top, 4rem) - 3rem);
+    min-height: 22rem;
     overflow: hidden;
   }
 }
 
-/* The chat region: the conversation fills it. The Rooms + Manage panels are viewport overlays
-   (portaled to <body>, like the in-app help drawer), so they never touch this layout — the chat is
-   never squeezed or shifted. Sole fill-the-page child of .chatPage. */
-.chatLayout {
-  flex: 1 1 auto;
-  height: 100%;
-  min-height: 0;
-  display: flex;
-}
-
-/* Mobile: cancel the admin content area's 1rem side gutter so the chat is edge-to-edge, and lock the
-   pane to its area (overflow hidden + the messages list owns the only scroll) so the page can't
-   rubber-band and lift the composer off the bottom nav. */
+/* Mobile: pinned between the fixed top app-bar and the fixed bottom nav (position:fixed gives a DEFINITE box
+   straight from the viewport — a 100dvh height had to resolve down flex ancestors and collapsed in some engines,
+   floating the composer up). top/height follow --vvh/--vv-offset-top so the on-screen keyboard can't cover the
+   conversation, and --chat-top (the event header's measured bottom, page.tsx) so the header never covers its top.
+   Edge to edge: the title band and the pill keep the page's gutter themselves. */
 @media (max-width: 900px) {
-  /* Pin the conversation to the viewport, anchored BETWEEN the fixed top app-bar and the
-     fixed bottom nav. Earlier we sized it with `height: calc(100dvh - bars)`, but that height
-     still has to resolve down a chain of flex/percentage ancestors (adminMain is flex-grown,
-     not definite) — which collapsed unreliably in some engines, dropping the panel to content
-     height so the composer floated up. position:fixed + top/bottom insets give the panel a
-     DEFINITE box straight from the viewport, independent of any ancestor height resolution.
-     The chat is the only content on this route, so taking it out of the (now-empty) admin
-     content flow is fine; the Rooms/Manage slide-overs are portaled to <body> and unaffected.
-     z-index stays below the top bar (250) and nav (300) so the chrome always wins. */
   .chatPage {
     position: fixed;
-    /* top/height (not a bottom inset) driven off --vvh/--vv-offset-top: the on-screen keyboard
-       shrinks and pans the VISUAL viewport, not the layout viewport those custom properties would
-       otherwise be missing from — a fixed `bottom: 0` would keep chasing the (unchanged) layout
-       viewport's bottom edge and get covered by the keyboard, with no way to scroll back to the
-       header/history above it. Falls back to 100dvh when JS hasn't set the vars yet (SSR/first paint). */
-    top: calc(var(--vv-offset-top, 0px) + 48px + env(safe-area-inset-top) + 0.5rem);
+    top: calc(var(--vv-offset-top, 0px) + var(--chat-top, calc(48px + env(safe-area-inset-top))) + 0.5rem);
     left: 0;
     right: 0;
     height: calc(
-      var(--vvh, 100dvh) - 48px - env(safe-area-inset-top) - 0.5rem
+      var(--vvh, 100dvh) - var(--chat-top, calc(48px + env(safe-area-inset-top))) - 0.5rem
         - 70px - env(safe-area-inset-bottom) - var(--admin-strip-h, 0px)
     );
     margin-inline: 0;
     overflow: hidden;
     z-index: 1;
   }
+  .head,
+  .pillRow,
+  .notice { padding-inline: 1rem; }
 }
 
+.head { flex: none; }
+.notice { flex: none; margin: 0 0 0.6rem; }
+
+/* ── The room, on a phone: the olive pill (the olive pill chooses what is read, 7 Oct) and its coaches ── */
+.pillRow { display: none; flex: none; align-items: center; gap: 0.6rem; margin: 0 0 0.6rem; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: var(--tap-min, 44px);
+  max-width: 70%;
+  padding: 0 0.9rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 999px;
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  cursor: pointer;
+}
+.pill:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.pillName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pillCount { font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; }
+
+/* ── The rooms and the conversation ── */
+.chatLayout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 1rem;
+}
 .chatCol {
   flex: 1 1 auto;
-  height: 100%;
   min-width: 0;
   min-height: 0;
   display: flex;
 }
 
-.roomsBtn,
-.manageBtn {
+/* At a desk the rooms are a docked column: a card, its band ("Rooms 2"), a row per room (the chosen one on the
+   olive wash), New room at its foot. */
+.dock {
+  flex: 0 0 16.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow: hidden;
+}
+.dockBand {
+  padding: 0.6rem 1rem 0.5rem;
+  border-bottom: 1px solid var(--home-line);
+  font-family: var(--font-display);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.dockCount { margin-left: 0.25rem; color: var(--text-tertiary); }
+.dockList { list-style: none; margin: 0; padding: 0; overflow-y: auto; min-height: 0; }
+.dockList > li { border-bottom: 1px solid var(--home-line); }
+.dockRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+@media (hover: hover) { .dockRow:hover { background: var(--home-olive-soft); } }
+.dockRow[aria-current='true'] { background: var(--home-olive-soft); }
+.dockRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.dockName { font-size: var(--type-body); font-weight: 650; }
+.dockSub { font-size: var(--type-support); color: var(--text-tertiary); }
+.dockNew {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.45rem;
+  min-height: var(--admin-control-h);
+  margin: 0.25rem 0.6rem 0.6rem;
+  padding: 0 0.4rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
 }
-/* Mobile: the Rooms toggle collapses to its icon so the room-name title keeps its width. */
-@media (max-width: 900px) {
-  .roomsBtnLabel { display: none; }
-  .roomsBtn { gap: 0.25rem; }
-}
-/* The count shown beside the icon only when the "Members" label is hidden (mobile). */
-.manageBtnCount {
-  display: none;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
+.dockNew:hover { color: var(--home-olive); }
 
-/* Mobile: collapse to icon + count so the room-name title keeps its space (the full pill otherwise
-   starves the flex-1 header title and truncates it early). Matches the panel's full-bleed breakpoint. */
+/* A phone: the pill takes the dock's place (the Rooms sheet opens from it). */
 @media (max-width: 900px) {
-  .manageBtnLabel,
-  .manageBtnChevron { display: none; }
-  .manageBtnCount { display: inline; }
-  .manageBtn { gap: 0.25rem; }
+  .dock { display: none; }
+  .pillRow { display: flex; }
 }
 
 .state {
@@ -103,15 +160,17 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  color: var(--white-40);
   padding: 1.5rem;
   font-size: 0.85rem;
+  color: var(--text-tertiary);
 }
+.quiet { margin: 0; padding: 1.25rem 0.1rem; font-size: var(--type-body); color: var(--text-tertiary); }
+.taken { margin: 0.25rem 0 0; font-size: var(--type-support); font-weight: 600; color: var(--warning-light); }
 
 .spin { animation: chat-admin-spin 0.9s linear infinite; }
 @keyframes chat-admin-spin { to { transform: rotate(360deg); } }
 
-/* Reported-message count on the "Manage room" button (R3-2 moderation queue). */
+/* Reported messages waiting, on Manage room (R3-2): a count on a solid danger fill (true white in both themes). */
 .manageReportsBadge {
   display: inline-flex;
   align-items: center;
@@ -122,21 +181,9 @@
   margin-left: 0.1rem;
   border-radius: 999px;
   background: var(--danger);
-  color: var(--white);
+  color: var(--white-fixed);
   font-family: var(--font-data, monospace);
   font-size: 0.62rem;
   font-weight: 700;
   line-height: 1;
 }
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
-   This page draws no heading of its own — the conversation IS the screen. `.chatPage`/`.chatLayout`/
-   `.chatCol`/`.roomsBtn`/`.manageBtn`/labels are pure layout, no colour, untouched. `.manageBtnCount`
-   is dead CSS (no JSX reads it) — reported to the lead, left untouched. `ChatPanel` (the coach
-   portal's own conversation surface) already wears the portal look under the marker (its own
-   module — see the report to the lead); this file is only the admin's chrome around it.
-   ⚠ TOKENS ONLY. */
-:global([data-admin-kit]) .state { color: var(--text-tertiary); }
-/* `--white` remaps to the warm INK (not white) under the marker in Warm — wrong on a solid danger
-   fill. `--white-fixed` holds true white in both themes (ink-on-danger, same idiom as ink-on-lime). */
-:global([data-admin-kit]) .manageReportsBadge { color: var(--white-fixed); }

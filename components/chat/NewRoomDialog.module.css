@@ -2,7 +2,6 @@
   position: fixed;
   inset: 0;
   z-index: 70;
-  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -17,7 +16,6 @@
   background: var(--card-bg);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   border-radius: var(--radius);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
   overflow: hidden;
 }
 
@@ -37,7 +35,6 @@
   gap: 0.4rem;
   font-weight: 700;
   font-size: 0.86rem;
-  color: var(--white-90);
 }
 .closeBtn {
   display: inline-flex;
@@ -45,13 +42,11 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: var(--white-5);
   border: 1px solid var(--white-10);
   border-radius: var(--radius-md);
-  color: var(--white-90);
   cursor: pointer;
 }
-.closeBtn:hover:not(:disabled) { background: var(--white-10); }
+
 .closeBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 .closeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -69,22 +64,18 @@
 .label {
   font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--white-70);
   font-weight: 700;
 }
 .input {
   width: 100%;
   padding: 0.55rem 0.65rem;
-  background: var(--white-5);
   border: 1px solid var(--white-10);
   border-radius: var(--radius-md);
-  color: var(--white-90);
   font-size: 0.9rem;
 }
 .input:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 1px; }
 
-.note { color: var(--white-45); font-size: 0.8rem; margin: 0; line-height: 1.45; }
+.note { font-size: 0.8rem; margin: 0; line-height: 1.45; }
 
 .divList {
   display: flex;
@@ -100,19 +91,14 @@
   width: 100%;
   text-align: left;
   padding: 0.5rem 0.6rem;
-  background: var(--white-5);
   border: 1px solid var(--white-10);
   border-radius: var(--radius-md);
-  color: var(--white-90);
   cursor: pointer;
 }
-.divRow:hover:not(:disabled) { background: var(--white-10); }
+
 .divRow:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 1px; }
 .divRow:disabled { opacity: 0.6; cursor: not-allowed; }
-.divRowOn {
-  border-color: rgba(var(--logic-lime-rgb), 0.55);
-  background: rgba(var(--logic-lime-rgb), 0.12);
-}
+
 .check {
   flex: 0 0 auto;
   width: 18px;
@@ -122,14 +108,13 @@
   justify-content: center;
   border-radius: 4px;
   border: 1px solid var(--white-20);
-  color: var(--logic-lime);
 }
-.divRowOn .check { border-color: rgba(var(--logic-lime-rgb), 0.7); }
-.divName { flex: 1 1 auto; min-width: 0; font-size: 0.86rem; font-weight: 600; }
-.divCount { flex: 0 0 auto; color: var(--white-45); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
 
-.summary { color: var(--white-70); font-size: 0.8rem; margin: 0; line-height: 1.45; }
-.error { color: var(--danger); font-size: 0.8rem; margin: 0; }
+.divName { flex: 1 1 auto; min-width: 0; font-size: 0.86rem; font-weight: 600; }
+.divCount { flex: 0 0 auto; font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+
+.summary { font-size: 0.8rem; margin: 0; line-height: 1.45; }
+.error { font-size: 0.8rem; margin: 0; }
 
 .foot {
   flex: 0 0 auto;
@@ -150,54 +135,54 @@
    ⚠ `.divRow`'s kit rule and `.divRowOn`'s are equal specificity under the marker — `.divRowOn` is
    positioned AFTER `.divRow` so the chosen division keeps its olive selection instead of being wiped
    back to the unselected ground (same rule as ChatRoomsPanel's `.row`/`.rowActive`). TOKENS ONLY. */
-:global([data-admin-kit]) .backdrop { background: var(--home-scrim); }
-:global([data-admin-kit]) .dialog {
+.backdrop { background: var(--home-scrim); }
+.dialog {
   border-color: var(--home-line);
   box-shadow: var(--home-shadow);
 }
-:global([data-admin-kit]) .head { border-bottom-color: var(--home-line); }
+.head { border-bottom-color: var(--home-line); }
 /* The dialog's own name — a compact heading, not an eyebrow (same call as the two panels' titles). */
-:global([data-admin-kit]) .title { font-family: var(--font-display); color: var(--text-primary); }
-:global([data-admin-kit]) .closeBtn {
+.title { font-family: var(--font-display); color: var(--text-primary); }
+.closeBtn {
   background: var(--card-bg);
   border-color: var(--home-line);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .closeBtn:hover:not(:disabled) { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .closeBtn:focus-visible { outline-color: var(--home-olive); }
+.closeBtn:hover:not(:disabled) { background: var(--home-olive-soft); }
+.closeBtn:focus-visible { outline-color: var(--home-olive); }
 
 /* Field label — the portal's field-label idiom (body face, small capitals kept, tertiary ink; see
    `[data-admin-kit] .form-label` in app/globals.css, the same recipe). */
-:global([data-admin-kit]) .label {
+.label {
   font-family: var(--font-sans, system-ui, sans-serif);
   letter-spacing: 0.04em;
   color: var(--text-tertiary);
 }
-:global([data-admin-kit]) .input {
+.input {
   background: var(--home-card);
   border-color: var(--home-line-strong);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .input:focus-visible { outline-color: var(--home-olive); }
-:global([data-admin-kit]) .note { color: var(--text-tertiary); }
+.input:focus-visible { outline-color: var(--home-olive); }
+.note { color: var(--text-tertiary); }
 
 /* Division picker — a quiet option row; the chosen division is the olive selection, never a second
    lime (same call as ChatRoomsPanel's room rows). */
-:global([data-admin-kit]) .divRow {
+.divRow {
   background: var(--card-bg);
   border-color: var(--home-line);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .divRow:hover:not(:disabled) { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .divRow:focus-visible { outline-color: var(--home-olive); }
-:global([data-admin-kit]) .divRowOn {
+.divRow:hover:not(:disabled) { background: var(--home-olive-soft); }
+.divRow:focus-visible { outline-color: var(--home-olive); }
+.divRowOn {
   border-color: var(--home-olive);
   background: var(--home-olive-soft);
 }
-:global([data-admin-kit]) .check { border-color: var(--home-line-strong); color: var(--home-olive); }
-:global([data-admin-kit]) .divRowOn .check { border-color: var(--home-olive); }
-:global([data-admin-kit]) .divCount { color: var(--text-tertiary); }
+.check { border-color: var(--home-line-strong); color: var(--home-olive); }
+.divRowOn .check { border-color: var(--home-olive); }
+.divCount { color: var(--text-tertiary); }
 
-:global([data-admin-kit]) .summary { color: var(--text-secondary); }
-:global([data-admin-kit]) .error { color: var(--danger-light); }
-:global([data-admin-kit]) .foot { border-top-color: var(--home-line); }
+.summary { color: var(--text-secondary); }
+.error { color: var(--danger-light); }
+.foot { border-top-color: var(--home-line); }

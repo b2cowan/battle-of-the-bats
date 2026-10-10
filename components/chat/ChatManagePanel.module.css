@@ -5,7 +5,6 @@
   position: fixed;
   inset: 0;
   z-index: 700;
-  background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(2px);
   animation: chatManageFade 0.2s ease;
 }
@@ -21,7 +20,6 @@
   flex-direction: column;
   background: var(--card-bg);
   border-left: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  box-shadow: -8px 0 48px rgba(0, 0, 0, 0.55);
   outline: none;
   animation: chatManageIn 0.22s ease;
 }
@@ -47,7 +45,6 @@
   gap: 0.4rem;
   font-weight: 700;
   font-size: 0.82rem;
-  color: var(--white-90);
 }
 .closeBtn {
   display: inline-flex;
@@ -55,13 +52,11 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: var(--white-5);
   border: 1px solid var(--white-10);
   border-radius: var(--radius-md);
-  color: var(--white-90);
   cursor: pointer;
 }
-.closeBtn:hover { background: var(--white-10); }
+
 .closeBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 
 .body {
@@ -80,15 +75,11 @@
   gap: 0.4rem;
 }
 .blockHead {
-  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--white-70);
-  font-weight: 700;
 }
-.count { color: var(--white-45); font-weight: 600; }
-.empty { color: var(--white-45); font-size: 0.82rem; margin: 0; }
-.note { color: var(--white-45); font-size: 0.78rem; margin: 0 0 0.35rem; line-height: 1.45; }
+.count { font-weight: 600; }
+.empty { font-size: 0.82rem; margin: 0; }
+.note { font-size: 0.78rem; margin: 0 0 0.35rem; line-height: 1.45; }
 
 .row {
   display: flex;
@@ -97,7 +88,7 @@
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--white-8);
 }
-.row:last-child { border-bottom: none; }
+.row:last-child { border-bottom-width: 0; border-bottom-style: none; }
 .avatar {
   flex: 0 0 auto;
   width: 30px;
@@ -119,19 +110,16 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 0.3rem;
-  color: var(--white-90);
   font-weight: 600;
   font-size: 0.84rem;
 }
 .rowSub {
-  color: var(--white-45);
   font-size: 0.72rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .rowLastSeen {
-  color: var(--white-40);
   font-size: 0.68rem;
   white-space: normal;
 }
@@ -148,10 +136,6 @@
   justify-content: center;
 }
 /* Brief copied confirmation (replaces the old "Copied" word) — lime tick. */
-.iconActionDone.iconActionDone {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.45);
-}
 
 .tagOrg, .tagMuted {
   font-size: 0.58rem;
@@ -160,8 +144,8 @@
   border-radius: 4px;
   padding: 0.05rem 0.3rem;
 }
-.tagOrg { color: var(--info); border: 1px solid rgba(var(--info-rgb), 0.4); }
-.tagMuted { color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.45); }
+.tagOrg { border: 1px solid rgba(var(--info-rgb), 0.4); }
+.tagMuted { border: 1px solid rgba(var(--warning-rgb), 0.45); }
 
 /* Room settings (rename / close / delete) for the open room — separated + pushed to the bottom,
    away from the open gesture, so a destructive action isn't the first thing under the thumb. */
@@ -175,11 +159,7 @@
   border-top: 1px solid rgba(var(--danger-rgb), 0.22);
 }
 .settingsLabel {
-  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--white-45);
-  font-weight: 700;
 }
 
 /* ── Reported messages (R3-2 moderation queue) — pinned to the top of the panel body when non-empty. */
@@ -193,7 +173,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  color: var(--danger);
 }
 .reportRow {
   display: flex;
@@ -202,20 +181,18 @@
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--white-8);
 }
-.reportRow:last-child { border-bottom: none; }
+.reportRow:last-child { border-bottom-width: 0; border-bottom-style: none; }
 .reportMain { flex: 1 1 auto; min-width: 0; }
 .reportMeta {
   font-size: 0.68rem;
-  color: var(--white-45);
   margin-bottom: 0.15rem;
 }
 .reportBody {
   font-size: 0.84rem;
-  color: var(--white-90);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
-.reportBody em { color: var(--white-45); }
+
 .reportActions {
   flex: 0 0 auto;
   display: flex;
@@ -234,69 +211,98 @@
    overridden property (`.row` has no colour of its own; `.tagOrg`/`.tagMuted` are independent chips,
    not modifiers of a shared base), so ordering is not load-bearing in this file — still grouped by
    component for review. TOKENS ONLY. */
-:global([data-admin-kit]) .backdrop { background: var(--home-scrim); }
-:global([data-admin-kit]) .panel {
+.backdrop { background: var(--home-scrim); }
+.panel {
   border-left-color: var(--home-line);
   box-shadow: var(--home-shadow);
 }
-:global([data-admin-kit]) .head { border-bottom-color: var(--home-line); }
+.head { border-bottom-color: var(--home-line); }
 /* The panel's own name, not a label over content beneath it — a compact heading, not an eyebrow
    (same call as ChatRoomsPanel's twin `.headTitle`, for the two panels to read as one idiom). */
-:global([data-admin-kit]) .headTitle { font-family: var(--font-display); color: var(--text-primary); }
-:global([data-admin-kit]) .closeBtn {
+.headTitle { font-family: var(--font-display); color: var(--text-primary); }
+.closeBtn {
   background: var(--card-bg);
   border-color: var(--home-line);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .closeBtn:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .closeBtn:focus-visible { outline-color: var(--home-olive); }
+.closeBtn:hover { background: var(--home-olive-soft); }
+.closeBtn:focus-visible { outline-color: var(--home-olive); }
 
 /* Section eyebrows ("Members", "Not yet joined", "Room settings") */
-:global([data-admin-kit]) .blockHead {
+.blockHead {
   font-family: var(--font-data);
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .settingsLabel {
+.settingsLabel {
   font-family: var(--font-data);
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .count { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-:global([data-admin-kit]) .empty { color: var(--text-tertiary); }
-:global([data-admin-kit]) .note { color: var(--text-tertiary); }
+.count { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.empty { color: var(--text-tertiary); }
+.note { color: var(--text-tertiary); }
 
 /* Member / pending rows */
-:global([data-admin-kit]) .row { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .rowName { color: var(--text-primary); }
-:global([data-admin-kit]) .rowSub { color: var(--text-tertiary); }
-:global([data-admin-kit]) .rowLastSeen { color: var(--text-tertiary); }
+.row { border-bottom-color: var(--home-line); }
+.rowName { color: var(--text-primary); }
+.rowSub { color: var(--text-tertiary); }
+.rowLastSeen { color: var(--text-tertiary); }
 /* The copied checkmark — an accent icon confirming success, never raw lime. */
-:global([data-admin-kit]) .iconActionDone.iconActionDone {
+.iconActionDone.iconActionDone {
   color: var(--home-olive);
   border-color: var(--home-olive);
 }
 
 /* Role/status tags — Organizer NAMES a role (the quiet chip); Muted is a real state (a warning tint,
    AA-safe ink) */
-:global([data-admin-kit]) .tagOrg {
+.tagOrg {
   color: var(--text-secondary);
   background: var(--home-olive-soft);
   border-color: var(--home-line-strong);
 }
-:global([data-admin-kit]) .tagMuted {
+.tagMuted {
   color: var(--warning-light);
   background: rgba(var(--warning-rgb), 0.08);
   border-color: rgba(var(--warning-rgb), 0.3);
 }
 
 /* Reported messages */
-:global([data-admin-kit]) .reportsHeadLabel { color: var(--danger-light); }
-:global([data-admin-kit]) .reportRow { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .reportMeta { color: var(--text-tertiary); }
-:global([data-admin-kit]) .reportBody { color: var(--text-primary); }
-:global([data-admin-kit]) .reportBody em { color: var(--text-tertiary); }
+.reportsHeadLabel { color: var(--danger-light); }
+.reportRow { border-bottom-color: var(--home-line); }
+.reportMeta { color: var(--text-tertiary); }
+.reportBody { color: var(--text-primary); }
+.reportBody em { color: var(--text-tertiary); }
+
+/* Stage 5 (E11): a reported message's Remove is red WORDS (the record's delete shape), never a filled button beside
+   Dismiss; and every row action meets the tap floor on a phone (34px before). */
+.removeWords {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: var(--admin-control-h);
+  padding: 0 0.25rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--danger-light);
+  cursor: pointer;
+}
+.removeWords:hover { text-decoration: underline; text-underline-offset: 3px; }
+.removeWords:disabled { opacity: 0.55; cursor: default; }
+@media (max-width: 768px) {
+  .panel :global(.btn),
+  .removeWords { min-height: var(--tap-min, 44px); }
+  .iconAction { min-width: var(--tap-min, 44px); }
+}
+
+/* The panel's close × meets the tap floor on a phone (Stage 5, A54: 32px before). */
+@media (max-width: 768px) {
+  .closeBtn { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+}
