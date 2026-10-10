@@ -7,6 +7,48 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-10 — ONE CALENDAR: THE RECIPE (owner, ratifying Club Tier Stage 6c: *"I agree with your recommendations"* — all twenty asks and the `/design` review's eleven drawing changes) — hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 6c (v78), plan `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 6c, written into `docs/agents/design/TABLE_AND_LIST_STANDARD.md` §11
+
+**Decision:** every calendar in the app follows one recipe, thirteen lines, each kept only where its reason applies.
+- **C1 views mean one thing.** Week is seven days, Month a month grid, List the surface's natural range, Day one day. Why: one word, one meaning across screens read in one evening.
+- **C2 Monday first in every grid.** Why: every week the product files starts Monday; a Sunday-first Month splits a weekend.
+- **C3 open on today at every width**, a season list with today at the top of its frame. Why: "what's next" (F01).
+- **C4 one toolbar line**: scope · view · dates inline above 900 px · filters · Export · create. **A rare door (Import) lives in the create button's menu.** Why: three control rows stood above the coach's first day.
+- **C5 one booking row** (the portal's row = the admin kit's row). Why: a table whose columns answer no column question is a fourth shape.
+- **C6 one calendar-cell chip**: time, then title. The touch Month from 641 to 768 px. Why: a Month that can't say when isn't worth opening; 44 px.
+- **C7 one today mark: the olive edge, and today said in words wherever a day is headed** ("Today · Sat, Oct 10").
+  - **A season list marks today with a NOW LINE, never a band**: a band heads rows that aren't today's.
+  - Why: today was drawn five ways and colour alone.
+- **C8 one spelling.** "Sat, Oct 10" (the display face in capitals on a heading), "Oct 5 – 11, 2026", "Venue · Facility". Why: one day was spelled seven ways.
+- **C9 one word per state; a cancelled or postponed booking is never hidden and never a clash.** Why: "is it on?" is the question.
+- **C10 the booking's own clock, the zone said once, read from the club's zone.** Why: four screens read the device's clock.
+- **C11 one Export; Calendar wherever bookings are listed.**
+- **C12 a window reads first; a reader gets no foot.**
+- **C13 a phone week is one frame per day; Export from every view.**
+
+**The register (R1–R11)** says what differs on purpose, each with its reason:
+- List's range per reader.
+- The club's Month counts.
+- The Timeline.
+- Colour: kind vs team.
+- Families read, never edit.
+- The public tournament steps by game day.
+- No Export on the admin team schedule.
+- Search and Tools on the tournament only.
+- A range club-wide, a start on a team's.
+- The family's sentences.
+- Date-grouped lists that aren't calendars wear the words only.
+
+**New rules for every screen, not just calendars:**
+- **A scope that doesn't depend on the view leads, the view follows, the dates follow the view** (they take the view's unit).
+- **The olive face chooses what is read**: a switch for up to three views, the olive View pill for four or more. The admin kit's black view fill leaves the calendars; a team's Tryouts page and the tournament's Communication page keep theirs, open, not ruled.
+
+**Why:** nine calendars grew one at a time. The club calendar copied the coach's toolbar on Oct 9, and two of its phone choices were reversed that evening because their reasons hadn't travelled with them. **A shared part travels WITH its reason**: the standard's §11.3 names each part's question and who asks it, and a screen that doesn't ask the question doesn't wear the part.
+
+**Applies to:** the coach's Schedule, the club calendar and a team's schedule (admin), all in the 6c build. The tournament's, house league's, the public and the family schedules are handed to their owners as findings. Stage 11's draft grid wears the recipe in the Timeline's shape (Ask 18).
+
+⚠ The hub's "Not written yet" row (a) still proposes "a quiet olive band" for today in a list. The design review replaced it with the now line, and the review's reason decides.
+
 ### 2026-10-10 — AN IMPORT LIVES WITH ITS DATA: NO "DATA TOOLS" PAGE (owner, at the Tournament admin redesign's Stage 5 addendum, asked about the imports-only Data tools drawing: *"should we re-evaluate our need for data tools? does it make sense to do something like what we have for the coaches budget, where we can provide an import on the schedule page (and any other imports in data tools) and offer templates to ensure they load in the proper format? then we can remove the whole data tools section"* → the redrawing → "Retire it, as drawn")
 
 **Decision:** a spreadsheet import is a door on the screen whose data it fills — the tournament's teams from Teams' one

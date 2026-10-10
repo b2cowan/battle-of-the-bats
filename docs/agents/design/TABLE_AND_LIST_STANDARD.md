@@ -523,3 +523,79 @@ column (2026-09-03) · the card's lead cell is its title (2026-09-03) · pinned 
 hairlines on sticky tables are inset shadows (2026-08-24) · the answer is the loudest row, not the
 subtotal (2026-08-24) · btn-data is the admin shell's control size (2026-05-24) · flat rows are the
 admin list shape (2026-06-01) · no new grey token; the white-alpha ladder stops at /50 (2026-08-11).
+
+---
+
+## 11. Calendars — the recipe, the register and the shared parts (Club Tier Stage 6c, ruled 2026-10-10)
+
+**Ruled by the owner 2026-10-10** (*"I agree with your recommendations"* — all twenty asks and the `/design` review's eleven
+drawing changes), from nine calendars compared side by side at 1440, 768 and 390 in both skins: club hub
+https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 6c (v78), plan
+`docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 6c. **The rule this section carries: a shared part
+travels WITH its reason.** A calendar that lacks a line's reason leaves the line out instead of copying it (the club
+calendar's phone copied two coach choices whose reasons it didn't share, §288 W4). Each line names its reason so that test
+can be run. Where a drawing and a line seem to disagree, the line's reason decides.
+
+### 11.1 The recipe — C1–C13
+
+| Line | The rule | Why |
+|---|---|---|
+| **C1 · Views mean one thing** | **Week** is seven days, Monday to Sunday, stepped with arrows. **Month** is a month grid that says what and when (a team's calendar) or how much (the club's). **List** is the surface's natural range — a team's season, the club's week, a tournament's day — and the date row says which. **Day** is one day. A phone drops a view that only repeats another. | A person moves between these screens in one evening; if "Week" is seven days on one and a season on another, the word stops meaning anything. |
+| **C2 · Monday first, in every grid** | Week views, Month grids, week headings and jump lists all start on Monday. | Every week the product files already starts Monday; a Sunday-first Month splits a weekend tournament across two rows and disagrees with the Week one click away. |
+| **C3 · Open on today, at every width** | A calendar opens on today when its range holds today; otherwise on the next day with something on it; a finished range on its last day. A season list opens with today at the top of its frame and the finished games a scroll above. | The question every visit asks is "what's next"; the phone already answered it and the desk was the last exception (the coach schedule deep dive's F01, rule R3). |
+| **C4 · One toolbar line** | Under the title, one line: a scope that doesn't depend on the view leads (the olive pill), then the view switch, then — wider than 900 px — the date arrows and range (they follow the view because the view sets their unit), then filters, Search and Tools where the surface has them, then Export and the create button at the right end. A rare door (Import) lives in the create button's menu or in Tools, never on the line. At 900 px and narrower the dates take their own row. On a phone the view switch is the glyph in the title row; Filter and Export share a row, and with no filter row Export is an icon in the title row. | Three rows of controls stood above the coach's first day; the tournament's schedule built the one-line form. "One Export and one create, above what they act on" (2026-09-01; 2026-10-09). |
+| **C5 · One booking row** | A list of bookings is the product's row list (§3.10 — the portal's `CoachRow` and the admin kit's `ClubRow`, one recipe): one frame, a band per day or month, hairlined rows. **Lead** the time (with the date when the list has no day bands); **title** who and what; **caption** where, "Venue · Facility", with the program's word on a page that shows more than one program; **trail** the state and the score, then the chevron. A clash is 6a's amber line under the place. | The coach's List and the tournament's Day already wear it; a table whose columns answer no column question (no total, nothing compared down it) is a fourth shape for the same row. |
+| **C6 · One calendar-cell chip** | Inside a Week column or a Month cell a booking is one chip: the time on its first line, the title on its second, the kind's colour on a one-team calendar and the team's on the club's, the amber flag for a clash. A desk Month cell shows up to three, then "+N more", which opens the day. From 641 to 768 px and on a phone a Month is the **touch Month**: dots, the whole day taps, the chosen day's rows underneath. | A Month that can't say when isn't worth opening (F09). At 641–768 the tap floor is 44 px (K-12) and a chip in a 104 px cell can't be 44 tall, so the day itself is the target. |
+| **C7 · One today mark** | Today is the olive edge **and is said in words wherever a day is headed** — never colour alone: a Week column's border and top line under "Today · Sat, Oct 10"; a Month cell's ring; a phone day's frame. In a list it is the day band "Today · Sat, Oct 10"; in a **season list with nothing on today, a now line** between the last finished row and the next — never a band, which would head rows that aren't today's. Empty days: "—" in a Week column, a bare Month cell, a run folded into one quiet line on a phone (today never folds into it), nothing in a list. | Today was drawn five ways and the coach's Week marked nothing. ⚠ The hub's "Not written yet" table, row (a), still proposes "a quiet olive band"; the design review replaced it with the now line, and the review's reason (a band heads the rows under it) decides. |
+| **C8 · One spelling for a day, a week, a range** | A day **"Sat, Oct 10"** — over a Week column, on a band, as a phone day's heading, as a day label; a heading or band wears the condensed display face in capitals (the 2026-09-28 ruling 1), so the words stay one spelling and the style does the rest. In a sentence **"Saturday, October 10"**. A row whose list has no day bands leads **"Sat, Oct 10 · 2:00 p.m."**. A week **"Oct 5 – 11, 2026"**, **"Oct 26 – Nov 1, 2026"**, **"Dec 28, 2026 – Jan 3, 2027"** (no year on a phone). A month **"October 2026"**. No "Week of …". A place **"Venue · Facility"**. | One day was spelled seven ways, three on the club calendar alone; "Sat, Oct 10" is the spelling most screens already used, and the club's range words are the shortest that can't be misread. |
+| **C9 · One word per state; nothing hidden** | A scheduled booking says nothing. Otherwise one chip, one spelling: **Moved, Postponed, Cancelled, Live, Final** (where no team is "ours"), **Win · Loss · Tie** (a team's own calendar, beside the score), **Scrimmage, Forfeit**. Cancelled is struck through and dimmed; postponed says Postponed. **Neither is ever hidden from a schedule a person reads, and neither ever counts as a clash.** | "Is it on?" is what a schedule exists to answer; hidden, a called-off game looks like an empty evening. Two spellings of one result (Win / Won) is the spelling ruling's bug. |
+| **C10 · The booking's own clock, said once** | Every date and time reads in the club's zone (or a tournament game's own stored clock), never the device's; times "2:00 p.m.", ranges "5:30–7:30 p.m.". The zone is said once, on the date row, in one sentence ("Times in Eastern time."), **read from the club's zone**, wherever a reader may sit outside it. | A calendar entry is the event's own time (the deep dive's R5); four screens read the device's clock and three said three different things about which clock it was. |
+| **C11 · Export: one button, Calendar wherever bookings are listed** | One Export (no chevron), Excel first, then CSV and Calendar (.ics) for any list of dated bookings, a PDF where a printed schedule exists; one line in the menu names what the file holds. A public or family schedule subscribes instead (6d). | The 2026-10-01 and 2026-10-08 Export rulings applied to calendars: the calendar file is the format a schedule needs most. |
+| **C12 · A booking opens a window that reads first** | It reads first (the record standard), says when, where and the state, and has one door to the booking's own schedule. A reader who can't change it gets **no foot at all** — no Done, no greyed form. | The 2026-10-01 record standard and the 2026-10-09 rulings that took Done out of record windows. |
+| **C13 · On a phone: one frame per day; every tool reachable** | A week stacks its days, each one frame with its heading inside and its bookings as hairlined rows (§3.10.8, P1); a run of empty days folds into one quiet line; Month is the touch Month; every control ≥ 44 px; Export is reachable from every view. | The coach's and the club's phone weeks ran the same grouping two ways; the standard's phone ruling is one frame, never a card per row. |
+
+### 11.2 The register — what differs on purpose, R1–R11
+
+A difference between two calendars is on this list or it is a bug.
+
+| | What differs | Where | Why it stays |
+|---|---|---|---|
+| **R1** | List is a season on a team's calendar, a week on the club's, a day on a tournament's | coach, admin team · club · tournament | Each is that reader's unit of planning; the date row says which range is on screen. |
+| **R2** | The club's Month counts bookings instead of naming them | club calendar | A club's day can hold twenty bookings; a count and an amber clash count answer "which days are busy, and which are broken". A team's day holds one or two, so its Month names them. |
+| **R3** | The tournament's Timeline: the fields across a day, by the clock | tournament schedule | Placing games on fields is its own job; Stage 11's draft grid shares its shape (fields down, time across), not the Week's. |
+| **R4** | Colour: the kind on a one-team calendar, the team on the club's | coach, admin team · club | On one team's calendar the question is what each event is; on the club's, whose (2026-10-09). The kind is said in words on the club's. |
+| **R5** | Family and public schedules read and never edit: no create, no Export, no clash marks | family app, team page, public league, public tournament, Scores | A family asks "when and where"; a clash is the club's question; a family takes the schedule with them by subscribing (6d). |
+| **R6** | The public tournament steps by game day, not by week | public tournament | An event is a few dense days with no empty days; a strip of game days replaces arrows. |
+| **R7** | No Export on the admin team schedule, and its window has no edit | a team's schedule (admin) | The coaches keep that schedule (D3); the club calendar's Team filter exports a range. A club admin doesn't edit a team's events. |
+| **R8** | Search, Filter and Tools on the tournament's schedule only | tournament schedule | An event holds hundreds of games across divisions; a season is about forty events, and the club calendar filters by venue, program and team. |
+| **R9** | A club-wide row shows the time as a range; a team's shows the start | club calendar (and Stage 11) · coach, tournament | On the club's page the question is overlap, so the end matters; on a team's or an event's, the start is what a person arrives for. |
+| **R10** | The family reads sentences, not chips (" · Cancelled", "W 4–2") | family app, team page | A family list is read, not scanned for states; the words are the recipe's words in a sentence. |
+| **R11** | Date-grouped lists that are not calendars wear the words, not the views | the game-day board, the scorekeeper, the Overview's tiles, the helper home, the club board's next event, Scores | They answer "what needs me now", not "what's when"; they take C8–C10 and nothing else. |
+
+### 11.3 The shared parts — each with its question
+
+**A screen that doesn't ask the question doesn't wear the part.**
+
+| Part | The question it answers | Who asks it, so who wears it |
+|---|---|---|
+| The toolbar line | How do I change what I'm reading? | Every calendar with views or filters |
+| The view switch (a phone: the View drawer) | Which arrangement am I reading? | Every calendar with more than one view. **The olive face chooses what is read**: a switch for up to three views, the olive View pill for four or more; the admin kit's black fill leaves the calendars (a team's Tryouts page and the tournament's Communication page keep theirs — open, not ruled) |
+| The date row (arrows, range, day label) | Which stretch of time is on screen, and how do I step? | Every view that is a stretch of time: Week, Month, the club's List, the tournament's Day — never a season list |
+| The day band | Which day is this? | Every list grouped by day or month |
+| The booking row | What's on, when, where, and is it on? | Every list of bookings |
+| The calendar-cell chip | What's in this day's cell? | Week columns and desk Month cells on a team's calendar; the club's Week (register K-21) |
+| The phone week stack (one frame a day; empty days folded) | What's on this week, on a phone? | Coach, club, admin team |
+| The touch Month (dots, the chosen day's rows) | Which days have something, and what's on this one? | Coach and admin team at 768 and narrower (the club's Month counts instead, R2) |
+| The clash line and flag (6a), the amber count | Does this booking collide with another program's? | Every admin calendar that lists club-venue bookings |
+| The today mark | Where is today? | Every calendar |
+| The booking's window | Tell me everything about this booking. | Every calendar whose bookings open |
+| The Export menu and the calendar file | Take this schedule with me. | Every schedule an admin or a coach keeps |
+| The zone sentence | Which clock are these times in? | Wherever a reader may sit outside the club's zone |
+| The state chips | Is it on, moved, called off, played? | Every booking row |
+| The family's schedule words | What's next for my child's team? | The family app, the public team page, the event window's subtitle |
+
+Not on the list on purpose: the tournament's Timeline and Bracket (one surface each), the public tournament's day strip
+(R6), house league's Practices view (Stage 9 decides whether practices join its season list). **Built by** the 6c build
+(Part A the date arrows, C6-01–03; then the coach's desk schedule, the club calendar and a team's schedule). Every other
+calendar's delta is a finding handed to the project that owns it (the hub's "Not drawn" screen); Stage 8 confirms every
+calendar against this section.
