@@ -16,6 +16,7 @@ import { pluralize as count } from './utils.ts';
 import { GAME_DAY_LIST, GAME_STATE_WORD } from './game-day-words.ts';
 import { TEAMS_WORDS } from './registration-words.ts';
 import { formatShortWeekdayDate } from './timezone.ts';
+import { fanSlotLabel } from './playoff-bracket.ts';
 import type { ScheduleStage, ScheduleState, ScheduleView } from './schedule-day.ts';
 
 // ── THE DAY (Stage 3 build, Part 2 — S1, A33, A44; /marketing 2026-10-09) ────────────────────────────────────────
@@ -229,3 +230,96 @@ export async function readRefusal(res: Response, fallback?: string): Promise<str
  */
 export const GAME_DAY_REMINDER_SENTENCE =
   'Each accepted team with a contact email also gets a game-day reminder the evening before its first game. If that time has already passed when you publish, that team gets none.';
+
+// ── THE GAME WINDOW (Stage 3 build, Part 3 — S2, A35, A36; /marketing 2026-10-09) ───────────────────────────────
+
+export const GAME_WINDOW_WORDS = {
+  noun: 'game',
+  /** The window's place in what the view shows: '3 of 12', and at a desk '3 of 12 · Today · Fri, Oct 9'. */
+  position: (i: number, n: number) => `${i} of ${n}`,
+  positionWide: (position: string, scope: string) => (scope ? `${position} · ${scope}` : position),
+  editGame: 'Edit game',
+  addGame: 'Add game',
+  cancel: 'Cancel',
+  sections: {
+    whenWhere: 'When and where', score: 'Score', bracket: 'In the bracket', roundRobin: 'In the round robin',
+    whoSees: 'Who sees it', game: 'The game',
+  },
+  facts: { when: 'When', length: 'Length', where: 'Where', pool: 'Pool' },
+  fields: {
+    division: 'Division', stage: 'Stage', day: 'Day', start: 'Start', length: 'Length', away: 'Away', home: 'Home',
+    awaySlot: 'Away slot', homeSlot: 'Home slot', notes: 'Notes', notesPlaceholder: 'Optional', choose: 'Choose…',
+    seeds: 'Seeds', winners: 'Winner of…', losers: 'Loser of…', teams: 'Teams',
+  },
+  noDate: 'No date yet',
+  noPlace: 'No place yet',
+  minutes: (n: number) => `${n} min`,
+  /** The Length box's placeholder: what the game plays for when its own box is empty (A39's chain, said once). */
+  inheritedLength: (by: 'division' | 'event', divisionName: string, n: number) =>
+    by === 'division' ? `${divisionName}'s ${n} min` : `The event's ${n} min`,
+  score: {
+    startsAt: (time: string) => `Starts at ${time}`,
+    startedAt: (time: string) => `Started at ${time}`,
+    notPlayed: 'Not played yet',
+    notScored: 'Not scored yet',
+  },
+  doors: { enter: 'Enter the score', review: 'Review the score', edit: 'Edit the score', bracket: 'Edit the bracket' },
+  undecided: 'Not decided yet',
+  keep: 'Keep this game if you generate the round robin again',
+  keepCaption: 'A new draft leaves a kept game where it is.',
+  whoSees: {
+    publishedAlerts: (division: string) => `${division} is published. Moving this game alerts both teams' followers, and a team linked to a Coaches Portal sees it on its own schedule.`,
+    publishedNoAlerts: (division: string) => `${division} is published: a change shows on the public site and in the app straight away. Phone alerts to followers are on Tournament Plus, so on this plan nobody gets a notification.`,
+    unpublished: (division: string) => `${division} isn't published, so only your staff can see this game. Nobody is told when it moves.`,
+    /** A played game is never announced (`lib/schedule-change-classify.ts` drops it). */
+    played: (division: string) => `${division} is published: this game and its result show on the public site and in the app. Changing a played game tells nobody.`,
+    /** A cancelled game's move is not announced; putting it back on is (the route records a reinstatement). */
+    cancelledAlerts: (division: string) => `${division} is published. Reinstating this game alerts both teams' followers.`,
+  },
+  editingNote: {
+    alerts: (division: string) => `${division} is published. Change when or where, and ✓ asks before it tells both teams.`,
+    noAlerts: (division: string) => `${division} is published. Change when or where, and ✓ asks before the public schedule changes.`,
+  },
+  cancelGame: 'Cancel game',
+  reinstateGame: 'Reinstate game',
+  deleteGame: 'Delete game',
+  /** The quiet line under Venue: where a tournament venue came from (specimen 7). */
+  venueSource: { library: "From the club's Venue library", tournament: 'Added in this tournament' },
+  venueGroup: "This tournament's venues",
+  /** The tournament's own refusal, red under the field (A37): "{Diamond 2} already has {the U11 final}, 4:00–5:15 p.m." */
+  refusal: (field: string, other: string, range: string, noun: string) => ({
+    // A range ending "p.m." already ends the sentence: one period, never two.
+    lead: `${field} already has ${other}, ${range}${range.endsWith('.') ? '' : '.'}`,
+    rest: ` Two games in this tournament can't share a ${noun}: change the time or the ${noun}.`,
+  }),
+  /** A gap shorter than the event's buffer: it saves, in the busy ink. */
+  buffer: (field: string, other: string, until: string, gap: number) => ({
+    lead: `${field} has ${other} until ${until}`,
+    rest: ` — less than the ${gap}-minute gap between games. You can still save.`,
+  }),
+  /** A playoff game named in another game's line ("the U11 final"). */
+  playoffGame: (division: string, round: string) => `the ${division} ${round.toLowerCase()}`,
+  vs: (away: string, home: string) => `${away} vs ${home}`,
+  /** The save word while the red line under the field holds a value. */
+  held: {
+    refused: (noun: string) => `Not saved: that ${noun} is taken then`,
+  },
+  /** The published-game question (A36) — at ✓ in the window, before a drop or the phone's Move. */
+  move: {
+    title: 'Move a published game?',
+    farBody: (away: string, home: string) => `Followers of ${away} and ${home} get one alert once you've made no changes for 10 minutes, and a team linked to a Coaches Portal sees the move on its own schedule. Undo it before then and nobody is told.`,
+    nearBody: (away: string, home: string) => `This game starts within 6 hours, so followers of ${away} and ${home} are alerted in the next few minutes. If you undo it first, nobody is told; if the alert has gone, they're told it's back where it was.`,
+    noAlertsBody: 'The new time shows on the public site and in the app straight away, and a team linked to a Coaches Portal sees it on its own schedule. Phone alerts are on Tournament Plus, so nobody gets a notification.',
+    stay: "Don't move",
+    go: 'Move it',
+  },
+} as const;
+
+/** A bracket slot's words in the admin — the ONE slot wording (owner 2026-07-17: "Semifinal 1 winner"), with a seed
+ *  read as "Seed 1" (the stored "Seed #1" is the standings' key and never changes). */
+export function slotWords(placeholder: string | null | undefined): string {
+  const p = (placeholder ?? '').trim();
+  if (!p) return '';
+  const seed = /^Seed #(\d+)$/.exec(p);
+  return seed ? `Seed ${seed[1]}` : fanSlotLabel(p);
+}

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Calendar, Plus, Pencil, X, Trophy, MapPin, Globe, RefreshCw, Wrench } from 'lucide-react';
-import { findBracketSchedulingViolations, nextManualBracketCode } from '@/lib/playoff-bracket';
+import { bracketGameLabel, findBracketSchedulingViolations, nextManualBracketCode } from '@/lib/playoff-bracket';
 import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { useTournament } from '@/lib/tournament-context';
 import { tournamentToday } from '@/lib/timezone';
@@ -21,10 +21,7 @@ import PlayoffBracketView from './components/PlayoffBracketView';
 import ScheduleTimeline from './components/ScheduleTimeline';
 import { Game, Venue, PoolSlot, PlayoffConfig } from '@/lib/types';
 import { fieldNounFor } from '@/lib/sports';
-import { checkVenueConflict, toConflictGame, type ConflictResult } from '@/lib/schedule-conflict';
-import { hasKnownPlacement } from '@/lib/venue-identity';
 import { formatVenueLocation, resolveGameFieldLabel } from '@/lib/venue-label';
-import { fieldPickerValueForGame } from './components/TournamentFieldPicker';
 import ZeroVenuePrompt from './components/ZeroVenuePrompt';
 import ResolveLocationsModal from './components/ResolveLocationsModal';
 import { buildLocationResolvePlan, type LocationResolvePlan } from '@/lib/tournament-location-resolve';
@@ -36,9 +33,9 @@ import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import HelpCallout from '@/components/help/HelpCallout';
 import AddVenueModal from '@/components/admin/AddVenueModal';
 import { TournamentAdminHeader } from '@/components/admin/tournament/TournamentAdminUI';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
 // The page's own parts (Stage 3 Part 0 split them out; none brings a stylesheet the lines above don't).
-import GameFormModal, { emptyForm, type ModalMode } from './components/GameFormModal';
+import GameWindow, { type GameSaveReply } from './components/GameWindow';
+import type { GamePatch, GameWindowForm } from '@/lib/game-window-form';
 import PublishScheduleModal from './components/PublishScheduleModal';
 import ResolveFacilitiesModal from './components/ResolveFacilitiesModal';
 import { useScheduleData } from './useScheduleData';
@@ -47,10 +44,12 @@ import { useScheduleExport } from './useScheduleExport';
 import type { ReactNode } from 'react';
 import { CalendarDays, Clock, CloudRain, EyeOff, List, Lock, MoreHorizontal, Network, Sparkles, Trash2 } from 'lucide-react';
 import {
-  eventDays, fieldKeyOf, filtersOn, matchesScheduleFilter, matchesScheduleSearch, NO_SCHEDULE_FILTER, openingDay,
+  eventDays, fieldKeyOf, filtersOn, gamesByDay, matchesScheduleFilter, matchesScheduleSearch, NO_SCHEDULE_FILTER, openingDay,
   scheduleStateOf, SCHEDULE_STATES, stepDay, type ScheduleFilter, type ScheduleState, type ScheduleView,
 } from '@/lib/schedule-day';
-import { SCHEDULE_DAY_WORDS as W, SCHEDULE_TOOL_NAMES as T } from '@/lib/schedule-words';
+import { GAME_WINDOW_WORDS as GW, SCHEDULE_DAY_WORDS as W, SCHEDULE_TOOL_NAMES as T, slotWords } from '@/lib/schedule-words';
+import { placeOfWhere } from '@/lib/tournament-where';
+import { clashLine } from '@/lib/venue-clash-words';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
@@ -80,20 +79,17 @@ export default function AdminSchedulePage() {
   const { currentTournament, isLocked, loading: tournamentLoading, setCurrentTournament } = useTournament();
   const { currentOrg } = useOrg();
   usePageTitle('Schedule');
-  // Admin Design Continuity slice 4c — the kit switch. `kx` patches every hand-set inline
-  // colour below while the switch is off (no className swap needed at this level).
-  const kx = useKitStyle();
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
   const {
     games, setGames, gamesLoading, teams, divisions, setDivisions, venues, setVenues, facilityLanes,
     refresh, reloadGames,
   } = useScheduleData({ tournamentId, tournamentLoading, orgSlug });
-  const [modalSlots, setModalSlots] = useState<PoolSlot[]>([]);
-  const [modalSlotsLoading, setModalSlotsLoading] = useState(false);
-  const [modal, setModal]       = useState<ModalMode>(null);
-  const [editing, setEditing]   = useState<Game | null>(null);
-  const [form, setForm]         = useState(emptyForm);
+  // The game window (S2): the game it shows, or Add game's empty one — one window, whichever view opened it.
+  const [openGameId, setOpenGameId] = useState<string | null>(null);
+  const [creatingGame, setCreatingGame] = useState(false);
+  // The published-game question (A36), asked over the window; its answer settles the window's ✓.
+  const [moveAsk, setMoveAsk] = useState<{ game: Game; near: boolean; answer: (move: boolean) => void } | null>(null);
   // The view and the day (S1, A33): the schedule opens on the day — today during the event, its first day before it,
   // its last after it — every division, both stages, every state. `chosenDay` stays null until the organizer steps,
   // so the opening follows the games as they load. Nothing here is remembered between visits (1 October).
@@ -124,8 +120,6 @@ export default function AdminSchedulePage() {
   // Optional config override passed to the builder — set by "Start from standings".
   const [playoffWizardConfig, setPlayoffWizardConfig] = useState<Partial<PlayoffConfig> | undefined>(undefined);
   const [search, setSearch] = useState('');
-  // Modal field picker: true = the explicit "Somewhere else (type it)" choice is active.
-  const [venueTextMode, setVenueTextMode] = useState(false);
   const [addVenueOpen, setAddVenueOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
@@ -145,40 +139,6 @@ export default function AdminSchedulePage() {
   const [healthRules, setHealthRules] = useState<ScheduleHealthRulesDraft>(() => getScheduleHealthRules(currentTournament));
   const [savedHealthRules, setSavedHealthRules] = useState<ScheduleHealthRulesDraft>(healthRules);
   const [savingHealthRules, setSavingHealthRules] = useState(false);
-
-  // ── Real-time venue conflict check for the Add/Edit modal ────────────────
-  // Pure computation from already-loaded state — no extra fetch required.
-  const modalConflict = useMemo((): ConflictResult | null => {
-    if (!modal) return null;
-    if (!form.date || !form.time) return null;
-
-    // This is the main door free text comes in through, so gating the check on a picked venue was
-    // the single biggest hole — an organizer could type the same field name onto two games at one
-    // time and the modal would not say a word. `location` is passed as-is; a picked venue already
-    // shadows it inside the placement rules, so the precedence lives in one place.
-    const proposedGame = toConflictGame({
-      id: editing?.id ?? '__new__',
-      date: form.date,
-      time: form.time,
-      status: 'scheduled',
-      venueId: form.venueId || null,
-      venueFacilityId: form.venueFacilityId || null,
-      location: form.location,
-      divisionId: form.divisionId || null,
-      // The form offers a per-game length (a 3-hour final in a 90-minute division). Without it the
-      // check measured the proposed game at the division default and missed the back half of a
-      // longer game — a real overlap that saved without a word.
-      durationMinutes: form.durationMinutes === '' ? null : form.durationMinutes,
-    });
-    if (!hasKnownPlacement(proposedGame)) return null;
-
-    return checkVenueConflict({
-      proposedGame,
-      allGames: games.map(toConflictGame),
-      divisions,
-      tournament: currentTournament,
-    });
-  }, [modal, form.date, form.time, form.venueId, form.venueFacilityId, form.location, form.divisionId, form.durationMinutes, editing?.id, games, divisions, currentTournament]);
 
   // Sport-pack surface noun for every field-picking label (never hard-coded — R "sport-neutral").
   const fieldNoun = fieldNounFor(currentTournament?.sport);
@@ -293,16 +253,9 @@ export default function AdminSchedulePage() {
   const hasRoundRobinStage = resolveHasRoundRobin(currentTournament);
   const hasPlayoffStage = resolveHasPlayoffs(currentTournament);
 
-  const groupTeams   = (id: string) => teams.filter(t => t.divisionId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam  = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
   const getGroupName = (id: string) => divisions.find(g => g.id === id)?.name ?? '—';
-  const getVenueName = (venueId?: string, facilityId?: string) => {
-    const venue = venueId ? venues.find(d => d.id === venueId) : null;
-    if (!venue) return '';
-    const facility = facilityId ? venue.facilities?.find(f => f.id === facilityId) : null;
-    return formatVenueLocation(venue.name, facility?.name);
-  };
   const getGameVenueKey = (g: Game) => {
     // Key by facility when present so each diamond/field is its own filter row.
     // A venue with Diamonds 1–3 then yields three accurate options instead of one
@@ -328,16 +281,15 @@ export default function AdminSchedulePage() {
     return { name: g.location?.trim() || 'No venue' };
   };
 
-  async function fetchModalSlots(divisionId: string) {
-    if (!currentTournament?.id || !divisionId) { setModalSlots([]); return; }
-    setModalSlotsLoading(true);
+  // Add game's pool slots, for a division whose round robin is drawn by slot (the window asks once per division).
+  const loadSlots = useCallback(async (divisionId: string): Promise<PoolSlot[]> => {
+    if (!tournamentId || !divisionId) return [];
+    const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
     try {
-      const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(currentTournament.id)}&divisionId=${encodeURIComponent(divisionId)}${orgParam}`);
-      setModalSlots(res.ok ? await res.json() : []);
-    } catch { setModalSlots([]); }
-    finally { setModalSlotsLoading(false); }
-  }
+      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(tournamentId)}&divisionId=${encodeURIComponent(divisionId)}${orgParam}`);
+      return res.ok ? await res.json() : [];
+    } catch { return []; }
+  }, [tournamentId, orgSlug]);
 
   function handlePublishDone(updates: { id: string; scheduleVisibility: 'published' }[]) {
     // Publishing closes registration server-side too (atomic) — reflect both so the UI
@@ -415,37 +367,10 @@ export default function AdminSchedulePage() {
     });
   }
 
+  // Add game opens the game window to create (S2), on the shown division, stage and day.
   function openAdd() {
-    const divisionId = (filterGroup !== 'all' ? filterGroup : '') || (divisions[0]?.id ?? '');
-    setForm({ ...emptyForm, divisionId });
-    setVenueTextMode(false);
-    setEditing(null);
-    setModal('add');
-    fetchModalSlots(divisionId);
-  }
-
-  function openEdit(g: Game) {
-    const picker = fieldPickerValueForGame(g);
-    setForm({
-      divisionId: g.divisionId,
-      homeTeamId: g.homeTeamId ?? '',
-      awayTeamId: g.awayTeamId ?? '',
-      homeSlotId: g.homeSlotId ?? '',
-      awaySlotId: g.awaySlotId ?? '',
-      homePlaceholder: g.homePlaceholder ?? '',
-      awayPlaceholder: g.awayPlaceholder ?? '',
-      date: g.date ?? '',
-      time: g.time ?? '09:00',
-      durationMinutes: typeof g.durationMinutes === 'number' ? g.durationMinutes : '',
-      location: picker.location,
-      venueId: picker.venueId,
-      venueFacilityId: picker.venueFacilityId,
-      notes: g.notes ?? '',
-    });
-    setVenueTextMode(picker.textMode);
-    setEditing(g);
-    setModal('edit');
-    fetchModalSlots(g.divisionId);
+    setOpenGameId(null);
+    setCreatingGame(true);
   }
 
   // All schedule writes go through the service-role games API. Direct browser-client
@@ -474,147 +399,150 @@ export default function AdminSchedulePage() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    // Hard block: do not allow saving when a true overlap exists.
-    if (modalConflict?.kind === 'overlap') return;
-    // Playoffs wire participants by Seed/Winner/Loser placeholders, not pool slots.
-    const isPlayoffGame = editing ? !!editing.isPlayoff : viewMode === 'playoff';
-    const slotMode = !isPlayoffGame && modalSlots.length > 0;
-    const homeSlot = slotMode ? modalSlots.find(s => s.id === form.homeSlotId) : null;
-    const awaySlot = slotMode ? modalSlots.find(s => s.id === form.awaySlotId) : null;
-    // Bracket codes are internal wiring, never user-typed. Editing a playoff game
-    // KEEPS its existing code (so downstream Winner/Loser refs stay valid); a new
-    // hand-added game gets a fresh, collision-free code assigned by the system.
-    const effectiveBracketCode = isPlayoffGame
-      ? (editing?.isPlayoff
-          ? (editing.bracketCode || undefined)
-          : nextManualBracketCode(
-              games.filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.id !== editing?.id),
-              form.homePlaceholder,
-              form.awayPlaceholder,
-            ))
+  /** A playoff game can't start on or before a game that feeds it, or after a game it feeds (the bracket's order). */
+  function bracketOrderProblem(c: { id?: string; divisionId: string; code: string; home?: string | null; away?: string | null; date?: string | null; time?: string | null }): string | null {
+    const others = games
+      .filter(g => g.isPlayoff && g.divisionId === c.divisionId && g.id !== c.id)
+      .map(g => ({ code: g.bracketCode, home: g.homePlaceholder, away: g.awayPlaceholder, date: g.date, time: g.time }));
+    const involved = findBracketSchedulingViolations([...others, { code: c.code, home: c.home ?? null, away: c.away ?? null, date: c.date ?? '', time: c.time ?? '' }])
+      .filter(v => v.game === c.code || v.feeder === c.code);
+    if (involved.length === 0) return null;
+    // The rounds by their names ("The final", "Semifinal 1"), never the bracket's internal codes.
+    return involved.map(v => {
+      const game = bracketGameLabel(v.game);
+      const feeder = bracketGameLabel(v.feeder);
+      return v.reason === 'earlier-date'
+        ? `${game} is on an earlier day than ${feeder}, which feeds it.`
+        : `${game} must start after ${feeder} on the same day — set a later time, or move it to a later day.`;
+    }).join(' ');
+  }
+
+  /** Add game's Save — the window's create mode asks, it never autosaves (24 September). The Add window's wiring. */
+  async function createGame(form: GameWindowForm) {
+    const isPlayoffGame = form.stage === 'playoff';
+    // A round robin drawn by slot takes slots, not teams (the division's slots decide, as the Add window did).
+    const slots = isPlayoffGame ? [] : await loadSlots(form.divisionId);
+    const slotMode = slots.length > 0;
+    const homeSlot = slotMode ? slots.find(sl => sl.id === form.homeSlotId) : undefined;
+    const awaySlot = slotMode ? slots.find(sl => sl.id === form.awaySlotId) : undefined;
+    // Bracket codes are internal wiring, never typed: a hand-added playoff game gets a fresh, collision-free code.
+    const code = isPlayoffGame
+      ? nextManualBracketCode(games.filter(g => g.isPlayoff && g.divisionId === form.divisionId), form.homePlaceholder, form.awayPlaceholder)
       : undefined;
-    const data: Omit<Game, 'id'> = {
-      tournamentId:    currentTournament?.id ?? '',
-      divisionId:      form.divisionId,
-      homeTeamId:      slotMode ? '' : (form.homeTeamId || ''),
-      awayTeamId:      slotMode ? '' : (form.awayTeamId || ''),
-      homeSlotId:      homeSlot?.id,
-      awaySlotId:      awaySlot?.id,
+    const place = placeOfWhere(form.where);
+    const length = parseInt(form.durationMinutes, 10);
+    const data: Record<string, unknown> = {
+      tournamentId: tournamentId ?? '',
+      divisionId: form.divisionId,
+      homeTeamId: slotMode ? null : (form.homeTeamId || null),
+      awayTeamId: slotMode ? null : (form.awayTeamId || null),
+      homeSlotId: homeSlot?.id,
+      awaySlotId: awaySlot?.id,
       homePlaceholder: homeSlot?.displayName,
       awayPlaceholder: awaySlot?.displayName,
-      date:              form.date,
-      time:              form.time,
-      durationMinutes:   form.durationMinutes === '' ? null : form.durationMinutes,
-      // Venue decision, stated in full: a picked venue (its display string is derived
-      // server-side), or typed text via the explicit "somewhere else" mode, or nothing.
-      // Typed text is only sent while text mode is active, so stale words never ride
-      // along with a picked venue or a cleared one.
-      location:          venueTextMode ? form.location : '',
-      venueId:           form.venueId           || undefined,
-      venueFacilityId:   form.venueFacilityId   || undefined,
-      notes:             form.notes             || undefined,
-      status:          editing?.status || 'scheduled',
-      bracketCode:     effectiveBracketCode,
+      date: form.date,
+      time: form.time,
+      durationMinutes: Number.isFinite(length) && length > 0 ? Math.min(600, length) : null,
+      // A picked venue (its words are derived on the server), or typed words, or nothing.
+      location: place.location ?? '',
+      venueId: place.venueId ?? undefined,
+      venueFacilityId: place.venueFacilityId ?? undefined,
+      notes: form.notes.trim() || undefined,
+      status: 'scheduled',
+      bracketCode: code,
     };
-    const w = data as Record<string, unknown>;
-
-    if (isPlayoffGame) {
-      // Persist the picker's choice directly. The picker's setSide already clears
-      // the other side when a slot is actively changed, so we never need to force a
-      // side to null here — and a resolved bracket game legitimately carries BOTH a
-      // team id (filled by advancePlayoffs) and its source placeholder ("Winner
-      // SF1"); force-nulling would wipe still-valid wiring when only the time/venue
-      // is edited. Canonical placeholder strings are what advancePlayoffs resolves.
-      w.isPlayoff = true;
-      w.homeTeamId = form.homeTeamId || null;
-      w.awayTeamId = form.awayTeamId || null;
-      w.homePlaceholder = form.homePlaceholder || null;
-      w.awayPlaceholder = form.awayPlaceholder || null;
-      // Single-bracket inheritance: a hand-added game joins the division's existing
-      // bracket so connectors + advancement resolve. The FIRST hand-added game (no
-      // existing bracket) mints a fresh bracketId so its Winner/Loser advancement
-      // stays scoped (advancePlayoffs guards by bracketId) and can't later leak into
-      // an auto-generated bracket sharing the same codes. Multi-bracket (tiered/
-      // split) manual single-game add is out of scope for V1 → left null.
-      if (editing?.bracketId) {
-        w.bracketId = editing.bracketId;
-      } else {
-        const ids = Array.from(new Set(
-          games
-            .filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.id !== editing?.id && g.bracketId)
-            .map(g => g.bracketId)
-        ));
-        w.bracketId = ids.length === 1 ? ids[0] : (ids.length === 0 ? crypto.randomUUID() : null);
-      }
+    if (isPlayoffGame && code) {
+      data.isPlayoff = true;
+      data.homeTeamId = form.homeTeamId || null;
+      data.awayTeamId = form.awayTeamId || null;
+      data.homePlaceholder = form.homePlaceholder || null;
+      data.awayPlaceholder = form.awayPlaceholder || null;
+      // A hand-added game joins the division's one bracket, so its Winner/Loser slots resolve; the first one mints
+      // its own bracket id (advancement is scoped by it). Several brackets (tiered or split): none.
+      const ids = Array.from(new Set(games.filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.bracketId).map(g => g.bracketId)));
+      data.bracketId = ids.length === 1 ? ids[0] : (ids.length === 0 ? crypto.randomUUID() : null);
+      const problem = bracketOrderProblem({ divisionId: form.divisionId, code, home: form.homePlaceholder, away: form.awayPlaceholder, date: form.date, time: form.time });
+      if (problem) throw new Error(problem);
     }
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    const res = await fetch(`/api/admin/games${orgQuery}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create', tournamentId, games: [data] }),
+    });
+    // The sandbox refuses by design and its chrome says so; the window closes as a save would.
+    if (!res.ok && !isSandboxRefusal(res)) throw new Error(await readRefusal(res, SCHEDULE_REFUSAL.gameFallback));
+    setCreatingGame(false);
+    await reloadGames();
+  }
 
-    // Empty team ids must be null (nullable uuid column), never '' — saveGame
-    // inserts the value raw and an '' would fail uuid validation. Covers playoff
-    // placeholder sides and team-less / slot-based round-robin games alike.
-    if (!w.homeTeamId) w.homeTeamId = null;
-    if (!w.awayTeamId) w.awayTeamId = null;
-
-    // A playoff game can't be scheduled on/before a game that feeds it (or moved so
-    // a game it feeds would precede it). Validate this game against the division's bracket.
-    if (isPlayoffGame && effectiveBracketCode) {
-      const others = games
-        .filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.id !== editing?.id)
-        .map(g => ({ code: g.bracketCode, home: g.homePlaceholder, away: g.awayPlaceholder, date: g.date, time: g.time }));
-      const candidate = { code: effectiveBracketCode, home: w.homePlaceholder as string | null, away: w.awayPlaceholder as string | null, date: form.date, time: form.time };
-      const involved = findBracketSchedulingViolations([...others, candidate])
-        .filter(v => v.game === effectiveBracketCode || v.feeder === effectiveBracketCode);
-      if (involved.length > 0) {
-        setFeedback({
-          isOpen: true,
-          title: 'Fix the bracket order first',
-          message: involved.map(v => v.reason === 'earlier-date'
-            ? `${v.game} is on an earlier day than ${v.feeder}, which feeds it.`
-            : `${v.game} must start after ${v.feeder} (same day) — set a later time, or move it to a later day.`).join('\n'),
-          type: 'warning',
-        });
-        return;
-      }
-    }
-
-    const dw = data as Record<string, unknown>;
-    try {
-      // Writes go through the service-role API: the `authenticated` role has no
-      // INSERT/UPDATE/DELETE grant on `games`, so direct client writes 403.
-      if (modal === 'add') {
-        await gamesApi('POST', { action: 'create', tournamentId: currentTournament?.id, games: [data] });
-      } else if (editing) {
-        await gamesApi('PATCH', {
-          action: 'update', id: editing.id,
-          date: data.date || undefined,
-          time: data.time || undefined,
-          durationMinutes: data.durationMinutes ?? undefined,
-          // Explicit nulls, never absent keys: the API treats a PRESENT venueId as the
-          // venue decision (null = clear), so clearing genuinely clears — the old
-          // `|| undefined` coalescing made the key vanish and the stored venue survive.
-          venueId: data.venueId ?? null,
-          venueFacilityId: data.venueFacilityId ?? null,
-          location: data.location || null,
-          notes: data.notes,
-          homeTeamId: dw.homeTeamId,
-          awayTeamId: dw.awayTeamId,
-          homePlaceholder: dw.homePlaceholder,
-          awayPlaceholder: dw.awayPlaceholder,
-          bracketCode: data.bracketCode,
-        });
-      }
-      setModal(null);
-      refresh();
-    } catch (e) {
-      setModal(null);
-      setFeedback({
-        isOpen: true,
-        title: 'Could not save game',
-        message: e instanceof Error ? e.message : 'Saving the game failed. Please try again.',
-        type: 'warning',
+  /**
+   * The game window's save (S2): only the fields that changed, through the games route's `update` — the same writer as
+   * before, so the route's own checks and the published-game alerts (B2.3) hold. A refusal throws the route's reason,
+   * which the window's save word shows with Retry; the club's amber line comes back from the reply (Club Tier 6a).
+   */
+  async function saveGameFields(gameId: string, patch: GamePatch): Promise<GameSaveReply> {
+    const self = games.find(g => g.id === gameId);
+    if (!self) throw new Error(SCHEDULE_REFUSAL.gameFallback);
+    if (self.isPlayoff && self.bracketCode && ('date' in patch || 'time' in patch || 'homePlaceholder' in patch || 'awayPlaceholder' in patch)) {
+      const problem = bracketOrderProblem({
+        id: gameId, divisionId: self.divisionId, code: self.bracketCode,
+        home: 'homePlaceholder' in patch ? patch.homePlaceholder : self.homePlaceholder,
+        away: 'awayPlaceholder' in patch ? patch.awayPlaceholder : self.awayPlaceholder,
+        date: patch.date ?? self.date, time: patch.time ?? self.time,
       });
+      if (problem) throw new Error(problem);
     }
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    const res = await fetch(`/api/admin/games${orgQuery}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', id: gameId, ...patch }),
+    });
+    // The "see it live" sandbox keeps the change on screen (nothing is saved, and its chrome says so).
+    if (res.headers.get('X-Sandbox-Blocked') === '1') {
+      const venue = patch.venueId ? venues.find(v => v.id === patch.venueId) : null;
+      const facility = patch.venueFacilityId ? venue?.facilities?.find(f => f.id === patch.venueFacilityId) : null;
+      setGames(prev => prev.map((g): Game => {
+        if (g.id !== gameId) return g;
+        const next: Game = { ...g };
+        if (patch.date) next.date = patch.date;
+        if (patch.time) next.time = patch.time;
+        if ('durationMinutes' in patch) next.durationMinutes = patch.durationMinutes ?? null;
+        if ('venueId' in patch) {
+          next.venueId = patch.venueId ?? undefined;
+          next.venueFacilityId = patch.venueFacilityId ?? undefined;
+          next.location = venue ? formatVenueLocation(venue.name, facility?.name) : (patch.location ?? '');
+        }
+        if ('notes' in patch) next.notes = patch.notes ?? undefined;
+        if ('homeTeamId' in patch) next.homeTeamId = patch.homeTeamId ?? '';
+        if ('awayTeamId' in patch) next.awayTeamId = patch.awayTeamId ?? '';
+        if ('homePlaceholder' in patch) next.homePlaceholder = patch.homePlaceholder ?? undefined;
+        if ('awayPlaceholder' in patch) next.awayPlaceholder = patch.awayPlaceholder ?? undefined;
+        return next;
+      }));
+      return { crossLine: null };
+    }
+    if (!res.ok) {
+      const reason = await readRefusal(res, SCHEDULE_REFUSAL.gameFallback);
+      // The refusal can be BECAUSE the game changed (scored a moment ago): re-read, quietly.
+      void reloadGames();
+      throw new Error(reason);
+    }
+    const reply = await res.json().catch(() => ({})) as { crossProgram?: { findings?: Record<string, Parameters<typeof clashLine>[0]> } };
+    await reloadGames();
+    const findings = reply.crossProgram?.findings?.[gameId] ?? [];
+    if (findings.length === 0) return { crossLine: null };
+    const venueId = 'venueId' in patch ? patch.venueId : self.venueId;
+    const facilityId = 'venueFacilityId' in patch ? patch.venueFacilityId : self.venueFacilityId;
+    const venue = venues.find(v => v.id === venueId);
+    return {
+      crossLine: clashLine(findings, {
+        sport: currentTournament?.sport,
+        venueName: venue?.name ?? '',
+        facilityName: venue?.facilities?.find(f => f.id === facilityId)?.name ?? null,
+      }),
+    };
   }
 
   // F71: Cancel Game and Reinstate used to drop a refusal (a final result, a completed event) without a word.
@@ -626,7 +554,7 @@ export default function AdminSchedulePage() {
       body: JSON.stringify({ action, id }),
     });
     await refusedWrite(res, action === 'cancel' ? SCHEDULE_REFUSAL_TITLE.cancelGame : SCHEDULE_REFUSAL_TITLE.reinstateGame);
-    refresh();
+    await reloadGames();
   }
   const markCancelled = (id: string) => patchGameStatus(id, 'cancel');
   const markScheduled = (id: string) => patchGameStatus(id, 'revert-to-scheduled');
@@ -648,7 +576,7 @@ export default function AdminSchedulePage() {
       });
       return;
     }
-    refresh();
+    await reloadGames();
   }
 
   async function handleSaveGame(gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; location?: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder?: string; awayPlaceholder?: string }) {
@@ -660,22 +588,14 @@ export default function AdminSchedulePage() {
     const isPlayoffGame = !!self?.isPlayoff;
     // Block scheduling a playoff game on/before a game that feeds it (or vice versa).
     if (isPlayoffGame && self?.bracketCode) {
-      const others = games
-        .filter(g => g.isPlayoff && g.divisionId === self.divisionId && g.id !== gameId)
-        .map(g => ({ code: g.bracketCode, home: g.homePlaceholder, away: g.awayPlaceholder, date: g.date, time: g.time }));
-      const candidate = { code: self.bracketCode, home: data.homePlaceholder ?? self.homePlaceholder, away: data.awayPlaceholder ?? self.awayPlaceholder, date: data.date, time: data.time };
-      const involved = findBracketSchedulingViolations([...others, candidate])
-        .filter(v => v.game === self.bracketCode || v.feeder === self.bracketCode);
-      if (involved.length > 0) {
-        setFeedback({
-          isOpen: true,
-          title: 'Fix the bracket order first',
-          message: involved.map(v => v.reason === 'earlier-date'
-            ? `${v.game} is on an earlier day than ${v.feeder}, which feeds it.`
-            : `${v.game} must start after ${v.feeder} (same day) — set a later time, or move it to a later day.`).join('\n'),
-          type: 'warning',
-        });
-        throw new Error('bracket-order'); // keep the inline row open
+      const problem = bracketOrderProblem({
+        id: gameId, divisionId: self.divisionId, code: self.bracketCode,
+        home: data.homePlaceholder ?? self.homePlaceholder, away: data.awayPlaceholder ?? self.awayPlaceholder,
+        date: data.date, time: data.time,
+      });
+      if (problem) {
+        setFeedback({ isOpen: true, title: 'Fix the bracket order first', message: problem, type: 'warning' });
+        throw new Error('bracket-order'); // the timeline puts the block back
       }
     }
     const typedLocation = !data.venueId && !data.venueFacilityId ? (data.location?.trim() || null) : null;
@@ -824,7 +744,8 @@ export default function AdminSchedulePage() {
             await gamesApi('PATCH', updates);
           }
           await gamesApi('POST', { action: 'delete-game', tournamentId: currentTournament?.id, gameIds: [id] });
-          refresh();
+          setOpenGameId(open => (open === id ? null : open));
+          await reloadGames();
         } catch (e) {
           setFeedback({
             isOpen: true,
@@ -868,20 +789,12 @@ export default function AdminSchedulePage() {
     });
   }
 
-  async function handleVenueSaved(saved: Venue) {
+  // A venue added from here re-reads the list; a game picks it in its own window (the field lists the venues).
+  async function handleVenueSaved() {
     const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const res = await fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(currentTournament!.id)}${orgParam}`);
     const updated: Venue[] = res.ok ? await res.json() : [];
     setVenues(updated);
-    // The create-venue modal serves SIX doors (game modal, timeline, both zero-venue
-    // prompts, every inline row). Auto-select the new venue only where the game modal is
-    // actually open — blindly writing it into the modal's form from an inline-row door
-    // would stage a venue nobody picked for the NEXT modal open. Inline rows get the new
-    // venue in their (refreshed) picker list and choose it themselves.
-    if (modal) {
-      setForm(f => ({ ...f, venueId: saved.id, venueFacilityId: '', location: '' }));
-      setVenueTextMode(false);
-    }
     setAddVenueOpen(false);
   }
 
@@ -1226,12 +1139,30 @@ export default function AdminSchedulePage() {
     },
   ];
 
-  // A row opens its game. Part 3 brings the game window; until then a row opens the game's edit window (the Edit Game
-  // window the page carried with nothing opening it, F74).
+  // A row, a timeline block or (Part 7) a bracket card opens ITS game (S2) — read-only in a locked event.
   function openGame(g: Game) {
-    if (isLocked) return;
-    openEdit(g);
+    setCreatingGame(false);
+    setOpenGameId(g.id);
   }
+
+  // ── The game window's world: the game, its steps through what the view shows, and the question it asks ──
+  const windowGame = openGameId ? scheduled.find(g => g.id === openGameId) ?? null : null;
+  const stepOrder = gamesByDay(shownView === 'all' ? filtered : shownView === 'bracket' ? bracketGames : dayGames).flatMap(b => b.games);
+  const stepAt = windowGame ? stepOrder.findIndex(g => g.id === windowGame.id) : -1;
+  const stepScope = shownView === 'all' ? W.views.all.label : shownView === 'bracket' ? (bracketDivision?.name ?? '') : W.dayLabel(day, today);
+  const stepName = (g: Game) => GW.vs(
+    getTeamName(g.awayTeamId ?? '') ?? (slotWords(g.awayPlaceholder) || 'TBD'),
+    getTeamName(g.homeTeamId ?? '') ?? (slotWords(g.homePlaceholder) || 'TBD'),
+  );
+  const stepTo = (g: Game | undefined) => (g ? { name: stepName(g), onStep: () => setOpenGameId(g.id) } : null);
+  const gameSteps = stepAt >= 0 ? {
+    prev: stepTo(stepOrder[stepAt - 1]),
+    next: stepTo(stepOrder[stepAt + 1]),
+    position: GW.position(stepAt + 1, stepOrder.length),
+    positionWide: GW.positionWide(GW.position(stepAt + 1, stepOrder.length), stepScope),
+  } : undefined;
+  const askMove = useCallback((game: Game, near: boolean) => new Promise<boolean>(answer => setMoveAsk({ game, near, answer })), []);
+  const answerMove = (move: boolean) => { moveAsk?.answer(move); setMoveAsk(null); };
 
   // ── Tools: its tools by name, then its two acts (A34 as amended; A44: a plan lock in words, never a bare padlock) ──
   const tPlusHref = orgSlug ? tournamentPlusPanelHref(orgSlug) : '#';
@@ -1463,6 +1394,7 @@ export default function AdminSchedulePage() {
           stage="all"
           day={day}
           onMove={isLocked ? undefined : handleMoveGame}
+          onOpen={openGame}
           onCreateVenue={() => setAddVenueOpen(true)}
           zeroVenuePrompt={
             <ZeroVenuePrompt
@@ -1580,15 +1512,60 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      {(modal === 'add' || modal === 'edit') && (
-        <GameFormModal
-          modal={modal} setModal={setModal} editing={editing} form={form} setForm={setForm}
-          handleSubmit={handleSubmit} fetchModalSlots={fetchModalSlots} divisions={divisions} teams={teams} games={games}
-          modalSlots={modalSlots} modalSlotsLoading={modalSlotsLoading} viewMode={viewMode} orgSlug={orgSlug}
-          venues={venues} venueTextMode={venueTextMode} setVenueTextMode={setVenueTextMode} hasOrgLibrary={hasOrgLibrary}
-          setAddVenueOpen={setAddVenueOpen} fieldNoun={fieldNoun} modalConflict={modalConflict}
-          canAlertFollowers={canAlertFollowers} groupTeams={groupTeams} modalTitleStyle={modalTitleStyle} kx={kx}
+      {(windowGame || creatingGame) && currentTournament && (
+        <GameWindow
+          game={creatingGame ? null : windowGame}
+          ctx={{
+            tournament: currentTournament, divisions, teams, venues, games: scheduled, days, today, nowMs,
+            orgSlug: orgSlug ?? '',
+            resultsHref: id => `/${orgSlug}/admin/tournaments/results?tournamentId=${encodeURIComponent(currentTournament.id)}&gameId=${encodeURIComponent(id)}`,
+            canAlertFollowers,
+            canBuildBracket: canBuildPlayoffsManually,
+            hasRoundRobinStage,
+            hasPlayoffStage,
+          }}
+          canWrite={!isLocked}
+          steps={creatingGame ? undefined : gameSteps}
+          onSave={saveGameFields}
+          onCreate={createGame}
+          onClose={() => { setOpenGameId(null); setCreatingGame(false); }}
+          onCancelGame={g => { void markCancelled(g.id); }}
+          onReinstate={g => { void markScheduled(g.id); }}
+          onToggleKeep={(g, keep) => { void toggleGeneratorLock(g.id, keep); }}
+          onDelete={g => handleDeleteRequest(g.id)}
+          onEditBracket={g => { setOpenGameId(null); enterBracketEditor(g.id, g.divisionId); }}
+          loadSlots={loadSlots}
+          createDefaults={{
+            divisionId: (filterGroup !== 'all' ? filterGroup : '') || (divisions[0]?.id ?? ''),
+            stage: viewMode,
+            date: shownView === 'all' ? '' : day,
+          }}
+          askMove={askMove}
         />
+      )}
+
+      {/* A published game's move asks once (A36) — over the window, at its ✓. */}
+      {moveAsk && (
+        <KitDialog
+          kind="question"
+          title={GW.move.title}
+          onClose={() => answerMove(false)}
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => answerMove(false)}>{GW.move.stay}</button>
+              <button type="button" className="btn btn-lime" onClick={() => answerMove(true)}>{GW.move.go}</button>
+            </>
+          )}
+        >
+          <p>
+            {!canAlertFollowers
+              ? GW.move.noAlertsBody
+              : (moveAsk.near ? GW.move.nearBody : GW.move.farBody)(
+                getTeamName(moveAsk.game.awayTeamId ?? '') ?? (slotWords(moveAsk.game.awayPlaceholder) || 'TBD'),
+                getTeamName(moveAsk.game.homeTeamId ?? '') ?? (slotWords(moveAsk.game.homePlaceholder) || 'TBD'),
+              )}
+          </p>
+        </KitDialog>
       )}
 
       {showGenerator && currentTournament && canAutoGenerateSchedule && (

@@ -70,11 +70,13 @@ type BlockDisplay = {
   away: string; home: string; info: ConflictInfo | undefined; title: string;
 };
 
-/** One game block. Draggable (D2.2) when `draggable`; tappable (mobile) when `onSelect`;
- * otherwise static (ghosts, read-only). */
-function TimelineBlock({ g, ghost, display, draggable, showConflicts, onSelect }: {
+/** One game block. Draggable (D2.2) when `draggable`; a click opens the game (`onOpen`, Stage 3 S2) — the drag
+ * sensor waits for 5px, so a click is never a drag. On a phone a tap opens the reschedule sheet (`onSelect`) when
+ * there is one, else the game. Ghosts are static. */
+function TimelineBlock({ g, ghost, display, draggable, showConflicts, onSelect, onOpen }: {
   g: Game; ghost: boolean; display: BlockDisplay; draggable: boolean; showConflicts: boolean;
   onSelect?: () => void;
+  onOpen?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: g.id, disabled: !draggable });
   const style: CSSProperties = {
@@ -84,20 +86,21 @@ function TimelineBlock({ g, ghost, display, draggable, showConflicts, onSelect }
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
     zIndex: isDragging ? 50 : undefined,
   };
-  // Keyboard a11y: Enter/Space opens the reschedule sheet. On desktop the block is
-  // pointer-draggable (no onClick, to keep click≠drag); on mobile it's a tap target.
-  const interactiveProps = onSelect
+  // Enter/Space does what a click does. A draggable block already carries the drag's button role and tab stop.
+  const tap = draggable ? onOpen : (onSelect ?? onOpen);
+  const interactiveProps = tap
     ? {
         onKeyDown: (e: ReactKeyboardEvent) => {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); }
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); }
         },
-        ...(draggable ? {} : { onClick: onSelect, tabIndex: 0, role: 'button' as const }),
+        onClick: tap,
+        ...(draggable ? {} : { tabIndex: 0, role: 'button' as const }),
       }
     : {};
   return (
     <div
       ref={setNodeRef}
-      className={`${styles.block} ${ghost ? styles.ghost : ''} ${draggable ? styles.draggable : ''} ${onSelect ? styles.selectable : ''} ${isDragging ? styles.dragging : ''}`}
+      className={`${styles.block} ${ghost ? styles.ghost : ''} ${draggable ? styles.draggable : ''} ${tap ? styles.selectable : ''} ${isDragging ? styles.dragging : ''}`}
       data-conflict={showConflicts && !ghost && display.info ? display.info.kind : undefined}
       data-status={g.status}
       style={style}
@@ -317,6 +320,7 @@ export default function ScheduleTimeline({
   selection,
   stage,
   onMove,
+  onOpen,
   onCreateVenue,
   zeroVenuePrompt,
   day: dayProp,
@@ -332,6 +336,8 @@ export default function ScheduleTimeline({
   stage: string;
   /** Persist a drag-to-move / drag-to-place (D2.2). Omit (or locked) → read-only grid. */
   onMove?: (gameId: string, target: { date: string; time: string; venueId: string; venueFacilityId: string }) => void | Promise<void>;
+  /** Open a game's window (a click on its block, Stage 3 S2). */
+  onOpen?: (g: Game) => void;
   /** Open the create-venue flow (for the "+ Field" menu). */
   onCreateVenue?: () => void;
   /** Rendered instead of the add-a-field hint when the tournament has ZERO venues —
@@ -750,7 +756,7 @@ export default function ScheduleTimeline({
                       {hourLines.map(m => <div key={m} className={styles.gridLine} style={{ top: (m - axis.start) * PX_PER_MIN }} />)}
                       {showNow && <div className={styles.nowLine} style={{ top: nowTop }} />}
                       {ghostGames.filter(g => facilityOf(g)?.key === activeCol.key).map(g => { const d = blockDisplay(g, true); return d ? <TimelineBlock key={g.id} g={g} ghost display={d} draggable={false} showConflicts={showConflicts} /> : null; })}
-                      {placedFocused.filter(g => facilityOf(g)?.key === activeCol.key).map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={false} showConflicts={showConflicts} onSelect={onMove ? () => setSheetGame(g) : undefined} /> : null; })}
+                      {placedFocused.filter(g => facilityOf(g)?.key === activeCol.key).map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={false} showConflicts={showConflicts} onSelect={onMove ? () => setSheetGame(g) : undefined} onOpen={onOpen ? () => onOpen(g) : undefined} /> : null; })}
                     </div>
                   </div>
                 </div>
@@ -813,7 +819,7 @@ export default function ScheduleTimeline({
                         </div>
                       )}
                       {colGhosts.map(g => { const d = blockDisplay(g, true); return d ? <TimelineBlock key={g.id} g={g} ghost display={d} draggable={false} showConflicts={showConflicts} /> : null; })}
-                      {colFocused.map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={!!onMove} showConflicts={showConflicts} onSelect={onMove ? () => setSheetGame(g) : undefined} /> : null; })}
+                      {colFocused.map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={!!onMove} showConflicts={showConflicts} onSelect={onMove ? () => setSheetGame(g) : undefined} onOpen={onOpen ? () => onOpen(g) : undefined} /> : null; })}
                     </DroppableCol>
                   </div>
                 );

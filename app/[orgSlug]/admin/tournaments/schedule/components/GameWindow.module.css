@@ -1,0 +1,62 @@
+/*
+ * THE GAME WINDOW (Tournament admin redesign Stage 3, S2) — the kit's form window (KitDialog) holds the frame; these are
+ * its contents: the facts read first, the form the pencil opens. On the kit's tokens from the start: no old look.
+ */
+.head { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+
+/* The facts, read first: a label left, its value right (Teams' record facts, the same rhythm). */
+.facts { display: grid; gap: 0.1rem; margin: 0 0 0.4rem; }
+.facts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.facts dt { flex: none; font-size: var(--type-support); color: var(--text-tertiary); }
+.facts dd { margin: 0; min-width: 0; text-align: right; font-weight: 600; overflow-wrap: anywhere; }
+.scoreTeams { margin: 0.2rem 0 0.4rem; }
+.audit { margin: 0 0 0.4rem; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* A door is olive text with its chevron (1 October: a door is olive text; an action is the white button). */
+.door {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: var(--admin-control-h);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--home-olive);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+}
+.door:hover { text-decoration: underline; text-underline-offset: 3px; }
+.door:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+.whoText { margin: 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+
+/* Cancel game keeps its amber (the §245 keep) on the white button: amber words, never an amber fill. */
+.amber { color: var(--badge-warning-ink); }
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* The form the pencil opens. Two short fields side by side; on a phone every field stacks at the 44px floor. */
+.form { display: block; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; }
+.note { margin: 0 0 0.9rem; }
+
+@media (max-width: 768px) {
+  .form input,
+  .form select,
+  .form textarea { min-height: var(--tap-min, 44px); }
+  .door { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 480px) {
+  .pair { grid-template-columns: minmax(0, 1fr); }
+}
+/* The Venue field ends where its line ends; the next field keeps the kit's field gap from it. */
+.where { margin: 0 0 0.9rem; }

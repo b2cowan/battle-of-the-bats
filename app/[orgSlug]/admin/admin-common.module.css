@@ -258,11 +258,6 @@
   overflow: hidden;
 }
 
-.compactListContent {
-  display: flex;
-  flex-direction: column;
-}
-
 .groupHeader {
   padding: 0.38rem 1.5rem;
   background: var(--surface-2);
@@ -275,56 +270,12 @@
 .groupHeader strong { font-family: var(--font-data); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--logic-lime); }
 
 /* ─── Pool Sub-Sections (used inside group sections) ──────────────────────── */
-.poolSubSection {
-  margin-left: 0;
-  margin-top: 1rem;
-}
-
-.poolSubSection:first-child {
-  margin-top: 0;
-}
-
-.poolSubHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 0;
-  padding: 0.45rem 1.5rem 0.45rem 1rem;
-  background: var(--black-20);
-  border-top: 1px solid var(--border-2);
-  border-bottom: 1px solid var(--border-2);
-  border-left: 3px solid var(--border);
-  width: 100%;
-}
 
 @media (max-width: 768px) {
   /* Tighter rhythm on phones — the pool header already provides the division
      break, so the full 2.5rem gap wastes a chunk of the small viewport, and the
      header's wide right padding leaves the rows beneath it misaligned. */
   .compactList { gap: 1.25rem; }
-  .poolSubHeader { padding: 0.45rem 0.75rem; }
-}
-
-.poolDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.poolSubLabel {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.65);
-}
-
-.poolSubCount {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  color: var(--data-gray);
-  opacity: 0.6;
 }
 
 /* ─── Table Header ────────────────────────────────────────────────────────── */
@@ -360,17 +311,6 @@
 /* ─── Game-row responsive columns ─────────────────────────────────────────── */
 /* Venue is now stacked inside the date cell — no separate venue column.       */
 /* flex-shrink hierarchy: date (0, never yields) → matchup (1, last to shrink) */
-.gameColDate {
-  flex: 0 0 205px;   /* room for date · time + an inline live chip (Now/Next/Overdue) on one line */
-  min-width: 0;
-  overflow: hidden;
-}
-
-.gameColMatchup {
-  /* flex-basis: 200px establishes a real space claim so shrink math activates. */
-  flex: 2 1 200px;
-  min-width: 0;
-}
 
 /* ─── Icon Button ─────────────────────────────────────────────────────────── */
 .iconBtn {
@@ -608,8 +548,7 @@
   background: var(--card-bg);
   border-bottom-color: var(--home-line-strong);
 }
-:global([data-admin-kit]) .groupHeader strong,
-:global([data-admin-kit]) .poolSubLabel {
+:global([data-admin-kit]) .groupHeader strong {
   font-family: var(--font-data);
   font-size: var(--type-label);
   font-weight: 700;
@@ -617,13 +556,6 @@
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .poolSubHeader {
-  background: var(--home-olive-soft);
-  border-top-color: var(--home-line);
-  border-bottom-color: var(--home-line);
-  border-left-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .poolSubCount { color: var(--text-tertiary); opacity: 1; font-variant-numeric: tabular-nums; }
 
 /* ── Row controls, the opened row and the row menu ── */
 :global([data-admin-kit]) .iconBtn { color: var(--text-tertiary); }

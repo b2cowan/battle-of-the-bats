@@ -1,8 +1,7 @@
 /**
  * Shared game "window state" classifier — the single definition of
- * live / overdue / future used by BOTH the tournament admin dashboard API
- * (`app/api/admin/tournament-dashboard/route.ts`) and the Schedule game rows
- * (`app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx`), so the two
+ * live / overdue / future used by the tournament admin dashboard API
+ * (`app/api/admin/tournament-dashboard/route.ts`), Results and the Schedule's day (`lib/schedule-day.ts`), so the
  * surfaces can never disagree about what's playing now vs. up next vs. overdue.
  *
  * `scheduledWindowState` is a PURE window test over millisecond timestamps.

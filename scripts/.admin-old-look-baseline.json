@@ -1,6 +1,6 @@
 {
   "app/[orgSlug]/admin/admin-common.module.css": {
-    "kitScope": 42
+    "kitScope": 39
   },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
     "kitScope": 130
@@ -119,13 +119,6 @@
     "kx": 11,
     "helpers": 1
   },
-  "app/[orgSlug]/admin/tournaments/schedule/components/GameFormModal.tsx": {
-    "kx": 9
-  },
-  "app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx": {
-    "kx": 9,
-    "helpers": 1
-  },
   "app/[orgSlug]/admin/tournaments/schedule/components/PlayoffBracketView.tsx": {
     "kx": 4,
     "helpers": 1
@@ -141,19 +134,12 @@
     "kx": 33,
     "helpers": 1
   },
-  "app/[orgSlug]/admin/tournaments/schedule/components/TournamentFieldPicker.tsx": {
-    "kx": 1,
-    "helpers": 1
-  },
   "app/[orgSlug]/admin/tournaments/schedule/components/ZeroVenuePrompt.tsx": {
     "kx": 4,
     "helpers": 1
   },
-  "app/[orgSlug]/admin/tournaments/schedule/page.tsx": {
-    "helpers": 1
-  },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
-    "kitScope": 217
+    "kitScope": 192
   },
   "app/[orgSlug]/admin/tournaments/settings/event/page.tsx": {
     "kx": 22,

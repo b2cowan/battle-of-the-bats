@@ -141,11 +141,10 @@ const WEARS_THE_FIELD = [
   'components/coaches/ScheduleEventForm.tsx',
   'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx',
   'components/rep-teams/TryoutDayCard.tsx',
+  'app/[orgSlug]/admin/tournaments/schedule/components/GameWindow.tsx',
 ];
 /** Forms that still ask where their own way, and who brings them onto the field. ⚠ ONLY SHRINKS. */
 const WHERE_NOT_YET: Record<string, string> = {
-  'app/[orgSlug]/admin/tournaments/schedule/components/GameFormModal.tsx': 'the tournament\'s Add Game (moved out of the schedule page by Stage 3 Part 0, the same form) — Tournament Stage 3 redraws it and takes the field (Ask 13)',
-  'app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx': 'the tournament\'s inline game edit — Tournament Stage 3',
   'components/admin/TournamentSetupWizard.tsx': 'the setup wizard\'s venue step — Tournament Stage 5',
   'components/coaches/ScheduleEditor.tsx': 'the free Basic coach\'s schedule (never in a club, no place book) — found by 6a\'s scan, not drawn; the owner rules whether it takes the field',
   'components/coaches/ScheduleImportSheet.tsx': 'the schedule import\'s row cells mirror the file\'s "Location" column (export and import) — renaming the column changes the file\'s contract (a /marketing finding); since 6a the import links a row to a club venue by name',
@@ -153,7 +152,6 @@ const WHERE_NOT_YET: Record<string, string> = {
 /** A file that names where without being a form for it. */
 const WHERE_EXEMPT: Record<string, string> = {
   'components/venue/WhereField.tsx': 'the field itself',
-  'app/[orgSlug]/admin/tournaments/schedule/components/TournamentFieldPicker.tsx': 'the tournament\'s own picker, worn by its not-yet forms',
   'app/[orgSlug]/admin/tournaments/schedule/components/ResolveLocationsModal.tsx': 'matches typed names to venues in bulk — a tool, not a form that places one event',
   'app/[orgSlug]/admin/tournaments/schedule/components/ShiftDayModal.tsx': 'the rain-delay shift\'s Venue FILTER over games already placed — it never asks where',
 };
@@ -175,8 +173,6 @@ describe('one way to say where, on every form (Ask 13)', () => {
   });
   it('the not-yet list only shrinks, and holds nothing stale', () => {
     assert.deepEqual(Object.keys(WHERE_NOT_YET).sort(), [
-      'app/[orgSlug]/admin/tournaments/schedule/components/GameFormModal.tsx',
-      'app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx',
       'components/admin/TournamentSetupWizard.tsx',
       'components/coaches/ScheduleEditor.tsx',
       'components/coaches/ScheduleImportSheet.tsx',

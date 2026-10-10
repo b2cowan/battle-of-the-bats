@@ -417,7 +417,7 @@ export interface ConflictInfo {
 
 /**
  * Scans all games in a tournament and returns conflict status for every game
- * that has at least one conflict. Used to render conflict badges in GameList.
+ * that has at least one conflict. Used to mark conflicting blocks on the Schedule's timeline.
  *
  * Games with no time, or with no usable location at all, are skipped. Games located only by a
  * typed field name ARE scanned — they used to be dropped here, which is why the list showed no

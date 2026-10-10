@@ -1495,8 +1495,6 @@
   flex-shrink: 0;
 }
 
-/* ─── Compact Number Input (small integer fields) ─────────────────────────── */
-
 /* ─── Priority: Inline Limits Row ────────────────────────────────────────── */
 .limitsRow {
   display: flex;
@@ -1802,17 +1800,6 @@
   }
 }
 
-/* Consistent height for the mobile Row-2 action controls (Publish + Tools).
-   They sit beside the search field, which is the 34px control height used by the
-   division select + stage toggle — so match 34px across the board. Targets both
-   the publish/unpublish button and the wrench Tools trigger (and the unpublish
-   split-button + its chevron). At 768px to beat .mobileIconButton's 32px. */
-
-/* Desktop: normalize the Row-1 action cluster to one height — the admin's one control height
-   (`--admin-control-h` — one button size across the admin, owner 2026-10-01; 34px on a computer since
-   2026-10-03, the portal's button; it was a 28px pin for the old compact buttons). Exclude [role=menuitem] (the dropdown rows are multi-line
-   and must keep their content height; a fixed clamp made their text overlap). */
-
 /* ─── Mobile settings bottom sheet (Schedule) ───────────────────────────── */
 .sheetBackdrop {
   position: fixed;
@@ -1913,149 +1900,12 @@
 
 .sheetDone:hover { background: rgba(var(--logic-lime-rgb), 0.14); }
 
-/* ─── Status chips: hidden on mobile — appear in the settings sheet instead ── */
-
-/* ─── Active settings summary strip (mobile only) ─────────────────────────── */
-
-/* ─── Summary strip: right-side wrapper + status count tally ────────────── */
-
 /* ─── Add Game button — icon-only collapse on mobile ─────────────────────── */
 
 /* Schedule rows become a compact two-line mobile grid so team names have room. */
-@media (max-width: 768px) {
-  .gameRowMain {
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    padding: 0.35rem 0.75rem !important;
-    min-height: 40px;
-  }
-
-  .planningGameRow {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 0.45rem 0.5rem !important;
-    align-items: center !important;
-    padding: 0.55rem 0.75rem !important;
-    min-height: 54px;
-  }
-
-  .planningDateCell {
-    grid-column: 1;
-    grid-row: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.12rem;
-  }
-
-  .planningMatchup {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    display: flex !important;
-    flex-direction: column;
-    gap: 0.2rem !important;
-    width: 100%;
-    max-width: none;
-    min-width: 0;
-  }
-
-  .planningTeamAway,
-  .planningTeamHome {
-    min-width: 0;
-    font-size: 0.82rem !important;
-    text-align: left !important;
-  }
-
-  .planningStatusCell {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .gameRowMain :global([data-role="schedule-expand"]),
-  .planningExpandPlaceholder {
-    grid-column: 3;
-    grid-row: 1;
-  }
-}
 
 /* ⚰ The scoring mode's rows (`.scoring*`, `.score*`, Finalize's label) are GONE (Tournament admin
    redesign Stage 1, 2026-09-29): Results draws its own list (`results/ResultsList.tsx`). */
-
-/* ─── Matchup Team Names — desktop reflow + 2-line wrap ──────────────────── */
-/* Long names (30+ chars) borrow the short opponent's slack (flex: 0 1 auto    */
-/* + justify-content: center on the matchup cell), then wrap to a 2nd line     */
-/* instead of truncating. Mirrors the venue cell's -webkit-box clamp.          */
-/* Mobile (≤768px) re-grids these via the .planningMatchup grid rules above.   */
-.planningTeamAway,
-.planningTeamHome {
-  flex: 0 1 auto;
-  min-width: 0;
-  font-family: var(--font-data);
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--fl-text);
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.25;
-}
-/* Planning matchup — stacked away-over-home names (no scores in this mode).
-   Centered in the (growing) matchup column so a full-width row stays balanced and
-   the expand chevron doesn't strand far to the right; the block is a fixed width
-   so names still line up across rows. */
-.planningMatchup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  width: 100%;
-  max-width: 24rem;
-  margin: 0 auto;
-  min-width: 0;
-}
-.planningTeamAway,
-.planningTeamHome { text-align: left; }
-
-/* ─── Planning Mode Status Cell ──────────────────────────────────────────── */
-/* Replaces the `flex: 0 0 96px` inline style, adds mobile width collapse.  */
-.planningStatusCell {
-  flex: 0 0 96px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.35rem;
-  flex-shrink: 0;
-}
-
-.generatorLockBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.22rem;
-  padding: 1px 5px;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.32);
-  border-radius: 2px;
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  line-height: 1.2;
-}
-
-.generatorLockAction {
-  color: var(--logic-lime) !important;
-}
-
-@media (max-width: 768px) {
-  .planningStatusCell {
-    flex: 0 0 auto;
-    min-width: 0;
-    justify-content: flex-end;
-  }
-}
 
 /* ─── Venue sub-line inside the date cell (planning + scoring) ───────────── */
 /* Row 1 = venue name, row 2 = facility name (when set). Each line is short   */
@@ -2067,117 +1917,6 @@
   gap: 0.35rem;
   flex-wrap: wrap;
   row-gap: 0.1rem;
-}
-
-.venueInDate {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  opacity: 0.75;
-  margin-top: 2px;
-  line-height: 1.3;
-}
-
-/* Venue + facility on a single line (e.g. "lions park · diamond #1"). */
-.venueLine {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.venueInDate > div {
-  min-width: 0;
-  overflow: hidden;
-}
-
-.venueInDate > div > div {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ─── Planning Row Status Stripe ─────────────────────────────────────────── */
-/* 3px left border mirrors the tally dot colours in the mobile summary strip. */
-.planningRow[data-status="scheduled"] {
-  border-left: 3px solid rgba(var(--info-rgb), 0.55);
-}
-.planningRow[data-status="cancelled"] {
-  border-left: 3px solid rgba(var(--danger-rgb), 0.55);
-}
-.planningRow[data-status="completed"] {
-  border-left: 3px solid rgba(var(--success-rgb), 0.48);
-}
-
-/* ─── Mobile Status Tag (below date) ─────────────────────────────────────── */
-/* Desktop: hidden — desktopStatusBadge in planningStatusCell covers it.     */
-/* Mobile (≤768px): shown below date/time text inside planningDateCell.      */
-.mobileStatusTag {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobileStatusTag {
-    display: inline;
-    font-family: var(--font-data);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    color: var(--warning);
-    margin-left: 0.3rem;
-  }
-  .mobileStatusTag[data-status="cancelled"] { color: var(--danger); }
-  .mobileStatusTag[data-status="completed"] { color: var(--success); }
-}
-
-/* ─── Date Group Dividers ─────────────────────────────────────────────────── */
-/* Separates game rows by date in the flat list view.                         */
-.gameDateDivider {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.65rem 1rem 0.3rem;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-30);
-}
-
-.gameDateDivider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border-2);
-}
-
-.gameDateTodayBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.08rem 0.35rem;
-  border-radius: 2px;
-  background: rgba(var(--logic-lime-rgb), 0.12);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  color: var(--logic-lime);
-  font-size: 0.5rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* ─── Desktop Badge / Mobile Compact Marker ──────────────────────────────── */
-/* Desktop: full badge text visible, marker hidden.                          */
-/* Mobile (≤768px): badge hidden, compact square initial shown instead.      */
-.desktopStatusBadge { display: inline-flex; }
-
-@media (max-width: 768px) {
-  .desktopStatusBadge { display: none; }
 }
 
 /* ─── Schedule Status Filter Chips ──────────────────────────────────────── */
@@ -2219,24 +1958,7 @@
   animation: adminSlideDown 0.15s ease-out;
 }
 
-.inlineFormBody {
-  display: grid;
-  grid-template-columns: 130px 110px 1fr;
-  gap: 0.55rem 1rem;
-  padding: 0.75rem 1.5rem 0.6rem;
-}
-
-.formField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.22rem;
-  min-width: 0;
-}
-
 /* Spans all grid columns — used for Notes textarea */
-.formFieldFull {
-  grid-column: 1 / -1;
-}
 
 .formLabel {
   font-family: var(--font-data);
@@ -2295,61 +2017,10 @@
   box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.15);
 }
 
-.inlineFormFooter {
-  display: flex;
-  align-items: center;
-  justify-content: stretch;
-  gap: 0.5rem;
-  padding: 0.4rem 1.5rem 0.55rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.1);
-}
-
-.inlineFormActions {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  width: 100%;
-  min-width: 0;
-}
-
-.inlineCancelButton {
-  color: var(--warning) !important;
-}
-
-.inlineActionSpacer {
-  flex: 1 1 auto;
-  min-width: 0.5rem;
-}
-
 .saveError {
   font-family: var(--font-data);
   font-size: 0.68rem;
   color: var(--danger);
-}
-
-.cancelledActionBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.45rem 1.5rem 0.55rem;
-  border-top: 1px solid rgba(var(--danger-rgb), 0.18);
-  background: rgba(var(--danger-rgb), 0.05);
-}
-
-.cancelledActionText {
-  min-width: 0;
-  color: var(--white-50);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  line-height: 1.35;
-}
-
-.cancelledActions {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 0.4rem;
 }
 
 /* Gate check-in: a team marked no-show, flagged on its games. */
@@ -2369,173 +2040,20 @@
   vertical-align: middle;
 }
 
-@media (max-width: 768px) {
-
-  .inlineFormBody {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  /* On mobile, venue spans both columns */
-  .inlineFormBody .formField:nth-child(3) {
-    grid-column: 1 / -1;
-  }
-
-  .inlineFormFooter {
-    padding-inline: 0.75rem;
-  }
-
-  .inlineFormActions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.42rem;
-  }
-
-  .inlineFormActions :global(.btn) {
-    width: 100%;
-    min-width: 0;
-    min-height: 32px;
-    padding: 0.24rem 0.5rem;
-    font-size: 0.6rem;
-    letter-spacing: 0.015em;
-    white-space: nowrap;
-    justify-content: center;
-  }
-
-  .inlineActionSpacer {
-    display: none;
-  }
-
-  .cancelledActionBar {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 0.45rem;
-    padding: 0.45rem 0.75rem 0.55rem;
-  }
-
-  .cancelledActionText {
-    font-size: 0.62rem;
-  }
-
-  .cancelledActions {
-    justify-content: flex-end;
-  }
-
-  .cancelledActions :global(.btn) {
-    min-height: 28px;
-  }
-}
-
-/* ─── Live game-row states (B3) — game-day timeline cues ──────────────────────
-   Placed after the [data-status] stripe rules so equal-specificity wins. Only
-   un-scored (scheduled) games get these; the global prefers-reduced-motion guard
-   freezes the pulse. */
-.planningRow[data-live="live"] {
-  border-left: 3px solid var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.04);
-}
-
-.planningRow[data-live="overdue"] {
-  border-left: 3px solid var(--warning);
-  background: rgba(var(--warning-rgb), 0.045);
-}
-
-.planningRow[data-live="next"] {
-  border-left: 3px solid rgba(var(--info-rgb), 0.7);
-}
-
 /* ─── Conflict visualization (C5) ────────────────────────────────────────────
    Placed AFTER the live-state rules so a conflict stripe outranks the live
    stripe (overlap = hard venue double-book, buffer = scheduled too close).
    Same specificity as the live rules → later source order wins. */
-.planningRow[data-conflict="buffer"] {
-  border-left: 3px solid var(--warning);
-  background: rgba(var(--warning-rgb), 0.05);
-}
-
-.planningRow[data-conflict="overlap"] {
-  border-left: 3px solid var(--danger);
-  background: rgba(var(--danger-rgb), 0.06);
-}
 
 /* Tokenized conflict badge (desktop status cell) */
-.conflictBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 1px 5px;
-  border-radius: 2px;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.conflictBadge[data-kind="overlap"] {
-  color: var(--danger);
-  background: rgba(var(--danger-rgb), 0.1);
-  border: 1px solid rgba(var(--danger-rgb), 0.35);
-}
-
-.conflictBadge[data-kind="buffer"] {
-  color: var(--warning);
-  background: rgba(var(--warning-rgb), 0.1);
-  border: 1px solid rgba(var(--warning-rgb), 0.3);
-}
 
 /* Mobile conflict tag (sits in the date cell beside the status tag) */
-.mobileConflictTag {
-  display: none;
-}
 
 /* Clash banner at the top of the expanded edit panel — names the partner so
    mobile users (no hover/tooltip) can see exactly what it collides with. */
-.conflictBanner {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0 0 0.6rem;
-  padding: 0.4rem 0.6rem;
-  border-radius: 3px;
-  font-size: 0.72rem;
-  line-height: 1.3;
-}
-
-.conflictBanner[data-kind="overlap"] {
-  color: var(--danger);
-  background: rgba(var(--danger-rgb), 0.08);
-  border: 1px solid rgba(var(--danger-rgb), 0.25);
-}
-
-.conflictBanner[data-kind="buffer"] {
-  color: var(--warning);
-  background: rgba(var(--warning-rgb), 0.08);
-  border: 1px solid rgba(var(--warning-rgb), 0.22);
-}
-
-.conflictBanner strong { font-weight: 800; }
 
 /* Says the clash was matched on a typed field name rather than a set-up field. Deliberately
    quieter than the warning itself — it qualifies the finding, it isn't a second finding. */
-.conflictMatchNote {
-  font-style: normal;
-  opacity: 0.78;
-}
-
-@media (max-width: 768px) {
-  /* On mobile the desktop status-cell badge is hidden; show a compact inline
-     tag in the date cell instead. */
-  .conflictBadge { display: none; }
-
-  .mobileConflictTag {
-    display: inline;
-    margin-left: 0.4rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-    white-space: nowrap;
-  }
-
-  .mobileConflictTag[data-kind="overlap"] { color: var(--danger); }
-  .mobileConflictTag[data-kind="buffer"] { color: var(--warning); }
-}
 
 /* Conflicts-only filter chip (toolbar) */
 
@@ -2591,15 +2109,6 @@
 .liveChip[data-live="overdue"] { color: var(--warning);    background: rgba(var(--warning-rgb), 0.1); }
 .liveChip[data-live="next"]    { color: var(--info);       background: rgba(var(--info-rgb), 0.1); }
 
-.liveChipDot {
-  width: 5px;
-  height: 5px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: currentColor;
-  animation: liveChipPulse 2s ease-in-out infinite;
-}
-
 @keyframes liveChipPulse {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.3; }
@@ -2607,21 +2116,6 @@
 
 /* ─── Game-row status label — passive, borderless (deliberately NOT a button) ──
    Reads as a status, so the clickable Finalize button beside it is unambiguous. */
-.statusTag {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  line-height: 1.25;
-  text-align: right;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-.statusTag[data-status="completed"] { color: var(--success); }
-.statusTag[data-status="submitted"] { color: var(--warning); }
-.statusTag[data-status="cancelled"] { color: var(--danger); }
-.statusTag[data-status="scheduled"] { color: var(--data-gray); }
 
 /* ============================================================
    Read-view bracket (committed games "Bracket" layout) — C2/C1
@@ -2812,10 +2306,6 @@
   .mobileStageBtn + .mobileStageBtn {
     border-left: 1px solid var(--border-2);
   }
-
-  /* Division selector takes the full first row; the Stage segmented control
-     wraps to its own full-width row beneath it (flex: 1 1 100%), so it stretches
-     edge-to-edge with no trailing dead space. */
 }
 
 /* ── "All divisions" List view — per-division section headers ─────────────── */
@@ -2823,9 +2313,6 @@
 /* Playoff row "edit in bracket builder" icon (List view). On very narrow phones
    the collapsed row is content-dense, so hide the icon-only button there and rely
    on the labelled "Edit in bracket" button in the expanded row footer. */
-@media (max-width: 480px) {
-  .playoffEditIconBtn { display: none; }
-}
 
 /* ------------------------------------------------------------------
    Phase 3 — "Match Typed Locations" review panel + its banner.
@@ -3074,9 +2561,9 @@
 }
 
 /* ═══ ON THE KIT — the game list (Admin Design Continuity slice 4b, only with the switch on) ═══════
-   GameList.tsx is the Schedule page's list view — every rule below answers a class GameList reads from
-   this sheet. (It was Results' body too, in a scoring mode; Tournament admin redesign Stage 1 deleted
-   that mode and its rules on 2026-09-29, and the planning rules left here are Stage 3's to fold.) Everything else in
+   The game list that this block dressed is gone (its scoring mode with Stage 1, 2026-09-29; the list itself with
+   Tournament admin redesign Stage 3, whose day wears Results' row); the rules left here are the ones another of the
+   schedule's windows still reads, and Stage 3 folds them with the rest. Everything else in
    this 4,000-line file (the schedule page chrome, timeline, brackets, generator, playoff wizard, the
    shift-day / resolve-locations / field-picker windows) belongs to slice 4c and is untouched here.
    ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here.
@@ -3084,80 +2571,11 @@
    (the extra attribute selector adds a point), but ties with another KIT rule of the same shape — so
    every modifier a base class carries in the legacy sheet above is restated here, base rule first. */
 
-/* ── Date / time text (both modes) — the bold date + secondary time are inline `kx()` patches in
-   GameList.tsx (row-invariant, hoisted above the row map); .dateLine itself carries no colour.
-   The venue sub-line is a fact line, not a label, so it moves to the body face like a secondaryCell. ── */
-:global([data-admin-kit]) .venueInDate {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-  opacity: 1; /* text-tertiary is already AA-tuned; the legacy 0.75 fade would double-dim it */
-}
-
-/* ── Date-group divider (flat pool view) — a section eyebrow, kept mono+uppercase ── */
-:global([data-admin-kit]) .gameDateDivider { color: var(--text-tertiary); }
-:global([data-admin-kit]) .gameDateDivider::after { background: var(--home-line); }
-/* A legacy lime TINT (rgba lime + lime ink) is an accent, not a primary — olive-soft fill, olive
-   border/ink, never a solid ink-on-lime highlight (this is a marker, not a second CTA). */
-:global([data-admin-kit]) .gameDateTodayBadge {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
-
-/* ── Matchup team names — body face, bold (ADC specimen 4: "the matchup in the body face bold") ── */
-:global([data-admin-kit]) .planningTeamAway,
-:global([data-admin-kit]) .planningTeamHome {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-
-/* ── Status tag (passive status word beside the row) — a readout, kept mono; light tier for AA ── */
-:global([data-admin-kit]) .statusTag[data-status="completed"] { color: var(--success-light); }
-:global([data-admin-kit]) .statusTag[data-status="submitted"] { color: var(--warning-light); }
-:global([data-admin-kit]) .statusTag[data-status="cancelled"] { color: var(--danger-light); }
-:global([data-admin-kit]) .statusTag[data-status="scheduled"] { color: var(--text-tertiary); }
-
-/* Mobile inline status tag — base (today's "Reviewing" default) THEN its two overrides, so the kit
-   rule can never tie-and-lose against its own modifier. */
-:global([data-admin-kit]) .mobileStatusTag { color: var(--warning-light); }
-:global([data-admin-kit]) .mobileStatusTag[data-status="cancelled"] { color: var(--danger-light); }
-:global([data-admin-kit]) .mobileStatusTag[data-status="completed"] { color: var(--success-light); }
-
-/* ── Conflict badge (desktop) / mobile tag / inline banner — light tier + the standard 0.08/0.3 tint ── */
-:global([data-admin-kit]) .conflictBadge[data-kind="overlap"] {
-  color: var(--danger-light);
-  background: rgba(var(--danger-rgb), 0.08);
-  border-color: rgba(var(--danger-rgb), 0.3);
-}
-:global([data-admin-kit]) .conflictBadge[data-kind="buffer"] {
-  color: var(--warning-light);
-  background: rgba(var(--warning-rgb), 0.08);
-  border-color: rgba(var(--warning-rgb), 0.3);
-}
-:global([data-admin-kit]) .mobileConflictTag[data-kind="overlap"] { color: var(--danger-light); }
-:global([data-admin-kit]) .mobileConflictTag[data-kind="buffer"] { color: var(--warning-light); }
-:global([data-admin-kit]) .conflictBanner[data-kind="overlap"] {
-  color: var(--danger-light);
-  background: rgba(var(--danger-rgb), 0.08);
-  border-color: rgba(var(--danger-rgb), 0.3);
-}
-:global([data-admin-kit]) .conflictBanner[data-kind="buffer"] {
-  color: var(--warning-light);
-  background: rgba(var(--warning-rgb), 0.08);
-  border-color: rgba(var(--warning-rgb), 0.3);
-}
 
 /* ── Live-game chip + row stripe — "Live = the portal's red", not the brand lime ── */
 :global([data-admin-kit]) .liveChip[data-live="live"]    { color: var(--home-live); background: var(--home-live-soft); }
 :global([data-admin-kit]) .liveChip[data-live="overdue"] { color: var(--warning-light); }
 :global([data-admin-kit]) .liveChip[data-live="next"]    { color: var(--info-light); }
-/* Longhand border-LEFT-color only — the shorthand would also have worked here (nothing else sets
-   this row's other three border sides), but longhand keeps the intent explicit: only the stripe's
-   hue moves, not its width/style. */
-:global([data-admin-kit]) .planningRow[data-live="live"] {
-  border-left-color: var(--home-live);
-  background: var(--home-live-soft);
-}
 
 /* ── The no-show tag beside a team's name (a planning row) ── */
 :global([data-admin-kit]) .noShowTag {
@@ -3200,25 +2618,6 @@
 
 /* ── Inline form footer actions ── */
 :global([data-admin-kit]) .saveError { color: var(--danger-light); }
-/* "Keep" / "Release" (generator-lock toggle) — raw lime as TEXT; !important matches the legacy
-   declaration's own !important (a non-important kit rule cannot win against it). */
-:global([data-admin-kit]) .generatorLockAction { color: var(--home-olive) !important; }
-/* "KEPT" — a legacy lime tint (rgba fill + lime ink), so it is an accent, not a solid highlight. */
-:global([data-admin-kit]) .generatorLockBadge {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
-/* "Cancel Game" — reversible via Reinstate (unlike Forfeit/Revert Score, which erase a recorded
-   result), so it stays the caution tier rather than moving to danger. !important matches legacy. */
-:global([data-admin-kit]) .inlineCancelButton { color: var(--warning-light) !important; }
-
-/* ── Cancelled-game action bar ── */
-:global([data-admin-kit]) .cancelledActionBar {
-  background: rgba(var(--danger-rgb), 0.08);
-  border-top-color: rgba(var(--danger-rgb), 0.3);
-}
-:global([data-admin-kit]) .cancelledActionText { color: var(--text-secondary); }
 
 /* ═══ ON THE KIT — the schedule itself (Admin Design Continuity slice 4c, only with the switch on) ═══
    Everything in this sheet the game list block above does not dress: the Schedule page (header tag,
@@ -3236,12 +2635,6 @@
    temporary-facility and typed-location banners, the "All divisions" list headers, the venue filter
    menu, and the shared error banner (the generator and the locations window read it too). ── */
 
-/* ── Header meta: "Published" status (4a's state-chip slot) — the kit's good state ── */
-
-/* ── Publish action button — disabled (not-yet-loaded) and the LIVE/published disabled variant.
-   ⚠ FINDING: `.publishButton[data-live]:disabled` is dead CSS — the button never renders a
-   `data-live` attribute (only game rows do, in GameList.tsx). Restated only the reachable rule. */
-
 /* ── Mobile-visible Stage toggle (Round Robin / Playoffs) — a hand-rolled segmented control;
    mirrors the shared ToolbarSegmentedControl's kit recipe (TournamentAdminUI.module.css) for
    house consistency. Legacy sets these colours inside the same breakpoint, so the kit restates
@@ -3258,15 +2651,6 @@
     border-left-color: var(--home-line-strong);
   }
 }
-
-/* ── Status filter chips: `.filterChip`/`.chipActive` are already on the kit (admin-common.module.css)
-   and paint every chosen filter olive regardless of status — at (0,3,0) that already outranks this
-   page's own `.scheduleStatusActive.scheduleStatusScheduled` (0,2,0), so the legacy blueprint-blue
-   "Scheduled" accent is naturally superseded. Restated explicitly (matching the shared rule's own
-   values) so the result doesn't depend on an accidental cross-file specificity tie — see the ADC
-   shadow-audit note on same-weight rules resolving by bundle order.
-   DECIDED AT BUILD TIME: the "Scheduled" chip's distinct blue no longer survives on the kit — every
-   status chip's active state is the one house olive, exactly like every other admin list's filters. */
 
 /* ── Mobile settings bottom sheet ── */
 :global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }
@@ -3308,13 +2692,6 @@
   color: var(--text-secondary);
 }
 :global([data-admin-kit]) .sheetDone:hover { background: var(--home-olive-soft); border-color: var(--home-olive); color: var(--home-olive); }
-
-/* ── Venue nested modal (same sheet recipe as above) ── */
-
-/* ── Active-settings summary strip (mobile) ── */
-
-/* Status tally dots keep their state colour, moved to the light tier for AA on the kit; the dot
-   itself is a solid mark (base hue) — the LIGHT tier is for the text, per the ink rule. */
 
 /* ── Add Game button icon-collapse (mobile) — layout only, no colour in the legacy rule; nothing
    to restate here (its colour comes from the already-kit `.btn-lime`). ── */
@@ -3361,12 +2738,6 @@
   border-radius: 8px;
   color: var(--danger-light);
 }
-
-/* ── "All divisions" List view — per-division section headers ── */
-
-/* ── Venue filter menu (desktop) ── */
-/* The 4b sweep measured "All venues" under the contrast floor in Warm at the legacy rgba(148,163,184,.6)
-   text — the kit's --text-secondary clears it. */
 
 /* ── The health panels (ScheduleHealthPanel + BracketHealthPanel — one layer serves both, and their
    reuse inside the generator, the playoff wizard and the bracket editor) and the Resolve Locations

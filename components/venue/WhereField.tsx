@@ -66,6 +66,7 @@ export default function WhereField({
   disabled = false,
   venueLabel = 'Venue',
   facilityLabel,
+  sourceLine,
 }: {
   idPrefix?: string;
   /** The program's sport — the facility's word. */
@@ -96,6 +97,12 @@ export default function WhereField({
   venueLabel?: string;
   /** Overrides the sport's word (only for a form whose label is not the bare noun, e.g. "Default diamond"). */
   facilityLabel?: string;
+  /**
+   * The quiet line under Venue in the host program's own words, in place of the club's pill line — a tournament says
+   * where its venue came from ("Added in this tournament" / "From the club's Venue library", Tournament admin redesign
+   * Stage 3, specimen 7). '' draws none. Absent, the field draws its own line, as built.
+   */
+  sourceLine?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
@@ -161,7 +168,9 @@ export default function WhereField({
     }
   }
 
-  const under = venueSourceLine(value.source, value.locationAddress, inClub);
+  const under = sourceLine !== undefined
+    ? { pill: null, rest: sourceLine }
+    : venueSourceLine(value.source, value.locationAddress, inClub);
   const venueId = `${idPrefix}-venue`;
   const facilityId = `${idPrefix}-facility`;
   // Each row's place in the flat list the arrow keys walk: venues, places, then the foot rows.
