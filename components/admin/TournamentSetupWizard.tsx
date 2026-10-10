@@ -1,124 +1,77 @@
 'use client';
-
-import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
-import { AlertCircle, ArrowRight, Copy, Plus, Trash2, X } from 'lucide-react';
+/**
+ * NEW TOURNAMENT — ONE WINDOW FOR EVERY DOOR (Tournament admin redesign Stage 5, E1 and A47; hub v45, ruled 2026-10-10).
+ *
+ * The first run opens it after the plan page; the rail's +, the Tournaments list and every "Reuse this setup" door open
+ * it through `SetupWizardOpener`. Before Stage 5 the first run had its own six-step wizard with its own answers (a
+ * park's diamonds named "Lions Park — Diamond 1", a question nothing read) and this one asked only a street address,
+ * so a three-diamond park scheduled as one lane (F25, F77, F79, F91).
+ *
+ * The kit's form window (`KitDialog`): full screen with ← on a phone, a 640 window at a desk, the live public-page
+ * preview beside it at 1280 and wider (unchanged). Three steps and a review:
+ *
+ *   1 The tournament — name, dates, style, link, each marked required; the style is saved WITH the tournament in the
+ *     one create step (F78: it used to be a second call whose failure was swallowed). Under one at a time (A23, A55) a
+ *     name last year's finished event still holds is said as it is typed, with the year-bumped name one tap away.
+ *   2 Divisions — each a card with its own labels (J1-031); none is allowed (the board's checklist asks).
+ *   3 Venues — one ticked list (the /design review): the club's Venue library for a plan that has one, "your venues"
+ *     (each past venue once, with its diamonds — A51) for everyone else; "A new venue" opens the four things with a
+ *     count, named "Diamond 1…N" in the sport's word (F77). The raw "every copy" search is gone (F79, S6-04).
+ *   Review — each row a door back to its step; the welcome message a switch with its text. "Create the draft" makes the
+ *     tournament, its style, divisions, venues (with their diamonds) and welcome in ONE request, which takes everything
+ *     back if any part fails.
+ *
+ * Fees are not asked (optional, owner 2026-06-16). Before the steps, an organization with past events meets "Start
+ * blank, or reuse" — left as it is today on the Tournament plan (the free tournament tier review owns it). Stage 4's
+ * reuse step (D2) is the same window.
+ */
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Copy } from 'lucide-react';
 import type { Tournament, TournamentFormat } from '@/lib/types';
 import TournamentStyleCards from './TournamentStyleCards';
-import { tournamentFormatCreatePatch } from '@/lib/tournament-phase';
-import styles from './TournamentSetupWizard.module.css';
-import { tournamentToday } from '@/lib/timezone';
 import TournamentCreationPreview, {
   type PreviewOrg,
   type PreviewTournamentTheme,
 } from './TournamentCreationPreview';
 import { PRESETS, isThemePresetKey } from '@/lib/themes';
-import { hasPlanFeature } from '@/lib/plan-features';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
-import { Callout } from '@/components/admin/kit/club/RepKit';
+import { hasOrgVenueLibrary, hasPlanFeature } from '@/lib/plan-features';
+import { tournamentToday, formatEventDateRange } from '@/lib/timezone';
+import { TOURNAMENT_FORMAT_OPTIONS } from '@/lib/tournament-phase';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import { Callout, ClubRow, ClubRowFrame, ClubRowList, repKit } from '@/components/admin/kit/club/RepKit';
+import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
 import { CheckChoice } from '@/components/admin/tournament/ScreenParts';
+import VenueChooser, { type ChooserVenue } from '@/components/admin/tournament/VenueChooser';
+import NewVenueSheet, { type NewVenueDraft } from '@/components/admin/tournament/NewVenueSheet';
 import { REUSE_WORDS } from '@/lib/after-event-words';
+import { CREATE_STEPS, CREATE_WORDS as W, type CreateStep } from '@/lib/tournament-setup-words';
+import { nameForYear, sameTournamentName, slugForName } from '@/lib/tournament-name';
+import { dedupePastVenues, facilityKindForSport, facilityNames, type PastVenueRow } from '@/lib/venue-facilities';
+import styles from './TournamentSetupWizard.module.css';
 
-// Today's hand-set inline styles, hoisted once (same values). Each wears its kit patch through
-// `kx(legacy, patch)` while the switch is on (Admin Design Continuity slice 4a).
-const CONFIRM_LEAVE_TEXT: CSSProperties = { color: 'var(--white-60)', marginBottom: '0.5rem' };
-const VENUE_SEARCH_MENU: CSSProperties = {
-  position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-  background: 'var(--surface-2)',
-  border: '1px solid var(--border, var(--white-10))',
-  borderRadius: '2px', zIndex: 50,
-  maxHeight: '200px', overflowY: 'auto',
-  boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-};
-const VENUE_SEARCH_ITEM: CSSProperties = {
-  display: 'block', width: '100%', textAlign: 'left',
-  padding: '0.5rem 0.75rem', background: 'none', border: 'none',
-  cursor: 'pointer', borderBottom: '1px solid var(--border, var(--white-8))',
-  color: 'inherit',
-};
-const VENUE_SEARCH_ITEM_KIT: CSSProperties = { borderBottom: KIT_LINE };
-const VENUE_ADDRESS_CAPTION: CSSProperties = { display: 'block', fontSize: '0.75rem', color: 'var(--white-40, var(--white-40))' };
-
-const WIZARD_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'review'] as const;
-const CANADIAN_PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'];
-const DIVISION_PRESETS: Record<Exclude<DivisionPreset, 'custom'>, string[]> = {
+const DIVISION_PRESETS = {
   youth: ['U9', 'U11', 'U13', 'U15', 'U17', 'U19'],
   adult: ['Open', 'Competitive', 'Recreational'],
-};
-
-type WizardStep = typeof WIZARD_ORDER[number];
-type SkippableStep = Exclude<WizardStep, 'review'>;
-type DivisionPreset = 'youth' | 'adult' | 'custom';
-
-type TournamentDraft = {
-  year: number;
-  name: string;
-  slug: string;
-  startDate: string | null;
-  endDate: string | null;
-};
+} as const;
+type DivisionPreset = keyof typeof DIVISION_PRESETS | 'custom';
 
 type DivisionRow = {
   id: string;
   name: string;
   minAge: string;
   maxAge: string;
-  capacity: number;
+  capacity: string;
+  usePools: boolean;
   poolCount: number;
-  requiresPoolSelection: boolean;
   poolNames: string[];
-};
-
-type SetupDivision = {
-  name: string;
-  minAge: number | null;
-  maxAge: number | null;
-  capacity: number;
-  poolCount: number;
-  poolNames: string;
   requiresPoolSelection: boolean;
 };
 
-type VenueFields = {
-  name: string;
-  street: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  country: string;
-  notes: string;
-};
+type PastTournament = { id: string; name: string; year?: number | null; status?: string | null };
 
-type QueuedVenue = {
-  key: string;
-  name: string;
-  address: string;
-  notes: string;
-};
-
-type ExistingVenue = {
-  id: string;
-  tournamentId: string;
-  tournamentName?: string | null;
-  name: string;
-  address?: string | null;
-  notes?: string | null;
-};
-
-type ExistingTournament = {
-  id: string;
-  name: string;
-  status?: string | null;
-};
-
-type SkippedState = Record<SkippableStep, boolean>;
-
-type PastTournament = {
-  id: string;
-  name: string;
-  year?: number | null;
-  status?: string | null;
-};
+/** An event that holds a name or a link (any status but Archived) — read when the window opens. */
+type LiveEvent = { id: string; name: string; slug: string | null; year: number | null; status: string | null };
 
 type CloneCopiedCounts = {
   venues?: number;
@@ -142,31 +95,21 @@ export type CreatedTournament = {
   record?: Tournament;
 };
 
-/** Mode before the main wizard steps: pick clone source or start from scratch. */
 type PreStepMode = 'choose' | 'clone-name';
 
-type CloneNameForm = {
-  name: string;
-  slug: string;
-  startDate: string;
-  endDate: string;
-  autoSlug: boolean;
-};
-
+type CloneNameForm = { name: string; slug: string; startDate: string; endDate: string; autoSlug: boolean };
 type CloneCopyOptionKey = 'structure' | 'venues' | 'registration' | 'publicPresence' | 'content';
 type CloneCopyOptions = Record<CloneCopyOptionKey, boolean>;
-type ReuseSetupWarning = {
-  /** The analytics key (the clone route's `WARNING_KEYS`). */
-  key: string;
-  /** One bullet line in the step's "Review before you publish" callout. */
-  text: string;
-};
+type ReuseSetupWarning = { key: string; text: string };
+
 /** The door that opened the wizard (product analytics). ⚠ Every value here must also be in the clone
  *  route's `SOURCE_SURFACES`, or that door records `unknown`. */
 export type ReuseSetupSourceSurface =
   | 'sidebar_create'
   | 'manage_tournaments_new_button'
   | 'manage_tournaments_row'
+  // Stage 5: the first run opens this same window after the plan page (E1).
+  | 'first_run'
   // Stage 4's doors (D2, A19): the reuse step opens with the event already chosen.
   | 'finished_board'
   | 'summary'
@@ -178,96 +121,72 @@ type TournamentSetupWizardProps = {
   isOpen: boolean;
   orgSlug?: string;
   orgContactEmail?: string | null;
-  /** Pass existing non-archived tournaments to enable the clone pre-step. */
+  /** Pass existing non-archived tournaments to enable the "Start blank, or reuse" pre-step. */
   existingTournaments?: PastTournament[];
-  /**
-   * The event a door opened the reuse step FOR (the finished board, Summary, a Completed row on the Tournaments list, an
-   * event's record — Stage 4, D2). The step opens on it with no "pick a source" step behind it, so its
-   * foot is Cancel, not Back. It need not be in `existingTournaments`: an ARCHIVED event is a source too
-   * (the clone route accepts any status), and that list holds the non-archived ones.
-   */
+  /** The event a door opened the reuse step FOR (Stage 4, D2): no "pick a source" behind it. */
   initialSource?: PastTournament | null;
-  /** Surface that opened the setup wizard, used for product analytics. */
   sourceSurface?: ReuseSetupSourceSurface;
-  /**
-   * The org, for the desktop live preview of the public page being created. Omit (or pass
-   * null) and the wizard renders exactly as it did before the preview existed — the pane
-   * needs the org's name and theme to show anything honest.
-   */
+  /** The org, for the desktop live preview (and its plan, for the Venue library). */
   previewOrg?: PreviewOrg | null;
-  /**
-   * Whether this member may set tournament branding. Combined with the org's plan, this
-   * decides if the preview offers the colour swatches — the same pair of gates the
-   * Branding screen itself uses.
-   */
+  /** Whether this member may set tournament branding (the preview's swatches). */
   canManageBranding?: boolean;
   /** Whether the org's plan includes tournament cloning. */
   canClone?: boolean;
   /** Upgrade copy shown if canClone is false. */
   upgradeCopy?: string;
+  /** The organization's sport — the venue step's word for a lane ("Diamond"). */
+  sport?: string | null;
   onClose: () => void;
   onCreated: (tournament: CreatedTournament) => void | Promise<void>;
 };
 
 const DEFAULT_CLONE_COPY_OPTIONS: CloneCopyOptions = {
-  structure: true,
-  venues: true,
-  registration: true,
-  publicPresence: true,
-  content: true,
+  structure: true, venues: true, registration: true, publicPresence: true, content: true,
 };
-
 /** The five areas, in the step's order; their words are /marketing's (`REUSE_WORDS.areas`). */
 const REUSE_COPY_OPTION_KEYS: CloneCopyOptionKey[] = ['structure', 'venues', 'registration', 'publicPresence', 'content'];
 
-function generateSlug(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function todayValue() { return tournamentToday(); }
+
+function addDays(value: string, days: number) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
+  const [y, m, d] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
 }
 
-function normalizeTournamentName(name: string) {
-  return name.trim().replace(/\s+/g, ' ').toLowerCase();
+function uniqueName(base: string, taken: readonly string[]) {
+  if (!taken.some(t => sameTournamentName(t, base))) return base;
+  let n = 2;
+  while (taken.some(t => sameTournamentName(t, `${base} ${n}`))) n += 1;
+  return `${base} ${n}`;
 }
 
-function getUniqueTournamentName(baseName: string, existingNames: string[]) {
-  const usedNames = new Set(existingNames.map(normalizeTournamentName));
-  if (!usedNames.has(normalizeTournamentName(baseName))) return baseName;
-
-  let suffix = 2;
-  while (usedNames.has(normalizeTournamentName(`${baseName} ${suffix}`))) {
-    suffix += 1;
-  }
-  return `${baseName} ${suffix}`;
+function starterAges(name: string) {
+  const youth = name.trim().match(/^U\s*(\d{1,2})$/i) || name.trim().match(/^(\d{1,2})\s*U$/i);
+  if (youth) return { minAge: '', maxAge: youth[1] };
+  if (['Open', 'Competitive', 'Recreational'].includes(name.trim())) return { minAge: '18', maxAge: '' };
+  return { minAge: '', maxAge: '' };
 }
 
-function getDefaultTournamentForm(existingNames: string[] = [], year = new Date().getFullYear()) {
-  const defaultName = getUniqueTournamentName(`${year} Tournament`, existingNames);
+let divisionSeq = 0;
+function divisionRow(name: string): DivisionRow {
+  divisionSeq += 1;
   return {
-    name: defaultName,
-    slug: generateSlug(defaultName),
-    startDate: '',
-    endDate: '',
-    format: 'round_robin_playoffs' as TournamentFormat,
+    id: `division-${divisionSeq}`, name, ...starterAges(name), capacity: '8',
+    usePools: false, poolCount: 2, poolNames: ['Pool A', 'Pool B'], requiresPoolSelection: false,
   };
 }
 
-function getRepeatTournamentName(tournament: PastTournament) {
-  const nextYear = (tournament.year ?? new Date().getFullYear()) + 1;
-  const sourceYear = tournament.year ? String(tournament.year) : '';
-  const name = sourceYear && tournament.name.includes(sourceYear)
-    ? tournament.name.replace(sourceYear, String(nextYear))
-    : `${tournament.name} ${nextYear}`;
-  return { name, year: nextYear };
-}
+function poolLetter(i: number) { return String.fromCharCode(65 + i); }
 
-function getRepeatNameForm(tournament: PastTournament): CloneNameForm {
-  const repeat = getRepeatTournamentName(tournament);
-  return {
-    name: repeat.name,
-    slug: generateSlug(repeat.name),
-    startDate: '',
-    endDate: '',
-    autoSlug: true,
-  };
+function getRepeatNameForm(t: PastTournament): CloneNameForm {
+  const nextYear = (t.year ?? new Date().getFullYear()) + 1;
+  const name = nameForYear(t.name, nextYear, t.year ?? null);
+  return { name, slug: slugForName(name), startDate: '', endDate: '', autoSlug: true };
 }
 
 function buildCloneApiOptions(options: CloneCopyOptions) {
@@ -285,195 +204,45 @@ function buildCloneApiOptions(options: CloneCopyOptions) {
   };
 }
 
-function getReuseSetupWarnings(
-  source: PastTournament | null,
-  draftYear: number,
-  options: CloneCopyOptions,
-): ReuseSetupWarning[] {
+function getReuseSetupWarnings(source: PastTournament | null, draftYear: number, options: CloneCopyOptions): ReuseSetupWarning[] {
   const warnings: ReuseSetupWarning[] = [];
-  const W = REUSE_WORDS.warning;
+  const WW = REUSE_WORDS.warning;
   const name = source?.name ?? '';
   const sourceYear = typeof source?.year === 'number' ? source.year : null;
   const yearGap = sourceYear && Number.isInteger(draftYear) ? draftYear - sourceYear : null;
   const sourceStatus = source?.status ?? null;
-  const sourceIsUnfinished = sourceStatus === 'draft' || sourceStatus === 'active';
-
-  if (sourceStatus === 'draft') {
-    warnings.push({ key: 'source_draft', text: W.source_draft(name) });
-  } else if (sourceStatus === 'active') {
-    warnings.push({ key: 'source_active', text: W.source_active(name) });
-  }
-
-  if (yearGap !== null && yearGap > 1) {
-    warnings.push({ key: 'source_older_than_one_year', text: W.source_older_than_one_year(name, yearGap) });
-  } else if (yearGap !== null && yearGap < 0) {
-    warnings.push({ key: 'draft_year_before_source', text: W.draft_year_before_source(name) });
-  }
-
-  if (options.registration && (sourceIsUnfinished || (yearGap !== null && yearGap >= 1))) {
-    warnings.push({ key: 'registration_setup_review', text: W.registration_setup_review });
-  }
-
-  if ((options.publicPresence || options.content) && (sourceIsUnfinished || (yearGap !== null && yearGap >= 1))) {
-    warnings.push({ key: 'public_content_review', text: W.public_content_review });
-  }
-
+  const unfinished = sourceStatus === 'draft' || sourceStatus === 'active';
+  if (sourceStatus === 'draft') warnings.push({ key: 'source_draft', text: WW.source_draft(name) });
+  else if (sourceStatus === 'active') warnings.push({ key: 'source_active', text: WW.source_active(name) });
+  if (yearGap !== null && yearGap > 1) warnings.push({ key: 'source_older_than_one_year', text: WW.source_older_than_one_year(name, yearGap) });
+  else if (yearGap !== null && yearGap < 0) warnings.push({ key: 'draft_year_before_source', text: WW.draft_year_before_source(name) });
+  if (options.registration && (unfinished || (yearGap !== null && yearGap >= 1))) warnings.push({ key: 'registration_setup_review', text: WW.registration_setup_review });
+  if ((options.publicPresence || options.content) && (unfinished || (yearGap !== null && yearGap >= 1))) warnings.push({ key: 'public_content_review', text: WW.public_content_review });
   return warnings;
 }
 
-function getTournamentStatusLabel(status?: string | null) {
+function statusLabel(status?: string | null) {
   if (!status) return 'Tournament';
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function getSourceSortRank(status?: string | null) {
-  switch (status) {
-    case 'completed':
-      return 0;
-    case 'archived':
-      return 1;
-    case 'active':
-      return 2;
-    case 'draft':
-      return 3;
-    default:
-      return 4;
-  }
+function sourceRank(status?: string | null) {
+  return status === 'completed' ? 0 : status === 'archived' ? 1 : status === 'active' ? 2 : status === 'draft' ? 3 : 4;
 }
 
-function getDefaultSkipped(): SkippedState {
-  return {
-    tournament: false,
-    divisions: false,
-    welcome: false,
-    venues: false,
-  };
-}
-
-function isDateValue(value: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value);
-}
-
-function getTodayDateValue() {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Toronto',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date());
-  const year = parts.find(part => part.type === 'year')?.value;
-  const month = parts.find(part => part.type === 'month')?.value;
-  const day = parts.find(part => part.type === 'day')?.value;
-  return year && month && day ? `${year}-${month}-${day}` : tournamentToday();
-}
-
-function addDaysToDateValue(value: string, days: number) {
-  if (!isDateValue(value)) return '';
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
-
-function getDivisionStarterAgeRange(name: string) {
-  const normalized = name.trim();
-  const youthMatch = normalized.match(/^U\s*(\d{1,2})$/i) || normalized.match(/^(\d{1,2})\s*U$/i);
-  if (youthMatch) return { minAge: '', maxAge: youthMatch[1] };
-  if (['Open', 'Competitive', 'Recreational'].includes(normalized)) return { minAge: '18', maxAge: '' };
-  return { minAge: '', maxAge: '' };
-}
-
-function buildDivisionRows(names: string[]): DivisionRow[] {
-  return names.map((name, index) => ({
-    id: `${generateSlug(name) || 'division'}-${index + 1}`,
-    name,
-    ...getDivisionStarterAgeRange(name),
-    capacity: 8,
-    poolCount: 0,
-    requiresPoolSelection: false,
-    poolNames: ['Pool A'],
-  }));
-}
-
-function buildVenueDraft(): VenueFields {
-  return {
-    name: '',
-    street: '',
-    city: '',
-    province: '',
-    postalCode: '',
-    country: 'Canada',
-    notes: '',
-  };
-}
-
-function normalizeVenueFields(venue: VenueFields): VenueFields {
-  return {
-    name: venue.name.trim(),
-    street: venue.street.trim(),
-    city: venue.city.trim(),
-    province: venue.province.trim(),
-    postalCode: venue.postalCode.trim(),
-    country: venue.country.trim() || 'Canada',
-    notes: venue.notes.trim(),
-  };
-}
-
-function hasVenueContent(venue: VenueFields) {
-  const normalized = normalizeVenueFields(venue);
-  return !!(normalized.name || normalized.street || normalized.city || normalized.province || normalized.postalCode || normalized.notes);
-}
-
-function isVenueReady(venue: VenueFields) {
-  return !!normalizeVenueFields(venue).name;
-}
-
-function formatVenueAddress(venue: VenueFields) {
-  const normalized = normalizeVenueFields(venue);
-  const hasAddressDetails = !!(normalized.street || normalized.city || normalized.province || normalized.postalCode);
-  if (!hasAddressDetails) return '';
-
-  const cityLine = [normalized.city, normalized.province, normalized.postalCode].filter(Boolean).join(' ');
-  return [normalized.street, cityLine, normalized.country].filter(Boolean).join(', ');
-}
-
-/**
- * Which swatch reads as chosen — it must name the colours the phone beside it is ACTUALLY
- * rendering, or the row lies about what is being published.
- *
- * The subtlety: a source event with no branding of its own arrives as a real object whose
- * fields are all null. Testing the object's truthiness would read "platform" and highlight
- * FieldLogicHQ blue while the phone renders the org's green. So this asks the same question
- * the public page asks — does this tournament carry a theme of its OWN? — and falls through
- * to the org's when it does not. A custom hex matches no swatch: nothing is highlighted and
- * the caption says whose colours they are instead of naming one of the nine.
- */
-function resolveSelectedPreset(
-  org: PreviewOrg,
-  tournamentTheme: PreviewTournamentTheme | null,
-): string | null {
-  const ownTheme = tournamentTheme && (tournamentTheme.themePreset || tournamentTheme.themePrimary)
-    ? tournamentTheme
-    : null;
+/** Which swatch reads as chosen — it must name the colours the phone beside it is ACTUALLY rendering. */
+function resolveSelectedPreset(org: PreviewOrg, tournamentTheme: PreviewTournamentTheme | null): string | null {
+  const ownTheme = tournamentTheme && (tournamentTheme.themePreset || tournamentTheme.themePrimary) ? tournamentTheme : null;
   const primary = ownTheme ? ownTheme.themePrimary : org.themePrimary;
   if (primary) return null;
   const preset = (ownTheme ? ownTheme.themePreset : org.themePreset) ?? 'platform';
-  // An unrecognised (legacy) preset publishes as the platform theme — resolveTheme falls
-  // back silently — so the row says the same thing rather than highlighting nothing.
   return isThemePresetKey(preset) ? preset : 'platform';
 }
 
-/** The line under the swatches: name the preset, or say whose colours these are. */
-function describeTheme(
-  org: PreviewOrg,
-  tournamentTheme: PreviewTournamentTheme | null,
-  inheritsSourceBranding: boolean,
-): string {
+function describeTheme(org: PreviewOrg, tournamentTheme: PreviewTournamentTheme | null, inherits: boolean): string {
   const selected = resolveSelectedPreset(org, tournamentTheme);
   if (selected) return `Theme: ${PRESETS[selected].name}`;
-  return inheritsSourceBranding
-    ? 'Theme: copied from the event you are reusing'
-    : 'Theme: your organization’s own colours';
+  return inherits ? 'Theme: copied from the event you are reusing' : 'Theme: your organization’s own colours';
 }
 
 async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
@@ -483,10 +252,15 @@ async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Pro
   return data as T;
 }
 
+/** A venue the step can create from: one from the book (past / library), or one typed in this window. */
+type PickedVenue =
+  | { key: string; kind: 'past'; sourceVenueId: string; name: string; lanes: string[] }
+  | { key: string; kind: 'library'; orgVenueId: string; name: string; lanes: string[] }
+  | { key: string; kind: 'new'; draft: NewVenueDraft; name: string; lanes: string[] };
+
 export default function TournamentSetupWizard({
   isOpen,
   orgSlug,
-  orgContactEmail,
   existingTournaments,
   initialSource = null,
   sourceSurface = 'unknown',
@@ -494,524 +268,319 @@ export default function TournamentSetupWizard({
   canManageBranding = false,
   canClone,
   upgradeCopy,
+  sport = null,
   onClose,
   onCreated,
 }: TournamentSetupWizardProps) {
-  const kx = useKitStyle();
-  // Row-invariant, so built once per render rather than once per row.
-  const leaveTextStyle = kx(CONFIRM_LEAVE_TEXT, KIT_INK.secondary);
-  const venueItemStyle = kx(VENUE_SEARCH_ITEM, VENUE_SEARCH_ITEM_KIT);
-  const venueAddressStyle = kx(VENUE_ADDRESS_CAPTION, KIT_INK.tertiary);
-
-  // ── Pre-step state (choose / clone-name) ─────────────────────────────────
-  const hasPastTournaments = Boolean(existingTournaments && existingTournaments.length > 0);
-  const [preStep, setPreStep] = useState<PreStepMode | null>(hasPastTournaments ? 'choose' : null);
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const reuseTitleId = useId();
+  const kind = facilityKindForSport(sport);
+  const libraryPlan = Boolean(previewOrg && hasOrgVenueLibrary(previewOrg.planId));
+
+  // ── Pre-step (choose / the reuse step) ──────────────────────────────────────────────────────────────
+  const hasPast = Boolean(existingTournaments && existingTournaments.length > 0);
+  const [preStep, setPreStep] = useState<PreStepMode | null>(hasPast ? 'choose' : null);
   const [cloneSource, setCloneSource] = useState<PastTournament | null>(null);
-  const [cloneNameForm, setCloneNameForm] = useState<CloneNameForm>({
-    name: '', slug: '',
-    startDate: '', endDate: '', autoSlug: true,
-  });
-  const [cloneCopyOptions, setCloneCopyOptions] = useState<CloneCopyOptions>(DEFAULT_CLONE_COPY_OPTIONS);
+  const [cloneForm, setCloneForm] = useState<CloneNameForm>({ name: '', slug: '', startDate: '', endDate: '', autoSlug: true });
+  const [cloneOptions, setCloneOptions] = useState<CloneCopyOptions>(DEFAULT_CLONE_COPY_OPTIONS);
   const [cloneWorking, setCloneWorking] = useState(false);
   const [cloneError, setCloneError] = useState('');
-  // The reuse step asks "Leave setup?" only once something was changed (today it asked even untouched).
-  const cloneTouchedRef = useRef(false);
-  // A door opened the step for one event: nothing to go Back to (D2).
+  const cloneTouched = useRef(false);
   const openedFromDoor = Boolean(initialSource && canClone);
-  const reuseTitleId = useId();
 
-  // ── Main wizard state ─────────────────────────────────────────────────────
-  const [activeStep, setActiveStep] = useState<WizardStep>('tournament');
-  const [stepError, setStepError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [dataLoading, setDataLoading] = useState(true);
+  // ── The three steps ─────────────────────────────────────────────────────────────────────────────────
+  const [step, setStep] = useState<CreateStep>('tournament');
+  const [form, setForm] = useState({ name: '', slug: '', startDate: '', endDate: '', format: 'round_robin_playoffs' as TournamentFormat });
   const [slugEdited, setSlugEdited] = useState(false);
-  const [skipped, setSkipped] = useState<SkippedState>(getDefaultSkipped);
-  const formTouchedRef = useRef(false);
-
-  const [tournamentForm, setTournamentForm] = useState(getDefaultTournamentForm);
+  const [usedSuggestion, setUsedSuggestion] = useState(false);
   const [divisionPreset, setDivisionPreset] = useState<DivisionPreset>('youth');
-  const [divisionRows, setDivisionRows] = useState<DivisionRow[]>(() => buildDivisionRows(DIVISION_PRESETS.youth));
-  const [customDivisionName, setCustomDivisionName] = useState('');
-  const [useWelcomeMsg, setUseWelcomeMsg] = useState(true);
-  const [welcomeMsg, setWelcomeMsg] = useState('Welcome to our tournament! We are excited to host a great event for all participating teams.');
+  const [divisions, setDivisions] = useState<DivisionRow[]>(() => DIVISION_PRESETS.youth.map(divisionRow));
+  const [newDivision, setNewDivision] = useState('');
+  const [divisionMistake, setDivisionMistake] = useState<{ id: string; text: string } | null>(null);
+  const [welcomeOn, setWelcomeOn] = useState(true);
+  const [welcomeText, setWelcomeText] = useState<string | null>(null);
+  const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
+  const [eventsLoaded, setEventsLoaded] = useState(false);
+  const [book, setBook] = useState<PickedVenue[]>([]);
+  const [bookCaption, setBookCaption] = useState<Record<string, ChooserVenue>>({});
+  const [bookFailed, setBookFailed] = useState(false);
+  const [added, setAdded] = useState<PickedVenue[]>([]);
+  const [ticked, setTicked] = useState<Set<string>>(new Set());
+  const [sheet, setSheet] = useState<{ name: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [leaveAsk, setLeaveAsk] = useState(false);
+  const touched = useRef(false);
+  const addedSeq = useRef(0);
 
-  const [existingVenues, setExistingVenues] = useState<ExistingVenue[]>([]);
-  const [existingTournamentNames, setExistingTournamentNames] = useState<string[]>([]);
-  const [venueSearch, setVenueSearch] = useState('');
-  const [venueSearchSelected, setVenueSearchSelected] = useState<ExistingVenue | null>(null);
-  const [venueSearchOpen, setVenueSearchOpen] = useState(false);
-  const [showVenueForm, setShowVenueForm] = useState(false);
-  const [venueDraft, setVenueDraft] = useState<VenueFields>(buildVenueDraft);
-  const [venueQueue, setVenueQueue] = useState<QueuedVenue[]>([]);
-  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
-
-  // ── Public-page colours ───────────────────────────────────────────────────
-  // `chosenPreset` stays null until the organizer actually picks one. That is the whole
-  // difference between "this event has its own colours" and "this event follows the org" —
-  // saving the inherited value would silently pin the draft and stop a future org rebrand
-  // from reaching it. `sourceTheme` is the branding a reuse would copy, read from the
-  // source event so the swatch row and the phone both start on the truth.
+  // ── Public-page colours (the preview's swatches) ────────────────────────────────────────────────────
   const [chosenPreset, setChosenPreset] = useState<string | null>(null);
-  // Kept WITH the id it was read for, so switching source events can never paint the new
-  // preview in the previous event's colours while the next read is in flight.
   const [sourceTheme, setSourceTheme] = useState<{ id: string; theme: PreviewTournamentTheme } | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
-    // Reset pre-step
-    const hasPast = Boolean(existingTournaments && existingTournaments.length > 0);
-    cloneTouchedRef.current = false;
+    const past = Boolean(existingTournaments && existingTournaments.length > 0);
+    cloneTouched.current = false;
+    touched.current = false;
+    /* eslint-disable react-hooks/set-state-in-effect -- the open window's reset */
     if (initialSource && canClone) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- the open window's reset, as below
       setPreStep('clone-name');
       setCloneSource(initialSource);
-      setCloneNameForm(getRepeatNameForm(initialSource));
-      setCloneCopyOptions(DEFAULT_CLONE_COPY_OPTIONS);
+      setCloneForm(getRepeatNameForm(initialSource));
     } else {
-      setPreStep(hasPast ? 'choose' : null);
+      setPreStep(past ? 'choose' : null);
       setCloneSource(null);
-      setCloneNameForm({ name: '', slug: '', startDate: '', endDate: '', autoSlug: true });
-      setCloneCopyOptions(DEFAULT_CLONE_COPY_OPTIONS);
+      setCloneForm({ name: '', slug: '', startDate: '', endDate: '', autoSlug: true });
     }
+    setCloneOptions(DEFAULT_CLONE_COPY_OPTIONS);
     setCloneWorking(false);
     setCloneError('');
-    setActiveStep('tournament');
-    setStepError('');
-    setSaving(false);
+    setStep('tournament');
+    setForm({ name: '', slug: '', startDate: '', endDate: '', format: 'round_robin_playoffs' });
     setSlugEdited(false);
-    formTouchedRef.current = false;
-    setSkipped(getDefaultSkipped());
-    setTournamentForm(getDefaultTournamentForm());
+    setUsedSuggestion(false);
     setDivisionPreset('youth');
-    setDivisionRows(buildDivisionRows(DIVISION_PRESETS.youth));
-    setCustomDivisionName('');
-    setUseWelcomeMsg(true);
-    setWelcomeMsg('Welcome to our tournament! We are excited to host a great event for all participating teams.');
-    setVenueSearch('');
-    setVenueSearchSelected(null);
-    setVenueSearchOpen(false);
-    setShowVenueForm(false);
-    setVenueDraft(buildVenueDraft());
-    setVenueQueue([]);
-    setCloseConfirmOpen(false);
+    setDivisions(DIVISION_PRESETS.youth.map(divisionRow));
+    setNewDivision('');
+    setDivisionMistake(null);
+    setWelcomeOn(true);
+    setWelcomeText(null);
+    setAdded([]);
+    setTicked(new Set());
+    setSheet(null);
+    setSaving(false);
+    setError('');
+    setLeaveAsk(false);
     setChosenPreset(null);
     setSourceTheme(null);
-    setDataLoading(true);
-    Promise.all([
-      requestJson<ExistingVenue[]>(`/api/admin/venues?scope=org${orgParam}`).catch(() => []),
-      requestJson<ExistingTournament[]>(`/api/admin/tournaments${orgQuery}`).catch(() => []),
-    ]).then(([venues, tournaments]) => {
-      setExistingVenues(venues);
-      const names = tournaments
-        .filter(tournament => tournament.status !== 'archived')
-        .map(tournament => tournament.name)
-        .filter(Boolean);
-      setExistingTournamentNames(names);
-      if (!formTouchedRef.current) {
-        setTournamentForm(getDefaultTournamentForm(names));
-      }
-      setDataLoading(false);
-    }).catch(() => setDataLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, orgContactEmail, existingTournaments?.length, initialSource?.id, canClone]);
+    setEventsLoaded(false);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
-  // The branding a reuse would carry over. Without this the preview would paint the reused
-  // event in the ORG's colours while the draft actually publishes in the source event's —
-  // the preview telling a returning organizer the one thing it exists to get right.
+    // The org's events (the name and link last year's still holds) and the venue book — the club's library for a plan
+    // that has one, the venues past events used for everyone else (each once, with its diamonds).
+    requestJson<Array<{ id: string; name: string; slug: string | null; year: number | null; status: string | null }>>(`/api/admin/tournaments${orgQuery}`)
+      .then(rows => {
+        const live = rows.filter(r => r.status !== 'archived').map(r => ({ id: r.id, name: r.name, slug: r.slug, year: r.year, status: r.status }));
+        setLiveEvents(live);
+        const year = new Date().getFullYear();
+        const name = uniqueName(`${year} Tournament`, live.map(e => e.name));
+        setForm(f => (f.name ? f : { ...f, name, ...(slugEdited ? {} : { slug: slugForName(name) }) }));
+      })
+      .catch(() => { /* the server still refuses a taken name at Create */ })
+      .finally(() => setEventsLoaded(true));
+
+    const venuesRead = libraryPlan
+      ? requestJson<Array<{ id: string; name: string; address: string | null; facilities?: { name: string }[] }>>(`/api/admin/org/venues${orgQuery}`)
+        .then(rows => rows.map(v => ({
+          picked: { key: `library:${v.id}`, kind: 'library' as const, orgVenueId: v.id, name: v.name, lanes: (v.facilities ?? []).map(f => f.name) },
+          row: { key: `library:${v.id}`, name: v.name, address: v.address, caption: W.libraryCaption((v.facilities ?? []).length, kind, v.address) },
+        })))
+      : requestJson<Array<PastVenueRow & { facilities?: { name: string }[] }>>(`/api/admin/venues?scope=past${orgParam}`)
+        .then(rows => dedupePastVenues(rows).map(v => ({
+          picked: { key: `past:${v.id}`, kind: 'past' as const, sourceVenueId: v.id, name: v.name, lanes: (v.facilities ?? []).map(f => f.name) },
+          row: { key: `past:${v.id}`, name: v.name, address: v.address, caption: W.pastCaption((v.facilities ?? []).length, kind, v.sourceTournamentName) },
+        })));
+    venuesRead
+      .then(rows => {
+        setBook(rows.map(r => r.picked));
+        setBookCaption(Object.fromEntries(rows.map(r => [r.row.key, r.row])));
+        setBookFailed(false);
+      })
+      .catch(() => { setBook([]); setBookCaption({}); setBookFailed(true); });
+  // Once per opening: the window mounts when a door opens it. Re-running on the event list's length wiped what was typed
+  // when the list finished loading behind an open window (/review 2026-10-10).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // The branding a reuse would carry over, so the preview paints the reused event in its own colours.
   useEffect(() => {
     const sourceId = cloneSource?.id;
     if (!isOpen || !sourceId) return;
     let cancelled = false;
-    requestJson<PreviewTournamentTheme>(
-      `/api/admin/tournament-branding?tournamentId=${encodeURIComponent(sourceId)}${orgParam}`
-    )
-      .then(branding => {
-        if (cancelled) return;
-        setSourceTheme({
-          id: sourceId,
-          theme: {
-            themePreset: branding.themePreset ?? null,
-            themePrimary: branding.themePrimary ?? null,
-            themeAccent: branding.themeAccent ?? null,
-          },
-        });
-      })
-      // A failed read just means the preview keeps showing the org's colours — the draft
-      // itself is unaffected, so this must never block or error the wizard.
+    requestJson<PreviewTournamentTheme>(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(sourceId)}${orgParam}`)
+      .then(b => { if (!cancelled) setSourceTheme({ id: sourceId, theme: { themePreset: b.themePreset ?? null, themePrimary: b.themePrimary ?? null, themeAccent: b.themeAccent ?? null } }); })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [isOpen, cloneSource?.id, orgParam]);
 
+  // ── A55: the name and link last year's finished event still holds ───────────────────────────────────
+  const nameHolder = useMemo(
+    () => (form.name.trim() ? liveEvents.find(e => sameTournamentName(e.name, form.name)) ?? null : null),
+    [liveEvents, form.name],
+  );
+  const suggestion = useMemo(() => {
+    if (!nameHolder) return null;
+    const startYear = form.startDate ? Number(form.startDate.slice(0, 4)) : null;
+    const base = nameHolder.year ?? new Date().getFullYear();
+    let year = startYear && startYear > base ? startYear : base + 1;
+    for (let tries = 0; tries < 5; tries += 1, year += 1) {
+      const candidate = nameForYear(form.name, year, nameHolder.year);
+      if (!liveEvents.some(e => sameTournamentName(e.name, candidate))) return candidate;
+    }
+    return null;
+  }, [nameHolder, form.name, form.startDate, liveEvents]);
+  const slugHolder = form.slug ? liveEvents.find(e => e.slug === form.slug) ?? null : null;
+
   if (!isOpen) return null;
 
-  function updateTournamentStartDate(startDate: string) {
-    setTournamentForm(form => {
-      const endDate = startDate ? addDaysToDateValue(startDate, 2) : '';
-      // Year is derived from the start date. If the name is still the auto-generated
-      // "<year> Tournament", re-sync it (and the slug) to the new year.
-      const autoNamed = /^\d{4} Tournament(?: \d+)?$/.test(form.name);
-      if (!startDate || !autoNamed) return { ...form, startDate, endDate };
-      const name = getUniqueTournamentName(`${startDate.slice(0, 4)} Tournament`, existingTournamentNames);
-      return {
-        ...form,
-        startDate,
-        endDate,
-        name,
-        ...(slugEdited ? {} : { slug: generateSlug(name) }),
-      };
+  const touch = () => { touched.current = true; };
+
+  function setName(name: string) {
+    touch();
+    setUsedSuggestion(false);
+    setForm(f => ({ ...f, name, ...(slugEdited ? {} : { slug: slugForName(name) }) }));
+  }
+
+  function takeSuggestion() {
+    if (!suggestion) return;
+    touch();
+    setUsedSuggestion(true);
+    setForm(f => ({ ...f, name: suggestion, ...(slugEdited ? {} : { slug: slugForName(suggestion) }) }));
+  }
+
+  function setStartDate(startDate: string) {
+    touch();
+    setForm(f => {
+      const endDate = startDate ? (f.endDate && f.endDate >= startDate ? f.endDate : addDays(startDate, 2)) : '';
+      // An untouched "2026 Tournament" follows the year of its start date.
+      const auto = /^\d{4} Tournament(?: \d+)?$/.test(f.name);
+      if (!startDate || !auto) return { ...f, startDate, endDate };
+      const name = uniqueName(`${startDate.slice(0, 4)} Tournament`, liveEvents.map(e => e.name));
+      return { ...f, startDate, endDate, name, ...(slugEdited ? {} : { slug: slugForName(name) }) };
     });
   }
 
-  function updateTournamentEndDate(endDate: string) {
-    setTournamentForm(form => {
-      if (!form.startDate) return { ...form, endDate: '' };
-      if (endDate && endDate < form.startDate) return { ...form, endDate: form.startDate };
-      return { ...form, endDate };
-    });
+  // ── Steps ────────────────────────────────────────────────────────────────────────────────────────────
+  function tournamentMistake(): string | null {
+    if (!form.name.trim()) return W.nameRequired;
+    if (nameHolder) return nameHolder.year && nameHolder.status === 'completed' ? W.nameHeld(nameHolder.year) : W.nameTaken;
+    if (!SLUG_RE.test(form.slug)) return W.linkInvalid;
+    if (slugHolder) return 'Another tournament already uses this public link. Choose a different one.';
+    if (!form.startDate || !form.endDate) return W.datesRequired;
+    if (form.startDate < todayValue()) return W.startPast;
+    if (form.endDate < form.startDate) return W.endBeforeStart;
+    return null;
   }
 
-  function updateDivisionRow(id: string, updater: (row: DivisionRow) => DivisionRow) {
-    setDivisionRows(prev => prev.map(row => row.id === id ? updater(row) : row));
-  }
-
-  function updateDivisionPools(id: string, count: number) {
-    updateDivisionRow(id, row => {
-      const poolNames = Array.from({ length: count }).map((_, i) => row.poolNames[i] || `Pool ${String.fromCharCode(65 + i)}`);
-      return { ...row, poolCount: count, poolNames };
-    });
-  }
-
-  function updateDivisionPoolName(id: string, poolIndex: number, name: string) {
-    updateDivisionRow(id, row => {
-      const poolNames = [...row.poolNames];
-      poolNames[poolIndex] = name;
-      return { ...row, poolNames };
-    });
-  }
-
-  function applyDivisionPreset(preset: DivisionPreset) {
-    setDivisionPreset(preset);
-    setCustomDivisionName('');
-    setDivisionRows(preset === 'custom' ? [] : buildDivisionRows(DIVISION_PRESETS[preset]));
-  }
-
-  function addCustomDivision() {
-    const name = customDivisionName.trim();
-    if (!name) return;
-    setDivisionRows(prev => [
-      ...prev,
-      {
-        id: `custom-${prev.length + 1}-${generateSlug(name) || 'division'}`,
-        name,
-        ...getDivisionStarterAgeRange(name),
-        capacity: 8,
-        poolCount: 0,
-        requiresPoolSelection: false,
-        poolNames: ['Pool A'],
-      },
-    ]);
-    setCustomDivisionName('');
-  }
-
-  function updateVenueDraft(field: keyof VenueFields, value: string) {
-    setVenueDraft(draft => ({ ...draft, [field]: value }));
-  }
-
-  function addExistingToQueue() {
-    if (!venueSearchSelected) {
-      setStepError('Select a venue from the search results first.');
-      return;
+  function divisionsPayload(): { rows: ReturnType<typeof toPayload>[]; mistake: { id: string; text: string } | null } {
+    const named = divisions.filter(d => d.name.trim());
+    const seen = new Map<string, string>();
+    for (const d of named) {
+      const key = d.name.trim().toLowerCase();
+      if (seen.has(key)) return { rows: [], mistake: { id: d.id, text: W.divisionDuplicate(d.name.trim()) } };
+      seen.set(key, d.id);
+      const cap = Number(d.capacity);
+      if (!Number.isFinite(cap) || cap < 1) return { rows: [], mistake: { id: d.id, text: W.divisionCapacity } };
+      const min = d.minAge === '' ? null : Number(d.minAge);
+      const max = d.maxAge === '' ? null : Number(d.maxAge);
+      if (min !== null && max !== null && min > max) return { rows: [], mistake: { id: d.id, text: W.divisionAges } };
     }
-    const key = `existing-${venueSearchSelected.id}`;
-    if (venueQueue.some(q => q.key === key)) {
-      setStepError('This venue has already been added.');
-      return;
-    }
-    setVenueQueue(prev => [...prev, {
-      key,
-      name: venueSearchSelected.name,
-      address: venueSearchSelected.address || '',
-      notes: venueSearchSelected.notes || '',
-    }]);
-    setVenueSearch('');
-    setVenueSearchSelected(null);
-    setVenueSearchOpen(false);
-    setStepError('');
+    return { rows: named.map(toPayload), mistake: null };
   }
 
-  function createNewVenue() {
-    if (!isVenueReady(venueDraft)) {
-      setStepError('Add a venue name before creating it.');
-      return;
-    }
-    const normalized = normalizeVenueFields(venueDraft);
-    setVenueQueue(prev => [...prev, {
-      key: `new-${Date.now()}`,
-      name: normalized.name,
-      address: formatVenueAddress(normalized),
-      notes: normalized.notes,
-    }]);
-    setVenueDraft(buildVenueDraft());
-    setShowVenueForm(false);
-    setStepError('');
-  }
-
-  function getTournamentDraft(): TournamentDraft {
-    const slug = tournamentForm.slug || generateSlug(tournamentForm.name);
-    const name = tournamentForm.name.trim();
-
-    if (!name) throw new Error('Enter a tournament name before continuing.');
-    if (existingTournamentNames.some(existingName => normalizeTournamentName(existingName) === normalizeTournamentName(name))) {
-      throw new Error(`A tournament named "${name}" already exists. Use a different name, such as "${getUniqueTournamentName(name, existingTournamentNames)}".`);
-    }
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error('Use a valid public link before continuing.');
-    if (!tournamentForm.startDate || !tournamentForm.endDate) {
-      throw new Error('Add start and end dates. You can change them later if they are still being finalized.');
-    }
-    if (tournamentForm.startDate < getTodayDateValue()) throw new Error('Start date cannot be before today.');
-    if (tournamentForm.endDate < tournamentForm.startDate) {
-      throw new Error('End date cannot be before the start date.');
-    }
-
-    // Year is derived from the start date — the wizard no longer asks for it separately.
+  function toPayload(d: DivisionRow) {
+    const pools = d.usePools ? Math.max(2, Math.min(4, d.poolCount)) : 0;
     return {
-      year: Number(tournamentForm.startDate.slice(0, 4)),
-      name,
-      slug,
-      startDate: tournamentForm.startDate,
-      endDate: tournamentForm.endDate,
+      name: d.name.trim(),
+      minAge: d.minAge === '' ? null : Number(d.minAge),
+      maxAge: d.maxAge === '' ? null : Number(d.maxAge),
+      capacity: Math.max(1, Math.floor(Number(d.capacity)) || 8),
+      poolCount: pools,
+      poolNames: pools >= 2 ? d.poolNames.slice(0, pools).map((n, i) => n.replace(/,/g, ' ').trim() || `Pool ${poolLetter(i)}`).join(',') : '',
+      requiresPoolSelection: pools >= 2 && d.requiresPoolSelection,
     };
   }
 
-  function getDivisionDraftRows(): SetupDivision[] {
-    const rows = divisionRows
-      .map(row => ({
-        ...row,
-        name: row.name.trim(),
-        minAge: row.minAge.trim(),
-        maxAge: row.maxAge.trim(),
-      }))
-      .filter(row => row.name);
-    if (rows.length === 0) throw new Error('Add at least one division, or skip this step.');
+  const pickedVenues = [...book, ...added].filter(v => ticked.has(v.key));
 
-    const duplicateDivision = rows.find((row, index) =>
-      rows.findIndex(other => other.name.toLowerCase() === row.name.toLowerCase()) !== index
-    );
-    if (duplicateDivision) throw new Error(`Division names must be unique. "${duplicateDivision.name}" is listed more than once.`);
-
-    const invalidCapacity = rows.find(row => !Number.isFinite(row.capacity) || row.capacity < 1);
-    if (invalidCapacity) throw new Error(`Add a valid max team count for ${invalidCapacity.name}.`);
-
-    const invalidAge = rows.find(row => {
-      const min = row.minAge === '' ? null : Number(row.minAge);
-      const max = row.maxAge === '' ? null : Number(row.maxAge);
-      if (min !== null && (!Number.isFinite(min) || min < 0)) return true;
-      if (max !== null && (!Number.isFinite(max) || max < 0)) return true;
-      return min !== null && max !== null && min > max;
-    });
-    if (invalidAge) throw new Error(`Review the age limits for ${invalidAge.name}. Leave either side blank for open-ended ranges.`);
-
-    return rows.map(row => ({
-      name: row.name,
-      minAge: row.minAge ? Number(row.minAge) : null,
-      maxAge: row.maxAge ? Number(row.maxAge) : null,
-      capacity: row.capacity || 8,
-      poolCount: row.poolCount,
-      poolNames: row.poolCount >= 2 ? row.poolNames.slice(0, row.poolCount).join(',') : '',
-      requiresPoolSelection: row.requiresPoolSelection,
-    }));
-  }
-
-  function getVenueDraftRows() {
-    if (showVenueForm && hasVenueContent(venueDraft)) {
-      throw new Error('Click "Create" before continuing, or clear the venue form.');
+  function next() {
+    setError('');
+    if (step === 'tournament') {
+      const mistake = tournamentMistake();
+      if (mistake) { setError(mistake); return; }
+      setStep('divisions');
+    } else if (step === 'divisions') {
+      const { mistake } = divisionsPayload();
+      setDivisionMistake(mistake);
+      if (mistake) { setError(mistake.text); return; }
+      setStep('venues');
+    } else if (step === 'venues') {
+      setStep('review');
     }
-    return venueQueue;
   }
 
-  function getNextStep(step: WizardStep) {
-    const index = WIZARD_ORDER.indexOf(step);
-    return WIZARD_ORDER[index + 1] ?? null;
-  }
-
-  function getPreviousStep(step: WizardStep) {
-    const index = WIZARD_ORDER.indexOf(step);
-    return WIZARD_ORDER[index - 1] ?? null;
-  }
-
-  function advance(step: WizardStep) {
-    const next = getNextStep(step);
-    if (next) setActiveStep(next);
-  }
-
-  function markFormTouched() {
-    formTouchedRef.current = true;
+  function back() {
+    setError('');
+    if (step === 'review') setStep('venues');
+    else if (step === 'venues') setStep('divisions');
+    else if (step === 'divisions') setStep('tournament');
   }
 
   function requestClose() {
-    // 'choose' screen has no data entered yet — close immediately
+    if (saving || cloneWorking) return;
     if (preStep === 'choose') { onClose(); return; }
-    // The reuse step confirms once the organizer has changed something; untouched, it just closes.
-    if (preStep === 'clone-name') {
-      if (cloneTouchedRef.current) setCloseConfirmOpen(true); else onClose();
-      return;
-    }
-    const setupStarted = formTouchedRef.current || activeStep !== 'tournament';
-    if (setupStarted) {
-      setCloseConfirmOpen(true);
-      return;
-    }
+    if (preStep === 'clone-name') { if (cloneTouched.current) setLeaveAsk(true); else onClose(); return; }
+    if (touched.current || step !== 'tournament') { setLeaveAsk(true); return; }
     onClose();
   }
 
-  function validateAndAdvance(step: WizardStep) {
-    try {
-      if (step === 'tournament') {
-        const draft = getTournamentDraft();
-        setTournamentForm(form => ({ ...form, slug: draft.slug }));
-        setSkipped(prev => ({ ...prev, tournament: false }));
-      }
-      if (step === 'divisions') {
-        getDivisionDraftRows();
-        setSkipped(prev => ({ ...prev, divisions: false }));
-      }
-      if (step === 'welcome') {
-        if (useWelcomeMsg && !welcomeMsg.trim()) throw new Error('Add welcome message text, or skip this step.');
-        setSkipped(prev => ({ ...prev, welcome: !useWelcomeMsg }));
-      }
-      if (step === 'venues') {
-        getVenueDraftRows();
-        if (venueQueue.length === 0) throw new Error('Select or add at least one venue, or skip this step.');
-        setSkipped(prev => ({ ...prev, venues: false }));
-      }
-      setStepError('');
-      advance(step);
-    } catch (err) {
-      setStepError(err instanceof Error ? err.message : 'Unable to continue.');
-    }
-  }
-
-  function skipStep(step: SkippableStep) {
-    if (step === 'tournament') {
-      setSkipped({
-        tournament: true,
-        divisions: true,
-        welcome: true,
-        venues: true,
-      });
-      setActiveStep('review');
-      return;
-    }
-
-    setSkipped(prev => ({ ...prev, [step]: true }));
-    setStepError('');
-    const next = getNextStep(step);
-    if (next) setActiveStep(next);
-  }
-
-  async function saveSetupDraft() {
-    setStepError('');
+  async function create() {
+    if (saving) return;
+    setError('');
+    const mistake = tournamentMistake();
+    if (mistake) { setStep('tournament'); setError(mistake); return; }
+    const { rows, mistake: divMistake } = divisionsPayload();
+    if (divMistake) { setStep('divisions'); setDivisionMistake(divMistake); setError(divMistake.text); return; }
+    const welcome = (welcomeText ?? W.welcomeDefault(form.name.trim())).trim();
     setSaving(true);
-
+    let created: (CreatedTournament & { success: boolean }) | null = null;
     try {
-      if (skipped.tournament) {
-        onClose();
-        return;
-      }
-
-      const tournament = getTournamentDraft();
-      const divisions = skipped.divisions ? [] : getDivisionDraftRows();
-      const announcement = !skipped.welcome && useWelcomeMsg ? { body: welcomeMsg.trim() } : null;
-      const allVenues = skipped.venues ? [] : venueQueue;
-
-      const created = await requestJson<CreatedTournament & { success: boolean }>(`/api/admin/setup-tournament${orgQuery}`, {
+      created = await requestJson<CreatedTournament & { success: boolean }>(`/api/admin/setup-tournament${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // A preset rides along ONLY when the organizer picked one. Left alone, the draft
-          // stores no theme and keeps inheriting the organization's.
-          tournament: chosenPreset ? { ...tournament, themePreset: chosenPreset } : tournament,
-          divisions,
-          announcement,
-          migration: null,
+          tournament: {
+            name: form.name.trim(),
+            slug: form.slug,
+            startDate: form.startDate,
+            endDate: form.endDate,
+            // The style rides WITH the tournament (F78).
+            format: form.format,
+            // A preset only when the organizer picked one; left alone, the draft keeps following the org's theme.
+            ...(chosenPreset ? { themePreset: chosenPreset } : {}),
+          },
+          divisions: rows,
+          announcement: welcomeOn && welcome ? { body: welcome } : null,
+          venues: pickedVenues.map(v => (v.kind === 'new'
+            ? { kind: 'new', name: v.draft.name, address: v.draft.address || null, notes: v.draft.notes || null, count: v.draft.count, facilityType: v.draft.facilityType }
+            : v.kind === 'past' ? { kind: 'past', sourceVenueId: v.sourceVenueId } : { kind: 'library', orgVenueId: v.orgVenueId })),
         }),
       });
-
-      await Promise.all([
-        ...allVenues.map(row => requestJson<{ success: boolean }>(`/api/admin/venues${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'save',
-            data: {
-              tournamentId: created.id,
-              name: row.name,
-              address: row.address || '',
-              notes: row.notes || undefined,
-            },
-          }),
-        })),
-      ]);
-
-      // The style is a tournament setting; only the default (round robin + playoffs) needs no write.
-      const formatPatch = tournamentFormatCreatePatch(tournamentForm.format);
-      if (formatPatch) {
-        await requestJson<{ success: boolean }>(`/api/admin/tournaments${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'patch-settings', id: created.id, data: formatPatch }),
-        }).catch(() => { /* non-fatal: format can still be set in Event Settings */ });
-      }
-
-      await onCreated({ id: created.id, name: created.name, slug: created.slug, creationMethod: 'blank' });
     } catch (err) {
-      setStepError(err instanceof Error ? err.message : 'Unable to save setup.');
+      setError(err instanceof Error ? err.message : 'The tournament couldn’t be created. Please try again.');
+      setSaving(false);
+      return;
+    }
+    // The draft exists now: a failure past this point is the board not opening, never "couldn't be created" (a retry
+    // would only meet the name it just took).
+    try {
+      await onCreated({ id: created.id, name: created.name, slug: created.slug, creationMethod: 'blank' });
+    } catch {
+      setError(`${created.name} was created, but its board didn’t open. Find it on Tournaments.`);
     } finally {
       setSaving(false);
     }
   }
 
-  /**
-   * The desktop live preview of the public page being created — rendered as the modal
-   * overlay's second flex child (hidden by CSS below the two-pane breakpoint; see
-   * TournamentCreationPreview.module.css). Divisions only bind
-   * once the organizer has actually REACHED the divisions step: the starter set is
-   * pre-filled, and claiming six divisions on step 1 would preview a page they have not
-   * agreed to yet. The reuse path copies divisions server-side, so it stays unbound.
-   */
-  function renderPreview(source: {
-    name: string;
-    slug: string;
-    startDate: string;
-    endDate: string;
-    bindDivisions: boolean;
-    /** True on the reuse screen while "Public presence" is among the areas being copied. */
-    inheritsSourceBranding?: boolean;
-  }) {
+  // ── The preview beside the window (1280 and wider) ──────────────────────────────────────────────────
+  function preview(source: { name: string; slug: string; startDate: string; endDate: string; bindDivisions: boolean; inheritsSourceBranding?: boolean }) {
     if (!previewOrg) return null;
-
-    // What this draft publishes in: an explicit pick first, then the branding a reuse would
-    // copy, then nothing at all — which means "follow the organization", the default that
-    // keeps a future org rebrand flowing through to the event.
-    const inheritedTheme = source.inheritsSourceBranding && sourceTheme?.id === cloneSource?.id
-      ? sourceTheme?.theme ?? null
-      : null;
-    const tournamentTheme: PreviewTournamentTheme | null = chosenPreset
-      ? { themePreset: chosenPreset, themePrimary: null, themeAccent: null }
-      : inheritedTheme;
-
-    // Only offer the row where the Branding screen itself would: the plan carries custom
-    // branding AND this member is allowed to set it. Free-plan orgs see no row and no tease.
-    const canChooseTheme =
-      canManageBranding && hasPlanFeature(previewOrg.planId, 'advanced_tournament_branding');
-    // Count only the rows that will actually be created — a row whose name has been cleared
-    // is dropped on save (getDivisionDraftRows), so counting it here would preview divisions
-    // and team spots the published page never gets.
-    const realRows = divisionRows.filter(row => row.name.trim());
-    const divisionsBound = source.bindDivisions && !skipped.divisions && realRows.length > 0;
+    const inheritedTheme = source.inheritsSourceBranding && sourceTheme?.id === cloneSource?.id ? sourceTheme?.theme ?? null : null;
+    const tournamentTheme: PreviewTournamentTheme | null = chosenPreset ? { themePreset: chosenPreset, themePrimary: null, themeAccent: null } : inheritedTheme;
+    const canChooseTheme = canManageBranding && hasPlanFeature(previewOrg.planId, 'advanced_tournament_branding');
+    const real = divisions.filter(d => d.name.trim());
+    const bound = source.bindDivisions && real.length > 0;
     return (
       <TournamentCreationPreview
         org={previewOrg}
@@ -1019,250 +588,105 @@ export default function TournamentSetupWizard({
         slug={source.slug}
         startDate={source.startDate}
         endDate={source.endDate}
-        divisionCount={divisionsBound ? realRows.length : null}
-        teamSpots={divisionsBound ? realRows.reduce((sum, row) => sum + (row.capacity || 0), 0) : null}
+        divisionCount={bound ? real.length : null}
+        teamSpots={bound ? real.reduce((n, d) => n + (Number(d.capacity) || 0), 0) : null}
         tournamentTheme={tournamentTheme}
         themePicker={canChooseTheme ? {
           selected: resolveSelectedPreset(previewOrg, tournamentTheme),
-          onSelect: preset => setChosenPreset(preset),
+          onSelect: p => setChosenPreset(p),
           caption: describeTheme(previewOrg, tournamentTheme, Boolean(inheritedTheme)),
-          // Offered only once a pick is in play: a way back to inheriting, so choosing a
-          // colour is not a one-way door that outlasts the rest of the form.
           onClear: chosenPreset ? () => setChosenPreset(null) : null,
-          clearLabel: source.inheritsSourceBranding
-            ? 'Use the colours from the event you are reusing'
-            : 'Use my organization’s colours',
+          clearLabel: source.inheritsSourceBranding ? 'Use the colours from the event you are reusing' : 'Use my organization’s colours',
         } : null}
       />
     );
   }
 
-  function renderFrame(title: string, description: string, children: React.ReactNode, options: {
-    step: WizardStep;
-    saveLabel: string;
-    onSave: () => void;
-    allowSkip?: boolean;
-    hideBack?: boolean;
-  }) {
-    const stepNumber = WIZARD_ORDER.indexOf(options.step) + 1;
-    const previousStep = getPreviousStep(options.step);
-    const progressWidth = `${(stepNumber / WIZARD_ORDER.length) * 100}%`;
+  const leaveQuestion = leaveAsk && (
+    <KitDialog
+      kind="question"
+      title={W.leaveTitle}
+      onClose={() => setLeaveAsk(false)}
+      footer={(
+        <>
+          <button type="button" className="btn btn-outline" onClick={() => setLeaveAsk(false)}>{W.keepWorking}</button>
+          <button type="button" className="btn btn-danger" onClick={() => { setLeaveAsk(false); onClose(); }}>{W.leave}</button>
+        </>
+      )}
+    >
+      <p>{W.leaveBody}</p>
+    </KitDialog>
+  );
 
-    return (
-      <div className={styles.modalOverlay} role="presentation">
-        {closeConfirmOpen && (
-          <div className={styles.modalOverlay} style={{ zIndex: 10 }}>
-            <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>Leave setup?</h3>
-              </div>
-              <p style={leaveTextStyle}>Your progress will not be saved.</p>
-              <div className="modal-footer">
-                <button className="btn btn-ghost btn-data" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
-                <button className="btn btn-danger btn-data" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
-              </div>
-            </div>
-          </div>
-        )}
-        <div className={styles.workflowModal} role="dialog" aria-modal="true" aria-labelledby="tournament-setup-title">
-          <div className={styles.wizardChrome}>
-            <span>Step {stepNumber}/{WIZARD_ORDER.length}</span>
-            <div className={styles.wizardProgressBar} aria-hidden="true">
-              <span style={{ width: progressWidth }} />
-            </div>
-          </div>
-
-          <div className={styles.modalHeader}>
-            <div>
-              <h2 id="tournament-setup-title" className={styles.modalTitle}>{title}</h2>
-              <p className={styles.modalSub}>{description}</p>
-            </div>
-            <button type="button" className={styles.modalClose} onClick={requestClose} aria-label="Close setup modal">
-              <X size={18} />
-            </button>
-          </div>
-
-          <div key={options.step} className={styles.workflowSlide}>
-            <div className={styles.workflowModalBody}>{children}</div>
-          </div>
-
-          {stepError && (
-            <div className={styles.planError}>
-              <AlertCircle size={14} />
-              {stepError}
-            </div>
-          )}
-
-          <div className={styles.workflowModalFooter}>
-            <div>
-              {!options.hideBack && (
-                <button type="button" className="btn btn-ghost btn-data" onClick={() => previousStep && setActiveStep(previousStep)} disabled={saving || !previousStep}>
-                  Back
-                </button>
-              )}
-            </div>
-            <div className={styles.workflowFooterActions}>
-              {options.allowSkip && (
-                <button type="button" className="btn btn-ghost btn-data" onClick={() => skipStep(options.step as SkippableStep)} disabled={saving}>
-                  Skip
-                </button>
-              )}
-              <button type="button" className="btn btn-lime btn-data" onClick={options.onSave} disabled={saving || (options.step === 'tournament' && dataLoading)}>
-                {saving ? 'Saving...' : (options.step === 'tournament' && dataLoading) ? 'Loading…' : options.saveLabel}
-              </button>
-            </div>
-          </div>
-        </div>
-        {renderPreview({
-          name: tournamentForm.name,
-          slug: tournamentForm.slug,
-          startDate: tournamentForm.startDate,
-          endDate: tournamentForm.endDate,
-          bindDivisions: WIZARD_ORDER.indexOf(options.step) >= WIZARD_ORDER.indexOf('divisions'),
-        })}
-      </div>
-    );
-  }
-
-  // ── PRE-STEP: CHOOSE ──────────────────────────────────────────────────────
+  // ── PRE-STEP: "Start blank, or reuse" (left as today on the Tournament plan — the free tier review's) ─────
   if (preStep === 'choose') {
-    const sorted = [...(existingTournaments ?? [])].sort((a, b) => {
-      const rankDiff = getSourceSortRank(a.status) - getSourceSortRank(b.status);
-      return rankDiff || ((b.year ?? 0) - (a.year ?? 0));
-    });
+    const sorted = [...(existingTournaments ?? [])].sort((a, b) => (sourceRank(a.status) - sourceRank(b.status)) || ((b.year ?? 0) - (a.year ?? 0)));
     return (
-      <div className={styles.modalOverlay} role="presentation">
-        {closeConfirmOpen && (
-          <div className={styles.modalOverlay} style={{ zIndex: 10 }}>
-            <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-              <div className="modal-header"><h3>Leave setup?</h3></div>
-              <p style={leaveTextStyle}>Your progress will not be saved.</p>
-              <div className="modal-footer">
-                <button className="btn btn-ghost btn-data" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
-                <button className="btn btn-danger btn-data" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
-              </div>
-            </div>
+      <KitDialog
+        kind="form"
+        title={W.title}
+        identity="Start blank, or reuse setup from an event you already ran."
+        onClose={requestClose}
+        footer={<button type="button" className="btn btn-lime" onClick={() => setPreStep(null)}>Start blank tournament</button>}
+      >
+        <div className={styles.reuseIntro}>
+          <div className={styles.reuseTitleRow}>
+            <Copy size={15} aria-hidden />
+            <strong>Reuse a previous tournament setup</strong>
+            {!canClone && upgradeCopy && <span className={styles.plusBadge}>Tournament Plus</span>}
           </div>
-        )}
-        <div className={styles.workflowModal} role="dialog" aria-modal="true">
-          <div className={styles.modalHeader}>
-            <div>
-              <h2 className={styles.modalTitle}>New Tournament</h2>
-              <p className={styles.modalSub}>Start blank, or reuse setup from an event you already ran.</p>
-            </div>
-            <button type="button" className={styles.modalClose} onClick={requestClose} aria-label="Close">
-              <X size={18} />
-            </button>
-          </div>
-
-          <div className={styles.workflowModalBody}>
-            <div className={styles.reuseIntro}>
-              <div className={styles.reuseTitleRow}>
-                <Copy size={15} />
-                <strong>Reuse a previous tournament setup</strong>
-                {!canClone && upgradeCopy && (
-                  <span className={styles.plusBadge}>Tournament Plus</span>
-                )}
-              </div>
-              <p>
-                Best for annual tournaments, seasonal classics, and repeat events where the structure already worked.
-              </p>
-              {!canClone && upgradeCopy ? (
-                <Callout role="note" flush>{upgradeCopy}</Callout>
-              ) : (
-                <div className={styles.sourceList}>
-                  {sorted.map(t => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => {
-                        setCloneSource(t);
-                        setCloneNameForm(getRepeatNameForm(t));
-                        setCloneCopyOptions(DEFAULT_CLONE_COPY_OPTIONS);
-                        // A colour chosen for a DIFFERENT source event does not carry over —
-                        // it would silently override this event's own branding without the
-                        // organizer ever having picked a colour for it.
-                        setChosenPreset(null);
-                        setCloneError('');
-                        cloneTouchedRef.current = false;
-                        setPreStep('clone-name');
-                      }}
-                      className={styles.sourceButton}
-                    >
-                      <span>
-                        <span>{t.name}</span>
-                        <small>{[t.year, getTournamentStatusLabel(t.status)].filter(Boolean).join(' · ')}</small>
-                      </span>
-                      <ArrowRight size={14} />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className={styles.choiceDivider}>
-              <span />
-              <strong>or</strong>
-              <span />
-            </div>
-          </div>
-
-          <div className={styles.workflowModalFooter}>
-            <div />
-            <div className={styles.workflowFooterActions}>
-              <button
-                type="button"
-                className="btn btn-lime btn-data"
-                onClick={() => { setPreStep(null); }}
-              >
-                Start blank tournament
-              </button>
-            </div>
-          </div>
+          <p>Best for annual tournaments, seasonal classics, and repeat events where the structure already worked.</p>
+          {!canClone && upgradeCopy ? (
+            <Callout role="note" flush>{upgradeCopy}</Callout>
+          ) : (
+            <ClubRowFrame>
+              <ClubRowList inset label="Reuse a previous tournament setup">
+                {sorted.map(t => (
+                  <ClubRow
+                    key={t.id}
+                    as="button"
+                    title={t.name}
+                    caption={[t.year, statusLabel(t.status)].filter(Boolean).join(' · ')}
+                    chevron
+                    onClick={() => {
+                      setCloneSource(t);
+                      setCloneForm(getRepeatNameForm(t));
+                      setCloneOptions(DEFAULT_CLONE_COPY_OPTIONS);
+                      // A colour chosen for a DIFFERENT source never carries over to this one.
+                      setChosenPreset(null);
+                      setCloneError('');
+                      cloneTouched.current = false;
+                      setPreStep('clone-name');
+                    }}
+                  />
+                ))}
+              </ClubRowList>
+            </ClubRowFrame>
+          )}
         </div>
-      </div>
+        <div className={styles.choiceDivider}><span /><strong>or</strong><span /></div>
+      </KitDialog>
     );
   }
 
-  // ── PRE-STEP: CLONE NAME — the reuse step (Tournament admin redesign Stage 4, D2) ─────────────────
-  // Every "Reuse this setup" door opens HERE with the event chosen; New tournament reaches it from its
-  // "Start blank, or reuse" pick (that path keeps Back). Content restyled to the drawing: the five areas
-  // as the composer's checkbox rows, what never comes along as one sentence, the warnings as the kit's
-  // white callout with an amber edge. Full screen on a phone (the kit's form window); at a desk the
-  // window and its live preview are Stage 5's frame, unchanged.
+  // ── PRE-STEP: the reuse step (Stage 4, D2) — the same window ──────────────────────────────────────────
   if (preStep === 'clone-name') {
-    const selectedCopyCount = Object.values(cloneCopyOptions).filter(Boolean).length;
-    const selectedCopyGroups = REUSE_COPY_OPTION_KEYS.filter(key => cloneCopyOptions[key]);
-    // Year is derived from the start date — the clone form no longer asks for it separately.
-    const cloneDraftYear = cloneNameForm.startDate ? Number(cloneNameForm.startDate.slice(0, 4)) : NaN;
-    const reuseWarnings = getReuseSetupWarnings(cloneSource, cloneDraftYear, cloneCopyOptions);
-    const touch = () => { cloneTouchedRef.current = true; };
-    const toggleCopyOption = (key: CloneCopyOptionKey) => {
-      touch();
-      setCloneCopyOptions(options => ({ ...options, [key]: !options[key] }));
-      setCloneError('');
-    };
+    const selectedCount = Object.values(cloneOptions).filter(Boolean).length;
+    const selectedGroups = REUSE_COPY_OPTION_KEYS.filter(k => cloneOptions[k]);
+    const draftYear = cloneForm.startDate ? Number(cloneForm.startDate.slice(0, 4)) : NaN;
+    const warnings = getReuseSetupWarnings(cloneSource, draftYear, cloneOptions);
+    const ctouch = () => { cloneTouched.current = true; };
 
     async function submitClone() {
       if (!cloneSource) return;
-      const name = cloneNameForm.name.trim();
-      const slug = cloneNameForm.slug.trim();
-      if (!name) { setCloneError('Enter a tournament name.'); return; }
-      if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) { setCloneError(REUSE_WORDS.slugInvalid); return; }
-      if (!cloneNameForm.startDate || !cloneNameForm.endDate) { setCloneError('Add start and end dates. You can change them later if they are still being finalized.'); return; }
-      if (cloneNameForm.startDate < getTodayDateValue()) { setCloneError('Start date cannot be before today.'); return; }
-      if (cloneNameForm.endDate < cloneNameForm.startDate) {
-        setCloneError('End date cannot be before the start date.');
-        return;
-      }
-      // Year is derived from the start date.
-      const year = Number(cloneNameForm.startDate.slice(0, 4));
-      if (selectedCopyCount === 0) {
-        // From a door there is no blank path to offer (New tournament's pick has one).
-        setCloneError(openedFromDoor ? REUSE_WORDS.nothingChosenDoor : REUSE_WORDS.nothingChosenNew);
-        return;
-      }
-
+      const name = cloneForm.name.trim();
+      const slug = cloneForm.slug.trim();
+      if (!name) { setCloneError(W.nameRequired); return; }
+      if (!slug || !SLUG_RE.test(slug)) { setCloneError(REUSE_WORDS.slugInvalid); return; }
+      if (!cloneForm.startDate || !cloneForm.endDate) { setCloneError(W.datesRequired); return; }
+      if (cloneForm.startDate < todayValue()) { setCloneError(W.startPast); return; }
+      if (cloneForm.endDate < cloneForm.startDate) { setCloneError(W.endBeforeStart); return; }
+      if (selectedCount === 0) { setCloneError(openedFromDoor ? REUSE_WORDS.nothingChosenDoor : REUSE_WORDS.nothingChosenNew); return; }
       setCloneWorking(true);
       setCloneError('');
       try {
@@ -1270,32 +694,20 @@ export default function TournamentSetupWizard({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name, slug, year,
-            startDate: cloneNameForm.startDate || null,
-            endDate: cloneNameForm.endDate || null,
-            // Only sent when the organizer actually picked one — an explicit choice
-            // overrides whatever the copied branding would have set.
+            name, slug, year: Number(cloneForm.startDate.slice(0, 4)),
+            startDate: cloneForm.startDate || null,
+            endDate: cloneForm.endDate || null,
             ...(chosenPreset ? { themePreset: chosenPreset } : {}),
-            options: buildCloneApiOptions(cloneCopyOptions),
-            analytics: {
-              sourceSurface,
-              selectedCopyGroups,
-              warningCount: reuseWarnings.length,
-              warningKeys: reuseWarnings.map(warning => warning.key),
-            },
+            options: buildCloneApiOptions(cloneOptions),
+            analytics: { sourceSurface, selectedCopyGroups: selectedGroups, warningCount: warnings.length, warningKeys: warnings.map(w => w.key) },
           }),
         });
         const data = await res.json() as { tournament?: Tournament; copied?: CloneCopiedCounts; error?: string };
         if (!res.ok) throw new Error(data.error ?? 'Unable to create tournament draft.');
         if (!data.tournament) throw new Error('No tournament returned.');
         await onCreated({
-          id: data.tournament.id,
-          name: data.tournament.name,
-          slug: data.tournament.slug,
-          creationMethod: 'reused_setup',
-          sourceName: cloneSource.name,
-          copied: data.copied,
-          record: data.tournament,
+          id: data.tournament.id, name: data.tournament.name, slug: data.tournament.slug,
+          creationMethod: 'reused_setup', sourceName: cloneSource.name, copied: data.copied, record: data.tournament,
         });
       } catch (err) {
         setCloneError(err instanceof Error ? err.message : 'Unable to create tournament draft.');
@@ -1305,492 +717,330 @@ export default function TournamentSetupWizard({
     }
 
     return (
-      <div className={`${styles.modalOverlay} ${styles.reuseOverlay}`} role="presentation">
-        {closeConfirmOpen && (
-          <div className={styles.modalOverlay} style={{ zIndex: 10 }}>
-            <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-              <div className="modal-header"><h3>Leave setup?</h3></div>
-              <p style={leaveTextStyle}>Your progress will not be saved.</p>
-              <div className="modal-footer">
-                <button className="btn btn-ghost btn-data" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
-                <button className="btn btn-danger btn-data" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
-              </div>
-            </div>
-          </div>
-        )}
-        <div className={`${styles.workflowModal} ${styles.reuseWindow}`} role="dialog" aria-modal="true" aria-labelledby={reuseTitleId}>
-          <div className={styles.reuseHead}>
-            <div className={styles.reuseTitleBlock}>
-              <h2 id={reuseTitleId} className={styles.reuseTitle}>{REUSE_WORDS.title(cloneSource?.name ?? '')}</h2>
-              <p className={styles.reuseLede}>{REUSE_WORDS.lede}</p>
-            </div>
-            <button type="button" className={styles.reuseClose} onClick={requestClose} aria-label="Close" disabled={cloneWorking}>
-              <X size={18} aria-hidden />
-            </button>
-          </div>
-
-          <div className={styles.reuseBody}>
-            <div className={styles.modalGridTwo}>
-              <label className={styles.fieldLabel}>
-                Tournament name *{' '}
-                <input
-                  className="form-input"
-                  value={cloneNameForm.name}
-                  onChange={e => {
-                    const name = e.target.value;
-                    touch();
-                    setCloneNameForm(f => ({
-                      ...f, name,
-                      ...(f.autoSlug ? { slug: generateSlug(name) } : {}),
-                    }));
-                  }}
-                  placeholder="e.g. Spring Classic 2027"
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                Public link *{' '}
-                <input
-                  className="form-input"
-                  value={cloneNameForm.slug}
-                  onChange={e => {
-                    touch();
-                    setCloneNameForm(f => ({
-                      ...f,
-                      slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'),
-                      autoSlug: false,
-                    }));
-                  }}
-                  placeholder="spring-classic-2027"
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                Start date *{' '}
-                <input
-                  className="form-input"
-                  type="date"
-                  value={cloneNameForm.startDate}
-                  min={getTodayDateValue()}
-                  onChange={e => {
-                    touch();
-                    setCloneNameForm(f => ({
-                      ...f,
-                      startDate: e.target.value,
-                      endDate: e.target.value ? addDaysToDateValue(e.target.value, 2) : '',
-                    }));
-                  }}
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                End date *{' '}
-                <input
-                  className="form-input"
-                  type="date"
-                  value={cloneNameForm.endDate}
-                  min={cloneNameForm.startDate || getTodayDateValue()}
-                  disabled={!cloneNameForm.startDate}
-                  onChange={e => { touch(); setCloneNameForm(f => ({ ...f, endDate: e.target.value })); }}
-                />
-              </label>
-            </div>
-            <p className={styles.fieldHint}>{REUSE_WORDS.dateHint}</p>
-
-            <section className={styles.reuseAreas} aria-labelledby={`${reuseTitleId}-areas`}>
-              <h3 id={`${reuseTitleId}-areas`} className={styles.reuseAreasHeading}>
-                {REUSE_WORDS.whatToBring}
-                <span className={styles.reuseAreasCount}>{REUSE_WORDS.count(selectedCopyCount, REUSE_COPY_OPTION_KEYS.length)}</span>
-              </h3>
-              {REUSE_COPY_OPTION_KEYS.map(key => (
-                <CheckChoice
-                  key={key}
-                  checked={cloneCopyOptions[key]}
-                  onChange={() => toggleCopyOption(key)}
-                  title={REUSE_WORDS.areas[key].title}
-                  caption={REUSE_WORDS.areas[key].caption}
-                />
-              ))}
-              <p className={styles.reuseNever}>{REUSE_WORDS.neverCopied(cloneSource?.name ?? '')}</p>
-            </section>
-
-            {reuseWarnings.length > 0 && (
-              <Callout tone="warn" flush>
-                <b className={styles.reuseReviewHeading}>{REUSE_WORDS.reviewHeading}</b>
-                <ul className={styles.reuseReviewList}>
-                  {reuseWarnings.map(warning => <li key={warning.key}>{warning.text}</li>)}
-                </ul>
-              </Callout>
-            )}
-
-            <p className={styles.reusePrivacy}>{REUSE_WORDS.privacy}</p>
-
-            {cloneError && (
-              <div className={styles.planError} role="alert">
-                <AlertCircle size={14} aria-hidden /> {cloneError}
-              </div>
-            )}
-          </div>
-
-          <div className={styles.reuseFoot}>
-            {openedFromDoor ? (
-              <button type="button" className={`btn btn-ghost btn-data ${styles.reuseFootButton}`} onClick={requestClose} disabled={cloneWorking}>
-                {REUSE_WORDS.cancel}
+      <>
+        <KitDialog
+          kind="form"
+          title={<span id={reuseTitleId}>{REUSE_WORDS.title(cloneSource?.name ?? '')}</span>}
+          identity={REUSE_WORDS.lede}
+          onClose={requestClose}
+          busy={cloneWorking}
+          aside={preview({ name: cloneForm.name, slug: cloneForm.slug, startDate: cloneForm.startDate, endDate: cloneForm.endDate, bindDivisions: false, inheritsSourceBranding: cloneOptions.publicPresence })}
+          footer={(
+            <>
+              {openedFromDoor
+                ? <button type="button" className="btn btn-outline" onClick={requestClose} disabled={cloneWorking}>{REUSE_WORDS.cancel}</button>
+                : <button type="button" className="btn btn-outline" onClick={() => { setPreStep('choose'); setCloneError(''); }} disabled={cloneWorking}>{W.back}</button>}
+              <button type="button" className="btn btn-lime" onClick={() => void submitClone()} disabled={cloneWorking}>
+                {cloneWorking ? REUSE_WORDS.creating : REUSE_WORDS.create}
               </button>
-            ) : (
-              <button type="button" className={`btn btn-ghost btn-data ${styles.reuseFootButton}`} onClick={() => { setPreStep('choose'); setCloneError(''); }} disabled={cloneWorking}>
-                Back
-              </button>
-            )}
-            <button type="button" className={`btn btn-lime btn-data ${styles.reuseFootButton} ${styles.reuseCreate}`} onClick={submitClone} disabled={cloneWorking}>
-              {cloneWorking ? REUSE_WORDS.creating : REUSE_WORDS.create}
-            </button>
+            </>
+          )}
+        >
+          <FormError>{cloneError}</FormError>
+          <div className={styles.grid2}>
+            <label className={ck.field} htmlFor="reuse-name">
+              <span className={ck.label}>{W.name}<span className={repKit.req} aria-hidden>*</span></span>
+              <input id="reuse-name" className={ck.input} value={cloneForm.name} placeholder="e.g. Spring Classic 2027"
+                onChange={e => { const name = e.target.value; ctouch(); setCloneForm(f => ({ ...f, name, ...(f.autoSlug ? { slug: slugForName(name) } : {}) })); }} />
+            </label>
+            <label className={ck.field} htmlFor="reuse-link">
+              <span className={ck.label}>{W.publicLink}<span className={repKit.req} aria-hidden>*</span></span>
+              <input id="reuse-link" className={ck.input} value={cloneForm.slug} placeholder="spring-classic-2027"
+                onChange={e => { ctouch(); setCloneForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'), autoSlug: false })); }} />
+            </label>
+            <label className={ck.field} htmlFor="reuse-start">
+              <span className={ck.label}>{W.startDate}<span className={repKit.req} aria-hidden>*</span></span>
+              <input id="reuse-start" className={ck.input} type="date" value={cloneForm.startDate} min={todayValue()}
+                onChange={e => { ctouch(); const v = e.target.value; setCloneForm(f => ({ ...f, startDate: v, endDate: v ? addDays(v, 2) : '' })); }} />
+            </label>
+            <label className={ck.field} htmlFor="reuse-end">
+              <span className={ck.label}>{W.endDate}<span className={repKit.req} aria-hidden>*</span></span>
+              <input id="reuse-end" className={ck.input} type="date" value={cloneForm.endDate} min={cloneForm.startDate || todayValue()} disabled={!cloneForm.startDate}
+                onChange={e => { ctouch(); setCloneForm(f => ({ ...f, endDate: e.target.value })); }} />
+            </label>
           </div>
-        </div>
-        {renderPreview({
-          name: cloneNameForm.name,
-          slug: cloneNameForm.slug,
-          startDate: cloneNameForm.startDate,
-          endDate: cloneNameForm.endDate,
-          bindDivisions: false,
-          // Untick "Public presence" and the copied colours stop applying — the swatch row
-          // and the phone both fall back to the org's, live.
-          inheritsSourceBranding: cloneCopyOptions.publicPresence,
-        })}
+          <p className={ck.hint}>{REUSE_WORDS.dateHint}</p>
+          <section className={styles.areas} aria-labelledby={`${reuseTitleId}-areas`}>
+            <h3 id={`${reuseTitleId}-areas`} className={styles.areasHeading}>
+              {REUSE_WORDS.whatToBring} <span className={styles.areasCount}>{REUSE_WORDS.count(selectedCount, REUSE_COPY_OPTION_KEYS.length)}</span>
+            </h3>
+            {REUSE_COPY_OPTION_KEYS.map(key => (
+              <CheckChoice
+                key={key}
+                checked={cloneOptions[key]}
+                onChange={() => { ctouch(); setCloneOptions(o => ({ ...o, [key]: !o[key] })); setCloneError(''); }}
+                title={REUSE_WORDS.areas[key].title}
+                caption={REUSE_WORDS.areas[key].caption}
+              />
+            ))}
+            <p className={ck.hint}>{REUSE_WORDS.neverCopied(cloneSource?.name ?? '')}</p>
+          </section>
+          {warnings.length > 0 && (
+            <Callout tone="warn" flush>
+              <b className={styles.reviewHeading}>{REUSE_WORDS.reviewHeading}</b>
+              <ul className={styles.reviewList}>{warnings.map(w => <li key={w.key}>{w.text}</li>)}</ul>
+            </Callout>
+          )}
+          <p className={`${ck.hint} ${styles.privacy}`}>{REUSE_WORDS.privacy}</p>
+        </KitDialog>
+        {leaveQuestion}
+      </>
+    );
+  }
+
+  // ── The three steps and the review ───────────────────────────────────────────────────────────────────
+  const at = step === 'review' ? CREATE_STEPS.length : CREATE_STEPS.indexOf(step) + 1;
+  const identity = step === 'review' ? W.reviewLine : W.stepLine(at, W.stepLabel[step]);
+  const host = typeof window !== 'undefined' ? window.location.host : '';
+  const realDivisions = divisions.filter(d => d.name.trim());
+
+  const footer = (
+    <>
+      {step === 'tournament'
+        ? <button type="button" className="btn btn-outline" onClick={requestClose} disabled={saving}>{W.cancel}</button>
+        : <button type="button" className="btn btn-outline" onClick={back} disabled={saving}>{W.back}</button>}
+      {step === 'review'
+        ? <button type="button" className="btn btn-lime" onClick={() => void create()} disabled={saving}>{saving ? W.creating : W.create}</button>
+        : <button type="button" className="btn btn-lime" onClick={next} disabled={saving || (step === 'tournament' && !eventsLoaded)}>
+            {step === 'tournament' && !eventsLoaded ? W.loading : W.next}
+          </button>}
+    </>
+  );
+
+  let body: React.ReactNode = null;
+
+  if (step === 'tournament') {
+    const heldLine = nameHolder && (
+      <div className={styles.held} role="status">
+        <span>{nameHolder.year && nameHolder.status === 'completed' ? W.nameHeld(nameHolder.year) : W.nameTaken}</span>
+        {suggestion && <button type="button" className={styles.heldUse} onClick={takeSuggestion}>{W.takeName(suggestion)}</button>}
       </div>
     );
-  }
-
-  if (activeStep === 'tournament') {
-    return renderFrame(
-      'Create your tournament',
-      'Start with core tournament details. The tournament stays private as a draft.',
-      (
-        <>
-          {!hasPastTournaments && (
-            <div className={styles.orientationBlurb}>
-              <p>New here? Here’s what you’re building</p>
-              <ul>
-                <li>A public tournament page teams can find and register on.</li>
-                <li>Your schedule, scores, and standings update live for coaches and parents on game day.</li>
-                <li>Nothing is visible to anyone until you choose to activate — you’re always in control.</li>
-              </ul>
-            </div>
-          )}
-          <label className={styles.fieldLabel}>
-            Tournament name{' '}
-            <input
-              className="form-input"
-              value={tournamentForm.name}
-              onChange={e => {
-                markFormTouched();
-                const name = e.target.value;
-                setTournamentForm(form => ({ ...form, name, ...(!slugEdited ? { slug: generateSlug(name) } : {}) }));
-              }}
-              placeholder="e.g. Spring Classic 2026"
-            />
+    body = (
+      <>
+        <label className={ck.field} htmlFor="new-t-name">
+          <span className={ck.label}>{W.name}<span className={repKit.req} aria-hidden>*</span></span>
+          <input id="new-t-name" className={ck.input} value={form.name} maxLength={120} placeholder="e.g. Spring Classic 2027"
+            onChange={e => setName(e.target.value)} data-autofocus="" />
+          {heldLine}
+        </label>
+        <div className={styles.grid2}>
+          <label className={ck.field} htmlFor="new-t-start">
+            <span className={ck.label}>{W.startDate}<span className={repKit.req} aria-hidden>*</span></span>
+            <input id="new-t-start" className={ck.input} type="date" value={form.startDate} min={todayValue()} onChange={e => setStartDate(e.target.value)} />
           </label>
-          <div className={styles.modalGridTwo}>
-            <label className={styles.fieldLabel}>
-              Start date{' '}
-              <input className="form-input" type="date" value={tournamentForm.startDate} min={getTodayDateValue()} onChange={e => { markFormTouched(); updateTournamentStartDate(e.target.value); }} />
-            </label>
-            <label className={styles.fieldLabel}>
-              End date{' '}
-              <input className="form-input" type="date" value={tournamentForm.endDate} min={tournamentForm.startDate || getTodayDateValue()} disabled={!tournamentForm.startDate} onChange={e => { markFormTouched(); updateTournamentEndDate(e.target.value); }} />
-            </label>
-          </div>
-          <p className={styles.fieldHint}>
-            Start and end dates are required. You can change them later if they are still being finalized.
-          </p>
-          <div className={styles.fieldLabel}>
-            Tournament style
-            <TournamentStyleCards
-              value={tournamentForm.format}
-              onChange={format => { markFormTouched(); setTournamentForm(form => ({ ...form, format })); }}
-            />
-          </div>
-          <label className={styles.fieldLabel}>
-            Public link{' '}
-            <input
-              className="form-input"
-              value={tournamentForm.slug}
-              onChange={e => {
-                markFormTouched();
-                setSlugEdited(true);
-                setTournamentForm(form => ({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') }));
-              }}
-              placeholder="spring-classic-2026"
-            />
+          <label className={ck.field} htmlFor="new-t-end">
+            <span className={ck.label}>{W.endDate}<span className={repKit.req} aria-hidden>*</span></span>
+            <input id="new-t-end" className={ck.input} type="date" value={form.endDate} min={form.startDate || todayValue()} disabled={!form.startDate}
+              onChange={e => { touch(); const v = e.target.value; setForm(f => ({ ...f, endDate: v && v < f.startDate ? f.startDate : v })); }} />
           </label>
-        </>
-      ),
-      { step: 'tournament', saveLabel: 'Next', onSave: () => validateAndAdvance('tournament'), hideBack: true },
+        </div>
+        <div className={ck.field}>
+          <span className={ck.label} id="new-t-style-label">{W.style}<span className={repKit.req} aria-hidden>*</span></span>
+          <TournamentStyleCards labelledBy="new-t-style-label" value={form.format} onChange={format => { touch(); setForm(f => ({ ...f, format })); }} />
+        </div>
+        <label className={ck.field} htmlFor="new-t-link">
+          <span className={ck.label}>{W.publicLink}<span className={repKit.req} aria-hidden>*</span></span>
+          <input id="new-t-link" className={ck.input} value={form.slug} maxLength={80}
+            onChange={e => { touch(); setSlugEdited(true); setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') })); }} />
+          <span className={`${ck.hint} ${styles.address}`}>{host ? `${host}/${orgSlug ?? ''}/${form.slug}` : `/${orgSlug ?? ''}/${form.slug}`}</span>
+          {usedSuggestion && !slugEdited && !slugHolder && <span className={ck.hint}>{W.linkKept}</span>}
+        </label>
+      </>
     );
-  }
-
-  if (activeStep === 'divisions') {
-    return renderFrame(
-      'Set up divisions',
-      'Add the divisions or divisions teams can register for. Pools are optional and can be configured per division.',
-      (
-        <div className={styles.setupBlock}>
-          <div className={styles.setupBlockHeader}>
-            <span>Division starter</span>
-            <small>Rename or remove anything you do not need.</small>
+  } else if (step === 'divisions') {
+    body = (
+      <>
+        <p className={styles.lede}>{W.divisionsLede}</p>
+        <div className={styles.starter}>
+          <label className={ck.field} htmlFor="new-t-starter">
+            <span className={ck.label}>{W.starter}</span>
+            <select id="new-t-starter" className={ck.select} value={divisionPreset}
+              onChange={e => {
+                touch();
+                const p = e.target.value as DivisionPreset;
+                setDivisionPreset(p);
+                setDivisionMistake(null);
+                setDivisions(p === 'custom' ? [] : DIVISION_PRESETS[p].map(divisionRow));
+              }}>
+              <option value="youth">{W.starterYouth}</option>
+              <option value="adult">{W.starterAdult}</option>
+              <option value="custom">{W.starterCustom}</option>
+            </select>
+          </label>
+          <div className={styles.addDivision}>
+            <label className={ck.field} htmlFor="new-t-add-division">
+              <span className={ck.label}>{W.addDivision}</span>
+              <input id="new-t-add-division" className={ck.input} value={newDivision} placeholder={W.addDivisionPlaceholder}
+                onChange={e => setNewDivision(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (newDivision.trim()) { touch(); setDivisions(d => [...d, divisionRow(newDivision.trim())]); setNewDivision(''); } } }} />
+            </label>
+            <button type="button" className={`btn btn-outline ${styles.addButton}`} disabled={!newDivision.trim()}
+              onClick={() => { touch(); setDivisions(d => [...d, divisionRow(newDivision.trim())]); setNewDivision(''); }}>Add</button>
           </div>
-          <div className={styles.presetGridCompact}>
-            {(['youth', 'adult', 'custom'] as DivisionPreset[]).map(preset => (
-              <button
-                key={preset}
-                type="button"
-                className={`${styles.presetButtonCompact} ${divisionPreset === preset ? styles.presetButtonCompactActive : ''}`}
-                onClick={() => applyDivisionPreset(preset)}
-              >
-                {preset === 'youth' ? 'Youth' : preset === 'adult' ? 'Adult' : 'Custom'}
-              </button>
-            ))}
-          </div>
-          <div className={styles.addInlineRow}>
-            <input
-              className="form-input"
-              value={customDivisionName}
-              onChange={e => setCustomDivisionName(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addCustomDivision();
-                }
-              }}
-              placeholder="Add a division, e.g. 12U, Open, Varsity"
-            />
-            <button type="button" className="btn btn-outline btn-sm" onClick={addCustomDivision}>
-              <Plus size={14} /> Add
-            </button>
-          </div>
-          {divisionRows.length > 0 && (
-            <div className={styles.divisionHeaderRow}>
-              <span>Division</span>
-              <span>Min age</span>
-              <span>Max age</span>
-              <span>Max teams</span>
-              <span>Pools</span>
-              <span />
-            </div>
-          )}
-          <div className={styles.inlineList}>
-            {divisionRows.map(row => (
-              <div key={row.id} className={styles.divisionInlineShell}>
-                <div className={styles.divisionInlineRow}>
-                  <input className="form-input" value={row.name} onChange={e => updateDivisionRow(row.id, current => ({ ...current, name: e.target.value }))} placeholder="Division name" />
-                  <input className="form-input" type="number" min="0" value={row.minAge} onChange={e => updateDivisionRow(row.id, current => ({ ...current, minAge: e.target.value }))} placeholder="Any" />
-                  <input className="form-input" type="number" min="0" value={row.maxAge} onChange={e => updateDivisionRow(row.id, current => ({ ...current, maxAge: e.target.value }))} placeholder="Any" />
-                  <input className="form-input" type="number" min="1" value={row.capacity} onChange={e => updateDivisionRow(row.id, current => ({ ...current, capacity: Number(e.target.value) }))} />
-                  <label className={styles.compactCheckbox}>
-                    <input
-                      type="checkbox"
-                      checked={row.poolCount >= 2}
-                      onChange={e => updateDivisionRow(row.id, current => ({
-                        ...current,
-                        poolCount: e.target.checked ? 2 : 0,
-                        poolNames: e.target.checked ? ['Pool A', 'Pool B'] : ['Pool A'],
-                        requiresPoolSelection: e.target.checked ? current.requiresPoolSelection : false,
-                      }))}
-                    />{' '}
-                    Use pools
+        </div>
+        {divisions.length === 0 && <p className={ck.hint}>{W.noDivisions}</p>}
+        <div className={styles.divisions}>
+          {divisions.map(row => {
+            const update = (patch: Partial<DivisionRow>) => { touch(); setDivisions(ds => ds.map(d => (d.id === row.id ? { ...d, ...patch } : d))); };
+            const mistake = divisionMistake?.id === row.id ? divisionMistake.text : null;
+            return (
+              <fieldset key={row.id} className={styles.division} aria-invalid={mistake ? true : undefined}>
+                <legend className={styles.srOnly}>{row.name || W.divisionName}</legend>
+                <div className={styles.divisionHead}>
+                  <label className={ck.field} htmlFor={`${row.id}-name`}>
+                    <span className={ck.label}>{W.divisionName}</span>
+                    <input id={`${row.id}-name`} className={ck.input} value={row.name} maxLength={60} onChange={e => update({ name: e.target.value })} />
                   </label>
-                  <button type="button" className={styles.iconOnlyButton} onClick={() => setDivisionRows(prev => prev.filter(item => item.id !== row.id))} aria-label={`Remove ${row.name || 'division'}`}>
-                    <Trash2 size={14} />
-                  </button>
+                  <button type="button" className={`btn btn-outline ${styles.remove}`} aria-label={W.removeDivision(row.name)}
+                    onClick={() => { touch(); setDivisions(ds => ds.filter(d => d.id !== row.id)); }}>✕</button>
                 </div>
-                {row.poolCount >= 2 && (
-                  <div className={styles.poolSetupPanel}>
-                    <div className={styles.poolControlsRow}>
-                      <label className={styles.poolMiniField}>
-                        Pool count{' '}
-                        <input className="form-input" type="number" min="2" max="4" value={row.poolCount} onChange={e => updateDivisionPools(row.id, Number(e.target.value))} />
-                      </label>
-                      <label className={styles.compactCheckbox}>
-                        <input type="checkbox" checked={row.requiresPoolSelection} onChange={e => updateDivisionRow(row.id, current => ({ ...current, requiresPoolSelection: e.target.checked }))} />{' '}
-                        Registrant picks pool
-                      </label>
-                    </div>
-                    <div className={styles.poolNameGrid}>
-                      {Array.from({ length: row.poolCount }).map((_, i) => (
-                        <label key={`${row.id}-pool-${i}`} className={styles.poolNameField}>
-                          {String.fromCharCode(65 + i)} Name
-                          <input className="form-input" value={row.poolNames[i] || ''} onChange={e => updateDivisionPoolName(row.id, i, e.target.value)} placeholder="e.g. Gold" />
+                <div className={styles.grid3}>
+                  <label className={ck.field} htmlFor={`${row.id}-min`}>
+                    <span className={ck.label}>{W.youngest}</span>
+                    <input id={`${row.id}-min`} className={ck.input} type="number" inputMode="numeric" min={0} value={row.minAge} placeholder={W.anyAge} onChange={e => update({ minAge: e.target.value })} />
+                  </label>
+                  <label className={ck.field} htmlFor={`${row.id}-max`}>
+                    <span className={ck.label}>{W.oldest}</span>
+                    <input id={`${row.id}-max`} className={ck.input} type="number" inputMode="numeric" min={0} value={row.maxAge} placeholder={W.anyAge} onChange={e => update({ maxAge: e.target.value })} />
+                  </label>
+                  <label className={ck.field} htmlFor={`${row.id}-cap`}>
+                    <span className={ck.label}>{W.maxTeams}</span>
+                    <input id={`${row.id}-cap`} className={ck.input} type="number" inputMode="numeric" min={1} value={row.capacity} onChange={e => update({ capacity: e.target.value })} />
+                  </label>
+                </div>
+                <label className={styles.checkLine}>
+                  <input type="checkbox" checked={row.usePools} onChange={e => update({ usePools: e.target.checked })} />
+                  <span>{W.usePools}</span>
+                </label>
+                {row.usePools && (
+                  <div className={styles.pools}>
+                    <label className={ck.field} htmlFor={`${row.id}-pools`}>
+                      <span className={ck.label}>{W.poolCount}</span>
+                      <select id={`${row.id}-pools`} className={ck.select} value={row.poolCount}
+                        onChange={e => {
+                          const n = Number(e.target.value);
+                          update({ poolCount: n, poolNames: Array.from({ length: n }, (_, i) => row.poolNames[i] || `Pool ${poolLetter(i)}`) });
+                        }}>
+                        {[2, 3, 4].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    </label>
+                    <div className={styles.grid2}>
+                      {Array.from({ length: row.poolCount }, (_, i) => (
+                        <label key={i} className={ck.field} htmlFor={`${row.id}-pool-${i}`}>
+                          <span className={ck.label}>{W.poolName(poolLetter(i))}</span>
+                          <input id={`${row.id}-pool-${i}`} className={ck.input} value={row.poolNames[i] ?? ''} maxLength={40}
+                            onChange={e => { const names = [...row.poolNames]; names[i] = e.target.value; update({ poolNames: names }); }} />
                         </label>
                       ))}
                     </div>
+                    <label className={styles.checkLine}>
+                      <input type="checkbox" checked={row.requiresPoolSelection} onChange={e => update({ requiresPoolSelection: e.target.checked })} />
+                      <span>{W.registrantPicks}</span>
+                    </label>
                   </div>
                 )}
-              </div>
-            ))}
-            {divisionRows.length === 0 && <div className={styles.emptyModalState}>Add at least one division to continue.</div>}
+                {mistake && <p className={repKit.formError} role="alert">{mistake}</p>}
+              </fieldset>
+            );
+          })}
+        </div>
+      </>
+    );
+  } else if (step === 'venues') {
+    const chooserRows: ChooserVenue[] = book.map(v => bookCaption[v.key]).filter(Boolean);
+    const addedRows: ChooserVenue[] = added.map(v => ({
+      key: v.key, name: v.name, address: v.kind === 'new' ? v.draft.address || null : null,
+      caption: v.kind === 'new' ? W.newCaption(v.draft.count, v.draft.facilityType, v.draft.address) : '',
+    }));
+    const lineVenues = pickedVenues.map(v => ({ names: v.lanes }));
+    body = (
+      <>
+        <p className={styles.lede}>{W.venuesLede(kind)}</p>
+        <VenueChooser
+          idPrefix="new-t-venues"
+          heading={libraryPlan ? W.library : W.yourVenues}
+          searchPlaceholder={libraryPlan ? W.searchLibrary : W.searchYours}
+          venues={chooserRows}
+          added={addedRows}
+          ticked={ticked}
+          onToggle={(key, checked) => { touch(); setTicked(t => { const n = new Set(t); if (checked) n.add(key); else n.delete(key); return n; }); }}
+          newLabel={libraryPlan ? W.notTheClubs : W.newVenue}
+          newCaption={libraryPlan ? W.notTheClubsCaption : W.newVenueCaption(kind)}
+          onNew={typed => setSheet({ name: typed })}
+          noMatch={W.noMatch}
+          notice={bookFailed ? W.venuesLoadFailed : undefined}
+        />
+        <p className={styles.venueLine}>{W.venueLine(lineVenues, kind)}</p>
+      </>
+    );
+  } else {
+    const lanes = pickedVenues.reduce((n, v) => n + v.lanes.length, 0);
+    const welcome = welcomeText ?? W.welcomeDefault(form.name.trim());
+    body = (
+      <>
+        <ClubRowFrame>
+          <ClubRowList inset label={W.reviewLine}>
+            <ClubRow as="button" aria-label={W.editStep(W.stepLabel.tournament)} onClick={() => setStep('tournament')} chevron
+              title={form.name.trim()}
+              caption={[formatEventDateRange(form.startDate, form.endDate, true), TOURNAMENT_FORMAT_OPTIONS.find(o => o.value === form.format)?.title].filter(Boolean).join(' · ')} />
+            <ClubRow as="button" aria-label={W.editStep(W.stepLabel.divisions)} onClick={() => setStep('divisions')} chevron
+              title={W.divisionsRow(realDivisions.length)}
+              caption={realDivisions.length ? realDivisions.map(d => d.name.trim()).join(' · ') : undefined} />
+            <ClubRow as="button" aria-label={W.editStep(W.stepLabel.venues)} onClick={() => setStep('venues')} chevron
+              title={W.venuesRow(pickedVenues.length, lanes, kind)}
+              caption={pickedVenues.length ? pickedVenues.map(v => v.name).join(' · ') : undefined} />
+          </ClubRowList>
+        </ClubRowFrame>
+        <div className={`${ck.switchRow} ${styles.welcome}${welcomeOn ? '' : ` ${ck.switchRowOff}`}`}>
+          <div className={ck.switchText}>
+            <span className={ck.switchName} id="new-t-welcome-label">{W.welcome}</span>
+            {welcomeOn && (
+              <textarea className={`${ck.textarea} ${styles.welcomeText}`} rows={3} maxLength={1000} value={welcome}
+                aria-labelledby="new-t-welcome-label" onChange={e => { touch(); setWelcomeText(e.target.value); }} />
+            )}
           </div>
+          <button type="button" role="switch" aria-checked={welcomeOn} aria-labelledby="new-t-welcome-label" className={ck.switch}
+            onClick={() => { touch(); setWelcomeOn(on => !on); }} />
         </div>
-      ),
-      { step: 'divisions', saveLabel: 'Next', onSave: () => validateAndAdvance('divisions'), allowSkip: true },
+        <p className={ck.hint}>{W.reviewFoot}</p>
+      </>
     );
   }
 
-  if (activeStep === 'welcome') {
-    return renderFrame(
-      'Create welcome message',
-      'Publish an optional pinned welcome note for teams and coaches on the tournament news page.',
-      (
-        <div className={styles.inlineList}>
-          <label className={styles.checkboxLine}>
-            <input type="checkbox" checked={useWelcomeMsg} onChange={e => setUseWelcomeMsg(e.target.checked)} />{' '}
-            Publish a welcome announcement
-          </label>
-          {useWelcomeMsg && <textarea className="form-textarea" rows={4} value={welcomeMsg} onChange={e => setWelcomeMsg(e.target.value)} />}
-        </div>
-      ),
-      { step: 'welcome', saveLabel: 'Next', onSave: () => validateAndAdvance('welcome'), allowSkip: true },
-    );
-  }
-
-  if (activeStep === 'venues') {
-    const venueSearchQuery = venueSearch.trim().toLowerCase();
-    const filteredVenues = venueSearchQuery
-      ? existingVenues.filter(v =>
-          v.name.toLowerCase().includes(venueSearchQuery) ||
-          (v.address && v.address.toLowerCase().includes(venueSearchQuery))
-        )
-      : existingVenues;
-
-    return renderFrame(
-      'Add venues',
-      'Search for a venue you\'ve used before, or create a new one.',
-      (
-        <div className={styles.inlineList}>
-          {existingVenues.length > 0 && (
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-              <div style={{ flex: 1, position: 'relative' }}>
-                <input
-                  className="form-input"
-                  placeholder="Search by name or address…"
-                  value={venueSearch}
-                  onChange={e => {
-                    setVenueSearch(e.target.value);
-                    setVenueSearchSelected(null);
-                    setVenueSearchOpen(true);
-                    setStepError('');
-                  }}
-                  onFocus={() => setVenueSearchOpen(true)}
-                  onBlur={() => setTimeout(() => setVenueSearchOpen(false), 150)}
-                  autoComplete="off"
-                />
-                {venueSearchOpen && filteredVenues.length > 0 && (
-                  <div style={kx(VENUE_SEARCH_MENU, KIT_SURFACE.menu)}>
-                    {filteredVenues.map(v => (
-                      <button
-                        key={v.id}
-                        type="button"
-                        onMouseDown={e => e.preventDefault()}
-                        onClick={() => {
-                          setVenueSearchSelected(v);
-                          setVenueSearch(v.name);
-                          setVenueSearchOpen(false);
-                          setStepError('');
-                        }}
-                        style={venueItemStyle}
-                      >
-                        <span style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem' }}>{v.name}</span>
-                        {v.address && <span style={venueAddressStyle}>{v.address}</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button type="button" className="btn btn-outline btn-sm" onClick={addExistingToQueue} style={{ whiteSpace: 'nowrap', marginTop: '1px' }}>
-                Add
-              </button>
-            </div>
-          )}
-
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            style={{ alignSelf: 'flex-start' }}
-            onClick={() => { setShowVenueForm(f => !f); setVenueDraft(buildVenueDraft()); setStepError(''); }}
-          >
-            <Plus size={14} /> {showVenueForm ? 'Cancel' : 'Create venue'}
-          </button>
-
-          {showVenueForm && (
-            <div className={styles.venueComposer}>
-              <div className={styles.venueDraftGrid}>
-                <label className={styles.fieldLabel}>Venue name *<input className="form-input" value={venueDraft.name} onChange={e => updateVenueDraft('name', e.target.value)} placeholder="Lions Field" /></label>
-                <label className={styles.fieldLabel}>Street address<input className="form-input" value={venueDraft.street} onChange={e => updateVenueDraft('street', e.target.value)} placeholder="123 Main St" /></label>
-                <label className={styles.fieldLabel}>City<input className="form-input" value={venueDraft.city} onChange={e => updateVenueDraft('city', e.target.value)} placeholder="Milton" /></label>
-                <label className={styles.fieldLabel}>
-                  Province{' '}
-                  <select className="form-select" value={venueDraft.province} onChange={e => updateVenueDraft('province', e.target.value)}>
-                    <option value="">Select province</option>
-                    {CANADIAN_PROVINCES.map(province => <option key={province} value={province}>{province}</option>)}
-                  </select>
-                </label>
-                <label className={styles.fieldLabel}>Postal code<input className="form-input" value={venueDraft.postalCode} onChange={e => updateVenueDraft('postalCode', e.target.value.toUpperCase())} placeholder="A1A 1A1" /></label>
-                <label className={`${styles.fieldLabel} ${styles.venueNotesField}`}>Notes<input className="form-input" value={venueDraft.notes} onChange={e => updateVenueDraft('notes', e.target.value)} placeholder="Parking, entrance, field number" /></label>
-              </div>
-              <button type="button" className="btn btn-outline btn-sm" onClick={createNewVenue}>
-                <Plus size={14} /> Create
-              </button>
-            </div>
-          )}
-
-          {venueQueue.length > 0 && (
-            <div className={styles.venueList}>
-              {venueQueue.map(item => (
-                <div key={item.key} className={styles.venueCard} style={{ padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                  <div>
-                    <span style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem' }}>{item.name}</span>
-                    {item.address && <span style={venueAddressStyle}>{item.address}</span>}
-                  </div>
-                  <button type="button" className={styles.iconOnlyButton} onClick={() => setVenueQueue(prev => prev.filter(q => q.key !== item.key))} aria-label={`Remove ${item.name}`} style={{ flexShrink: 0 }}>
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ),
-      { step: 'venues', saveLabel: 'Next', onSave: () => validateAndAdvance('venues'), allowSkip: true },
-    );
-  }
-
-  const divisionCount = skipped.divisions ? 0 : divisionRows.filter(row => row.name.trim()).length;
-  const venueCount = skipped.venues ? 0 : venueQueue.length;
-  const welcomeIncluded = !skipped.welcome && useWelcomeMsg && !!welcomeMsg.trim();
-
-  return renderFrame(
-    skipped.tournament ? 'Finish setup' : 'Review and save',
-    skipped.tournament
-      ? 'No tournament setup will be created.'
-      : 'Saving keeps the tournament hidden from the public. You can activate it later from Manage Tournaments.',
-    skipped.tournament ? (
-      <div className={styles.reviewPanel}>
-        <div className={styles.emptyModalState}>You skipped tournament creation, so no tournament, divisions, or venues will be created.</div>
-      </div>
-    ) : (
-      <div className={styles.reviewPanel}>
-        <div className={styles.reviewItem}><span>Tournament</span><strong>{tournamentForm.name.trim() || 'Not named yet'}</strong></div>
-        <div className={styles.reviewItem}><span>Divisions</span><strong>{divisionCount > 0 ? `${divisionCount} included` : 'Skipped'}</strong></div>
-        <div className={styles.reviewItem}><span>Welcome message</span><strong>{welcomeIncluded ? 'Included' : 'Skipped'}</strong></div>
-        <div className={styles.reviewItem}><span>Venues</span><strong>{venueCount > 0 ? `${venueCount} included` : 'Skipped'}</strong></div>
-        <div className={styles.reviewItem}><span>Public contact</span><strong>You (editable in Event Settings)</strong></div>
-        <div className={styles.reviewItem}><span>Public visibility</span><strong>Not live yet</strong></div>
-        <div className={styles.nextStepsCallout}>
-          <strong>What happens after you save</strong>
-          <p>
-            You’ll finish a short launch checklist on your dashboard, preview exactly what teams will see, and
-            activate when you’re ready. Only admins can work on it until then — registration stays closed and the
-            public page is not live until you activate.
-          </p>
-        </div>
-      </div>
-    ),
-    { step: 'review', saveLabel: skipped.tournament ? 'Finish for now' : 'Save setup', onSave: saveSetupDraft },
+  return (
+    <>
+      <KitDialog
+        kind="form"
+        title={W.title}
+        identity={identity}
+        progress={{ at, of: CREATE_STEPS.length }}
+        levelKey={step}
+        onClose={requestClose}
+        busy={saving}
+        footer={footer}
+        aside={preview({ name: form.name, slug: form.slug, startDate: form.startDate, endDate: form.endDate, bindDivisions: step !== 'tournament' })}
+      >
+        <FormError>{error}</FormError>
+        {body}
+      </KitDialog>
+      {sheet && (
+        <NewVenueSheet
+          defaultKind={kind}
+          initialName={sheet.name}
+          identity={libraryPlan ? W.notTheClubsCaption : undefined}
+          onCancel={() => setSheet(null)}
+          onAdd={draft => {
+            addedSeq.current += 1;
+            const key = `new:${addedSeq.current}`;
+            setAdded(a => [...a, { key, kind: 'new', draft, name: draft.name, lanes: facilityNames(draft.count, draft.facilityType) }]);
+            setTicked(t => new Set(t).add(key));
+            touch();
+            setSheet(null);
+          }}
+        />
+      )}
+      {leaveQuestion}
+    </>
   );
 }

@@ -85,6 +85,26 @@ input[type='checkbox'].check22::before { width: 6px; height: 11px; border-width:
   cursor: pointer;
 }
 .choice:first-of-type { border-top: 0; }
+
+/* A ticked row inside a row list (`CheckRow`, Stage 5) — Teams' Select many row, by value: never tinted, the tick
+   alone marks a chosen row (standard §3.3). */
+.checkRowItem { display: block; border-bottom: 1px solid var(--home-line); }
+.checkRowItem:last-child { border-bottom: 0; }
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 60px;
+  padding: var(--table-pad-comfortable) 1.1rem;
+  cursor: pointer;
+}
+.checkRow:has(input:focus-visible) { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.checkRow[data-disabled] { cursor: default; }
+.checkRow[data-disabled] .checkRowTitle { color: var(--text-secondary); }
+.checkRowMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.checkRowTitle { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.checkRowCaption { font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+@media (max-width: 640px) { .checkRow { padding: 0.65rem 0.85rem; } }
 .choiceText { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .choiceText b { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
 .choiceText span { font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }

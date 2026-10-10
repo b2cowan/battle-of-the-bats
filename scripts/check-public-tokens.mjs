@@ -522,7 +522,6 @@ const ADMIN_COLOUR_DEBT = new Set([
   'components/admin/NumberStepper.module.css',
   'components/admin/tournament/GuidanceRail.module.css',
   'components/admin/tournament/TournamentAdminUI.module.css',
-  'components/admin/TournamentSetupWizard.module.css',
 ]);
 // A colour literal: hex, or rgb/rgba/hsl/hsla with no var() inside. The kit check also refuses the keywords.
 const COLOR_LITERAL = String.raw`#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\((?![^()]*var\()[^()]*\)`;

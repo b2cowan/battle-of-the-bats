@@ -4,6 +4,9 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import { copyLibraryVenue, copyPastVenue, createTournamentVenue } from '@/lib/tournament-venue-copy';
+import { facilityKindForSport } from '@/lib/venue-facilities';
+import { FACILITY_TYPES, type FacilityType } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -138,8 +141,9 @@ async function clearFacilityFromGames(facilityId: string) {
 // ---------------------------------------------------------------------------
 // GET /api/admin/venues
 //   ?tournamentId=<id>           — venues for one tournament (with facilities)
-//   ?scope=org                   — all venues across org's tournaments (flat)
-//   ?scope=past&orgSlug=<slug>   — for import-from-past flow (no-org users)
+//   ?scope=past&orgSlug=<slug>   — the venues past events used, with their facilities: "your venues" (Stage 5, A51)
+//                                  for an organization without a Venue library. ⚠ scope=org (every copy, no facilities)
+//                                  retired with the old wizard's search (Stage 5, F79).
 // ---------------------------------------------------------------------------
 
 export const GET = withObservability(async (req: Request) => {
@@ -152,41 +156,7 @@ export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
-  // -- scope=org: all venues across all org tournaments ----------------------
-  if (scope === 'org') {
-    let tournamentQuery = supabaseAdmin
-      .from('tournaments')
-      .select('id, name, year')
-      .eq('org_id', ctx.org.id)
-      .order('year', { ascending: false });
-
-    if (ctx.assignedTournamentIds !== null) {
-      if (ctx.assignedTournamentIds.length === 0) return NextResponse.json([]);
-      tournamentQuery = tournamentQuery.in('id', ctx.assignedTournamentIds);
-    }
-
-    const { data: tournaments, error: tErr } = await tournamentQuery;
-    if (tErr) return NextResponse.json({ error: tErr.message }, { status: 500 });
-
-    const tIds = (tournaments ?? []).map(t => t.id);
-    if (tIds.length === 0) return NextResponse.json([]);
-
-    const { data, error } = await supabaseAdmin
-      .from('diamonds')
-      .select('*')
-      .in('tournament_id', tIds)
-      .order('name', { ascending: true });
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-    const tById = new Map((tournaments ?? []).map(t => [t.id, `${t.name} (${t.year})`]));
-
-    return NextResponse.json((data ?? []).map(row => ({
-      ...mapVenue(row),
-      tournamentName: tById.get(row.tournament_id) ?? null,
-    })));
-  }
-
-  // -- scope=past: past-tournament import list (no-org users) ---------------
+  // -- scope=past: "your venues" — each past event's venues, with their facilities ---------------
   if (scope === 'past') {
     let pastQuery = supabaseAdmin
       .from('tournaments')
@@ -232,12 +202,18 @@ export const GET = withObservability(async (req: Request) => {
       }
     }
 
-    const tById = new Map((pastTournaments ?? []).map(t => [t.id, `${t.name} (${t.year})`]));
+    const tById = new Map((pastTournaments ?? []).map(t => [t.id, t]));
 
-    return NextResponse.json((venueData ?? []).map(row => ({
-      ...mapVenue(row, facilityByVenue[row.id] ?? []),
-      tournamentName: tById.get(row.tournament_id) ?? null,
-    })));
+    return NextResponse.json((venueData ?? []).map(row => {
+      const t = tById.get(row.tournament_id);
+      return {
+        ...mapVenue(row, facilityByVenue[row.id] ?? []),
+        tournamentName: t ? `${t.name} (${t.year})` : null,
+        // The event a copy came from, so "your venues" can keep each park's newest copy and say where it was last used.
+        sourceTournamentName: t?.name ?? null,
+        sourceTournamentYear: t?.year ?? null,
+      };
+    }));
   }
 
   // -- default: single tournament venues with facilities --------------------
@@ -336,22 +312,33 @@ export const POST = withObservability(async (req: Request) => {
   try {
     const { action, id, data } = await req.json();
 
-    // -- save-venue: create a new tournament venue --------------------------
-    if (action === 'save-venue') {
+    // -- save-venue (and the legacy 'save'): a new tournament venue WITH its lanes ------------------
+    // Every way a venue is added names its lanes "Diamond 1…N" in the tournament's sport word (Stage 5, F77): a count
+    // of one is "Diamond 1", never the venue's own name, and never "Lions Park — Diamond 1". The count and the kind
+    // come from the form; a caller that sends neither gets one lane of the sport's kind.
+    if (action === 'save-venue' || action === 'save') {
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
       const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
       if (wrongOrg) return wrongOrg;
-
-      const { data: newVenue, error } = await supabaseAdmin.from('diamonds').insert({
-        tournament_id:       data.tournamentId,
-        name:                data.name,
-        address:             data.address  ?? null,
-        notes:               data.notes    ?? null,
-        source_org_venue_id: data.sourceOrgVenueId ?? null,
-      }).select('*').single();
-      if (error) throw error;
-      return NextResponse.json({ success: true, venue: mapVenue(newVenue, []) });
+      if (typeof data.name !== 'string' || !data.name.trim()) {
+        return NextResponse.json({ error: 'Give the venue a name.' }, { status: 400 });
+      }
+      const { data: t } = await supabaseAdmin.from('tournaments').select('sport').eq('id', data.tournamentId).maybeSingle();
+      const kind: FacilityType = FACILITY_TYPES.includes(data.facilityType) && data.facilityType !== 'other'
+        ? data.facilityType : facilityKindForSport(t?.sport ?? null);
+      const { venueId } = await createTournamentVenue(data.tournamentId, {
+        name: data.name,
+        address: data.address ?? null,
+        notes: data.notes ?? null,
+        count: Number(data.count ?? data.fieldCount) || 1,
+        facilityType: kind,
+      });
+      const [{ data: newVenue }, { data: facData }] = await Promise.all([
+        supabaseAdmin.from('diamonds').select('*').eq('id', venueId).single(),
+        supabaseAdmin.from('venue_facilities').select('*').eq('venue_id', venueId).order('display_order', { ascending: true }),
+      ]);
+      return NextResponse.json({ success: true, venue: mapVenue(newVenue, facData ?? []) });
     }
 
     // -- update-venue -------------------------------------------------------
@@ -391,51 +378,7 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ success: true });
     }
 
-    // -- Backward-compat actions: 'save', 'update', 'delete' ----------------
-    // Keep these so existing callers (AddVenueModal) continue to work until
-    // they are updated to the new action names.
-    if (action === 'save') {
-      const denied = scopeGuard(ctx, data.tournamentId);
-      if (denied) return denied;
-      const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
-      if (wrongOrg) return wrongOrg;
-      const { data: newVenue, error } = await supabaseAdmin.from('diamonds').insert({
-        tournament_id: data.tournamentId,
-        name:          data.name,
-        address:       data.address ?? null,
-        notes:         data.notes   ?? null,
-      }).select('*').single();
-      if (error) throw error;
-      // Auto-create scheduling lanes (facilities). A venue with N fields/diamonds
-      // (J1-028) gets N lanes so the generator can run games in parallel; a single
-      // surface keeps the original venue-named lane. The surface type (diamond /
-      // field / court / rink / gym) is carried from the wizard and used both as
-      // the facility_type and to auto-name the lanes (e.g. "Field 1"). Legacy
-      // callers that omit it fall back to 'other' + the prior single-lane shape.
-      const ALLOWED_FACILITY_TYPES = ['diamond', 'field', 'court', 'rink', 'gym', 'other'];
-      const facilityType: string = ALLOWED_FACILITY_TYPES.includes(data.facilityType) ? data.facilityType : 'other';
-      const typeLabel: Record<string, string> = {
-        diamond: 'Diamond', field: 'Field', court: 'Court', rink: 'Rink', gym: 'Gym', other: 'Field',
-      };
-      const fieldCount = Math.max(1, Math.min(30, Math.floor(Number(data.fieldCount) || 1)));
-      const facilityRows = fieldCount === 1
-        ? [{ name: data.name, display_order: 0 }]
-        : Array.from({ length: fieldCount }, (_, i) => ({
-            name:          `${data.name} — ${typeLabel[facilityType]} ${i + 1}`,
-            display_order: i,
-          }));
-      await supabaseAdmin.from('venue_facilities').insert(
-        facilityRows.map(f => ({
-          venue_id:      newVenue.id,
-          tournament_id: data.tournamentId,
-          name:          f.name,
-          facility_type: facilityType,
-          display_order: f.display_order,
-        }))
-      );
-      return NextResponse.json({ success: true });
-    }
-
+    // -- Backward-compat actions: 'update', 'delete' (the old 'save' is save-venue's branch above) ---------
     if (action === 'update' && id) {
       const { data: existing } = await supabaseAdmin
         .from('diamonds').select('tournament_id').eq('id', id).single();
@@ -533,122 +476,40 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ success: true });
     }
 
-    // -- import-from-org: copy an org library venue into a tournament -------
+    // -- import-from-org: the club's library venue into a tournament, its facilities and both links -----
+    // (lib/tournament-venue-copy, Stage 5 — one home for every copy path). A second import of the same venue offers the
+    // copy already there (S6-04): two copies of one diamond would be two venues to the tournament's own clash check.
     if (action === 'import-from-org') {
       // The library itself is a League/Club feature — the same gate as /api/admin/org/venues.
-      // Without it, any plan could pull library rows through this side door.
       if (!hasOrgVenueLibrary(ctx.org.planId)) return forbidden();
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
       const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
       if (wrongOrg) return wrongOrg;
-
-      const { data: ov, error: ovErr } = await supabaseAdmin
-        .from('org_venues')
-        .select('*, org_venue_facilities(*)')
-        .eq('id', data.orgVenueId)
-        .single();
-      // "Not found" for another org's venue too — supabaseAdmin bypasses RLS, so ownership
-      // is this check or nothing; without it any admin could copy a foreign club's private
-      // venue list (names, addresses, notes) into their own tournament by UUID.
-      if (ovErr || !ov || ov.org_id !== ctx.org.id) {
-        return NextResponse.json({ error: 'Org venue not found' }, { status: 404 });
-      }
-
-      // Importing the same library venue twice offers the copy already there (S6-04, Club Tier Stage 6a) — two
-      // copies of one diamond would be two venues to the tournament's own clash check, which compares copy ids.
-      const { data: already } = await supabaseAdmin
-        .from('diamonds').select('*')
-        .eq('tournament_id', data.tournamentId).eq('source_org_venue_id', data.orgVenueId)
-        .order('name', { ascending: true }).limit(1).maybeSingle();
-      if (already) {
-        const { data: facData } = await supabaseAdmin
-          .from('venue_facilities').select('*').eq('venue_id', already.id)
-          .order('display_order', { ascending: true });
-        return NextResponse.json({ success: true, venue: mapVenue(already, facData ?? []), existing: true });
-      }
-
-      const { data: newVenue, error: vErr } = await supabaseAdmin.from('diamonds').insert({
-        tournament_id:       data.tournamentId,
-        name:                ov.name,
-        address:             ov.address ?? null,
-        notes:               ov.notes   ?? null,
-        source_org_venue_id: data.orgVenueId,
-      }).select('*').single();
-      if (vErr || !newVenue) throw vErr ?? new Error('Failed to create tournament venue');
-
-      const facilities: any[] = ov.org_venue_facilities ?? [];
-      if (facilities.length > 0) {
-        const { error: fErr } = await supabaseAdmin.from('venue_facilities').insert(
-          facilities.map((f: any) => ({
-            venue_id:               newVenue.id,
-            tournament_id:          data.tournamentId,
-            name:                   f.name,
-            facility_type:          f.facility_type,
-            display_order:          f.display_order,
-            notes:                  f.notes ?? null,
-            source_org_facility_id: f.id,
-          }))
-        );
-        if (fErr) throw fErr;
-      }
-
-      const { data: facData } = await supabaseAdmin
-        .from('venue_facilities')
-        .select('*')
-        .eq('venue_id', newVenue.id)
-        .order('display_order', { ascending: true });
-
-      return NextResponse.json({ success: true, venue: mapVenue(newVenue, facData ?? []) });
+      // "Not found" for another org's venue too — the copy proves the venue is this org's before reading anything.
+      const copied = await copyLibraryVenue(data.tournamentId, ctx.org.id, data.orgVenueId);
+      if (!copied) return NextResponse.json({ error: 'Org venue not found' }, { status: 404 });
+      const [{ data: venue }, { data: facData }] = await Promise.all([
+        supabaseAdmin.from('diamonds').select('*').eq('id', copied.venueId).single(),
+        supabaseAdmin.from('venue_facilities').select('*').eq('venue_id', copied.venueId).order('display_order', { ascending: true }),
+      ]);
+      return NextResponse.json({ success: true, venue: mapVenue(venue, facData ?? []), ...(copied.existing ? { existing: true } : {}) });
     }
 
-    // -- import-from-past: copy a past-tournament venue into current --------
+    // -- import-from-past: a past event's venue ("your venues"), its facilities and any library links ------
     if (action === 'import-from-past') {
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
       const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
       if (wrongOrg) return wrongOrg;
-
-      const { data: srcVenue, error: svErr } = await supabaseAdmin
-        .from('diamonds').select('*').eq('id', data.sourceVenueId).single();
-      if (svErr || !srcVenue) return NextResponse.json({ error: 'Source venue not found' }, { status: 404 });
-      // Source venue must belong to the caller's org (prevents copying another org's venue)
-      const srcWrongOrg = await requireTournamentInOrg(ctx, srcVenue.tournament_id);
-      if (srcWrongOrg) return srcWrongOrg;
-
-      const { data: newVenue, error: vErr } = await supabaseAdmin.from('diamonds').insert({
-        tournament_id: data.tournamentId,
-        name:          srcVenue.name,
-        address:       srcVenue.address ?? null,
-        notes:         srcVenue.notes   ?? null,
-        // The club-library link travels with the copy (S6-04): the source is this club's own (checked above).
-        source_org_venue_id: srcVenue.source_org_venue_id ?? null,
-      }).select('*').single();
-      if (vErr || !newVenue) throw vErr ?? new Error('Failed to create venue');
-
-      const { data: srcFacilities } = await supabaseAdmin
-        .from('venue_facilities').select('*').eq('venue_id', data.sourceVenueId);
-
-      if (srcFacilities?.length) {
-        const { error: fErr } = await supabaseAdmin.from('venue_facilities').insert(
-          srcFacilities.map((f: any) => ({
-            venue_id:      newVenue.id,
-            tournament_id: data.tournamentId,
-            name:          f.name,
-            facility_type: f.facility_type,
-            display_order: f.display_order,
-            notes:         f.notes ?? null,
-            source_org_facility_id: f.source_org_facility_id ?? null,
-          }))
-        );
-        if (fErr) throw fErr;
-      }
-
-      const { data: facData } = await supabaseAdmin
-        .from('venue_facilities').select('*').eq('venue_id', newVenue.id)
-        .order('display_order', { ascending: true });
-
-      return NextResponse.json({ success: true, venue: mapVenue(newVenue, facData ?? []) });
+      // The source must be this org's (the copy proves it) — never another org's venue by id.
+      const copied = await copyPastVenue(data.tournamentId, ctx.org.id, data.sourceVenueId, ctx.assignedTournamentIds);
+      if (!copied) return NextResponse.json({ error: 'Source venue not found' }, { status: 404 });
+      const [{ data: venue }, { data: facData }] = await Promise.all([
+        supabaseAdmin.from('diamonds').select('*').eq('id', copied.venueId).single(),
+        supabaseAdmin.from('venue_facilities').select('*').eq('venue_id', copied.venueId).order('display_order', { ascending: true }),
+      ]);
+      return NextResponse.json({ success: true, venue: mapVenue(venue, facData ?? []) });
     }
 
     return NextResponse.json({ error: 'Unsupported action.' }, { status: 400 });

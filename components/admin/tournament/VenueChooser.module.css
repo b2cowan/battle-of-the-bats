@@ -1,0 +1,14 @@
+/* The ticked venue list (Tournament admin redesign Stage 5, E1/E5): the kit's field and row list, plus the search
+   box's magnifier at its right edge. Tokens only. */
+.chooser { display: flex; flex-direction: column; }
+.search { position: relative; display: block; }
+.searchInput { padding-right: 2.25rem; }
+.searchIcon {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+.quiet { font-weight: 400; color: var(--text-tertiary); }

@@ -3,9 +3,13 @@ import { getAuthContext, getAuthContextWithScope, unauthorized, requireCapabilit
 import { withObservability } from '@/lib/observability';
 import { tournamentToday } from '@/lib/timezone';
 import { isThemePresetKey } from '@/lib/themes';
-import { hasPlanFeature } from '@/lib/plan-features';
+import { hasOrgVenueLibrary, hasPlanFeature } from '@/lib/plan-features';
+import { isTournamentFormat, tournamentFormatCreatePatch } from '@/lib/tournament-phase';
+import { copyLibraryVenue, copyPastVenue, createTournamentVenue } from '@/lib/tournament-venue-copy';
+import { FACILITY_TYPES, type FacilityType } from '@/lib/types';
 import { hasFiniteSlots, readSlotHolders, visibleHolder } from '@/lib/tournament-slot';
 import { slotsInUseRefusal } from '@/lib/tournament-status-words';
+import { nameTakenRefusal, sameTournamentName } from '@/lib/tournament-name';
 
 type DivisionAgeConfig = {
   min: number | null;
@@ -28,6 +32,43 @@ type PoolInsertRow = {
   name: string;
   display_order: number;
 };
+
+/**
+ * The venues the New tournament window picked (Stage 5, E1): a new one with its count, a past event's ("your venues")
+ * or the club's library venue. Created in THIS request, after the tournament, so a failure takes the whole draft back
+ * (the catch below) — today the wizard saved them one call at a time after the draft, and a failure halfway left a
+ * draft missing a park.
+ */
+type SetupVenue =
+  | { kind: 'new'; name: string; address?: string | null; notes?: string | null; count: number; facilityType: FacilityType }
+  | { kind: 'past'; sourceVenueId: string }
+  | { kind: 'library'; orgVenueId: string };
+
+function readSetupVenues(value: unknown): SetupVenue[] | null {
+  if (value == null) return [];
+  if (!Array.isArray(value) || value.length > 40) return null;
+  const out: SetupVenue[] = [];
+  for (const raw of value as Array<Record<string, unknown>>) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (raw.kind === 'new' && typeof raw.name === 'string' && raw.name.trim()) {
+      out.push({
+        kind: 'new',
+        name: raw.name.trim(),
+        address: typeof raw.address === 'string' ? raw.address : null,
+        notes: typeof raw.notes === 'string' ? raw.notes : null,
+        count: Number(raw.count) || 1,
+        facilityType: FACILITY_TYPES.includes(raw.facilityType as FacilityType) ? raw.facilityType as FacilityType : 'other',
+      });
+    } else if (raw.kind === 'past' && typeof raw.sourceVenueId === 'string') {
+      out.push({ kind: 'past', sourceVenueId: raw.sourceVenueId });
+    } else if (raw.kind === 'library' && typeof raw.orgVenueId === 'string') {
+      out.push({ kind: 'library', orgVenueId: raw.orgVenueId });
+    } else {
+      return null;
+    }
+  }
+  return out;
+}
 
 type SeedTeam = {
   id: string;
@@ -85,10 +126,6 @@ function getTodayDateValue() {
   return year && month && day ? `${year}-${month}-${day}` : tournamentToday();
 }
 
-function normalizeTournamentName(name: string) {
-  return name.trim().replace(/\s+/g, ' ').toLowerCase();
-}
-
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const auth = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -131,7 +168,7 @@ export const POST = withObservability(async (req: Request) => {
       debug.push(line);
     };
 
-    const { tournament, divisions, announcement, seedData, scheduleParams, migration } = body;
+    const { tournament, divisions, announcement, seedData, scheduleParams } = body;
     const allowSeedData = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';
     const effectiveSeedData = allowSeedData ? seedData : null;
     const slug = String(tournament?.slug ?? '').trim().toLowerCase();
@@ -141,6 +178,20 @@ export const POST = withObservability(async (req: Request) => {
 
     if (!tournamentName) {
       return Response.json({ error: 'Tournament name is required.' }, { status: 400 });
+    }
+
+    // The style is saved WITH the tournament (F78): it used to be a second call whose failure was swallowed, so an
+    // Exhibition could quietly become round robin + playoffs.
+    if (tournament?.format != null && !isTournamentFormat(tournament.format)) {
+      return Response.json({ error: 'Unknown tournament style.' }, { status: 400 });
+    }
+    const formatPatch = tournamentFormatCreatePatch(isTournamentFormat(tournament?.format) ? tournament.format : undefined);
+
+    const setupVenues = readSetupVenues(body.venues);
+    if (!setupVenues) return Response.json({ error: 'The venues could not be read.' }, { status: 400 });
+    // The club's library is League Plus and Club only (the same gate as the library itself).
+    if (setupVenues.some(v => v.kind === 'library') && !hasOrgVenueLibrary(auth.org.planId)) {
+      return Response.json({ error: 'The Venue library is part of League Plus and Club.' }, { status: 403 });
     }
 
     if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
@@ -178,8 +229,8 @@ export const POST = withObservability(async (req: Request) => {
       .neq('status', 'archived');
 
     if (nameError) throw nameError;
-    if ((existingNames ?? []).some(row => normalizeTournamentName(row.name ?? '') === normalizeTournamentName(tournamentName))) {
-      return Response.json({ error: `A tournament named "${tournamentName}" already exists. Choose a different name.` }, { status: 409 });
+    if ((existingNames ?? []).some(row => sameTournamentName(row.name ?? '', tournamentName))) {
+      return Response.json({ error: nameTakenRefusal(tournamentName) }, { status: 409 });
     }
 
     // One at a time (A23): only a Draft or Active event holds a slot — a finished one stays online and holds none.
@@ -242,6 +293,7 @@ export const POST = withObservability(async (req: Request) => {
         end_date:        endDate,
         default_contact_member_id: creatorMember?.id ?? null,
         org_id: auth.org.id,
+        ...(formatPatch ? { settings: formatPatch.settings } : {}),
         // Left NULL unless explicitly chosen, so the event keeps following the org's theme.
         ...(themePreset ? { theme_preset: themePreset } : {}),
       })
@@ -307,31 +359,27 @@ export const POST = withObservability(async (req: Request) => {
       }
     }
 
-    // 3.5 Handle Migration
-    if (migration && migration.sourceTournamentId) {
-      console.log('Handling migration from tournament:', migration.sourceTournamentId);
-      
-      if (migration.migrateVenues) {
-        const { data: sourceVenues } = await supabase
-          .from('diamonds')
-          .select('*')
-          .eq('tournament_id', migration.sourceTournamentId);
-
-        if (sourceVenues && sourceVenues.length > 0) {
-          const rows = sourceVenues.map(d => ({
-            tournament_id: tid,
-            name: d.name,
-            address: d.address,
-            notes: d.notes
-          }));
-          const { error: dErr } = await supabase.from('diamonds').insert(rows);
-          if (dErr) console.error('Migration Error: Failed to clone venues', dErr);
-          else console.log(`Migrated ${rows.length} venues`);
-        }
-      }
-
-      // contacts table retired — migration.contactIds no longer cloned
+    // 3.5 Venues, each with its diamonds (Stage 5, E1). Any failure throws, and the catch takes the draft back.
+    // (The old "migration" path — venues copied with no facilities — had no caller left and went with it.)
+    // A past venue comes only from an event the member may see (their assignments, read when one is asked for).
+    // (null = unrestricted — an owner; a member whose scope can't be read gets none.)
+    let allowedTournamentIds: string[] | null = null;
+    if (setupVenues.some(v => v.kind === 'past')) {
+      const scoped = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
+      allowedTournamentIds = scoped ? scoped.assignedTournamentIds : [];
     }
+    for (const venue of setupVenues) {
+      if (venue.kind === 'new') {
+        await createTournamentVenue(tid, venue);
+      } else if (venue.kind === 'past') {
+        const copied = await copyPastVenue(tid, auth.org.id, venue.sourceVenueId, allowedTournamentIds);
+        if (!copied) throw new Error('One of your venues could not be found. Pick it again.');
+      } else {
+        const copied = await copyLibraryVenue(tid, auth.org.id, venue.orgVenueId);
+        if (!copied) throw new Error('One of the club’s venues could not be found. Pick it again.');
+      }
+    }
+    if (setupVenues.length) log(`Created ${setupVenues.length} venues`);
 
     // 4. Seed Data
     if (effectiveSeedData && Object.values(effectiveSeedData).some(v => v)) {
@@ -556,15 +604,16 @@ export const POST = withObservability(async (req: Request) => {
       }
     }
 
-    // 5. Announcement
-    if (announcement) {
-      await supabase.from('announcements').insert({
+    // 5. Announcement — part of the one step: a failed welcome takes the draft back too.
+    if (announcement && typeof announcement.body === 'string' && announcement.body.trim()) {
+      const { error: welcomeError } = await supabase.from('announcements').insert({
         tournament_id: tid,
         title: 'Welcome!',
-        body: announcement.body,
+        body: announcement.body.trim(),
         published_at: new Date().toISOString(),
         pinned: true
       });
+      if (welcomeError) throw welcomeError;
     }
 
     return new Response(JSON.stringify({ success: true, id: tid, slug, name: tournamentName, debug }), {

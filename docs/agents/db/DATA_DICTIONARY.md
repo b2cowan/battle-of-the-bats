@@ -1235,7 +1235,7 @@ the studio and mirrored to the platform audit log.
 **`name`** (text, NOT NULL) — venue display name; composed into `games.location` as `${venue.name} - ${facility.name}`.
 
 <!-- dict:col:diamonds.address -->
-**`address`** (text) — street address. _Dev/prod:_ prod's NOT NULL is a **live failure path** — venue create writes `address ?? null` ([venues/route.ts:449](../../../app/api/admin/venues/route.ts#L449)) and the form treats address as optional, so **creating an address-less venue fails on prod**. Migration 202 loosens prod — **applied to BOTH envs 2026-07-27**.
+**`address`** (text) — street address. _Dev/prod:_ prod's NOT NULL is a **live failure path** — venue create writes `address ?? null` (`lib/tournament-venue-copy` → `createTournamentVenue`, since Stage 5) and the form treats address as optional, so **creating an address-less venue fails on prod**. Migration 202 loosens prod — **applied to BOTH envs 2026-07-27**.
 
 <!-- dict:col:diamonds.notes -->
 **`notes`** (text) — admin notes.
@@ -1259,7 +1259,7 @@ the studio and mirrored to the platform audit log.
 **`tournament_id`** (FK → `tournaments.id`, NOT NULL) — denormalized scope (gotcha 3).
 
 <!-- dict:col:venue_facilities.name -->
-**`name`** (text, NOT NULL) — facility label (e.g. "Diamond 1").
+**`name`** (text, NOT NULL) — facility label (e.g. "Diamond 1"). **Since Tournament admin redesign Stage 5 (2026-10-10) every way a venue is ADDED names its lanes "Diamond 1…N" in the tournament's sport word** (`lib/venue-facilities` → `facilityNames`, written by `lib/tournament-venue-copy` → `createTournamentVenue`): never "Lions Park — Diamond 1" (the first run's old naming), and a count of one is "Diamond 1", never the venue's own name (the old one-lane habit). Rows written before Stage 5 keep their names (owner, 2026-10-10: stored names stay; an organizer renames on the venue's record).
 
 <!-- dict:col:venue_facilities.facility_type -->
 **`facility_type`** (text, NOT NULL, default `'other'`) — `diamond|field|court|rink|gym|other` (`FacilityType`, [lib/types.ts:200](../../../lib/types.ts#L200)); enforced by a DB CHECK constraint (mig 095, `venue_facilities_facility_type_check` — and the matching one on `org_venue_facilities`, mig 094).
@@ -1271,7 +1271,7 @@ the studio and mirrored to the platform audit log.
 **`notes`** (text) — facility notes.
 
 <!-- dict:col:venue_facilities.source_org_facility_id -->
-**`source_org_facility_id`** (FK → `org_venue_facilities.id`, nullable) — import-from-org provenance stamp.
+**`source_org_facility_id`** (FK → `org_venue_facilities.id`, nullable) — the copy's link to the club's library facility, set by import-from-org and **kept by every copy path** — import-from-past, the clone (Reuse this setup) and "into this draft" (`lib/tournament-venue-copy`, the one home since Tournament admin redesign Stage 5, 2026-10-10). Until Stage 5 the clone copied venues and NO facilities (Club Tier 6a's F2), so a reused park arrived with no lanes.
 
 <!-- dict:col:venue_facilities.settings -->
 **`settings`** (jsonb, NOT NULL, default `'{}'`) — **DEAD/unwired** (gotcha 2).

@@ -1,60 +1,43 @@
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem;
-  margin-top: 0.35rem;
-}
-
-.card {
-  text-align: left;
-  padding: 0.7rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--white);
-  min-height: 44px;
-  font: inherit;
-}
-
-.cardSelected {
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  border-color: var(--logic-lime);
-}
-
-.title {
-  display: block;
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
-.desc {
-  display: block;
-  font-size: 0.72rem;
-  color: var(--white-60);
-  margin-top: 0.2rem;
-  line-height: 1.35;
-}
-
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
-   The tournament-style cards: a kit option card, the chosen one the olive selection. Rendered by both
-   the new-tournament wizard and the org setup wizard (app/[orgSlug]/admin/onboarding/page.tsx, already
-   on the kit) — one recipe, so the choice reads the same in both places. ⚠ TOKENS ONLY. */
-:global([data-admin-kit]) .card {
+/* The tournament's style as radio rows (Tournament admin redesign Stage 5, E1): a row per format with its one line,
+   the chosen row on the olive selection. The kit's tokens only — the old dark-theme base and its [data-admin-kit] layer
+   retired with the creation wizards' rebuild. */
+.group { display: flex; flex-direction: column; gap: 0.5rem; }
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
   background: var(--card-bg);
-  border-color: var(--home-line-strong);
   color: var(--text-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-:global([data-admin-kit]) .cardSelected {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
+.row:hover { border-color: var(--home-olive); }
+.row:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.rowOn { background: var(--home-olive-soft); border-color: var(--home-olive); }
+.dot {
+  position: relative;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 0.1rem;
+  border: 2px solid var(--home-line-strong);
+  border-radius: 50%;
+  background: var(--card-bg);
 }
-:global([data-admin-kit]) .title { color: var(--text-primary); }
-:global([data-admin-kit]) .cardSelected .title { color: var(--home-olive); }
-:global([data-admin-kit]) .desc { color: var(--text-tertiary); }
+.rowOn .dot { border-color: var(--home-olive); }
+.rowOn .dot::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--home-olive);
+}
+.text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.title { font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.desc { font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }

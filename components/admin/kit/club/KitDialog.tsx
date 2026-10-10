@@ -83,6 +83,13 @@
  * The address is read when the step opens: a window whose level or record changes in place is re-keyed by its host. Escape, × and Back close the TOP window only (the floor answers the newest), the page-scroll lock is
  * a count, and a question opened from the raised window still lands on top of it. Mount it BESIDE the form it rises
  * over, never inside that form's body.
+ *
+ * A FORM IN STEPS (Tournament admin redesign Stage 5, E1 — New tournament, "Step 1 of 3"): `progress` draws the step
+ * bar under the head, one segment a step, the steps reached in olive; the caller says the step in `identity`.
+ * A FORM WITH A LIVE PREVIEW BESIDE IT (`aside`, the same window): drawn beside the panel at 1280 and wider (the
+ * caller's part hides itself below that), INSIDE the panel's element so the window's floor still holds it — Tab reaches
+ * its controls (the preview's colour swatches) and a click in it is not "outside". The panel moves left by the
+ * aside's width so the pair is centred; a phone never shows it.
  */
 import { createContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
@@ -130,6 +137,8 @@ export default function KitDialog({
   busy = false,
   wide = false,
   raised = false,
+  progress,
+  aside,
 }: {
   kind: 'question' | 'form';
   title: ReactNode;
@@ -172,6 +181,10 @@ export default function KitDialog({
   wide?: boolean;
   /** A form opened from INSIDE another form stands one layer above it (see the header; Stage 3d, Ask 7a). */
   raised?: boolean;
+  /** A form in steps: the step bar under the head (see the header; Stage 5). */
+  progress?: { at: number; of: number };
+  /** A live preview beside a form at 1280 and wider (see the header; Stage 5). */
+  aside?: ReactNode;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -223,7 +236,7 @@ export default function KitDialog({
     >
       <div
         ref={panelRef}
-        className={`${styles.panel} ${kind === 'question' ? styles.question : styles.form}${wide ? ` ${styles.wide}` : ''}`}
+        className={`${styles.panel} ${kind === 'question' ? styles.question : styles.form}${wide ? ` ${styles.wide}` : ''}${aside != null && kind === 'form' ? ` ${styles.withAside}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={ariaLabel ? undefined : titleId}
@@ -263,6 +276,13 @@ export default function KitDialog({
             </button>
           )}
         </div>
+        {progress && progress.of > 1 && (
+          <div className={styles.progress} aria-hidden>
+            {Array.from({ length: progress.of }, (_, i) => (
+              <span key={i} className={i < progress.at ? styles.progressDone : undefined} />
+            ))}
+          </div>
+        )}
         <KitReasonSlot.Provider value={reason}>
           <div className={styles.bodyWrap} data-has-status={status != null || undefined}>
             {/* Any change in the body quiets the reason beside the button: it was about what was there before. */}
@@ -304,6 +324,7 @@ export default function KitDialog({
             )}
           </nav>
         )}
+        {aside != null && kind === 'form' && <div className={styles.aside}>{aside}</div>}
       </div>
     </div>
   );

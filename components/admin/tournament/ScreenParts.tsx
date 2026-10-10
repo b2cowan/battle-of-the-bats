@@ -11,6 +11,7 @@
  *   screenParts.check22                                       — the product's checkbox at the drawing's 22px
  *   screenParts.headerButton · .headerButtonLabel             — worded at a desk, a 44px icon on a phone
  *   joinDots([...])                                          — "Jun 13 · On the site · Emailed to 18"
+ *   <CheckRow checked onChange title caption />               — a TICKED row inside a row list (Stage 5's venue list)
  */
 import { Fragment, type ReactNode } from 'react';
 import styles from './ScreenParts.module.css';
@@ -48,6 +49,33 @@ export function CheckChoice({ checked, onChange, title, caption, disabled }: {
         {caption != null && <span>{caption}</span>}
       </span>
     </label>
+  );
+}
+
+/**
+ * A ROW THAT IS TICKED, inside the kit's row list (`ClubRowList inset` in a `ClubRowFrame`) — the ticked list the
+ * New tournament window picks its venues from (Stage 5, E1; Add a venue too). Teams' Select many drew the same row in
+ * its own stylesheet (Stage 2): the 22px box first, the title and its caption, the whole row the target, never tinted —
+ * a chosen row is marked by its tick alone (standard §3.3). ⚠ Teams still draws its own copy: moving it onto this part
+ * is owed (a walked screen). A row whose tick can't change (a venue already in the tournament) is `disabled`.
+ */
+export function CheckRow({ checked, onChange, title, caption, disabled }: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  title: ReactNode;
+  caption?: ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <li className={styles.checkRowItem} data-row-list-row>
+      <label className={styles.checkRow} data-disabled={disabled || undefined}>
+        <input type="checkbox" className={styles.check22} checked={checked} disabled={disabled} onChange={e => onChange(e.target.checked)} />
+        <span className={styles.checkRowMain}>
+          <span className={styles.checkRowTitle}>{title}</span>
+          {caption != null && <span className={styles.checkRowCaption}>{caption}</span>}
+        </span>
+      </label>
+    </li>
   );
 }
 

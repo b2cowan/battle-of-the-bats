@@ -47,12 +47,10 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--logic-lime);
 }
 
 .title {
@@ -82,25 +80,13 @@
   align-items: flex-start;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
-  background: var(--surface, rgba(255,255,255,0.04));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
   transition: border-color 0.2s;
-}
-
-.stepDone {
-  border-color: rgba(74, 222, 128, 0.25);
-  background: rgba(74, 222, 128, 0.03);
 }
 
 .stepIcon {
   flex-shrink: 0;
   margin-top: 0.1rem;
-  color: var(--white-20, rgba(255,255,255,0.2));
-}
-
-.stepDone .stepIcon {
-  color: var(--success-light);
 }
 
 .stepBody {
@@ -110,14 +96,12 @@
 
 .stepTitle {
   font-weight: 700;
-  color: var(--white-90);
   font-size: 0.95rem;
   margin-bottom: 0.25rem;
 }
 
 .stepDesc {
   font-size: 0.82rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
   line-height: 1.5;
 }
 
@@ -126,22 +110,12 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--logic-lime);
   text-decoration: none;
   white-space: nowrap;
   padding: 0.4rem 0.85rem;
-  border-radius: 2px;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  background: transparent;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
-}
-
-.stepCta:hover {
-  background: rgba(var(--blueprint-blue-rgb), 0.1);
-  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
 }
 
 .stepCta:disabled,
@@ -159,7 +133,6 @@
 }
 
 .stepCtaSecondary {
-  color: var(--white-40, rgba(255,255,255,0.4));
   font-size: 0.78rem;
 }
 
@@ -181,8 +154,6 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(8px);
 }
 
 .planModal,
@@ -226,25 +197,18 @@
   align-items: center;
   gap: 0.85rem;
   margin-bottom: 1rem;
-  color: var(--logic-lime);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .wizardProgressBar {
   height: 5px;
   overflow: hidden;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.08);
 }
 
 .wizardProgressBar span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--logic-lime);
   transition: width 0.25s ease;
 }
 
@@ -296,9 +260,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  color: var(--white-60, rgba(255,255,255,0.6));
-  font-size: 0.72rem;
-  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -307,19 +268,8 @@
   grid-column: 1 / -1;
 }
 
-.fieldHint {
-  margin: 0.5rem 0 0;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.78rem;
-  font-weight: 400;
-  line-height: 1.4;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
 .requiredLegend {
   margin: 0.85rem 0 0;
-  color: var(--white-40, rgba(255,255,255,0.4));
   font-size: 0.72rem;
   font-weight: 400;
   letter-spacing: 0;
@@ -327,7 +277,6 @@
 }
 
 .requiredLegend span {
-  color: var(--logic-lime);
   font-weight: 700;
 }
 
@@ -347,7 +296,6 @@
 }
 
 .setupBlockHeader span {
-  color: var(--white-80, rgba(255,255,255,0.8));
   font-size: 0.82rem;
   font-weight: 900;
   letter-spacing: 0.04em;
@@ -355,32 +303,7 @@
 }
 
 .setupBlockHeader small {
-  color: var(--white-35, rgba(255,255,255,0.35));
   font-size: 0.74rem;
-}
-
-.presetGridCompact {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.presetButtonCompact {
-  min-height: 36px;
-  color: var(--white-60, rgba(255,255,255,0.6));
-  background: var(--black-20, rgba(0,0,0,0.2));
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  cursor: pointer;
-  font-weight: 800;
-}
-
-.presetButtonCompactActive,
-.presetButtonCompact:hover {
-  color: var(--white-90);
-  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
-  background: rgba(var(--blueprint-blue-rgb), 0.1);
 }
 
 .divisionPresetGrid {
@@ -397,34 +320,17 @@
   align-items: flex-start;
   text-align: left;
   padding: 0.75rem;
-  color: var(--white-55, rgba(255,255,255,0.55));
-  background: rgba(255,255,255,0.025);
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
   cursor: pointer;
 }
 
 .presetCard strong {
-  color: var(--white-80, rgba(255,255,255,0.8));
   font-size: 0.82rem;
 }
 
 .presetCard span {
   font-size: 0.74rem;
   line-height: 1.35;
-}
-
-.presetCardActive,
-.presetCard:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
-  background: rgba(var(--blueprint-blue-rgb), 0.1);
-}
-
-.addInlineRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
 }
 
 .inlineActions {
@@ -452,189 +358,27 @@
   gap: 0.45rem;
 }
 
-.divisionHeaderRow,
-.divisionInlineRow {
-  display: grid;
-  grid-template-columns: minmax(8rem, 1fr) 5.5rem 5.5rem 5.8rem 6.5rem 2rem;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.divisionHeaderRow {
-  padding: 0 0.35rem 0.1rem;
-  color: var(--white-35, rgba(255,255,255,0.35));
-  font-size: 0.66rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.divisionHeaderRow span {
-  min-width: 0;
-}
-
-.divisionInlineShell {
-  padding: 0.35rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255,255,255,0.02);
-}
-
-.divisionInlineRow :global(.form-input) {
-  height: 38px;
-  padding: 0.42rem 0.65rem;
-  font-size: 0.9rem;
-}
-
-.venueComposer {
-  padding: 1rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.045);
-}
-
 /* "+ Add venue" / Save+Cancel sit below the Notes field — clear separation. */
-.venueComposerAction {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.venueDraftGrid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.65rem;
-}
-
-.venueDraftGrid {
-  margin-bottom: 0.8rem;
-}
-
-.venueDraftGrid label:nth-child(1),
-.venueDraftGrid label:nth-child(2) {
-  grid-column: span 3;
-}
-
-.venueDraftGrid label:nth-child(3),
-.venueDraftGrid label:nth-child(4),
-.venueDraftGrid label:nth-child(5),
-.venueDraftGrid label:nth-child(6) {
-  grid-column: span 2;
-}
-
-.venueNotesField {
-  grid-column: 1 / -1;
-}
 
 /* Surface row — the "what do you play on" block (count + type + explainer),
    set apart from the address grid so the scheduling model reads clearly. */
-.venueSurfaceBlock {
-  margin: 0.85rem 0 0.85rem;
-  padding: 0.8rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255,255,255,0.025);
-}
-
-.venueSurfaceRow {
-  display: grid;
-  grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
-  gap: 0.65rem;
-  align-items: end;
-}
-
-.venueSurfaceExplain {
-  margin: 0.6rem 0 0;
-  color: var(--white-50, rgba(255,255,255,0.5));
-  font-size: 0.78rem;
-  font-weight: 400;
-  line-height: 1.5;
-  text-transform: none;
-  letter-spacing: 0;
-}
 
 @media (max-width: 560px) {
-  .venueSurfaceRow {
-    grid-template-columns: 1fr;
-  }
-}
-
-.venueList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  
 }
 
 /* Added venues render as concise, read-only summary rows (name · count · address)
    with Edit + remove actions — Edit loads the venue back into the composer. */
-.venueSummaryRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255,255,255,0.025);
-}
 
-.venueSummaryRowEditing {
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  background: rgba(var(--logic-lime-rgb), 0.06);
-}
-
-.venueSummaryText {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.venueSummaryName {
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: var(--white);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.venueSummaryMeta {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  color: var(--data-gray, rgba(255,255,255,0.45));
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.venueSummaryActions {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-shrink: 0;
-}
-
-.venueSummaryEditingTag {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
-  color: var(--logic-lime);
-}
-
-.compactCheckbox,
 .checkboxLine {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  color: var(--white-55, rgba(255,255,255,0.55));
   font-size: 0.78rem;
   font-weight: 700;
 }
 
-.compactCheckbox input,
-.checkboxLine input,
-.divisionInlineRow input[type='checkbox'] {
+.checkboxLine input {
   width: 16px;
   height: 16px;
 }
@@ -645,68 +389,14 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  color: var(--white-45, rgba(255,255,255,0.45));
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 2px;
   cursor: pointer;
-}
-
-.iconOnlyButton:hover {
-  color: var(--white-90);
-  background: rgba(255,255,255,0.05);
-  border-color: var(--border, rgba(255,255,255,0.08));
-}
-
-.poolSetupPanel {
-  margin-top: 0.65rem;
-  padding: 0.75rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.055);
-}
-
-.poolControlsRow {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.7rem;
-}
-
-.poolMiniField,
-.poolNameField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.66rem;
-  font-weight: 900;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.poolMiniField input {
-  width: 72px;
-  height: 34px;
-}
-
-.poolNameGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 0.6rem;
-}
-
-.poolNameField input {
-  height: 34px;
-  font-size: 0.82rem;
 }
 
 .emptyModalState {
   padding: 1rem;
-  color: var(--white-35, rgba(255,255,255,0.35));
   border: 1px dashed var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
   text-align: center;
   font-size: 0.85rem;
 }
@@ -731,11 +421,11 @@
 }
 
 .reviewItem:last-child {
-  border-bottom: 0;
+  border-bottom-width: 0;
+  border-bottom-style: none;
 }
 
 .reviewItem span {
-  color: var(--white-45, rgba(255,255,255,0.45));
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -743,14 +433,12 @@
 }
 
 .reviewItem strong {
-  color: var(--white-85, rgba(255,255,255,0.85));
   font-size: 0.9rem;
   text-align: right;
 }
 
 .planStage {
   width: 100%;
-  box-shadow: none;
 }
 
 .modalHeader {
@@ -784,15 +472,7 @@
   justify-content: center;
   flex-shrink: 0;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--white-70, rgba(255,255,255,0.7));
   cursor: pointer;
-}
-
-.modalClose:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
-  color: var(--white-90);
 }
 
 .planError {
@@ -801,9 +481,6 @@
   gap: 0.5rem;
   margin-top: 1rem;
   border: 1px solid rgba(248, 113, 113, 0.35);
-  border-radius: 2px;
-  background: rgba(248, 113, 113, 0.08);
-  color: var(--plan-error-text);
   font-size: 0.82rem;
   padding: 0.8rem 0.9rem;
 }
@@ -813,20 +490,11 @@
   min-width: 0;
 }
 
-.planErrorActions {
-  display: flex;
-  gap: 0.4rem;
-  flex-shrink: 0;
-}
-
 @media (max-width: 560px) {
   .planError {
     flex-wrap: wrap;
   }
-  .planErrorActions {
-    width: 100%;
-    justify-content: flex-end;
-  }
+  
 }
 
 @media (max-width: 640px) {
@@ -848,31 +516,17 @@
     padding: 0.75rem;
   }
 
-  .modalGridTwo,
-  .presetGridCompact,
-  .divisionInlineRow,
-  .venueDraftGrid,
-  .addInlineRow {
+  .modalGridTwo {
     grid-template-columns: 1fr;
   }
 
-  .venueDraftGrid label:nth-child(1),
-  .venueDraftGrid label:nth-child(2),
-  .venueDraftGrid label:nth-child(3),
-  .venueDraftGrid label:nth-child(4),
-  .venueDraftGrid label:nth-child(5),
-  .venueDraftGrid label:nth-child(6) {
-    grid-column: auto;
-  }
+  
 
-  .divisionHeaderRow {
-    display: none;
-  }
+  
 
   .workflowModalFooter,
-  .workflowFooterActions,
-  .reviewItem,
-  .poolControlsRow {
+.workflowFooterActions,
+.reviewItem {
     align-items: stretch;
     flex-direction: column;
   }
@@ -888,45 +542,9 @@
 }
 
 /* ── Founding Season welcome (qualifying step modal) ─────────────────────── */
-.foundingSeasonWelcome {
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  background: rgba(var(--logic-lime-rgb), 0.04);
-  padding: 0.9rem 1.1rem;
-  margin-bottom: 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.foundingSeasonWelcomeEyebrow {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.foundingSeasonWelcomeTitle {
-  font-family: var(--font-data);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--fl-text);
-  line-height: 1.2;
-}
-
-.foundingSeasonWelcomeCopy {
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  color: var(--data-gray);
-  line-height: 1.55;
-  margin-top: 0.15rem;
-}
 
 /* ── Founding Season banner (league/club checklist page) ──────────────────── */
 .foundingSeasonBanner {
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  background: rgba(var(--logic-lime-rgb), 0.04);
   padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
   display: flex;
@@ -936,77 +554,21 @@
 
 .foundingSeasonBannerEyebrow {
   font-family: var(--font-data);
-  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--logic-lime);
 }
 
 .foundingSeasonBannerTitle {
-  font-family: var(--font-data);
-  font-size: 0.88rem;
   font-weight: 700;
-  color: var(--fl-text);
   line-height: 1.2;
 }
 
 .foundingSeasonBannerCopy {
-  font-family: var(--font-data);
-  font-size: 0.76rem;
-  color: var(--data-gray);
   line-height: 1.55;
   margin-top: 0.1rem;
 }
 
 /* ── Qualifying step ──────────────────────────────────────────────────────── */
-.qualifyingOptions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  padding: 0.25rem 0;
-}
-
-.qualifyingOption {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 1rem 1.25rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.qualifyingOption:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-}
-
-.qualifyingOptionActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  background: rgba(var(--logic-lime-rgb), 0.05);
-}
-
-.qualifyingOptionLabel {
-  font-family: var(--font-data);
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--fl-text);
-  line-height: 1.2;
-}
-
-.qualifyingOptionActive .qualifyingOptionLabel {
-  color: var(--logic-lime);
-}
-
-.qualifyingOptionSub {
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  color: var(--data-gray);
-  line-height: 1.4;
-}
 
 /* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
    Setup ("Welcome to FieldLogicHQ", the plan chooser, the setup windows) on the coaches portal's
@@ -1015,33 +577,33 @@
    console face (F2). Scoped under `[data-admin-kit]` — the legacy rules above render untouched
    while the switch is off. ⚠ TOKENS ONLY (checkAdminKit). */
 
-:global([data-admin-kit]) .headerIcon {
+.headerIcon {
   background: var(--home-olive-soft);
   border-color: var(--home-line);
   color: var(--home-olive);
 }
-:global([data-admin-kit]) .title,
-:global([data-admin-kit]) .modalTitle {
+.title,
+.modalTitle {
   font-family: var(--font-display);
   font-weight: 700;
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .sub,
-:global([data-admin-kit]) .modalSub { color: var(--text-secondary); }
+.sub,
+.modalSub { color: var(--text-secondary); }
 
 /* ── The steps → kit cards; a done step says so in olive, not a green wash ── */
-:global([data-admin-kit]) .step {
+.step {
   background: var(--card-bg);
   border-color: var(--home-line);
   border-radius: 8px;
 }
-:global([data-admin-kit]) .stepDone { border-color: rgba(var(--success-rgb), 0.35); background: var(--card-bg); }
-:global([data-admin-kit]) .stepIcon { color: var(--text-tertiary); }
-:global([data-admin-kit]) .stepDone .stepIcon { color: var(--home-olive); }
-:global([data-admin-kit]) .stepTitle { color: var(--text-primary); }
-:global([data-admin-kit]) .stepDesc { color: var(--text-secondary); }
+.stepDone { border-color: rgba(var(--success-rgb), 0.35); background: var(--card-bg); }
+.stepIcon { color: var(--text-tertiary); }
+.stepDone .stepIcon { color: var(--home-olive); }
+.stepTitle { color: var(--text-primary); }
+.stepDesc { color: var(--text-secondary); }
 /* A step's action → the portal's secondary button; the quieter one → a text action. */
-:global([data-admin-kit]) .stepCta {
+.stepCta {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-support);
   font-weight: 650;
@@ -1050,147 +612,122 @@
   border-color: var(--home-line-strong);
   border-radius: var(--radius-sm);
 }
-:global([data-admin-kit]) .stepCta:hover { background: var(--home-olive-soft); border-color: var(--home-olive); }
-:global([data-admin-kit]) .stepCtaSecondary { color: var(--home-olive); background: transparent; border-color: transparent; }
-:global([data-admin-kit]) .stepCtaSecondary:hover { background: var(--home-olive-soft); border-color: transparent; }
-:global([data-admin-kit]) .stepCta:disabled,
-:global([data-admin-kit]) .stepCta[aria-disabled="true"],
-:global([data-admin-kit]) .stepCta:disabled:hover,
-:global([data-admin-kit]) .stepCta[aria-disabled="true"]:hover {
+.stepCta:hover { background: var(--home-olive-soft); border-color: var(--home-olive); }
+.stepCtaSecondary { color: var(--home-olive); background: transparent; border-color: transparent; }
+.stepCtaSecondary:hover { background: var(--home-olive-soft); border-color: transparent; }
+.stepCta:disabled,
+.stepCta[aria-disabled="true"],
+.stepCta:disabled:hover,
+.stepCta[aria-disabled="true"]:hover {
   color: var(--text-tertiary);
   background: var(--card-bg);
   border-color: var(--home-line);
 }
 
 /* ── Founding Season → a kit card with the olive edge; its eyebrow is the kit's ── */
-:global([data-admin-kit]) .foundingSeasonBanner,
-:global([data-admin-kit]) .foundingSeasonWelcome {
+.foundingSeasonBanner {
   background: var(--card-bg);
   border: 1px solid var(--home-line);
   border-left: 3px solid var(--home-olive);
   border-radius: 8px;
 }
-:global([data-admin-kit]) .foundingSeasonBannerEyebrow,
-:global([data-admin-kit]) .foundingSeasonWelcomeEyebrow {
+.foundingSeasonBannerEyebrow {
   font-size: var(--type-label);
   letter-spacing: 0.09em;
   color: var(--home-olive);
 }
-:global([data-admin-kit]) .foundingSeasonBannerTitle,
-:global([data-admin-kit]) .foundingSeasonWelcomeTitle {
+.foundingSeasonBannerTitle {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-heading);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .foundingSeasonBannerCopy,
-:global([data-admin-kit]) .foundingSeasonWelcomeCopy {
+.foundingSeasonBannerCopy {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-body);
   color: var(--text-secondary);
 }
 
 /* ── The windows (plan chooser, setup steps) → the portal's window over its scrim ── */
-:global([data-admin-kit]) .modalOverlay { background: var(--home-scrim); backdrop-filter: none; }
-:global([data-admin-kit]) .planModal,
-:global([data-admin-kit]) .workflowModal {
+.modalOverlay { background: var(--home-scrim); backdrop-filter: none; }
+.planModal,
+.workflowModal {
   background: var(--card-bg);
   border-color: var(--home-line);
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
 }
 /* The required plan choice is part of the page, not a window. */
-:global([data-admin-kit]) .planStage {
+.planStage {
   background: var(--card-bg);
   border-color: var(--home-line);
   border-radius: 12px;
   box-shadow: none;
 }
-:global([data-admin-kit]) .modalClose {
+.modalClose {
   background: var(--card-bg);
   border-color: var(--home-line-strong);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .modalClose:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
-:global([data-admin-kit]) .workflowModalFooter { border-top-color: var(--home-line); }
+.modalClose:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
+.workflowModalFooter { border-top-color: var(--home-line); }
 
 /* The wizard's progress: the kit's eyebrow and the olive bar. */
-:global([data-admin-kit]) .wizardChrome {
+.wizardChrome {
   font-family: var(--font-data);
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .wizardProgressBar { background: var(--home-line); border-radius: 6px; }
-:global([data-admin-kit]) .wizardProgressBar span { background: var(--home-olive); }
+.wizardProgressBar { background: var(--home-line); border-radius: 6px; }
+.wizardProgressBar span { background: var(--home-olive); }
 
 /* ── Fields ── the portal's label; hints and legends in the tertiary ink ── */
-:global([data-admin-kit]) .fieldLabel {
+.fieldLabel {
   font-size: var(--type-support);
   font-weight: 600;
   color: var(--text-tertiary);
 }
-:global([data-admin-kit]) .fieldHint,
-:global([data-admin-kit]) .requiredLegend,
-:global([data-admin-kit]) .venueSurfaceExplain { color: var(--text-tertiary); }
+.requiredLegend { color: var(--text-tertiary); }
 /* The required mark is a plain asterisk in the label's own ink (portal-wide ruling 2026-08-25). */
-:global([data-admin-kit]) .requiredLegend span { color: inherit; }
+.requiredLegend span { color: inherit; }
 
 /* ── Setup blocks, presets, lists → kit cards; the chosen one is the olive selection ── */
-:global([data-admin-kit]) .setupBlock,
-:global([data-admin-kit]) .venueSurfaceBlock,
-:global([data-admin-kit]) .reviewPanel,
-:global([data-admin-kit]) .venueSummaryRow,
-:global([data-admin-kit]) .divisionInlineShell {
+.setupBlock,
+.reviewPanel {
   background: var(--card-bg);
   border-color: var(--home-line);
   border-radius: 8px;
 }
-:global([data-admin-kit]) .setupBlockHeader span { color: var(--text-primary); }
-:global([data-admin-kit]) .setupBlockHeader small { color: var(--text-tertiary); }
-:global([data-admin-kit]) .presetButtonCompact,
-:global([data-admin-kit]) .presetCard {
+.setupBlockHeader span { color: var(--text-primary); }
+.setupBlockHeader small { color: var(--text-tertiary); }
+.presetCard {
   color: var(--text-secondary);
   background: var(--card-bg);
   border-color: var(--home-line-strong);
   border-radius: 8px;
 }
-:global([data-admin-kit]) .presetCard strong { color: var(--text-primary); }
-:global([data-admin-kit]) .presetButtonCompactActive,
-:global([data-admin-kit]) .presetButtonCompact:hover,
-:global([data-admin-kit]) .presetCardActive,
-:global([data-admin-kit]) .presetCard:hover {
+.presetCard strong { color: var(--text-primary); }
+.presetCardActive,
+.presetCard:hover {
   color: var(--text-primary);
   background: var(--home-olive-soft);
   border-color: var(--home-olive);
 }
-:global([data-admin-kit]) .divisionHeaderRow,
-:global([data-admin-kit]) .poolMiniField,
-:global([data-admin-kit]) .poolNameField { color: var(--text-tertiary); }
-:global([data-admin-kit]) .venueComposer,
-:global([data-admin-kit]) .poolSetupPanel {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .venueSummaryRowEditing { background: var(--home-olive-soft); border-color: var(--home-olive); }
-:global([data-admin-kit]) .venueSummaryName { color: var(--text-primary); }
-:global([data-admin-kit]) .venueSummaryMeta { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-tertiary); }
-:global([data-admin-kit]) .venueSummaryEditingTag { color: var(--home-olive); }
-:global([data-admin-kit]) .compactCheckbox,
-:global([data-admin-kit]) .checkboxLine { color: var(--text-secondary); }
-:global([data-admin-kit]) .iconOnlyButton { color: var(--text-tertiary); border-radius: var(--radius-sm); }
-:global([data-admin-kit]) .iconOnlyButton:hover { color: var(--text-primary); background: var(--home-olive-soft); border-color: var(--home-line); }
-:global([data-admin-kit]) .emptyModalState {
+
+.checkboxLine { color: var(--text-secondary); }
+.iconOnlyButton { color: var(--text-tertiary); border-radius: var(--radius-sm); }
+.iconOnlyButton:hover { color: var(--text-primary); background: var(--home-olive-soft); border-color: var(--home-line); }
+.emptyModalState {
   color: var(--text-tertiary);
   border-color: var(--home-line-strong);
   border-radius: 8px;
 }
-:global([data-admin-kit]) .reviewItem { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .reviewItem span { color: var(--text-tertiary); }
-:global([data-admin-kit]) .reviewItem strong { color: var(--text-primary); }
-:global([data-admin-kit]) .planError {
+.reviewItem { border-bottom-color: var(--home-line); }
+.reviewItem span { color: var(--text-tertiary); }
+.reviewItem strong { color: var(--text-primary); }
+.planError {
   color: var(--text-primary);
   background: rgba(var(--danger-rgb), 0.07);
   border-color: rgba(var(--danger-rgb), 0.35);
@@ -1198,19 +735,4 @@
 }
 
 /* ── The qualifying step's choices → kit option cards ── */
-:global([data-admin-kit]) .qualifyingOption {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .qualifyingOption:hover { border-color: var(--home-olive); background: var(--card-bg); }
-:global([data-admin-kit]) .qualifyingOptionActive { border-color: var(--home-olive); background: var(--home-olive-soft); }
-:global([data-admin-kit]) .qualifyingOptionLabel {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .qualifyingOptionActive .qualifyingOptionLabel { color: var(--home-olive); }
-:global([data-admin-kit]) .qualifyingOptionSub {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-secondary);
-}
+

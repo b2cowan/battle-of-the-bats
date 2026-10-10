@@ -3,6 +3,7 @@ import { LIVE_SEASON_STATUSES, liveSeasonOf, publicTryoutSeasonOf } from './seas
 import { countsOnRoster, rosterCountOf, seasonRecordOf } from './team-season-figures';
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
+import { copyTournamentVenues } from './tournament-venue-copy';
 import type { MeasurableTypeCreateFields } from './development-input';
 import { accountedCellKeys, scopeCompleteness } from './development-session-view';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from './plan-config';
@@ -340,30 +341,11 @@ export async function cloneTournament(
     };
 
     if (options.includeVenues) {
-      const { data: venues, error } = await supabaseAdmin
-        .from('diamonds')
-        .select('*')
-        .eq('tournament_id', sourceTournamentId)
-        .order('name', { ascending: true });
-      if (error) throw error;
-
-      if (venues?.length) {
-        const { data: insertedVenues, error: insertError } = await supabaseAdmin
-          .from('diamonds')
-          .insert(venues.map(venue => ({
-            tournament_id: targetTournamentId,
-            name: venue.name,
-            address: venue.address,
-            notes: venue.notes,
-            // The link to the club's library survives a clone (S6-04, Club Tier Stage 6a): the clash check reads it,
-            // and a clone is always the same club's (the source is read by org above). ⚠ The clone still copies NO
-            // facilities — recorded for Tournament Stage 5, which redraws setup; not fixed here.
-            source_org_venue_id: venue.source_org_venue_id ?? null,
-          })))
-          .select('id');
-        if (insertError) throw insertError;
-        copied.venues = insertedVenues?.length ?? 0;
-      }
+      // Every venue WITH its facilities and both library links (Tournament Stage 5, 6a's F2 — until then the clone
+      // copied venues and none of their diamonds, so next year's park arrived with no lane to schedule on). One home
+      // for every copy path: lib/tournament-venue-copy.
+      const { venueIds } = await copyTournamentVenues(sourceTournamentId, targetTournamentId!);
+      copied.venues = venueIds.length;
     }
 
     const divisionIdMap = new Map<string, string>();

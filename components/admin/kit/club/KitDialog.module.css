@@ -41,6 +41,36 @@
 /* A form whose body is a table (New allocation’s teams): wide enough for Team · Season · Share · Due. */
 .form.wide { max-width: 50rem; }
 
+/* A form in steps (Stage 5): the step bar under the head — one segment a step, the steps reached in olive. */
+.progress {
+  display: flex;
+  gap: 4px;
+  padding: 0.35rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--home-line);
+}
+.progress > span { flex: 1; height: 4px; border-radius: 2px; background: var(--home-line); }
+.progress > .progressDone { background: var(--home-olive); }
+
+/* A live preview beside a form (Stage 5, `aside`): inside the panel, drawn to its right at 1280 and wider; the panel
+   gives the overlay the aside's width as a margin so the pair is centred. The caller's part sizes itself (the
+   creation preview's phone is 300px) and hides below 1280. */
+.aside { display: none; }
+@media (min-width: 1280px) {
+  .form.withAside { margin-right: calc(300px + 4rem); }
+  /* On its own card (the hub's drawing), so the page under the scrim never reads through it. */
+  .aside {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: calc(100% + 1.5rem);
+    padding: 1rem 1.25rem 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid var(--home-line);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+  }
+}
+
 .head {
   display: flex;
   align-items: flex-start;

@@ -1,8 +1,7 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import {
   AlertCircle,
   ArrowRight,
@@ -15,36 +14,37 @@ import {
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL } from '@/lib/plan-config';
+import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
+import { PLAN_CONFIG, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL } from '@/lib/plan-config';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
-import type { FreeFloor, OrgPlan, TournamentFormat, FacilityType } from '@/lib/types';
-import { FACILITY_TYPE_LABELS } from '@/lib/types';
-import TournamentStyleCards from '@/components/admin/TournamentStyleCards';
-import { tournamentFormatCreatePatch } from '@/lib/tournament-phase';
+import type { FreeFloor, OrgPlan } from '@/lib/types';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
+/*
+ * THE FIRST RUN (Tournament admin redesign Stage 5, E1 and A47 — ruled 2026-10-10). Plan selection is a standalone gate
+ * (?choosePlan=1). On the Tournament plans the first run then opens the ONE New tournament window every later
+ * tournament uses (SetupWizardOpener's `first_run` door) — its own six steps are gone, and with them the "how many
+ * tournaments a year" question nothing read (F91), the Plus offer shown to an organizer who had just chosen free
+ * (J1-019) and the park's lanes named "Lions Park — Diamond 1" (F77). The house-league steps below are unchanged.
+ */
 const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
+/** The startup tasks the tournament path records (the progress read still names them). */
 const STARTUP_ORDER = ['tournament', 'divisions', 'welcome', 'venues'] as const;
-// Plan selection is a standalone gate (reached via ?choosePlan=1), NOT a numbered
-// wizard step. The wizard is the 6-step tournament setup flow.
-const WIZARD_ORDER = ['qualifying', ...STARTUP_ORDER, 'review'] as const;
 const LEAGUE_STARTUP_ORDER = ['league_season', 'league_divisions', 'league_registration', 'league_tournament'] as const;
 const LEAGUE_WIZARD_ORDER = ['league-season', 'league-divisions', 'league-registration', 'league-tournament', 'league-review'] as const;
 
 type StartupActionTaskId = typeof STARTUP_ORDER[number];
 type LeagueStartupActionTaskId = typeof LEAGUE_STARTUP_ORDER[number];
 type StartupProgressTaskId = 'plan' | StartupActionTaskId | LeagueStartupActionTaskId;
-// 'plan' is a gate, not part of WIZARD_ORDER, but it stays in the union so legacy
-// guards (activeModal === 'plan', markStartupTask('plan', …)) still type-check.
-type StartupTaskId = 'plan' | typeof WIZARD_ORDER[number];
 type LeagueWizardTaskId = typeof LEAGUE_WIZARD_ORDER[number];
 type StartupTaskStatus = 'pending' | 'complete' | 'skipped';
-type ActiveModal = StartupTaskId | LeagueWizardTaskId | null;
-type DivisionPreset = 'youth' | 'adult' | 'custom';
+// 'plan' is a gate, not a wizard step, but it stays in the union so the plan chooser's guards
+// (activeModal === 'plan') still type-check.
+type ActiveModal = 'plan' | LeagueWizardTaskId | null;
 type LeagueDivisionPreset = 'youth' | 'adult' | 'custom';
 
 type TournamentSummary = {
@@ -68,41 +68,6 @@ type StartupProgress = {
   firstTournament: TournamentSummary | null;
 };
 
-type DivisionRow = {
-  id: string;
-  sourceId?: string;
-  name: string;
-  minAge: string;
-  maxAge: string;
-  capacity: number;
-  poolCount: number;
-  requiresPoolSelection: boolean;
-  poolNames: string[];
-};
-
-type VenueFields = {
-  name: string;
-  street: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  country: string;
-  notes: string;
-  /** How many fields/diamonds this venue has — drives auto-created scheduling lanes (J1-028). */
-  fieldCount: string;
-  /** The kind of playing surface — sets the facility type + auto-names (Diamond 1…N). */
-  facilityType: FacilityType;
-};
-
-/** Surface types offered in the wizard (the in-app editor also has "other"; the
- *  wizard keeps it to the concrete surfaces and defaults to diamond). */
-const WIZARD_FACILITY_TYPES: FacilityType[] = ['diamond', 'field', 'court', 'rink', 'gym'];
-
-type VenueRow = VenueFields & {
-  id: string;
-};
-
-type DraftSkippedState = Record<StartupActionTaskId, boolean>;
 type LeagueDraftSkippedState = Record<LeagueStartupActionTaskId, boolean>;
 
 type LeagueDivisionRow = {
@@ -129,28 +94,6 @@ type LeagueSeasonForm = {
 };
 
 
-const CANADIAN_PROVINCES = [
-  'AB',
-  'BC',
-  'MB',
-  'NB',
-  'NL',
-  'NS',
-  'NT',
-  'NU',
-  'ON',
-  'PE',
-  'QC',
-  'SK',
-  'YT',
-];
-
-
-const DIVISION_PRESETS: Record<Exclude<DivisionPreset, 'custom'>, string[]> = {
-  youth: ['U9', 'U11', 'U13', 'U15', 'U17', 'U19'],
-  adult: ['Open', 'Competitive', 'Recreational'],
-};
-
 const LEAGUE_DIVISION_PRESETS: Record<Exclude<LeagueDivisionPreset, 'custom'>, string[]> = {
   youth: ['U9', 'U11', 'U13', 'U15', 'U17'],
   adult: ['Recreational', 'Competitive'],
@@ -160,16 +103,6 @@ function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-function getDefaultTournamentForm() {
-  const defaultName = `${new Date().getFullYear()} Tournament`;
-  return {
-    name: defaultName,
-    slug: generateSlug(defaultName),
-    startDate: '',
-    endDate: '',
-    format: 'round_robin_playoffs' as TournamentFormat,
-  };
-}
 
 function getDefaultLeagueSeasonForm(): LeagueSeasonForm {
   const nextYear = new Date().getFullYear();
@@ -192,14 +125,6 @@ function getDefaultLeagueSeasonForm(): LeagueSeasonForm {
   };
 }
 
-function getDefaultDraftSkipped(): DraftSkippedState {
-  return {
-    tournament: false,
-    divisions: false,
-    welcome: false,
-    venues: false,
-  };
-}
 
 function getDefaultLeagueDraftSkipped(): LeagueDraftSkippedState {
   return {
@@ -208,10 +133,6 @@ function getDefaultLeagueDraftSkipped(): LeagueDraftSkippedState {
     league_registration: false,
     league_tournament: false,
   };
-}
-
-function isDateValue(value: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 function getTodayDateValue() {
@@ -227,37 +148,7 @@ function getTodayDateValue() {
   return year && month && day ? `${year}-${month}-${day}` : tournamentToday();
 }
 
-function addDaysToDateValue(value: string, days: number) {
-  if (!isDateValue(value)) return '';
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
 
-function getDivisionStarterAgeRange(name: string) {
-  const normalized = name.trim();
-  const youthMatch = normalized.match(/^U\s*(\d{1,2})$/i) || normalized.match(/^(\d{1,2})\s*U$/i);
-  if (youthMatch) {
-    return { minAge: '', maxAge: youthMatch[1] };
-  }
-  if (['Open', 'Competitive', 'Recreational'].includes(normalized)) {
-    return { minAge: '18', maxAge: '' };
-  }
-  return { minAge: '', maxAge: '' };
-}
-
-function buildDivisionRows(names: string[]): DivisionRow[] {
-  return names.map((name, index) => ({
-    id: `${generateSlug(name) || 'division'}-${index + 1}`,
-    name,
-    ...getDivisionStarterAgeRange(name),
-    capacity: 8,
-    poolCount: 0,
-    requiresPoolSelection: false,
-    poolNames: ['Pool A'],
-  }));
-}
 
 function buildLeagueDivisionRows(names: string[]): LeagueDivisionRow[] {
   return names.map((name, index) => ({
@@ -267,70 +158,15 @@ function buildLeagueDivisionRows(names: string[]): LeagueDivisionRow[] {
   }));
 }
 
-function buildVenueDraft(): VenueFields {
-  return {
-    name: '',
-    street: '',
-    city: '',
-    province: '',
-    postalCode: '',
-    country: 'Canada',
-    notes: '',
-    fieldCount: '1',
-    facilityType: 'diamond',
-  };
-}
 
-function buildVenueRow(index: number, draft: VenueFields = buildVenueDraft()): VenueRow {
-  return { ...draft, id: `venue-${index}` };
-}
 
-function normalizeVenueFields(venue: VenueFields): VenueFields {
-  return {
-    name: venue.name.trim(),
-    street: venue.street.trim(),
-    city: venue.city.trim(),
-    province: venue.province.trim(),
-    postalCode: venue.postalCode.trim(),
-    country: venue.country.trim() || 'Canada',
-    notes: venue.notes.trim(),
-    fieldCount: normalizeFieldCount(venue.fieldCount),
-    facilityType: venue.facilityType,
-  };
-}
 
 /** Clamp the field/diamond count to a sane 1–30 and default to '1'. */
-function normalizeFieldCount(raw: string): string {
-  const n = parseInt(raw, 10);
-  if (isNaN(n) || n < 1) return '1';
-  return String(Math.min(n, 30));
-}
 
-function hasVenueContent(venue: VenueFields) {
-  const normalized = normalizeVenueFields(venue);
-  return !!(normalized.name || normalized.street || normalized.city || normalized.province || normalized.postalCode || normalized.notes);
-}
 
-function isVenueReady(venue: VenueFields) {
-  const normalized = normalizeVenueFields(venue);
-  return !!normalized.name;
-}
 
-function formatVenueAddress(venue: VenueFields) {
-  const normalized = normalizeVenueFields(venue);
-  const hasAddressDetails = !!(normalized.street || normalized.city || normalized.province || normalized.postalCode);
-  if (!hasAddressDetails) return '';
-
-  const cityLine = [normalized.city, normalized.province, normalized.postalCode].filter(Boolean).join(' ');
-  return [normalized.street, cityLine, normalized.country].filter(Boolean).join(', ');
-}
 
 /** Concise "3 Diamonds" style count for an added-venue summary row. */
-function venueFacilitySummary(venue: VenueFields): string {
-  const n = Number(normalizeFieldCount(venue.fieldCount));
-  const label = FACILITY_TYPE_LABELS[venue.facilityType] ?? 'Field';
-  return `${n} ${label}${n === 1 ? '' : 's'}`;
-}
 
 function normalizePlanId(planId: string): OrgPlan {
   return PLAN_ORDER.includes(planId as OrgPlan) ? planId as OrgPlan : 'tournament';
@@ -381,21 +217,22 @@ async function markStartupTask(taskId: StartupActionTaskId | LeagueStartupAction
   });
 }
 
-// Admin Design Continuity switch (Club Tier Stage 1, specimen 10): on, for a Club's owner → the
-// club's setup checklist on the kit; otherwise today's setup page, untouched below. The release slice
-// deletes this wrapper (slice 2 restyles today's page for every other plan first).
+// A Club's owner gets the club's setup checklist (Club Tier Stage 1, specimen 10); every other plan this page. (The
+// admin is always on the kit, so the switch this wrapper read is gone — Tournament admin redesign Stage 5.)
 const ClubSetupKit = dynamic(() => import('@/components/admin/kit/club/ClubSetupKit'));
 
 export default function OnboardingPage() {
-  const kit = useAdminKit();
   const { currentOrg, userRole } = useOrg();
-  return kit && userRole === 'owner' && isClubPlan(currentOrg?.planId) ? <ClubSetupKit /> : <OnboardingPageLegacy />;
+  return userRole === 'owner' && isClubPlan(currentOrg?.planId) ? <ClubSetupKit /> : <OnboardingPageLegacy />;
 }
 
 function OnboardingPageLegacy() {
   const { currentOrg, userRole, loading, refresh: refreshOrgContext } = useOrg();
   const { refresh: refreshTournamentContext } = useTournament();
+  const { openNew } = useSetupWizard();
   const router = useRouter();
+  // The New tournament window opens once per visit (the effect below re-runs on every state change).
+  const firstRunOpened = useRef(false);
   const searchParams = useSearchParams();
 
   const [startupProgress, setStartupProgress] = useState<StartupProgress | null>(null);
@@ -409,9 +246,6 @@ function OnboardingPageLegacy() {
   const [workflowRedirecting, setWorkflowRedirecting] = useState(false);
   const [stepSaving, setStepSaving] = useState(false);
   const [stepError, setStepError] = useState('');
-  // Optional inline action buttons rendered inside the step-error banner (used by
-  // the venue step to offer "Add it" / "Clear form" when the composer is dirty).
-  const [stepErrorActions, setStepErrorActions] = useState<Array<{ label: string; onClick: () => void; primary?: boolean }>>([]);
   const [gatingMap, setGatingMap] = useState<Record<OrgPlan, boolean>>(() => ({
     tournament: PLAN_CONFIG.tournament.gatingStatus === 'early_access',
     team: PLAN_CONFIG.team.gatingStatus === 'early_access',
@@ -422,23 +256,7 @@ function OnboardingPageLegacy() {
   }));
   const [planLoading, setPlanLoading] = useState<OrgPlan | null>(null);
   const [planError, setPlanError] = useState('');
-  const [draftSkipped, setDraftSkipped] = useState<DraftSkippedState>(getDefaultDraftSkipped);
   const [leagueDraftSkipped, setLeagueDraftSkipped] = useState<LeagueDraftSkippedState>(getDefaultLeagueDraftSkipped);
-  const [qualifyingAnswer, setQualifyingAnswer] = useState<string>('');
-
-  const [tournamentForm, setTournamentForm] = useState(getDefaultTournamentForm);
-  const [slugEdited, setSlugEdited] = useState(false);
-  const [divisionPreset, setDivisionPreset] = useState<DivisionPreset>('youth');
-  const [divisionRows, setDivisionRows] = useState<DivisionRow[]>(() => buildDivisionRows(DIVISION_PRESETS.youth));
-  const [customDivisionName, setCustomDivisionName] = useState('');
-  const [useWelcomeMsg, setUseWelcomeMsg] = useState(true);
-  const [welcomeMsg, setWelcomeMsg] = useState('Welcome to our tournament! We are excited to host a great event for all participating teams.');
-
-  const [venueDraft, setVenueDraft] = useState<VenueFields>(buildVenueDraft);
-  const [venueRows, setVenueRows] = useState<VenueRow[]>([]);
-  // When set, the composer is editing an already-added venue (loaded into the
-  // draft) rather than adding a new one. Added venues render as read-only rows.
-  const [editingVenueId, setEditingVenueId] = useState<string | null>(null);
   const [leagueSeasonForm, setLeagueSeasonForm] = useState<LeagueSeasonForm>(getDefaultLeagueSeasonForm);
   const [leagueDivisionPreset, setLeagueDivisionPreset] = useState<LeagueDivisionPreset>('youth');
   const [leagueDivisionRows, setLeagueDivisionRows] = useState<LeagueDivisionRow[]>(() => buildLeagueDivisionRows(LEAGUE_DIVISION_PRESETS.youth));
@@ -456,11 +274,6 @@ function OnboardingPageLegacy() {
     return [...STARTUP_ORDER, ...LEAGUE_STARTUP_ORDER].every(taskId => progress.tasks[taskId] !== 'complete');
   }
 
-  function getWizardResumeStep(): StartupTaskId {
-    // Plan selection is handled by a standalone gate (?choosePlan=1) before the wizard,
-    // so the wizard always resumes at its first setup step.
-    return 'qualifying';
-  }
 
   const refreshStartup = useCallback(async () => {
     const orgParam = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
@@ -566,7 +379,12 @@ function OnboardingPageLegacy() {
       return;
     }
 
-    void showWizardStep(getWizardResumeStep());
+    // The one New tournament window (Stage 5, E1), opened once; creating lands on the new draft's board.
+    if (firstRunOpened.current) return;
+    firstRunOpened.current = true;
+    openNew('first_run', { onCreated: finishFirstRun, onClose: closeWorkflowModal });
+    // The window's own handlers are read when it opens; `firstRunOpened` keeps it to one opening per visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, currentOrg, userRole, planChoiceRequired, continueSetup, planSelectionSucceeded, startupProgress, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting, router]);
 
   useEffect(() => {
@@ -624,18 +442,6 @@ function OnboardingPageLegacy() {
     }
   }
 
-  async function saveQualifyingStep() {
-    // Fire-and-forget — non-blocking segmentation data only
-    if (qualifyingAnswer && currentOrg) {
-      const orgParam = `?orgSlug=${encodeURIComponent(currentOrg.slug)}`;
-      fetch(`/api/admin/org/onboarding-survey${orgParam}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tournamentsPerYear: qualifyingAnswer }),
-      }).catch(() => {});
-    }
-    await advanceWizard('qualifying');
-  }
 
   async function choosePlan(planKey: OrgPlan, selectedBillingCycle: 'monthly' | 'annual' = 'monthly') {
     if (!currentOrg || planLoading) return;
@@ -720,24 +526,10 @@ function OnboardingPageLegacy() {
     }
   }
 
-  function resetTournamentModal() {
-    setTournamentForm(getDefaultTournamentForm());
-    setSlugEdited(false);
-    setDivisionPreset('youth');
-    setCustomDivisionName('');
-    setDivisionRows(buildDivisionRows(DIVISION_PRESETS.youth));
-    setUseWelcomeMsg(true);
-    setWelcomeMsg('Welcome to our tournament! We are excited to host a great event for all participating teams.');
-  }
 
   function resetWorkflowDraftState() {
-    resetTournamentModal();
-    setDraftSkipped(getDefaultDraftSkipped());
     resetLeagueSetupDraft();
-    setVenueDraft(buildVenueDraft());
-    setVenueRows([]);
     setStepError('');
-    setStepErrorActions([]);
   }
 
   function resetLeagueSetupDraft() {
@@ -749,12 +541,19 @@ function OnboardingPageLegacy() {
     setLeagueDraftSkipped(getDefaultLeagueDraftSkipped());
   }
 
-  // Clear the step-error banner AND any inline action buttons together. The two
-  // pieces of state must always be cleared as a unit, or stale venue-step action
-  // buttons can render on an unrelated step's error.
   function clearStepError() {
     setStepError('');
-    setStepErrorActions([]);
+  }
+
+  /** The first run's New tournament was created: setup is done, and the new draft's board opens. */
+  async function finishFirstRun(created: { id: string }) {
+    if (!currentOrg) return;
+    const orgParam = `?orgSlug=${encodeURIComponent(currentOrg.slug)}`;
+    setWorkflowRedirecting(true);
+    await requestJson<{ ok: boolean }>(`/api/admin/org/complete-onboarding${orgParam}`, { method: 'POST' }).catch(() => null);
+    await refreshTournamentContext(created.id);
+    await refreshOrgContext();
+    router.replace(getPostOnboardingHref(currentOrg, { hasTournament: true }));
   }
 
   async function showWizardStep(stepId: Exclude<ActiveModal, null>) {
@@ -779,24 +578,19 @@ function OnboardingPageLegacy() {
     setWizardDismissed(true);
   }
 
-  function isLeagueWizardStep(stepId: Exclude<ActiveModal, null>): stepId is LeagueWizardTaskId {
-    return (LEAGUE_WIZARD_ORDER as readonly string[]).includes(stepId);
-  }
-
-  function getWizardOrder(stepId: Exclude<ActiveModal, null>) {
-    return isLeagueWizardStep(stepId) ? LEAGUE_WIZARD_ORDER : WIZARD_ORDER;
+  function getWizardOrder() {
+    return LEAGUE_WIZARD_ORDER;
   }
 
   function getNextWizardStep(stepId: Exclude<ActiveModal, null>): Exclude<ActiveModal, null> | null {
-    const order = getWizardOrder(stepId);
+    const order = getWizardOrder();
     const currentIndex = (order as readonly string[]).indexOf(stepId);
     return (order[currentIndex + 1] as Exclude<ActiveModal, null> | undefined) ?? null;
   }
 
   function getPreviousWizardStep(stepId: Exclude<ActiveModal, null>): Exclude<ActiveModal, null> | null {
     if (stepId === 'league-season') return null;
-    if (stepId === 'review' && draftSkipped.tournament) return 'tournament';
-    const order = getWizardOrder(stepId);
+    const order = getWizardOrder();
     const currentIndex = (order as readonly string[]).indexOf(stepId);
     return currentIndex > 0 ? (order[currentIndex - 1] as Exclude<ActiveModal, null>) : null;
   }
@@ -818,35 +612,8 @@ function OnboardingPageLegacy() {
     await showWizardStep(previousStep);
   }
 
-  function applyDivisionPreset(preset: DivisionPreset) {
-    setDivisionPreset(preset);
-    setCustomDivisionName('');
-    const names = preset === 'custom' ? [] : DIVISION_PRESETS[preset];
-    setDivisionRows(buildDivisionRows(names));
-  }
 
-  function addDivisionRow() {
-    const name = customDivisionName.trim();
-    if (!name) return;
-    setDivisionRows(prev => [
-      ...prev,
-      {
-        id: `custom-${prev.length + 1}-${generateSlug(name) || 'division'}`,
-        name,
-        minAge: '',
-        maxAge: '',
-        capacity: 8,
-        poolCount: 0,
-        requiresPoolSelection: false,
-        poolNames: ['Pool A'],
-      },
-    ]);
-    setCustomDivisionName('');
-  }
 
-  function updateDivisionRow(id: string, updater: (row: DivisionRow) => DivisionRow) {
-    setDivisionRows(prev => prev.map(row => row.id === id ? updater(row) : row));
-  }
 
   function handleLeagueSeasonNameChange(name: string) {
     // The public link is auto-generated from the season name (the URL field was removed from the
@@ -881,232 +648,22 @@ function OnboardingPageLegacy() {
     setLeagueDivisionRows(prev => prev.map(row => row.id === id ? updater(row) : row));
   }
 
-  function updateDivisionPools(id: string, count: number) {
-    updateDivisionRow(id, row => {
-      const poolNames = Array.from({ length: count }).map((_, i) => row.poolNames[i] || `Pool ${String.fromCharCode(65 + i)}`);
-      return { ...row, poolCount: count, poolNames };
-    });
-  }
 
-  function updateDivisionPoolName(id: string, poolIndex: number, name: string) {
-    updateDivisionRow(id, row => {
-      const poolNames = [...row.poolNames];
-      poolNames[poolIndex] = name;
-      return { ...row, poolNames };
-    });
-  }
 
-  function updateTournamentStartDate(startDate: string) {
-    setTournamentForm(form => {
-      const endDate = startDate ? addDaysToDateValue(startDate, 2) : '';
-      // The tournament year is derived from the start date. If the name is still the
-      // auto-generated "<year> Tournament", re-sync it (and the slug) to the new year.
-      const autoNamed = /^\d{4} Tournament$/.test(form.name);
-      if (!startDate || !autoNamed) return { ...form, startDate, endDate };
-      const name = `${startDate.slice(0, 4)} Tournament`;
-      return {
-        ...form,
-        startDate,
-        endDate,
-        name,
-        ...(slugEdited ? {} : { slug: generateSlug(name) }),
-      };
-    });
-  }
 
-  function updateTournamentEndDate(endDate: string) {
-    setTournamentForm(form => {
-      if (!form.startDate) return { ...form, endDate: '' };
-      if (endDate && endDate < form.startDate) return { ...form, endDate: form.startDate };
-      return { ...form, endDate };
-    });
-  }
 
-  function updateVenueDraft(field: keyof VenueFields, value: string) {
-    setVenueDraft(draft => ({ ...draft, [field]: value }));
-  }
 
-  function updateVenueDraftType(value: FacilityType) {
-    setVenueDraft(draft => ({ ...draft, facilityType: value }));
-  }
 
-  function clearVenueError() {
-    setStepError('');
-    setStepErrorActions([]);
-  }
 
   /** Commit the composer draft (add new or save edit). Returns false if invalid. */
-  function commitVenueDraft(): boolean {
-    if (!isVenueReady(venueDraft)) return false;
-    const normalized = normalizeVenueFields(venueDraft);
-    if (editingVenueId) {
-      setVenueRows(prev => prev.map(row => row.id === editingVenueId ? { ...normalized, id: row.id } : row));
-      setEditingVenueId(null);
-    } else {
-      setVenueRows(prev => [...prev, buildVenueRow(Date.now(), normalized)]);
-    }
-    setVenueDraft(buildVenueDraft());
-    return true;
-  }
 
-  function loadVenueIntoComposer(row: VenueRow) {
-    setVenueDraft({
-      name: row.name, street: row.street, city: row.city, province: row.province,
-      postalCode: row.postalCode, country: row.country, notes: row.notes,
-      fieldCount: row.fieldCount, facilityType: row.facilityType,
-    });
-    setEditingVenueId(row.id);
-  }
 
-  // Inline-banner guard: the composer holds an unsaved venue. Offer actionable
-  // buttons (Add it / Clear form) right in the error banner instead of a dead end.
-  function flagDirtyComposer(message: string, afterResolve?: () => void) {
-    const valid = isVenueReady(venueDraft);
-    const actions: Array<{ label: string; onClick: () => void; primary?: boolean }> = [];
-    if (valid) {
-      actions.push({
-        label: editingVenueId ? 'Save changes' : 'Add it',
-        primary: true,
-        onClick: () => { if (commitVenueDraft()) { clearVenueError(); afterResolve?.(); } },
-      });
-    }
-    actions.push({
-      label: editingVenueId ? 'Cancel edit' : 'Clear form',
-      onClick: () => { setVenueDraft(buildVenueDraft()); setEditingVenueId(null); clearVenueError(); afterResolve?.(); },
-    });
-    setStepError(message);
-    setStepErrorActions(actions);
-  }
 
-  function addVenueDraft() {
-    if (!isVenueReady(venueDraft)) {
-      setStepError('Add a venue name before adding it to the list. Address details are optional.');
-      setStepErrorActions([]);
-      return;
-    }
-    commitVenueDraft();
-    clearVenueError();
-  }
 
-  function editVenueRow(id: string) {
-    const row = venueRows.find(r => r.id === id);
-    if (!row) return;
-    // If a draft is already in the composer (new or another edit), don't lose it
-    // silently — offer to add/save or clear it, then open the requested edit.
-    if (row.id !== editingVenueId && hasVenueContent(venueDraft)) {
-      flagDirtyComposer(
-        editingVenueId
-          ? 'You’re editing a venue. Save or cancel it first, then edit “' + row.name + '”.'
-          : 'You have an unsaved venue. Add it or clear the form, then edit “' + row.name + '”.',
-        () => loadVenueIntoComposer(row),
-      );
-      return;
-    }
-    loadVenueIntoComposer(row);
-    clearVenueError();
-  }
 
-  function cancelVenueEdit() {
-    setVenueDraft(buildVenueDraft());
-    setEditingVenueId(null);
-    clearVenueError();
-  }
 
-  function removeVenueRow(id: string) {
-    setVenueRows(prev => prev.filter(item => item.id !== id));
-    if (editingVenueId === id) cancelVenueEdit();
-  }
 
-  function getTournamentDraft() {
-    const slug = tournamentForm.slug || generateSlug(tournamentForm.name);
-    const name = tournamentForm.name.trim();
 
-    if (!name) {
-      throw new Error('Enter a tournament name before continuing.');
-    }
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-      throw new Error('Use a valid public link before continuing.');
-    }
-    if (!tournamentForm.startDate || !tournamentForm.endDate) {
-      throw new Error('Add start and end dates. You can change them later if they are still being finalized.');
-    }
-    if (tournamentForm.startDate < getTodayDateValue()) {
-      throw new Error('Start date cannot be before today.');
-    }
-    if (tournamentForm.endDate < tournamentForm.startDate) {
-      throw new Error('End date cannot be before the start date.');
-    }
-
-    // Year is derived from the start date — the wizard no longer asks for it separately.
-    return {
-      year: Number(tournamentForm.startDate.slice(0, 4)),
-      name,
-      slug,
-      startDate: tournamentForm.startDate,
-      endDate: tournamentForm.endDate,
-    };
-  }
-
-  function getDivisionDraftRows() {
-    const rows = divisionRows
-      .map(row => ({
-        ...row,
-        name: row.name.trim(),
-        minAge: row.minAge.trim(),
-        maxAge: row.maxAge.trim(),
-      }))
-      .filter(row => row.name);
-    if (rows.length === 0) throw new Error('Add at least one division, or skip this step.');
-
-    const duplicateDivision = rows.find((row, index) =>
-      rows.findIndex(other => other.name.toLowerCase() === row.name.toLowerCase()) !== index
-    );
-    if (duplicateDivision) throw new Error(`Division names must be unique. "${duplicateDivision.name}" is listed more than once.`);
-
-    const invalidCapacity = rows.find(row => !Number.isFinite(row.capacity) || row.capacity < 1);
-    if (invalidCapacity) throw new Error(`Add a valid max team count for ${invalidCapacity.name}.`);
-
-    const invalidAge = rows.find(row => {
-      const min = row.minAge === '' ? null : Number(row.minAge);
-      const max = row.maxAge === '' ? null : Number(row.maxAge);
-      if (min !== null && (!Number.isFinite(min) || min < 0)) return true;
-      if (max !== null && (!Number.isFinite(max) || max < 0)) return true;
-      return min !== null && max !== null && min > max;
-    });
-    if (invalidAge) throw new Error(`Review the age limits for ${invalidAge.name}. Leave either side blank for open-ended ranges.`);
-
-    return rows.map(row => ({
-      name: row.name,
-      minAge: row.minAge ? Number(row.minAge) : null,
-      maxAge: row.maxAge ? Number(row.maxAge) : null,
-      capacity: row.capacity || 8,
-      poolCount: row.poolCount,
-      poolNames: row.poolCount >= 2 ? row.poolNames.slice(0, row.poolCount).join(',') : '',
-      requiresPoolSelection: row.requiresPoolSelection,
-    }));
-  }
-
-  function getVenueDraftRows() {
-    if (hasVenueContent(venueDraft)) {
-      if (!isVenueReady(venueDraft)) {
-        throw new Error('Add a venue name before continuing, or clear the venue form.');
-      }
-      throw new Error(editingVenueId
-        ? 'Save or cancel the venue you’re editing before continuing.'
-        : 'Click Add venue before continuing, or clear the venue form.');
-    }
-
-    const rows = venueRows
-      .map(row => normalizeVenueFields(row))
-      .filter(hasVenueContent);
-    if (rows.length === 0) {
-      throw new Error('Add at least one venue name, or skip this step.');
-    }
-    if (rows.some(row => !isVenueReady(row))) {
-      throw new Error('Each added venue needs a venue name. Address details are optional.');
-    }
-    return rows;
-  }
 
   function getLeagueSeasonDraft() {
     const name = leagueSeasonForm.name.trim().replace(/\s+/g, ' ');
@@ -1181,110 +738,13 @@ function OnboardingPageLegacy() {
     }));
   }
 
-  async function saveTournamentStep() {
-    try {
-      const draft = getTournamentDraft();
-      setTournamentForm(form => ({ ...form, slug: draft.slug }));
-      setDraftSkipped(prev => ({ ...prev, tournament: false }));
-      setStepError('');
-      await advanceWizard('tournament');
-    } catch (err) {
-      setStepError(err instanceof Error ? err.message : 'Unable to continue.');
-    }
-  }
 
-  async function saveDivisionsStep() {
-    try {
-      getDivisionDraftRows();
-      setDraftSkipped(prev => ({ ...prev, divisions: false }));
-      setStepError('');
-      await advanceWizard('divisions');
-    } catch (err) {
-      setStepError(err instanceof Error ? err.message : 'Unable to continue.');
-    }
-  }
 
-  async function saveWelcomeStep() {
-    try {
-      if (useWelcomeMsg && !welcomeMsg.trim()) throw new Error('Add welcome message text, or skip this step.');
-      setDraftSkipped(prev => ({ ...prev, welcome: !useWelcomeMsg }));
-      setStepError('');
-      await advanceWizard('welcome');
-    } catch (err) {
-      setStepError(err instanceof Error ? err.message : 'Unable to continue.');
-    }
-  }
 
-  // The committed venue rows (excluding the composer draft) — pass an extra row
-  // when the caller has just committed a draft whose state hasn't flushed yet.
-  function finalizeVenueRows(extra?: VenueRow): { rows: ReturnType<typeof normalizeVenueFields>[]; error?: string } {
-    const all = extra ? [...venueRows, extra] : venueRows;
-    const rows = all.map(row => normalizeVenueFields(row)).filter(hasVenueContent);
-    if (rows.length === 0) return { rows, error: 'Add at least one venue name, or skip this step.' };
-    if (rows.some(row => !isVenueReady(row))) return { rows, error: 'Each added venue needs a venue name. Address details are optional.' };
-    return { rows };
-  }
 
-  async function advanceVenues(extra?: VenueRow) {
-    const { error } = finalizeVenueRows(extra);
-    if (error) { setStepError(error); setStepErrorActions([]); return; }
-    setDraftSkipped(prev => ({ ...prev, venues: false }));
-    clearVenueError();
-    await advanceWizard('venues');
-  }
-
-  async function saveVenuesStep() {
-    // Unsaved composer content blocks Next — offer actionable buttons inline.
-    if (hasVenueContent(venueDraft)) {
-      if (!isVenueReady(venueDraft)) {
-        // Invalid (no name): can only clear. Clearing then continues.
-        flagDirtyComposer(
-          'You started a venue but it has no name. Add a name, or clear the form to continue.',
-          () => { void advanceVenues(); },
-        );
-      } else {
-        // Valid: "Add it" commits the draft and continues with that row included
-        // (state hasn't flushed, so pass it explicitly); "Clear form" drops it.
-        const committed = buildVenueRow(Date.now(), normalizeVenueFields(venueDraft));
-        flagDirtyComposerForNext(committed);
-      }
-      return;
-    }
-    await advanceVenues();
-  }
 
   // Specialized dirty-banner for the Next action with a valid draft: Add-it path
   // must carry the just-built row forward (React state not yet flushed).
-  function flagDirtyComposerForNext(committed: VenueRow) {
-    const isEdit = !!editingVenueId;
-    setStepError(isEdit
-      ? 'You’re still editing a venue. Save or cancel it to continue.'
-      : 'You have an unsaved venue. Add it, or clear the form, to continue.');
-    setStepErrorActions([
-      {
-        label: isEdit ? 'Save changes' : 'Add it',
-        primary: true,
-        onClick: () => {
-          if (isEdit) {
-            setVenueRows(prev => prev.map(row => row.id === editingVenueId ? { ...committed, id: row.id } : row));
-            setEditingVenueId(null);
-            setVenueDraft(buildVenueDraft());
-            clearVenueError();
-            void advanceVenues();
-          } else {
-            setVenueRows(prev => [...prev, committed]);
-            setVenueDraft(buildVenueDraft());
-            clearVenueError();
-            void advanceVenues(committed);
-          }
-        },
-      },
-      {
-        label: isEdit ? 'Cancel edit' : 'Clear form',
-        onClick: () => { setVenueDraft(buildVenueDraft()); setEditingVenueId(null); clearVenueError(); void advanceVenues(); },
-      },
-    ]);
-  }
 
   async function saveLeagueSeasonStep() {
     try {
@@ -1326,37 +786,7 @@ function OnboardingPageLegacy() {
     await advanceWizard('league-tournament');
   }
 
-  function clearDraftForStep(taskId: StartupActionTaskId) {
-    if (taskId === 'tournament') {
-      resetTournamentModal();
-      setDraftSkipped(getDefaultDraftSkipped());
-    }
-    if (taskId === 'divisions') {
-      setDivisionPreset('custom');
-      setCustomDivisionName('');
-      setDivisionRows([]);
-    }
-    if (taskId === 'welcome') {
-      setUseWelcomeMsg(false);
-      setWelcomeMsg('');
-    }
-    if (taskId === 'venues') {
-      setVenueDraft(buildVenueDraft());
-      setVenueRows([]);
-    }
-  }
 
-  async function skipStep(taskId: StartupActionTaskId) {
-    clearDraftForStep(taskId);
-    setDraftSkipped(prev => {
-      if (taskId === 'tournament') {
-        return STARTUP_ORDER.reduce<DraftSkippedState>((acc, step) => ({ ...acc, [step]: true }), getDefaultDraftSkipped());
-      }
-      return { ...prev, [taskId]: true };
-    });
-    setStepError('');
-    await showWizardStep(taskId === 'tournament' ? 'review' : getNextWizardStep(taskId) ?? 'review');
-  }
 
   function clearLeagueDraftForStep(taskId: LeagueStartupActionTaskId) {
     if (taskId === 'league_season') {
@@ -1397,81 +827,6 @@ function OnboardingPageLegacy() {
     await showWizardStep(taskId === 'league_season' ? 'league-review' : getNextWizardStep(stepName) ?? 'league-review');
   }
 
-  async function saveSetupDraft() {
-    if (!currentOrg) return;
-    setStepError('');
-    setStepSaving(true);
-
-    // These admin routes are org-context fail-closed (requireOrgSlug) — always
-    // pass the active org slug so a multi-membership session resolves the right org.
-    const orgParam = `?orgSlug=${encodeURIComponent(currentOrg.slug)}`;
-
-    try {
-      if (draftSkipped.tournament) {
-        for (const taskId of STARTUP_ORDER) {
-          await markStartupTask(taskId, 'skipped', currentOrg?.slug);
-        }
-        await requestJson<{ ok: boolean }>(`/api/admin/org/complete-onboarding${orgParam}`, { method: 'POST' });
-        await refreshOrgContext();
-        setWorkflowRedirecting(true);
-        router.replace(getPostOnboardingHref(currentOrg, { hasTournament: false }));
-        return;
-      }
-
-      const tournament = getTournamentDraft();
-      const divisions = draftSkipped.divisions ? [] : getDivisionDraftRows();
-      const announcement = !draftSkipped.welcome && useWelcomeMsg ? { body: welcomeMsg.trim() } : null;
-      const venues = draftSkipped.venues ? [] : getVenueDraftRows();
-
-      const created = await requestJson<{ success: boolean; id: string; slug: string; name: string }>(`/api/admin/setup-tournament${orgParam}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tournament,
-          divisions,
-          announcement,
-          migration: null,
-        }),
-      });
-
-      await Promise.all(venues.map(row => requestJson<{ success: boolean }>(`/api/admin/venues${orgParam}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'save',
-          data: {
-            tournamentId: created.id,
-            name: row.name,
-            address: formatVenueAddress(row),
-            notes: row.notes || undefined,
-            fieldCount: Number(normalizeFieldCount(row.fieldCount)),
-            facilityType: row.facilityType,
-          },
-        }),
-      })));
-
-      // The style is a tournament setting; only the default (round robin + playoffs) needs no write.
-      const formatPatch = tournamentFormatCreatePatch(tournamentForm.format);
-      if (formatPatch) {
-        await requestJson<{ success: boolean }>(`/api/admin/tournaments${orgParam}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'patch-settings', id: created.id, data: formatPatch }),
-        }).catch(() => { /* non-fatal: format can still be set in Event Settings */ });
-      }
-
-      await requestJson<{ ok: boolean }>(`/api/admin/org/complete-onboarding${orgParam}`, { method: 'POST' });
-      await refreshTournamentContext();
-      await refreshOrgContext();
-      await refreshStartup();
-      setWorkflowRedirecting(true);
-      router.replace(getPostOnboardingHref(currentOrg, { hasTournament: true }));
-    } catch (err) {
-      setStepError(err instanceof Error ? err.message : 'Unable to save setup.');
-    } finally {
-      setStepSaving(false);
-    }
-  }
 
   async function saveLeagueSetupDraft() {
     if (!currentOrg) return;
@@ -1617,7 +972,7 @@ function OnboardingPageLegacy() {
     /** Show a "* required" legend when the step has required fields. */
     requiredHint?: boolean;
   }) {
-    const wizardOrder = getWizardOrder(options.stepId);
+    const wizardOrder = getWizardOrder();
     const stepNumber = (wizardOrder as readonly string[]).indexOf(options.stepId) + 1;
     const progressWidth = `${(stepNumber / wizardOrder.length) * 100}%`;
     const previousStep = getPreviousWizardStep(options.stepId);
@@ -1658,22 +1013,6 @@ function OnboardingPageLegacy() {
             <div className={styles.planError}>
               <AlertCircle size={14} />
               <span className={styles.planErrorText}>{stepError}</span>
-              {/* Inline actions only ever belong to the venues step — gate on it so
-                  stale actions can never render on another step's error banner. */}
-              {options.stepId === 'venues' && stepErrorActions.length > 0 && (
-                <span className={styles.planErrorActions}>
-                  {stepErrorActions.map(action => (
-                    <button
-                      key={action.label}
-                      type="button"
-                      className={`btn btn-sm ${action.primary ? 'btn-outline' : 'btn-ghost'}`}
-                      onClick={action.onClick}
-                    >
-                      {action.label}
-                    </button>
-                  ))}
-                </span>
-              )}
             </div>
           )}
 
@@ -1686,9 +1025,7 @@ function OnboardingPageLegacy() {
                 <button
                   type="button"
                   className="btn btn-ghost"
-                  onClick={() => void ((LEAGUE_STARTUP_ORDER as readonly string[]).includes(options.taskId!)
-                    ? skipLeagueStep(options.taskId as LeagueStartupActionTaskId)
-                    : skipStep(options.taskId as StartupActionTaskId))}
+                  onClick={() => void skipLeagueStep(options.taskId as LeagueStartupActionTaskId)}
                   disabled={stepSaving}
                 >
                   Skip
@@ -1707,54 +1044,8 @@ function OnboardingPageLegacy() {
   }
 
   function renderActiveModal() {
-    // Plan selection is a standalone gate (?choosePlan=1), not a wizard step — the wizard
-    // starts at 'qualifying'. (The old in-wizard 'plan' step was removed in the decouple.)
-    if (activeModal === 'qualifying') {
-      const QUALIFYING_OPTIONS = [
-        { value: '1', label: '1', sub: 'Just getting started' },
-        { value: '2-3', label: '2–3', sub: 'A few each season' },
-        { value: '4+', label: '4 or more', sub: 'Running a full tournament program' },
-      ];
-      const isFoundingSeasonWindow = isFoundingSeasonSignupOpen();
-      return renderModalFrame(
-        'One quick question',
-        'How many tournaments does your organization run per year? This helps us tailor the setup for you.',
-        (
-          <>
-            {isFoundingSeasonWindow && (
-              <div className={styles.foundingSeasonWelcome}>
-                <p className={styles.foundingSeasonWelcomeEyebrow}>Founding Season</p>
-                <p className={styles.foundingSeasonWelcomeTitle}>Welcome to your Founding Season.</p>
-                <p className={styles.foundingSeasonWelcomeCopy}>
-                  Tournament Plus is free through {FOUNDING_SEASON_END_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month. No credit card.
-                  We&apos;ll remind you during the summer, and in {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for your {FOUNDING_SEASON_NEXT_YEAR_LABEL} season.
-                </p>
-              </div>
-            )}
-            <div className={styles.qualifyingOptions}>
-              {QUALIFYING_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className={`${styles.qualifyingOption} ${qualifyingAnswer === opt.value ? styles.qualifyingOptionActive : ''}`}
-                  onClick={() => setQualifyingAnswer(opt.value)}
-                >
-                  <span className={styles.qualifyingOptionLabel}>{opt.label}</span>
-                  <span className={styles.qualifyingOptionSub}>{opt.sub}</span>
-                </button>
-              ))}
-            </div>
-          </>
-        ),
-        {
-          stepId: 'qualifying',
-          saveLabel: 'Continue',
-          onSave: saveQualifyingStep,
-          allowSkip: false,
-        }
-      );
-    }
-
+    // Plan selection is a standalone gate (?choosePlan=1), not a wizard step. The tournament path's steps are the one
+    // New tournament window (Stage 5); what is left here is the house-league path.
     if (activeModal === 'league-season') {
       return renderModalFrame(
         'Create your first season',
@@ -2063,453 +1354,6 @@ function OnboardingPageLegacy() {
           stepId: 'league-review',
           saveLabel: leagueDraftSkipped.league_season ? 'Finish for now' : 'Save setup',
           onSave: saveLeagueSetupDraft,
-        }
-      );
-    }
-
-    if (activeModal === 'tournament') {
-      return renderModalFrame(
-        'Create your tournament',
-        'Start with core tournament details. The tournament stays private as a draft.',
-        (
-          <>
-            <label className={styles.fieldLabel}>
-              Tournament name *{' '}
-              <input
-                className="form-input"
-                value={tournamentForm.name}
-                onChange={e => {
-                  const name = e.target.value;
-                  setTournamentForm(form => ({
-                    ...form,
-                    name,
-                    slug: slugEdited ? form.slug : generateSlug(name),
-                  }));
-                }}
-              />
-            </label>
-
-            <div className={styles.modalGridTwo}>
-              <label className={styles.fieldLabel}>
-                Start date *{' '}
-                <input
-                  className="form-input"
-                  type="date"
-                  min={todayDate}
-                  value={tournamentForm.startDate}
-                  onChange={e => updateTournamentStartDate(e.target.value)}
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                End date *{' '}
-                <input
-                  className="form-input"
-                  type="date"
-                  value={tournamentForm.endDate}
-                  min={tournamentForm.startDate || undefined}
-                  disabled={!tournamentForm.startDate}
-                  onChange={e => updateTournamentEndDate(e.target.value)}
-                />
-              </label>
-            </div>
-            <p className={styles.fieldHint}>
-              Start and end dates are required. You can change them later if they are still being finalized.
-            </p>
-
-            <div className={styles.fieldLabel}>
-              Tournament style
-              <TournamentStyleCards
-                value={tournamentForm.format}
-                onChange={format => setTournamentForm(form => ({ ...form, format }))}
-              />
-            </div>
-
-            <label className={styles.fieldLabel}>
-              Public link{' '}
-              <input
-                className="form-input"
-                value={tournamentForm.slug}
-                onChange={e => {
-                  setSlugEdited(true);
-                  setTournamentForm(form => ({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') }));
-                }}
-              />
-            </label>
-          </>
-        ),
-        { stepId: 'tournament', saveLabel: 'Next', onSave: saveTournamentStep, taskId: 'tournament', allowSkip: true, requiredHint: true }
-      );
-    }
-
-    if (activeModal === 'divisions') {
-      return renderModalFrame(
-        'Set up divisions',
-        'Add the divisions or divisions teams can register for. Pools or groups are optional when you need to split teams inside a division.',
-        (
-          <div className={styles.setupBlock}>
-            <div className={styles.setupBlockHeader}>
-              <span>Divisions</span>
-              <small>Max teams is the registration cap for that division.</small>
-            </div>
-            <div className={styles.presetGridCompact}>
-              {(['youth', 'adult', 'custom'] as DivisionPreset[]).map(preset => (
-                <button
-                  key={preset}
-                  type="button"
-                  className={`${styles.presetButtonCompact} ${divisionPreset === preset ? styles.presetButtonCompactActive : ''}`}
-                  onClick={() => applyDivisionPreset(preset)}
-                >
-                  {preset === 'youth' ? 'Youth' : preset === 'adult' ? 'Adult' : 'Custom'}
-                </button>
-              ))}
-            </div>
-            <div className={styles.addInlineRow}>
-              <input
-                className="form-input"
-                value={customDivisionName}
-                placeholder="Add a division, e.g. 12U, Open, Varsity"
-                onChange={e => setCustomDivisionName(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addDivisionRow();
-                  }
-                }}
-              />
-              <button type="button" className="btn btn-outline btn-sm" onClick={addDivisionRow}>
-                <Plus size={14} /> Add
-              </button>
-            </div>
-            <div className={styles.inlineList}>
-              <div className={styles.divisionHeaderRow} aria-hidden="true">
-                <span>Division</span>
-                <span>From age</span>
-                <span>To age</span>
-                <span>Max teams</span>
-                <span>Pools/groups</span>
-                <span></span>
-              </div>
-              {divisionRows.map(row => (
-                <div key={row.id} className={styles.divisionInlineShell}>
-                  <div className={styles.divisionInlineRow}>
-                    <input
-                      className="form-input"
-                      value={row.name}
-                      placeholder="Division"
-                      onChange={e => updateDivisionRow(row.id, current => ({ ...current, name: e.target.value }))}
-                    />
-                    <input
-                      className="form-input"
-                      type="number"
-                      min="0"
-                      value={row.minAge}
-                      placeholder="Any"
-                      onChange={e => updateDivisionRow(row.id, current => ({ ...current, minAge: e.target.value }))}
-                      aria-label={`${row.name || 'Division'} minimum age`}
-                    />
-                    <input
-                      className="form-input"
-                      type="number"
-                      min="0"
-                      value={row.maxAge}
-                      placeholder="Any"
-                      onChange={e => updateDivisionRow(row.id, current => ({ ...current, maxAge: e.target.value }))}
-                      aria-label={`${row.name || 'Division'} maximum age`}
-                    />
-                    <input
-                      className="form-input"
-                      type="number"
-                      min="1"
-                      value={row.capacity}
-                      onChange={e => updateDivisionRow(row.id, current => ({ ...current, capacity: Number(e.target.value) }))}
-                      aria-label={`${row.name || 'Division'} max teams`}
-                    />
-                    <label className={styles.compactCheckbox}>
-                      <input
-                        type="checkbox"
-                        checked={row.poolCount >= 2}
-                        onChange={e => e.target.checked ? updateDivisionPools(row.id, 2) : updateDivisionPools(row.id, 0)}
-                      />{' '}
-                      Pools/groups
-                    </label>
-                    <button
-                      type="button"
-                      className={styles.iconOnlyButton}
-                      onClick={() => setDivisionRows(prev => prev.filter(item => item.id !== row.id))}
-                      aria-label={`Remove ${row.name || 'division'}`}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                  {row.poolCount >= 2 && (
-                    <div className={styles.poolSetupPanel}>
-                      <div className={styles.poolControlsRow}>
-                        <label className={styles.poolMiniField}>
-                          <span>Pool/group count</span>
-                          <input
-                            className="form-input"
-                            type="number"
-                            min="2"
-                            max="4"
-                            value={row.poolCount}
-                            onChange={e => updateDivisionPools(row.id, Number(e.target.value))}
-                          />
-                        </label>
-                        <label className={styles.compactCheckbox}>
-                          <input
-                            type="checkbox"
-                            checked={row.requiresPoolSelection}
-                            onChange={e => updateDivisionRow(row.id, current => ({ ...current, requiresPoolSelection: e.target.checked }))}
-                          />{' '}
-                          Team chooses pool/group
-                        </label>
-                      </div>
-                      <div className={styles.poolNameGrid}>
-                        {Array.from({ length: row.poolCount }).map((_, i) => (
-                          <label key={`${row.id}-pool-${i}`} className={styles.poolNameField}>
-                            <span>{String.fromCharCode(65 + i)} Name</span>
-                            <input
-                              className="form-input"
-                              value={row.poolNames[i] || ''}
-                              onChange={e => updateDivisionPoolName(row.id, i, e.target.value)}
-                              placeholder="e.g. Gold"
-                            />
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-              {divisionRows.length === 0 && (
-                <div className={styles.emptyModalState}>Add at least one division to continue.</div>
-              )}
-            </div>
-          </div>
-        ),
-        { stepId: 'divisions', saveLabel: 'Next', onSave: saveDivisionsStep, taskId: 'divisions', allowSkip: true }
-      );
-    }
-
-    if (activeModal === 'welcome') {
-      return renderModalFrame(
-        'Create welcome message',
-        'Publish an optional pinned welcome note for teams and coaches on the tournament news page.',
-        (
-          <div className={styles.inlineList}>
-            <label className={styles.checkboxLine}>
-              <input type="checkbox" checked={useWelcomeMsg} onChange={e => setUseWelcomeMsg(e.target.checked)} />{' '}
-              Publish a welcome announcement
-            </label>
-            {useWelcomeMsg && (
-              <textarea
-                className="form-textarea"
-                rows={4}
-                value={welcomeMsg}
-                onChange={e => setWelcomeMsg(e.target.value)}
-              />
-            )}
-          </div>
-        ),
-        { stepId: 'welcome', saveLabel: 'Next', onSave: saveWelcomeStep, taskId: 'welcome', allowSkip: true }
-      );
-    }
-
-    if (activeModal === 'venues') {
-      return renderModalFrame(
-        'Add venues',
-        'Add the locations you expect to schedule games on. You can add more later.',
-        (
-          <div className={styles.inlineList}>
-            <div className={styles.venueComposer}>
-              <div className={styles.setupBlockHeader}>
-                <span>{editingVenueId ? 'Edit venue' : 'Add one venue'}</span>
-                <small>Country defaults to Canada.</small>
-              </div>
-              <div className={styles.venueDraftGrid}>
-                <label className={styles.fieldLabel}>
-                  Venue name *{' '}
-                  <input className="form-input" value={venueDraft.name} onChange={e => updateVenueDraft('name', e.target.value)} placeholder="Lions Field" />
-                </label>
-                <label className={styles.fieldLabel}>
-                  Street address{' '}
-                  <input className="form-input" value={venueDraft.street} onChange={e => updateVenueDraft('street', e.target.value)} placeholder="123 Main St" />
-                </label>
-                <label className={styles.fieldLabel}>
-                  City{' '}
-                  <input className="form-input" value={venueDraft.city} onChange={e => updateVenueDraft('city', e.target.value)} placeholder="Milton" />
-                </label>
-                <label className={styles.fieldLabel}>
-                  Province{' '}
-                  <select className="form-select" value={venueDraft.province} onChange={e => updateVenueDraft('province', e.target.value)}>
-                    <option value="">Select province</option>
-                    {CANADIAN_PROVINCES.map(province => (
-                      <option key={province} value={province}>{province}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className={styles.fieldLabel}>
-                  Postal code{' '}
-                  <input className="form-input" value={venueDraft.postalCode} onChange={e => updateVenueDraft('postalCode', e.target.value.toUpperCase())} placeholder="A1A 1A1" />
-                </label>
-                <label className={styles.fieldLabel}>
-                  Country{' '}
-                  <input className="form-input" value={venueDraft.country} onChange={e => updateVenueDraft('country', e.target.value)} />
-                </label>
-              </div>
-
-              {/* Surface block — the scheduling model: how many playable surfaces and of what kind. */}
-              <div className={styles.venueSurfaceBlock}>
-                <div className={styles.venueSurfaceRow}>
-                  <label className={styles.fieldLabel}>
-                    How many *{' '}
-                    <input
-                      className="form-input"
-                      type="number"
-                      min={1}
-                      max={30}
-                      step={1}
-                      value={venueDraft.fieldCount}
-                      onChange={e => updateVenueDraft('fieldCount', e.target.value)}
-                      placeholder="1"
-                    />
-                  </label>
-                  <label className={styles.fieldLabel}>
-                    Surface type *{' '}
-                    <select
-                      className="form-select"
-                      value={venueDraft.facilityType}
-                      onChange={e => updateVenueDraftType(e.target.value as FacilityType)}
-                    >
-                      {WIZARD_FACILITY_TYPES.map(t => (
-                        <option key={t} value={t}>{FACILITY_TYPE_LABELS[t]}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <p className={styles.venueSurfaceExplain}>
-                  A <strong>facility</strong> is one playable surface — a diamond, field, court, rink, or gym.
-                  The scheduler books one game per facility at a time, so entering{' '}
-                  <strong>{normalizeFieldCount(venueDraft.fieldCount)}</strong>{' '}lets that many games run in
-                  parallel here. We&apos;ll create {FACILITY_TYPE_LABELS[venueDraft.facilityType]}&nbsp;1…N
-                  automatically — you can rename them or add more on the Venues page anytime.
-                </p>
-              </div>
-
-              <label className={`${styles.fieldLabel} ${styles.venueNotesField}`} style={{ display: 'block' }}>
-                Notes{' '}
-                <input className="form-input" value={venueDraft.notes} onChange={e => updateVenueDraft('notes', e.target.value)} placeholder="Parking, entrance, field number" style={{ marginTop: '0.35rem' }} />
-              </label>
-              <div className={styles.venueComposerAction}>
-                <button type="button" className="btn btn-outline btn-sm" onClick={addVenueDraft}>
-                  {editingVenueId ? <><CheckCircle2 size={14} /> Save changes</> : <><Plus size={14} /> Add venue</>}
-                </button>
-                {editingVenueId && (
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={cancelVenueEdit}>
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.setupBlock}>
-              <div className={styles.setupBlockHeader}>
-                <span>Added venues</span>
-                <small>{venueRows.length} added</small>
-              </div>
-
-              {venueRows.length === 0 ? (
-                <div className={styles.emptyModalState}>
-                  No venues added yet. Complete the form above, then click Add venue.
-                </div>
-              ) : (
-                <div className={styles.venueList}>
-                  {venueRows.map((row) => {
-                    const address = formatVenueAddress(row);
-                    const isEditing = editingVenueId === row.id;
-                    return (
-                      <div key={row.id} className={`${styles.venueSummaryRow} ${isEditing ? styles.venueSummaryRowEditing : ''}`}>
-                        <div className={styles.venueSummaryText}>
-                          <strong className={styles.venueSummaryName}>{row.name}</strong>
-                          <span className={styles.venueSummaryMeta}>
-                            {venueFacilitySummary(row)}{address ? ` · ${address}` : ''}
-                          </span>
-                        </div>
-                        <div className={styles.venueSummaryActions}>
-                          {isEditing ? (
-                            <span className={styles.venueSummaryEditingTag}>Editing above…</span>
-                          ) : (
-                            <button type="button" className="btn btn-ghost btn-sm" onClick={() => editVenueRow(row.id)}>
-                              Edit
-                            </button>
-                          )}
-                          <button type="button" className={styles.iconOnlyButton} onClick={() => removeVenueRow(row.id)} aria-label={`Remove ${row.name}`}>
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        ),
-        { stepId: 'venues', saveLabel: 'Next', onSave: saveVenuesStep, taskId: 'venues', allowSkip: true, requiredHint: true }
-      );
-    }
-
-    if (activeModal === 'review') {
-      const divisionCount = draftSkipped.divisions ? 0 : divisionRows.filter(row => row.name.trim()).length;
-      const venueCount = draftSkipped.venues ? 0 : venueRows.filter(row => hasVenueContent(row)).length;
-      const welcomeIncluded = !draftSkipped.welcome && useWelcomeMsg && !!welcomeMsg.trim();
-
-      return renderModalFrame(
-        draftSkipped.tournament ? 'Finish setup' : 'Review and save',
-        draftSkipped.tournament
-          ? 'No tournament setup will be created. You can return to this wizard from the dashboard later.'
-          : 'Saving keeps the tournament hidden from the public. You can activate it later from Tournament Management.',
-        draftSkipped.tournament ? (
-          <div className={styles.reviewPanel}>
-            <div className={styles.emptyModalState}>
-              You skipped tournament creation, so no tournament, divisions, or venues will be created.
-            </div>
-          </div>
-        ) : (
-          <div className={styles.reviewPanel}>
-            <div className={styles.reviewItem}>
-              <span>Tournament</span>
-              <strong>{tournamentForm.name.trim() || 'Not named yet'}</strong>
-            </div>
-            <div className={styles.reviewItem}>
-              <span>Divisions</span>
-              <strong>{divisionCount > 0 ? `${divisionCount} included` : 'Skipped'}</strong>
-            </div>
-            <div className={styles.reviewItem}>
-              <span>Welcome message</span>
-              <strong>{welcomeIncluded ? 'Included' : 'Skipped'}</strong>
-            </div>
-            <div className={styles.reviewItem}>
-              <span>Venues</span>
-              <strong>{venueCount > 0 ? `${venueCount} included` : 'Skipped'}</strong>
-            </div>
-            <div className={styles.reviewItem}>
-              <span>Public contact</span>
-              <strong>You (editable in Event Settings)</strong>
-            </div>
-            <div className={styles.reviewItem}>
-              <span>Public visibility</span>
-              <strong>Not live yet</strong>
-            </div>
-            <div className={styles.emptyModalState}>
-              After saving, only admins can work on this tournament. Registration stays closed and the public page is not live until you activate it. Review the public page format, schedule, divisions, and registration details before going live.
-            </div>
-          </div>
-        ),
-        {
-          stepId: 'review',
-          saveLabel: draftSkipped.tournament ? 'Finish for now' : 'Save setup',
-          onSave: saveSetupDraft,
         }
       );
     }

@@ -1,0 +1,19 @@
+/* The New venue sheet (Tournament admin redesign Stage 5, E1/E5): the kit's fields (ClubKit), plus the count's
+   − [ n ] + row — two boxed icon buttons at the admin's control height (34px at a desk, the 44px floor on a touch
+   screen) beside a short number box. Tokens only. */
+.count { display: flex; align-items: center; gap: 0.5rem; }
+.countButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--admin-control-h, 34px);
+  min-width: var(--admin-control-h, 34px);
+  height: var(--admin-control-h, 34px);
+  padding: 0;
+}
+.countInput { width: 7rem; text-align: center; font-variant-numeric: tabular-nums; }
+.named { margin: 0 0 0.9rem; }
+@media (max-width: 768px) {
+  .countButton { width: var(--tap-min, 44px); min-width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .countInput { flex: 1 1 auto; width: auto; }
+}

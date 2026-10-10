@@ -9,6 +9,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { slotsInUseRefusal } from '@/lib/tournament-status-words';
 import { hasFiniteSlots, readSlotHolders, visibleHolder } from '@/lib/tournament-slot';
+import { nameTakenRefusal, sameTournamentName } from '@/lib/tournament-name';
+import { tournamentToday } from '@/lib/timezone';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -31,6 +33,8 @@ const SOURCE_SURFACES = [
   'sidebar_create',
   'manage_tournaments_new_button',
   'manage_tournaments_row',
+  // Stage 5: the first run opens the same window (E1).
+  'first_run',
   'finished_board',
   'past_tournaments_row',
   'tournament_record',
@@ -212,6 +216,8 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   if (!Number.isInteger(year) || year < 2000 || year > 2100) return json({ error: 'Choose a valid tournament year.' }, 400);
   if (startDate === undefined || endDate === undefined) return json({ error: 'Tournament dates must use YYYY-MM-DD format.' }, 400);
   if (startDate && endDate && endDate < startDate) return json({ error: 'End date cannot be before start date.' }, 400);
+  // The clone asks what New tournament asks (Stage 5, F84): never a start date before today.
+  if (startDate && startDate < tournamentToday()) return json({ error: 'Start date cannot be before today.' }, 400);
 
   // A colour chosen in the wizard's preview. Entitlement is decided here, not by the UI that
   // hid the row: unknown preset → 400, plan without custom branding or a member who may not
@@ -297,7 +303,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   }
 
   // One at a time (A23): the slot is held by Draft and Active events only — so a finished source holds none.
-  const [holders, { count: slugCount, error: slugError }] = await Promise.all([
+  const [holders, { count: slugCount, error: slugError }, { data: liveNames, error: namesError }] = await Promise.all([
     hasFiniteSlots(ctx.org.tournamentLimit) ? readSlotHolders(supabaseAdmin, ctx.org.id) : Promise.resolve([]),
     supabaseAdmin
       .from('tournaments')
@@ -305,13 +311,21 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       .eq('org_id', ctx.org.id)
       .eq('slug', slug)
       .neq('status', 'archived'),
+    supabaseAdmin
+      .from('tournaments')
+      .select('name')
+      .eq('org_id', ctx.org.id)
+      .neq('status', 'archived'),
   ]);
 
   if (slugError) return json({ error: slugError.message }, 500);
+  if (namesError) return json({ error: namesError.message }, 500);
   if (hasFiniteSlots(ctx.org.tournamentLimit) && holders.length >= ctx.org.tournamentLimit) {
     return json({ error: slotsInUseRefusal(ctx.org.tournamentLimit, visibleHolder(holders, ctx.assignedTournamentIds)) }, 403);
   }
   if ((slugCount ?? 0) > 0) return json({ error: 'Another tournament already uses this public link. Choose a different one.' }, 409);
+  // Two live events never share a name (F84: New tournament refused it, the clone didn't).
+  if ((liveNames ?? []).some(row => sameTournamentName(String(row.name ?? ''), name))) return json({ error: nameTakenRefusal(name) }, 409);
 
   try {
     const result = await cloneTournament(tournamentId, ctx.org.id, {

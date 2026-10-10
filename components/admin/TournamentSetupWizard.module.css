@@ -1,947 +1,132 @@
-.modalOverlay {
-  --wizard-modal-bg: #080b12; /* token-exempt: wizard modal near-black, no global match */
-  --plan-error-text: #fecaca; /* token-exempt: pale error text tone, no global match */
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(8px);
-  /* The overlay IS the two-pane row: the live public-page preview sits beside the modal as
-     a second flex child. The gap only shows when that pane is visible — it appears at its
-     own breakpoint (TournamentCreationPreview.module.css), and the nested "leave setup?"
-     confirm is position:fixed, so it never joins this row. */
-  gap: 20px;
-}
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
+   New tournament — the window's own parts (Tournament admin redesign Stage 5, E1; hub v45). The frame is the kit's
+   form window (KitDialog), the fields the kit's (ClubKit), the lists the kit's row list; what is left here is the
+   step bodies' layout. Rebuilt on the kit's tokens in Stage 5: the old dark base and its [data-admin-kit] layer
+   (59 rules) retired with the two wizards it styled. ⚠ TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
 
-.workflowModal {
-  width: min(880px, 100%);
-  max-height: min(780px, calc(100vh - 3rem));
-  overflow-y: auto;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 2px;
-  background: var(--wizard-modal-bg);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
-  padding: 1.25rem;
-}
-
-.wizardChrome {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 0.85rem;
-  margin-bottom: 1rem;
-  color: var(--logic-lime);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.wizardProgressBar {
-  height: 5px;
+.lede { margin: 0 0 0.9rem; color: var(--text-secondary); }
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
   overflow: hidden;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.08);
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.wizardProgressBar span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--logic-lime);
-  transition: width 0.25s ease;
-}
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 0.75rem; }
 
-.modalHeader {
+/* Step 1 — the name a finished event still holds (A55): an amber line under the field, its one-tap answer beside it. */
+.held {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.6rem;
+  margin: 0.1rem 0 0;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--home-amber);
 }
+.heldUse {
+  min-height: 34px;
+  padding: 0 0.15rem;
+  border: none;
+  background: none;
+  color: var(--home-olive);
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.heldUse:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+.address { overflow-wrap: anywhere; }
 
-.modalTitle {
+/* Step 2 — divisions, each a card with its own labels (J1-031). */
+.starter { display: grid; grid-template-columns: minmax(0, 12rem) minmax(0, 1fr); gap: 0 0.75rem; align-items: end; }
+.addDivision { display: flex; gap: 0.5rem; align-items: flex-end; }
+.addDivision > label { flex: 1 1 auto; min-width: 0; }
+.addButton { margin-bottom: 0.9rem; min-height: 40px; }
+.divisions { display: flex; flex-direction: column; gap: 0.75rem; }
+.division {
   margin: 0;
-  color: var(--white-90);
-  font-family: var(--font-data);
-  font-size: 1.2rem;
-  font-weight: 900;
+  padding: 0.85rem 0.9rem 0.2rem;
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  min-width: 0;
 }
-
-.modalSub {
-  margin: 0.35rem 0 0;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.86rem;
-  line-height: 1.5;
-}
-
-.modalClose,
-.iconOnlyButton {
+.division[aria-invalid] { border-color: var(--home-live); }
+.divisionHead { display: flex; gap: 0.5rem; align-items: flex-end; }
+.divisionHead > label { flex: 1 1 auto; min-width: 0; }
+.remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--white-70, rgba(255,255,255,0.7));
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  margin-bottom: 0.9rem;
+  padding: 0;
+}
+.checkLine {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--tap-min, 44px);
+  margin: -0.4rem 0 0.4rem;
+  font-size: var(--type-body);
+  color: var(--text-primary);
   cursor: pointer;
 }
+.checkLine input { width: 20px; height: 20px; margin: 0; flex: none; }
+.pools { padding: 0.2rem 0 0.2rem 0.9rem; border-left: 2px solid var(--home-line); margin-bottom: 0.6rem; }
 
-.modalClose {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-}
+/* Step 3 — the line under the list, named as the schedule will name the lanes. */
+.venueLine { margin: 0.75rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
 
-.iconOnlyButton {
-  width: 30px;
-  height: 30px;
-  background: transparent;
-}
+/* Review — the welcome message, a switch with its text. */
+.welcome { margin-top: 1rem; }
+.welcomeText { margin-top: 0.5rem; }
 
-.modalClose:hover,
-.iconOnlyButton:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
-  color: var(--white-90);
-}
-
-.workflowSlide {
-  animation: slideIn 0.24s ease both;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(28px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.workflowModalBody,
-.inlineList {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.workflowModalFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border, rgba(255,255,255,0.08));
-}
-
-.workflowFooterActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.reuseIntro {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.reuseTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--white-90);
-}
-
-.reuseTitleRow svg {
-  color: var(--logic-lime);
-  flex-shrink: 0;
-}
-
-.reuseTitleRow strong {
-  font-size: 0.9rem;
-  font-weight: 900;
-}
-
-.reuseIntro p {
-  max-width: 660px;
-  margin: 0;
-  color: var(--white-50, rgba(255,255,255,0.5));
-  font-size: 0.82rem;
-  line-height: 1.55;
-}
-
+/* "Start blank, or reuse" (left as today on the Tournament plan — the free tier review's) */
+.reuseIntro { display: flex; flex-direction: column; gap: 0.6rem; }
+.reuseIntro p { margin: 0; }
+.reuseTitleRow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; color: var(--text-primary); }
 .plusBadge {
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
   padding: 0.1rem 0.45rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  border-radius: 2px;
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  font-size: 0.68rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.sourceList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.sourceButton {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-width: 0;
-  padding: 0.7rem 0.9rem;
-  border: 1px solid var(--border-2, rgba(255,255,255,0.1));
-  border-radius: 2px;
-  color: inherit;
-  background: var(--surface-1, rgba(255,255,255,0.03));
-  cursor: pointer;
-  text-align: left;
-}
-
-.sourceButton:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.38);
-  background: rgba(var(--logic-lime-rgb), 0.055);
-}
-
-.sourceButton span,
-.sourceButton small {
-  display: block;
-}
-
-.sourceButton span {
-  min-width: 0;
-}
-
-.sourceButton span span {
-  overflow: hidden;
-  color: var(--white-85, rgba(255,255,255,0.85));
-  font-size: 0.88rem;
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sourceButton small {
-  margin-top: 0.2rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.74rem;
-}
-
-.sourceButton svg {
-  flex-shrink: 0;
-  color: var(--logic-lime);
-}
-
-.choiceDivider {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.choiceDivider span {
-  flex: 1;
-  height: 1px;
-  background: var(--border-2, rgba(255,255,255,0.1));
-}
-
-.choiceDivider strong {
-  color: var(--white-30, rgba(255,255,255,0.3));
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.modalGridTwo {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-}
-
-.fieldLabel,
-.poolMiniField,
-.poolNameField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  color: var(--white-60, rgba(255,255,255,0.6));
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.fieldHint {
-  margin: 0.5rem 0 0;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.78rem;
-  font-weight: 400;
-  line-height: 1.4;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.setupBlock,
-.venueCard,
-.reviewPanel {
-  padding: 1rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255,255,255,0.025);
-}
-
-.setupBlockHeader,
-.venueCardHeader {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.setupBlockHeader span,
-.venueCardHeader strong {
-  color: var(--white-80, rgba(255,255,255,0.8));
-  font-size: 0.82rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.setupBlockHeader small {
-  color: var(--white-35, rgba(255,255,255,0.35));
-  font-size: 0.74rem;
-}
-
-.presetGridCompact {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.presetButtonCompact {
-  min-height: 36px;
-  color: var(--white-60, rgba(255,255,255,0.6));
-  background: var(--black-20, rgba(0,0,0,0.2));
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  cursor: pointer;
-  font-weight: 800;
-}
-
-.presetButtonCompactActive,
-.presetButtonCompact:hover {
-  color: var(--white-90);
-  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
-  background: rgba(var(--blueprint-blue-rgb), 0.1);
-}
-
-.addInlineRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.divisionHeaderRow,
-.divisionInlineRow {
-  display: grid;
-  grid-template-columns: minmax(8rem, 1fr) 5.5rem 5.5rem 5.8rem 6.5rem 2rem;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.divisionHeaderRow {
-  padding: 0 0.35rem 0.1rem;
-  color: var(--white-35, rgba(255,255,255,0.35));
-  font-size: 0.66rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.divisionInlineShell {
-  padding: 0.35rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255,255,255,0.02);
-}
-
-.divisionInlineRow :global(.form-input) {
-  height: 38px;
-  padding: 0.42rem 0.65rem;
-  font-size: 0.9rem;
-}
-
-.compactCheckbox,
-.checkboxLine {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: var(--white-55, rgba(255,255,255,0.55));
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.compactCheckbox input,
-.checkboxLine input,
-.divisionInlineRow input[type='checkbox'] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--blueprint-blue);
-}
-
-.poolSetupPanel {
-  margin-top: 0.65rem;
-  padding: 0.75rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.055);
-}
-
-.poolControlsRow {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.7rem;
-}
-
-.poolMiniField input {
-  width: 72px;
-  height: 34px;
-}
-
-.poolNameGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 0.6rem;
-}
-
-.poolNameField input {
-  height: 34px;
-  font-size: 0.82rem;
-}
-
-.venueComposer {
-  padding: 1rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.045);
-}
-
-.venueDraftGrid,
-.venueCardGrid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.65rem;
-}
-
-.venueDraftGrid {
-  margin-bottom: 0.8rem;
-}
-
-.venueDraftGrid label:nth-child(1),
-.venueDraftGrid label:nth-child(2),
-.venueCardGrid label:nth-child(1),
-.venueCardGrid label:nth-child(2) {
-  grid-column: span 3;
-}
-
-.venueDraftGrid label:nth-child(3),
-.venueDraftGrid label:nth-child(4),
-.venueDraftGrid label:nth-child(5),
-.venueCardGrid label:nth-child(3),
-.venueCardGrid label:nth-child(4),
-.venueCardGrid label:nth-child(5),
-.venueCardGrid label:nth-child(6) {
-  grid-column: span 2;
-}
-
-.venueNotesField {
-  grid-column: 1 / -1;
-}
-
-.venueList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.existingVenueGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.6rem;
-}
-
-.existingVenueButton {
-  min-height: 88px;
-  padding: 0.75rem;
-  text-align: left;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  color: var(--white-65, rgba(255,255,255,0.65));
-  background: rgba(255,255,255,0.025);
-  cursor: pointer;
-}
-
-.existingVenueButton:hover,
-.existingVenueSelected {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--white-90);
-}
-
-.existingVenueButton strong,
-.existingVenueButton span,
-.existingVenueButton small {
-  display: block;
-}
-
-.existingVenueButton strong {
-  margin-bottom: 0.25rem;
-  font-size: 0.88rem;
-}
-
-.existingVenueButton span,
-.existingVenueButton small {
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.74rem;
-  line-height: 1.35;
-}
-
-.emptyModalState {
-  padding: 1rem;
-  color: var(--white-35, rgba(255,255,255,0.35));
-  border: 1px dashed var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  text-align: center;
-  font-size: 0.85rem;
-}
-
-.reviewPanel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.reviewItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
-}
-
-.reviewItem:last-child {
-  border-bottom: 0;
-}
-
-.reviewItem span {
-  color: var(--white-45, rgba(255,255,255,0.45));
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.reviewItem strong {
-  color: var(--white-85, rgba(255,255,255,0.85));
-  font-size: 0.9rem;
-  text-align: right;
-}
-
-.planError {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  border: 1px solid rgba(248, 113, 113, 0.35);
-  border-radius: 2px;
-  background: rgba(248, 113, 113, 0.08);
-  color: var(--plan-error-text);
-  font-size: 0.82rem;
-  padding: 0.8rem 0.9rem;
-}
-
-/* Discovery & Orientation (help Layer 3) — first-run wizard additions */
-.orientationBlurb {
-  margin: 0 0 0.25rem;
-  padding: 0.85rem 0.95rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.025);
-}
-.orientationBlurb p {
-  margin: 0 0 0.55rem;
-  color: var(--logic-lime);
-  font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.orientationBlurb ul {
-  margin: 0;
-  padding-left: 1.05rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.32rem;
-}
-.orientationBlurb li {
-  color: var(--white-70, rgba(255, 255, 255, 0.7));
-  font-size: 0.79rem;
-  line-height: 1.45;
-}
-
-.nextStepsCallout {
-  margin-top: 0.25rem;
-  padding: 0.85rem 0.95rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.025);
-}
-.nextStepsCallout strong {
-  display: block;
-  margin-bottom: 0.35rem;
-  color: var(--white-90);
-  font-size: 0.76rem;
-  font-weight: 800;
-}
-.nextStepsCallout p {
-  margin: 0;
-  color: var(--white-60, rgba(255, 255, 255, 0.6));
-  font-size: 0.78rem;
-  line-height: 1.5;
-}
-
-@media (max-width: 640px) {
-  .modalOverlay {
-    align-items: flex-start;
-    padding: 0.75rem;
-  }
-
-  .wizardChrome,
-  .modalGridTwo,
-  .presetGridCompact,
-  .divisionInlineRow,
-  .venueDraftGrid,
-  .venueCardGrid,
-  .addInlineRow {
-    grid-template-columns: 1fr;
-  }
-
-  .venueDraftGrid label:nth-child(1),
-  .venueDraftGrid label:nth-child(2),
-  .venueDraftGrid label:nth-child(3),
-  .venueDraftGrid label:nth-child(4),
-  .venueDraftGrid label:nth-child(5),
-  .venueDraftGrid label:nth-child(6),
-  .venueCardGrid label:nth-child(1),
-  .venueCardGrid label:nth-child(2),
-  .venueCardGrid label:nth-child(3),
-  .venueCardGrid label:nth-child(4),
-  .venueCardGrid label:nth-child(5),
-  .venueCardGrid label:nth-child(6) {
-    grid-column: auto;
-  }
-
-  .divisionHeaderRow {
-    display: none;
-  }
-
-  .workflowModalFooter,
-  .workflowFooterActions,
-  .reviewItem,
-  .poolControlsRow {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .reviewItem strong {
-    text-align: left;
-  }
-}
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
-   The new-tournament wizard on the coaches portal's kit: the same steps, words and actions, in both
-   themes. The recipes here are the portal's own, by value, and mirror the sibling setup flow already
-   on the kit (`app/[orgSlug]/admin/onboarding/onboarding.module.css`, slice 2 — same class vocabulary,
-   same tokens) so the two wizards read as one system. The window is the portal's card ground over its
-   scrim; the progress bar and buttons are olive/lime, never the platform blue; titles leave the console
-   face (F2) and monospace stays on the eyebrow-style counters. `TournamentCreationPreview`'s
-   `[data-public-preview]` island keeps the organization's own colours — nothing below reaches inside
-   it (module-scoped selectors can't; see the report for the shared classes that can).
-   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
-
-/* ── The window over its scrim ── */
-:global([data-admin-kit]) .modalOverlay { background: var(--home-scrim); }
-:global([data-admin-kit]) .workflowModal {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 12px;
-  box-shadow: var(--shadow-lg);
-}
-
-/* ── Step counter + progress bar → the kit eyebrow and the olive bar ── */
-:global([data-admin-kit]) .wizardChrome {
+  border: 1px solid var(--home-olive);
+  border-radius: 999px;
   font-family: var(--font-data);
   font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.09em;
-  color: var(--text-secondary);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--home-olive);
 }
-:global([data-admin-kit]) .wizardProgressBar { background: var(--home-line); border-radius: 6px; }
-:global([data-admin-kit]) .wizardProgressBar span { background: var(--home-olive); }
+.choiceDivider { display: flex; align-items: center; gap: 0.75rem; margin: 1rem 0 0; color: var(--text-tertiary); }
+.choiceDivider span { flex: 1; height: 1px; background: var(--home-line); }
+.choiceDivider strong { font-size: var(--type-support); font-weight: 600; }
 
-/* ── Header, close button ── */
-:global([data-admin-kit]) .modalTitle {
-  font-family: var(--font-display);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .modalSub { color: var(--text-secondary); }
-:global([data-admin-kit]) .modalClose,
-:global([data-admin-kit]) .iconOnlyButton {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  border-radius: var(--radius-sm);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .modalClose:hover,
-:global([data-admin-kit]) .iconOnlyButton:hover {
-  color: var(--text-primary);
-  background: var(--home-olive-soft);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) .workflowModalFooter { border-top-color: var(--home-line); }
+/* The reuse step (Stage 4, D2): its five areas and its review callout. */
+.areas { margin: 0.75rem 0; }
+.areasHeading { margin: 0 0 0.25rem; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
+.areasCount { font-weight: 500; color: var(--text-tertiary); }
+.reviewHeading { display: block; margin-bottom: 0.25rem; color: var(--text-primary); }
+.reviewList { margin: 0; padding-left: 1.1rem; }
+.privacy { margin-top: 0.75rem; }
 
-/* ── "Reuse a previous tournament setup" intro ── */
-:global([data-admin-kit]) .reuseTitleRow { color: var(--text-primary); }
-:global([data-admin-kit]) .reuseTitleRow svg { color: var(--home-olive); }
-:global([data-admin-kit]) .reuseIntro p { color: var(--text-tertiary); }
-:global([data-admin-kit]) .plusBadge {
-  color: var(--text-secondary);
-  background: var(--home-olive-soft);
-  border-color: var(--home-line-strong);
-  border-radius: 999px;
-}
-
-/* ── The clone-source list → kit option rows ── */
-:global([data-admin-kit]) .sourceButton {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .sourceButton:hover { border-color: var(--home-olive); background: var(--home-olive-soft); }
-:global([data-admin-kit]) .sourceButton span span { color: var(--text-primary); }
-:global([data-admin-kit]) .sourceButton small { color: var(--text-tertiary); }
-:global([data-admin-kit]) .sourceButton svg { color: var(--home-olive); }
-:global([data-admin-kit]) .choiceDivider span { background: var(--home-line); }
-:global([data-admin-kit]) .choiceDivider strong { color: var(--text-tertiary); }
-
-/* ── Fields → the portal's label ── */
-:global([data-admin-kit]) .fieldLabel,
-:global([data-admin-kit]) .poolMiniField,
-:global([data-admin-kit]) .poolNameField {
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .fieldHint { color: var(--text-tertiary); }
-
-/* ── Setup blocks, venue cards, review panel, division rows → kit cards ── */
-:global([data-admin-kit]) .setupBlock,
-:global([data-admin-kit]) .venueCard,
-:global([data-admin-kit]) .reviewPanel,
-:global([data-admin-kit]) .divisionInlineShell {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .setupBlockHeader span,
-:global([data-admin-kit]) .venueCardHeader strong { color: var(--text-primary); }
-:global([data-admin-kit]) .setupBlockHeader small { color: var(--text-tertiary); }
-
-/* ── Division preset toggle → the chosen segment is the olive selection ── */
-:global([data-admin-kit]) .presetButtonCompact {
-  color: var(--text-secondary);
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .presetButtonCompactActive,
-:global([data-admin-kit]) .presetButtonCompact:hover {
-  color: var(--text-primary);
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-}
-:global([data-admin-kit]) .divisionHeaderRow { color: var(--text-tertiary); }
-:global([data-admin-kit]) .compactCheckbox,
-:global([data-admin-kit]) .checkboxLine { color: var(--text-secondary); }
-:global([data-admin-kit]) .poolSetupPanel,
-:global([data-admin-kit]) .venueComposer {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  border-radius: 8px;
-}
-
-/* ── Existing-venue picker → kit option rows, the chosen one olive ── */
-:global([data-admin-kit]) .existingVenueButton {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  border-radius: 8px;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .existingVenueButton:hover { border-color: var(--home-olive); background: var(--card-bg); }
-:global([data-admin-kit]) .existingVenueSelected { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--text-primary); }
-:global([data-admin-kit]) .existingVenueButton strong { color: var(--text-primary); }
-:global([data-admin-kit]) .existingVenueButton span,
-:global([data-admin-kit]) .existingVenueButton small { color: var(--text-tertiary); }
-:global([data-admin-kit]) .emptyModalState {
-  color: var(--text-tertiary);
-  border-color: var(--home-line-strong);
-  border-radius: 8px;
-}
-
-/* ── Review step ── */
-:global([data-admin-kit]) .reviewItem { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .reviewItem span { color: var(--text-tertiary); }
-:global([data-admin-kit]) .reviewItem strong { color: var(--text-primary); }
-:global([data-admin-kit]) .planError {
-  color: var(--text-primary);
-  background: rgba(var(--danger-rgb), 0.07);
-  border-color: rgba(var(--danger-rgb), 0.35);
-  border-radius: 8px;
-}
-
-/* ── First-run orientation blurb / next-steps callout ── */
-:global([data-admin-kit]) .orientationBlurb,
-:global([data-admin-kit]) .nextStepsCallout {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .orientationBlurb p { color: var(--text-secondary); }
-:global([data-admin-kit]) .orientationBlurb li { color: var(--text-secondary); }
-:global([data-admin-kit]) .nextStepsCallout strong { color: var(--text-primary); }
-:global([data-admin-kit]) .nextStepsCallout p { color: var(--text-secondary); }
-
-/* ═══ THE REUSE STEP (Tournament admin redesign Stage 4, D2 — 2026-10-06) ═══════════════════════════
-   Every "Reuse this setup" door opens here. The content is the drawing's: the five areas as the
-   composer's checkbox rows (ScreenParts' CheckChoice), one sentence for what stays, the warnings as the
-   kit's white callout with an amber edge. At a desk the window and its preview are Stage 5's frame (the
-   rules above); on a phone the step FILLS the screen and covers the bar — the kit's form window (the
-   drawer-layers ruling) — with ✕ at the top left and Cancel + the one lime pinned at the foot.
-   Born on the kit: tokens only, no old-look layer. ═══ */
-.workflowModal.reuseWindow { padding: 0; }
-.reuseHead {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1.25rem 1.25rem 0.75rem;
-}
-.reuseTitleBlock { flex: 1; min-width: 0; }
-.reuseTitle {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--type-heading);
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-primary);
-}
-.reuseLede { margin: 0.25rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
-.reuseClose {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--admin-control-h);
-  height: var(--admin-control-h);
-  border: none;
-  border-radius: 7px;
-  background: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-}
-.reuseClose:hover { background: var(--home-olive-soft); color: var(--text-primary); }
-.reuseBody {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 0 1.25rem 1.25rem;
-}
-.reuseAreas { margin: 0; }
-.reuseAreasHeading {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin: 0 0 0.15rem;
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-heading);
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-primary);
-}
-.reuseAreasCount { font-size: var(--type-support); font-weight: 600; color: var(--text-tertiary); }
-.reuseNever { margin: 0.5rem 0 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
-.reuseReviewHeading { display: block; margin-bottom: 0.25rem; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
-.reuseReviewList { margin: 0; padding-left: 1rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
-.reuseReviewList li { margin: 0.2rem 0; }
-.reusePrivacy { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
-.reuseFoot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.85rem 1.25rem;
-  border-top: 1px solid var(--home-line);
-}
-.reuseFootButton { min-height: var(--admin-control-h); }
-@media (max-width: 768px) {
-  .reuseFootButton,
-  .reuseClose { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
-}
 @media (max-width: 640px) {
-  .modalOverlay.reuseOverlay { padding: 0; align-items: stretch; }
-  .workflowModal.reuseWindow {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-height: none;
-    height: 100dvh;
-    overflow: hidden;
-    border: 0;
-    border-radius: 0;
-  }
-  /* ✕ at the top left, as the drawing's sheet (the form window's leave-door corner). */
-  .reuseHead { padding: 0.5rem 1rem 0.75rem 0.5rem; border-bottom: 1px solid var(--home-line); align-items: center; }
-  .reuseClose { order: -1; }
-  .reuseBody { flex: 1; min-height: 0; overflow-y: auto; padding: 1rem; }
-  /* The name and the link full width; the two dates side by side, as drawn. */
-  .reuseBody .modalGridTwo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .reuseBody .modalGridTwo > label:nth-child(-n + 2) { grid-column: 1 / -1; }
-  .reuseFoot { padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); }
-  .reuseCreate { flex: 1; }
+  .grid2, .starter { grid-template-columns: 1fr; }
+  .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid3 > label:last-child { grid-column: 1 / -1; }
+  .remove { width: var(--tap-min, 44px); min-width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .addButton { min-height: var(--tap-min, 44px); }
 }

@@ -48,12 +48,6 @@
     "helpers": 6,
     "legacy": 1
   },
-  "app/[orgSlug]/admin/onboarding/onboarding.module.css": {
-    "kitScope": 80
-  },
-  "app/[orgSlug]/admin/onboarding/page.tsx": {
-    "useAdminKit": 1
-  },
   "app/[orgSlug]/admin/org/venues/venues-admin.module.css": {
     "kitScope": 23
   },
@@ -158,16 +152,6 @@
   },
   "components/admin/TieBreakerEditor.module.css": {
     "kitScope": 18
-  },
-  "components/admin/TournamentSetupWizard.module.css": {
-    "kitScope": 59
-  },
-  "components/admin/TournamentSetupWizard.tsx": {
-    "kx": 4,
-    "helpers": 1
-  },
-  "components/admin/TournamentStyleCards.module.css": {
-    "kitScope": 5
   },
   "components/admin/tournament/GuidanceRail.module.css": {
     "kitScope": 26

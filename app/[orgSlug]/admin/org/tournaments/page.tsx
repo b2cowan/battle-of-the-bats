@@ -27,7 +27,7 @@
  * tournaments' old address) redirects here. The door to it is "Tournaments" in the rail's Admin group and
  * the phone's More (D7a).
  */
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { ChevronRight, ExternalLink, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
@@ -65,10 +65,7 @@ export default function AdminTournamentsPage({
   const { openNew, openReuse } = useSetupWizard();
   const lists = useTournamentLists(currentOrg?.slug, currentOrg?.planId);
   const [openId, setOpenId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (createOnLoad) openNew('manage_tournaments_new_button');
-  }, [createOnLoad, openNew]);
+  const createOpened = useRef(false);
 
   const orgSlug = currentOrg?.slug ?? '';
   const canWrite = Boolean(userRole && hasCapability(userRole, userCapabilities, 'create_tournaments'));
@@ -85,6 +82,16 @@ export default function AdminTournamentsPage({
   // flash "0 of 1 in use" and a New tournament that then turns into the lock line (/review 2026-10-06).
   const ready = !lists.loading && !(lists.error && lists.events.length === 0);
   const planHref = tournamentPlusPanelHref(orgSlug);
+
+  // The ?create=1 address (the onboarding's League path, the coach portal's hosted section) opens New tournament —
+  // but only once the slot is read, and never at the limit (Stage 5, F83): there the slot line above says why, naming
+  // the event that holds it, instead of a wizard that refuses at its last step.
+  useEffect(() => {
+    if (!createOnLoad || !ready || !userRole || createOpened.current) return;
+    createOpened.current = true;
+    if (!atLimit && canWrite) openNew('manage_tournaments_new_button');
+  }, [createOnLoad, ready, userRole, atLimit, canWrite, openNew]);
+
   const bands = listBands(lists.events);
   const order = walkOrder(bands);
 

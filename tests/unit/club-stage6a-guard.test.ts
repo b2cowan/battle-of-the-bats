@@ -84,7 +84,7 @@ const EXEMPT: Record<string, string> = {
   'app/api/dev/seed/house-league/route.ts': 'a dev seed',
   'app/api/dev/seed/rep-team/route.ts': 'a dev seed',
   'app/api/dev/seed/tournament/route.ts': 'a dev seed',
-  'app/api/admin/setup-tournament/route.ts': 'a brand-new tournament\'s sample schedule, on venues it has just created — none carries a library link, so nothing it writes can be compared',
+  'app/api/admin/setup-tournament/route.ts': 'its only game writes are the dev-tools sample schedule (seedData, NEXT_PUBLIC_ENABLE_DEV_TOOLS only) on a brand-new DRAFT — since Tournament Stage 5 its venues may be library copies with their links, but a draft\'s sample games are never a real booking',
 };
 
 /** Writers not yet running the check, each with the stage that wires it. ⚠ ONLY SHRINKS. */
@@ -146,7 +146,9 @@ const WEARS_THE_FIELD = [
 ];
 /** Forms that still ask where their own way, and who brings them onto the field. ⚠ ONLY SHRINKS. */
 const WHERE_NOT_YET: Record<string, string> = {
-  'components/admin/TournamentSetupWizard.tsx': 'the setup wizard\'s venue step — Tournament Stage 5',
+  // The setup wizard's venue step LEFT this list in Tournament admin redesign Stage 5 (2026-10-10): it picks a
+  // tournament's venues from one ticked list (components/admin/tournament/VenueChooser — the club's library or "your
+  // venues"), it never asks where one event is. Its games wear the Venue field (GameWindow, MoveSheet).
   'components/coaches/ScheduleEditor.tsx': 'the free Basic coach\'s schedule (never in a club, no place book) — found by 6a\'s scan, not drawn; the owner rules whether it takes the field',
   'components/coaches/ScheduleImportSheet.tsx': 'the schedule import\'s row cells mirror the file\'s "Location" column (export and import) — renaming the column changes the file\'s contract (a /marketing finding); since 6a the import links a row to a club venue by name',
 };
@@ -174,12 +176,10 @@ describe('one way to say where, on every form (Ask 13)', () => {
   });
   it('the not-yet list only shrinks, and holds nothing stale', () => {
     assert.deepEqual(Object.keys(WHERE_NOT_YET).sort(), [
-      'components/admin/TournamentSetupWizard.tsx',
       'components/coaches/ScheduleEditor.tsx',
       'components/coaches/ScheduleImportSheet.tsx',
     ], 'a new not-yet form is a decision, not a fix');
     for (const f of Object.keys(WHERE_NOT_YET)) {
-      if (f === 'components/admin/TournamentSetupWizard.tsx') continue; // its venue step adds venues: it is listed by ruling (Ask 13), not by the scan
       assert.ok(forms.includes(f), `${f} no longer asks where its own way — move it to WEARS_THE_FIELD`);
     }
   });
