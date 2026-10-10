@@ -1,33 +1,29 @@
 'use client';
-import { useEffect, useState, useCallback, useMemo, type CSSProperties } from 'react';
+import { useEffect, useState, useCallback, type CSSProperties } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { Users, Trophy, Megaphone, TrendingUp } from 'lucide-react';
 import type { ActivityEvent } from '@/app/api/admin/tournament-activity/route';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 
 type EnrichedEvent = ActivityEvent & { timeAgo: string };
 
-// kitInk: registration is an INFO fact (blueprint-blue → info-light); score/final are the
-// brand accent (logic-lime → home-olive, matching the "done" ink used elsewhere on the kit);
-// announcement's literal slate has no theme answer of its own, so it goes to the quietest ink.
+// Each kind's ink on the kit: registration is an INFO fact; a score and a final are the brand accent (the "done" ink
+// used elsewhere on the kit); an announcement takes the quietest ink.
 const TYPE_CONFIG = {
-  registration:  { icon: Users,      color: 'var(--blueprint-blue)',  kitInk: KIT_INK.info,     label: 'Registration' },
-  score:         { icon: TrendingUp,  color: 'var(--logic-lime)',      kitInk: KIT_INK.accent,   label: 'Score'        },
-  game_complete: { icon: Trophy,      color: 'var(--logic-lime)',      kitInk: KIT_INK.accent,   label: 'Final'        },
-  announcement:  { icon: Megaphone,   color: 'rgba(148,163,184,0.7)',  kitInk: KIT_INK.tertiary, label: 'Announcement' },
+  registration:  { icon: Users,      ink: KIT_INK.info,     label: 'Registration' },
+  score:         { icon: TrendingUp, ink: KIT_INK.accent,   label: 'Score'        },
+  game_complete: { icon: Trophy,     ink: KIT_INK.accent,   label: 'Final'        },
+  announcement:  { icon: Megaphone,  ink: KIT_INK.tertiary, label: 'Announcement' },
 };
-type EventType = keyof typeof TYPE_CONFIG;
 
-// Today's inline styles (the switch-off look, byte for byte). `kx` lays the kit's patch over them
-// once per render (Admin Design Continuity slice 4b), not once per row of a feed that re-renders on
-// every live event.
-const HEADING_STYLE: CSSProperties = { fontFamily: 'var(--font-data)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--logic-lime)', marginBottom: '1rem' };
-const ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.6rem 0', borderBottom: '1px solid var(--white-5)' };
+// The feed's look on the kit — its old look retired with the board it sits on (Tournament admin redesign Stage 5): the
+// kit's patch folded onto the styles it was laid over, so nothing moved.
+const HEADING_STYLE: CSSProperties = { fontFamily: 'var(--font-data)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '1rem', ...KIT_INK.secondary };
+const ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.6rem 0', borderBottom: '1px solid var(--home-line)' };
 const LAST_ROW_STYLE: CSSProperties = { ...ROW_STYLE, borderBottom: 'none' };
-const ICON_BOX_STYLE: CSSProperties = { width: 28, height: 28, borderRadius: '2px', background: 'var(--white-5)', border: '1px solid var(--white-8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 };
-const MESSAGE_STYLE: CSSProperties = { fontSize: '0.82rem', color: 'var(--white-75)', lineHeight: 1.4 };
-const TIME_STYLE: CSSProperties = { fontSize: '0.7rem', color: 'var(--white-30)', marginTop: '0.1rem' };
+const ICON_BOX_STYLE: CSSProperties = { width: 28, height: 28, borderRadius: '2px', background: 'var(--home-olive-soft)', border: '1px solid var(--home-line-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 };
+const MESSAGE_STYLE: CSSProperties = { fontSize: '0.82rem', lineHeight: 1.4, ...KIT_INK.secondary };
+const TIME_STYLE: CSSProperties = { fontSize: '0.7rem', marginTop: '0.1rem', ...KIT_INK.tertiary };
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -46,17 +42,6 @@ export function LiveEventLog({ tournamentId, orgSlug, className }: { tournamentI
   const [events, setEvents] = useState<EnrichedEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
-  const kx = useKitStyle();
-  const feedStyles = useMemo(() => ({
-    heading: kx(HEADING_STYLE, KIT_INK.secondary),
-    row: kx(ROW_STYLE, { borderBottom: '1px solid var(--home-line)' }),
-    iconBox: kx(ICON_BOX_STYLE, { background: 'var(--home-olive-soft)', border: '1px solid var(--home-line-strong)' }),
-    message: kx(MESSAGE_STYLE, KIT_INK.secondary),
-    time: kx(TIME_STYLE, KIT_INK.tertiary),
-    icon: Object.fromEntries(
-      Object.entries(TYPE_CONFIG).map(([type, cfg]) => [type, kx({ color: cfg.color }, cfg.kitInk)]),
-    ) as Record<EventType, CSSProperties>,
-  }), [kx]);
 
   const fetchHistory = useCallback(async () => {
     setLoading(true);
@@ -135,7 +120,7 @@ export function LiveEventLog({ tournamentId, orgSlug, className }: { tournamentI
 
   return (
     <div className={className}>
-      <h2 style={feedStyles.heading}>
+      <h2 style={HEADING_STYLE}>
         Recent Activity
       </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0', maxHeight: '320px', overflowY: 'auto' }}>
@@ -143,13 +128,13 @@ export function LiveEventLog({ tournamentId, orgSlug, className }: { tournamentI
         const Icon = TYPE_CONFIG[event.type].icon;
         return (
           // The divider sits between rows only — the last row has none, switch on or off.
-          <div key={event.id} style={i < events.length - 1 ? feedStyles.row : LAST_ROW_STYLE}>
-            <div style={feedStyles.iconBox}>
-              <Icon size={13} style={feedStyles.icon[event.type]} />
+          <div key={event.id} style={i < events.length - 1 ? ROW_STYLE : LAST_ROW_STYLE}>
+            <div style={ICON_BOX_STYLE}>
+              <Icon size={13} style={TYPE_CONFIG[event.type].ink} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={feedStyles.message}>{event.message}</div>
-              <div style={feedStyles.time}>{event.timeAgo}</div>
+              <div style={MESSAGE_STYLE}>{event.message}</div>
+              <div style={TIME_STYLE}>{event.timeAgo}</div>
             </div>
           </div>
         );

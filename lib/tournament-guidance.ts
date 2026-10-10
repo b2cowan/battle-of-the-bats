@@ -14,6 +14,7 @@
  */
 import { hasPlanFeature } from './plan-features';
 import { getBillingHref } from './billing-urls';
+import { daysBetweenDateStrings, tournamentToday } from './timezone';
 import type { OrgPlan } from './types';
 
 export type GuidanceStage = 'draft' | 'pre' | 'live' | 'ready' | 'post' | 'done';
@@ -99,9 +100,13 @@ export function resolveGuidanceStage(opts: {
  * Encapsulates the clock read so callers can use it during render without
  * tripping the purity rule (same pattern as isWithinEventDates).
  */
+/**
+ * Days until the event starts, counted in the ORG's timezone — the board's count and the help drawer's (Stage 5: the
+ * drawer counted from the device's clock and UTC midnight, so it could say a different number than the board beside it).
+ */
 export function daysUntilStart(startDate?: string | null): number | null {
   if (!startDate) return null;
-  return Math.ceil((Date.parse(startDate) - Date.now()) / 86_400_000);
+  return daysBetweenDateStrings(tournamentToday(), startDate);
 }
 
 function base(orgSlug: string) {

@@ -166,6 +166,18 @@ export const REUSE_WORDS = {
   slugInvalid: 'Use lowercase letters, numbers, and hyphens in the public link.',
   /** The notice on the new draft's board. */
   created: (source: string) => `Draft created from ${source}`,
+  // ── "Into this draft" (Stage 5, E2 — the draft board's Start from a past tournament; /marketing 2026-10-10) ──
+  intoTitle: 'Start from a past tournament',
+  intoLede: (draft: string) => `Into ${draft}`,
+  intoSource: 'Bring forward from',
+  intoKeeps: 'This draft keeps its name, link, and dates. Anything already in it stays; what you bring in is added beside it.',
+  intoNeverCopied: (source: string) => `Teams, registrations, games, scores, payments, files, and messages stay with ${source}.`,
+  intoBring: 'Bring it in',
+  intoBringing: 'Bringing it in…',
+  /** The board's notice once it lands. */
+  broughtIn: (source: string) => `Brought in from ${source}.`,
+  intoFailed: 'It couldn’t be brought in, and the draft is as it was. Please try again.',
+  intoFailedPartly: 'It couldn’t all be brought in, and part of it may be in the draft. Check the board before you try again.',
 } as const;
 
 /** The one Tournaments list (D7, ruled 2026-10-06 — it replaced A22's two lists): every event in one band. */

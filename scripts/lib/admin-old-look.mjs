@@ -10,7 +10,7 @@
  */
 
 const T = 'Tournament admin redesign';
-const DASHBOARD = `${T} Stage 4 — the dashboard before and after the event`;
+const DASHBOARD = `${T} Stage 5 — the board before the event`;
 const VOLUNTEERS = `${T} Stage 6 — the volunteers`;
 const CHAT = `${T} — Chat (no stage names it yet)`;
 
@@ -19,7 +19,6 @@ const OWNERS = [
   ['app/[orgSlug]/admin/tournaments/dashboard/', DASHBOARD],
   ['components/admin/LiveEventLog', DASHBOARD],
   ['components/admin/tournament/GuidanceRail', DASHBOARD],
-  ['components/admin/tournament/PersonaPanel', DASHBOARD],
   ['app/[orgSlug]/admin/tournaments/archives/', `${T} Stage 4 — Past tournaments`],
   ['app/[orgSlug]/admin/tournaments/summary/', `${T} Stage 4 — Summary`],
   ['app/[orgSlug]/admin/org/tournaments/', `${T} Stage 4 — the Tournaments list`],

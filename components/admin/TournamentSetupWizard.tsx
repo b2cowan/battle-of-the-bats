@@ -23,7 +23,9 @@
  *
  * Fees are not asked (optional, owner 2026-06-16). Before the steps, an organization with past events meets "Start
  * blank, or reuse" — left as it is today on the Tournament plan (the free tournament tier review owns it). Stage 4's
- * reuse step (D2) is the same window.
+ * reuse step (D2) is the same window — and, since Stage 5 (E2, F33), so is "into this draft": the draft board's Start
+ * from a past tournament opens the reuse step in a mode that fills THAT draft (no name, link or dates — the draft's stay;
+ * the source a dropdown; the five areas; nothing it holds replaced). One reuse flow, three doors.
  */
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Copy } from 'lucide-react';
@@ -95,7 +97,10 @@ export type CreatedTournament = {
   record?: Tournament;
 };
 
-type PreStepMode = 'choose' | 'clone-name';
+type PreStepMode = 'choose' | 'clone-name' | 'into';
+
+/** The draft "into this draft" fills. */
+export type IntoDraft = { id: string; name: string; year: number | null };
 
 type CloneNameForm = { name: string; slug: string; startDate: string; endDate: string; autoSlug: boolean };
 type CloneCopyOptionKey = 'structure' | 'venues' | 'registration' | 'publicPresence' | 'content';
@@ -136,6 +141,10 @@ type TournamentSetupWizardProps = {
   upgradeCopy?: string;
   /** The organization's sport — the venue step's word for a lane ("Diamond"). */
   sport?: string | null;
+  /** "Into this draft" (Stage 5, E2): the reuse step fills this draft instead of making a new one. */
+  into?: IntoDraft | null;
+  /** "Into this draft" landed: the source it came from, and what came in. */
+  onBroughtIn?: (result: { sourceName: string; copied?: CloneCopiedCounts }) => void | Promise<void>;
   onClose: () => void;
   onCreated: (tournament: CreatedTournament) => void | Promise<void>;
 };
@@ -269,6 +278,8 @@ export default function TournamentSetupWizard({
   canClone,
   upgradeCopy,
   sport = null,
+  into = null,
+  onBroughtIn,
   onClose,
   onCreated,
 }: TournamentSetupWizardProps) {
@@ -288,6 +299,12 @@ export default function TournamentSetupWizard({
   const [cloneError, setCloneError] = useState('');
   const cloneTouched = useRef(false);
   const openedFromDoor = Boolean(initialSource && canClone);
+  // "Into this draft": every other event is a source, newest finished first (the board offers it only when one exists).
+  const intoSources = useMemo(
+    () => (into ? [...(existingTournaments ?? [])].filter(t => t.id !== into.id)
+      .sort((a, b) => (sourceRank(a.status) - sourceRank(b.status)) || ((b.year ?? 0) - (a.year ?? 0))) : []),
+    [into, existingTournaments],
+  );
 
   // ── The three steps ─────────────────────────────────────────────────────────────────────────────────
   const [step, setStep] = useState<CreateStep>('tournament');
@@ -324,7 +341,10 @@ export default function TournamentSetupWizard({
     cloneTouched.current = false;
     touched.current = false;
     /* eslint-disable react-hooks/set-state-in-effect -- the open window's reset */
-    if (initialSource && canClone) {
+    if (into) {
+      setPreStep('into');
+      setCloneSource(intoSources[0] ?? null);
+    } else if (initialSource && canClone) {
       setPreStep('clone-name');
       setCloneSource(initialSource);
       setCloneForm(getRepeatNameForm(initialSource));
@@ -356,6 +376,8 @@ export default function TournamentSetupWizard({
     setSourceTheme(null);
     setEventsLoaded(false);
     /* eslint-enable react-hooks/set-state-in-effect */
+    // "Into this draft" asks no name and adds no venue here: nothing more to read.
+    if (into) return;
 
     // The org's events (the name and link last year's still holds) and the venue book — the club's library for a plan
     // that has one, the venues past events used for everyone else (each once, with its diamonds).
@@ -520,7 +542,7 @@ export default function TournamentSetupWizard({
   function requestClose() {
     if (saving || cloneWorking) return;
     if (preStep === 'choose') { onClose(); return; }
-    if (preStep === 'clone-name') { if (cloneTouched.current) setLeaveAsk(true); else onClose(); return; }
+    if (preStep === 'clone-name' || preStep === 'into') { if (cloneTouched.current) setLeaveAsk(true); else onClose(); return; }
     if (touched.current || step !== 'tournament') { setLeaveAsk(true); return; }
     onClose();
   }
@@ -666,6 +688,105 @@ export default function TournamentSetupWizard({
         </div>
         <div className={styles.choiceDivider}><span /><strong>or</strong><span /></div>
       </KitDialog>
+    );
+  }
+
+  // ── "INTO THIS DRAFT" (Stage 5, E2 · F33 · F80): the reuse step filling the draft it was opened from ─────────
+  if (preStep === 'into' && into) {
+    // The first past event until one is chosen (the event list may arrive after the window opened).
+    const source = cloneSource ?? intoSources[0] ?? null;
+    const selectedCount = Object.values(cloneOptions).filter(Boolean).length;
+    const selectedGroups = REUSE_COPY_OPTION_KEYS.filter(k => cloneOptions[k]);
+    const warnings = getReuseSetupWarnings(source, into.year ?? NaN, cloneOptions);
+    const ctouch = () => { cloneTouched.current = true; };
+
+    async function submitInto() {
+      if (!source || !into || cloneWorking) return;
+      if (selectedCount === 0) { setCloneError(REUSE_WORDS.nothingChosenDoor); return; }
+      setCloneWorking(true);
+      setCloneError('');
+      let copied: CloneCopiedCounts | undefined;
+      try {
+        const data = await requestJson<{ copied?: CloneCopiedCounts }>(
+          `/api/admin/tournaments/${encodeURIComponent(into.id)}/populate-from${orgQuery}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sourceTournamentId: source.id,
+              areas: cloneOptions,
+              analytics: { sourceSurface: 'draft_dashboard', selectedCopyGroups: selectedGroups, warningCount: warnings.length, warningKeys: warnings.map(w => w.key) },
+            }),
+          },
+        );
+        copied = data.copied;
+      } catch (err) {
+        setCloneError(err instanceof Error ? err.message : REUSE_WORDS.intoFailed);
+        setCloneWorking(false);
+        return;
+      }
+      // It landed: a failure past here is the board not refreshing, never "couldn't be brought in".
+      try {
+        await onBroughtIn?.({ sourceName: source.name, copied });
+      } finally {
+        setCloneWorking(false);
+      }
+    }
+
+    return (
+      <>
+        <KitDialog
+          kind="form"
+          title={REUSE_WORDS.intoTitle}
+          identity={REUSE_WORDS.intoLede(into.name)}
+          onClose={requestClose}
+          busy={cloneWorking}
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={requestClose} disabled={cloneWorking}>{REUSE_WORDS.cancel}</button>
+              <button type="button" className="btn btn-lime" onClick={() => void submitInto()} disabled={cloneWorking || !source}>
+                {cloneWorking ? REUSE_WORDS.intoBringing : REUSE_WORDS.intoBring}
+              </button>
+            </>
+          )}
+        >
+          <FormError>{cloneError}</FormError>
+          <label className={ck.field} htmlFor="into-source">
+            <span className={ck.label}>{REUSE_WORDS.intoSource}<span className={repKit.req} aria-hidden>*</span></span>
+            <select
+              id="into-source"
+              className={ck.select}
+              value={source?.id ?? ''}
+              onChange={e => { ctouch(); setCloneSource(intoSources.find(t => t.id === e.target.value) ?? null); setCloneError(''); }}
+            >
+              {intoSources.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </label>
+          <section className={styles.areas} aria-labelledby={`${reuseTitleId}-into-areas`}>
+            <h3 id={`${reuseTitleId}-into-areas`} className={styles.areasHeading}>
+              {REUSE_WORDS.whatToBring} <span className={styles.areasCount}>{REUSE_WORDS.count(selectedCount, REUSE_COPY_OPTION_KEYS.length)}</span>
+            </h3>
+            {REUSE_COPY_OPTION_KEYS.map(key => (
+              <CheckChoice
+                key={key}
+                checked={cloneOptions[key]}
+                onChange={() => { ctouch(); setCloneOptions(o => ({ ...o, [key]: !o[key] })); setCloneError(''); }}
+                title={REUSE_WORDS.areas[key].title}
+                caption={REUSE_WORDS.areas[key].caption}
+              />
+            ))}
+          </section>
+          <p className={ck.hint}>{REUSE_WORDS.intoKeeps}</p>
+          <p className={ck.hint}>{REUSE_WORDS.intoNeverCopied(source?.name ?? '')}</p>
+          {warnings.length > 0 && (
+            <Callout tone="warn" flush>
+              <b className={styles.reviewHeading}>{REUSE_WORDS.reviewHeading}</b>
+              <ul className={styles.reviewList}>{warnings.map(w => <li key={w.key}>{w.text}</li>)}</ul>
+            </Callout>
+          )}
+        </KitDialog>
+        {leaveQuestion}
+      </>
     );
   }
 

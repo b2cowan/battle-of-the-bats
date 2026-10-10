@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { populateTournamentFrom } from '@/lib/db';
+import { PopulateFailed, type SetupAreas } from '@/lib/tournament-setup-copy';
+import { REUSE_WORDS } from '@/lib/after-event-words';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
@@ -51,6 +53,8 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();
+  // Filling a draft's setup is setting up a tournament: the capability every create and reuse path asks (Stage 5).
+  if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 
   const { tournamentId: destinationTournamentId } = await params;
 
@@ -58,8 +62,10 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const denied = scopeGuard(ctx, destinationTournamentId);
   if (denied) return denied;
 
-  const body = await req.json() as {
+  const body = await req.json().catch(() => ({})) as {
     sourceTournamentId?: unknown;
+    /** The reuse step's five areas (Stage 5's "into this draft"); absent = all five, as before. */
+    areas?: Partial<Record<keyof SetupAreas, unknown>>;
     analytics?: {
       sourceSurface?: unknown;
       selectedCopyGroups?: unknown;
@@ -79,6 +85,20 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   if (sourceTournamentId === destinationTournamentId) {
     return json({ error: 'Source and destination must be different tournaments.' }, 400);
   }
+  // The source too is one this member may see (a member limited to certain tournaments copies only from those).
+  const sourceDenied = scopeGuard(ctx, sourceTournamentId);
+  if (sourceDenied) return sourceDenied;
+
+  const areas: SetupAreas = body.areas && typeof body.areas === 'object'
+    ? {
+      structure: body.areas.structure === true,
+      venues: body.areas.venues === true,
+      registration: body.areas.registration === true,
+      publicPresence: body.areas.publicPresence === true,
+      content: body.areas.content === true,
+    }
+    : { structure: true, venues: true, registration: true, publicPresence: true, content: true };
+  if (!Object.values(areas).some(Boolean)) return json({ error: REUSE_WORDS.nothingChosenDoor }, 400);
 
   if (!hasPlanFeature(ctx.org.planId, 'tournament_cloning')) {
     return json({ error: requiresTournamentPlusCopy('tournament_cloning') }, 403);
@@ -91,7 +111,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     .eq('id', destinationTournamentId)
     .eq('org_id', ctx.org.id)
     .maybeSingle();
-  if (destError) return json({ error: destError.message }, 500);
+  if (destError) { console.error('[populate-from] destination read', destError); return json({ error: REUSE_WORDS.intoFailed }, 500); }
   if (!destination) return json({ error: 'Destination tournament not found.' }, 404);
   if (destination.status !== 'draft') {
     return json({ error: 'You can only populate a draft tournament. Activate it first if you want to update settings.' }, 409);
@@ -104,7 +124,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     .eq('id', sourceTournamentId)
     .eq('org_id', ctx.org.id)
     .maybeSingle();
-  if (sourceError) return json({ error: sourceError.message }, 500);
+  if (sourceError) { console.error('[populate-from] source read', sourceError); return json({ error: REUSE_WORDS.intoFailed }, 500); }
   if (!source) return json({ error: 'Source tournament not found.' }, 404);
 
   await writePlatformEvent({
@@ -127,7 +147,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   });
 
   try {
-    const result = await populateTournamentFrom(destinationTournamentId, sourceTournamentId, ctx.org.id);
+    const result = await populateTournamentFrom(destinationTournamentId, sourceTournamentId, ctx.org.id, areas);
 
     await writePlatformEvent({
       eventType: 'tournament_plus_feature_used',
@@ -151,7 +171,11 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
 
     return json({ success: true, copied: result.copied });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to populate tournament.';
-    return json({ error: message }, 500);
+    // One step that finishes or leaves the draft as it was (F80): the words say which, never the database's.
+    console.error('[populate-from] failed', error);
+    // Inside the step every failure is a PopulateFailed that knows whether the draft is as it was; anything else
+    // stopped before it wrote (the step's own reads), so the draft is untouched.
+    const tookBack = error instanceof PopulateFailed ? error.tookBack : true;
+    return json({ error: tookBack ? REUSE_WORDS.intoFailed : REUSE_WORDS.intoFailedPartly }, 500);
   }
 }, { route: '/api/admin/tournaments/[tournamentId]/populate-from' });

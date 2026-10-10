@@ -22,6 +22,7 @@ import { playedCounts } from '@/lib/event-recap';
 import { fetchAllIn } from '@/lib/supabase-paging';
 import { RECORD_WORDS, slotsInUseRefusal } from '@/lib/tournament-status-words';
 import { hasFiniteSlots, needsFreeSlot, readSlotHolders, visibleHolder } from '@/lib/tournament-slot';
+import { activationMissing } from '@/lib/tournament-activation';
 
 function isDateValue(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -460,26 +461,25 @@ export const POST = withObservability(async (req: Request) => {
           .single();
         if (tournamentError) throw tournamentError;
 
-        const { data: divisions, error: divisionsError } = await supabase
+        const { count: divisionCount, error: divisionsError } = await supabase
           .from('divisions')
-          .select('id, is_closed')
+          .select('id', { count: 'exact', head: true })
           .eq('tournament_id', id);
         if (divisionsError) throw divisionsError;
 
-        const blockers: string[] = [];
-        if (!tournamentRow?.start_date || !tournamentRow?.end_date) blockers.push('add tournament dates');
-        if (!divisions?.length) blockers.push('add at least one division');
-        // A contact is satisfied by a selected contact member, a tournament-level
-        // contact email, OR the org fallback (the three sources resolveTournamentContactEmail
-        // draws from). We gate on a contact existing at all — not on the public-visibility
-        // toggle, since an organizer may deliberately hide the email from the public site
-        // while still reaching coaches/admins.
-        if (!tournamentRow?.default_contact_member_id && !tournamentRow?.contact_email && !ctx.org.contactEmail) {
-          blockers.push('add a public contact email');
-        }
-        if (blockers.length > 0) {
+        // The one rule (lib/tournament-activation — the board's Ready to activate and the record read it too), and
+        // the record's own sentence when it refuses ("To activate it, first add its dates, a division, and a contact.").
+        const missing = activationMissing({
+          startDate: tournamentRow?.start_date,
+          endDate: tournamentRow?.end_date,
+          divisionCount: divisionCount ?? 0,
+          defaultContactMemberId: tournamentRow?.default_contact_member_id,
+          contactEmail: tournamentRow?.contact_email,
+          orgContactEmail: ctx.org.contactEmail,
+        });
+        if (missing.length > 0) {
           return Response.json(
-            { error: `Before activating this tournament, please ${blockers.join(', ')}.` },
+            { error: RECORD_WORDS.blocked(current.status === 'draft' ? 'activate' : 'reopen', missing) },
             { status: 400 }
           );
         }

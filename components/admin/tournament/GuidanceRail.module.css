@@ -1,24 +1,15 @@
 /* Discovery & Orientation lifecycle rail — matches the dashboard's
    reuseSetupPrompt banner language (border-2 / white-03 / logic-lime icon). */
-
 .rail {
   border: 1px solid var(--border-2);
-  background: var(--white-03);
   border-radius: 8px;
   padding: 1rem 1.15rem;
   margin-bottom: 1.5rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
-.railLive {
-  border-color: var(--warning);
-}
+
 /* "Ready to finalize" — positive end-of-event milestone (lime frame), distinct
    from the amber live tone. The base .icon is already --logic-lime, so only the
    border swaps (mirrors .railLive's single-property pattern). Design 2026-07-06. */
-.railReady {
-  border-color: var(--logic-lime);
-}
-
 .head {
   display: flex;
   gap: 0.7rem;
@@ -29,16 +20,12 @@
 .collapseBtn {
   background: none;
   border: 0;
-  color: var(--white-40);
   cursor: pointer;
   padding: 0.1rem;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
   border-radius: 4px;
-}
-.collapseBtn:hover {
-  color: var(--warning);
 }
 
 /* ── Collapsed game-day strip ────────────────────────────────────────── */
@@ -49,6 +36,7 @@
   padding: 0.6rem 1rem;
   flex-wrap: wrap;
 }
+
 .compactToggle {
   flex: 1;
   min-width: 0;
@@ -62,9 +50,11 @@
   text-align: left;
   color: inherit;
 }
+
 .compactToggle .icon {
   margin-top: 0;
 }
+
 .compactHeadline {
   flex: 1;
   min-width: 0;
@@ -76,6 +66,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 /* Groups the CTA + expand chevron so the chevron reads as the row's own
    trailing disclosure control, not an arrow attached to the CTA button. */
 .compactActions {
@@ -84,6 +75,7 @@
   gap: 0.5rem;
   flex-shrink: 0;
 }
+
 .compactChevronBtn {
   display: inline-flex;
   align-items: center;
@@ -94,13 +86,11 @@
   flex-shrink: 0;
   border-radius: 4px;
 }
+
 .compactChevron {
-  color: var(--white-40);
   flex-shrink: 0;
 }
-.compactChevronBtn:hover .compactChevron {
-  color: var(--warning);
-}
+
 .compactCta {
   flex-shrink: 0;
 }
@@ -120,18 +110,17 @@
     justify-content: flex-end;
   }
 }
+
 .icon {
-  color: var(--logic-lime);
   flex-shrink: 0;
   margin-top: 0.15rem;
 }
-.railLive .icon {
-  color: var(--warning);
-}
+
 .body {
   flex: 1;
   min-width: 0;
 }
+
 .headline {
   font-family: var(--font-data);
   font-size: 0.92rem;
@@ -139,6 +128,7 @@
   margin: 0 0 0.25rem;
   letter-spacing: 0.01em;
 }
+
 .context {
   font-size: 0.78rem;
   color: var(--white-50);
@@ -146,14 +136,14 @@
   max-width: 62ch;
   line-height: 1.5;
 }
+
 .cta {
   /* uses shared .btn classes; just guarantee it sits on its own line */
   display: inline-flex;
 }
+
 .progress {
-  font-family: var(--font-data);
   font-size: 0.64rem;
-  color: var(--white-40);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin: 0.55rem 0 0;
@@ -168,8 +158,8 @@
   gap: 0.55rem;
   align-items: flex-start;
 }
+
 .nudgeDyk {
-  color: var(--logic-lime);
   font-weight: 700;
   font-family: var(--font-data);
   font-size: 0.66rem;
@@ -178,19 +168,19 @@
   flex-shrink: 0;
   margin-top: 0.12rem;
 }
-.railLive .nudgeDyk {
-  color: var(--warning);
-}
+
 .nudgeBody {
   flex: 1;
   min-width: 0;
 }
+
 .nudgeText {
   font-size: 0.76rem;
   color: var(--white-50);
   margin: 0;
   line-height: 1.5;
 }
+
 .nudgeActions {
   display: flex;
   gap: 1rem;
@@ -198,21 +188,22 @@
   align-items: center;
   flex-wrap: wrap;
 }
+
 .nudgeShow {
-  color: var(--logic-lime);
   font-family: var(--font-data);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   text-decoration: none;
 }
+
 .nudgeShow:hover {
   text-decoration: underline;
 }
+
 .nudgeDismiss {
   background: none;
   border: 0;
-  color: var(--white-40);
   font-family: var(--font-data);
   font-size: 0.66rem;
   text-transform: uppercase;
@@ -223,28 +214,20 @@
   gap: 0.2rem;
   padding: 0;
 }
-.nudgeDismiss:hover {
-  color: var(--white-60);
-}
 
 /* ── "See common tasks" shortcuts ────────────────────────────────────── */
 .tasks {
   margin-top: 0.85rem;
 }
+
 .tasksToggle {
   background: none;
   border: 0;
-  color: var(--white-50);
-  font-family: var(--font-data);
   font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   cursor: pointer;
   padding: 0;
 }
-.tasksToggle:hover {
-  color: var(--logic-lime);
-}
+
 .taskList {
   list-style: none;
   margin: 0.7rem 0 0;
@@ -253,101 +236,121 @@
   flex-direction: column;
   gap: 0.2rem;
 }
+
 .taskLink {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
-  color: var(--white-60);
   font-size: 0.8rem;
   padding: 0.4rem 0.5rem;
   border-radius: 6px;
   border: 1px solid transparent;
 }
-.taskLink:hover {
-  background: var(--white-03);
-  border-color: var(--border-2);
-  color: var(--white-80);
-}
+
 .taskLabel {
   flex: 1;
 }
+
 .taskArrow {
-  color: var(--white-40);
   font-family: var(--font-data);
 }
+
 .plusTag {
   font-family: var(--font-data);
   font-size: 0.58rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--logic-lime);
   border: 1px solid var(--border-2);
   border-radius: 3px;
   padding: 0.05rem 0.34rem;
 }
 
-/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
-   The lifecycle "what's next" rail. `.railLive`'s amber becomes the kit's live/game-day RED (the
+/* ═══ THE KIT'S LOOK — once a scoped layer (Admin Design Continuity slice 4b), folded onto the rules above with zero
+   differences when the rail's old look retired (Tournament admin redesign Stage 5; only the "ready to finalize" card
+   is drawn now). The lifecycle "what's next" rail. `.railLive`'s amber becomes the kit's live/game-day RED (the
    dashboard header above already tones the same isGameDay fact red — same page, one language);
    `.railReady`'s lime BORDER becomes the kit's done/good GREEN (its icon keeps the base accent, as
    the legacy rule keeps the base lime — only the border swaps), matching the vocabulary. Every
    modifier (.railLive, .railReady, descendant `.icon`/`.nudgeDyk`) is restated here at the SAME
    specificity shape as the legacy rule it answers, so it keeps outranking the plain `.rail`/`.icon`
    kit rule exactly as the legacy modifier outranks the legacy base. ⚠ TOKENS ONLY. */
-:global([data-admin-kit]) .rail {
+.rail {
   border-color: var(--home-line);
   background: var(--card-bg);
   box-shadow: none;
 }
-:global([data-admin-kit]) .railLive {
+
+.railLive {
   border-color: rgba(var(--danger-rgb), 0.4);
 }
-:global([data-admin-kit]) .railReady {
+
+.railReady {
   border-color: rgba(var(--success-rgb), 0.4);
 }
-:global([data-admin-kit]) .collapseBtn { color: var(--text-tertiary); }
-:global([data-admin-kit]) .collapseBtn:hover { color: var(--home-olive); }
-:global([data-admin-kit]) .compactHeadline,
-:global([data-admin-kit]) .headline {
+
+.collapseBtn { color: var(--text-tertiary); }
+
+.collapseBtn:hover { color: var(--home-olive); }
+
+.compactHeadline,
+.headline {
   font-family: var(--font-sans, system-ui, sans-serif);
   letter-spacing: normal;
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .compactChevron { color: var(--text-tertiary); }
-:global([data-admin-kit]) .compactChevronBtn:hover .compactChevron { color: var(--home-olive); }
-:global([data-admin-kit]) .icon { color: var(--home-olive); }
-:global([data-admin-kit]) .railLive .icon { color: var(--danger-light); }
-:global([data-admin-kit]) .context,
-:global([data-admin-kit]) .nudgeText {
+
+.compactChevron { color: var(--text-tertiary); }
+
+.compactChevronBtn:hover .compactChevron { color: var(--home-olive); }
+
+.icon { color: var(--home-olive); }
+
+.railLive .icon { color: var(--danger-light); }
+
+.context,
+.nudgeText {
   font-family: var(--font-sans, system-ui, sans-serif);
   color: var(--text-tertiary);
 }
-:global([data-admin-kit]) .progress {
+
+.progress {
   font-family: var(--font-data);
   color: var(--text-tertiary);
 }
-:global([data-admin-kit]) .nudge { border-top-color: var(--home-line); }
-:global([data-admin-kit]) .nudgeDyk { color: var(--text-secondary); }
-:global([data-admin-kit]) .railLive .nudgeDyk { color: var(--danger-light); }
-:global([data-admin-kit]) .nudgeShow { color: var(--home-olive); }
-:global([data-admin-kit]) .nudgeDismiss { color: var(--text-tertiary); }
-:global([data-admin-kit]) .nudgeDismiss:hover { color: var(--text-primary); }
-:global([data-admin-kit]) .tasksToggle {
+
+.nudge { border-top-color: var(--home-line); }
+
+.nudgeDyk { color: var(--text-secondary); }
+
+.railLive .nudgeDyk { color: var(--danger-light); }
+
+.nudgeShow { color: var(--home-olive); }
+
+.nudgeDismiss { color: var(--text-tertiary); }
+
+.nudgeDismiss:hover { color: var(--text-primary); }
+
+.tasksToggle {
   font-family: var(--font-sans, system-ui, sans-serif);
   text-transform: none;
   letter-spacing: normal;
   color: var(--text-tertiary);
 }
-:global([data-admin-kit]) .tasksToggle:hover { color: var(--home-olive); }
-:global([data-admin-kit]) .taskLink { color: var(--text-secondary); }
-:global([data-admin-kit]) .taskLink:hover {
+
+.tasksToggle:hover { color: var(--home-olive); }
+
+.taskLink { color: var(--text-secondary); }
+
+.taskLink:hover {
   background: var(--home-olive-soft);
   border-color: var(--home-line-strong);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .taskArrow { color: var(--text-tertiary); }
-:global([data-admin-kit]) .plusTag {
+
+.taskArrow { color: var(--text-tertiary); }
+
+.plusTag {
   color: var(--text-secondary);
   border-color: var(--home-line-strong);
 }

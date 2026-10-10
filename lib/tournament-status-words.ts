@@ -12,7 +12,8 @@
  *     take the site and every shared link offline at once;
  *   - only Draft and Active hold a slot (one at a time, A23, 2026-10-10 — `lib/tournament-slot.ts`, the rule's one
  *     home): a change INTO Draft or Active from outside them needs a free one and is refused when none is free;
- *   - Activate AND Reopen (any change to Active) are refused without dates, a division and a contact;
+ *   - Activate AND Reopen (any change to Active) are refused without dates, a division and a contact
+ *     (`lib/tournament-activation.ts`, the rule's one home since Stage 5 — the board, the record and the route read it);
  *   - registration takes the status Active, an open division, AND a day before the start date
  *     (app/api/register) — so a reopened finished event takes no registrations;
  *   - Completed locks games, teams, divisions, check-in and imports (their routes refuse with 409);
@@ -166,6 +167,11 @@ export type ConfirmFacts = {
   status?: string | null;
   /** Mark complete will send the results email (the dashboard route's own rule). */
   willEmailTeams?: boolean;
+  /**
+   * The divisions open for registration, by name — Activate names them (Stage 5, E2: the draft's Ready to activate
+   * card). Absent = not read here, and the question says "its open divisions" as the record does.
+   */
+  openDivisions?: readonly string[] | null;
   /** The plan includes sealing (Tournament Plus+). */
   canSeal?: boolean;
   sealed?: boolean;
@@ -173,6 +179,17 @@ export type ConfirmFacts = {
 
 const startsLater = (f: ConfirmFacts) => Boolean(f.startDate && f.today < f.startDate);
 const startDay = (f: ConfirmFacts) => formatStoredDate(f.startDate, { withYear: false });
+/** "U11", "U11 and U13", "U11, U13, and U15" (the house's serial comma). */
+const andList = (names: readonly string[]) =>
+  names.length <= 2 ? names.join(' and ') : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+
+/** Activate's sentence: where teams can register, named when the caller read the open divisions. */
+function activateBody(f: ConfirmFacts): string {
+  if (!startsLater(f)) return `Its public site goes online. Registration stays closed: it started on ${startDay(f)}.`;
+  if (!f.openDivisions) return `Its public site goes online, and teams can register in its open divisions until it starts on ${startDay(f)}.`;
+  if (f.openDivisions.length === 0) return 'Its public site goes online. No division is open for registration yet: open one on Teams when you’re ready.';
+  return `Its public site goes online, and teams can register in ${andList(f.openDivisions)} until it starts on ${startDay(f)}.`;
+}
 
 /** Each change's question: its title, its body, and the button that repeats the verb that opened it. */
 export function statusConfirm(change: StatusChange, f: ConfirmFacts): { title: string; body: string; action: string; danger: boolean } {
@@ -180,9 +197,7 @@ export function statusConfirm(change: StatusChange, f: ConfirmFacts): { title: s
     case 'activate':
       return {
         title: `Activate ${f.name}?`,
-        body: startsLater(f)
-          ? `Its public site goes online, and teams can register in its open divisions until it starts on ${startDay(f)}.`
-          : `Its public site goes online. Registration stays closed: it started on ${startDay(f)}.`,
+        body: activateBody(f),
         action: STATUS_ACTION.activate,
         danger: false,
       };

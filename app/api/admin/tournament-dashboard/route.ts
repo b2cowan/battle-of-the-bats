@@ -25,6 +25,11 @@ import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
 import { willEmailResultsOnComplete } from '@/lib/coach-email-rules';
 import { resolveTournamentChatParticipants } from '@/lib/chat-resolvers';
 import { getTournamentChatRoom, getActiveMemberUserIds } from '@/lib/chat-service';
+import { activationMissing, contactSourceOf } from '@/lib/tournament-activation';
+import type { BoardFees, DraftSetup } from '@/lib/tournament-board-words';
+import { normalizeTieBreakers } from '@/lib/tie-breakers';
+import { normalizeHiddenPublicPages, visiblePublicPages, PUBLIC_PAGE_OPTIONS } from '@/lib/public-pages';
+import { DEFAULT_SPORT } from '@/lib/sports';
 
 type GameRow = {
   id: string;
@@ -97,6 +102,8 @@ type TournamentFeeRow = {
   theme_primary: string | null;
   settings: Record<string, unknown> | null;
   status: string | null;
+  sport: string | null;
+  public_hidden_pages: unknown;
   notify_teams_on_complete: boolean | null;
   results_notified_at: string | null;
 };
@@ -139,7 +146,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data: tournament, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
-    .select('start_date, end_date, contact_email, default_contact_member_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, settings, status, notify_teams_on_complete, results_notified_at, chat_reminder_last_sent_at')
+    .select('start_date, end_date, contact_email, default_contact_member_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, settings, status, sport, public_hidden_pages, notify_teams_on_complete, results_notified_at, chat_reminder_last_sent_at')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .maybeSingle();
@@ -154,7 +161,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const t = tournament as TournamentFeeRow;
 
-  const [divisionsRes, teamsRes, gamesRes, announcementsRes, teamPaymentsRes, poolSlotsRes, venuesRes, rulesRes] = await Promise.all([
+  const [divisionsRes, teamsRes, gamesRes, announcementsRes, teamPaymentsRes, poolSlotsRes, venuesRes, rulesRes, lanesRes] = await Promise.all([
     supabaseAdmin
       .from('divisions')
       .select('id, name, is_closed, capacity, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, playoff_config, settings', { count: 'exact' })
@@ -182,10 +189,16 @@ export const GET = withObservability(async (req: Request) => {
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('diamonds')
-      .select('id', { count: 'exact', head: true })
-      .eq('tournament_id', tournamentId),
+      .select('id, name', { count: 'exact' })
+      .eq('tournament_id', tournamentId)
+      .order('name', { ascending: true }),
     supabaseAdmin
       .from('rules')
+      .select('id', { count: 'exact', head: true })
+      .eq('tournament_id', tournamentId),
+    // The draft's Venues row counts the lanes ("Lions Park · 3 diamonds").
+    supabaseAdmin
+      .from('venue_facilities')
       .select('id', { count: 'exact', head: true })
       .eq('tournament_id', tournamentId),
   ]);
@@ -199,6 +212,7 @@ export const GET = withObservability(async (req: Request) => {
     ['poolSlots', poolSlotsRes.error],
     ['venues', venuesRes.error],
     ['rules', rulesRes.error],
+    ['lanes', lanesRes.error],
   ];
   const failedQuery = namedErrors.find(([, err]) => err != null);
   if (failedQuery) {
@@ -232,11 +246,18 @@ export const GET = withObservability(async (req: Request) => {
 
   const hasDates = Boolean(t.start_date && t.end_date);
   const hasDivisions = divisions.length > 0;
-  // A contact is satisfied by a selected contact member, a tournament-level
-  // contact email, OR the org fallback (the three sources resolveTournamentContactEmail
-  // draws from) — kept in lockstep with the activation blocker so the checklist
-  // never claims "ready" while activation 400s, or vice versa.
-  const hasPublicContact = Boolean(t.default_contact_member_id || t.contact_email || ctx.org.contactEmail);
+  // The one rule Activate reads (lib/tournament-activation, F82): before Stage 5 the checklist's "ready" left the
+  // contact out, so a draft could read ready while Activate refused it.
+  const activationFacts = {
+    startDate: t.start_date,
+    endDate: t.end_date,
+    divisionCount: divisions.length,
+    defaultContactMemberId: t.default_contact_member_id,
+    contactEmail: t.contact_email,
+    orgContactEmail: ctx.org.contactEmail,
+  };
+  const contactSource = contactSourceOf(activationFacts);
+  const hasPublicContact = contactSource !== null;
   const hasOpenDivision = hasDivisions && divisions.some(group => !group.is_closed);
   const hasBranding = Boolean(t.logo_url || t.hero_banner_url || t.theme_preset || t.theme_primary);
   const hasVenues   = (venuesRes.count ?? 0) > 0;
@@ -795,9 +816,58 @@ export const GET = withObservability(async (req: Request) => {
     };
   }
 
+  // How the fees are set up — the draft's Fees row and the weeks-before Payments card say the true thing (F81): "not
+  // set up" is never "free", and fees set with nobody accepted yet are still fees.
+  const fees: BoardFees = {
+    scope: typeof tSettings.fee_scope === 'string' ? tSettings.fee_scope : null,
+    mode: t.fee_schedule_mode === 'division' ? 'division' : 'tournament',
+    total: t.total_fee_amount,
+    deposit: t.deposit_amount,
+    divisionFees: divisions.filter(d => d.total_fee_amount != null && d.total_fee_amount > 0).length,
+  };
+
+  // The draft's board (Stage 5, E2): each row says what is set, in words. Read only for a draft.
+  let setup: DraftSetup | null = null;
+  if (t.status === 'draft') {
+    // A chosen contact member's own address (the org's member, proved by org — this is an email on a screen).
+    let contactEmail: string | null = contactSource === 'tournament' ? t.contact_email : contactSource === 'org' ? ctx.org.contactEmail ?? null : null;
+    if (contactSource === 'member' && t.default_contact_member_id) {
+      const { data: member } = await supabaseAdmin
+        .from('organization_members')
+        .select('user_id')
+        .eq('id', t.default_contact_member_id)
+        .eq('organization_id', ctx.org.id)
+        .maybeSingle();
+      if (member?.user_id) {
+        const { data: user } = await supabaseAdmin.auth.admin.getUserById(member.user_id as string);
+        contactEmail = user?.user?.email ?? null;
+      }
+    }
+    const minutes = positiveNumber(tSettings.game_duration_minutes) ?? null;
+    const visible = visiblePublicPages({ publicHiddenPages: normalizeHiddenPublicPages(t.public_hidden_pages), settings: tSettings as TournamentSettings });
+    setup = {
+      contact: { source: contactSource, email: contactEmail },
+      venues: { names: ((venuesRes.data ?? []) as Array<{ name: string | null }>).map(v => v.name ?? '').filter(Boolean), lanes: lanesRes.count ?? 0 },
+      rules: rulesRes.count ?? 0,
+      timing: {
+        minutes,
+        perDivision: tSettings.game_timing_scope === 'per_division',
+        breakers: normalizeTieBreakers(tSettings.tie_breakers),
+        breakersPerDivision: tSettings.tie_breaker_scope === 'per_division',
+      },
+      publicPages: visible.map(p => p.label),
+      hasLogo: Boolean(t.logo_url),
+      sport: t.sport ?? DEFAULT_SPORT,
+      openDivisions: divisions.filter(d => !d.is_closed).map(d => d.name),
+    };
+  }
+
   return Response.json({
     coinTossNeeded,
     chatAdoption,
+    fees,
+    setup,
+    publicPageCount: PUBLIC_PAGE_OPTIONS.length,
     divisions:      divisionsRes.count ?? divisions.length,
     teams:          teamsRes.count ?? 0,
     scheduled:      games.filter(game => game.status === 'scheduled').length,
@@ -834,15 +904,10 @@ export const GET = withObservability(async (req: Request) => {
       hasFees,
       hasGameTiming,
       hasTieBreakers,
-      // Fees are OPTIONAL to activate (owner decision 2026-06-16, J1-030/032):
-      // the server activation blocker never enforced fee_scope, and the wizard
-      // never asks for it — so the "ready" gate no longer requires it either.
-      // hasFees is still surfaced as an optional checklist item below.
-      // Opening public registration is OPTIONAL to activate (owner decision
-      // 2026-06-16): organizers who load/invite teams privately never open a
-      // division, so hasOpenDivision is surfaced as an optional item below
-      // rather than gating activation.
-      ready: hasDates && hasDivisions,
+      // "Ready" is exactly what Activate checks: dates, a division and a contact (lib/tournament-activation, F82).
+      // Fees and an open division are OPTIONAL to activate (owner decisions 2026-06-16, J1-030/032): an organizer who
+      // loads or invites teams privately never opens a division, and one who collects offline sets no fees.
+      ready: activationMissing(activationFacts).length === 0,
     },
     registration: {
       totalCapacity,

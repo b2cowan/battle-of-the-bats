@@ -126,6 +126,26 @@ export function BoardNote({ children }: { children: ReactNode }) {
   );
 }
 
+/** A board's door card (G8's, Stage 1): the kit's door, its eyebrow, title and one line. The rain-delay door here, the
+ *  draft's Preview (Stage 5). With `chip` (a plan lock) the eyebrow carries the chip instead of the arrow. */
+export function BoardDoor({ href, eyebrow, chip, title, line, newTab = false }: {
+  href: string;
+  eyebrow: ReactNode;
+  chip?: ReactNode;
+  title: ReactNode;
+  line: ReactNode;
+  /** A door out of the admin (the public preview): a new tab, so the board keeps its place. */
+  newTab?: boolean;
+}) {
+  return (
+    <CoachDoorCard href={href} className={styles.door} {...(newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+      <CoachEyebrow arrow={!chip} chip={chip}>{eyebrow}</CoachEyebrow>
+      <span className={styles.doorTitle}>{title}</span>
+      <span className={styles.doorLine}>{line}</span>
+    </CoachDoorCard>
+  );
+}
+
 /** "Customize this board" — a quiet link at an active board's foot (G1 moved it out of the title band). */
 export function CustomizeLink({ onClick }: { onClick: () => void }) {
   return <button type="button" className={styles.quietLink} onClick={onClick}>{GAME_DAY_WORDS.customize}</button>;
@@ -247,19 +267,12 @@ export default function GameDayBoard({
   // Tournament plan it keeps its place with the lock and the plan's name, and opens what Plus includes.
   const door = visible('rainDelay') && gd.hasGamesToShift && !locked ? (
     canRainDelay ? (
-      <CoachDoorCard href={`${base}/schedule?tool=rain-delay`} className={styles.door}>
-        <CoachEyebrow arrow>{GAME_DAY_WORDS.doorEyebrow}</CoachEyebrow>
-        <span className={styles.doorTitle}>{GAME_DAY_WORDS.doorTitle}</span>
-        <span className={styles.doorLine}>{GAME_DAY_WORDS.doorLine}</span>
-      </CoachDoorCard>
+      <BoardDoor href={`${base}/schedule?tool=rain-delay`} eyebrow={GAME_DAY_WORDS.doorEyebrow}
+        title={GAME_DAY_WORDS.doorTitle} line={GAME_DAY_WORDS.doorLine} />
     ) : (
-      <CoachDoorCard href={planHref} className={styles.door}>
-        <CoachEyebrow chip={<RepChip><Lock size={10} aria-hidden /> {GAME_DAY_WORDS.doorLockedPlan}</RepChip>}>
-          {GAME_DAY_WORDS.doorEyebrow}
-        </CoachEyebrow>
-        <span className={styles.doorTitle}>{GAME_DAY_WORDS.doorTitle}</span>
-        <span className={styles.doorLine}>{GAME_DAY_WORDS.doorLockedLine}</span>
-      </CoachDoorCard>
+      <BoardDoor href={planHref} eyebrow={GAME_DAY_WORDS.doorEyebrow}
+        chip={<RepChip><Lock size={10} aria-hidden /> {GAME_DAY_WORDS.doorLockedPlan}</RepChip>}
+        title={GAME_DAY_WORDS.doorTitle} line={GAME_DAY_WORDS.doorLockedLine} />
     )
   ) : null;
 

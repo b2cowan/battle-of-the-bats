@@ -1,0 +1,80 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE DRAFT'S BOARD's own layout (DraftBoard.tsx — Tournament admin redesign Stage 5, E2, hub v45).
+   The parts are the kit's: the row list is `ClubRow*` (components/admin/kit/club/RepKit), the ready card
+   the kit's section, the Preview the board family's door (GameDayBoard `BoardDoor`). This file lays them
+   out and draws the checklist's head (its count and its bar), which the kit has no slot for.
+   Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* One column on a phone and a tablet: Ready to activate FIRST once the draft is ready (the /design review:
+   the one main action of a ready board is not 900px down, under rows that are all done), then the
+   checklist, then the Preview. At a desk the checklist takes the wide column and the ready card and the
+   Preview a narrow one — the game-day and finished boards' own split (Stages 1 and 4). */
+.board { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+.main { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+/* The kit's section carries its own bottom margin; on the board the column's gap spaces it (two classes, so the
+   rule never depends on which module the bundle loads first). */
+.board > .ready { margin: 0; }
+@media (min-width: 1180px) {
+  .board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 20.5rem;
+    grid-template-rows: auto auto 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+  .main { grid-column: 1; grid-row: 1 / span 3; }
+  .ready { grid-column: 2; grid-row: 1; }
+  .preview { grid-column: 2; grid-row: 2; }
+  /* Not ready yet: the Preview opens the narrow column. */
+  .board:not(:has(> .ready)) > .preview { grid-row: 1; }
+}
+
+/* The checklist's head: its title, how far along it is (said ONCE), and the bar. */
+.head { padding: 0.85rem 1.1rem 0.75rem; }
+/* ⚠ The heading sets the BODY face itself: the global h1–h6 rule would draw it in the condensed display face. */
+.title {
+  margin: 0;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+.progressLine { margin: 0.15rem 0 0.65rem; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
+.bar { height: 6px; border-radius: 3px; background: var(--home-line); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--home-olive); }
+
+/* A row's one lead mark: done (olive), needed for Activate (amber), not set yet (quiet). */
+.markDone { color: var(--home-olive); }
+.markNeeded { color: var(--home-amber); }
+.markOpen { color: var(--text-tertiary); }
+
+/* Ready to activate: one sentence and the board's one lime. */
+.readyLine { margin: 0 0 0.85rem; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+.readyButton { min-height: var(--admin-control-h); }
+
+/* Activate's question: the public link and Copy (no go-live surface had one before Stage 5). */
+.link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--home-paper);
+}
+.linkLabel { flex-basis: 100%; font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
+.linkUrl { flex: 1 1 12rem; min-width: 0; font-size: var(--type-body); color: var(--text-primary); overflow-wrap: anywhere; }
+.copy { flex: none; min-height: var(--admin-control-h); }
+.error { margin: 0.6rem 0 0; color: var(--danger); font-size: var(--type-support); }
+
+@media (max-width: 768px) {
+  .readyButton,
+  .copy { min-height: var(--tap-min, 44px); }
+  .readyButton { width: 100%; }
+}

@@ -3,7 +3,7 @@ import { LIVE_SEASON_STATUSES, liveSeasonOf, publicTryoutSeasonOf } from './seas
 import { countsOnRoster, rosterCountOf, seasonRecordOf } from './team-season-figures';
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
-import { copyTournamentVenues } from './tournament-venue-copy';
+import { copySetupRows, takeBackSetupRows, PopulateFailed, type SetupAreas, type SetupLedger } from './tournament-setup-copy';
 import type { MeasurableTypeCreateFields } from './development-input';
 import { accountedCellKeys, scopeCompleteness } from './development-session-view';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from './plan-config';
@@ -218,14 +218,6 @@ function toSettingsObject(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function remapUuidArray(value: unknown, idMap: Map<string, string>): string[] | null {
-  if (!Array.isArray(value)) return null;
-  const mapped = value
-    .map(id => typeof id === 'string' ? idMap.get(id) : null)
-    .filter((id): id is string => Boolean(id));
-  return mapped.length ? mapped : null;
-}
-
 export async function cloneTournament(
   sourceTournamentId: string,
   orgId: string,
@@ -329,245 +321,24 @@ export async function cloneTournament(
     if (targetError) throw targetError;
     targetTournamentId = target.id;
 
-    const copied: CloneTournamentResult['copied'] = {
-      venues: 0,
-      divisions: 0,
-      pools: 0,
-      slots: 0,
-      rules: 0,
-      resources: 0,
-      welcome: false,
-      registrationFields: 0,
-    };
-
-    if (options.includeVenues) {
-      // Every venue WITH its facilities and both library links (Tournament Stage 5, 6a's F2 — until then the clone
-      // copied venues and none of their diamonds, so next year's park arrived with no lane to schedule on). One home
-      // for every copy path: lib/tournament-venue-copy.
-      const { venueIds } = await copyTournamentVenues(sourceTournamentId, targetTournamentId!);
-      copied.venues = venueIds.length;
-    }
-
-    const divisionIdMap = new Map<string, string>();
-    const poolIdMap = new Map<string, string>();
-
-    if (options.includeDivisions) {
-      const { data: divisions, error } = await supabaseAdmin
-        .from('divisions')
-        .select('*')
-        .eq('tournament_id', sourceTournamentId)
-        .order('display_order', { ascending: true });
-      if (error) throw error;
-
-      if (divisions?.length) {
-        const { data: insertedGroups, error: insertError } = await supabaseAdmin
-          .from('divisions')
-          .insert(divisions.map(group => ({
-            tournament_id: targetTournamentId,
-            name: group.name,
-            min_age: group.min_age,
-            max_age: group.max_age,
-            display_order: group.display_order,
-            is_closed: false,
-            capacity: group.capacity,
-            pool_count: group.pool_count,
-            pool_names: group.pool_names,
-            requires_pool_selection: group.requires_pool_selection ?? false,
-            playoff_config: group.playoff_config,
-            schedule_visibility: 'unpublished',
-            deposit_amount: options.includeFeeSchedule ? group.deposit_amount ?? null : null,
-            deposit_due_date: options.includeFeeSchedule ? group.deposit_due_date ?? null : null,
-            total_fee_amount: options.includeFeeSchedule ? group.total_fee_amount ?? null : null,
-            total_fee_due_date: options.includeFeeSchedule ? group.total_fee_due_date ?? null : null,
-          })))
-          .select('id');
-        if (insertError) throw insertError;
-        divisions.forEach((group, index) => {
-          const inserted = insertedGroups?.[index];
-          if (inserted?.id) divisionIdMap.set(group.id, inserted.id);
-        });
-        copied.divisions = insertedGroups?.length ?? 0;
-
-        if (options.includePools) {
-          const { data: pools, error: poolsError } = await supabaseAdmin
-            .from('pools')
-            .select('*')
-            .in('division_id', divisions.map(group => group.id))
-            .order('display_order', { ascending: true });
-          if (poolsError) throw poolsError;
-
-          if (pools?.length) {
-            const { data: insertedPools, error: poolInsertError } = await supabaseAdmin
-              .from('pools')
-              .insert(pools.map(pool => ({
-                division_id: divisionIdMap.get(pool.division_id),
-                name: pool.name,
-                display_order: pool.display_order,
-              })))
-              .select('id');
-            if (poolInsertError) throw poolInsertError;
-            pools.forEach((pool, index) => {
-              const inserted = insertedPools?.[index];
-              if (inserted?.id) poolIdMap.set(pool.id, inserted.id);
-            });
-            copied.pools = insertedPools?.length ?? 0;
-
-            if (options.includeSlots) {
-              const { data: slots, error: slotsError } = await supabaseAdmin
-                .from('pool_slots')
-                .select('*')
-                .eq('tournament_id', sourceTournamentId)
-                .order('slot_number', { ascending: true });
-              if (slotsError) throw slotsError;
-
-              const slotRows = (slots ?? [])
-                .map(slot => ({
-                  pool_id: poolIdMap.get(slot.pool_id),
-                  tournament_id: targetTournamentId,
-                  division_id: divisionIdMap.get(slot.division_id),
-                  slot_number: slot.slot_number,
-                  display_name: slot.display_name,
-                  team_id: null,
-                }))
-                .filter(slot => slot.pool_id && slot.division_id);
-
-              if (slotRows.length) {
-                const { data: insertedSlots, error: slotInsertError } = await supabaseAdmin
-                  .from('pool_slots')
-                  .insert(slotRows)
-                  .select('id');
-                if (slotInsertError) throw slotInsertError;
-                copied.slots = insertedSlots?.length ?? 0;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (options.includeRulesResources) {
-      const { data: rules, error } = await supabaseAdmin
-        .from('rules')
-        .select('*')
-        .eq('tournament_id', sourceTournamentId)
-        .order('display_order', { ascending: true });
-      if (error) throw error;
-
-      if (rules?.length) {
-        const { data: insertedRules, error: insertError } = await supabaseAdmin
-          .from('rules')
-          .insert(rules.map(rule => ({
-            tournament_id: targetTournamentId,
-            title: rule.title,
-            icon: rule.icon,
-            display_order: rule.display_order,
-            division_ids: remapUuidArray(rule.division_ids, divisionIdMap),
-          })))
-          .select('id');
-        if (insertError) throw insertError;
-        copied.rules = insertedRules?.length ?? 0;
-
-        const ruleIdMap = new Map<string, string>();
-        rules.forEach((rule, index) => {
-          const inserted = insertedRules?.[index];
-          if (inserted?.id) ruleIdMap.set(rule.id, inserted.id);
-        });
-
-        const { data: ruleItems, error: itemError } = await supabaseAdmin
-          .from('rule_items')
-          .select('*')
-          .in('rule_id', rules.map(rule => rule.id))
-          .order('display_order', { ascending: true });
-        if (itemError) throw itemError;
-
-        const itemRows = (ruleItems ?? [])
-          .map(item => ({
-            rule_id: ruleIdMap.get(item.rule_id),
-            content: item.content,
-            display_order: item.display_order,
-          }))
-          .filter(item => item.rule_id);
-        if (itemRows.length) {
-          const { error: itemInsertError } = await supabaseAdmin.from('rule_items').insert(itemRows);
-          if (itemInsertError) throw itemInsertError;
-        }
-      }
-
-      const { data: resources, error: resourceError } = await supabaseAdmin
-        .from('resources')
-        .select('*')
-        .eq('tournament_id', sourceTournamentId)
-        .order('display_order', { ascending: true });
-      if (resourceError) throw resourceError;
-
-      if (resources?.length) {
-        const { data: insertedResources, error: insertError } = await supabaseAdmin
-          .from('resources')
-          .insert(resources.map(resource => ({
-            tournament_id: targetTournamentId,
-            label: resource.label,
-            url: resource.url,
-            display_order: resource.display_order,
-          })))
-          .select('id');
-        if (insertError) throw insertError;
-        copied.resources = insertedResources?.length ?? 0;
-      }
-    }
-
-    if (options.includeWelcome) {
-      const { data: welcome, error } = await supabaseAdmin
-        .from('announcements')
-        .select('*')
-        .eq('tournament_id', sourceTournamentId)
-        .eq('title', 'Welcome!')
-        .order('published_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-
-      if (welcome?.body) {
-        const { error: welcomeInsertError } = await supabaseAdmin.from('announcements').insert({
-          tournament_id: targetTournamentId,
-          title: 'Welcome!',
-          body: welcome.body,
-          published_at: new Date().toISOString(),
-          pinned: true,
-          division_ids: remapUuidArray(welcome.division_ids, divisionIdMap),
-        });
-        if (welcomeInsertError) throw welcomeInsertError;
-        copied.welcome = true;
-      }
-    }
-
-    if (options.includeRegistrationFields) {
-      const { data: fields, error } = await supabaseAdmin
-        .from('tournament_registration_fields')
-        .select('*')
-        .eq('tournament_id', sourceTournamentId)
-        .eq('org_id', orgId)
-        .eq('is_archived', false)
-        .order('sort_order', { ascending: true });
-      if (error) throw error;
-
-      if (fields?.length) {
-        const { data: insertedFields, error: insertError } = await supabaseAdmin
-          .from('tournament_registration_fields')
-          .insert(fields.map(field => ({
-            tournament_id: targetTournamentId,
-            org_id: orgId,
-            label: field.label,
-            field_type: field.field_type,
-            options: field.options ?? [],
-            required: field.required ?? false,
-            sort_order: field.sort_order ?? 0,
-            is_archived: false,
-          })))
-          .select('id');
-        if (insertError) throw insertError;
-        copied.registrationFields = insertedFields?.length ?? 0;
-      }
-    }
+    // Every row of the chosen setup, through the one copier the draft's "Start from a past tournament" uses too
+    // (lib/tournament-setup-copy, Stage 5). A failure below deletes the new draft, and everything in it cascades.
+    const copied = await copySetupRows({
+      sourceId: sourceTournamentId,
+      targetId: targetTournamentId!,
+      orgId,
+      include: {
+        divisions: Boolean(options.includeDivisions),
+        pools: Boolean(options.includeDivisions && options.includePools),
+        slots: Boolean(options.includeDivisions && options.includePools && options.includeSlots),
+        venues: Boolean(options.includeVenues),
+        rulesResources: Boolean(options.includeRulesResources),
+        welcome: Boolean(options.includeWelcome),
+        registrationFields: Boolean(options.includeRegistrationFields),
+        divisionFees: Boolean(options.includeFeeSchedule),
+      },
+      ledger: [],
+    });
 
     return {
       tournament: mapTournament(target),
@@ -596,14 +367,24 @@ export type PopulateTournamentResult = {
 };
 
 /**
- * Wipes the setup data of an existing draft tournament and repopulates it
- * from a source tournament in the same org. The destination's name, slug,
- * year, and dates are left untouched — only setup content is replaced.
+ * Fills an existing DRAFT from a past event of the same org — the draft board's "Start from a past tournament", Stage 4's
+ * reuse step in its "into this draft" mode (Tournament admin redesign Stage 5, F33 and F80). The draft keeps its name,
+ * link and dates. In each area ticked (`areas`):
+ *
+ *   - NOTHING IS REPLACED UNASKED: what the draft already holds stays, and the source's is added beside it (rows: a
+ *     same-named one is not added twice — lib/tournament-setup-copy; the event's own fields: only those the draft
+ *     hasn't set are filled — its fees, its branding, its contact, its settings);
+ *   - ONE STEP THAT FINISHES OR LEAVES THE DRAFT AS IT WAS: on any failure every row it wrote is taken back and the
+ *     draft's own fields are put back as they were (`PopulateFailed.tookBack` says whether that worked).
+ *
+ * Before Stage 5 this deleted the draft's venues, rules, resources, questions and welcome first, copied everything with
+ * no choice of areas, and a failure halfway left half a draft.
  */
 export async function populateTournamentFrom(
   destinationTournamentId: string,
   sourceTournamentId: string,
   orgId: string,
+  areas: SetupAreas = { structure: true, venues: true, registration: true, publicPresence: true, content: true },
 ): Promise<PopulateTournamentResult> {
   if (destinationTournamentId === sourceTournamentId) {
     throw new Error('Source and destination must be different tournaments.');
@@ -613,290 +394,121 @@ export async function populateTournamentFrom(
     supabaseAdmin.from('tournaments').select('*').eq('id', destinationTournamentId).eq('org_id', orgId).maybeSingle(),
     supabaseAdmin.from('tournaments').select('*').eq('id', sourceTournamentId).eq('org_id', orgId).maybeSingle(),
   ]);
-  if (destError) throw destError;
-  if (sourceError) throw sourceError;
-  if (!destination) throw new Error('Destination tournament not found.');
-  if (!source) throw new Error('Source tournament not found.');
-  if (destination.status !== 'draft') throw new Error('Can only populate a draft tournament.');
+  // Nothing is written before the patch below, so a refusal here leaves the draft as it was (`tookBack`).
+  if (destError) throw new PopulateFailed(true, destError);
+  if (sourceError) throw new PopulateFailed(true, sourceError);
+  if (!destination) throw new PopulateFailed(true, new Error('Destination tournament not found.'));
+  if (!source) throw new PopulateFailed(true, new Error('Source tournament not found.'));
+  if (destination.status !== 'draft') throw new PopulateFailed(true, new Error('Can only populate a draft tournament.'));
 
-  // ── Clear existing destination data ───────────────────────────────────────
-  const { data: existingDivisions } = await supabaseAdmin
-    .from('divisions').select('id').eq('tournament_id', destinationTournamentId);
-  const existingDivisionIds = (existingDivisions ?? []).map(g => g.id);
+  // A division's own fee is part of the draft's fee approach too (/review 2026-10-10: a draft in division-fee mode with
+  // no tournament-level fee read as "no fees", and the source's approach was laid over it).
+  const { count: draftDivisionFees, error: divisionFeesError } = await supabaseAdmin
+    .from('divisions').select('id', { count: 'exact', head: true })
+    .eq('tournament_id', destinationTournamentId)
+    .or('total_fee_amount.not.is.null,deposit_amount.not.is.null');
+  if (divisionFeesError) throw new PopulateFailed(true, divisionFeesError);
 
-  let existingPoolIds: string[] = [];
-  if (existingDivisionIds.length > 0) {
-    const { data: existingPools } = await supabaseAdmin
-      .from('pools').select('id').in('division_id', existingDivisionIds);
-    existingPoolIds = (existingPools ?? []).map(p => p.id);
-  }
+  // ── The event's own fields: fill only what the draft hasn't set ──────────────────────────────────────────────
+  const unset = (v: unknown) => v === null || v === undefined || (typeof v === 'string' && v.trim() === '');
+  const destSettings = toSettingsObject(destination.settings);
+  const sourceSettings = toSettingsObject(source.settings);
+  const FEE_KEYS = ['fee_scope', 'show_fees_on_register', 'payment_instructions', 'payment_instructions_on_form'];
+  const RULES_KEYS = ['rulesLayout', 'resourcesLayout'];
+  // The draft's own fee approach (any of it) is kept whole: half of one approach and half of another is no approach.
+  const draftHasFees = !unset(destSettings.fee_scope) || destination.total_fee_amount != null || destination.deposit_amount != null
+    || (draftDivisionFees ?? 0) > 0;
+  const takeFees = areas.registration && !draftHasFees;
 
-  const { data: existingRules } = await supabaseAdmin
-    .from('rules').select('id').eq('tournament_id', destinationTournamentId);
-  const existingRuleIds = (existingRules ?? []).map(r => r.id);
-
-  // Delete in dependency order
-  if (existingPoolIds.length > 0) {
-    const { error } = await supabaseAdmin.from('pool_slots').delete().in('pool_id', existingPoolIds);
-    if (error) throw error;
-  }
-  await supabaseAdmin.from('pool_slots').delete().eq('tournament_id', destinationTournamentId);
-
-  if (existingPoolIds.length > 0) {
-    const { error } = await supabaseAdmin.from('pools').delete().in('id', existingPoolIds);
-    if (error) throw error;
-  }
-  if (existingDivisionIds.length > 0) {
-    const { error } = await supabaseAdmin.from('divisions').delete().in('id', existingDivisionIds);
-    if (error) throw error;
-  }
-  if (existingRuleIds.length > 0) {
-    await supabaseAdmin.from('rule_items').delete().in('rule_id', existingRuleIds);
-    await supabaseAdmin.from('rules').delete().in('id', existingRuleIds);
-  }
-
-  await Promise.all([
-    supabaseAdmin.from('diamonds').delete().eq('tournament_id', destinationTournamentId),
-    supabaseAdmin.from('resources').delete().eq('tournament_id', destinationTournamentId),
-    supabaseAdmin.from('tournament_registration_fields').delete().eq('tournament_id', destinationTournamentId),
-    supabaseAdmin.from('announcements').delete().eq('tournament_id', destinationTournamentId).eq('title', 'Welcome!'),
-  ]);
-
-  // ── Copy tournament-level fields from source ───────────────────────────────
-  const { error: updateError } = await supabaseAdmin.from('tournaments').update({
-    // Carry the source event's sport (multi-sport, Phase 1).
-    sport: source.sport ?? DEFAULT_SPORT,
-    contact_email: source.contact_email ?? null,
-    // Carry the selected contact member too (source & destination are same-org, so the
-    // member id is valid here) — without it, populating drops the primary contact and the
-    // launch checklist/activation would flag "no contact" even though the source had one.
-    default_contact_member_id: source.default_contact_member_id ?? null,
-    // Carry per-audience contact visibility (mig 120) so populating from a source can't silently
-    // re-expose a contact the organizer had hidden.
-    contact_show_to_coaches: source.contact_show_to_coaches ?? true,
-    contact_show_on_public: source.contact_show_on_public ?? true,
-    require_score_finalization: source.require_score_finalization ?? null,
-    // Carry the event's configuration DNA (tie-breakers, game timing, roster rules,
-    // coach-email toggles, format) — previously dropped, so populating a draft from a
-    // source silently lost all of it. populate is a wholesale replace (it already deletes
-    // + recreates divisions/pools/rules), so settings are copied in full. settings holds
-    // only enums/booleans/strings (no entity ids), so the copy is reference-safe.
-    settings: toSettingsObject(source.settings),
-    fee_schedule_mode: source.fee_schedule_mode ?? 'tournament',
-    deposit_amount: source.deposit_amount ?? null,
-    deposit_due_date: source.deposit_due_date ?? null,
-    total_fee_amount: source.total_fee_amount ?? null,
-    total_fee_due_date: source.total_fee_due_date ?? null,
-    logo_url: source.logo_url ?? null,
-    hero_banner_url: source.hero_banner_url ?? null,
-    theme_preset: source.theme_preset ?? null,
-    theme_primary: source.theme_primary ?? null,
-    theme_accent: source.theme_accent ?? null,
-    theme_font: source.theme_font ?? null,
-    theme_card_style: source.theme_card_style ?? null,
-    color_mode: source.color_mode ?? null,
-    icon_bg_color: source.icon_bg_color ?? null,
-    app_name: source.app_name ?? null,
-    app_icon_scale: source.app_icon_scale ?? null,
-    public_hidden_pages: Array.isArray(source.public_hidden_pages) ? source.public_hidden_pages : [],
-    // Carry coach-name visibility (mig 150) so populating from a source can't silently re-expose
-    // (or hide) coach names against the organizer's saved choice.
-    coach_names_show_on_public: source.coach_names_show_on_public === true,
-  }).eq('id', destinationTournamentId);
-  if (updateError) throw updateError;
-
-  // ── Copy related data from source to destination ───────────────────────────
-  const copied: PopulateTournamentResult['copied'] = {
-    venues: 0, divisions: 0, pools: 0, slots: 0,
-    rules: 0, resources: 0, welcome: false, registrationFields: 0,
+  const patch: Record<string, unknown> = {};
+  const fill = (column: string) => {
+    if (unset(destination[column]) && !unset(source[column])) patch[column] = source[column];
   };
 
-  const divisionIdMap = new Map<string, string>();
-  const poolIdMap = new Map<string, string>();
+  // Settings, key by key: the event's configuration (game timing, tie-breakers, roster rules, coach-email toggles)
+  // with its structure, the fee keys with its fees, the rules layout with its content. The draft's own keys win.
+  const mergedSettings = { ...destSettings };
+  let settingsChanged = false;
+  for (const [key, value] of Object.entries(sourceSettings)) {
+    const allowed = FEE_KEYS.includes(key) ? takeFees : RULES_KEYS.includes(key) ? areas.content : areas.structure;
+    if (!allowed || !unset(mergedSettings[key]) || unset(value)) continue;
+    mergedSettings[key] = value;
+    settingsChanged = true;
+  }
+  if (settingsChanged) patch.settings = mergedSettings;
 
-  // Venues + facilities (copy parent venues then their facilities)
-  const { data: venues, error: venuesError } = await supabaseAdmin
-    .from('diamonds').select('*').eq('tournament_id', sourceTournamentId).order('name');
-  if (venuesError) throw venuesError;
-  if (venues?.length) {
-    const { data: ins, error } = await supabaseAdmin.from('diamonds').insert(
-      venues.map(v => ({
-        tournament_id: destinationTournamentId,
-        name: v.name,
-        address: v.address,
-        notes: v.notes,
-        // The library link is KEPT (S6-04, Club Tier Stage 6a). It used to be dropped "for a fresh local copy" — but
-        // the copy is a new local row either way; the link only records which of the club's venues it is, which is
-        // what the cross-program clash check reads. Both tournaments are this club's (read by org above).
-        source_org_venue_id: v.source_org_venue_id ?? null,
-      }))
-    ).select('id');
-    if (error) throw error;
-    copied.venues = ins?.length ?? 0;
-
-    // Copy venue_facilities for each cloned venue
-    if (ins?.length) {
-      const sourceVenueIds = venues.map(v => v.id);
-      const { data: srcFacilities } = await supabaseAdmin
-        .from('venue_facilities')
-        .select('*')
-        .in('venue_id', sourceVenueIds);
-
-      if (srcFacilities?.length) {
-        // Build old→new venue id map
-        const venueIdMap = new Map<string, string>();
-        venues.forEach((v, i) => { if (ins[i]) venueIdMap.set(v.id, ins[i].id); });
-
-        const facilityRows = srcFacilities
-          .filter(f => venueIdMap.has(f.venue_id))
-          .map(f => ({
-            venue_id:      venueIdMap.get(f.venue_id)!,
-            tournament_id: destinationTournamentId,
-            name:          f.name,
-            facility_type: f.facility_type,
-            display_order: f.display_order,
-            notes:         f.notes ?? null,
-            // Kept with its venue's (S6-04): the facility's link is what makes a game on it an exact clash.
-            source_org_facility_id: f.source_org_facility_id ?? null,
-          }));
-
-        if (facilityRows.length) {
-          const { error: fErr } = await supabaseAdmin.from('venue_facilities').insert(facilityRows);
-          if (fErr) throw fErr;
-        }
-      }
+  // The contact travels as one: a draft with none takes the source's (and its per-audience visibility, mig 120).
+  if (unset(destination.contact_email) && unset(destination.default_contact_member_id)
+    && (!unset(source.contact_email) || !unset(source.default_contact_member_id))) {
+    patch.contact_email = source.contact_email ?? null;
+    patch.default_contact_member_id = source.default_contact_member_id ?? null;
+    patch.contact_show_to_coaches = source.contact_show_to_coaches ?? true;
+    patch.contact_show_on_public = source.contact_show_on_public ?? true;
+  }
+  if (areas.structure) fill('require_score_finalization');
+  if (takeFees) {
+    patch.fee_schedule_mode = source.fee_schedule_mode ?? 'tournament';
+    for (const column of ['deposit_amount', 'deposit_due_date', 'total_fee_amount', 'total_fee_due_date']) fill(column);
+  }
+  if (areas.publicPresence) {
+    for (const column of [
+      'logo_url', 'hero_banner_url', 'theme_preset', 'theme_primary', 'theme_accent', 'theme_font', 'theme_card_style',
+      'color_mode', 'icon_bg_color', 'app_name', 'app_icon_scale',
+    ]) fill(column);
+    const draftHidden = Array.isArray(destination.public_hidden_pages) ? destination.public_hidden_pages : [];
+    if (draftHidden.length === 0 && Array.isArray(source.public_hidden_pages) && source.public_hidden_pages.length > 0) {
+      patch.public_hidden_pages = source.public_hidden_pages;
+    }
+    // Coach names on the public site are off unless an organizer turned them on (mig 150): the source's choice comes too.
+    if (destination.coach_names_show_on_public !== true && source.coach_names_show_on_public === true) {
+      patch.coach_names_show_on_public = true;
     }
   }
 
-  // Divisions + pools + slots
-  const { data: divisions, error: divisionsError } = await supabaseAdmin
-    .from('divisions').select('*').eq('tournament_id', sourceTournamentId).order('display_order');
-  if (divisionsError) throw divisionsError;
-  if (divisions?.length) {
-    const { data: ins, error } = await supabaseAdmin.from('divisions').insert(
-      divisions.map(g => ({
-        tournament_id: destinationTournamentId,
-        name: g.name, min_age: g.min_age, max_age: g.max_age,
-        display_order: g.display_order,
-        is_closed: false,
-        capacity: g.capacity,
-        pool_count: g.pool_count, pool_names: g.pool_names,
-        requires_pool_selection: g.requires_pool_selection ?? false,
-        playoff_config: g.playoff_config,
-        schedule_visibility: 'unpublished',
-        deposit_amount: g.deposit_amount ?? null,
-        deposit_due_date: g.deposit_due_date ?? null,
-        total_fee_amount: g.total_fee_amount ?? null,
-        total_fee_due_date: g.total_fee_due_date ?? null,
-      }))
-    ).select('id');
-    if (error) throw error;
-    divisions.forEach((g, i) => { if (ins?.[i]?.id) divisionIdMap.set(g.id, ins[i].id); });
-    copied.divisions = ins?.length ?? 0;
+  // What the draft held in those fields, to put back if the copy fails.
+  const before: Record<string, unknown> = {};
+  for (const column of Object.keys(patch)) before[column] = destination[column] ?? null;
+  if (patch.settings) before.settings = destination.settings ?? {};
 
-    const { data: pools, error: poolsError } = await supabaseAdmin
-      .from('pools').select('*').in('division_id', divisions.map(g => g.id)).order('display_order');
-    if (poolsError) throw poolsError;
-    if (pools?.length) {
-      const { data: insPools, error: poolError } = await supabaseAdmin.from('pools').insert(
-        pools.map(p => ({ division_id: divisionIdMap.get(p.division_id), name: p.name, display_order: p.display_order }))
-      ).select('id');
-      if (poolError) throw poolError;
-      pools.forEach((p, i) => { if (insPools?.[i]?.id) poolIdMap.set(p.id, insPools[i].id); });
-      copied.pools = insPools?.length ?? 0;
-
-      const { data: slots, error: slotsError } = await supabaseAdmin
-        .from('pool_slots').select('*').eq('tournament_id', sourceTournamentId).order('slot_number');
-      if (slotsError) throw slotsError;
-      const slotRows = (slots ?? [])
-        .map(s => ({
-          pool_id: poolIdMap.get(s.pool_id),
-          tournament_id: destinationTournamentId,
-          division_id: divisionIdMap.get(s.division_id),
-          slot_number: s.slot_number, display_name: s.display_name, team_id: null,
-        }))
-        .filter(s => s.pool_id && s.division_id);
-      if (slotRows.length) {
-        const { data: insSlots, error: slotError } = await supabaseAdmin.from('pool_slots').insert(slotRows).select('id');
-        if (slotError) throw slotError;
-        copied.slots = insSlots?.length ?? 0;
-      }
-    }
+  if (Object.keys(patch).length) {
+    const { error: updateError } = await supabaseAdmin
+      .from('tournaments').update(patch).eq('id', destinationTournamentId).eq('org_id', orgId);
+    if (updateError) throw new PopulateFailed(true, updateError);
   }
 
-  // Rules & resources
-  const { data: rules, error: rulesError } = await supabaseAdmin
-    .from('rules').select('*').eq('tournament_id', sourceTournamentId).order('display_order');
-  if (rulesError) throw rulesError;
-  if (rules?.length) {
-    const { data: insRules, error: ruleError } = await supabaseAdmin.from('rules').insert(
-      rules.map(r => ({
-        tournament_id: destinationTournamentId,
-        title: r.title, icon: r.icon, display_order: r.display_order,
-        division_ids: remapUuidArray(r.division_ids, divisionIdMap),
-      }))
-    ).select('id');
-    if (ruleError) throw ruleError;
-    copied.rules = insRules?.length ?? 0;
-    const ruleIdMap = new Map<string, string>();
-    rules.forEach((r, i) => { if (insRules?.[i]?.id) ruleIdMap.set(r.id, insRules[i].id); });
-    const { data: ruleItems, error: itemError } = await supabaseAdmin
-      .from('rule_items').select('*').in('rule_id', rules.map(r => r.id)).order('display_order');
-    if (itemError) throw itemError;
-    const itemRows = (ruleItems ?? [])
-      .map(item => ({ rule_id: ruleIdMap.get(item.rule_id), content: item.content, display_order: item.display_order }))
-      .filter(item => item.rule_id);
-    if (itemRows.length) {
-      const { error: itemInsertError } = await supabaseAdmin.from('rule_items').insert(itemRows);
-      if (itemInsertError) throw itemInsertError;
-    }
-  }
-
-  const { data: resources, error: resourcesError } = await supabaseAdmin
-    .from('resources').select('*').eq('tournament_id', sourceTournamentId).order('display_order');
-  if (resourcesError) throw resourcesError;
-  if (resources?.length) {
-    const { data: ins, error } = await supabaseAdmin.from('resources').insert(
-      resources.map(r => ({ tournament_id: destinationTournamentId, label: r.label, url: r.url, display_order: r.display_order }))
-    ).select('id');
-    if (error) throw error;
-    copied.resources = ins?.length ?? 0;
-  }
-
-  // Welcome announcement
-  const { data: welcome, error: welcomeError } = await supabaseAdmin
-    .from('announcements').select('*')
-    .eq('tournament_id', sourceTournamentId).eq('title', 'Welcome!').order('published_at').limit(1).maybeSingle();
-  if (welcomeError) throw welcomeError;
-  if (welcome?.body) {
-    const { error } = await supabaseAdmin.from('announcements').insert({
-      tournament_id: destinationTournamentId,
-      title: 'Welcome!', body: welcome.body,
-      published_at: new Date().toISOString(), pinned: true,
-      division_ids: remapUuidArray(welcome.division_ids, divisionIdMap),
+  const ledger: SetupLedger = [];
+  try {
+    const copied = await copySetupRows({
+      sourceId: sourceTournamentId,
+      targetId: destinationTournamentId,
+      orgId,
+      include: {
+        divisions: areas.structure,
+        pools: areas.structure,
+        slots: areas.structure,
+        venues: areas.venues,
+        rulesResources: areas.content,
+        welcome: areas.content,
+        registrationFields: areas.registration,
+        // A copied division's own fee comes only with the source's fee approach.
+        divisionFees: takeFees,
+      },
+      keep: true,
+      ledger,
     });
-    if (error) throw error;
-    copied.welcome = true;
+    return { copied };
+  } catch (error) {
+    let tookBack = await takeBackSetupRows(destinationTournamentId, ledger);
+    if (Object.keys(before).length) {
+      const { error: restoreError } = await supabaseAdmin
+        .from('tournaments').update(before).eq('id', destinationTournamentId).eq('org_id', orgId);
+      if (restoreError) {
+        tookBack = false;
+        console.error('[populateTournamentFrom] could not put the draft\'s fields back', restoreError);
+      }
+    }
+    throw new PopulateFailed(tookBack, error);
   }
-
-  // Registration fields
-  const { data: fields, error: fieldsError } = await supabaseAdmin
-    .from('tournament_registration_fields').select('*')
-    .eq('tournament_id', sourceTournamentId).eq('org_id', orgId).eq('is_archived', false).order('sort_order');
-  if (fieldsError) throw fieldsError;
-  if (fields?.length) {
-    const { data: ins, error } = await supabaseAdmin.from('tournament_registration_fields').insert(
-      fields.map(f => ({
-        tournament_id: destinationTournamentId, org_id: orgId,
-        label: f.label, field_type: f.field_type, options: f.options ?? [],
-        required: f.required ?? false, sort_order: f.sort_order ?? 0, is_archived: false,
-      }))
-    ).select('id');
-    if (error) throw error;
-    copied.registrationFields = ins?.length ?? 0;
-  }
-
-  return { copied };
 }
 
 // --- Venues (tournament-scoped) ---

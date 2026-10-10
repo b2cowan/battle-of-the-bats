@@ -111,6 +111,29 @@ const tournamentsHelp: HelpPageContent = {
             </>
           ),
         },
+        {
+          id: 'launch-draft-board',
+          title: 'The draft’s board: what’s left before you activate',
+          content: (
+            <>
+              <p>A draft&rsquo;s <strong>Dashboard</strong> is one checklist. <strong>Before you activate</strong> lists the three things Activate needs: the event&rsquo;s dates, at least one division, and someone teams can write to (your organization&rsquo;s email covers it unless you choose another contact). Each row opens the exact place it is set.</p>
+              <p><strong>The rest, when you&rsquo;re ready</strong> lists venues, fees, the schedule, rules and resources, game timing and tie-breakers, and the public site. None of them is needed to activate. A draft with no fees set up says payments aren&rsquo;t tracked here; it never calls the event free.</p>
+              <p>Once the three required rows are done, a <strong>Ready to activate</strong> card appears with the board&rsquo;s one main button. It asks first, shows the public link with <strong>Copy</strong>, and only then puts the public site online. Until you activate, the tournament stays private: the <strong>Preview</strong> card shows the public site and its registration form as they will look.</p>
+              <p>A draft with no divisions yet offers <strong>Start from a past tournament</strong> (Tournament Plus and above): choose an event and the parts to bring forward. The draft keeps its name, link, and dates, and anything already in it stays; what you bring in is added beside it. If any part fails, nothing is brought in.</p>
+            </>
+          ),
+        },
+        {
+          id: 'launch-weeks-before',
+          title: 'The weeks before game day',
+          content: (
+            <>
+              <p>Once a tournament is active and before its first day, its <strong>Dashboard</strong> opens with how many days are left and a door to message your teams. Five cards follow: <strong>Registration</strong> (each division&rsquo;s spots, with a count of teams waiting for your review), <strong>Payments</strong>, <strong>Coaches</strong> (who has signed up, and a reminder for those who haven&rsquo;t), <strong>Messages</strong>, and <strong>Schedule</strong>. Every row opens the place to act on it.</p>
+              <p>Payments says the true thing: with fees set and no team accepted yet, nothing is due; with no fees set up, payments aren&rsquo;t tracked here, and the row opens <strong>Fees &amp; Payments</strong> in Event settings.</p>
+              <p><strong>Customize this board</strong> at the foot lets you drag the cards into your own order or hide one. Your layout is saved in this browser.</p>
+            </>
+          ),
+        },
       ],
       faqs: [
         {
@@ -1354,6 +1377,13 @@ const tournamentsHelp: HelpPageContent = {
         <p>Admins can enter, review, finalize, correct, export, or revert scores from <strong>Results &amp; Scoring</strong>. It opens on <strong>Needs you</strong> — games waiting to finalize, needing a score, or playing right now — with <strong>All games</strong> one tap away.</p>
       ),
       subtopics: [
+        {
+          id: 'results-game-day-board',
+          title: 'The game-day board',
+          content: (
+            <p>On game day your tournament <strong>Dashboard</strong> is four lists in the order of your day: <strong>To finalize</strong> (scores waiting for you to confirm), <strong>Needs a score</strong> (games whose time has passed with no result), <strong>Playing now</strong>, and <strong>Up next</strong>. Each list hides itself when it is empty, and every game opens in Results with its score editor already open. Beside them sit the rain-delay door, the event so far, and Schedule health. <strong>Customize this board</strong> shows or hides each part.</p>
+          ),
+        },
         {
           id: 'results-needs-you-all-games',
           title: 'Needs you and All games',

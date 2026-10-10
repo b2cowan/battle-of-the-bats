@@ -35,6 +35,7 @@ import {
   RECORD_WORDS as W, STATUS_ACTION, STATUS_WORD, statusConfirm, statusSentence, type StatusChange,
 } from '@/lib/tournament-status-words';
 import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { activationMissing } from '@/lib/tournament-activation';
 import type { ListEvent } from '@/lib/tournament-lists';
 
 export interface RecordPlan {
@@ -250,10 +251,14 @@ export default function TournamentRecord(props: TournamentRecordProps) {
 
   // ── What each status allows, and what is said before a tap ──
   const status = event.status;
-  const missing: Array<'dates' | 'division' | 'contact'> = [];
-  if (!event.startDate || !event.endDate) missing.push('dates');
-  if (event.divisionCount === 0) missing.push('division');
-  if (!event.defaultContactMemberId && !event.contactEmail && !plan.orgContactEmail) missing.push('contact');
+  const missing = activationMissing({
+    startDate: event.startDate,
+    endDate: event.endDate,
+    divisionCount: event.divisionCount,
+    defaultContactMemberId: event.defaultContactMemberId,
+    contactEmail: event.contactEmail,
+    orgContactEmail: plan.orgContactEmail,
+  });
   const slotFull = finiteSlots && props.slotHolders.length >= plan.limit;
   const askFor = (change: StatusChange) => () => { setAskError(''); setAsk(change); };
   const changeButton = (change: StatusChange) => (

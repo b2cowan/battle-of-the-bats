@@ -514,13 +514,11 @@ const ADMIN_COLOUR_DEBT = new Set([
   'app/[orgSlug]/admin/onboarding/onboarding.module.css',
   'app/[orgSlug]/admin/public-site/public-site.module.css',
   'app/[orgSlug]/admin/tournaments/branding/branding.module.css',
-  'app/[orgSlug]/admin/tournaments/dashboard/dashboard.module.css',
   'app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css',
   'app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css',
   'app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css',
   'app/[orgSlug]/admin/tournaments/settings/notifications/notifications.module.css',
   'components/admin/NumberStepper.module.css',
-  'components/admin/tournament/GuidanceRail.module.css',
   'components/admin/tournament/TournamentAdminUI.module.css',
 ]);
 // A colour literal: hex, or rgb/rgba/hsl/hsla with no var() inside. The kit check also refuses the keywords.

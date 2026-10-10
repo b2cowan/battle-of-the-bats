@@ -1,774 +1,52 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE BOARD PAGE's own sheet (page.tsx). Since Tournament admin redesign Stage 5 the boards are their own
+   files on the kit — DraftBoard, WeeksBeforeBoard, GameDayBoard, FinishedBoard — and this sheet keeps only
+   what the page itself draws: the place a board waits in, Customize's toolbar and its drag-to-reorder
+   parts, Schedule health's body (the game-day board's health row opens it in place), and the recent
+   events log's frame. Its old look was retired here, folded onto the kit with zero differences (the
+   draft's checklist, the panels, the stat cards, the persona panel and the two old windows went with
+   their screens). ⚠ TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 220px));
-  justify-content: start;
-  gap: 1rem;
-  margin-bottom: 2.5rem;
-}
+/* ── The page ───────────────────────────────────────────────────────────── */
+.page {}
 
-.statCard {
+/* The board's place while this event's read is in flight (or failed): one quiet line under the title,
+   never a board guessed from placeholder zeros. */
+.boardWaiting {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  text-decoration: none;
-  background: var(--hud-surface);
-  border: 1px solid var(--blueprint-blue);
-  box-shadow: var(--glow-blue), var(--highlight-top);
-  border-radius: 0;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
-}
-
-/* Tap feedback — settles instantly under reduced motion */
-.statCard:active {
-  transform: scale(0.992);
-}
-
-.statCard:hover {
-  border-color: var(--logic-lime);
-  box-shadow: var(--glow-lime);
-}
-
-.statIcon {
-  width: 44px;
-  height: 44px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--logic-lime);
-  flex-shrink: 0;
-}
-
-.statNum {
-  font-family: var(--font-data);
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--logic-lime);
-  line-height: 1;
-}
-
-.statLabel {
-  font-family: var(--font-data);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  margin-top: 0.2rem;
-}
-
-.sectionTitle {
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-  margin: 0;
-}
-
-/* Reuse setup prompt */
-.reuseSetupPrompt {
-  margin-bottom: 1.5rem;
-  padding: 1rem 1.15rem;
-  border: 1px solid var(--border-2);
-  background: var(--white-03);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.reusePromptBody {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.reusePromptIcon {
-  color: var(--logic-lime);
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-}
-
-.reusePromptTitle {
-  display: block;
-  font-family: var(--font-data);
-  font-size: 0.86rem;
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--fl-text);
-}
-
-.reusePromptBody p {
-  font-family: var(--font-data);
-  font-size: 0.73rem;
-  line-height: 1.55;
-  color: var(--white-50);
-  margin: 0.2rem 0 0;
-}
-
-.reusePromptActions {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.reuseModalTitle {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  min-width: 0;
-}
-
-.reuseModalTitle h3 {
-  margin: 0;
-}
-
-.reuseModalTitle p {
-  margin: 0.25rem 0 0;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
-}
-
-.reuseModalBody {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-  margin: 1rem 0;
-  font-family: var(--font-data);
-  font-size: 0.82rem;
-  line-height: 1.6;
-  color: var(--white-70);
-}
-
-.reuseModalBody p {
-  margin: 0;
-}
-
-.sourceList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 1rem 0;
-}
-
-.sourceButton {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--border-2);
-  border-radius: 0;
-  background: var(--white-03);
-  cursor: pointer;
-  text-align: left;
-  color: inherit;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.sourceButton:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  background: rgba(var(--logic-lime-rgb), 0.04);
-}
-
-.sourceName {
-  display: block;
-  font-family: var(--font-data);
-  font-size: 0.85rem;
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--fl-text);
-}
-
-.sourceMeta {
-  display: block;
-  margin-top: 0.2rem;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  color: var(--white-40);
-}
-
-.reuseCopyGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.reuseCopyPanel {
-  padding: 0.8rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-}
-
-.reuseCopyPanel h4 {
-  margin: 0 0 0.55rem;
-  font-family: var(--font-data);
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.reuseCopyList,
-.copiedSummaryList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.42rem;
-}
-
-.reuseCopyList li,
-.copiedSummaryList li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.45rem;
-  color: var(--white-70);
-}
-
-.checkDot,
-.neverDot {
-  width: 6px;
-  height: 6px;
-  margin-top: 0.56rem;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--logic-lime);
-}
-
-.neverDot {
-  background: var(--warning);
-}
-
-.modalNote {
-  color: var(--white-50);
-}
-
-.copiedSummaryList {
-  padding: 0.8rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  background: rgba(var(--logic-lime-rgb), 0.04);
-}
-
-/* ── Publish checklist ───────────────────────────────── */
-.publishChecklist {
-  margin-bottom: 2.5rem;
-  padding: 1.25rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.05);
-}
-
-.checklistReady {
-  background: rgba(var(--logic-lime-rgb), 0.04);
-}
-
-.checklistHeader {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.checklistSub {
-  font-family: var(--font-data);
-  font-size: 0.6875rem;
-  color: var(--data-gray);
-  line-height: 1.5;
-  margin: 0.25rem 0 0.5rem;
-}
-
-.checklistProgress {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
-
-.checklistProgressLabel {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.progressTrack {
-  flex: 1;
-  height: 3px;
-  background: var(--border-2);
-  overflow: hidden;
-}
-
-.progressFill {
-  height: 100%;
-  background: var(--logic-lime);
-  transition: width 0.4s ease;
-}
-
-/* ── Flat checklist list ─────────────────────────────── */
-.checklistList {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  /* visible (not hidden) so concept HelpTooltip popovers on default-group rows aren't clipped.
-     The list has no border-radius, so nothing relies on overflow:hidden for corner clipping. */
-  overflow: visible;
-}
-
-/* Group divider micro-label inside the optional drawer (Recommended / Defaults / Your call). */
-.checklistDivider {
-  width: 100%;
-  padding: 0.5rem 0.85rem 0.35rem;
-  font-family: var(--font-data);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-40);
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-}
-
-
-.checklistRow {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.55rem 0.85rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  text-decoration: none;
-  color: inherit;
-  transition: background 0.15s;
-  min-height: 40px;
   flex-wrap: wrap;
-  /* Positioning context for the stretched label-link overlay (whole-card click target). */
-  position: relative;
-}
-
-.checklistRow:last-child {
-  border-bottom: none;
-}
-
-.checklistRow:hover {
-  background: rgba(var(--blueprint-blue-rgb), 0.06);
-}
-
-.checklistRowDone:hover {
-  background: rgba(var(--logic-lime-rgb), 0.04);
-}
-
-.rowIcon {
-  display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--warning);
+  gap: 0.75rem;
+  margin: 0;
+  padding: 1.25rem 0.1rem;
+  font-size: var(--type-body);
+  color: var(--text-tertiary);
 }
 
-.checklistRowDone .rowIcon {
-  color: var(--logic-lime);
-}
+/* A refresh that failed after the board drew: its figures stay, and say they may be old. */
+.staleLine { margin: 0 0 1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 
-.rowLabel {
-  flex: 1;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--fl-text);
-  min-width: 0;
-}
-
-.checklistRowDone .rowLabel {
-  color: var(--logic-lime);
-}
-
-/* Label-as-link: rows that carry a concept "?" tooltip make the LABEL the <a> (the row is a <div>)
-   so a <button> isn't nested inside an <a>. A stretched ::after overlay makes the WHOLE card the
-   click target (status arrow, badge, sub-label all included) while the tooltip floats above it. */
-.rowLabelLink {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--fl-text);
-  text-decoration: none;
-}
-.rowLabelLink::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-.rowLabelLink:hover {
-  text-decoration: underline;
-}
-.checklistRowDone .rowLabelLink {
-  color: var(--logic-lime);
-}
-
-/* The "?" tooltip sits above the stretched link overlay so it stays independently clickable
-   (tap = open tooltip, not navigate) on both desktop and mobile. */
-.rowHelp {
-  position: relative;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-}
-
-/* Neutralize the pending-icon amber on default-backed rows — they have working values, not warnings. */
-.checklistRow .rowIconMuted {
-  color: var(--data-gray);
-}
-
-/* Schedule row — tone-driven flag (overrides the done/pending icon + status colors).
-   Scoped under .checklistRow to outrank .checklistRowDone/.checklistRowPending overrides. */
-.checklistRow .rowIcon[data-sched-tone='neutral'] { color: var(--data-gray); }
-.checklistRow .rowIcon[data-sched-tone='good']    { color: var(--logic-lime); }
-.checklistRow .rowIcon[data-sched-tone='warning'] { color: var(--warning); }
-.checklistRow .rowIcon[data-sched-tone='danger']  { color: var(--danger); }
-
-.checklistRow .rowStatus[data-sched-tone='neutral'] { color: var(--data-gray); }
-.checklistRow .rowStatus[data-sched-tone='good']    { color: rgba(var(--logic-lime-rgb), 0.85); }
-.checklistRow .rowStatus[data-sched-tone='warning'] { color: var(--warning); }
-.checklistRow .rowStatus[data-sched-tone='danger']  { color: var(--danger); }
-
-.rowOptTag {
-  font-family: var(--font-data);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  padding: 0.1rem 0.3rem;
-  flex-shrink: 0;
-}
-
-.rowStatus {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  flex-shrink: 0;
-  color: rgba(var(--logic-lime-rgb), 0.65);
-}
-
-.checklistRowPending .rowStatus {
-  color: rgba(var(--logic-lime-rgb), 0.85);
-}
-
-.rowDesc {
-  width: 100%;
-  padding-left: calc(16px + 0.65rem);
-  font-family: var(--font-data);
-  font-size: 0.625rem;
-  color: var(--data-gray);
-  line-height: 1.4;
-  padding-bottom: 0.3rem;
-  margin-top: -0.1rem;
-}
-
-/* ── Analytics panels ────────────────────────────────── */
-.analyticsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 2.5rem;
-}
-
-.analyticsPanel {
-  padding: 1.25rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-  /* Whisper-thin top edge for depth without breaking the flat 2px rule */
-  box-shadow: var(--highlight-top);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  /* Grid items default to min-width:auto, which lets long unbreakable content
-     (team names, venue) push a panel wider than its column and overflow the
-     viewport on mobile. Clamp it so panels always fit their grid track. */
-  min-width: 0;
-}
-
-.panelHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
+/* ── Schedule health's body (the game-day board's health row) ───────────── */
 .panelLink {
   margin-left: auto;
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.65rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(var(--logic-lime-rgb), 0.55);
+  letter-spacing: normal;
+  text-transform: none;
   text-decoration: none;
+  color: var(--home-olive);
   transition: color 0.15s;
 }
 
-.panelLink:hover { color: var(--logic-lime); }
-
-/* ⚰ The Now Playing / Up Next / Needs a Score tile strips (`.liveStripPanel`, `.liveList`, `.liveRow`
-   and parts) are GONE (Tournament admin redesign Stage 1, 2026-09-29): the game-day board is
-   `GameDayBoard.tsx`, its four lists in one frame of the kit's row list. */
-
-.mainGauge {
+.emptyPanel {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.gaugeFigures {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-}
-
-.gaugeMain {
-  font-family: var(--font-data);
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--logic-lime);
-  line-height: 1;
-}
-
-.gaugeOf {
-  font-family: var(--font-data);
-  font-size: 1rem;
-  color: var(--data-gray);
-}
-
-.gaugeLabel {
-  font-family: var(--font-data);
-  font-size: 0.625rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--data-gray);
-  margin-left: 0.25rem;
-}
-
-.gaugeWrap {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.gaugeTrack {
-  flex: 1;
-  height: 6px;
-  background: var(--border-2);
-  border-radius: 0;
-  overflow: hidden;
-}
-
-.gaugeFill {
-  height: 100%;
-  border-radius: 0;
-  transition: width 0.4s ease;
-}
-
-.gaugePct {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  min-width: 32px;
-  text-align: right;
-}
-
-.registrationStatusTable {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  padding-top: 0.75rem;
-}
-
-.registrationStatusHeader,
-.registrationStatusRow {
-  display: grid;
-  grid-template-columns: minmax(86px, 1fr) repeat(3, minmax(48px, 64px));
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.registrationStatusHeader {
-  font-family: var(--font-data);
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-.registrationStatusHeader span:not(:first-child) {
-  text-align: center;
-}
-
-.registrationDivisionName {
-  overflow: hidden;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--fl-text);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.registrationStatusCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 26px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  background: rgba(var(--blueprint-blue-rgb), 0.035);
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  font-weight: 800;
-  text-decoration: none;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.registrationStatusCount:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.38);
-  background: rgba(var(--logic-lime-rgb), 0.055);
-}
-
-.registrationStatusCount[data-status="accepted"] {
-  color: var(--success);
-}
-
-.registrationStatusCount[data-status="pending"] {
-  color: var(--warning);
-}
-
-.registrationStatusCount[data-status="waitlist"] {
-  color: var(--blueprint-blue);
-}
-
-.registrationFollowUps {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  padding-top: 0.65rem;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.registrationFollowUps svg {
-  color: var(--warning);
-  flex-shrink: 0;
-}
-
-.registrationFollowUpChips {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
-.registrationFollowUpChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-height: 24px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  background: rgba(var(--blueprint-blue-rgb), 0.035);
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  padding: 0.15rem 0.45rem;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.registrationFollowUpChip strong {
-  color: var(--logic-lime);
-}
-
-.registrationFollowUpChip[data-tone="danger"] {
-  border-color: rgba(var(--danger-rgb), 0.26);
-}
-
-.registrationFollowUpChip[data-tone="warning"] {
-  border-color: rgba(var(--warning-rgb), 0.28);
-}
-
-.registrationFollowUpChip[data-locked="true"] {
-  border-style: dashed;
-}
-
-.outstandingRow {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--warning);
-}
-
-.paymentBreakdown {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  padding-top: 0.75rem;
-}
-
-.payRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
-}
-
-.scheduleHealthPanel {
-  gap: 0.75rem;
-}
-
-.scheduleHealthPanel[data-tone="good"] {
-  border-color: rgba(var(--success-rgb), 0.22);
-  background: rgba(var(--success-rgb), 0.025);
-}
-
-.scheduleHealthPanel[data-tone="warning"] {
-  border-color: rgba(var(--warning-rgb), 0.28);
-  background: rgba(var(--warning-rgb), 0.035);
-}
-
-.scheduleHealthPanel[data-tone="danger"] {
-  border-color: rgba(var(--danger-rgb), 0.28);
-  background: rgba(var(--danger-rgb), 0.035);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
 }
 
 .scheduleHealthTopline {
@@ -786,102 +64,56 @@
   align-items: center;
   justify-content: center;
   border: 1px solid currentColor;
-  background: var(--white-5);
+  background: var(--home-card, var(--card-bg));
   font-family: var(--font-data);
 }
+.scheduleHealthScore span { font-size: 1.35rem; font-weight: 900; line-height: 1; }
+.scheduleHealthScore small { font-size: 0.58rem; color: var(--text-tertiary); }
+.scheduleHealthScore[data-tone="good"] { color: var(--success-light); background: rgba(var(--success-rgb), 0.08); }
+.scheduleHealthScore[data-tone="warning"] { color: var(--warning-light); background: rgba(var(--warning-rgb), 0.08); }
+.scheduleHealthScore[data-tone="danger"] { color: var(--danger-light); background: rgba(var(--danger-rgb), 0.08); }
 
-.scheduleHealthScore span {
-  font-size: 1.35rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.scheduleHealthScore small {
-  font-size: 0.58rem;
-  color: var(--white-45);
-}
-
-.scheduleHealthScore[data-tone="good"] {
-  color: var(--success);
-  background: rgba(var(--success-rgb), 0.08);
-}
-
-.scheduleHealthScore[data-tone="warning"] {
-  color: var(--warning);
-  background: rgba(var(--warning-rgb), 0.08);
-}
-
-.scheduleHealthScore[data-tone="danger"] {
-  color: var(--danger);
-  background: rgba(var(--danger-rgb), 0.08);
-}
-
-.scheduleHealthSummary {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
+.scheduleHealthSummary { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
 .scheduleHealthSummary strong {
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.8rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--fl-text);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
 }
-
 .scheduleHealthSummary span {
   overflow: hidden;
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.66rem;
-  color: var(--data-gray);
+  color: var(--text-tertiary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .scheduleHealthIssuePill {
   padding: 0.2rem 0.45rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  border: 1px solid var(--home-line-strong);
+  color: var(--text-tertiary);
   font-family: var(--font-data);
   font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--data-gray);
   white-space: nowrap;
 }
+.scheduleHealthIssuePill[data-tone="good"] { color: var(--success-light); border-color: rgba(var(--success-rgb), 0.3); }
+.scheduleHealthIssuePill[data-tone="warning"] { color: var(--warning-light); border-color: rgba(var(--warning-rgb), 0.3); }
+.scheduleHealthIssuePill[data-tone="danger"] { color: var(--danger-light); border-color: rgba(var(--danger-rgb), 0.3); }
 
-.scheduleHealthIssuePill[data-tone="good"] {
-  color: var(--success);
-  border-color: rgba(var(--success-rgb), 0.24);
-}
-
-.scheduleHealthIssuePill[data-tone="warning"] {
-  color: var(--warning);
-  border-color: rgba(var(--warning-rgb), 0.28);
-}
-
-.scheduleHealthIssuePill[data-tone="danger"] {
-  color: var(--danger);
-  border-color: rgba(var(--danger-rgb), 0.28);
-}
-
-.scheduleHealthMiniGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.35rem;
-}
-
+.scheduleHealthMiniGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; }
 .scheduleHealthMiniMetric {
   min-width: 0;
   padding: 0.42rem 0.45rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
-  background: rgba(var(--blueprint-blue-rgb), 0.035);
+  border: 1px solid var(--home-line-strong);
+  background: var(--home-card, var(--card-bg));
   font-family: var(--font-data);
 }
-
 .scheduleHealthMiniMetric strong,
 .scheduleHealthMiniMetric small {
   display: block;
@@ -889,238 +121,52 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.scheduleHealthMiniMetric strong {
-  font-size: 1rem;
-  line-height: 1;
-  color: var(--fl-text);
-}
-
+.scheduleHealthMiniMetric strong { font-size: 1rem; line-height: 1; color: var(--text-primary); }
 .scheduleHealthMiniMetric small {
   margin-top: 0.18rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.56rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--data-gray);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
 }
-
-.scheduleHealthMiniMetric[data-tone="good"] strong {
-  color: var(--success);
-}
-
-.scheduleHealthMiniMetric[data-tone="warning"] strong {
-  color: var(--warning);
-}
-
-.scheduleHealthMiniMetric[data-tone="danger"] strong {
-  color: var(--danger);
-}
-
-.scheduleHealthMiniMetric[data-tone="info"] strong {
-  color: var(--blueprint-blue);
-}
+.scheduleHealthMiniMetric[data-tone="good"] strong { color: var(--success-light); }
+.scheduleHealthMiniMetric[data-tone="warning"] strong { color: var(--warning-light); }
+.scheduleHealthMiniMetric[data-tone="danger"] strong { color: var(--danger-light); }
+.scheduleHealthMiniMetric[data-tone="info"] strong { color: var(--info-light); }
 
 .scheduleHealthIssueLink {
   display: flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.48rem 0.55rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  background: rgba(var(--blueprint-blue-rgb), 0.035);
-  color: var(--data-gray);
+  border: 1px solid var(--home-line-strong);
+  background: var(--home-card, var(--card-bg));
+  color: var(--text-tertiary);
   font-family: var(--font-data);
   font-size: 0.68rem;
   line-height: 1.35;
   text-decoration: none;
 }
-
-.scheduleHealthIssueLink svg {
-  flex-shrink: 0;
-}
-
+.scheduleHealthIssueLink svg { flex-shrink: 0; }
 .scheduleHealthIssueLink[data-tone="good"] {
-  color: var(--success);
-  border-color: rgba(var(--success-rgb), 0.22);
-  background: rgba(var(--success-rgb), 0.055);
+  color: var(--success-light);
+  border-color: rgba(var(--success-rgb), 0.3);
+  background: rgba(var(--success-rgb), 0.06);
 }
-
 .scheduleHealthIssueLink[data-tone="warning"] {
-  color: var(--warning);
-  border-color: rgba(var(--warning-rgb), 0.26);
-  background: rgba(var(--warning-rgb), 0.055);
+  color: var(--warning-light);
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.06);
 }
-
 .scheduleHealthIssueLink[data-tone="danger"] {
-  color: var(--danger);
-  border-color: rgba(var(--danger-rgb), 0.26);
-  background: rgba(var(--danger-rgb), 0.055);
+  color: var(--danger-light);
+  border-color: rgba(var(--danger-rgb), 0.3);
+  background: rgba(var(--danger-rgb), 0.06);
 }
 
-.emptyPanel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  color: var(--data-gray);
-}
-
-/* ── Stat card sub-value ─────────────────────────────── */
-.statSubValue {
-  font-family: var(--font-data);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--white-30);
-  margin-top: 0.1rem;
-  text-transform: uppercase;
-}
-
-/* Non-link stat card (e.g. Days) */
-.statCardStatic {
-  cursor: default;
-}
-.statCardStatic:hover {
-  border-color: var(--blueprint-blue);
-  box-shadow: var(--glow-blue);
-}
-
-/* ── Compact metric strip (active/completed, replaces stat cards) ── */
-.metricStrip {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.65rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-}
-
-.metricItem {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
-}
-
-.metricValue {
-  font-family: var(--font-data);
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--logic-lime);
-  letter-spacing: -0.03em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.metricLabel {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-.metricSep {
-  font-family: var(--font-data);
-  font-size: 0.85rem;
-  color: var(--white-20);
-  user-select: none;
-}
-
-/* ── Registration trend sparkline ─────────────────────── */
-.sparkline {
-  flex-shrink: 0;
-  opacity: 0.85;
-}
-
-@media (max-width: 640px) {
-  .sparkline { display: none; }
-}
-
-/* ── Registration velocity chip ──────────────────────── */
-.velocityChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.15rem 0.45rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  background: rgba(var(--logic-lime-rgb), 0.06);
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-/* ── Payment by division table ───────────────────────── */
-.payDivTable {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  padding-top: 0.75rem;
-  margin-top: 0.25rem;
-}
-
-.payDivHeader,
-.payDivRow {
-  display: grid;
-  grid-template-columns: minmax(80px, 1fr) repeat(4, minmax(42px, 54px));
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.payDivHeader {
-  font-family: var(--font-data);
-  font-size: 0.54rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-.payDivHeader span:not(:first-child) {
-  text-align: center;
-}
-
-.payDivName {
-  overflow: hidden;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  color: var(--fl-text);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.payDivCell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
-  background: rgba(var(--blueprint-blue-rgb), 0.03);
-  color: var(--white-30);
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-decoration: none;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.payDivCell:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.3);
-  background: rgba(var(--logic-lime-rgb), 0.04);
-}
-
-.payDivCell[data-tone="success"] { color: var(--success);         border-color: rgba(var(--success-rgb), 0.22); }
-.payDivCell[data-tone="info"]    { color: var(--info);  border-color: rgba(var(--info-rgb), 0.3); }
-.payDivCell[data-tone="warning"] { color: var(--warning);         border-color: rgba(var(--warning-rgb), 0.28); }
-.payDivCell[data-tone="danger"]  { color: var(--danger);          border-color: rgba(var(--danger-rgb), 0.28); }
-
-/* ── Edit Layout mode ──────────────────────────────────── */
+/* ── Customize (the toolbar, and the weeks-before cards' drag-to-reorder) ─── */
 .editToolbar {
   display: flex;
   align-items: center;
@@ -1128,52 +174,32 @@
   flex-wrap: wrap;
   padding: 0.6rem 0.85rem;
   margin-bottom: 1.25rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
+  border: 1px solid var(--home-line);
+  background: var(--card-bg);
   position: sticky;
-  /* Stick BELOW the shared AdminEventHeader, not under it (which would bury Done / Reset).
-     The header itself now sticks below the Stage C top strip, so both offsets stack. */
   top: calc(var(--admin-header-h, 0px) + var(--admin-topstrip-h, 0px));
   z-index: 5;
 }
-
-.editToolbarIcon {
-  color: var(--logic-lime);
-  flex-shrink: 0;
-}
-
+.editToolbarIcon { flex-shrink: 0; color: var(--home-olive); }
 .editToolbarTitle {
   font-family: var(--font-data);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--logic-lime);
+  color: var(--text-secondary);
 }
-
 .editToolbarHint {
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.62rem;
-  color: var(--data-gray);
   letter-spacing: 0.04em;
+  color: var(--text-tertiary);
 }
-
-.editToolbarActions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
+.editToolbarActions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
 
 /* The game-day board's Customize (Tournament admin redesign Stage 1): one checkbox per part, in the
    day's order — shown or hidden, never moved. Full width under the toolbar's title line. */
-.editToolbarParts {
-  flex-basis: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1rem;
-  order: 1;
-}
+.editToolbarParts { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; order: 1; }
 .editToolbarPart {
   display: inline-flex;
   align-items: center;
@@ -1185,136 +211,13 @@
 }
 .editToolbarPart input { width: 1rem; height: 1rem; accent-color: var(--home-olive); }
 
-/* Stat card in edit mode */
-.statCardEditing {
-  position: relative;
-  cursor: default;
-}
+/* A card while it is dragged. */
+.cardDragging { outline: 1px solid var(--home-olive); box-shadow: none; }
 
-.statCardEditing:hover {
-  border-color: var(--blueprint-blue);
-  box-shadow: none;
-}
-
-.cardDragging {
-  outline: 1px solid var(--logic-lime);
-  box-shadow: var(--glow-sm);
-}
-
-.cardGrip,
-.cardRemove {
-  position: absolute;
-  top: 4px;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(var(--blueprint-blue-rgb), 0.06);
-  border: 1px solid transparent;
-  border-radius: 2px;
-  color: var(--white-30);
-  cursor: pointer;
-  z-index: 2;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-}
-
-.cardGrip {
-  left: 4px;
-  cursor: grab;
-  touch-action: none;
-}
-
-.cardGrip:active {
-  cursor: grabbing;
-  color: var(--logic-lime);
-}
-
-.cardRemove {
-  right: 4px;
-}
-
-.statCardEditing:hover .cardGrip {
-  color: var(--white-45);
-}
-
-.cardRemove:hover {
-  color: var(--danger);
-  border-color: rgba(var(--danger-rgb), 0.4);
-  background: rgba(var(--danger-rgb), 0.12);
-}
-
-/* Click-to-edit icon box on a stat card */
-.statIconEdit {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  color: var(--logic-lime);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.statIconEdit:hover {
-  border-color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-}
-
-.iconEditBadge {
-  position: absolute;
-  bottom: -5px;
-  right: -5px;
-  width: 15px;
-  height: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--hud-surface);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.5);
-  border-radius: 2px;
-  color: var(--logic-lime);
-}
-
-/* Icon picker popover (anchored to a stat card) */
-.iconPopover {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 4px;
-  z-index: 20;
-  width: 232px;
-  background: var(--hud-surface);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.5);
-  box-shadow: var(--shadow);
-}
-
-.iconPopover .iconPickerGrid {
-  border-top: none;
-  background: transparent;
-}
-
-/* Analytics panel in edit mode */
-.panelSortable {
-  position: relative;
-}
-
-.panelSortable > section {
-  pointer-events: none;
-}
-
-.panelEditControls {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  display: flex;
-  gap: 0.25rem;
-  z-index: 2;
-}
-
+/* A card in Customize: its grip and its remove over it; the card itself is inert. */
+.panelSortable { position: relative; }
+.panelSortable > section { pointer-events: none; }
+.panelEditControls { position: absolute; top: 6px; right: 6px; display: flex; gap: 0.25rem; z-index: 2; }
 .panelGrip,
 .panelRemove {
   width: 24px;
@@ -1322,40 +225,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--hud-surface);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  border: 1px solid var(--home-line-strong);
   border-radius: 2px;
-  color: var(--white-30);
+  background: var(--card-bg);
+  color: var(--text-tertiary);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-
-.panelGrip {
-  cursor: grab;
-  touch-action: none;
-}
-
-.panelGrip:active {
-  cursor: grabbing;
-  color: var(--logic-lime);
-}
-
-.panelGrip:hover {
-  color: var(--white-45);
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-}
-
+.panelGrip { cursor: grab; touch-action: none; }
+.panelGrip:active { cursor: grabbing; color: var(--home-olive); }
+.panelGrip:hover { color: var(--text-primary); border-color: var(--home-olive); }
 .panelRemove:hover {
-  color: var(--danger);
+  color: var(--danger-light);
   border-color: rgba(var(--danger-rgb), 0.4);
-  background: rgba(var(--danger-rgb), 0.12);
+  background: rgba(var(--danger-rgb), 0.1);
 }
 
-/* "+ Add" ghost tile + menu */
-.addTile {
-  position: relative;
-}
-
+/* "Add card": the ghost tile and its menu of hidden cards. */
+.addTile { position: relative; }
 .addTileBtn {
   width: 100%;
   min-height: 78px;
@@ -1364,31 +251,21 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  background: var(--white-03);
-  border: 1px dashed rgba(var(--blueprint-blue-rgb), 0.4);
-  color: var(--data-gray);
+  border: 1px dashed var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-tertiary);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-
-.addTilePanel .addTileBtn {
-  min-height: 120px;
-}
-
-.addTileBtn:hover {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.55);
-  background: rgba(var(--logic-lime-rgb), 0.04);
-}
-
+.addTileBtn:hover { color: var(--home-olive); border-color: var(--home-olive); background: var(--home-olive-soft); }
+.addTilePanel .addTileBtn { min-height: 120px; }
 .addTileLabel {
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
 }
-
 .addMenu {
   position: absolute;
   top: calc(100% + 4px);
@@ -1397,11 +274,10 @@
   min-width: 220px;
   display: flex;
   flex-direction: column;
-  background: var(--hud-surface);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.5);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--home-line-strong);
+  background: var(--card-bg);
+  box-shadow: var(--home-shadow);
 }
-
 .addMenuRow {
   display: flex;
   flex-direction: column;
@@ -1409,1203 +285,32 @@
   padding: 0.5rem 0.7rem;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.14);
+  border-bottom: 1px solid var(--home-line);
   cursor: pointer;
   text-align: left;
   transition: background 0.12s;
 }
-
-.addMenuRow:last-child {
-  border-bottom: none;
-}
-
-.addMenuRow:hover {
-  background: rgba(var(--logic-lime-rgb), 0.06);
-}
-
+.addMenuRow:last-child { border-bottom-width: 0; border-bottom-style: none; }
+.addMenuRow:hover { background: var(--home-olive-soft); }
 .addMenuRowTop {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--fl-text);
+  color: var(--text-primary);
 }
 
-.addMenuIcon {
-  display: flex;
-  flex-shrink: 0;
-  color: var(--logic-lime);
-}
-
-.addMenuNote {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding-left: 1.2rem;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  color: var(--data-gray);
-}
-
-.addMenuEmpty {
-  padding: 0.6rem 0.7rem;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  color: var(--data-gray);
-}
-
-/* Icon picker grid */
-.iconPickerGrid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
-  padding: 0.5rem 0.65rem 0.65rem;
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12);
-}
-
-.iconPickerBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 30px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-  color: var(--white-40);
-  cursor: pointer;
-  transition: color 0.1s, border-color 0.1s, background 0.1s;
-}
-
-.iconPickerBtn:hover {
-  color: var(--fl-text);
-  border-color: rgba(var(--logic-lime-rgb), 0.35);
-  background: rgba(var(--logic-lime-rgb), 0.05);
-}
-
-.iconPickerBtnActive {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.55);
-  background: rgba(var(--logic-lime-rgb), 0.1);
-}
-
-/* ── Communications panel ────────────────────────────── */
-.commsStats {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.commsStat {
-  display: flex;
-  align-items: baseline;
-  gap: 0.3rem;
-}
-
-.commsStatNum {
-  font-family: var(--font-data);
-  font-size: 1.6rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--logic-lime);
-}
-
-.commsStatLabel {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-.commsDot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--border-2);
-  flex-shrink: 0;
-}
-
-.commsLatest {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-}
-
-.commsLatestTag {
-  font-family: var(--font-data);
-  font-size: 0.5rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  border: 1px solid var(--border-2);
-  padding: 0.1rem 0.3rem;
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-}
-
-.commsLatestBody {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.commsLatestTitle {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--fl-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.commsLatestDate {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  color: var(--data-gray);
-}
-
-.commsAction {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.6);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.commsAction:hover {
-  color: var(--logic-lime);
-}
-
-/* ── Coach Sign-ups & Chat panel ─────────────────────────────────────── */
-.chatFunnelRow {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-}
-
-.chatFunnelOf {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--data-gray);
-}
-
-.chatExplain {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  line-height: 1.5;
-  color: var(--white-60);
-  margin: 0;
-}
-
-.chatWarn {
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  line-height: 1.45;
-  color: var(--warning);
-  margin: 0;
-}
-
-.chatWarnLink {
-  color: var(--warning);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color 0.15s;
-}
-
-.chatWarnLink:hover { color: var(--logic-lime); }
-
-.chatExplainLink {
-  color: var(--white-60);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color 0.15s;
-}
-
-.chatExplainLink:hover { color: var(--logic-lime); }
-
-.chatRemindBtn {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  /* token-exempt: drifts from --on-lime; pinned pending normalization */
-  color: #0b0f14;
-  background: var(--logic-lime);
-  border: none;
-  padding: 0.5rem 0.75rem;
-  border-radius: 2px;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.chatRemindBtn:hover:not(:disabled) { opacity: 0.85; }
-.chatRemindBtn:disabled { opacity: 0.55; cursor: default; }
-
-.chatAllIn {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--success);
-}
-
-.chatRemindResult {
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  line-height: 1.4;
-  color: var(--white-60);
-  margin: 0;
-}
-
-/* A send that worked should read as success, and one that didn't as something to look at —
-   previously both were the same grey line (Step 1 fix, owner-approved 2026-07-29). */
-.chatRemindResultOk  { color: var(--success); }
-.chatRemindResultBad { color: var(--danger); }
-
-/* Panel-level retry so a failed funnel doesn't cost a full page reload. Quiet by design — this is
-   a recovery affordance, not an action to draw the eye. */
-.chatRetryBtn {
-  align-self: flex-start;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  background: transparent;
-  border: 1px solid var(--border-2);
-  padding: 0.4rem 0.65rem;
-  border-radius: 2px;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.chatRetryBtn:hover {
-  color: var(--logic-lime);
-  border-color: var(--logic-lime);
-}
-
-/* Loading placeholder — the SHAPE of the funnel, so a slow load never reads as an outage. */
-.chatSkeleton {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  padding: 0.2rem 0 0.1rem;
-}
-
-.chatSkelBar {
-  display: block;
-  border-radius: 3px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.11) 50%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
-  background-size: 200% 100%;
-  animation: chatSkelShimmer 1.4s ease-in-out infinite;
-}
-
-.chatSkelNum       { height: 1.6rem;  width: 58%; }
-.chatSkelGauge     { height: 0.35rem; width: 100%; }
-.chatSkelLine      { height: 0.6rem;  width: 74%; }
-.chatSkelLineShort { height: 0.6rem;  width: 46%; }
-
-@keyframes chatSkelShimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chatSkelBar { animation: none; }
-}
-
-/* The board's place while this event's read is in flight (or failed): one quiet line under the title,
-   never a board guessed from placeholder zeros. */
-.boardWaiting {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0;
-  padding: 1.25rem 0.1rem;
-  font-size: var(--type-body);
-  color: var(--text-tertiary);
-}
-
-/* ── Activate banner (ready state) ──────────────────── */
-.activateBanner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 1.25rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
-  background: rgba(var(--logic-lime-rgb), 0.05);
-}
-
-.activateBannerBody {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  min-width: 0;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  color: var(--fl-text);
-}
-
-.activateBannerIcon {
-  color: var(--logic-lime);
-  flex-shrink: 0;
-}
-
-.activateBannerError {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  color: var(--danger);
-  flex: 1;
-  min-width: 0;
-}
-
-/* ── Optional items toggle ───────────────────────────── */
-.optionalToggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.45rem 0.75rem;
-  background: transparent;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 0;
-  cursor: pointer;
-  color: var(--white-50);
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  width: 100%;
-  margin-top: 1rem;
-  text-align: left;
-  transition: border-color 0.15s;
-}
-
-.optionalToggle:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.55);
-  color: var(--white-70);
-}
-
-/* Named drawer label truncates gracefully on narrow screens; the count stays visible. */
-.optionalToggleLabel {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-
-/* Activate-confirm "going live with these gaps" summary (read-only, non-blocking). */
-.activateSummary {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin: 0 0 0.75rem;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  background: rgba(var(--blueprint-blue-rgb), 0.05);
-}
-.activateSummaryBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-.activateSummaryHead {
-  display: block;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--white-50);
-}
-.activateSummaryList {
-  margin: 0.25rem 0 0;
-  padding-left: 1.1rem;
-  font-size: 0.78rem;
-  color: var(--data-gray);
-  line-height: 1.5;
-}
-
-/* ── Checklist error footer ──────────────────────────── */
-.checklistFooter {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-}
-
-.checklistFooter span {
-  font-family: var(--font-data);
-  font-size: 0.6875rem;
-  color: var(--data-gray);
-  line-height: 1.4;
-}
-
-/* ── Wrap-up card (completed mode) ──────────────────── */
-
-/* Champion chips inside the wrap-up banner (the post-event payoff) */
-
-/* Free-tier post-event upsell (Summary is locked) — quiet, single nudge */
-
-/* ── Recent events ───────────────────────────────────── */
-.recentEvents {
-  margin-top: 0;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  padding: 1.25rem;
-}
-
-/* ── Page wrapper ─────────────────────────────────────── */
-.page {}
-
-@media (max-width: 768px) {
-  .publishChecklist {
-    padding: 1rem;
-  }
-
-  .checklistRow {
-    padding: 0.5rem 0.75rem;
-    min-height: 36px;
-  }
-}
+/* ── Recent events ──────────────────────────────────────────────────────── */
+.recentEvents { margin-top: 0; border: 1px solid var(--home-line); padding: 1.25rem; }
 
 @media (max-width: 640px) {
-  /* Wrap-up card: icon + text keep one row, the CTA drops to a full-width row. */
-
-  .reuseSetupPrompt {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .reusePromptActions {
-    width: 100%;
-  }
-
-  .reusePromptActions :global(.btn) {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .reuseCopyGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .sourceButton {
-    padding: 0.75rem;
-  }
-
   .page header {
     padding-bottom: 0.75rem !important;
     margin-bottom: 1rem !important;
   }
-
-  .checklistHeader {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .checklistFooter {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .publishChecklist {
-    padding: 0.85rem;
-  }
-
-  .checklistRow {
-    padding: 0.5rem 0.65rem;
-  }
-
-  .rowDesc {
-    font-size: 0.7rem;
-  }
-
-  .activateBanner {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .activateBanner .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .analyticsGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .scheduleHealthTopline {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .scheduleHealthIssuePill {
-    grid-column: 1 / -1;
-    width: max-content;
-  }
-
-  .scheduleHealthMiniGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .registrationStatusHeader,
-  .registrationStatusRow {
-    grid-template-columns: minmax(72px, 1fr) repeat(3, minmax(38px, 48px));
-    gap: 0.35rem;
-  }
-
-  .registrationStatusHeader {
-    font-size: 0.5rem;
-    letter-spacing: 0.04em;
-  }
-
-  .registrationStatusCount {
-    min-height: 24px;
-    font-size: 0.72rem;
-  }
-
-  .registrationFollowUps {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.45rem;
-  }
-
-  .statsGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-  }
-
-  .statCard {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.3rem;
-    padding: 0.65rem 0.35rem;
-    text-align: center;
-  }
-
-  .statIcon {
-    width: 30px;
-    height: 30px;
-  }
-
-  .statNum {
-    font-size: 1.5rem;
-  }
+  .scheduleHealthTopline { grid-template-columns: auto minmax(0, 1fr); }
+  .scheduleHealthIssuePill { grid-column: 1 / -1; width: max-content; }
+  .scheduleHealthMiniGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
-   The tournament dashboard — game day and before it. The console mono+uppercase moves to the body
-   face on titles/buttons/table heads (F2); it stays on eyebrows, chips and readouts. Bare
-   `--logic-lime`/`--blueprint-blue` split by role: a section eyebrow or a figure caption reads
-   `--text-secondary`; a big standalone figure reads `--text-primary`; an icon or a link/action reads
-   `--home-olive`; a plain decorative fill (a progress bar, never text) reads `--home-lime`. Bare
-   `--danger`/`--warning`/`--success`/`--info` move to their `-light` tier wherever they colour TEXT or
-   an icon glyph — borders/tints already resolve through `-rgb` and are untouched. Card chrome
-   (`--blueprint-blue`/`--white-N`/`--border-2`/`--hud-surface` washes) becomes the plain Card recipe;
-   the few spots that mean the INFO state specifically (Up Next, waitlist, "info" tones) keep that
-   meaning via `--info`/`--info-light`. ⚠ TOKENS ONLY. */
-
-/* ── Stat cards ──────────────────────────────────────────────────────────── */
-:global([data-admin-kit]) .statCard {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  box-shadow: none;
-}
-:global([data-admin-kit]) .statCard:hover {
-  border-color: var(--home-olive);
-  box-shadow: none;
-}
-:global([data-admin-kit]) .statIcon {
-  background: var(--home-olive-soft);
-  border-color: var(--home-line-strong);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .statNum {
-  font-family: var(--font-data);
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-:global([data-admin-kit]) .statLabel {
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .statSubValue { color: var(--text-tertiary); }
-:global([data-admin-kit]) .statCardStatic:hover,
-:global([data-admin-kit]) .statCardEditing:hover {
-  border-color: var(--home-line);
-  box-shadow: none;
-}
-
-/* ── Section eyebrows (every panel's small caption title) ───────────────── */
-:global([data-admin-kit]) .sectionTitle,
-:global([data-admin-kit]) .editToolbarTitle,
-:global([data-admin-kit]) .reuseCopyPanel h4 {
-  color: var(--text-secondary);
-}
-
-/* ── Reuse-setup / completed-upsell prompt (Card recipe) ─────────────────── */
-:global([data-admin-kit]) .reuseSetupPrompt {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .reusePromptIcon {
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .reusePromptTitle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .reusePromptBody p {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-
-/* ── Reuse / populate-from modal copy ─────────────────────────────────────── */
-:global([data-admin-kit]) .reuseModalTitle p,
-:global([data-admin-kit]) .modalNote {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .reuseModalBody {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .sourceButton {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-}
-:global([data-admin-kit]) .sourceButton:hover {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .sourceName {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .sourceMeta {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .reuseCopyPanel {
-  border-color: var(--home-line-strong);
-  background: var(--home-card, var(--card-bg));
-}
-:global([data-admin-kit]) .reuseCopyList li,
-:global([data-admin-kit]) .copiedSummaryList li { color: var(--text-secondary); }
-:global([data-admin-kit]) .checkDot { background: var(--home-olive); }
-:global([data-admin-kit]) .neverDot { background: var(--home-line-strong); }
-:global([data-admin-kit]) .copiedSummaryList {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-
-/* ── Publish checklist ────────────────────────────────────────────────────── */
-:global([data-admin-kit]) .publishChecklist {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-}
-:global([data-admin-kit]) .checklistReady { background: var(--card-bg); }
-:global([data-admin-kit]) .checklistSub {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .progressTrack { background: var(--home-line); }
-:global([data-admin-kit]) .progressFill { background: var(--home-lime); }
-:global([data-admin-kit]) .checklistList { border-color: var(--home-line); }
-:global([data-admin-kit]) .checklistDivider {
-  color: var(--text-secondary);
-  background: var(--home-olive-soft);
-  border-bottom-color: var(--home-line);
-}
-:global([data-admin-kit]) .checklistRow {
-  border-bottom-color: var(--home-line);
-}
-:global([data-admin-kit]) .checklistRow:hover {
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .checklistRowDone:hover {
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .rowIcon { color: var(--warning-light); }
-:global([data-admin-kit]) .checklistRowDone .rowIcon { color: var(--home-olive); }
-:global([data-admin-kit]) .rowLabel,
-:global([data-admin-kit]) .rowLabelLink {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .checklistRowDone .rowLabel,
-:global([data-admin-kit]) .checklistRowDone .rowLabelLink { color: var(--home-olive); }
-:global([data-admin-kit]) .checklistRow .rowIconMuted { color: var(--text-tertiary); }
-:global([data-admin-kit]) .checklistRow .rowIcon[data-sched-tone='neutral'],
-:global([data-admin-kit]) .checklistRow .rowStatus[data-sched-tone='neutral'] { color: var(--text-tertiary); }
-:global([data-admin-kit]) .checklistRow .rowIcon[data-sched-tone='good'],
-:global([data-admin-kit]) .checklistRow .rowStatus[data-sched-tone='good']    { color: var(--success-light); }
-:global([data-admin-kit]) .checklistRow .rowIcon[data-sched-tone='warning'],
-:global([data-admin-kit]) .checklistRow .rowStatus[data-sched-tone='warning'] { color: var(--warning-light); }
-:global([data-admin-kit]) .checklistRow .rowIcon[data-sched-tone='danger'],
-:global([data-admin-kit]) .checklistRow .rowStatus[data-sched-tone='danger']  { color: var(--danger-light); }
-:global([data-admin-kit]) .rowOptTag {
-  color: var(--text-secondary);
-  background: var(--home-olive-soft);
-  border-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .rowStatus { color: var(--home-olive); }
-:global([data-admin-kit]) .checklistRowPending .rowStatus { color: var(--home-olive); }
-:global([data-admin-kit]) .rowDesc {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-
-/* ── Analytics panels (Card recipe) ──────────────────────────────────────── */
-:global([data-admin-kit]) .analyticsPanel {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-  box-shadow: none;
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .panelLink {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .panelLink:hover { color: var(--home-olive); }
-
-/* ── Gauges ───────────────────────────────────────────────────────────────── */
-:global([data-admin-kit]) .gaugeMain {
-  font-family: var(--font-data);
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-:global([data-admin-kit]) .gaugeOf { color: var(--text-tertiary); }
-:global([data-admin-kit]) .gaugeLabel { color: var(--text-secondary); }
-:global([data-admin-kit]) .gaugeTrack { background: var(--home-line); }
-:global([data-admin-kit]) .payRow {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-
-/* ── Registration status mini-table (Table recipe: body face, tertiary head) ── */
-:global([data-admin-kit]) .registrationStatusTable,
-:global([data-admin-kit]) .paymentBreakdown,
-:global([data-admin-kit]) .payDivTable {
-  border-top-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .registrationStatusHeader,
-:global([data-admin-kit]) .payDivHeader {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .registrationDivisionName,
-:global([data-admin-kit]) .payDivName {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .registrationStatusCount {
-  border-color: var(--home-line-strong);
-  background: var(--home-card, var(--card-bg));
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .registrationStatusCount:hover {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .registrationStatusCount[data-status="accepted"] { color: var(--success-light); }
-:global([data-admin-kit]) .registrationStatusCount[data-status="pending"] { color: var(--warning-light); }
-:global([data-admin-kit]) .registrationStatusCount[data-status="waitlist"] { color: var(--info-light); }
-:global([data-admin-kit]) .outstandingRow { color: var(--warning-light); }
-:global([data-admin-kit]) .registrationFollowUps {
-  border-top-color: var(--home-line-strong);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .registrationFollowUps svg { color: var(--warning-light); }
-:global([data-admin-kit]) .registrationFollowUpChip {
-  border-color: var(--home-line-strong);
-  background: var(--home-card, var(--card-bg));
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .registrationFollowUpChip strong { color: var(--home-olive); }
-:global([data-admin-kit]) .registrationFollowUpChip[data-tone="danger"] { border-color: rgba(var(--danger-rgb), 0.35); }
-:global([data-admin-kit]) .registrationFollowUpChip[data-tone="warning"] { border-color: rgba(var(--warning-rgb), 0.35); }
-:global([data-admin-kit]) .payDivCell {
-  border-color: var(--home-line-strong);
-  background: var(--home-card, var(--card-bg));
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .payDivCell:hover {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .payDivCell[data-tone="success"] { color: var(--success-light); border-color: rgba(var(--success-rgb), 0.3); }
-:global([data-admin-kit]) .payDivCell[data-tone="info"]    { color: var(--info-light);    border-color: rgba(var(--info-rgb), 0.3); }
-:global([data-admin-kit]) .payDivCell[data-tone="warning"] { color: var(--warning-light); border-color: rgba(var(--warning-rgb), 0.3); }
-:global([data-admin-kit]) .payDivCell[data-tone="danger"]  { color: var(--danger-light);  border-color: rgba(var(--danger-rgb), 0.3); }
-
-/* ── Schedule Health panel ───────────────────────────────────────────────── */
-:global([data-admin-kit]) .scheduleHealthPanel[data-tone="good"] {
-  border-color: rgba(var(--success-rgb), 0.3);
-  background: rgba(var(--success-rgb), 0.05);
-}
-:global([data-admin-kit]) .scheduleHealthPanel[data-tone="warning"] {
-  border-color: rgba(var(--warning-rgb), 0.3);
-  background: rgba(var(--warning-rgb), 0.06);
-}
-:global([data-admin-kit]) .scheduleHealthPanel[data-tone="danger"] {
-  border-color: rgba(var(--danger-rgb), 0.3);
-  background: rgba(var(--danger-rgb), 0.06);
-}
-:global([data-admin-kit]) .scheduleHealthScore {
-  background: var(--home-card, var(--card-bg));
-}
-:global([data-admin-kit]) .scheduleHealthScore small { color: var(--text-tertiary); }
-:global([data-admin-kit]) .scheduleHealthScore[data-tone="good"] { color: var(--success-light); background: rgba(var(--success-rgb), 0.08); }
-:global([data-admin-kit]) .scheduleHealthScore[data-tone="warning"] { color: var(--warning-light); background: rgba(var(--warning-rgb), 0.08); }
-:global([data-admin-kit]) .scheduleHealthScore[data-tone="danger"] { color: var(--danger-light); background: rgba(var(--danger-rgb), 0.08); }
-:global([data-admin-kit]) .scheduleHealthSummary strong {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .scheduleHealthSummary span {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .scheduleHealthIssuePill {
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .scheduleHealthIssuePill[data-tone="good"] { color: var(--success-light); border-color: rgba(var(--success-rgb), 0.3); }
-:global([data-admin-kit]) .scheduleHealthIssuePill[data-tone="warning"] { color: var(--warning-light); border-color: rgba(var(--warning-rgb), 0.3); }
-:global([data-admin-kit]) .scheduleHealthIssuePill[data-tone="danger"] { color: var(--danger-light); border-color: rgba(var(--danger-rgb), 0.3); }
-:global([data-admin-kit]) .scheduleHealthMiniMetric {
-  border-color: var(--home-line-strong);
-  background: var(--home-card, var(--card-bg));
-}
-:global([data-admin-kit]) .scheduleHealthMiniMetric strong { color: var(--text-primary); }
-:global([data-admin-kit]) .scheduleHealthMiniMetric small {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .scheduleHealthMiniMetric[data-tone="good"] strong { color: var(--success-light); }
-:global([data-admin-kit]) .scheduleHealthMiniMetric[data-tone="warning"] strong { color: var(--warning-light); }
-:global([data-admin-kit]) .scheduleHealthMiniMetric[data-tone="danger"] strong { color: var(--danger-light); }
-:global([data-admin-kit]) .scheduleHealthMiniMetric[data-tone="info"] strong { color: var(--info-light); }
-:global([data-admin-kit]) .scheduleHealthIssueLink {
-  border-color: var(--home-line-strong);
-  background: var(--home-card, var(--card-bg));
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .scheduleHealthIssueLink[data-tone="good"] {
-  color: var(--success-light);
-  border-color: rgba(var(--success-rgb), 0.3);
-  background: rgba(var(--success-rgb), 0.06);
-}
-:global([data-admin-kit]) .scheduleHealthIssueLink[data-tone="warning"] {
-  color: var(--warning-light);
-  border-color: rgba(var(--warning-rgb), 0.3);
-  background: rgba(var(--warning-rgb), 0.06);
-}
-:global([data-admin-kit]) .scheduleHealthIssueLink[data-tone="danger"] {
-  color: var(--danger-light);
-  border-color: rgba(var(--danger-rgb), 0.3);
-  background: rgba(var(--danger-rgb), 0.06);
-}
-:global([data-admin-kit]) .emptyPanel {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-
-/* ── Compact metric strip ────────────────────────────────────────────────── */
-:global([data-admin-kit]) .metricStrip { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .metricValue {
-  font-family: var(--font-data);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .metricLabel { color: var(--text-secondary); }
-:global([data-admin-kit]) .metricSep { color: var(--text-tertiary); }
-
-/* ── Registration velocity chip ──────────────────────────────────────────── */
-:global([data-admin-kit]) .velocityChip {
-  border-color: rgba(var(--success-rgb), 0.3);
-  background: rgba(var(--success-rgb), 0.08);
-  color: var(--success-light);
-}
-:global([data-admin-kit]) .sparkline polyline { stroke: var(--home-olive); }
-
-/* ── Customize / edit-layout mode ────────────────────────────────────────── */
-:global([data-admin-kit]) .editToolbar {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-}
-:global([data-admin-kit]) .editToolbarIcon { color: var(--home-olive); }
-:global([data-admin-kit]) .editToolbarHint {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .cardDragging {
-  outline-color: var(--home-olive);
-  box-shadow: none;
-}
-:global([data-admin-kit]) .cardGrip,
-:global([data-admin-kit]) .cardRemove {
-  background: var(--home-olive-soft);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .cardGrip:active { color: var(--home-olive); }
-:global([data-admin-kit]) .statCardEditing:hover .cardGrip { color: var(--text-primary); }
-:global([data-admin-kit]) .cardRemove:hover {
-  color: var(--danger-light);
-  border-color: rgba(var(--danger-rgb), 0.4);
-  background: rgba(var(--danger-rgb), 0.1);
-}
-:global([data-admin-kit]) .statIconEdit {
-  background: var(--home-olive-soft);
-  border-color: var(--home-line-strong);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .statIconEdit:hover {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .iconEditBadge {
-  background: var(--card-bg);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .iconPopover,
-:global([data-admin-kit]) .addMenu {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  box-shadow: var(--home-shadow);
-}
-:global([data-admin-kit]) .panelGrip,
-:global([data-admin-kit]) .panelRemove {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .panelGrip:active { color: var(--home-olive); }
-:global([data-admin-kit]) .panelGrip:hover {
-  color: var(--text-primary);
-  border-color: var(--home-olive);
-}
-:global([data-admin-kit]) .panelRemove:hover {
-  color: var(--danger-light);
-  border-color: rgba(var(--danger-rgb), 0.4);
-  background: rgba(var(--danger-rgb), 0.1);
-}
-:global([data-admin-kit]) .addTileBtn {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .addTileBtn:hover {
-  color: var(--home-olive);
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .addTileLabel {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: none;
-  letter-spacing: normal;
-}
-:global([data-admin-kit]) .addMenuRow { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .addMenuRow:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .addMenuRowTop {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .addMenuIcon { color: var(--home-olive); }
-:global([data-admin-kit]) .addMenuNote,
-:global([data-admin-kit]) .addMenuEmpty {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .iconPickerGrid {
-  background: var(--home-olive-soft);
-  border-top-color: var(--home-line);
-}
-/* The icon picker sits inside the icon-edit popover too, where the legacy sheet keeps it
-   transparent (the popover itself already paints the surface) — restated here at the same
-   compound shape so it isn't wiped by the plain `.iconPickerGrid` background above. */
-:global([data-admin-kit]) .iconPopover .iconPickerGrid {
-  background: transparent;
-}
-:global([data-admin-kit]) .iconPickerBtn {
-  border-color: var(--home-line-strong);
-  background: var(--card-bg);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .iconPickerBtn:hover {
-  color: var(--text-primary);
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-:global([data-admin-kit]) .iconPickerBtnActive {
-  color: var(--home-olive);
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-
-/* ── Communications panel ─────────────────────────────────────────────────── */
-:global([data-admin-kit]) .commsStatNum {
-  font-family: var(--font-data);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .commsStatLabel { color: var(--text-secondary); }
-:global([data-admin-kit]) .commsDot { background: var(--home-line-strong); }
-:global([data-admin-kit]) .commsLatest {
-  border-color: var(--home-line);
-  background: var(--home-card, var(--card-bg));
-}
-:global([data-admin-kit]) .commsLatestTag {
-  color: var(--text-tertiary);
-  border-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .commsLatestBody { font-family: var(--font-sans, system-ui, sans-serif); }
-:global([data-admin-kit]) .commsLatestTitle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .commsLatestDate {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .commsAction {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .commsAction:hover { color: var(--home-olive); }
-
-/* ── Coach Sign-ups & Chat panel ──────────────────────────────────────────── */
-:global([data-admin-kit]) .chatFunnelOf {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .chatExplain,
-:global([data-admin-kit]) .chatRemindResult {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .chatWarn {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--warning-light);
-}
-:global([data-admin-kit]) .chatWarnLink { color: var(--warning-light); }
-:global([data-admin-kit]) .chatWarnLink:hover { color: var(--home-olive); }
-:global([data-admin-kit]) .chatExplainLink { color: var(--text-tertiary); text-decoration: underline; }
-:global([data-admin-kit]) .chatExplainLink:hover { color: var(--home-olive); }
-:global([data-admin-kit]) .chatRemindBtn {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--home-lime-ink);
-  background: var(--home-lime);
-  border-radius: 6px;
-}
-:global([data-admin-kit]) .chatAllIn {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--success-light);
-}
-:global([data-admin-kit]) .chatRemindResultOk  { color: var(--success-light); }
-:global([data-admin-kit]) .chatRemindResultBad { color: var(--danger-light); }
-:global([data-admin-kit]) .chatRetryBtn {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-tertiary);
-  border-color: var(--home-line-strong);
-  border-radius: 6px;
-}
-:global([data-admin-kit]) .chatRetryBtn:hover {
-  color: var(--home-olive);
-  border-color: var(--home-olive);
-}
-:global([data-admin-kit]) .chatSkelBar {
-  background: linear-gradient(90deg, var(--home-olive-soft) 0%, var(--home-line-strong) 50%, var(--home-olive-soft) 100%);
-  background-size: 200% 100%;
-}
-
-/* ── Post-event / activate / wrap-up banners ──────────────────────────────── */
-:global([data-admin-kit]) .activateBanner {
-  border-color: rgba(var(--success-rgb), 0.35);
-  background: rgba(var(--success-rgb), 0.06);
-}
-:global([data-admin-kit]) .activateBannerBody {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .activateBannerIcon { color: var(--success-light); }
-:global([data-admin-kit]) .activateBannerError {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--danger-light);
-}
-:global([data-admin-kit]) .optionalToggle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  letter-spacing: normal;
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .optionalToggle:hover {
-  border-color: var(--home-olive);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .activateSummary {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-}
-:global([data-admin-kit]) .activateSummaryHead {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .activateSummaryList { color: var(--text-tertiary); }
-:global([data-admin-kit]) .checklistFooter { border-top-color: var(--home-line); }
-:global([data-admin-kit]) .checklistFooter span {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .recentEvents { border-color: var(--home-line); }
-

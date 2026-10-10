@@ -6,6 +6,8 @@
  *   openReuse(event, door) — "Reuse this setup": the wizard's reuse step, the event already chosen, no "pick a source"
  *                            behind it. The finished board's lime, Summary's Next year, the Tournaments list's Completed
  *                            rows, every event's record.
+ *   openInto(draft, done?) — "Start from a past tournament" on a draft's board (Stage 5, E2): the same reuse step,
+ *                            filling THAT draft; it lands with the notice naming the event it came from.
  *   openNew(door, finish?) — New tournament: the rail's +, the Tournaments list's button (and its ?create=1 address,
  *                            which the onboarding's League path and the coach portal's hosted section use) and, since
  *                            Stage 5, the FIRST RUN after the plan page (`first_run`) — one window for every door, so a
@@ -25,7 +27,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import type { CreatedTournament, ReuseSetupSourceSurface } from '@/components/admin/TournamentSetupWizard';
+import type { CreatedTournament, IntoDraft, ReuseSetupSourceSurface } from '@/components/admin/TournamentSetupWizard';
 import { NoticePill } from '@/components/admin/kit/club/RepKit';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
@@ -52,13 +54,18 @@ export type NewFinish = {
 type Opener = {
   openNew: (door: NewDoor, finish?: NewFinish) => void;
   openReuse: (source: ReuseSource, door: ReuseDoor) => void;
+  /** Fills a draft from a past event; `done` runs once it has landed (the board reads itself again). */
+  openInto: (draft: IntoDraft, done?: () => void) => void;
 };
 
-type OpenDoor = { kind: 'new'; door: NewDoor } | { kind: 'reuse'; door: ReuseDoor; source: ReuseSource };
+type OpenDoor =
+  | { kind: 'new'; door: NewDoor }
+  | { kind: 'reuse'; door: ReuseDoor; source: ReuseSource }
+  | { kind: 'into'; draft: IntoDraft };
 
 const SetupWizardContext = createContext<Opener | null>(null);
 
-const NO_OPENER: Opener = { openNew: () => {}, openReuse: () => {} };
+const NO_OPENER: Opener = { openNew: () => {}, openReuse: () => {}, openInto: () => {} };
 
 /** The doors' handle on the one wizard. Outside the admin frame it does nothing. */
 export function useSetupWizard(): Opener {
@@ -72,6 +79,7 @@ export function SetupWizardProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState<OpenDoor | null>(null);
   const [notice, setNotice] = useState<{ key: number; message: string } | null>(null);
   const finishRef = useRef<NewFinish | null>(null);
+  const intoDoneRef = useRef<(() => void) | null>(null);
 
   // The slot, read where the doors are: Draft and Active events hold it (A23).
   const atLimit = Boolean(currentOrg && hasFiniteSlots(currentOrg.tournamentLimit)
@@ -92,7 +100,22 @@ export function SetupWizardProvider({ children }: { children: ReactNode }) {
     finishRef.current = null;
     setOpen({ kind: 'reuse', door, source });
   }, []);
-  const value = useMemo(() => ({ openNew, openReuse }), [openNew, openReuse]);
+  const openInto = useCallback((draft: IntoDraft, done?: () => void) => {
+    finishRef.current = null;
+    intoDoneRef.current = done ?? null;
+    setOpen({ kind: 'into', draft });
+  }, []);
+  const value = useMemo(() => ({ openNew, openReuse, openInto }), [openNew, openReuse, openInto]);
+
+  async function landInDraft({ sourceName }: { sourceName: string }) {
+    const done = intoDoneRef.current;
+    intoDoneRef.current = null;
+    setOpen(null);
+    await refresh();
+    router.refresh();
+    done?.();
+    setNotice({ key: Date.now(), message: REUSE_WORDS.broughtIn(sourceName) });
+  }
 
   async function landOnNewDraft(created: CreatedTournament) {
     if (!currentOrg) return;
@@ -112,6 +135,7 @@ export function SetupWizardProvider({ children }: { children: ReactNode }) {
     const finish = finishRef.current;
     setOpen(null);
     finishRef.current = null;
+    intoDoneRef.current = null;
     finish?.onClose?.();
   }
 
@@ -128,12 +152,14 @@ export function SetupWizardProvider({ children }: { children: ReactNode }) {
           orgContactEmail={currentOrg.contactEmail ?? null}
           existingTournaments={tournaments.map(t => ({ id: t.id, name: t.name, year: t.year ?? null, status: t.status ?? null }))}
           initialSource={open.kind === 'reuse' ? open.source : null}
-          sourceSurface={open.door}
+          sourceSurface={open.kind === 'into' ? 'unknown' : open.door}
           previewOrg={currentOrg}
           canManageBranding={Boolean(userRole && hasCapability(userRole, userCapabilities, 'manage_branding'))}
           canClone={hasPlanFeature(currentOrg.planId, 'tournament_cloning')}
           upgradeCopy={requiresTournamentPlusCopy('tournament_cloning')}
           sport={sport}
+          into={open.kind === 'into' ? open.draft : null}
+          onBroughtIn={landInDraft}
           onClose={close}
           onCreated={landOnNewDraft}
         />

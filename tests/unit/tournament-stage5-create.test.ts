@@ -109,7 +109,9 @@ describe('every copy path keeps a venue\'s diamonds and library links (6a\'s F2)
   it('the clone copies venues through the one home, facilities included', () => {
     const db = code('lib/db.ts');
     const clone = db.slice(db.indexOf('export async function cloneTournament'), db.indexOf('export async function populateTournamentFrom'));
-    assert.match(clone, /copyTournamentVenues\(sourceTournamentId, targetTournamentId!\)/);
+    // Since Part 2 the clone's rows come through the shared copier (lib/tournament-setup-copy), whose venues are this home's.
+    assert.match(clone, /copySetupRows\(\{/);
+    assert.match(code('lib/tournament-setup-copy.ts'), /copyTournamentVenues\(sourceId, targetId/);
     assert.doesNotMatch(read('lib/db.ts'), /recorded for Tournament Stage 5, which redraws setup; not fixed here/);
   });
   it('the copy home keeps both library links', () => {

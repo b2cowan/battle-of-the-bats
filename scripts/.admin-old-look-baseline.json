@@ -72,13 +72,6 @@
     "kx": 2,
     "helpers": 2
   },
-  "app/[orgSlug]/admin/tournaments/dashboard/dashboard.module.css": {
-    "kitScope": 192
-  },
-  "app/[orgSlug]/admin/tournaments/dashboard/page.tsx": {
-    "kx": 23,
-    "helpers": 2
-  },
   "app/[orgSlug]/admin/tournaments/divisions/admin-page.module.css": {
     "kitScope": 22
   },
@@ -143,21 +136,11 @@
     "kx": 8,
     "helpers": 3
   },
-  "components/admin/LiveEventLog.tsx": {
-    "kx": 6,
-    "helpers": 1
-  },
   "components/admin/NumberStepper.module.css": {
     "kitScope": 5
   },
   "components/admin/TieBreakerEditor.module.css": {
     "kitScope": 18
-  },
-  "components/admin/tournament/GuidanceRail.module.css": {
-    "kitScope": 26
-  },
-  "components/admin/tournament/PersonaPanel.module.css": {
-    "kitScope": 12
   },
   "components/admin/tournament/TournamentAdminUI.module.css": {
     "kitScope": 47

@@ -1,0 +1,39 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE WEEKS BEFORE GAME DAY's own layout (WeeksBeforeBoard.tsx — Tournament admin redesign Stage 5, E2,
+   hub v45). The cards are the kit's section (`ClubSection`) with its row list (`ClubRow*`); this file
+   lays them out — one column on a phone and a tablet, two at a desk (the /design review's desk drawing) —
+   and sets the few words the kit has no slot for. Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+.cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; align-items: start; min-width: 0; }
+@media (min-width: 1024px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+}
+.cell { min-width: 0; }
+/* The kit's section carries its own bottom margin; the grid's gap spaces the cards (two classes, so the rule never
+   depends on which module the bundle loads first). */
+.cards .cell > section { margin: 0; }
+
+/* The note's door: olive words and a chevron, on the note's own line where it wraps. */
+.noteDoor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  min-height: var(--admin-control-h);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.noteDoor:hover { text-decoration: underline; text-underline-offset: 3px; }
+.noteDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+@media (max-width: 768px) {
+  .noteDoor { min-height: var(--tap-min, 44px); }
+}
+
+.quiet { margin: 0; font-weight: 400; color: var(--text-tertiary); font-size: var(--type-body); }
+
+/* What the last reminder said, under the Coaches card's rows. */
+.result,
+.resultBad { margin: 0; padding: 0.55rem 1.1rem 0.75rem; font-size: var(--type-support); line-height: 1.4; }
+.result { color: var(--text-secondary); }
+.resultBad { color: var(--danger); }

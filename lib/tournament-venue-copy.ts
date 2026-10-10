@@ -7,9 +7,10 @@
  *   copyLibraryVenue       — the club's Venue library venue, its facilities and BOTH library links; a second import of
  *                            the same venue returns the copy already there (6a's S6-04 rule);
  *   copyPastVenue          — a venue a past event used ("your venues"), its facilities and any library links;
- *   copyTournamentVenues   — every venue of one tournament into another (the clone; "into this draft") — until Stage 5
- *                            the clone copied venues and NONE of their facilities (6a's F2), so the demo's Invitational
- *                            held Riverdale Community Park with zero diamonds.
+ *   copyTournamentVenues   — every venue of one tournament into another (the clone; "into this draft", through
+ *                            lib/tournament-setup-copy) — until Stage 5 the clone copied venues and NONE of their
+ *                            facilities (6a's F2), so the demo's Invitational held Riverdale Community Park with zero
+ *                            diamonds.
  *
  * Multi-tenant: a library venue and a past venue are proved to be THIS org's before anything is copied (supabaseAdmin
  * bypasses RLS, so the proof is here or nowhere). The target tournament is the caller's to prove.
@@ -155,13 +156,22 @@ export async function copyPastVenue(
 /**
  * Every venue of one tournament into another, each with its facilities and both library links (the clone, and
  * Stage 5's "into this draft"). Both tournaments must be the same org's — the caller reads them by org. Returns the
- * ids written, so an all-or-nothing caller can take them back. Throws on any failed write.
+ * ids written; `onInserted` hears each one AS it is written, so an all-or-nothing caller can take them back even when
+ * a later write throws. `skip` leaves out a venue the target already holds ("into this draft" keeps its own).
  */
-export async function copyTournamentVenues(sourceTournamentId: string, targetTournamentId: string): Promise<{ venueIds: string[] }> {
-  const { data: venues, error } = await supabaseAdmin
+export async function copyTournamentVenues(
+  sourceTournamentId: string,
+  targetTournamentId: string,
+  opts: {
+    skip?: (venue: { name: string | null; source_org_venue_id: string | null }) => boolean;
+    onInserted?: (venueId: string) => void;
+  } = {},
+): Promise<{ venueIds: string[] }> {
+  const { data: sourceVenues, error } = await supabaseAdmin
     .from('diamonds').select('*').eq('tournament_id', sourceTournamentId).order('name', { ascending: true });
   if (error) throw error;
-  if (!venues?.length) return { venueIds: [] };
+  const venues = (sourceVenues ?? []).filter(v => !opts.skip?.({ name: v.name ?? null, source_org_venue_id: v.source_org_venue_id ?? null }));
+  if (!venues.length) return { venueIds: [] };
   // One insert per venue (a handful), so each copy's id is ITS venue's — never paired by the position a multi-row
   // insert happens to return its rows in.
   const venueIds: string[] = [];
@@ -176,6 +186,7 @@ export async function copyTournamentVenues(sourceTournamentId: string, targetTou
     }).select('id').single();
     if (insErr || !row) throw insErr ?? new Error('A venue could not be copied.');
     venueIds.push(row.id as string);
+    opts.onInserted?.(row.id as string);
     idMap.set(v.id as string, row.id as string);
   }
   const { data: facilities, error: fErr } = await supabaseAdmin
