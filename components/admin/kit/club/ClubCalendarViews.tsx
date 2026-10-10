@@ -8,9 +8,11 @@
  *            A clashing booking carries the amber mark; one that only MAY clash (a facility unset) is drawn dashed.
  *   List   — the kit's table, one row per booking, days as band rows; "Clashes with …" in words under the place (the
  *            row opens both sides — nothing in a cell to click); the name is the row's keyboard door; one chevron.
- *            On a phone, white cards with a corner chevron.
- *   Month  — a count per day and an amber mark where a day has a clash; a day opens its List.
- *   Phone  — the portal's stacked week: a run of empty days folds into one quiet line (`groupWeekDays`).
+ *            A computer's alone: on a phone it would be Week's stack again, so the page draws Week there (owner
+ *            2026-10-09, §288 W4).
+ *   Month  — a count per day and an amber mark where a day has a clash; a day opens its List (its Week on a phone).
+ *   Phone  — the portal's stacked week: a run of empty days folds into one quiet line (`groupWeekDays`); each day with
+ *            bookings carries `cal-day-<date>`, where Month's day scrolls to.
  *   Window — the booking, read-only (D3: no pencil): When, Where (address under it), the team and its head coach (or the
  *            season, or the tournament), then "Clashes with" as ONE white block with an amber edge — the other side, its
  *            facility, its head coach. The foot's door, in olive text: the team's schedule, or the Coaches Portal for
@@ -94,7 +96,7 @@ export function WeekView({ cursor, bookings, onOpen }: { cursor: string; booking
       </div>
       <div className={cal.stack}>
         {groups.map(g => g.kind === 'day' ? (
-          <section key={g.key} aria-label={dayLong(g.key)}>
+          <section key={g.key} id={`cal-day-${g.key}`} className={cal.jumpTarget} aria-label={dayLong(g.key)}>
             <h3 className={cal.stackDay}>{dayShort(g.key)}</h3>
             <div className={cal.stackCards}>{map.get(g.key)!.map(b => <PhoneCard key={b.key} b={b} onOpen={onOpen} />)}</div>
           </section>
@@ -107,57 +109,47 @@ export function WeekView({ cursor, bookings, onOpen }: { cursor: string; booking
 export function ListView({ bookings, onOpen }: { bookings: readonly CalendarBooking[]; onOpen: Open }) {
   const map = byDay(bookings);
   return (
-    <>
-      <div className={`${repKit.tableFrame} ${cal.deskOnly}`}>
-        <table className={repKit.table}>
-          <thead>
-            <tr>
-              <th scope="col" style={{ width: '10rem' }}>Time</th>
-              <th scope="col">Who</th>
-              <th scope="col">What</th>
-              <th scope="col">Where</th>
-              <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...map].flatMap(([day, list]) => [
-              <tr key={`band-${day}`} id={`cal-band-${day}`} className={repKit.band}><td colSpan={5}>{dayLong(day)}</td></tr>,
-              ...list.map(b => {
-                const line = clashLineWords(b);
-                return (
-                  <tr key={b.key} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; onOpen(b); }}>
-                    <td className={cal.timeCell}>{timeWords(b)}</td>
-                    <td>
-                      {PROGRAM_TAG[b.program] && <span className={cal.whoTag}>{PROGRAM_TAG[b.program]}</span>}
-                      <span className={cal.swatch} style={edge(b)} aria-hidden />
-                      <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} onClick={e => { e.stopPropagation(); onOpen(b); }}>{b.who}</button>
-                    </td>
-                    <td>{b.what}</td>
-                    <td>
-                      {whereWords(b)}
-                      {line && (
-                        <span className={`${cal.clashLine}${b.clash === 'busy_then' ? ` ${cal.busyLine}` : ''}`}>
-                          <AlertTriangle size={13} aria-hidden />{line}
-                        </span>
-                      )}
-                    </td>
-                    <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
-                  </tr>
-                );
-              }),
-            ])}
-          </tbody>
-        </table>
-      </div>
-      <div className={cal.stack}>
-        {[...map].map(([day, list]) => (
-          <section key={day} id={`cal-day-${day}`} aria-label={dayLong(day)}>
-            <h3 className={cal.stackDay}>{dayShort(day)}</h3>
-            <div className={cal.stackCards}>{list.map(b => <PhoneCard key={b.key} b={b} onOpen={onOpen} />)}</div>
-          </section>
-        ))}
-      </div>
-    </>
+    <div className={repKit.tableFrame}>
+      <table className={repKit.table}>
+        <thead>
+          <tr>
+            <th scope="col" style={{ width: '10rem' }}>Time</th>
+            <th scope="col">Who</th>
+            <th scope="col">What</th>
+            <th scope="col">Where</th>
+            <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {[...map].flatMap(([day, list]) => [
+            <tr key={`band-${day}`} id={`cal-band-${day}`} className={`${repKit.band} ${cal.jumpTarget}`}><td colSpan={5}>{dayLong(day)}</td></tr>,
+            ...list.map(b => {
+              const line = clashLineWords(b);
+              return (
+                <tr key={b.key} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; onOpen(b); }}>
+                  <td className={cal.timeCell}>{timeWords(b)}</td>
+                  <td>
+                    {PROGRAM_TAG[b.program] && <span className={cal.whoTag}>{PROGRAM_TAG[b.program]}</span>}
+                    <span className={cal.swatch} style={edge(b)} aria-hidden />
+                    <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} onClick={e => { e.stopPropagation(); onOpen(b); }}>{b.who}</button>
+                  </td>
+                  <td>{b.what}</td>
+                  <td>
+                    {whereWords(b)}
+                    {line && (
+                      <span className={`${cal.clashLine}${b.clash === 'busy_then' ? ` ${cal.busyLine}` : ''}`}>
+                        <AlertTriangle size={13} aria-hidden />{line}
+                      </span>
+                    )}
+                  </td>
+                  <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
+                </tr>
+              );
+            }),
+          ])}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

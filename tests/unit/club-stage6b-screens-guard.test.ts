@@ -29,6 +29,7 @@ const RAIL = 'components/admin/kit/AdminKitRail.tsx';
 const BAR = 'components/admin/kit/AdminKitBottomNav.tsx';
 const CAL_PAGE = 'app/[orgSlug]/admin/calendar/page.tsx';
 const CAL_VIEWS = 'components/admin/kit/club/ClubCalendarViews.tsx';
+const CAL_CSS = 'components/admin/kit/club/ClubCalendar.module.css';
 const CAL_ROUTE = 'app/api/admin/club-calendar/route.ts';
 const CAL_READ = 'lib/club-calendar.ts';
 const LIB_PAGE = 'app/[orgSlug]/admin/org/venues/page.tsx';
@@ -78,6 +79,20 @@ describe('2. the coach schedule’s toolbar', () => {
     assert.match(code, /const VIEWS: CalendarView\[\] = \['list', 'week', 'month'\]/);
     assert.match(code, /useState<CalendarView>\('week'\)/);
   });
+  it('a phone offers Week and Month only — List would repeat Week there (owner 2026-10-09, §288 W4)', () => {
+    // On this page List and Week both read ONE week, and a phone draws both as the same stack of day cards. (The coach
+    // schedule's List is the whole season, which is why its phone keeps three.) A computer keeps all three.
+    assert.match(code, /const PHONE_VIEWS: CalendarView\[\] = \['week', 'month'\]/);
+    assert.match(code, /\{PHONE_VIEWS\.map\(v =>/);
+    assert.match(code, /const shownView: CalendarView = phone && view === 'list' \? 'week' : view;/);
+    assert.match(code, /setView\(phone \? 'week' : 'list'\)/);
+    assert.match(code, /\) : shownView === 'week' \? \(\s*<WeekView/, 'the body draws shownView, never the raw choice');
+    assert.match(code, /\) : shownView === 'month' \? \(\s*<MonthView/);
+    const views = readCode(CAL_VIEWS);
+    const list = views.slice(views.indexOf('export function ListView'), views.indexOf('export function MonthView'));
+    assert.doesNotMatch(list, /PhoneCard|cal\.stack/, 'List has no phone form');
+    assert.match(views, /<section key=\{g\.key\} id=\{`cal-day-\$\{g\.key\}`\}/, "Week's phone days are Month's scroll targets");
+  });
   it('the view switch leads, then the quiet Venue · Program · Team pills, Export pinned right', () => {
     const views = code.indexOf('aria-label="Show the calendar as"');
     const venue = code.indexOf('label="Venue"');
@@ -85,8 +100,14 @@ describe('2. the coach schedule’s toolbar', () => {
     const team = code.indexOf('label="Team"');
     assert.ok(views > 0 && venue > views && program > venue && team > program);
     assert.match(code, /<MultiSelectDropdown restQuiet label="Venue"/);
-    assert.match(code, /<CoachListToolbar actions=\{<span className=\{cal\.exportDesk\}>\{exportMenu\}<\/span>\}>/);
+    assert.match(code, /<CoachListToolbar actions=\{exportMenu\}>/);
     assert.match(code, /formats=\{\['xlsx', 'csv', 'ics'\]\}/);
+  });
+  it('a phone keeps Export pinned right in the Filter row — never a second copy under the list (owner 2026-10-09, §288 W4)', () => {
+    // The coach schedule sends Export under the list only because its phone drops the toolbar row; this page keeps the
+    // row for Filter, so Export stays in it. ONE render of the menu, at every width.
+    assert.equal(code.match(/\{exportMenu\}/g)?.length, 1);
+    assert.doesNotMatch(readCode(CAL_CSS), /\.export(Desk|Phone)\b/);
   });
   it('no Today and no Search; the clock said once; the clash count is the amber pill that toggles Clashes only', () => {
     assert.doesNotMatch(code, />Today</);

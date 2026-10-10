@@ -12,8 +12,15 @@
  *   the date row— the week's arrows on their own row, "Times in Eastern time." said once, and the week's clash count as
  *                 the amber pill — a click is Clashes only, a second click shows everything.
  *   the views   — `ClubCalendarViews.tsx`. A booking opens a read window with both sides of its clash.
- *   the phone   — the coach schedule's: the View drawer in the title row, the stacked week, Export as a quiet row under
- *                 the list. The Filter button sits in the toolbar row, as on the club's Ledger (FilterGroup's phone form).
+ *   the phone   — the coach schedule's: the View drawer in the title row, the stacked week — offering WEEK and MONTH only
+ *                 (owner 2026-10-09, §288 W4): List and Week both read one week, and a phone draws both as the same
+ *                 stack of day cards, so List would repeat Week. (The coach's List is the whole season, which is why its
+ *                 phone keeps three.) A page left on List shows Week at phone width; Month's day opens the Week there,
+ *                 scrolled to that day. On a computer all three stay: columns and a table are different reads. The Filter button sits in the
+ *                 toolbar row, as on the club's Ledger (FilterGroup's phone form), and Export stays pinned right in that
+ *                 row as its icon (owner 2026-10-09, §288 W4): the coach schedule sends Export under the list only because
+ *                 its phone has no toolbar row, and this one keeps the row for Filter — so Export sits where it does on a
+ *                 computer and on the Ledger's phone, not at the end of a long week.
  *   Export      — one button, Excel first, then CSV, then Calendar (.ics); one line on top says what the file holds (the
  *                 range and the filters). It writes what the page shows. No PDF week and no subscribable link in the first
  *                 cut (Ask 10 hands the feeds to the schedule deep dive's stage 4).
@@ -24,6 +31,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CalendarDays, CalendarRange, ChevronLeft, ChevronRight, List } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { tournamentToday } from '@/lib/timezone';
 import { moneyFetch, refusalText } from '@/lib/money-fetch';
 import { buildFilename, downloadCSVBlob, downloadICSFromInstants, downloadXLSX, generateCSV } from '@/lib/export';
@@ -44,6 +52,8 @@ import {
 } from '@/lib/club-calendar-view';
 
 const VIEWS: CalendarView[] = ['list', 'week', 'month'];
+/** The phone's View drawer — no List: on a phone it is the same stack as Week (see the header). */
+const PHONE_VIEWS: CalendarView[] = ['week', 'month'];
 const VIEW_WORD: Record<CalendarView, string> = { list: 'List', week: 'Week', month: 'Month' };
 const VIEW_GLYPH: Record<CalendarView, React.ElementType> = { list: List, week: CalendarRange, month: CalendarDays };
 
@@ -54,6 +64,10 @@ export default function ClubCalendarPage() {
   const q = `orgSlug=${encodeURIComponent(slug)}`;
 
   const [view, setView] = useState<CalendarView>('week');
+  // What is DRAWN: a phone has no List (it would repeat Week), so List shows Week there. `view` stays as chosen, so a
+  // window widened back to a computer returns to the List it left.
+  const phone = useIsPhone();
+  const shownView: CalendarView = phone && view === 'list' ? 'week' : view;
   const [cursor, setCursor] = useState(() => tournamentToday());
   // Filters are not remembered between visits (the 2026-10-01 toolbar ruling): plain state, fresh on every open.
   const [venues, setVenues] = useState<Set<string>>(() => new Set());
@@ -63,8 +77,8 @@ export default function ClubCalendarPage() {
   const [read, setRead] = useState<CalendarRead | null>(null);
   const [failed, setFailed] = useState<{ refused: boolean; text: string } | null>(null);
   const [open, setOpen] = useState<CalendarBooking | null>(null);
-  /** Month's day, opened in its List — scrolled to once that week's List is drawn. */
   const [seenTeams, setSeenTeams] = useState<Map<string, string>>(() => new Map());
+  /** Month's day, opened in its List (its Week on a phone) — scrolled to once that week is drawn. */
   const jumpTo = useRef<string | null>(null);
 
   const range = useMemo(() => rangeFor(view, cursor), [view, cursor]);
@@ -118,12 +132,12 @@ export default function ClubCalendarPage() {
 
   useEffect(() => {
     const day = jumpTo.current;
-    if (!day || view !== 'list' || !current) return;
+    if (!day || shownView === 'month' || !current) return;
     jumpTo.current = null;
     const el = [document.getElementById(`cal-band-${day}`), document.getElementById(`cal-day-${day}`)]
       .find(x => x && x.offsetParent !== null);
     el?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-  }, [view, current]);
+  }, [shownView, current]);
 
   // ── Export: what the page shows ──
   const filterWords = [
@@ -149,19 +163,19 @@ export default function ClubCalendarPage() {
     />
   );
 
-  const ViewGlyph = VIEW_GLYPH[view];
+  const ViewGlyph = VIEW_GLYPH[shownView];
   const header = (
     <AdminPageHeader
       title={W.title}
       inlineActions
       actions={
-        // THE VIEW MENU on a phone (the coach schedule's, stage 2 · C1): the current view's glyph opening three rows
-        // in a drawer titled View. Hidden above 640, where the toolbar's switch leads instead.
+        // THE VIEW MENU on a phone (the coach schedule's, stage 2 · C1): the current view's glyph opening Week and Month
+        // in a drawer titled View — no List (see the header). Hidden above 640, where the toolbar's switch leads instead.
         <span className={cal.viewPhone}>
-          <CoachToolbarMenu label={`Change view · ${VIEW_WORD[view]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph" drawerOnPhone drawerTitle="View">
-            {VIEWS.map(v => {
+          <CoachToolbarMenu label={`Change view · ${VIEW_WORD[shownView]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph" drawerOnPhone drawerTitle="View">
+            {PHONE_VIEWS.map(v => {
               const Glyph = VIEW_GLYPH[v];
-              return <CoachToolbarMenuItem key={v} icon={<Glyph size={16} aria-hidden />} label={VIEW_WORD[v]} checked={view === v} onSelect={() => pickView(v)} />;
+              return <CoachToolbarMenuItem key={v} icon={<Glyph size={16} aria-hidden />} label={VIEW_WORD[v]} checked={shownView === v} onSelect={() => pickView(v)} />;
             })}
           </CoachToolbarMenu>
         </span>
@@ -177,7 +191,7 @@ export default function ClubCalendarPage() {
     <div className={ck.pageWide}>
       {header}
 
-      <CoachListToolbar actions={<span className={cal.exportDesk}>{exportMenu}</span>}>
+      <CoachListToolbar actions={exportMenu}>
         {/* The switch hides on a phone through its wrapper: the kit's `.toolbar .toolbarView` outranks a class on the switch itself. */}
         <span className={cal.viewDesk}>
           <div className={`${repKit.views} ${kit.toolbarView}`} role="group" aria-label="Show the calendar as">
@@ -229,18 +243,15 @@ export default function ClubCalendarPage() {
         <LoadFailed title={failed.text} onRetry={() => void load()} />
       ) : !current ? (
         <p className={ck.loading}>Loading…</p>
-      ) : view === 'week' ? (
+      ) : shownView === 'week' ? (
         <WeekView cursor={cursor} bookings={shown} onOpen={setOpen} />
-      ) : view === 'month' ? (
-        <MonthView cursor={cursor} bookings={shown} onDay={d => { jumpTo.current = d; setCursor(d); setView('list'); }} />
+      ) : shownView === 'month' ? (
+        <MonthView cursor={cursor} bookings={shown} onDay={d => { jumpTo.current = d; setCursor(d); setView(phone ? 'week' : 'list'); }} />
       ) : shown.length === 0 ? (
         <p className={ck.hint}>{all.length === 0 ? W.nothingThisWeek : W.nothingMatches}</p>
       ) : (
         <ListView bookings={shown} onOpen={setOpen} />
       )}
-
-      {/* Export on a phone: a quiet row under the list (the coach schedule's). */}
-      {current && <div className={cal.exportPhone}>{exportMenu}</div>}
 
       {open && <BookingWindow b={open} onClose={() => setOpen(null)} />}
     </div>

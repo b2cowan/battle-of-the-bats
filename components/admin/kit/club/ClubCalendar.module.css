@@ -110,13 +110,16 @@
 }
 .door:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-/* ── The phone: the View glyph in the title row, the stacked week, Export as a quiet row under the list ── */
+/* ── The phone: the View glyph in the title row, the stacked week (Export stays in the toolbar row, as its icon) ── */
 .viewPhone { display: none; }
-.exportPhone { display: none; }
 /* The view switch's wrapper: no box of its own on a computer, gone on a phone (the View drawer takes its place). */
 .viewDesk { display: contents; }
-/* The stacked week / list is the phone's alone — it owns its display, so no later rule can show it on a computer. */
+/* The stacked week is the phone's alone — it owns its display, so no later rule can show it on a computer. */
 .stack { display: none; flex-direction: column; gap: 0.9rem; }
+/* Where Month's day lands (a List band, a phone Week day): clear of the sticky chrome above the page — the event
+   header (61px on a phone) under the top strip and the sandbox bar — with a little air. Without it a phone's day
+   heading and its first card's time sat under the header. */
+.jumpTarget { scroll-margin-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + 4.75rem); }
 .stackDay { margin: 0 0 0.35rem; font-family: var(--font-display); font-size: var(--type-heading); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-secondary); }
 .stackCards { display: flex; flex-direction: column; gap: 0.45rem; }
 .stackQuiet { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
@@ -139,8 +142,6 @@
   .viewDesk { display: none; }
   .deskOnly { display: none; }
   .stack { display: flex; }
-  .exportDesk { display: none; }
-  .exportPhone { display: flex; justify-content: flex-start; margin-top: 1rem; }
   .navLong { display: none; }
   /* Month on a phone: a day says its count and its clashes as numbers — the words don't fit a seventh of 390px. */
   .monthCell { min-width: 0; min-height: 64px; padding: 0.35rem 0.3rem; overflow: hidden; }
