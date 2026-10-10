@@ -1,36 +1,42 @@
 'use client';
 
 /**
- * Admin-only control shown inside the standings table when a tied group needs a
- * coin toss ('coin' is the deciding breaker and no result is recorded). The
- * organizer taps the tied teams in finishing order; the result is POSTed to the
- * divisions API (action: record-coin-toss) and persisted to playoff_config, then
- * onRecorded() re-runs the standings.
+ * RECORD THE TOSS — the organizer's coin-toss result for a tied group, in the kit's form window with a record head
+ * (Tournament admin redesign Stage 3, S7 / A43, ruled 2026-10-09: "today's recorder, moved").
+ *
+ * Opened from where the seeds wait — the schedule's Bracket view, Results' "Needs you" and the dashboard's nudge —
+ * instead of a box inside the public standings' preview. Its controls are today's: tap the team that won the toss (or,
+ * three or more tied, the teams in finishing order), Start again, Save the result. The result is POSTed to the
+ * divisions API (`record-coin-toss`), stored on the division's playoff config, and the bracket re-seeds as today
+ * (J1-084). Two teams: the winner's tap orders both; three or more: the last team takes the last place.
  */
 
 import { useState } from 'react';
-import { Coins, Check, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import type { PendingToss } from '@/lib/coin-toss';
+import { COIN_TOSS_WORDS as CT, readRefusal } from '@/lib/schedule-words';
 import styles from './CoinTossRecorder.module.css';
 
-interface Props {
+export default function CoinTossRecorder({ orgSlug, toss, onClose, onRecorded }: {
   orgSlug: string;
-  divisionId: string;
-  groupKey: string;
-  teams: { id: string; name: string }[];
+  toss: PendingToss;
+  onClose: () => void;
+  /** Saved: the finishing order (team ids, best first). The caller re-reads what the toss reseeds. */
   onRecorded: (orderedTeamIds: string[]) => void;
-}
-
-export default function CoinTossRecorder({ orgSlug, divisionId, groupKey, teams, onRecorded }: Props) {
+}) {
   const [order, setOrder] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const remaining = teams.filter(t => !order.includes(t.id));
-  const complete = order.length === teams.length;
-  const teamName = (id: string) => teams.find(t => t.id === id)?.name ?? id;
+  const complete = order.length === toss.teams.length;
 
   function pick(id: string) {
-    setOrder(o => (o.includes(id) ? o : [...o, id]));
+    if (order.includes(id) || saving) return;
+    const next = [...order, id];
+    // The last team left takes the last place: two tied, the winner's one tap orders both.
+    const left = toss.teams.filter(t => !next.includes(t.id));
+    setOrder(left.length === 1 ? [...next, left[0].id] : next);
+    setError(null);
   }
 
   async function save() {
@@ -41,74 +47,60 @@ export default function CoinTossRecorder({ orgSlug, divisionId, groupKey, teams,
       const res = await fetch(`/api/admin/divisions?orgSlug=${encodeURIComponent(orgSlug)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'record-coin-toss',
-          id: divisionId,
-          groupKey,
-          orderedTeamIds: order,
-        }),
+        body: JSON.stringify({ action: 'record-coin-toss', id: toss.divisionId, groupKey: toss.groupKey, orderedTeamIds: order }),
       });
-      if (!res.ok) {
-        const d = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(d.error || 'Failed to save coin toss');
-      }
+      if (!res.ok) throw new Error(await readRefusal(res, CT.failed));
       onRecorded(order);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save coin toss');
+      setError(e instanceof Error ? e.message : CT.failed);
       setSaving(false);
     }
   }
 
+  // The teams in the order tapped, then the rest as the table shows them.
+  const shown = [...order.map(id => toss.teams.find(t => t.id === id)!), ...toss.teams.filter(t => !order.includes(t.id))];
+
   return (
-    <div className={styles.box}>
-      <div className={styles.head}>
-        <Coins size={15} aria-hidden />
-        <span>Coin toss required — {teams.length} teams tied</span>
-      </div>
-      <p className={styles.help}>
-        {teams.length === 2
-          ? 'Tap the coin-toss winner first.'
-          : 'Tap the tied teams in finishing order (1st, 2nd, …).'}
-      </p>
-
-      {order.length > 0 && (
-        <ol className={styles.order}>
-          {order.map((id, i) => (
-            <li key={id}>
-              <span className={styles.rank}>{i + 1}</span> {teamName(id)}
-            </li>
-          ))}
-        </ol>
-      )}
-
-      {remaining.length > 0 && (
-        <div className={styles.picks}>
-          {remaining.map(t => (
-            <button
-              key={t.id}
-              type="button"
-              className={styles.pick}
-              disabled={saving}
-              onClick={() => pick(t.id)}
-            >
-              {t.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {error && <p className={styles.error}>{error}</p>}
-
-      <div className={styles.actions}>
-        {order.length > 0 && (
-          <button type="button" className="btn btn-ghost btn-data" onClick={() => setOrder([])} disabled={saving}>
-            <RotateCcw size={13} /> Reset
-          </button>
-        )}
-        <button type="button" className="btn btn-lime btn-data" onClick={save} disabled={!complete || saving}>
-          <Check size={13} /> {saving ? 'Saving…' : 'Save result'}
+    <KitDialog
+      kind="form"
+      title={CT.sheetTitle(toss.divisionName)}
+      identity={CT.sheetFor(toss.places, toss.pool)}
+      onClose={onClose}
+      busy={saving}
+      footer={(
+        <button type="button" className="btn btn-lime" onClick={() => { void save(); }} disabled={!complete || saving}>
+          {saving ? CT.saving : CT.save}
         </button>
-      </div>
-    </div>
+      )}
+    >
+      <p className={styles.lead}>{toss.teams.length === 2 ? CT.tapWinner : CT.tapOrder}</p>
+      <ul className={styles.teams}>
+        {shown.map(t => {
+          const at = order.indexOf(t.id);
+          return (
+            <li key={t.id}>
+              <button
+                type="button"
+                className={styles.team}
+                data-on={at >= 0 || undefined}
+                aria-pressed={at >= 0}
+                disabled={saving}
+                onClick={() => pick(t.id)}
+              >
+                <span className={styles.rank} aria-hidden>{at >= 0 ? at + 1 : ''}</span>
+                <span>{t.name}</span>
+                {at >= 0 && <span className={styles.place}>{CT.placeOf(toss.places[at], toss.pool)}</span>}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {order.length > 0 && (
+        <button type="button" className={`btn btn-outline ${styles.again}`} onClick={() => { setOrder([]); setError(null); }} disabled={saving}>
+          <RotateCcw size={14} aria-hidden /> {CT.startAgain}
+        </button>
+      )}
+      {error && <p className={styles.error} role="alert">{error}</p>}
+    </KitDialog>
   );
 }

@@ -106,11 +106,13 @@ describe('F71 — a refused save says why', () => {
     assert.match(readCode(SANDBOX), /export const isSandboxRefusal = \(res: Response\): boolean => sandboxRefusal\(res, null\) !== null;/);
   });
 
-  it('Cancel Game, Reinstate, Unpublish, Unpublish all and the close-on-publish step read their replies too', () => {
+  it('Cancel Game, Reinstate, Unpublish, Unpublish all and the publish read their replies too', () => {
     assert.match(page, /refusedWrite\(res, action === 'cancel' \? SCHEDULE_REFUSAL_TITLE\.cancelGame : SCHEDULE_REFUSAL_TITLE\.reinstateGame\)/);
     assert.match(page, /refusedWrite\(res, SCHEDULE_REFUSAL_TITLE\.unpublish, SCHEDULE_REFUSAL\.divisionFallback\)/);
     assert.match(page, /title: SCHEDULE_REFUSAL_TITLE\.unpublishAll,/);
-    assert.match(readCode(PUBLISH), /readRefusal\(refused, SCHEDULE_REFUSAL\.divisionFallback\)/);
+    // Stage 3 Part 7 (S8): the window no longer pre-closes registration in a request of its own — the route closes it
+    // with the publish (mig 129), so there is one reply, and a refused one says the server's reason.
+    assert.match(readCode(PUBLISH), /if \(!res\.ok\) throw new Error\(await readRefusal\(res, PW\.failed\)\);/);
   });
 });
 

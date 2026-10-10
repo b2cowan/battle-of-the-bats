@@ -1,30 +1,52 @@
 'use client';
-import React, { useRef } from 'react';
-import { Calendar, Clock, MapPin, Trophy, Pencil, Trash2 } from 'lucide-react';
-import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
-import { resolveGameVenueLabel } from '@/lib/venue-label';
-import { formatTime } from '@/lib/utils';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
+/**
+ * THE BRACKET DIAGRAM — round columns wired by the measured connectors, read the public bracket's way (Tournament admin
+ * redesign Stage 3, S6 / A38, ruled 2026-10-09).
+ *
+ * Each card: its when line (day, time, field, round — and the state the score can't say), then the two sides: the
+ * team once known with the slot it came from under it ("Seed 1", "Semifinal 1 winner"), the score once played, and
+ * the winner in plain ink, bold, with a check (lib/bracket-reading.ts — the champion rule's `isDecided`). A card is
+ * the button that opens the game (S2); the pencil and the trash can on every card are gone (Edit bracket and the
+ * game window hold them). The champion closes the diagram: "Decided by the final" until it is, then the finished
+ * board's sentence.
+ *
+ * Without `teams` it is the playoff generator's preview: the slots only, nothing to open.
+ *
+ * Single elimination, double elimination (the shared seed round, then the winners bracket over the losers bracket,
+ * the grand final last) and consolation all lay out as ordered columns (`bracketRoundInfo` / `computeBracketColumns`).
+ */
+import { useRef, type ReactNode } from 'react';
+import { Check, ChevronRight, Trophy } from 'lucide-react';
+import type { Game, Venue } from '@/lib/types';
+import { bracketGameLabel, bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
+import { bracketSides, type BracketChampion, type BracketSide } from '@/lib/bracket-reading';
+import { resolveGameFieldLabel } from '@/lib/venue-label';
+import { BRACKET_WORDS as B, COIN_TOSS_WORDS as CT, bracketWhen, slotWords } from '@/lib/schedule-words';
+import type { ScheduleState } from '@/lib/schedule-day';
 import BracketConnectors from './BracketConnectors';
 import BracketZoomFrame from './BracketZoomFrame';
-import styles from '../schedule-admin.module.css';
+import { stateChip } from './ScheduleDayList';
+import bv from './BracketView.module.css';
+
+const NO_BREAK = String.fromCharCode(0xa0);
+
+/** The slice of a game the diagram reads — a saved game, or a generator preview row mapped to one. */
+export type BracketGame = Pick<Game, 'id'> & Partial<Game>;
+export interface BracketColumn { key: string; title: string; games: BracketGame[] }
 
 /**
- * Group games into ordered round columns via the shared bracketRoundInfo(), so
- * single elimination, double elimination (winners/losers/grand final), and
- * consolation all render as ordered columns. Connectors are inferred from the
- * Winner/Loser placeholders, so they follow any format. Used by both the main
- * Schedule playoff View and the (read-only) auto-generator preview.
+ * Group games into ordered round columns via the shared bracketRoundInfo(), so single elimination, double
+ * elimination (winners/losers/grand final) and consolation all render as ordered columns. Connectors are inferred
+ * from the Winner/Loser placeholders, so they follow any format.
  */
-export function buildBracketColumns(games: any[]) {
-  const sortByCode = (a: any, b: any) => {
+export function buildBracketColumns(games: BracketGame[]): BracketColumn[] {
+  const sortByCode = (a: BracketGame, b: BracketGame) => {
     if (/^FIN/i.test(a.bracketCode || '') && /^3RD/i.test(b.bracketCode || '')) return -1;
     if (/^3RD/i.test(a.bracketCode || '') && /^FIN/i.test(b.bracketCode || '')) return 1;
     return (a.bracketCode || '').localeCompare(b.bracketCode || '');
   };
   const colMap = computeBracketColumns(games);
-  const groups = new Map<string, { key: string; title: string; rank: number; games: any[] }>();
+  const groups = new Map<string, { key: string; title: string; rank: number; games: BracketGame[] }>();
   for (const g of games) {
     let info = colMap.get(g.id) || bracketRoundInfo(g.bracketCode || '');
     // The "if necessary" reset is its own column just right of the Grand Final.
@@ -40,174 +62,175 @@ export function buildBracketColumns(games: any[]) {
     .map(grp => ({ key: grp.key, title: grp.title, games: grp.games.sort(sortByCode) }));
 }
 
-/**
- * Read-only bracket diagram. Pass `readOnly` to drop the per-game edit/delete
- * affordances (the auto-generator preview shows structure only — editing happens
- * inline on the main screen via BracketEditor). Pass `venues` (with facilities)
- * so location labels resolve live instead of from the stored snapshot.
- */
-export default function BracketColumns({ columns, onEdit, onDelete, formatDate, readOnly = false, venues }: any) {
+/** The slots only — the generator's preview, before there are teams. */
+function slotSides(g: BracketGame): { away: BracketSide; home: BracketSide } {
+  const slot = (ph?: string | null): BracketSide => ({
+    name: slotWords(displayBracketRefs(ph)) || 'TBD', slot: null, score: null, won: false, known: false,
+  });
+  return { away: slot(g.awayPlaceholder), home: slot(g.homePlaceholder) };
+}
+
+function Side({ side }: { side: BracketSide }) {
+  return (
+    <div className={bv.side} data-won={side.won || undefined}>
+      <span className={bv.team}>
+        <span className={bv.name}>
+          {side.name}
+          {side.won && <Check size={14} className={bv.check} aria-label="won" />}
+        </span>
+        {side.slot && <span className={bv.slot}>{side.slot}</span>}
+      </span>
+      <span className={bv.score}>{side.score ?? ''}</span>
+    </div>
+  );
+}
+
+export function ChampionCard({ champion }: { champion: BracketChampion }) {
+  return champion.kind === 'decided' ? (
+    <div className={bv.champion}>
+      <Trophy size={18} aria-hidden />
+      <b>{champion.team}</b>
+      <span>{champion.caption}</span>
+    </div>
+  ) : (
+    <div className={bv.champion} data-waiting>
+      <Trophy size={18} aria-hidden />
+      <b>{B.championWaiting}</b>
+      {champion.either && <span>{B.championEither(champion.either[0], champion.either[1])}</span>}
+    </div>
+  );
+}
+
+export default function BracketColumns({ columns, teams, venues, stateOf, waiting, champion, onOpen }: {
+  columns: BracketColumn[];
+  /** The bracket read with its teams, scores and winners. Absent: the generator's preview (the slots only). */
+  teams?: readonly { id: string; name: string }[];
+  /** Resolves a game's field label live (instead of the stored snapshot) — the diamond, as the public bracket names it. */
+  venues?: Venue[];
+  /** The state the score can't say, as the day's chip ("Playing now"). */
+  stateOf?: (g: Game) => ScheduleState;
+  /** Games whose slots wait on a coin toss. */
+  waiting?: ReadonlySet<string>;
+  /** The champion at the diagram's end; null or absent draws none. */
+  champion?: BracketChampion | null;
+  /** A card opens its game. Absent (the preview): the cards are not buttons. */
+  onOpen?: (g: Game) => void;
+}) {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const kx = useKitStyle();
-  // Row-invariant kit patches — computed once per render, not once per row/map() call.
-  const roundLabelStyle = kx(
-    { textAlign: 'center', color: 'var(--logic-lime)', fontFamily: 'var(--font-data)', fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1.5rem', opacity: 0.7, padding: '2px 4px' },
-    { color: 'var(--home-olive)', opacity: 1 },
-  );
-  const cardRegularStyle = kx(
-    { padding: '0.75rem', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', background: 'var(--surface)', position: 'relative', zIndex: 1, boxShadow: 'var(--shadow-sm)', borderRadius: '2px' },
-    { border: '1px solid var(--home-line)', background: 'var(--card-bg)', boxShadow: 'none', borderRadius: '8px' },
-  );
-  const cardFinalStyle = kx(
-    { padding: '0.75rem', border: '1px solid rgba(var(--logic-lime-rgb), 0.55)', background: 'var(--surface)', position: 'relative', zIndex: 1, boxShadow: '0 0 0 1px rgba(var(--logic-lime-rgb), 0.28), 0 6px 20px rgba(var(--logic-lime-rgb), 0.14)', borderRadius: '2px' },
-    { border: '1px solid var(--home-olive)', background: 'var(--card-bg)', boxShadow: '0 0 0 1px var(--home-olive)', borderRadius: '8px' },
-  );
-  const codeChipStyle = kx(
-    { fontSize: '0.6rem', fontWeight: 900, color: 'var(--logic-lime)', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '2px 8px', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em' },
-    { fontFamily: 'var(--font-data)', color: 'var(--home-olive)', background: 'var(--home-olive-soft)', border: '1px solid var(--home-olive)' },
-  );
-  const sideTagStyle = kx(
-    { width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--data-gray)', textAlign: 'center', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '1px 0', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em' },
-    { fontFamily: 'var(--font-data)', color: 'var(--text-tertiary)', background: 'transparent', border: '1px solid var(--home-line-strong)' },
-  );
-  const teamNameStyle = kx(
-    { fontWeight: '700', fontSize: '0.85rem', color: 'var(--white)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-    KIT_INK.primary,
-  );
-  const dividerStyle = kx({ height: '1px', background: 'var(--white-03)' }, { background: 'var(--home-line)' });
-  const footerMetaStyle = kx(
-    { display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '0.4rem', paddingTop: '0.6rem', borderTop: '1px solid var(--white-5)', fontSize: '0.7rem', color: 'var(--white-40)' },
-    { borderTop: '1px solid var(--home-line)', color: 'var(--text-tertiary)' },
-  );
-  const iconBtnStyle = kx(
-    { height: '24px', width: '24px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--white-03)' },
-    { background: 'transparent' },
-  );
-  const connectorMatchups = columns.flatMap((c: any) => c.games).map((g: any) => ({
+  const connectorMatchups = columns.flatMap(c => c.games).map(g => ({
     id: g.id,
     code: g.bracketCode || '',
     home: { label: g.homePlaceholder || '' },
     away: { label: g.awayPlaceholder || '' },
   }));
-  const gfFinalCols = columns.filter((c: any) => c.key === 'GF' || c.key === 'GF2');
-  const finalCol = columns.find((c: any) => c.title === 'Finals') ?? columns[columns.length - 1];
+  const gfFinalCols = columns.filter(c => c.key === 'GF' || c.key === 'GF2');
+  const finalCol = columns.find(c => c.title === 'Finals') ?? columns[columns.length - 1];
   const finalGameIds = new Set<string>(
-    (gfFinalCols.length ? gfFinalCols.flatMap((c: any) => c.games) : (finalCol?.games ?? [])).map((g: any) => g.id),
+    (gfFinalCols.length ? gfFinalCols.flatMap(c => c.games) : (finalCol?.games ?? [])).map(g => g.id),
   );
 
-  // Double elimination → a shared SEED round (round 1) first, then the bracket
-  // FORKS into the winners bracket (top) and losers bracket (bottom), with the
-  // grand final on the far right. Keeping round 1 shared (instead of inside the
-  // winners tier) means every downstream feed flows forward (rightward), never
-  // back under the seed games. Other formats stay flat.
-  const isDoubleElim = columns.some((c: any) => /^LB\d/.test(c.key || ''));
-  const indexed = columns.map((col: any, idx: number) => ({ col, idx }));
+  // Double elimination → a shared SEED round (round 1) first, then the bracket FORKS into the winners bracket (top)
+  // and losers bracket (bottom), with the grand final on the far right, so every feed flows forward.
+  const isDoubleElim = columns.some(c => /^LB\d/.test(c.key || ''));
+  const indexed = columns.map((col, idx) => ({ col, idx }));
   const wbRound = (key: string) => { const m = /^WB(\d+)$/.exec(key || ''); return m ? parseInt(m[1], 10) : null; };
-  const seedCols = indexed.filter(({ col }: any) => wbRound(col.key) === 1);
-  const winnersCols = indexed.filter(({ col }: any) => (wbRound(col.key) ?? 0) >= 2);
-  const losersCols = indexed.filter(({ col }: any) => /^LB\d/.test(col.key || ''));
-  const gfCols = indexed.filter(({ col }: any) => col.key === 'GF' || col.key === 'GF2');
-  const hasLoserPath = connectorMatchups.some((m: any) =>
-    /^loser\s/i.test(m.home.label) || /^loser\s/i.test(m.away.label));
+  const seedCols = indexed.filter(({ col }) => wbRound(col.key) === 1);
+  const winnersCols = indexed.filter(({ col }) => (wbRound(col.key) ?? 0) >= 2);
+  const losersCols = indexed.filter(({ col }) => /^LB\d/.test(col.key || ''));
+  const gfCols = indexed.filter(({ col }) => col.key === 'GF' || col.key === 'GF2');
+  const hasLoserPath = connectorMatchups.some(m => /^loser\s/i.test(m.home.label) || /^loser\s/i.test(m.away.label));
 
-  const renderColumn = ({ col, idx }: any) => (
-        <div key={idx} className={styles.readBracketColumn}>
-          <div style={roundLabelStyle}>
-            {displayRoundTitle(col.title)}
-          </div>
+  const card = (g: BracketGame) => {
+    const full = g as Game;
+    const sides = teams ? bracketSides(full, teams) : slotSides(g);
+    const field = (venues ? resolveGameFieldLabel(full, venues) : g.location) || '';
+    const round = g.bracketCode ? bracketGameLabel(g.bracketCode) : '';
+    // The when line breaks only between its parts, never inside one ("Semifinal" / "1").
+    const when = [bracketWhen(g.date, g.time), field, round, waiting?.has(g.id) ? CT.waits : ''].filter(Boolean)
+      .map(part => part.replace(/ /g, NO_BREAK)).join(' · ');
+    const chip = stateOf ? stateChip(full, stateOf(full)) : null;
+    const body: ReactNode = (
+      <>
+        <span className={bv.when}>{when}{chip}</span>
+        {onOpen && <ChevronRight size={16} className={bv.go} aria-hidden />}
+        <Side side={sides.home} />
+        <span className={bv.divider} aria-hidden />
+        <Side side={sides.away} />
+      </>
+    );
+    const final = finalGameIds.has(g.id) || undefined;
+    return onOpen ? (
+      <button
+        key={g.id}
+        type="button"
+        className={bv.card}
+        data-matchup-id={g.id}
+        data-final={final}
+        aria-haspopup="dialog"
+        aria-label={B.cardLabel(round || B.champion, sides.home.name, sides.away.name)}
+        onClick={() => onOpen(full)}
+      >
+        {body}
+      </button>
+    ) : (
+      <div key={g.id} className={bv.card} data-matchup-id={g.id} data-final={final}>{body}</div>
+    );
+  };
 
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: (col.title === 'Finals' || col.key === 'GF') ? 'center' : 'space-around',
-            flex: 1,
-            gap: (col.title === 'Finals' || col.key === 'GF') ? '2.5rem' : '1.5rem'
-          }}>
-            {col.games.map((g: any) => {
-              const isFinalGame = finalGameIds.has(g.id);
-              return (
-              <div key={g.id} style={{ position: 'relative' }}>
-                <div className="card" data-matchup-id={g.id} style={isFinalGame ? cardFinalStyle : cardRegularStyle}>
-                  <div className="flex-between" style={{ marginBottom: '7px' }}>
-                    <div style={codeChipStyle}>{displayBracketRefs(g.bracketCode)}</div>
-                    {!readOnly && (
-                      <div className="flex gap-1.5">
-                        <button className="btn btn-ghost btn-sm" onClick={() => onEdit(g)} title="Edit" style={iconBtnStyle}><Pencil size={11} /></button>
-                        <button className="btn btn-ghost btn-sm text-danger" onClick={() => onDelete(g.id)} title="Delete" style={iconBtnStyle}><Trash2 size={11} /></button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={sideTagStyle}>VIS</div>
-                      <div style={teamNameStyle}>
-                        {displayBracketRefs(g.awayPlaceholder) || 'TBD'}
-                      </div>
-                    </div>
-                    <div style={dividerStyle} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={sideTagStyle}>HOM</div>
-                      <div style={teamNameStyle}>
-                        {displayBracketRefs(g.homePlaceholder) || 'TBD'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={footerMetaStyle}>
-                    <div className="flex items-center" style={{ gap: '5px' }}><Calendar size={10} className="text-primary-light opacity-50" /> {g.date ? formatDate(g.date) : 'TBD'}</div>
-                    <div className="flex items-center" style={{ gap: '5px', justifyContent: 'flex-end' }}><Clock size={10} className="text-primary-light opacity-50" /> {g.time ? formatTime(g.time) : 'TBD'}</div>
-                    <div className="flex items-center" style={{ gap: '5px', gridColumn: 'span 2' }}><MapPin size={10} className="text-primary-light opacity-50" /> {(venues ? resolveGameVenueLabel(g, venues) : g.location) || 'TBD'}</div>
-                  </div>
-                </div>
-              </div>
-              );
-            })}
-          </div>
-        </div>
-  );
+  const renderColumn = ({ col, idx }: { col: BracketColumn; idx: number }) => {
+    const isFinals = col.title === 'Finals' || col.key === 'GF';
+    return (
+      <div key={idx} className={bv.column}>
+        <div className={bv.roundTitle}>{displayRoundTitle(col.title)}</div>
+        <div className={`${bv.games}${isFinals ? ` ${bv.gamesFinal}` : ''}`}>{col.games.map(card)}</div>
+      </div>
+    );
+  };
+  const championColumn = champion ? (
+    <div className={bv.column}>
+      <div className={bv.roundTitle}>{B.champion}</div>
+      <div className={`${bv.games} ${bv.gamesFinal}`}><ChampionCard champion={champion} /></div>
+    </div>
+  ) : null;
 
   return (
-    <div className={styles.readBracketWrap}>
+    <div className={bv.wrap}>
       {hasLoserPath && (
-        <div className={styles.bracketLegend}>
-          <span><i className={styles.legendWin} /> Winner advances</span>
-          <span><i className={styles.legendLoss} /> Loser drops down</span>
+        <div className={bv.legend}>
+          <span><i aria-hidden /> {B.winnerAdvances}</span>
+          <span><i className={bv.loss} aria-hidden /> {B.loserDrops}</span>
         </div>
       )}
-      <BracketZoomFrame fitKey={columns.map((c: any) => `${c.key}:${c.games.length}`).join('|')}>
+      <BracketZoomFrame fitKey={columns.map(c => `${c.key}:${c.games.length}`).join('|')}>
         {(zoom: number) => (
-        <div ref={canvasRef} className={`${styles.readBracketCanvas}${isDoubleElim ? ` ${styles.readBracketCanvasTiered}` : ''}`}>
-          <BracketConnectors canvasRef={canvasRef} matchups={connectorMatchups} finalIds={finalGameIds} scale={zoom} />
-        {isDoubleElim ? (
-          <>
-            {seedCols.length > 0 && (
-              <div className={styles.bracketSeedColumn}>
-                {seedCols.map(renderColumn)}
-              </div>
-            )}
-            <div className={styles.bracketSplit}>
-              {winnersCols.length > 0 && (
-                <div className={styles.bracketTier}>
-                  <div className={styles.bracketTierLabel}><Trophy size={11} /> Winners Bracket</div>
-                  <div className={styles.bracketTierRow}>{winnersCols.map(renderColumn)}</div>
+          <div ref={canvasRef} className={`${bv.canvas}${isDoubleElim ? ` ${bv.canvasTiered}` : ''}`}>
+            <BracketConnectors canvasRef={canvasRef} matchups={connectorMatchups} finalIds={finalGameIds} scale={zoom} />
+            {isDoubleElim ? (
+              <>
+                {seedCols.length > 0 && <div className={bv.section}>{seedCols.map(renderColumn)}</div>}
+                <div className={bv.split}>
+                  {winnersCols.length > 0 && (
+                    <div className={bv.section}>
+                      <div className={bv.tierLabel}><Trophy size={11} aria-hidden /> {B.winnersBracket}</div>
+                      <div className={bv.row}>{winnersCols.map(renderColumn)}</div>
+                    </div>
+                  )}
+                  <div className={bv.section}>
+                    <div className={bv.tierLabel}>{B.losersBracket}</div>
+                    <div className={bv.row}>{losersCols.map(renderColumn)}</div>
+                  </div>
                 </div>
-              )}
-              <div className={styles.bracketTier}>
-                <div className={styles.bracketTierLabel}>Losers Bracket</div>
-                <div className={styles.bracketTierRow}>{losersCols.map(renderColumn)}</div>
-              </div>
-            </div>
-            {gfCols.length > 0 && (
-              <div className={styles.bracketGfSection}>
-                <div className={styles.bracketGfRow}>{gfCols.map(renderColumn)}</div>
-              </div>
+                {(gfCols.length > 0 || championColumn) && (
+                  <div className={bv.section}><div className={bv.row}>{gfCols.map(renderColumn)}{championColumn}</div></div>
+                )}
+              </>
+            ) : (
+              <>
+                {columns.map((col, idx) => renderColumn({ col, idx }))}
+                {championColumn}
+              </>
             )}
-          </>
-        ) : (
-          columns.map((col: any, idx: number) => renderColumn({ col, idx }))
-        )}
-        </div>
+          </div>
         )}
       </BracketZoomFrame>
     </div>

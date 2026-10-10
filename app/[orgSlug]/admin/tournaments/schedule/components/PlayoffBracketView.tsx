@@ -1,169 +1,239 @@
 'use client';
-/** The schedule's Bracket view (split pools, tiered brackets, or one diagram). Moved out of the schedule page, Stage 3 Part 0. */
-import { Trophy } from 'lucide-react';
+/**
+ * THE SCHEDULE'S BRACKET VIEW — one division's playoffs, read the public bracket's way (Tournament admin redesign
+ * Stage 3, S6 + S7 / A38 + A43, ruled 2026-10-09).
+ *
+ *   · Its heading: "U11 playoffs" over its format ("Single elimination · the top 4 of the round robin"), with Edit
+ *     bracket the white button above what it acts on (a phone: full width under the bracket).
+ *   · A coin toss still owed for its seeds is said HERE, where the seeds wait: the amber note naming the tie and the
+ *     games waiting on it, with Record the toss (S7). The waiting game says so once, in its when line.
+ *   · Every bracket game shows, whatever the Filter (a played semifinal no longer reads "No playoff bracket yet").
+ *     A Search (or a Filter) lists the games it matches in round bands instead (1 October).
+ *   · A desk draws the diagram (BracketColumns); a phone reads the rounds as bands in one frame — the day's row, the
+ *     winner bold and checked — with the diagram one tap away (Show as diagram: today's zoom frame).
+ *   · Split pools and tiers keep one diagram per bracket, named; the champion card ends the division's TOP bracket.
+ */
+import { Fragment, useState } from 'react';
+import { AlertCircle, Pencil, Trophy } from 'lucide-react';
+import type { Division, Game, Team, Venue } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
-import { groupGamesByBracketId } from '@/lib/playoff-bracket';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
-import BracketColumns, { buildBracketColumns } from './BracketColumns';
+import { bracketGameLabel, groupGamesByBracketId, displayRoundTitle } from '@/lib/playoff-bracket';
+import { playoffFormatLabel } from '@/lib/playoff-picture';
+import { bracketChampion, bracketSides, playedCount, type BracketChampion } from '@/lib/bracket-reading';
+import { gamesWaitingOnToss, type PendingToss } from '@/lib/coin-toss';
+import type { ScheduleState } from '@/lib/schedule-day';
+import { BRACKET_WORDS as B, COIN_TOSS_WORDS as CT, SCHEDULE_DAY_WORDS as W, bracketWhen } from '@/lib/schedule-words';
+import { Callout, ClubRow, ClubRowBand, ClubRowFrame, ClubRowList } from '@/components/admin/kit/club/RepKit';
+import repKit from '@/components/admin/kit/club/RepKit.module.css';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import BracketColumns, { buildBracketColumns, type BracketColumn } from './BracketColumns';
+import { ScheduleGameRow } from './ScheduleDayList';
+import sd from './ScheduleDay.module.css';
+import bv from './BracketView.module.css';
 
-function inferGamePool(game: any, allGames: any[], pools: any[]): string | null {
-  // Direct: placeholder contains "Pool X"
+/** Which of the division's pools a playoff game belongs to: its slot names the pool ("1st Pool A"), or it is fed by
+ *  (or sits in the same bracket as) a game that does. */
+function inferGamePool(game: Game, allGames: Game[], pools: { name: string }[]): string | null {
   for (const pool of pools) {
-    const bare = pool.name.replace(/^Pool\s+/i, '').trim();
-    const tag = `Pool ${bare}`;
-    if (game.homePlaceholder?.includes(tag) || game.awayPlaceholder?.includes(tag)) {
-      return pool.name;
-    }
+    const tag = `Pool ${pool.name.replace(/^Pool\s+/i, '').trim()}`;
+    if (game.homePlaceholder?.includes(tag) || game.awayPlaceholder?.includes(tag)) return pool.name;
   }
-  // Transitive: "Winner SF1" → find that game's pool.
-  // Match by bracketId (set per-pool in executeCreate) to avoid code collisions.
+  // "Winner SF1" → that game's pool (matched within the bracket, since codes repeat across pools).
   const ph = game.homePlaceholder || game.awayPlaceholder || '';
   const winnerCode = ph.match(/(?:Winner|Loser) ([\w-]+)/)?.[1];
   if (winnerCode) {
-    const source = allGames.find((g: any) =>
-      g.bracketCode === winnerCode &&
-      g.isPlayoff &&
-      g.id !== game.id &&
-      (game.bracketId ? g.bracketId === game.bracketId : true)
-    );
+    const source = allGames.find(g => g.bracketCode === winnerCode && g.isPlayoff && g.id !== game.id
+      && (game.bracketId ? g.bracketId === game.bracketId : true));
     if (source) return inferGamePool(source, allGames, pools);
   }
-  // BracketId sibling fallback: for manually-added rounds with no placeholder,
-  // find any sibling game in the same bracketId group that has a direct pool match.
+  // A hand-added round with no slot: any game of the same bracket that names a pool.
   if (game.bracketId) {
     for (const sibling of allGames) {
       if (sibling.id === game.id || sibling.bracketId !== game.bracketId || !sibling.isPlayoff) continue;
       for (const pool of pools) {
-        const bare = pool.name.replace(/^Pool\s+/i, '').trim();
-        const tag = `Pool ${bare}`;
-        if (sibling.homePlaceholder?.includes(tag) || sibling.awayPlaceholder?.includes(tag)) {
-          return pool.name;
-        }
+        const tag = `Pool ${pool.name.replace(/^Pool\s+/i, '').trim()}`;
+        if (sibling.homePlaceholder?.includes(tag) || sibling.awayPlaceholder?.includes(tag)) return pool.name;
       }
     }
   }
   return null;
 }
 
-// Detect split mode from game data: any playoff game whose placeholder names a pool
-function hasSplitPoolGames(games: any[], pools: any[]): boolean {
-  return pools.length >= 2 && games.some(g =>
-    pools.some((p: any) => {
-      const bare = p.name.replace(/^Pool\s+/i, '').trim();
-      const tag = `Pool ${bare}`;
-      return g.homePlaceholder?.includes(tag) || g.awayPlaceholder?.includes(tag);
-    })
+const hasSplitPoolGames = (games: Game[], pools: { name: string }[]) => pools.length >= 2 && games.some(g =>
+  pools.some(p => {
+    const tag = `Pool ${p.name.replace(/^Pool\s+/i, '').trim()}`;
+    return g.homePlaceholder?.includes(tag) || g.awayPlaceholder?.includes(tag);
+  }));
+
+/** One bracket inside the division: its name (split pools, tiers), its games, its champion card. */
+interface BracketGroup { key: string; title: string | null; games: Game[]; champion: BracketChampion | null }
+
+export default function PlayoffBracketView({
+  games, divisionGames, teams, divisions, division, venues, stateOf, fromRoundRobin, tosses, onRecordToss,
+  canEdit, editLabel, onEditBracket, onOpen, focus,
+}: {
+  /** The division's bracket games — every one, whatever the Filter. */
+  games: Game[];
+  /** Every game of the division (the champion rule reads the top tier's final among them). */
+  divisionGames: Game[];
+  teams: Team[];
+  divisions: Division[];
+  division: Division | undefined;
+  venues: Venue[];
+  stateOf: (g: Game) => ScheduleState;
+  /** The playoffs follow a round robin ("the top 4 of the round robin"); else a playoffs-only event ("4 teams"). */
+  fromRoundRobin: boolean;
+  /** This division's coin tosses still owed. */
+  tosses: PendingToss[];
+  onRecordToss: (toss: PendingToss) => void;
+  canEdit: boolean;
+  /** "Edit bracket", or "Build bracket" before there is one. */
+  editLabel: string;
+  onEditBracket: () => void;
+  onOpen: (g: Game) => void;
+  /** A Search or Filter is on: the ids it matches (listed in round bands). */
+  focus: ReadonlySet<string> | null;
+}) {
+  const isPhone = useIsPhone();
+  const [diagramOnPhone, setDiagramOnPhone] = useState(false);
+  const waiting = gamesWaitingOnToss(tosses);
+  const ctx = { teams, divisions, venues };
+  const cfg = division?.playoffConfig;
+  const caption = division ? B.caption(playoffFormatLabel(cfg), cfg?.teamsQualifying ?? 0, fromRoundRobin) : '';
+
+  // The division's brackets: per pool (split pools), per tier (each its own bracket id), or one.
+  const pools = division?.pools ?? [];
+  const groups: BracketGroup[] = [];
+  if (division && games.length > 0) {
+    const champion = (groupGames: Game[], top: boolean) => bracketChampion(division, divisionGames, groupGames, teams, top);
+    if (hasSplitPoolGames(games, pools)) {
+      pools.forEach((pool, i) => {
+        const poolGames = games.filter(g => inferGamePool(g, games, pools) === pool.name);
+        if (poolGames.length > 0) groups.push({ key: pool.id, title: `${formatPoolName(pool.name)} playoffs`, games: poolGames, champion: champion(poolGames, i === 0) });
+      });
+      const other = games.filter(g => inferGamePool(g, games, pools) === null);
+      if (other.length > 0) groups.push({ key: 'other', title: 'Other', games: other, champion: null });
+    } else {
+      const byBracket = groupGamesByBracketId(games);
+      if (byBracket.length > 1) {
+        byBracket.forEach((grp, i) => groups.push({ key: grp.key, title: grp.label || `Bracket ${i + 1}`, games: grp.games, champion: champion(grp.games, i === 0) }));
+      } else {
+        groups.push({ key: 'one', title: null, games, champion: champion(games, true) });
+      }
+    }
+  }
+
+  const listForm = focus !== null || (isPhone && !diagramOnPhone);
+  const editButton = canEdit ? (
+    <button type="button" className="btn btn-outline btn-data" onClick={onEditBracket}>
+      <Pencil size={14} aria-hidden /> {editLabel}
+    </button>
+  ) : null;
+
+  /** A bracket's rounds as bands; a division with more than one bracket names it in each band ("Pool A playoffs ·
+   *  Semifinals"), so the frame stays one list of bands. */
+  const rounds = (columns: BracketColumn[], champion: BracketChampion | null, prefix: string | null) => (
+    <>
+      {columns.map(col => {
+        const listed = (col.games as Game[]).filter(g => focus === null || focus.has(g.id));
+        if (listed.length === 0) return null;
+        const title = [prefix, displayRoundTitle(col.title)].filter(Boolean).join(' · ');
+        return (
+          <ClubRowList key={col.key} inset label={title}>
+            <ClubRowBand count={B.played(playedCount(col.games as Game[]), col.games.length)}>{title}</ClubRowBand>
+            {listed.map(g => (
+              <ScheduleGameRow
+                key={g.id}
+                ctx={ctx}
+                g={g}
+                state={stateOf(g)}
+                onOpen={onOpen}
+                lead={bracketWhen(g.date, g.time) || undefined}
+                sides={bracketSides(g, teams)}
+                tail={waiting.has(g.id) ? CT.waits : undefined}
+              />
+            ))}
+          </ClubRowList>
+        );
+      })}
+      {champion && focus === null && (
+        <ClubRowList inset label={B.champion}>
+          <ClubRowBand>{B.champion}</ClubRowBand>
+          <ClubRow
+            mark={<Trophy size={16} className={bv.championMark} aria-hidden />}
+            title={champion.kind === 'decided' ? champion.team : B.championWaiting}
+            caption={champion.kind === 'decided' ? champion.caption : champion.either ? B.championEither(champion.either[0], champion.either[1]) : undefined}
+          />
+        </ClubRowList>
+      )}
+    </>
   );
-}
 
-export default function PlayoffBracketView({ games, teams, division, venues, canBuildManualBracket, onBuildBracket, onStartFromStandings, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
-  const kx = useKitStyle();
-  // Row-invariant kit patches — the two "one diagram per group" layouts below (split pools,
-  // tiered brackets) share one section-title recipe: an eyebrow over each bracket diagram.
-  const sectionTitleIconStyle = kx({ color: 'var(--logic-lime)' }, KIT_INK.accent);
-  const sectionTitleStyle = kx(
-    { color: 'var(--logic-lime)', fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase' as const, letterSpacing: '0.1em', margin: 0 },
-    { ...KIT_INK.eyebrowAccent, fontSize: '0.85rem' },
-  );
-  const sectionTitleRuleStyle = kx({ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--blueprint-blue), transparent)' }, { background: 'linear-gradient(to right, var(--home-line), transparent)' });
-  const otherTitleStyle = kx({ color: 'var(--white-40)', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' as const, margin: 0 }, KIT_INK.tertiary);
-
-  if (games.length === 0) {
-    return (
-      <div className="empty-state" style={{ padding: '4rem' }}>
-        <Trophy size={48} />
-        <p>No playoff bracket yet</p>
-        <p className="text-sm text-muted" style={{ maxWidth: '34rem', margin: '0 auto' }}>
-          A bracket is rounds of games wired together — each game feeds its winner (or loser) into the next.
-          Build one here; the rounds and matchups link up automatically.
-        </p>
-        {canBuildManualBracket && onBuildBracket && (
-          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.25rem' }}>
-            <button type="button" className="btn btn-lime btn-data" onClick={onBuildBracket}>
-              <Trophy size={14} /> Build bracket
-            </button>
-            {onStartFromStandings && (
-              <button type="button" className="btn btn-outline btn-data" onClick={onStartFromStandings}>
-                Start from standings (1 v 8, 2 v 7…)
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const pools = division?.pools || [];
-  const isSplitMode = hasSplitPoolGames(games, pools);
-
-  if (isSplitMode) {
-    return (
-      <div style={{
-        display: 'flex', flexDirection: 'column', gap: '3rem',
-        padding: '2rem 0.75rem',
-      }}>
-        {pools.map((pool: any) => {
-          const poolGames = games.filter((g: any) => inferGamePool(g, games, pools) === pool.name);
-          if (poolGames.length === 0) return null;
-          const columns = buildBracketColumns(poolGames);
-          return (
-            <div key={pool.id}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                <Trophy size={16} style={sectionTitleIconStyle} />
-                <h3 style={sectionTitleStyle}>
-                  {formatPoolName(pool.name)} Playoffs
-                </h3>
-                <div style={sectionTitleRuleStyle} />
-              </div>
-              <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
-            </div>
-          );
-        })}
-        {(() => {
-          const unassigned = games.filter((g: any) => inferGamePool(g, games, pools) === null);
-          if (unassigned.length === 0) return null;
-          return (
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                <h3 style={otherTitleStyle}>Other</h3>
-              </div>
-              <BracketColumns columns={buildBracketColumns(unassigned)} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
-            </div>
-          );
-        })()}
-      </div>
-    );
-  }
-
-  // Tiered (or per-bracket) layout: when pools don't drive the split but the games
-  // span ≥2 independent brackets (each tier is its own bracket_id, reusing codes),
-  // render one diagram per bracket so tiers don't cross-wire into a single tree.
-  const bracketGroups = groupGamesByBracketId(games);
-  if (bracketGroups.length > 1) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem', padding: '2rem 0.75rem 0' }}>
-        {bracketGroups.map((grp, i) => (
-          <div key={grp.key}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-              <Trophy size={16} style={sectionTitleIconStyle} />
-              <h3 style={sectionTitleStyle}>
-                {grp.label || `Bracket ${i + 1}`}
-              </h3>
-              <div style={sectionTitleRuleStyle} />
-            </div>
-            <BracketColumns columns={buildBracketColumns(grp.games)} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // Standard flat layout
-  const columns = buildBracketColumns(games);
   return (
-    <div style={{ padding: '2rem 0.75rem 0' }}>
-      <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
+    <div className={sd.list}>
+      {division && (
+        <div className={bv.head}>
+          <div className={bv.headText}>
+            <span className={bv.title}>{W.bracketTitle(division.name)}</span>
+            {caption && <span className={bv.caption}>{caption}</span>}
+          </div>
+          {!isPhone && editButton && <div className={bv.headActions}>{editButton}</div>}
+        </div>
+      )}
+
+      {tosses.map(t => (
+        <div key={t.groupKey} className={bv.tossNote}>
+          <Callout tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />} flush>
+            <b>{CT.title(t.places, t.pool)}</b>
+            <span className={repKit.calloutSub}>{CT.body(t.teams.map(x => x.name), t.waits.map(w => bracketGameLabel(w.bracketCode)))}</span>
+            <div className={repKit.calloutActions}>
+              <button type="button" className="btn btn-outline" onClick={() => onRecordToss(t)}>{CT.record}</button>
+            </div>
+          </Callout>
+        </div>
+      ))}
+
+      {games.length === 0 ? (
+        <div className={bv.empty}>
+          <Trophy size={36} aria-hidden />
+          <b>{B.emptyTitle}</b>
+          <p>{B.emptyBody}</p>
+        </div>
+      ) : (
+        <>
+          {isPhone && focus === null && (
+            <div className={bv.switch}>
+              <button type="button" className="btn btn-outline btn-data" onClick={() => setDiagramOnPhone(d => !d)}>
+                {diagramOnPhone ? B.showList : B.showDiagram}
+              </button>
+            </div>
+          )}
+          {listForm ? (
+            <ClubRowFrame>
+              {groups.map(grp => (
+                <Fragment key={grp.key}>{rounds(buildBracketColumns(grp.games), grp.champion, groups.length > 1 ? grp.title : null)}</Fragment>
+              ))}
+            </ClubRowFrame>
+          ) : (
+            groups.map(grp => (
+              <div key={grp.key} className={bv.group}>
+                {grp.title && groups.length > 1 && <div className={bv.groupTitle}><Trophy size={15} aria-hidden />{grp.title}</div>}
+                <BracketColumns
+                  columns={buildBracketColumns(grp.games)}
+                  teams={teams}
+                  venues={venues}
+                  stateOf={stateOf}
+                  waiting={waiting}
+                  champion={grp.champion}
+                  onOpen={onOpen}
+                />
+              </div>
+            ))
+          )}
+        </>
+      )}
+
+      {isPhone && editButton && <div className={`${bv.headActions} ${bv.editUnder}`}>{editButton}</div>}
     </div>
   );
 }

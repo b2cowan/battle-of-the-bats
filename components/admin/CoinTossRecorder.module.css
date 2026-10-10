@@ -1,93 +1,46 @@
-.box {
-  margin-top: 0.6rem;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--warning);
-  border-radius: 4px;
-  background: rgba(var(--warning-rgb), 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+/*
+ * The coin-toss recorder's body (Tournament admin redesign Stage 3, S7) — the kit's form window holds the frame and
+ * the record head. On the kit's tokens: the old dark box inside the standings preview is gone.
+ */
+.lead { margin: 0 0 0.75rem; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
 
-.head {
+.teams { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.team {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: var(--warning);
-}
-
-.help {
-  margin: 0;
-  font-size: 0.72rem;
-  color: var(--white-45);
-  line-height: 1.4;
-}
-
-.order {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.order li {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.78rem;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
   font-weight: 600;
-  font-family: var(--font-data);
-  background: var(--white-5);
-  border: 1px solid var(--border-2);
-  border-radius: 3px;
-  padding: 0.2rem 0.5rem;
-}
-
-.rank {
-  font-weight: 900;
-  color: var(--logic-lime);
-}
-
-.picks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.pick {
-  font-size: 0.78rem;
-  font-weight: 600;
-  font-family: var(--font-data);
-  color: var(--white-90);
-  background: var(--white-5);
-  border: 1px solid var(--border-2);
-  border-radius: 3px;
-  padding: 0.3rem 0.6rem;
+  text-align: left;
   cursor: pointer;
 }
-
-.pick:hover {
-  border-color: var(--logic-lime);
-  color: var(--logic-lime);
+.team:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.team[data-on] { border-color: var(--home-olive); background: var(--home-olive-soft); cursor: default; }
+.team:disabled { cursor: default; }
+.rank {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--home-line-strong);
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--text-secondary);
 }
+.team[data-on] .rank { border-color: var(--home-olive); background: var(--home-olive); color: var(--card-bg); }
+.place { margin-left: auto; font-size: var(--type-support); font-weight: 500; color: var(--text-secondary); white-space: nowrap; }
 
-.pick:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.error {
-  margin: 0;
-  font-size: 0.72rem;
-  color: var(--danger-light);
-}
-
-.actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-}
+.again { margin-top: 0.75rem; }
+@media (max-width: 768px) { .again { min-height: var(--tap-min, 44px); } }
+.error { margin: 0.75rem 0 0; font-size: var(--type-body); color: var(--danger-light); }

@@ -10,10 +10,13 @@
  * and never while an editor, the view sheet or a confirm is open — a refresh never moves a game out
  * from under the organizer. A link with `?gameId=` (the board's rows, a notification) opens THAT game's
  * editor, once per id; `?view=all` opens on All games.
+ *
+ * A coin toss still owed (Stage 3, S7) opens Needs you as the bracket's note, and its division wears the amber count
+ * in the division list; Record the toss opens the same recorder as the schedule's Bracket view and the dashboard.
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ExternalLink, SlidersHorizontal, Trophy, RefreshCw, Search } from 'lucide-react';
+import { AlertCircle, ExternalLink, SlidersHorizontal, Trophy, RefreshCw, Search } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -36,6 +39,13 @@ import { useVisiblePoll } from '@/lib/hooks/useVisiblePoll';
 import s from '../../admin-common.module.css';
 import styles from './results-admin.module.css';
 import ResultsList, { ALL_BANDS, NEEDS_YOU_BANDS, bandFor, gameStateWord, type ResultsBand } from './ResultsList';
+import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
+import { COIN_TOSS_WORDS as CT } from '@/lib/schedule-words';
+import { bracketGameLabel } from '@/lib/playoff-bracket';
+import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
+import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
+import { Callout } from '@/components/admin/kit/club/RepKit';
+import repKit from '@/components/admin/kit/club/RepKit.module.css';
 
 /**
  * Signal that a game's score just became public (finalize / forfeit) so the mobile AdminContextStrip
@@ -111,6 +121,7 @@ export default function AdminResultsPage() {
   const [openGameId, setOpenGameId] = useState<string | null>(null);
   const [finalizingId, setFinalizingId] = useState<string | null>(null);
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
+  const [tossOpen, setTossOpen] = useState<PendingToss | null>(null);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
     title: string;
@@ -186,7 +197,7 @@ export default function AdminResultsPage() {
   // a confirm): a refresh would move that game between bands under their thumb.
   useVisiblePoll(refresh, {
     enabled: Boolean(tournamentId),
-    paused: openGameId !== null || finalizingId !== null || mobileSettingsOpen || feedback.isOpen,
+    paused: openGameId !== null || finalizingId !== null || mobileSettingsOpen || feedback.isOpen || tossOpen !== null,
   });
 
   useEffect(() => {
@@ -216,6 +227,11 @@ export default function AdminResultsPage() {
     return m;
   }, [games, divisions, currentTournament, nowMs, today]);
   const bandOf = useCallback((g: Game) => bandById.get(g.id) ?? null, [bandById]);
+  // A coin toss still owed: the standings engine's flags, the one reading the bracket and the dashboard use.
+  const tosses = useMemo(
+    () => pendingCoinTosses({ divisions, teams, games, settings: currentTournament?.settings }),
+    [divisions, teams, games, currentTournament?.settings],
+  );
 
   // G3 · a game opens that game: `?gameId=` (the board's rows, a notification) opens its score editor,
   // once per id (ref-guarded, so the refresh never fights the organizer's later choices). The filters
@@ -465,15 +481,34 @@ export default function AdminResultsPage() {
       ))}
     </div>
   );
+  // The division list is Teams' picker (a browser list can't carry the amber count): a division with a coin toss
+  // owed wears it, and the closed box its dot when the toss is in another division.
   const divisionSelect = (className: string) => (
-    <label className={className}>
-      <span className="sr-only">Division</span>
-      <select className={styles.select} value={filterGroup} onChange={e => setFilterGroup(e.target.value)}>
-        <option value="">All divisions</option>
-        {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-      </select>
-    </label>
+    <DivisionPicker
+      className={className}
+      divisions={[
+        { id: '', name: 'All divisions', waiting: 0 },
+        ...divisions.map(d => ({ id: d.id, name: d.name, waiting: tosses.filter(t => t.divisionId === d.id).length })),
+      ]}
+      value={filterGroup}
+      onChange={setFilterGroup}
+      words={{ waiting: CT.pending, waitingElsewhere: CT.pending(tosses.length) }}
+    />
   );
+  // The toss note opens Needs you — the bracket's note, named by its division when the screen shows more than one.
+  const tossNotes = lens === 'needs' && tosses.length > 0 ? (
+    <div className={styles.tossNotes}>
+      {tosses.filter(t => !filterGroup || t.divisionId === filterGroup).map(t => (
+        <Callout key={t.groupKey} tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />} flush>
+          <b>{divisions.length > 1 ? CT.inDivision(t.divisionName, CT.title(t.places, t.pool)) : CT.title(t.places, t.pool)}</b>
+          <span className={repKit.calloutSub}>{CT.body(t.teams.map(x => x.name), t.waits.map(w => bracketGameLabel(w.bracketCode)))}</span>
+          <div className={repKit.calloutActions}>
+            <button type="button" className="btn btn-outline" onClick={() => setTossOpen(t)}>{CT.record}</button>
+          </div>
+        </Callout>
+      ))}
+    </div>
+  ) : null;
   const searchField = (className: string) => (
     <label className={className}>
       <span className="sr-only">Search games</span>
@@ -612,6 +647,8 @@ export default function AdminResultsPage() {
           <p>No tournament selected.</p>
         </div>
       ) : games.length > 0 ? (
+        <>
+        {tossNotes}
         <ResultsList
           games={narrowed}
           bands={bands}
@@ -653,7 +690,18 @@ export default function AdminResultsPage() {
             </div>
           }
         />
+        </>
       ) : null}
+
+      {tossOpen && (
+        <CoinTossRecorder
+          orgSlug={orgSlug ?? ''}
+          toss={tossOpen}
+          onClose={() => setTossOpen(null)}
+          // Saved: the division's tie-breaker order and the bracket's seeds changed — read both again.
+          onRecorded={() => { setTossOpen(null); setupForRef.current = null; void load(true); }}
+        />
+      )}
 
       <FeedbackModal
         {...feedback}

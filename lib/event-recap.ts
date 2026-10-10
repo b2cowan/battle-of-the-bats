@@ -144,6 +144,36 @@ const byOrder = (a: Division, b: Division) => (a.order ?? 0) - (b.order ?? 0);
 /** Before any game counts, a division's table is every team at 0-0 in name order: that ranks nobody. */
 const hasRankedGame = (rows: DivisionStandingRow[]) => rows.some(row => row.gp > 0);
 
+/**
+ * A division's champion, when its top tier's final is decided (P1) — the finished board's row, and the schedule's
+ * Bracket view's champion card (Tournament admin redesign Stage 3, S6: "one sentence in two places"). Null while
+ * the final waits, or when the winner is not a named team.
+ */
+export function championFinish(
+  div: Pick<Division, 'id' | 'name'>,
+  games: readonly Game[],
+  teamName: (id?: string | null) => string | null,
+): Extract<DivisionFinish, { kind: 'champion' }> | null {
+  const final = decidedFinalFor([...games], div.id);
+  if (!final) return null;
+  const homeWon = (final.homeScore ?? 0) > (final.awayScore ?? 0);
+  const champion = teamName(homeWon ? final.homeTeamId : final.awayTeamId);
+  if (!champion) return null;
+  const groups = groupGamesByBracketId(games.filter(g => g.isPlayoff && g.divisionId === div.id));
+  return {
+    kind: 'champion',
+    divisionId: div.id,
+    divisionName: div.name,
+    teamName: champion,
+    tierLabel: groups.length > 1 ? (groups[0].label ?? 'Bracket 1') : null,
+    runnerUpName: teamName(homeWon ? final.awayTeamId : final.homeTeamId),
+    winnerScore: Math.max(final.homeScore ?? 0, final.awayScore ?? 0),
+    loserScore: Math.min(final.homeScore ?? 0, final.awayScore ?? 0),
+    byForfeit: final.status === 'forfeit',
+    finalDate: final.date || null,
+  };
+}
+
 function divisionFinish(
   div: Division,
   input: RecapInput,
@@ -153,26 +183,8 @@ function divisionFinish(
   teamName: (id?: string | null) => string | null,
 ): DivisionFinish | null {
   const playoffGames = input.games.filter(g => g.isPlayoff && g.divisionId === div.id);
-  const final = decidedFinalFor(input.games, div.id);
-  if (final) {
-    const homeWon = (final.homeScore ?? 0) > (final.awayScore ?? 0);
-    const champion = teamName(homeWon ? final.homeTeamId : final.awayTeamId);
-    if (champion) {
-      const groups = groupGamesByBracketId(playoffGames);
-      return {
-        kind: 'champion',
-        divisionId: div.id,
-        divisionName: div.name,
-        teamName: champion,
-        tierLabel: groups.length > 1 ? (groups[0].label ?? 'Bracket 1') : null,
-        runnerUpName: teamName(homeWon ? final.awayTeamId : final.homeTeamId),
-        winnerScore: Math.max(final.homeScore ?? 0, final.awayScore ?? 0),
-        loserScore: Math.min(final.homeScore ?? 0, final.awayScore ?? 0),
-        byForfeit: final.status === 'forfeit',
-        finalDate: final.date || null,
-      };
-    }
-  }
+  const champion = championFinish(div, input.games, teamName);
+  if (champion) return champion;
   // The published standings' first team — the same engine and reads as the public Standings page.
   const top = ranked ? standings[0] : null;
   if (!top) return null; // nothing to rank: no final result, or a bracket-only division with no decided final

@@ -1,6 +1,7 @@
 'use client';
 /**
- * THE DIVISION PICKER on Teams (owner, 2026-10-01). Our own list rather than the browser's, because a
+ * THE DIVISION PICKER — Teams' (owner, 2026-10-01), and Results' since the coin toss gave Results a count (Tournament
+ * admin redesign Stage 3, S7). Our own list rather than the browser's, because a
  * built-in list holds plain text only and the owner asked for a division's waiting teams as a MARK, not
  * words: "· 1 to review" read as part of the name and was cut off on a phone.
  *
@@ -11,8 +12,9 @@
  *     opening. Opening it is the explanation: the division with the pill.
  *   · The open list is this page's filter-menu look (Status, Payment), so the toolbar has one menu.
  *
- * ⚠ Schedule and Results still use the browser's list for their divisions: they show no per-division
- * count. If one gains a count, it takes this control rather than growing a second shape.
+ * ⚠ The schedule still uses the browser's list for its divisions: it shows no per-division count. If it gains one,
+ * it takes this control rather than growing a second shape. A screen whose count is another thing passes its own
+ * `words` (Results: a coin toss to record); "All divisions" is a choice like any other (id '').
  */
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
@@ -23,16 +25,25 @@ import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 
 export type DivisionChoice = { id: string; name: string; waiting: number };
 
+/** What a division's count is, in words for assistive tech (Teams' default: teams to review). */
+export type DivisionPickerWords = { waiting: (n: number) => string; waitingElsewhere: string };
+const TEAMS_PICKER_WORDS: DivisionPickerWords = { waiting: TEAMS_WORDS.toReviewCount, waitingElsewhere: TEAMS_WORDS.waitingElsewhere };
+
 const ITEM = '[role="menuitemradio"]';
 
 export default function DivisionPicker({
   divisions,
   value,
   onChange,
+  words = TEAMS_PICKER_WORDS,
+  className,
 }: {
   divisions: readonly DivisionChoice[];
   value: string;
   onChange: (id: string) => void;
+  words?: DivisionPickerWords;
+  /** The field's own width class where the host's toolbar sizes it (Results' view sheet fills its row). */
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -71,7 +82,7 @@ export default function DivisionPicker({
   }
 
   return (
-    <div className={tb.divisionField} ref={rootRef}>
+    <div className={className ? `${tb.divisionField} ${className}` : tb.divisionField} ref={rootRef}>
       <button
         ref={triggerRef}
         type="button"
@@ -80,7 +91,7 @@ export default function DivisionPicker({
         disabled={divisions.length === 0}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`${TEAMS_WORDS.division}: ${shownName}${waitingElsewhere ? `. ${TEAMS_WORDS.waitingElsewhere}` : ''}`}
+        aria-label={`${TEAMS_WORDS.division}: ${shownName}${waitingElsewhere ? `. ${words.waitingElsewhere}` : ''}`}
       >
         <span className={tb.divisionTriggerName}>{shownName}</span>
         {waitingElsewhere && <span className={tb.divisionWaitingDot} aria-hidden />}
@@ -102,7 +113,7 @@ export default function DivisionPicker({
                 type="button"
                 role="menuitemradio"
                 aria-checked={on}
-                aria-label={d.waiting > 0 ? `${d.name}, ${TEAMS_WORDS.toReviewCount(d.waiting)}` : d.name}
+                aria-label={d.waiting > 0 ? `${d.name}, ${words.waiting(d.waiting)}` : d.name}
                 className={tb.regFilterOption}
                 data-on={on || undefined}
                 onClick={() => pick(d.id)}

@@ -23,6 +23,7 @@ import { gameWindowState } from '@/lib/game-live-state';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
+import type { BracketSide } from '@/lib/bracket-reading';
 import styles from './results-admin.module.css';
 
 export type ResultsBand = 'toFinalize' | 'needsScore' | 'playingNow' | 'scheduled' | 'final';
@@ -102,8 +103,25 @@ function TeamName({ ctx, id, placeholder }: { ctx: Pick<Ctx, 'teams'>; id?: stri
  * schedule's day's (Tournament admin redesign Stage 3, S1: "The row is Results' row"). One recipe, owned here.
  * `scored`: the caller's word that the numbers are a result (played, waiting or forfeited) — a scheduled game's
  * stored zeros are not a score.
+ *
+ * `sides`: a bracket game read the bracket's way (lib/bracket-reading.ts, S6) — the home side (the higher seed) on top as
+ * the public bracket draws it, each team with the slot it came from after its name, the winner in plain ink, bold, with
+ * a check. Results' own rows keep the winner's green score (the
+ * exception register's question, A38), so the two marks are never mixed on one row.
  */
-export function GameTeams({ teams, g, scored }: { teams: Team[]; g: Game; scored: boolean }) {
+export function GameTeams({ teams, g, scored, sides }: {
+  teams: Team[]; g: Game; scored: boolean; sides?: { away: BracketSide; home: BracketSide };
+}) {
+  if (sides) {
+    return (
+      <span className={styles.teams}>
+        <BracketTeam side={sides.home} />
+        <span className={styles.teamScore}>{sides.home.score ?? ''}</span>
+        <BracketTeam side={sides.away} />
+        <span className={styles.teamScore}>{sides.away.score ?? ''}</span>
+      </span>
+    );
+  }
   const has = scored && g.homeScore != null && g.awayScore != null;
   const tie = has && g.status !== 'forfeit' && g.homeScore === g.awayScore;
   const awayWon = has && !tie && (g.awayScore ?? 0) > (g.homeScore ?? 0);
@@ -115,6 +133,17 @@ export function GameTeams({ teams, g, scored }: { teams: Team[]; g: Game; scored
       <span className={styles.teamScore} data-won={awayWon || undefined}>{has ? g.awayScore : ''}</span>
       <TeamName ctx={ctx} id={g.homeTeamId} placeholder={g.homePlaceholder} />
       <span className={styles.teamScore} data-won={homeWon || undefined}>{has ? g.homeScore : ''}</span>
+    </span>
+  );
+}
+
+/** A bracket side: the team (or its slot while it is one), bold with a check once it has won, its slot after it. */
+function BracketTeam({ side }: { side: BracketSide }) {
+  return (
+    <span className={`${styles.teamName} ${styles.bracketTeam}`} data-won={side.won || undefined}>
+      <span>{side.name}</span>
+      {side.won && <Check size={14} className={styles.wonCheck} aria-label="won" />}
+      {side.slot && <span className={styles.teamSlot}>{side.slot}</span>}
     </span>
   );
 }

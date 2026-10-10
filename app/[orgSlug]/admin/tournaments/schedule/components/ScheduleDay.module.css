@@ -83,13 +83,6 @@
 .chipDesk { display: inline-flex; }
 .health { margin: 0.9rem 0 0; }
 
-/* A note on the day (publishing, Part 7; the coin toss, Part 7) and the bracket's heading with its white button. */
-.bracketHead { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.75rem; }
-.bracketTitle { display: flex; flex-direction: column; min-width: 0; }
-.bracketTitle b { font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
-.bracketEdit { flex: none; }
-.bracketTitle span { font-size: var(--type-support); color: var(--text-tertiary); }
-
 /* A Tools row the plan doesn't include: the tool's name, then the plan's (A44 — never a bare padlock). */
 .lockedTool { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 
@@ -98,7 +91,6 @@
   .viewPill { min-height: var(--tap-min, 44px); padding: 0 0.85rem; font-size: var(--type-body); }
   .arrow { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
   .scopeLabel { min-height: var(--tap-min, 44px); }
-  .bracketEdit { min-height: var(--tap-min, 44px); }
 }
 @media (max-width: 900px) {
   .scopeInline { display: none; }
@@ -108,7 +100,6 @@
   .scopeRow .scopeLabel { width: 100%; min-width: 0; }
 }
 @media (max-width: 640px) {
-  .bracketHead { flex-wrap: wrap; }
   .chipPhone { display: inline-flex; }
   .chipDesk { display: none; }
 }

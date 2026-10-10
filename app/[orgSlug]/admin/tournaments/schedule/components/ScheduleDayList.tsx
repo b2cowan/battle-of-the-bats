@@ -8,10 +8,12 @@
  * say, as a chip (Playing now, Pending Review, Needs a score, Forfeit, Cancelled; a level final says Tie, as Results
  * does). No coloured rail (a list draws none, §3.10.7). The whole row opens the game.
  *
- * All games is the same rows in day bands ("Fri, Oct 9 · 4 games"), then the games with no day yet.
+ * All games is the same rows in day bands ("Fri, Oct 9 · 4 games"), then the games with no day yet. The Bracket view's
+ * phone bands are this row too (S6), reading each side the bracket's way (`sides`).
  */
 import type { ReactNode } from 'react';
 import type { Division, Game, Team, Venue } from '@/lib/types';
+import type { BracketSide } from '@/lib/bracket-reading';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, RepChip, type ChipTone } from '@/components/admin/kit/club/RepKit';
 import { GameTeams, gameWhereLine } from '../../results/ResultsList';
 import { GAME_STATE_WORD } from '@/lib/game-day-words';
@@ -33,22 +35,35 @@ const CHIP_TONE: Partial<Record<ScheduleState, ChipTone>> = {
 /** The numbers are a result: played, waiting for the organizer, or forfeited (a scheduled game's zeros are not). */
 const isScored = (state: ScheduleState) => state === 'final' || state === 'forfeit' || state === 'pendingReview';
 
-type Ctx = { teams: Team[]; divisions: Division[]; venues: Venue[] };
+export type ScheduleRowCtx = { teams: Team[]; divisions: Division[]; venues: Venue[] };
+type Ctx = ScheduleRowCtx;
 
-function DayRow({ ctx, g, state, onOpen }: { ctx: Ctx; g: Game; state: ScheduleState; onOpen: (g: Game) => void }) {
-  const scored = isScored(state);
+/** The state the score can't say, as its chip — the day's rows and the bracket's cards wear the same one. */
+export function stateChip(g: Game, state: ScheduleState): ReactNode {
   const tie = state === 'final' && g.homeScore != null && g.homeScore === g.awayScore;
   const chip = tie ? GAME_STATE_WORD.tie : CHIP_TONE[state] !== undefined ? W.states[state] : null;
-  const chipEl = chip ? <RepChip tone={tie ? 'neutral' : CHIP_TONE[state]}>{chip}</RepChip> : null;
-  const where = gameWhereLine(ctx, g);
+  return chip ? <RepChip tone={tie ? 'neutral' : CHIP_TONE[state]}>{chip}</RepChip> : null;
+}
+
+/**
+ * One game's row. The Bracket view's bands pass `lead` (the day with the time: "Fri 2:00 p.m."), `sides` (the
+ * bracket's reading of the two teams) and `tail` (a waiting game's "waits for the toss").
+ */
+export function ScheduleGameRow({ ctx, g, state, onOpen, lead, sides, tail }: {
+  ctx: Ctx; g: Game; state: ScheduleState; onOpen: (g: Game) => void;
+  lead?: string; sides?: { away: BracketSide; home: BracketSide }; tail?: string;
+}) {
+  const scored = isScored(state);
+  const chipEl = stateChip(g, state);
+  const where = [gameWhereLine(ctx, g), tail].filter(Boolean).join(' · ');
   return (
     <ClubRow
       as="button"
       onClick={() => onOpen(g)}
       aria-haspopup="dialog"
-      lead={g.time ? formatTime(g.time) : undefined}
+      lead={lead ?? (g.time ? formatTime(g.time) : undefined)}
       captionFirst
-      title={<GameTeams teams={ctx.teams} g={g} scored={scored} />}
+      title={<GameTeams teams={ctx.teams} g={g} scored={scored} sides={sides} />}
       // The chip rides the when line on a phone (as drawn: "4:00 p.m. · Diamond 2 · U11 · Final  PLAYING NOW"), so a
       // state never costs a row a line of its own; at a desk it keeps its column before the chevron.
       caption={where || chipEl ? <>{where}{chipEl && <span className={sd.chipPhone}>{chipEl}</span>}</> : undefined}
@@ -82,7 +97,7 @@ export default function ScheduleDayList({
     return (
       <div className={sd.list}>
         <ClubRowList label={label}>
-          {groups.flatMap(g => g.games).map(g => <DayRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} onOpen={onOpen} />)}
+          {groups.flatMap(g => g.games).map(g => <ScheduleGameRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} onOpen={onOpen} />)}
         </ClubRowList>
       </div>
     );
@@ -95,7 +110,7 @@ export default function ScheduleDayList({
           return (
             <ClubRowList key={day ?? 'none'} inset label={name}>
               <ClubRowBand count={W.bandCount(list.length)}>{name}</ClubRowBand>
-              {list.map(g => <DayRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} onOpen={onOpen} />)}
+              {list.map(g => <ScheduleGameRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} onOpen={onOpen} />)}
             </ClubRowList>
           );
         })}

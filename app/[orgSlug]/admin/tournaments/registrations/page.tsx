@@ -57,7 +57,7 @@ import { TournamentAdminHeader } from '@/components/admin/tournament';
 import { joinDots, screenParts } from '@/components/admin/tournament/ScreenParts';
 import BottomSheet from '@/components/admin/BottomSheet';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import DivisionPicker from './components/DivisionPicker';
+import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
 import RegistrationHealthPanel from './components/RegistrationHealthPanel';
 import TeamsGlance, { type PaymentSummary } from './components/TeamsGlance';
 import TeamList, { type ListMode, type RowFacts } from './components/TeamList';

@@ -113,7 +113,6 @@ export default async function TournamentPreviewSectionPage({
         tournamentSlug={tournamentSlug}
         isPreview
         initialData={initialData}
-        enableCoinTossAdmin
       />
     );
   }

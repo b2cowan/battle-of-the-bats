@@ -48,14 +48,17 @@ import {
   eventDays, fieldKeyOf, filtersOn, gamesByDay, matchesScheduleFilter, matchesScheduleSearch, NO_SCHEDULE_FILTER, openingDay,
   scheduleStateOf, SCHEDULE_STATES, stepDay, type ScheduleFilter, type ScheduleState, type ScheduleView,
 } from '@/lib/schedule-day';
-import { GAME_WINDOW_WORDS as GW, MOVE_WORDS as MW, RAIN_DELAY_WORDS as RW, SCHEDULE_DAY_WORDS as W, SCHEDULE_TOOL_NAMES as T, slotWords } from '@/lib/schedule-words';
+import { COIN_TOSS_WORDS as CT, GAME_WINDOW_WORDS as GW, MOVE_WORDS as MW, PUBLISH_WORDS as PW, RAIN_DELAY_WORDS as RW, SCHEDULE_DAY_WORDS as W, SCHEDULE_TOOL_NAMES as T, slotWords } from '@/lib/schedule-words';
+import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
+import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
 import { placeOfWhere } from '@/lib/tournament-where';
 import { clashLine } from '@/lib/venue-clash-words';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
-import { ClubRow, ClubRowList, NoticePill, RepChip } from '@/components/admin/kit/club/RepKit';
+import { Callout, ClubRow, ClubRowList, NoticePill, RepChip } from '@/components/admin/kit/club/RepKit';
+import repKit from '@/components/admin/kit/club/RepKit.module.css';
 import { WhereLine } from '@/components/venue/WhereField';
 import type { ClashLine } from '@/lib/venue-clash-words';
 import type { MoveTarget } from './components/MoveSheet';
@@ -142,7 +145,9 @@ export default function AdminSchedulePage() {
     onConfirm?: () => void;
   }>({ isOpen: false, title: '', message: '', type: 'primary' });
 
-  const [publishModal, setPublishModal] = useState<{ divisionId: string } | null>(null);
+  const [publishOpen, setPublishOpen] = useState(false);
+  // The coin toss being recorded (S7) — opened from the bracket's note.
+  const [tossOpen, setTossOpen] = useState<PendingToss | null>(null);
 
   // ── Schedule Health rules (organizer-defined thresholds) ──────────────────
   // `healthRules` is the live/draft value driving the panel preview; `savedHealthRules`
@@ -302,18 +307,12 @@ export default function AdminSchedulePage() {
     } catch { return []; }
   }, [tournamentId, orgSlug]);
 
-  function handlePublishDone(updates: { id: string; scheduleVisibility: 'published' }[]) {
-    // Publishing closes registration server-side too (atomic) — reflect both so the UI
-    // matches even if the optimistic pre-close was skipped or failed.
-    setDivisions(prev => prev.map(g => {
-      const u = updates.find(u => u.id === g.id);
-      return u ? { ...g, scheduleVisibility: u.scheduleVisibility, isClosed: true } : g;
-    }));
-    // Modal stays open to show success state; user closes it with "Done"
-  }
-
-  function handleDivisionClosed(id: string) {
-    setDivisions(prev => prev.map(g => g.id === id ? { ...g, isClosed: true } : g));
+  /** Published (S8): the divisions read published and closed (the route writes both at once), the window closes, and
+   *  the notice says what happened ("Published U11 and U13 · emailed 8 teams"). */
+  function handlePublishDone(ids: string[], emailed: number) {
+    setDivisions(prev => prev.map(g => (ids.includes(g.id) ? { ...g, scheduleVisibility: 'published', isClosed: true } : g)));
+    setPublishOpen(false);
+    say(PW.done(divisions.filter(d => ids.includes(d.id)).map(d => d.name), emailed));
   }
 
   function handleUnpublish(divisionId: string) {
@@ -824,6 +823,11 @@ export default function AdminSchedulePage() {
   const divisionGames = scheduled.filter(g => selectedDivisionIds.has(g.divisionId));
   // A bracket reads every one of its games, whatever the Filter (S6: a played semifinal no longer reads "No bracket").
   const bracketGames = bracketDivision ? scheduled.filter(g => g.isPlayoff && g.divisionId === bracketDivision.id) : [];
+  // A coin toss still owed (S7): the standings engine's own flags, read by the one reading Results and the dashboard use.
+  const tosses = useMemo(
+    () => pendingCoinTosses({ divisions, teams, games: scheduled, settings: currentTournament?.settings }),
+    [divisions, teams, scheduled, currentTournament?.settings],
+  );
   const unresolvedLaneGameCounts = divisionGames.reduce((map, game) => {
     if (game.scheduleFacilityLaneId && !game.venueId && !game.venueFacilityId) {
       map.set(game.scheduleFacilityLaneId, (map.get(game.scheduleFacilityLaneId) ?? 0) + 1);
@@ -944,10 +948,6 @@ export default function AdminSchedulePage() {
     setFilter(NO_SCHEDULE_FILTER);
   }
 
-  function formatDate(d: string) {
-    return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-
   function openResolveFacilities() {
     setResolveFacilitiesError(null);
     setFacilityLaneSelections(Object.fromEntries(unresolvedFacilityLanes.map(lane => [
@@ -1035,7 +1035,10 @@ export default function AdminSchedulePage() {
     { key: 'all', label: W.views.all.label, hint: W.views.all.hint, icon: <List size={15} aria-hidden /> },
     { key: 'timeline', label: W.views.timeline.label, hint: W.views.timeline.hint(fieldPlural), icon: <Clock size={15} aria-hidden /> },
     // Bracket only where the event has playoffs (an Exhibition has none — absent, never locked).
-    ...(hasPlayoffStage ? [{ key: 'bracket' as const, label: W.views.bracket.label, hint: W.views.bracket.hint, icon: <Network size={15} aria-hidden /> }] : []),
+    ...(hasPlayoffStage ? [{
+      key: 'bracket' as const, label: W.views.bracket.label, hint: W.views.bracket.hint, icon: <Network size={15} aria-hidden />,
+      waiting: { count: tosses.length, words: CT.pending(tosses.length) },
+    }] : []),
   ];
   function chooseView(next: ScheduleView) {
     setView(next);
@@ -1169,6 +1172,7 @@ export default function AdminSchedulePage() {
   const showGenerators = !isLocked;
   const showRainDelay = hasUpcomingGames && !isLocked;
   const showPublish = !isLocked && unpublishedDivisions.length > 0;
+  const unpublishedWithGames = unpublishedDivisions.filter(d => scheduled.some(g => g.divisionId === d.id));
   const showUnpublish = !isLocked && publishedDivisions.length > 0;
   const showClearBracket = shownView === 'bracket' && !isLocked && canBuildPlayoffsManually && bracketGames.length > 0;
   const hasTools = (showGenerators && (hasRoundRobinStage || hasPlayoffStage)) || showRainDelay || showPublish || showUnpublish || showClearBracket;
@@ -1197,7 +1201,7 @@ export default function AdminSchedulePage() {
         : lockedTool(T.rainDelay, null))}
       {showPublish && (
         <CoachToolbarMenuItem icon={<Globe size={16} aria-hidden />} label={T.publish} hint={W.toolHints.publish}
-          onSelect={() => setPublishModal({ divisionId: unpublishedDivisions[0].id })} />
+          onSelect={() => setPublishOpen(true)} />
       )}
       {showUnpublish && (
         <CoachToolbarMenuItem icon={<EyeOff size={16} aria-hidden />} label={T.unpublish} hint={W.toolHints.unpublish}
@@ -1290,6 +1294,18 @@ export default function AdminSchedulePage() {
 
       {currentTournament && !gamesLoading && games.length === 0 && !editingBracket && (
         <HelpCallout variant="info" title="No games scheduled yet" body={noGamesYet} />
+      )}
+
+      {/* Before publishing: the note at the top of the day (and All games, the Timeline) says who can't see the games
+          yet, with the one action (S8). Gone once every division is published; the Bracket view keeps its own notes. */}
+      {showPublish && !gamesLoading && !editingBracket && shownView !== 'bracket' && unpublishedWithGames.length > 0 && (
+        <Callout role="note" icon={<Globe size={16} aria-hidden />}>
+          <b>{PW.noteTitle}</b>
+          <span className={repKit.calloutSub}>{PW.noteBody(unpublishedWithGames.map(d => d.name))}</span>
+          <div className={repKit.calloutActions}>
+            <button type="button" className="btn btn-outline" onClick={() => setPublishOpen(true)}>{PW.noteAction}</button>
+          </div>
+        </Callout>
       )}
 
       {unresolvedFacilityLanes.length > 0 && (
@@ -1403,32 +1419,23 @@ export default function AdminSchedulePage() {
         />
         </>
       ) : shownView === 'bracket' ? (
-        <>
-          {/* The bracket's heading, with Edit bracket the white button above what it acts on (S6). Part 7 rebuilds the cards. */}
-          {bracketDivision && (
-            <div className={sd.bracketHead}>
-              <span className={sd.bracketTitle}><b>{W.bracketTitle(bracketDivision.name)}</b></span>
-              {canBuildPlayoffsManually && !isLocked && (
-                <button type="button" className={`btn btn-outline btn-data ${sd.bracketEdit}`} onClick={() => enterBracketEditor()}>
-                  <Pencil size={14} aria-hidden /> {bracketGames.length > 0 ? T.editBracket : T.buildBracket}
-                </button>
-              )}
-            </div>
-          )}
-          <PlayoffBracketView
-            games={bracketGames}
-            teams={teams}
-            division={bracketDivision}
-            canBuildManualBracket={canBuildPlayoffsManually && !isLocked}
-            onBuildBracket={() => enterBracketEditor()}
-            onStartFromStandings={undefined}
-            onEdit={(isLocked || !canBuildPlayoffsManually) ? undefined : () => enterBracketEditor()}
-            onDelete={isLocked ? undefined : handleDeleteRequest}
-            getGroupName={getGroupName}
-            formatDate={formatDate}
-            venues={venues}
-          />
-        </>
+        <PlayoffBracketView
+          games={bracketGames}
+          divisionGames={bracketDivision ? scheduled.filter(g => g.divisionId === bracketDivision.id) : []}
+          teams={teams}
+          divisions={divisions}
+          division={bracketDivision}
+          venues={venues}
+          stateOf={stateOf}
+          fromRoundRobin={hasRoundRobinStage}
+          tosses={tosses.filter(t => t.divisionId === bracketDivision?.id)}
+          onRecordToss={setTossOpen}
+          canEdit={canBuildPlayoffsManually && !isLocked}
+          editLabel={bracketGames.length > 0 ? T.editBracket : T.buildBracket}
+          onEditBracket={() => enterBracketEditor()}
+          onOpen={openGame}
+          focus={filtersOn(filter) > 0 || search.trim() !== '' ? filteredIds : null}
+        />
       ) : (
         <ScheduleDayList
           mode={shownView === 'all' ? 'all' : 'day'}
@@ -1618,17 +1625,27 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      {publishModal && currentTournament && (
+      {publishOpen && currentTournament && (
         <PublishScheduleModal
-          defaultDivisionId={publishModal.divisionId}
           divisions={divisions}
+          games={scheduled}
+          teams={teams}
           tournament={currentTournament}
           canNotify={canNotify}
+          canAlertFollowers={canAlertFollowers}
           planId={currentOrg?.planId ?? null}
           orgSlug={currentOrg?.slug ?? ''}
-          onClose={() => setPublishModal(null)}
+          onClose={() => setPublishOpen(false)}
           onPublished={handlePublishDone}
-          onDivisionClosed={handleDivisionClosed}
+        />
+      )}
+
+      {tossOpen && (
+        <CoinTossRecorder
+          orgSlug={currentOrg?.slug ?? ''}
+          toss={tossOpen}
+          onClose={() => setTossOpen(null)}
+          onRecorded={() => { setTossOpen(null); say(CT.saved(tossOpen.divisionName)); void refresh(); }}
         />
       )}
 

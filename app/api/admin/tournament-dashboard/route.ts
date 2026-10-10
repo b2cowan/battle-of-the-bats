@@ -5,10 +5,9 @@ import {
   getTeams,
   getGames,
   getDivisions,
-  computeTournamentStandings,
 } from '@/lib/db';
 import type { TournamentSettings } from '@/lib/types';
-import { resolveTieBreakers } from '@/lib/tie-breakers';
+import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { buildRegistrationAttentionSummary } from '@/lib/registration-attention';
 import { hasCapability } from '@/lib/roles';
@@ -685,10 +684,10 @@ export const GET = withObservability(async (req: Request) => {
   );
 
   // ── Coin-toss nudge ───────────────────────────────────────────────
-  // Surface divisions where a tied group is still awaiting an admin coin toss.
-  // Only runs when 'coin' is actually configured somewhere (cheap guard), then
-  // ranks each such division in-memory via the pure standings engine.
-  const coinTossNeeded: { divisionId: string; divisionName: string; teamNames: string[] }[] = [];
+  // Surface the tied groups still awaiting an admin coin toss — the one reading the schedule's Bracket view and
+  // Results use (lib/coin-toss.ts, Stage 3 S7), so the three never name a different tie. Only runs when 'coin' is
+  // actually configured somewhere (cheap guard).
+  const coinTossNeeded: PendingToss[] = [];
   const tournamentUsesCoin = Array.isArray(tSettings.tie_breakers) && tSettings.tie_breakers.includes('coin');
   const anyDivisionUsesCoin = divisions.some(d => Array.isArray(d.playoff_config?.tieBreakers) && d.playoff_config!.tieBreakers!.includes('coin'));
   if (tournamentUsesCoin || anyDivisionUsesCoin) {
@@ -698,15 +697,9 @@ export const GET = withObservability(async (req: Request) => {
         getGames(tournamentId, { admin: true }),
         getDivisions(tournamentId, { admin: true }),
       ]);
-      for (const d of domainDivisions) {
-        const effectiveBreakers = resolveTieBreakers(d.playoffConfig, tSettings as TournamentSettings);
-        if (!Array.isArray(effectiveBreakers) || !effectiveBreakers.includes('coin')) continue;
-        const rows = computeTournamentStandings(d.id, domainTeams, domainGames, d.playoffConfig, tSettings as TournamentSettings);
-        const flagged = rows.filter(r => r.needsCoinToss).map(r => r.teamName);
-        if (flagged.length > 0) {
-          coinTossNeeded.push({ divisionId: d.id, divisionName: d.name, teamNames: flagged });
-        }
-      }
+      coinTossNeeded.push(...pendingCoinTosses({
+        divisions: domainDivisions, teams: domainTeams, games: domainGames, settings: tSettings as TournamentSettings,
+      }));
     } catch (e) {
       console.error('[tournament-dashboard] coin-toss check failed', e);
     }

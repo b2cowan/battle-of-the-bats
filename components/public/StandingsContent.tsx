@@ -1,8 +1,7 @@
 'use client';
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Calendar, CheckCircle, ChevronDown, Clock, Star, Trophy } from 'lucide-react';
-import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
 import { resolveTieBreakers, BREAKER_LABELS } from '@/lib/tie-breakers';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -50,8 +49,6 @@ interface Props {
   tournamentSlug: string;
   isPreview?: boolean;
   initialData?: PublicTournamentPageData;
-  /** Admin-only: render the inline coin-toss recorder when a tied group needs one. */
-  enableCoinTossAdmin?: boolean;
 }
 
 function formatShortDate(date: string) {
@@ -76,7 +73,7 @@ const STAT_LEGEND: { abbr: string; label: string; vis?: 'mobile' | 'desktop' }[]
   { abbr: 'PTS', label: 'Points' },
 ];
 
-export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = false, initialData, enableCoinTossAdmin = false }: Props) {
+export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
   const [divisions, setDivisions]           = useState<Division[]>(() => initialData?.divisions ?? []);
   const [games, setGames]                   = useState<Game[]>(() => initialData?.games ?? []);
   const [teams, setTeams]                   = useState<PublicTeam[]>(() => initialData?.teams ?? []);
@@ -111,27 +108,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   // the bracket mounts on first reveal (see bracketDisclosure) and then stays.
   const [revealedBrackets, setRevealedBrackets] = useState<Set<string>>(() => new Set());
   const prevRanksRef = useRef<Map<string, number>>(new Map());
-
-  // Admin coin-toss: optimistically reorder the (contiguous) tied block by the
-  // recorded order and clear the needs-coin-toss flag, so the table updates
-  // immediately. The result is also persisted server-side, so future loads agree.
-  const applyCoinToss = useCallback((divisionId: string, groupKey: string, orderedTeamIds: string[]) => {
-    setStandingsByDivision(prev => {
-      const rows = prev[divisionId];
-      if (!rows) return prev;
-      const rank = new Map(orderedTeamIds.map((id, i) => [id, i] as const));
-      const inGroup = (r: StandingResult) => r.coinTossGroupKey === groupKey && rank.has(r.teamId);
-      const reordered = rows
-        .filter(inGroup)
-        .slice()
-        .sort((a, b) => rank.get(a.teamId)! - rank.get(b.teamId)!)
-        .map(r => ({ ...r, needsCoinToss: false, coinTossGroupKey: null }));
-      if (reordered.length === 0) return prev;
-      let gi = 0;
-      const next = rows.map(r => (inGroup(r) ? reordered[gi++] : r));
-      return { ...prev, [divisionId]: next };
-    });
-  }, []);
 
   useEffect(() => {
     if (!activeGroup) return;
@@ -643,15 +619,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                     const tieBreakerOrder = resolveTieBreakers(currentGroup?.playoffConfig, selectedTournament?.settings)
                       .map(b => BREAKER_LABELS[b]);
                     const activeRunDiffCap = poolStandings.find(s => s.runDiffCap)?.runDiffCap ?? null;
-                    // Tied groups awaiting a coin toss (admin only), keyed by coinTossGroupKey.
-                    const coinTossGroups: Record<string, StandingRow[]> = {};
-                    if (enableCoinTossAdmin) {
-                      for (const s of poolStandings) {
-                        if (s.needsCoinToss && s.coinTossGroupKey) {
-                          (coinTossGroups[s.coinTossGroupKey] ??= []).push(s);
-                        }
-                      }
-                    }
 
                     return (
                       <div key={pool.id} className={styles.summarySection}>
@@ -815,16 +782,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                           )}
                         </div>
 
-                        {enableCoinTossAdmin && currentGroup && Object.entries(coinTossGroups).map(([groupKey, rows]) => (
-                          <CoinTossRecorder
-                            key={groupKey}
-                            orgSlug={orgSlug}
-                            divisionId={currentGroup.id}
-                            groupKey={groupKey}
-                            teams={rows.map(r => ({ id: r.teamId, name: r.teamName }))}
-                            onRecorded={ordered => applyCoinToss(currentGroup.id, groupKey, ordered)}
-                          />
-                        ))}
                       </div>
                     );
                   })}

@@ -602,11 +602,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     })));
   }, [templatePreview, tournament?.endDate]);
 
-  // ── Read-only preview rendering (reuses the main screen's BracketColumns) ─────
-  function previewFormatDate(d: string) {
-    return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-
+  // ── Read-only preview rendering (reuses the main screen's BracketColumns, without teams: the slots only) ─────
   /** Resolve a friendly field/venue label for a preview row (read-only display). */
   function resolvePreviewLocation(row: PlayoffPreviewRow): string {
     if (row.location) return row.location;
@@ -1979,8 +1975,6 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                               </div>
                               <BracketColumns
                                 columns={buildBracketColumns(templatePreview.filter(p => p.pool === poolName).map(previewRowToGame))}
-                                readOnly
-                                formatDate={previewFormatDate}
                               />
                             </div>
                           ))}
@@ -1990,8 +1984,6 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                     return (
                       <BracketColumns
                         columns={buildBracketColumns(templatePreview.map(previewRowToGame))}
-                        readOnly
-                        formatDate={previewFormatDate}
                       />
                     );
                   })()}

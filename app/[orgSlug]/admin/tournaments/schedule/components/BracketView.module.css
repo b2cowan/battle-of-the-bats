@@ -1,0 +1,133 @@
+/*
+ * THE BRACKET (Tournament admin redesign Stage 3, S6) — the diagram's columns and cards, the champion at its end,
+ * and the view's heading, note and phone bands. On the kit's tokens from the start: no old look. The connectors and
+ * the zoom frame keep their own sheet (BracketBuilder.module.css), shared with the bracket editor.
+ */
+
+/* ── The view's heading: "U11 playoffs" over its caption, Edit bracket the white button above what it acts on ── */
+.head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem 1rem; flex-wrap: wrap; margin: 0 0 0.75rem; }
+.headText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.title { font-size: var(--type-heading, 1rem); font-weight: 700; color: var(--text-primary); }
+.caption { font-size: var(--type-support); color: var(--text-secondary); }
+.headActions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.tossNote { margin: 0 0 0.75rem; }
+
+/* ── The diagram: round columns on a canvas the connectors measure ── */
+.wrap { width: 100%; max-width: 100%; }
+.canvas { display: flex; gap: 2.5rem; width: max-content; padding: 1rem 0; min-height: 300px; position: relative; }
+.canvasTiered { align-items: center; }
+.column { display: flex; flex-direction: column; width: 16rem; flex-shrink: 0; position: relative; z-index: 1; }
+.roundTitle {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.games { display: flex; flex-direction: column; justify-content: space-around; flex: 1; gap: 1.5rem; }
+.gamesFinal { justify-content: center; gap: 2.5rem; }
+
+/* Double elimination: the seed round, then the winners bracket over the losers bracket, the grand final last. */
+.split { display: flex; flex-direction: column; gap: 2rem; }
+.section { display: flex; flex-direction: column; gap: 0.65rem; flex-shrink: 0; }
+.row { display: flex; gap: 2.5rem; width: max-content; min-width: 100%; }
+.tierLabel {
+  position: sticky;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: max-content;
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* The winner / loser legend: the connector lines' own tones (BracketBuilder.module.css), so it never disagrees. */
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; margin: 0 0 0.5rem; font-size: var(--type-support); color: var(--text-secondary); }
+.legend span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.legend i { display: inline-block; width: 20px; height: 0; border-top: 2.5px solid var(--home-olive); border-radius: 2px; }
+.legend i.loss { border-top-style: dashed; border-top-color: var(--text-tertiary); }
+
+/* ── A card: its when line with the chevron that opens the game, then the two sides ── */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem 0.7rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  text-align: left;
+  font: inherit;
+  position: relative;
+  z-index: 1;
+}
+button.card { cursor: pointer; }
+button.card:hover { border-color: var(--home-line-strong); }
+button.card:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.card[data-final] { border-color: var(--home-olive); box-shadow: 0 0 0 1px var(--home-olive); }
+.when {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.4rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  padding-right: 1.25rem;
+}
+.go { position: absolute; top: 0.6rem; right: 0.55rem; color: var(--text-tertiary); }
+.side { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.5rem; }
+.team { display: flex; flex-direction: column; min-width: 0; }
+.name { display: inline-flex; align-items: center; gap: 0.3rem; min-width: 0; font-size: var(--type-body); font-weight: 600; overflow-wrap: anywhere; }
+.side[data-won] .name { font-weight: 750; }
+.check { flex: none; color: var(--home-olive); }
+.slot { font-size: var(--type-support); color: var(--text-secondary); }
+.score { min-width: 1.5rem; text-align: right; font-size: var(--type-body); font-weight: 750; font-variant-numeric: tabular-nums; }
+.divider { height: 1px; background: var(--home-line); }
+
+/* ── The champion where the bracket ends ── */
+.champion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--home-olive);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+.champion svg { color: var(--home-olive); margin-bottom: 0.15rem; }
+.champion b { font-size: var(--type-body); font-weight: 750; color: var(--text-primary); }
+.champion span { font-size: var(--type-support); color: var(--text-secondary); }
+.champion[data-waiting] { border-style: dashed; border-color: var(--home-line-strong); }
+.champion[data-waiting] svg { color: var(--text-tertiary); }
+
+/* ── A bracket of its own inside one division (split pools, tiers): its name over its diagram ── */
+.group + .group { margin-top: 2rem; }
+.groupTitle { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
+.groupTitle svg { color: var(--home-olive); }
+
+/* ── The phone's form, and the switch between the two ── */
+.switch { display: flex; justify-content: flex-end; margin: 0 0 0.5rem; }
+.championMark { color: var(--home-olive); }
+.editUnder { margin-top: 0.75rem; }
+
+.empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2.5rem 1rem; text-align: center; }
+.empty svg { color: var(--text-tertiary); }
+.empty b { font-size: var(--type-heading, 1rem); color: var(--text-primary); }
+.empty p { margin: 0; max-width: 34rem; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
+
+@media (max-width: 768px) {
+  /* A phone's diagram is the zoom frame's: the columns keep their width and the frame pans. The fork stacks. */
+  .canvasTiered { flex-direction: column; align-items: stretch; gap: 1.75rem; }
+  .headActions { width: 100%; }
+  .headActions > * { flex: 1 1 auto; min-height: var(--tap-min, 44px); }
+  .switch :global(.btn) { min-height: var(--tap-min, 44px); }
+}

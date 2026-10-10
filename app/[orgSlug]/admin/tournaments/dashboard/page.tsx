@@ -39,6 +39,10 @@ import { tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import { Callout, repKit } from '@/components/admin/kit/club/RepKit';
+import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
+import type { PendingToss } from '@/lib/coin-toss';
+import { COIN_TOSS_WORDS as CT } from '@/lib/schedule-words';
+import { bracketGameLabel } from '@/lib/playoff-bracket';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
@@ -169,7 +173,8 @@ type DashboardStats = {
   recap: EventRecap | null;
   /** Whether marking complete will email a results summary to team contacts (mirrors the confirm copy). */
   notifyTeamsOnComplete: boolean;
-  coinTossNeeded: { divisionId: string; divisionName: string; teamNames: string[] }[];
+  /** Coin tosses still owed (lib/coin-toss — the Bracket view's and Results' one reading). */
+  coinTossNeeded: PendingToss[];
   publishChecklist: PublishChecklist;
   registration: {
     totalCapacity: number;
@@ -616,6 +621,8 @@ export default function AdminDashboard() {
   const [statsError, setStatsError] = useState('');
   /** Bumped by a panel-level "Try again" so the stats effect re-runs without a page reload. */
   const [statsReloadKey, setStatsReloadKey] = useState(0);
+  // The coin toss being recorded from the nudge (S7: it opens the recorder in place, not the standings preview).
+  const [tossOpen, setTossOpen] = useState<PendingToss | null>(null);
   /**
    * Which fetch attempt has settled (`statsAttemptKey`: tournament · reload · finished). Compared against the
    * current attempt rather than reset on change, so switching tournaments (or hitting Try again)
@@ -1931,23 +1938,23 @@ export default function AdminDashboard() {
         <p className={styles.boardWaiting} role="status">Loading…</p>
       ))}
 
-      {/* ── COIN TOSS NEEDED — a step the lists can't say, with its one action ── */}
-      {currentTournament?.id && visibleStats.coinTossNeeded.length > 0 && (
-        <Callout tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />}>
-          <b>Coin toss required</b>
-          <span className={repKit.calloutSub}>
-            {visibleStats.coinTossNeeded.map(c => `${c.divisionName} — ${c.teamNames.join(' & ')}`).join(' · ')}.
-            {' '}Teams are tied; record the coin-toss result to finalize standings &amp; playoff seeding.
-          </span>
+      {/* ── A COIN TOSS STILL OWED — the bracket's note, with its one action: the recorder, here (S7) ── */}
+      {currentTournament?.id && visibleStats.coinTossNeeded.map(t => (
+        <Callout key={t.groupKey} tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />}>
+          <b>{CT.inDivision(t.divisionName, CT.title(t.places, t.pool))}</b>
+          <span className={repKit.calloutSub}>{CT.body(t.teams.map(x => x.name), t.waits.map(w => bracketGameLabel(w.bracketCode)))}</span>
           <div className={repKit.calloutActions}>
-            <Link
-              className="btn btn-lime btn-data"
-              href={`/${currentOrg?.slug}/admin/tournaments/preview/${currentTournament.slug}/standings`}
-            >
-              Record coin toss
-            </Link>
+            <button type="button" className="btn btn-outline" onClick={() => setTossOpen(t)}>{CT.record}</button>
           </div>
         </Callout>
+      ))}
+      {tossOpen && (
+        <CoinTossRecorder
+          orgSlug={currentOrg?.slug ?? ''}
+          toss={tossOpen}
+          onClose={() => setTossOpen(null)}
+          onRecorded={() => { setTossOpen(null); setStatsReloadKey(k => k + 1); }}
+        />
       )}
 
       {/* ── EDIT LAYOUT TOOLBAR ──────────────────────────── */}

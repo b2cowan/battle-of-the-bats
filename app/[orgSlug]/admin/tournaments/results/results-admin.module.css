@@ -95,8 +95,18 @@
 }
 .teamName { display: inline-flex; align-items: center; gap: 0.35rem; min-width: 0; overflow-wrap: anywhere; }
 .teamScore { min-width: 1.5rem; text-align: right; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+/* A coin toss still owed opens Needs you (Stage 3, S7): the bracket's note. */
+.tossNotes { display: flex; flex-direction: column; gap: 0.6rem; margin: 0 0 0.9rem; }
+
 /* The winner's score keeps today's green (a question for the exception register, hub G4). */
 .teamScore[data-won] { color: var(--success-light); }
+/* A bracket game's sides (the schedule's Bracket view, S6): the winner in plain ink, bold, with a check; the slot it
+   came from after the name in the caption's ink. */
+.teamName[data-won] { font-weight: 750; }
+/* A long name wraps whole: its slot drops under it rather than sitting beside a broken name. */
+.bracketTeam { flex-wrap: wrap; row-gap: 0; }
+.wonCheck { flex: none; color: var(--home-olive); }
+.teamSlot { font-size: var(--type-support); font-weight: 500; color: var(--text-secondary); white-space: nowrap; }
 .noShowTag {
   font-family: var(--font-data);
   font-size: var(--type-token);

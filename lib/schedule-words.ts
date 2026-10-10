@@ -12,11 +12,11 @@
  * ⚠ A generator save tells NO ONE (it records no schedule change). Nothing here may say or imply teams are told.
  */
 
-import { formatTime, pluralize as count } from './utils.ts';
+import { formatTime, joinWithAnd, pluralize as count } from './utils.ts';
 import { GAME_DAY_LIST, GAME_STATE_WORD } from './game-day-words.ts';
 import { TEAMS_WORDS } from './registration-words.ts';
 import { formatShortWeekdayDate } from './timezone.ts';
-import { fanSlotLabel } from './playoff-bracket.ts';
+import { fanSlotLabel, ordinal } from './playoff-bracket.ts';
 import type { ScheduleStage, ScheduleState, ScheduleView } from './schedule-day.ts';
 
 /** A division's (or a team's) possessive: "U13's", but "U11 Girls'" — a name ending in s takes the apostrophe alone. */
@@ -525,3 +525,107 @@ export function slotWords(placeholder: string | null | undefined): string {
   const seed = /^Seed #(\d+)$/.exec(p);
   return seed ? `Seed ${seed[1]}` : fanSlotLabel(p);
 }
+
+// ── THE BRACKET (Stage 3 build, Part 7 — S6, A38; /marketing 2026-10-09) ─────────────────────────────────────────
+
+/** The Bracket view's words. The champion's sentence is the finished board's (`FINISH_WORDS.caption`), never a copy. */
+/** A bracket game's day and time: "Fri 2:00 p.m." (the card's when line; a phone band row's lead). */
+export function bracketWhen(date?: string | null, time?: string | null): string {
+  const day = date ? formatShortWeekdayDate(date).split(',')[0] : '';
+  return [day, time ? formatTime(time) : ''].filter(Boolean).join(' ');
+}
+
+export const BRACKET_WORDS = {
+  /** "Single elimination · the top 4 of the round robin" (a playoffs-only event: "Single elimination · 4 teams"). */
+  caption: (format: string, qualifying: number, fromRoundRobin: boolean) =>
+    qualifying > 0 ? `${format} · ${fromRoundRobin ? `the top ${qualifying} of the round robin` : count(qualifying, 'team', 'teams')}` : format,
+  champion: 'Champion',
+  /** The champion's card before the final is decided; "Riverdale Rapids or Cedar Hollow Cyclones" once both are known. */
+  championWaiting: 'Decided by the final',
+  championEither: (a: string, b: string) => `${a} or ${b}`,
+  /** A phone's round band: "2 of 2 played". */
+  played: (played: number, of: number) => `${played} of ${of} played`,
+  showDiagram: 'Show as diagram',
+  showList: 'Show as list',
+  /** A division in the Playoffs stage with no bracket games yet. */
+  emptyTitle: 'No playoff bracket yet',
+  emptyBody: 'A bracket is rounds of games wired together: each game feeds its winner (or loser) into the next. Build one here, and the rounds and matchups link up for you.',
+  winnerAdvances: 'Winner advances',
+  loserDrops: 'Loser drops down',
+  winnersBracket: 'Winners bracket',
+  losersBracket: 'Losers bracket',
+  /** A card's name for assistive tech: "Semifinal 1, Riverdale Rapids against Silver Creek Sharks. Open the game." */
+  cardLabel: (round: string, first: string, second: string) => `${round}, ${first} against ${second}. Open the game.`,
+} as const;
+
+// ── THE COIN TOSS (Stage 3 build, Part 7 — S7, A43; /marketing 2026-10-09) ──────────────────────────────────────
+
+/** "seeds 2 and 3" / "2nd and 3rd in Pool A" — the places a toss decides. */
+const tossPlaces = (places: readonly number[], pool: string | null) =>
+  pool ? `${joinWithAnd(places.map(ordinal))} in ${pool}` : `seeds ${joinWithAnd(places.map(String))}`;
+
+export const COIN_TOSS_WORDS = {
+  /** The note on the bracket and at the top of Results' Needs you: "A coin toss decides seeds 2 and 3". */
+  title: (places: readonly number[], pool: string | null) => `A coin toss decides ${tossPlaces(places, pool)}`,
+  /** "{A} and {B} are still tied after every other tie-breaker. Semifinal 2 waits for it." */
+  body: (teams: readonly string[], waiting: readonly string[]) => [
+    `${joinWithAnd(teams)} are still tied after every other tie-breaker.`,
+    waiting.length === 0 ? '' : `${joinWithAnd(waiting)} ${waiting.length === 1 ? 'waits' : 'wait'} for it.`,
+  ].filter(Boolean).join(' '),
+  /** A division's own note names it when the screen shows more than one division (Results, the dashboard). */
+  inDivision: (division: string, title: string) => `${division} · ${title.charAt(0).toLowerCase()}${title.slice(1)}`,
+  record: 'Record the toss',
+  /** A waiting game's when line ends with it: "Fri 12:00 p.m. · Diamond 2 · Semifinal 2 · waits for the toss". */
+  waits: 'waits for the toss',
+  /** The recorder's record head: "Coin toss · U11", "For seeds 2 and 3". */
+  sheetTitle: (division: string) => `Coin toss · ${division}`,
+  sheetFor: (places: readonly number[], pool: string | null) => `For ${tossPlaces(places, pool)}`,
+  tapWinner: 'Tap the team that won the toss.',
+  tapOrder: 'Tap the teams in finishing order.',
+  /** A team's place in the order the organizer tapped ("Seed 2" / "2nd in Pool A"). */
+  placeOf: (place: number, pool: string | null) => (pool ? `${ordinal(place)} in ${pool}` : `Seed ${place}`),
+  startAgain: 'Start again',
+  save: 'Save the result',
+  saving: 'Saving…',
+  failed: "The toss wasn't saved. Try again.",
+  /** The notice once it is saved. */
+  saved: (division: string) => `Coin toss saved · ${division} is reseeded`,
+  /** The view pill's count, for assistive tech. */
+  pending: (n: number) => (n === 1 ? '1 coin toss to record' : `${n} coin tosses to record`),
+} as const;
+
+// ── PUBLISHING (Stage 3 build, Part 7 — S8, A46; /marketing 2026-10-09) ─────────────────────────────────────────
+
+export const PUBLISH_WORDS = {
+  /** The note on the day while a division with games is unpublished. */
+  noteTitle: "Teams and families can't see these games yet",
+  noteBody: (divisions: readonly string[]) =>
+    `${joinWithAnd(divisions)} ${divisions.length === 1 ? "isn't" : "aren't"} published.`,
+  noteAction: 'Publish…',
+  title: 'Publish the schedule',
+  /** "Riverdale Summer Classic · 2 divisions not published". */
+  caption: (event: string, unpublished: number) => `${event} · ${count(unpublished, 'division', 'divisions')} not published`,
+  divisions: 'Divisions',
+  games: (n: number) => count(n, 'game', 'games'),
+  registrationOpen: 'Registration is open — publishing closes it',
+  registrationClosed: 'Registration is closed',
+  whoSees: 'Who sees them',
+  seesPublic: "The public site and the app show these games with the teams' names.",
+  seesCoaches: (event: string) => `Each team linked to a Coaches Portal gets its games on its own schedule, marked "From ${event}".`,
+  /** What a later move does — Tournament Plus alerts followers; every plan's linked schedules follow. */
+  seesMoves: (alerts: boolean) => (alerts
+    ? "After this, moving a game alerts its teams' followers and updates those schedules."
+    : 'After this, a moved game updates those schedules. Phone alerts to followers are on Tournament Plus.'),
+  email: 'Email the teams',
+  emailBox: (teams: number) => `Email the ${count(teams, 'accepted team', 'accepted teams')} that the schedule is live`,
+  /** The Tournament plan's one plain lock line in place of the box (PlanLockLine adds the plan: "… · Tournament Plus"). */
+  emailLocked: 'Emails to teams when you publish',
+  /** "Publish 2 divisions" / "Publish U11". */
+  go: (names: readonly string[]) => (names.length === 1 ? `Publish ${names[0]}` : `Publish ${count(names.length, 'division', 'divisions')}`),
+  goNone: 'Choose a division to publish',
+  publishing: 'Publishing…',
+  /** The notice after it: "Published U11 and U13 · emailed 8 teams". */
+  done: (names: readonly string[], emailed: number) =>
+    [`Published ${joinWithAnd(names)}`, emailed > 0 ? `emailed ${count(emailed, 'team', 'teams')}` : ''].filter(Boolean).join(' · '),
+  failed: "The schedule wasn't published. Nothing was changed.",
+} as const;

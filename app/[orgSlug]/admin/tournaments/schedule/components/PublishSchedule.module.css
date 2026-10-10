@@ -1,0 +1,3 @@
+/* PUBLISH THE SCHEDULE (Tournament admin redesign Stage 3, S8) — its sentences; the kit's form window holds the frame. */
+.say { margin: 0 0 0.4rem; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
+.say:last-child { margin-bottom: 0; }

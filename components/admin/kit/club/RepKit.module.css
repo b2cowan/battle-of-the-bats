@@ -502,6 +502,8 @@
 .calloutBody { flex: 1; min-width: 0; }
 .calloutSub { display: block; margin-top: 0.2rem; font-size: var(--type-support); color: var(--text-secondary); }
 .calloutActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
+/* A note's one action clears the phone's 44px floor (K-18; first met by the schedule's notes, Stage 3 Part 7). */
+@media (max-width: 768px) { .calloutActions :global(.btn) { min-height: var(--tap-min, 44px); } }
 
 /* ── The figure cards row (the portal's kit cards, four across) ── */
 .cards4 {

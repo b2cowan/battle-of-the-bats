@@ -15,9 +15,16 @@ import { useState, type ReactNode } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
+import kit from '@/components/admin/kit/AdminKitFrame.module.css';
 import sd from './ScheduleDay.module.css';
 
-export type ViewChoice<K extends string> = { key: K; label: string; hint: string; icon: ReactNode };
+export type ViewChoice<K extends string> = {
+  key: K; label: string; hint: string; icon: ReactNode;
+  /** Things waiting in that view (a coin toss owed, on Bracket — S7): the rail's amber count, with its words for
+   *  assistive tech. Teams' division picker's rule (1 October): the closed pill shows the count when it is the view
+   *  on screen, and the amber dot when another view has one. */
+  waiting?: { count: number; words: string };
+};
 
 /** The view pill: the current view's icon and word, opening the views with a line each (a sheet on a phone). */
 export function ViewPill<K extends string>({ view, choices, onView, menuTitle }: {
@@ -27,19 +34,37 @@ export function ViewPill<K extends string>({ view, choices, onView, menuTitle }:
   menuTitle: string;
 }) {
   const current = choices.find(c => c.key === view) ?? choices[0];
+  const waitingHere = current.waiting && current.waiting.count > 0 ? current.waiting : null;
+  const waitingElsewhere = choices.filter(c => c.key !== current.key && (c.waiting?.count ?? 0) > 0);
   return (
     <CoachToolbarMenu
-      label={`${menuTitle}: ${current.label}`}
+      label={[`${menuTitle}: ${current.label}`, waitingHere?.words, ...waitingElsewhere.map(c => `${c.label}: ${c.waiting!.words}`)].filter(Boolean).join('. ')}
       title={menuTitle}
       plainTrigger
       triggerClassName={sd.viewPill}
       align="start"
       drawerOnPhone
       panelMinWidth={240}
-      triggerContent={<>{current.icon}{current.label}<ChevronDown size={14} aria-hidden /></>}
+      triggerContent={(
+        <>
+          {current.icon}{current.label}
+          {waitingHere && <span className={kit.count} aria-hidden>{waitingHere.count}</span>}
+          {!waitingHere && waitingElsewhere.length > 0 && <span className={tb.divisionWaitingDot} aria-hidden />}
+          <ChevronDown size={14} aria-hidden />
+        </>
+      )}
     >
       {choices.map(c => (
-        <CoachToolbarMenuItem key={c.key} icon={c.icon} label={c.label} hint={c.hint} checked={c.key === view} onSelect={() => onView(c.key)} />
+        <CoachToolbarMenuItem
+          key={c.key}
+          icon={c.icon}
+          label={c.waiting && c.waiting.count > 0
+            ? <>{c.label} <span className={kit.count} aria-label={c.waiting.words}>{c.waiting.count}</span></>
+            : c.label}
+          hint={c.hint}
+          checked={c.key === view}
+          onSelect={() => onView(c.key)}
+        />
       ))}
     </CoachToolbarMenu>
   );

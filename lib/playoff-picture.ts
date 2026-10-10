@@ -99,7 +99,8 @@ export interface PlayoffPicture {
   divisions: DivisionPlayoffPicture[];
 }
 
-function formatLabel(cfg?: PlayoffConfig): string {
+/** A bracket's format in words ("Single elimination") — the public playoffs picture's, and the admin Bracket view's. */
+export function playoffFormatLabel(cfg?: PlayoffConfig): string {
   switch (cfg?.format) {
     case 'double':      return 'Double elimination';
     case 'consolation': return 'Single elimination + consolation';
@@ -271,14 +272,14 @@ function buildDivisionPicture(
   // the record the stat cards already carry; the seed list below says the rest.
   const narrative: string[] = [
     top && gamesStarted
-      ? `${formatLabel(cfg)}${teamsQualifying > 0 ? `, top ${teamsQualifying} advancing` : ''} — ${splitTeamQualifier(top.teamName).base} enter as the #1 seed.`
-      : `The ${division.name} playoffs are set — ${formatLabel(cfg)}${teamsQualifying > 0 ? `, top ${teamsQualifying} advancing` : ''}.`,
+      ? `${playoffFormatLabel(cfg)}${teamsQualifying > 0 ? `, top ${teamsQualifying} advancing` : ''} — ${splitTeamQualifier(top.teamName).base} enter as the #1 seed.`
+      : `The ${division.name} playoffs are set — ${playoffFormatLabel(cfg)}${teamsQualifying > 0 ? `, top ${teamsQualifying} advancing` : ''}.`,
   ];
 
   return {
     divisionId: division.id,
     divisionName: division.name,
-    formatLabel: formatLabel(cfg),
+    formatLabel: playoffFormatLabel(cfg),
     teamsQualifying,
     gamesStarted,
     seeds,
