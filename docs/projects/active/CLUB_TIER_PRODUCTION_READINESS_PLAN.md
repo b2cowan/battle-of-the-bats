@@ -1445,6 +1445,165 @@ before that session opens. The tournament redesign's Stage 3 is being built now 
 11, which holds it); the builds they produce, no, unless a delta is ruled otherwise. **QA walk §** when built.
 **Migrations:** none expected.
 
+> **🎨 DRAWN 2026-10-10** (from `CLUB_TIER_STAGE6C_MOCKUP_PROMPT.md`, beside the tournament redesign's Stage 5; hub, Mockups →
+> **Stage 6c**, nine screens `s6c-*`, parts in `.probe/s6c-hub/` rebuilt by `assemble.cjs`; **twenty asks OPEN** on the Decisions
+> tab, findings **C6-01…C6-16** on the Full Plan tab; published 2026-10-10 as hub v75, then v76 with two wordings trued;
+> **`/design` review the same day, eleven drawing fixes, hub v77** — listed on the Formatting check screen: the 768 frame at the
+> 44 px floor (K-12); today's marker in a season list a now line, not a band; today said in words on a Week heading; Week and
+> phone day headings in the display face (ruling 1); the club List's team swatch in the lead-mark slot (§3.10.7) and no band
+> counts (status said once); the phone ⚠ and "4 clashes" as built; Import into Add Event's menu (C4); house league's division
+> leads as the olive scope pill (2026-10-07); Ask 13 widened to three looks for one choice, settled on "olive chooses what is read").
+> Nothing built; no code, help, gates or seeds touched.
+> - **Evidence.** Four read-only code surveys (one per surface family) and a capture pass with the owner's go (`.probe/s6c/shots.mjs`:
+>   53 screens on the test clubs at 1440 / 768 / 390, Warm and Dark, every non-GET answered locally — **0 writes**; ids resolved
+>   read-only, because the sweep's resolver re-anchors the probe game). Captures + 23 comparison crops in
+>   `docs/projects/active/club-tier-6c/` (2.6 MB), published as the hub's supporting files. Not captured: the family app (no family
+>   sign-in on the fixtures), the public team page (the test team is families-only), signed-out Scores (empty), the free coach
+>   schedule (no fixture) — read from the code.
+> - **The screens.** (1) *Where the calendars stand*: one table, nine surfaces × twelve dimensions, every cell opening its note and,
+>   where one exists, the capture at true size; the defects; what the plan's list missed. (2) *The recipe*, C1–C13 with a reason
+>   each. (3) *The register* R1–R11 and the shared parts (each with its question and who asks it). (4) Specimen 1, the coach's desk
+>   schedule (the deep dive's stage 2), before/after at 1440, 768 and 390. (5) Specimen 2, the club calendar's deltas and a team's
+>   schedule (admin). (6) Specimen 3, every other calendar's delta, handed to its owner. (7) Specimen 4, Stage 11's grid as proposed
+>   ("Stage 11 draws this"). (8) Formatting check. (9) Not drawn.
+> - **The surface list, corrected from the code** (the prompt's list held, with these): the tournament's Export and Add game sit in its
+>   title band, not after the line; its bands read "FRI, JUN 12  3 games" (no "·"); house league's Week is the SELECTED DIVISION's season
+>   and a reader's click opens a greyed "Edit Game"; the admin team schedule's List also opens at the top (F01 applies to it); the
+>   coach's phone has no Import and no Export outside List; "was 2:00, now 4:30" exists only in comments; the public tournament's
+>   "Jump to date" is an aria label behind "⋯" (more than five game days). **A tenth surface the list missed:** the free (Basic) coach
+>   schedule — the one schedule left on the device's clock.
+> - **A41, answered from the code and the commits:** 6b's calendar was committed first (`c43d767a`, 10-09 18:18), Stage 3's Day three
+>   and a half hours later (`76fe08b3`, 21:54) — but the Day wore the admin kit's row (`ClubRow`, Club Stage 2 `00865a6d`, older than
+>   both), neither imports the other, and the club calendar draws a booking three ways of its own (the List's table, the Week card,
+>   the phone card). "Whichever builds first" would make the club's table the shared part; Ask 5 recommends the kit row (the portal's
+>   row is the same recipe), which the Day and the coach's List already wear. No as-built record of Stage 3 exists in its plan.
+> - **Defects found (not design questions), C6-01–C6-09:** the coach's date arrows step with the device's clock — from the 29th to the
+>   31st the month arrow skips a month in every zone (Oct 31 › opens December; confirmed by running the page's own expression under
+>   Toronto and Vancouver), east of UTC every press lands a day short, the arrows are unnamed (C6-01); the Overview's live tournament
+>   card shows a bare date a day early in every Americas zone ("Oct 9 - Oct 11" for Oct 10–12, run and confirmed), its tile and lull
+>   card east of Eastern (C6-02); the free coach schedule formats on the device's zone (C6-03); the public league drops cancelled
+>   games and shows a postponed one as on (C6-04); the admin team schedule's Week spills its names into the next column at 1440, its
+>   Month's "+N more" is dead, it has no phone form (C6-05); the tournament's Day rows show no other-program clash (C6-06); the public
+>   tournament's forfeit has no badge/score and its .ics uses the device clock (C6-07); the scorekeeper opens on the device's day
+>   (C6-08); the coach's tournament record decides LIVE by its own rule (C6-09). Ask 17 recommends C6-01–03 as one fix commit now,
+>   before Oct 29.
+> - **Found, design:** one view switch, two looks (portal olive vs the admin kit's black, C6-10); three clock sentences ("Times in
+>   Eastern time." written into the page; "All times are local."; none, C6-11); Stage 11's grid can't be the Week (C6-13); Month grids
+>   Sunday-first vs Monday weeks (C6-14); house league's "Week" is a season (C6-15); the club calendar hides cancelled and postponed
+>   bookings (a 6b build-time choice, never drawn or asked, C6-16); today drawn five ways and absent from the coach's Week.
+> - **The asks (all open, each with a recommendation):** 1 what each view means · 2 Monday first everywhere · 3 open on today at every
+>   width (the coach's list scrolls in its own frame, today's band) · 4 one toolbar line with the dates inline above 900 (Import, Export,
+>   create at its end) · 5 one booking row (the club's List leaves its table; A41) · 6 one calendar-cell chip, Month time over title,
+>   the touch Month at ≤768 · 7 one today mark · 8 one spelling for a day, a week, a range, a place · 9 one word per state, nothing
+>   hidden · 10 the booking's own clock, one zone sentence read from the club · 11 Calendar in every admin Export · 12 the window
+>   reads first, the phone's day frame, Export from every view · 13 one look for the view switch · 14 a team's schedule (admin) wears
+>   the coach's views read-only · 15 the other calendars' owners (tournament redesign, Stage 9, Stage 7, 6d; family app parked with
+>   6d, Scores parked as a feed) · 16 the deep dive's stage 2 as deltas · 17 fix C6-01–03 now · 18 Stage 11's grid takes the Timeline's
+>   shape and wears the recipe · 19 one 6c build (coach desk, club calendar, a team's schedule) · 20 what the list missed.
+> - **When ruled:** write the 6c build prompt; hand each other delta to its owner as a finding (specimen 3's table); the recipe and
+>   register become the standard's calendar section (Stage 8); K-21 rewritten to name one chip; Stage 11's "the club calendar's Week
+>   view" sentence corrected if Ask 18 holds; then the Stage 10 + 11 session can open.
+>
+> **⚖ RATIFIED 2026-10-10 — all twenty asks as recommended, and the `/design` review's eleven drawing changes** (owner: *"I agree
+> with your recommendations"*, after the review's report; hub v78, Decisions rows Accepted). Consequences recorded the same day:
+> - **Build prompt** `CLUB_TIER_STAGE6C_BUILD_PROMPT.md`: **Part A** the three date defects (C6-01–03) as their own commit, able to
+>   run alone and first (Ask 17: before Oct 29); **Part 0** the rulings into the design log, the formatting standard's new calendar
+>   section (the recipe C1–C13 + register R1–R11) and K-21; then the coach's desk schedule, the club calendar and a team's schedule
+>   (admin) to hub v78's specimens 1 and 2.
+> - **Handed on as findings:** the tournament redesign (its plan, the block "Findings handed over by Club Tier Stage 6c", at the end
+>   of §6c Stage 3); Stage 9 (house league's admin and public schedules, below); Stage 7 (the coach's tournament record, below);
+>   6d (what a feed carries, below); Stage 8 (confirms the standard's calendar section). The family app and the public team page are
+>   parked with 6d; Scores is parked as a feed, not a calendar (register R11).
+> - **Stage 11's sentence corrected** (Ask 18): the draft grid takes the Timeline's shape and wears the recipe (Stage 11, item 3).
+> - **The Stage 10 + 11 drawing session may open** (6c's rulings were the only thing it waited on).
+>
+> **🔨 6c BUILT 2026-10-10** (from `CLUB_TIER_STAGE6C_BUILD_PROMPT.md`, to hub v78's specimens 1 and 2). **Committed 2026-10-10**
+> on the owner's word, each from a private index: Part A `bc1a545f` (rebuilt as a standalone change on the commit before it
+> and verified there — tsc, the date ratchet, the unit suite — so it can ship alone), Part 0 `be2d5217`, the build
+> `e43a8ece` (verified the same way on its own tree); the records follow them. The hub's QA tab carries the walks (v80).
+> - **Part A · the three date defects (C6-01–03)** — the coach's Week/Month arrows step the CALENDAR (`stepScheduleCursor` on
+>   `addCalendarMonths` / `addCalendarDays`; a month keeps its day, clamped: Oct 31 › Nov 30, Jan 31 › Feb 28/29, Mar 31 ‹ Feb
+>   28; both arrows keep the touch Month's chosen day on its grid; named "Previous/Next week|month"); the Overview's live
+>   tournament card reads stored dates in the one range spelling (`formatEventDateRange`, "Oct 10–12, 2026"), its Tournaments
+>   tile and quiet-week card through `formatShortWeekdayDate`; the free portal's schedule reads AND writes the club's clock
+>   (`lib/basic-coach-schedule-view.ts`; an untouched time saves back the stored instant — the fall-back night's repeated hour).
+>   Tests under Auckland, Vancouver and Toronto clocks (`tests/unit/club-tier-6c-date-defects.test.ts`). `/review` (date
+>   lens): 2 Low confirmed + fixed, 9 advisory, 0 refuted. Help unchanged (no article quotes the old dates).
+> - **Part 0 · the rulings where the product reads them** — `memory/design_decisions.md` "2026-10-10 — ONE CALENDAR: THE RECIPE"
+>   (+ its `memory/MEMORY.md` line); `TABLE_AND_LIST_STANDARD.md` §11 (the recipe C1–C13 with reasons, the register R1–R11,
+>   the shared parts); `TABLE_EXCEPTION_REGISTER.md` K-21 rewritten to ONE calendar-cell chip, the two other black switches
+>   listed open; changelog. ⚖ Recorded: the hub's "Not written yet" row (a) still says "a quiet olive band" — the design
+>   review's now line decides (its reason: a band heads the rows under it).
+> - **The coach's desk schedule** — one toolbar line (switch · dates above 900 · Export · Add Event, lime last); Import is the
+>   last item of Add Event's menu ("Import from a file"), so it reaches a phone; ONE Add Event menu placed by width
+>   (title row ≤640, the line above); the List scrolls in its own frame at every width and opens on today
+>   (`useScheduleOpensOnToday`, shared with the admin page; the frame `.scheduleListFrame`, never under 420px, clear of the
+>   shell's bar via `--coach-foot-clear`); the NOW LINE ("Today · Sat, Oct 10", `nowLineAt`) — never a band; the lead says
+>   its weekday ("Tue, Oct 13 · 1:00 p.m.", the date column widened to 10.5rem = the admin kit's); Week — today's olive
+>   column headed in words, display-face headings, the one cell chip (time over title, kind edge, ⚠ corner); Month — Monday
+>   first, time over title with an ellipsis, "+N more" opens the day, today an olive ring; 641–768 the touch Month (dots,
+>   44px); the phone — Export as the title row's calendar mark in every view (the List-only row retired), day frames with
+>   hairlined rows and a chevron, today never folded; "Cancelled" / "Win · Loss · Tie" written once and set in capitals by
+>   CSS; the week range "Oct 5 – 11, 2026" (`formatWeekRange`); the Overview's "Sat, Oct 10 · 2:00 p.m. vs Falcons".
+> - **The club calendar** — one toolbar line (the olive switch, Ask 13; the dates above 900; Venue · Program · Team; the
+>   clash pill with the filters; the zone sentence + Export at the end); List = the kit's row list (`ClubRowList` / band per
+>   day / `ClubRow`: the range lead, the team swatch as the one lead mark, "14U AA · Practice", "House league · U9 Rookie ·"
+>   where more than one program shows, 6a's clash line, the chevron) — the table is gone; Week chips say the RANGE (R9) with
+>   "Tue, Oct 20" headings; cancelled bookings and postponed league games READ and SHOWN (struck, dimmed, their chip —
+>   Postponed amber), never a clash (6a's constructors drop both before the pool) and out of the Month's count; Excel/CSV
+>   gain a Status column ("Scheduled" · "Cancelled" · "Postponed"); the calendar file marks a cancelled booking cancelled and
+>   never writes a postponed game; the zone sentence read from the zone (`timesInZoneSentence`, per call); the phone week is
+>   the coach's stack (day frames, hairlined rows, colour rail, today unfolded); "4 clashes" kept.
+> - **A team's schedule (admin)** — draws the coach's `ScheduleListView` / `ScheduleWeekView` / `ScheduleMonthView` read-only
+>   (no Add, Import, Export — R7 — or attendance/lineup/game-day taps), opening on today, the coach's phone form (View drawer,
+>   stacked week, touch Month); the olive switch leads the line, the read-only sentence ends it; "+N more" opens the day (it
+>   was dead text, C6-05). ⚠ DEPARTURE, allowed by the prompt: an event opens the KIT'S window minus Done, not the coach's
+>   event sheet — the sheet is a working surface (attendance, lineup, scouting, awards, the score form) reading a dozen
+>   coach endpoints and capabilities; read-only it would be a sheet of absent doors. Its When is the one "when" line
+>   (`eventWhenWords`, which also stops dropping an end past midnight). Tryout rows and undated bracket slots are not drawn
+>   (the admin read has neither; the team's Tryouts page and the tournament carry them).
+> - **"Sat, Oct 3"** — `orgWeekdayDay` takes its comma through the shared day words (the club board's next event too).
+> - **Gates** — typecheck ✓; lint 0 errors; unit suite ✓ (6,522); `check:spelling` / `check:contrast` /
+>   `check:text-contrast` / `check:date-correctness` / `check:export-catalog` (helpSummary names the Status column) /
+>   `check:public-tokens` / `check:css-module-purity` / `check:dictionary` ✓ (no schema change); `check:old-look` ✓ (nothing
+>   to lower — the retired copy carried no old-look markers); `check:css-selectors` ✗ ONLY on a foreign class
+>   (`generatorModal`, the tournament redesign's Stage 3 generator — reported, not touched); the screens guard
+>   `tests/unit/club-stage6c-screens-guard.test.ts` (30); `check:layout` warm ✓ on the coach's List/Week/Month, the club
+>   calendar's three views and a team's schedule (+ its new Week/Month entries) at 361/390/768/1440 — 7 entries pruned (the
+>   768 Month's 16px chips, and three "Public site" frame entries no longer found); Dark ✓ save the Game day pill (a probe
+>   false positive: its lime chip is an `::after` behind the words; Dark can't be baselined). Two defects the sweep found and
+>   this build fixed: the weekday lead overflowing its column; the touch Month's chosen-day number white on Dark's lime.
+> - **`/simplify`** — one frame rule for both pages; one month arithmetic (the club calendar's own retired); one "when" line;
+>   one state-word source; the shared date row; the chip's one variant; the zone sentence per call.
+> - **`/review`** (high-risk on the date arithmetic and the club calendar's read; four lenses): the read stays org-scoped, a
+>   called-off booking can never reach the clash pool or a count, no reader sees a program it couldn't open; the arithmetic
+>   verified under three device clocks; the admin page has no write path and no coach-only data. Fixed: the zone sentence
+>   falls back to the plain zone name on a browser without generic zone names (it would have thrown); an empty season's
+>   spacer; a doubled rule where the now line meets a band; a UAT check made meaningful (Import is inside Add Event).
+> - **`/design`** against v78 at 1440 / 768 / 390, Warm and Dark: matches; one fix — the club calendar at 641–900 wrapped to
+>   three rows of controls, so the zone sentence joins the dates' row at 900 and below (C10: it is about the dates).
+>   Defensible and kept: the List frame's white ends at the last row (paper below — the phone's honest foot); the frame's top
+>   edge scrolls away under the pinned band (the phone's construction); club rows are comfortable, not compact (density by
+>   content, §3.1); Dark's quiet swatch for house league; the phone's Export is the calendar mark (the action's icon).
+> - **`/docs`**: the coach's schedule article split into four sub-topics (it was 428 words), the import article (Import a
+>   schedule, on a phone too), the Money article's portal-wide Import line, the club calendar's article (rows, cancelled and
+>   postponed shown, the Status column, the controls), a Rep Teams FAQ "What does a team's Schedule show me?".
+> - **Words settled by `/marketing` (2026-10-10).** Changed: Add Event's last item is **"Import a schedule"** (was "Import
+>   from a file" — the sheet takes pasted rows as well as files, and is titled "Bring in a schedule"); the admin page's
+>   sentence takes the Roster tab's construction, **"{team}’s coaches keep the schedule in their Coaches Portal; the club
+>   reads it here."** Kept: "Nothing scheduled." (the house phrase — the phone Week's quiet line, the Overview, the admin
+>   team tile); the now line "Today · Sat, Oct 10"; the Status column's "Scheduled" · "Cancelled" · "Postponed" (the league's
+>   printed schedule already says Scheduled and Cancelled). ⚖ Known edge, accepted: a played league game reads "Scheduled"
+>   in the calendar's file where the league's own schedule says "Final" — the calendar is a booking list with no results;
+>   its Status says whether the booking stood. Money's Bills empty state also says "Import a schedule" (a schedule of
+>   bills) — a different tab, each sheet saying what it brings in.
+> - **Found and not fixed (reported):** `generatorModal`, a dead class the tournament redesign's Stage 3 left in its
+>   generator's stylesheet (fails `check:css-selectors` for everyone — the tournament redesign's to remove); the Game day
+>   pill's Dark contrast probe (a false positive); a desk Month shows ONE tryout chip on a day with several (as before — it
+>   opens the Tryouts page); dismissing the duplicate-game notice leaves the List's frame a notice's height short until the
+>   next resize (cosmetic).
+> - **Walks:** Owner QA Ledger **§289**, eleven walks (W1 Part A … W11 Dark), all read-only — hub QA tab "Stage 6c".
+
 ### Stage 6d — Calendar feeds (the deep dive's stage 4 + D07 + 6b Ask 10)
 **Outcome:** a coach — and through the team's feed, a family — subscribes once to a calendar that stays current, instead of
 downloading a file that goes stale. From the deep dive's stage 4: a "Subscribe on this phone" row beside the download;
@@ -1453,6 +1612,11 @@ D07: the team-wide feed's token has had no caller since 2026-09-12, `ics.ts` sti
 future release". 6b Ask 10 handed the club calendar's subscribable link here (6b shipped the download only). Stage 11's
 finalized club slots reach families through the team's feed (Stage 11, item 5), so the feed is settled before 11 is built.
 ⚠ A coach-scoped feed token is new storage — a migration may appear; decided when drawn. Out: two-way sync.
+**⚖ From Stage 6c (ruled 2026-10-10) — what a feed carries:** the recipe's words: a cancelled event stays in the feed marked
+cancelled (today the family feed DROPS it), "Arrive by 5:30 p.m." in the clock's spelling (today the raw stored string), "vs" /
+"@" for home and away (today always "vs"), and every time in the event's own clock (the public tournament's "Add My Games to
+Calendar" writes the device's, C6-07). The family app and the public team page are parked here: their lists already read the
+recipe's words.
 **Sequencing:** after 6c (the feed carries the recipe's words); before Stage 11's build. **Holds the release?** No,
 recommended — unless the owner wants clubs to launch with a subscribable club calendar.
 
@@ -1469,7 +1633,7 @@ Small; it fills any gap in the sequence. **Holds the release?** No.
 - [ ] Hub banner logic for a club (G01); "Add my team" for a club org (one click; today two steps — G03); tournament fees → the club ledger **by decision** (recommend: an automatic income entry on the org ledger when a fee is marked paid, source_module `tournament_fee`, voided with the payment — the house-league pattern done right, fixing the fire-and-forget/void/revive defects with it).
 - [ ] **Message every family** (G02): one org-wide announcement door on the hub (audience = every guardian across rep rosters + league registrations + Families, through the family-email choke point with suppression, a preview count, a send log, a cap). Reuses the house-league broadcast sender once it is batched.
 - [ ] **By activity on the club's Budget vs. Actual** (from 3b, Ask 5): the coach's third report shape ("did this event pay for itself?") joins once a hosted tournament's money joins the budget.
-- [ ] **The coach portal's Tournaments** (the coach Schedule deep dive's stage 3, merged 2026-10-09 — see Stage 6c): the list and the record at 390 and 1440 (the card runs off a 390 screen, D-3; the record is 2,139px with 11 of 17 controls under 44 and no help door); titled by the tournament with the team as its meta; the head-coach editor to autosave or to Settings; a "Games on your Schedule" row and a "← Tournament" back; the 600/901 breakpoints onto 640/768/900. **The record is shared with the free portal through flag props — every change lands on both.** Drawn with this stage, after the tournament redesign's Stage 2 (teams). **Does not hold the release.**
+- [ ] **The coach portal's Tournaments** (the coach Schedule deep dive's stage 3, merged 2026-10-09 — see Stage 6c): the list and the record at 390 and 1440 (the card runs off a 390 screen, D-3; the record is 2,139px with 11 of 17 controls under 44 and no help door); titled by the tournament with the team as its meta; the head-coach editor to autosave or to Settings; a "Games on your Schedule" row and a "← Tournament" back; the 600/901 breakpoints onto 640/768/900. **The record is shared with the free portal through flag props — every change lands on both.** Drawn with this stage, after the tournament redesign's Stage 2 (teams). **Does not hold the release.** *From Stage 6c (ruled 2026-10-10):* the record's dates and times read the device's clock (`CoachLiveSchedule`, `formatGameDateLabel`) — the recipe's own clock and words (C8, C10); "LIVE" follows its own rule (a submitted score, today) instead of the shared game-status rule (C6-09); "vs / @" on its rows and "vs / at" in its change banner — one.
 **QA walk §J.** **Migrations:** `org_announcements` (+ send log) if the broadcast is recorded.
 
 ### Stage 8 — Release readiness
@@ -1483,7 +1647,7 @@ Small; it fills any gap in the sequence. **Holds the release?** No.
 - [ ] `/strategy` logs the release decision and the cohort shape (5–10 Club, invite-only, founder-managed — preserved 2026-07-28), and D6.
 - [ ] **Nav review (⚖ owner note 2026-09-28, "for a nav review later in this project"):** the admin rail and the Coaches Portal rail group pages differently. Three models in the code: the portal's collapsible group headings (`CoachesSidebar`: Season/Progress/Money/Communication/Team, heading = toggle + chevron, all open but Team, a closed group shows a count; the phone More sheet never collapses); the club admin kit rail (`AdminKitRail`: static labels Programs / Also on your plan / Organization, a program is a LINK that shows its pages only while you're inside it, locked owner rows; phone "In ‹program›" disclosure); the tournament groups inside the same rail (collapsible, defaults vary by tournament status). Recommend one model, the portal's as the benchmark, ruled before this stage so the formatting standard names it.
   - **Accounting is already ruled (Stage 3a, Ask 2 option B, 2026-09-30):** one page with the coach's tab row, its rail row never opens and carries the waiting count, a page one level down has a back arrow and no tabs (built 2026-10-01). **Write into the formatting standard at this review the rule it proposed:** *a program whose pages are views of one body of records is one page with tabs; a program whose pages are separate jobs lists them in the rail* (design log 2026-09-30). The other programs are reviewed against that rule here; Rep Teams stays in the rail.
-- [ ] **The formatting standard** (§6 "Across every stage — formatting"): written, with its exception register, and every club screen measured against it.
+- [ ] **The formatting standard** (§6 "Across every stage — formatting"): written, with its exception register, and every club screen measured against it. Its **calendar section** (the 6c recipe C1–C13 and register R1–R11, ruled 2026-10-10) is written by the 6c build's Part 0; Stage 8 confirms every calendar against it.
 **Exit:** owner go/no-go on the nine-point definition in §3.
 
 ### Stage 9 — House league (last; its own release)
@@ -1492,7 +1656,14 @@ vanishing season, schedule honesty, parent payment loop, schedule generator, ema
 coupling check for a standalone League Plus org (house league with no rep teams / no accounting),
 the ledger seam fixed under D1's pattern (C18), venues under Stage 6's book, one-click season changes
 gaining confirms, and the League Plus un-park (D11). Its own PLAN/PM-brief pair when it opens;
-this document only reserves the slot.
+this document only reserves the slot. **⚖ From Stage 6c (ruled 2026-10-10), house league's calendars against the recipe**
+(club hub → Mockups → Stage 6c → specimen 3): the admin schedule's "Week" (a whole season in week groups) and "List" (the same
+season as a table) become one season List grouped by week in the row list, "Week" kept for seven days if wanted (C1); it opens
+on this week (C3); "Oct 19 – 25, 2026" not "WEEK OF OCTOBER 19, 2026", "Kinsmen Park · Diamond B" not "—", Final not
+Completed, no chip for a scheduled game (C8, C9); a reader's click opens a read window, not a greyed "Edit Game" (C12); the
+division leads as the olive scope pill, then the views, then Generate, Export and Add Game (C4). **The public league schedule**
+shows the place, Cancelled struck through and Postponed in words (today a postponed game reads as on and a cancelled one
+disappears — defect C6-04, sooner if house league ships first), opens on this week, and says "Times in Eastern time." once.
 
 ### Stage 10 — Permits & bookings (⚖ D4 ruled IN scope 2026-09-25; release-gating; end of the walk)
 **Outcome:** the club records the permits it holds and every module's scheduling reads them.
@@ -1584,8 +1755,11 @@ by its coach.
    - *Rules* (folded): earliest and latest start by age group, at most N slots per team per week, never on a team's game
      day or over its existing bookings (Stage 6's one clash rule), the same night each week or prime time rotated, no
      back-to-back days.
-3. **Generate, then adjust by hand**: a draft grid (facility × week, the club calendar's Week view) with each slot named by
-   its team. Drag a slot, swap two teams, clear a slot, and lock a slot so a regenerate keeps it. Beside it, a fairness
+3. **Generate, then adjust by hand**: a draft grid with each slot named by its team. ⚖ *Corrected 2026-10-10 (Stage 6c Ask 18):*
+   not the club calendar's Week view, which stacks bookings as cards and can't show an empty slot, but **the Timeline's shape**
+   (facilities down, the hours in each day, an open slot on the page), wearing the 6c recipe (the toolbar line, a Monday week,
+   the day words, today, the team's colour, range times, the zone sentence, Export, 6a's clash flag); once final, its slots read
+   as bookings on the club calendar. Specimen: club hub → Mockups → Stage 6c → 4. Drag a slot, swap two teams, clear a slot, and lock a slot so a regenerate keeps it. Beside it, a fairness
    summary: hours per team, each team's share of prime time, any team short of its share, and every clash with a booking
    already on the books.
 4. **Summaries**: the whole schedule (by facility and week), by team, by program; one Export (Excel first, then PDF), and

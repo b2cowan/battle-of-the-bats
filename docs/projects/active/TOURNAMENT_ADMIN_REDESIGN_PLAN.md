@@ -1415,6 +1415,33 @@ the start), and both widenings proposed in the UX summary ruled in.
   transaction (a mid-loop failure leaves earlier moves unannounced, as before); DATA_DICTIONARY `games` gotcha 6 still
   says prod `location` is NOT NULL (the snapshot says nullable).
 
+### Findings handed over by Club Tier Stage 6c "One calendar" (ruled 2026-10-10; not this plan's rulings until drawn here)
+
+> Club Tier Stage 6c compared every calendar in the product and the owner ratified one calendar recipe on 2026-10-10
+> (`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 6c; the club hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 →
+> Mockups → Stage 6c → specimen 3 and "Not drawn"). 6c rebuilds nobody else's screen: these are findings for this
+> redesign, each with the recipe line it breaks, to draw or decline in its own session. Stage 3 as built is the input, not
+> something 6c overwrote. **A41, answered from the code:** the Day wears the admin kit's row (`ClubRow`), and the recipe's
+> one booking row IS that row — the club calendar's List moves onto it (6c's build), so the Day needs no change for A41.
+- **The Day's toolbar (C4):** Export and Add game move from the title band to the toolbar line's right end (one Export and
+  one create above what they act on); the title band keeps the title and help; their 44 px icons on a phone unchanged.
+- **A clash on a Day row (C5, finding C6-06):** a game whose field another club program holds says it under its
+  where-line in 6a's amber words — the line the game window and the timeline's cross note already show.
+- **Live (C9):** the row chip "Playing now" becomes "Live" (every public screen and Scores say Live); the game-day board may
+  keep "Playing now" as a band heading. Also one spelling for "Pending Review" / "Pending review" (the printed schedule).
+- **Calendar in Export (C11):** the schedule's Export gains Calendar (.ics) for the games in view.
+- **The phone row (found 2026-10-10 on a capture):** at 390 the state chip floats in the middle of the row (CANCELLED,
+  NEEDS A SCORE).
+- **The public schedule (`ScheduleContent`):** the day divider reads "Sun, Jun 14" (capitals by its style), never
+  "SUNDAY · JUN 14", and a row never "Jun 14 - 11:30 a.m." with a hyphen (C8); the where-line on a computer's row too
+  (today the phone's only); "Times in Eastern time." replaces "All times are local." (C10); the jump list's weeks start
+  on Monday, "Jun 8 – 14, 2026" (C2); a forfeit gets its chip and score (C6-07); "Add My Games to Calendar" writes the
+  event's own clock, not the device's (C6-07, with Club 6d); the tournament home's "Unofficial" follows the schedule's rule.
+- **The scorekeeper (C6-08):** it opens on the event's day (`tournamentToday`), not the device's; and one matchup order
+  (the board's "away @ home" vs the scorekeeper's "home vs away").
+- **The Timeline (C10):** its empty-day line and header format on the device's locale ("No games scheduled on …") — the
+  recipe's words, "No games on Fri, Oct 9."
+
 ## 6d. Stage 4 — After the event, as drawn (2026-10-05)
 
 Drawn at true size on the hub's **Stage 4** tab, phone and desk, before (captured 2026-10-05 on the demo's finished

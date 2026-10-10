@@ -416,6 +416,36 @@ scheduler should be built on settled parts. Priority: the review's rulings come 
 of the coach work holds the release. Success: one written calendar recipe that every calendar either follows or departs
 from with a stated reason, and no screen whose calendar part was copied without one.
 
+**One calendar: drawn 2026-10-10, twenty questions open.** The review found nine calendars, not seven (the free coach
+portal's schedule and an admin's view of one team's schedule were missing from the count), and compared them on twelve
+questions at computer, tablet and phone widths with real captures. What a person would see differently once it is ruled:
+every calendar opens on today; "Week" always means seven days starting Monday; a day is always spelled "Sat, Oct 10";
+today is marked the same way everywhere; a cancelled or postponed game stays on the page, struck through, instead of
+vanishing (today it vanishes from the club calendar and from house league's public schedule, where a postponed game even
+reads as on). The coach's desktop schedule gets one row of controls instead of three, and a Month that shows each event's
+time. A club admin's view of one team's schedule becomes the coach's own screens, read-only, instead of an older copy
+that breaks on a phone. Some differences stay on purpose, each with its reason. A team's list is its season, the club's
+is a week. The club's Month counts bookings instead of naming them. Families never see clash marks. The review also
+found three date bugs that affect coaches today. The month arrow skips November from Oct 29 to 31, and a coach's
+Overview shows a live tournament's dates a day early. Both are recommended as a small fix now, ahead of everything else.
+And the scheduler's grid can't simply be the club calendar's week, because a scheduler has to show empty slots. Every
+other calendar's changes go to the project that owns it. Priority: the rulings come before the Stage 10 + 11 session.
+**Ratified the same day (owner: "I agree with your recommendations"), every question as recommended.** The build comes in
+one session, in three parts. First the three date bugs, on their own, so they can ship before Oct 29. Then the rules
+written into the product's formatting standard. Then the coach's desktop schedule, the club calendar and the admin's
+view of a team's schedule. The other calendars' changes were handed to their owners. The permits and scheduler session
+can start now; it doesn't wait for this build.
+
+**Built and committed the same day (2026-10-10).** A coach's schedule now opens on today on a computer too, with an
+olive "Today" line where today falls and the season a scroll above; its controls are one row, with Import moved inside
+Add Event (so it works on a phone for the first time); Week marks today, Month starts on Monday and shows each event's
+time and name, and the month arrow no longer skips November. The club calendar lists bookings as rows by day, shows
+cancelled and postponed bookings instead of hiding them (never as clashes), and its spreadsheet gains a Status column.
+An admin's view of a team's schedule is now the coach's own screens, read-only, and works on a phone. The Overview's
+tournament dates and the free portal's times are right in every time zone. Eleven read-only walks are ready (Owner QA
+§289). Success looks like: a coach lands on next week's game without scrolling, and nobody turns up for a called-off game
+because the club calendar hid it.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money
