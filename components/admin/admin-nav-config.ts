@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Calendar, Trophy, Mail,
   Settings2, MapPin, Tag, BookOpen, Paintbrush,
-  Settings, List, Database, UserCheck, QrCode, MessageSquare,
+  Settings, List, UserCheck, QrCode, MessageSquare,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -52,7 +52,7 @@ export const TOUR_GROUPS: TourGroup[] = [
     label: 'Admin',
     defaultOpenFor: [],
     items: [
-      { key: 'data-tools', icon: Database, label: 'Data Tools'       },
+      // ⚰ Data tools retired (Stage 5, E10, A59): each import lives with its data — Teams' Export, the schedule's Tools.
       { key: 'settings',   icon: Settings, label: 'Settings & Access' },
       // The one Tournaments list (D7, ruled 2026-10-06): it took Past tournaments' place here — an occasional
       // destination, so a row in Admin, not the top of the rail (D7a). A list mark: Results wears the trophy.

@@ -383,17 +383,18 @@ test.describe.serial('Tournament Data Tools combined UAT smoke', () => {
     });
     const page = await context.newPage();
 
+    // Data tools retired (Tournament admin redesign Stage 5, E10, A59): each import lives with its data — Teams'
+    // Export menu imports teams, the schedule's Tools imports games — and its old address opens Teams.
     await page.goto(`/${smoke.orgSlug}/admin/tournaments/data-tools`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Data Tools' })).toBeVisible({ timeout: 30_000 });
-    // The standalone "Add/update teams" / "Add/update schedule" buttons were
-    // replaced by a single "Import" ToolbarMenu whose Teams/Schedule menuitems
-    // render only while the menu is open.
-    const importMenuTrigger = page.getByRole('button', { name: 'Import' });
-    await expect(importMenuTrigger).toBeVisible({ timeout: 20_000 });
-    await importMenuTrigger.click();
-    await expect(page.getByRole('menuitem', { name: 'Teams' })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByRole('menuitem', { name: 'Schedule' })).toBeVisible({ timeout: 20_000 });
-    // Close the menu so its overlay/menuitems don't interfere with later assertions.
+    await expect(page).toHaveURL(/\/admin\/tournaments\/registrations/, { timeout: 30_000 });
+    const exportTrigger = page.locator('main button[aria-haspopup="menu"]:visible', { hasText: 'Export' }).first();
+    await expect(exportTrigger).toBeVisible({ timeout: 30_000 });
+    await exportTrigger.click();
+    await expect(page.locator('[role="menu"] [role="menuitem"]', { hasText: 'Import teams from a spreadsheet' }).first()).toBeVisible({ timeout: 20_000 });
+    await page.keyboard.press('Escape');
+    await page.goto(`/${smoke.orgSlug}/admin/tournaments/schedule`, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: 'Tools' }).first().click();
+    await expect(page.getByText('Import games from a spreadsheet', { exact: true }).last()).toBeVisible({ timeout: 30_000 });
     await page.keyboard.press('Escape');
 
     const templateChecks = await page.evaluate(async ({ orgSlug, tournamentId }) => {
@@ -552,15 +553,14 @@ test.describe.serial('Tournament Data Tools combined UAT smoke', () => {
       }),
     ]));
 
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    // History rows now live inside the "Recent Imports" CollapsibleCard, which is
-    // collapsed by default (native <details>), so expand it before asserting.
-    const recentImportsCard = page.locator('details', { has: page.locator('summary', { hasText: 'Recent Imports' }) });
-    await recentImportsCard.locator('summary', { hasText: 'Recent Imports' }).click();
-    await expect(recentImportsCard.getByText('Teams & Registrations').first()).toBeVisible({ timeout: 20_000 });
-    // Scope the "Schedule" assertion inside the Recent Imports card so it doesn't
-    // match the "Schedule" template-row label in the open "Import & Export" card.
-    await expect(recentImportsCard.getByText('Schedule').first()).toBeVisible({ timeout: 20_000 });
+    // The earlier imports live inside the import they belong to: Teams' import sheet lists the teams import.
+    await page.goto(`/${smoke.orgSlug}/admin/tournaments/registrations`, { waitUntil: 'domcontentloaded' });
+    await page.locator('main button[aria-haspopup="menu"]:visible', { hasText: 'Export' }).first().click();
+    await page.locator('[role="menu"] [role="menuitem"]', { hasText: 'Import teams from a spreadsheet' }).first().click();
+    const sheet = page.locator('[data-kit-dialog]').last();
+    await sheet.getByRole('button', { name: '1 earlier import' }).click({ timeout: 20_000 });
+    await expect(sheet.getByText('data-tools-team-smoke.csv').first()).toBeVisible({ timeout: 20_000 });
+    await page.keyboard.press('Escape');
 
     const { error: downgradeError } = await supabaseAdmin
       .from('organizations')
@@ -568,9 +568,10 @@ test.describe.serial('Tournament Data Tools combined UAT smoke', () => {
       .eq('id', smoke.orgId);
     if (downgradeError) throw downgradeError;
 
+    // On the Tournament plan the moved door keeps its lock in words (A44): the row names Tournament Plus.
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Unlock import/export workflows' })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByRole('link', { name: /Review Tournament Plus/i })).toBeVisible();
+    await page.locator('main button[aria-haspopup="menu"]:visible', { hasText: 'Export' }).first().click();
+    await expect(page.locator('[role="menu"] [role="menuitem"]', { hasText: 'Import teams from a spreadsheet' }).first()).toContainText('Tournament Plus', { timeout: 20_000 });
 
     await restoreOrgPlan(smoke);
     await context.close();

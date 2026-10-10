@@ -278,12 +278,14 @@ describe('the chrome (S4)', () => {
 });
 
 describe('curated surfaces (S6)', () => {
-  test('covers the four ratified corners and nothing else', () => {
+  test('covers the ratified corners and nothing else', () => {
     // Ratified 2026-08-02: billing/subscription, staff invitations, data tools/exports, deep
     // settings forms. `settings` is the Settings & Access hub and carries three of the four.
+    // ⚰ `data-tools` left with its page (Tournament admin redesign Stage 5, E10, A59): Data tools retired, each import
+    // now on Teams' Export and the schedule's Tools — whether a demo hides those doors is the /demos session's call.
     assert.deepEqual(
       [...SANDBOX_HIDDEN_TOURNAMENT_NAV_KEYS].sort(),
-      ['data-tools', 'settings', 'settings/event'],
+      ['settings', 'settings/event'],
     );
   });
 

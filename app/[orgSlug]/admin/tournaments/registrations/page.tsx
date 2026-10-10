@@ -58,6 +58,10 @@ import { joinDots, screenParts } from '@/components/admin/tournament/ScreenParts
 import BottomSheet from '@/components/admin/BottomSheet';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
+import ImportSheet, { ImportDoor } from '@/components/admin/tournament/ImportSheet';
+import { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import { IMPORT_WORDS } from '@/lib/tournament-import-words';
+import { hasCapability } from '@/lib/roles';
 import RegistrationHealthPanel from './components/RegistrationHealthPanel';
 import TeamsGlance, { type PaymentSummary } from './components/TeamsGlance';
 import TeamList, { type ListMode, type RowFacts } from './components/TeamList';
@@ -145,9 +149,11 @@ type Ask = {
 
 export default function UnifiedTeamsPage() {
   const { currentTournament, isLocked, loading: tournamentLoading } = useTournament();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
   const searchParams = useSearchParams();
   usePageTitle('Teams');
+  // Import teams from a spreadsheet (Stage 5, E10): Data tools retired; the import lives where the teams are.
+  const [importOpen, setImportOpen] = useState(false);
   const [regs, setRegs] = useState<TeamRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(DEFAULT_STATUSES);
@@ -827,9 +833,14 @@ export default function UnifiedTeamsPage() {
     resetAddTeamForm();
   }
 
-  function openDataTools() {
-    if (!currentOrg?.slug) return;
-    window.location.assign(`/${currentOrg.slug}/admin/tournaments/data-tools`);
+  // The import's door: who may import (the roles Data tools allowed), and the plan (Tournament Plus — on the
+  // Tournament plan the row is the Tools lock in words, A44, and opens the plan's panel).
+  const canImportTeams = !isLocked && Boolean(userRole && (
+    hasCapability(userRole, userCapabilities, 'manage_registrations') || hasCapability(userRole, userCapabilities, 'create_tournaments')));
+  const importOnPlan = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_data_imports') : false;
+  function openImport() {
+    if (importOnPlan) { setImportOpen(true); return; }
+    if (currentOrg?.slug) window.location.assign(tournamentPlusPanelHref(currentOrg.slug));
   }
 
   // ── Export handlers (server-side — registration data has custom fields) ──
@@ -1641,14 +1652,10 @@ export default function UnifiedTeamsPage() {
               pdfFeatureKey="pdf_exports"
               disabled={!currentTournament}
               exportDisabled={regs.length === 0}
-              hasImportOption
-              onImport={openDataTools}
-              importLabel="Data tools"
-              importHint={
-                currentOrg && !hasPlanFeature(currentOrg.planId, 'bulk_data_imports')
-                  ? 'Tournament Plus imports and registration exports'
-                  : 'Templates, imports, and bulk exports'
-              }
+              hasImportOption={canImportTeams}
+              onImport={openImport}
+              importLabel={IMPORT_WORDS.door('teams')}
+              importHint={importOnPlan ? IMPORT_WORDS.doorHint : 'Tournament Plus'}
             />
             {!isLocked && ownTeam && !ownTeam.registrationId && (
               <button
@@ -1883,6 +1890,7 @@ export default function UnifiedTeamsPage() {
               {!isLocked && ownTeam && !ownTeam.registrationId && (
                 <button type="button" className="btn btn-outline" onClick={openOwnTeamModal}>Add my team</button>
               )}
+              {canImportTeams && importOnPlan && <ImportDoor kind="teams" onOpen={() => setImportOpen(true)} />}
             </>
           ) : (
             <>
@@ -2169,6 +2177,16 @@ export default function UnifiedTeamsPage() {
             </ul>
           )}
         </KitDialog>
+      )}
+
+      {importOpen && currentTournament && currentOrg?.slug && (
+        <ImportSheet
+          kind="teams"
+          tournament={{ id: currentTournament.id, name: currentTournament.name }}
+          orgSlug={currentOrg.slug}
+          onClose={() => setImportOpen(false)}
+          onImported={load}
+        />
       )}
     </div>
   );

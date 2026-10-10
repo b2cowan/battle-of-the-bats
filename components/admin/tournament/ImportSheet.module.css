@@ -1,0 +1,43 @@
+/* The import sheet (ImportSheet.tsx — Tournament admin redesign Stage 5, E10): what the kit's window, sections and
+   row list have no slot for. Born on the kit: TOKENS ONLY. */
+
+.templateRow { display: flex; align-items: flex-end; gap: 0.6rem; flex-wrap: wrap; }
+.templateRow > label { margin: 0; flex: 1 1 14rem; min-width: 0; }
+.templateRow > label:nth-child(2) { flex: 0 0 7.5rem; }
+.download,
+.choose,
+.door { display: inline-flex; align-items: center; gap: 0.4rem; min-height: var(--admin-control-h); }
+.door { margin: 0.5rem 0 0; }
+
+.fileLine { margin: 0 0 0.5rem; font-size: var(--type-body); color: var(--text-primary); overflow-wrap: anywhere; }
+.quiet { margin: 0 0 0.5rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.notice { margin: 0 0 0.5rem; font-size: var(--type-support); color: var(--text-secondary); }
+.plainList { margin: 0.25rem 0; padding-left: 1.1rem; }
+/* A row that can't import says why in amber (words, never colour alone). */
+.blocked { color: var(--warning-light); font-weight: 600; }
+.blockedFoot { margin: 0.6rem 0 0; font-size: var(--type-support); font-weight: 600; color: var(--warning-light); }
+.done { margin: 0.6rem 0 0; font-size: var(--type-body); font-weight: 600; color: var(--success-light); }
+
+/* Show all rows · N earlier imports: quiet doors in the text's own colour, underlined. */
+.more {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--admin-control-h);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .download,
+  .choose,
+  .door,
+  .more { min-height: var(--tap-min, 44px); }
+}

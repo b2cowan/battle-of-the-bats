@@ -577,7 +577,51 @@ const tournamentsHelp: HelpPageContent = {
           <p>Use <strong>Registration Questions</strong> (under Settings &amp; Access, or <strong>Tools</strong> &rarr; <strong>Registration questions</strong> on the Teams page) when you need tournament-specific coach confirmations, dropdown answers, or uploaded documents. Submitted answers appear in each team&rsquo;s record, under <strong>Registration answers</strong>, and in registration exports.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'import-teams',
+          title: 'Import teams from a spreadsheet',
+          content: (
+            <>
+              <p>On Tournament Plus and above, open <strong>Teams</strong>, then <strong>Export</strong> &rsaquo; <strong>Import teams from a spreadsheet</strong> (an event with no teams yet offers it on its empty list too). One window does the whole job:</p>
+              <ul>
+                <li><strong>Start from a template.</strong> <em>This event&rsquo;s teams, to update them</em> includes each team&rsquo;s ID, so keep the IDs in place to update the right team. <em>An empty template, for new teams</em> is a blank start; leave the ID column empty. Excel keeps the reference sheets; CSV is a plain option.</li>
+                <li><strong>Your file.</strong> Choose it, and the preview reads it at once: each row says what it will do, <strong>Adds</strong>, <strong>Updates</strong> (and what changes), <strong>No change</strong>, or <strong>Can&rsquo;t import</strong> and why.</li>
+                <li><strong>Import N rows.</strong> Nothing changes until you press it, and only from a clean preview: a row that can&rsquo;t import is fixed in your file, then the file chosen again. Teams missing from the file stay as they are; an import never deletes one.</li>
+              </ul>
+              <p>When the file adds teams, you can also email their coaches a link to their Coaches Portal. <strong>Earlier imports</strong>, inside the same window, lists what was imported before, when, and from which file.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
+        {
+          id: 'faq-import-current-vs-empty',
+          question: 'Should I use a current template or an empty template?',
+          answerText: 'Use a current template to update existing rows because it includes IDs. Use an empty template when preparing new rows.',
+          keywords: ['current template', 'empty template', 'ids', 'spreadsheet'],
+          answer: (
+            <p>Use a current template when editing existing teams or games because the ID columns tell FieldLogicHQ which record to update. Use an empty template for new rows and leave ID columns blank.</p>
+          ),
+        },
+        {
+          id: 'faq-import-warning-vs-blocked',
+          question: 'What is the difference between a warning and a blocked row?',
+          answerText: 'Warnings can still be applied after review. Blocked rows must be fixed and previewed again before apply.',
+          keywords: ['warning', 'blocked row', 'preview', 'apply'],
+          answer: (
+            <p>Warnings call attention to something worth reviewing, such as a name match or timing buffer. Blocked rows fail a safety rule and stop the apply step until the file is fixed and previewed again.</p>
+          ),
+        },
+        {
+          id: 'faq-import-delete-replace',
+          question: 'Can I wipe and replace teams or schedules from a spreadsheet?',
+          answerText: 'No. Imports are add/update-only. Missing spreadsheet rows do not delete teams or games.',
+          keywords: ['delete', 'replace', 'wipe', 'add update'],
+          answer: (
+            <p>No. Spreadsheet imports are add/update-only. Removing a row from the file does not remove the team or game from the tournament.</p>
+          ),
+        },
         {
           id: 'faq-where-teams-register',
           question: 'Where do teams register?',
@@ -843,6 +887,17 @@ const tournamentsHelp: HelpPageContent = {
         </>
       ),
       subtopics: [
+        {
+          id: 'import-games',
+          title: 'Import games from a spreadsheet',
+          content: (
+            <>
+              <p>On Tournament Plus and above, open <strong>Schedule</strong>, then <strong>Tools</strong> &rsaquo; <strong>Import games from a spreadsheet</strong> (an empty schedule offers it too). It is the same window as Teams&rsquo; import: start from this event&rsquo;s games (to update them) or an empty template (for new games), choose your file, read what each row will do, then <strong>Import N rows</strong>. Nothing changes before that, and games missing from the file stay as they are.</p>
+              <p><strong>Field names in the Location column link themselves when they match.</strong> A row whose Location names one of your venues or fields (capitals and punctuation don&rsquo;t matter) is linked to the real field, so its game is checked for double-bookings. Names that don&rsquo;t match are listed by name with a game count: they import as typed text, aren&rsquo;t checked, and never block the file. You can link them to a real field afterwards from the Schedule page, without importing again.</p>
+              <p>A schedule import can&rsquo;t change a scored, submitted or final game, a playoff game, or the generator&rsquo;s pool and lane structure; it never deletes games or imports scores. A completed tournament is locked until you reopen it from the Tournaments list.</p>
+            </>
+          ),
+        },
         {
           id: 'schedule-build',
           title: 'Building the schedule',
@@ -2255,85 +2310,6 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['summary', 'Post-event summary', 'recap', 'post-event', 'print', 'champions link', 'clone next year', 'renewal'],
           answer: (
             <p><strong>Summary</strong>, on Tournament Plus and above, is a finished tournament&rsquo;s recap on one page: how each division finished, the event in numbers, and <strong>Reuse this setup</strong> for next year. Copy the champions link to share it, or <strong>Print</strong> a one-page recap on Letter paper for your records.</p>
-          ),
-        },
-      ],
-    },
-
-    {
-      id: 'data-tools-imports',
-      group: 'Close Out',
-      heading: 'Importing teams and schedules',
-      summary: 'Use Data Tools for spreadsheet templates, safe previews, and recent import history.',
-      keywords: ['import', 'data tools', 'xlsx', 'csv', 'spreadsheet', 'templates', 'teams', 'schedule', 'blocked rows', 'current template', 'empty template', 'field names', 'location column', 'unmatched', 'link after import'],
-      searchText: 'import data tools spreadsheet templates xlsx csv preview teams registrations schedule bulk add update recent imports blocked rows current template empty template warnings location column field names matched automatically unmatched field names didn\'t match typed text third-party schedule link typed text to a real field afterwards from the schedule page without re-importing',
-      links: [
-        { label: 'Data Tools', href: '../tournaments/data-tools' },
-      ],
-      content: (
-        <>
-          <p>
-            Open <strong>Data Tools</strong> when you need spreadsheet workflows. Download a
-            current-data template when you want to edit existing records, or an empty template
-            when you want to prepare new rows from scratch.
-          </p>
-          <ul>
-            <li><strong>Current templates</strong> include existing IDs. Keep those IDs in place when you want FieldLogicHQ to update an existing team or game.</li>
-            <li><strong>Empty templates</strong> are blank starting points for new rows. Leave the ID columns empty when creating new teams or games.</li>
-            <li><strong>XLSX</strong> is the best format for most admins because it keeps workbook metadata and reference sheets where available. <strong>CSV</strong> is a flat compatibility option.</li>
-            <li><strong>Teams &amp; Registrations</strong> and <strong>Schedule</strong> imports are add/update-only. Missing spreadsheet rows do not delete teams or games.</li>
-            <li><strong>Recent Imports</strong> shows who uploaded a file, when it was previewed or applied, and the row counts.</li>
-          </ul>
-          <p>
-            Uploading a file creates a preview first. Review creates, updates, unchanged rows,
-            warnings, and blocked rows before applying. Warnings are advisory; blocked rows must
-            be fixed before any schedule or team changes can be applied.
-          </p>
-          <p>
-            <strong>Field names in the Location column link themselves when they match.</strong> A
-            schedule row whose Location exactly names one of your venues or fields (capitalization
-            and punctuation don&apos;t matter) is linked to the real field record, so those games are
-            covered by double-booking checks. Names that don&apos;t match are listed <em>by name, with a
-            game count</em> in the preview — they import as typed text, aren&apos;t checked for
-            double-bookings, and never block the file. A name matching more than one field stays
-            text with a warning rather than being guessed; use the Venue/Facility columns to be
-            exact. Anything that imported as typed text can be linked to a real field afterwards
-            from the <strong>Schedule</strong> page, without re-importing the file.
-          </p>
-          <p>
-            Schedule imports block scored, submitted, completed, generator-locked, playoff,
-            pool-slot structural, and facility-lane structural changes. A completed tournament
-            is locked until you reopen it from the Tournaments list. Scores, delete imports, and
-            replace/wipe imports are not supported.
-          </p>
-        </>
-      ),
-      faqs: [
-        {
-          id: 'faq-import-current-vs-empty',
-          question: 'Should I use a current template or an empty template?',
-          answerText: 'Use a current template to update existing rows because it includes IDs. Use an empty template when preparing new rows.',
-          keywords: ['current template', 'empty template', 'ids', 'spreadsheet'],
-          answer: (
-            <p>Use a current template when editing existing teams or games because the ID columns tell FieldLogicHQ which record to update. Use an empty template for new rows and leave ID columns blank.</p>
-          ),
-        },
-        {
-          id: 'faq-import-warning-vs-blocked',
-          question: 'What is the difference between a warning and a blocked row?',
-          answerText: 'Warnings can still be applied after review. Blocked rows must be fixed and previewed again before apply.',
-          keywords: ['warning', 'blocked row', 'preview', 'apply'],
-          answer: (
-            <p>Warnings call attention to something worth reviewing, such as a name match or timing buffer. Blocked rows fail a safety rule and stop the apply step until the file is fixed and previewed again.</p>
-          ),
-        },
-        {
-          id: 'faq-import-delete-replace',
-          question: 'Can I wipe and replace teams or schedules from a spreadsheet?',
-          answerText: 'No. Imports are add/update-only. Missing spreadsheet rows do not delete teams or games.',
-          keywords: ['delete', 'replace', 'wipe', 'add update'],
-          answer: (
-            <p>No. Spreadsheet imports are add/update-only. Removing a row from the file does not remove the team or game from the tournament.</p>
           ),
         },
       ],

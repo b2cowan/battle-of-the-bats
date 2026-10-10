@@ -278,8 +278,11 @@ test.describe.serial('Tournament schedule import UAT smoke', () => {
     });
     const page = await context.newPage();
 
-    await page.goto(`/${smoke.orgSlug}/admin/tournaments/data-tools`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Data Tools' })).toBeVisible({ timeout: 30_000 });
+    // Data tools retired (Tournament admin redesign Stage 5, E10): the games import is the schedule's Tools row.
+    await page.goto(`/${smoke.orgSlug}/admin/tournaments/schedule`, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: 'Tools' }).first().click();
+    await expect(page.getByText('Import games from a spreadsheet', { exact: true }).last()).toBeVisible({ timeout: 30_000 });
+    await page.keyboard.press('Escape');
 
     const csv = buildImportCsv(smoke);
     const previewResponse = await page.evaluate(async ({ csvText, orgSlug, tournamentId }) => {

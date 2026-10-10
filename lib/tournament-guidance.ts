@@ -304,7 +304,7 @@ export function getStageShortcuts(
     draft: [
       { label: 'Preview what teams will see', sectionId: 'public-site-preview' },
       { label: 'Set up divisions and pool play', sectionId: 'divisions-and-pools' },
-      { label: 'Import a team list from a spreadsheet', sectionId: 'data-tools-imports', plus: 'import' },
+      { label: 'Import a team list from a spreadsheet', sectionId: 'registrations-and-teams', plus: 'import' },
       { label: 'Understand what activating does', sectionId: 'settings-and-access' },
     ],
     pre: [

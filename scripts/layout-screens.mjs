@@ -258,10 +258,11 @@ async function openPayeesWindow(page, { firstPayee = false } = {}) {
  *  this never falls back to the page: a locked item says why in a notice instead of opening, and a
  *  picture of the page would then pass as the window, so a window that does not appear fails the entry.
  *  (The identity check moves the pointer off after every opener — see `admin-identity.mjs`.) */
-async function openDataToolsImport(page, item) {
-  await page.locator('button[aria-haspopup="menu"][aria-label="Import"]:visible').first().click();
-  await page.locator('[role="menu"] [role="menuitem"]:visible', { hasText: item }).first().click();
-  await page.locator('.modal').first().waitFor({ state: 'visible', timeout: 15_000 });
+// Teams' Export menu → Import teams from a spreadsheet (Stage 5, E10): the import sheet, nothing chosen.
+async function openTeamsImport(page) {
+  await page.locator('main button[aria-haspopup="menu"]:visible', { hasText: 'Export' }).first().click();
+  await page.locator('[role="menu"] [role="menuitem"]:visible', { hasText: 'Import teams from a spreadsheet' }).first().click();
+  await page.locator('[role="dialog"]').first().waitFor({ state: 'visible', timeout: 15_000 });
 }
 
 // The team sheet, open (stage 1 · B1): the switcher's rows, reached from the team name in the
@@ -1505,7 +1506,7 @@ export const SCREENS = [
   ...[
 ['/dashboard', 'admin-t-dashboard'],
     ['/branding', 'admin-t-branding'], ['/check-in', 'admin-t-check-in'],
-    ['/communication', 'admin-t-communication'], ['/data-tools', 'admin-t-data-tools'],
+    ['/communication', 'admin-t-communication'],
     ['/divisions', 'admin-t-divisions'], ['/manage', 'admin-t-manage'],
     ['/registrations', 'admin-t-registrations'], ['/results', 'admin-t-results'], ['/rules', 'admin-t-rules'],
     ['/schedule', 'admin-t-schedule'], ['/settings', 'admin-t-settings'], ['/settings/event', 'admin-t-settings-event'],
@@ -1559,14 +1560,14 @@ export const SCREENS = [
     clock: (c) => `${c.tournamentGameDay}T07:00:00-04:00`,
     interact: (p) => openScheduleTool(p, 'Rain delay', '[role="dialog"]'),
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/schedule?tournamentId=${c.tournamentId}` },
-  // Data tools' two import windows (Admin Design Continuity Part B, area 3), each opened by its own item
-  // under the Import menu, nothing chosen or uploaded. They share one sheet and serve Data tools alone.
-  ...[
-    ['admin-t-data-tools-import-teams', 'Teams'],
-    ['admin-t-data-tools-import-schedule', 'Schedule'],
-  ].map(([id, item]) => ({ id, area: 'tournaments', session: 'orgOwner', ready: 'h1', scope: '.modal',
-    interact: (p) => openDataToolsImport(p, item),
-    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/data-tools?tournamentId=${c.tournamentId}` })),
+  // The import sheet, nothing chosen (Stage 5, E10 — Data tools retired): teams from Teams' Export menu, games from
+  // the schedule's Tools.
+  { id: 'admin-t-teams-import', area: 'tournaments', session: 'orgOwner', ready: 'h1', scope: '[role="dialog"]',
+    interact: openTeamsImport,
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/registrations?tournamentId=${c.tournamentId}` },
+  { id: 'admin-t-schedule-import', area: 'tournaments', session: 'orgOwner', ready: 'h1', scope: '[role="dialog"]',
+    interact: (p) => openScheduleTool(p, 'Import games from a spreadsheet', '[role="dialog"]'),
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/schedule?tournamentId=${c.tournamentId}` },
   // A club's own tournament, inside the CLUB frame — the tournament screens under the other rail.
   { id: 'admin-club-t-dashboard', area: 'tournaments', session: 'repClubOwner', ready: 'h1',
     path: (c) => `/${c.clubSlug}/admin/tournaments/dashboard?tournamentId=${c.clubTournamentId}` },

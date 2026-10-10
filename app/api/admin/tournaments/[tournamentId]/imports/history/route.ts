@@ -94,12 +94,20 @@ export const GET = withObservability(async (req: Request, { params }: RouteParam
     ? Math.min(Math.max(Math.trunc(requestedLimit), 1), 20)
     : 8;
 
-  const { data, error } = await supabaseAdmin
+  // The import sheet's "earlier imports" (Stage 5, E10): one kind, and only what went in or failed — every chosen file
+  // makes a preview batch, so filtering on the client let previews crowd real imports out of the limit.
+  const kind = url.searchParams.get('kind');
+  const types = kind === TOURNAMENT_TEAM_IMPORT_TYPE || kind === TOURNAMENT_SCHEDULE_IMPORT_TYPE
+    ? [kind]
+    : [TOURNAMENT_TEAM_IMPORT_TYPE, TOURNAMENT_SCHEDULE_IMPORT_TYPE];
+  let query = supabaseAdmin
     .from('import_batches')
     .select('id, import_type, source_filename, status, summary_json, actor_email, created_at, committed_at, expires_at')
     .eq('org_id', ctx.org.id)
-    .in('import_type', [TOURNAMENT_TEAM_IMPORT_TYPE, TOURNAMENT_SCHEDULE_IMPORT_TYPE])
-    .contains('scope_json', { tournamentId })
+    .in('import_type', types)
+    .contains('scope_json', { tournamentId });
+  if (url.searchParams.get('applied') === '1') query = query.in('status', ['committed', 'failed']);
+  const { data, error } = await query
     .order('created_at', { ascending: false })
     .limit(limit);
 

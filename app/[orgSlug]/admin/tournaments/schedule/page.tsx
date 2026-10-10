@@ -43,7 +43,10 @@ import { useScheduleData } from './useScheduleData';
 import { useScheduleExport } from './useScheduleExport';
 // The day (Stage 3 Part 2): its model, its words, and the shared parts it wears.
 import type { ReactNode } from 'react';
-import { CalendarDays, Clock, CloudRain, EyeOff, List, Lock, MoreHorizontal, Network, Sparkles, Trash2 } from 'lucide-react';
+import { CalendarDays, Clock, CloudRain, EyeOff, List, Lock, MoreHorizontal, Network, Sparkles, Trash2, Upload } from 'lucide-react';
+import ImportSheet, { ImportDoor } from '@/components/admin/tournament/ImportSheet';
+import { IMPORT_WORDS } from '@/lib/tournament-import-words';
+import { hasCapability } from '@/lib/roles';
 import {
   eventDays, fieldKeyOf, filtersOn, gamesByDay, matchesScheduleFilter, matchesScheduleSearch, NO_SCHEDULE_FILTER, openingDay,
   scheduleStateOf, SCHEDULE_STATES, stepDay, type ScheduleFilter, type ScheduleState, type ScheduleView,
@@ -84,8 +87,10 @@ const DEFAULT_HEALTH_RULES: ScheduleHealthRulesDraft = { maxGamesPerDay: 2, minR
 
 export default function AdminSchedulePage() {
   const { currentTournament, isLocked, loading: tournamentLoading, setCurrentTournament } = useTournament();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
   usePageTitle('Schedule');
+  // Import games from a spreadsheet (Stage 5, E10): Data tools retired; the import lives with the games.
+  const [importOpen, setImportOpen] = useState(false);
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
   const {
@@ -1200,7 +1205,14 @@ export default function AdminSchedulePage() {
   const unpublishedWithGames = unpublishedDivisions.filter(d => scheduled.some(g => g.divisionId === d.id));
   const showUnpublish = !isLocked && publishedDivisions.length > 0;
   const showClearBracket = shownView === 'bracket' && !isLocked && canBuildPlayoffsManually && bracketGames.length > 0;
-  const hasTools = (showGenerators && (hasRoundRobinStage || hasPlayoffStage)) || showRainDelay || showPublish || showUnpublish || showClearBracket;
+  // The import: the roles Data tools allowed, never on a locked (completed) event; Tournament Plus, its lock in words.
+  const showImport = !isLocked && Boolean(userRole && (
+    hasCapability(userRole, userCapabilities, 'manage_schedule_structure')
+    || hasCapability(userRole, userCapabilities, 'update_schedule')
+    || hasCapability(userRole, userCapabilities, 'create_tournaments')));
+  const canImport = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_data_imports') : false;
+  const hasOtherTools = (showGenerators && (hasRoundRobinStage || hasPlayoffStage)) || showRainDelay || showPublish || showUnpublish || showClearBracket;
+  const hasTools = hasOtherTools || showImport;
   const toolsMenu = hasTools ? (
     <CoachToolbarMenu
       label={W.tools}
@@ -1232,6 +1244,11 @@ export default function AdminSchedulePage() {
         <CoachToolbarMenuItem icon={<EyeOff size={16} aria-hidden />} label={T.unpublish} hint={W.toolHints.unpublish}
           onSelect={() => (publishedDivisions.length === 1 ? handleUnpublish(publishedDivisions[0].id) : setUnpublishOpen(true))} />
       )}
+      {showImport && hasOtherTools && <CoachToolbarMenuSeparator />}
+      {showImport && (canImport
+        ? <CoachToolbarMenuItem icon={<Upload size={16} aria-hidden />} label={IMPORT_WORDS.door('games')} hint={IMPORT_WORDS.doorHint}
+            onSelect={() => setImportOpen(true)} />
+        : lockedTool(IMPORT_WORDS.door('games'), null))}
     </CoachToolbarMenu>
   ) : null;
 
@@ -1319,6 +1336,9 @@ export default function AdminSchedulePage() {
 
       {currentTournament && !gamesLoading && games.length === 0 && !editingBracket && (
         <HelpCallout variant="info" title="No games scheduled yet" body={noGamesYet} />
+      )}
+      {currentTournament && !gamesLoading && games.length === 0 && !editingBracket && showImport && canImport && (
+        <ImportDoor kind="games" onOpen={() => setImportOpen(true)} />
       )}
 
       {/* Before publishing: the note at the top of the day (and All games, the Timeline) says who can't see the games
@@ -1641,6 +1661,17 @@ export default function AdminSchedulePage() {
       )}
 
       {/* The one Add a venue window (Stage 5, E5): the club's library or "your venues", and a new venue with its count. */}
+      {importOpen && currentTournament && orgSlug && (
+        <ImportSheet
+          kind="games"
+          tournament={{ id: currentTournament.id, name: currentTournament.name }}
+          orgSlug={orgSlug}
+          fieldWord={`${fieldNoun.toLowerCase()}s`}
+          onClose={() => setImportOpen(false)}
+          onImported={() => { void refresh(); }}
+        />
+      )}
+
       {addVenueOpen && currentTournament && (
         <AddVenuesWindow
           orgSlug={orgSlug ?? ''}

@@ -53,7 +53,6 @@ const KNOWN_DEBT: Record<string, string> = {
   // K-13 — the tournament admin's schedule generator preview and health tables keep the shell's
   // own cell sizes beside the flat-row list; headings were moved to the baseline in the same pass.
   'app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css': 'K-13',
-  'components/admin/import/TournamentTeamsImportDialog.module.css': 'out of scope — a dialog (standard §1)',
   'app/platform-admin/dev-tools/playbook.module.css': 'internal dev tool, not a customer surface',
 };
 

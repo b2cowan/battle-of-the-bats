@@ -292,7 +292,6 @@ const KIT_TOURNAMENT_LABELS: Readonly<Record<string, string>> = {
   'Venues & Facilities': 'Venues & facilities',
   'Rules & Resources': 'Rules & resources',
   'Public Site': 'Public site',
-  'Data Tools': 'Data tools',
   'Settings & Access': 'Settings & access',
 };
 

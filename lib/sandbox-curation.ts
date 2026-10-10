@@ -30,12 +30,12 @@
  *
  * `settings` is the Settings & Access hub, and hiding it covers three of the four corners at once —
  * it is where subscription, staff invitations, notification settings and the registration-field
- * builder all live. `settings/event` is the Setup group's deep event form. `data-tools` is exports.
+ * builder all live. `settings/event` is the Setup group's deep event form. (`data-tools` left with the page it
+ * hid: Data tools retired, Tournament admin redesign Stage 5.)
  */
 export const SANDBOX_HIDDEN_TOURNAMENT_NAV_KEYS: ReadonlySet<string> = new Set([
   'settings',
   'settings/event',
-  'data-tools',
 ]);
 
 /**
