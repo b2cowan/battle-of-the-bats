@@ -139,6 +139,24 @@ nothing else in the portal, and Cancel — the right answer to a rain-out — wa
 family on one press; Delete removes a game from families' calendars without a word. Guards:
 `tests/unit/coach-schedule-sheet-guard.test.ts` (the last describe), `coach-schedule-phone-guard.test.ts`.
 
+### 2026-10-09 — A MOVE CAN BE TAKEN BACK; A PUBLISHED GAME'S MOVE ASKS ONCE; AN EVENT'S OWN OVERLAP IS REFUSED, ANOTHER PROGRAM'S IS AMBER; ONE GAME LENGTH (owner, ruling Tournament admin redesign Stage 3 from the hub's paste-back — A36, A37, A39, all as recommended)
+
+**Decision:** (1) **Every move of a scheduled game ends in the floating notice (~8 s) carrying Undo**, which puts back
+the day, the time and the place (and un-cancels). It covers the drop, the phone's move sheet, the game window's
+when/where save, the rain delay and the bracket editor. It is the browser session's: no stored history. (2) **An
+unpublished game moves at once; a published game asks once before it moves** ("its teams are told"). In a record
+window that otherwise autosaves, a published game's change to when or where is **held until ✓**, which asks then. That
+is a named exception to "edit autosaves" (2026-09-24) for the one change that tells families, as the coaches portal
+already keeps that save. Played games don't drag. (3) **A same-event overlap** (the same surface, for the game's
+length) **is refused at every door and on the server**; a too-short buffer still warns. A booking of the club's other
+programs stays Club Stage 6a's **amber line, which never refuses**. (4) **A game's length is one chain everywhere**:
+the game's own, else its division's, else the event's, else the shared 90 — the board's "playing now" included.
+**Why:** today a drop saves at once with no way back; the tournament refused an overlap in two windows and allowed it
+in the drag and the phone sheet, with no server refusal; and three surfaces answered "how long is this game" three
+ways. An Undo inside the alerts' quiet window tells nobody, because today's alert rule already drops a game moved and
+moved back. **Applies to:** the tournament schedule (the Stage 3 build); "adjust by hand with Undo" is one of the
+parts named as Club Stage 11's starting point (A40). Record: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §6c.
+
 ### 2026-10-09 — A TEAM'S BILL HAS ONE FOOT ROW AT MOST, AND A LIST OF ONE HAS NO PREVIOUS · NEXT (owner, at 15U AAA's bill on a phone walking §285 W8: *"not a huge fan of the format and size of this footer"* → the recommendation → *"go ahead and build"*) — the window-footer ruling owed since 2026-10-01, for the bill window
 
 **Decision:** (1) **The kit draws no Previous · Next row when the record has no neighbour at either end** — every

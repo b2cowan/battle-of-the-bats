@@ -86,5 +86,5 @@ old Budget year picker (32, redrawn in Stage 3b).
   14 clean; one NEW finding unrelated to this change — `coach-schedule` in the coach session's Dark:
   the *Game day* link (`ScheduleCalendarViews` `gdEntryBtn`) is rgba(16,19,10) on rgb(17,24,39),
   1.06:1. Time-dependent (shows only near a game). Reported, not fixed.
-- **Owner QA:** ledger §262, walk on the hub's QA Walk tab.
+- **Owner QA:** ledger §262 ✅ PASSED 2026-10-07 on the owner's word (not ticked step by step).
 - **Committed `d9302f6f` 2026-10-05** (at the owner's ask, so Sheet Frame step 1 could build on the shared Tools stylesheet).

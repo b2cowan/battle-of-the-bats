@@ -1,6 +1,6 @@
 # Save over a practice template, a drill or a circuit — PM brief
 
-**Status:** drawn and ruled as drawn 2026-10-02 (D1–D12); built on dev 2026-10-02; owner QA §260. Plan: `COACH_PRACTICE_SAVE_OVER_PLAN.md`. Hub: `COACH_PRACTICE_SAVE_OVER_HUB.html`.
+**Status:** drawn and ruled as drawn 2026-10-02 (D1–D12); built on dev 2026-10-02; owner QA §260 ✅ PASSED 2026-10-07 on the owner's word. Plan: `COACH_PRACTICE_SAVE_OVER_PLAN.md`. Hub: `COACH_PRACTICE_SAVE_OVER_HUB.html`.
 
 ## What changes for the coach
 Practice plans have three saves: a whole practice as a **template**, one activity as a **drill**, and a block of stations as a **circuit**. Today each one only creates, and a name you already have is refused after you press the button. With this change, all three can **save over** the one you have, the way the lineup builder's Save as template does now:

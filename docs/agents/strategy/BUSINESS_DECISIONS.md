@@ -8,6 +8,111 @@
 
 ---
 
+### 2026-10-08 — The club scheduler is carried by the HOUSE-LEAGUE plan and BOTH Club bands: plan choice follows what an organization runs, never a feature an upgrade unlocks
+**Status:** **Decided** (owner, 2026-10-08 — Club readiness Stage 11, Ask 6: *"house leagues and club plans can hold the scheduler, going from house league only to club is not a functionality decision rather than what does the club do and a calendar generator would not make them say 'lets now add our rep program'."*) · one sub-point **Proposed** (the free League floor, below). **Nothing built** — Stage 11 of `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` is drawn with Stage 10 (permits) in one mockup session first.
+
+**What the scheduler is (Stage 11):** an admin hands out the organization's shared time — a dome's winter hours, pitching-tunnel nights, house league's practice slots — by entering parameters, generating a draft, adjusting it by hand, finalizing it, keeping it as a named schedule, reading it as summaries and sending it to staff. It hands out **time**, not game pairings.
+
+**Decision:**
+1. **League Plus (`league`), Club (`club`) and Club · Association (`club_large`) carry it.** A house-league organization schedules its practices and facility time with it as fully as a club does.
+2. **Not the Tournament plans, not the standalone Premium Coaches Portal.** A tournament has its own generator (`auto_schedule`, Tournament Plus); a standalone team has no organization time to hand out.
+3. **It is never an upgrade lever between League Plus and Club.** Nothing about the scheduler differs between the two, and no copy may present it as a reason to move from League Plus to Club.
+4. **No price, band, SKU or plan-name change.** An inclusion of the three plans.
+
+**Rationale:** The owner's reasoning is the brand canon's own tier rule (`BRAND_STRATEGY.md` §"Tier rules" 1–2: League and Club are peers for different kinds of organization, not a seniority ladder; "League is a peer of Club, not a stepping stone to it"). An organization chooses Club because it runs rep teams, not because a tool is locked; gating a scheduling tool at Club would tell a pure house league it is a "smaller" club, the framing the canon forbids, and would not move a single league to Club. Commercially, the tool's value — sharing scarce diamonds and dome hours across many teams — is the same daily problem for a house-league president as for a club president, so it strengthens both paid org plans at once. ⚠ **Pre-revenue hypothesis:** no customer has asked for it; League Plus is parked (2026-07-28) and has never been sold, so the League side of this ruling takes effect only when house league un-parks (Stage 9).
+
+**Proposed — the free League floor (held, flag off):** recommended **excluded**. The free floor is "a first house-league season" (1 season · 1 division · 8 teams); the scheduler is the paid floor's tool, the same line `auto_schedule` draws between Tournament and Tournament Plus. Not urgent: the floor is held and parked. Owner to rule when house league un-parks.
+
+**Affects:** `PLAN_PRICING_FACTS.md` (an inclusions line and a not-yet-built item, this session); Stage 11's build (a feature key); `/for-leagues`, `/for-clubs` and the plan cards **only when it ships**.
+
+**Handoff:**
+HANDOFF → `/billing` — at Stage 11's build: one feature key gated so League Plus and both Club bands pass and Tournament / Tournament Plus / `team` do not (gate at `league` if the rank ladder already orders `league` < `club` < `club_large` above `tournament_plus`; verify the ladder, never assume it), `lib/plan-features.ts` + the Facts doc in the same unit of work, drift check run.
+HANDOFF → `/marketing` — at ship only, and never before (the Facts doc does not advertise what is not built): name it on `/for-leagues` and `/for-clubs` in the same terms, with no "upgrade to Club for scheduling" framing anywhere. Today no surface mentions a scheduler, so nothing needs correcting.
+HANDOFF → `/plan` — done this session: Stage 11 Ask 6 recorded as ruled in the Club readiness plan and hub.
+
+**Supersedes:** nothing. **Relates to:** 2026-07-28 League & Club park (League Plus unsold; the League side waits for Stage 9's un-park); 2026-09-25 Permits & bookings (Stage 10, drawn together with Stage 11 — whether permits also reach League Plus is NOT ruled here and stays Club-only until ruled); brand tier rules (`BRAND_STRATEGY.md`).
+
+---
+
+### 2026-10-08 — The Club production release ALSO waits for the club scheduler (Stage 11), after permits (Stage 10)
+**Status:** **Decided** (owner, 2026-10-08 — Club readiness Stage 11, Ask 5, ruling against the recommendation: *"I agree with your recommendations for both stage 6 and 11 except that the release will wait until this is all done."*).
+
+**Decision:** the first Club production release (the Stage 8 go/no-go of `CLUB_TIER_PRODUCTION_READINESS_PLAN.md`) comes after **Stage 11, the club scheduler**, as well as Stage 10 (permits) and Stage 6 (venues, the clash check, the club calendar). The chain to release is now 6 → 10 + 11 (drawn in one session, built as two) → 8. The recommendation offered — release first and ship the scheduler to the founding clubs as an update, since it is the largest new build in the programme — is **rejected**.
+
+**Rationale:** the owner's release posture since 2026-09-25 is completeness over speed (*"we are not rushing to production"*; permits made a release gate on the same reasoning). The scheduler and permits are one idea — the time a club holds and how it is handed out — so a release carrying permits without the scheduler would record the club's diamond hours and leave their allocation in a spreadsheet. **The cost, named:** the release moves out by the scheduler's whole build and walk, the longest single item left in the programme, and the Club price ($219 / $379) stays unvalidated against a paying customer for that much longer (the 2026-07-28 finding). Club stays early-access and date-free ("coming soon") on every surface in the meantime (2026-09-28 ruling) — nothing customer-facing changes.
+
+**Affects:** the Club readiness plan §7 sequencing and Stage 8's entry condition (updated this session); no price, gate, copy or config change.
+
+**Handoff:**
+HANDOFF → `/plan` — done this session: §7 and Stage 11 say the release waits; Stage 8's go/no-go now follows Stages 3, 6, 10 and 11.
+HANDOFF → `/marketing` — none. Club's date-free "coming soon" (2026-09-28) already covers a later release; no surface may name a release date.
+HANDOFF → `/billing` — none; gates stay `early_access` until the Stage 8 flip runbook.
+
+**Supersedes:** nothing. **Extends:** 2026-09-25 "Permits & bookings are IN the Club tier, and the Club production release WAITS for them" (the same posture applied to Stage 11).
+
+---
+
+### 2026-10-07 — On a one-slot plan, the finished board says plainly that next year costs this year's public site; whether a FINISHED event should keep holding the slot is OPEN
+**Status:** **Decided** (part 1: the disclosure — owner, 2026-10-06, Tournament admin redesign Stage 4 ask **A23** ruled "as recommended" in the paste-back; built and on prod 2026-10-07, job 277) · **Proposed — awaiting the owner** (part 2: the packaging question A23 routed here; nothing ratified).
+
+**Today's rule, read from the code (2026-10-07):**
+- The free **Tournament** plan and the **Premium Coaches Portal's** included tournament each have **one tournament slot**.
+- Every event that is **not archived** holds a slot. That includes a **completed** one.
+- A slot is freed only by **Archive**. Archived is not a public status, so archiving takes the event's **public site and every shared link offline**.
+- So a free organizer setting up next year's event must take last year's results down first.
+
+**Decision (part 1, Decided):** the product says so before it bites.
+- The finished event's board carries one sentence beside **Archive**, on the one-slot plans only: one slot, this event holds it, and archiving takes its site and shared links offline.
+- Archive stays on the board as next year's path.
+- **Summary** and **Reuse this setup** show as lock lines (Tournament Plus), never as dashed boxes (2026-09-30 design ruling).
+- The archive question asks first, in the same words.
+- **No gate, price, slot count or plan name changed.**
+- Before this, nothing said it until New tournament refused at the limit.
+
+**The open question (part 2, Proposed):** should a **finished** event keep holding the one slot?
+
+**Recommendation (not ratified): B, "one at a time."**
+- A **completed** event stops holding the slot. Only Draft and Live events count.
+- Last year's results stay online, read-only.
+- Archive becomes a tidy-up, not a toll.
+
+The options:
+- **A, keep today's rule.** The slot is the upgrade moment.
+- **B, one at a time.** As above.
+- **C, a middle.** A finished event keeps the slot, but archiving no longer takes its results offline. That changes what Archive means on every plan.
+
+**Rationale for B:**
+1. **The moment A charges is a hostile one.** The organizer pays for next year by breaking every results link that parents, coaches and the local paper already shared. The trust cost falls on the families the free floor is meant to reach.
+2. **The free floor's job is acquisition** (free-floor model; the Founding Season posture). An organizer who comes back next year is already the win.
+3. **Tournament Plus keeps its reasons, all of them untouched by B:** several events at once, Reuse this setup (`tournament_cloning`), the saved Summary and shareable results, Sealed records (`sealed_archives`), branding, the comms workflow.
+4. **It reads the Facts doc's "1 tournament" the way an organizer already hears it:** one running at a time.
+5. **It fits the Premium Coaches Portal's one included tournament,** which is naturally once per season.
+
+**The tradeoff:** B removes the one upgrade trigger that fires on its own for a returning free organizer. Pre-revenue, there is no data on how strong that trigger is. **This is a hypothesis, not a finding.** Revisit B after the first real season's conversion data.
+
+**What part 2 does not touch, whatever is ruled:** prices, plan names, the staff-seat limit and every feature key.
+
+**Affects:**
+- **Part 1:** done. `lib/after-event-words.ts`, the Stage 4 board, and the archive question's words beside them.
+- **Part 2, if ruled B:**
+  - the slot-occupancy rule, which today is "occupied = not archived";
+  - New tournament's and the clone route's limit checks;
+  - the one-slot sentence;
+  - the archive question's "the slot is freed" clause;
+  - the Facts doc's Tournament row and its note;
+  - the Tournament admin redesign's Stage 5 (creation).
+- **If ruled C:** the meaning of Archive on every plan, and the public pages' archived-event handling.
+
+**Handoff:**
+HANDOFF → owner — rule part 2 (A, B or C). Until then, today's rule and the part-1 sentence stand.
+HANDOFF → `/billing` — only on a B or C ruling: the occupancy rule in the plan-limit check (`getEffectiveTournamentLimit` and its callers), New tournament and the clone route, and the Facts doc in the same change.
+HANDOFF → `/marketing` — part 1 is live. The sentence's words-pass coverage is not recorded, so it's worth a glance in the next `/marketing` session. On a B ruling, the one-slot sentence and the archive question's slot clause are rewritten. The pricing page's "1 tournament" may then say "one at a time" if `/marketing` judges it clearer.
+HANDOFF → `/plan` — on a B or C ruling, fold it into the Tournament admin redesign's Stage 5 (creation owns the limit checks; A18 already moved the draft board there). It needs no plan of its own.
+
+**Supersedes:** nothing. **Source:** `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §3 F49 and §6d (A23; "Routed, not built"); hub https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM (Stage 4, A23).
+
+---
+
 ### 2026-10-02 — A club can SHARE payees with its teams, and sees what its teams recorded paying to THOSE payees — nothing else of a team's spending
 **Status:** Decided (owner, 2026-10-02 — *"I agree with your recommendations, go ahead with strategy"*, on the Ledger Parity discussion; D7 on hub https://claude.ai/artifact/EQqEd3s4CBLbnrnPuUVAAo). **Nothing built**; the D6/D7 drawings are in review.
 
