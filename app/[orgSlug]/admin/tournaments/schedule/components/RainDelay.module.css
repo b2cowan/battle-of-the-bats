@@ -1,0 +1,32 @@
+/*
+ * THE RAIN DELAY (Tournament admin redesign Stage 3, S5) — its contents; the kit's form window holds the frame.
+ * On the kit's tokens from the start: no old look.
+ */
+
+/* Storm Mode's place (A42): reserved at the window's top, and empty — its own project, not designed. */
+.stormPlace:empty { display: none; }
+
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; align-items: end; }
+.empty { margin: 0.4rem 0; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
+
+/* A row's new time reads first; a cancelled row says so in the live ink. */
+.move { font-weight: 650; color: var(--text-primary); }
+.cancelled { font-weight: 650; color: var(--danger-light); }
+/* The check, under the row: red when the tournament refuses it, amber for the club's booking (warns only). */
+.refuse,
+.club { display: flex; gap: 0.3rem; align-items: baseline; margin-top: 0.25rem; font-weight: 600; }
+.refuse { color: var(--danger-light); }
+.club { color: var(--badge-warning-ink); }
+.refuse svg,
+.club svg { flex: none; position: relative; top: 2px; }
+
+.go { flex: 1 1 auto; }
+.go:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 768px) {
+  .pair input,
+  .pair select { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 480px) {
+  .pair { grid-template-columns: minmax(0, 1fr); }
+}

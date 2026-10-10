@@ -72,6 +72,28 @@ export function findRefusedOverlap(params: {
   return null;
 }
 
+/**
+ * EVERY refused overlap a batch makes, by proposed game — the rain delay marks each row it would put on a taken
+ * diamond (S5), where a writer needs only the first. The same order and pool as `findRefusedOverlap`.
+ */
+export function refusedOverlapsById(params: {
+  proposed: readonly OverlapGame[];
+  existing: readonly OverlapGame[];
+  divisions: Division[];
+  tournament: Tournament | null | undefined;
+}): Map<string, ConflictResult> {
+  const leaving = new Set(params.proposed.map(p => p.id));
+  const pool: OverlapGame[] = params.existing.filter(g => !leaving.has(g.id));
+  const out = new Map<string, ConflictResult>();
+  for (const p of params.proposed) {
+    if (p.status === 'cancelled') continue;
+    const conflict = checkVenueConflict({ proposedGame: p, allGames: pool, divisions: params.divisions, tournament: params.tournament });
+    if (conflict && isRefusedOverlap(conflict)) out.set(p.id, conflict);
+    pool.push(p);
+  }
+  return out;
+}
+
 const teamWords = (name: string | null | undefined, placeholder: string | null | undefined) =>
   name?.trim() || slotWords(placeholder) || 'TBD';
 

@@ -15,7 +15,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import BracketEditor from './components/BracketEditor';
-import ShiftDayModal from './components/ShiftDayModal';
+import ShiftDayModal, { type RainDelayDone } from './components/ShiftDayModal';
 import { type ScheduleHealthRulesDraft } from './components/ScheduleHealthPanel';
 import PlayoffBracketView from './components/PlayoffBracketView';
 import ScheduleTimeline from './components/ScheduleTimeline';
@@ -48,7 +48,7 @@ import {
   eventDays, fieldKeyOf, filtersOn, gamesByDay, matchesScheduleFilter, matchesScheduleSearch, NO_SCHEDULE_FILTER, openingDay,
   scheduleStateOf, SCHEDULE_STATES, stepDay, type ScheduleFilter, type ScheduleState, type ScheduleView,
 } from '@/lib/schedule-day';
-import { GAME_WINDOW_WORDS as GW, MOVE_WORDS as MW, SCHEDULE_DAY_WORDS as W, SCHEDULE_TOOL_NAMES as T, slotWords } from '@/lib/schedule-words';
+import { GAME_WINDOW_WORDS as GW, MOVE_WORDS as MW, RAIN_DELAY_WORDS as RW, SCHEDULE_DAY_WORDS as W, SCHEDULE_TOOL_NAMES as T, slotWords } from '@/lib/schedule-words';
 import { placeOfWhere } from '@/lib/tournament-where';
 import { clashLine } from '@/lib/venue-clash-words';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
@@ -99,6 +99,8 @@ export default function AdminSchedulePage() {
   const say = (message: string, action?: { label: string; onAction: () => void }) => setNotice({ key: Date.now(), message, action });
   // A move on the timeline that lands on another of the club's bookings: 6a's amber line, above the grid (S4).
   const [crossNote, setCrossNote] = useState<ClashLine | null>(null);
+  // The rain delay's Undo after a posted message asks first (the message stays posted).
+  const [rainUndoAsk, setRainUndoAsk] = useState<{ answer: (go: boolean) => void } | null>(null);
   // The view and the day (S1, A33): the schedule opens on the day — today during the event, its first day before it,
   // its last after it — every division, both stages, every state. `chosenDay` stays null until the organizer steps,
   // so the opening follows the games as they load. Nothing here is remembered between visits (1 October).
@@ -558,6 +560,31 @@ export default function AdminSchedulePage() {
       setFeedback({ isOpen: true, title: SCHEDULE_REFUSAL_TITLE.saveGame, message: e instanceof Error ? e.message : SCHEDULE_REFUSAL.gameFallback, type: 'warning' });
     }
   }
+  /** The rain delay is done (posted or skipped): the notice says what changed, with Undo for the whole batch (A42). */
+  function rainDelayDone(done: RainDelayDone) {
+    setShowShiftDay(false);
+    void reloadGames();
+    if (done.moved === 0 && done.cancelled === 0) return;
+    say(RW.done(done.moved, done.cancelled, done.shiftMinutes), { label: MW.undo, onAction: () => { void undoRainDelay(done); } });
+  }
+  async function undoRainDelay(done: RainDelayDone) {
+    if (done.posted && !(await new Promise<boolean>(answer => setRainUndoAsk({ answer })))) return;
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    const res = await fetch(`/api/admin/games${orgQuery}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'bulk-restore',
+        tournamentId,
+        restores: done.shifts.map(sh => ({ id: sh.id, date: sh.from.date, time: sh.from.time })),
+        reinstateIds: done.cancelIds,
+      }),
+    });
+    if (await refusedWrite(res, SCHEDULE_REFUSAL_TITLE.saveGame)) { void reloadGames(); return; }
+    await reloadGames();
+    say(RW.undone);
+  }
+
   /** A game whose teams are told when it moves: its division is published and it is still to play. */
   function livePublished(g: Game) {
     return g.status === 'scheduled' && divisions.find(d => d.id === g.divisionId)?.scheduleVisibility === 'published';
@@ -1605,19 +1632,39 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      {showShiftDay && tournamentId && (
+      {showShiftDay && tournamentId && currentTournament && (
         <ShiftDayModal
-          tournamentId={tournamentId}
+          tournament={currentTournament!}
           orgSlug={currentOrg?.slug ?? ''}
+          planId={currentOrg?.planId ?? null}
           games={games}
           teams={teams}
           divisions={divisions}
+          venues={venues}
+          fieldNoun={fieldNoun}
           getVenueKey={getGameVenueKey}
           getVenueLabel={getGameVenueDisplay}
           canPushFans={currentOrg?.planId ? hasPlanFeature(currentOrg.planId, 'fan_score_alerts') : false}
           onClose={() => setShowShiftDay(false)}
-          onApplied={() => { void refresh(); }}
+          onApplied={() => { void reloadGames(); }}
+          onFinished={rainDelayDone}
         />
+      )}
+
+      {rainUndoAsk && (
+        <KitDialog
+          kind="question"
+          title={RW.undoAsk.title}
+          onClose={() => { rainUndoAsk.answer(false); setRainUndoAsk(null); }}
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => { rainUndoAsk.answer(false); setRainUndoAsk(null); }}>{RW.undoAsk.keep}</button>
+              <button type="button" className="btn btn-lime" onClick={() => { rainUndoAsk.answer(true); setRainUndoAsk(null); }}>{RW.undoAsk.go}</button>
+            </>
+          )}
+        >
+          <p>{RW.undoAsk.body}</p>
+        </KitDialog>
       )}
 
       {unpublishOpen && (

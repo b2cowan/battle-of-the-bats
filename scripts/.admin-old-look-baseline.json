@@ -126,10 +126,6 @@
   "app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css": {
     "kitScope": 57
   },
-  "app/[orgSlug]/admin/tournaments/schedule/components/ShiftDayModal.tsx": {
-    "kx": 33,
-    "helpers": 1
-  },
   "app/[orgSlug]/admin/tournaments/schedule/components/ZeroVenuePrompt.tsx": {
     "kx": 4,
     "helpers": 1

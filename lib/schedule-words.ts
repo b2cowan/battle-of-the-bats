@@ -12,7 +12,7 @@
  * ⚠ A generator save tells NO ONE (it records no schedule change). Nothing here may say or imply teams are told.
  */
 
-import { pluralize as count } from './utils.ts';
+import { formatTime, pluralize as count } from './utils.ts';
 import { GAME_DAY_LIST, GAME_STATE_WORD } from './game-day-words.ts';
 import { TEAMS_WORDS } from './registration-words.ts';
 import { formatShortWeekdayDate } from './timezone.ts';
@@ -437,6 +437,84 @@ export const MOVE_WORDS = {
   sheetCaption: (division: string, stage: string, when: string, where: string) =>
     [division, stage, when ? `now ${when}` : '', where].filter(Boolean).join(' · '),
   nextFree: (time: string) => `Use the next free time, ${time}`,
+} as const;
+
+// ── THE RAIN DELAY (Stage 3 build, Part 6 — S5, A42; /marketing 2026-10-09) ───────────────────────────────────────
+
+/** "an hour", "30 minutes", "2 hours", "1 hour 30 minutes" — the shift in a sentence. */
+export function shiftWords(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const hours = h === 1 ? (m ? '1 hour' : 'an hour') : h > 1 ? `${h} hours` : '';
+  return [hours, m ? count(m, 'minute', 'minutes') : ''].filter(Boolean).join(' ') || '0 minutes';
+}
+
+/** A rain-delay row's move: "4:00 → 5:00 p.m." — the first clock drops its a.m./p.m. only when both share it. */
+export function rainDelayMove(from: string, to: string, nextDay: boolean): string {
+  const a = formatTime(from);
+  const b = formatTime(to);
+  const suffix = (t: string) => t.match(/[ap]\.m\.$/)?.[0] ?? '';
+  return RAIN_DELAY_WORDS.move(suffix(a) && suffix(a) === suffix(b) && !nextDay ? a.replace(/\s?[ap]\.m\.$/, '') : a, b, nextDay);
+}
+
+export const RAIN_DELAY_WORDS = {
+  title: 'Rain delay',
+  /** "Today · Fri, Oct 9 · 2 games still to play". */
+  caption: (dayLabel: string, n: number) => `${dayLabel} · ${count(n, 'game', 'games')} still to play`,
+  day: 'Day',
+  dayChoice: (dayLabel: string, n: number) => `${dayLabel} · ${count(n, 'game', 'games')}`,
+  division: 'Division',
+  allDivisions: 'All divisions',
+  field: (noun: string) => noun,
+  allFields: (noun: string) => `All ${noun.toLowerCase()}s`,
+  shift: 'Push the games later by',
+  shiftChoice: (minutes: number) => (minutes === 60 ? '1 hour' : minutes % 60 === 0 ? `${minutes / 60} hours` : `${minutes} minutes`),
+  anotherAmount: 'Another amount',
+  minutes: 'Minutes',
+  /** A row's move: "4:00 → 5:00 p.m." (the next day says so). */
+  move: (from: string, to: string, nextDay: boolean) => `${from} → ${to}${nextDay ? ', the next day' : ''}`,
+  cancelGame: 'Cancel game',
+  cancelled: 'Cancelled',
+  moveInstead: 'Move instead',
+  beforeFeeder: 'before the game that feeds it',
+  bracketOrder: 'This would put a playoff game before the game that feeds it. Push fewer games, or a different amount, so every playoff game stays after its feeders.',
+  cancellingPlayoff: "You're cancelling a playoff game. Its place in the bracket needs settling by hand afterwards.",
+  noGames: 'No games left to move.',
+  noGamesBody: 'This moves or cancels the games still to play on a day. Once a day has games, come back for a rain delay or a day running behind.',
+  noMatch: 'No games match these filters.',
+  /** The lime: what it does, and who it tells when any of it is published. */
+  apply: (moving: number, cancelling: number, tells: boolean) => {
+    const parts = moving > 0 && cancelling > 0
+      ? `Move ${count(moving, 'game', 'games')}, cancel ${cancelling}`
+      : moving > 0 ? `Move ${count(moving, 'game', 'games')}` : `Cancel ${count(cancelling, 'game', 'games')}`;
+    return `${parts}${tells ? ' · tells their teams' : ''}`;
+  },
+  /** After the announcement step: the notice, with Undo. */
+  done: (moved: number, cancelled: number, minutes: number) => (moved > 0 && cancelled > 0
+    ? `${count(moved, 'game', 'games')} moved, ${cancelled} cancelled`
+    : moved > 0 ? `${count(moved, 'game', 'games')} moved ${shiftWords(minutes)} later` : `${count(cancelled, 'game', 'games')} cancelled`),
+  undone: 'The day is back as it was',
+  /** Undo after the organizer posted a message (found by /marketing, not in the drawing): it asks first. */
+  undoAsk: {
+    title: 'Put the games back?',
+    body: "Your message about the delay stays posted. Post a correction so teams aren't left with the old news.",
+    keep: 'Keep the delay',
+    go: 'Put them back',
+  },
+  /** The announcement step (kept). */
+  announce: {
+    lead: (moved: number, cancelled: number) => `${[moved ? `${count(moved, 'game', 'games')} moved` : '', cancelled ? `${cancelled} cancelled` : ''].filter(Boolean).join(' · ')}. Now let people know.`,
+    title: 'Message title',
+    body: 'Message',
+    notify: (fans: boolean) => (fans ? 'Send a notification to opted-in fans and your staff and coaches' : 'Send a notification to your staff and coaches'),
+    notifyHint: (fans: boolean) => (fans
+      ? 'Pushes to fans following the tournament and to your coaches, and pins to the public schedule.'
+      : 'Pushes to your staff and portal coaches, and pins to the public schedule. Fan push is on Tournament Plus.'),
+    skip: 'Skip',
+    post: (notify: boolean) => (notify ? 'Post & notify' : 'Post to schedule'),
+    posting: 'Posting…',
+    draftTitle: 'Schedule update',
+  },
 } as const;
 
 /** A bracket slot's words in the admin — the ONE slot wording (owner 2026-07-17: "Semifinal 1 winner"), with a seed

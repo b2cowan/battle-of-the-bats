@@ -111,7 +111,7 @@ describe('every writer refuses before its first write (A37 — fails when a new 
     const hits = [/\.insert\(/, /\.update\(/, /\.rpc\(/, /\.delete\(/].map(re => b.search(re)).filter(i => i >= 0);
     return hits.length ? Math.min(...hits) : Infinity;
   };
-  for (const action of ['bulk-save', 'create', 'save-bracket', 'replace-division-round-robin', 'bulk-reschedule', 'update', 'revert-to-scheduled']) {
+  for (const action of ['bulk-save', 'create', 'save-bracket', 'replace-division-round-robin', 'bulk-reschedule', 'bulk-restore', 'update', 'revert-to-scheduled']) {
     test(`the games route's ${action}`, () => {
       const b = block(action);
       const at = b.indexOf('overlapRefused(');
@@ -140,7 +140,7 @@ describe('every writer refuses before its first write (A37 — fails when a new 
     // These place nothing: they delete, score, cancel (which frees a diamond) or finalize.
     const placesNothing = new Set(['delete-game', 'delete-division-games', 'delete-games', 'delete-playoff-games', 'delete-division-playoff-games',
       'delete-tournament-games', 'cancel', 'forfeit', 'submit-score', 'finalize', 'revert-score']);
-    const writers = new Set(['bulk-save', 'create', 'save-bracket', 'replace-division-round-robin', 'bulk-reschedule', 'update', 'revert-to-scheduled']);
+    const writers = new Set(['bulk-save', 'create', 'save-bracket', 'replace-division-round-robin', 'bulk-reschedule', 'bulk-restore', 'update', 'revert-to-scheduled']);
     const unknown = [...new Set(actions)].filter(a => !writers.has(a) && !placesNothing.has(a));
     assert.deepEqual(unknown, [], 'a new action that places a game must ask the overlap rule before it writes');
   });

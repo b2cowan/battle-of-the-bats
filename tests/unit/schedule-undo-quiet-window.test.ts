@@ -1,5 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { collapseNotices, type NoticeGameNow, type QueuedNotice } from '../../lib/schedule-change-classify.ts';
 import { zonedWallClockToUtc } from '../../lib/timezone.ts';
 
@@ -74,5 +75,21 @@ describe('the gates the collapse keeps', () => {
   test('a game already played, or already started: nothing', () => {
     assert.deepEqual(sweep([notice({})], game({ game_time: '18:00:00', status: 'completed' })), []);
     assert.deepEqual(sweep([notice({})], game({ game_date: '2026-10-09', game_time: '11:00:00' })), []);
+  });
+});
+
+describe('the rain delay can be undone inside the window (S5, A42)', () => {
+  const route = readFileSync(new URL('../../app/api/admin/games/route.ts', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+  const shift = route.slice(route.indexOf("if (action === 'bulk-reschedule')"), route.indexOf("if (action === 'bulk-restore')"));
+  test('it records the game\'s real place on both sides (a null place would never collapse with its Undo)', () => {
+    assert.match(shift, /date: g\.date, time: g\.time, location: g\.location, status: g\.status,/);
+    assert.match(shift, /location: g\.location,\n\s+status: now\.status,/);
+    assert.doesNotMatch(shift, /location: null/);
+  });
+  test('its Undo is a writer like any other: told, and refused when its old place is taken', () => {
+    const restore = route.slice(route.indexOf("if (action === 'bulk-restore')"), route.indexOf('    if (!id) {'));
+    assert.match(restore, /overlapRefused\(restoreTournamentId,/);
+    assert.match(restore, /await announceScheduleChanges\(ctx\.org, restoreTournamentId,/);
+    assert.match(restore, /\.eq\('status', 'cancelled'\)/, 'only a game still cancelled is put back on');
   });
 });

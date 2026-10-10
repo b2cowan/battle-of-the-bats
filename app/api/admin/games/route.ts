@@ -1019,7 +1019,7 @@ export const PATCH = withObservability(async (req: Request) => {
 
       const { data: gameRows, error: loadErr } = await supabaseAdmin
         .from('games')
-        .select('id, status, game_date, game_time, is_playoff, bracket_code, home_placeholder, away_placeholder, home_team_id, away_team_id, division_id')
+        .select('id, status, game_date, game_time, location, is_playoff, bracket_code, home_placeholder, away_placeholder, home_team_id, away_team_id, division_id')
         .eq('tournament_id', bulkTournamentId);
       if (loadErr) throw loadErr;
 
@@ -1034,6 +1034,7 @@ export const PATCH = withObservability(async (req: Request) => {
         awayPlaceholder: g.away_placeholder,
         homeTeamId: g.home_team_id,
         awayTeamId: g.away_team_id,
+        location: (g.location ?? null) as string | null,
       }));
 
       const plan = planBulkReschedule(allGames, { shiftMinutes, shiftIds, cancelIds });
@@ -1119,8 +1120,11 @@ export const PATCH = withObservability(async (req: Request) => {
           .flatMap((g) => {
             const now = settled.get(g.id);
             if (!now) return [];
+            // The game's REAL place on both sides: a shift never moves it, and the quiet window's collapse needs the
+            // true "was" to see a rain delay undone inside it as no news (Stage 3 Part 6 — it read null, so an Undo
+            // would have been told as a move).
             const before: GameScheduleSnapshot = {
-              date: g.date, time: g.time, location: null, status: g.status,
+              date: g.date, time: g.time, location: g.location, status: g.status,
             };
             return [{
               gameId: g.id,
@@ -1131,9 +1135,8 @@ export const PATCH = withObservability(async (req: Request) => {
               after: {
                 date: now.game_date,
                 time: now.game_time,
-                // Location is untouched by a bulk shift; passing the same value on both sides
-                // keeps the diff honest (a shift is a time change, never a venue change).
-                location: null,
+                // Untouched by a bulk shift: the same value on both sides (a shift is a time change, never a venue change).
+                location: g.location,
                 status: now.status,
               },
             }];
@@ -1155,6 +1158,70 @@ export const PATCH = withObservability(async (req: Request) => {
         noticeIds,
         crossProgram,
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // ── bulk-restore (Stage 3 Part 6, A42): the rain delay's Undo ───────────────────────────────────
+    // Puts a batch back where the client's own record says it was: each moved game to its day and time, each
+    // cancelled game back on. The client is trusted for the VALUES (its record of the batch it just applied) and never
+    // for the SCOPE: every id is re-read in this tournament; a game moved back must still be to play, a game put back on
+    // must still be cancelled. The overlap rule holds as on every writer (A37). Recorded like any change: inside the
+    // alerts' quiet window a move and its Undo collapse to nothing (lib/schedule-change-classify.ts, collapseNotices).
+    if (action === 'bulk-restore') {
+      if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
+      if (!hasPlanFeature(ctx.org.planId, 'bulk_reschedule')) return planFeatureForbidden('bulk_reschedule');
+      const restoreTournamentId: string | undefined = body.tournamentId;
+      if (!restoreTournamentId) {
+        return new Response(JSON.stringify({ error: 'tournamentId required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+      const restoreDenied = scopeGuard(ctx, restoreTournamentId);
+      if (restoreDenied) return restoreDenied;
+      const restoreWrongOrg = await requireTournamentInOrg(ctx, restoreTournamentId);
+      if (restoreWrongOrg) return restoreWrongOrg;
+      if (await isTournamentLocked(restoreTournamentId)) return tournamentLockedResponse();
+
+      const restores = (Array.isArray(body.restores) ? body.restores : [])
+        .filter((r: any) => typeof r?.id === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r?.date ?? '') && /^\d{2}:\d{2}/.test(r?.time ?? ''))
+        .map((r: any) => ({ id: r.id as string, date: r.date as string, time: (r.time as string).slice(0, 5) }));
+      const reinstateIds: string[] = Array.isArray(body.reinstateIds)
+        ? body.reinstateIds.filter((x: unknown): x is string => typeof x === 'string') : [];
+      if (restores.length === 0 && reinstateIds.length === 0) {
+        return new Response(JSON.stringify({ error: 'Nothing to put back.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+      const ids = [...new Set([...restores.map((r: { id: string }) => r.id), ...reinstateIds])];
+      const { data: beforeRows, error: beforeErr } = await supabaseAdmin
+        .from('games').select(`id, ${SCHEDULE_SNAPSHOT_COLUMNS}`).eq('tournament_id', restoreTournamentId).in('id', ids);
+      if (beforeErr) throw beforeErr;
+      const beforeById = new Map(((beforeRows ?? []) as Array<ScheduleSnapshotRow & { id: string }>).map(r => [r.id, r]));
+      const movable = restores.filter((r: { id: string }) => beforeById.get(r.id)?.status === 'scheduled');
+      const back = reinstateIds.filter(rid => beforeById.get(rid)?.status === 'cancelled');
+      if (movable.length === 0 && back.length === 0) {
+        return new Response(JSON.stringify({ error: 'Those games have changed since — nothing was put back.' }), { status: 409, headers: { 'Content-Type': 'application/json' } });
+      }
+      const refusedRestore = await overlapRefused(restoreTournamentId, [
+        ...movable.map((r: { id: string; date: string; time: string }): ProposedGameRow => ({ id: r.id, game_date: r.date, game_time: r.time })),
+        ...back.map((rid): ProposedGameRow => ({ id: rid, status: 'scheduled' })),
+      ]);
+      if (refusedRestore) return refusedRestore;
+      if (movable.length) {
+        const { error: rpcErr } = await supabaseAdmin.rpc('bulk_reschedule_games', {
+          p_tournament_id: restoreTournamentId,
+          p_shifts: movable.map((r: { id: string; date: string; time: string }) => ({ id: r.id, game_date: r.date, game_time: r.time })),
+          p_cancel_ids: [],
+        });
+        if (rpcErr) throw rpcErr;
+      }
+      if (back.length) {
+        const { error: backErr } = await supabaseAdmin.from('games').update({ status: 'scheduled' })
+          .in('id', back).eq('tournament_id', restoreTournamentId).eq('status', 'cancelled');
+        if (backErr) throw backErr;
+      }
+      // The same telling as every writer; game-day reminders follow the times put back.
+      const restoredIds = new Set<string>([...movable.map((r: { id: string }) => r.id), ...back]);
+      await announceScheduleChanges(ctx.org, restoreTournamentId, new Map([...beforeById].filter(([gid]) => restoredIds.has(gid))));
+      const crossProgram = await clashReportForTournamentGames(ctx.org, [...restoredIds]);
+      return new Response(JSON.stringify({ ok: true, restored: movable.length, reinstated: back.length, crossProgram }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     if (!id) {

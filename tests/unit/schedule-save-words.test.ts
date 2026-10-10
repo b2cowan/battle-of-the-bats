@@ -5,6 +5,9 @@ import {
   GAME_DAY_REMINDER_SENTENCE,
   SCHEDULE_REFUSAL,
   GENERATOR_WORDS,
+  RAIN_DELAY_WORDS,
+  rainDelayMove,
+  shiftWords,
   draftStatement,
   refusalReason,
 } from '../../lib/schedule-words.ts';
@@ -122,5 +125,30 @@ describe('the round-robin generator\'s words (S3, /marketing 2026-10-09)', () =>
     assert.equal(GENERATOR_WORDS.saveReplace(1), 'Save and replace 1 game');
     assert.match(GENERATOR_WORDS.replace.published('U13'), /their followers are told the new time, and a game this draft drops is told as cancelled/);
     assert.equal(GENERATOR_WORDS.replace.unpublished('U13'), "U13 isn't published, so nobody is told.");
+  });
+});
+
+describe('the rain delay\'s words (S5, /marketing 2026-10-09)', () => {
+  it('a row\'s move drops the first a.m./p.m. only when both clocks share it', () => {
+    assert.equal(rainDelayMove('16:00', '17:00', false), '4:00 → 5:00 p.m.');
+    assert.equal(rainDelayMove('11:30', '12:30', false), '11:30 a.m. → 12:30 p.m.');
+    assert.equal(rainDelayMove('23:00', '00:30', true), '11:00 p.m. → 12:30 a.m., the next day');
+  });
+  it('the lime says what it does, and who it tells when any of it is published', () => {
+    assert.equal(RAIN_DELAY_WORDS.apply(2, 0, true), 'Move 2 games · tells their teams');
+    assert.equal(RAIN_DELAY_WORDS.apply(1, 1, false), 'Move 1 game, cancel 1');
+    assert.equal(RAIN_DELAY_WORDS.apply(0, 2, false), 'Cancel 2 games');
+  });
+  it('the notice after, and after its Undo', () => {
+    assert.equal(RAIN_DELAY_WORDS.done(2, 0, 60), '2 games moved an hour later');
+    assert.equal(RAIN_DELAY_WORDS.done(1, 0, 90), '1 game moved 1 hour 30 minutes later');
+    assert.equal(RAIN_DELAY_WORDS.done(2, 1, 60), '2 games moved, 1 cancelled');
+    assert.equal(RAIN_DELAY_WORDS.done(0, 2, 0), '2 games cancelled');
+    assert.equal(RAIN_DELAY_WORDS.undone, 'The day is back as it was');
+    assert.equal(shiftWords(120), '2 hours');
+    assert.equal(shiftWords(30), '30 minutes');
+  });
+  it('the shift is a dropdown: 30 minutes · 1 hour · 2 hours · Another amount', () => {
+    assert.deepEqual([30, 60, 120].map(m => RAIN_DELAY_WORDS.shiftChoice(m)), ['30 minutes', '1 hour', '2 hours']);
   });
 });
