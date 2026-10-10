@@ -1126,13 +1126,18 @@
   },
   {
     "tablename": "org_budget_lines",
+    "indexname": "org_budget_lines_fiscal_year_idx",
+    "indexdef": "CREATE INDEX org_budget_lines_fiscal_year_idx ON public.org_budget_lines USING btree (fiscal_year_id)"
+  },
+  {
+    "tablename": "org_budget_lines",
     "indexname": "org_budget_lines_item_id_idx",
     "indexdef": "CREATE INDEX org_budget_lines_item_id_idx ON public.org_budget_lines USING btree (item_id)"
   },
   {
     "tablename": "org_budget_lines",
-    "indexname": "org_budget_lines_one_line_per_item",
-    "indexdef": "CREATE UNIQUE INDEX org_budget_lines_one_line_per_item ON public.org_budget_lines USING btree (org_id, season_year, item_id) WHERE (item_id IS NOT NULL)"
+    "indexname": "org_budget_lines_one_word_per_fiscal_year",
+    "indexdef": "CREATE UNIQUE INDEX org_budget_lines_one_word_per_fiscal_year ON public.org_budget_lines USING btree (fiscal_year_id, item_id) WHERE (item_id IS NOT NULL)"
   },
   {
     "tablename": "org_budget_lines",
@@ -1153,6 +1158,51 @@
     "tablename": "org_budget_periods",
     "indexname": "org_budget_periods_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_budget_periods_pkey ON public.org_budget_periods USING btree (id)"
+  },
+  {
+    "tablename": "org_fiscal_year_reopenings",
+    "indexname": "org_fiscal_year_reopenings_by_idx",
+    "indexdef": "CREATE INDEX org_fiscal_year_reopenings_by_idx ON public.org_fiscal_year_reopenings USING btree (reopened_by) WHERE (reopened_by IS NOT NULL)"
+  },
+  {
+    "tablename": "org_fiscal_year_reopenings",
+    "indexname": "org_fiscal_year_reopenings_org_idx",
+    "indexdef": "CREATE INDEX org_fiscal_year_reopenings_org_idx ON public.org_fiscal_year_reopenings USING btree (org_id)"
+  },
+  {
+    "tablename": "org_fiscal_year_reopenings",
+    "indexname": "org_fiscal_year_reopenings_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_fiscal_year_reopenings_pkey ON public.org_fiscal_year_reopenings USING btree (id)"
+  },
+  {
+    "tablename": "org_fiscal_year_reopenings",
+    "indexname": "org_fiscal_year_reopenings_was_by_idx",
+    "indexdef": "CREATE INDEX org_fiscal_year_reopenings_was_by_idx ON public.org_fiscal_year_reopenings USING btree (was_closed_by) WHERE (was_closed_by IS NOT NULL)"
+  },
+  {
+    "tablename": "org_fiscal_year_reopenings",
+    "indexname": "org_fiscal_year_reopenings_year_idx",
+    "indexdef": "CREATE INDEX org_fiscal_year_reopenings_year_idx ON public.org_fiscal_year_reopenings USING btree (fiscal_year_id, reopened_at)"
+  },
+  {
+    "tablename": "org_fiscal_years",
+    "indexname": "org_fiscal_years_closed_by_idx",
+    "indexdef": "CREATE INDEX org_fiscal_years_closed_by_idx ON public.org_fiscal_years USING btree (closed_by) WHERE (closed_by IS NOT NULL)"
+  },
+  {
+    "tablename": "org_fiscal_years",
+    "indexname": "org_fiscal_years_one_name",
+    "indexdef": "CREATE UNIQUE INDEX org_fiscal_years_one_name ON public.org_fiscal_years USING btree (org_id, name)"
+  },
+  {
+    "tablename": "org_fiscal_years",
+    "indexname": "org_fiscal_years_one_start",
+    "indexdef": "CREATE UNIQUE INDEX org_fiscal_years_one_start ON public.org_fiscal_years USING btree (org_id, first_day)"
+  },
+  {
+    "tablename": "org_fiscal_years",
+    "indexname": "org_fiscal_years_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_fiscal_years_pkey ON public.org_fiscal_years USING btree (id)"
   },
   {
     "tablename": "org_internal_notes",
@@ -1683,6 +1733,11 @@
     "tablename": "rep_allocation_installments",
     "indexname": "rep_allocation_installments_accounting_entry_id_idx",
     "indexdef": "CREATE INDEX rep_allocation_installments_accounting_entry_id_idx ON public.rep_allocation_installments USING btree (accounting_entry_id)"
+  },
+  {
+    "tablename": "rep_allocation_installments",
+    "indexname": "rep_allocation_installments_carried_by_idx",
+    "indexdef": "CREATE INDEX rep_allocation_installments_carried_by_idx ON public.rep_allocation_installments USING btree (carried_by_program_year_id) WHERE (carried_by_program_year_id IS NOT NULL)"
   },
   {
     "tablename": "rep_allocation_installments",
@@ -2821,6 +2876,11 @@
   },
   {
     "tablename": "rep_team_events",
+    "indexname": "rep_team_events_club_booking_idx",
+    "indexdef": "CREATE INDEX rep_team_events_club_booking_idx ON public.rep_team_events USING btree (org_id, starts_at) WHERE (org_venue_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_events",
     "indexname": "rep_team_events_family_shared_idx",
     "indexdef": "CREATE INDEX rep_team_events_family_shared_idx ON public.rep_team_events USING btree (team_id) WHERE (family_shared_at IS NOT NULL)"
   },
@@ -2828,6 +2888,16 @@
     "tablename": "rep_team_events",
     "indexname": "rep_team_events_org_id_idx",
     "indexdef": "CREATE INDEX rep_team_events_org_id_idx ON public.rep_team_events USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_events",
+    "indexname": "rep_team_events_org_venue_facility_idx",
+    "indexdef": "CREATE INDEX rep_team_events_org_venue_facility_idx ON public.rep_team_events USING btree (org_venue_facility_id) WHERE (org_venue_facility_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_events",
+    "indexname": "rep_team_events_org_venue_idx",
+    "indexdef": "CREATE INDEX rep_team_events_org_venue_idx ON public.rep_team_events USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
   },
   {
     "tablename": "rep_team_events",
@@ -3541,8 +3611,23 @@
   },
   {
     "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_club_booking_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_club_booking_idx ON public.rep_tryout_sessions USING btree (org_id, starts_at) WHERE (org_venue_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
     "indexname": "rep_tryout_sessions_org_idx",
     "indexdef": "CREATE INDEX rep_tryout_sessions_org_idx ON public.rep_tryout_sessions USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_org_venue_facility_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_org_venue_facility_idx ON public.rep_tryout_sessions USING btree (org_venue_facility_id) WHERE (org_venue_facility_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_org_venue_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_org_venue_idx ON public.rep_tryout_sessions USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
   },
   {
     "tablename": "rep_tryout_sessions",

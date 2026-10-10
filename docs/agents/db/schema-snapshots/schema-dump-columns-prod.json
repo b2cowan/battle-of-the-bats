@@ -207,6 +207,15 @@
     "ordinal_position": 23
   },
   {
+    "table_name": "accounting_entries",
+    "column_name": "written_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
     "table_name": "accounting_ledgers",
     "column_name": "id",
     "data_type": "uuid",
@@ -6165,6 +6174,15 @@
     "ordinal_position": 11
   },
   {
+    "table_name": "org_budget_lines",
+    "column_name": "fiscal_year_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
     "table_name": "org_budget_periods",
     "column_name": "id",
     "data_type": "uuid",
@@ -6226,6 +6244,195 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 7
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "column_name": "fiscal_year_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "column_name": "reopened_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "column_name": "reopened_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "column_name": "was_closed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "column_name": "was_closed_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "column_name": "was_closing_balance",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "org_fiscal_year_reopenings",
+    "column_name": "was_closing_snapshot",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "first_day",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "last_day",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "closed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "closed_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "closing_balance",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "closing_snapshot",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "org_fiscal_years",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
   },
   {
     "table_name": "org_internal_notes",
@@ -7639,6 +7846,15 @@
     "is_nullable": "NO",
     "column_default": "false",
     "ordinal_position": 37
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "fiscal_first_month",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "1",
+    "ordinal_position": 38
   },
   {
     "table_name": "pitch_decks",
@@ -9603,6 +9819,15 @@
     "ordinal_position": 23
   },
   {
+    "table_name": "rep_allocation_installments",
+    "column_name": "carried_by_program_year_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
     "table_name": "rep_allocation_reminder_waves",
     "column_name": "id",
     "data_type": "uuid",
@@ -10060,6 +10285,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_cost_allocations",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
   },
   {
     "table_name": "rep_development_goal_reviews",
@@ -14427,6 +14661,24 @@
     "ordinal_position": 41
   },
   {
+    "table_name": "rep_team_events",
+    "column_name": "org_venue_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 42
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "org_venue_facility_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 43
+  },
+  {
     "table_name": "rep_team_expense_tags",
     "column_name": "expense_id",
     "data_type": "uuid",
@@ -17350,6 +17602,24 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 14
+  },
+  {
+    "table_name": "rep_tryout_sessions",
+    "column_name": "org_venue_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "rep_tryout_sessions",
+    "column_name": "org_venue_facility_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
   },
   {
     "table_name": "rep_tryouts",
