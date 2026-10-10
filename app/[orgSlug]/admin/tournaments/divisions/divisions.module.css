@@ -1,0 +1,13 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   DIVISIONS — the few words the kit's row list and table have no slot for (page.tsx, Tournament admin
+   redesign Stage 5, E4): the row's figure and the list's foot. The rows, the table and the record are the
+   kit's. Born on the kit (the old cards' sheet, admin-page.module.css, left with them): TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* "6 of 6 · full" — the good news it is, in the row's own ink (never red, Q 3.1). */
+.figure { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* "18 of 18 spots taken". */
+.foot { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+.quiet { margin: 0; padding: 1.25rem 0.1rem; font-size: var(--type-body); color: var(--text-tertiary); }

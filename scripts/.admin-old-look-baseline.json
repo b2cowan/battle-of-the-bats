@@ -72,13 +72,6 @@
     "kx": 2,
     "helpers": 2
   },
-  "app/[orgSlug]/admin/tournaments/divisions/admin-page.module.css": {
-    "kitScope": 22
-  },
-  "app/[orgSlug]/admin/tournaments/divisions/page.tsx": {
-    "kx": 21,
-    "helpers": 1
-  },
   "app/[orgSlug]/admin/tournaments/rules/RulesAdmin.tsx": {
     "useAdminKit": 1,
     "kx": 6,

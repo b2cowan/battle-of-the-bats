@@ -1,0 +1,43 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   A DIVISION'S RECORD — the few parts the kit's record has no slot for (DivisionRecord.tsx, Tournament admin
+   redesign Stage 5, E4): its pools' names, each "its own or the event's" block, and the door to Teams.
+   The window, the sections, the facts and the fields are the kit's. Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* The door to where registration opens and closes (Teams — J1-040): olive words, a real target. */
+.door {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--admin-control-h);
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.door:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+
+/* Its pools: how many, then a name each. */
+.pools { margin: 0 0 0.5rem; }
+.poolNames { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 0 0.75rem; }
+
+/* Each of its own settings: its own, or the event's. */
+.own { padding: 0.75rem 0 0.25rem; border-top: 1px solid var(--home-line); }
+.ownHead { margin: 0 0 0.5rem; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.ownCheck {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.55rem;
+  min-height: var(--tap-min, 44px);
+  margin: 0 0 0.35rem;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.ownCheck input { width: 1.1rem; height: 1.1rem; accent-color: var(--home-olive); }
+
+@media (max-width: 768px) {
+  .door { min-height: var(--tap-min, 44px); }
+}

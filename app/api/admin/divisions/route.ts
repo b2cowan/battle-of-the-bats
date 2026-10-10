@@ -102,7 +102,10 @@ export const GET = withObservability(async (req: Request) => {
   const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
   if (wrongOrg) return wrongOrg;
 
-  const [{ data, error }, teamsRes] = await Promise.all([
+  // ?counts=1 (Divisions' list, Tournament admin redesign Stage 5): each division's games, teams and waitlist too, so its
+  // record can ask "Delete U11 Girls?" ONCE with what goes — never a refusal and a second question.
+  const withCounts = url.searchParams.get('counts') === '1';
+  const [{ data, error }, teamsRes, gamesRes] = await Promise.all([
     supabaseAdmin
       .from('divisions')
       .select('*, pools(*)')
@@ -110,18 +113,28 @@ export const GET = withObservability(async (req: Request) => {
       .order('display_order', { ascending: true }),
     supabaseAdmin
       .from('teams')
-      .select('division_id')
-      .eq('tournament_id', tournamentId)
-      .eq('status', 'accepted'),
+      .select('division_id, status')
+      .eq('tournament_id', tournamentId),
+    withCounts
+      ? supabaseAdmin.from('games').select('division_id, home_score, away_score').eq('tournament_id', tournamentId)
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
-  if (error) return Response.json({ error: error.message }, { status: 500 });
+  if (error) return Response.json({ error: 'The divisions didn’t load.' }, { status: 500 });
+  if (teamsRes.error || gamesRes.error) return Response.json({ error: 'The divisions didn’t load.' }, { status: 500 });
 
-  // Build accepted-count lookup keyed by division_id
-  const acceptedByDivision = ((teamsRes.data ?? []) as { division_id: string }[]).reduce<Record<string, number>>(
-    (acc, row) => { acc[row.division_id] = (acc[row.division_id] ?? 0) + 1; return acc; },
+  // Accepted teams (every caller), and with ?counts=1 every team and the waitlist, keyed by division_id.
+  const teamRows = (teamsRes.data ?? []) as { division_id: string; status: string | null }[];
+  const tally = (rows: { division_id: string | null }[]) => rows.reduce<Record<string, number>>(
+    (acc, row) => { if (row.division_id) acc[row.division_id] = (acc[row.division_id] ?? 0) + 1; return acc; },
     {},
   );
+  const acceptedByDivision = tally(teamRows.filter(t => t.status === 'accepted'));
+  const teamsByDivision = tally(teamRows);
+  const waitlistByDivision = tally(teamRows.filter(t => t.status === 'waitlist'));
+  const gameRows = (gamesRes.data ?? []) as { division_id: string | null; home_score: number | null; away_score: number | null }[];
+  const gamesByDivision = tally(gameRows);
+  const scoredByDivision = tally(gameRows.filter(g => g.home_score !== null || g.away_score !== null));
 
   return Response.json((data ?? []).map(group => ({
     id: group.id,
@@ -144,6 +157,14 @@ export const GET = withObservability(async (req: Request) => {
     totalFeeDueDate: group.total_fee_due_date ?? null,
     settings: (group.settings && typeof group.settings === 'object') ? group.settings : {},
     acceptedCount: acceptedByDivision[group.id] ?? 0,
+    ...(withCounts ? {
+      counts: {
+        games: gamesByDivision[group.id] ?? 0,
+        scoredGames: scoredByDivision[group.id] ?? 0,
+        teams: teamsByDivision[group.id] ?? 0,
+        waitlist: waitlistByDivision[group.id] ?? 0,
+      },
+    } : {}),
     pools: ((group.pools ?? [])
       .map((pool: { id: string; division_id: string; name: string; display_order: number }) => ({
         id: pool.id,
@@ -163,7 +184,7 @@ export const POST = withObservability(async (req: Request) => {
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 
   try {
-    const { action, id, data, force } = await req.json();
+    const { action, id, data, force, expected } = await req.json();
 
     if (action === 'save') {
       const denied = scopeGuard(ctx, data.tournamentId);
@@ -476,6 +497,26 @@ export const POST = withObservability(async (req: Request) => {
             },
             { status: 409 },
           );
+        }
+      }
+
+      // Asked once with the counts (Stage 5): the question named what goes, so delete only if that is still what goes.
+      // A team that registered (or a game added) since then is said in a fresh question, never removed unseen.
+      if (force === true && expected && typeof expected === 'object') {
+        const [{ data: games }, { data: teams }] = await Promise.all([
+          supabaseAdmin.from('games').select('home_score, away_score').eq('division_id', id),
+          supabaseAdmin.from('teams').select('status').eq('division_id', id),
+        ]);
+        const now = {
+          games: (games ?? []).length,
+          scoredGames: (games ?? []).filter(g => g.home_score !== null || g.away_score !== null).length,
+          teams: (teams ?? []).length,
+          waitlist: (teams ?? []).filter(t => t.status === 'waitlist').length,
+        };
+        // The question named the games, how many have a score, and the teams: any of them moving asks again.
+        if (now.games !== Number(expected.games) || now.teams !== Number(expected.teams)
+          || (expected.scoredGames !== undefined && now.scoredGames !== Number(expected.scoredGames))) {
+          return Response.json({ error: 'DIVISION_CHANGED', counts: now }, { status: 409 });
         }
       }
 
