@@ -32,7 +32,7 @@ import type { EventRecap } from '@/lib/event-recap';
 import styles from './FinishedBoard.module.css';
 
 export default function FinishedBoard({
-  recap, tournament, base, planHref, hasSummary, canClone, canArchive, tournamentLimit, slotHolders, archive,
+  recap, tournament, base, planHref, hasSummary, canClone, canArchive, tournamentLimit, slotHolder, archive,
 }: {
   recap: EventRecap;
   tournament: { id: string; name: string; year: number | null; status: string; startDate?: string | null };
@@ -46,8 +46,8 @@ export default function FinishedBoard({
   /** This member may change a tournament's status (create_tournaments). */
   canArchive: boolean;
   tournamentLimit: number;
-  /** How many events hold a slot (every event not archived), this one included. */
-  slotHolders: number;
+  /** Another event that holds the slot now (a Draft or Active one — this finished event holds none, A23), if any. */
+  slotHolder: string | null;
   /** Archives this event; resolves once the board has moved on, rejects with the route's words. */
   archive: () => Promise<void>;
 }) {
@@ -75,7 +75,7 @@ export default function FinishedBoard({
     <NextYear>
       {finiteSlots && (
         <p className={styles.slotSentence}>
-          {slotHolders > 1 ? NEXT_YEAR_WORDS.slotsHeld(slotHolders) : NEXT_YEAR_WORDS.oneSlotHeld}
+          {slotHolder ? NEXT_YEAR_WORDS.slotTaken(slotHolder) : NEXT_YEAR_WORDS.oneAtATime}
         </p>
       )}
       {finiteSlots && canArchive && (

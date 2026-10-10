@@ -48,6 +48,7 @@ import type { EventRecap } from '@/lib/event-recap';
 import FinishedBoard from './FinishedBoard';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { statusConfirm } from '@/lib/tournament-status-words';
+import { holdsSlot } from '@/lib/tournament-slot';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import GameDayBoard, {
   BoardNote, CustomizeLink, EMPTY_GAME_DAY, GAME_DAY_PARTS, type GameDayPartId, type GameDayStats,
@@ -2152,7 +2153,8 @@ export default function AdminDashboard() {
           canClone={canReuseSetup}
           canArchive={hasCapability(userRole ?? 'official', userCapabilities, 'create_tournaments')}
           tournamentLimit={currentOrg?.tournamentLimit ?? 9999}
-          slotHolders={tournaments.length}
+          slotHolder={(tournaments.find(t => t.id !== currentTournament.id && t.status === 'active')
+            ?? tournaments.find(t => t.id !== currentTournament.id && holdsSlot(t.status)))?.name ?? null}
           archive={archiveEvent}
         />
       )}

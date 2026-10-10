@@ -10,7 +10,8 @@
  * set-status), checked 2026-10-06:
  *   - only Active and Completed are public (lib/public-tournament-data PUBLIC_STATUSES): Draft and Archived
  *     take the site and every shared link offline at once;
- *   - every status but Archived holds a slot; a change needing one is refused when none is free;
+ *   - only Draft and Active hold a slot (one at a time, A23, 2026-10-10 — `lib/tournament-slot.ts`, the rule's one
+ *     home): a change INTO Draft or Active from outside them needs a free one and is refused when none is free;
  *   - Activate AND Reopen (any change to Active) are refused without dates, a division and a contact;
  *   - registration takes the status Active, an open division, AND a day before the start date
  *     (app/api/register) — so a reopened finished event takes no registrations;
@@ -26,6 +27,7 @@
  * (G1, `PHASE_LABEL`), and a public site is "online" / "offline".
  */
 import { formatStoredDate } from './timezone.ts';
+import { holdsSlot } from './tournament-slot.ts';
 
 export type StatusChange = 'activate' | 'complete' | 'draft' | 'reopen' | 'archive' | 'bringBack' | 'seal' | 'delete';
 
@@ -44,21 +46,36 @@ export const STATUS_ACTION: Record<StatusChange, string> = {
 /** The status word, said once (a band, a chip). */
 export const STATUS_WORD = { draft: 'Draft', active: 'Active', completed: 'Completed', archived: 'Archived' } as const;
 
-/** A route's refusal when every slot on the plan is held (the set-status and clone routes). */
-export function slotsInUseRefusal(limit: number): string {
-  return limit === 1
-    ? 'Your plan has one tournament slot, and it’s in use. Archive another tournament first.'
-    : `Your plan has ${limit} tournament slots, and they’re all in use. Archive another tournament first.`;
+/** The event that holds a slot, as a refusal names it. */
+export type SlotHolderRef = { name: string; status: string };
+
+/**
+ * A route's refusal when every slot on the plan is held (New tournament, the clone, a status change — and every New
+ * tournament door before it opens). It names the event that holds the slot and the way out: marking a live event
+ * complete frees it, and its site stays online (one at a time, A23; /marketing 2026-10-10). Archive is not offered as
+ * the way out: it takes a site offline, which one at a time exists to avoid (A55).
+ */
+export function slotsInUseRefusal(limit: number, holder?: SlotHolderRef | null): string {
+  if (limit !== 1) {
+    return holder?.status === 'draft'
+      ? `Your plan has ${limit} tournament slots, and drafts hold them all. Archive or delete one to start another.`
+      : `Your plan has ${limit} tournament slots, and they’re all in use. Mark one complete when it’s done, and you can start another.`;
+  }
+  if (holder?.status === 'draft') {
+    return `Your plan runs one tournament at a time, and ${holder.name} holds the slot as a draft. Archive or delete it to start a different one.`;
+  }
+  return `Your plan runs one tournament at a time, and ${holder?.name ?? 'another tournament'} holds the slot. Mark it complete when it’s done, and you can start the next one.`;
 }
 
 /** What a locked (completed) event's screens and routes say when an edit is refused. */
 export const LOCKED_RESULTS = 'This tournament is completed, so its results are locked. Reopen it from the Tournaments list to make changes.';
 export const LOCKED_IMPORTS = 'This tournament is completed, so its results are locked. Reopen it from the Tournaments list to import.';
 
-/** The archive sentence (F32, rewritten 2026-10-06: the way back is now the record's Bring back). */
-export function archiveSentence(finiteSlots: boolean): string {
-  return finiteSlots
-    ? 'Its public site goes offline right away, so every link you’ve shared stops working, and its tournament slot is freed. Its teams, games, and payments are kept, and you can bring it back from the Tournaments list if a tournament slot is free.'
+/** The archive sentence (F32, rewritten 2026-10-06: the way back is now the record's Bring back). Its slot clause only
+ *  for an event that holds one — a finished event holds none (A23), and Bring back needs none. */
+export function archiveSentence(freesSlot: boolean): string {
+  return freesSlot
+    ? 'Its public site goes offline right away, so every link you’ve shared stops working, and its tournament slot is freed. Its teams, games, and payments are kept, and you can bring it back from the Tournaments list.'
     : 'Its public site goes offline right away, so every link you’ve shared stops working. Its teams, games, and payments are kept, and you can bring it back from the Tournaments list.';
 }
 
@@ -90,9 +107,9 @@ export const RECORD_WORDS = {
   lockSlots: 'More tournament slots',
   lockReuse: 'Reuse this setup',
   sealedNoReopen: 'Its results are sealed, so it can’t be reopened.',
-  slotFull: (holder: string) => `Bringing it back needs a free slot. Your plan has one, and ${holder} holds it.`,
-  slotsFull: (limit: number, holders: number) =>
-    `Bringing it back needs a free slot. Your plan has ${limit === 1 ? 'one' : limit}, and ${holders} other events hold them.`,
+  /** A finished event moving back into the slot (A23): said in the record before any tap, and by the route. */
+  needsSlot: (change: 'reopen' | 'draft', holder: string) =>
+    `${change === 'reopen' ? 'Reopening' : 'Moving it back to draft'} needs a free slot, and ${holder} holds it.`,
   linkTaken: (holder: string) => `Its public link is now used by ${holder}. Change this event’s public link in Details before you bring it back.`,
   /** "To activate it, first add its dates, a division, and a contact." */
   blocked: (verb: 'activate' | 'reopen', missing: Array<'dates' | 'division' | 'contact'>) => {
@@ -131,7 +148,7 @@ export function statusSentence(f: StatusFacts): string {
       return `Its public site is online.${reg}${f.finiteSlots ? ' It holds a tournament slot.' : ''}`;
     }
     case 'completed':
-      return `${finished}Its public site is online and its results are read-only.${f.finiteSlots ? ' It holds a tournament slot.' : ''}${f.sealed ? ` ${RECORD_WORDS.sealedNoReopen}` : ''}`;
+      return `${finished}Its public site is online and its results are read-only.${f.finiteSlots ? ' It doesn’t hold a tournament slot.' : ''}${f.sealed ? ` ${RECORD_WORDS.sealedNoReopen}` : ''}`;
     case 'archived':
       return `${finished}Its public site is offline.${f.finiteSlots ? ' It doesn’t hold a tournament slot.' : ''}`;
   }
@@ -145,6 +162,8 @@ export type ConfirmFacts = {
   today: string;
   /** The plan has a finite number of slots (the Tournament plan). */
   finiteSlots: boolean;
+  /** The event's status now — Archive frees a slot only from one that holds it (A23). */
+  status?: string | null;
   /** Mark complete will send the results email (the dashboard route's own rule). */
   willEmailTeams?: boolean;
   /** The plan includes sealing (Tournament Plus+). */
@@ -173,6 +192,8 @@ export function statusConfirm(change: StatusChange, f: ConfirmFacts): { title: s
         body: [
           'Its results become read-only and final, and registration closes. Its public site stays online.',
           f.willEmailTeams ? 'Each team’s coach gets an email with the final results.' : '',
+          // One at a time (A23): marking it complete is what frees the slot for next year's event.
+          f.finiteSlots ? 'It frees your plan’s tournament slot, so you can start the next one.' : '',
           // The same question opens from the record, the game-day board and Event settings, so it names the
           // place every one of them shares (/marketing 2026-10-07).
           'You can reopen it from the Tournaments list.',
@@ -197,7 +218,7 @@ export function statusConfirm(change: StatusChange, f: ConfirmFacts): { title: s
         danger: false,
       };
     case 'archive':
-      return { title: `Archive ${f.name}?`, body: archiveSentence(f.finiteSlots), action: STATUS_ACTION.archive, danger: true };
+      return { title: `Archive ${f.name}?`, body: archiveSentence(f.finiteSlots && holdsSlot(f.status)), action: STATUS_ACTION.archive, danger: true };
     case 'bringBack':
       return {
         title: `Bring ${f.name} back?`,
@@ -205,7 +226,6 @@ export function statusConfirm(change: StatusChange, f: ConfirmFacts): { title: s
         // same rule as Mark complete (an event archived before it was ever completed has never sent them).
         body: [
           'It comes back as Completed, and its public site goes back online at the same links.',
-          f.finiteSlots ? 'It will hold a tournament slot again.' : '',
           f.willEmailTeams ? 'Each team’s coach gets an email with the final results.' : '',
         ].filter(Boolean).join(' '),
         action: STATUS_ACTION.bringBack,

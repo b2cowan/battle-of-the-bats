@@ -91,10 +91,10 @@ export const NEXT_YEAR_WORDS = {
   reuse: 'Reuse this setup',
   /** The record's caption beside it. */
   recordCaption: 'Starts a private draft from this event',
-  /** The Tournament plan: one slot, held. */
-  oneSlotHeld: 'Your plan has one tournament slot, and this event holds it. To set up next year’s event, archive this one first: its public site goes offline and the links you’ve shared stop working.',
-  slotsHeld: (holders: number) =>
-    `Your plan has one tournament slot, and ${holders} events hold one, this one included. To set up next year’s event, archive all ${holders} first: each one’s public site goes offline and the links you’ve shared stop working.`,
+  /** The Tournament plan, one at a time (A23, /marketing 2026-10-10): a finished event holds no slot. */
+  oneAtATime: 'Your plan runs one tournament at a time. Next year’s can start now, and this one stays online.',
+  /** …while another event (next year's draft, say) already holds it. */
+  slotTaken: (holder: string) => `Your plan runs one tournament at a time, and ${holder} holds the slot now. This one stays online.`,
   archive: 'Archive this tournament',
   lockReuse: 'Reuse this setup for next year',
 } as const;
@@ -172,11 +172,20 @@ export const REUSE_WORDS = {
 export const LIST_WORDS = {
   tournaments: 'Tournaments',
   newTournament: 'New tournament',
-  /** "1 of 1 tournament slot in use" — on a plan with a finite number of slots. */
-  slotsInUse: (used: number, limit: number) =>
-    used > limit
-      ? `${used} events hold slots; your plan has ${limit}.`
-      : `${used} of ${limit} tournament ${limit === 1 ? 'slot' : 'slots'} in use`,
+  /**
+   * The slot line, on a plan with a finite number of slots — Draft and Active events only (one at a time, A23,
+   * /marketing 2026-10-10). On a one-slot plan it says the rule once, and while the slot is held, what frees it.
+   * `holder` is the event that holds it (Active first), when one does.
+   */
+  slotsInUse: (used: number, limit: number, holder?: { name: string; status: string } | null) => {
+    if (used > limit) return `${used} events hold slots; your plan has ${limit}.`;
+    const count = `${used} of ${limit} tournament ${limit === 1 ? 'slot' : 'slots'} in use`;
+    if (limit !== 1) return count;
+    if (used === 0 || !holder) return `${count}. Your plan runs one tournament at a time, and a finished one stays online.`;
+    return holder.status === 'draft'
+      ? `${count}. Your plan runs one tournament at a time, and ${holder.name} holds it as a draft. To start a different one, archive or delete that draft first.`
+      : `${count}. Your plan runs one tournament at a time: once ${holder.name} is marked complete, you can start the next one. It stays online.`;
+  },
   /** A finished event's teams are history: "no teams", never "no teams yet". */
   teams: (n: number, finished = false) => (n === 0 ? (finished ? 'no teams' : 'no teams yet') : n === 1 ? '1 team' : `${n} teams`),
   datesNotSet: 'Dates not set',

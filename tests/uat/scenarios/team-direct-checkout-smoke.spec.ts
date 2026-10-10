@@ -212,7 +212,7 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
     })
     expect(secondTournament.status()).toBe(403)
     await expect(secondTournament.json()).resolves.toMatchObject({
-      error: expect.stringContaining('1 tournament slot'),
+      error: expect.stringContaining('one tournament at a time'),
     })
 
     await coachContext.close()

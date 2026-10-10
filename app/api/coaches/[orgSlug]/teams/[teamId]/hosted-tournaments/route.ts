@@ -9,6 +9,7 @@ import { getEntitledTeamMembership, resolveMembershipCapabilities } from '@/lib/
 import { canConfigureTeam, denyUnless } from '@/lib/coach-capabilities';
 import { TOURNAMENT_GRANT_KEY } from '@/lib/coach-tournament-grant';
 import { withObservability } from '@/lib/observability';
+import { hasFiniteSlots, readSlotHolders } from '@/lib/tournament-slot';
 
 export type HostedTournamentRow = {
   id: string;
@@ -76,7 +77,7 @@ export const GET = withObservability(async (_req: Request,
 
   const canRun = hasModuleEntitlement(ctx.org, 'module_tournaments')
     && hasCapability(ctx.role, ctx.capabilities, TOURNAMENT_GRANT_KEY);
-  if (!canRun) return NextResponse.json({ canRun: false, tournaments: [] as HostedTournamentRow[] });
+  if (!canRun) return NextResponse.json({ canRun: false, slotFree: false, tournaments: [] as HostedTournamentRow[] });
 
   let query = supabaseAdmin
     .from('tournaments')
@@ -119,5 +120,17 @@ export const GET = withObservability(async (_req: Request,
     registeredTeams: counts.get(r.id as string) ?? 0,
   }));
 
-  return NextResponse.json({ canRun: true, tournaments });
+  // One at a time (A23): on the included tournament's one slot, a finished event holds none, so next year's can start
+  // while last year's stays listed. `slotFree` is said only on a plan with a finite number of slots — the section's
+  // door below a list exists for that case (an unlimited plan keeps today's page).
+  let slotFree = false;
+  if (hasFiniteSlots(ctx.org.tournamentLimit)) {
+    try {
+      slotFree = (await readSlotHolders(supabaseAdmin, ctx.org.id)).length < ctx.org.tournamentLimit;
+    } catch (e) {
+      console.error('[coaches hosted tournaments] slot read error:', e);
+    }
+  }
+
+  return NextResponse.json({ canRun: true, slotFree, tournaments });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/hosted-tournaments' });

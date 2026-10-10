@@ -92,12 +92,12 @@ export default function PremiumTeamTournamentsPage({
     if (coachesLoading || notGranted) return;
     let active = true;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/hosted-tournaments`)
-      .then(res => (res.ok ? res.json() as Promise<{ canRun: boolean; tournaments: HostedTournamentRow[] }> : null))
+      .then(res => (res.ok ? res.json() as Promise<{ canRun: boolean; slotFree?: boolean; tournaments: HostedTournamentRow[] }> : null))
       // Always lands on a definite value once the request settles — never leaves `hosted` stuck
       // at `null` on a failed/non-ok response. `awaitingMergeDecision` below waits on this exact
       // state for an empty top section, so a permanent `null` here would hang that page's loading
       // state forever instead of just quietly not offering the hosting door (review 2026-09-13).
-      .then(json => { if (active) setHosted(json ? { canRun: !!json.canRun, tournaments: json.tournaments ?? [] } : { canRun: false, tournaments: [] }); })
+      .then(json => { if (active) setHosted(json ? { canRun: !!json.canRun, slotFree: !!json.slotFree, tournaments: json.tournaments ?? [] } : { canRun: false, tournaments: [] }); })
       .catch(() => { if (active) setHosted({ canRun: false, tournaments: [] }); });
     return () => { active = false; };
   }, [orgSlug, teamId, coachesLoading, notGranted]);

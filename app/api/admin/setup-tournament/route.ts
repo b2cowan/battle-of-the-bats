@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
-import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
+import { getAuthContext, getAuthContextWithScope, unauthorized, requireCapability } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import { tournamentToday } from '@/lib/timezone';
 import { isThemePresetKey } from '@/lib/themes';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { hasFiniteSlots, readSlotHolders, visibleHolder } from '@/lib/tournament-slot';
+import { slotsInUseRefusal } from '@/lib/tournament-status-words';
 
 type DivisionAgeConfig = {
   min: number | null;
@@ -180,22 +182,14 @@ export const POST = withObservability(async (req: Request) => {
       return Response.json({ error: `A tournament named "${tournamentName}" already exists. Choose a different name.` }, { status: 409 });
     }
 
+    // One at a time (A23): only a Draft or Active event holds a slot — a finished one stays online and holds none.
     const limit = auth.org.tournamentLimit;
-    if (limit < 9999) {
-      const { count: occupiedSlotCount, error: limitError } = await supabase
-        .from('tournaments')
-        .select('*', { count: 'exact', head: true })
-        .eq('org_id', auth.org.id)
-        .neq('status', 'archived');
-
-      if (limitError) throw limitError;
-      if ((occupiedSlotCount ?? 0) >= limit) {
-        return Response.json(
-          {
-            error: `Your plan allows ${limit} tournament slot${limit === 1 ? '' : 's'}. Archive an existing tournament before creating another.`,
-          },
-          { status: 403 }
-        );
+    if (hasFiniteSlots(limit)) {
+      const holders = await readSlotHolders(supabase, auth.org.id);
+      if (holders.length >= limit) {
+        // The refusal names the holder only to a caller who may see it — their assignments, read on this rare path only.
+        const scoped = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
+        return Response.json({ error: slotsInUseRefusal(limit, visibleHolder(holders, scoped?.assignedTournamentIds)) }, { status: 403 });
       }
     }
 

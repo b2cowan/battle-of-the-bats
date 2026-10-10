@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './orgDetail.module.css';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime, fmtSince, fmtDaysLeft } from '@/lib/format-date';
+import { holdsSlot } from '@/lib/tournament-slot';
 
 // Platform-admin styles set the console's monospace font per-element, so an unstyled checkbox/radio
 // <label> falls back to the browser default (wrong font AND larger size). Reuse this on every
@@ -732,9 +733,11 @@ export default function OrgDetailClient({
   const eligibleNewOwners = members.filter(m => m.role !== 'owner' && m.status === 'active');
   const selectedPlan = planOptions.find(plan => plan.id === planId) ?? initialPlan;
   const parsedTournamentLimit = Number(tournamentLimit);
+  // One at a time (A23): only Draft and Active events hold a slot.
+  const slotHeldCount = tournaments.filter(t => holdsSlot(t.status)).length;
   const wouldBeOverLimit = Number.isFinite(parsedTournamentLimit) &&
     parsedTournamentLimit < 9999 &&
-    tournaments.length > parsedTournamentLimit;
+    slotHeldCount > parsedTournamentLimit;
   const parsedTeamLimitValue = teamLimit.trim() === '' ? null : Number(teamLimit);
   const teamLimitChanged = parsedTeamLimitValue !== (currentTeamLimit ?? null);
   const isClubBand = planId === 'club' || planId === 'club_large';
@@ -1385,7 +1388,7 @@ export default function OrgDetailClient({
                   </p>
                   {wouldBeOverLimit && (
                     <p className={styles.warningNote}>
-                      This would put the org over limit: {tournaments.length} non-archived tournaments against {parsedTournamentLimit}.
+                      This would put the org over limit: {slotHeldCount} draft and active tournaments against {parsedTournamentLimit}.
                     </p>
                   )}
                 </div>

@@ -2017,7 +2017,7 @@ const tournamentsHelp: HelpPageContent = {
                 <li><strong>Next year</strong> &mdash; <strong>Reuse this setup</strong>, on Tournament Plus and above.</li>
                 <li><strong>Summary</strong> &mdash; the door to the tournament&rsquo;s recap.</li>
               </ul>
-              <p>On the Tournament plan, Next year says how many tournament slots are in use and offers <strong>Archive this tournament</strong>, so the slot is free for your next event.</p>
+              <p>On the Tournament plan, Next year says your plan runs one tournament at a time: a completed tournament holds no slot, so next year&rsquo;s can start right away while this one stays online. <strong>Archive this tournament</strong> is there to tidy up; it takes the public site offline.</p>
             </>
           ),
         },
@@ -2043,7 +2043,7 @@ const tournamentsHelp: HelpPageContent = {
                 <li><strong>Completed</strong> and <strong>Archived</strong> &mdash; what&rsquo;s finished, most recent first.</li>
                 <li><strong>Sealed records</strong> &mdash; each opens its permanent public record; <strong>Public ledger</strong> opens the public page that lists them.</li>
               </ul>
-              <p>Each group says whether its public sites are online. Tap a tournament to open its record. On Tournament Plus and above, a completed tournament&rsquo;s row also carries <strong>Reuse setup</strong>. On the Tournament plan the list says how many tournament slots are in use, and the tournament holding a slot is on the same list.</p>
+              <p>Each group says whether its public sites are online. Tap a tournament to open its record. On Tournament Plus and above, a completed tournament&rsquo;s row also carries <strong>Reuse setup</strong>. On the Tournament plan the list says how many tournament slots are in use and, while one is held, what frees it. Only a draft or an active tournament holds a slot.</p>
             </>
           ),
         },
@@ -2055,8 +2055,8 @@ const tournamentsHelp: HelpPageContent = {
               <p>Every status change lives in the tournament&rsquo;s record, and each one asks first, saying what it will do to the public site, registration, and your tournament slot:</p>
               <ul>
                 <li><strong>Draft</strong> &mdash; <strong>Activate</strong> puts the public site online. It needs dates, a division, and a contact first; the record says what to add.</li>
-                <li><strong>Active</strong> &mdash; <strong>Mark complete</strong>, or <strong>Move back to draft</strong>, which takes the public site offline so every link you&rsquo;ve shared stops working.</li>
-                <li><strong>Completed</strong> &mdash; <strong>Reopen</strong> makes its results editable again and moves it back to Tournaments. <strong>Archive</strong> takes its public site offline and frees its tournament slot.</li>
+                <li><strong>Active</strong> &mdash; <strong>Mark complete</strong>, which on the Tournament plan frees your tournament slot, or <strong>Move back to draft</strong>, which takes the public site offline so every link you&rsquo;ve shared stops working.</li>
+                <li><strong>Completed</strong> &mdash; <strong>Reopen</strong> makes its results editable again and moves it back to Tournaments. On the Tournament plan it needs a free slot; if another tournament holds it, the record says which before you tap. <strong>Archive</strong> takes its public site offline.</li>
                 <li><strong>Archived</strong> &mdash; <strong>Bring back</strong> returns it as Completed, with its public site online at the same links.</li>
               </ul>
               <p>On Tournament Plus and above, a finished tournament&rsquo;s <strong>Permanent record</strong> offers <strong>Seal</strong>, which keeps a permanent public record of its results in your public ledger. Sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
@@ -2101,41 +2101,41 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-completed-archived-sealed',
           question: 'What is the difference between completed, archived, and sealed?',
-          answerText: 'Completed means the event is over: its results are read-only, its public site stays online, and it still holds a tournament slot. Archived takes its public site offline and frees the slot; you can bring it back from the Tournaments list. Sealed means a permanent public record of its results was kept in your public ledger; sealing can’t be undone, and a sealed tournament can’t be reopened.',
+          answerText: 'Completed means the event is over: its results are read-only, its public site stays online, and it doesn’t hold a tournament slot. Archived takes its public site offline; you can bring it back from the Tournaments list. Sealed means a permanent public record of its results was kept in your public ledger; sealing can’t be undone, and a sealed tournament can’t be reopened.',
           keywords: ['completed', 'archived', 'sealed', 'lifecycle', 'Archives', 'Past tournaments'],
           popular: true,
           answer: (
-            <p><strong>Completed</strong> means the event is over: its results are read-only, its public site stays online, and it still holds a tournament slot. <strong>Archived</strong> takes its public site offline and frees the slot; you can bring it back from the <strong>Tournaments</strong> list. <strong>Sealed</strong> means a permanent public record of its results was kept in your public ledger; sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
+            <p><strong>Completed</strong> means the event is over: its results are read-only, its public site stays online, and it doesn&rsquo;t hold a tournament slot. <strong>Archived</strong> takes its public site offline; you can bring it back from the <strong>Tournaments</strong> list. <strong>Sealed</strong> means a permanent public record of its results was kept in your public ledger; sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
           ),
         },
         {
           id: 'faq-completed-counts-limit',
           question: 'Does a completed tournament still count against my plan limit?',
-          answerText: 'Completed tournaments still count against the tournament slot limit until archived.',
-          keywords: ['plan limit', 'slot', 'completed', 'archive'],
+          answerText: 'No. Your plan runs one tournament at a time: only a draft or an active tournament holds the slot. Once you mark a tournament complete, the slot is free for your next one, and the finished tournament stays online with its results and links.',
+          keywords: ['plan limit', 'slot', 'completed', 'archive', 'one tournament at a time', 'next year', 'start next year'],
           popular: true,
           answer: (
-            <p>Yes. A completed tournament still holds a tournament slot. Archive it when you are ready to retire it and free that slot.</p>
+            <p><strong>No.</strong> Your plan runs one tournament at a time: only a <strong>draft</strong> or an <strong>active</strong> tournament holds the slot. Once you <strong>mark a tournament complete</strong>, the slot is free for your next one, and the finished tournament stays online with its results and links.</p>
           ),
         },
         {
           id: 'faq-free-slot',
           question: 'How do I free up a tournament slot?',
-          answerText: 'Archive a finished tournament: open it from the Tournaments list and tap Archive. On the Tournament plan its finished dashboard also offers Archive this tournament. Its public site goes offline, so every link you have shared stops working.',
-          keywords: ['free slot', 'plan limit', 'archive tournament'],
+          answerText: 'Mark the tournament complete when it’s done: a completed tournament holds no slot, and its public site stays online. A draft you no longer need can be archived or deleted from its record.',
+          keywords: ['free slot', 'plan limit', 'archive tournament', 'one tournament at a time', 'mark complete'],
           answer: (
-            <p>Archive a finished tournament: open it from the <strong>Tournaments</strong> list and tap <strong>Archive</strong>. On the Tournament plan, its finished dashboard also offers <strong>Archive this tournament</strong>. Archived tournaments keep their teams, games, and payments but no longer hold a slot. Archiving takes the public site offline, so every link you&rsquo;ve shared stops working.</p>
+            <p><strong>Mark the tournament complete</strong> when it&rsquo;s done: a completed tournament holds no slot, and its public site stays online. A draft you no longer need can be archived or deleted from its record in the <strong>Tournaments</strong> list.</p>
           ),
         },
         {
           id: 'faq-bring-back-archived',
           question: 'Can I bring an archived tournament back?',
-          answerText: 'Yes. Open it from the Tournaments list and tap Bring back. It comes back as Completed, and its public site goes back online at the same links. It needs a free tournament slot: if every slot is in use, the record says which event holds it before you tap anything. If another tournament now uses its public link, change this tournament’s public link in Details first.',
+          answerText: 'Yes. Open it from the Tournaments list and tap Bring back. It comes back as Completed, and its public site goes back online at the same links. It doesn’t need a free tournament slot, because a completed tournament holds none. If another tournament now uses its public link, change this tournament’s public link in Details first.',
           keywords: ['bring back archived', 'restore tournament', 'unarchive', 'undo archive', 'reactivate tournament', 'archived by mistake', 'public site offline', 'Archives'],
           answer: (
             <>
               <p>Yes. Open it from the <strong>Tournaments</strong> list and tap <strong>Bring back</strong>. It comes back as <strong>Completed</strong>, and its public site goes back online at the same links.</p>
-              <p>It needs a free tournament slot: if every slot is in use, the record says which event holds it before you tap anything. If another tournament now uses its public link, change this tournament&rsquo;s public link in <strong>Details</strong> first.</p>
+              <p>It doesn&rsquo;t need a free tournament slot, because a completed tournament holds none. If another tournament now uses its public link, change this tournament&rsquo;s public link in <strong>Details</strong> first.</p>
             </>
           ),
         },

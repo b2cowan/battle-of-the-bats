@@ -45,6 +45,7 @@ import { AFTER_EVENT_LOCK_PLAN, LIST_WORDS } from '@/lib/after-event-words';
 import { RECORD_WORDS, STATUS_WORD } from '@/lib/tournament-status-words';
 import { isFinished, listBands, walkOrder, type ListBand, type ListEvent } from '@/lib/tournament-lists';
 import { formatEventDateRange, formatStoredDate } from '@/lib/timezone';
+import { holdsSlot } from '@/lib/tournament-slot';
 import styles from './tournaments-admin.module.css';
 
 const LIST_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'closeout-two-lists' };
@@ -75,8 +76,10 @@ export default function AdminTournamentsPage({
   const canSeal = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'sealed_archives'));
   const limit = currentOrg?.tournamentLimit ?? 9999;
   const finiteSlots = limit < 9999;
-  // Every status but Archived holds a slot — and with one list, the events holding them are all on this page.
-  const used = lists.events.filter(e => e.status !== 'archived').length;
+  // One at a time (A23): only Draft and Active hold a slot — and with one list, the events holding them are all on this
+  // page. The slot line names the one that holds it (Active first), so it can say what frees it.
+  const holders = lists.events.filter(e => holdsSlot(e.status)).sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1));
+  const used = holders.length;
   const atLimit = finiteSlots && used >= limit;
   // The slot line and New tournament wait for the first read: before it, "used" is 0 and a full plan would
   // flash "0 of 1 in use" and a New tournament that then turns into the lock line (/review 2026-10-06).
@@ -151,7 +154,7 @@ export default function AdminTournamentsPage({
       />
       {finiteSlots && ready && (
         <div className={styles.slotLine}>
-          <span>{LIST_WORDS.slotsInUse(used, limit)}</span>
+          <span>{LIST_WORDS.slotsInUse(used, limit, holders[0] ?? null)}</span>
           {atLimit && canWrite && <PlanLockLine href={planHref} plan={AFTER_EVENT_LOCK_PLAN}>{RECORD_WORDS.lockSlots}</PlanLockLine>}
         </div>
       )}

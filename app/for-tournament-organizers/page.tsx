@@ -22,7 +22,7 @@ const { painItems: PAIN_ITEMS, steps: STEPS, features: PLUS_FEATURES } =
   PLAN_ARTICLE_CONTENT.tournament_plus;
 
 const FREE_FEATURES = [
-  '1 active tournament',
+  '1 tournament at a time',
   'Manual scheduling across fields and time slots',
   'Standard team registration with waitlist collection',
   'Single and double-elimination brackets',

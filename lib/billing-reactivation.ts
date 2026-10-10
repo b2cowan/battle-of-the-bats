@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { SLOT_STATUSES, withinFreeSlots } from './tournament-slot';
 
 /**
  * REACTIVATION RESTORES EVERYTHING CANCELLATION TOOK (A07, Club Tier Stage 1b).
@@ -86,11 +87,12 @@ export async function restoreAfterReactivation(orgId: string, tournamentLimit: n
   if (rowsError) throw rowsError;
   const retained = (rows ?? []) as RetainedRow[];
 
+  // One at a time (A23): only Draft and Active events hold a slot, and a row that comes back finished takes none.
   const { count: liveCount, error: countError } = await supabaseAdmin
     .from('tournaments')
     .select('id', { count: 'exact', head: true })
     .eq('org_id', orgId)
-    .neq('status', 'archived');
+    .in('status', [...SLOT_STATUSES]);
   if (countError) throw countError;
   const freeSlots = tournamentLimit >= 9999 ? Number.POSITIVE_INFINITY : Math.max(0, tournamentLimit - (liveCount ?? 0));
 
@@ -102,10 +104,12 @@ export async function restoreAfterReactivation(orgId: string, tournamentLimit: n
 
   await closeRecords(retained.filter(r => r.record_type === 'account').map(r => r.id));
 
-  // Newest first, up to the free slots; the rest stay retained. A handful of writes whatever the
-  // count — one per status the tournaments come back as, then one to close their records.
+  // Newest first: a finished one always, a Draft or Active one up to the free slots; the rest stay retained. A
+  // handful of writes whatever the count — one per status the tournaments come back as, then one to close them.
   const tournaments = retained.filter(r => r.record_type === 'tournament' && r.record_id);
-  const toRestore = Number.isFinite(freeSlots) ? tournaments.slice(0, freeSlots) : tournaments;
+  const toRestore = Number.isFinite(freeSlots)
+    ? withinFreeSlots(tournaments, freeSlots, r => restoredStatus(r.metadata?.previousStatus))
+    : tournaments;
   const byStatus = new Map<RestoredStatus, RetainedRow[]>();
   for (const row of toRestore) {
     const status = restoredStatus(row.metadata?.previousStatus);

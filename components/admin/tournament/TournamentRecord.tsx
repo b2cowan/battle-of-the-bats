@@ -57,7 +57,7 @@ export interface TournamentRecordProps {
   plan: RecordPlan;
   /** Mark complete will email the teams their results (the event's setting, the club's pause, sent once, the plan). */
   willEmailOnComplete: boolean;
-  /** Every event that holds a slot (not archived), this one excluded. */
+  /** Every event that holds a slot (Draft or Active — one at a time, A23), this one excluded; Active first. */
   slotHolders: ListEvent[];
   /** Another non-archived event now using this one's public link, if any. */
   linkTakenBy: string | null;
@@ -271,20 +271,22 @@ export default function TournamentRecord(props: TournamentRecordProps) {
   } else if (status === 'active') {
     statusButtons = [changeButton('complete'), changeButton('draft')];
   } else if (status === 'completed') {
+    // One at a time (A23): a finished event holds no slot, so Reopen needs a free one — said before any tap.
     if (!sealed) {
-      if (missing.length > 0) statusBefore = before(W.blocked('reopen', missing));
+      if (slotFull) {
+        statusBefore = (
+          <>
+            {before(W.needsSlot('reopen', props.slotHolders[0].name))}
+            <PlanLockLine href={plan.planHref} plan={AFTER_EVENT_LOCK_PLAN}>{W.lockSlots}</PlanLockLine>
+          </>
+        );
+      } else if (missing.length > 0) statusBefore = before(W.blocked('reopen', missing));
       else statusButtons.push(changeButton('reopen'));
     }
     statusButtons.push(changeButton('archive'));
   } else if (status === 'archived') {
-    if (slotFull) {
-      statusBefore = (
-        <>
-          {before(props.slotHolders.length === 1 ? W.slotFull(props.slotHolders[0].name) : W.slotsFull(plan.limit, props.slotHolders.length))}
-          <PlanLockLine href={plan.planHref} plan={AFTER_EVENT_LOCK_PLAN}>{W.lockSlots}</PlanLockLine>
-        </>
-      );
-    } else if (props.linkTakenBy) {
+    // Bring back returns it as Completed, which holds no slot (A23): only its public link can stand in the way.
+    if (props.linkTakenBy) {
       statusBefore = before(W.linkTaken(props.linkTakenBy));
     } else {
       statusButtons = [changeButton('bringBack')];
@@ -301,7 +303,7 @@ export default function TournamentRecord(props: TournamentRecordProps) {
 
   const confirm = ask && ask !== 'link'
     ? statusConfirm(ask, {
-      name: event.name, startDate: event.startDate, today, finiteSlots,
+      name: event.name, startDate: event.startDate, today, finiteSlots, status,
       willEmailTeams: props.willEmailOnComplete, canSeal: plan.canSeal, sealed: Boolean(sealed),
     })
     : null;

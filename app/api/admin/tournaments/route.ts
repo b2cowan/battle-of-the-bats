@@ -20,7 +20,8 @@ import { isProvinceCode } from '@/lib/canadian-provinces';
 import { withObservability } from '@/lib/observability';
 import { playedCounts } from '@/lib/event-recap';
 import { fetchAllIn } from '@/lib/supabase-paging';
-import { slotsInUseRefusal } from '@/lib/tournament-status-words';
+import { RECORD_WORDS, slotsInUseRefusal } from '@/lib/tournament-status-words';
+import { hasFiniteSlots, needsFreeSlot, readSlotHolders, visibleHolder } from '@/lib/tournament-slot';
 
 function isDateValue(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -400,19 +401,19 @@ export const POST = withObservability(async (req: Request) => {
       if (currentError) throw currentError;
       if (!current) return Response.json({ error: 'Tournament not found.' }, { status: 404 });
 
-      if (newStatus !== 'archived') {
-        const { count, error: limitError } = await supabase
-          .from('tournaments')
-          .select('*', { count: 'exact', head: true })
-          .eq('org_id', ctx.org.id)
-          .neq('status', 'archived')
-          .neq('id', id);
-
-        if (limitError) throw limitError;
-
-        const limit: number = ctx.org.tournamentLimit;
-        if (limit < 9999 && (count ?? 0) >= limit) {
-          return Response.json({ error: slotsInUseRefusal(limit) }, { status: 403 });
+      // One at a time (A23): only Draft and Active hold a slot. So a change needs a free one only when it moves the
+      // event INTO them from outside — Reopen and Move back to draft of a finished event, or an archived event
+      // straight back to Active or Draft. Bring back (Archived → Completed) and Mark complete need none, and a
+      // change between Draft and Active keeps the slot the event already holds.
+      const limit: number = ctx.org.tournamentLimit;
+      if (hasFiniteSlots(limit) && needsFreeSlot(current.status, newStatus)) {
+        const holders = await readSlotHolders(supabase, ctx.org.id, id);
+        if (holders.length >= limit) {
+          const named = visibleHolder(holders, ctx.assignedTournamentIds);
+          const error = current.status === 'completed' && limit === 1
+            ? RECORD_WORDS.needsSlot(newStatus === 'active' ? 'reopen' : 'draft', named?.name ?? 'another tournament')
+            : slotsInUseRefusal(limit, named);
+          return Response.json({ error }, { status: 403 });
         }
       }
 

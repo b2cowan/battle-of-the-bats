@@ -363,11 +363,11 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-plan-change-tournaments',
           question: 'We moved to a smaller plan — where did our tournaments go?',
-          answerText: 'If your new plan includes fewer tournament slots than you were using, the extra tournaments are archived rather than deleted. A tournament that is currently running is never the one archived — live events are kept. Archived tournaments are retained and come back when you move up to a plan with room for them again.',
+          answerText: 'If your new plan includes fewer tournament slots than you have draft and active tournaments, the extra ones are archived rather than deleted. A tournament that is currently running is never the one archived — live events are kept — and a completed tournament holds no slot, so a plan change never archives it. Archived tournaments are retained and come back when you move up to a plan with room for them again.',
           keywords: ['tournaments disappeared', 'tournaments missing', 'tournament archived', 'downgrade', 'smaller plan', 'fewer tournaments', 'plan change tournaments', 'where did my tournament go'],
           answer: (
             <>
-              <p>If your new plan includes fewer tournament slots than you were using, the extra tournaments are <strong>archived rather than deleted</strong>, and a tournament that is <strong>currently running is never the one archived</strong> — live events are kept.</p>
+              <p>If your new plan includes fewer tournament slots than you have draft and active tournaments, the extra ones are <strong>archived rather than deleted</strong>, and a tournament that is <strong>currently running is never the one archived</strong> — live events are kept. A completed tournament holds no slot, so a plan change never archives it.</p>
               <p>Archived tournaments are retained and come back when you move up to a plan with room for them again.</p>
             </>
           ),

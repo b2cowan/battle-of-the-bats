@@ -8,6 +8,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { slotsInUseRefusal } from '@/lib/tournament-status-words';
+import { hasFiniteSlots, readSlotHolders, visibleHolder } from '@/lib/tournament-slot';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -295,12 +296,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     return json({ error: requiresTournamentPlusCopy('tournament_cloning') }, 403);
   }
 
-  const [{ count, error: countError }, { count: slugCount, error: slugError }] = await Promise.all([
-    supabaseAdmin
-      .from('tournaments')
-      .select('*', { count: 'exact', head: true })
-      .eq('org_id', ctx.org.id)
-      .neq('status', 'archived'),
+  // One at a time (A23): the slot is held by Draft and Active events only — so a finished source holds none.
+  const [holders, { count: slugCount, error: slugError }] = await Promise.all([
+    hasFiniteSlots(ctx.org.tournamentLimit) ? readSlotHolders(supabaseAdmin, ctx.org.id) : Promise.resolve([]),
     supabaseAdmin
       .from('tournaments')
       .select('*', { count: 'exact', head: true })
@@ -309,10 +307,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       .neq('status', 'archived'),
   ]);
 
-  if (countError) return json({ error: countError.message }, 500);
   if (slugError) return json({ error: slugError.message }, 500);
-  if (ctx.org.tournamentLimit < 9999 && (count ?? 0) >= ctx.org.tournamentLimit) {
-    return json({ error: slotsInUseRefusal(ctx.org.tournamentLimit) }, 403);
+  if (hasFiniteSlots(ctx.org.tournamentLimit) && holders.length >= ctx.org.tournamentLimit) {
+    return json({ error: slotsInUseRefusal(ctx.org.tournamentLimit, visibleHolder(holders, ctx.assignedTournamentIds)) }, 403);
   }
   if ((slugCount ?? 0) > 0) return json({ error: 'Another tournament already uses this public link. Choose a different one.' }, 409);
 

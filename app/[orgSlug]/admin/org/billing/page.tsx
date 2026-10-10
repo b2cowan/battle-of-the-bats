@@ -23,6 +23,7 @@ import { usePlanGating } from '@/lib/use-plan-gating';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlanArticlePanel from '@/components/billing/PlanArticlePanel';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
+import { holdsSlot } from '@/lib/tournament-slot';
 import styles from './billing.module.css';
 
 const STATUS_LABEL: Record<SubscriptionStatus, string> = {
@@ -88,7 +89,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Venue management',
     'Default FieldLogicHQ public styling',
     'Public news posts and basic team email',
-    '3 staff / admin seats · 1 tournament slot',
+    '3 staff / admin seats · 1 tournament at a time',
   ],
   team: [
     'One rep team Coaches Portal',
@@ -550,7 +551,8 @@ function BillingPagePlans() {
   const nextSeasonChoice = foundingSeasonStatus?.nextSeason ?? null;
   const cardOnFile = foundingSeasonStatus?.card ?? null;
   const cardLabel = formatCardOnFile(cardOnFile);
-  const usageCount     = tournaments.filter(t => t.status !== 'archived').length;
+  // One at a time (A23): only a draft or an active event holds a slot (lib/tournament-slot.ts).
+  const usageCount     = tournaments.filter(t => holdsSlot(t.status)).length;
   const usageLimit     = currentOrg.tournamentLimit;
   const usagePct       = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
   const primaryUpgradePlans: OrgPlan[] = currentPlanKey === 'tournament' ? ['tournament_plus'] : [];
@@ -971,7 +973,7 @@ function BillingPagePlans() {
       {/* Usage meters */}
       <div className={styles.usageCard}>
         <div className={styles.usageHeader}>
-          <span className={styles.usageLabel}>Non-archived tournament slots used</span>
+          <span className={styles.usageLabel}>Tournament slots in use</span>
           <span className={styles.usageCount}>
             {usageCount} / {usageLimit >= 9999 ? 'Unlimited' : usageLimit}
           </span>
@@ -1300,8 +1302,12 @@ function BillingPagePlans() {
             <button className="btn btn-ghost" onClick={() => setDowngradePreflight(null)}>Close</button>
           </div>
           <p className={styles.retentionCopy}>
-            New limit: {downgradePreflight.targetTournamentLimit >= 9999 ? 'Unlimited' : downgradePreflight.targetTournamentLimit} non-archived tournament slots.
-            {' '}Current usage: {downgradePreflight.activeTournamentCount}.
+            {downgradePreflight.targetTournamentLimit >= 9999
+              ? 'Unlimited tournaments.'
+              : downgradePreflight.targetTournamentLimit === 1
+                ? 'One tournament at a time: a draft or an active event holds the slot, and a finished one stays online.'
+                : `${downgradePreflight.targetTournamentLimit} tournaments at a time: drafts and active events hold the slots, and finished ones stay online.`}
+            {' '}In use now: {downgradePreflight.activeTournamentCount}.
           </p>
           {downgradePreflight.targetPlan === 'tournament' && (
             <p className={styles.statusNote}>

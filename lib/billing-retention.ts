@@ -7,6 +7,7 @@ import { sendTransactionalEmail } from './platform-email-templates';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { tournamentToday } from './timezone';
 import { orderByKeepPriority } from './billing-downgrade-order';
+import { SLOT_STATUSES, withinFreeSlots } from './tournament-slot';
 import type { Organization, OrgPlan } from './types';
 import type { Capability } from './roles';
 
@@ -151,12 +152,30 @@ export async function getNonArchivedTournaments(orgId: string): Promise<BillingT
   return ((data ?? []) as TournamentRow[]).map(mapTournament);
 }
 
+/**
+ * The events that hold a tournament slot — Draft and Active (one at a time, A23, `lib/tournament-slot.ts`). A
+ * downgrade chooses among THESE only: a finished event holds no slot, so a plan change never archives it (and never
+ * takes its public site offline).
+ */
+export async function getSlotHoldingTournaments(orgId: string): Promise<BillingTournamentSummary[]> {
+  const { data, error } = await supabaseAdmin
+    .from('tournaments')
+    .select('id, name, slug, status, year, start_date, end_date')
+    .eq('org_id', orgId)
+    .in('status', [...SLOT_STATUSES])
+    .order('year', { ascending: false })
+    .order('name', { ascending: true });
+
+  if (error) throw error;
+  return ((data ?? []) as TournamentRow[]).map(mapTournament);
+}
+
 export async function buildDowngradePreflight(
   org: Organization,
   targetPlan: OrgPlan,
 ): Promise<DowngradePreflight> {
   const targetCfg = PLAN_CONFIG[targetPlan];
-  const tournaments = await getNonArchivedTournaments(org.id);
+  const tournaments = await getSlotHoldingTournaments(org.id);
   const targetTournamentLimit = targetCfg.tournamentLimit;
   const activeTournamentCount = tournaments.length;
   const allowedKeepCount = targetTournamentLimit >= 9999
@@ -209,7 +228,7 @@ export async function archiveOverCapTournamentsForPlanChange(opts: {
   const targetLimit = PLAN_CONFIG[targetPlan]?.tournamentLimit ?? 1;
   if (targetLimit >= 9999) return [];
 
-  const tournaments = await getNonArchivedTournaments(orgId);
+  const tournaments = await getSlotHoldingTournaments(orgId);
   if (tournaments.length <= targetLimit) return [];
 
   // Rank by what the org is actually USING, never the display order — see billing-downgrade-order.
@@ -247,7 +266,7 @@ export async function archiveOverCapTournamentsForPlanChange(opts: {
   // These are three statements with no surrounding transaction. If the archive ran first and this
   // insert then failed, the tournaments would be archived with no retention record — invisible to
   // `restoreRetainedDowngradeTournaments` (which reads only these rows) AND invisible to a retry
-  // (`getNonArchivedTournaments` already excludes archived ones), so the customer would lose them
+  // (`getSlotHoldingTournaments` already excludes archived ones), so the customer would lose them
   // permanently even after paying again. Reversed, the bad case is a retention row for a
   // tournament that was never archived — restore simply no-ops it back to the status it still has.
   // Harmless. The durable fix is one RPC wrapping all three; that needs a migration, so it is
@@ -338,34 +357,19 @@ export async function restoreRetainedDowngradeTournaments(
   orgId: string,
   tournamentLimit: number,
 ): Promise<RestoreRetainedTournamentsResult> {
+  // One at a time (A23): only Draft and Active hold a slot, so only they count against the free ones — and a row
+  // that comes back finished takes none (`withinFreeSlots`), even when every slot is held.
   const { count: currentCount, error: countError } = await supabaseAdmin
     .from('tournaments')
     .select('id', { count: 'exact', head: true })
     .eq('org_id', orgId)
-    .neq('status', 'archived');
+    .in('status', [...SLOT_STATUSES]);
 
   if (countError) throw countError;
 
   const availableSlots = tournamentLimit >= 9999
     ? Number.POSITIVE_INFINITY
     : Math.max(0, tournamentLimit - (currentCount ?? 0));
-
-  if (availableSlots <= 0) {
-    const { count: remainingCount, error: remainingError } = await supabaseAdmin
-      .from('billing_retained_records')
-      .select('id', { count: 'exact', head: true })
-      .eq('org_id', orgId)
-      .eq('record_type', 'tournament')
-      .eq('retained_state', 'retained_inactive')
-      .eq('metadata->>retentionReason', 'plan_downgrade');
-
-    if (remainingError) throw remainingError;
-    return {
-      restoredCount: 0,
-      remainingRetainedCount: remainingCount ?? 0,
-      restoredTournamentIds: [],
-    };
-  }
 
   const { data, error } = await supabaseAdmin
     .from('billing_retained_records')
@@ -381,7 +385,7 @@ export async function restoreRetainedDowngradeTournaments(
   const retainedRows = ((data ?? []) as RetainedTournamentRestoreRow[])
     .filter(row => row.record_id);
   const rowsToRestore = Number.isFinite(availableSlots)
-    ? retainedRows.slice(0, availableSlots)
+    ? withinFreeSlots(retainedRows, availableSlots, row => restoredTournamentStatus(row.metadata?.previousStatus))
     : retainedRows;
 
   const restoredTournamentIds: string[] = [];

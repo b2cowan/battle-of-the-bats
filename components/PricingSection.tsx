@@ -60,10 +60,10 @@ const PLANS: Plan[] = [
       'Basic team/contact email',
       'Default FieldLogicHQ styling',
       '3 staff / admin seats',
-      '1 tournament slot',
+      '1 tournament at a time',
     ],
     compactFeatures: [
-      '1 tournament slot',
+      '1 tournament at a time',
       'Manual scheduling & score entry',
       'Basic team registration',
       'Public results & standings',

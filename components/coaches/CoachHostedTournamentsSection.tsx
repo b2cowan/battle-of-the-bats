@@ -9,7 +9,7 @@ import type { HostedTournamentRow } from '@/app/api/coaches/[orgSlug]/teams/[tea
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import card from '@/components/coaches/CoachRegistrationCard.module.css';
 
-export type HostedTournamentsState = { canRun: boolean; tournaments: HostedTournamentRow[] } | null;
+export type HostedTournamentsState = { canRun: boolean; slotFree?: boolean; tournaments: HostedTournamentRow[] } | null;
 
 /**
  * "TOURNAMENTS YOU RUN" — the second half of the team's tournament season, on the page that
@@ -88,6 +88,11 @@ export default function CoachHostedTournamentsSection({
             );
           })}
         </div>
+      )}
+      {/* One at a time (A23): the included tournament's slot is free again once last year's is marked complete,
+          and last year's stays listed above — so next year's door shows beneath it. */}
+      {state.tournaments.length > 0 && state.slotFree && (
+        <SetupCard href={setupHref} onView={() => track('tournament_plus_acquisition_cta_viewed')} onClick={() => track('tournament_plus_acquisition_cta_clicked')} />
       )}
     </section>
   );

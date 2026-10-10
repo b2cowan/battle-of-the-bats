@@ -393,7 +393,7 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 - Basic team/contact email
 - Default FieldLogicHQ styling
 - 3 staff / admin seats
-- 1 tournament slot
+- 1 tournament at a time *(was "1 tournament slot" — /marketing 2026-10-10, with one at a time built: a finished event no longer holds the slot; the count is unchanged. Single-sourced in `components/PricingSection.tsx`, both the full and the compact list.)*
 
 **"What's next" upgrade nudge (bottom of card):**
 > Need automated scheduling or bracket tools? → Tournament Plus

@@ -7,7 +7,8 @@ export interface PlanConfig {
   label: string;
   monthlyPrice: number;
   annualPrice: number;
-  // Max number of non-archived tournaments. Draft, active, and completed count.
+  // Max number of tournaments held at once: Draft and Active events only — a finished (Completed) one holds no
+  // slot (one at a time, A23, 2026-10-10; the rule's one home is lib/tournament-slot.ts). 9999 = unlimited.
   tournamentLimit: number;
   // Max number of non-archived rep teams an org may run (the Club capacity band).
   // 9999 = effectively unlimited / not capped by this mechanism. Only enforced for

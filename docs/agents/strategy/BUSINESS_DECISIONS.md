@@ -9,7 +9,7 @@
 ---
 
 ### 2026-10-10 — One at a time: on a one-slot plan, a FINISHED event no longer holds the slot
-**Status:** **Decided** (owner, 2026-10-10, at the start of the Tournament admin redesign's Stage 5 design session: chose "B · One at a time (Recommended)" on the question the 2026-10-07 entry left open). **Not built.** Stage 5 (creation, which owns the limit checks) draws it, and Stage 5's build implements it.
+**Status:** **Decided** (owner, 2026-10-10, at the start of the Tournament admin redesign's Stage 5 design session: chose "B · One at a time (Recommended)" on the question the 2026-10-07 entry left open). **Built 2026-10-10** — Stage 5's build, Part 0 (`/billing`): the rule's one home is `lib/tournament-slot.ts`, read at every limit check named under Affects plus the platform admin's plan change and both restores (a finished event comes back without a slot). The `/marketing` words and the Facts doc's line landed with it; the three help answers with `/docs`.
 
 **Decision:**
 - On the one-slot plans (the free **Tournament** plan and the **Premium Coaches Portal's** included tournament), only **Draft** and **Active** events hold the slot. A **Completed** event does not.

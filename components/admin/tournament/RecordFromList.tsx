@@ -14,6 +14,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { LIST_WORDS } from '@/lib/after-event-words';
 import { STATUS_WORD } from '@/lib/tournament-status-words';
+import { holdsSlot } from '@/lib/tournament-slot';
 import type { ListEvent } from '@/lib/tournament-lists';
 import type { useTournamentLists } from './useTournamentLists';
 
@@ -54,7 +55,7 @@ export default function RecordFromList({ openId, order, lists, onOpen, onClose }
         orgContactEmail: currentOrg.contactEmail ?? null,
       }}
       willEmailOnComplete={event.willEmailOnComplete}
-      slotHolders={events.filter(e => e.status !== 'archived' && e.id !== event.id)}
+      slotHolders={events.filter(e => holdsSlot(e.status) && e.id !== event.id).sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1))}
       linkTakenBy={takenBy}
       prev={order[idx - 1] ?? null}
       next={order[idx + 1] ?? null}

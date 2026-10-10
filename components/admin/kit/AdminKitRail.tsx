@@ -33,6 +33,8 @@ import { useChatUnread } from '@/lib/use-chat-unread';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
 import { isKitLinkActive, kitTournamentLabel, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
+import { holdsSlot } from '@/lib/tournament-slot';
+import { slotsInUseRefusal } from '@/lib/tournament-status-words';
 import { useRailTeamName } from './useRailTeam';
 import { briefPageCount, briefProgramCount } from './club/ClubBriefProvider';
 import styles from './AdminKitFrame.module.css';
@@ -346,7 +348,9 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
     && !allKeys.some(k => k !== key && k.length > key.length && pathname.startsWith(`${base}/tournaments/${k}`));
 
   const slotLimit = currentOrg?.tournamentLimit ?? 9999;
-  const atLimit = tournaments.length >= slotLimit;
+  // One at a time (A23): only Draft and Active events hold a slot (lib/tournament-slot.ts).
+  const slotHolders = tournaments.filter(t => holdsSlot(t.status)).sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1));
+  const atLimit = slotHolders.length >= slotLimit;
   const billingHref = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : `${base}/org/billing`;
 
   return (
@@ -373,9 +377,7 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
               className={styles.switcherAdd}
               onClick={() => (atLimit && userRole === 'owner' ? router.push(billingHref) : atLimit ? undefined : onCreate())}
               disabled={atLimit && userRole !== 'owner'}
-              title={atLimit && userRole === 'owner'
-                ? `All ${slotLimit} tournament slot${slotLimit === 1 ? '' : 's'} used. Upgrade your plan to add more.`
-                : atLimit ? 'Tournament slot limit reached. Ask your org owner to upgrade.' : 'Create a new tournament'}
+              title={atLimit ? slotsInUseRefusal(slotLimit, slotHolders[0] ?? null) : 'Create a new tournament'}
               aria-label="Create new tournament"
             >
               <Plus size={14} aria-hidden />

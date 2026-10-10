@@ -8,6 +8,7 @@ import { fmtAbsoluteDate } from '@/lib/format-date';
 import type { OrgPlan } from '@/lib/types';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import OrgDetailClient from './OrgDetailClient';
+import { holdsSlot } from '@/lib/tournament-slot';
 import styles from './orgDetail.module.css';
 
 type OverrideRow = {
@@ -392,16 +393,18 @@ export default async function OrgDetailPage({
     Boolean(org.subscription_period) ||
     Boolean(org.current_period_end)
   );
+  // One at a time (A23): only Draft and Active events hold a slot — a finished one is never "over the limit".
+  const slotHeldCount = tournaments.filter(t => holdsSlot(t.status)).length;
   const hasOverLimitTournaments = effectiveTournamentLimit !== null &&
     effectiveTournamentLimit < 9999 &&
-    tournaments.length > effectiveTournamentLimit;
+    slotHeldCount > effectiveTournamentLimit;
   const attentionItems = [
     ...(ownerMembers.length === 0 ? ['No owner is assigned to this organization.'] : []),
     ...(subscriptionStatus === 'past_due' ? ['Subscription is past due. Review billing and owner contact before support-sensitive changes.'] : []),
     ...(subscriptionStatus === 'canceled' ? ['Subscription is canceled. Confirm access expectations before making support changes.'] : []),
     ...(hasFreePlanBillingMismatch ? ['Free Tournament billing state is inconsistent. The plan should be active with no Stripe subscription.'] : []),
     ...(expiringSoonOverrides.length > 0 ? [`${expiringSoonOverrides.length} active override${expiringSoonOverrides.length === 1 ? '' : 's'} expiring within 14 days — extend or let lapse.`] : []),
-    ...(hasOverLimitTournaments ? [`This org has ${tournaments.length} non-archived tournaments against a limit of ${effectiveTournamentLimit}.`] : []),
+    ...(hasOverLimitTournaments ? [`This org has ${slotHeldCount} draft and active tournaments against a limit of ${effectiveTournamentLimit}.`] : []),
     ...(hasOverCapTeams ? [`This org has ${teamCount} teams against its cap of ${effectiveTeamLimit}.`] : []),
   ];
 
