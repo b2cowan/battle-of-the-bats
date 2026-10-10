@@ -84,10 +84,12 @@ describe('R2 — the public-preview island restores what the kit changes', () =>
     assert.deepEqual(open, [], 'a warm class rule without the exclusion restyles a preview of a public page');
   });
 
-  it('the three previews wear the island', () => {
+  it('the two previews wear the island', () => {
     assert.match(readSource('app/[orgSlug]/admin/AdminChrome.tsx'), /data-public-preview/, 'the tournament preview shell');
-    assert.match(readSource('app/[orgSlug]/admin/tournaments/branding/page.tsx'), /data-public-preview/, 'the Public Site theme preview');
     assert.match(readSource('components/admin/TournamentCreationPreview.tsx'), /data-public-preview/, 'the new-tournament live preview');
+    // ⚰ The Public Site theme's drawn preview (a mock of no real page) retired with Tournament admin redesign Stage 5
+    // (E7, J1-064): the page's door card opens the real site instead, so no island is left there to guard.
+    assert.doesNotMatch(readSource('app/[orgSlug]/admin/tournaments/branding/page.tsx'), /themePreview|modePreview/, 'the drawn mock came back');
   });
 });
 

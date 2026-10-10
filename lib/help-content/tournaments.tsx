@@ -1856,6 +1856,17 @@ const tournamentsHelp: HelpPageContent = {
       ),
       subtopics: [
         {
+          id: 'public-site-cards',
+          title: 'Public site: the door to your site, and changes that save themselves',
+          content: (
+            <>
+              <p><strong>Public site</strong> opens with a door to the site itself: <strong>See your public site</strong>. While the tournament is a draft it says <strong>Preview</strong> and opens your preview, as families will see it once you activate; once it&rsquo;s active it says <strong>Online</strong> and opens the public page in a new tab.</p>
+              <p><strong>Pages</strong> comes first, on every plan: a switch for each page families can see (News, Schedule, Standings, Teams, Rules, Registration), and <strong>Show coaches&rsquo; names</strong> on Teams and team pages (off by default). Tap anywhere on a row to switch it.</p>
+              <p>On Tournament Plus and above, six closed cards follow, each saying what it holds: <strong>Logo</strong>, <strong>App icon</strong>, <strong>Theme</strong>, <strong>Hero banner</strong>, <strong>Font</strong>, and <strong>Card style</strong>. Open one to change it. Every change saves itself, and a small note says so; there is no Save button and nothing to lose by leaving. In <strong>Theme</strong>, a custom colour can be typed as a hex code beside its picker (like #1E3A8A). To see your colours on the real page, use the door at the top.</p>
+            </>
+          ),
+        },
+        {
           id: 'public-site-standings',
           title: 'Consistent standings',
           content: (

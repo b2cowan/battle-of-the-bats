@@ -24,6 +24,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import type { NotificationEventType } from '@/lib/types';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
+import { SwitchButton, SwitchRow, SwitchRows } from '@/components/admin/tournament/SwitchRows';
 import { NOTIFY_WORDS as W } from '@/lib/tournament-settings-words';
 import styles from './notifications.module.css';
 
@@ -32,21 +33,6 @@ const CHAT_EVENT: NotificationEventType = 'chat_message';
 interface TournamentPref {
   eventType: NotificationEventType;
   optedOut: boolean;
-}
-
-/** One 52px row, its whole width the switch. */
-function SwitchRow({ on, name, caption, onToggle }: {
-  on: boolean; name: string; caption?: string; onToggle: () => void;
-}) {
-  return (
-    <button type="button" role="switch" aria-checked={on} className={styles.row} onClick={onToggle}>
-      <span className={styles.text}>
-        <span className={styles.name}>{name}</span>
-        {caption && <span className={styles.caption}>{caption}</span>}
-      </span>
-      <span className={styles.switch} aria-hidden />
-    </button>
-  );
 }
 
 export default function TournamentNotificationPreferencesPage() {
@@ -132,15 +118,13 @@ export default function TournamentNotificationPreferencesPage() {
   }
 
   const rowsFor = (list: NotificationEventType[]) => list.map(et => (
-    <li key={et}>
-      <SwitchRow
-        on={!(prefs.get(et) ?? false)}
-        name={NOTIFICATION_EVENT_LABELS[et]}
-        caption={et === CHAT_EVENT ? W.mentions : undefined}
-       
-        onToggle={() => toggle(et)}
-      />
-    </li>
+    <SwitchRow
+      key={et}
+      on={!(prefs.get(et) ?? false)}
+      name={NOTIFICATION_EVENT_LABELS[et]}
+      caption={et === CHAT_EVENT ? W.mentions : undefined}
+      onToggle={() => toggle(et)}
+    />
   ));
 
   return (
@@ -154,13 +138,13 @@ export default function TournamentNotificationPreferencesPage() {
       ) : (
         <>
           <div className={styles.card}>
-            <SwitchRow on={isMuted} name={W.mute} caption={W.muteCaption} onToggle={() => muteAll(!isMuted)} />
+            <SwitchButton on={isMuted} name={W.mute} caption={W.muteCaption} onToggle={() => muteAll(!isMuted)} />
           </div>
           <section className={styles.card} aria-labelledby="tell-me-when">
             <h2 id="tell-me-when" className={styles.band}>{W.tellMeWhen}</h2>
-            <ul className={styles.rows}>
+            <SwitchRows>
               {rowsFor(chatEnabled ? [...TOURNAMENT_EVENT_TYPES, CHAT_EVENT] : [...TOURNAMENT_EVENT_TYPES])}
-            </ul>
+            </SwitchRows>
           </section>
           <Link href={`/account/notifications?focus=org-${orgSlug ?? ''}`} className={styles.door}>
             {W.manage} <ChevronRight size={16} aria-hidden />

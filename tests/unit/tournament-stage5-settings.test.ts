@@ -110,11 +110,13 @@ describe('order: Tools → Reorder, and a handle at a desk (A54)', () => {
 
 describe('notifications and the hub (E6, F31)', () => {
   const page = code('app/[orgSlug]/admin/tournaments/settings/notifications/page.tsx');
-  it('each row is one switch its whole width, the pill says each save', () => {
-    assert.match(page, /<button type="button" role="switch" aria-checked=\{on\} className=\{styles\.row\}/);
+  it('each row is one switch its whole width (the shared switch rows), the pill says each save', () => {
+    const rows = code('components/admin/tournament/SwitchRows.tsx');
+    assert.match(rows, /<button type="button" role="switch" aria-checked=\{on\} className=\{styles\.row\}/);
+    assert.match(read('components/admin/tournament/SwitchRows.module.css'), /min-height: 52px;/);
+    assert.match(page, /<SwitchRows>/);
     assert.match(page, /<SavePill /);
     assert.match(page, /NOTIFICATION_EVENT_LABELS\[et\]/);
-    assert.match(read('app/[orgSlug]/admin/tournaments/settings/notifications/notifications.module.css'), /min-height: 52px;/);
   });
   it('the settings hub gains its "?" and keeps its three cards', () => {
     const hub = code('app/[orgSlug]/admin/tournaments/settings/page.tsx');

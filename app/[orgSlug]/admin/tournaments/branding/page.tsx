@@ -1,27 +1,50 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
-import { useState, useEffect, useRef, useMemo, type CSSProperties } from 'react';
+/**
+ * PUBLIC SITE — Tournament admin redesign Stage 5 (E7, A53; F29, F90's page half, J1-064), built to hub v45, ruled
+ * as drawn 2026-10-10.
+ *
+ *   the door      "See your public site" — a door card at the top at every width: the organizer's preview while the
+ *                 event is a draft ("Preview"), the public page in a new tab after ("Online"; never "Live", which is
+ *                 one game). On a phone and a tablet there was no door to the site from any setup screen.
+ *   Pages         first (the part every plan uses): 52px switch rows, two columns at a desk; Show coaches' names
+ *   six parts     Logo, App icon, Theme, Hero banner, Font, Card style — closed cards that say what each holds
+ *                 (Event settings' model). The theme's drawn mock went (the door shows the real page); a colour can
+ *                 be typed as a hex code beside its picker.
+ *   saving        every change saves itself with the floating pill: a choice at once, typing after a pause, and
+ *                 anything still waiting is sent as you leave — the bottom Save Changes, its "Unsaved changes" and
+ *                 the success pop-ups after an upload went; nothing is lost by leaving (a theme change was, silently).
+ *   free plan     the door and Pages as every plan; the advanced part locked as today (the free tier review decides).
+ */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, Image as ImageIcon, Palette, Upload } from 'lucide-react';
+import { Image as ImageIcon, Upload } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import FeedbackModal from '@/components/FeedbackModal';
-import { TournamentAdminHeader, CompactUpsell } from '@/components/admin/tournament';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import CollapsibleCard from '@/components/admin/CollapsibleCard';
+import { CompactUpsell } from '@/components/admin/tournament';
+import HelpButton from '@/components/help/HelpButton';
+import type { HelpRequest } from '@/components/help/help-drawer-context';
+import { ClubSection, LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
+import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import { SwitchRow, SwitchRows } from '@/components/admin/tournament/SwitchRows';
+import { BoardDoor } from '../dashboard/GameDayBoard';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import { PUBLIC_PAGE_OPTIONS, normalizeHiddenPublicPages, type PublicPageKey } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { hasCapability } from '@/lib/roles';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
+import { PUBLIC_SITE_WORDS as W, appIconSummary, parseHex, themeSummary } from '@/lib/tournament-settings-words';
 import styles from './branding.module.css';
+import site from './site.module.css';
 
-// Both access-denied states below share this exact legacy style (Admin Design Continuity slice 4a).
-const ACCESS_MESSAGE_STYLE: CSSProperties = { color: 'var(--white-40)', fontSize: '0.9rem' };
+/** Public site's "?" (A56): its own help sub-topic. */
+const SITE_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['public-site-preview'], subtopicId: 'public-site-cards' };
 
-// Mirror of lib/pwa-icon ICON_DARK (that module is server-only — it can't be imported
-// into this client component). The shared truth lives there; this is the UI default
-// shown when no logo colour has been sampled yet.
+// Mirror of lib/pwa-icon ICON_DARK (that module is server-only — it can't be imported into this client component).
+// The shared truth lives there; this is the UI default shown when no logo colour has been sampled yet.
 const ICON_DARK_FALLBACK = '#0a0a12';
 
 interface BrandingSettings {
@@ -41,832 +64,556 @@ interface BrandingSettings {
   coachNamesShowOnPublic: boolean;
 }
 
+/** What the page edits — sent whole on every save (the route takes the same body the old Save sent). */
+type Draft = {
+  presetKey: string;
+  customPrimary: string;
+  customAccent: string;
+  fontKey: string;
+  cardStyle: string;
+  colorMode: 'dark' | 'light';
+  iconBg: string | null;
+  appName: string;
+  iconScale: number;
+  publicHiddenPages: PublicPageKey[];
+  coachNamesShowOnPublic: boolean;
+};
+
 // App-icon "Logo size" slider: relative to the tuned default (100). Stored null = 100.
 const ICON_SCALE_MIN = 70;
 const ICON_SCALE_MAX = 125;
 const ICON_SCALE_DEFAULT = 100;
 
-function errorMessage(err: unknown, fallback: string) {
-  return err instanceof Error ? err.message : fallback;
+const sameHex = (a: string | null, b: string | null) => (a ?? '').toLowerCase() === (b ?? '').toLowerCase();
+
+function draftOf(data: BrandingSettings, advanced: boolean): Draft {
+  const custom = Boolean(data.themePrimary && advanced);
+  return {
+    presetKey: custom ? 'custom' : data.themePreset ?? 'platform',
+    customPrimary: custom ? data.themePrimary! : '#1E3A8A',
+    customAccent: custom ? data.themeAccent ?? '#D9F99D' : '#D9F99D',
+    fontKey: advanced ? data.themeFont ?? 'system' : 'system',
+    cardStyle: advanced ? data.themeCardStyle ?? 'default' : 'default',
+    colorMode: data.colorMode ?? 'dark',
+    iconBg: advanced ? data.iconBgColor ?? null : null,
+    appName: advanced ? data.appName ?? '' : '',
+    iconScale: advanced ? data.iconScale ?? ICON_SCALE_DEFAULT : ICON_SCALE_DEFAULT,
+    publicHiddenPages: normalizeHiddenPublicPages(data.publicHiddenPages),
+    coachNamesShowOnPublic: data.coachNamesShowOnPublic === true,
+  };
 }
 
-const sameHex = (a: string | null, b: string | null) =>
-  (a ?? '').toLowerCase() === (b ?? '').toLowerCase();
+function bodyOf(d: Draft, advanced: boolean) {
+  const pages = { publicHiddenPages: normalizeHiddenPublicPages(d.publicHiddenPages), coachNamesShowOnPublic: d.coachNamesShowOnPublic };
+  if (!advanced) return pages;
+  const theme = d.presetKey === 'custom'
+    ? { themePreset: 'platform', themePrimary: d.customPrimary, themeAccent: d.customAccent }
+    : { themePreset: d.presetKey, themePrimary: null, themeAccent: null };
+  return {
+    ...theme,
+    themeFont: d.fontKey,
+    themeCardStyle: d.cardStyle,
+    colorMode: d.colorMode,
+    iconBgColor: d.iconBg,
+    appName: d.appName.trim() || null,
+    iconScale: d.iconScale === ICON_SCALE_DEFAULT ? null : d.iconScale,
+    ...pages,
+  };
+}
 
-type SectionKey = 'publicPages' | 'logo' | 'appIcon' | 'theme' | 'heroBanner' | 'fontFamily' | 'cardStyle';
+/** The draft with the address it was read from (and the plan's body): a save always goes to ITS tournament. */
+type Held = { url: string; advanced: boolean; draft: Draft };
+const send = (held: Held, keepalive = false) => fetch(held.url, {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(bodyOf(held.draft, held.advanced)),
+  keepalive,
+});
+
+/** A file's own name from its stored address ("uat-plus-logo.png"), or "Uploaded" when it carries none worth showing. */
+function fileName(url: string | null): string {
+  if (!url) return W.none;
+  const last = decodeURIComponent(url.split('?')[0].split('/').pop() ?? '');
+  return /^[\w.-]{1,60}\.(png|jpe?g|webp|gif|svg)$/i.test(last) && !/^\d{10,}/.test(last) ? last : W.uploaded;
+}
+
+/** A colour's hex code, typed beside its picker: kept as typed until it is one, then it is the colour. */
+function HexField({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (hex: string) => void }) {
+  const [typed, setTyped] = useState(value.toUpperCase());
+  const [seen, setSeen] = useState(value);
+  if (!sameHex(seen, value)) { setSeen(value); setTyped(value.toUpperCase()); }
+  const bad = typed.trim() !== '' && parseHex(typed) === null;
+  return (
+    <>
+      <input id={id} className={site.hexInput} aria-label={`${label} · ${W.hexCode}`} value={typed} maxLength={7} spellCheck={false}
+        onChange={e => {
+          setTyped(e.target.value);
+          const hex = parseHex(e.target.value);
+          if (hex) { setSeen(hex); onChange(hex); }
+        }}
+        onBlur={() => { if (parseHex(typed) === null) setTyped(value.toUpperCase()); }} />
+      {bad && <p className={site.mistake} role="alert">{W.hexHeld}</p>}
+    </>
+  );
+}
 
 export default function TournamentBrandingPage() {
   const { currentTournament } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
-  const kx = useKitStyle();
   usePageTitle('Public Site');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
 
-  const [saved, setSaved] = useState<BrandingSettings | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const tournamentId = currentTournament?.id;
+  const advanced = currentOrg?.planId ? hasPlanFeature(currentOrg.planId, 'advanced_tournament_branding') : false;
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const upgradeHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
+  const brandingUrl = tournamentId ? `/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}` : '';
+
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [iconBgSuggested, setIconBgSuggested] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [bannerUploading, setBannerUploading] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const [presetKey, setPresetKey] = useState('platform');
-  const [customPrimary, setCustomPrimary] = useState('#1E3A8A');
-  const [customAccent, setCustomAccent] = useState('#D9F99D');
-  const [fontKey, setFontKey] = useState('system');
-  const [cardStyle, setCardStyle] = useState('default');
-  const [colorMode, setColorMode] = useState<'dark' | 'light'>('dark');
-  const [iconBg, setIconBg] = useState<string | null>(null);          // override; null = auto
-  const [iconBgSuggested, setIconBgSuggested] = useState<string | null>(null);
-  const [appName, setAppName] = useState('');                          // blank = use event name
-  const [iconScale, setIconScale] = useState(ICON_SCALE_DEFAULT);       // 100 = default size
-  const [publicHiddenPages, setPublicHiddenPages] = useState<PublicPageKey[]>([]);
-  const [coachNamesShowOnPublic, setCoachNamesShowOnPublic] = useState(false);
-
-  const [successOpen, setSuccessOpen] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorOpen, setErrorOpen] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-
-  // Accordion state — Public Pages open by default, advanced sections closed
-  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
-    publicPages: true,
-    logo: false,
-    appIcon: false,
-    theme: false,
-    heroBanner: false,
-    fontFamily: false,
-    cardStyle: false,
-  });
-
-  function toggleSection(key: SectionKey) {
-    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
-  }
-
+  const [logoError, setLogoError] = useState('');
+  const [bannerError, setBannerError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
-  const tournamentId = currentTournament?.id;
-  const canUseAdvancedBranding = currentOrg?.planId
-    ? hasPlanFeature(currentOrg.planId, 'advanced_tournament_branding')
-    : false;
-  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-  const upgradeHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
+  // ── Saving: a choice at once, typing after a pause, one save at a time, anything waiting sent on leaving ──
+  // The draft carries the address it was read from: a save always goes to ITS tournament, so switching events mid-edit
+  // can never write one event's site over another's (/review).
+  const latest = useRef<Held | null>(null);
+  const edits = useRef(0);
+  const currentUrl = useRef(brandingUrl);
+  const chain = useRef<Promise<unknown>>(Promise.resolve());
+  const timer = useRef<number | null>(null);
+  const [waiting, setWaiting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
+  // A tournament switch (or leaving the page): a change still waiting goes to ITS tournament now, and the page forgets
+  // that draft until the new event's own read arrives.
   useEffect(() => {
-    if (!tournamentId) return;
-    fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`)
-      .then(r => r.json())
-      .then((data: BrandingSettings) => {
-        setSaved(data);
-        setLogoPreview(data.logoUrl);
-        setBannerPreview(data.heroBannerUrl);
-        setFontKey(canUseAdvancedBranding ? data.themeFont ?? 'system' : 'system');
-        setCardStyle(canUseAdvancedBranding ? data.themeCardStyle ?? 'default' : 'default');
-        setColorMode(data.colorMode ?? 'dark');
-        setIconBg(canUseAdvancedBranding ? data.iconBgColor ?? null : null);
-        setIconBgSuggested(data.iconBgSuggested ?? null);
-        setAppName(canUseAdvancedBranding ? data.appName ?? '' : '');
-        setIconScale(canUseAdvancedBranding ? (data.iconScale ?? ICON_SCALE_DEFAULT) : ICON_SCALE_DEFAULT);
-        setPublicHiddenPages(normalizeHiddenPublicPages(data.publicHiddenPages));
-        setCoachNamesShowOnPublic(data.coachNamesShowOnPublic === true);
-        if (data.themePrimary && canUseAdvancedBranding) {
-          setPresetKey('custom');
-          setCustomPrimary(data.themePrimary);
-          setCustomAccent(data.themeAccent ?? '#D9F99D');
-        } else {
-          setPresetKey(data.themePreset ?? 'platform');
-        }
-      })
-      .catch(() => showError('Failed to load branding settings'));
-  }, [tournamentId, canUseAdvancedBranding, orgParam]);
+    currentUrl.current = brandingUrl;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a new event shows Loading until its own read lands
+    setDraft(null);
+    return () => {
+      if (timer.current && latest.current) { window.clearTimeout(timer.current); timer.current = null; void send(latest.current, true); }
+      latest.current = null;
+    };
+  }, [brandingUrl]);
 
-  const isDirty = useMemo(() => {
-    if (!saved) return false;
-    // Public-site controls (page visibility + coach-name toggle) are available on every plan.
-    const publicSiteDirty =
-      normalizeHiddenPublicPages(publicHiddenPages).join('|') !== normalizeHiddenPublicPages(saved.publicHiddenPages).join('|') ||
-      coachNamesShowOnPublic !== (saved.coachNamesShowOnPublic === true);
-    if (!canUseAdvancedBranding) {
-      return publicSiteDirty;
+  const load = useCallback(async () => {
+    if (!brandingUrl) return;
+    setLoadError(false);
+    const editsAtStart = edits.current;
+    try {
+      const res = await fetch(brandingUrl, { cache: 'no-store' });
+      if (!res.ok) throw new Error('load');
+      const data = await res.json() as BrandingSettings;
+      if (currentUrl.current !== brandingUrl) return; // another event's read owns the page now
+      setLogoUrl(data.logoUrl);
+      setBannerUrl(data.heroBannerUrl);
+      setIconBgSuggested(data.iconBgSuggested ?? null);
+      // An edit made while this read was out stays: a late read never overwrites it.
+      if (edits.current !== editsAtStart && latest.current?.url === brandingUrl) return;
+      const d = draftOf(data, advanced);
+      latest.current = { url: brandingUrl, advanced, draft: d };
+      setDraft(d);
+    } catch {
+      if (currentUrl.current === brandingUrl) setLoadError(true);
     }
-    const savedPresetKey = saved.themePrimary && canUseAdvancedBranding ? 'custom' : (saved.themePreset ?? 'platform');
-    const savedFontKey = canUseAdvancedBranding ? saved.themeFont ?? 'system' : 'system';
-    const savedCardStyle = canUseAdvancedBranding ? saved.themeCardStyle ?? 'default' : 'default';
-    const presetChanged =
-      presetKey !== savedPresetKey ||
-      (canUseAdvancedBranding && presetKey === 'custom' && savedPresetKey === 'custom' && (
-        customPrimary !== (saved.themePrimary ?? '#1E3A8A') ||
-        customAccent !== (saved.themeAccent ?? '#D9F99D')
-      ));
-    return (
-      presetChanged ||
-      fontKey !== savedFontKey ||
-      cardStyle !== savedCardStyle ||
-      colorMode !== (saved.colorMode ?? 'dark') ||
-      !sameHex(iconBg, saved.iconBgColor) ||
-      appName.trim() !== (saved.appName ?? '') ||
-      iconScale !== (saved.iconScale ?? ICON_SCALE_DEFAULT) ||
-      publicSiteDirty
-    );
-  }, [saved, presetKey, customPrimary, customAccent, fontKey, cardStyle, colorMode, iconBg, appName, iconScale, publicHiddenPages, coachNamesShowOnPublic, canUseAdvancedBranding]);
+  }, [brandingUrl, advanced]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- a new event reads its own public site
+  useEffect(() => { void load(); }, [load]);
+
+  const saveNow = useCallback(() => {
+    if (timer.current) { window.clearTimeout(timer.current); timer.current = null; }
+    setWaiting(false);
+    const held = latest.current;
+    if (!held) return;
+    setSaving(true);
+    setSaveError(null);
+    const run = chain.current.catch(() => {}).then(async () => {
+      // When its turn comes: the newest draft of the SAME tournament (a later change rides along), never another's.
+      const now = latest.current && latest.current.url === held.url ? latest.current : held;
+      try {
+        const res = await send(now);
+        if (!res.ok) throw new Error('save');
+        setSaveError(null);
+      } catch {
+        setSaveError(W.saveFailed);
+      }
+    });
+    chain.current = run;
+    void run.finally(() => { if (chain.current === run) setSaving(false); });
+  }, []);
+
+  /** A change: kept at once; saved at once, or after a pause while it is still being typed or dragged. */
+  const change = useCallback((patch: Partial<Draft>, later = false) => {
+    const held = latest.current;
+    if (!held) return;
+    edits.current += 1;
+    latest.current = { ...held, draft: { ...held.draft, ...patch } };
+    setDraft(latest.current.draft);
+    if (!later) { saveNow(); return; }
+    setWaiting(true);
+    if (timer.current) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(saveNow, 900);
+  }, [saveNow]);
+
+  // Closing the tab with a change still waiting: send it, so nothing typed is lost.
+  useEffect(() => {
+    const flush = () => {
+      if (!timer.current || !latest.current) return;
+      window.clearTimeout(timer.current);
+      timer.current = null;
+      void send(latest.current, true);
+    };
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, []);
 
   const previewTheme = useMemo(() => {
-    if (presetKey === 'custom' && canUseAdvancedBranding) {
-      return resolveTheme('platform', customPrimary || null, customAccent || null);
-    }
-    return resolveTheme(presetKey, null, null);
-  }, [presetKey, customPrimary, customAccent, canUseAdvancedBranding]);
+    if (!draft) return resolveTheme('platform', null, null);
+    return draft.presetKey === 'custom' && advanced
+      ? resolveTheme('platform', draft.customPrimary || null, draft.customAccent || null)
+      : resolveTheme(draft.presetKey, null, null);
+  }, [draft, advanced]);
 
-  // App-icon preview tile colour: the override if set, else the auto-sampled colour,
-  // else the dark default. Lower-cased so the native colour input stays controlled.
-  const effectiveIconBg = (iconBg ?? iconBgSuggested ?? ICON_DARK_FALLBACK).toLowerCase();
-
-  // Preview tracks the iOS framing (the tile is a rounded square, like iPhone): scale
-  // the 156/180 base box by the slider, clamped to the same 110–172 safe range the
-  // apple-touch icon route uses, expressed as a % of the tile.
-  const iconPreviewPct = `${(Math.max(110, Math.min(172, Math.round(156 * iconScale / 100))) / 180 * 100).toFixed(1)}%`;
-
-  function showError(msg: string) {
-    setErrorMsg(msg);
-    setErrorOpen(true);
-  }
-
-  async function handleSave() {
-    if (!tournamentId || saving) return;
-    setSaving(true);
-    try {
-      const normalizedHiddenPages = normalizeHiddenPublicPages(publicHiddenPages);
-      const safeFontKey = canUseAdvancedBranding ? fontKey : 'system';
-      const safeCardStyle = canUseAdvancedBranding ? cardStyle : 'default';
-      const themeBody = presetKey === 'custom' && canUseAdvancedBranding
-        ? { themePreset: 'platform', themePrimary: customPrimary, themeAccent: customAccent }
-        : { themePreset: presetKey, themePrimary: null, themeAccent: null };
-      const requestBody = canUseAdvancedBranding
-        ? {
-            ...themeBody,
-            themeFont: safeFontKey,
-            themeCardStyle: safeCardStyle,
-            colorMode,
-            iconBgColor: iconBg,
-            appName: appName.trim() || null,
-            iconScale: iconScale === ICON_SCALE_DEFAULT ? null : iconScale,
-            publicHiddenPages: normalizedHiddenPages,
-            coachNamesShowOnPublic,
-          }
-        : {
-            publicHiddenPages: normalizedHiddenPages,
-            coachNamesShowOnPublic,
-          };
-
-      const res = await fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error ?? 'Save failed');
-      }
-      setFontKey(safeFontKey);
-      setCardStyle(safeCardStyle);
-      setPublicHiddenPages(normalizedHiddenPages);
-      setSaved(prev => prev ? {
-        ...prev,
-        ...(canUseAdvancedBranding ? {
-          ...themeBody,
-          themeFont: safeFontKey,
-          themeCardStyle: safeCardStyle,
-          colorMode,
-          iconBgColor: iconBg,
-          appName: appName.trim() || null,
-          iconScale: iconScale === ICON_SCALE_DEFAULT ? null : iconScale,
-        } : {}),
-        publicHiddenPages: normalizedHiddenPages,
-        coachNamesShowOnPublic,
-      } : null);
-      setSuccessMsg('Branding settings saved.');
-      setSuccessOpen(true);
-    } catch (err: unknown) {
-      showError(errorMessage(err, 'Something went wrong'));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function togglePublicPage(key: PublicPageKey) {
-    setPublicHiddenPages(prev => (
-      prev.includes(key)
-        ? prev.filter(item => item !== key)
-        : [...prev, key]
-    ));
-  }
-
-  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !tournamentId || !canUseAdvancedBranding) return;
-    setLogoPreview(URL.createObjectURL(file));
-    setLogoUploading(true);
+  // ── Uploads save on their own, as today; the pill says so (no pop-up), a failure says so in its card ──
+  async function upload(kind: 'logo' | 'banner', file: File) {
+    if (!tournamentId || !advanced) return;
+    const setBusy = kind === 'logo' ? setLogoUploading : setBannerUploading;
+    const setError = kind === 'logo' ? setLogoError : setBannerError;
+    setBusy(true);
+    setError('');
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch(`/api/admin/tournament-logo?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Upload failed');
-      setLogoPreview(data.logoUrl);
-      setIconBgSuggested(data.iconBgSuggested ?? null);
-      setSaved(prev => prev ? { ...prev, logoUrl: data.logoUrl } : null);
-      setSuccessMsg('Tournament logo updated.');
-      setSuccessOpen(true);
-    } catch (err: unknown) {
-      showError(errorMessage(err, 'Upload failed'));
-      setLogoPreview(saved?.logoUrl ?? null);
+      const route = kind === 'logo' ? 'tournament-logo' : 'tournament-hero-banner';
+      const res = await fetch(`/api/admin/${route}?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'POST', body: fd });
+      const data = await res.json().catch(() => null) as { logoUrl?: string; heroBannerUrl?: string; iconBgSuggested?: string | null; error?: string } | null;
+      if (!res.ok) throw new Error(data?.error && res.status < 500 ? data.error : W.uploadFailed);
+      if (kind === 'logo') { setLogoUrl(data?.logoUrl ?? null); setIconBgSuggested(data?.iconBgSuggested ?? null); }
+      else setBannerUrl(data?.heroBannerUrl ?? null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : W.uploadFailed);
     } finally {
-      setLogoUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setBusy(false);
+      const input = kind === 'logo' ? fileInputRef.current : bannerInputRef.current;
+      if (input) input.value = '';
     }
   }
-
-  async function handleRemoveLogo() {
-    if (!tournamentId || !canUseAdvancedBranding) return;
-    setLogoUploading(true);
+  async function removeUpload(kind: 'logo' | 'banner') {
+    if (!tournamentId || !advanced) return;
+    const setBusy = kind === 'logo' ? setLogoUploading : setBannerUploading;
+    const setError = kind === 'logo' ? setLogoError : setBannerError;
+    setBusy(true);
+    setError('');
     try {
-      const res = await fetch(`/api/admin/tournament-logo?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Remove failed');
-      setLogoPreview(null);
-      setIconBgSuggested(null);
-      setSaved(prev => prev ? { ...prev, logoUrl: null } : null);
-      setSuccessMsg('Logo removed.');
-      setSuccessOpen(true);
-    } catch (err: unknown) {
-      showError(errorMessage(err, 'Remove failed'));
+      const route = kind === 'logo' ? 'tournament-logo' : 'tournament-hero-banner';
+      const res = await fetch(`/api/admin/${route}?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('remove');
+      if (kind === 'logo') { setLogoUrl(null); setIconBgSuggested(null); }
+      else setBannerUrl(null);
+    } catch {
+      setError(W.removeFailed);
     } finally {
-      setLogoUploading(false);
-    }
-  }
-
-  async function handleBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !tournamentId || !canUseAdvancedBranding) return;
-    setBannerPreview(URL.createObjectURL(file));
-    setBannerUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch(`/api/admin/tournament-hero-banner?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Upload failed');
-      setBannerPreview(data.heroBannerUrl);
-      setSaved(prev => prev ? { ...prev, heroBannerUrl: data.heroBannerUrl } : null);
-      setSuccessMsg('Hero banner updated.');
-      setSuccessOpen(true);
-    } catch (err: unknown) {
-      showError(errorMessage(err, 'Upload failed'));
-      setBannerPreview(saved?.heroBannerUrl ?? null);
-    } finally {
-      setBannerUploading(false);
-      if (bannerInputRef.current) bannerInputRef.current.value = '';
-    }
-  }
-
-  async function handleRemoveBanner() {
-    if (!tournamentId || !canUseAdvancedBranding) return;
-    setBannerUploading(true);
-    try {
-      const res = await fetch(`/api/admin/tournament-hero-banner?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Remove failed');
-      setBannerPreview(null);
-      setSaved(prev => prev ? { ...prev, heroBannerUrl: null } : null);
-      setSuccessMsg('Hero banner removed.');
-      setSuccessOpen(true);
-    } catch (err: unknown) {
-      showError(errorMessage(err, 'Remove failed'));
-    } finally {
-      setBannerUploading(false);
+      setBusy(false);
     }
   }
 
   if (!hasCapability(userRole ?? 'official', userCapabilities, 'manage_branding')) {
-    return (
-      <div className={styles.page}>
-        <p style={kx(ACCESS_MESSAGE_STYLE, KIT_INK.tertiary)}>You don&apos;t have access to manage tournament branding.</p>
-      </div>
-    );
+    return <div className={repKit.page}><p className={site.quiet}>{W.noAccess}</p></div>;
+  }
+  if (!tournamentId) {
+    return <div className={repKit.page}><p className={site.quiet}>{W.noTournament}</p></div>;
   }
 
-  if (!tournamentId) {
-    return (
-      <div className={styles.page}>
-        <p style={kx(ACCESS_MESSAGE_STYLE, KIT_INK.tertiary)}>Select a tournament from the sidebar to manage its branding.</p>
-      </div>
-    );
+  const status = currentTournament?.status;
+  const slug = currentTournament?.slug;
+  const livePath = `/${currentOrg?.slug ?? ''}/${slug ?? ''}`;
+  const host = typeof window === 'undefined' ? '' : window.location.host;
+  const door = !slug || !currentOrg?.slug ? null : (
+    <div className={site.door}>
+      {status === 'draft' || status === 'archived' ? (
+        <BoardDoor href={`${base}/preview/${slug}`} newTab
+          eyebrow={status === 'draft' ? W.previewEyebrow : W.offlineEyebrow} title={W.door}
+          line={status === 'draft' ? W.previewLine : W.offlineLine} />
+      ) : (
+        <BoardDoor href={livePath} newTab eyebrow={W.onlineEyebrow} title={W.door}
+          line={<>{W.onlineLine}<span className={site.address}> · {host}{livePath}</span></>} />
+      )}
+    </div>
+  );
+
+  const header = (
+    <AdminPageHeader title={W.title} inlineActions actions={<HelpButton help={SITE_HELP} label={W.title} iconOnly />} />
+  );
+  if (loadError && !draft) {
+    return <div className={repKit.page}>{header}<LoadFailed title={W.loadFailed} onRetry={() => void load()} /></div>;
   }
+  if (!draft) {
+    return <div className={repKit.page}>{header}<p className={site.quiet} role="status">Loading…</p></div>;
+  }
+
+  const d = draft;
+  const effectiveIconBg = (d.iconBg ?? iconBgSuggested ?? ICON_DARK_FALLBACK).toLowerCase();
+  // The preview tile tracks the iOS framing: the 156/180 base box scaled by the slider, clamped to the apple-touch
+  // icon route's 110–172 safe range, as a % of the tile.
+  const iconPreviewPct = `${(Math.max(110, Math.min(172, Math.round(156 * d.iconScale / 100))) / 180 * 100).toFixed(1)}%`;
+  const iconBgWord = d.iconBg === null ? 'auto'
+    : sameHex(d.iconBg, '#ffffff') ? 'white'
+      : sameHex(d.iconBg, ICON_DARK_FALLBACK) ? 'dark'
+        : sameHex(d.iconBg, previewTheme.primary) ? 'brand' : 'custom';
+  const presetName = d.presetKey === 'custom' ? null : PRESETS[d.presetKey]?.name ?? null;
+  const togglePage = (key: PublicPageKey) => change({
+    publicHiddenPages: d.publicHiddenPages.includes(key) ? d.publicHiddenPages.filter(k => k !== key) : [...d.publicHiddenPages, key],
+  });
+  const iconBgButton = (label: string, value: string | null, chip: string, pressed: boolean) => (
+    <button type="button" aria-pressed={pressed} className={`${styles.iconBgOption} ${pressed ? styles.iconBgOptionActive : ''}`}
+      onClick={() => change({ iconBg: value })}>
+      <span className={styles.iconBgChip} style={{ background: chip }} aria-hidden />{' '}{label}
+    </button>
+  );
 
   return (
-    <div className={styles.page}>
-      <TournamentAdminHeader
-        icon={<Palette size={16} />}
-        title="Public Site"
-        kitTitle="Public site"
-        subtitle={`${currentTournament?.name} — logo, colors, pages, and advanced styling`}
-      />
+    <div className={repKit.page}>
+      {header}
+      {door}
 
-      {/* ── Public Pages ──────────────────────────── */}
-      <div className={styles.card}>
-        <button
-          type="button"
-          className={styles.accordionTrigger}
-          onClick={() => toggleSection('publicPages')}
-          aria-expanded={openSections.publicPages}
-        >
-          <h2 className={styles.sectionTitle}>Public Pages</h2>
-          <ChevronDown size={14} className={`${styles.chevron} ${openSections.publicPages ? styles.chevronOpen : ''}`} aria-hidden />
-        </button>
-        <div className={styles.accordionBody} data-open={openSections.publicPages || undefined}>
-          <p className={styles.compactNote}>
-            Choose which pages appear on this tournament&apos;s public site.
-          </p>
-          <div className={styles.pageSelectorGrid}>
-            {PUBLIC_PAGE_OPTIONS.map(page => {
-              const checked = !publicHiddenPages.includes(page.key);
-              return (
-                <label key={page.key} className={styles.pageSelector}>
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => togglePublicPage(page.key)}
-                  />
-                  <span>
-                    <strong>{page.label}</strong>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-
-          {/* Coach-name visibility — a public PII control, available on every plan (mig 150). */}
-          <label className={styles.pageSelector} style={{ marginTop: '0.65rem', alignItems: 'flex-start' }}>
-            <input
-              type="checkbox"
-              checked={coachNamesShowOnPublic}
-              onChange={() => setCoachNamesShowOnPublic(v => !v)}
-            />
-            <span>
-              <strong>Show coach names</strong>
-              <span className={styles.compactNote} style={{ margin: 0 }}>
-                Display each team&apos;s coach name on the public Teams cards, team profiles, and schedule search. Off by default to keep coach names private. Coach names always stay visible in your admin views and the Coaches Portal.
-              </span>
-            </span>
-          </label>
+      {/* ── Pages: every plan ── */}
+      <ClubSection id="pages" title={W.pages} list>
+        <p className={site.pagesLine}>{W.pagesLine}</p>
+        <SwitchRows label={W.pages} columns={2}>
+          {PUBLIC_PAGE_OPTIONS.map(page => (
+            <SwitchRow key={page.key} on={!d.publicHiddenPages.includes(page.key)} name={page.label} onToggle={() => togglePage(page.key)} />
+          ))}
+        </SwitchRows>
+        <div className={site.coachRow}>
+          <SwitchRows>
+            {/* A public PII control, on every plan (mig 150): off by default, coach names stay in the admin and the portal. */}
+            <SwitchRow on={d.coachNamesShowOnPublic} name={W.coachNames} caption={W.coachNamesLine}
+              onToggle={() => change({ coachNamesShowOnPublic: !d.coachNamesShowOnPublic })} />
+          </SwitchRows>
         </div>
-      </div>
+      </ClubSection>
 
-      {/* ── Advanced Branding section header ─────── */}
-      <div className={styles.advancedHeader}>
-        <p className={styles.advancedEyebrow}>Advanced Branding</p>
-        <span className={styles.planBadge}>Tournament Plus</span>
-      </div>
-
-      {/* Single consolidated upsell — free tier only */}
-      {!canUseAdvancedBranding && (
-        <CompactUpsell
-          title="Unlock Advanced Branding"
-          className={styles.upsellBlock}
-          action={
-            <Link href={upgradeHref} className="btn btn-outline btn-data">
-              Upgrade
-            </Link>
-          }
-        >
-          Logo uploads, custom colors, hero banner, custom fonts, and card styles.
-        </CompactUpsell>
-      )}
-
-      {/* ── Tournament Logo ───────────────────────── */}
-      {!canUseAdvancedBranding ? (
-        <div className={styles.card}>
-          <div className={`${styles.sectionTitleRow} ${styles.lockedCardHeader}`}>
-            <h2 className={styles.sectionTitle}>Tournament Logo</h2>
-            <span className={styles.lockedBadge}>Locked</span>
+      {!advanced ? (
+        <>
+          {/* ── The free plan's advanced part, as today (the free tournament tier review decides it) ── */}
+          <div className={styles.advancedHeader}>
+            <p className={styles.advancedEyebrow}>Advanced Branding</p>
+            <span className={styles.planBadge}>Tournament Plus</span>
           </div>
-          <p className={styles.lockedHint}>Upload a custom logo for this tournament&apos;s public site.</p>
-        </div>
-      ) : (
-        <div className={styles.card}>
-          <button
-            type="button"
-            className={styles.accordionTrigger}
-            onClick={() => toggleSection('logo')}
-            aria-expanded={openSections.logo}
+          <CompactUpsell
+            title="Unlock Advanced Branding"
+            className={styles.upsellBlock}
+            action={<Link href={upgradeHref} className="btn btn-outline btn-data">Upgrade</Link>}
           >
-            <h2 className={styles.sectionTitle}>Tournament Logo</h2>
-            <ChevronDown size={14} className={`${styles.chevron} ${openSections.logo ? styles.chevronOpen : ''}`} aria-hidden />
-          </button>
-          <div className={styles.accordionBody} data-open={openSections.logo || undefined}>
+            Logo uploads, custom colors, hero banner, custom fonts, and card styles.
+          </CompactUpsell>
+          {[
+            ['Tournament Logo', 'Upload a custom logo for this tournament’s public site.'],
+            ['App Icon', 'Give your event its own branded icon, colours, and name inside the one FieldLogicHQ app fans use.'],
+            ['Theme', 'Set a custom color palette and background mode for the public site.'],
+            ['Hero Banner', 'Add a full-width header image to the public tournament page.'],
+            ['Font Family', 'Choose a custom typeface for the public site.'],
+            ['Card Style', 'Control how content cards look on the public site.'],
+          ].map(([title, hint]) => (
+            <div key={title} className={styles.card}>
+              <div className={`${styles.sectionTitleRow} ${styles.lockedCardHeader}`}>
+                <h2 className={styles.sectionTitle}>{title}</h2>
+                <span className={styles.lockedBadge}>Locked</span>
+              </div>
+              <p className={styles.lockedHint}>{hint}</p>
+            </div>
+          ))}
+        </>
+      ) : (
+        <>
+          {/* ── Logo ── */}
+          <CollapsibleCard title={W.logo} sectionId="logo" defaultOpen={false} meta={fileName(logoUrl)}>
+            <FormError>{logoError}</FormError>
             <div className={styles.logoRow}>
               <div className={styles.logoPreview}>
-                {logoPreview
-                  ? <img src={logoPreview} alt="Logo" className={styles.logoImg} />
-                  : <span className={styles.logoPlaceholder} aria-hidden="true"><ImageIcon size={30} /></span>
-                }
+                {logoUrl
+                  ? <img src={logoUrl} alt="Logo" className={styles.logoImg} />
+                  : <span className={styles.logoPlaceholder} aria-hidden="true"><ImageIcon size={30} /></span>}
               </div>
               <div className={styles.logoActions}>
                 <button type="button" className="btn btn-outline btn-data" onClick={() => fileInputRef.current?.click()} disabled={logoUploading}>
-                  <Upload size={13} />
-                  {logoUploading ? 'Uploading...' : logoPreview ? 'Replace Logo' : 'Upload Logo'}
+                  <Upload size={13} aria-hidden /> {logoUploading ? W.uploading : logoUrl ? W.replaceLogo : W.uploadLogo}
                 </button>
-                {logoPreview && (
-                  <button type="button" className="btn btn-ghost btn-data" onClick={handleRemoveLogo} disabled={logoUploading}>
-                    Remove
-                  </button>
+                {logoUrl && (
+                  <button type="button" className="btn btn-ghost btn-data" onClick={() => void removeUpload('logo')} disabled={logoUploading}>{W.remove}</button>
                 )}
-                <p className={styles.logoHint}>JPG, PNG, or WebP · max 2 MB. Falls back to organization logo when not set.</p>
+                <p className={styles.logoHint}>{W.logoHint}</p>
               </div>
             </div>
-            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoChange} style={{ display: 'none' }} />
-          </div>
-        </div>
-      )}
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden
+              onChange={e => { const f = e.target.files?.[0]; if (f) void upload('logo', f); }} />
+          </CollapsibleCard>
 
-      {/* ── App Icon ──────────────────────────────── */}
-      {!canUseAdvancedBranding ? (
-        <div className={styles.card}>
-          <div className={`${styles.sectionTitleRow} ${styles.lockedCardHeader}`}>
-            <h2 className={styles.sectionTitle}>App Icon</h2>
-            <span className={styles.lockedBadge}>Locked</span>
-          </div>
-          <p className={styles.lockedHint}>Give your event its own branded icon, colours, and name inside the one FieldLogicHQ app fans use.</p>
-        </div>
-      ) : (
-        <div className={styles.card}>
-          <button
-            type="button"
-            className={styles.accordionTrigger}
-            onClick={() => toggleSection('appIcon')}
-            aria-expanded={openSections.appIcon}
-          >
-            <h2 className={styles.sectionTitle}>App Icon</h2>
-            <ChevronDown size={14} className={`${styles.chevron} ${openSections.appIcon ? styles.chevronOpen : ''}`} aria-hidden />
-          </button>
-          <div className={styles.accordionBody} data-open={openSections.appIcon || undefined}>
+          {/* ── App icon ── */}
+          <CollapsibleCard title={W.appIcon} sectionId="app-icon" defaultOpen={false} meta={appIconSummary(Boolean(logoUrl), iconBgWord)}>
             <p className={styles.compactNote}>
-              Your event&apos;s branded icon and short name — its identity inside the one FieldLogicHQ app fans use. We match the background to your logo automatically — override it below for a different colour or a border, and use the slider to size your logo. Fans install a single FieldLogicHQ app now, so this sets how your event looks inside it rather than a separate home-screen icon — use the preview here as your guide.
+              Your event&apos;s branded icon and short name: its identity inside the one FieldLogicHQ app fans use. The
+              background matches your logo automatically; choose another below for a different colour or a border, and
+              use the slider to size your logo.
             </p>
             <div className={styles.iconLayout}>
               <div className={styles.iconPreview}>
                 <div className={styles.iconTile} style={{ background: effectiveIconBg }}>
-                  {logoPreview
-                    ? <img src={logoPreview} alt="" className={styles.iconTileImg} style={{ width: iconPreviewPct, height: iconPreviewPct }} />
+                  {logoUrl
+                    ? <img src={logoUrl} alt="" className={styles.iconTileImg} style={{ width: iconPreviewPct, height: iconPreviewPct }} />
                     : <span className={styles.iconTilePlaceholder} aria-hidden="true"><ImageIcon size={26} /></span>}
                 </div>
-                <span className={styles.iconAppName}>{appName.trim() || currentTournament?.name || 'Your event'}</span>
+                <span className={styles.iconAppName}>{d.appName.trim() || currentTournament?.name || 'Your event'}</span>
               </div>
-
               <div className={styles.iconControls}>
                 <div className={styles.iconNameField}>
                   <label className={styles.label} htmlFor="app-name">App name</label>
-                  <input
-                    id="app-name"
-                    type="text"
-                    className="form-input"
-                    style={{ maxWidth: '260px' }}
-                    maxLength={30}
-                    value={appName}
-                    placeholder={currentTournament?.name ?? 'Your event'}
-                    onChange={e => setAppName(e.target.value)}
-                  />
-                  <p className={styles.inheritNote}>Shown under the icon. About 12 characters fit — try initials if your name is long. Leave blank to use the event name.</p>
+                  <input id="app-name" type="text" className={ck.input} maxLength={30} value={d.appName}
+                    placeholder={currentTournament?.name ?? 'Your event'} onChange={e => change({ appName: e.target.value }, true)} />
+                  <p className={styles.inheritNote}>Shown under the icon. About 12 characters fit: try initials if your name is long. Leave blank to use the event name.</p>
                 </div>
-
-                <span className={styles.label}>Background</span>
+                <span className={styles.label}>{W.background}</span>
                 <div className={styles.iconBgOptions}>
-                  <button
-                    type="button"
-                    aria-pressed={iconBg === null}
-                    className={`${styles.iconBgOption} ${iconBg === null ? styles.iconBgOptionActive : ''}`}
-                    onClick={() => setIconBg(null)}
-                  >
-                    <span className={styles.iconBgChip} style={{ background: iconBgSuggested ?? ICON_DARK_FALLBACK }} aria-hidden />{' '}
-                    Auto
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={sameHex(iconBg, '#ffffff')}
-                    className={`${styles.iconBgOption} ${sameHex(iconBg, '#ffffff') ? styles.iconBgOptionActive : ''}`}
-                    onClick={() => setIconBg('#ffffff')}
-                  >
-                    <span className={styles.iconBgChip} style={{ background: '#ffffff' }} aria-hidden />{' '}
-                    White
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={sameHex(iconBg, ICON_DARK_FALLBACK)}
-                    className={`${styles.iconBgOption} ${sameHex(iconBg, ICON_DARK_FALLBACK) ? styles.iconBgOptionActive : ''}`}
-                    onClick={() => setIconBg(ICON_DARK_FALLBACK)}
-                  >
-                    <span className={styles.iconBgChip} style={{ background: ICON_DARK_FALLBACK }} aria-hidden />{' '}
-                    Dark
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={sameHex(iconBg, previewTheme.primary)}
-                    className={`${styles.iconBgOption} ${sameHex(iconBg, previewTheme.primary) ? styles.iconBgOptionActive : ''}`}
-                    onClick={() => setIconBg(previewTheme.primary.toLowerCase())}
-                  >
-                    <span className={styles.iconBgChip} style={{ background: previewTheme.primary }} aria-hidden />{' '}
-                    Brand
-                  </button>
+                  {iconBgButton('Auto', null, iconBgSuggested ?? ICON_DARK_FALLBACK, d.iconBg === null)}
+                  {iconBgButton('White', '#ffffff', '#ffffff', sameHex(d.iconBg, '#ffffff'))}
+                  {iconBgButton('Dark', ICON_DARK_FALLBACK, ICON_DARK_FALLBACK, sameHex(d.iconBg, ICON_DARK_FALLBACK))}
+                  {iconBgButton('Brand', previewTheme.primary.toLowerCase(), previewTheme.primary, sameHex(d.iconBg, previewTheme.primary))}
                 </div>
-
                 <div className={styles.iconCustomRow}>
-                  <label className={styles.label} htmlFor="icon-bg-custom" style={{ margin: 0 }}>Custom colour</label>
-                  <input
-                    id="icon-bg-custom"
-                    type="color"
-                    className={styles.colorInput}
-                    value={effectiveIconBg}
-                    onChange={e => setIconBg(e.target.value)}
-                  />
-                  {iconBg !== null && (
-                    <button type="button" className="btn btn-ghost btn-data" onClick={() => setIconBg(null)}>
-                      Back to auto
-                    </button>
-                  )}
-                </div>
-
-                <p className={styles.inheritNote}>A colour that contrasts with your logo shows as a border. Leave on Auto to match seamlessly.</p>
-
-                <div className={styles.iconSizeField}>
-                  <div className={styles.iconSizeHeader}>
-                    <label className={styles.label} htmlFor="icon-scale" style={{ margin: 0 }}>Logo size</label>
-                    {iconScale !== ICON_SCALE_DEFAULT && (
-                      <button type="button" className="btn btn-ghost btn-data" onClick={() => setIconScale(ICON_SCALE_DEFAULT)}>
-                        Reset
-                      </button>
+                  <label className={styles.label} htmlFor="icon-bg-custom">Custom colour</label>
+                  <div className={site.hexRow}>
+                    <input id="icon-bg-custom" type="color" className={styles.colorInput} value={effectiveIconBg}
+                      onChange={e => change({ iconBg: e.target.value }, true)} />
+                    <HexField id="icon-bg-hex" label="Custom colour" value={effectiveIconBg} onChange={hex => change({ iconBg: hex }, true)} />
+                    {d.iconBg !== null && (
+                      <button type="button" className="btn btn-ghost btn-data" onClick={() => change({ iconBg: null })}>Back to auto</button>
                     )}
                   </div>
-                  <input
-                    id="icon-scale"
-                    type="range"
-                    className={styles.iconSizeSlider}
-                    min={ICON_SCALE_MIN}
-                    max={ICON_SCALE_MAX}
-                    step={1}
-                    value={iconScale}
-                    onChange={e => setIconScale(Number(e.target.value))}
-                    aria-label="App icon logo size"
-                  />
-                  <div className={styles.iconSizeScale} aria-hidden="true">
-                    <span>Small</span>
-                    <span>Default</span>
-                    <span>Large</span>
+                </div>
+                <p className={styles.inheritNote}>A colour that contrasts with your logo shows as a border. Leave on Auto to match seamlessly.</p>
+                <div className={styles.iconSizeField}>
+                  <div className={styles.iconSizeHeader}>
+                    <label className={styles.label} htmlFor="icon-scale">Logo size</label>
+                    {d.iconScale !== ICON_SCALE_DEFAULT && (
+                      <button type="button" className="btn btn-ghost btn-data" onClick={() => change({ iconScale: ICON_SCALE_DEFAULT })}>Reset</button>
+                    )}
                   </div>
+                  <input id="icon-scale" type="range" className={styles.iconSizeSlider} min={ICON_SCALE_MIN} max={ICON_SCALE_MAX} step={1}
+                    value={d.iconScale} onChange={e => change({ iconScale: Number(e.target.value) }, true)} aria-label="App icon logo size" />
+                  <div className={styles.iconSizeScale} aria-hidden="true"><span>Small</span><span>Default</span><span>Large</span></div>
                   <p className={styles.inheritNote}>Drag to size your logo in the icon. Android keeps a little more edge padding so its round icon never crops your logo.</p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </CollapsibleCard>
 
-      {/* ── Theme ─────────────────────────────────── */}
-      {!canUseAdvancedBranding ? (
-        <div className={styles.card}>
-          <div className={`${styles.sectionTitleRow} ${styles.lockedCardHeader}`}>
-            <h2 className={styles.sectionTitle}>Theme</h2>
-            <span className={styles.lockedBadge}>Locked</span>
-          </div>
-          <p className={styles.lockedHint}>Set a custom color palette and background mode for the public site.</p>
-        </div>
-      ) : (
-        <div className={styles.card}>
-          <button
-            type="button"
-            className={styles.accordionTrigger}
-            onClick={() => toggleSection('theme')}
-            aria-expanded={openSections.theme}
-          >
-            <h2 className={styles.sectionTitle}>Theme</h2>
-            <ChevronDown size={14} className={`${styles.chevron} ${openSections.theme ? styles.chevronOpen : ''}`} aria-hidden />
-          </button>
-          <div className={styles.accordionBody} data-open={openSections.theme || undefined}>
-            <p className={styles.compactNote}>
-              Choose the public site color palette and background mode for this tournament.
-            </p>
+          {/* ── Theme: the presets and light / dark; the drawn mock went (the door shows the real page) ── */}
+          <CollapsibleCard title={W.theme} sectionId="theme" defaultOpen={false} meta={themeSummary(presetName, d.colorMode)}>
+            <p className={styles.compactNote}>{W.themeLine}</p>
             <div className={styles.swatchGrid}>
               {Object.entries(PRESETS).map(([key, preset]) => (
-                <button
-                  key={key}
-                  type="button"
-                  title={preset.name}
-                  aria-label={preset.name}
-                  aria-pressed={presetKey === key}
-                  className={`${styles.swatch} ${presetKey === key ? styles.swatchActive : ''}`}
-                  style={{ background: preset.primary }}
-                  onClick={() => setPresetKey(key)}
-                >
-                  {presetKey === key && <span className={styles.swatchCheck}>✓</span>}
+                <button key={key} type="button" title={preset.name} aria-label={preset.name} aria-pressed={d.presetKey === key}
+                  className={`${styles.swatch} ${d.presetKey === key ? styles.swatchActive : ''}`} style={{ background: preset.primary }}
+                  onClick={() => change({ presetKey: key })}>
+                  {d.presetKey === key && <span className={styles.swatchCheck}>✓</span>}
                 </button>
               ))}
-              <button
-                type="button"
-                title="Custom colors"
-                aria-label="Custom colors"
-                aria-pressed={presetKey === 'custom'}
-                className={`${styles.swatch} ${styles.swatchCustom} ${presetKey === 'custom' ? styles.swatchActive : ''}`}
-                onClick={() => setPresetKey('custom')}
-              >
-                {presetKey === 'custom' && <span className={styles.swatchCheck}>✓</span>}
+              <button type="button" title={W.custom} aria-label={W.custom} aria-pressed={d.presetKey === 'custom'}
+                className={`${styles.swatch} ${styles.swatchCustom} ${d.presetKey === 'custom' ? styles.swatchActive : ''}`}
+                onClick={() => {
+                  if (d.presetKey === 'custom') return;
+                  // Custom starts from the colours on show, so opening it to look changes nothing families see.
+                  const from = PRESETS[d.presetKey];
+                  change({ presetKey: 'custom', customPrimary: from?.primary ?? d.customPrimary, customAccent: from?.accent ?? d.customAccent });
+                }}>
+                {d.presetKey === 'custom' && <span className={styles.swatchCheck}>✓</span>}
               </button>
             </div>
-
-            {presetKey === 'custom' && (
+            {d.presetKey === 'custom' && (
               <div className={styles.customPickers}>
                 <div className={styles.colorPickerField}>
-                  <label className={styles.label} htmlFor="t-primary">Primary</label>
-                  <input id="t-primary" type="color" className={styles.colorInput} value={customPrimary} onChange={e => setCustomPrimary(e.target.value)} />
+                  <label className={styles.label} htmlFor="t-primary">{W.primary}</label>
+                  <div className={site.hexRow}>
+                    <input id="t-primary" type="color" className={styles.colorInput} value={d.customPrimary} onChange={e => change({ customPrimary: e.target.value }, true)} />
+                    <HexField id="t-primary-hex" label={W.primary} value={d.customPrimary} onChange={hex => change({ customPrimary: hex }, true)} />
+                  </div>
                 </div>
                 <div className={styles.colorPickerField}>
-                  <label className={styles.label} htmlFor="t-accent">Accent</label>
-                  <input id="t-accent" type="color" className={styles.colorInput} value={customAccent} onChange={e => setCustomAccent(e.target.value)} />
+                  <label className={styles.label} htmlFor="t-accent">{W.accent}</label>
+                  <div className={site.hexRow}>
+                    <input id="t-accent" type="color" className={styles.colorInput} value={d.customAccent} onChange={e => change({ customAccent: e.target.value }, true)} />
+                    <HexField id="t-accent-hex" label={W.accent} value={d.customAccent} onChange={hex => change({ customAccent: hex }, true)} />
+                  </div>
                 </div>
               </div>
             )}
-
             <div className={styles.modeToggleRow}>
-              <h3 className={styles.modeToggleLabel}>Background</h3>
-              <div className={styles.modeToggle} role="group" aria-label="Background mode">
+              <h3 className={styles.modeToggleLabel}>{W.background}</h3>
+              <div className={styles.modeToggle} role="group" aria-label={W.background}>
                 {(['dark', 'light'] as const).map(m => (
-                  <button
-                    key={m}
-                    type="button"
-                    aria-pressed={colorMode === m}
-                    className={`${styles.modeToggleBtn} ${colorMode === m ? styles.modeToggleBtnActive : ''}`}
-                    onClick={() => setColorMode(m)}
-                  >
-                    {m === 'dark' ? 'Dark' : 'Light'}
+                  <button key={m} type="button" aria-pressed={d.colorMode === m}
+                    className={`${styles.modeToggleBtn} ${d.colorMode === m ? styles.modeToggleBtnActive : ''}`}
+                    onClick={() => change({ colorMode: m })}>
+                    {m === 'dark' ? W.dark : W.light}
                   </button>
                 ))}
               </div>
             </div>
+            {previewTheme.isLowContrast && <div className={styles.lowContrastWarning}>{W.lowContrast}</div>}
+            <p className={styles.inheritNote}>{W.inheritTheme}</p>
+          </CollapsibleCard>
 
-            {previewTheme.isLowContrast && (
-              <div className={styles.lowContrastWarning}>Low contrast — text may be hard to read.</div>
-            )}
-
-            {/* `data-public-preview` (R2, Admin Design Continuity): a picture of the PUBLIC page, so
-                under the admin kit it keeps the public palette, not the account theme (globals.css);
-                the colours set inline here still win inside it. */}
-            <div
-              className={styles.themePreview}
-              data-public-preview
-              style={{
-                '--primary': previewTheme.primary,
-                '--primary-light': previewTheme.primaryLight,
-                '--primary-rgb': previewTheme.primaryRgb,
-                '--border': `rgba(${previewTheme.primaryRgb}, 0.25)`,
-              } as React.CSSProperties}
-            >
-              <p className={styles.themePreviewLabel}>Preview</p>
-              <div className={`${styles.modePreview} ${colorMode === 'light' ? styles.modePreviewLight : styles.modePreviewDark}`}>
-                <div className={styles.previewHeroText}>
-                  <span className={colorMode === 'light' ? styles.previewBadgeLight : styles.previewBadgeDark}>2026 Tournament</span>
-                  <strong>Public Site</strong>
-                  <span>Hosted by your organization.</span>
-                </div>
-                <div className={styles.previewActions}>
-                  <button type="button" className={colorMode === 'light' ? styles.previewPrimaryLight : styles.previewPrimaryDark}>Register</button>
-                  <button type="button" className={colorMode === 'light' ? styles.previewOutlineLight : styles.previewOutlineDark}>Schedule</button>
-                </div>
-              </div>
-            </div>
-
-            <p className={styles.inheritNote}>When not set, this tournament inherits the organization color theme.</p>
-          </div>
-        </div>
-      )}
-
-      {/* ── Hero Banner ───────────────────────────── */}
-      {!canUseAdvancedBranding ? (
-        <div className={styles.card}>
-          <div className={`${styles.sectionTitleRow} ${styles.lockedCardHeader}`}>
-            <h2 className={styles.sectionTitle}>Hero Banner</h2>
-            <span className={styles.lockedBadge}>Locked</span>
-          </div>
-          <p className={styles.lockedHint}>Add a full-width header image to the public tournament page.</p>
-        </div>
-      ) : (
-        <div className={styles.card}>
-          <button
-            type="button"
-            className={styles.accordionTrigger}
-            onClick={() => toggleSection('heroBanner')}
-            aria-expanded={openSections.heroBanner}
-          >
-            <h2 className={styles.sectionTitle}>Hero Banner</h2>
-            <ChevronDown size={14} className={`${styles.chevron} ${openSections.heroBanner ? styles.chevronOpen : ''}`} aria-hidden />
-          </button>
-          <div className={styles.accordionBody} data-open={openSections.heroBanner || undefined}>
-            <p className={styles.bannerDesc}>
-              Full-width image shown at the top of this tournament&apos;s public page. Falls back to the organization banner when not set.
-            </p>
-            {bannerPreview && (
-              <div className={styles.bannerPreview}>
-                <img src={bannerPreview} alt="Hero banner preview" className={styles.bannerImg} />
-              </div>
+          {/* ── Hero banner ── */}
+          <CollapsibleCard title={W.heroBanner} sectionId="hero-banner" defaultOpen={false} meta={fileName(bannerUrl)}>
+            <FormError>{bannerError}</FormError>
+            <p className={styles.bannerDesc}>{W.bannerLine}</p>
+            {bannerUrl && (
+              <div className={styles.bannerPreview}><img src={bannerUrl} alt="Hero banner preview" className={styles.bannerImg} /></div>
             )}
             <div className={styles.logoActions}>
-              <button
-                type="button"
-                className="btn btn-outline btn-data"
-                onClick={() => bannerInputRef.current?.click()}
-                disabled={bannerUploading}
-              >
-                <ImageIcon size={13} />
-                {bannerUploading ? 'Uploading...' : bannerPreview ? 'Replace Banner' : 'Upload Banner'}
+              <button type="button" className="btn btn-outline btn-data" onClick={() => bannerInputRef.current?.click()} disabled={bannerUploading}>
+                <ImageIcon size={13} aria-hidden /> {bannerUploading ? W.uploading : bannerUrl ? W.replaceBanner : W.uploadBanner}
               </button>
-              {bannerPreview && (
-                <button type="button" className="btn btn-ghost btn-data" onClick={handleRemoveBanner} disabled={bannerUploading}>
-                  Remove
-                </button>
+              {bannerUrl && (
+                <button type="button" className="btn btn-ghost btn-data" onClick={() => void removeUpload('banner')} disabled={bannerUploading}>{W.remove}</button>
               )}
             </div>
-            <p className={styles.bannerHint}>JPG, PNG, or WebP · max 4 MB. Recommended 16:5 ratio.</p>
-            <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBannerChange} style={{ display: 'none' }} />
-          </div>
-        </div>
-      )}
+            <p className={styles.bannerHint}>{W.bannerHint}</p>
+            <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden
+              onChange={e => { const f = e.target.files?.[0]; if (f) void upload('banner', f); }} />
+          </CollapsibleCard>
 
-      {/* ── Font Family ───────────────────────────── */}
-      {!canUseAdvancedBranding ? (
-        <div className={styles.card}>
-          <div className={`${styles.sectionTitleRow} ${styles.lockedCardHeader}`}>
-            <h2 className={styles.sectionTitle}>Font Family</h2>
-            <span className={styles.lockedBadge}>Locked</span>
-          </div>
-          <p className={styles.lockedHint}>Choose a custom typeface for the public site.</p>
-        </div>
-      ) : (
-        <div className={styles.card}>
-          <button
-            type="button"
-            className={styles.accordionTrigger}
-            onClick={() => toggleSection('fontFamily')}
-            aria-expanded={openSections.fontFamily}
-          >
-            <h2 className={styles.sectionTitle}>Font Family</h2>
-            <ChevronDown size={14} className={`${styles.chevron} ${openSections.fontFamily ? styles.chevronOpen : ''}`} aria-hidden />
-          </button>
-          <div className={styles.accordionBody} data-open={openSections.fontFamily || undefined}>
+          {/* ── Font ── */}
+          <CollapsibleCard title={W.font} sectionId="font" defaultOpen={false} meta={FONT_OPTIONS[d.fontKey]?.label ?? d.fontKey}>
             <div className={styles.fontGrid}>
               {Object.entries(FONT_OPTIONS).map(([key, opt]) => (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={fontKey === key}
-                  className={`${styles.fontBtn} ${fontKey === key ? styles.fontBtnActive : ''}`}
-                  style={{ fontFamily: opt.sampleStyle }}
-                  onClick={() => setFontKey(key)}
-                >
+                <button key={key} type="button" aria-pressed={d.fontKey === key}
+                  className={`${styles.fontBtn} ${d.fontKey === key ? styles.fontBtnActive : ''}`} style={{ fontFamily: opt.sampleStyle }}
+                  onClick={() => change({ fontKey: key })}>
                   <span className={styles.fontBtnLabel}>{opt.label}</span>
                   <span className={styles.fontBtnSample}>Aa 123</span>
                 </button>
               ))}
             </div>
-            <p className={styles.inheritNote}>When not set, this tournament inherits the organization font.</p>
-          </div>
-        </div>
-      )}
+            <p className={styles.inheritNote}>{W.inheritFont}</p>
+          </CollapsibleCard>
 
-      {/* ── Card Style ────────────────────────────── */}
-      {!canUseAdvancedBranding ? (
-        <div className={styles.card}>
-          <div className={`${styles.sectionTitleRow} ${styles.lockedCardHeader}`}>
-            <h2 className={styles.sectionTitle}>Card Style</h2>
-            <span className={styles.lockedBadge}>Locked</span>
-          </div>
-          <p className={styles.lockedHint}>Control how content cards look on the public site.</p>
-        </div>
-      ) : (
-        <div className={styles.card}>
-          <button
-            type="button"
-            className={styles.accordionTrigger}
-            onClick={() => toggleSection('cardStyle')}
-            aria-expanded={openSections.cardStyle}
-          >
-            <h2 className={styles.sectionTitle}>Card Style</h2>
-            <ChevronDown size={14} className={`${styles.chevron} ${openSections.cardStyle ? styles.chevronOpen : ''}`} aria-hidden />
-          </button>
-          <div className={styles.accordionBody} data-open={openSections.cardStyle || undefined}>
+          {/* ── Card style ── */}
+          <CollapsibleCard title={W.cardStyle} sectionId="card-style" defaultOpen={false} meta={CARD_STYLE_OPTIONS[d.cardStyle]?.label ?? d.cardStyle}>
             <div className={styles.cardStyleGrid}>
               {Object.entries(CARD_STYLE_OPTIONS).map(([key, opt]) => (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={cardStyle === key}
-                  className={`${styles.cardStyleBtn} ${cardStyle === key ? styles.cardStyleBtnActive : ''}`}
-                  onClick={() => setCardStyle(key)}
-                >
+                <button key={key} type="button" aria-pressed={d.cardStyle === key}
+                  className={`${styles.cardStyleBtn} ${d.cardStyle === key ? styles.cardStyleBtnActive : ''}`}
+                  onClick={() => change({ cardStyle: key })}>
                   <div className={`${styles.cardStyleThumb} ${styles[`cardThumb_${key}` as keyof typeof styles]}`}>
                     <div className={styles.cardThumbLine} />
                     <div className={styles.cardThumbLine} style={{ width: '60%' }} />
@@ -875,21 +622,17 @@ export default function TournamentBrandingPage() {
                 </button>
               ))}
             </div>
-            <p className={styles.inheritNote}>When not set, this tournament inherits the organization card style.</p>
-          </div>
-        </div>
+            <p className={styles.inheritNote}>{W.inheritCard}</p>
+          </CollapsibleCard>
+        </>
       )}
 
-      {/* ── Save footer ───────────────────────────── */}
-      <div className={styles.formFooter}>
-        {isDirty && <span className={styles.unsavedLabel}>Unsaved changes</span>}
-        <button type="button" className="btn btn-lime btn-data" onClick={handleSave} disabled={saving || !isDirty}>
-          {saving ? 'Saving...' : 'Save Changes'}
-        </button>
-      </div>
-
-      <FeedbackModal isOpen={successOpen} onClose={() => setSuccessOpen(false)} title="Saved" message={successMsg} type="success" />
-      <FeedbackModal isOpen={errorOpen} onClose={() => setErrorOpen(false)} title="Error" message={errorMsg} type="danger" />
+      <SavePill
+        saving={saving || logoUploading || bannerUploading}
+        dirty={waiting}
+        error={saveError}
+        onRetry={saveNow}
+      />
     </div>
   );
 }

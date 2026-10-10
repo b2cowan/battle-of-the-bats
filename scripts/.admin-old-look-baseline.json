@@ -55,13 +55,6 @@
   "app/[orgSlug]/admin/public-site/public-site.module.css": {
     "kitScope": 25
   },
-  "app/[orgSlug]/admin/tournaments/branding/branding.module.css": {
-    "kitScope": 69
-  },
-  "app/[orgSlug]/admin/tournaments/branding/page.tsx": {
-    "kx": 2,
-    "helpers": 1
-  },
   "app/[orgSlug]/admin/tournaments/chat/chat-admin.module.css": {
     "kitScope": 2
   },

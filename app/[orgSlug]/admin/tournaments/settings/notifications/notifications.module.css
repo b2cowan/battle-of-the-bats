@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-   TOURNAMENT NOTIFICATIONS — 52px switch rows, the whole row the target (page.tsx, Tournament admin redesign Stage 5,
-   E6, A54; hub v45). The 521-line sheet of a table of 36×20 switches, its banners and its skeleton retired with it.
+   TOURNAMENT NOTIFICATIONS — the cards around its switch rows (page.tsx, Tournament admin redesign Stage 5, E6, A54;
+   hub v45). The rows themselves are the shared 52px switch rows (components/admin/tournament/SwitchRows). The
+   521-line sheet of a table of 36×20 switches, its banners and its skeleton retired with the rebuild.
    Born on the kit: TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
@@ -16,58 +17,6 @@
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-.rows { list-style: none; margin: 0; padding: 0; }
-.rows > li + li { border-top: 1px solid var(--home-line); }
-
-/* A row: its words, then its switch — one button, the row's whole width (role="switch"). */
-.row {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  width: 100%;
-  min-height: 52px;
-  padding: 0.55rem 1.1rem;
-  border: 0;
-  background: none;
-  font: inherit;
-  text-align: left;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-@media (hover: hover) { .row:hover:not(:disabled) { background: var(--home-olive-soft); } }
-.row:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
-.row:disabled { cursor: default; }
-.text { flex: 1 1 auto; min-width: 0; }
-.name { display: block; font-size: var(--type-body); font-weight: 600; }
-.caption { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
-
-/* The drawn switch (the kit's look, ClubKit's `.switch`): the row is the button, so this is its picture. */
-.switch { position: relative; flex: none; width: 2.75rem; height: 1.6rem; }
-.switch::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 999px;
-  background: var(--home-line);
-  transition: background 0.15s ease;
-}
-.switch::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0.25rem;
-  width: 1.1rem;
-  height: 1.1rem;
-  border-radius: 50%;
-  background: var(--card-bg);
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-50%);
-  transition: left 0.15s ease;
-}
-.row[aria-checked='true'] .switch::before { background: var(--home-olive); border-color: var(--home-olive); }
-.row[aria-checked='true'] .switch::after { left: calc(100% - 1.35rem); }
-.row:disabled .switch { opacity: 0.45; }
 
 /* The door to every-org settings: words and a chevron, its row 44px tall. */
 .door {

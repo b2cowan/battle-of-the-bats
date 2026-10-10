@@ -1,3 +1,11 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE SETTINGS SHEET — Event settings' cards and Public site's branding parts (and the free plan's locked view of
+   them). Its old look folded onto the kit look it wore (Tournament admin redesign Stage 5, Part 7: all three screens
+   that used it rebuilt — Event settings, Registration questions, Public site); the rules nothing renders any more
+   (the accordion, the save footer, the theme's drawn mock, the old headers) went. TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* The page wrapper: the admin shell lays it out. */
 .page {}
 
 /* Constrains settings form content to a readable width, centred in the admin shell */
@@ -5,61 +13,6 @@
   max-width: 860px;
   margin: 0 auto;
   width: 100%;
-}
-
-.pageHeader {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-
-.backBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--white-45);
-  text-decoration: none;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  transition: color 0.15s;
-}
-
-.backBtn:hover {
-  color: var(--white-80);
-}
-
-.headerIcon {
-  width: 30px;
-  height: 30px;
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--logic-lime);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.pageTitle {
-  font-size: 1.05rem;
-  font-weight: 900;
-  font-family: var(--font-data);
-  margin: 0;
-  color: var(--logic-lime);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  line-height: 1.1;
-}
-
-.pageSub {
-  margin: 0.25rem 0 0;
-  color: var(--data-gray);
-  font-size: 0.68rem;
-  font-family: var(--font-data);
 }
 
 .card {
@@ -79,12 +32,6 @@
 }
 
 .sectionTitle {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.65);
-  font-family: var(--font-data);
   margin: 0 0 0.75rem;
 }
 
@@ -123,10 +70,6 @@
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  border-radius: 2px;
-  border: 1px solid rgba(var(--primary-rgb), 0.35);
-  background: rgba(var(--primary-rgb), 0.12);
-  color: var(--primary-light);
   font-size: 0.68rem;
   font-weight: 900;
   letter-spacing: 0.06em;
@@ -192,9 +135,7 @@
   gap: 0.75rem;
   flex-wrap: wrap;
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
 }
 
 .inlineUpsell p {
@@ -222,8 +163,6 @@
   width: 80px;
   height: 80px;
   border-radius: 2px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(var(--primary-rgb), 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -244,9 +183,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-light);
-  background: rgba(var(--primary-rgb), 0.14);
-  border: 1px solid rgba(var(--primary-rgb), 0.28);
 }
 
 .logoActions {
@@ -285,17 +221,12 @@
   transform: scale(1.12);
 }
 
-.swatchActive {
-  border-color: var(--white-80);
-}
-
 .swatchCheck {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--white);
 }
 
 .swatchCustom {
@@ -316,9 +247,6 @@
 }
 
 .label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--white-60);
   margin-bottom: 0.35rem;
   display: block;
 }
@@ -336,7 +264,6 @@
 .lowContrastWarning {
   margin-top: 0.5rem;
   font-size: 0.78rem;
-  color: var(--warning);
 }
 
 /* ── App Icon ──────────────────────────────────── */
@@ -415,10 +342,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.35rem 0.6rem;
-  border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
-  background: var(--white-05);
-  color: var(--white-60);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -433,7 +357,6 @@
 .iconBgOptionActive {
   color: var(--white);
   border-color: rgba(var(--logic-lime-rgb), 0.6);
-  background: rgba(var(--logic-lime-rgb), 0.08);
 }
 
 .iconBgChip {
@@ -470,7 +393,6 @@
 .iconSizeSlider {
   width: 100%;
   max-width: 260px;
-  accent-color: var(--primary);
   cursor: pointer;
 }
 
@@ -481,30 +403,6 @@
   font-size: 0.68rem;
   color: var(--white-40);
 }
-
-.themePreview {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: rgba(var(--primary-rgb), 0.06);
-  border: 1px solid rgba(var(--primary-rgb), 0.22);
-  border-radius: 2px;
-}
-
-.themePreviewLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--white-40);
-  margin: 0 0 0.5rem;
-}
-/* R2 (Admin Design Continuity, switch on): `.themePreview` is a public-preview island, so inside it
-   the ramp is the PUBLIC dark one — but this caption is the ADMIN's words, sitting on the admin's
-   card. The island leaves the portal's `--home-*` set alone, so its dim ink still follows the
-   account theme here. */
-:global([data-admin-kit]) .themePreviewLabel { color: var(--home-ink-soft); }
-/* ↑ Slice 4a sweep: `--home-dim` measured 4.45:1 on the island's Dark ground; the soft ink clears it in
-   both themes (it is resolved at the shell's marker, so the island's public remap never reaches it). */
 
 .modeToggleRow {
   display: flex;
@@ -546,136 +444,10 @@
   transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
 
-.modeToggleBtn:hover {
-  color: var(--white-90);
-}
-
 .modeToggleBtnActive {
   background: var(--logic-lime);
   color: var(--on-lime);
   box-shadow: 0 4px 12px rgba(var(--logic-lime-rgb), 0.25);
-}
-
-.modePreview {
-  min-height: 176px;
-  border-radius: 2px;
-  padding: 1.15rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 1rem;
-  overflow: hidden;
-  position: relative;
-}
-
-.modePreviewDark {
-  /* token-exempt: theme-preview mockup swatch — simulates the dark-mode bg, not live app chrome */
-  background:
-    radial-gradient(circle at 82% 8%, rgba(var(--primary-rgb), 0.3), transparent 42%),
-    linear-gradient(135deg, rgba(var(--primary-rgb), 0.18), transparent 45%),
-    #080B14; /* token-exempt: dark-mode preview base fill, not live app chrome */
-  border: 1px solid rgba(var(--primary-rgb), 0.35);
-}
-
-.modePreviewLight {
-  /* token-exempt: theme-preview mockup swatch — simulates the light-mode bg, not live app chrome */
-  background:
-    radial-gradient(circle at 82% 8%, rgba(var(--primary-rgb), 0.12), transparent 42%),
-    linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), transparent 46%),
-    #F5F7FC; /* token-exempt: light-mode preview base fill, not live app chrome */
-  border: 1px solid rgba(var(--primary-rgb), 0.22);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.68);
-}
-
-.previewHeroText {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.previewHeroText strong {
-  font-size: 1.15rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.previewHeroText span {
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.modePreviewDark .previewHeroText strong {
-  color: var(--white);
-}
-
-.modePreviewDark .previewHeroText > span:last-child {
-  color: rgba(255, 255, 255, 0.64);
-}
-
-.modePreviewLight .previewHeroText strong {
-  /* token-exempt: theme-preview mockup text ink — simulates light-mode text, NOT the --on-lime ink token */
-  color: #0F1123;
-}
-
-.modePreviewLight .previewHeroText > span:last-child {
-  color: rgba(15, 17, 35, 0.62);
-}
-
-.previewBadgeDark,
-.previewBadgeLight {
-  width: fit-content;
-  padding: 0.2rem 0.5rem;
-  border-radius: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.previewBadgeDark {
-  color: var(--primary-light);
-  background: rgba(var(--primary-rgb), 0.18);
-  border: 1px solid rgba(var(--primary-rgb), 0.35);
-}
-
-.previewBadgeLight {
-  color: var(--primary);
-  background: rgba(var(--primary-rgb), 0.08);
-  border: 1px solid rgba(var(--primary-rgb), 0.22);
-}
-
-.previewActions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.previewPrimaryDark,
-.previewPrimaryLight,
-.previewOutlineDark,
-.previewOutlineLight {
-  padding: 0.35rem 0.65rem;
-  border-radius: 2px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  cursor: default;
-}
-
-.previewPrimaryDark,
-.previewPrimaryLight {
-  background: var(--primary);
-  color: var(--white);
-  border: 1px solid var(--primary);
-}
-
-.previewOutlineDark {
-  background: transparent;
-  color: var(--primary-light);
-  border: 1px solid var(--primary);
-}
-
-.previewOutlineLight {
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--primary);
-  border: 1px solid rgba(var(--primary-rgb), 0.48);
 }
 
 .fontBtn:disabled,
@@ -685,46 +457,6 @@
 }
 
 /* ── Banner ──────────────────────────────── */
-.pageSelectorGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-}
-
-.pageSelector {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-height: 42px;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  background: var(--bg-2);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.pageSelector:hover {
-  border-color: rgba(var(--primary-rgb), 0.4);
-  background: rgba(var(--primary-rgb), 0.06);
-}
-
-.pageSelector input {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-}
-
-.pageSelector span {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.pageSelector strong {
-  color: var(--white-80);
-  font-size: 0.82rem;
-}
 
 .bannerDesc {
   font-size: 0.85rem;
@@ -826,12 +558,6 @@
   background: rgba(var(--primary-rgb), 0.1);
 }
 
-.fontBtn:disabled:hover,
-.cardStyleBtn:disabled:hover {
-  border-color: rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
-}
-
 .cardStyleThumb {
   width: 100%;
   height: 28px;
@@ -843,14 +569,10 @@
   padding: 4px 6px;
 }
 
-.cardThumb_default  { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
-.cardThumb_glass    { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
-.cardThumb_outlined { background: transparent; border: 1px solid var(--primary); }
-.cardThumb_flat     { background: rgba(0,0,0,0.15); border: none; }
+.cardThumb_glass    { backdrop-filter: blur(4px); }
 
 .cardThumbLine {
   height: 3px;
-  background: rgba(255,255,255,0.2);
   border-radius: 2px;
   width: 80%;
 }
@@ -861,22 +583,6 @@
   color: var(--white-70);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-}
-
-/* ── Footer ──────────────────────────────── */
-.formFooter {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 0.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-}
-
-.unsavedLabel {
-  font-size: 0.8rem;
-  color: var(--white-40);
 }
 
 /* ── Inherit note ────────────────────────── */
@@ -964,89 +670,10 @@
 }
 
 .urlSlug {
-  color: var(--fl-text);
   font-weight: 700;
 }
 
-/* ── Tie-breaker sortable row ──────────────────── */
-
-/* ── Accordion ───────────────────────────────── */
-
-/* Desktop: trigger is non-interactive; acts as a plain block wrapper */
-.accordionTrigger {
-  display: block;
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  text-align: left;
-  font: inherit;
-  color: inherit;
-  cursor: default;
-  pointer-events: none;
-}
-
-.chevron {
-  display: none;
-}
-
-/* Desktop: accordion body always visible */
-.accordionBody {
-  display: block;
-}
-
-/* Tight gap between trigger title and body on desktop */
-.accordionTrigger .sectionTitle {
-  margin-bottom: 0.75rem;
-}
-
-/* sectionTitleRow inside trigger keeps its standard spacing */
-.accordionTrigger .sectionTitleRow {
-  margin-bottom: 1.25rem;
-}
-
 @media (max-width: 600px) {
-  /* Mobile: trigger becomes an interactive button */
-  .accordionTrigger {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    cursor: pointer;
-    pointer-events: auto;
-    min-height: 36px;
-  }
-
-  /* Remove bottom spacing on title inside trigger — body handles its own top gap */
-  .accordionTrigger .sectionTitle,
-  .accordionTrigger .sectionTitleRow {
-    margin-bottom: 0;
-  }
-
-  /* Chevron visible on mobile */
-  .chevron {
-    display: block;
-    color: var(--white-40);
-    transition: transform 0.2s ease;
-    flex-shrink: 0;
-  }
-
-  .chevronOpen {
-    transform: rotate(180deg);
-  }
-
-  /* Collapsed by default */
-  .accordionBody {
-    display: none;
-  }
-
-  /* Expanded when open */
-  .accordionBody[data-open] {
-    display: block;
-    padding-top: 0.75rem;
-  }
-
   /* Locked hint hidden on mobile — upsell block covers it */
   .lockedHint {
     display: none;
@@ -1055,10 +682,6 @@
   /* No bottom gap when hint is hidden */
   .lockedCardHeader {
     margin-bottom: 0;
-  }
-
-  .pageSelectorGrid {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .fontGrid, .cardStyleGrid {
@@ -1105,41 +728,22 @@
     flex-direction: column;
     align-items: flex-start;
   }
-
-  .formFooter {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .formFooter :global(.btn) {
-    justify-content: center;
-    min-height: 44px;
-    width: 100%;
-  }
 }
 
-/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
-   Event settings, Registration questions and Public Site's chrome (the body only — R2 keeps the
-   theme preview, the colour swatches, the custom-colour wheel, the app-icon tile/background chips,
-   the font samples' own face, and the logo/banner images exactly as the organization set them) on
-   the coaches portal's kit. Every rule is scoped under `[data-admin-kit]` (only the admin shell
-   carries it, and only while the dev switch is on), so the legacy rules above render untouched until
-   the release slice deletes them. `.pageHeader`/`.headerIcon`/`.pageTitle`/`.pageSub`/`.backBtn`/
-   `.settingsTitleRow` carry no kit rule here — Event settings and Registration questions moved their
-   own header markup into `AdminPageHeader`'s `legacy` slot, so none of it renders once the switch is
-   on. `.themePreviewLabel` already has its kit rule above (slice 1) — kept.
-   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+/* ── The kit's look for the cards, labels and controls above (folded from its `[data-admin-kit]` layer; it comes after
+   the rules it overrode, so it still wins over them). The organization's own colours stay exactly as set: the swatches,
+   the custom-colour wheel, the app-icon tile and its chips, the font samples' face, the logo and banner images. ── */
 
 /* ── Cards ── */
-:global([data-admin-kit]) .card,
-:global([data-admin-kit]) .questionCard {
+.card,
+.questionCard {
   background: var(--card-bg);
   border: 1px solid var(--home-line);
   border-radius: 8px;
 }
 
-/* The accordion / question-list card's own title — a real heading, not a shouted mono label. */
-:global([data-admin-kit]) .sectionTitle {
+/* A card's own title — a real heading, not a shouted mono label. */
+.sectionTitle {
   font-family: var(--font-display);
   font-size: var(--type-body);
   font-weight: 700;
@@ -1149,11 +753,11 @@
 }
 
 /* A label over a value, or a group header within a card, → the kit eyebrow. */
-:global([data-admin-kit]) .subSectionLabel,
-:global([data-admin-kit]) .advancedEyebrow,
-:global([data-admin-kit]) .modeToggleLabel,
-:global([data-admin-kit]) .fontBtnLabel,
-:global([data-admin-kit]) .cardStyleLabel {
+.subSectionLabel,
+.advancedEyebrow,
+.modeToggleLabel,
+.fontBtnLabel,
+.cardStyleLabel {
   font-family: var(--font-data);
   font-size: var(--type-label);
   font-weight: 700;
@@ -1163,8 +767,8 @@
 }
 
 /* Plan / locked chips name a state, not a verdict — the kit's quiet chip. */
-:global([data-admin-kit]) .planBadge,
-:global([data-admin-kit]) .lockedBadge {
+.planBadge,
+.lockedBadge {
   font-family: var(--font-data);
   color: var(--text-secondary);
   background: var(--home-olive-soft);
@@ -1172,28 +776,27 @@
   border-radius: 999px;
 }
 
-:global([data-admin-kit]) .advancedHeader,
-:global([data-admin-kit]) .cardDivider,
-:global([data-admin-kit]) .formFooter {
+.advancedHeader,
+.cardDivider {
   border-top-color: var(--home-line);
 }
 
 /* ── Segmented controls / mode toggle → the chosen-option idiom ── */
-:global([data-admin-kit]) .segmentedControl,
-:global([data-admin-kit]) .modeToggle {
+.segmentedControl,
+.modeToggle {
   background: var(--card-bg);
   border: 1px solid var(--home-line-strong);
   border-radius: var(--radius-sm);
 }
-:global([data-admin-kit]) .segmentButton,
-:global([data-admin-kit]) .modeToggleBtn {
+.segmentButton,
+.modeToggleBtn {
   font-family: var(--font-sans, system-ui, sans-serif);
   color: var(--text-tertiary);
   border-radius: var(--radius-sm);
 }
-:global([data-admin-kit]) .modeToggleBtn:hover { color: var(--text-primary); }
-:global([data-admin-kit]) .segmentButtonActive,
-:global([data-admin-kit]) .modeToggleBtnActive {
+.modeToggleBtn:hover { color: var(--text-primary); }
+.segmentButtonActive,
+.modeToggleBtnActive {
   background: var(--home-olive-soft);
   color: var(--home-olive);
   border-color: var(--home-olive);
@@ -1201,57 +804,55 @@
 }
 
 /* ── Body copy: descriptions, hints and notes leave the console's dim mono ramp ── */
-:global([data-admin-kit]) .descriptionText,
-:global([data-admin-kit]) .inheritNote {
+.descriptionText,
+.inheritNote {
   font-family: var(--font-sans, system-ui, sans-serif);
 }
-:global([data-admin-kit]) .descriptionText,
-:global([data-admin-kit]) .bannerDesc,
-:global([data-admin-kit]) .compactNote,
-:global([data-admin-kit]) .lockedHint,
-:global([data-admin-kit]) .logoHint,
-:global([data-admin-kit]) .bannerHint,
-:global([data-admin-kit]) .iconTilePlaceholder,
-:global([data-admin-kit]) .inheritNote,
-:global([data-admin-kit]) .unsavedLabel,
-:global([data-admin-kit]) .iconSizeScale,
-:global([data-admin-kit]) .chevron,
-:global([data-admin-kit]) .urlPreview {
+.descriptionText,
+.bannerDesc,
+.compactNote,
+.lockedHint,
+.logoHint,
+.bannerHint,
+.iconTilePlaceholder,
+.inheritNote,
+.iconSizeScale,
+.urlPreview {
   color: var(--text-tertiary);
 }
-:global([data-admin-kit]) .inlineUpsell p,
-:global([data-admin-kit]) .warningBanner p,
-:global([data-admin-kit]) .iconAppName,
-:global([data-admin-kit]) .fontBtnSample {
+.inlineUpsell p,
+.warningBanner p,
+.iconAppName,
+.fontBtnSample {
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .urlSlug { color: var(--text-primary); }
-:global([data-admin-kit]) .lowContrastWarning { color: var(--warning-light); }
+.urlSlug { color: var(--text-primary); }
+.lowContrastWarning { color: var(--warning-light); }
 
-:global([data-admin-kit]) .inlineUpsell {
+.inlineUpsell {
   background: var(--home-olive-soft);
   border: 1px solid var(--home-line-strong);
 }
 
 /* ── Logo ── */
-:global([data-admin-kit]) .logoPreview {
+.logoPreview {
   background: var(--home-olive-soft);
   border: 1px solid var(--home-line-strong);
 }
-:global([data-admin-kit]) .logoPlaceholder {
+.logoPlaceholder {
   color: var(--home-olive);
   background: var(--home-olive-soft);
   border: 1px solid var(--home-line-strong);
 }
 
 /* ── Swatches (R2 — only the chosen ring's ink moves; the fills stay the organization's colours) ── */
-:global([data-admin-kit]) .swatchActive { border-color: var(--home-olive); }
+.swatchActive { border-color: var(--home-olive); }
 /* The chosen swatch's tick sits ON the organization's colour, so it keeps today's white in both themes
    (`--white` turns to the warm INK in Warm — 1.59:1 on the navy preset, the slice 4a sweep). */
-:global([data-admin-kit]) .swatchCheck { color: var(--white-fixed); }
+.swatchCheck { color: var(--white-fixed); }
 
 /* ── Form field labels (the custom-colour wheel itself, `.colorInput`, is R2 content — untouched) ── */
-:global([data-admin-kit]) .label {
+.label {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-support);
   font-weight: 600;
@@ -1262,61 +863,63 @@
 
 /* ── App icon: the tile and its background chips stay the icon's real look (R2) — only the chrome
    around them (the background-choice buttons, the size slider) moves. ── */
-:global([data-admin-kit]) .iconBgOption {
+.iconBgOption {
   background: var(--card-bg);
   border: 1px solid var(--home-line-strong);
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .iconBgOption:hover,
-:global([data-admin-kit]) .iconBgOptionActive {
+.iconBgOption:hover,
+.iconBgOptionActive {
   border-color: var(--home-olive);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .iconBgOptionActive { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .iconSizeSlider { accent-color: var(--home-olive); }
+.iconBgOptionActive { background: var(--home-olive-soft); }
+.iconSizeSlider { accent-color: var(--home-olive); }
 
 /* ── Font grid / card-style grid: unchosen tile → chosen tile ── */
-:global([data-admin-kit]) .fontBtn,
-:global([data-admin-kit]) .cardStyleBtn,
-:global([data-admin-kit]) .pageSelector {
+.fontBtn,
+.cardStyleBtn {
   background: var(--card-bg);
   border: 1px solid var(--home-line-strong);
   border-radius: 8px;
 }
-:global([data-admin-kit]) .fontBtn:hover,
-:global([data-admin-kit]) .cardStyleBtn:hover,
-:global([data-admin-kit]) .pageSelector:hover {
+.fontBtn:hover,
+.cardStyleBtn:hover {
   background: var(--home-olive-soft);
   border-color: var(--home-olive);
 }
-:global([data-admin-kit]) .fontBtnActive,
-:global([data-admin-kit]) .cardStyleBtnActive {
+.fontBtnActive,
+.cardStyleBtnActive {
   background: var(--home-olive-soft);
   border-color: var(--home-olive);
 }
-:global([data-admin-kit]) .fontBtn:disabled:hover,
-:global([data-admin-kit]) .cardStyleBtn:disabled:hover {
+.fontBtn:disabled:hover,
+.cardStyleBtn:disabled:hover {
   background: var(--card-bg);
   border-color: var(--home-line-strong);
 }
-:global([data-admin-kit]) .pageSelector strong { color: var(--text-primary); }
 
 /* The card-style thumbnails are drawn for a dark ground (white alphas) and vanish on Warm cream —
    redrawn as small icons of each style in theme tokens, kept distinguishable: default = card ground
    + a hairline; glass = a soft olive wash + a stronger hairline; outlined = transparent + an olive
    edge; flat = the soft olive wash, no edge. */
-:global([data-admin-kit]) .cardThumb_default  { background: var(--card-bg); border: 1px solid var(--home-line); }
-:global([data-admin-kit]) .cardThumb_glass    { background: var(--home-olive-soft); border: 1px solid var(--home-line-strong); }
-:global([data-admin-kit]) .cardThumb_outlined { background: transparent; border: 1px solid var(--home-olive); }
-:global([data-admin-kit]) .cardThumb_flat     { background: var(--home-olive-soft); border: none; }
-:global([data-admin-kit]) .cardThumbLine { background: var(--home-line-strong); }
+.cardThumb_default { background: var(--card-bg); border: 1px solid var(--home-line); }
+.cardThumb_glass { background: var(--home-olive-soft); border: 1px solid var(--home-line-strong); }
+.cardThumb_outlined { background: transparent; border: 1px solid var(--home-olive); }
+.cardThumb_flat { background: var(--home-olive-soft); border: none; }
+.cardThumbLine { background: var(--home-line-strong); }
 
-/* ── Kit-only pieces the pages render with the switch on ── */
-/* A fact F3 moved out of a header, at the top of the card it now frames. */
-:global([data-admin-kit]) .kitLede {
-  margin: 0 0 0.85rem;
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  color: var(--text-secondary);
-  line-height: 1.5;
+
+/* The branding controls at the admin's height on a computer and the tap floor on touch (Stage 5, A54: nothing a thumb
+   taps under 38px, the floor 44) — the background chips, the light / dark choice, the swatches, a colour's picker,
+   the logo-size slider. */
+.iconBgOption,
+.modeToggleBtn { min-height: var(--admin-control-h); }
+.iconSizeSlider { height: var(--admin-control-h); }
+@media (max-width: 768px) {
+  .iconBgOption,
+  .modeToggleBtn { min-height: var(--tap-min, 44px); }
+  .swatch,
+  .colorInput { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .iconSizeSlider { height: var(--tap-min, 44px); }
 }

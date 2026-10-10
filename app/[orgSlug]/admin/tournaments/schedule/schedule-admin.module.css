@@ -289,14 +289,6 @@
   text-transform: uppercase;
 }
 
-.previewActions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
 /* Heading type, ink and ground are the baseline's (table standard, register F-07). */
 
 .healthPanel {

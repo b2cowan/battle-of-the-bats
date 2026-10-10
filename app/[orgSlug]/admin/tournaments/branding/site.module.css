@@ -1,0 +1,35 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   PUBLIC SITE — what the page adds to its shared branding sheet (page.tsx, Tournament admin redesign Stage 5, E7):
+   the door card's place, the address it shows at a desk, the Pages card's caption, the hex code beside a colour, a
+   mistake under its field, an upload's failure. Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.door { margin: 0 0 0.75rem; }
+/* The address the door opens — said at a desk, where there is room for it (the drawing). */
+.address { color: var(--text-tertiary); }
+@media (max-width: 640px) { .address { display: none; } }
+
+.pagesLine { margin: 0; padding: 0 1.1rem 0.5rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.coachRow { border-top: 1px solid var(--home-line); }
+
+/* A colour: its picker and its hex code side by side. */
+.hexRow { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.hexInput {
+  width: 7.5rem;
+  min-height: var(--admin-control-h);
+  padding: 0 0.6rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+  color: var(--text-primary);
+  font-family: var(--font-data);
+  font-size: var(--type-body);
+  text-transform: uppercase;
+}
+.hexInput:focus { outline: none; border-color: var(--home-olive); }
+.mistake { margin: 0.25rem 0 0; font-size: var(--type-support); font-weight: 600; color: var(--danger-light); }
+.quiet { margin: 0; padding: 1.25rem 0.1rem; font-size: var(--type-body); color: var(--text-tertiary); }
+
+@media (max-width: 768px) {
+  .hexInput { min-height: var(--tap-min, 44px); }
+}
