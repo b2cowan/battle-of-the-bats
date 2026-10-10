@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-08T03:10:47.176Z",
+  "generated": "2026-10-09T02:38:04.560Z",
   "entries": {
     "admin-calendar|768|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
@@ -12,6 +12,610 @@
     "admin-calendar-month|768|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
       "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill every team in Senior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 14U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 15U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 15U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill every team in Junior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 9U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 11U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 12U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill 13U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill every team in Not in a group": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|361|tap-floor|input·Bill UAT Test Team": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill every team in Senior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 14U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 15U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 15U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill every team in Junior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 9U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 11U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 12U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill 13U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill every team in Not in a group": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|390|tap-floor|input·Bill UAT Test Team": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill every team in Senior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 14U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 15U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 15U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill every team in Junior": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 9U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 11U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 12U AA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill 13U AAA": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill every team in Not in a group": {
+      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-allocation-new|768|tap-floor|input·Bill UAT Test Team": {
+      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-hl-standings|361|tap-floor|a·House league": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-hl-teams|361|tap-floor|button·Add Teams": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|361|tap-floor|button·Randomize": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|361|tap-floor|button·Start Draft": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|361|tap-floor|div·Isaac Walsh": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|361|tap-floor|div·Hudson Byrne": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|361|tap-floor|button·Edit team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-hl-teams|361|control-width|button·Edit team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "28px wide (floor 44) — icon-only control"
+    },
+    "admin-hl-teams|361|tap-floor|button·Delete team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-hl-teams|361|control-width|button·Delete team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "28px wide (floor 44) — icon-only control"
+    },
+    "admin-hl-standings|390|tap-floor|a·House league": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-hl-teams|390|tap-floor|button·Add Teams": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|390|tap-floor|button·Randomize": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|390|tap-floor|button·Start Draft": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|390|tap-floor|div·Isaac Walsh": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|390|tap-floor|div·Hudson Byrne": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|390|tap-floor|button·Edit team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-hl-teams|390|control-width|button·Edit team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "28px wide (floor 44) — icon-only control"
+    },
+    "admin-hl-teams|390|tap-floor|button·Delete team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-hl-teams|390|control-width|button·Delete team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "28px wide (floor 44) — icon-only control"
+    },
+    "admin-hl-standings|768|tap-floor|a·House league": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-hl-standings|768|tap-floor|button·Export": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "38px tall (floor 44)"
+    },
+    "admin-hl-teams|768|tap-floor|button·Add Teams": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|768|tap-floor|button·Randomize": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|768|tap-floor|button·Start Draft": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|768|tap-floor|button·Export": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "38px tall (floor 44)"
+    },
+    "admin-hl-teams|768|tap-floor|div·Isaac Walsh": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|768|tap-floor|div·Hudson Byrne": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-teams|768|tap-floor|button·Edit team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-hl-teams|768|control-width|button·Edit team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "28px wide (floor 44) — icon-only control"
+    },
+    "admin-hl-teams|768|tap-floor|button·Delete team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-hl-teams|768|control-width|button·Delete team": {
+      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
+      "detail": "28px wide (floor 44) — icon-only control"
+    },
+    "coach-schedule-add|361|tap-floor|input·<input>": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-schedule-add|361|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add|361|tap-floor|input·Type to find a venue…": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add|361|tap-floor|input·e.g. Diamond 2": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add|361|tap-floor|button·More — links, notes": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add|361|tap-floor|button·Cancel": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add|361|tap-floor|button·Add practice": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|361|tap-floor|input·<input>": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|361|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|361|tap-floor|input·Type to find a venue…": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|361|tap-floor|input·e.g. Diamond 2": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|361|tap-floor|button·More — links, notes": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|361|tap-floor|button·Cancel": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|361|tap-floor|button·Add practice": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add|390|tap-floor|input·<input>": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-schedule-add|390|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add|390|tap-floor|input·Type to find a venue…": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add|390|tap-floor|input·e.g. Diamond 2": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add|390|tap-floor|button·More — links, notes": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add|390|tap-floor|button·Cancel": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add|390|tap-floor|button·Add practice": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|390|tap-floor|input·<input>": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|390|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|390|tap-floor|input·Type to find a venue…": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|390|tap-floor|input·e.g. Diamond 2": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|390|tap-floor|button·More — links, notes": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|390|tap-floor|button·Cancel": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|390|tap-floor|button·Add practice": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add|768|tap-floor|input·<input>": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-schedule-add|768|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add|768|tap-floor|input·Type to find a venue…": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add|768|tap-floor|input·e.g. Diamond 2": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add|768|tap-floor|button·More — links, notes": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add|768|tap-floor|button·Cancel": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add|768|tap-floor|button·Add practice": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|768|tap-floor|input·<input>": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|768|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|768|tap-floor|input·Type to find a venue…": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|768|tap-floor|input·e.g. Diamond 2": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|768|tap-floor|button·More — links, notes": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|768|tap-floor|button·Cancel": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule-add-venue-list|768|tap-floor|button·Add practice": {
+      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-hl-schedule|361|tap-floor|button·Week": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule|361|tap-floor|button·List": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule|361|tap-floor|button·Practices": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule|361|tap-floor|button·Generate Schedule": {
+      "reason": "Pre-existing toolbar button at its built height, newly visible rather than newly made: the 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test season two teams and a game, which is what shows Generate and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-schedule|361|tap-floor|button·Add Game": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|361|tap-floor|button·<button>": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|361|control-width|button·<button>": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "admin-hl-schedule-add-game|361|tap-floor|select·RedsBlues": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "39px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|361|tap-floor|input·<input>": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "40px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|361|tap-floor|input·Type to find a venue…": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|361|tap-floor|input·e.g. Diamond 2": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|361|tap-floor|select·ScheduledCompletedPostponedCancelled": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "39px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|361|tap-floor|button·Cancel": {
+      "reason": "The same button as the \"Close\" entry it replaces, at the same 31px: house league's Add Game foot reads Cancel since the §284 W6 owner call (2026-10-09, 8777565b — a create form keeps Cancel beside its save). Pre-existing old-look window control at its built height; re-keyed, not newly made.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|361|hidden-behind-chrome|select·ScheduledCompletedPostponedCancelled": {
+      "reason": "The window's own pinned foot doing its job, not a trapped control: at 361 the Add Game window opens taller than the screen, and the Status select starts below the pinned Cancel/Create bar; scrolling the WINDOW reveals it (the rule reads the page's scroll, not the window's). It was never reported before only because the select showed through the 24px strip the foot used to park above the window's edge — the defect the owner caught at Edit Game walking Club Tier §288 W9 (2026-10-09), fixed by sticking the head and foot at minus the window's padding.",
+      "detail": "centre (181,760) sits under fixed nav·Admin mobile navigation; hit test returns div·CancelCreate Game"
+    },
+    "admin-hl-schedule-add-game|361|tap-floor|button·Create Game": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-hl-schedule|390|tap-floor|button·Week": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule|390|tap-floor|button·List": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule|390|tap-floor|button·Practices": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule|390|tap-floor|button·Generate Schedule": {
+      "reason": "Pre-existing toolbar button at its built height, newly visible rather than newly made: the 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test season two teams and a game, which is what shows Generate and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-schedule|390|tap-floor|button·Add Game": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|390|tap-floor|button·<button>": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|390|control-width|button·<button>": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "admin-hl-schedule-add-game|390|tap-floor|select·RedsBlues": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "39px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|390|tap-floor|input·<input>": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "40px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|390|tap-floor|input·Type to find a venue…": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|390|tap-floor|input·e.g. Diamond 2": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|390|tap-floor|select·ScheduledCompletedPostponedCancelled": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "39px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|390|tap-floor|button·Cancel": {
+      "reason": "The same button as the \"Close\" entry it replaces, at the same 31px: house league's Add Game foot reads Cancel since the §284 W6 owner call (2026-10-09, 8777565b — a create form keeps Cancel beside its save). Pre-existing old-look window control at its built height; re-keyed, not newly made.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|390|tap-floor|button·Create Game": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-hl-schedule|768|tap-floor|button·Week": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule|768|tap-floor|button·List": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule|768|tap-floor|button·Practices": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule|768|tap-floor|button·Generate Schedule": {
+      "reason": "Pre-existing toolbar button at its built height, newly visible rather than newly made: the 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test season two teams and a game, which is what shows Generate and Export here.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-schedule|768|tap-floor|button·Add Game": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-hl-schedule|768|tap-floor|button·Export": {
+      "reason": "Pre-existing toolbar button at its built height, newly visible rather than newly made: the 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test season two teams and a game, which is what shows Generate and Export here.",
+      "detail": "38px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|768|tap-floor|button·<button>": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "26px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|768|control-width|button·<button>": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "admin-hl-schedule-add-game|768|tap-floor|select·RedsBlues": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "39px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|768|tap-floor|input·<input>": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "40px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|768|tap-floor|input·Type to find a venue…": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|768|tap-floor|input·e.g. Diamond 2": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|768|tap-floor|select·ScheduledCompletedPostponedCancelled": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "39px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|768|tap-floor|button·Cancel": {
+      "reason": "The same button as the \"Close\" entry it replaces, at the same 31px: house league's Add Game foot reads Cancel since the §284 W6 owner call (2026-10-09, 8777565b — a create form keeps Cancel beside its save). Pre-existing old-look window control at its built height; re-keyed, not newly made.",
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|768|tap-floor|button·Create Game": {
+      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+      "detail": "31px tall (floor 44)"
     },
     "admin-rep-assistant-coaches|361|tap-floor|a·Public site": {
       "reason": null,
@@ -3297,98 +3901,6 @@
       "reason": null,
       "detail": "cells at 12.80px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
     },
-    "admin-hl-schedule|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hl-schedule|361|tap-floor|button·Week": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule|361|tap-floor|button·List": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule|361|tap-floor|button·Practices": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule|361|tap-floor|button·Add Game": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-schedule|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-schedule|361|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-schedule|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-schedule|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-standings|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hl-standings|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-standings|361|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-standings|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-standings|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hl-teams|361|tap-floor|button·Create Teams": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|361|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|361|tap-floor|div·Gavin Gagnon": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|361|tap-floor|div·Miles Fraser": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|361|content-overflow|div·No teams yetCreate your teams first, the": {
-      "reason": null,
-      "detail": "content spills 23px with overflow-x:visible — no scroller owns it"
-    },
     "admin-club-t-dashboard|361|tap-floor|a·UAT Rep Club Invitational 2026 — open da": {
       "reason": null,
       "detail": "19px tall (floor 44)"
@@ -4084,98 +4596,6 @@
     "admin-hl-registrations|390|type-ladder|table·Player": {
       "reason": null,
       "detail": "cells at 12.80px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
-    },
-    "admin-hl-schedule|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hl-schedule|390|tap-floor|button·Week": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule|390|tap-floor|button·List": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule|390|tap-floor|button·Practices": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule|390|tap-floor|button·Add Game": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-schedule|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-schedule|390|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-schedule|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-schedule|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-standings|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hl-standings|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-standings|390|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-standings|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-standings|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hl-teams|390|tap-floor|button·Create Teams": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|390|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|390|tap-floor|div·Gavin Gagnon": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|390|tap-floor|div·Miles Fraser": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|390|content-overflow|div·No teams yetCreate your teams first, the": {
-      "reason": null,
-      "detail": "content spills 8px with overflow-x:visible — no scroller owns it"
     },
     "admin-club-t-dashboard|390|tap-floor|a·UAT Rep Club Invitational 2026 — open da": {
       "reason": null,
@@ -4980,94 +5400,6 @@
     "admin-hl-registrations|768|type-ladder|table·Player": {
       "reason": null,
       "detail": "cells at 12.80px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
-    },
-    "admin-hl-schedule|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hl-schedule|768|tap-floor|button·Week": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule|768|tap-floor|button·List": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule|768|tap-floor|button·Practices": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule|768|tap-floor|button·Add Game": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-schedule|768|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-hl-schedule|768|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-hl-schedule|768|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-standings|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hl-standings|768|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-hl-standings|768|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-hl-standings|768|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-standings|361|tap-floor|a·House league": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-hl-standings|390|tap-floor|a·House league": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-hl-standings|768|tap-floor|a·House league": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|button·Create Teams": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-hl-teams|768|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|768|tap-floor|div·Gavin Gagnon": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|div·Miles Fraser": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "admin-club-t-dashboard|768|tap-floor|a·UAT Rep Club Invitational 2026 — open da": {
       "reason": null,
@@ -12598,138 +12930,6 @@
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
       "detail": "16px tall (floor 44)"
     },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill 11U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill 12U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill 13U AAA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill 14U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill 15U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill 15U AAA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill 9U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill UAT Test Team": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill 11U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill 12U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill 13U AAA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill 14U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill 15U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill 15U AAA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill 9U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill UAT Test Team": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill 11U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill 12U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill 13U AAA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill 14U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill 15U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill 15U AAA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill 9U AA": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill UAT Test Team": {
-      "reason": "Club Tier Stage 3c: New allocation's teams are the shared FORM TABLE (components/shared/FormTable.tsx). The checkbox and the team's name are ONE label, and the label is the tap target — 44px tall at every touch width (measured 2026-10-07 at 390 and 768). The rule measures the input inside it, as with the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill every team in Senior": {
-      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill every team in Junior": {
-      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|361|tap-floor|input·Bill every team in Not in a group": {
-      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill every team in Senior": {
-      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill every team in Junior": {
-      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|390|tap-floor|input·Bill every team in Not in a group": {
-      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill every team in Senior": {
-      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill every team in Junior": {
-      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-accounting-allocation-new|768|tap-floor|input·Bill every team in Not in a group": {
-      "reason": "Club Tier Ask 11 (4f942b03): a group heading of New allocation's FORM TABLE ticks every team in the group. Its checkbox and the group's name are ONE label, and the label is the tap target — 44px tall at 361, 390 and 768 (measured 2026-10-08 by the Stage 3d sweep: 247/276/129px wide). The rule measures the input inside it, as with the per-team ticks and the shared filter pill's option checkbox.",
-      "detail": "16px tall (floor 44)"
-    },
     "admin-accounting-payment-requests|361|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target. The coach's Ledger carries the same entry (coach-transactions). Club Tier Stage 3a, 2026-10-01.",
       "detail": "16px tall (floor 44)"
@@ -12745,418 +12945,6 @@
     "coach-payables|768|content-overflow|td·Sep 25, 2026": {
       "reason": "Found, not fixed (Ledger Parity session 2, 2026-10-02): the Bills view's next-payment column at 768 fits \"Sep 1, 2026\" and not a two-digit day — a pre-existing tight column, surfaced only because the walk fixture added the first bill due on a two-digit day (Diamond permit — fall block). Reported to the owner; the Bills view is outside Ledger Parity. Fix: let the column take its content's width at the 641–768 band.",
       "detail": "content spills 4px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-hl-teams|361|tap-floor|button·Add Teams": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|361|tap-floor|button·Randomize": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|361|tap-floor|button·Start Draft": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|361|tap-floor|div·Isaac Walsh": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|361|tap-floor|div·Hudson Byrne": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|361|tap-floor|button·Edit team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-hl-teams|361|control-width|button·Edit team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "28px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|361|tap-floor|button·Delete team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-hl-teams|361|control-width|button·Delete team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "28px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|390|tap-floor|button·Add Teams": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|390|tap-floor|button·Randomize": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|390|tap-floor|button·Start Draft": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|390|tap-floor|div·Isaac Walsh": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|390|tap-floor|div·Hudson Byrne": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|390|tap-floor|button·Edit team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-hl-teams|390|control-width|button·Edit team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "28px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|390|tap-floor|button·Delete team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-hl-teams|390|control-width|button·Delete team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "28px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-standings|768|tap-floor|button·Export": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|button·Add Teams": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|button·Randomize": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|button·Start Draft": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|button·Export": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|div·Isaac Walsh": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|div·Hudson Byrne": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-teams|768|tap-floor|button·Edit team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-hl-teams|768|control-width|button·Edit team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "28px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-teams|768|tap-floor|button·Delete team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-hl-teams|768|control-width|button·Delete team": {
-      "reason": "Pre-existing control at its built size, newly visible rather than newly made: the Club Tier Stage 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test club's house-league season two teams (Reds, Blues) and a game, which is what shows the team cards, the draft buttons and Export here.",
-      "detail": "28px wide (floor 44) — icon-only control"
-    },
-    "coach-schedule-add|361|tap-floor|input·<input>": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-schedule-add|361|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add|361|tap-floor|input·Type to find a venue…": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add|361|tap-floor|input·e.g. Diamond 2": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add|361|tap-floor|button·More — links, notes": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add|361|tap-floor|button·Cancel": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add|361|tap-floor|button·Add practice": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|361|tap-floor|input·<input>": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|361|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|361|tap-floor|input·Type to find a venue…": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|361|tap-floor|input·e.g. Diamond 2": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|361|tap-floor|button·More — links, notes": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|361|tap-floor|button·Cancel": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|361|tap-floor|button·Add practice": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add|390|tap-floor|input·<input>": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-schedule-add|390|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add|390|tap-floor|input·Type to find a venue…": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add|390|tap-floor|input·e.g. Diamond 2": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add|390|tap-floor|button·More — links, notes": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add|390|tap-floor|button·Cancel": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add|390|tap-floor|button·Add practice": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|390|tap-floor|input·<input>": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|390|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|390|tap-floor|input·Type to find a venue…": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|390|tap-floor|input·e.g. Diamond 2": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|390|tap-floor|button·More — links, notes": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|390|tap-floor|button·Cancel": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|390|tap-floor|button·Add practice": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add|768|tap-floor|input·<input>": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-schedule-add|768|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add|768|tap-floor|input·Type to find a venue…": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add|768|tap-floor|input·e.g. Diamond 2": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add|768|tap-floor|button·More — links, notes": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add|768|tap-floor|button·Cancel": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add|768|tap-floor|button·Add practice": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|768|tap-floor|input·<input>": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|768|tap-floor|select·None15 minutes before · 5:45 p.m.30 minu": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|768|tap-floor|input·Type to find a venue…": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|768|tap-floor|input·e.g. Diamond 2": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|768|tap-floor|button·More — links, notes": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|768|tap-floor|button·Cancel": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule-add-venue-list|768|tap-floor|button·Add practice": {
-      "reason": "Pre-existing control heights of the coach Add/Edit Event form, newly visible rather than newly made: the form joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the host form's own input class — the same 35px box the retired place picker used — so it matches the fields beside it. The footer's Cancel / Add buttons are the dialog-footer tap floor the owner has yet to rule (phone stage 4, plan §10.8). Closes with that ruling or the portal-wide touch-debt project.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-hl-schedule|361|tap-floor|button·Generate Schedule": {
-      "reason": "Pre-existing toolbar button at its built height, newly visible rather than newly made: the 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test season two teams and a game, which is what shows Generate and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|361|tap-floor|button·<button>": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|361|control-width|button·<button>": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "26px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-schedule-add-game|361|tap-floor|select·RedsBlues": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|361|tap-floor|input·<input>": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|361|tap-floor|input·Type to find a venue…": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|361|tap-floor|input·e.g. Diamond 2": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|361|tap-floor|select·ScheduledCompletedPostponedCancelled": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|361|tap-floor|button·Cancel": {
-      "reason": "The same button as the \"Close\" entry it replaces, at the same 31px: house league's Add Game foot reads Cancel since the §284 W6 owner call (2026-10-09, 8777565b — a create form keeps Cancel beside its save). Pre-existing old-look window control at its built height; re-keyed, not newly made.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|361|hidden-behind-chrome|select·ScheduledCompletedPostponedCancelled": {
-      "reason": "The window's own pinned foot doing its job, not a trapped control: at 361 the Add Game window opens taller than the screen, and the Status select starts below the pinned Cancel/Create bar; scrolling the WINDOW reveals it (the rule reads the page's scroll, not the window's). It was never reported before only because the select showed through the 24px strip the foot used to park above the window's edge — the defect the owner caught at Edit Game walking Club Tier §288 W9 (2026-10-09), fixed by sticking the head and foot at minus the window's padding.",
-      "detail": "centre (181,760) sits under fixed nav·Admin mobile navigation; hit test returns div·CancelCreate Game"
-    },
-    "admin-hl-schedule-add-game|361|tap-floor|button·Create Game": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-hl-schedule|390|tap-floor|button·Generate Schedule": {
-      "reason": "Pre-existing toolbar button at its built height, newly visible rather than newly made: the 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test season two teams and a game, which is what shows Generate and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|390|tap-floor|button·<button>": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|390|control-width|button·<button>": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "26px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-schedule-add-game|390|tap-floor|select·RedsBlues": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|390|tap-floor|input·<input>": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|390|tap-floor|input·Type to find a venue…": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|390|tap-floor|input·e.g. Diamond 2": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|390|tap-floor|select·ScheduledCompletedPostponedCancelled": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|390|tap-floor|button·Cancel": {
-      "reason": "The same button as the \"Close\" entry it replaces, at the same 31px: house league's Add Game foot reads Cancel since the §284 W6 owner call (2026-10-09, 8777565b — a create form keeps Cancel beside its save). Pre-existing old-look window control at its built height; re-keyed, not newly made.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|390|tap-floor|button·Create Game": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-hl-schedule|768|tap-floor|button·Generate Schedule": {
-      "reason": "Pre-existing toolbar button at its built height, newly visible rather than newly made: the 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test season two teams and a game, which is what shows Generate and Export here.",
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-hl-schedule|768|tap-floor|button·Export": {
-      "reason": "Pre-existing toolbar button at its built height, newly visible rather than newly made: the 6a fixture step (seed-club-fixture --club-venues, 2026-10-08) gave the test season two teams and a game, which is what shows Generate and Export here.",
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|768|tap-floor|button·<button>": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "26px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|768|control-width|button·<button>": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "26px wide (floor 44) — icon-only control"
-    },
-    "admin-hl-schedule-add-game|768|tap-floor|select·RedsBlues": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|768|tap-floor|input·<input>": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|768|tap-floor|input·Type to find a venue…": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|768|tap-floor|input·e.g. Diamond 2": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|768|tap-floor|select·ScheduledCompletedPostponedCancelled": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|768|tap-floor|button·Cancel": {
-      "reason": "The same button as the \"Close\" entry it replaces, at the same 31px: house league's Add Game foot reads Cancel since the §284 W6 owner call (2026-10-09, 8777565b — a create form keeps Cancel beside its save). Pre-existing old-look window control at its built height; re-keyed, not newly made.",
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-hl-schedule-add-game|768|tap-floor|button·Create Game": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
-      "detail": "31px tall (floor 44)"
     }
   }
 }
