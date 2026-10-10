@@ -120,7 +120,7 @@ export default function PersonaPanel({
               </p>
               <span className={styles.when}>When you hand off access</span>
               <Link href={staffKitHref} className={styles.link}>
-                See Staff Kit →
+                See Staff kit →
               </Link>
             </div>
           </div>

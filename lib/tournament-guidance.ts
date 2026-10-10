@@ -172,7 +172,7 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
           id: 'staff-kit',
           body:
             'Set your scorekeepers up before game day — invite them once and they get a phone-friendly scoring screen that shows only the games, nothing else in your admin.',
-          action: { label: 'Open Staff Kit', href: `${b}/staff-kit` },
+          action: { label: 'Open Staff kit', href: `${b}/staff-kit` },
         },
       };
     }
