@@ -10,7 +10,7 @@ import NumberStepper from '@/components/admin/NumberStepper';
 import FeedbackModal from '@/components/FeedbackModal';
 import BracketBuilder from './BracketBuilder';
 import BracketHealthPanel from './BracketHealthPanel';
-import { DEFAULT_BOOKING_MINUTES } from '@/lib/booking-length';
+import { gameLengthMinutes } from '@/lib/booking-length';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 
@@ -212,9 +212,10 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
       ? null
       : buildBracketScheduleMetrics(
           preview.map(p => ({ code: p.code, home: p.home, away: p.away, date: p.date || null, time: p.time || null })),
-          { gameDurationMinutes: tournament?.settings?.game_duration_minutes ?? DEFAULT_BOOKING_MINUTES, minRestMinutes },
+          // THE chain (A39): the division's length, else the tournament's, else the one booking length.
+          { gameDurationMinutes: gameLengthMinutes(undefined, division.settings?.game_duration_minutes, tournament?.settings?.game_duration_minutes), minRestMinutes },
         ),
-    [preview, tournament?.settings?.game_duration_minutes, minRestMinutes],
+    [preview, division.settings?.game_duration_minutes, tournament?.settings?.game_duration_minutes, minRestMinutes],
   );
   const violationText = (v: { game: string; feeder: string; reason: string }) =>
     v.reason === 'earlier-date'

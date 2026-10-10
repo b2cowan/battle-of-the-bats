@@ -6,6 +6,7 @@ import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
 import { tournamentToday } from '@/lib/timezone';
 import { typedLocationKey } from '@/lib/venue-identity';
+import { gameLengthMinutes } from '@/lib/booking-length';
 
 type Params = { params: Promise<{ orgSlug: string }> };
 
@@ -16,6 +17,7 @@ type TournamentRow = {
   year: number;
   status: string | null;
   require_score_finalization: boolean | null;
+  settings: { game_duration_minutes?: unknown } | null;
 };
 
 type GameRow = {
@@ -43,6 +45,7 @@ type GameRow = {
   score_submitted_by_email: string | null;
   score_submitted_at: string | null;
   score_submission_source: Game['scoreSubmissionSource'] | null;
+  duration_minutes: number | null;
 };
 
 type TeamRow = {
@@ -65,6 +68,7 @@ type DivisionRow = {
   min_age: number | null;
   max_age: number | null;
   display_order: number | null;
+  settings: { game_duration_minutes?: unknown } | null;
 };
 
 interface OfficialScoreCard {
@@ -173,6 +177,7 @@ function mapGame(row: GameRow): Game {
     scoreSubmittedByEmail: row.score_submitted_by_email,
     scoreSubmittedAt: row.score_submitted_at,
     scoreSubmissionSource: row.score_submission_source,
+    durationMinutes: row.duration_minutes ?? undefined,
   };
 }
 
@@ -221,7 +226,7 @@ export async function getScore(req: Request, { params }: Params) {
 
   let tournamentQuery = supabaseAdmin
     .from('tournaments')
-    .select('id, name, slug, year, status, require_score_finalization')
+    .select('id, name, slug, year, status, require_score_finalization, settings')
     .eq('org_id', ctx.org.id)
     .neq('status', 'archived')
     .order('year', { ascending: false })
@@ -304,7 +309,8 @@ export async function getScore(req: Request, { params }: Params) {
       score_submitted_by_user_id,
       score_submitted_by_email,
       score_submitted_at,
-      score_submission_source
+      score_submission_source,
+      duration_minutes
     `)
     .in('tournament_id', tournamentIds)
     .eq('game_date', date)
@@ -341,7 +347,7 @@ export async function getScore(req: Request, { params }: Params) {
       .order('name', { ascending: true }),
     supabaseAdmin
       .from('divisions')
-      .select('id, tournament_id, name, min_age, max_age, display_order')
+      .select('id, tournament_id, name, min_age, max_age, display_order, settings')
       .in('tournament_id', tournamentIds)
       .order('display_order', { ascending: true }),
   ]);
@@ -358,7 +364,17 @@ export async function getScore(req: Request, { params }: Params) {
 
   const teams = (teamsResult.data ?? []) as TeamRow[];
   const venues = ((venuesResult.data ?? []) as VenueRow[]).map(mapVenue);
-  const divisions = ((divisionsResult.data ?? []) as DivisionRow[]).map(mapDivision);
+  const divisionRows = (divisionsResult.data ?? []) as DivisionRow[];
+  const divisions = divisionRows.map(mapDivision);
+
+  // A game's length is THE chain (A39, lib/booking-length.ts) — its own, its division's, its tournament's, the one
+  // booking length — resolved here, where the settings are: the scorekeeper spans tournaments and holds none of
+  // them, so it read every game as 90 minutes (this read sent neither the game's own length nor any setting).
+  const divisionMinutesById = new Map(divisionRows.map(d => [d.id, d.settings?.game_duration_minutes] as const));
+  const tournamentMinutesById = new Map(tournaments.map(t => [t.id, t.settings?.game_duration_minutes] as const));
+  for (const game of games) {
+    game.durationMinutes = gameLengthMinutes(game.durationMinutes, divisionMinutesById.get(game.divisionId), tournamentMinutesById.get(game.tournamentId));
+  }
 
   const teamNameById = new Map(teams.map(team => [team.id, team.name]));
   const venueById = new Map(venues.map(venue => [venue.id, venue]));

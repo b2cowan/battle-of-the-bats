@@ -8,8 +8,24 @@
  * league game and a tournament game on two different assumptions without anyone noticing. Every one of
  * them now reads it from here.
  *
- * ⚠ NOT the tournament dashboard's "playing now" window (`lib/game-live-state.ts`, 60 minutes): that is how
- * long a game stays in Playing now before it reads Needs a score, a different question with its own number
- * (recorded for the tournament redesign as a finding, 2026-10-08 — the scheduler assumes 90 for the same game).
+ * The tournament dashboard's "Playing now" window is the SAME question (tournament admin redesign A39, owner
+ * ruling 2026-10-09): it decides when a game stops being Playing now and becomes Needs a score, so a game whose
+ * length is set nowhere plays for this many minutes there too. Club 6a recorded it as "a different question with
+ * its own number" (60); read in the code it was not, and that number is gone.
  */
 export const DEFAULT_BOOKING_MINUTES = 90;
+
+/** A length a person set: a positive, finite number of minutes. */
+const setMinutes = (v: unknown): number | undefined =>
+  (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined);
+
+/**
+ * A tournament game's length — THE chain (A39): the game's own, else its division's, else its tournament's, else the
+ * one booking length. Every reader asks this one question the same way: the clash check, the timeline, the schedule's
+ * health, the board's Playing now, Results, the scorekeeper and the club calendar (`tournamentGameMinutes` in
+ * `lib/venue-clash.ts` reads the same chain for the cross-program check; `tests/unit/game-length.test.ts` holds the two
+ * to one answer). The division and tournament values are their `settings.game_duration_minutes`.
+ */
+export function gameLengthMinutes(gameMinutes: unknown, divisionMinutes?: unknown, tournamentMinutes?: unknown): number {
+  return setMinutes(gameMinutes) ?? setMinutes(divisionMinutes) ?? setMinutes(tournamentMinutes) ?? DEFAULT_BOOKING_MINUTES;
+}

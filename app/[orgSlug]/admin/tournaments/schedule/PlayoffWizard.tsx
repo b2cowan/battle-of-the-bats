@@ -11,6 +11,7 @@ import { resolveManualTravelBuffers } from '@/lib/schedule-metrics';
 import { formatVenueLocation } from '@/lib/venue-label';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
 import { resolveGameTiming, slotsClearOfTakenGames, toConflictGame } from '@/lib/schedule-conflict';
+import { gameLengthMinutes } from '@/lib/booking-length';
 import NumberStepper from '@/components/admin/NumberStepper';
 import {
   filterStartsAfterRoundRobinCompletion,
@@ -255,7 +256,16 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   // the auto-schedule optimizer toggle is locked below.
   const [autoSchedule, setAutoSchedule] = useState(canAutoSchedule);
   const [generationScope, setGenerationScope] = useState<GenerationScope>('replace');
-  const [gameLength, setGameLength] = useState(tournament?.settings?.game_duration_minutes ?? 90);
+  // The length box starts at the chosen division's length by THE chain (A39) and follows the division until the
+  // organizer sets one; every playoff game saves it (`durationMinutes` below).
+  const lengthOfDivision = (id: string) => gameLengthMinutes(undefined, divisions.find(d => d.id === id)?.settings?.game_duration_minutes, tournament?.settings?.game_duration_minutes);
+  const [gameLength, setGameLengthState] = useState(() => lengthOfDivision(selectedDivisionId));
+  const gameLengthSet = useRef(false);
+  const setGameLength = (minutes: number) => { gameLengthSet.current = true; setGameLengthState(minutes); };
+  const chooseDivision = (id: string) => {
+    setSelectedDivisionId(id);
+    if (!gameLengthSet.current) setGameLengthState(lengthOfDivision(id));
+  };
   const [breakLength, setBreakLength] = useState(tournament?.settings?.buffer_minutes ?? 15);
   const [dateSlots, setDateSlots] = useState<DateSlot[]>([
     { date: tournament?.endDate || tournament?.startDate || '', startTime: '09:00', endTime: '20:30' },
@@ -1350,7 +1360,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                 {divisions.length > 1 && (
                   <div className="form-group">
                     <label className="form-label">Division</label>
-                    <select className="form-select" value={selectedDivisionId} onChange={e => setSelectedDivisionId(e.target.value)}>
+                    <select className="form-select" value={selectedDivisionId} onChange={e => chooseDivision(e.target.value)}>
                       {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                   </div>

@@ -21,17 +21,17 @@
  *   'overdue'  → Needs a Score (window fully elapsed, any day)
  */
 import { zonedWallClockToUtc } from './timezone';
+import { DEFAULT_BOOKING_MINUTES } from './booking-length';
 
 export type ScheduledWindowState = 'live' | 'overdue' | 'future';
 
-/** Default game length (minutes) when neither the game nor the tournament sets one. */
-export const DEFAULT_GAME_DURATION_MINUTES = 60;
-
 /**
- * Classify a scheduled game's play window against "now".
+ * Classify a scheduled game's play window against "now". The length is THE chain's answer (`gameLengthMinutes`,
+ * lib/booking-length.ts — A39: how long a game reads Playing now is how long it lasts); the board used to keep its
+ * own 60 here.
  *
  * @param startMs          UTC start instant in ms (NaN/Infinity → treated as not-started).
- * @param durationMinutes  Game length in minutes (non-positive/NaN → DEFAULT_GAME_DURATION_MINUTES).
+ * @param durationMinutes  Game length in minutes (non-positive/NaN → the one booking length).
  * @param nowMs            Current instant in ms.
  * @returns 'future' before start · 'live' inside [start, start+duration) · 'overdue' after.
  */
@@ -44,7 +44,7 @@ export function scheduledWindowState(
   if (!Number.isFinite(startMs)) return 'future';
   const dur = Number.isFinite(durationMinutes) && durationMinutes > 0
     ? durationMinutes
-    : DEFAULT_GAME_DURATION_MINUTES;
+    : DEFAULT_BOOKING_MINUTES;
   const endMs = startMs + dur * 60_000;
   if (nowMs < startMs) return 'future';
   if (nowMs < endMs) return 'live';

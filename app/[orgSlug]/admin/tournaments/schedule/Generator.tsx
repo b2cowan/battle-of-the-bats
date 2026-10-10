@@ -1,5 +1,6 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
+import { gameLengthMinutes } from '@/lib/booking-length';
 import { Sparkles, Check, X, RefreshCw, AlertCircle, Plus, Trash2, Info, SlidersHorizontal } from 'lucide-react';
 import { Team, Division, Venue, Game, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
@@ -206,7 +207,18 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
 
   const [selectedGroupId, setSelectedGroupId] = useState(defaultDivisionId || divisions[0]?.id || '');
   // Initialize from tournament settings so generator matches event-level defaults.
-  const [gameLength, setGameLength] = useState(tournament.settings?.game_duration_minutes ?? 90);
+  // The length box starts at the chosen division's length by THE chain (A39: the division's, else the tournament's,
+  // else the one booking length) and follows the division until the organizer sets one. Every game the generator saves
+  // carries this length (`saveDraftInOneStep`), so the board, the clash check and the club calendar read the length the
+  // drafts were spaced by.
+  const lengthOfDivision = (id: string) => gameLengthMinutes(undefined, divisions.find(d => d.id === id)?.settings?.game_duration_minutes, tournament.settings?.game_duration_minutes);
+  const [gameLength, setGameLengthState] = useState(() => lengthOfDivision(selectedGroupId));
+  const gameLengthSet = useRef(false);
+  const setGameLength = (minutes: number) => { gameLengthSet.current = true; setGameLengthState(minutes); };
+  const chooseDivision = (id: string) => {
+    setSelectedGroupId(id);
+    if (!gameLengthSet.current) setGameLengthState(lengthOfDivision(id));
+  };
   const [breakLength, setBreakLength] = useState(tournament.settings?.buffer_minutes ?? 15);
   const [gamesPerTeam, setGamesPerTeam] = useState(3);
   const [selectedResourceKeys, setSelectedResourceKeys] = useState<Set<string>>(
@@ -1095,7 +1107,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
         action: 'replace-division-round-robin',
         tournamentId: tournament.id,
         divisionId: selectedGroupId,
-        games,
+        // A39 / F76: every game carries the length the drafts were spaced by (it used to save none).
+        games: games.map(g => ({ ...g, durationMinutes: gameLength })),
         replaceGameIds: replaceableGameIds,
       }),
     });
@@ -1265,7 +1278,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
             <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
               <div className="form-group">
                 <label className="form-label">Division</label>
-                <select className="form-select" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
+                <select className="form-select" value={selectedGroupId} onChange={e => chooseDivision(e.target.value)}>
                   {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </select>
               </div>

@@ -36,7 +36,7 @@ import { formatTime } from '@/lib/utils';
 import { GAME_DAY_LIST, GAME_STATE_WORD, SCOREKEEPER_BUCKET } from '@/lib/game-day-words';
 import { SCOREKEEPER_WORDS } from '@/lib/volunteer-words';
 import { gameWindowState } from '@/lib/game-live-state';
-import { resolveGameTiming } from '@/lib/schedule-conflict';
+import { gameLengthMinutes } from '@/lib/booking-length';
 import { tournamentToday } from '@/lib/timezone';
 import { typedLocationKey } from '@/lib/venue-identity';
 import styles from './scorekeeper.module.css';
@@ -176,17 +176,16 @@ function isFinal(game: Game) {
 
 // Game day's one word per state (Tournament admin redesign G5, /marketing 2026-09-29) — the same words
 // as the organizer's board and Results, by the shared play-window rule: "Needs a score" once a game's time
-// has passed, "Scheduled" before then. The game's length is its own or its division's (this page spans
-// tournaments and holds none's settings); a scheduler-built game carries its own. A forfeit is a forfeit
+// has passed, "Scheduled" before then. The game's length is THE chain (A39), resolved by the score read (this page
+// spans tournaments and holds none of their settings). A forfeit is a forfeit
 // (it used to read "To Score").
-function statusLabel(game: Game, divisions: Division[], readAt: number) {
+function statusLabel(game: Game, readAt: number) {
   const { status } = game;
   if (status === 'submitted') return GAME_STATE_WORD.pendingReview;
   if (status === 'completed') return GAME_STATE_WORD.final;
   if (status === 'forfeit') return GAME_STATE_WORD.forfeit;
   if (status === 'cancelled') return 'Cancelled';
-  const { durationMinutes } = resolveGameTiming(divisions.find(d => d.id === game.divisionId), null, game.durationMinutes);
-  const w = gameWindowState({ date: game.date, time: game.time, durationMinutes, nowMs: readAt, today: tournamentToday(new Date(readAt)) });
+  const w = gameWindowState({ date: game.date, time: game.time, durationMinutes: gameLengthMinutes(game.durationMinutes), nowMs: readAt, today: tournamentToday(new Date(readAt)) });
   return w === 'overdue' ? GAME_STATE_WORD.needsScore : GAME_DAY_LIST.scheduled;
 }
 
@@ -941,7 +940,7 @@ export default function ScorekeeperPage() {
                 <span className={styles.chip}>
                   {isNow
                     ? <span className={styles.nowBadge}>{GAME_DAY_LIST.upNext}</span>
-                    : <RepChip tone={statusTone(game.status)}>{statusLabel(game, divisions, readAt)}</RepChip>}
+                    : <RepChip tone={statusTone(game.status)}>{statusLabel(game, readAt)}</RepChip>}
                 </span>
 
                 <span className={styles.matchup}>

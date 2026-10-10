@@ -29,7 +29,7 @@ import {
   isPlaced,
   type VenuePlacement,
 } from './venue-identity.ts';
-import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
+import { DEFAULT_BOOKING_MINUTES, gameLengthMinutes } from './booking-length.ts';
 
 // ---------------------------------------------------------------------------
 // Timing resolution
@@ -46,8 +46,8 @@ export const SYSTEM_TIMING_DEFAULTS: GameTiming = {
 };
 
 /**
- * Resolves effective game timing by cascading the DURATION:
- *   per-game override → division.settings → tournament.settings → SYSTEM_TIMING_DEFAULTS
+ * Resolves effective game timing. The DURATION is THE one chain (`gameLengthMinutes`, lib/booking-length.ts):
+ *   per-game override → division.settings → tournament.settings → the one booking length
  *
  * `gameDurationOverride` is a single game's own length (`game.durationMinutes`),
  * so playoff games, finals, etc. can run their own length and are validated
@@ -60,14 +60,9 @@ export function resolveGameTiming(
 ): GameTiming {
   const divS = division?.settings;
   const tourS = tournament?.settings;
-  const pos = (v: unknown) => (typeof v === 'number' && v > 0 ? v : undefined);
   const nonNeg = (v: unknown) => (typeof v === 'number' && v >= 0 ? v : undefined);
 
-  const durationMinutes =
-    pos(gameDurationOverride) ??
-    pos(divS?.game_duration_minutes) ??
-    pos(tourS?.game_duration_minutes) ??
-    SYSTEM_TIMING_DEFAULTS.durationMinutes;
+  const durationMinutes = gameLengthMinutes(gameDurationOverride, divS?.game_duration_minutes, tourS?.game_duration_minutes);
 
   const bufferMinutes =
     nonNeg(divS?.buffer_minutes) ??

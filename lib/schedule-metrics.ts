@@ -1,6 +1,6 @@
 import type { Division, Game, Tournament, Venue } from './types';
 import { computeTournamentStandings } from './tie-breakers.ts';
-import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
+import { gameLengthMinutes } from './booking-length.ts';
 import { isStandardSingleEliminationBracket, nextBracketCodeViaWinner } from './playoff-bracket.ts';
 import {
   resolveVenuePlacement,
@@ -170,6 +170,8 @@ export interface BuildScheduleMetricsOptions {
    */
   standingsGames?: ScheduleMetricGame[];
   expectedGamesPerParticipant?: number;
+  /** A preview's spacing length (a generator's length box): it stands in for the division's and the tournament's for
+   *  a game that carries no length of its own. A game's own length always wins (A39, THE chain). */
   gameDurationMinutes?: number;
   bufferMinutes?: number;
   manualTravelBuffers?: ManualTravelBufferSettings;
@@ -204,7 +206,6 @@ interface ParticipantGame {
 }
 
 // The one booking length (lib/booking-length.ts) — the clash engines and the live window read the same number.
-const DEFAULT_GAME_DURATION_MINUTES = DEFAULT_BOOKING_MINUTES;
 const DEFAULT_BUFFER_MINUTES = 15;
 const DEFAULT_MAX_GAMES_PER_DAY = 2;
 const EARLY_GAME_CUTOFF_MINUTES = 12 * 60;
@@ -887,19 +888,14 @@ function resolveDuration(
   divisions: Division[],
   tournament: Tournament | null,
 ): number {
+  // THE chain (A39, lib/booking-length.ts): the game's own length, else its division's, else the tournament's, else the
+  // one booking length. A preview's spacing length stands in for the last three — never over a game's own (it used
+  // to: the board measured every game at the tournament's length, a generator's kept games at the draft's).
   if (typeof options.gameDurationMinutes === 'number' && options.gameDurationMinutes > 0) {
-    return options.gameDurationMinutes;
-  }
-  // A game's own length wins (playoff games, a longer final, etc.).
-  if (typeof game.durationMinutes === 'number' && game.durationMinutes > 0) {
-    return game.durationMinutes;
+    return gameLengthMinutes(game.durationMinutes, options.gameDurationMinutes);
   }
   const division = divisions.find(item => item.id === game.divisionId);
-  const divDuration = division?.settings?.game_duration_minutes;
-  if (typeof divDuration === 'number' && divDuration > 0) return divDuration;
-  const tournamentDuration = tournament?.settings?.game_duration_minutes;
-  if (typeof tournamentDuration === 'number' && tournamentDuration > 0) return tournamentDuration;
-  return DEFAULT_GAME_DURATION_MINUTES;
+  return gameLengthMinutes(game.durationMinutes, division?.settings?.game_duration_minutes, tournament?.settings?.game_duration_minutes);
 }
 
 const SEED_REF_RE = /^Seed #(\d+)$/;

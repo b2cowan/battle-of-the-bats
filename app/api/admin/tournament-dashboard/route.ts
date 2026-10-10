@@ -17,6 +17,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { tournamentNow } from '@/lib/timezone';
 import { gameWindowState, type ScheduledWindowState } from '@/lib/game-live-state';
+import { gameLengthMinutes } from '@/lib/booking-length';
 import { decidedFinalFor, type ChampionGameInput } from '@/lib/champions';
 import { loadEventRecap } from '@/lib/event-recap-read';
 import { hasFirstGameStarted, isGameDay as isGameDayRule } from '@/lib/tournament-phase';
@@ -61,6 +62,7 @@ type DivisionRow = {
   total_fee_amount: number | null;
   total_fee_due_date: string | null;
   playoff_config: { tieBreakers?: string[] } | null;
+  settings: { game_duration_minutes?: unknown } | null;
 };
 
 type TeamPaymentRow = {
@@ -156,7 +158,7 @@ export const GET = withObservability(async (req: Request) => {
   const [divisionsRes, teamsRes, gamesRes, announcementsRes, teamPaymentsRes, poolSlotsRes, venuesRes, rulesRes] = await Promise.all([
     supabaseAdmin
       .from('divisions')
-      .select('id, name, is_closed, capacity, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, playoff_config', { count: 'exact' })
+      .select('id, name, is_closed, capacity, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, playoff_config, settings', { count: 'exact' })
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('teams')
@@ -358,7 +360,11 @@ export const GET = withObservability(async (req: Request) => {
   // cross-midnight-safe) via zonedWallClockToUtc — never the raw UTC clock that
   // caused the "not-yet-started shows as LIVE" bug.
   const divisionNameById = new Map(divisions.map(d => [d.id, d.name] as const));
-  const defaultDurationMin = positiveNumber(tSettings.game_duration_minutes) ?? 60;
+  // A game's length is THE chain (A39, lib/booking-length.ts): its own, its division's, the tournament's, the one
+  // booking length. Playing now lasts exactly that long (it used to skip the division and default to 60).
+  const divisionMinutesById = new Map(divisions.map(d => [d.id, d.settings?.game_duration_minutes] as const));
+  const lengthOf = (g: { duration_minutes: number | null; division_id: string | null }) =>
+    gameLengthMinutes(g.duration_minutes, g.division_id ? divisionMinutesById.get(g.division_id) : undefined, tSettings.game_duration_minutes);
   const nowMs = Date.now();
 
   // Per-game window state (scheduled games only), computed once — the shared rule Results' bands read
@@ -369,7 +375,7 @@ export const GET = withObservability(async (req: Request) => {
     windowStateById.set(g.id, gameWindowState({
       date: g.game_date,
       time: g.game_time,
-      durationMinutes: g.duration_minutes ?? defaultDurationMin,
+      durationMinutes: lengthOf(g),
       nowMs,
       today,
     }));
@@ -502,6 +508,8 @@ export const GET = withObservability(async (req: Request) => {
       awayPlaceholder: game.away_placeholder,
       date: game.game_date,
       time: game.game_time,
+      // Each game measured at its own chain length (the health engine used to take the tournament's for every game).
+      durationMinutes: lengthOf(game),
       venueId: game.diamond_id,
       venueFacilityId: game.venue_facility_id,
       scheduleFacilityLaneId: game.schedule_facility_lane_id ?? null,
@@ -519,7 +527,6 @@ export const GET = withObservability(async (req: Request) => {
       status: team.status,
       seed: team.seed ?? null,
     })),
-    gameDurationMinutes: positiveNumber(tSettings.game_duration_minutes),
     bufferMinutes: positiveNumber(tSettings.buffer_minutes),
     // Organizer-defined Schedule Health rules so the dashboard score/tone match the Schedule panel.
     maxGamesPerDay: positiveNumber(savedHealthRules?.maxGamesPerDay),
