@@ -24,11 +24,12 @@
  * 2026-09-29: "show/hide the parts"); the order is the day's and does not move.
  */
 import { useState, type ReactNode } from 'react';
-import { ChevronDown, Lock, Trophy } from 'lucide-react';
+import { Lock, Trophy } from 'lucide-react';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure } from '@/components/coaches/kit';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, RepChip } from '@/components/admin/kit/club/RepKit';
 import { GAME_DAY_LIST, GAME_DAY_WORDS, gameWhen } from '@/lib/game-day-words';
 import { tournamentToday } from '@/lib/timezone';
+import HealthRow from '@/components/admin/tournament/HealthRow';
 import styles from './GameDayBoard.module.css';
 
 type BoardGame = {
@@ -298,20 +299,18 @@ export default function GameDayBoard({
     ? GAME_DAY_WORDS.healthCaption(health.tone, health.issueCount)
     : GAME_DAY_WORDS.healthNotBuilt;
   const healthRow = visible('gdScheduleHealth') ? (
-    // The demo tour's "Break the schedule" step rings this row (and the schedule's own panel).
-    <div className={styles.health} data-sandbox-tour="schedule-health">
-      <button type="button" className={styles.healthRow} aria-expanded={healthOpen} onClick={() => setHealthOpen(o => !o)}>
-        <span className={styles.healthScore} data-tone={health.timedGames > 0 ? health.tone : undefined}>
-          {health.timedGames > 0 ? health.score : '—'}
-        </span>
-        <span className={styles.healthText}>
-          <span className={styles.healthTitle}>{GAME_DAY_WORDS.healthTitle}</span>
-          <span className={styles.healthCaption}>{healthCaption}</span>
-        </span>
-        <ChevronDown size={16} className={styles.healthChevron} aria-hidden />
-      </button>
-      {healthOpen && <div className={styles.healthBody}>{healthBody}</div>}
-    </div>
+    // The demo tour's "Break the schedule" step rings this row (and the schedule's own, at its day's foot).
+    <HealthRow
+      data-sandbox-tour="schedule-health"
+      score={health.timedGames > 0 ? health.score : null}
+      tone={health.tone}
+      title={GAME_DAY_WORDS.healthTitle}
+      caption={healthCaption}
+      open={healthOpen}
+      onToggle={() => setHealthOpen(o => !o)}
+    >
+      {healthBody}
+    </HealthRow>
   ) : null;
 
   return (

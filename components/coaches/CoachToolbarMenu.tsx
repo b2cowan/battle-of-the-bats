@@ -66,6 +66,8 @@ export function CoachToolbarMenu({
   title,
   overWindow = false,
   panelMinWidth,
+  align = 'end',
+  triggerContent,
   open: openProp,
   onOpenChange,
   triggerClassName = '',
@@ -163,6 +165,19 @@ export function CoachToolbarMenu({
    * stays on one line, as drawn (2026-10-09). The phone sheet is the screen's width either way.
    */
   panelMinWidth?: number;
+  /**
+   * Which edge the desk popover hangs from. `end` (the default) for a trigger at the right end of a right-pinned group,
+   * as every caller had; `start` for a trigger that LEADS its line — the tournament schedule's view pill (Tournament
+   * admin redesign Stage 3, S1), whose right-aligned panel would hang off the line's left end. The phone sheet is the
+   * screen's width either way.
+   */
+  align?: 'start' | 'end';
+  /**
+   * The trigger's whole inside, for a trigger that is more than one line — the tournament schedule's day ("Today · Fri,
+   * Oct 9" over "4 games · U11 and U13"), which opens the list of the event's days (Stage 3, S1). `label` stays its
+   * accessible name. Takes the place of `icon`, the word and the chevron; wear it with `plainTrigger`.
+   */
+  triggerContent?: ReactNode;
   /**
    * ⚠ **CONTROLLED MODE, AND IT EXISTS FOR EXACTLY ONE SHAPE: A DOOR ELSEWHERE ON THE PAGE THAT
    * OPENS THIS MENU** (Schedule's empty state, Phase 4b). Leave both undefined and the menu owns
@@ -302,9 +317,8 @@ export function CoachToolbarMenu({
       default: break;
     }
   };
-  // Always right-aligned: these triggers sit at the right end of a right-pinned group, so a
-  // left-aligned panel would hang off the page. A left-aligned variant can add the option back
-  // when a caller actually needs one.
+  // Right-aligned unless asked (`align`): most triggers sit at the right end of a right-pinned group, where a
+  // left-aligned panel would hang off the page; a trigger that leads its line asks for `start`.
   // A glyph trigger's menu is a short list of one-word choices (List · Week · Month) — 160 wide,
   // the drawing's number; the worded triggers keep the room their hints need.
   /* ⚠ Asked only when this menu can actually USE the answer. This component is rendered once per
@@ -325,7 +339,7 @@ export function CoachToolbarMenu({
   const panelStyle = useAnchoredMenu(open && !asDrawer, rootRef, panelRef, {
     minWidth: panelMinWidth ?? (variant === 'glyph' ? 160 : 260),
     narrowMinWidth: variant === 'glyph' ? 160 : 200,
-    align: 'end',
+    align,
   });
 
   /* Focus moves into the panel on open (see the component doc) — and AGAIN when the width crosses 640
@@ -375,12 +389,16 @@ export function CoachToolbarMenu({
         aria-expanded={open}
         /* The label is the accessible name while it is visible; once it can hide at ≤640 the
            name has to be stated, or the phone gets a button announced as "chevron". */
-        aria-label={collapseOnPhone || variant === 'glyph' ? label : undefined}
+        aria-label={collapseOnPhone || variant === 'glyph' || triggerContent != null ? label : undefined}
         onClick={() => setOpen(v => !v)}
       >
-        {icon}
-        {variant === 'glyph' ? null : collapseOnPhone ? <span className={shared.headerBtnLabel}>{label}</span> : label}
-        {variant !== 'chip' && variant !== 'glyph' && <ChevronDown size={14} aria-hidden />}
+        {triggerContent != null ? triggerContent : (
+          <>
+            {icon}
+            {variant === 'glyph' ? null : collapseOnPhone ? <span className={shared.headerBtnLabel}>{label}</span> : label}
+            {variant !== 'chip' && variant !== 'glyph' && <ChevronDown size={14} aria-hidden />}
+          </>
+        )}
       </button>
       {/* The sheet answers its own keys, outside tap and back step (the frame; `useDismissable` above stands down
           for it), and its dim is inside the boundary it watches — `drawerOnPhone` above has the defect a dim

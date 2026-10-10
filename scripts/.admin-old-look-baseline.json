@@ -1,6 +1,6 @@
 {
   "app/[orgSlug]/admin/admin-common.module.css": {
-    "kitScope": 45
+    "kitScope": 42
   },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
     "kitScope": 130
@@ -134,11 +134,6 @@
     "kx": 25,
     "helpers": 1
   },
-  "app/[orgSlug]/admin/tournaments/schedule/components/ScheduleMenus.tsx": {
-    "useAdminKit": 1,
-    "kx": 11,
-    "helpers": 4
-  },
   "app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css": {
     "kitScope": 72
   },
@@ -155,11 +150,10 @@
     "helpers": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/page.tsx": {
-    "kx": 2,
     "helpers": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
-    "kitScope": 269
+    "kitScope": 217
   },
   "app/[orgSlug]/admin/tournaments/settings/event/page.tsx": {
     "kx": 22,

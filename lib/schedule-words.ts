@@ -13,6 +13,107 @@
  */
 
 import { pluralize as count } from './utils.ts';
+import { GAME_DAY_LIST, GAME_STATE_WORD } from './game-day-words.ts';
+import { TEAMS_WORDS } from './registration-words.ts';
+import { formatShortWeekdayDate } from './timezone.ts';
+import type { ScheduleStage, ScheduleState, ScheduleView } from './schedule-day.ts';
+
+// ── THE DAY (Stage 3 build, Part 2 — S1, A33, A44; /marketing 2026-10-09) ────────────────────────────────────────
+
+/** The two paid tools and the free one, by name (A34 as amended 2026-10-09: a door names the tool it opens). */
+export const SCHEDULE_TOOL_NAMES = {
+  roundRobin: 'Round-robin generator',
+  playoffs: 'Playoff generator',
+  rainDelay: 'Rain delay',
+  publish: 'Publish…',
+  unpublish: 'Unpublish a division…',
+  buildBracket: 'Build bracket',
+  editBracket: 'Edit bracket',
+  clearBracket: 'Clear bracket',
+} as const;
+
+export const SCHEDULE_DAY_WORDS = {
+  title: 'Schedule',
+  view: 'View',
+  views: {
+    day: { label: 'Day', hint: 'One day, every game' },
+    all: { label: 'All games', hint: 'Every day, by day' },
+    timeline: { label: 'Timeline', hint: (fieldPlural: string) => `${fieldPlural} across the day` },
+    bracket: { label: 'Bracket', hint: "One division's playoffs" },
+  } satisfies Record<ScheduleView, { label: string; hint: string | ((p: string) => string) }>,
+  /** Teams' own words, so the two toolbars spell the Filter one way. */
+  filter: TEAMS_WORDS.filter,
+  filtersOn: TEAMS_WORDS.filtersOn,
+  resetFilters: TEAMS_WORDS.resetFilters,
+  search: 'Search teams',
+  tools: TEAMS_WORDS.tools,
+  groups: { division: 'Division', stage: 'Stage', status: TEAMS_WORDS.filterStatus },
+  stages: { pool: 'Round robin', playoff: 'Playoffs' } satisfies Record<ScheduleStage, string>,
+  states: {
+    needsScore: GAME_STATE_WORD.needsScore,
+    pendingReview: GAME_STATE_WORD.pendingReview,
+    playingNow: GAME_DAY_LIST.playingNow,
+    scheduled: GAME_DAY_LIST.scheduled,
+    final: GAME_STATE_WORD.final,
+    forfeit: GAME_STATE_WORD.forfeit,
+    cancelled: 'Cancelled',
+  } satisfies Record<ScheduleState, string>,
+  previousDay: 'Previous day',
+  nextDay: 'Next day',
+  chooseDay: 'Choose a day',
+  previousDivision: 'Previous division',
+  nextDivision: 'Next division',
+  chooseDivision: 'Choose a division',
+  noDate: 'No date yet',
+  /** "Today · Fri, Oct 9" — the day row's label; any other day is just its date. */
+  dayLabel: (day: string, today: string) => (day === today ? `Today · ${formatShortWeekdayDate(day)}` : formatShortWeekdayDate(day)),
+  /** "4 games · U11 and U13" / "12 games · 3 divisions" / "1 game · U11" / "No games". */
+  dayCaption: (games: number, divisionNames: readonly string[]) => {
+    if (games === 0) return 'No games';
+    const which = divisionNames.length === 0 ? ''
+      : divisionNames.length === 1 ? divisionNames[0]
+        : divisionNames.length === 2 ? `${divisionNames[0]} and ${divisionNames[1]}`
+          : `${divisionNames.length} divisions`;
+    return [count(games, 'game', 'games'), which].filter(Boolean).join(' · ');
+  },
+  /** A band's count in All games. */
+  bandCount: (games: number) => count(games, 'game', 'games'),
+  noGamesOnDay: (day: string) => `No games on ${formatShortWeekdayDate(day)}.`,
+  noGamesMatch: 'No games match the filter.',
+  clearFilter: 'Clear the filter',
+  /** The health row's division scope, after Stage 1's caption ("Healthy · no issues · both divisions"). */
+  healthScope: (divisions: number) => (divisions <= 1 ? '' : divisions === 2 ? 'both divisions' : 'every division'),
+  /** A Tools row the plan doesn't include: the tool's name, then the plan's (A44 — never a bare padlock). */
+  lockedPlan: 'Tournament Plus',
+  addGame: 'Add game',
+  /** The Bracket view's heading ("U11 playoffs"). */
+  bracketTitle: (division: string) => `${division} playoffs`,
+  adjustRules: 'Adjust the rules',
+  /** An event with no games yet: how to make them, by format and plan (/marketing 2026-10-09). */
+  noGamesYet: {
+    playoffsOnly: 'This tournament is playoffs only. Build the bracket by hand, or use the playoff generator to seed and schedule it.',
+    playoffsOnlyLocked: 'This tournament is playoffs only. Build the bracket by hand. The playoff generator, which seeds and schedules it for you, is on Tournament Plus.',
+    noPlayoffs: 'Add your games by hand — a day of scrimmages is a handful of rows — or use the round-robin generator to build them from your teams.',
+    noPlayoffsLocked: 'Add your games by hand — a day of scrimmages is a handful of rows. The round-robin generator can build them from your teams on Tournament Plus.',
+    both: 'Add games by hand, or use the round-robin generator to build them from your teams. For the playoffs, use the playoff generator or build the bracket by hand.',
+    bothLocked: 'Add games by hand, or build the playoff bracket by hand. The round-robin and playoff generators are on Tournament Plus.',
+  },
+  /** Unpublish, from Tools (/marketing 2026-10-09). */
+  unpublishTitle: (division: string) => `Unpublish ${division}?`,
+  unpublishBody: (division: string) => `${division}'s games come off the public schedule. Registration stays closed; reopen it yourself if you want new sign-ups.`,
+  unpublishConfirm: (division: string) => `Unpublish ${division}`,
+  unpublishAllTitle: (n: number) => `Unpublish all ${n} divisions?`,
+  unpublishAllBody: 'Their games come off the public schedule; you can publish them again at any time. Registration stays closed; reopen it yourself if you want new sign-ups.',
+  unpublishAllConfirm: (n: number) => `Unpublish all ${n}`,
+  unpublishWindowTitle: 'Unpublish a division',
+  toolHints: {
+    roundRobin: 'Builds the round robin from your teams',
+    playoffs: 'Seeds and schedules the playoffs',
+    rainDelay: "Move or cancel a day's games at once",
+    publish: "Put a division's games on the public site",
+    unpublish: "Take a division's games off the public site",
+  },
+} as const;
 
 export interface DraftSaveCounts {
   division: string;

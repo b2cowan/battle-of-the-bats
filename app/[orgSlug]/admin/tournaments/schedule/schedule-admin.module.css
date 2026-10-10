@@ -722,6 +722,32 @@
 .healthSandboxReset:hover { border-color: var(--logic-lime); }
 .healthSandboxReset:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 
+/* The health row's door to the rules (Tournament admin redesign Stage 3, S1): the row has no gear, so its body opens
+   with a quiet worded button. Written on the kit's tokens — no old look. */
+.healthRulesDoor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: var(--admin-control-h);
+  margin: 0 0 0.6rem;
+  padding: 0 0.65rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  cursor: pointer;
+}
+.healthRulesDoor:hover,
+.healthRulesDoor[aria-pressed='true'] { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
+.healthRulesDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+@media (max-width: 768px) {
+  .healthRulesDoor,
+  .healthSandboxReset { min-height: var(--tap-min, 44px); }
+}
+
 /* ── Schedule Health rules editor ──────────────────────────────────────────── */
 .healthGear {
   margin-left: auto;
@@ -1663,10 +1689,6 @@
   }
 }
 
-.mobileButtonLabel {
-  display: inline;
-}
-
 /* Double-class for specificity over the shared .toolbar { align-items:center }
    (same single-class weight, cross-file source order is unreliable).
    Top-align the toolbar groups: the left group (Division + Stage + View) can wrap
@@ -1678,42 +1700,18 @@
   align-items: flex-start;
 }
 
-.scheduleDivisionGroup {
-  min-width: 0;
-}
-
 /* The shared ToolbarSelect defaults to min-width:13rem (≈208px) — far wider than
    a division dropdown needs ("U12", "Open Division"). At 13rem the division
    select alone made the left view-group ≈654px, which (with no grow) still left a
    visible gap before the action cluster and could push it to a 2nd row. 9rem fits
    the longest realistic division name and tightens the whole row. Desktop only;
    mobile keeps its own full-width rule. */
-@media (min-width: 769px) {
-  .scheduleDivisionSelect :global(select) {
-    min-width: 9rem;
-  }
-}
-
-.scheduleActionsGroup {
-  flex-wrap: nowrap;
-}
 
 /* Mobile-only Tools menu — hidden on desktop, where Publish/Auto/Export are
    separate controls in the Row 1 action group. */
-.scheduleMobileTools {
-  display: none;
-}
 
 /* Mobile-only Publish/Unpublish control — sits BESIDE the Tools menu on Row 2.
    Hidden on desktop (publish lives in the Row 1 action group there). */
-.scheduleMobilePublish {
-  display: none;
-}
-
-.scheduleExportButton,
-.scheduleToolsMenu {
-  flex-shrink: 0;
-}
 
 /* Playoff bracket actions (Build / Edit + Clear) — sit with the view controls in
    the left group, immediately after the View toggle, so they read as part of the
@@ -1726,36 +1724,6 @@
    surfaces its danger semantics on hover. Keeps a 1px transparent border so its
    box height matches the bordered .btn-ghost Auto trigger exactly. Double class
    for specificity over the global .btn / .btn-ghost rules. */
-
-.scheduleFilterGroup {
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;
-}
-
-.scheduleSearch {
-  /* !important overrides the shared .search max-width/flex-basis from TournamentAdminUI.module.css
-     which lands on the same element and wins the cascade by bundle order */
-  flex: 1 1 14rem !important;
-  max-width: none !important;
-  min-width: 13rem;
-}
-
-.scheduleVenueDesktop {
-  flex: 1 1 13rem;
-  max-width: 22rem;
-  min-width: 0;
-}
-
-.scheduleVenueDesktop .venueFilterRoot,
-.scheduleVenueMobile .venueFilterRoot {
-  width: 100%;
-  max-width: none;
-}
-
-.desktopModeControl {
-  display: inline-flex;
-}
 
 /* Wrapper for the two mobile mode selects (Round Robin|Flat / List|Bracket).
    Hidden on desktop; becomes a full-width flex row on mobile so the selects
@@ -1773,61 +1741,16 @@
    tournament status indicators (● Live / ● Open): lime is carried only by the
    dot, text stays neutral. Lime fill/border is reserved for the Publish ACTION
    (.publishButton, unpublished state). */
-.publishStatusText {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.publishStatusDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--logic-lime);
-  flex-shrink: 0;
-}
 
 /* The generic-mode flag ("· names hidden") — quieter than the primary word so
    "Published" stays the headline and the sub-state recedes. */
 
-.publishButton:disabled {
-  border-color: rgba(148, 163, 184, 0.18) !important;
-  background: rgba(148, 163, 184, 0.08) !important;
-  color: rgba(148, 163, 184, 0.45) !important;
-  cursor: not-allowed;
-}
-
 /* Override disabled graying when the schedule IS published — keep lime so the
    admin can see the schedule is live at a glance, even on mobile where the
    "Live · Teams" text badge is hidden. Higher specificity wins over :disabled. */
-.publishButton[data-live]:disabled {
-  border-color: rgba(var(--logic-lime-rgb), 0.35) !important;
-  background: rgba(var(--logic-lime-rgb), 0.07) !important;
-  color: rgba(var(--logic-lime-rgb), 0.65) !important;
-  cursor: default;
-}
 
 .desktopTitle {
   display: inline;
-}
-
-.mobileTitle {
-  display: none;
-}
-
-.desktopSubtitle {
-  display: inline;
-}
-
-.mobileSubtitle {
-  display: none;
 }
 
 @media (max-width: 760px) {
@@ -1841,13 +1764,6 @@
   }
 
   /* Division group expands to fill row 1 beside action buttons */
-  .scheduleStartGroup {
-    flex: 1 1 auto !important;
-    width: auto !important;
-    order: unset;
-    gap: 0.4rem;
-    min-width: 0;
-  }
 
   /* mobileModePair removed from toolbar — lives in the sheet now */
 
@@ -1857,9 +1773,6 @@
   /* Desktop action cluster (bracket actions · Publish · Auto) is hidden on
      mobile — Publish becomes a sibling beside the Tools menu, and bracket
      build/edit lives in the Tools menu's Playoffs section. */
-  .scheduleEndGroup {
-    display: none !important;
-  }
 
   /* Single Tools menu sits on Row 2, right of the search field.
      order:3 keeps it last even though .scheduleSearch is order:1 at ≤640px —
@@ -1867,122 +1780,25 @@
      right-anchored dropdown opened off the left edge of the screen. */
   /* Publish sits between search and Tools (order 2). margin-left:auto on it
      pushes both it and Tools to the right edge as a pair. */
-  .scheduleMobilePublish {
-    display: inline-flex;
-    flex: 0 0 auto;
-    order: 2;
-    margin-left: auto;
-  }
-
-  .scheduleMobileTools {
-    display: inline-flex;
-    flex: 0 0 auto;
-    order: 3;
-  }
 
   /* Match action button height to the select (38px).
      Declared outside the 760px block so it beats .mobileIconButton at 768px. */
 
-  .scheduleFilterGroup {
-    flex: 1 1 100%;
-    width: 100% !important;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    order: unset;
-  }
-
-  .scheduleStatusFilters {
-    margin-left: 0;
-  }
-
-  .scheduleSearch {
-    /* Share Row 2 with the Tools menu rather than taking the full width. */
-    flex: 1 1 auto;
-    width: auto;
-    max-width: none;
-    min-width: 0;
-  }
-
   /* Desktop venue hidden on mobile — venue lives in the sheet */
-  .scheduleVenueDesktop {
-    display: none;
-  }
 
   /* scheduleVenueMobile no longer in toolbar */
 
   /* Panel: break out of the narrow flex-item width so full venue names show.
      right:auto + min-width lets the panel grow past the button's own width;
      max-width clamps it to the viewport so it never clips off-screen. */
-  .scheduleVenueMobile .venueFilterPanel {
-    right: auto;
-    width: auto;
-    min-width: 240px;
-    max-width: calc(100vw - 1.5rem);
-  }
-
-  .desktopModeControl {
-    display: none !important;
-  }
-
-  .scheduleDivisionSelect {
-    order: 1;
-    display: inline-flex !important;
-    align-items: stretch !important;
-    flex: 1 1 100%;
-    width: 100% !important;
-    min-width: 0;
-    flex-direction: column !important;
-    gap: 0.28rem;
-  }
-
-  .scheduleDivisionSelect > span {
-    display: block;
-    color: var(--white-50); /* was rgba(148,163,184,0.58) — too faint to orient the user */
-    font-size: 0.58rem;
-    letter-spacing: 0.12em;
-  }
-
-  .scheduleDivisionSelect select {
-    min-width: 0;
-    width: 100%;
-    height: 34px; /* 28 → 34: comfortable thumb target for primary filter controls */
-    min-height: 34px;
-    padding-left: 0.45rem;
-    padding-right: 1.25rem;
-    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-    border-radius: 2px;
-    background: var(--bg-2);
-    color: var(--data-gray);
-    color-scheme: dark;
-    font-family: var(--font-data);
-    font-size: 0.64rem;
-    letter-spacing: 0.03em;
-  }
 
   /* .publishStatus (the old lime pill) is retired for the published state — the
      status now renders as plain dot+text in the header meta row (under the
      subtitle), which is naturally visible on mobile. Keep the hide for the
      locked "Not Published" pill, which still uses .publishStatus. */
 
-  .publishStatusText {
-    font-size: 0.58rem;
-    letter-spacing: 0.03em;
-  }
-
   .desktopTitle {
     display: none;
-  }
-
-  .mobileTitle {
-    display: inline;
-  }
-
-  .desktopSubtitle {
-    display: none;
-  }
-
-  .mobileSubtitle {
-    display: inline;
   }
 }
 
@@ -1991,28 +1807,11 @@
    division select + stage toggle — so match 34px across the board. Targets both
    the publish/unpublish button and the wrench Tools trigger (and the unpublish
    split-button + its chevron). At 768px to beat .mobileIconButton's 32px. */
-@media (max-width: 768px) {
-  /* Trigger buttons only — NOT the dropdown menu items ([role=menuitem]), which
-     are multi-line and must size to their content (a fixed height crushes the
-     title+subtitle onto one another). */
-  .scheduleMobilePublish :global(button:not([role="menuitem"])),
-  .scheduleMobileTools :global(button:not([role="menuitem"])) {
-    height: 34px !important;
-    min-height: 34px !important;
-    min-width: 34px;
-  }
-}
 
 /* Desktop: normalize the Row-1 action cluster to one height — the admin's one control height
    (`--admin-control-h` — one button size across the admin, owner 2026-10-01; 34px on a computer since
    2026-10-03, the portal's button; it was a 28px pin for the old compact buttons). Exclude [role=menuitem] (the dropdown rows are multi-line
    and must keep their content height; a fixed clamp made their text overlap). */
-@media (min-width: 769px) {
-  .scheduleEndGroup :global(button:not([role="menuitem"])) {
-    height: var(--admin-control-h);
-    min-height: var(--admin-control-h);
-  }
-}
 
 /* ─── Mobile settings bottom sheet (Schedule) ───────────────────────────── */
 .sheetBackdrop {
@@ -2099,81 +1898,7 @@
   color: var(--logic-lime);
 }
 
-.venueSheetBtn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  width: 100%;
-  min-height: 40px;
-  padding: 0 0.65rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  border-radius: 2px;
-  background: var(--bg-2);
-  color: var(--data-gray);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-align: left;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.venueSheetBtn:hover { border-color: rgba(var(--logic-lime-rgb), 0.4); color: var(--fl-text); }
-.venueSheetBtnActive { border-color: rgba(var(--logic-lime-rgb), 0.4); background: rgba(var(--logic-lime-rgb), 0.06); color: var(--logic-lime); }
-
 /* Venue nested modal */
-.venueModalBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 505; }
-
-.venueModal {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  z-index: 510;
-  background: var(--hud-surface);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  max-height: 70vh;
-  display: flex;
-  flex-direction: column;
-  animation: schedSheetSlideUp 0.2s cubic-bezier(0.32, 0.72, 0, 1);
-  max-width: 760px;
-  margin: 0 auto;
-}
-
-.venueModalHandle { width: 36px; height: 4px; background: rgba(var(--blueprint-blue-rgb), 0.35); border-radius: 2px; margin: 0.75rem auto 0; flex-shrink: 0; }
-
-.venueModalHeader {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.65rem 1.25rem 0.5rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  flex-shrink: 0;
-}
-
-.venueModalBack { border: none; background: transparent; color: var(--data-gray); font-family: var(--font-data); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; padding: 0; transition: color 0.12s; }
-.venueModalBack:hover { color: var(--logic-lime); }
-
-.venueModalTitle { flex: 1; font-family: var(--font-data); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--logic-lime-rgb), 0.65); text-align: center; }
-
-.venueModalClear { border: none; background: transparent; color: var(--data-gray); font-family: var(--font-data); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; padding: 0; transition: color 0.12s; }
-.venueModalClear:hover { color: var(--danger); }
-
-.venueModalList { flex: 1; overflow-y: auto; padding: 0.5rem 1.25rem; display: flex; flex-direction: column; gap: 0.25rem; }
-
-.venueModalOption {
-  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-  width: 100%; min-height: 44px; padding: 0.5rem 0.65rem;
-  border: 1px solid transparent; border-radius: 2px;
-  background: transparent; color: var(--white-60);
-  cursor: pointer; font-family: var(--font-data); font-size: 0.78rem; text-align: left;
-  transition: border-color 0.12s, background 0.12s, color 0.12s;
-}
-
-.venueModalOption:hover { border-color: rgba(var(--blueprint-blue-rgb), 0.3); background: rgba(var(--blueprint-blue-rgb), 0.06); color: var(--fl-text); }
-.venueModalOptionActive { border-color: rgba(var(--logic-lime-rgb), 0.4); background: rgba(var(--logic-lime-rgb), 0.07); color: var(--logic-lime); }
-
-.venueModalSublabel { color: var(--data-gray); font-size: 0.68rem; }
-.venueModalCount { color: var(--data-gray); font-family: var(--font-data); font-size: 0.65rem; flex-shrink: 0; }
-.venueModalFooter { padding: 0.75rem 1.25rem 1.25rem; flex-shrink: 0; border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18); }
 
 .sheetDone {
   margin-top: 1rem; width: 100%; height: 42px;
@@ -2189,110 +1914,12 @@
 .sheetDone:hover { background: rgba(var(--logic-lime-rgb), 0.14); }
 
 /* ─── Status chips: hidden on mobile — appear in the settings sheet instead ── */
-@media (max-width: 760px) {
-  .scheduleStatusFilters {
-    display: none !important;
-  }
-}
 
 /* ─── Active settings summary strip (mobile only) ─────────────────────────── */
-.activeSettingsSummary { display: none; }
-
-@media (max-width: 760px) {
-  .activeSettingsSummary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.4rem 0;
-    margin-bottom: 0.5rem;
-    border: none;
-    border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-    background: transparent;
-    cursor: pointer;
-    text-align: left;
-  }
-
-  .activeSettingsSummaryText {
-    font-family: var(--font-data);
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--logic-lime);
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .activeSettingsSummaryIcon {
-    color: var(--data-gray);
-    flex-shrink: 0;
-    transition: color 0.12s;
-  }
-
-  .activeSettingsSummary:hover .activeSettingsSummaryIcon { color: var(--logic-lime); }
-}
 
 /* ─── Summary strip: right-side wrapper + status count tally ────────────── */
-.summaryRight {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.statusCountTally {
-  display: flex;
-  align-items: center;
-  gap: 0.32rem;
-}
-
-.tallyPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.18rem;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  transition: opacity 0.12s;
-}
-
-.tallyDot {
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.tallyScheduled { color: var(--info); }
-.tallyScheduled .tallyDot { background: var(--info); }
-.tallyCancelled { color: var(--danger); }
-.tallyCancelled .tallyDot { background: var(--danger); }
-.tallyCompleted { color: var(--success); }
-.tallyCompleted .tallyDot { background: var(--success); }
-
-.tallyInactive { opacity: 0.28; }
 
 /* ─── Add Game button — icon-only collapse on mobile ─────────────────────── */
-.addGameLabel { display: inline; }
-
-@media (max-width: 760px) {
-  .addGameButton {
-    width: 32px;
-    min-width: 32px;
-    height: 32px; /* 28 → 32: slightly better touch target for header CTA */
-    min-height: 32px;
-    padding: 0 !important;
-    justify-content: center;
-    gap: 0;
-  }
-  .addGameLabel { display: none; }
-}
 
 /* Schedule rows become a compact two-line mobile grid so team names have room. */
 @media (max-width: 768px) {
@@ -2556,212 +2183,14 @@
 /* ─── Schedule Status Filter Chips ──────────────────────────────────────── */
 /* Combined with s.statusFilters (admin-common) which provides base flex.   */
 /* This class adds mobile grid collapse + chip centering only.               */
-.scheduleStatusFilters {
-  flex-shrink: 0;
-  margin-left: auto;
-}
 
 /* Desktop chip height matches the venue filter button — the admin's one control height (2026-10-01). */
-.scheduleStatusFilters > button {
-  min-height: var(--admin-control-h);
-}
-
-.scheduleStatusActive.scheduleStatusScheduled {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.65);
-  background: rgba(var(--blueprint-blue-rgb), 0.14);
-  color: var(--blueprint-blue);
-}
-
-.scheduleStatusActive.scheduleStatusScheduled::before {
-  background: var(--blueprint-blue);
-}
-
-.venueFilterRoot {
-  position: relative;
-  flex: 1 1 13rem;
-  max-width: 22rem;
-  min-width: 0;
-}
-
-.venueFilterButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.4rem;
-  width: 100%;
-  height: var(--admin-control-h);
-  padding: 0 0.65rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 2px;
-  background: var(--bg-2);
-  color: rgba(148, 163, 184, 0.6);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.venueFilterButton span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.venueFilterButton:hover:not(:disabled),
-.venueFilterButtonActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.42);
-  background: rgba(var(--logic-lime-rgb), 0.07);
-  color: var(--logic-lime);
-}
-
-.venueFilterButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.venueFilterPanel {
-  position: absolute;
-  top: calc(100% + 0.35rem);
-  left: 0;
-  right: 0;
-  z-index: 210;
-  width: 100%;
-  max-width: 100%;
-  max-height: 18rem;
-  overflow-y: auto;
-  padding: 0.4rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 2px;
-  background: var(--hud-surface);
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.55);
-}
-
-.venueFilterHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.35rem 0.4rem 0.45rem;
-  color: var(--white-50);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.venueFilterHeader button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  border: 0;
-  background: transparent;
-  color: var(--white-50);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.venueFilterHeader button:hover {
-  color: var(--logic-lime);
-}
-
-.venueFilterList {
-  display: grid;
-  gap: 0.2rem;
-}
-
-.venueFilterOption {
-  display: grid;
-  grid-template-columns: 1rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.45rem;
-  width: 100%;
-  min-height: 2rem;
-  padding: 0.35rem 0.45rem;
-  border: 1px solid transparent;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--white-70);
-  cursor: pointer;
-  text-align: left;
-}
-
-.venueFilterOption:hover,
-.venueFilterOptionActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.26);
-  background: rgba(var(--logic-lime-rgb), 0.07);
-  color: var(--white);
-}
-
-.venueFilterCheck {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--logic-lime);
-}
 
 /* Flex-column wrapper — holds primary name + optional facility sublabel */
-.venueFilterName {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-  overflow: hidden;
-}
 
 /* Primary venue name */
-.venueFilterNamePrimary {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
 
 /* Secondary facility name — smaller, more subdued */
-.venueFilterSublabel {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--white-40);
-  line-height: 1.2;
-}
-
-.venueFilterCount {
-  color: var(--white-40);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-}
-
-@media (max-width: 640px) {
-  .scheduleSearch {
-    order: 1;
-  }
-
-  .scheduleStatusFilters {
-    display: none !important;
-  }
-
-  .venueFilterButton {
-    justify-content: flex-start;
-    height: 34px;
-    padding-inline: 0.7rem;
-  }
-
-  .venueFilterPanel {
-    width: 100%;
-    max-width: 100%;
-  }
-}
 
 /* Deliberate duplicate of the keyframes in ../../admin-common.module.css.
    CSS Modules scope @keyframes per file and rewrite animation-name to the
@@ -2772,7 +2201,6 @@
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 
 /* ─── Game Row Cell ───────────────────────────────────────────────────────── */
 .cell {
@@ -2942,19 +2370,6 @@
 }
 
 @media (max-width: 768px) {
-  .mobileIconButton {
-    width: 32px;
-    min-width: 32px;
-    height: 32px; /* 28 → 32: icon-only secondary actions */
-    min-height: 32px;
-    padding: 0 !important;
-    justify-content: center;
-    gap: 0;
-  }
-
-  .mobileButtonLabel {
-    display: none;
-  }
 
   .inlineFormBody {
     grid-template-columns: 1fr 1fr;
@@ -3371,23 +2786,8 @@
 /* ── Mobile-visible stage toggle (Round Robin / Playoffs) ────
    Pulled out of the settings sheet onto the Division row so the most important
    context switch is one tap. Desktop keeps the segmented control. */
-.mobileStageToggle {
-  display: none;
-}
 
 @media (max-width: 900px) {
-  .mobileStageToggle {
-    /* Full-width segmented control on its own row — stretches edge to edge so
-       there's no trailing dead space (the toggle previously hugged its content
-       and left the rest of the row blank). Each option splits the width evenly. */
-    display: flex;
-    flex: 1 1 100%;
-    width: 100%;
-    overflow: hidden;
-    border: 1px solid var(--border-2);
-    border-radius: 4px;
-    background: var(--white-03);
-  }
 
   .mobileStageBtn {
     flex: 1 1 0;
@@ -3413,54 +2813,12 @@
     border-left: 1px solid var(--border-2);
   }
 
-  .mobileStageActive {
-    background: rgba(var(--logic-lime-rgb), 0.14);
-    color: var(--logic-lime);
-  }
-
   /* Division selector takes the full first row; the Stage segmented control
      wraps to its own full-width row beneath it (flex: 1 1 100%), so it stretches
      edge-to-edge with no trailing dead space. */
-  .scheduleStartGroup {
-    flex-wrap: wrap;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-
-  .scheduleStartGroup .scheduleDivisionSelect {
-    flex: 1 1 100%;
-    min-width: 0;
-  }
 }
 
 /* ── "All divisions" List view — per-division section headers ─────────────── */
-.allDivisionHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.2rem 0.55rem;
-  margin-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-}
-
-.allDivisionName {
-  font-family: var(--font-data);
-  font-size: 0.85rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--logic-lime);
-}
-
-.allDivisionCount {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--data-gray);
-  background: var(--white-5);
-  border-radius: 999px;
-  padding: 0.1rem 0.5rem;
-}
 
 /* Playoff row "edit in bracket builder" icon (List view). On very narrow phones
    the collapsed row is content-dense, so hide the icon-only button there and rely
@@ -3879,27 +3237,16 @@
    menu, and the shared error banner (the generator and the locations window read it too). ── */
 
 /* ── Header meta: "Published" status (4a's state-chip slot) — the kit's good state ── */
-:global([data-admin-kit]) .publishStatusText { color: var(--success-light); }
-:global([data-admin-kit]) .publishStatusDot { background: var(--success); }
 
 /* ── Publish action button — disabled (not-yet-loaded) and the LIVE/published disabled variant.
    ⚠ FINDING: `.publishButton[data-live]:disabled` is dead CSS — the button never renders a
    `data-live` attribute (only game rows do, in GameList.tsx). Restated only the reachable rule. */
-:global([data-admin-kit]) .publishButton:disabled {
-  border-color: var(--home-line-strong) !important;
-  background: var(--home-paper) !important;
-  color: var(--text-tertiary) !important;
-}
 
 /* ── Mobile-visible Stage toggle (Round Robin / Playoffs) — a hand-rolled segmented control;
    mirrors the shared ToolbarSegmentedControl's kit recipe (TournamentAdminUI.module.css) for
    house consistency. Legacy sets these colours inside the same breakpoint, so the kit restates
    inside it too. */
 @media (max-width: 900px) {
-  :global([data-admin-kit]) .mobileStageToggle {
-    border-color: var(--home-line-strong);
-    background: var(--home-card);
-  }
   :global([data-admin-kit]) .mobileStageBtn {
     font-family: var(--font-sans, system-ui, sans-serif);
     font-weight: 650;
@@ -3909,10 +3256,6 @@
   }
   :global([data-admin-kit]) .mobileStageBtn + .mobileStageBtn {
     border-left-color: var(--home-line-strong);
-  }
-  :global([data-admin-kit]) .mobileStageActive {
-    background: var(--home-olive-soft);
-    color: var(--home-olive);
   }
 }
 
@@ -3924,14 +3267,6 @@
    shadow-audit note on same-weight rules resolving by bundle order.
    DECIDED AT BUILD TIME: the "Scheduled" chip's distinct blue no longer survives on the kit — every
    status chip's active state is the one house olive, exactly like every other admin list's filters. */
-:global([data-admin-kit]) .scheduleStatusActive.scheduleStatusScheduled {
-  background: rgba(var(--home-olive-rgb), 0.16);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .scheduleStatusActive.scheduleStatusScheduled::before {
-  background: var(--text-tertiary);
-}
 
 /* ── Mobile settings bottom sheet ── */
 :global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }
@@ -3964,21 +3299,6 @@
 }
 /* The sheet's Venue row — opens the nested venue list; olive once a venue is chosen (the same
    choice recipe as a segment). Added in review: the page builder's layer had no rule for it. */
-:global([data-admin-kit]) .venueSheetBtn {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  border-color: var(--home-line-strong);
-  background: var(--home-card);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .venueSheetBtn:hover { border-color: var(--home-olive); color: var(--text-primary); }
-:global([data-admin-kit]) .venueSheetBtnActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
 /* "Done" dismisses the sheet — a quiet secondary action, not the view's one primary (the sheet has
    no competing primary, but a loud lime "Done" reads as a commit button, which this isn't).
    DECIDED AT BUILD TIME: moved off the lime CTA the legacy button wore. */
@@ -3990,71 +3310,11 @@
 :global([data-admin-kit]) .sheetDone:hover { background: var(--home-olive-soft); border-color: var(--home-olive); color: var(--home-olive); }
 
 /* ── Venue nested modal (same sheet recipe as above) ── */
-:global([data-admin-kit]) .venueModalBackdrop { background: var(--home-scrim); }
-:global([data-admin-kit]) .venueModal {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 18px 18px 0 0;
-}
-:global([data-admin-kit]) .venueModalHandle { background: var(--home-line-strong); }
-:global([data-admin-kit]) .venueModalHeader { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .venueModalBack {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .venueModalBack:hover { color: var(--home-olive); }
-:global([data-admin-kit]) .venueModalTitle {
-  font-family: var(--font-data);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .venueModalClear {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .venueModalClear:hover { color: var(--danger-light); }
-:global([data-admin-kit]) .venueModalOption {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .venueModalOption:hover {
-  border-color: var(--home-line);
-  background: var(--home-paper);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .venueModalOptionActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .venueModalSublabel { color: var(--text-tertiary); }
-:global([data-admin-kit]) .venueModalCount {
-  font-family: var(--font-data);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .venueModalFooter { border-top-color: var(--home-line); }
 
 /* ── Active-settings summary strip (mobile) ── */
-:global([data-admin-kit]) .activeSettingsSummary { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .activeSettingsSummaryText {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .activeSettingsSummaryIcon { color: var(--text-tertiary); }
-:global([data-admin-kit]) .activeSettingsSummary:hover .activeSettingsSummaryIcon { color: var(--home-olive); }
 
 /* Status tally dots keep their state colour, moved to the light tier for AA on the kit; the dot
    itself is a solid mark (base hue) — the LIGHT tier is for the text, per the ink rule. */
-:global([data-admin-kit]) .tallyScheduled { color: var(--info-light); }
-:global([data-admin-kit]) .tallyScheduled .tallyDot { background: var(--info); }
-:global([data-admin-kit]) .tallyCancelled { color: var(--danger-light); }
-:global([data-admin-kit]) .tallyCancelled .tallyDot { background: var(--danger); }
-:global([data-admin-kit]) .tallyCompleted { color: var(--success-light); }
-:global([data-admin-kit]) .tallyCompleted .tallyDot { background: var(--success); }
 
 /* ── Add Game button icon-collapse (mobile) — layout only, no colour in the legacy rule; nothing
    to restate here (its colour comes from the already-kit `.btn-lime`). ── */
@@ -4103,74 +3363,10 @@
 }
 
 /* ── "All divisions" List view — per-division section headers ── */
-:global([data-admin-kit]) .allDivisionHeader { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .allDivisionName {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 700;
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .allDivisionCount {
-  font-family: var(--font-data);
-  color: var(--text-tertiary);
-  background: var(--home-paper);
-}
 
 /* ── Venue filter menu (desktop) ── */
-:global([data-admin-kit]) .venueFilterButton {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  border-color: var(--home-line-strong);
-  background: var(--home-card);
-  color: var(--text-secondary);
-}
 /* The 4b sweep measured "All venues" under the contrast floor in Warm at the legacy rgba(148,163,184,.6)
    text — the kit's --text-secondary clears it. */
-:global([data-admin-kit]) .venueFilterButton:hover:not(:disabled),
-:global([data-admin-kit]) .venueFilterButtonActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .venueFilterPanel {
-  border-color: var(--home-line);
-  background: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: var(--home-shadow);
-}
-:global([data-admin-kit]) .venueFilterHeader {
-  font-family: var(--font-data);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .venueFilterHeader button {
-  font-family: var(--font-data);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .venueFilterHeader button:hover { color: var(--home-olive); }
-:global([data-admin-kit]) .venueFilterOption { color: var(--text-secondary); }
-:global([data-admin-kit]) .venueFilterOption:hover,
-:global([data-admin-kit]) .venueFilterOptionActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .venueFilterCheck { color: var(--home-olive); }
-:global([data-admin-kit]) .venueFilterNamePrimary {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-}
-:global([data-admin-kit]) .venueFilterSublabel {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 500;
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .venueFilterCount {
-  font-family: var(--font-data);
-  color: var(--text-tertiary);
-}
 
 /* ── The health panels (ScheduleHealthPanel + BracketHealthPanel — one layer serves both, and their
    reuse inside the generator, the playoff wizard and the bracket editor) and the Resolve Locations

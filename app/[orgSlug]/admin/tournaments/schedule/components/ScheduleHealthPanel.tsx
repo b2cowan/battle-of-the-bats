@@ -137,68 +137,109 @@ export default function ScheduleHealthPanel({
       </summary>
 
       <div className={styles.healthBody}>
-        {/* Sandbox-only invitation. The panel already exists and is untouched for customers; on the
-            demo it grows one line that tells a stranger what to do with it. The score genuinely
-            reacts to a dragged game — the health engine recomputes in the browser — so this is a
-            promise the product keeps. */}
-        {isSandbox && (
-          <p className={styles.healthSandboxPrompt}>
-            <span>Try it — drag a game onto a slot that&apos;s already busy, and watch this score react.</span>
-            {onSandboxReset && (
-              <button type="button" className={styles.healthSandboxReset} onClick={onSandboxReset}>
-                Put it back
-              </button>
-            )}
-          </p>
-        )}
-        {showRulesEditor && editing && rules && (
-          <div className={styles.healthRules}>
-            <div className={styles.healthRulesGrid}>
-              <label className={styles.healthRule}>
-                <span>Max games / day</span>
-                <input
-                  type="number" min={1} max={10} value={rules.maxGamesPerDay}
-                  onChange={event => onRuleChange?.({ maxGamesPerDay: clampInt(event.target.value, 1, 10, rules.maxGamesPerDay) })}
-                />
-              </label>
-              <label className={styles.healthRule}>
-                <span>Min rest between games (min)</span>
-                <input
-                  type="number" min={0} max={600} step={5} value={rules.minRestMinutes}
-                  onChange={event => onRuleChange?.({ minRestMinutes: clampInt(event.target.value, 0, 600, rules.minRestMinutes) })}
-                />
-              </label>
-              <label className={styles.healthRule}>
-                <span>Target games / team</span>
-                <input
-                  type="number" min={1} max={99} placeholder="No target"
-                  value={rules.targetGamesPerTeam ?? ''}
-                  onChange={event => onRuleChange?.({ targetGamesPerTeam: event.target.value === '' ? null : clampInt(event.target.value, 1, 99, rules.targetGamesPerTeam ?? 1) })}
-                />
-              </label>
-            </div>
-            <div className={styles.healthRulesFooter}>
-              <button type="button" className={styles.healthRulesReset} onClick={onRestoreDefaultRules}>Restore defaults</button>
-              <div className={styles.healthRulesActions}>
-                {rulesDirty && (
-                  <button type="button" className={styles.healthRulesDiscard} onClick={onResetRules}>Discard</button>
-                )}
-                <button
-                  type="button"
-                  className={styles.healthRulesSave}
-                  disabled={!rulesDirty || savingRules}
-                  onClick={onSaveRules}
-                >
-                  {savingRules ? 'Saving…' : 'Save rules'}
-                </button>
-              </div>
-            </div>
-            <p className={styles.healthRulesHint}>The score and warnings below update live as you adjust. Saved per tournament.</p>
-          </div>
-        )}
-        <ScheduleHealthContent metrics={metrics} showTeamTable={showTeamTable} />
+        <ScheduleHealthBody
+          metrics={metrics} showTeamTable={showTeamTable} isSandbox={isSandbox} onSandboxReset={onSandboxReset}
+          showRulesEditor={showRulesEditor} editing={editing} rules={rules} rulesDirty={rulesDirty} savingRules={savingRules}
+          onRuleChange={onRuleChange} onSaveRules={onSaveRules} onResetRules={onResetRules} onRestoreDefaultRules={onRestoreDefaultRules}
+        />
       </div>
     </details>
+  );
+}
+
+/**
+ * The panel's BODY — the demo's invitation, the rules editor, the figures and the issues — worn by the panel (the
+ * generator's drafts) and by the schedule's health row at its day's foot (Tournament admin redesign Stage 3, S1: one
+ * row that opens in place). The row carries no gear, so it passes `rulesToggle` and the body draws its own door.
+ */
+export function ScheduleHealthBody({
+  metrics, showTeamTable = false, isSandbox, onSandboxReset, showRulesEditor, editing, rules, rulesDirty = false,
+  savingRules = false, onRuleChange, onSaveRules, onResetRules, onRestoreDefaultRules, rulesToggle,
+}: {
+  metrics: ScheduleMetrics;
+  showTeamTable?: boolean;
+  isSandbox: boolean;
+  onSandboxReset?: () => void;
+  showRulesEditor: boolean;
+  editing: boolean;
+  rules?: ScheduleHealthRulesDraft;
+  rulesDirty?: boolean;
+  savingRules?: boolean;
+  onRuleChange?: (patch: Partial<ScheduleHealthRulesDraft>) => void;
+  onSaveRules?: () => void;
+  onResetRules?: () => void;
+  onRestoreDefaultRules?: () => void;
+  /** A host with no gear of its own (the health row): the body's own door to the rules, and its words. */
+  rulesToggle?: { label: string; onToggle: () => void };
+}) {
+  return (
+    <>
+      {showRulesEditor && rulesToggle && (
+        <button type="button" className={styles.healthRulesDoor} aria-pressed={editing} onClick={rulesToggle.onToggle}>
+          <SlidersHorizontal size={14} aria-hidden /> {rulesToggle.label}
+        </button>
+      )}
+      {/* Sandbox-only invitation. The panel already exists and is untouched for customers; on the
+          demo it grows one line that tells a stranger what to do with it. The score genuinely
+          reacts to a dragged game — the health engine recomputes in the browser — so this is a
+          promise the product keeps. */}
+      {isSandbox && (
+        <p className={styles.healthSandboxPrompt}>
+          <span>Try it — drag a game onto a slot that&apos;s already busy, and watch this score react.</span>
+          {onSandboxReset && (
+            <button type="button" className={styles.healthSandboxReset} onClick={onSandboxReset}>
+              Put it back
+            </button>
+          )}
+        </p>
+      )}
+      {showRulesEditor && editing && rules && (
+        <div className={styles.healthRules}>
+          <div className={styles.healthRulesGrid}>
+            <label className={styles.healthRule}>
+              <span>Max games / day</span>
+              <input
+                type="number" min={1} max={10} value={rules.maxGamesPerDay}
+                onChange={event => onRuleChange?.({ maxGamesPerDay: clampInt(event.target.value, 1, 10, rules.maxGamesPerDay) })}
+              />
+            </label>
+            <label className={styles.healthRule}>
+              <span>Min rest between games (min)</span>
+              <input
+                type="number" min={0} max={600} step={5} value={rules.minRestMinutes}
+                onChange={event => onRuleChange?.({ minRestMinutes: clampInt(event.target.value, 0, 600, rules.minRestMinutes) })}
+              />
+            </label>
+            <label className={styles.healthRule}>
+              <span>Target games / team</span>
+              <input
+                type="number" min={1} max={99} placeholder="No target"
+                value={rules.targetGamesPerTeam ?? ''}
+                onChange={event => onRuleChange?.({ targetGamesPerTeam: event.target.value === '' ? null : clampInt(event.target.value, 1, 99, rules.targetGamesPerTeam ?? 1) })}
+              />
+            </label>
+          </div>
+          <div className={styles.healthRulesFooter}>
+            <button type="button" className={styles.healthRulesReset} onClick={onRestoreDefaultRules}>Restore defaults</button>
+            <div className={styles.healthRulesActions}>
+              {rulesDirty && (
+                <button type="button" className={styles.healthRulesDiscard} onClick={onResetRules}>Discard</button>
+              )}
+              <button
+                type="button"
+                className={styles.healthRulesSave}
+                disabled={!rulesDirty || savingRules}
+                onClick={onSaveRules}
+              >
+                {savingRules ? 'Saving…' : 'Save rules'}
+              </button>
+            </div>
+          </div>
+          <p className={styles.healthRulesHint}>The score and warnings below update live as you adjust. Saved per tournament.</p>
+        </div>
+      )}
+      <ScheduleHealthContent metrics={metrics} showTeamTable={showTeamTable} />
+    </>
   );
 }
 

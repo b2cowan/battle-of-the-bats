@@ -73,25 +73,48 @@ type Ctx = {
   today: string;
 };
 
-function teamName(ctx: Ctx, id: string | undefined, placeholder?: string) {
+function teamName(ctx: Pick<Ctx, 'teams'>, id: string | undefined, placeholder?: string) {
   return (id && ctx.teams.find(t => t.id === id)?.name) || placeholder || 'TBD';
 }
-const isNoShow = (ctx: Ctx, id?: string) => !!id && ctx.teams.find(t => t.id === id)?.checkInStatus === 'no_show';
+const isNoShow = (ctx: Pick<Ctx, 'teams'>, id?: string) => !!id && ctx.teams.find(t => t.id === id)?.checkInStatus === 'no_show';
 
-/** "Maple Field 2 · U13 Boys · Semifinal" — where, which division, which round. */
-function whereLine(ctx: Ctx, g: Game) {
+/** "Maple Field 2 · U13 Boys · Semifinal" — where, which division, which round. The schedule's day reads it too. */
+export function gameWhereLine(ctx: Pick<Ctx, 'venues' | 'divisions'>, g: Game) {
   const field = resolveGameFieldLabel(g, ctx.venues) || g.location || '';
   const division = ctx.divisions.find(d => d.id === g.divisionId)?.name ?? '';
   const round = g.isPlayoff ? bracketRoundLabel(g.bracketCode) : '';
   return [field, division, round].filter(Boolean).join(' · ');
 }
+const whereLine = gameWhereLine;
 
 /** A team's name, with the No-show tag the check-in board set. */
-function TeamName({ ctx, id, placeholder }: { ctx: Ctx; id?: string; placeholder?: string }) {
+function TeamName({ ctx, id, placeholder }: { ctx: Pick<Ctx, 'teams'>; id?: string; placeholder?: string }) {
   return (
     <span className={styles.teamName}>
       {isNoShow(ctx, id) && <span className={styles.noShowTag}>No-show</span>}
       {teamName(ctx, id, placeholder)}
+    </span>
+  );
+}
+
+/**
+ * A game's two teams, each with its score at the right (the stacked game row, §245) — Results' row title, and the
+ * schedule's day's (Tournament admin redesign Stage 3, S1: "The row is Results' row"). One recipe, owned here.
+ * `scored`: the caller's word that the numbers are a result (played, waiting or forfeited) — a scheduled game's
+ * stored zeros are not a score.
+ */
+export function GameTeams({ teams, g, scored }: { teams: Team[]; g: Game; scored: boolean }) {
+  const has = scored && g.homeScore != null && g.awayScore != null;
+  const tie = has && g.status !== 'forfeit' && g.homeScore === g.awayScore;
+  const awayWon = has && !tie && (g.awayScore ?? 0) > (g.homeScore ?? 0);
+  const homeWon = has && !tie && (g.homeScore ?? 0) > (g.awayScore ?? 0);
+  const ctx = { teams };
+  return (
+    <span className={styles.teams}>
+      <TeamName ctx={ctx} id={g.awayTeamId} placeholder={g.awayPlaceholder} />
+      <span className={styles.teamScore} data-won={awayWon || undefined}>{has ? g.awayScore : ''}</span>
+      <TeamName ctx={ctx} id={g.homeTeamId} placeholder={g.homePlaceholder} />
+      <span className={styles.teamScore} data-won={homeWon || undefined}>{has ? g.homeScore : ''}</span>
     </span>
   );
 }
@@ -107,8 +130,6 @@ function ResultRow({ ctx, g, band, canFinalize, onOpen, onFinalize, finalizing }
 }) {
   const scored = (band === 'toFinalize' || band === 'final') && g.homeScore != null && g.awayScore != null;
   const tie = scored && g.status !== 'forfeit' && g.homeScore === g.awayScore;
-  const awayWon = scored && !tie && (g.awayScore ?? 0) > (g.homeScore ?? 0);
-  const homeWon = scored && !tie && (g.homeScore ?? 0) > (g.awayScore ?? 0);
   // Only a result the score can't say wears a word: a forfeit, a tie. The band says the rest.
   const chip = g.status === 'forfeit' || g.scoreSubmissionSource === 'forfeit' ? GAME_STATE_WORD.forfeit : tie ? GAME_STATE_WORD.tie : null;
   const when = gameWhen(g.date, g.time, ctx.today);
@@ -119,14 +140,7 @@ function ResultRow({ ctx, g, band, canFinalize, onOpen, onFinalize, finalizing }
       onClick={() => onOpen(g.id)}
       lead={when || undefined}
       captionFirst
-      title={
-        <span className={styles.teams}>
-          <TeamName ctx={ctx} id={g.awayTeamId} placeholder={g.awayPlaceholder} />
-          <span className={styles.teamScore} data-won={awayWon || undefined}>{scored ? g.awayScore : ''}</span>
-          <TeamName ctx={ctx} id={g.homeTeamId} placeholder={g.homePlaceholder} />
-          <span className={styles.teamScore} data-won={homeWon || undefined}>{scored ? g.homeScore : ''}</span>
-        </span>
-      }
+      title={<GameTeams teams={ctx.teams} g={g} scored={scored} />}
       caption={where || undefined}
       trail={chip ? <RepChip>{chip}</RepChip> : undefined}
       chevron

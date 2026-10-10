@@ -299,8 +299,11 @@
   .row:has(> .rowLead):has(.rowCaption) .rowLead::after { content: ' ·'; }
   .row:has(> .rowLead) .rowCaption { order: 5; flex: 1 1 0; min-width: 0; }
   /* `captionFirst`: the date and caption read above the title (Results' "when" line over two teams). */
-  li[data-caption-first] > .row:has(> .rowLead) .rowLead { order: 0; }
-  li[data-caption-first] > .row:has(> .rowLead) .rowCaption { order: 1; }
+  /* The time and the caption share their FIRST line's baseline, so a caption that wraps (a long field name, the
+     schedule day's state chip — Tournament admin redesign Stage 3) keeps "4:00 p.m. · Diamond 2" on one line rather
+     than centring the time beside two. One-line captions sit exactly where they did (same size, same height). */
+  li[data-caption-first] > .row:has(> .rowLead) .rowLead { order: 0; align-self: baseline; }
+  li[data-caption-first] > .row:has(> .rowLead) .rowCaption { order: 1; align-self: baseline; }
   li[data-caption-first] > .row:has(> .rowLead)::before { order: 2; }
   li[data-caption-first] > .row:has(> .rowLead) .rowTitle { order: 3; flex-basis: 100%; }
   li[data-caption-first] > .row:has(> .rowLead) .rowTrail { order: 4; }

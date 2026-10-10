@@ -1,0 +1,114 @@
+/*
+ * THE SCHEDULE'S DAY (Tournament admin redesign Stage 3, S1) — the parts the shared toolbar sheet
+ * (components/admin/tournament/AdminToolbar.module.css: the line, Search, Filter, Tools) does not hold.
+ * Written on the kit's tokens from the start: no `[data-admin-kit]` layer, no old look.
+ */
+
+/* The view — the olive pill that chooses what is read (owner, 7 October): 30px beside the desk's 34px controls. */
+.viewPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex: none;
+  min-height: 30px;
+  padding: 0 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--home-olive) 45%, transparent);
+  border-radius: 999px;
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.viewPill:hover,
+.viewPill[aria-expanded='true'] { border-color: var(--home-olive); }
+.viewPill:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+
+/* A flexible gap that stays on a phone (the shared spacer hides there, where Teams' division box fills the line). */
+.spacer { flex: 1 1 auto; }
+
+/* The day — or a bracket's division — with its arrows (the club calendar's week arrows, A41): beside the view
+   on a wide desk, on a row of its own below 900px, where the line has no room for it. */
+.scope { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.scopeInline { flex: none; }
+.scopeRow { display: none; }
+.arrow {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--admin-control-h);
+  height: var(--admin-control-h);
+  padding: 0;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.arrow:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.arrow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.arrow:disabled { opacity: 0.4; cursor: default; background: var(--card-bg); }
+.scopeLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 13.75rem;
+  min-height: var(--admin-control-h);
+  padding: 0.2rem 0.5rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+}
+.scopeLabel:hover,
+.scopeLabel[aria-expanded='true'] { background: var(--home-olive-soft); }
+.scopeLabel:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.scopeCaption { font-size: var(--type-support); font-weight: 500; color: var(--text-tertiary); }
+/* A desk names the day only; the count rides with it on its own row. */
+.scopeInline .scopeCaption { display: none; }
+
+/* The day's games and All games' bands sit in the kit's row frame; the health row closes the day. */
+.list { margin: 0 0 0.9rem; }
+.chipPhone { display: none; margin-left: 0.4rem; vertical-align: 1px; }
+.chipDesk { display: inline-flex; }
+.health { margin: 0.9rem 0 0; }
+
+/* A note on the day (publishing, Part 7; the coin toss, Part 7) and the bracket's heading with its white button. */
+.bracketHead { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.75rem; }
+.bracketTitle { display: flex; flex-direction: column; min-width: 0; }
+.bracketTitle b { font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.bracketEdit { flex: none; }
+.bracketTitle span { font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* A Tools row the plan doesn't include: the tool's name, then the plan's (A44 — never a bare padlock). */
+.lockedTool { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+/* Touch widths: every control in the phone's daily job clears 44px (A44). */
+@media (max-width: 768px) {
+  .viewPill { min-height: var(--tap-min, 44px); padding: 0 0.85rem; font-size: var(--type-body); }
+  .arrow { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .scopeLabel { min-height: var(--tap-min, 44px); }
+  .bracketEdit { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 900px) {
+  .scopeInline { display: none; }
+  .scopeRow { display: flex; margin: 0 0 0.75rem; }
+  /* The label's menu root fills the row between the two arrows, and its button fills the root. */
+  .scopeRow > div { flex: 1 1 auto; min-width: 0; }
+  .scopeRow .scopeLabel { width: 100%; min-width: 0; }
+}
+@media (max-width: 640px) {
+  .bracketHead { flex-wrap: wrap; }
+  .chipPhone { display: inline-flex; }
+  .chipDesk { display: none; }
+}

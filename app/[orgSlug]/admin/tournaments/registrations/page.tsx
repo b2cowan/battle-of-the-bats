@@ -48,6 +48,7 @@ import { Division } from '@/lib/types';
 import { buildFilename, downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
+import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import ExportMenu from '@/components/admin/ExportMenu';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { Callout, RepChip, RowAction, repKit } from '@/components/admin/kit/club/RepKit';
@@ -1710,11 +1711,11 @@ export default function UnifiedTeamsPage() {
           {selectedRegistrationIds.size > 0 && <div className={styles.bulkInline}>{bulkBar}</div>}
         </div>
       ) : (
-        <div className={styles.toolbar}>
+        <div className={tb.toolbar}>
           <DivisionPicker divisions={divisionChoices} value={selectedDivisionId} onChange={chooseDivision} />
           {showViewTools && (
-            <div className={styles.deskFilters}>
-              <label className={styles.searchField}>
+            <div className={tb.deskFilters}>
+              <label className={tb.searchField}>
                 <Search size={14} aria-hidden />
                 <span className="sr-only">{TEAMS_WORDS.search}</span>
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`${TEAMS_WORDS.search}…`} />
@@ -1741,14 +1742,14 @@ export default function UnifiedTeamsPage() {
               />
             </div>
           )}
-          <span className={styles.toolbarSpacer} aria-hidden />
+          <span className={tb.toolbarSpacer} aria-hidden />
           {showViewTools && (
             <>
-              <button type="button" className={`${styles.tool} ${styles.phoneTool}`} onClick={() => setSearchOpen(o => !o)}
+              <button type="button" className={`${tb.tool} ${tb.phoneTool}`} onClick={() => setSearchOpen(o => !o)}
                 aria-expanded={searchOpen || search !== ''} aria-label={TEAMS_WORDS.search} data-on={search !== '' || undefined}>
                 <Search size={18} aria-hidden />
               </button>
-              <button type="button" className={`${styles.tool} ${styles.phoneTool}`} onClick={() => setMobileSettingsOpen(true)}
+              <button type="button" className={`${tb.tool} ${tb.phoneTool}`} onClick={() => setMobileSettingsOpen(true)}
                 aria-label={TEAMS_WORDS.filter} data-on={hasNonDefaultFilters || undefined}>
                 <SlidersHorizontal size={18} aria-hidden />
               </button>
@@ -1763,13 +1764,13 @@ export default function UnifiedTeamsPage() {
               label={TEAMS_WORDS.tools}
               icon={working === 'randomizing'
                 ? <RefreshCw size={18} className="spin" aria-hidden />
-                : <MoreHorizontal size={18} className={styles.toolsGlyph} aria-hidden />}
+                : <MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
               disabled={working === 'randomizing'}
               collapseOnPhone
               bareOnPhone
               drawerOnPhone
               drawerTitle={TEAMS_WORDS.tools}
-              triggerClassName={styles.tool}
+              triggerClassName={tb.tool}
             >
               {canSelectMany && (
                 <>
@@ -1802,12 +1803,12 @@ export default function UnifiedTeamsPage() {
         </div>
       )}
       {listMode === 'normal' && showViewTools && (searchOpen || search !== '') && (
-        <label className={`${styles.searchField} ${styles.phoneSearch}`}>
+        <label className={`${tb.searchField} ${tb.phoneSearch}`}>
           <Search size={14} aria-hidden />
           <span className="sr-only">{TEAMS_WORDS.search}</span>
           <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder={`${TEAMS_WORDS.search}…`} />
           {search !== '' && (
-            <button type="button" className={styles.searchClear} onClick={() => { setSearch(''); setSearchOpen(false); }} aria-label="Clear the search">
+            <button type="button" className={tb.searchClear} onClick={() => { setSearch(''); setSearchOpen(false); }} aria-label="Clear the search">
               <X size={14} aria-hidden />
             </button>
           )}
@@ -2238,25 +2239,25 @@ function TeamsFilterMenu({
     <button
       key={key}
       type="button"
-      className={styles.regFilterOption}
+      className={tb.regFilterOption}
       data-on={checked || undefined}
       onClick={onPick}
       role={radio ? 'menuitemradio' : 'menuitemcheckbox'}
       aria-checked={checked}
       tabIndex={-1}
     >
-      <span className={styles.regFilterCheck}>{checked ? <Check size={12} aria-hidden /> : null}</span>
-      <span className={styles.regFilterName}>{label}</span>
-      {count !== undefined && <span className={styles.regFilterCount}>{count}</span>}
+      <span className={tb.regFilterCheck}>{checked ? <Check size={12} aria-hidden /> : null}</span>
+      <span className={tb.regFilterName}>{label}</span>
+      {count !== undefined && <span className={tb.regFilterCount}>{count}</span>}
     </button>
   );
 
   return (
-    <div className={styles.regFilterRoot} ref={rootRef}>
+    <div className={tb.regFilterRoot} ref={rootRef}>
       <button
         ref={triggerRef}
         type="button"
-        className={styles.regFilterButton}
+        className={tb.regFilterButton}
         data-active={on > 0 || undefined}
         onClick={() => setOpen(v => !v)}
         aria-haspopup="menu"
@@ -2265,33 +2266,33 @@ function TeamsFilterMenu({
       >
         <SlidersHorizontal size={14} aria-hidden />
         <span>{TEAMS_WORDS.filter}</span>
-        {on > 0 && <span className={styles.filterOn} aria-hidden>{on}</span>}
+        {on > 0 && <span className={tb.filterOn} aria-hidden>{on}</span>}
         <ChevronDown size={14} aria-hidden />
       </button>
       {open && (
-        <div ref={panelRef} className={`${styles.regFilterPanel} ${styles.filterPanel}`} role="menu" aria-label={TEAMS_WORDS.filter} onKeyDown={onPanelKey}>
-          <div className={styles.regFilterHeader}><span>{TEAMS_WORDS.filterStatus}</span></div>
-          <div className={styles.regFilterList}>
+        <div ref={panelRef} className={`${tb.regFilterPanel} ${tb.filterPanel}`} role="menu" aria-label={TEAMS_WORDS.filter} onKeyDown={onPanelKey}>
+          <div className={tb.regFilterHeader}><span>{TEAMS_WORDS.filterStatus}</span></div>
+          <div className={tb.regFilterList}>
             {statuses.map(o => row(o.key, o.label, selectedStatuses.includes(o.key), () => onToggleStatus(o.key), o.count))}
           </div>
           {payments && (
             <>
-              <div className={styles.regFilterHeader}><span>{TEAMS_WORDS.filterPayment}</span></div>
-              <div className={styles.regFilterList}>
+              <div className={tb.regFilterHeader}><span>{TEAMS_WORDS.filterPayment}</span></div>
+              <div className={tb.regFilterList}>
                 {payments.map(o => row(o.key, o.label, selectedPayments.includes(o.key), () => onTogglePayment(o.key), o.count))}
               </div>
             </>
           )}
           {grouping && (
             <>
-              <div className={styles.regFilterHeader}><span>{TEAMS_WORDS.groupBy}</span></div>
-              <div className={styles.regFilterList}>
+              <div className={tb.regFilterHeader}><span>{TEAMS_WORDS.groupBy}</span></div>
+              <div className={tb.regFilterList}>
                 {(['pools', 'flat'] as const).map(v => row(v, v === 'pools' ? TEAMS_WORDS.toolsPools : TEAMS_WORDS.filterStatus, grouping === v, () => onGrouping(v), undefined, true))}
               </div>
             </>
           )}
           {on > 0 && (
-            <button type="button" role="menuitem" tabIndex={-1} className={styles.filterReset} onClick={() => { onReset(); setOpen(false); triggerRef.current?.focus(); }}>
+            <button type="button" role="menuitem" tabIndex={-1} className={tb.filterReset} onClick={() => { onReset(); setOpen(false); triggerRef.current?.focus(); }}>
               <X size={12} aria-hidden /> {TEAMS_WORDS.resetFilters}
             </button>
           )}

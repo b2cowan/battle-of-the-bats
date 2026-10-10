@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Calendar, ChevronRight, Plus, Pencil, X, SlidersHorizontal, Trophy, MapPin, Globe, RefreshCw, Wrench } from 'lucide-react';
+import { Calendar, Plus, Pencil, X, Trophy, MapPin, Globe, RefreshCw, Wrench } from 'lucide-react';
 import { findBracketSchedulingViolations, nextManualBracketCode } from '@/lib/playoff-bracket';
 import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { useTournament } from '@/lib/tournament-context';
@@ -11,23 +11,19 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, hasOrgVenueLibrary, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { SCHEDULE_REFUSAL, SCHEDULE_REFUSAL_TITLE, readRefusal } from '@/lib/schedule-words';
 import { isSandboxRefusal } from '@/lib/coach-sandbox-refusal';
-import {
-  SCHEDULE_STATUS_ORDER, SCHEDULE_STATUS_LABELS, type ScheduleStatusFilter as ScheduleStatus,
-} from '@/lib/tournament-schedule-status';
 import ExportMenu from '@/components/admin/ExportMenu';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import BracketEditor from './components/BracketEditor';
-import GameList from './components/GameList';
 import ShiftDayModal from './components/ShiftDayModal';
-import ScheduleHealthPanel, { type ScheduleHealthRulesDraft } from './components/ScheduleHealthPanel';
+import { type ScheduleHealthRulesDraft } from './components/ScheduleHealthPanel';
 import PlayoffBracketView from './components/PlayoffBracketView';
 import ScheduleTimeline from './components/ScheduleTimeline';
 import { Game, Venue, PoolSlot, PlayoffConfig } from '@/lib/types';
 import { fieldNounFor } from '@/lib/sports';
 import { checkVenueConflict, toConflictGame, type ConflictResult } from '@/lib/schedule-conflict';
 import { hasKnownPlacement } from '@/lib/venue-identity';
-import { formatVenueLocation } from '@/lib/venue-label';
+import { formatVenueLocation, resolveGameFieldLabel } from '@/lib/venue-label';
 import { fieldPickerValueForGame } from './components/TournamentFieldPicker';
 import ZeroVenuePrompt from './components/ZeroVenuePrompt';
 import ResolveLocationsModal from './components/ResolveLocationsModal';
@@ -39,36 +35,42 @@ import FeedbackModal from '@/components/FeedbackModal';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import HelpCallout from '@/components/help/HelpCallout';
 import AddVenueModal from '@/components/admin/AddVenueModal';
-import {
-  TournamentAdminHeader,
-  TournamentAdminToolbar,
-  ToolbarGroup,
-  ToolbarSearch,
-  ToolbarSegmentedControl,
-  ToolbarSelect,
-} from '@/components/admin/tournament/TournamentAdminUI';
+import { TournamentAdminHeader } from '@/components/admin/tournament/TournamentAdminUI';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
 // The page's own parts (Stage 3 Part 0 split them out; none brings a stylesheet the lines above don't).
 import GameFormModal, { emptyForm, type ModalMode } from './components/GameFormModal';
 import PublishScheduleModal from './components/PublishScheduleModal';
 import ResolveFacilitiesModal from './components/ResolveFacilitiesModal';
-import { MobileToolsMenu, ScheduleToolsMenu, UnpublishControl } from './components/ScheduleMenus';
-import VenueFilterMenu from './components/VenueFilterMenu';
 import { useScheduleData } from './useScheduleData';
 import { useScheduleExport } from './useScheduleExport';
+// The day (Stage 3 Part 2): its model, its words, and the shared parts it wears.
+import type { ReactNode } from 'react';
+import { CalendarDays, Clock, CloudRain, EyeOff, List, Lock, MoreHorizontal, Network, Sparkles, Trash2 } from 'lucide-react';
+import {
+  eventDays, fieldKeyOf, filtersOn, matchesScheduleFilter, matchesScheduleSearch, NO_SCHEDULE_FILTER, openingDay,
+  scheduleStateOf, SCHEDULE_STATES, stepDay, type ScheduleFilter, type ScheduleState, type ScheduleView,
+} from '@/lib/schedule-day';
+import { SCHEDULE_DAY_WORDS as W, SCHEDULE_TOOL_NAMES as T } from '@/lib/schedule-words';
+import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
+import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { ClubRow, ClubRowList, RepChip } from '@/components/admin/kit/club/RepKit';
+import HealthRow from '@/components/admin/tournament/HealthRow';
+import FilterMenu, { type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
+import { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import { screenParts } from '@/components/admin/tournament/ScreenParts';
+import tb from '@/components/admin/tournament/AdminToolbar.module.css';
+import ScheduleToolbar, { ScopeNav, ViewPill, type ViewChoice } from './components/ScheduleToolbar';
+import ScheduleDayList from './components/ScheduleDayList';
+import { ScheduleHealthBody } from './components/ScheduleHealthPanel';
+import sd from './components/ScheduleDay.module.css';
 
-// The filter's words and the printed schedule's words are ONE list — see
-// lib/tournament-schedule-status.ts for why this is not a canonical map for every surface.
-type ScheduleStatusFilter = ScheduleStatus;
-
-const STATUS_FILTERS: Array<{ key: ScheduleStatusFilter; label: string }> =
-  SCHEDULE_STATUS_ORDER.map(key => ({ key, label: SCHEDULE_STATUS_LABELS[key] }));
-
-const STATUS_CHIP_CLASS: Record<string, string | undefined> = {
-  scheduled: 'chip_scheduled',
-  cancelled: 'chip_cancelled',
-  completed: 'chip_completed',
+// The two plain windows' titles (Add / Edit Game, Resolve Temporary Facilities) in the kit's display face — the kit
+// half of what was a `kx()` patch, folded (Stage 3 Part 2; the global `.modal-header h3` is written at zero weight).
+const modalTitleStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-display)', fontSize: 'var(--type-heading)', fontWeight: 700, textTransform: 'none',
+  letterSpacing: 'normal', color: 'var(--text-primary)', margin: 0,
 };
 
 // Engine defaults for the Schedule Health rules editor (matches lib/schedule-metrics.ts).
@@ -84,7 +86,7 @@ export default function AdminSchedulePage() {
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
   const {
-    games, setGames, gamesLoading, teams, divisions, setDivisions, venues, setVenues, facilityLanes, setFacilityLanes,
+    games, setGames, gamesLoading, teams, divisions, setDivisions, venues, setVenues, facilityLanes,
     refresh, reloadGames,
   } = useScheduleData({ tournamentId, tournamentLoading, orgSlug });
   const [modalSlots, setModalSlots] = useState<PoolSlot[]>([]);
@@ -92,12 +94,21 @@ export default function AdminSchedulePage() {
   const [modal, setModal]       = useState<ModalMode>(null);
   const [editing, setEditing]   = useState<Game | null>(null);
   const [form, setForm]         = useState(emptyForm);
-  const [selection, setSelection] = useState<Set<string> | null>(null); // null = all divisions/pools
-  const [viewMode, setViewMode] = useState<'pool' | 'playoff'>('pool');
-  const [layout, setLayout] = useState<'list' | 'bracket' | 'timeline'>('list');
-  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
-  const [conflictsOnly, setConflictsOnly] = useState(false);
-  const [venueModalOpen, setVenueModalOpen] = useState(false);
+  // The view and the day (S1, A33): the schedule opens on the day — today during the event, its first day before it,
+  // its last after it — every division, both stages, every state. `chosenDay` stays null until the organizer steps,
+  // so the opening follows the games as they load. Nothing here is remembered between visits (1 October).
+  const [view, setView] = useState<ScheduleView>('day');
+  const [chosenDay, setChosenDay] = useState<string | null>(null);
+  const [filter, setFilter] = useState<ScheduleFilter>(NO_SCHEDULE_FILTER);
+  const [bracketDivisionId, setBracketDivisionId] = useState('');
+  const [unpublishOpen, setUnpublishOpen] = useState(false);
+  // "Playing now" turns to "Needs a score" by the clock: the day re-reads its states each minute.
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => { const t = window.setInterval(() => setNowMs(Date.now()), 60_000); return () => window.clearInterval(t); }, []);
+  // The health row arrives open in a demo (the tour lands on it — its "Break the schedule" step), closed for a club.
+  const isSandbox = useIsSandbox();
+  const [healthOpen, setHealthOpen] = useState(isSandbox);
+  const [rulesEditing, setRulesEditing] = useState(false);
   const [resolveFacilitiesOpen, setResolveFacilitiesOpen] = useState(false);
   const [resolveLocationsOpen, setResolveLocationsOpen] = useState(false);
   const [locationBannerDismissed, setLocationBannerDismissed] = useState(false);
@@ -113,8 +124,6 @@ export default function AdminSchedulePage() {
   // Optional config override passed to the builder — set by "Start from standings".
   const [playoffWizardConfig, setPlayoffWizardConfig] = useState<Partial<PlayoffConfig> | undefined>(undefined);
   const [search, setSearch] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState<ScheduleStatusFilter[]>(['scheduled']);
-  const [selectedVenueKeys, setSelectedVenueKeys] = useState<string[]>([]);
   // Modal field picker: true = the explicit "Somewhere else (type it)" choice is active.
   const [venueTextMode, setVenueTextMode] = useState(false);
   const [addVenueOpen, setAddVenueOpen] = useState(false);
@@ -220,8 +229,8 @@ export default function AdminSchedulePage() {
     if (!canBuildPlayoffsManually || isLocked) return;
     // From an "all divisions" List view, retarget the builder to the clicked
     // game's division (the editor freezes on playoffBuilderDivision at mount).
-    if (divisionId && filterGroup !== divisionId) setSelection(new Set([divisionId]));
-    if (viewMode !== 'playoff') setViewMode('playoff');
+    if (divisionId) setBracketDivisionId(divisionId);
+    setView('bracket');
     setBracketFocusGameId(focusGameId);
     setEditingBracket(true);
   }
@@ -271,56 +280,18 @@ export default function AdminSchedulePage() {
   // another's id — every action would fail, for no reason the admin could see.
   useEffect(() => { setResolveLocationsOpen(false); }, [tournamentId]);
 
-  // Restore filter state from localStorage when tournament changes. Skipped while
-  // editing a bracket so a tournament switch can't flip viewMode and unmount the editor.
+  // A switch of tournament starts on its own opening day, with nothing narrowed (A33: the schedule remembers nothing
+  // between visits — the old stored filter, `flhq-schedule-{id}`, is no longer read, so it cannot hide played games).
   useEffect(() => {
-    if (!tournamentId || editingBracket) return;
-    try {
-      const raw = localStorage.getItem(`flhq-schedule-${tournamentId}`);
-      if (!raw) return;
-      const cached = JSON.parse(raw) as Partial<{
-        viewMode: 'pool' | 'playoff';
-        layout: 'list' | 'bracket' | 'timeline';
-        selectedStatuses: ScheduleStatusFilter[];
-        selectedVenueKeys: string[];
-      }>;
-      if (cached.viewMode === 'pool' || cached.viewMode === 'playoff') setViewMode(cached.viewMode);
-      if (cached.layout === 'list' || cached.layout === 'bracket' || cached.layout === 'timeline') setLayout(cached.layout);
-      if (Array.isArray(cached.selectedStatuses) && cached.selectedStatuses.length > 0) setSelectedStatuses(cached.selectedStatuses);
-      if (Array.isArray(cached.selectedVenueKeys)) setSelectedVenueKeys(cached.selectedVenueKeys);
-    } catch {}
-  }, [tournamentId, editingBracket]);
+    setChosenDay(null);
+    setFilter(NO_SCHEDULE_FILTER);
+    setBracketDivisionId('');
+  }, [tournamentId]);
 
-  // Persist filter state. Guard: only write once divisions are loaded.
-  useEffect(() => {
-    if (!tournamentId || divisions.length === 0) return;
-    try {
-      localStorage.setItem(`flhq-schedule-${tournamentId}`, JSON.stringify({
-        viewMode, layout, selectedStatuses, selectedVenueKeys,
-      }));
-    } catch {}
-  }, [tournamentId, viewMode, layout, selectedStatuses, selectedVenueKeys, divisions.length]);
-
-  // The schedule scopes to a single division at a time (matches Teams/Results).
-  // Default to the first division and keep the selection valid as divisions load.
-  useEffect(() => {
-    if (divisions.length === 0) return;
-    setSelection(prev => {
-      if (prev && prev.size === 1 && divisions.some(d => d.id === [...prev][0])) return prev;
-      return new Set([divisions[0].id]);
-    });
-  }, [divisions]);
-  // Bracket only exists under Playoffs — fall back to List if the stage flips to round robin.
-  useEffect(() => { if (viewMode === 'pool' && layout === 'bracket') setLayout('list'); }, [viewMode, layout]);
-
-  // The format pins the stage: a bracket-only event has no round-robin stage (stay on Playoffs);
-  // an Exhibition has no playoff stage (stay on Round Robin). The Stage toggle renders only when
-  // both stages exist — a switch to an empty stage is a promise the event cannot keep.
+  // The format decides the stages: a bracket-only event has no round robin; an Exhibition has no playoffs, and so no
+  // Stage filter, no Bracket view and no playoff generator — each absent, never locked.
   const hasRoundRobinStage = resolveHasRoundRobin(currentTournament);
   const hasPlayoffStage = resolveHasPlayoffs(currentTournament);
-  const showStageToggle = hasRoundRobinStage && hasPlayoffStage;
-  useEffect(() => { if (!hasRoundRobinStage && viewMode === 'pool') setViewMode('playoff'); }, [hasRoundRobinStage, viewMode]);
-  useEffect(() => { if (!hasPlayoffStage && viewMode === 'playoff') setViewMode('pool'); }, [hasPlayoffStage, viewMode]);
 
   const groupTeams   = (id: string) => teams.filter(t => t.divisionId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
@@ -383,12 +354,13 @@ export default function AdminSchedulePage() {
   }
 
   function handleUnpublish(divisionId: string) {
+    const name = divisions.find(d => d.id === divisionId)?.name ?? '';
     setFeedback({
       isOpen: true,
-      title: 'Unpublish Division?',
-      message: 'The schedule for this division will be removed from the public page. Registration stays closed — unpublishing does not reopen it; reopen registration separately if you want new sign-ups.',
+      title: W.unpublishTitle(name),
+      message: W.unpublishBody(name),
       type: 'warning',
-      confirmText: 'Unpublish',
+      confirmText: W.unpublishConfirm(name),
       onConfirm: async () => {
         const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
         const res = await fetch(`/api/admin/divisions${orgQuery}`, {
@@ -408,11 +380,11 @@ export default function AdminSchedulePage() {
     if (published.length === 0) return;
     setFeedback({
       isOpen: true,
-      title: `Unpublish all ${published.length} divisions?`,
-      message: 'These divisions will be removed from the public schedule page (you can republish them at any time). Registration stays closed — unpublishing does not reopen it; reopen registration separately if you want new sign-ups.',
+      title: W.unpublishAllTitle(published.length),
+      message: W.unpublishAllBody,
       items: published.map(g => ({ label: g.name })),
       type: 'warning',
-      confirmText: `Unpublish All (${published.length})`,
+      confirmText: W.unpublishAllConfirm(published.length),
       onConfirm: async () => {
         const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
         const replies = await Promise.all(published.map(g =>
@@ -920,38 +892,34 @@ export default function AdminSchedulePage() {
     return lane ? { ...game, scheduleFacilityLaneLabel: lane.label } : game;
   }), [games, facilityLaneById]);
 
-  // ── Scope (divisions) derivations ─────────────────────────────────────────────
-  // `selection` (null = all) holds the selected division ids and drives visibility;
-  // `filterGroup` is derived for the per-division features ('all' unless exactly one).
-  const stageGames = useMemo(
-    () => scheduled.filter(g => (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)),
-    [scheduled, viewMode],
+  // ── The day, the Filter and Search (S1, A33) ────────────────────────────────────────────────────────────────
+  const today = scheduleToday;
+  const days = useMemo(() => eventDays(scheduled, currentTournament), [scheduled, currentTournament]);
+  const day = chosenDay && days.includes(chosenDay) ? chosenDay : openingDay(days, today);
+  const shownView: ScheduleView = view === 'bracket' && !hasPlayoffStage ? 'day' : view;
+  const stateById = useMemo(
+    () => new Map(scheduled.map(g => [g.id, scheduleStateOf(g, divisions, currentTournament, nowMs, today)] as const)),
+    [scheduled, divisions, currentTournament, nowMs, today],
   );
-  // Show every division in the picker (not just ones that already have games in
-  // this stage), so a new/empty division can be selected to start building games
-  // or to preview its bracket before any games are scheduled.
-  const scopeDivisions = useMemo(
-    () => divisions.map(d => ({ id: d.id, name: d.name })),
-    [divisions],
-  );
-  const isGameInScope = (g: Game) => selection === null || selection.has(g.divisionId || '');
-  const selectedDivisionIds = selection === null ? new Set(divisions.map(d => d.id)) : selection;
-  const filterGroup = selectedDivisionIds.size === 1 ? Array.from(selectedDivisionIds)[0] : 'all';
+  const stateOf = useCallback((g: Game): ScheduleState => stateById.get(g.id) ?? 'scheduled', [stateById]);
+  const searched = scheduled.filter(g => matchesScheduleSearch(
+    resolveTeam(g.homeTeamId, g.homePlaceholder), resolveTeam(g.awayTeamId, g.awayPlaceholder), search));
+  const filtered = searched.filter(g => matchesScheduleFilter(g, stateOf(g), filter));
+  const dayGames = filtered.filter(g => g.date === day);
+  const exportGames = shownView === 'day' || shownView === 'timeline' ? dayGames : filtered;
 
-  // Bracket is per-division — when it's selected while 'all' is in scope, snap to the first division.
-  useEffect(() => {
-    if (layout === 'bracket' && filterGroup === 'all') {
-      const first = scopeDivisions[0];
-      if (first) setSelection(new Set([first.id]));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layout, filterGroup, scopeDivisions]);
-
-  // Division + view slice (no search, no status) — used for status chip counts
-  const divisionGames = scheduled.filter(g =>
-    isGameInScope(g) &&
-    (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)
-  );
+  // The per-division features (the bracket, Add game's division, the generators' defaults, temporary lanes) read ONE
+  // division when the Bracket view or the Filter names one; otherwise every division.
+  const bracketDivision = divisions.find(d => d.id === bracketDivisionId)
+    ?? divisions.find(d => scheduled.some(g => g.isPlayoff && g.divisionId === d.id))
+    ?? divisions[0];
+  const filterGroup = shownView === 'bracket' ? (bracketDivision?.id ?? 'all') : filter.divisions.length === 1 ? filter.divisions[0] : 'all';
+  const selectedDivisionIds = filterGroup === 'all' ? new Set(divisions.map(d => d.id)) : new Set([filterGroup]);
+  // Add game's stage: a playoff game from the Bracket view (or in a bracket-only event), a round-robin game elsewhere.
+  const viewMode: 'pool' | 'playoff' = shownView === 'bracket' || !hasRoundRobinStage ? 'playoff' : 'pool';
+  const divisionGames = scheduled.filter(g => selectedDivisionIds.has(g.divisionId));
+  // A bracket reads every one of its games, whatever the Filter (S6: a played semifinal no longer reads "No bracket").
+  const bracketGames = bracketDivision ? scheduled.filter(g => g.isPlayoff && g.divisionId === bracketDivision.id) : [];
   const unresolvedLaneGameCounts = divisionGames.reduce((map, game) => {
     if (game.scheduleFacilityLaneId && !game.venueId && !game.venueFacilityId) {
       map.set(game.scheduleFacilityLaneId, (map.get(game.scheduleFacilityLaneId) ?? 0) + 1);
@@ -1004,31 +972,26 @@ export default function AdminSchedulePage() {
     try { window.localStorage.setItem(locationDismissKey, locationTokenSignature); } catch { /* private mode */ }
   }, [locationDismissKey, locationTokenSignature]);
 
-  const statusCounts: Record<string, number> = {
-    scheduled: divisionGames.filter(g => g.status === 'scheduled').length,
-    cancelled: divisionGames.filter(g => g.status === 'cancelled').length,
-    completed: divisionGames.filter(g => g.status === 'completed').length,
-  };
-  const savedScheduleMetrics = useMemo(() => {
-    if (!currentTournament || !filterGroup || filterGroup === 'all' || divisionGames.length === 0) return null;
+  // Schedule health across EVERY division (S1 — it scored one division at a time), for its one row at the day's foot.
+  const healthMetrics = useMemo(() => {
+    if (!currentTournament || scheduled.length === 0) return null;
     return buildScheduleMetrics({
-      games: divisionGames,
+      games: scheduled,
       teams,
       divisions,
       venues,
       tournament: currentTournament,
-      divisionId: filterGroup,
-      includePlayoffs: viewMode === 'playoff',
-      // Playoffs only: lets a "Seed #N" bracket slot resolve against LIVE round-robin standings
-      // when the organizer never typed a seed number in Teams admin (the common case). Needs the
-      // tournament's full, unfiltered game list — divisionGames above is already view-scoped.
-      standingsGames: viewMode === 'playoff' ? games : undefined,
+      includePlayoffs: true,
       // Draft rules drive the live preview as the organizer adjusts them.
       maxGamesPerDay: healthRules.maxGamesPerDay,
       minRestMinutes: healthRules.minRestMinutes,
       expectedGamesPerParticipant: healthRules.targetGamesPerTeam ?? undefined,
     });
-  }, [currentTournament, viewMode, filterGroup, divisionGames, games, teams, divisions, venues, healthRules]);
+  }, [currentTournament, scheduled, teams, divisions, venues, healthRules]);
+  const healthScope = W.healthScope(new Set(scheduled.map(g => g.divisionId)).size);
+  const healthCaption = healthMetrics && healthMetrics.totalGames > 0
+    ? [GAME_DAY_WORDS.healthCaption(healthMetrics.healthTone, healthMetrics.issues.length), healthScope].filter(Boolean).join(' · ')
+    : GAME_DAY_WORDS.healthNotBuilt;
 
   // Re-seed the rules editor from the tournament's saved settings when the tournament changes.
   useEffect(() => {
@@ -1072,70 +1035,13 @@ export default function AdminSchedulePage() {
       setSavingHealthRules(false);
     }
   }
-  const conflictCount = (savedScheduleMetrics?.venueConflictCount ?? 0) + (savedScheduleMetrics?.bufferConflictCount ?? 0);
-  const hasConflicts = conflictCount > 0;
-  useEffect(() => {
-    if (!hasConflicts && conflictsOnly) setConflictsOnly(false);
-  }, [hasConflicts, conflictsOnly]);
-  const venueFilterOptions = Array.from(
-    divisionGames.reduce((map, g) => {
-      const key = getGameVenueKey(g);
-      const existing = map.get(key);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        const display = getGameVenueDisplay(g);
-        map.set(key, { key, label: display.name, sublabel: display.sublabel, count: 1 });
-      }
-      return map;
-    }, new Map<string, { key: string; label: string; sublabel?: string; count: number }>()),
-  ).map(([, option]) => option).sort((a, b) => a.label.localeCompare(b.label));
-  const totalVenueCount = venueFilterOptions.reduce((t, o) => t + o.count, 0);
-
-  // Mobile settings sheet: venue label + summary strip text
-  const venueLabel = selectedVenueKeys.length === 0
-    ? 'All venues'
-    : selectedVenueKeys.length === 1
-      ? (venueFilterOptions.find(o => o.key === selectedVenueKeys[0])?.label ?? '1 venue')
-      : `${selectedVenueKeys.length} venues`;
-
-  const settingsSummary = [
-    layout === 'list' ? 'List' : layout === 'bracket' ? 'Bracket' : 'Timeline',
-    venueFilterOptions.length > 1 ? venueLabel : null,
-  ].filter(Boolean).join(' · ');
-
-  const filtered  = scheduled.filter(g => {
-    const matchesDivision = isGameInScope(g);
-    const matchesView = viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff;
-    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(g.status as ScheduleStatusFilter);
-    const matchesVenue = selectedVenueKeys.length === 0 || selectedVenueKeys.includes(getGameVenueKey(g));
-    const q = search.toLowerCase();
-    const matchesSearch = q === '' ||
-      resolveTeam(g.homeTeamId, g.homePlaceholder).toLowerCase().includes(q) ||
-      resolveTeam(g.awayTeamId, g.awayPlaceholder).toLowerCase().includes(q);
-    return matchesDivision && matchesView && matchesStatus && matchesVenue && matchesSearch;
-  });
-
-  // True when the division+stage has games but the active search/status/venue
-  // filters hide all of them — drives a "Clear filters" recovery empty state,
-  // distinct from a division that genuinely has no games scheduled yet.
-  const filtersHidingGames = filtered.length === 0 && divisionGames.length > 0;
-
   function clearScheduleFilters() {
     setSearch('');
-    setSelectedVenueKeys([]);
-    setSelectedStatuses(STATUS_FILTERS.map(f => f.key));
-    setConflictsOnly(false);
+    setFilter(NO_SCHEDULE_FILTER);
   }
 
   function formatDate(d: string) {
     return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-
-  function statusBadge(status: string) {
-    if (status === 'completed') return <span className="badge badge-success">Final</span>;
-    if (status === 'cancelled') return <span className="badge badge-danger">Cancelled</span>;
-    return <span className="badge badge-warning">Scheduled</span>;
   }
 
   function openResolveFacilities() {
@@ -1175,19 +1081,22 @@ export default function AdminSchedulePage() {
     setResolvingFacilities(true);
     try {
       const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-      const res = await fetch(`/api/admin/schedule-facility-lanes${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'resolve',
-          tournamentId,
-          divisionId: filterGroup,
-          mappings,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to resolve temporary facilities');
-      if (Array.isArray(data.lanes)) setFacilityLanes(data.lanes);
+      // The lanes belong to divisions and the route resolves one division per request; the page shows every division
+      // now (S1), so the mappings go division by division and the full re-read below brings back every lane.
+      const byDivision = new Map<string, typeof mappings>();
+      for (const mapping of mappings) {
+        const divisionId = unresolvedFacilityLanes.find(lane => lane.id === mapping.laneId)?.divisionId ?? '';
+        byDivision.set(divisionId, [...(byDivision.get(divisionId) ?? []), mapping]);
+      }
+      for (const [divisionId, list] of byDivision) {
+        const res = await fetch(`/api/admin/schedule-facility-lanes${orgQuery}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'resolve', tournamentId, divisionId, mappings: list }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to resolve temporary facilities');
+      }
       setResolveFacilitiesOpen(false);
       await refresh();
     } catch (error) {
@@ -1209,17 +1118,180 @@ export default function AdminSchedulePage() {
   const playoffBuilderDivision = divisions.find(d => d.id === playoffBuilderDivisionId) ?? null;
 
   const { handleExportXLSX, handleExportCSV, handleExportPDF, handleExportBracketPDF } = useScheduleExport({
-    currentOrg, currentTournament, orgSlug, layout, filtered, divisionGames, activeDivision, teams,
+    currentOrg, currentTournament, orgSlug, layout: shownView === 'bracket' ? 'bracket' : 'list', filtered: exportGames,
+    divisionGames, activeDivision, teams,
     getGroupName, resolveTeam, getGameVenueDisplay,
   });
 
-  // Row-invariant kit patches — the two plain-window titles below share one recipe (the global
-  // kit's `.modal-header h3` is written at zero weight so a page's own skin wins; these inline
-  // titles need the same patch restated here to reach the kit's display face + text-primary).
-  const modalTitleStyle = kx(
-    { fontFamily: 'var(--font-data)', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--logic-lime)', margin: 0 } as React.CSSProperties,
-    { fontFamily: 'var(--font-display)', fontSize: 'var(--type-heading)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', color: 'var(--text-primary)', margin: 0 },
+  // ── The toolbar's parts (S1) ─────────────────────────────────────────────────────────────────────────────────
+  // The sport's surfaces, plural, for the Timeline's line ("Diamonds across the day").
+  const fieldPlural = `${fieldNoun}s`;
+  const viewChoices: ViewChoice<ScheduleView>[] = [
+    { key: 'day', label: W.views.day.label, hint: W.views.day.hint, icon: <CalendarDays size={15} aria-hidden /> },
+    { key: 'all', label: W.views.all.label, hint: W.views.all.hint, icon: <List size={15} aria-hidden /> },
+    { key: 'timeline', label: W.views.timeline.label, hint: W.views.timeline.hint(fieldPlural), icon: <Clock size={15} aria-hidden /> },
+    // Bracket only where the event has playoffs (an Exhibition has none — absent, never locked).
+    ...(hasPlayoffStage ? [{ key: 'bracket' as const, label: W.views.bracket.label, hint: W.views.bracket.hint, icon: <Network size={15} aria-hidden /> }] : []),
+  ];
+  function chooseView(next: ScheduleView) {
+    setView(next);
+    if (next === 'bracket' && !bracketDivisionId && bracketDivision) setBracketDivisionId(bracketDivision.id);
+  }
+
+  // The day's row (its arrows step through the event's days) — or, in the Bracket view, the division's (S6: a
+  // bracket is one division's; scope and view each in their own place).
+  const dayDivisionNames = divisions
+    .filter(d => scheduled.some(g => g.date === day && g.divisionId === d.id))
+    .map(d => d.name);
+  const dayTotal = scheduled.filter(g => g.date === day).length;
+  // Every division can open its bracket (an empty one is where the organizer builds it).
+  const playoffDivisions = hasPlayoffStage ? divisions : [];
+  function scopeNav(placement: 'inline' | 'row') {
+    if (shownView === 'all') return undefined;
+    if (shownView === 'bracket') {
+      if (!bracketDivision) return undefined;
+      const ids = playoffDivisions.map(d => d.id);
+      const at = ids.indexOf(bracketDivision.id);
+      return (
+        <ScopeNav
+          placement={placement}
+          label={bracketDivision.name}
+          choices={playoffDivisions.map(d => ({ key: d.id, label: d.name }))}
+          value={bracketDivision.id}
+          onChoose={id => setBracketDivisionId(id)}
+          prev={at > 0 ? ids[at - 1] : null}
+          next={at >= 0 && at < ids.length - 1 ? ids[at + 1] : null}
+          prevLabel={W.previousDivision}
+          nextLabel={W.nextDivision}
+          menuTitle={W.chooseDivision}
+        />
+      );
+    }
+    // A day row still says how many games the day has, so a filter never hides the day's size (S1).
+    return (
+      <ScopeNav
+        placement={placement}
+        label={W.dayLabel(day, today)}
+        caption={W.dayCaption(dayTotal, dayDivisionNames)}
+        choices={days.map(d => ({ key: d, label: W.dayLabel(d, today) }))}
+        value={day}
+        onChoose={setChosenDay}
+        prev={stepDay(days, day, -1)}
+        next={stepDay(days, day, 1)}
+        prevLabel={W.previousDay}
+        nextLabel={W.nextDay}
+        menuTitle={W.chooseDay}
+      />
+    );
+  }
+
+  // The Filter: Division · Stage · Status · the sport's field, several choices each, counted over what the view reads.
+  const countBase = shownView === 'day' || shownView === 'timeline' ? searched.filter(g => g.date === day) : searched;
+  const countBy = (pick: (g: Game) => string) => countBase.reduce((m, g) => m.set(pick(g), (m.get(pick(g)) ?? 0) + 1), new Map<string, number>());
+  const divisionCounts = countBy(g => g.divisionId);
+  const stageCounts = countBy(g => (g.isPlayoff ? 'playoff' : 'pool'));
+  const stateCounts = countBy(g => stateOf(g));
+  const fieldCounts = countBy(g => fieldKeyOf(g));
+  const fieldLabels = new Map<string, string>();
+  for (const g of scheduled) {
+    const key = fieldKeyOf(g);
+    if (fieldLabels.has(key)) continue;
+    // Results' field words ("Maple Field 2"), so a venue and its diamond of one name read once.
+    fieldLabels.set(key, resolveGameFieldLabel(g, venues) || g.location?.trim() || getGameVenueDisplay(g).name);
+  }
+  const toggle = <K extends keyof ScheduleFilter>(group: K, key: string) => setFilter(prev => {
+    const list = prev[group] as readonly string[];
+    return { ...prev, [group]: list.includes(key) ? list.filter(k => k !== key) : [...list, key] };
+  });
+  const filterGroups: FilterGroupDef[] = [
+    {
+      key: 'division', label: W.groups.division, selected: filter.divisions, onToggle: k => toggle('divisions', k),
+      options: divisions.length > 1 ? divisions.map(d => ({ key: d.id, label: d.name, count: divisionCounts.get(d.id) ?? 0 })) : [],
+    },
+    {
+      key: 'stage', label: W.groups.stage, selected: filter.stages, onToggle: k => toggle('stages', k),
+      options: hasRoundRobinStage && hasPlayoffStage
+        ? (['pool', 'playoff'] as const).map(st => ({ key: st, label: W.stages[st], count: stageCounts.get(st) ?? 0 }))
+        : [],
+    },
+    {
+      key: 'status', label: W.groups.status, selected: filter.states, onToggle: k => toggle('states', k),
+      options: SCHEDULE_STATES.map(st => ({ key: st, label: W.states[st], count: stateCounts.get(st) ?? 0 })),
+    },
+    {
+      key: 'field', label: fieldNoun, selected: filter.fields, onToggle: k => toggle('fields', k),
+      options: fieldLabels.size > 1
+        ? Array.from(fieldLabels.entries()).sort((a, b) => a[1].localeCompare(b[1])).map(([key, label]) => ({ key, label, count: fieldCounts.get(key) ?? 0 }))
+        : [],
+    },
+  ];
+
+  // A row opens its game. Part 3 brings the game window; until then a row opens the game's edit window (the Edit Game
+  // window the page carried with nothing opening it, F74).
+  function openGame(g: Game) {
+    if (isLocked) return;
+    openEdit(g);
+  }
+
+  // ── Tools: its tools by name, then its two acts (A34 as amended; A44: a plan lock in words, never a bare padlock) ──
+  const tPlusHref = orgSlug ? tournamentPlusPanelHref(orgSlug) : '#';
+  const lockedTool = (name: string, icon: ReactNode) => (
+    <CoachToolbarMenuItem
+      icon={<Lock size={16} aria-hidden />}
+      label={<span className={sd.lockedTool}>{icon}{name} <RepChip>{W.lockedPlan}</RepChip></span>}
+      href={tPlusHref}
+    />
   );
+  const unpublishedDivisions = divisions.filter(d => (d.scheduleVisibility ?? 'unpublished') === 'unpublished');
+  const publishedDivisions = divisions.filter(d => d.scheduleVisibility && d.scheduleVisibility !== 'unpublished');
+  const showGenerators = !isLocked;
+  const showRainDelay = hasUpcomingGames && !isLocked;
+  const showPublish = !isLocked && unpublishedDivisions.length > 0;
+  const showUnpublish = !isLocked && publishedDivisions.length > 0;
+  const showClearBracket = shownView === 'bracket' && !isLocked && canBuildPlayoffsManually && bracketGames.length > 0;
+  const hasTools = (showGenerators && (hasRoundRobinStage || hasPlayoffStage)) || showRainDelay || showPublish || showUnpublish || showClearBracket;
+  const toolsMenu = hasTools ? (
+    <CoachToolbarMenu
+      label={W.tools}
+      icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
+      collapseOnPhone
+      bareOnPhone
+      drawerOnPhone
+      drawerTitle={W.tools}
+      triggerClassName={tb.tool}
+    >
+      {showGenerators && hasRoundRobinStage && (canAutoGenerateSchedule
+        ? <CoachToolbarMenuItem icon={<Sparkles size={16} aria-hidden />} label={T.roundRobin} hint={W.toolHints.roundRobin} onSelect={openGenerator} />
+        : lockedTool(T.roundRobin, null))}
+      {showGenerators && hasPlayoffStage && (canAutoBracket
+        ? <CoachToolbarMenuItem icon={<Trophy size={16} aria-hidden />} label={T.playoffs} hint={W.toolHints.playoffs} onSelect={openAutoGenerator} />
+        : lockedTool(T.playoffs, null))}
+      {showClearBracket && (
+        <CoachToolbarMenuItem icon={<Trash2 size={16} aria-hidden />} label={T.clearBracket} onSelect={handleClearBracket} />
+      )}
+      {(showRainDelay || showPublish || showUnpublish) && showGenerators && <CoachToolbarMenuSeparator />}
+      {showRainDelay && (canRainDelay
+        ? <CoachToolbarMenuItem icon={<CloudRain size={16} aria-hidden />} label={T.rainDelay} hint={W.toolHints.rainDelay} onSelect={openRainDelay} />
+        : lockedTool(T.rainDelay, null))}
+      {showPublish && (
+        <CoachToolbarMenuItem icon={<Globe size={16} aria-hidden />} label={T.publish} hint={W.toolHints.publish}
+          onSelect={() => setPublishModal({ divisionId: unpublishedDivisions[0].id })} />
+      )}
+      {showUnpublish && (
+        <CoachToolbarMenuItem icon={<EyeOff size={16} aria-hidden />} label={T.unpublish} hint={W.toolHints.unpublish}
+          onSelect={() => (publishedDivisions.length === 1 ? handleUnpublish(publishedDivisions[0].id) : setUnpublishOpen(true))} />
+      )}
+    </CoachToolbarMenu>
+  ) : null;
+
+  // No games yet: how to make them, by format and plan (/marketing 2026-10-09 — the tools by their names).
+  const noGamesYet = !hasRoundRobinStage
+    ? (canAutoBracket ? W.noGamesYet.playoffsOnly : W.noGamesYet.playoffsOnlyLocked)
+    : !hasPlayoffStage
+      ? (canAutoGenerateSchedule ? W.noGamesYet.noPlayoffs : W.noGamesYet.noPlayoffsLocked)
+      : canAutoGenerateSchedule ? W.noGamesYet.both : W.noGamesYet.bothLocked;
+
+
 
   return (
     <div className={s.page}>
@@ -1231,476 +1303,71 @@ export default function AdminSchedulePage() {
       />
       <TournamentAdminHeader
         icon={<Calendar size={20} />}
+        title={W.title}
+        mobileActionsInline
+        locked={isLocked}
         help={{
           module: 'tournaments',
           sectionIds: ['recipe-build-tournament-schedule', 'schedule-playoffs'],
           label: 'Schedule',
           fullGuideHref: currentOrg ? `/${currentOrg.slug}/admin/help/tournaments#recipe-build-tournament-schedule` : undefined,
         }}
-        title={(
-          <>
-            <span className={styles.desktopTitle}>Schedule Management</span>
-            <span className={styles.mobileTitle}>Schedule</span>
-          </>
-        )}
-        kitTitle={(
-          <>
-            <span className={styles.desktopTitle}>Schedule management</span>
-            <span className={styles.mobileTitle}>Schedule</span>
-          </>
-        )}
-        subtitle={currentTournament ? (
-          <>
-            <span className={styles.desktopSubtitle}>{currentTournament.name} ({currentTournament.year})</span>
-            <span className={styles.mobileSubtitle}>{currentTournament.name}</span>
-          </>
-        ) : 'Plan tournament games'}
-        meta={(() => {
-          // Per-division publish STATUS — lives under the subtitle (left), the
-          // orientation layer. Plain dot + text, never a button: it shares no row
-          // with the action buttons, which fixes the prior height-mismatch. Only
-          // rendered once a division is published (the unpublished resting state
-          // has no status to report — its action sits in `actions`).
-          const ag = divisions.find(g => g.id === filterGroup);
-          if (!ag) return null;
-          const vis = ag.scheduleVisibility ?? 'unpublished';
-          if (vis === 'unpublished') return null;
-          return (
-            <span
-              className={styles.publishStatusText}
-              title="Published with real team names"
-            >
-              <span className={styles.publishStatusDot} aria-hidden />{' '}
-              Published
-            </span>
-          );
-        })()}
-        mobileActionsInline
-        locked={isLocked}
         actions={(
           <>
-            {/* Publish/Unpublish + Tools live in the toolbar Row 1 right group; the
-                read-only status lives in `meta` (under the subtitle). The header actions
-                row carries Export + the stage-aware primary (Add Game in Round Robin,
-                Build/Edit Bracket in Playoffs). */}
             <ExportMenu
-              className={styles.scheduleExportButton}
               formats={['xlsx', 'csv', 'pdf']}
               onExportXLSX={handleExportXLSX}
               onExportCSV={handleExportCSV}
               onExportPDF={handleExportPDF}
-              pdfLabel={layout === 'bracket' ? 'Bracket PDF' : 'PDF report'}
-              onExportSecondaryPDF={layout === 'bracket' ? () => handleExportBracketPDF(true) : undefined}
+              pdfLabel={shownView === 'bracket' ? 'Bracket PDF' : 'PDF report'}
+              onExportSecondaryPDF={shownView === 'bracket' ? () => handleExportBracketPDF(true) : undefined}
               secondaryPdfLabel="Blank bracket PDF"
               secondaryPdfHint="Empty bracket to print and fill in by hand"
               planId={currentOrg?.planId}
-              disabled={filtered.length === 0}
+              disabled={shownView === 'bracket' ? bracketGames.length === 0 : exportGames.length === 0}
             />
-            {/* Stage-aware primary. Round Robin → Add Game (single-game add is hidden in
-                Playoffs, where games are managed in the bracket editor). */}
-            {!isLocked && viewMode !== 'playoff' && (
+            {/* Add game: the screen's one lime (A12) in every view — Publish moved into Tools (S8). */}
+            {!isLocked && (
               <button
-                className={`btn btn-lime btn-data ${styles.addGameButton}`}
+                className={`btn btn-lime btn-data ${screenParts.headerButton}`}
                 onClick={openAdd}
                 disabled={!currentTournament}
-                aria-label="Add game"
-                title="Add game"
+                aria-label={W.addGame}
+                title={W.addGame}
               >
-                <Plus size={14} /> <span className={styles.addGameLabel}>Add Game</span>
+                <Plus size={15} aria-hidden />
+                <span className={screenParts.headerButtonLabel}>{W.addGame}</span>
               </button>
             )}
-            {/* Playoffs → Build/Edit Bracket takes the same header slot Add Game holds. */}
-            {viewMode === 'playoff' && canBuildPlayoffsManually && !isLocked && !editingBracket && (() => {
-              const built = games.some(g => g.isPlayoff && g.divisionId === playoffBuilderDivisionId);
-              return (
-                <button
-                  className={`btn btn-lime btn-data ${styles.addGameButton}`}
-                  onClick={() => enterBracketEditor()}
-                  disabled={!currentTournament}
-                  aria-label={built ? 'Edit bracket' : 'Build bracket'}
-                  title={built ? 'Edit the playoff bracket' : 'Build the playoff bracket manually'}
-                >
-                  {built ? <Pencil size={14} /> : <Trophy size={14} />}{' '}
-                  <span className={styles.addGameLabel}>{built ? 'Edit Bracket' : 'Build Bracket'}</span>
-                </button>
-              );
-            })()}
           </>
         )}
       />
 
-      <TournamentAdminToolbar ariaLabel="Schedule controls" className={styles.scheduleToolbar}>
-        {/* ── Row 1 left: Division + view mode controls (grow) ── */}
-        <ToolbarGroup grow className={`${styles.scheduleDivisionGroup} ${styles.scheduleStartGroup}`}>
-          {divisions.length > 0 && !editingBracket && (
-            <ToolbarSelect<string>
-              className={styles.scheduleDivisionSelect}
-              label="Division"
-              value={filterGroup !== 'all' ? filterGroup : (divisions[0]?.id ?? '')}
-              options={divisions.map(d => ({ value: d.id, label: d.name }))}
-              onChange={(id) => setSelection(new Set([id]))}
+      {/* ── One toolbar line in every view and at every width (S1, 1 October) ── */}
+      {!editingBracket && (
+        <ScheduleToolbar
+          viewPill={<ViewPill view={shownView} choices={viewChoices} onView={chooseView} menuTitle={W.view} />}
+          scopeInline={scopeNav('inline')}
+          scopeRow={scopeNav('row')}
+          search={search}
+          onSearch={setSearch}
+          searchLabel={W.search}
+          filter={(
+            <FilterMenu
+              groups={filterGroups}
+              label={W.filter}
+              onLabel={W.filtersOn}
+              resetLabel={W.resetFilters}
+              onReset={() => setFilter(NO_SCHEDULE_FILTER)}
+              align="end"
             />
           )}
-          {/* While editing a bracket, the view/stage controls are hidden so they can't
-              unmount the editor (and lose edits) — exit via the editor's Cancel/Save. */}
-          {/* Mobile: prominent stage toggle (desktop keeps the segmented control below) */}
-          {showStageToggle && !editingBracket && (
-          <div className={styles.mobileStageToggle} role="group" aria-label="Stage">
-            {(['pool', 'playoff'] as const).map(v => (
-              <button
-                key={v}
-                type="button"
-                className={`${styles.mobileStageBtn} ${viewMode === v ? styles.mobileStageActive : ''}`}
-                onClick={() => setViewMode(v)}
-                aria-pressed={viewMode === v}
-              >
-                {v === 'pool' ? 'Round Robin' : 'Playoffs'}
-              </button>
-            ))}
-          </div>
-          )}
-          {/* Stage: Round Robin | Playoffs — only when the format has both */}
-          {showStageToggle && !editingBracket && (
-          <ToolbarSegmentedControl<'pool' | 'playoff'>
-            className={styles.desktopModeControl}
-            value={viewMode}
-            options={[
-              { value: 'pool', label: 'Round Robin' },
-              { value: 'playoff', label: 'Playoffs' },
-            ]}
-            onChange={value => { setViewMode(value); }}
-            ariaLabel="Stage"
-          />
-          )}
-          {/* View: stage-dependent (Round Robin → List/Timeline, Playoffs → List/Bracket/Timeline) */}
-          {!editingBracket && (
-          <ToolbarSegmentedControl<'list' | 'bracket' | 'timeline'>
-            className={styles.desktopModeControl}
-            value={layout}
-            options={viewMode === 'playoff'
-              ? [{ value: 'list', label: 'List' }, { value: 'bracket', label: 'Bracket' }, { value: 'timeline', label: 'Timeline' }]
-              : [{ value: 'list', label: 'List' }, { value: 'timeline', label: 'Timeline' }]}
-            onChange={setLayout}
-            ariaLabel="View"
-          />
-          )}
-          {editingBracket && (
-            <span className="text-label" style={kx({ color: 'var(--logic-lime)', alignSelf: 'center', padding: '0 0.5rem' }, KIT_INK.accent)}>Editing bracket</span>
-          )}
-        </ToolbarGroup>
-
-        {/* ── Row 1 right: action cluster — [bracket actions ·] Publish · Auto ──
-            All actions are one right-aligned cluster (matches the Round Robin look,
-            which the owner approved); bracket Build/Edit/Clear lead it in Playoffs.
-            Single nowrap group → no mid-row gap, no wrapping to a second line. */}
-        <ToolbarGroup align="end" className={`${styles.scheduleActionsGroup} ${styles.scheduleEndGroup}`}>
-          {/* Bracket Build/Edit is the stage-aware PRIMARY in the header now (mirrors
-              Add Game), so it's no longer duplicated here in the toolbar. */}
-          {/* Publish/Unpublish ACTION — division-scoped (covers both stages). The
-              read-only status lives in the header meta row (under the subtitle). */}
-          {(() => {
-            const ag = divisions.find(g => g.id === filterGroup);
-            if (!ag || isLocked) return null;
-            const vis = ag.scheduleVisibility ?? 'unpublished';
-            if (vis === 'unpublished') {
-              return (
-                <button
-                  className={`btn btn-lime btn-data ${styles.publishButton} ${styles.mobileIconButton}`}
-                  onClick={() => setPublishModal({ divisionId: filterGroup })}
-                  disabled={!currentTournament}
-                  aria-label="Publish schedule"
-                  title="Publish schedule"
-                >
-                  <Globe size={10} />
-                  <span className={styles.mobileButtonLabel}>Publish</span>
-                </button>
-              );
-            }
-            return (
-              <UnpublishControl
-                className={styles.mobileIconButton}
-                publishedCount={divisions.filter(g => g.scheduleVisibility && g.scheduleVisibility !== 'unpublished').length}
-                currentLabel={ag.name ?? 'this division'}
-                onUnpublishOne={() => handleUnpublish(filterGroup)}
-                onUnpublishAll={handleUnpublishAll}
-              />
-            );
-          })()}
-          <ScheduleToolsMenu
-            className={styles.scheduleToolsMenu}
-            disabled={!currentTournament}
-            showAutoGenerate={hasRoundRobinStage}
-            canAutoGenerate={canAutoGenerateSchedule}
-            onAutoGenerate={openGenerator}
-            showAutoBracket={hasPlayoffStage}
-            canAutoBracket={canAutoBracket}
-            onAutoBracket={openAutoGenerator}
-            canRainDelay={canRainDelay}
-            onRainDelay={openRainDelay}
-            rainDelayAvailable={hasUpcomingGames && !isLocked}
-          />
-        </ToolbarGroup>
-
-        {/* ── Row 2: search + venue + status filters (hidden in Timeline — it has its own Day + Scope) ── */}
-        {layout !== 'timeline' && !editingBracket && (
-        <ToolbarGroup fullWidth className={styles.scheduleFilterGroup}>
-          <ToolbarSearch className={styles.scheduleSearch} value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
-          {/* Mobile-only: Publish/Unpublish sits BESIDE the Tools menu (not inside
-              it), next to search, so the division selector keeps the full first row.
-              The desktop Row-1 action group is hidden on mobile. */}
-          {!isLocked && (() => {
-            const ag = divisions.find(g => g.id === filterGroup);
-            if (!ag) return null;
-            const isPub = (ag.scheduleVisibility ?? 'unpublished') !== 'unpublished';
-            return (
-              <span className={styles.scheduleMobilePublish}>
-                {isPub ? (
-                  <UnpublishControl
-                    className={styles.mobileIconButton}
-                    publishedCount={divisions.filter(g => g.scheduleVisibility && g.scheduleVisibility !== 'unpublished').length}
-                    currentLabel={ag.name ?? 'this division'}
-                    onUnpublishOne={() => handleUnpublish(filterGroup)}
-                    onUnpublishAll={handleUnpublishAll}
-                  />
-                ) : (
-                  <button
-                    className={`btn btn-lime btn-data ${styles.publishButton} ${styles.mobileIconButton}`}
-                    onClick={() => setPublishModal({ divisionId: filterGroup })}
-                    disabled={!currentTournament}
-                    aria-label="Publish schedule"
-                    title="Publish schedule"
-                  >
-                    <Globe size={10} />
-                    <span className={styles.mobileButtonLabel}>Publish</span>
-                  </button>
-                )}
-              </span>
-            );
-          })()}
-          <MobileToolsMenu
-            className={styles.scheduleMobileTools}
-            showAutoGenerate={hasRoundRobinStage}
-            canAutoGenerate={canAutoGenerateSchedule}
-            onAutoGenerate={openGenerator}
-            showAutoBracket={hasPlayoffStage}
-            canAutoBracket={canAutoBracket}
-            onAutoBracket={openAutoGenerator}
-            canRainDelay={canRainDelay}
-            onRainDelay={openRainDelay}
-            rainDelayAvailable={hasUpcomingGames && !isLocked}
-          />
-          <div className={styles.scheduleVenueDesktop}>
-            <VenueFilterMenu
-              options={venueFilterOptions}
-              selectedKeys={selectedVenueKeys}
-              onToggle={key => setSelectedVenueKeys(prev => prev.includes(key) ? prev.filter(value => value !== key) : [...prev, key])}
-              onClear={() => setSelectedVenueKeys([])}
-            />
-          </div>
-          <div className={`${s.statusFilters} ${styles.scheduleStatusFilters}`}>
-            {STATUS_FILTERS.map(({ key, label }) => {
-              const isActive = selectedStatuses.includes(key);
-              const chipMod = STATUS_CHIP_CLASS[key];
-              const count = statusCounts[key] ?? 0;
-              // Dim 0-count chips (shared data-empty convention) so non-zero counts
-              // draw the eye, and disable a 0-count chip that isn't already applied so
-              // it can't route the user into an empty view. An applied chip stays
-              // interactive so it can always be toggled back off.
-              const isDisabled = count === 0 && !isActive;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  data-empty={count === 0 ? 'true' : undefined}
-                  disabled={isDisabled}
-                  title={isDisabled ? `No ${label.toLowerCase()} games` : undefined}
-                  className={[
-                    s.filterChip,
-                    key === 'scheduled' ? styles.scheduleStatusScheduled : '',
-                    chipMod ? (s as Record<string, string>)[chipMod] : '',
-                    isActive ? s.chipActive : '',
-                    isActive ? styles.scheduleStatusActive : '',
-                  ].filter(Boolean).join(' ')}
-                  onClick={() => setSelectedStatuses(prev => isActive ? prev.filter(status => status !== key) : [...prev, key])}
-                >
-                  {label.toUpperCase()}
-                  <span className={s.chipCount}>{count}</span>
-                </button>
-              );
-            })}
-          </div>
-        </ToolbarGroup>
-        )}
-      </TournamentAdminToolbar>
-
-      {/* ── Mobile settings bottom sheet (Schedule) ────────── */}
-      {mobileSettingsOpen && (
-        <>
-          <div className={styles.sheetBackdrop} onClick={() => setMobileSettingsOpen(false)} aria-hidden />
-          <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="View settings">
-            <div className={styles.sheetHandle} />
-            <div className={styles.sheetBody}>
-              {/* Stage (Round Robin / Playoffs) is the primary context switch and
-                  lives on-screen via .mobileStageToggle — not duplicated here
-                  (this sheet is for passive view config only). */}
-              <div className={styles.sheetSection}>
-                <div className={styles.sheetSectionLabel}>View</div>
-                <div className={styles.sheetSegments}>
-                  {(viewMode === 'playoff' ? (['list', 'bracket', 'timeline'] as const) : (['list', 'timeline'] as const)).map(v => (
-                    <button key={v} type="button"
-                      className={`${styles.sheetSeg} ${layout === v ? styles.sheetSegActive : ''}`}
-                      onClick={() => setLayout(v)}
-                    >
-                      {v === 'list' ? 'List' : v === 'bracket' ? 'Bracket' : 'Timeline'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {venueFilterOptions.length > 1 && (
-                <div className={styles.sheetSection}>
-                  <div className={styles.sheetSectionLabel}>Venue</div>
-                  <button
-                    type="button"
-                    className={`${styles.venueSheetBtn} ${selectedVenueKeys.length > 0 ? styles.venueSheetBtnActive : ''}`}
-                    onClick={() => setVenueModalOpen(true)}
-                  >
-                    <span>{venueLabel}</span>
-                    <ChevronRight size={13} aria-hidden />
-                  </button>
-                </div>
-              )}
-              <div className={styles.sheetSection}>
-                <div className={styles.sheetSectionLabel}>Game Status</div>
-                <div className={styles.sheetSegments}>
-                  {STATUS_FILTERS.map(({ key, label }) => (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`${styles.sheetSeg} ${selectedStatuses.includes(key) ? styles.sheetSegActive : ''}`}
-                      onClick={() => setSelectedStatuses(prev =>
-                        prev.includes(key) ? prev.filter(s => s !== key) : [...prev, key]
-                      )}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button type="button" className={styles.sheetDone} onClick={() => setMobileSettingsOpen(false)}>Done</button>
-            </div>
-          </div>
-
-          {/* Venue nested modal */}
-          {venueModalOpen && (
-            <>
-              <div className={styles.venueModalBackdrop} onClick={() => setVenueModalOpen(false)} aria-hidden />
-              <div className={styles.venueModal} role="dialog" aria-modal="true" aria-label="Filter by venue">
-                <div className={styles.venueModalHandle} />
-                <div className={styles.venueModalHeader}>
-                  <button type="button" className={styles.venueModalBack} onClick={() => setVenueModalOpen(false)}>← Back</button>
-                  <span className={styles.venueModalTitle}>Venue</span>
-                  {selectedVenueKeys.length > 0 && (
-                    <button type="button" className={styles.venueModalClear} onClick={() => setSelectedVenueKeys([])}>Clear</button>
-                  )}
-                </div>
-                <div className={styles.venueModalList}>
-                  <button type="button"
-                    className={`${styles.venueModalOption} ${selectedVenueKeys.length === 0 ? styles.venueModalOptionActive : ''}`}
-                    onClick={() => setSelectedVenueKeys([])}
-                  >
-                    <span>All venues</span>
-                    <span className={styles.venueModalCount}>{totalVenueCount}</span>
-                  </button>
-                  {venueFilterOptions.map(opt => (
-                    <button key={opt.key} type="button"
-                      className={`${styles.venueModalOption} ${selectedVenueKeys.includes(opt.key) ? styles.venueModalOptionActive : ''}`}
-                      onClick={() => setSelectedVenueKeys(prev => prev.includes(opt.key) ? prev.filter(k => k !== opt.key) : [...prev, opt.key])}
-                    >
-                      <span>{opt.label}{opt.sublabel ? <span className={styles.venueModalSublabel}> — {opt.sublabel}</span> : ''}</span>
-                      <span className={styles.venueModalCount}>{opt.count}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className={styles.venueModalFooter}>
-                  <button type="button" className={styles.sheetDone} onClick={() => setVenueModalOpen(false)}>Done</button>
-                </div>
-              </div>
-            </>
-          )}
-        </>
+          tools={toolsMenu}
+        />
       )}
-
-      {/* ── Active settings summary strip (mobile only) ──────── */}
-      {currentTournament && !mobileSettingsOpen && !editingBracket && (
-        <button
-          type="button"
-          className={styles.activeSettingsSummary}
-          onClick={() => setMobileSettingsOpen(true)}
-          aria-label={`View settings: ${settingsSummary}`}
-        >
-          <span className={styles.activeSettingsSummaryText}>{settingsSummary}</span>
-          <span className={styles.summaryRight}>
-            <span className={styles.statusCountTally} aria-hidden>
-              {STATUS_FILTERS.map(({ key }) => (
-                <span
-                  key={key}
-                  className={[
-                    styles.tallyPill,
-                    key === 'scheduled' ? styles.tallyScheduled : '',
-                    key === 'cancelled' ? styles.tallyCancelled : '',
-                    key === 'completed' ? styles.tallyCompleted : '',
-                    !selectedStatuses.includes(key) ? styles.tallyInactive : '',
-                  ].filter(Boolean).join(' ')}
-                >
-                  <span className={styles.tallyDot} />
-                  {statusCounts[key] ?? 0}
-                </span>
-              ))}
-            </span>
-            <SlidersHorizontal size={12} className={styles.activeSettingsSummaryIcon} aria-hidden />
-          </span>
-        </button>
-      )}
-
 
       {currentTournament && !gamesLoading && games.length === 0 && !editingBracket && (
-        <HelpCallout
-          variant="info"
-          title="No games scheduled yet"
-          body={!hasRoundRobinStage
-            ? 'This is a bracket-only tournament. Open the Playoff Bracket Builder to seed your teams and generate the bracket.'
-            : !hasPlayoffStage
-            ? (canAutoGenerateSchedule
-              ? 'Add your games by hand — a day of scrimmages is a handful of rows — or use the Round-Robin Generator to build them from your teams.'
-              : 'Add your games by hand — a day of scrimmages is a handful of rows. The Round-Robin Generator can build them from your teams with Tournament Plus.')
-            : canAutoGenerateSchedule
-            ? 'Build your schedule by adding games manually, or use the Round-Robin Generator to auto-build games from your teams. For playoffs, use the Playoff Bracket Builder.'
-            : 'Build your schedule by adding games manually, or use the Playoff Bracket Builder to seed a bracket. The Round-Robin Generator is available with Tournament Plus or higher.'}
-        />
-      )}
-
-      {savedScheduleMetrics && (
-        <ScheduleHealthPanel
-          metrics={savedScheduleMetrics}
-          subtitle={`${activeDivision?.name ?? 'Division'} · ${viewMode === 'playoff' ? 'Saved playoffs' : hasPlayoffStage ? 'Saved round robin' : 'Saved games'}`}
-          defaultOpen={false}
-          showTeamTable
-          onJumpToConflict={() => {
-            document.getElementById('schedule-first-conflict')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }}
-          rules={healthRules}
-          canEditRules={!isLocked}
-          rulesDirty={healthRulesDirty}
-          savingRules={savingHealthRules}
-          onRuleChange={patch => setHealthRules(prev => ({ ...prev, ...patch }))}
-          onSaveRules={saveHealthRules}
-          onResetRules={() => setHealthRules(savedHealthRules)}
-          onRestoreDefaultRules={() => setHealthRules(DEFAULT_HEALTH_RULES)}
-          // The sandbox's own undo. Nothing was ever persisted, so "put it back" is simply a
-          // re-read of the server's untouched copy — which also means a visitor can never wedge
-          // the demo for themselves. The panel renders this only inside a demo org.
-          onSandboxReset={() => { void refresh(); }}
-        />
+        <HelpCallout variant="info" title="No games scheduled yet" body={noGamesYet} />
       )}
 
       {unresolvedFacilityLanes.length > 0 && (
@@ -1771,7 +1438,7 @@ export default function AdminSchedulePage() {
           <RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} />
           <p>{tournamentLoading ? 'Loading tournament...' : 'Loading schedule...'}</p>
         </div>
-      ) : editingBracket && viewMode === 'playoff' && currentTournament && playoffBuilderDivision ? (
+      ) : editingBracket && currentTournament && playoffBuilderDivision ? (
         <BracketEditor
           division={playoffBuilderDivision}
           tournamentId={currentTournament.id}
@@ -1785,15 +1452,16 @@ export default function AdminSchedulePage() {
           onDone={(saved) => { setEditingBracket(false); setBracketFocusGameId(undefined); if (saved) refresh(); }}
           onClear={handleClearBracket}
         />
-      ) : layout === 'timeline' ? (
+      ) : shownView === 'timeline' ? (
         <ScheduleTimeline
-          games={stageGames}
+          games={filtered}
           venues={venues}
           divisions={divisions}
           teams={teams}
           tournament={currentTournament}
-          selection={selection}
-          stage={viewMode}
+          selection={null}
+          stage="all"
+          day={day}
           onMove={isLocked ? undefined : handleMoveGame}
           onCreateVenue={() => setAddVenueOpen(true)}
           zeroVenuePrompt={
@@ -1804,112 +1472,88 @@ export default function AdminSchedulePage() {
             />
           }
         />
-      ) : layout === 'bracket' && filterGroup === 'all' ? (
-        <div className="empty-state">
-          <Calendar size={40} style={{ opacity: 0.2 }} />
-          <p>Brackets are per division — pick a division above to view its bracket.</p>
-        </div>
-      ) : layout === 'bracket' ? (
-        <PlayoffBracketView
-          games={filtered}
-          teams={teams}
-          division={activeDivision}
-          canBuildManualBracket={canBuildPlayoffsManually && !isLocked}
-          onBuildBracket={enterBracketEditor}
-          onStartFromStandings={undefined}
-          onEdit={(isLocked || !canBuildPlayoffsManually) ? undefined : () => enterBracketEditor()}
-          onDelete={isLocked ? undefined : handleDeleteRequest}
-          getGroupName={getGroupName}
-          formatDate={formatDate}
-          statusBadge={statusBadge}
-          venues={venues}
-        />
-      ) : filterGroup === 'all' ? (
-        <div className={s.compactList}>
-          {filtered.length === 0 ? (
-            filtersHidingGames ? (
-              <div className="empty-state">
-                <Calendar size={40} style={{ opacity: 0.2 }} />
-                <p>No games match your filters.</p>
-                <button type="button" className="btn btn-outline btn-data" style={{ marginTop: '0.6rem' }} onClick={clearScheduleFilters}>
-                  Clear filters
+      ) : shownView === 'bracket' ? (
+        <>
+          {/* The bracket's heading, with Edit bracket the white button above what it acts on (S6). Part 7 rebuilds the cards. */}
+          {bracketDivision && (
+            <div className={sd.bracketHead}>
+              <span className={sd.bracketTitle}><b>{W.bracketTitle(bracketDivision.name)}</b></span>
+              {canBuildPlayoffsManually && !isLocked && (
+                <button type="button" className={`btn btn-outline btn-data ${sd.bracketEdit}`} onClick={() => enterBracketEditor()}>
+                  <Pencil size={14} aria-hidden /> {bracketGames.length > 0 ? T.editBracket : T.buildBracket}
                 </button>
-              </div>
-            ) : (
-              <div className="empty-state">
-                <Calendar size={40} style={{ opacity: 0.2 }} />
-                <p>{currentTournament ? 'No games found.' : 'No tournament selected.'}</p>
-              </div>
-            )
-          ) : (
-            divisions
-              .map(div => ({ div, divGames: filtered.filter(g => g.divisionId === div.id) }))
-              .filter(({ divGames }) => divGames.length > 0)
-              .map(({ div, divGames }) => (
-                <div key={div.id}>
-                  <div className={styles.allDivisionHeader}>
-                    <span className={styles.allDivisionName}>{div.name}</span>
-                    <span className={styles.allDivisionCount}>{divGames.length}</span>
-                  </div>
-                  <GameList
-                    games={divGames}
-                    teams={teams}
-                    divisions={divisions}
-                    venues={venues}
-                    viewMode={viewMode}
-                    groupByPool={true}
-                    pools={div.pools}
-                    onDelete={isLocked ? undefined : handleDeleteRequest}
-                    onCancel={isLocked ? undefined : markCancelled}
-                    onSchedule={isLocked ? undefined : markScheduled}
-                    onToggleGeneratorLock={isLocked ? undefined : toggleGeneratorLock}
-                    onSave={isLocked ? undefined : handleSaveGame}
-                    onPlayoffEdit={(isLocked || !canBuildPlayoffsManually) ? undefined : (g) => enterBracketEditor(g.id, g.divisionId)}
-                    onCreateVenue={() => setAddVenueOpen(true)}
-                    conflictsOnly={conflictsOnly}
-                    tournament={currentTournament}
-                  />
-                </div>
-              ))
+              )}
+            </div>
           )}
-        </div>
+          <PlayoffBracketView
+            games={bracketGames}
+            teams={teams}
+            division={bracketDivision}
+            canBuildManualBracket={canBuildPlayoffsManually && !isLocked}
+            onBuildBracket={() => enterBracketEditor()}
+            onStartFromStandings={undefined}
+            onEdit={(isLocked || !canBuildPlayoffsManually) ? undefined : () => enterBracketEditor()}
+            onDelete={isLocked ? undefined : handleDeleteRequest}
+            getGroupName={getGroupName}
+            formatDate={formatDate}
+            venues={venues}
+          />
+        </>
       ) : (
-        <div className={s.compactList}>
-          {filtered.length === 0 ? (
-            filtersHidingGames ? (
-              <div className="empty-state">
-                <Calendar size={40} style={{ opacity: 0.2 }} />
-                <p>No games match your filters.</p>
-                <button type="button" className="btn btn-outline btn-data" style={{ marginTop: '0.6rem' }} onClick={clearScheduleFilters}>
-                  Clear filters
-                </button>
-              </div>
-            ) : (
-              <div className="empty-state">
-                <Calendar size={40} style={{ opacity: 0.2 }} />
-                <p>{currentTournament ? 'No games found for this division.' : 'No tournament selected.'}</p>
-              </div>
-            )
-          ) : (
-            <GameList
-              games={filtered}
-              teams={teams}
-              divisions={divisions}
-              venues={venues}
-              viewMode={viewMode}
-              groupByPool={true}
-              pools={activeDivision?.pools}
-              onDelete={isLocked ? undefined : handleDeleteRequest}
-              onCancel={isLocked ? undefined : markCancelled}
-              onSchedule={isLocked ? undefined : markScheduled}
-              onToggleGeneratorLock={isLocked ? undefined : toggleGeneratorLock}
-              onSave={isLocked ? undefined : handleSaveGame}
-              onPlayoffEdit={(isLocked || !canBuildPlayoffsManually) ? undefined : (g) => enterBracketEditor(g.id, g.divisionId)}
-              onCreateVenue={() => setAddVenueOpen(true)}
-              conflictsOnly={conflictsOnly}
-              tournament={currentTournament}
-            />
+        <ScheduleDayList
+          mode={shownView === 'all' ? 'all' : 'day'}
+          games={shownView === 'all' ? filtered : dayGames}
+          stateOf={stateOf}
+          teams={teams}
+          divisions={divisions}
+          venues={venues}
+          onOpen={openGame}
+          label={shownView === 'all' ? W.views.all.label : W.dayLabel(day, today)}
+          empty={games.length === 0 ? null : (
+            <div className={sd.list}>
+              <ClubRowList>
+                <ClubRow
+                  title={(filtersOn(filter) > 0 || search !== '') ? W.noGamesMatch : shownView === 'all' ? W.noGamesMatch : W.noGamesOnDay(day)}
+                  actions={(filtersOn(filter) > 0 || search !== '') ? (
+                    <button type="button" className="btn btn-outline btn-data" onClick={clearScheduleFilters}>{W.clearFilter}</button>
+                  ) : undefined}
+                />
+              </ClubRowList>
+            </div>
           )}
+        />
+      )}
+
+      {/* Schedule health — one closed row at the foot, across every division (S1). The demo tour rings it. */}
+      {healthMetrics && !editingBracket && (
+        <div className={sd.health}>
+          <HealthRow
+            data-sandbox-tour="schedule-health"
+            score={healthMetrics.totalGames > 0 ? healthMetrics.healthScore : null}
+            tone={healthMetrics.healthTone}
+            title={GAME_DAY_WORDS.healthTitle}
+            caption={healthCaption}
+            open={healthOpen}
+            onToggle={() => setHealthOpen(o => !o)}
+          >
+            <ScheduleHealthBody
+              metrics={healthMetrics}
+              showTeamTable
+              isSandbox={isSandbox}
+              // The sandbox's own undo: nothing was ever persisted, so "put it back" is a re-read of the server's copy.
+              onSandboxReset={() => { void refresh(); }}
+              showRulesEditor={!isLocked}
+              editing={rulesEditing}
+              rules={healthRules}
+              rulesDirty={healthRulesDirty}
+              savingRules={savingHealthRules}
+              onRuleChange={patch => setHealthRules(prev => ({ ...prev, ...patch }))}
+              onSaveRules={saveHealthRules}
+              onResetRules={() => setHealthRules(savedHealthRules)}
+              onRestoreDefaultRules={() => setHealthRules(DEFAULT_HEALTH_RULES)}
+              rulesToggle={{ label: W.adjustRules, onToggle: () => setRulesEditing(e => !e) }}
+            />
+          </HealthRow>
         </div>
       )}
 
@@ -1932,7 +1576,7 @@ export default function AdminSchedulePage() {
           tournamentId={tournamentId ?? ''}
           onClose={() => setResolveLocationsOpen(false)}
           onGamesChanged={refresh}
-          onCreateVenue={() => { setResolveLocationsOpen(false); setVenueModalOpen(true); }}
+          onCreateVenue={() => { setResolveLocationsOpen(false); setAddVenueOpen(true); }}
         />
       )}
 
@@ -2019,6 +1663,21 @@ export default function AdminSchedulePage() {
           onClose={() => setShowShiftDay(false)}
           onApplied={() => { void refresh(); }}
         />
+      )}
+
+      {unpublishOpen && (
+        <KitDialog kind="question" title={W.unpublishWindowTitle} onClose={() => setUnpublishOpen(false)}
+          footer={publishedDivisions.length > 1 ? (
+            <button type="button" className="btn btn-outline" onClick={() => { setUnpublishOpen(false); handleUnpublishAll(); }}>
+              {W.unpublishAllConfirm(publishedDivisions.length)}
+            </button>
+          ) : undefined}>
+          <ClubRowList label={W.unpublishWindowTitle}>
+            {publishedDivisions.map(d => (
+              <ClubRow key={d.id} as="button" title={d.name} chevron onClick={() => { setUnpublishOpen(false); handleUnpublish(d.id); }} />
+            ))}
+          </ClubRowList>
+        </KitDialog>
       )}
 
       <FeedbackModal

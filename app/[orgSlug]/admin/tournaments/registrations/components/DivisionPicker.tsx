@@ -19,7 +19,7 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { TEAMS_WORDS } from '@/lib/registration-words';
 import kit from '@/components/admin/kit/AdminKitFrame.module.css';
-import styles from '../teams-admin.module.css';
+import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 
 export type DivisionChoice = { id: string; name: string; waiting: number };
 
@@ -71,25 +71,25 @@ export default function DivisionPicker({
   }
 
   return (
-    <div className={styles.divisionField} ref={rootRef}>
+    <div className={tb.divisionField} ref={rootRef}>
       <button
         ref={triggerRef}
         type="button"
-        className={`${styles.divisionSelect} ${styles.divisionTrigger}`}
+        className={`${tb.divisionSelect} ${tb.divisionTrigger}`}
         onClick={() => setOpen(v => !v)}
         disabled={divisions.length === 0}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`${TEAMS_WORDS.division}: ${shownName}${waitingElsewhere ? `. ${TEAMS_WORDS.waitingElsewhere}` : ''}`}
       >
-        <span className={styles.divisionTriggerName}>{shownName}</span>
-        {waitingElsewhere && <span className={styles.divisionWaitingDot} aria-hidden />}
-        <ChevronDown size={16} className={styles.divisionChevron} aria-hidden />
+        <span className={tb.divisionTriggerName}>{shownName}</span>
+        {waitingElsewhere && <span className={tb.divisionWaitingDot} aria-hidden />}
+        <ChevronDown size={16} className={tb.divisionChevron} aria-hidden />
       </button>
       {open && (
         <div
           ref={listRef}
-          className={`${styles.regFilterPanel} ${styles.divisionPanel}`}
+          className={`${tb.regFilterPanel} ${tb.divisionPanel}`}
           role="menu"
           aria-label={TEAMS_WORDS.division}
           onKeyDown={onListKey}
@@ -103,12 +103,12 @@ export default function DivisionPicker({
                 role="menuitemradio"
                 aria-checked={on}
                 aria-label={d.waiting > 0 ? `${d.name}, ${TEAMS_WORDS.toReviewCount(d.waiting)}` : d.name}
-                className={styles.regFilterOption}
+                className={tb.regFilterOption}
                 data-on={on || undefined}
                 onClick={() => pick(d.id)}
               >
-                <span className={styles.regFilterCheck}>{on ? <Check size={12} aria-hidden /> : null}</span>
-                <span className={styles.regFilterName}>{d.name}</span>
+                <span className={tb.regFilterCheck}>{on ? <Check size={12} aria-hidden /> : null}</span>
+                <span className={tb.regFilterName}>{d.name}</span>
                 {d.waiting > 0 && <span className={kit.count} aria-hidden>{d.waiting}</span>}
               </button>
             );

@@ -319,6 +319,7 @@ export default function ScheduleTimeline({
   onMove,
   onCreateVenue,
   zeroVenuePrompt,
+  day: dayProp,
 }: {
   games: Game[];
   venues: Venue[];
@@ -336,6 +337,9 @@ export default function ScheduleTimeline({
   /** Rendered instead of the add-a-field hint when the tournament has ZERO venues —
    *  the setup prompt that stops typed-only schedules at the source (Phase 2). */
   zeroVenuePrompt?: ReactNode;
+  /** The day shown, when the page leads it (the schedule's day row, Stage 3 S1): the grid's own day arrows then stand
+   *  down, so the screen has one way to change the day. */
+  day?: string;
 }) {
   const divById = useMemo(() => new Map(divisions.map(d => [d.id, d])), [divisions]);
   // Pool is for block COLOR only (not selection) — derived from the teams' pool.
@@ -350,7 +354,8 @@ export default function ScheduleTimeline({
     [games],
   );
   const todayISO = tournamentToday();
-  const [day, setDay] = useState<string>(() => (days.includes(todayISO) ? todayISO : days[0] ?? todayISO));
+  const [ownDay, setDay] = useState<string>(() => (days.includes(todayISO) ? todayISO : days[0] ?? todayISO));
+  const day = dayProp ?? ownDay;
   const [extraColumns, setExtraColumns] = useState<Set<string>>(new Set());
   const [showConflicts, setShowConflicts] = useState(true);
   const isMobile = useIsMobile(768);
@@ -631,7 +636,7 @@ export default function ScheduleTimeline({
           </button>
         </div>
 
-        <div className={styles.dayNav}>
+        {dayProp === undefined && <div className={styles.dayNav}>
           <button
             type="button"
             className={styles.dayBtn}
@@ -657,7 +662,7 @@ export default function ScheduleTimeline({
           >
             <ChevronRight size={16} />
           </button>
-        </div>
+        </div>}
       </div>
 
       {/* ── conflict legend — explains the colour code when clashes are visible ── */}

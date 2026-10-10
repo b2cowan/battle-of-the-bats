@@ -1,4 +1,4 @@
-﻿/* ─── Shared Admin Styles ─────────────────────────────────────────────────── */
+/* ─── Shared Admin Styles ─────────────────────────────────────────────────── */
 /* Used by Teams, Schedule, and Results admin pages                           */
 
 /* ─── Page Layout ─────────────────────────────────────────────────────────── */
@@ -134,8 +134,6 @@
   flex-wrap: wrap;
 }
 
-.statusFilters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-
 .filterChip {
   display: inline-flex;
   align-items: center;
@@ -203,14 +201,8 @@
 
 /* ─── Schedule game-status chip variants ─────────────────────────────────── */
 .chip_all::before       { background: rgba(148, 163, 184, 0.45); }
-.chip_scheduled::before { background: rgba(148, 163, 184, 0.45); }
-.chip_cancelled::before { background: var(--danger); }
-.chip_completed::before { background: var(--success); }
 
 .chipActive.chip_all       { border-color: rgba(var(--logic-lime-rgb), 0.4); background: rgba(var(--logic-lime-rgb), 0.06); color: var(--logic-lime); }
-.chipActive.chip_scheduled { border-color: rgba(148, 163, 184, 0.35); background: rgba(148, 163, 184, 0.07); color: rgba(148, 163, 184, 0.85); }
-.chipActive.chip_cancelled { border-color: rgba(var(--danger-rgb), 0.5);   background: rgba(var(--danger-rgb), 0.08);   color: var(--danger); }
-.chipActive.chip_completed { border-color: rgba(var(--success-rgb), 0.5);   background: rgba(var(--success-rgb), 0.08);   color: var(--success); }
 
 /* ─── Search ──────────────────────────────────────────────────────────────── */
 .searchWrapper {
@@ -571,15 +563,12 @@
 :global([data-admin-kit]) .chip_pending::before,
 :global([data-admin-kit]) .chip_pay_unpaid::before { background: var(--warning); }
 :global([data-admin-kit]) .chip_accepted::before,
-:global([data-admin-kit]) .chip_pay_paid::before,
-:global([data-admin-kit]) .chip_completed::before { background: var(--success); }
+:global([data-admin-kit]) .chip_pay_paid::before { background: var(--success); }
 :global([data-admin-kit]) .chip_waitlist::before,
 :global([data-admin-kit]) .chip_pay_deposit::before { background: var(--info); }
 :global([data-admin-kit]) .chip_rejected::before,
-:global([data-admin-kit]) .chip_pay_pastdue::before,
-:global([data-admin-kit]) .chip_cancelled::before { background: var(--danger); }
-:global([data-admin-kit]) .chip_all::before,
-:global([data-admin-kit]) .chip_scheduled::before { background: var(--text-tertiary); }
+:global([data-admin-kit]) .chip_pay_pastdue::before { background: var(--danger); }
+:global([data-admin-kit]) .chip_all::before { background: var(--text-tertiary); }
 @media (max-width: 768px) {
   :global([data-admin-kit]) .filterChip { min-height: var(--tap-min, 44px); }
 }
