@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 const CAPABILITIES = [
   {
-    name: 'Bracket Generator',
-    desc: 'Build single or double-elimination brackets in seconds. Seeding, bye assignment, and bracket advancement are handled automatically.',
+    name: 'Playoff Generator',
+    desc: 'Seed and schedule single or double-elimination playoffs in seconds. Byes and advancement are handled automatically.',
   },
   {
     name: 'Live Scorekeeping',
@@ -20,8 +20,8 @@ const CAPABILITIES = [
     desc: 'Start with standard team registration on the free plan. Tournament Plus adds custom questions, file collection, Excel and PDF exports for check-in and insurance submissions, and waitlist workflows.',
   },
   {
-    name: 'Schedule Generator',
-    desc: 'Automated game scheduling across fields and time slots. Minimize conflicts, balance rest, and publish in one click.',
+    name: 'Round-Robin Generator',
+    desc: 'Pairs every team and finds each game a field and a time. Three ranked drafts balance rest and field moves; you pick one, adjust by hand, and publish.',
   },
   {
     name: 'Venue Management',

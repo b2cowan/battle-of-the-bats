@@ -1591,8 +1591,8 @@ export default function AdminDashboard() {
           </>
         ) : (
           <div className={styles.emptyPanel}>
-            <span>No timed schedule generated yet.</span>
-            <Link href={`${base}/schedule`} className={styles.panelLink}>Build schedule →</Link>
+            <span>No games have times yet.</span>
+            <Link href={`${base}/schedule`} className={styles.panelLink}>Open the schedule →</Link>
           </div>
         );
   }

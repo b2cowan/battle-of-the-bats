@@ -19,6 +19,9 @@ import { formatShortWeekdayDate } from './timezone.ts';
 import { fanSlotLabel } from './playoff-bracket.ts';
 import type { ScheduleStage, ScheduleState, ScheduleView } from './schedule-day.ts';
 
+/** A division's (or a team's) possessive: "U13's", but "U11 Girls'" — a name ending in s takes the apostrophe alone. */
+export const possessive = (name: string) => (/s$/i.test(name.trim()) ? `${name}'` : `${name}'s`);
+
 // ── THE DAY (Stage 3 build, Part 2 — S1, A33, A44; /marketing 2026-10-09) ────────────────────────────────────────
 
 /** The two paid tools and the free one, by name (A34 as amended 2026-10-09: a door names the tool it opens). */
@@ -101,7 +104,7 @@ export const SCHEDULE_DAY_WORDS = {
   },
   /** Unpublish, from Tools (/marketing 2026-10-09). */
   unpublishTitle: (division: string) => `Unpublish ${division}?`,
-  unpublishBody: (division: string) => `${division}'s games come off the public schedule. Registration stays closed; reopen it yourself if you want new sign-ups.`,
+  unpublishBody: (division: string) => `${possessive(division)} games come off the public schedule. Registration stays closed; reopen it yourself if you want new sign-ups.`,
   unpublishConfirm: (division: string) => `Unpublish ${division}`,
   unpublishAllTitle: (n: number) => `Unpublish all ${n} divisions?`,
   unpublishAllBody: 'Their games come off the public schedule; you can publish them again at any time. Registration stays closed; reopen it yourself if you want new sign-ups.',
@@ -116,60 +119,156 @@ export const SCHEDULE_DAY_WORDS = {
   },
 } as const;
 
-export interface DraftSaveCounts {
+// ── THE ROUND-ROBIN GENERATOR (Stage 3 build, Part 5 — S3, A34, A40; /marketing 2026-10-09) ──────────────────────
+
+/** What a draft's save does to its division, counted (the generator's one statement, and its replace question). */
+export interface DraftStatementCounts {
   division: string;
   /** The draft's new games. */
   added: number;
-  /** The division's round-robin games still to play (scheduled, not kept) the save removes. */
+  /** The division's round-robin games still to play (scheduled, not kept) the save replaces. */
   replaced: number;
-  /** Every game the save leaves alone: results, cancelled, kept, and playoff games. */
+  /** Round-robin games already played or waiting on a score: they stay, with their scores. */
+  played: number;
+  /** Games still to play the organizer marked Keep: they stay where they are. */
   kept: number;
-  /** Slot-based drafts save placeholders, not teams, and say so in their own words. */
-  slotBased: boolean;
-  /** The division's schedule is on the public page, so the new games show there as soon as they save. */
+  /** Everything else the save leaves alone (its playoff games, a cancelled game). */
+  other: number;
+  /** The division's schedule is on the public site and in the app. */
   published: boolean;
 }
 
-/** The generator's save question (the "Commit Schedule?" window). */
-export function draftSaveQuestion(c: DraftSaveCounts): string {
-  const sentences: string[] = [];
-  if (c.added === 0 && c.replaced === 0) return 'There is nothing to save.';
-  if (c.added === 0) {
-    sentences.push(`This will remove ${count(c.replaced, 'game still to play', 'games still to play')} from ${c.division}. There are no new games to add.`);
-  } else {
-    const what = c.slotBased ? 'a slot-based schedule' : count(c.added, 'new game', 'new games');
-    const replace = c.replaced > 0 ? ` and replace ${count(c.replaced, 'game still to play', 'games still to play')}` : '';
-    sentences.push(`This will save ${what} for ${c.division}${replace}.`);
-  }
-  if (c.kept > 0) sentences.push(`${count(c.kept, 'game stays as it is', 'games stay as they are')}.`);
-  if (c.published && c.added > 0) {
-    sentences.push(`${c.division} is published, so the new games show on the public schedule right away. No one is notified.`);
-  }
-  return sentences.join(' ');
-}
-
-/** The label of the readout above the generator's form AND of the preview's summary band — one word for both. */
-export const DRAFT_SAVE_LABEL = 'On save';
-
-/** The one-line readout above the generator's form, shown when the division already has games. */
-export function draftSaveReadout(kept: number, replaced: number): string {
-  const keeps = `Keeps ${count(kept, 'game', 'games')}.`;
-  return replaced > 0
-    ? `${keeps} Replaces ${count(replaced, 'game still to play', 'games still to play')}.`
-    : `${keeps} Nothing to replace.`;
-}
-
-/** The preview's summary band: after DRAFT_SAVE_LABEL, the three counts' words (kept · replaced · new). */
-export const DRAFT_SAVE_BAND = { kept: 'kept', replaced: 'replaced', added: 'new' } as const;
-
 /**
- * The schedule list's Keep / Release tooltips on a ROUND-ROBIN game (a draft never replaces a kept one). Playoff rows
- * keep their own words: the playoff window still has its "Build from current" mode.
+ * The statement under the chosen draft — what saving does, before anything is saved (S3): "Saving adds 12 games to
+ * U11. U11 has none yet, so nothing is replaced. …" or "Saving changes U13's games." with what it adds, replaces and
+ * keeps.
  */
-export const KEEP_WORDS = {
-  keptBadge: 'Kept. A new draft will not replace this game.',
-  keep: 'Keep this game. Saving a new draft will leave it where it is.',
-  release: 'Release this game. The next draft can replace it if it is still to play.',
+export function draftStatement(c: DraftStatementCounts): { lead: string; rest: string; bullets: string[] } {
+  const games = (n: number) => count(n, 'game', 'games');
+  if (c.added === 0 && c.replaced === 0) return { lead: 'There is nothing to save.', rest: '', bullets: [] };
+  if (c.replaced === 0 && c.played === 0 && c.kept === 0 && c.other === 0) {
+    return {
+      lead: `Saving adds ${games(c.added)} to ${c.division}.`,
+      rest: ` ${c.division} has none yet, so nothing is replaced. ${c.published
+        ? 'They show on the public site and in the app as soon as you save.'
+        : `They aren't published yet: teams and families see them once you publish ${c.division}.`}`,
+      bullets: [],
+    };
+  }
+  const bullets: string[] = [];
+  if (c.added > 0) bullets.push(`Adds ${games(c.added)} from this draft`);
+  if (c.replaced > 0) bullets.push(`${c.added > 0 ? 'Replaces' : 'Removes'} ${count(c.replaced, 'game still to play', 'games still to play')}`);
+  const played = c.played > 0 ? `${count(c.played, 'played game and its score', 'played games and their scores')}` : '';
+  const kept = c.kept > 0 ? `${count(c.kept, 'game you marked Keep', 'games you marked Keep')}` : '';
+  if (played || kept) bullets.push(`Keeps ${[played, kept].filter(Boolean).join(', and ')}`);
+  if (c.other > 0) bullets.push(`Leaves its ${count(c.other, 'other game', 'other games')} as ${c.other === 1 ? 'it is' : 'they are'}`);
+  return { lead: `Saving changes ${possessive(c.division)} games.`, rest: '', bullets };
+}
+
+export const GENERATOR_WORDS = {
+  title: 'Round-robin generator',
+  caption: {
+    settings: (tournament: string) => `${tournament} · step 1 of 2 · settings`,
+    drafts: (tournament: string, division: string) => `${tournament} · step 2 of 2 · drafts for ${division}`,
+  },
+  sections: { pairs: 'What it pairs', when: 'When', where: 'Where', rules: 'Rules' },
+  fields: {
+    division: 'Division',
+    gamesPerTeam: 'Games per team',
+    gamesPerSlot: 'Games per slot',
+    gamesPerTeamHint: 'Round-robin rounds to generate, not a guaranteed game count. With an odd number of teams, one gets a bye each round and plays one fewer game.',
+    pair: 'Pair',
+    pairTeams: 'The accepted teams',
+    pairSlots: 'Slots now, the teams later',
+    pairSlotsHint: (division: string, pooled: boolean) => (pooled
+      ? 'Builds the games with placeholder names ("Pool A Team 1") so you can lay out the schedule before teams are final. Assign real teams to the slots; the public schedule shows real names once you publish.'
+      : `Builds the games with placeholder names ("${division} Team 1") without pools. Assign real teams; the public schedule shows real names once you publish.`),
+    slots: (pool: string) => `${pool} slots`,
+    day: 'Day',
+    from: 'From',
+    until: 'Until',
+    addDay: 'Add a day',
+    removeDay: (day: string) => `Remove ${day}`,
+    chooseDay: 'Choose a day',
+    gameLength: 'Game length',
+    gameLengthHint: 'Saved on every game it makes',
+    turnover: 'Turnover',
+    turnoverHint: (noun: string) => `Between games on one ${noun.toLowerCase()}`,
+    minutes: (n: number) => `${n} min`,
+    aimFor: 'Aim for',
+    moreRules: 'More rules',
+    fewerRules: 'Fewer rules',
+    rulesSummary: (perDay: number, rest: number) => `Most ${perDay} games a day · ${rest} min rest`,
+    maxPerDay: 'Most games a day, per team',
+    minRest: 'Rest between a team\'s games',
+    effort: 'How many drafts it tries',
+    effortChoices: { 12: 'Fewer, faster', 24: 'Balanced', 40: 'The most' } as Record<number, string>,
+    avoidBackToBack: 'Avoid back-to-back games',
+    fewerMoves: 'Keep teams on one field',
+    balanceEarlyLate: 'Spread early and late games',
+    allFields: 'All',
+    noFields: 'None',
+    temporary: 'Use temporary facilities',
+    temporaryHint: 'Generate now and place the games on real fields later.',
+    temporaryCount: 'Facilities',
+  },
+  /** The presets' names in the Aim for dropdown (ids are the engine's). */
+  presets: { balanced: 'Balanced', rest: 'Rest-friendly', compact: 'Compact', facility: 'Fewest field moves', early: 'Younger teams earlier', custom: 'Your own rules' } as Record<string, string>,
+  /** The other divisions' kept games, drawn as taken (F69 made the drafts leave them free). */
+  taken: (opts: { divisions: string[]; games: number; fields: string[]; days: string[]; times: string[] }) => {
+    const list = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+    const verb = opts.games === 1 ? 'holds' : 'hold';
+    const where = `${list(opts.fields)} on ${list(opts.days)}`;
+    const first = opts.divisions.length === 1
+      ? `${possessive(opts.divisions[0])} ${count(opts.games, 'game', 'games')} ${verb} ${where}${opts.times.length && opts.times.length <= 4 ? ` at ${list(opts.times)}` : ''}`
+      : `Other divisions' ${count(opts.games, 'game', 'games')} ${verb} ${where}`;
+    // A clock ending "p.m." already ends the sentence: one period, never two.
+    return `${first}${first.endsWith('.') ? '' : '.'} The drafts leave those times free.`;
+  },
+  noGamesYet: (division: string) => `${division} has no games yet.`,
+  hasGames: (division: string, n: number) => `${division} has ${count(n, 'game', 'games')}.`,
+  generate: 'Generate drafts',
+  threeMore: 'Three more drafts',
+  backToSettings: 'Back to settings',
+  settings: 'Settings',
+  save: 'Save this schedule',
+  saveReplace: (n: number) => `Save and replace ${count(n, 'game', 'games')}`,
+  seeGames: (n: number) => `See its ${count(n, 'game', 'games')}`,
+  hideGames: 'Hide its games',
+  draftsLabel: 'Drafts',
+  /** A draft card: its rank's name, then what decides between them. */
+  cards: {
+    best: 'Best overall', moves: 'Fewest field moves', rest: 'Best rest', backToBacks: 'Fewest back-to-backs',
+    lightDays: 'Lightest days', health: 'Highest health', other: (n: number) => `Draft ${n}`, current: 'Current schedule',
+  },
+  measures: {
+    noClashes: (others: string) => `No clashes with ${others}`,
+    loadAndMoves: (backToBacks: number, moves: number) => `${count(backToBacks, 'back-to-back', 'back-to-backs')} · ${count(moves, 'field move', 'field moves')}`,
+    shortestRest: (rest: string) => `Shortest rest ${rest}`,
+    clubOne: (where: string) => `1 game on a club booking: ${where}`,
+    clubMany: (n: number) => `${n} games on a club booking`,
+    clubClear: 'Clear of club bookings',
+  },
+  others: (names: string[]) => (names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} and ${names[1]}` : `${names.length} other divisions`),
+  /** The replace asks once (the lime names the replace; this is its question). */
+  replace: {
+    title: (n: number) => `Replace ${count(n, 'game', 'games')} still to play?`,
+    published: (division: string) => `${division} is published. Where two teams still meet, their followers are told the new time, and a game this draft drops is told as cancelled. A new pairing appears on the schedule without an alert.`,
+    unpublished: (division: string) => `${division} isn't published, so nobody is told.`,
+    back: 'Back',
+    go: (n: number) => `Replace ${count(n, 'game', 'games')}`,
+  },
+  slotDraftNote: (pooled: boolean) => (pooled
+    ? 'These are placeholder games. Assign real teams to the slots; the public schedule shows real names once you publish.'
+    : 'These placeholder games need no pools. Save them now, then assign real teams by hand or generate again from the teams.'),
+  errors: {
+    chooseDays: 'Choose a day for every row of When.',
+    twoTeams: 'It needs at least 2 accepted teams to pair.',
+    noMatchups: 'There is nothing to pair. Check the pools.',
+    noSlotMatchups: 'There is nothing to pair. Give each pool at least 2 slots.',
+    notEnoughSlots: (need: number, have: number, noun: string) => `There is room for ${count(have, 'game', 'games')} and the draft needs ${need}. Add a day, widen the hours, choose more ${noun.toLowerCase()}s, or shorten the game length.`,
+    noDraft: 'No draft fits without two games for one team at once. Add a day or a field.',
+  },
 } as const;
 
 /** The one-step save's replies (the games route; shown in the generator's error band, the draft still on screen). */
@@ -256,7 +355,7 @@ export const GAME_WINDOW_WORDS = {
   minutes: (n: number) => `${n} min`,
   /** The Length box's placeholder: what the game plays for when its own box is empty (A39's chain, said once). */
   inheritedLength: (by: 'division' | 'event', divisionName: string, n: number) =>
-    by === 'division' ? `${divisionName}'s ${n} min` : `The event's ${n} min`,
+    by === 'division' ? `${possessive(divisionName)} ${n} min` : `The event's ${n} min`,
   score: {
     startsAt: (time: string) => `Starts at ${time}`,
     startedAt: (time: string) => `Started at ${time}`,

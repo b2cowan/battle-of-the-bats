@@ -110,7 +110,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
   tournament_plus: {
     billingQuestion: 'Ready to stop building your schedule by hand?',
     billingSub:
-      "Tournament Plus handles schedule generation, brackets, and email communications — so you're not starting from scratch for every event.",
+      "Tournament Plus handles the round robin, the playoffs and your email to teams — so you're not starting from scratch for every event.",
     eyebrow: 'Tournament Plus',
     panelHeadline: 'From first registration to final standings.',
     painHeadline: 'If this is your tournament setup, we know the drill.',
@@ -150,7 +150,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
         num: '02',
         label: 'Scheduling',
         title: 'Games fill themselves in.',
-        body: 'Set your fields and time slots. The schedule generator fills games, minimizes conflicts, and balances rest. Publish in one click.',
+        body: 'Set your fields and time slots. The round-robin generator fills games, minimizes conflicts, and balances rest. Publish in one click.',
       },
       {
         num: '03',
@@ -175,7 +175,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
     featuresLabel: 'Everything in Tournament, plus',
     features: [
       'Unlimited active tournaments',
-      'Automated schedule generation and playoff bracket builder',
+      'Round-robin and playoff generators',
       'Custom registration fields, file uploads, and waitlist promotion',
       'Registration exports — Excel, CSV, and PDF',
       'Advanced payment tracking and post-tournament reporting',

@@ -2,17 +2,6 @@
 /* Common styles live in ../admin-common.module.css                           */
 
 /* ─── Generator Overlay & Modal ───────────────────────────────────────────── */
-.generatorOverlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.85);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
 
 .generatorModal {
   background: var(--surface);
@@ -25,55 +14,7 @@
   flex-direction: column;
 }
 
-.generatorHeader {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.generatorHeader h3 {
-  margin: 0;
-  font-family: var(--font-data);
-  font-size: 0.82rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.generatorForm, .generatorPreview {
-  padding: 1.5rem;
-  overflow-y: auto;
-}
-
 /* Bring global form-group/form-label/inputs into HUD data-font density */
-.generatorForm :global(.form-label) {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--white-50);
-  margin-bottom: 0.3rem;
-}
-
-.generatorForm :global(.form-group) {
-  margin-bottom: 0.75rem;
-}
-
-.generatorForm :global(.form-input),
-.generatorForm :global(.form-select) {
-  height: 30px;
-  min-height: 30px;
-  font-size: 0.82rem;
-  padding-top: 0;
-  padding-bottom: 0;
-}
 
 /* accent-color removed — global branded checkbox handles this */
 
@@ -241,43 +182,6 @@
   text-transform: uppercase;
 }
 
-.slotControlGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 0.6rem;
-  margin-top: 0.5rem;
-}
-
-.slotCountControl {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 74px;
-  align-items: center;
-  gap: 0.45rem;
-  min-width: 0;
-  padding: 0.55rem 0.6rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  background: var(--white-5);
-}
-
-.slotCountControl span,
-.slotCountControl small {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.slotCountControl span {
-  color: var(--white-75);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.slotCountControl small {
-  grid-column: 1 / -1;
-  color: var(--white-45);
-  font-size: 0.68rem;
-  line-height: 1.3;
-}
-
 .priorityPanel {
   margin: 1rem 0;
   padding: 0.85rem;
@@ -312,50 +216,6 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.presetRail {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.35rem;
-  margin-bottom: 0.45rem;
-}
-
-.presetButton {
-  min-width: 0;
-  min-height: 30px;
-  padding: 0.32rem 0.42rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.045);
-  color: var(--white-60);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  line-height: 1.18;
-  text-transform: uppercase;
-  cursor: pointer;
-  overflow-wrap: anywhere;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-
-.presetButton:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.35);
-  color: var(--white-85);
-}
-
-.presetButtonActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.48);
-  background: rgba(var(--logic-lime-rgb), 0.09);
-  color: var(--logic-lime);
-}
-
-.presetHint {
-  margin: 0 0 0.75rem;
-  color: var(--white-45);
-  font-size: 0.68rem;
-  line-height: 1.35;
 }
 
 .prioritySection + .prioritySection {
@@ -429,103 +289,6 @@
   text-transform: uppercase;
 }
 
-.draftOptionGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.45rem;
-  margin: 0.55rem 0 0.75rem;
-}
-
-.draftOptionCard {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.22rem 0.45rem;
-  min-width: 0;
-  min-height: 62px;
-  padding: 0.5rem 0.55rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  border-radius: 2px;
-  background: var(--white-5);
-  color: var(--white-70);
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-
-.draftOptionCard:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.34);
-  color: var(--white-85);
-}
-
-.draftOptionCardActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
-}
-
-.draftOptionCard span,
-.draftOptionCard strong,
-.draftOptionCard em {
-  min-width: 0;
-}
-
-.draftOptionCard span {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  line-height: 1.25;
-  text-transform: uppercase;
-  overflow-wrap: anywhere;
-}
-
-.draftOptionCard strong {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.08rem;
-  color: var(--white-90);
-  font-family: var(--font-data);
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.draftOptionCardActive strong {
-  color: var(--logic-lime);
-}
-
-.draftOptionCard strong small {
-  color: var(--white-45);
-  font-size: 0.54rem;
-}
-
-.draftOptionCard em {
-  grid-column: 1 / -1;
-  color: var(--white-45);
-  font-style: normal;
-  font-size: 0.62rem;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-}
-
-.previewStats {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.55rem 0.75rem;
-  background: var(--bg-2);
-  border-radius: 2px;
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  color: var(--white-70);
-}
-
-.previewStats strong {
-  color: var(--fl-text);
-  font-weight: 800;
-}
-
 .previewActions {
   display: flex;
   align-items: center;
@@ -534,42 +297,7 @@
   flex-wrap: wrap;
 }
 
-.previewTableWrap {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-}
-
-.previewTableWrap table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
 /* Heading type, ink and ground are the baseline's (table standard, register F-07). */
-.previewTableWrap th {
-  text-align: left;
-  padding: var(--table-pad-compact) 0.65rem;
-}
-
-.previewTableWrap td {
-  padding: 0.5rem 0.65rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  color: var(--white-80);
-  vertical-align: middle;
-}
-
-.previewFooter {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  margin-top: auto;
-}
 
 .healthPanel {
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
@@ -1205,18 +933,6 @@
 }
 
 @media (max-width: 768px) {
-  .slotControlGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .presetRail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .scopeStrip {
-    grid-template-columns: 1fr;
-    gap: 0.55rem;
-  }
 
   .partialPreviewSummary {
     grid-template-columns: repeat(2, auto auto);
@@ -1225,10 +941,6 @@
 
   .partialPreviewSummary span {
     grid-column: 1 / -1;
-  }
-
-  .draftOptionGrid {
-    grid-template-columns: 1fr;
   }
 
   .prioritySectionHeader,
@@ -1355,22 +1067,6 @@
   cursor: default;
 }
 
-.scopeStrip {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.75rem;
-  margin: -0.25rem 0 1rem;
-  padding: 0.55rem 0.65rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  background: rgba(var(--blueprint-blue-rgb), 0.045);
-}
-
-.scopeCopy {
-  min-width: 0;
-}
-
-.scopeCopy span,
 .partialPreviewSummary span {
   display: block;
   color: var(--logic-lime);
@@ -1379,14 +1075,6 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.scopeCopy small {
-  display: block;
-  margin-top: 0.15rem;
-  color: var(--white-45);
-  font-size: 0.68rem;
-  line-height: 1.3;
 }
 
 .partialPreviewSummary {
@@ -1579,29 +1267,6 @@
   margin: 0;
 }
 
-/* ─── Generate Button ────────────────────────────────────────────────────── */
-.generateBtnWrap {
-  text-align: right;
-  margin-top: 1.25rem;
-}
-
-/* ─── Generator Step Section Labels ─────────────────────────────────────── */
-.generatorSection {
-  margin-bottom: 1.5rem;
-}
-
-.generatorStepLabel {
-  margin: 0 0 0.75rem;
-  padding-bottom: 0.45rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  color: rgba(var(--logic-lime-rgb), 0.65);
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 /* ─── Advanced Settings Drawer ───────────────────────────────────────────── */
 .advancedDrawer {
   margin-top: 0.75rem;
@@ -1663,17 +1328,8 @@
 }
 
 /* ─── Generator Mobile: bottom-sheet at ≤540px ───────────────────────────── */
-@media (max-width: 680px) {
-  .generatorOverlay {
-    padding: 1rem;
-  }
-}
 
 @media (max-width: 540px) {
-  .generatorOverlay {
-    padding: 0;
-    align-items: flex-end;
-  }
 
   .generatorModal {
     border-radius: 12px 12px 0 0;
@@ -2571,7 +2227,6 @@
    (the extra attribute selector adds a point), but ties with another KIT rule of the same shape — so
    every modifier a base class carries in the legacy sheet above is restated here, base rule first. */
 
-
 /* ── Live-game chip + row stripe — "Live = the portal's red", not the brand lime ── */
 :global([data-admin-kit]) .liveChip[data-live="live"]    { color: var(--home-live); background: var(--home-live-soft); }
 :global([data-admin-kit]) .liveChip[data-live="overdue"] { color: var(--warning-light); }
@@ -3039,48 +2694,15 @@
    window: home-scrim behind, card-bg ground, a neutral hairline edge, 12px radius,
    home-shadow). The 12px radius is restated inside the ≤540px media query below: my own higher-
    specificity base rule would otherwise flatten the mobile sheet's intentional square bottom. ── */
-:global([data-admin-kit]) .generatorOverlay {
-  background: var(--home-scrim);
-}
 :global([data-admin-kit]) .generatorModal {
   background: var(--card-bg);
   border-color: var(--home-line);
   border-radius: 12px;
   box-shadow: var(--home-shadow);
 }
-:global([data-admin-kit]) .generatorHeader {
-  border-bottom-color: var(--home-line);
-}
-/* Window title — same recipe as the shared .modal-header h3 kit rule (app/globals.css): a heading,
-   not an eyebrow, so it leaves the mono/uppercase/lime treatment. */
-:global([data-admin-kit]) .generatorHeader h3 {
-  font-family: var(--font-display);
-  font-size: var(--type-heading);
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-primary);
-}
-
-/* This local rule reaches the global .form-label at (0,2,0) — it ties the zero-weight global kit
-   field-label rule in app/globals.css and wins on source order, so the HUD data-font density under
-   the generator survives the switch unless restated here. .form-group/.form-input/.form-select carry
-   no colour in this local block (only sizing), so the global kit field rule already repaints them
-   unopposed — no restatement needed for those three. */
-:global([data-admin-kit]) .generatorForm :global(.form-label) {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: none;
-  color: var(--text-tertiary);
-}
 
 /* ── Step section labels ("1. Schedule Setup") — an eyebrow: mono/uppercase stays, ink moves off the
    accent (KIT_INK.eyebrow's own recipe is secondary ink, not accent) and the rule keeps a neutral edge. ── */
-:global([data-admin-kit]) .generatorStepLabel {
-  color: var(--text-secondary);
-  border-bottom-color: var(--home-line);
-}
 
 /* ── Segmented toggles (Team-based/Slot-based) — the divided-button structure stays (border-right
    dividers, not per-pill borders); only chrome + tone move. Chosen = the kit's olive selection.
@@ -3108,16 +2730,8 @@
 }
 
 /* ── The "On save" readout strip — a recessed band inside the generator's own card. ── */
-:global([data-admin-kit]) .scopeStrip {
-  background: var(--home-paper);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) .scopeCopy span,
 :global([data-admin-kit]) .partialPreviewSummary span {
   color: var(--text-secondary);
-}
-:global([data-admin-kit]) .scopeCopy small {
-  color: var(--text-tertiary);
 }
 
 /* ── The preview's "On save" stat strip — neutral recessed band; the counts are readouts (mono stays). ── */
@@ -3143,60 +2757,6 @@
   color: var(--text-tertiary);
 }
 
-/* ── Draft option cards — unchosen = a quiet option card, chosen = the kit's olive selection. ── */
-:global([data-admin-kit]) .draftOptionCard {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .draftOptionCard:hover {
-  border-color: var(--home-olive);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .draftOptionCardActive {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .draftOptionCard strong {
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .draftOptionCardActive strong {
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .draftOptionCard strong small {
-  color: var(--text-tertiary);
-}
-/* The detail line ("Health 87/100 | B2B 2 | Moves 3 | Max/day 3") reads as a fact sentence, not a bare
-   figure — decided at build time like GameList's .venueInDate: moves to the body face. */
-:global([data-admin-kit]) .draftOptionCard em {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-
-/* ── Preview stats strip + table. ── */
-:global([data-admin-kit]) .previewStats {
-  background: var(--home-paper);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .previewStats strong {
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .previewTableWrap {
-  border-color: var(--home-line);
-}
-/* th is unstyled here on purpose — the bare `th` element already carries the table standard's head
-   recipe globally (app/globals.css), which resolves through the warm/kit remap with no local rule. */
-:global([data-admin-kit]) .previewTableWrap td {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-secondary);
-  border-top-color: var(--home-line);
-}
-:global([data-admin-kit]) .previewFooter {
-  border-top-color: var(--home-line);
-}
-
 /* ── Scheduling Priorities panel (presets + advanced drawer). ── */
 :global([data-admin-kit]) .priorityPanel {
   background: var(--home-paper);
@@ -3206,28 +2766,6 @@
   color: var(--text-secondary);
 }
 :global([data-admin-kit]) .priorityHeader small {
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .presetButton {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  border-radius: var(--radius-sm);
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .presetButton:hover {
-  border-color: var(--home-olive);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .presetButtonActive {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .presetHint {
   color: var(--text-tertiary);
 }
 :global([data-admin-kit]) .prioritySection + .prioritySection {
@@ -3291,18 +2829,6 @@
    which this block does not touch). ── */
 :global([data-admin-kit]) .fieldHint {
   font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-
-/* ── Slot counts (slot-based mode). ── */
-:global([data-admin-kit]) .slotCountControl {
-  background: var(--home-paper);
-  border-color: var(--home-line);
-}
-:global([data-admin-kit]) .slotCountControl span {
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .slotCountControl small {
   color: var(--text-tertiary);
 }
 

@@ -216,9 +216,9 @@ export function requiresPlanCopy(feature: PlanFeature): string {
 export function requiresTournamentPlusCopy(feature: PlanFeature): string {
   switch (feature) {
     case 'auto_schedule':
-      return 'Automated schedule generation is included with Tournament Plus, League Plus, and Club.';
+      return 'The round-robin generator is included with Tournament Plus, League Plus, and Club.';
     case 'playoff_generator':
-      return 'The playoff bracket generator is included with Tournament Plus, League Plus, and Club.';
+      return 'The playoff generator is included with Tournament Plus, League Plus, and Club.';
     case 'sealed_archives':
       return 'Permanent sealed archives are included with Tournament Plus, League Plus, and Club.';
     case 'advanced_tournament_branding':

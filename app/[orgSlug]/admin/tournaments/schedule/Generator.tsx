@@ -1,16 +1,37 @@
 'use client';
-import { useState, useMemo, useRef } from 'react';
+/**
+ * THE ROUND-ROBIN GENERATOR — Tournament admin redesign Stage 3, S3 (A34, A40; ruled 2026-10-09, as drawn). One name on
+ * every door (A34 as amended), and two steps on the kit's form window (KitDialog — full screen with ← on a phone,
+ * the wide form at a desk):
+ *
+ *   1. SETTINGS — What it pairs · When · Where · Rules: today's content under plain headings. The other divisions'
+ *      saved games are drawn as taken (the defects pass made the drafts leave them free, F69); the game length is
+ *      saved on every game it makes (A39).
+ *   2. DRAFTS — three ranked cards that name what decides between them (clashes with the other divisions, back-to-
+ *      backs, field moves, the shortest rest, and the games landing on another of the club's bookings: 6a's amber,
+ *      which warns and never refuses); the chosen draft's games by day; ONE statement of what saving does; the lime
+ *      that says it. A replace asks once, and its teams ARE told (the route records it: moves, cancellations).
+ *
+ * Its logic is the defects pass's, kept: a draft replaces only games still to play and not kept, in one transaction
+ * (mig 320). The frame is tagged for Club Stage 11's scheduler (A40); nothing here is shared yet.
+ */
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { gameLengthMinutes } from '@/lib/booking-length';
-import { Sparkles, Check, X, RefreshCw, AlertCircle, Plus, Trash2, Info, SlidersHorizontal } from 'lucide-react';
-import { Team, Division, Venue, Game, Tournament } from '@/lib/types';
+import { AlertTriangle, Check, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { Team, Division, Venue, Game, Tournament, type OrgPlan } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
 import { slotsClearOfTakenGames, toConflictGame } from '@/lib/schedule-conflict';
-import { DRAFT_SAVE_BAND, DRAFT_SAVE_FAILED, DRAFT_SAVE_LABEL, draftSaveQuestion, draftSaveReadout, refusalReason } from '@/lib/schedule-words';
-import NumberStepper from '@/components/admin/NumberStepper';
-import FieldHint from '@/components/help/FieldHint';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
+import { DRAFT_SAVE_FAILED, GENERATOR_WORDS as GW, SCHEDULE_DAY_WORDS as SW, draftStatement, refusalReason } from '@/lib/schedule-words';
+import { fieldNounFor } from '@/lib/sports';
+import { formatShortWeekdayDate } from '@/lib/timezone';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import { clashLine, clashLineText } from '@/lib/venue-clash-words';
+import type { ClashFinding } from '@/lib/venue-clash';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { Callout, ClubRow, ClubRowBand, ClubRowFrame, ClubRowList } from '@/components/admin/kit/club/RepKit';
+import { CheckChoice, screenParts } from '@/components/admin/tournament/ScreenParts';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
   defaultSchedulePriorities,
   generateScoredScheduleDrafts,
@@ -21,8 +42,7 @@ import {
   type ScheduleDraftSlot,
   type SchedulePrioritySettings,
 } from '@/lib/schedule-generator';
-import ScheduleHealthPanel from './components/ScheduleHealthPanel';
-import styles from './schedule-admin.module.css';
+import gen from './Generator.module.css';
 
 interface DateSlot {
   date: string;
@@ -54,8 +74,9 @@ interface DraftOptimizationSummary {
 interface DraftOption {
   id: string;
   label: string;
-  detail: string;
   summary: DraftOptimizationSummary;
+  /** What decides between the drafts, in their cards' words (S3). */
+  metrics: { backToBacks: number; moves: number; minRest: number | null };
   games: Omit<Game, 'id'>[];
   slotGames: SlotGame[];
   gamesToCommit: Omit<Game, 'id'>[];
@@ -91,12 +112,6 @@ interface PartialGenerationContext {
 }
 
 const DIVISION_SLOT_POOL_ID = '__division__';
-const EFFORT_DESCRIPTIONS: Record<number, string> = {
-  12: 'Fast checks fewer drafts and returns quicker.',
-  24: 'Balanced checks more drafts without making generation feel slow.',
-  40: 'Deep checks the most drafts for tougher schedules.',
-};
-
 const SCHEDULE_PRESETS: SchedulePreset[] = [
   {
     id: 'balanced',
@@ -158,8 +173,6 @@ const SCHEDULE_PRESETS: SchedulePreset[] = [
   },
 ];
 
-const CUSTOM_PRESET_DESCRIPTION = 'Custom settings are active.';
-
 function venueResourceKey(venueId: string) {
   return `venue:${venueId}`;
 }
@@ -177,6 +190,8 @@ function getVenueResourceKeys(venue: Venue): string[] {
 interface GeneratorProps {
   tournament: Tournament;
   orgSlug?: string;
+  /** The org's plan: a club with a Venue library asks the club's check about the drafts. */
+  planId?: OrgPlan | null;
   divisions: Division[];
   /** Division to open on; falls back to the first division. */
   defaultDivisionId?: string;
@@ -189,22 +204,11 @@ interface GeneratorProps {
   onStale?: () => void;
 }
 
-export default function ScheduleGenerator({ tournament, orgSlug, divisions, defaultDivisionId, teams, venues, existingGames = [], onComplete, onCancel, onStale }: GeneratorProps) {
-  const kx = useKitStyle();
-  // Kit patches for this file's hand-set inline styles (Admin Design Continuity slice 4c) — computed
-  // once per render, not inside a loop, so no useMemo/hoisting-out-of-map concern here.
-  const modeDescriptionStyle = kx({ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--white-40)', lineHeight: 1.5 }, KIT_INK.tertiary);
-  const addDateButtonStyle = kx({ color: 'var(--logic-lime)' }, KIT_INK.accent);
-  const slotModeInfoBannerStyle = kx(
-    { display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.65rem 0.85rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.65rem 0', fontSize: '0.75rem', color: 'var(--white-60)', lineHeight: 1.5 },
-    { background: 'rgba(var(--info-rgb), 0.08)', color: 'var(--text-secondary)', borderRadius: '8px' },
-  );
-  const slotModeInfoIconStyle = kx({ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }, KIT_INK.info);
-  const confirmIconWrapStyle = kx(
-    { width: '36px', height: '36px', borderRadius: '2px', background: 'var(--white-5)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.65rem', color: 'var(--logic-lime)' },
-    { borderRadius: '8px', background: 'var(--home-olive-soft)', color: 'var(--home-olive)' },
-  );
-
+export default function ScheduleGenerator({ tournament, orgSlug, planId, divisions, defaultDivisionId, teams, venues, existingGames = [], onComplete, onCancel, onStale }: GeneratorProps) {
+  const noun = fieldNounFor(tournament.sport);
+  const [showGames, setShowGames] = useState(false);
+  // The draft games that land on another of the club's bookings, by the draft game's key (6a's check; amber).
+  const [clubFindings, setClubFindings] = useState<Record<string, ClashFinding[]>>({});
   const [selectedGroupId, setSelectedGroupId] = useState(defaultDivisionId || divisions[0]?.id || '');
   // Initialize from tournament settings so generator matches event-level defaults.
   // The length box starts at the chosen division's length by THE chain (A39: the division's, else the tournament's,
@@ -252,18 +256,15 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
   const [gamesToCommit, setGamesToCommit] = useState<Omit<Game, 'id'>[]>([]);
   const [slotGamesToCommit, setSlotGamesToCommit] = useState<SlotGame[]>([]);
   const [replaceableGameIds, setReplaceableGameIds] = useState<string[]>([]);
-  const [preservedGameCount, setPreservedGameCount] = useState(0);
   const [replacementGameCount, setReplacementGameCount] = useState(0);
-  const [draftSummary, setDraftSummary] = useState<DraftOptimizationSummary | null>(null);
   const [draftOptions, setDraftOptions] = useState<DraftOption[]>([]);
   const [selectedDraftOptionIndex, setSelectedDraftOptionIndex] = useState(0);
   const [draftSetIndex, setDraftSetIndex] = useState(0);
   const [committing, setCommitting] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [askReplace, setAskReplace] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const hasPreview = generatedGames.length > 0 || generatedSlotGames.length > 0;
-  const previewCount = generatedGames.length || generatedSlotGames.length;
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
   const availableDates = useMemo(() => {
@@ -343,45 +344,9 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     return resources;
   }, [venues, selectedResourceKeys]);
   const selectedResourceCount = selectedResources.length;
-  const totalResourceCount = venues.reduce((total, venue) => total + (venue.facilities?.length || 1), 0);
-  const currentEffortDescription = EFFORT_DESCRIPTIONS[priorities.candidateCount] ?? EFFORT_DESCRIPTIONS[24];
   const selectedPreset = SCHEDULE_PRESETS.find(preset => preset.id === selectedPresetId);
-  const presetDescription = selectedPreset?.description ?? CUSTOM_PRESET_DESCRIPTION;
+  const presetDescription = selectedPreset?.description ?? '';
   const manualTravelBuffers = useMemo(() => resolveManualTravelBuffers({}, tournament), [tournament]);
-  const previewMetrics = useMemo(() => {
-    if (!hasPreview) return null;
-    const previewGames = generationMode === 'slot' ? generatedSlotGames : generatedGames;
-    return buildScheduleMetrics({
-      games: previewGames,
-      teams: generationMode === 'slot' ? [] : teams,
-      divisions,
-      venues,
-      tournament,
-      divisionId: selectedGroupId,
-      expectedGamesPerParticipant: gamesPerTeam,
-      gameDurationMinutes: gameLength,
-      bufferMinutes: breakLength,
-      manualTravelBuffers,
-      maxGamesPerDay: priorities.maxGamesPerDay,
-      // The preview carries the division's kept games (playoffs among them) beside the draft's.
-      includePlayoffs: true,
-    });
-  }, [
-    hasPreview,
-    generationMode,
-    generatedSlotGames,
-    generatedGames,
-    teams,
-    divisions,
-    venues,
-    tournament,
-    manualTravelBuffers,
-    selectedGroupId,
-    gamesPerTeam,
-    gameLength,
-    breakLength,
-    priorities.maxGamesPerDay,
-  ]);
 
   function defaultSlotCount(poolId: string): number {
     if (slotCountOverride[poolId] !== undefined) return slotCountOverride[poolId];
@@ -623,7 +588,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
       return {
         id: `draft-${index + 1}`,
         label,
-        detail: `Health ${draft.metrics.healthScore}/100 | B2B ${draft.metrics.backToBackCount} | Moves ${movement} | Max/day ${draft.metrics.maxGamesInDay}`,
+        metrics: { backToBacks: draft.metrics.backToBackCount, moves: movement, minRest: draft.metrics.minRestMinutes ?? null },
         summary: { score: draft.score, healthScore: draft.metrics.healthScore, candidateCount: draft.candidateCount },
         ...mapped,
         gamesToCommit: mapped.gamesToCommit ?? mapped.games,
@@ -643,14 +608,14 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     bestRest: number;
   }): string {
     const { index, draft, movement, baseline, bestMovement, bestBackToBack, bestMaxDay, bestRest } = params;
-    if (index === 0) return 'Best overall';
+    if (index === 0) return GW.cards.best;
     const baselineMovement = baseline.metrics.venueChangeCount + baseline.metrics.facilityChangeCount;
-    if (movement === bestMovement && movement < baselineMovement) return 'Fewest moves';
-    if (draft.metrics.backToBackCount === bestBackToBack && draft.metrics.backToBackCount < baseline.metrics.backToBackCount) return 'Fewest back-to-backs';
-    if ((draft.metrics.minRestMinutes ?? 0) === bestRest && (draft.metrics.minRestMinutes ?? 0) > (baseline.metrics.minRestMinutes ?? 0)) return 'Best rest';
-    if (draft.metrics.maxGamesInDay === bestMaxDay && draft.metrics.maxGamesInDay < baseline.metrics.maxGamesInDay) return 'Lightest days';
-    if (draft.metrics.healthScore > baseline.metrics.healthScore) return 'Highest health';
-    return `Option ${index + 1}`;
+    if (movement === bestMovement && movement < baselineMovement) return GW.cards.moves;
+    if (draft.metrics.backToBackCount === bestBackToBack && draft.metrics.backToBackCount < baseline.metrics.backToBackCount) return GW.cards.backToBacks;
+    if ((draft.metrics.minRestMinutes ?? 0) === bestRest && (draft.metrics.minRestMinutes ?? 0) > (baseline.metrics.minRestMinutes ?? 0)) return GW.cards.rest;
+    if (draft.metrics.maxGamesInDay === bestMaxDay && draft.metrics.maxGamesInDay < baseline.metrics.maxGamesInDay) return GW.cards.lightDays;
+    if (draft.metrics.healthScore > baseline.metrics.healthScore) return GW.cards.health;
+    return GW.cards.other(index + 1);
   }
 
   function applyDraftOptions(options: DraftOption[], draftSeed: number) {
@@ -663,12 +628,10 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     setGeneratedSlotGames(option.slotGames);
     setGamesToCommit(option.gamesToCommit);
     setSlotGamesToCommit(option.slotGamesToCommit);
-    setDraftSummary(option.summary);
   }
 
   function applyPartialPreviewContext(partial: PartialGenerationContext) {
     setReplaceableGameIds(partial.replaceableGames.map(game => game.id));
-    setPreservedGameCount(partial.preservedGames.length);
     setReplacementGameCount(partial.replaceableGames.length);
   }
 
@@ -680,12 +643,11 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     setGeneratedSlotGames(option.slotGames);
     setGamesToCommit(option.gamesToCommit);
     setSlotGamesToCommit(option.slotGamesToCommit);
-    setDraftSummary(option.summary);
   }
 
   function generate(draftSeed = 0) {
     setError(null);
-    if (dateSlots.some(s => !s.date)) { setError('Please select a date for all slots'); return; }
+    if (dateSlots.some(s => !s.date)) { setError(GW.errors.chooseDays); return; }
 
     if (generationMode === 'slot') {
       generateSlots(selectedResources, draftSeed);
@@ -700,7 +662,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
 
   function generateTeams(resourceList: ScheduleResource[], draftSeed = 0) {
     const groupTeams = teams.filter(t => t.divisionId === selectedGroupId);
-    if (groupTeams.length < 2) { setError('Need at least 2 teams to generate a schedule'); return; }
+    if (groupTeams.length < 2) { setError(GW.errors.twoTeams); return; }
     const partial = getPartialContext();
 
     const pools: Record<string, Team[]> = {};
@@ -769,8 +731,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
         });
         applyDraftOptions([{
           id: 'current-schedule',
-          label: 'Current schedule',
-          detail: `Health ${metrics.healthScore}/100 | B2B ${metrics.backToBackCount} | Moves ${metrics.venueChangeCount + metrics.facilityChangeCount} | Max/day ${metrics.maxGamesInDay}`,
+          label: GW.cards.current,
+          metrics: { backToBacks: metrics.backToBackCount, moves: metrics.venueChangeCount + metrics.facilityChangeCount, minRest: metrics.minRestMinutes ?? null },
           summary: { score: metrics.healthScore, healthScore: metrics.healthScore, candidateCount: 0 },
           games: preservedGames,
           slotGames: [],
@@ -780,13 +742,13 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
         applyPartialPreviewContext(partial);
         return;
       }
-      setError('No matchups could be generated. Check your pool assignments.');
+      setError(GW.errors.noMatchups);
       return;
     }
 
     const totalSlots = buildTimeSlots(resourceList);
     if (totalSlots.length < matchupsToGenerate.length) {
-      setError(`Not enough time slots to schedule ${matchupsToGenerate.length} games. Need ${matchupsToGenerate.length} slots, but only have ${totalSlots.length} available. Add more fields/diamonds to a venue (each one runs games in parallel), widen the playing window, or shorten game length.`);
+      setError(GW.errors.notEnoughSlots(matchupsToGenerate.length, totalSlots.length, noun));
       return;
     }
 
@@ -822,7 +784,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     }, 3);
 
     if (drafts.length === 0) {
-      setError('No valid draft could be generated without overlapping a team. Try adding more dates or venues.');
+      setError(GW.errors.noDraft);
       return;
     }
 
@@ -928,8 +890,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
         });
         applyDraftOptions([{
           id: 'current-schedule',
-          label: 'Current schedule',
-          detail: `Health ${metrics.healthScore}/100 | B2B ${metrics.backToBackCount} | Moves ${metrics.venueChangeCount + metrics.facilityChangeCount} | Max/day ${metrics.maxGamesInDay}`,
+          label: GW.cards.current,
+          metrics: { backToBacks: metrics.backToBackCount, moves: metrics.venueChangeCount + metrics.facilityChangeCount, minRest: metrics.minRestMinutes ?? null },
           summary: { score: metrics.healthScore, healthScore: metrics.healthScore, candidateCount: 0 },
           games: [],
           slotGames: preservedSlotGames,
@@ -939,13 +901,13 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
         applyPartialPreviewContext(partial);
         return;
       }
-      setError('No matchups could be generated. Check slot counts (minimum 2).');
+      setError(GW.errors.noSlotMatchups);
       return;
     }
 
     const totalSlots = buildTimeSlots(resourceList);
     if (totalSlots.length < matchupsToGenerate.length) {
-      setError(`Not enough time slots for ${matchupsToGenerate.length} games. Need ${matchupsToGenerate.length} slots but have ${totalSlots.length}. Add more fields/diamonds to a venue (each one runs games in parallel), widen the playing window, or shorten game length.`);
+      setError(GW.errors.notEnoughSlots(matchupsToGenerate.length, totalSlots.length, noun));
       return;
     }
 
@@ -965,7 +927,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     }, 3);
 
     if (drafts.length === 0) {
-      setError('No valid slot draft could be generated without overlapping a slot. Try adding more dates or venues.');
+      setError(GW.errors.noDraft);
       return;
     }
 
@@ -982,7 +944,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
   }
 
   async function commit() {
-    setShowConfirm(false);
+    setAskReplace(false);
     if (generationMode === 'slot') {
       await commitSlots();
     } else {
@@ -1124,14 +1086,14 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
   }
 
   function reset() {
+    setShowGames(false);
+    setClubFindings({});
     setGeneratedGames([]);
     setGeneratedSlotGames([]);
     setGamesToCommit([]);
     setSlotGamesToCommit([]);
     setReplaceableGameIds([]);
-    setPreservedGameCount(0);
     setReplacementGameCount(0);
-    setDraftSummary(null);
     setDraftOptions([]);
     setSelectedDraftOptionIndex(0);
     setDraftSetIndex(0);
@@ -1215,533 +1177,392 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
 
   const divisionName = divisions.find(g => g.id === selectedGroupId)?.name ?? '';
   const previewGeneratedCount = generationMode === 'slot' ? slotGamesToCommit.length : gamesToCommit.length;
+  const step: 'settings' | 'drafts' = hasPreview ? 'drafts' : 'settings';
+  const published = currentGroup?.scheduleVisibility === 'published';
+  const pooled = poolList.length > 0;
+  const [moreRules, setMoreRules] = useState(false);
 
-  return (
-    <div className={styles.generatorOverlay}>
-      <div className={styles.generatorModal}>
-        <div className={styles.generatorHeader}>
-          <h3><Sparkles size={18} /> Schedule Generator</h3>
-          <button className="btn btn-ghost btn-sm" onClick={onCancel}><X size={18} /></button>
+  // ── What saving does, counted (the one statement under the chosen draft) ──
+  const playedCount = preservedExistingGames.filter(g => !g.isPlayoff && ['completed', 'forfeit', 'submitted'].includes(g.status)).length;
+  const markedCount = preservedExistingGames.filter(g => !g.isPlayoff && g.status === 'scheduled' && g.generatorLocked).length;
+  const statement = draftStatement({
+    division: divisionName, added: previewGeneratedCount, replaced: replacementGameCount,
+    played: playedCount, kept: markedCount, other: preservedExistingGames.length - playedCount - markedCount, published,
+  });
+
+  // ── The other divisions' games on the chosen fields and days, drawn as taken (the drafts leave them free) ──
+  const chosenDays = new Set(dateSlots.map(s => s.date).filter(Boolean));
+  const fieldName = (g: { venueId?: string | null; venueFacilityId?: string | null; scheduleFacilityLaneLabel?: string | null; location?: string | null }) => {
+    const venue = venues.find(v => v.id === g.venueId);
+    const facility = g.venueFacilityId ? venue?.facilities?.find(f => f.id === g.venueFacilityId) : null;
+    return facility?.name ?? venue?.name ?? g.scheduleFacilityLaneLabel ?? g.location ?? '';
+  };
+  const resourceOf = (g: Game) => (g.venueFacilityId ? facilityResourceKey(g.venueFacilityId) : g.venueId ? venueResourceKey(g.venueId) : null);
+  const takenOthers = existingGames.filter(g => {
+    if (g.divisionId === selectedGroupId || g.status === 'cancelled' || !g.date || !g.time || !chosenDays.has(g.date)) return false;
+    const key = resourceOf(g);
+    return !!key && selectedResourceKeys.has(key);
+  });
+  const nameOfDivision = (id: string) => divisions.find(d => d.id === id)?.name ?? '';
+  const othersOnDays = [...new Set(takenOthers.map(g => nameOfDivision(g.divisionId)))].filter(Boolean);
+  const weekday = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'long' });
+  const takenLine = takenOthers.length === 0 ? null : GW.taken({
+    divisions: othersOnDays,
+    games: takenOthers.length,
+    fields: [...new Set(takenOthers.map(fieldName))].filter(Boolean).sort(),
+    days: [...new Set(takenOthers.map(g => g.date!))].sort().map(weekday),
+    times: [...new Set([...takenOthers].sort((a, b) => (a.time ?? '').localeCompare(b.time ?? '')).map(g => formatTime(g.time!)))],
+  });
+
+  // ── The club's other bookings under each draft's games (6a's check; amber, never a refusal) ──
+  const canCheckClub = hasOrgVenueLibrary(planId ?? null);
+  useEffect(() => {
+    if (!canCheckClub || draftOptions.length === 0) return;
+    const games = draftOptions.flatMap((o, oi) => (generationMode === 'slot' ? o.slotGamesToCommit : o.gamesToCommit).map((g, gi) => ({
+      key: `${draftSetIndex}:${oi}:${gi}`, date: g.date, time: g.time, venueId: g.venueId ?? null,
+      venueFacilityId: g.venueFacilityId ?? null, durationMinutes: gameLength,
+    }))).filter(g => g.venueId);
+    if (!games.length) return;
+    let live = true;
+    fetch(`/api/admin/tournaments/${encodeURIComponent(tournament.id)}/club-clashes${orgQuery}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ games }),
+    })
+      .then(r => (r.ok ? r.json() : { findings: {} }))
+      .then((d: { findings?: Record<string, ClashFinding[]> }) => { if (live) setClubFindings(d.findings ?? {}); })
+      .catch(() => { /* no line, never an error on the drafts */ });
+    return () => { live = false; };
+  }, [canCheckClub, draftOptions, draftSetIndex, generationMode, gameLength, tournament.id, orgQuery]);
+  const newGamesOf = (o: DraftOption) => (generationMode === 'slot' ? o.slotGamesToCommit : o.gamesToCommit);
+  const clubLineOf = (oi: number, gi: number, g: Omit<Game, 'id'>) => {
+    const findings = clubFindings[`${draftSetIndex}:${oi}:${gi}`];
+    if (!findings?.length) return null;
+    const venue = venues.find(v => v.id === g.venueId);
+    return clashLineText(clashLine(findings, {
+      sport: tournament.sport, venueName: venue?.name ?? '',
+      facilityName: g.venueFacilityId ? venue?.facilities?.find(f => f.id === g.venueFacilityId)?.name ?? null : null,
+    }));
+  };
+  const clubMeasure = (oi: number, o: DraftOption) => {
+    const hits = newGamesOf(o).map((g, gi) => ({ g, gi })).filter(({ gi }) => clubFindings[`${draftSetIndex}:${oi}:${gi}`]?.length);
+    if (hits.length === 0) return <li className={gen.good}><Check size={13} aria-hidden /> {GW.measures.clubClear}</li>;
+    const first = hits[0].g;
+    const where = `${fieldName(first)}, ${formatShortWeekdayDate(first.date).split(',')[0]} ${formatTime(first.time)}`;
+    return <li className={gen.amber}><AlertTriangle size={13} aria-hidden /> {hits.length === 1 ? GW.measures.clubOne(where) : GW.measures.clubMany(hits.length)}</li>;
+  };
+  const restWords = (min: number) => {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return h && m ? `${h} h ${m} min` : h ? `${h} h` : `${m} min`;
+  };
+  const teamWords = (g: Omit<Game, 'id'>, side: 'home' | 'away') => {
+    const id = side === 'home' ? g.homeTeamId : g.awayTeamId;
+    const ph = side === 'home' ? g.homePlaceholder : g.awayPlaceholder;
+    return (id ? teams.find(t => t.id === id)?.name : null) || ph || 'TBD';
+  };
+
+  // ── Step 1 · settings: What it pairs · When · Where · Rules ──
+  const range = (from: number, to: number, by = 1) => Array.from({ length: Math.floor((to - from) / by) + 1 }, (_, i) => from + i * by);
+  const withCurrent = (list: number[], current: number) => (list.includes(current) ? list : [...list, current].sort((a, b) => a - b));
+  const settingsBody = (
+    <div className={gen.settings}>
+      <section className={gen.section} aria-labelledby="gen-pairs">
+        <h3 id="gen-pairs" className={gen.sectionTitle}>{GW.sections.pairs}</h3>
+        <div className={gen.pair2}>
+          <label className={ck.field}>
+            <span className={ck.label}>{GW.fields.division}</span>
+            <select className={ck.select} value={selectedGroupId} onChange={e => chooseDivision(e.target.value)}>
+              {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </label>
+          <label className={ck.field}>
+            <span className={ck.label}>{generationMode === 'slot' ? GW.fields.gamesPerSlot : GW.fields.gamesPerTeam}</span>
+            <select className={ck.select} value={gamesPerTeam} onChange={e => setGamesPerTeam(Number(e.target.value))} aria-describedby="gen-games-hint">
+              {range(1, 10).map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </label>
         </div>
-
-        {!hasPreview ? (
-          <div className={styles.generatorForm}>
-
-            {/* ── Section 1: Setup ── */}
-            <div className={styles.generatorSection}>
-              <p className={styles.generatorStepLabel}>1. Schedule Setup</p>
-
-              {/* Mode toggle */}
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Generation Mode</label>
-                <div className={styles.generatorSegmented}>
-                  <button
-                    type="button"
-                    className={`${styles.generatorSegBtn} ${generationMode === 'team' ? styles.generatorSegBtnActive : ''}`}
-                    onClick={() => setGenerationMode('team')}
-                  >
-                    Team-based
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.generatorSegBtn} ${generationMode === 'slot' ? styles.generatorSegBtnActive : ''}`}
-                    onClick={() => setGenerationMode('slot')}
-                  >
-                    Slot-based
-                  </button>
-                </div>
-                {generationMode === 'team' ? (
-                  <p style={modeDescriptionStyle}>
-                    Schedules accepted teams directly. Teams must be registered and accepted before generating.
-                  </p>
-                ) : (
-                  <p style={modeDescriptionStyle}>
-                    {poolList.length > 0
-                      ? <>Builds a draft schedule using placeholder names (e.g. &quot;Pool A Team 1&quot;) so you can lay out the bracket before teams are final. Assign real teams to the slots, then publish with real names once registration closes.</>
-                      : <>Builds a division-wide draft schedule using placeholder names (e.g. &quot;{currentGroup?.name ?? 'Division'} Team 1&quot;) without requiring pools. Assign real teams, then publish with real names once registration closes.</>
-                    }
-                  </p>
-                )}
-              </div>
-
-            {/* F70: the "Replace all | Build from current" switch is gone — a draft keeps every played, cancelled,
-                kept and playoff game and replaces only games still to play. What a save will touch, said once. */}
-            {hasExistingGames && (
-              <div className={styles.scopeStrip}>
-                <div className={styles.scopeCopy}>
-                  <span>{DRAFT_SAVE_LABEL}</span>
-                  <small>{draftSaveReadout(preservedExistingGames.length, replaceableExistingGames.length)}</small>
-                </div>
-              </div>
-            )}
-
-            <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
-              <div className="form-group">
-                <label className="form-label">Division</label>
-                <select className="form-select" value={selectedGroupId} onChange={e => chooseDivision(e.target.value)}>
-                  {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Games per {generationMode === 'slot' ? 'Slot' : 'Team'}</label>
-                <NumberStepper
-                  value={gamesPerTeam}
-                  min={1}
-                  max={10}
-                  onChange={setGamesPerTeam}
-                  ariaLabel="Games per team"
-                  ariaDescribedBy="gen-games-per-team-hint"
-                />
-                <FieldHint id="gen-games-per-team-hint">
-                  Round-robin rounds to generate, not a guaranteed game count. With an odd number of teams, one gets a bye each round and plays one fewer game.
-                </FieldHint>
-              </div>
+        <p id="gen-games-hint" className={gen.hint}>{GW.fields.gamesPerTeamHint}</p>
+        <label className={ck.field}>
+          <span className={ck.label}>{GW.fields.pair}</span>
+          <select className={ck.select} value={generationMode} onChange={e => setGenerationMode(e.target.value as 'team' | 'slot')}>
+            <option value="team">{GW.fields.pairTeams}</option>
+            <option value="slot">{GW.fields.pairSlots}</option>
+          </select>
+        </label>
+        {generationMode === 'slot' && (
+          <>
+            <p className={gen.hint}>{GW.fields.pairSlotsHint(currentGroup?.name ?? divisionName, pooled)}</p>
+            <div className={gen.pair2}>
+              {(pooled
+                ? poolList.map(p => ({ id: p.id, name: p.name, max: 16 }))
+                : [{ id: DIVISION_SLOT_POOL_ID, name: currentGroup?.name ?? divisionName, max: 32 }]
+              ).map(p => (
+                <label key={p.id} className={ck.field}>
+                  <span className={ck.label}>{GW.fields.slots(p.name)}</span>
+                  <select className={ck.select} value={slotCountOverride[p.id] ?? defaultSlotCount(p.id)}
+                    onChange={e => setSlotCountOverride(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}>
+                    {withCurrent(range(2, p.max), defaultSlotCount(p.id)).map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </label>
+              ))}
             </div>
+          </>
+        )}
+      </section>
 
-            {/* Slot count per pool or division (slot mode only) */}
-            {generationMode === 'slot' && (
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">{poolList.length === 0 ? 'Division Slots' : 'Teams per Pool'}</label>
-                {poolList.length === 0 ? (
-                  <div className={styles.slotControlGrid}>
-                    <label className={styles.slotCountControl}>
-                      <span>{currentGroup?.name ?? 'Division'} slots</span>
-                      <NumberStepper
-                        value={slotCountOverride[DIVISION_SLOT_POOL_ID] ?? defaultSlotCount(DIVISION_SLOT_POOL_ID)}
-                        min={2}
-                        max={32}
-                        onChange={v => setSlotCountOverride(prev => ({ ...prev, [DIVISION_SLOT_POOL_ID]: v }))}
-                        ariaLabel="Division slots"
-                      />
-                      <small>One placeholder team per slot.</small>
-                    </label>
-                  </div>
-                ) : (
-                  <div className={styles.slotControlGrid}>
-                    {poolList.map(pool => (
-                      <label key={pool.id} className={styles.slotCountControl}>
-                        <span>{pool.name}</span>
-                        <NumberStepper
-                          value={slotCountOverride[pool.id] ?? defaultSlotCount(pool.id)}
-                          min={2}
-                          max={16}
-                          onChange={v => setSlotCountOverride(prev => ({ ...prev, [pool.id]: v }))}
-                          ariaLabel={`${pool.name} teams`}
-                        />
-                        <small>Placeholder teams in this pool.</small>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            </div>{/* end section 1 */}
-
-            {/* ── Section 2: Dates & Timing ── */}
-            <div className={styles.generatorSection}>
-              <p className={styles.generatorStepLabel}>2. Dates & Timing</p>
-
-            <div className="form-group">
-              <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                Available Scheduling Dates{' '}
-                <button type="button" className="btn btn-ghost btn-sm" onClick={addDateSlot} style={addDateButtonStyle}>
-                  <Plus size={14} /> Add Date
-                </button>
-              </label>
-              <div className={styles.dateSlotList}>
-                {dateSlots.map((slot, idx) => (
-                  <div key={idx} className={styles.dateSlotRow}>
-                    <select className={styles.dateSlotSelect} value={slot.date} onChange={e => updateDateSlot(idx, { date: e.target.value })}>
-                      <option value="">Select date…</option>
-                      {availableDates.map(d => (
-                        <option key={d} value={d}>{new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</option>
-                      ))}
-                    </select>
-                    <input type="time" className={styles.dateSlotTime} value={slot.startTime} onChange={e => updateDateSlot(idx, { startTime: e.target.value })} />
-                    <span className={styles.dateSlotSep}>–</span>
-                    <input type="time" className={styles.dateSlotTime} value={slot.endTime} onChange={e => updateDateSlot(idx, { endTime: e.target.value })} />
-                    <button type="button" className={`btn btn-ghost btn-data ${styles.dateSlotDel}`} onClick={() => removeDateSlot(idx)} disabled={dateSlots.length === 1}>
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
-              <div className="form-group">
-                <label className="form-label">Game Duration (min)</label>
-                <NumberStepper value={gameLength} min={5} step={5} onChange={setGameLength} ariaLabel="Game duration in minutes" ariaDescribedBy="gen-game-duration-hint" />
-                <FieldHint id="gen-game-duration-hint">
-                  Length of each game slot. Shorter games fit more into each day; if the generator says it&apos;s out of slots, trimming this (or the turnover time) is the fix.
-                </FieldHint>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Turnover Time (min)</label>
-                <NumberStepper value={breakLength} min={0} step={5} onChange={setBreakLength} ariaLabel="Turnover time in minutes" />
-                <small className={styles.fieldHint}>Gap between games at the same facility.</small>
-              </div>
-            </div>
-
-            </div>{/* end section 2 */}
-
-            {/* ── Section 3: Scheduling Priorities ── */}
-            <div className={styles.generatorSection}>
-              <p className={styles.generatorStepLabel}>3. Scheduling Priorities</p>
-
-            <div className={styles.priorityPanel}>
-              <div className={styles.priorityHeader}>
-                <span>Preset</span>
-                <small>Best of {priorities.candidateCount}</small>
-              </div>
-              <div className={styles.presetRail} role="group" aria-label="Schedule priority presets">
-                {SCHEDULE_PRESETS.map(preset => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    className={`${styles.presetButton} ${selectedPresetId === preset.id ? styles.presetButtonActive : ''}`}
-                    title={preset.description}
-                    aria-pressed={selectedPresetId === preset.id}
-                    onClick={() => applyPreset(preset)}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-              <p className={styles.presetHint}>{presetDescription}</p>
-              <details className={styles.advancedDrawer}>
-                <summary className={styles.advancedSummary}>
-                  <SlidersHorizontal size={11} /> Advanced Settings
-                </summary>
-                <div className={styles.advancedDrawerContent}>
-                  <div className={styles.prioritySection}>
-                    <div className={styles.prioritySectionHeader}>
-                      <span>Limits</span>
-                      <small>Hard caps used during generation</small>
-                    </div>
-                    <div className={styles.limitsRow}>
-                      <label className={styles.limitItem} title="Caps how many games one team or slot can play in a day.">
-                        <span className={styles.limitLabel}>Max / day</span>
-                        <NumberStepper
-                          value={priorities.maxGamesPerDay}
-                          min={1}
-                          max={6}
-                          onChange={v => updatePriorities({ maxGamesPerDay: v })}
-                          ariaLabel="Max games per day"
-                        />
-                        <small className={styles.limitUnit}>per team</small>
-                      </label>
-                      <label className={styles.limitItem} title="Minimum time between games for the same team or slot.">
-                        <span className={styles.limitLabel}>Min rest</span>
-                        <NumberStepper
-                          value={priorities.minRestMinutes}
-                          min={0}
-                          max={360}
-                          step={15}
-                          onChange={v => updatePriorities({ minRestMinutes: v })}
-                          ariaLabel="Minimum rest minutes"
-                        />
-                        <small className={styles.limitUnit}>min between games</small>
-                      </label>
-                    </div>
-                  </div>
-                  <div className={styles.prioritySection}>
-                    <div className={styles.prioritySectionHeader}>
-                      <span>Preferences</span>
-                      <small>Scoring tradeoffs for better drafts</small>
-                    </div>
-                    <div className={styles.effortRow}>
-                      <span className={styles.limitLabel}>Effort</span>
-                      <select
-                        className="form-select"
-                        value={priorities.candidateCount}
-                        onChange={e => updatePriorities({ candidateCount: Number(e.target.value) })}
-                      >
-                        <option value={12}>Fast</option>
-                        <option value={24}>Balanced</option>
-                        <option value={40}>Deep</option>
-                      </select>
-                      <small className={styles.effortHint}>{currentEffortDescription}</small>
-                    </div>
-                    <div className={styles.prefChecks}>
-                      <label className={styles.prefCheck} title="Scores drafts higher when teams have rest between games.">
-                        <input
-                          type="checkbox"
-                          checked={priorities.avoidBackToBack}
-                          onChange={e => updatePriorities({ avoidBackToBack: e.target.checked })}
-                        />
-                        <span>Avoid back-to-back</span>
-                      </label>
-                      <label className={styles.prefCheck} title="Scores drafts higher when teams stay at the same selected facility.">
-                        <input
-                          type="checkbox"
-                          checked={priorities.reduceVenueChanges}
-                          onChange={e => updatePriorities({ reduceVenueChanges: e.target.checked })}
-                        />
-                        <span>Reduce facility moves</span>
-                      </label>
-                      <label className={styles.prefCheck} title="Scores drafts higher when early and late games are spread more evenly.">
-                        <input
-                          type="checkbox"
-                          checked={priorities.balanceTimeSlots}
-                          onChange={e => updatePriorities({ balanceTimeSlots: e.target.checked })}
-                        />
-                        <span>Balance early/late</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </details>
-            </div>
-
-            </div>{/* end section 3 */}
-
-            {/* ── Section 4: Facilities ── */}
-            <div className={styles.generatorSection}>
-              <p className={styles.generatorStepLabel}>4. Available Facilities</p>
-
-            <div className="form-group">
-              <small className={styles.fieldHint} style={{ display: 'block', marginBottom: '0.45rem' }}>Select which fields or diamonds the generator can assign games to.</small>
-              {venues.length > 0 && (
-                <div className={styles.facilityPickerHeader}>
-                  <span>{selectedResourceCount} / {totalResourceCount} selected</span>
-                  <div className={styles.facilityPickerActions}>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={selectAllResources}>All</button>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={clearResources}>None</button>
-                  </div>
-                </div>
-              )}
-              {venues.length > 0 && (
-                <div className={styles.facilityPicker}>
-                  {venues.map(venue => {
-                    const resourceKeys = getVenueResourceKeys(venue);
-                    const selectedCount = resourceKeys.filter(key => selectedResourceKeys.has(key)).length;
-                    const allSelected = selectedCount === resourceKeys.length;
-                    const facilities = venue.facilities ?? [];
-                    return (
-                      <div key={venue.id} className={styles.facilityVenueGroup}>
-                        <label className={styles.facilityVenueCheck}>
-                          <input type="checkbox" checked={allSelected} onChange={() => toggleVenueResources(venue)} />
-                          <span className={styles.facilityVenueName}>
-                            <strong>{venue.name}</strong>
-                            <small>{selectedCount} / {resourceKeys.length} selected</small>
-                          </span>
-                        </label>
-                        {facilities.length > 0 ? (
-                          <div className={styles.facilityChildGrid}>
-                            {facilities.map(facility => {
-                              const key = facilityResourceKey(facility.id);
-                              return (
-                                <label key={facility.id} className={styles.facilityCheck}>
-                                  <input type="checkbox" checked={selectedResourceKeys.has(key)} onChange={() => toggleResource(key)} />
-                                  <span>{facility.name}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <p className={styles.facilityEmptyText}>No facilities listed. Selecting the venue uses one scheduling lane.</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {(venues.length === 0 || selectedResourceCount === 0) && (
-                <div className={styles.temporaryFacilityPanel}>
-                  <div>
-                    <strong>Use temporary facilities</strong>
-                    <span>Schedules can be generated now and resolved to real venues later.</span>
-                  </div>
-                  <label>
-                    <span>Facilities</span>
-                    <input
-                      type="number"
-                      className="form-input"
-                      min="1"
-                      max="16"
-                      value={temporaryFacilityCount}
-                      onChange={e => setTemporaryFacilityCount(Number(e.target.value))}
-                    />
-                  </label>
-                </div>
-              )}
-            </div>
-
-            </div>{/* end section 4 */}
-
-            {error && <div className={styles.errorBanner}><AlertCircle size={16} /> {error}</div>}
-
-            <div className={styles.generateBtnWrap}>
-              <button className="btn btn-lime btn-data" onClick={() => generate(0)}>
-                Generate Round Robin Draft
-              </button>
-            </div>
+      <section className={gen.section} aria-labelledby="gen-when">
+        <h3 id="gen-when" className={gen.sectionTitle}>{GW.sections.when}</h3>
+        {dateSlots.map((slot, idx) => (
+          <div key={idx} className={gen.dayRow}>
+            <label className={ck.field}>
+              <span className={ck.label}>{GW.fields.day}</span>
+              <select className={ck.select} value={slot.date} onChange={e => updateDateSlot(idx, { date: e.target.value })}>
+                <option value="">{GW.fields.chooseDay}</option>
+                {availableDates.map(d => <option key={d} value={d}>{formatShortWeekdayDate(d)}</option>)}
+              </select>
+            </label>
+            <label className={ck.field}>
+              <span className={ck.label}>{GW.fields.from}</span>
+              <input className={ck.input} type="time" value={slot.startTime} onChange={e => updateDateSlot(idx, { startTime: e.target.value })} />
+            </label>
+            <label className={ck.field}>
+              <span className={ck.label}>{GW.fields.until}</span>
+              <input className={ck.input} type="time" value={slot.endTime} onChange={e => updateDateSlot(idx, { endTime: e.target.value })} />
+            </label>
+            <button type="button" className={gen.remove} onClick={() => removeDateSlot(idx)} disabled={dateSlots.length === 1}
+              aria-label={GW.fields.removeDay(slot.date ? formatShortWeekdayDate(slot.date) : GW.fields.day)}>
+              <Trash2 size={16} aria-hidden />
+            </button>
           </div>
-        ) : (
-          <div className={styles.generatorPreview}>
-            <div className={styles.previewStats}>
-              <span>
-                Previewing <strong>{previewCount}</strong> games for <strong>{divisionName}</strong>
-                {generationMode === 'slot' && <span className="badge badge-neutral" style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>SLOT SCHEDULE</span>}
-              </span>
-              <div className={styles.previewActions}>
-                <button className="btn btn-ghost btn-data" onClick={generateAnotherDraftSet}><RefreshCw size={13} /> Another Set</button>
-                <button className="btn btn-ghost btn-data" onClick={reset}>Start Over</button>
-              </div>
-            </div>
+        ))}
+        <button type="button" className={gen.door} onClick={addDateSlot}><Plus size={15} aria-hidden /> {GW.fields.addDay}</button>
+        <div className={gen.pair2}>
+          <label className={ck.field}>
+            <span className={ck.label}>{GW.fields.gameLength}</span>
+            <select className={ck.select} value={gameLength} onChange={e => setGameLength(Number(e.target.value))} aria-describedby="gen-length-hint">
+              {withCurrent([30, 45, 60, 75, 90, 105, 120, 135, 150, 180, 210, 240], gameLength).map(n => <option key={n} value={n}>{GW.fields.minutes(n)}</option>)}
+            </select>
+            <span id="gen-length-hint" className={gen.hint}>{GW.fields.gameLengthHint}</span>
+          </label>
+          <label className={ck.field}>
+            <span className={ck.label}>{GW.fields.turnover}</span>
+            <select className={ck.select} value={breakLength} onChange={e => setBreakLength(Number(e.target.value))} aria-describedby="gen-turnover-hint">
+              {withCurrent([0, 5, 10, 15, 20, 25, 30, 45, 60], breakLength).map(n => <option key={n} value={n}>{GW.fields.minutes(n)}</option>)}
+            </select>
+            <span id="gen-turnover-hint" className={gen.hint}>{GW.fields.turnoverHint(noun)}</span>
+          </label>
+        </div>
+      </section>
 
-            {/* The preview's "On save" band, once the division already has games. */}
-            {hasExistingGames && (
-              <div className={styles.partialPreviewSummary}>
-                <span>{DRAFT_SAVE_LABEL}</span>
-                <strong>{preservedGameCount}</strong>
-                <small>{DRAFT_SAVE_BAND.kept}</small>
-                <strong>{replacementGameCount}</strong>
-                <small>{DRAFT_SAVE_BAND.replaced}</small>
-                <strong>{previewGeneratedCount}</strong>
-                <small>{DRAFT_SAVE_BAND.added}</small>
-              </div>
-            )}
-
-            {draftSummary && (
-              <div className={styles.optimizationSummary}>
-                <span><Sparkles size={13} /> Set {draftSetIndex + 1} | Best of {draftSummary.candidateCount} drafts</span>
-                <strong>{draftSummary.score}</strong>
-                <small>Health {draftSummary.healthScore}/100</small>
-              </div>
-            )}
-
-            {draftOptions.length > 1 && (
-              <div className={styles.draftOptionGrid} role="group" aria-label="Generated draft options">
-                {draftOptions.map((option, index) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    className={`${styles.draftOptionCard} ${selectedDraftOptionIndex === index ? styles.draftOptionCardActive : ''}`}
-                    aria-pressed={selectedDraftOptionIndex === index}
-                    onClick={() => selectDraftOption(index)}
-                  >
-                    <span>{option.label}</span>
-                    <strong>{option.summary.healthScore}<small>/100</small></strong>
-                    <em>{option.detail}</em>
+      <section className={gen.section} aria-labelledby="gen-where">
+        <div className={gen.sectionHead}>
+          <h3 id="gen-where" className={gen.sectionTitle}>{GW.sections.where}</h3>
+          {venues.length > 0 && (
+            <span className={gen.headDoors}>
+              <button type="button" className={gen.door} onClick={selectAllResources}>{GW.fields.allFields}</button>
+              <button type="button" className={gen.door} onClick={clearResources}>{GW.fields.noFields}</button>
+            </span>
+          )}
+        </div>
+        {venues.map(venue => {
+          const facilities = venue.facilities ?? [];
+          return (
+            <div key={venue.id} className={gen.venue}>
+              {/* The venue's name heads its diamonds only when they have names of their own (a park with Diamonds 1–4);
+                  a venue that IS its one field ("Maple Field 1") reads once, as its chip. */}
+              {facilities.some(f => f.name !== venue.name) && (
+                <button type="button" className={gen.venueName} onClick={() => toggleVenueResources(venue)}
+                  aria-pressed={getVenueResourceKeys(venue).every(k => selectedResourceKeys.has(k))}>
+                  {venue.name}
+                </button>
+              )}
+              <div className={gen.chips}>
+                {(facilities.length ? facilities.map(f => ({ key: facilityResourceKey(f.id), name: f.name })) : [{ key: venueResourceKey(venue.id), name: venue.name }]).map(f => (
+                  <button key={f.key} type="button" className={gen.chip} aria-pressed={selectedResourceKeys.has(f.key)} onClick={() => toggleResource(f.key)}>
+                    {selectedResourceKeys.has(f.key) && <Check size={13} aria-hidden />}{f.name}
                   </button>
                 ))}
               </div>
-            )}
-
-            {generationMode === 'slot' && (
-              <div style={slotModeInfoBannerStyle}>
-                <Info size={13} style={slotModeInfoIconStyle} />
-                {poolList.length > 0
-                  ? 'This is a draft. Assign real teams to the slots via the Slot Assignments tab, then publish with real names once registration closes — placeholder names are never shown publicly.'
-                  : 'This division-wide draft uses placeholders and does not require pools. Save it now, then assign real teams manually or regenerate team-based when teams are final.'
-                }
-              </div>
-            )}
-
-            {previewMetrics && (
-              <ScheduleHealthPanel
-                metrics={previewMetrics}
-                title="Draft Health"
-                subtitle={`${divisionName} · ${generationMode === 'slot' ? 'Slot schedule' : 'Team schedule'}`}
-                showTeamTable
-              />
-            )}
-
-            {(() => {
-              const usePools = generationMode === 'slot' ? poolList.length > 0 : (currentGroup?.poolCount || 0) >= 2;
-              return (
-                <div className={styles.previewTableWrap}>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Matchup</th>
-                        {usePools && <th>Pool</th>}
-                        <th>Facility</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {generationMode === 'slot' ? (
-                        generatedSlotGames.map((g, i) => {
-                          const pool = poolList.find(p => p.id === g.homePoolId);
-                          return (
-                            <tr key={i}>
-                              <td>{new Date(g.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · <strong>{formatTime(g.time)}</strong></td>
-                              <td>{g.homePlaceholder} vs {g.awayPlaceholder}</td>
-                              {usePools && <td><span className="badge badge-neutral">{pool?.name ?? '—'}</span></td>}
-                              <td>{g.location}</td>
-                            </tr>
-                          );
-                        })
-                      ) : (
-                        generatedGames.map((g, i) => {
-                          const homeTeam = teams.find(t => t.id === g.homeTeamId);
-                          const awayTeam = teams.find(t => t.id === g.awayTeamId);
-                          const poolRecord = usePools ? currentGroup?.pools?.find(p => p.id === homeTeam?.poolId) : null;
-                          return (
-                            <tr key={i}>
-                              <td>{new Date(g.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · <strong>{formatTime(g.time)}</strong></td>
-                              <td>{homeTeam?.name} vs {awayTeam?.name}</td>
-                              {usePools && <td><span className="badge badge-neutral">{poolRecord?.name ?? 'Unassigned'}</span></td>}
-                              <td>{g.location}</td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              );
-            })()}
-
-            {error && <div className={styles.errorBanner}><AlertCircle size={16} /> {error}</div>}
-
-            <div className={styles.previewFooter}>
-              <button className="btn btn-ghost btn-data" onClick={reset} disabled={committing}>Cancel</button>
-              <button className="btn btn-lime btn-data" onClick={() => setShowConfirm(true)} disabled={committing}>
-                {committing ? <><RefreshCw className="spin" size={14} /> Saving…</> : <><Check size={14} /> Commit Schedule</>}
-              </button>
             </div>
+          );
+        })}
+        {takenLine && <p className={gen.taken}>{takenLine}</p>}
+        {(venues.length === 0 || selectedResourceCount === 0) && (
+          <div className={gen.pair2}>
+            <p className={gen.hint}><b>{GW.fields.temporary}.</b> {GW.fields.temporaryHint}</p>
+            <label className={ck.field}>
+              <span className={ck.label}>{GW.fields.temporaryCount}</span>
+              <select className={ck.select} value={temporaryFacilityCount} onChange={e => setTemporaryFacilityCount(Number(e.target.value))}>
+                {range(1, 16).map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
           </div>
         )}
-      </div>
+      </section>
 
-      {showConfirm && (
-        <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={() => setShowConfirm(false)}>
-          <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header" style={{ textAlign: 'center', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={confirmIconWrapStyle}>
-                <AlertCircle size={18} />
-              </div>
-              <h3>Commit Schedule?</h3>
-            </div>
-            {/* F70: what the save adds, replaces (games still to play) and keeps — never "permanently clear", and
-                never that teams are told (the save records no schedule change). */}
-            <p>
-              {draftSaveQuestion({
-                division: divisionName,
-                added: previewGeneratedCount,
-                replaced: replacementGameCount,
-                kept: preservedGameCount,
-                slotBased: generationMode === 'slot',
-                published: currentGroup?.scheduleVisibility === 'published',
-              })}
-              {generationMode === 'slot' && previewGeneratedCount > 0 && (
-                <>{' '}{poolList.length > 0 ? 'This is a draft — assign real teams to the slots, then publish with real names once registration closes.' : 'Division-wide placeholders will be saved without pool assignments.'}</>
-              )}
-            </p>
-            <div className="modal-footer" style={{ justifyContent: 'center' }}>
-              <button className="btn btn-ghost btn-data" onClick={() => setShowConfirm(false)}>Cancel</button>
-              <button className="btn btn-lime btn-data" onClick={commit}>
-                <Check size={14} /> Confirm & Save
-              </button>
-            </div>
-          </div>
+      <section className={gen.section} aria-labelledby="gen-rules">
+        <h3 id="gen-rules" className={gen.sectionTitle}>{GW.sections.rules}</h3>
+        <label className={ck.field}>
+          <span className={ck.label}>{GW.fields.aimFor}</span>
+          <select className={ck.select} value={selectedPresetId} aria-describedby="gen-preset-hint"
+            onChange={e => { const p = SCHEDULE_PRESETS.find(x => x.id === e.target.value); if (p) applyPreset(p); }}>
+            {SCHEDULE_PRESETS.map(p => <option key={p.id} value={p.id}>{GW.presets[p.id]}</option>)}
+            {selectedPresetId === 'custom' && <option value="custom">{GW.presets.custom}</option>}
+          </select>
+          {presetDescription && <span id="gen-preset-hint" className={gen.hint}>{presetDescription}</span>}
+        </label>
+        <div className={gen.rulesLine}>
+          <button type="button" className={gen.door} aria-expanded={moreRules} onClick={() => setMoreRules(v => !v)}>
+            {moreRules ? GW.fields.fewerRules : GW.fields.moreRules}
+          </button>
+          <span className={gen.hint}>{GW.fields.rulesSummary(priorities.maxGamesPerDay, priorities.minRestMinutes)}</span>
         </div>
-      )}
+        {moreRules && (
+          <div className={gen.more}>
+            <div className={gen.pair2}>
+              <label className={ck.field}>
+                <span className={ck.label}>{GW.fields.maxPerDay}</span>
+                <select className={ck.select} value={priorities.maxGamesPerDay} onChange={e => updatePriorities({ maxGamesPerDay: Number(e.target.value) })}>
+                  {range(1, 6).map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </label>
+              <label className={ck.field}>
+                <span className={ck.label}>{GW.fields.minRest}</span>
+                <select className={ck.select} value={priorities.minRestMinutes} onChange={e => updatePriorities({ minRestMinutes: Number(e.target.value) })}>
+                  {withCurrent(range(0, 360, 15), priorities.minRestMinutes).map(n => <option key={n} value={n}>{GW.fields.minutes(n)}</option>)}
+                </select>
+              </label>
+            </div>
+            <label className={ck.field}>
+              <span className={ck.label}>{GW.fields.effort}</span>
+              <select className={ck.select} value={priorities.candidateCount} onChange={e => updatePriorities({ candidateCount: Number(e.target.value) })}>
+                {[12, 24, 40].map(n => <option key={n} value={n}>{GW.fields.effortChoices[n]}</option>)}
+              </select>
+            </label>
+            <CheckChoice checked={priorities.avoidBackToBack} onChange={v => updatePriorities({ avoidBackToBack: v })} title={GW.fields.avoidBackToBack} />
+            <CheckChoice checked={priorities.reduceVenueChanges} onChange={v => updatePriorities({ reduceVenueChanges: v })} title={GW.fields.fewerMoves} />
+            <CheckChoice checked={priorities.balanceTimeSlots} onChange={v => updatePriorities({ balanceTimeSlots: v })} title={GW.fields.balanceEarlyLate} />
+          </div>
+        )}
+      </section>
+      {error && <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}>{error}</Callout>}
     </div>
+  );
+
+  // ── Step 2 · drafts: the cards, the chosen draft's games by day, one statement ──
+  const chosen = draftOptions[selectedDraftOptionIndex];
+  const chosenGames = chosen ? newGamesOf(chosen).map((g, gi) => ({ g, gi })) : [];
+  const days = Array.from(new Set(chosenGames.map(({ g }) => g.date))).sort();
+  const draftsBody = (
+    <div className={gen.drafts}>
+      <div className={gen.cards} role="group" aria-label={GW.draftsLabel}>
+        {draftOptions.map((o, oi) => (
+          <button key={o.id} type="button" className={gen.card} aria-pressed={selectedDraftOptionIndex === oi} onClick={() => selectDraftOption(oi)}>
+            <span className={gen.cardHead}>
+              <b>{o.label}</b>
+              <span className={gen.score}>{o.summary.healthScore}<small>/100</small></span>
+            </span>
+            <ul className={gen.measures}>
+              {othersOnDays.length > 0 && <li className={gen.good}><Check size={13} aria-hidden /> {GW.measures.noClashes(GW.others(othersOnDays))}</li>}
+              <li>{GW.measures.loadAndMoves(o.metrics.backToBacks, o.metrics.moves)}</li>
+              {o.metrics.minRest != null && <li>{GW.measures.shortestRest(restWords(o.metrics.minRest))}</li>}
+              {canCheckClub && newGamesOf(o).length > 0 && clubMeasure(oi, o)}
+            </ul>
+          </button>
+        ))}
+        {draftOptions.length > 1 && (
+          <button type="button" className={screenParts.plainButton} onClick={generateAnotherDraftSet} disabled={committing}>{GW.threeMore}</button>
+        )}
+      </div>
+      <div className={gen.chosen}>
+        {chosenGames.length > 0 && (
+          <button type="button" className={gen.seeGames} aria-expanded={showGames} onClick={() => setShowGames(v => !v)}>
+            {showGames ? GW.hideGames : GW.seeGames(chosenGames.length)}<ChevronRight size={16} aria-hidden />
+          </button>
+        )}
+        {chosenGames.length > 0 && (
+          <div className={gen.games} data-open={showGames || undefined}>
+            <ClubRowFrame>
+              {days.map(day => {
+                const list = chosenGames.filter(({ g }) => g.date === day).sort((a, b) => a.g.time.localeCompare(b.g.time));
+                return (
+                  <ClubRowList key={day} inset label={formatShortWeekdayDate(day)}>
+                    <ClubRowBand count={SW.bandCount(list.length)}>{formatShortWeekdayDate(day)}</ClubRowBand>
+                    {list.map(({ g, gi }) => {
+                      const club = chosen ? clubLineOf(selectedDraftOptionIndex, gi, g) : null;
+                      return (
+                        <ClubRow
+                          key={gi}
+                          lead={formatTime(g.time)}
+                          captionFirst
+                          title={`${teamWords(g, 'away')} vs ${teamWords(g, 'home')}`}
+                          caption={<>{fieldName(g)}{club && <span className={gen.clubLine}><AlertTriangle size={13} aria-hidden /> {club}</span>}</>}
+                        />
+                      );
+                    })}
+                  </ClubRowList>
+                );
+              })}
+            </ClubRowFrame>
+          </div>
+        )}
+        {generationMode === 'slot' && previewGeneratedCount > 0 && <Callout tone="info" flush>{GW.slotDraftNote(pooled)}</Callout>}
+        <div className={gen.statement}>
+          <b>{statement.lead}</b>{statement.rest}
+          {statement.bullets.length > 0 && <ul>{statement.bullets.map(b => <li key={b}>{b}</li>)}</ul>}
+        </div>
+        {error && <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}>{error}</Callout>}
+      </div>
+    </div>
+  );
+
+  const nothingToSave = previewGeneratedCount === 0 && replacementGameCount === 0;
+  return (
+    <>
+      <KitDialog
+        kind="form"
+        wide
+        title={GW.title}
+        identity={<span>{step === 'settings' ? GW.caption.settings(tournament.name) : GW.caption.drafts(tournament.name, divisionName)}</span>}
+        onClose={onCancel}
+        busy={committing}
+        back={step === 'drafts' ? { label: GW.settings, onBack: reset } : undefined}
+        footer={step === 'settings' ? (
+          <>
+            <span className={gen.footNote}>{hasExistingGames ? GW.hasGames(divisionName, currentDivisionExistingGames.length) : GW.noGamesYet(divisionName)}</span>
+            <button type="button" className="btn btn-lime" onClick={() => generate(0)}>{GW.generate}</button>
+          </>
+        ) : (
+          <>
+            <button type="button" className={screenParts.plainButton} onClick={reset} disabled={committing}>{GW.backToSettings}</button>
+            <button type="button" className={`btn btn-lime ${gen.save}`} disabled={committing || nothingToSave}
+              onClick={() => (replacementGameCount > 0 ? setAskReplace(true) : void commit())}>
+              {replacementGameCount > 0 ? GW.saveReplace(replacementGameCount) : GW.save}
+            </button>
+          </>
+        )}
+      >
+        {step === 'settings' ? settingsBody : draftsBody}
+      </KitDialog>
+
+      {askReplace && (
+        <KitDialog
+          kind="question"
+          title={GW.replace.title(replacementGameCount)}
+          onClose={() => setAskReplace(false)}
+          busy={committing}
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setAskReplace(false)} disabled={committing}>{GW.replace.back}</button>
+              <button type="button" className="btn btn-lime" onClick={() => void commit()} disabled={committing}>{GW.replace.go(replacementGameCount)}</button>
+            </>
+          )}
+        >
+          <p>{published ? GW.replace.published(divisionName) : GW.replace.unpublished(divisionName)}</p>
+        </KitDialog>
+      )}
+    </>
   );
 }

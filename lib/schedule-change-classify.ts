@@ -253,3 +253,56 @@ export function collapseNotices<G extends NoticeGameNow>(
   }
   return entries;
 }
+
+// ── The round-robin generator's replace, told truthfully (Stage 3 Part 5; owner ruling 2026-10-09: "tell it as moves") ──
+
+/** A round-robin game as the generator's replace reads it — before it is replaced, or as the draft inserted it. */
+export interface ReplaceRow extends ScheduleSnapshotRow {
+  id: string;
+  home_slot_id?: string | null;
+  away_slot_id?: string | null;
+}
+
+/** The two sides of a game as one unordered key: its teams, or its pool slots before the teams are known. */
+function pairKey(r: ReplaceRow): string | null {
+  const side = (team: string | null, slot: string | null | undefined) =>
+    (team && team !== NIL_TEAM_ID ? `t:${team}` : slot ? `s:${slot}` : null);
+  const a = side(r.home_team_id, r.home_slot_id);
+  const b = side(r.away_team_id, r.away_slot_id);
+  return a && b ? [a, b].sort().join('|') : null;
+}
+
+const byWhen = (x: ReplaceRow, y: ReplaceRow) =>
+  (x.game_date ?? '').localeCompare(y.game_date ?? '') || (x.game_time ?? '').localeCompare(y.game_time ?? '') || x.id.localeCompare(y.id);
+
+/**
+ * A draft replaces the division's games still to play by deleting them and inserting its own (one transaction,
+ * mig 320). Told as its teams would understand it:
+ *   · MOVED — a replaced game whose two teams still meet in the draft: the earliest such pairing, game for game, keyed
+ *     to the NEW game (the old row is gone, and a notice cascades with its game). Its "before" takes the new game's
+ *     home/away (the same two teams), so the classifier never mistakes a flipped matchup for a restructured one.
+ *   · DROPPED — a replaced game the draft no longer has: the caller keeps it as a cancelled game in a published
+ *     division, so its teams are told it's off; an unpublished division showed it to nobody.
+ *   · A pairing new to the draft tells no one (there is no "new game" alert).
+ */
+export function matchReplacedGames<O extends ReplaceRow, N extends ReplaceRow>(replaced: readonly O[], inserted: readonly N[]): {
+  moves: Array<{ before: O; after: N }>;
+  dropped: O[];
+} {
+  const open = new Map<string, N[]>();
+  for (const r of [...inserted].sort(byWhen)) {
+    const key = pairKey(r);
+    if (!key) continue;
+    const list = open.get(key);
+    if (list) list.push(r); else open.set(key, [r]);
+  }
+  const moves: Array<{ before: O; after: N }> = [];
+  const dropped: O[] = [];
+  for (const old of [...replaced].sort(byWhen)) {
+    const key = pairKey(old);
+    const next = key ? open.get(key)?.shift() : undefined;
+    if (next) moves.push({ before: { ...old, home_team_id: next.home_team_id, away_team_id: next.away_team_id }, after: next });
+    else dropped.push(old);
+  }
+  return { moves, dropped };
+}

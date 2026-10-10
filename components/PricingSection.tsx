@@ -88,7 +88,7 @@ const PLANS: Plan[] = [
     features: [
       'Everything in Tournament',
       'Unlimited tournament slots',
-      'Automated schedule generation and playoff bracket builder',
+      'Round-robin and playoff generators',
       'Custom registration fields, file uploads, and waitlist promotion',
       'Registration exports — Excel, CSV, and PDF',
       'Advanced payment tracking and post-tournament reporting',
@@ -99,7 +99,7 @@ const PLANS: Plan[] = [
     compactFeatures: [
       'Everything in Tournament',
       'Unlimited tournament slots',
-      'Automated scheduling and bracket builder',
+      'Round-robin and playoff generators',
       'Full branding control',
       'Unlimited staff / admin seats · unlimited volunteers',
     ],

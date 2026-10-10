@@ -4,8 +4,8 @@ import {
   DRAFT_SAVE_FAILED,
   GAME_DAY_REMINDER_SENTENCE,
   SCHEDULE_REFUSAL,
-  draftSaveQuestion,
-  draftSaveReadout,
+  GENERATOR_WORDS,
+  draftStatement,
   refusalReason,
 } from '../../lib/schedule-words.ts';
 import { willScheduleGameDayReminder } from '../../lib/schedule-publish-rules.ts';
@@ -15,48 +15,42 @@ import { willScheduleGameDayReminder } from '../../lib/schedule-publish-rules.ts
  * facts they may state.
  */
 
-const base = { division: 'U13', added: 9, replaced: 0, kept: 0, slotBased: false, published: false };
+const base = { division: 'U13', added: 9, replaced: 0, played: 0, kept: 0, other: 0, published: false };
 
-describe('the generator\'s save question (F70) says what it adds, replaces and keeps', () => {
-  it('an empty division: only what it adds', () => {
-    assert.equal(draftSaveQuestion(base), 'This will save 9 new games for U13.');
+describe('the generator\'s one statement (S3; F70) says what saving adds, replaces and keeps', () => {
+  it('an empty division: what it adds, that nothing is replaced, and who sees it', () => {
+    const s = draftStatement(base);
+    assert.equal(s.lead, 'Saving adds 9 games to U13.');
+    assert.equal(s.rest, " U13 has none yet, so nothing is replaced. They aren't published yet: teams and families see them once you publish U13.");
+    assert.deepEqual(s.bullets, []);
+    assert.match(draftStatement({ ...base, published: true }).rest, /They show on the public site and in the app as soon as you save\.$/);
   });
 
-  it('replaces games still to play and keeps the rest, singular and plural', () => {
-    assert.equal(
-      draftSaveQuestion({ ...base, replaced: 3, kept: 6 }),
-      'This will save 9 new games for U13 and replace 3 games still to play. 6 games stay as they are.',
-    );
-    assert.equal(
-      draftSaveQuestion({ ...base, added: 1, replaced: 1, kept: 1 }),
-      'This will save 1 new game for U13 and replace 1 game still to play. 1 game stays as it is.',
-    );
+  it('a division with games: what it adds, replaces and keeps, singular and plural', () => {
+    const s = draftStatement({ ...base, added: 6, replaced: 2, played: 4, kept: 1 });
+    assert.equal(s.lead, "Saving changes U13's games.");
+    assert.equal(draftStatement({ ...base, division: 'U11 Girls', added: 1, replaced: 1 }).lead, "Saving changes U11 Girls' games.");
+    assert.deepEqual(s.bullets, [
+      'Adds 6 games from this draft',
+      'Replaces 2 games still to play',
+      'Keeps 4 played games and their scores, and 1 game you marked Keep',
+    ]);
+    assert.deepEqual(draftStatement({ ...base, added: 1, replaced: 1, played: 1 }).bullets,
+      ['Adds 1 game from this draft', 'Replaces 1 game still to play', 'Keeps 1 played game and its score']);
+    assert.deepEqual(draftStatement({ ...base, added: 2, other: 3 }).bullets, ['Adds 2 games from this draft', 'Leaves its 3 other games as they are']);
   });
 
   it('a save that only removes games says so; a save with nothing to do says that', () => {
-    assert.equal(
-      draftSaveQuestion({ ...base, added: 0, replaced: 3, kept: 6 }),
-      'This will remove 3 games still to play from U13. There are no new games to add. 6 games stay as they are.',
-    );
-    assert.equal(draftSaveQuestion({ ...base, added: 0 }), 'There is nothing to save.');
+    assert.deepEqual(draftStatement({ ...base, added: 0, replaced: 3, played: 6 }).bullets,
+      ['Removes 3 games still to play', 'Keeps 6 played games and their scores']);
+    assert.equal(draftStatement({ ...base, added: 0 }).lead, 'There is nothing to save.');
   });
 
-  it('slot-based drafts name the schedule, not a game count', () => {
-    assert.equal(draftSaveQuestion({ ...base, slotBased: true, replaced: 2 }), 'This will save a slot-based schedule for U13 and replace 2 games still to play.');
-  });
-
-  it('never says games are cleared, and never that teams are told — a published division says no one is notified', () => {
-    for (const c of [base, { ...base, replaced: 3, kept: 6 }, { ...base, published: true }, { ...base, added: 0, replaced: 2, published: true }]) {
-      const q = draftSaveQuestion(c);
-      assert.doesNotMatch(q, /permanently|clear/i);
-      assert.doesNotMatch(q, /\b(teams|families|coaches) (are|will be) (told|notified|emailed)/i);
+  it('never says games are cleared', () => {
+    for (const c of [base, { ...base, replaced: 3, played: 6 }, { ...base, published: true }, { ...base, added: 0, replaced: 2, published: true }]) {
+      const s = draftStatement(c);
+      assert.doesNotMatch([s.lead, s.rest, ...s.bullets].join(' '), /permanently|clear/i);
     }
-    assert.match(draftSaveQuestion({ ...base, published: true }), /U13 is published, so the new games show on the public schedule right away\. No one is notified\.$/);
-  });
-
-  it('the form readout counts what a save keeps and replaces', () => {
-    assert.equal(draftSaveReadout(6, 3), 'Keeps 6 games. Replaces 3 games still to play.');
-    assert.equal(draftSaveReadout(1, 0), 'Keeps 1 game. Nothing to replace.');
   });
 
   it('every one-step failure says nothing was saved', () => {
@@ -100,5 +94,33 @@ describe('the Publish window\'s reminder sentence shows only when the reminder i
 
   it('no longer promises a reminder "even if the box above is left unchecked"', () => {
     assert.doesNotMatch(GAME_DAY_REMINDER_SENTENCE, /unchecked|even if/i);
+  });
+});
+
+describe('the round-robin generator\'s words (S3, /marketing 2026-10-09)', () => {
+  it('the taken line: one division names its times; several divisions count their games', () => {
+    assert.equal(
+      GENERATOR_WORDS.taken({ divisions: ['U13'], games: 3, fields: ['Diamond 3'], days: ['Friday'], times: ['9:00 a.m.', '10:30 a.m.', '12:00 p.m.'] }),
+      "U13's 3 games hold Diamond 3 on Friday at 9:00 a.m., 10:30 a.m. and 12:00 p.m. The drafts leave those times free.",
+    );
+    assert.equal(
+      GENERATOR_WORDS.taken({ divisions: ['U11', 'U15'], games: 9, fields: ['Diamond 1', 'Diamond 2'], days: ['Friday', 'Saturday'], times: [] }),
+      "Other divisions' 9 games hold Diamond 1 and Diamond 2 on Friday and Saturday. The drafts leave those times free.",
+    );
+    assert.match(GENERATOR_WORDS.taken({ divisions: ['U9'], games: 1, fields: ['Diamond 4'], days: ['Sunday'], times: ['4:00 p.m.'] }), /^U9's 1 game holds Diamond 4/);
+  });
+  it('a card names what decides between the drafts, singular and plural', () => {
+    assert.equal(GENERATOR_WORDS.measures.loadAndMoves(0, 2), '0 back-to-backs · 2 field moves');
+    assert.equal(GENERATOR_WORDS.measures.loadAndMoves(1, 1), '1 back-to-back · 1 field move');
+    assert.equal(GENERATOR_WORDS.measures.clubOne('Diamond 2, Fri 9:00 a.m.'), '1 game on a club booking: Diamond 2, Fri 9:00 a.m.');
+    assert.equal(GENERATOR_WORDS.measures.clubClear, 'Clear of club bookings');
+    assert.equal(GENERATOR_WORDS.others(['U13']), 'U13');
+    assert.equal(GENERATOR_WORDS.others(['U11', 'U13', 'U15']), '3 other divisions');
+  });
+  it('the replace asks once, and says who is told', () => {
+    assert.equal(GENERATOR_WORDS.replace.title(2), 'Replace 2 games still to play?');
+    assert.equal(GENERATOR_WORDS.saveReplace(1), 'Save and replace 1 game');
+    assert.match(GENERATOR_WORDS.replace.published('U13'), /their followers are told the new time, and a game this draft drops is told as cancelled/);
+    assert.equal(GENERATOR_WORDS.replace.unpublished('U13'), "U13 isn't published, so nobody is told.");
   });
 });

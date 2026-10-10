@@ -656,13 +656,13 @@ function addLinkedGameChangeSafetyErrors(
     (target.homeSlotId || target.awaySlotId) &&
     (before.homeTeamId !== after.homeTeamId || before.awayTeamId !== after.awayTeamId || before.divisionId !== after.divisionId)
   ) {
-    errors.push('Pool-slot games cannot change division or teams by schedule import. Update the schedule builder first.');
+    errors.push('Pool-slot games cannot change division or teams by schedule import. Change it on the schedule first.');
   }
   if (
     target.scheduleFacilityLaneId &&
     (before.venueId !== after.venueId || before.venueFacilityId !== after.venueFacilityId)
   ) {
-    errors.push('Facility-lane games cannot change venue or facility by schedule import. Update the schedule builder first.');
+    errors.push('Facility-lane games cannot change venue or facility by schedule import. Change it on the schedule first.');
   }
 }
 

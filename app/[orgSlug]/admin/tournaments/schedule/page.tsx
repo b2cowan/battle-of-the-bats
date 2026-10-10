@@ -183,7 +183,7 @@ export default function AdminSchedulePage() {
   function openGenerator() {
     if (!resolveHasRoundRobin(currentTournament)) return; // no round robin in bracket-only events
     if (!canAutoGenerateSchedule) {
-      showScheduleUpgrade('Round-Robin Generator Requires Tournament Plus', 'auto_schedule');
+      showScheduleUpgrade('The round-robin generator is on Tournament Plus', 'auto_schedule');
       return;
     }
     setShowGenerator(true);
@@ -208,7 +208,7 @@ export default function AdminSchedulePage() {
   // + crossover, + auto-schedule). Gated to Tournament Plus.
   function openAutoGenerator() {
     if (!canAutoBracket) {
-      showScheduleUpgrade('Auto-Generate Bracket Requires Tournament Plus', 'playoff_generator');
+      showScheduleUpgrade('The playoff generator is on Tournament Plus', 'playoff_generator');
       return;
     }
     setPlayoffWizardConfig(undefined);
@@ -219,7 +219,7 @@ export default function AdminSchedulePage() {
   // prompt (they keep manual single-game edits + the free rain-delay banner).
   function openRainDelay() {
     if (!canRainDelay) {
-      showScheduleUpgrade('Rain Delay Requires Tournament Plus', 'bulk_reschedule');
+      showScheduleUpgrade('Rain delay is on Tournament Plus', 'bulk_reschedule');
       return;
     }
     setShowShiftDay(true);
@@ -1549,6 +1549,7 @@ export default function AdminSchedulePage() {
         <ScheduleGenerator
           tournament={currentTournament}
           orgSlug={orgSlug ?? ''}
+          planId={currentOrg?.planId ?? null}
           divisions={divisions}
           defaultDivisionId={roundRobinDefaultDivisionId}
           teams={teams}

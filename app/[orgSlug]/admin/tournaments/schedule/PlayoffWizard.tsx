@@ -12,6 +12,7 @@ import { formatVenueLocation } from '@/lib/venue-label';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
 import { resolveGameTiming, slotsClearOfTakenGames, toConflictGame } from '@/lib/schedule-conflict';
 import { gameLengthMinutes } from '@/lib/booking-length';
+import { requiresTournamentPlusCopy } from '@/lib/plan-features';
 import NumberStepper from '@/components/admin/NumberStepper';
 import {
   filterStartsAfterRoundRobinCompletion,
@@ -1339,7 +1340,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                 <Trophy size={20} />
               </div>
               <div>
-                <h3 style={{ margin: 0 }}>Playoff Bracket Builder</h3>
+                <h3 style={{ margin: 0 }}>Playoff generator</h3>
                 <p className="text-label" style={kx({ color: 'var(--logic-lime)', marginTop: '0.25rem' }, KIT_INK.eyebrowAccent)}>{division.name} Division</p>
               </div>
             </div>
@@ -1661,7 +1662,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                     className={`${styles.generatorSegBtn} ${autoSchedule ? styles.generatorSegBtnActive : ''}`}
                     onClick={() => { if (canAutoSchedule) setAutoSchedule(true); }}
                     disabled={!canAutoSchedule}
-                    title={canAutoSchedule ? undefined : 'Automated schedule generation is included with Tournament Plus, League Plus, and Club.'}
+                    title={canAutoSchedule ? undefined : requiresTournamentPlusCopy('playoff_generator')}
                     style={!canAutoSchedule ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
                   >
                     {!canAutoSchedule && <Lock size={11} style={{ marginRight: '0.35rem' }} />}
@@ -1894,11 +1895,11 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
 
             <div style={kx({ marginTop: '1.5rem', padding: '1.25rem', background: 'rgba(var(--blueprint-blue-rgb), 0.08)', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }, { background: 'var(--home-olive-soft)', border: '1px solid var(--home-olive)', borderRadius: '8px' })}>
               <div>
-                <h4 className="font-bold text-sm text-primary-light" style={{ marginBottom: '0.25rem' }}>Preview Bracket</h4>
+                <h4 className="font-bold text-sm text-primary-light" style={{ marginBottom: '0.25rem' }}>Generate a draft</h4>
                 <p className="text-muted text-xs">Generates the bracket layout based on your configuration above. Resets the custom bracket canvas if you&apos;ve made manual edits.</p>
               </div>
               <button className="btn btn-lime btn-data" style={{ whiteSpace: 'nowrap', flexShrink: 0 }} onClick={generatePreview}>
-                <Sparkles size={13} /> Preview Bracket
+                <Sparkles size={13} /> Generate a draft
               </button>
             </div>
 
@@ -1958,7 +1959,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
 
                   <div style={kitInfoBannerStyle}>
                     <Info size={14} style={kitInfoIconStyle} />
-                    Preview only. Click <strong>Generate Playoff Bracket</strong> to save it, then fine-tune dates, fields and matchups on the schedule with <strong>Edit Bracket</strong>.
+                    A draft only. <strong>Save this bracket</strong> keeps it; then fine-tune dates, fields and matchups on the schedule with <strong>Edit bracket</strong>.
                   </div>
 
                   {(() => {
@@ -2005,7 +2006,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
         <div className="modal-footer" style={kx({ padding: '1.5rem 2rem', background: 'var(--surface-2)', margin: 0 }, { background: 'var(--card-bg)' })}>
           <button className="btn btn-ghost btn-data" onClick={onClose} disabled={loading}>Cancel</button>
           <button className="btn btn-lime btn-data" onClick={handleCreate} disabled={loading || preview.length === 0} style={{ padding: '0.75rem 2rem' }}>
-            {loading ? <><RefreshCw className="spin" size={14} /> Creating...</> : <><Check size={14} /> Generate Playoff Bracket</>}
+            {loading ? <><RefreshCw className="spin" size={14} /> Saving…</> : <><Check size={14} /> Save this bracket</>}
           </button>
         </div>
 
@@ -2051,7 +2052,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
             </p>
             <div className="flex flex-col gap-3">
               <button className="btn btn-primary" style={kx({ background: 'var(--danger)', borderColor: 'var(--danger)' }, KIT_BUTTON.danger)} onClick={proceedAfterWarning}>
-                {activeGenerationScope === 'build' ? 'Build From Current' : 'Yes, Delete and Replace'}
+                {activeGenerationScope === 'build' ? 'Build From Current' : 'Delete and replace'}
               </button>
               <button className="btn btn-ghost" onClick={() => setShowWarning(false)}>
                 Cancel

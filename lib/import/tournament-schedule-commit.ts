@@ -370,7 +370,7 @@ export function validateTournamentScheduleCommitAgainstContext(
   });
   if (slotLinkedRows.length > 0) {
     throw new TournamentScheduleImportCommitError(
-      'Pool-slot games cannot change division or teams by schedule import. Update the schedule builder first.',
+      'Pool-slot games cannot change division or teams by schedule import. Change it on the schedule first.',
       409,
       slotLinkedRows.map(row => row.rowNumber),
     );
@@ -385,7 +385,7 @@ export function validateTournamentScheduleCommitAgainstContext(
   });
   if (laneLinkedRows.length > 0) {
     throw new TournamentScheduleImportCommitError(
-      'Facility-lane games cannot change venue or facility by schedule import. Update the schedule builder first.',
+      'Facility-lane games cannot change venue or facility by schedule import. Change it on the schedule first.',
       409,
       laneLinkedRows.map(row => row.rowNumber),
     );

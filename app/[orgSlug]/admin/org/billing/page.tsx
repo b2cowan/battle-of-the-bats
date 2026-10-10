@@ -101,7 +101,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Everything in Tournament',
     'Unlimited tournament slots',
     'Custom registration — questions, file uploads, waitlists, and exports',
-    'Automated schedule generation and playoff brackets',
+    'Round-robin and playoff generators',
     'Full branding control',
     'Tournament cloning, announcements, and post-event archives',
     'Unlimited staff seats — volunteers always free',

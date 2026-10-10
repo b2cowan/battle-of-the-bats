@@ -53,7 +53,7 @@ export function tournamentFormatLabel(format: TournamentFormat): string {
  */
 const TOURNAMENT_FORMAT_SETTINGS_DESCRIPTIONS: Record<TournamentFormat, string> = {
   round_robin_playoffs: 'Teams play a round robin, then the top teams advance to a playoff bracket seeded from the standings.',
-  playoff_only: 'No round robin — the event starts straight with a playoff bracket. You seed teams into the first round yourself (manually or randomized) in the Playoff Bracket Builder.',
+  playoff_only: 'No round robin — the event starts straight with a playoff bracket. You seed teams into the first round yourself (manually or randomized) when you build the bracket.',
   exhibition: 'No playoffs — every game is a stand-alone game. Standings still run; hide the Standings page under Public pages if you don’t want a table.',
 };
 

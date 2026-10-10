@@ -7,6 +7,30 @@
 
 ---
 
+### 🆕 The two schedule tools' names — WRITTEN 2026-10-09 (`/marketing`, Tournament admin redesign Stage 3 build, Precondition 2; the owner's A34 as amended 2026-10-09: a door names the tool it opens)
+
+The product calls its two paid schedule tools **Round-robin generator** and **Playoff generator**; the free hand-built
+bracket keeps **Build bracket**. "Bracket" stays the free tool's word, so a locked "bracket generator" never reads as a
+second, paid way to make a bracket. Every customer surface uses the same two names (supersedes the lines below that say
+"Automated schedule generation", "Bracket generator", "playoff bracket builder" — Section 4's card lists, Section 5's
+table, Section 8's gate banner):
+
+| Where | Was | Now |
+|---|---|---|
+| Comparison table, Tournaments & Scheduling | Manual scheduling | **Games and brackets built by hand** (✓ on every plan, unchanged) |
+| Comparison table | Automated schedule generation | **Round-robin generator** |
+| Comparison table | Bracket generator | **Playoff generator** |
+| Card lists, billing page, plan article | "Automated schedule generation" + "Bracket generator" / "…and playoff bracket builder" | **Round-robin and playoff generators** |
+| Gate banner (Section 8, "bracket generator") | Bracket generation is a Tournament Plus feature… | **The playoff generator is on Tournament Plus.** (the in-app message reads its sentence from `lib/plan-features.ts`) |
+| Platform page cards | Schedule Generator / Bracket Generator | **Round-Robin Generator** / **Playoff Generator** (that page's heading case), descriptions in the build |
+| Plan emails' list | "Single & double-elimination bracket builder" · "Automated schedule generation across fields & time slots" | "The playoff generator, for single and double elimination" · "The round-robin generator, across your fields and time slots" |
+| Plan emails' heading | What you've unlocked / What's now unlocked | **What's included now** ("unlock" is on the never-use list) |
+
+No plan, price, gate or inclusion moved: the names only. Outcome lines that describe a result rather than name a tool
+("Auto-generated schedules and standings" on the home page) are kept.
+
+---
+
 ### 🆕 FOUNDING SEASON 2027 — offer copy APPROVED 2026-09-07 (owner, on mockup sheet `61a78f09`; built on `dev` 2026-09-07)
 
 **Every Founding Season sentence on the pages now comes from ONE canon and is single-sourced in

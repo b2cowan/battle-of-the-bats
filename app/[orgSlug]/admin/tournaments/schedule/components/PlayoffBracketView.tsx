@@ -81,7 +81,7 @@ export default function PlayoffBracketView({ games, teams, division, venues, can
         {canBuildManualBracket && onBuildBracket && (
           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.25rem' }}>
             <button type="button" className="btn btn-lime btn-data" onClick={onBuildBracket}>
-              <Trophy size={14} /> Build Bracket
+              <Trophy size={14} /> Build bracket
             </button>
             {onStartFromStandings && (
               <button type="button" className="btn btn-outline btn-data" onClick={onStartFromStandings}>

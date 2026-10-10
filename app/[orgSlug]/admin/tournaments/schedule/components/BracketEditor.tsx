@@ -447,7 +447,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
             disabled={loading || preview.length === 0}
             title={violations.length > 0 ? 'Fix the bracket order — a game is scheduled before the game that feeds it' : undefined}
           >
-            {loading ? <><RefreshCw className="spin" size={14} /> Saving…</> : <><Check size={14} /> Save Bracket</>}
+            {loading ? <><RefreshCw className="spin" size={14} /> Saving…</> : <><Check size={14} /> Save bracket</>}
           </button>
         </div>
       </div>
@@ -471,7 +471,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
               <span style={{ flex: 1 }} />
               {canAutoGenerate && onUseAutoGenerator && (
                 <button type="button" className="btn btn-outline btn-data" onClick={onUseAutoGenerator} title="Generate a full bracket from a format (Tournament Plus)">
-                  Auto-generate instead
+                  Use the playoff generator
                 </button>
               )}
             </div>

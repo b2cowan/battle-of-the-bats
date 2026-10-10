@@ -48,7 +48,7 @@ const MODULE_CARDS: Array<{
     tagline: 'From team registration to final standings — without the spreadsheets.',
     features: [
       'Custom team registration with waitlist management',
-      'Schedule generator across fields and time slots',
+      'The round-robin generator, across your fields and time slots',
       'Single and double-elimination brackets',
       'Live score entry — standings update the moment you save',
       'Tournament archives — every past event preserved',
