@@ -8,6 +8,41 @@
 
 ---
 
+### 2026-10-10 — One at a time: on a one-slot plan, a FINISHED event no longer holds the slot
+**Status:** **Decided** (owner, 2026-10-10, at the start of the Tournament admin redesign's Stage 5 design session: chose "B · One at a time (Recommended)" on the question the 2026-10-07 entry left open). **Not built.** Stage 5 (creation, which owns the limit checks) draws it, and Stage 5's build implements it.
+
+**Decision:**
+- On the one-slot plans (the free **Tournament** plan and the **Premium Coaches Portal's** included tournament), only **Draft** and **Active** events hold the slot. A **Completed** event does not.
+- Last year's results, public site and shared links stay online after the event finishes. A free organizer starts next year without taking anything down.
+- **Archive** stays, as a tidy-up (it still takes an event's public site offline), not as the price of next year.
+- **Unchanged:** prices, plan names, the slot count ("1 tournament"), the staff-seat limit and every feature key. Tournament Plus keeps all its reasons: several events at once, Reuse this setup, Summary, Sealed records, branding and the comms workflow.
+
+**Rationale:** the 2026-10-07 entry's case for B, ratified as written. One point adds weight, from reading the code: **today's rule never forced an upgrade.** A free organizer could always archive and carry on free. So the slot's only real effect was to make that organizer pay for next year by breaking the results links that families, coaches and the local paper had shared. B removes that cost, not a paywall. **The tradeoff stands as recorded:** B gives up the one upgrade prompt that fires by itself for a returning free organizer. It is a pre-revenue hypothesis; revisit it after the first real season's conversion data.
+
+**What the ruling implies.** The owner did not rule these separately, so they are follow-through for Stage 5's drawing and build, not new decisions:
+- **Mark complete frees the slot.** So moving a finished event back into the slot needs a free one: **Reopen** (Completed → Active) and **Move back to draft** (Completed → Draft) are refused at the limit, in words, before the tap.
+- **Bring back** (Archived → Completed) **no longer needs a slot**, because Completed holds none. Today it is the change refused at the limit.
+- **The downgrade path's "keep these, archive the rest"** (`api/billing/downgrade/confirm`) counts every event that isn't archived. Under B it should count only Draft and Active, so a downgrade never archives (and takes offline) a finished event.
+- ⚠ **Found while logging (Stage 5's to draw): the name and the public link.** Creating, cloning or renaming an event is refused when another event that **isn't archived** has the same name (year ignored) or the same public link (`setup-tournament`, `tournaments` update, the clone route; the database's `tournaments_org_slug_live_unique`). Today a free organizer archives last year first, which frees both. **Under B, last year's finished "Summer Classic" keeps its name and link, so next year's "Summer Classic" is refused** until one changes. Unlimited plans already meet this. The creation path and Reuse must answer it (for example, propose next year's name and link, or let a finished event's name repeat in another year). That is a Stage 5 design question, not a packaging one.
+
+**Affects:**
+- The slot-occupancy rule ("holds a slot = not archived" → "= Draft or Active"): New tournament (`setup-tournament`), the clone route, and the status-change route's limit check (`tournaments` PATCH).
+- The refusal words (`slotsInUseRefusal`, "Archive another tournament first"), the finished board's one-slot sentence and the archive question's "the slot is freed" clause (`lib/after-event-words.ts`, `lib/tournament-archive-words.ts`).
+- The Tournaments list's slot line ("1 of 1 tournament slot in use"), which counts the same way.
+- The coach portal's "Tournaments you run" and the included tournament's limit.
+- The billing downgrade's archive step.
+- `PLAN_PRICING_FACTS.md`'s one-slot line (updated this session: Decided, not built).
+
+**Handoff:**
+HANDOFF → `/plan` — done by the session that ruled it: Stage 5 of `TOURNAMENT_ADMIN_REDESIGN_PLAN.md` draws the creation path under B, including the name-and-link question above.
+HANDOFF → `/billing` — at Stage 5's build: change the occupancy count at every limit check above, and in the downgrade's keep/archive step. Run the Facts doc's drift check in the same unit of work and true the Facts line to "built". No `lib/plan-config.ts` value moves (`tournamentLimit` stays 1).
+HANDOFF → `/marketing` — at Stage 5's build, never before (the product still runs today's rule until then). Rewrite the finished board's one-slot sentence: under B it either goes, or becomes a line that last year stays online. Rewrite the archive question's slot clause and the slot refusal ("Archive another tournament first" stops being the only way out; Mark complete frees it too). The pricing page's "1 tournament" may say "one at a time" if `/marketing` judges it clearer. That is a copy call; the count is unchanged.
+HANDOFF → `/docs` — at Stage 5's build: the tournament help's after-event "Next year" text (it says archiving frees the slot), the org help's downgrade FAQ (fewer slots → the extras are archived), and the coach help's "one tournament slot" answer. All three are true today and stay true until the build.
+
+**Supersedes:** the 2026-10-07 entry's **part 2** (Proposed → Decided here). Its **part 1** (the board's sentence, on prod) stands until Stage 5's build, which rewrites it.
+
+---
+
 ### 2026-10-08 — The club scheduler is carried by the HOUSE-LEAGUE plan and BOTH Club bands: plan choice follows what an organization runs, never a feature an upgrade unlocks
 **Status:** **Decided** (owner, 2026-10-08 — Club readiness Stage 11, Ask 6: *"house leagues and club plans can hold the scheduler, going from house league only to club is not a functionality decision rather than what does the club do and a calendar generator would not make them say 'lets now add our rep program'."*) · one sub-point **Proposed** (the free League floor, below). **Nothing built** — Stage 11 of `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` is drawn with Stage 10 (permits) in one mockup session first.
 
@@ -53,7 +88,7 @@ HANDOFF → `/billing` — none; gates stay `early_access` until the Stage 8 fli
 ---
 
 ### 2026-10-07 — On a one-slot plan, the finished board says plainly that next year costs this year's public site; whether a FINISHED event should keep holding the slot is OPEN
-**Status:** **Decided** (part 1: the disclosure — owner, 2026-10-06, Tournament admin redesign Stage 4 ask **A23** ruled "as recommended" in the paste-back; built and on prod 2026-10-07, job 277) · **Proposed — awaiting the owner** (part 2: the packaging question A23 routed here; nothing ratified).
+**Status:** **Decided** (part 1: the disclosure — owner, 2026-10-06, Tournament admin redesign Stage 4 ask **A23** ruled "as recommended" in the paste-back; built and on prod 2026-10-07, job 277; Stage 5's build rewrites it) · ~~Proposed~~ **part 2 Decided 2026-10-10 as B, "one at a time" — superseded by "2026-10-10 — One at a time" above** (not built).
 
 **Today's rule, read from the code (2026-10-07):**
 - The free **Tournament** plan and the **Premium Coaches Portal's** included tournament each have **one tournament slot**.
