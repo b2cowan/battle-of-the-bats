@@ -1321,17 +1321,66 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 >   it). Kept: the tile's line, the door words, the Export line, the refusals ("Venue library" capitalised as the page's name;
 >   "any more", the product's spelling). **Declined on merit:** naming Club · Association in the plan line — every gate line in
 >   the product says "League Plus and Club" (Club · Association is Club's larger size), and the reader of a lock line is on a
->   smaller plan. **Drift flagged for `/strategy`:** `PLAN_PRICING_FACTS.md` has no row for the Venue library's gate (League
->   Plus · Club · Club · Association — `hasOrgVenueLibrary`); the gate is older than 6b, only its tile is new.
-> - **Owed:** the walks §288 (nine — on the hub's QA tab since v71, 2026-10-09, with 6a's status trued to passed); production
->   counts after the build; the commit (Part 0 its own; the layout baseline staged as HEAD + this stage's nine entries only — the working copy also
->   holds another session's 53 pruned house-league entries and a key reorder).
+>   smaller plan. **Drift flagged for `/strategy`, closed the same day:** `PLAN_PRICING_FACTS.md` had no row for the Venue
+>   library's gate (League Plus · Club · Club · Association — `hasOrgVenueLibrary`; older than 6b, only its tile is new).
+>   `/strategy` verified the gate (the free League floor sits on `plan_id='tournament'`, so it is out) and added the row
+>   with the club calendar beside it; drift check clean; no `BUSINESS_DECISIONS.md` entry (a fact, not a decision).
+> - **Committed 2026-10-09:** Part 0 `2ebab282`, the build `c43d767a` (51 files; staged from a private index — the layout
+>   baseline as HEAD + this stage's nine entries, the shared docs as this stage's hunks only). The build's pre-commit hooks
+>   were skipped **on the owner's word**: the PDF-documents check failed only on another session's untracked tournament file
+>   (`useScheduleExport.ts`), not in the commit. Not pushed.
+> - **⚖ Owner call 2026-10-09 (walking §288 W4) — on a phone Export moves into the Filter row.** Owner: "why is the export button
+>   at the bottom on the phone?", then "move it". The drawing copied the coach schedule's phone, whose Export sits under the list
+>   only because that phone has NO toolbar row; departure (4) gave Filter a row of its own, which brought the row back, and Export
+>   stayed behind at the end of the week. Built the same day: Export is the 44 px icon at the right end of the Filter row (where it
+>   sits on a computer, and on the club Ledger's phone); one render of the menu at every width, the phone-only copy and its two
+>   classes gone; the 6b guard test holds one Export. Read-only captures at 390 (Warm, Dark) and 1440 + `check:layout` on the three
+>   calendar views, both themes: no new findings. Help unchanged (it names no phone position). Hub: W4 steps 2 and 6 reworded and
+>   a Decisions row. **Lesson:** copy a placement WITH its reason — when a departure removes the reason, re-check
+>   every placement that rested on it.
+> - **⚖ Owner call 2026-10-09 (the same walk, W4) — a phone offers Week and Month, not List.** Owner: "do we need 'list' and
+>   'week' on a phone if they are both showing a list?", then "go ahead". Here List and Week both read ONE week and a phone drew
+>   both as the same stack of day cards; the drawing copied the coach's three-view drawer, where List is the whole SEASON (a
+>   different read). Built the same day: the phone drawer offers Week and Month (`PHONE_VIEWS`); the body draws `shownView`
+>   (List → Week at ≤640, the choice kept so a widened window returns to List); a Month day opens that Week on a phone and scrolls
+>   to the day; List's phone stack is gone; Week's phone days carry the `cal-day-` ids. Found and fixed: the day jump on a phone
+>   landed under the 61 px event header (List did the same before) — `.jumpTarget` scroll margin. A computer keeps all three.
+>   Declined for now: List as a longer range everywhere (changes a walked computer view; Stage 11's to weigh). Probes at 390 and
+>   1440 + guard test (46/46 with the calendar unit tests). `check:layout` NOT re-run for this one — the machine sat under the
+>   sweep's memory floor with the owner and another session on the dev server; owed after the next restart. Hub: W4 step 3
+>   reworded + a Decisions row, published with the W5–W6 session's edits from the shared file. Same lesson as the Export move:
+>   the drawing copied the coach's phone whole, and two of its parts rested on facts this page doesn't share.
+> - **⚖ Owner call 2026-10-09 (walking §288 W6) — a record's rare door ends its body; it never takes a foot row of its own.**
+>   Owner, at Kinsmen Park's edit form: "does archive need to have a full pinned row above the footer?" → the recommendation →
+>   "go ahead with both" (the venue and a payee). Archive / Bring back sat alone in a pinned row above Previous · Next (Delete,
+>   its other half, already ended the body), held there at every scroll for a door pressed once in a venue's life, and on the
+>   edit form it covered "Add a facility"; the row was left over from Done, which left every record window earlier the same
+>   day. A payee's Merge had the identical shape (the 3d Export ruling kept it "at the foot's left" without asking). Built the
+>   same evening: RepKit's `RecordAction` (RecordDelete's shape in the text's colour — it can be undone); the venue window ends
+>   with Archive this venue / Bring back this venue / Delete this venue (an archived venue nothing books: Bring back and Delete
+>   side by side), a refused Bring back says why under it; the payee window ends with Merge into another payee or Delete this
+>   payee; both feet are Previous · Next only. Guards (`admin-record-delete-guard`, the 3d and 6b screen guards) 80/80, lint
+>   clean, typecheck 0; help's Archive/Delete article names the new labels and place; design log 2026-10-09 "A record's rare
+>   door ends its body". `check:layout` (after the walks) on the venue window and a payee window, Warm and Dark, 361–1440:
+>   no new findings. `/review` (standard tier, 2 lenses): 1 Low confirmed and fixed — after the shared-rule split the
+>   Delete guard's first-match regex hit the one-line colour rule, so its bold/underline checks passed vacuously; it now
+>   reads every at-rest rule of both doors and was proven to bite. Hub: W7 steps 1, 7, 8 and W8 step 1 reworded.
+>   **Committed 2026-10-09 `b5c4542f`** (private index — RepKit, the 6b guard and the design log also hold other
+>   sessions' hunks, left out). Not pushed. ⚠ W7 and W8 were then walked from a hub page opened BEFORE the rewording, so
+>   their ticks name the foot: the new place owes a one-look re-check (ledger §288 W7).
+> - **Owed:** the walks §288 (nine — on the hub's QA tab since v71, 2026-10-09, with 6a's status trued to passed; W1–W6 passed
+>   2026-10-09, W4 on the first layout — its steps 2, 3 and 6 owe a re-check after the two phone calls); `check:layout` on the
+>   calendar after the phone-views change; production counts after the build; mig 321 to production (order independent of the code).
 > - **Follow-ups (not built):** the library's usage counts as one database aggregate (today: a scan of the club's linked bookings on
 >   each open); an "archived venues, flagged" list for the Venue field (today the read-back splits the booking's own line); the
 >   List/Week/Month vocabulary shared with the coach schedule (another session's file).
 > - **Found, not fixed:** the blanket REFERENCES/TRIGGER/TRUNCATE grants every table carries for `anon`/`authenticated` (unreachable
 >   through the data API; a platform item, not this stage's); the tournament import action (`app/api/admin/venues`) would still copy
->   an archived venue if called directly by id (the list hides them; harmless).
+>   an archived venue if called directly by id (the list hides them; harmless); **the calendar's door and its server disagree
+>   for one plan** (found by `/strategy` 2026-10-09): the rail and the More sheet hide Calendar on a tournament-only workspace,
+>   but the route and page refuse only the Tournament plans — so a standalone Premium Coaches Portal (`team`, tournaments
+>   only) could open `/admin/calendar` by its address and read its own tournaments' games. Its own data, no door, no leak;
+>   the fix is one line (refuse on the tournament-only test the door uses).
 
 - [ ] **One venue book:** the coach place book learns to *reference* an org venue (a place can be "one of the club's venues" or free-text; the coach still owns the row), tournaments read `source_org_venue_id` for clashes, and a **cross-module clash check** runs on every write to rep events, league games/practices and tournament games ("Diamond 2 is booked by 12U AA practice 6–8 p.m.") — warn, never block.
 - [ ] Venue Library: role gate matches who schedules (league_admin), errors surface, in-use guard, facility edit, copy for all modules, sidebar link everywhere.
