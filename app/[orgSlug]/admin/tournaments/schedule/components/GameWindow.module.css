@@ -60,3 +60,5 @@
 }
 /* The Venue field ends where its line ends; the next field keeps the kit's field gap from it. */
 .where { margin: 0 0 0.9rem; }
+/* Add game's lime while the red line holds it: it looks held. The global .btn draws no disabled state (a /design finding). */
+.create:disabled { opacity: 0.5; cursor: not-allowed; }

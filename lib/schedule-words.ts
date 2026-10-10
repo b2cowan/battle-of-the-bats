@@ -292,6 +292,11 @@ export const GAME_WINDOW_WORDS = {
     lead: `${field} already has ${other}, ${range}${range.endsWith('.') ? '' : '.'}`,
     rest: ` Two games in this tournament can't share a ${noun}: change the time or the ${noun}.`,
   }),
+  /** Two games whose TYPED places match: it saves, in the busy ink — a typed place isn't checked (A37). */
+  typedOverlap: (field: string, other: string, range: string) => ({
+    lead: `${field} also has ${other}, ${range}${range.endsWith('.') ? '' : '.'}`,
+    rest: ' Both places are typed, so this isn’t refused: pick the venue to be sure.',
+  }),
   /** A gap shorter than the event's buffer: it saves, in the busy ink. */
   buffer: (field: string, other: string, until: string, gap: number) => ({
     lead: `${field} has ${other} until ${until}`,
@@ -313,6 +318,26 @@ export const GAME_WINDOW_WORDS = {
     stay: "Don't move",
     go: 'Move it',
   },
+} as const;
+
+// ── MOVING A GAME (Stage 3 build, Part 4 — S4, A36; /marketing 2026-10-09) ────────────────────────────────────
+
+export const MOVE_WORDS = {
+  /** After every move, with Undo: "Moved to 5:30 p.m. · Diamond 3" — the day too when it changed. */
+  moved: (when: string, where: string) => `Moved to ${[when, where].filter(Boolean).join(' · ')}`,
+  /** After Undo (no action): "Put back at 5:00 p.m. · Diamond 4"; another day, "Put back on Sat, Oct 10, 5:00 p.m. …". */
+  putBack: (when: string, where: string, otherDay: boolean) => `Put back ${otherDay ? 'on' : 'at'} ${[when, where].filter(Boolean).join(' · ')}`,
+  cancelled: 'Game cancelled',
+  backOn: 'Game back on',
+  undo: 'Undo',
+  /** The timeline's red band under a refused drop: "Diamond 2 has the U11 final until 5:15 p.m. — can't drop here". */
+  dropRefused: (field: string, other: string, until: string) => `${field} has ${other} until ${until} — can't drop here`,
+  /** The phone's move sheet: its lime names who it tells (a published game on a plan with alerts). */
+  move: 'Move',
+  moveTells: 'Move · tells both teams',
+  sheetCaption: (division: string, stage: string, when: string, where: string) =>
+    [division, stage, when ? `now ${when}` : '', where].filter(Boolean).join(' · '),
+  nextFree: (time: string) => `Use the next free time, ${time}`,
 } as const;
 
 /** A bracket slot's words in the admin — the ONE slot wording (owner 2026-07-17: "Semifinal 1 winner"), with a seed

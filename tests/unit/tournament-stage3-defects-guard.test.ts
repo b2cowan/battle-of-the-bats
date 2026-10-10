@@ -87,14 +87,18 @@ describe('F69 — both generators are offered only the slots no kept game holds'
 describe('F71 — a refused save says why', () => {
   const page = readCode(PAGE);
 
-  it('the save handler reads the reply, keeps the sandbox branch first, and throws so the row stays open', () => {
-    const sandbox = page.indexOf("if (saveRes.headers.get('X-Sandbox-Blocked') === '1')");
-    const refused = page.indexOf('if (await refusedWrite(saveRes, SCHEDULE_REFUSAL_TITLE.saveGame)) {');
-    const refresh = page.indexOf('await refresh();', refused);
-    assert.ok(sandbox > 0 && sandbox < refused && refused < refresh);
-    // The refusal can be because the game changed: reload, then throw (the row stays open, a move rolls back).
-    // A quiet re-read (no loading state), so the open inline row survives it.
-    assert.match(page.slice(refused, refresh), /void reloadGames\(\);\s*throw new Error\('refused'\);/);
+  it('the save handler reads the reply, keeps the sandbox branch first, and throws so the window stays open', () => {
+    // Stage 3 Part 3–4: ONE save for a game (the game window, the timeline's drop, the phone's move sheet, Undo).
+    const save = page.slice(page.indexOf('async function writeGameFields('));
+    const sandbox = save.indexOf("if (res.headers.get('X-Sandbox-Blocked') === '1')");
+    const refused = save.indexOf('if (!res.ok) {');
+    const reread = save.indexOf('await reloadGames();', refused);
+    assert.ok(sandbox > 0 && sandbox < refused && refused < reread);
+    // The refusal says the route's own reason; it can be BECAUSE the game changed, so a quiet re-read (no loading
+    // state — the open window survives it), then throw: the window's save word shows why, a drop goes back.
+    assert.match(save.slice(refused, reread), /const reason = await readRefusal\(res, SCHEDULE_REFUSAL\.gameFallback\);\s*void reloadGames\(\);\s*throw new Error\(reason\);/);
+    // Every caller that is not the window says it in the message window, and a drop's block goes back.
+    assert.match(page, /setGames\(prev => prev\.map\(x => \(x\.id === gameId \? g : x\)\)\);\s*setFeedback\(\{ isOpen: true, title: SCHEDULE_REFUSAL_TITLE\.saveGame,/);
   });
 
   it('one helper reports a refused write — never the sandbox\'s by-design refusal', () => {

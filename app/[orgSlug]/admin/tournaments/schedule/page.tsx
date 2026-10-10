@@ -5,7 +5,7 @@ import { Calendar, Plus, Pencil, X, Trophy, MapPin, Globe, RefreshCw, Wrench } f
 import { bracketGameLabel, findBracketSchedulingViolations, nextManualBracketCode } from '@/lib/playoff-bracket';
 import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { useTournament } from '@/lib/tournament-context';
-import { tournamentToday } from '@/lib/timezone';
+import { formatShortWeekdayDate, tournamentToday } from '@/lib/timezone';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, hasOrgVenueLibrary, requiresTournamentPlusCopy } from '@/lib/plan-features';
@@ -22,6 +22,7 @@ import ScheduleTimeline from './components/ScheduleTimeline';
 import { Game, Venue, PoolSlot, PlayoffConfig } from '@/lib/types';
 import { fieldNounFor } from '@/lib/sports';
 import { formatVenueLocation, resolveGameFieldLabel } from '@/lib/venue-label';
+import { formatTime } from '@/lib/utils';
 import ZeroVenuePrompt from './components/ZeroVenuePrompt';
 import ResolveLocationsModal from './components/ResolveLocationsModal';
 import { buildLocationResolvePlan, type LocationResolvePlan } from '@/lib/tournament-location-resolve';
@@ -35,7 +36,7 @@ import AddVenueModal from '@/components/admin/AddVenueModal';
 import { TournamentAdminHeader } from '@/components/admin/tournament/TournamentAdminUI';
 // The page's own parts (Stage 3 Part 0 split them out; none brings a stylesheet the lines above don't).
 import GameWindow, { type GameSaveReply } from './components/GameWindow';
-import type { GamePatch, GameWindowForm } from '@/lib/game-window-form';
+import { startsInUrgentLane, type GamePatch, type GameWindowForm } from '@/lib/game-window-form';
 import PublishScheduleModal from './components/PublishScheduleModal';
 import ResolveFacilitiesModal from './components/ResolveFacilitiesModal';
 import { useScheduleData } from './useScheduleData';
@@ -47,14 +48,17 @@ import {
   eventDays, fieldKeyOf, filtersOn, gamesByDay, matchesScheduleFilter, matchesScheduleSearch, NO_SCHEDULE_FILTER, openingDay,
   scheduleStateOf, SCHEDULE_STATES, stepDay, type ScheduleFilter, type ScheduleState, type ScheduleView,
 } from '@/lib/schedule-day';
-import { GAME_WINDOW_WORDS as GW, SCHEDULE_DAY_WORDS as W, SCHEDULE_TOOL_NAMES as T, slotWords } from '@/lib/schedule-words';
+import { GAME_WINDOW_WORDS as GW, MOVE_WORDS as MW, SCHEDULE_DAY_WORDS as W, SCHEDULE_TOOL_NAMES as T, slotWords } from '@/lib/schedule-words';
 import { placeOfWhere } from '@/lib/tournament-where';
 import { clashLine } from '@/lib/venue-clash-words';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
-import { ClubRow, ClubRowList, RepChip } from '@/components/admin/kit/club/RepKit';
+import { ClubRow, ClubRowList, NoticePill, RepChip } from '@/components/admin/kit/club/RepKit';
+import { WhereLine } from '@/components/venue/WhereField';
+import type { ClashLine } from '@/lib/venue-clash-words';
+import type { MoveTarget } from './components/MoveSheet';
 import HealthRow from '@/components/admin/tournament/HealthRow';
 import FilterMenu, { type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
 import { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
@@ -90,6 +94,11 @@ export default function AdminSchedulePage() {
   const [creatingGame, setCreatingGame] = useState(false);
   // The published-game question (A36), asked over the window; its answer settles the window's ✓.
   const [moveAsk, setMoveAsk] = useState<{ game: Game; near: boolean; answer: (move: boolean) => void } | null>(null);
+  // Every move ends in a notice with Undo (A36) — the browser session's, like the location resolver's: no new data.
+  const [notice, setNotice] = useState<{ key: number; message: string; action?: { label: string; onAction: () => void } } | null>(null);
+  const say = (message: string, action?: { label: string; onAction: () => void }) => setNotice({ key: Date.now(), message, action });
+  // A move on the timeline that lands on another of the club's bookings: 6a's amber line, above the grid (S4).
+  const [crossNote, setCrossNote] = useState<ClashLine | null>(null);
   // The view and the day (S1, A33): the schedule opens on the day — today during the event, its first day before it,
   // its last after it — every division, both stages, every state. `chosenDay` stays null until the organizer steps,
   // so the opening follows the games as they load. Nothing here is remembered between visits (1 October).
@@ -481,8 +490,81 @@ export default function AdminSchedulePage() {
    * before, so the route's own checks and the published-game alerts (B2.3) hold. A refusal throws the route's reason,
    * which the window's save word shows with Retry; the club's amber line comes back from the reply (Club Tier 6a).
    */
-  async function saveGameFields(gameId: string, patch: GamePatch): Promise<GameSaveReply> {
+  async function saveGameFields(gameId: string, patch: GamePatch, opts: { undo?: boolean } = {}): Promise<GameSaveReply> {
     const self = games.find(g => g.id === gameId);
+    const reply = await writeGameFields(gameId, patch, self);
+    // A change of day, start or place is a MOVE: it ends in the notice with Undo (A36), wherever it was made.
+    const moved = 'date' in patch || 'time' in patch || 'venueId' in patch || 'location' in patch;
+    if (self && moved && opts.undo !== false) {
+      const before = placeOf(self);
+      const after = {
+        date: patch.date ?? self.date, time: patch.time ?? self.time,
+        venueId: 'venueId' in patch ? patch.venueId ?? null : before.venueId,
+        venueFacilityId: 'venueFacilityId' in patch ? patch.venueFacilityId ?? null : before.venueFacilityId,
+        location: 'location' in patch ? patch.location ?? null : before.location,
+      };
+      const otherDay = (after.date ?? '') !== (before.date ?? '');
+      const w = placeWords(after, otherDay);
+      say(MW.moved(w.when, w.where), { label: MW.undo, onAction: () => { void putBack(gameId, before, otherDay); } });
+    }
+    return reply;
+  }
+
+  /** A game's place as a move's "before": its day, start and diamond (or typed words). */
+  function placeOf(g: Game) {
+    return {
+      date: g.date ?? null, time: g.time ? g.time.slice(0, 5) : null,
+      venueId: g.venueId ?? null, venueFacilityId: g.venueFacilityId ?? null,
+      location: g.venueId ? null : (g.location?.trim() || null),
+    };
+  }
+  /** "5:30 p.m." + "Diamond 3" — the day too when it changed ("Sat, Oct 10, 5:30 p.m."). Results' field words. */
+  function placeWords(p: ReturnType<typeof placeOf>, otherDay: boolean) {
+    const when = [otherDay && p.date ? formatShortWeekdayDate(p.date) : '', p.time ? formatTime(p.time) : ''].filter(Boolean).join(', ');
+    const where = resolveGameFieldLabel({ venueId: p.venueId ?? undefined, venueFacilityId: p.venueFacilityId ?? undefined, location: p.location ?? '' }, venues);
+    return { when, where };
+  }
+  /** Undo: the game back where it was — the same writer, so the overlap rule holds (its old place may be taken). */
+  async function putBack(gameId: string, before: ReturnType<typeof placeOf>, otherDay: boolean) {
+    try {
+      await saveGameFields(gameId, {
+        ...(before.date ? { date: before.date } : {}), ...(before.time ? { time: before.time } : {}),
+        venueId: before.venueId, venueFacilityId: before.venueFacilityId, location: before.location,
+      }, { undo: false });
+      const w = placeWords(before, otherDay);
+      say(MW.putBack(w.when, w.where, otherDay));
+    } catch (e) {
+      setFeedback({ isOpen: true, title: SCHEDULE_REFUSAL_TITLE.saveGame, message: e instanceof Error ? e.message : SCHEDULE_REFUSAL.gameFallback, type: 'warning' });
+    }
+  }
+
+  /**
+   * A move from the timeline: a drop (a published game asks once, A36) or the phone's sheet (its lime already said who
+   * it tells). The block lands at once and goes back if the server refuses; the move ends in the notice with Undo.
+   */
+  async function moveGame(gameId: string, to: MoveTarget, how: 'drop' | 'sheet') {
+    const g = games.find(x => x.id === gameId);
+    if (!g) return;
+    if (how === 'drop' && livePublished(g) && !(await askMove(g, startsInUrgentLane(to.date, to.time, Date.now())))) return;
+    setCrossNote(null);
+    setGames(prev => prev.map(x => x.id === gameId
+      ? { ...x, date: to.date, time: to.time, venueId: to.venueId ?? undefined, venueFacilityId: to.venueFacilityId ?? undefined }
+      : x));
+    try {
+      const reply = await saveGameFields(gameId, { date: to.date, time: to.time, venueId: to.venueId, venueFacilityId: to.venueFacilityId, location: to.location });
+      setCrossNote(reply.crossLine);
+    } catch (e) {
+      setGames(prev => prev.map(x => (x.id === gameId ? g : x)));
+      setFeedback({ isOpen: true, title: SCHEDULE_REFUSAL_TITLE.saveGame, message: e instanceof Error ? e.message : SCHEDULE_REFUSAL.gameFallback, type: 'warning' });
+    }
+  }
+  /** A game whose teams are told when it moves: its division is published and it is still to play. */
+  function livePublished(g: Game) {
+    return g.status === 'scheduled' && divisions.find(d => d.id === g.divisionId)?.scheduleVisibility === 'published';
+  }
+
+  /** The games route's `update`, for one game: only the keys that changed. Throws the route's reason when refused. */
+  async function writeGameFields(gameId: string, patch: GamePatch, self: Game | undefined): Promise<GameSaveReply> {
     if (!self) throw new Error(SCHEDULE_REFUSAL.gameFallback);
     if (self.isPlayoff && self.bracketCode && ('date' in patch || 'time' in patch || 'homePlaceholder' in patch || 'awayPlaceholder' in patch)) {
       const problem = bracketOrderProblem({
@@ -546,18 +628,22 @@ export default function AdminSchedulePage() {
   }
 
   // F71: Cancel Game and Reinstate used to drop a refusal (a final result, a completed event) without a word.
-  async function patchGameStatus(id: string, action: 'cancel' | 'revert-to-scheduled') {
+  async function patchGameStatus(id: string, action: 'cancel' | 'revert-to-scheduled'): Promise<boolean> {
     const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const res = await fetch(`/api/admin/games${orgParam}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, id }),
     });
-    await refusedWrite(res, action === 'cancel' ? SCHEDULE_REFUSAL_TITLE.cancelGame : SCHEDULE_REFUSAL_TITLE.reinstateGame);
+    const refused = await refusedWrite(res, action === 'cancel' ? SCHEDULE_REFUSAL_TITLE.cancelGame : SCHEDULE_REFUSAL_TITLE.reinstateGame);
     await reloadGames();
+    return !refused;
   }
-  const markCancelled = (id: string) => patchGameStatus(id, 'cancel');
-  const markScheduled = (id: string) => patchGameStatus(id, 'revert-to-scheduled');
+  // Undo puts back day, time and diamond, and un-cancels (A36).
+  const markScheduled = async (id: string) => { if (await patchGameStatus(id, 'revert-to-scheduled')) say(MW.backOn); };
+  const markCancelled = async (id: string) => {
+    if (await patchGameStatus(id, 'cancel')) say(MW.cancelled, { label: MW.undo, onAction: () => { void markScheduled(id); } });
+  };
 
   async function toggleGeneratorLock(id: string, nextLocked: boolean) {
     const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
@@ -577,129 +663,6 @@ export default function AdminSchedulePage() {
       return;
     }
     await reloadGames();
-  }
-
-  async function handleSaveGame(gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; location?: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder?: string; awayPlaceholder?: string }) {
-    const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    // Only playoff games wire participants by placeholder. Never forward placeholder
-    // fields for round-robin/slot games — that would null-clobber a slot's stored
-    // label (slot games keep their slot displayName in home/away_placeholder).
-    const self = games.find(g => g.id === gameId);
-    const isPlayoffGame = !!self?.isPlayoff;
-    // Block scheduling a playoff game on/before a game that feeds it (or vice versa).
-    if (isPlayoffGame && self?.bracketCode) {
-      const problem = bracketOrderProblem({
-        id: gameId, divisionId: self.divisionId, code: self.bracketCode,
-        home: data.homePlaceholder ?? self.homePlaceholder, away: data.awayPlaceholder ?? self.awayPlaceholder,
-        date: data.date, time: data.time,
-      });
-      if (problem) {
-        setFeedback({ isOpen: true, title: 'Fix the bracket order first', message: problem, type: 'warning' });
-        throw new Error('bracket-order'); // the timeline puts the block back
-      }
-    }
-    const typedLocation = !data.venueId && !data.venueFacilityId ? (data.location?.trim() || null) : null;
-    const saveRes = await fetch(`/api/admin/games${orgParam}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action:           'update',
-        id:               gameId,
-        date:             data.date             || undefined,
-        time:             data.time             || undefined,
-        // Explicit nulls, never absent keys: a PRESENT venueId is the venue decision
-        // (null = clear), and the display string is DERIVED server-side from the picked
-        // venue — the client no longer authors it. Typed text rides along only when
-        // nothing is picked (the explicit "somewhere else" path).
-        venueId:          data.venueId          || null,
-        venueFacilityId:  data.venueFacilityId  || null,
-        location:         typedLocation,
-        notes:            data.notes            || undefined,
-        homeTeamId:       data.homeTeamId,
-        awayTeamId:       data.awayTeamId,
-        // Playoff matchup wiring from the inline editor (mutually exclusive with team).
-        homePlaceholder:  isPlayoffGame ? (data.homePlaceholder ?? undefined) : undefined,
-        awayPlaceholder:  isPlayoffGame ? (data.awayPlaceholder ?? undefined) : undefined,
-      }),
-    });
-
-    // ── "See it live" sandbox: keep the move, skip the refresh ────────────────────────────────
-    // The write was refused BY DESIGN (lib/demo-guard.ts), and the banner said so before the
-    // visitor touched anything — so this is not an error path. Two things happen here, and the
-    // second is the one that matters:
-    //
-    //   • the change is applied to the in-memory list, so a hands-on edit stays on screen;
-    //   • we do NOT refresh, because refreshing pulls the server's untouched copy back and snaps
-    //     the card home — the "looks broken" failure the whole drag beat exists to avoid.
-    //
-    // The schedule-health engine recomputes in the browser against this same list, so a
-    // moved-but-unsaved game scores correctly with no new maths. The "nothing is saved" toast is
-    // raised by the shared sandbox chrome, which watches every fetch for this same marker.
-    if (saveRes.headers.get('X-Sandbox-Blocked') === '1') {
-      // Mirror the server's derived display string on the in-memory copy (the real write
-      // was sandbox-refused by design, so the label has to be computed here).
-      const sandboxVenue    = data.venueId ? venues.find(d => d.id === data.venueId) : null;
-      const sandboxFacility = data.venueFacilityId ? sandboxVenue?.facilities?.find(f => f.id === data.venueFacilityId) : null;
-      setGames(prev => prev.map((g): Game => {
-        if (g.id !== gameId) return g;
-        const moved: Game = {
-          ...g,
-          date:            data.date || g.date,
-          time:            data.time,
-          venueId:         data.venueId || undefined,
-          venueFacilityId: data.venueFacilityId || undefined,
-          location:        sandboxVenue ? formatVenueLocation(sandboxVenue.name, sandboxFacility?.name) : (typedLocation ?? ''),
-          notes:           data.notes || undefined,
-          homeTeamId:      data.homeTeamId,
-          awayTeamId:      data.awayTeamId,
-        };
-        if (isPlayoffGame) {
-          moved.homePlaceholder = data.homePlaceholder ?? g.homePlaceholder;
-          moved.awayPlaceholder = data.awayPlaceholder ?? g.awayPlaceholder;
-        }
-        return moved;
-      }));
-      return;
-    }
-
-    // F71 — a refused save (a final result, a completed event, a venue the event doesn't have, a role that can't
-    // move games) used to fall through to the refresh below and snap back without a word. Say why, and throw so
-    // the inline row stays open and a drag or the phone's move sheet rolls back to where the server has the game —
-    // the same contract as 'bracket-order' above.
-    if (await refusedWrite(saveRes, SCHEDULE_REFUSAL_TITLE.saveGame)) {
-      // The refusal can be BECAUSE the game changed (scored a moment ago): re-read the games, so the list shows the
-      // truth rather than the pre-drag copy the move puts back — quietly, so the open inline row stays open.
-      void reloadGames();
-      throw new Error('refused');
-    }
-
-    await refresh();
-  }
-
-  // Drag-to-move on the Timeline (D2.2) — optimistic, then persist via handleSaveGame.
-  async function handleMoveGame(gameId: string, target: { date: string; time: string; venueId: string; venueFacilityId: string }) {
-    const game = games.find(g => g.id === gameId);
-    if (!game) return;
-    setGames(prev => prev.map(g => g.id === gameId
-      ? { ...g, date: target.date || g.date, time: target.time, venueId: target.venueId || undefined, venueFacilityId: target.venueFacilityId || undefined }
-      : g));
-    try {
-      await handleSaveGame(gameId, {
-        date: target.date || game.date,
-        time: target.time,
-        venueId: target.venueId,
-        venueFacilityId: target.venueFacilityId,
-        notes: game.notes ?? '',
-        homeTeamId: game.homeTeamId,
-        awayTeamId: game.awayTeamId,
-      });
-    } catch {
-      // The save was blocked (e.g. dragging a playoff game on/before the game that
-      // feeds it — handleSaveGame already showed the reason) or failed. Roll the
-      // optimistic move back to the game's pre-drag position so the Timeline never
-      // shows an unpersisted placement. (Previously this rejection escaped unhandled.)
-      setGames(prev => prev.map(g => g.id === gameId ? game : g));
-    }
   }
 
   function handleDeleteRequest(id: string) {
@@ -818,6 +781,7 @@ export default function AdminSchedulePage() {
   const searched = scheduled.filter(g => matchesScheduleSearch(
     resolveTeam(g.homeTeamId, g.homePlaceholder), resolveTeam(g.awayTeamId, g.awayPlaceholder), search));
   const filtered = searched.filter(g => matchesScheduleFilter(g, stateOf(g), filter));
+  const filteredIds = new Set(filtered.map(g => g.id));
   const dayGames = filtered.filter(g => g.date === day);
   const exportGames = shownView === 'day' || shownView === 'timeline' ? dayGames : filtered;
 
@@ -1384,8 +1348,10 @@ export default function AdminSchedulePage() {
           onClear={handleClearBracket}
         />
       ) : shownView === 'timeline' ? (
+        <>
+        {crossNote && <div className={sd.crossNote}><WhereLine tone={crossNote.tone} lead={crossNote.lead} rest={crossNote.rest} /></div>}
         <ScheduleTimeline
-          games={filtered}
+          games={scheduled}
           venues={venues}
           divisions={divisions}
           teams={teams}
@@ -1393,7 +1359,11 @@ export default function AdminSchedulePage() {
           selection={null}
           stage="all"
           day={day}
-          onMove={isLocked ? undefined : handleMoveGame}
+          focus={filtersOn(filter) > 0 || search.trim() !== '' ? (g => filteredIds.has(g.id)) : undefined}
+          eventDays={days}
+          today={today}
+          tellsFor={g => canAlertFollowers && livePublished(g)}
+          onMove={isLocked ? undefined : moveGame}
           onOpen={openGame}
           onCreateVenue={() => setAddVenueOpen(true)}
           zeroVenuePrompt={
@@ -1404,6 +1374,7 @@ export default function AdminSchedulePage() {
             />
           }
         />
+        </>
       ) : shownView === 'bracket' ? (
         <>
           {/* The bracket's heading, with Edit bracket the white button above what it acts on (S6). Part 7 rebuilds the cards. */}
@@ -1541,7 +1512,13 @@ export default function AdminSchedulePage() {
             date: shownView === 'all' ? '' : day,
           }}
           askMove={askMove}
+          notice={notice}
+          onNoticeDone={() => setNotice(null)}
         />
+      )}
+
+      {notice && !windowGame && !creatingGame && (
+        <NoticePill key={notice.key} message={notice.message} action={notice.action} onDone={() => setNotice(null)} />
       )}
 
       {/* A published game's move asks once (A36) — over the window, at its ✓. */}

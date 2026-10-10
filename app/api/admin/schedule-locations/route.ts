@@ -29,6 +29,7 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { clashReportForTournamentGames } from '@/lib/venue-clash-lookup';
+import { tournamentOverlapRefusal, type ProposedGameRow } from '@/lib/tournament-overlap-guard';
 import {
   createTournamentFacility,
   createTournamentVenue,
@@ -230,6 +231,27 @@ async function applyAssignments(
     return json({ error: `Too many games in one request (limit ${MAX_GAMES_PER_REQUEST}).` }, 400);
   }
 
+  // A37 (Tournament admin redesign Stage 3): typed names resolved onto one real diamond can put two games on it at
+  // once — refused, as every writer refuses it, BEFORE anything is created. A venue or field this request would
+  // create stands in by a placeholder id, so the games landing on it are still checked against each other.
+  const proposed: ProposedGameRow[] = prepared.flatMap((item, i) => {
+    let place: { diamond_id: string | null; venue_facility_id: string | null; location: string | null };
+    if (item.target.kind === 'create-venue') {
+      const name = item.target.name.trim();
+      const existing = [...catalog.venues.values()].find(venue => normalizeVenueNameToken(venue.name) === normalizeVenueNameToken(name));
+      place = { diamond_id: existing?.id ?? `new-venue:${i}`, venue_facility_id: null, location: name };
+    } else if (item.target.kind === 'create-facility') {
+      place = { diamond_id: item.target.venueId, venue_facility_id: `new-facility:${i}`, location: item.target.name.trim() };
+    } else {
+      const selection = resolveVenueSelectionFromCatalog(catalog, { venueId: item.target.venueId, venueFacilityId: item.target.venueFacilityId });
+      if (!selection.ok) return [];
+      place = { diamond_id: selection.value.venueId, venue_facility_id: selection.value.venueFacilityId, location: selection.value.location };
+    }
+    return item.gameIds.map(id => ({ id, ...place, schedule_facility_lane_id: null }));
+  });
+  const overlap = await tournamentOverlapRefusal(tournamentId, proposed);
+  if (overlap) return json(overlap.body, overlap.status);
+
   // Step 3 — create what the decisions call for and resolve each one to its final columns, in one
   // pass. Creations stay sequential: each new surface takes the next display order, which reads a
   // counter the previous iteration moved.
@@ -410,6 +432,11 @@ async function revertGames(
     if (bucket) bucket.ids.push(game.id);
     else buckets.set(key, { ...value, ids: [game.id] });
   }
+
+  // An Undo that would put two games back on one diamond at once is refused like any other write (A37).
+  const overlap = await tournamentOverlapRefusal(tournamentId, [...buckets.values()].flatMap(bucket =>
+    bucket.ids.map((id): ProposedGameRow => ({ id, diamond_id: bucket.venueId, venue_facility_id: bucket.venueFacilityId, location: bucket.location }))));
+  if (overlap) return json(overlap.body, overlap.status);
 
   await Promise.all([...buckets.values()].map(async bucket => {
     const { error } = await supabaseAdmin

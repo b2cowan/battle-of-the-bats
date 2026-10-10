@@ -51,7 +51,7 @@ const MAX_NOTICES_PER_SWEEP = 2000;
 // The change taxonomy, the classifier, the truthfulness filter and the publish gate live in
 // lib/schedule-change-classify.ts (pure, unit-tested — this module is server-only and unreachable from
 // the test runner). Re-exported so existing importers keep one import site.
-import { classifiedChanges, noticeTargets, NIL_TEAM_ID, type GameChangeInput, type GameChangeKind } from './schedule-change-classify';
+import { classifiedChanges, collapseNotices, noticeTargets, NIL_TEAM_ID, type GameChangeInput, type GameChangeKind } from './schedule-change-classify';
 export type { GameChangeInput, GameChangeKind, GameScheduleSnapshot } from './schedule-change-classify';
 
 export interface RecordedChanges {
@@ -236,70 +236,9 @@ function whenWhere(date: string | null, time: string | null, location: string | 
   return when || location || 'a time to be confirmed';
 }
 
-/**
- * One entry per changed game: the LATEST state, measured against the EARLIEST baseline. Two
- * moves in one editing session read as one correction ("was 2:00 p.m."), not a history the
- * reader has to unpick — the same rule the in-portal bar follows.
- */
+/** One entry per changed game — the rule is `collapseNotices` (lib/schedule-change-classify.ts, pure and tested). */
 function collapse(notices: NoticeRow[], games: Map<string, GameRow>, stillPublished: Set<string>) {
-  // Both picks are order-INDEPENDENT on purpose: the claim step returns rows from an
-  // UPDATE … RETURNING, whose order Postgres does not guarantee. Relying on input order here
-  // would silently pick the wrong "was" baseline.
-  const byGame = new Map<string, { first: NoticeRow; last: NoticeRow }>();
-  for (const n of notices) {
-    const seen = byGame.get(n.game_id);
-    if (!seen) { byGame.set(n.game_id, { first: n, last: n }); continue; }
-    // Ties on created_at (two rows written by the same transaction) break on id, so the pick is
-    // fully data-driven rather than falling back to iteration order.
-    if (n.created_at < seen.first.created_at ||
-        (n.created_at === seen.first.created_at && n.id < seen.first.id)) seen.first = n;
-    if (n.created_at > seen.last.created_at ||
-        (n.created_at === seen.last.created_at && n.id >= seen.last.id)) seen.last = n;
-  }
-
-  const entries: Array<{
-    gameId: string;
-    kind: GameChangeKind;
-    was: { date: string | null; time: string | null; location: string | null };
-    now: GameRow;
-  }> = [];
-
-  for (const [gameId, { first, last }] of byGame) {
-    const game = games.get(gameId);
-    if (!game) continue; // deleted between queue and sweep — nothing to announce
-
-    // The publish gate is re-tested HERE, not just at enqueue time. An organizer who pulls a
-    // division back to draft after making a change has deliberately hidden those times; sending
-    // the queued alert anyway would publish exactly what they just withdrew.
-    if (!game.division_id || !stillPublished.has(game.division_id)) continue;
-
-    // Read the kind from the game's CURRENT state, not the queued one: a move followed by a
-    // cancellation is a cancellation, and that self-heals whatever order the rows arrived in.
-    let kind: GameChangeKind = last.kind;
-    if (game.status === 'cancelled') kind = 'cancelled';
-    else if (last.kind === 'cancelled') kind = 'restored'; // cancelled then reinstated
-
-    // Already played, or the start time has passed — the message would arrive after the fact.
-    if (['submitted', 'completed', 'forfeit'].includes(game.status ?? '')) continue;
-    const startsAt = zonedWallClockToUtc(game.game_date, game.game_time);
-    if (startsAt && new Date(startsAt).getTime() <= Date.now()) continue;
-
-    // Moved and moved back inside one window: nothing to tell anyone.
-    if (
-      kind === 'moved' &&
-      first.was_date === game.game_date &&
-      first.was_time === game.game_time &&
-      (first.was_location ?? null) === (game.location ?? null)
-    ) continue;
-
-    entries.push({
-      gameId,
-      kind,
-      was: { date: first.was_date, time: first.was_time, location: first.was_location },
-      now: game,
-    });
-  }
-  return entries;
+  return collapseNotices(notices, games, stillPublished, Date.now());
 }
 
 type CollapsedEntry = ReturnType<typeof collapse>[number];

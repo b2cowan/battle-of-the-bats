@@ -26,16 +26,15 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import Link from 'next/link';
 import { Info } from 'lucide-react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
-import { Callout, RecordDelete, RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
+import { Callout, NoticePill, RecordDelete, RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
 import { CheckChoice, RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import WhereField, { WhereLine } from '@/components/venue/WhereField';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import type { Division, Game, PoolSlot, Team, Tournament, Venue } from '@/lib/types';
-import { checkVenueConflict, resolveGameTiming, toConflictGame, type ConflictResult } from '@/lib/schedule-conflict';
-import { hasKnownPlacement } from '@/lib/venue-identity';
+import { resolveGameTiming } from '@/lib/schedule-conflict';
 import { bracketGameLabel, buildPlaceholderOptions, descendantBracketCodes } from '@/lib/playoff-bracket';
-import { placeOfWhere, samePlace, tournamentSourceLine, tournamentVenueOptions } from '@/lib/tournament-where';
+import { samePlace, tournamentSourceLine, tournamentVenueOptions } from '@/lib/tournament-where';
 import type { WhereValue } from '@/lib/where-field';
 import {
   changesOf, emptyGameForm, formOfGame, lengthOfBox, startsInUrgentLane, whenWhereChanged, type GamePatch, type GameWindowForm,
@@ -45,9 +44,10 @@ import { GAME_WINDOW_WORDS as G, SCHEDULE_DAY_WORDS as W, slotWords } from '@/li
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import type { ClashLine } from '@/lib/venue-clash-words';
 import { formatShortWeekdayDate } from '@/lib/timezone';
-import { formatTime, formatTimeRange } from '@/lib/utils';
+import { formatTime } from '@/lib/utils';
 import { fieldNounFor } from '@/lib/sports';
 import { GameTeams } from '../../results/ResultsList';
+import { useOverlapLine } from './useOverlapLine';
 import gw from './GameWindow.module.css';
 
 /** A save's reply: the club's amber line for this game, when it lands on another program's booking. */
@@ -78,7 +78,7 @@ export interface GameWindowContext {
 
 export default function GameWindow({
   game, ctx, canWrite, steps, onSave, onCreate, onClose, onCancelGame, onReinstate, onToggleKeep, onDelete,
-  onEditBracket, loadSlots, createDefaults, askMove,
+  onEditBracket, loadSlots, createDefaults, askMove, notice, onNoticeDone,
 }: {
   /** The game to read and edit, or null to create one (Add game). */
   game: Game | null;
@@ -98,6 +98,9 @@ export default function GameWindow({
   createDefaults: { divisionId: string; stage: 'pool' | 'playoff'; date: string };
   /** The published-game question (A36): resolves true to move. The page owns the window it asks in. */
   askMove: (g: Game, startsWithinHours: boolean) => Promise<boolean>;
+  /** The page's notice after a move or a cancel (with Undo), shown in the window's corner while it is open. */
+  notice?: { key: number; message: string; action?: { label: string; onAction: () => void } } | null;
+  onNoticeDone?: () => void;
 }) {
   const creating = game === null;
   const noun = fieldNounFor(ctx.tournament?.sport);
@@ -125,20 +128,18 @@ export default function GameWindow({
   const published = !creating && division?.scheduleVisibility === 'published' && game?.status === 'scheduled';
   const isPlayoff = creating ? form.stage === 'playoff' : !!game?.isPlayoff;
 
-  // ── The tournament's own overlap (A37), checked as the form changes — the Add window's rule, now every door's ──
-  const conflict: ConflictResult | null = useMemo(() => {
-    if (!editing || !form.date || !form.time) return null;
-    const place = placeOfWhere(form.where);
-    const proposed = toConflictGame({
-      id: game?.id ?? '__new__', date: form.date, time: form.time, status: 'scheduled',
-      venueId: place.venueId, venueFacilityId: place.venueFacilityId, location: place.location ?? '',
-      divisionId: form.divisionId || null, durationMinutes: lengthOfBox(form.durationMinutes),
-    });
-    if (!hasKnownPlacement(proposed)) return null;
-    return checkVenueConflict({ proposedGame: proposed, allGames: ctx.games.map(toConflictGame), divisions: ctx.divisions, tournament: ctx.tournament });
-  }, [editing, form.date, form.time, form.where, form.divisionId, form.durationMinutes, game?.id, ctx.games, ctx.divisions, ctx.tournament]);
-  const refused = conflict?.kind === 'overlap';
+  // ── The tournament's own overlap (A37), checked as the form changes — the rule every writer and the server read.
+  // Refused on a known diamond; two matching TYPED names only warn (the field says a typed place isn't checked). ──
+  const { refused: overlaps, line: overlapLine } = useOverlapLine({
+    active: editing, id: game?.id ?? '__new__', date: form.date, time: form.time, where: form.where,
+    divisionId: form.divisionId || null, durationMinutes: lengthOfBox(form.durationMinutes),
+    games: ctx.games, teams: ctx.teams, divisions: ctx.divisions, tournament: ctx.tournament, noun,
+  });
   const movePending = !creating && whenWhereChanged(form, saved);
+  // It holds only what THIS edit places — a new game, or a change of day, start, place or length — as the server
+  // does. A game already sharing its diamond from before the rule still shows the red line (it is true) but never
+  // traps ✓ while only its notes or teams change.
+  const refused = overlaps && (creating || movePending || form.durationMinutes !== saved.durationMinutes);
   // Day, start and place wait: for ✓'s question on a published game, and while the overlap refuses them.
   const holdWhenWhere = published || refused;
 
@@ -273,34 +274,9 @@ export default function GameWindow({
   };
 
   // ── The lines under the field: the tournament's own refusal (red), a short gap (busy), the club's booking (amber) ──
-  const otherName = (c: ConflictResult) => {
-    const other = ctx.games.find(x => x.id === c.conflictingGame.id);
-    if (!other) return c.conflictingDivisionName;
-    const dName = ctx.divisions.find(d => d.id === other.divisionId)?.name ?? c.conflictingDivisionName;
-    return other.isPlayoff && other.bracketCode
-      ? G.playoffGame(dName, bracketGameLabel(other.bracketCode))
-      : G.vs(teamName(other.awayTeamId, other.awayPlaceholder), teamName(other.homeTeamId, other.homePlaceholder));
-  };
-  const otherRange = (c: ConflictResult) => {
-    const other = ctx.games.find(x => x.id === c.conflictingGame.id);
-    const start = c.conflictingGame.startTime ?? '';
-    const len = other ? resolveGameTiming(ctx.divisions.find(d => d.id === other.divisionId), ctx.tournament, other.durationMinutes).durationMinutes : timing.durationMinutes;
-    const [h, m] = start.split(':').map(Number);
-    const endMin = (h || 0) * 60 + (m || 0) + len;
-    const end = `${String(Math.floor(endMin / 60) % 24).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
-    return { range: formatTimeRange(start, end), end: formatTime(end) };
-  };
-  const fieldWords = form.where.fieldNumber.trim() || form.where.location.trim() || noun;
-  let line: ReactNode = null;
-  if (conflict?.kind === 'overlap') {
-    const r = G.refusal(fieldWords, otherName(conflict), otherRange(conflict).range, noun.toLowerCase());
-    line = <WhereLine tone="refuse" lead={r.lead} rest={r.rest} />;
-  } else if (conflict?.kind === 'buffer') {
-    const r = G.buffer(fieldWords, otherName(conflict), otherRange(conflict).end, timing.bufferMinutes);
-    line = <WhereLine tone="busy" lead={r.lead} rest={r.rest} />;
-  } else if (crossLine && samePlace(form.where, saved.where)) {
-    line = <WhereLine tone={crossLine.tone} lead={crossLine.lead} rest={crossLine.rest} />;
-  }
+  // The tournament's own line while editing; the club's amber line (from the last save's reply) while the place stands.
+  const line: ReactNode = overlapLine
+    ?? (crossLine && samePlace(form.where, saved.where) ? <WhereLine tone={crossLine.tone} lead={crossLine.lead} rest={crossLine.rest} /> : null);
 
   const playedOrWaiting = !!game && ['completed', 'submitted', 'forfeit'].includes(game.status);
 
@@ -531,7 +507,7 @@ export default function GameWindow({
         footer={(
           <>
             <button type="button" className={screenParts.plainButton} onClick={onClose} disabled={creatingBusy}>{G.cancel}</button>
-            <button type="button" className="btn btn-lime" onClick={() => void create()} disabled={creatingBusy || refused || !form.divisionId}>
+            <button type="button" className={`btn btn-lime ${gw.create}`} onClick={() => void create()} disabled={creatingBusy || refused || !form.divisionId}>
               {G.addGame}
             </button>
           </>
@@ -550,8 +526,11 @@ export default function GameWindow({
       ariaLabel={title}
       identity={identity}
       status={canWrite ? (
-        <SavePill inline saving={saving} dirty={dirty || movePending || !!heldWords} error={leaveError || saveError || null}
-          held={heldWords} onRetry={() => void handleSave()} />
+        // The page's notice ("Moved to 5:30 p.m. · Diamond 3 · Undo") takes the corner once the save word is at rest.
+        notice && !(saving || dirty || movePending || heldWords || leaveError || saveError)
+          ? <NoticePill inline key={notice.key} message={notice.message} action={notice.action} onDone={onNoticeDone ?? (() => {})} />
+          : <SavePill inline saving={saving} dirty={dirty || movePending || !!heldWords} error={leaveError || saveError || null}
+              held={heldWords} onRetry={() => void handleSave()} />
       ) : undefined}
       edit={canWrite ? { editing, onToggle: toggleEdit, label: G.editGame } : undefined}
       onClose={() => leave(onClose)}

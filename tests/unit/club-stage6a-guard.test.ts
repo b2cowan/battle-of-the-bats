@@ -142,6 +142,7 @@ const WEARS_THE_FIELD = [
   'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx',
   'components/rep-teams/TryoutDayCard.tsx',
   'app/[orgSlug]/admin/tournaments/schedule/components/GameWindow.tsx',
+  'app/[orgSlug]/admin/tournaments/schedule/components/MoveSheet.tsx',
 ];
 /** Forms that still ask where their own way, and who brings them onto the field. ⚠ ONLY SHRINKS. */
 const WHERE_NOT_YET: Record<string, string> = {

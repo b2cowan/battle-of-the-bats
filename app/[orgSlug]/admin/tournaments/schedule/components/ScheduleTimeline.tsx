@@ -10,17 +10,24 @@
  *    BUT conflict detection still runs over ALL games, so a clash with a foreign
  *    division on a shown facility is surfaced as a faded "ghost" block.
  *
- * Read-only for now — drag-to-move is D2.2, the mobile carousel is D2.3.
+ * Moving (Tournament admin redesign Stage 3, S4 — A36, A37): every game of the day is on the grid, whatever the
+ * Filter (it highlights; a drop must see what is taken). A drag lands on a 15-minute grid; a drop that would put two
+ * games of the tournament on one diamond turns the band red with its reason and springs back (the rule is
+ * `lib/tournament-overlap.ts`, the server's own). Played games don't drag. On a phone a tap opens the move sheet.
+ * The page asks a published game's question and ends every move in the notice with Undo.
  */
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Plus, Minus, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Plus } from 'lucide-react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, pointerWithin, type DragEndEvent, type DragMoveEvent } from '@dnd-kit/core';
 import type { Game, Division, Venue, Tournament, Team } from '@/lib/types';
-import { resolveGameTiming, buildConflictMap, checkVenueConflict, toConflictGame, timeToMinutes, minutesToTime, type ConflictInfo, type ConflictGame } from '@/lib/schedule-conflict';
+import { resolveGameTiming, buildConflictMap, checkVenueConflict, type ConflictInfo, type ConflictResult } from '@/lib/schedule-conflict';
+import { isRefusedOverlap, overlapGameOf, overlapOtherName, overlapOtherTimes, type OverlapGame } from '@/lib/tournament-overlap';
+import { MOVE_WORDS as M, slotWords } from '@/lib/schedule-words';
+import { bracketGameLabel } from '@/lib/playoff-bracket';
 import { teamAvatarHue } from '@/lib/team-color';
 import { formatTime, formatHour } from '@/lib/utils';
-import BottomSheet from '@/components/admin/BottomSheet';
+import MoveSheet, { type MoveTarget } from './MoveSheet';
 import styles from './ScheduleTimeline.module.css';
 import { tournamentToday } from '@/lib/timezone';
 import { useDismissable } from '@/lib/overlay-hooks';
@@ -196,121 +203,6 @@ function AddFieldMenu({ options, onAdd, onCreate }: {
   );
 }
 
-/** Mobile reschedule/place sheet — field picker + 15-min time stepper + live
- * conflict status (warn-and-allow), with a one-tap "next free slot" shortcut. */
-function RescheduleSheet({
-  game, mode, day, facilities, conflictGames, divisions, tournament, away, home, onClose, onSave,
-}: {
-  game: Game;
-  mode: 'move' | 'place';
-  day: string;
-  facilities: Col[];
-  conflictGames: ConflictGame[];
-  divisions: Division[];
-  tournament: Tournament | null;
-  away: string;
-  home: string;
-  onClose: () => void;
-  onSave: (target: { date: string; time: string; venueId: string; venueFacilityId: string }) => void;
-}) {
-  const initialField =
-    facilities.find(f =>
-      (game.venueFacilityId && f.facilityId === game.venueFacilityId) ||
-      (!game.venueFacilityId && !!game.venueId && f.venueId === game.venueId))?.key
-    ?? facilities[0]?.key ?? '';
-  const [fieldKey, setFieldKey] = useState(initialField);
-  const [timeMin, setTimeMin] = useState<number>(() => {
-    const t = game.time ? timeToMinutes(game.time) : NaN;
-    return Number.isNaN(t) ? 9 * 60 : t;
-  });
-
-  const selected = facilities.find(f => f.key === fieldKey) ?? null;
-
-  const conflict = useMemo(() => {
-    if (!selected) return null;
-    return checkVenueConflict({
-      proposedGame: {
-        id: game.id,
-        gameDate: day,
-        startTime: minutesToTime(timeMin),
-        status: game.status ?? null,
-        venueId: selected.venueId || null,
-        venueFacilityId: selected.facilityId || null,
-        scheduleFacilityLaneId: null,
-        divisionId: game.divisionId ?? null,
-      },
-      allGames: conflictGames,
-      divisions,
-      tournament,
-    });
-  }, [selected, timeMin, game, day, conflictGames, divisions, tournament]);
-
-  const step = (delta: number) => setTimeMin(t => Math.max(0, Math.min(24 * 60 - 15, t + delta)));
-
-  function save() {
-    if (!selected) return;
-    onSave({ date: day, time: minutesToTime(timeMin), venueId: selected.venueId, venueFacilityId: selected.facilityId });
-  }
-
-  return (
-    <BottomSheet
-      open
-      onClose={onClose}
-      title={`${mode === 'place' ? 'Place' : 'Reschedule'} · ${away} vs ${home}`}
-      footer={
-        <div className={styles.sheetFooter}>
-          <button type="button" className={styles.sheetCancel} onClick={onClose}>Cancel</button>
-          <button type="button" className={styles.sheetSave} onClick={save} disabled={!selected}>
-            {mode === 'place' ? 'Place game' : 'Save'}
-          </button>
-        </div>
-      }
-    >
-      <div className={styles.sheetSection}>
-        <span className={styles.sheetLabel}>Start time</span>
-        <div className={styles.stepper}>
-          <button type="button" className={styles.stepBtn} onClick={() => step(-15)} aria-label="15 minutes earlier"><Minus size={18} /></button>
-          <span className={styles.stepValue}>{formatTime(minutesToTime(timeMin))}</span>
-          <button type="button" className={styles.stepBtn} onClick={() => step(15)} aria-label="15 minutes later"><Plus size={18} /></button>
-        </div>
-      </div>
-
-      <div className={styles.sheetSection}>
-        <span className={styles.sheetLabel}>Field</span>
-        {facilities.length === 0 ? (
-          <p className={styles.sheetEmpty}>No fields yet — add a venue first.</p>
-        ) : (
-          <div className={styles.fieldList}>
-            {facilities.map(f => (
-              <button key={f.key} type="button" className={styles.fieldOption} data-on={f.key === fieldKey ? 'true' : 'false'} onClick={() => setFieldKey(f.key)}>
-                <span className={styles.fieldOptionName}>{f.venue}{f.facility ? ` · ${f.facility}` : ''}</span>
-                {f.key === fieldKey && <Check size={15} aria-hidden />}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className={styles.sheetStatus} data-kind={conflict ? conflict.kind : 'free'}>
-        <span className={styles.sheetStatusLine}>
-          {!conflict ? (
-            <><Check size={15} aria-hidden /> Free slot — no conflicts here.</>
-          ) : conflict.kind === 'overlap' ? (
-            <><AlertTriangle size={15} aria-hidden /> Overlaps {conflict.conflictingDivisionName} at {formatTime(conflict.conflictingGame.startTime || '')}.</>
-          ) : (
-            <><AlertTriangle size={15} aria-hidden /> Within the travel buffer after the previous game.</>
-          )}
-        </span>
-        {conflict && conflict.availableAt && (
-          <button type="button" className={styles.useFreeBtn} onClick={() => setTimeMin(timeToMinutes(conflict.availableAt))}>
-            Use next free slot ({formatTime(conflict.availableAt)})
-          </button>
-        )}
-      </div>
-    </BottomSheet>
-  );
-}
-
 export default function ScheduleTimeline({
   games,
   venues,
@@ -324,6 +216,10 @@ export default function ScheduleTimeline({
   onCreateVenue,
   zeroVenuePrompt,
   day: dayProp,
+  focus,
+  eventDays,
+  today: todayProp,
+  tellsFor,
 }: {
   games: Game[];
   venues: Venue[];
@@ -334,8 +230,8 @@ export default function ScheduleTimeline({
   selection: Set<string> | null;
   /** Current stage — flipping it snaps the day to the new stage's first date. */
   stage: string;
-  /** Persist a drag-to-move / drag-to-place (D2.2). Omit (or locked) → read-only grid. */
-  onMove?: (gameId: string, target: { date: string; time: string; venueId: string; venueFacilityId: string }) => void | Promise<void>;
+  /** Move a game — a drop, or the phone's sheet (which has already said who it tells). Omit (or locked) → read-only. */
+  onMove?: (gameId: string, to: MoveTarget, how: 'drop' | 'sheet') => void | Promise<void>;
   /** Open a game's window (a click on its block, Stage 3 S2). */
   onOpen?: (g: Game) => void;
   /** Open the create-venue flow (for the "+ Field" menu). */
@@ -346,12 +242,20 @@ export default function ScheduleTimeline({
   /** The day shown, when the page leads it (the schedule's day row, Stage 3 S1): the grid's own day arrows then stand
    *  down, so the screen has one way to change the day. */
   day?: string;
+  /** The page's Filter and Search: the games it matches stand out, the rest stay on the grid faded (S4). */
+  focus?: (g: Game) => boolean;
+  /** The event's days (the move sheet's Day field) and today, when the page leads. */
+  eventDays?: string[];
+  today?: string;
+  /** A published game on a plan with alerts: the move sheet's lime says it tells both teams. */
+  tellsFor?: (g: Game) => boolean;
 }) {
   const divById = useMemo(() => new Map(divisions.map(d => [d.id, d])), [divisions]);
   // Pool is for block COLOR only (not selection) — derived from the teams' pool.
   const teamPoolMap = useMemo(() => new Map(teams.map(t => [t.id, t.poolId || ''])), [teams]);
   const gamePoolId = (g: Game) => g.isPlayoff ? '' : (teamPoolMap.get(g.homeTeamId) || teamPoolMap.get(g.awayTeamId) || '');
-  const inScope = (g: Game) => selection === null || selection.has(g.divisionId || '');
+  const inScope = (g: Game) => (focus ? focus(g) : selection === null || selection.has(g.divisionId || ''));
+  const narrowed = !!focus || selection !== null;
   const teamName = (id?: string | null, ph?: string | null) =>
     (id ? teams.find(t => t.id === id)?.name : null) || ph || 'TBD';
 
@@ -369,7 +273,9 @@ export default function ScheduleTimeline({
   const [sheetGame, setSheetGame] = useState<Game | null>(null); // mobile: game being moved/placed
   const touchStartX = useRef<number | null>(null);
   // Live drop preview while dragging (D2.4): where the block would land + the verdict.
-  const [dragPreview, setDragPreview] = useState<{ colKey: string; top: number; height: number; kind: 'free' | 'buffer' | 'overlap'; time: string } | null>(null);
+  const [dragPreview, setDragPreview] = useState<{ colKey: string; top: number; height: number; kind: 'free' | 'buffer' | 'overlap'; time: string; reason?: string } | null>(null);
+  // The last refused drop's reason, for a screen reader (the band said it while dragging).
+  const [refusedNote, setRefusedNote] = useState('');
   // "Now" line — current time in minutes, ticked each minute.
   const [nowMin, setNowMin] = useState(() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); });
   useEffect(() => {
@@ -392,7 +298,10 @@ export default function ScheduleTimeline({
 
   // Lightweight conflict shape for ALL games — shared by the conflict map and the
   // mobile reschedule sheet's live check.
-  const conflictGames = useMemo<ConflictGame[]>(() => games.map(toConflictGame), [games]);
+  const conflictGames = useMemo<OverlapGame[]>(
+    () => games.map(g => overlapGameOf(g, id => (id ? teams.find(t => t.id === id)?.name : null))),
+    [games, teams],
+  );
 
   // Conflict map over ALL games (global) — always on, even in single-division scope.
   const conflictMap = useMemo<Map<string, ConflictInfo>>(() => {
@@ -431,7 +340,7 @@ export default function ScheduleTimeline({
   // Columns: facilities used by the visible games (placed, with a time + facility).
   const columns = useMemo<Col[]>(() => {
     const map = new Map<string, Col>();
-    (selection === null ? dayGames : focusedGames).forEach(g => {
+    dayGames.forEach(g => {
       if (!g.time) return;
       const f = facilityOf(g);
       if (f && !map.has(f.key)) map.set(f.key, f);
@@ -464,7 +373,7 @@ export default function ScheduleTimeline({
   // see the venue's full occupancy and pick a free slot before dragging (Outlook-style).
   // Gated on the Conflicts toggle; in all-divisions scope every game is already shown.
   const ghostGames = useMemo<Game[]>(() => {
-    if (selection === null || !showConflicts) return [];
+    if (!narrowed) return [];
     const focusedIds = new Set(focusedGames.map(g => g.id));
     return dayGames.filter(g => {
       if (focusedIds.has(g.id) || !g.time) return false;
@@ -472,7 +381,7 @@ export default function ScheduleTimeline({
       return !!f && colKeys.has(f.key);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selection, showConflicts, focusedGames, dayGames, colKeys]);
+  }, [narrowed, focusedGames, dayGames, colKeys]);
 
   // Time axis bounds derived from the day's placed blocks (padded, rounded to the hour).
   const axis = useMemo(() => {
@@ -536,9 +445,9 @@ export default function ScheduleTimeline({
     const poolIdx = pool && div?.pools ? div.pools.findIndex(p => p.id === gpid) : -1;
     const accent = `hsl(${(baseHue + (poolIdx >= 0 ? poolIdx * 65 : 0)) % 360}, 60%, 50%)`;
     const info = conflictMap.get(g.id);
-    const away = g.bracketCode ? (g.awayPlaceholder || 'TBD') : teamName(g.awayTeamId, g.awayPlaceholder);
-    const home = g.bracketCode ? (g.homePlaceholder || 'TBD') : teamName(g.homeTeamId, g.homePlaceholder);
-    const label = (div?.name || '') + (pool ? ` · ${pool.name}` : g.bracketCode ? ` · ${g.bracketCode}` : '');
+    const away = teamName(g.awayTeamId, slotWords(g.awayPlaceholder));
+    const home = teamName(g.homeTeamId, slotWords(g.homePlaceholder));
+    const label = (div?.name || '') + (pool ? ` · ${pool.name}` : g.bracketCode ? ` · ${bracketGameLabel(g.bracketCode)}` : '');
     const conflictNote = !ghost && info
       ? info.kind === 'overlap'
         ? ' — ⚠ Overlaps another booking at this field'
@@ -567,21 +476,32 @@ export default function ScheduleTimeline({
     newStart = Math.round(newStart / SNAP) * SNAP;
     newStart = Math.max(0, Math.min(24 * 60 - SNAP, newStart));
     const t = resolveGameTiming(divById.get(g.divisionId || ''), tournament, g.durationMinutes);
-    const result = checkVenueConflict({
+    const verdict = dropVerdict(g, targetCol, newStart);
+    const top = (newStart - axis.start) * PX_PER_MIN;
+    const height = Math.max(30, t.durationMinutes * PX_PER_MIN);
+    setDragPreview(prev =>
+      prev && prev.colKey === targetCol.key && prev.top === top && prev.kind === verdict.kind
+        ? prev
+        : { colKey: targetCol.key, top, height, kind: verdict.kind, time: minToTime(newStart), reason: verdict.reason });
+  }
+
+  /** A drop's verdict by the tournament's one rule (A37): refused (red, with its reason), a short gap, or free. */
+  function dropVerdict(g: Game, col: Col, start: number): { kind: 'free' | 'buffer' | 'overlap'; reason?: string } {
+    const result: ConflictResult | null = checkVenueConflict({
       proposedGame: {
-        id: g.id, gameDate: day, startTime: minToTime(newStart), status: g.status ?? null,
-        venueId: targetCol.venueId || null, venueFacilityId: targetCol.facilityId || null,
+        id: g.id, gameDate: day, startTime: minToTime(start), status: 'scheduled',
+        venueId: col.venueId || null, venueFacilityId: col.facilityId || null,
         scheduleFacilityLaneId: null, divisionId: g.divisionId ?? null, durationMinutes: g.durationMinutes ?? null,
       },
       allGames: conflictGames, divisions, tournament,
     });
-    const kind = result ? result.kind : 'free';
-    const top = (newStart - axis.start) * PX_PER_MIN;
-    const height = Math.max(30, t.durationMinutes * PX_PER_MIN);
-    setDragPreview(prev =>
-      prev && prev.colKey === targetCol.key && prev.top === top && prev.kind === kind
-        ? prev
-        : { colKey: targetCol.key, top, height, kind, time: minToTime(newStart) });
+    if (!result) return { kind: 'free' };
+    if (!isRefusedOverlap(result)) return { kind: 'buffer' };
+    const other = result.conflictingGame as OverlapGame;
+    return {
+      kind: 'overlap',
+      reason: M.dropRefused(col.facility || col.venue, overlapOtherName(other, divisions), overlapOtherTimes(other, divisions, tournament).end),
+    };
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -603,7 +523,14 @@ export default function ScheduleTimeline({
     newStart = Math.max(0, Math.min(24 * 60 - SNAP, newStart));
     const cur = facilityOf(g);
     if (cur && newStart === toMin(g.time) && targetCol.key === cur.key) return; // no-op
-    onMove(g.id, { date: day, time: minToTime(newStart), venueId: targetCol.venueId, venueFacilityId: targetCol.facilityId });
+    // Refused: nothing is sent and the block springs back where it was (A37).
+    const verdict = dropVerdict(g, targetCol, newStart);
+    if (verdict.kind === 'overlap') { setRefusedNote(verdict.reason ?? ''); return; }
+    setRefusedNote('');
+    onMove(g.id, {
+      date: day, time: minToTime(newStart),
+      venueId: targetCol.venueId || null, venueFacilityId: targetCol.facilityId || null, location: null,
+    }, 'drop');
   }
 
   // ── mobile field pager ──
@@ -620,10 +547,13 @@ export default function ScheduleTimeline({
       {/* ── controls ── */}
       <div className={styles.controls}>
         <div className={styles.controlsLeft}>
-          <div className={styles.scopeLabel}>
-            <CalendarDays size={13} aria-hidden />
-            <span>{scopeSummary}</span>
-          </div>
+          {dayProp === undefined && (
+            <div className={styles.scopeLabel}>
+              <CalendarDays size={13} aria-hidden />
+              <span>{scopeSummary}</span>
+            </div>
+          )}
+          <p className={styles.liveNote} aria-live="polite">{refusedNote}</p>
 
           <button
             type="button"
@@ -698,10 +628,10 @@ export default function ScheduleTimeline({
               <span className={styles.trayTitle}>Unscheduled · {unplacedGames.length}</span>
               <div className={styles.trayScroll}>
                 {unplacedGames.map(g => {
-                  const away = g.bracketCode ? (g.awayPlaceholder || 'TBD') : teamName(g.awayTeamId, g.awayPlaceholder);
-                  const home = g.bracketCode ? (g.homePlaceholder || 'TBD') : teamName(g.homeTeamId, g.homePlaceholder);
+                  const away = teamName(g.awayTeamId, slotWords(g.awayPlaceholder));
+                  const home = teamName(g.homeTeamId, slotWords(g.homePlaceholder));
                   const dn = divById.get(g.divisionId || '')?.name ?? '';
-                  const sub = `${dn}${g.bracketCode ? ` · ${g.bracketCode}` : ''}${g.time ? ` · ${formatTime(g.time)}` : ''}`;
+                  const sub = `${dn}${g.bracketCode ? ` · ${bracketGameLabel(g.bracketCode)}` : ''}${g.time ? ` · ${formatTime(g.time)}` : ''}`;
                   return <TrayCard key={g.id} g={g} label={`${away} vs ${home}`} sub={sub} onSelect={onMove ? () => setSheetGame(g) : undefined} />;
                 })}
               </div>
@@ -756,7 +686,7 @@ export default function ScheduleTimeline({
                       {hourLines.map(m => <div key={m} className={styles.gridLine} style={{ top: (m - axis.start) * PX_PER_MIN }} />)}
                       {showNow && <div className={styles.nowLine} style={{ top: nowTop }} />}
                       {ghostGames.filter(g => facilityOf(g)?.key === activeCol.key).map(g => { const d = blockDisplay(g, true); return d ? <TimelineBlock key={g.id} g={g} ghost display={d} draggable={false} showConflicts={showConflicts} /> : null; })}
-                      {placedFocused.filter(g => facilityOf(g)?.key === activeCol.key).map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={false} showConflicts={showConflicts} onSelect={onMove ? () => setSheetGame(g) : undefined} onOpen={onOpen ? () => onOpen(g) : undefined} /> : null; })}
+                      {placedFocused.filter(g => facilityOf(g)?.key === activeCol.key).map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={false} showConflicts={showConflicts} onSelect={onMove && g.status === 'scheduled' ? () => setSheetGame(g) : undefined} onOpen={onOpen ? () => onOpen(g) : undefined} /> : null; })}
                     </div>
                   </div>
                 </div>
@@ -773,10 +703,10 @@ export default function ScheduleTimeline({
             <span className={styles.trayTitle}>Unscheduled · {unplacedGames.length}</span>
             <div className={styles.trayScroll}>
               {unplacedGames.map(g => {
-                const away = g.bracketCode ? (g.awayPlaceholder || 'TBD') : teamName(g.awayTeamId, g.awayPlaceholder);
-                const home = g.bracketCode ? (g.homePlaceholder || 'TBD') : teamName(g.homeTeamId, g.homePlaceholder);
+                const away = teamName(g.awayTeamId, slotWords(g.awayPlaceholder));
+                const home = teamName(g.homeTeamId, slotWords(g.homePlaceholder));
                 const dn = divById.get(g.divisionId || '')?.name ?? '';
-                const sub = `${dn}${g.bracketCode ? ` · ${g.bracketCode}` : ''}${g.time ? ` · ${formatTime(g.time)}` : ''}`;
+                const sub = `${dn}${g.bracketCode ? ` · ${bracketGameLabel(g.bracketCode)}` : ''}${g.time ? ` · ${formatTime(g.time)}` : ''}`;
                 return <TrayCard key={g.id} g={g} label={`${away} vs ${home}`} sub={sub} />;
               })}
             </div>
@@ -816,10 +746,11 @@ export default function ScheduleTimeline({
                       {dragPreview && dragPreview.colKey === col.key && (
                         <div className={styles.dropPreview} data-kind={dragPreview.kind} style={{ top: dragPreview.top, height: dragPreview.height }}>
                           <span className={styles.dropPreviewTime}>{formatTime(dragPreview.time)}</span>
+                          {dragPreview.reason && <span className={styles.dropPreviewReason}>{dragPreview.reason}</span>}
                         </div>
                       )}
                       {colGhosts.map(g => { const d = blockDisplay(g, true); return d ? <TimelineBlock key={g.id} g={g} ghost display={d} draggable={false} showConflicts={showConflicts} /> : null; })}
-                      {colFocused.map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={!!onMove} showConflicts={showConflicts} onSelect={onMove ? () => setSheetGame(g) : undefined} onOpen={onOpen ? () => onOpen(g) : undefined} /> : null; })}
+                      {colFocused.map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={!!onMove && g.status === 'scheduled'} showConflicts={showConflicts} onSelect={onMove && g.status === 'scheduled' ? () => setSheetGame(g) : undefined} onOpen={onOpen ? () => onOpen(g) : undefined} /> : null; })}
                     </DroppableCol>
                   </div>
                 );
@@ -850,20 +781,20 @@ export default function ScheduleTimeline({
       </DndContext>
       )}
 
-      {/* ── mobile reschedule / place sheet ── */}
+      {/* ── the phone's move sheet (S4) ── */}
       {sheetGame && onMove && (
-        <RescheduleSheet
+        <MoveSheet
           game={sheetGame}
-          mode={(!sheetGame.venueId && !sheetGame.venueFacilityId) ? 'place' : 'move'}
-          day={day}
-          facilities={Array.from(facilityCatalog.values()).sort((a, b) => `${a.venue}${a.facility}`.localeCompare(`${b.venue}${b.facility}`))}
-          conflictGames={conflictGames}
+          games={games}
+          teams={teams}
           divisions={divisions}
+          venues={venues}
           tournament={tournament}
-          away={sheetGame.bracketCode ? (sheetGame.awayPlaceholder || 'TBD') : teamName(sheetGame.awayTeamId, sheetGame.awayPlaceholder)}
-          home={sheetGame.bracketCode ? (sheetGame.homePlaceholder || 'TBD') : teamName(sheetGame.homeTeamId, sheetGame.homePlaceholder)}
+          days={eventDays ?? days}
+          today={todayProp ?? todayISO}
+          tells={tellsFor?.(sheetGame) ?? false}
           onClose={() => setSheetGame(null)}
-          onSave={target => { onMove(sheetGame.id, target); setSheetGame(null); }}
+          onMove={to => { void onMove(sheetGame.id, to, 'sheet'); setSheetGame(null); }}
         />
       )}
     </div>

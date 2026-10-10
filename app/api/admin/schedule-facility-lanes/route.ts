@@ -11,6 +11,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { loadTournamentVenueCatalog, resolveVenueSelectionFromCatalog } from '@/lib/tournament-venue';
 import { clashReportForTournamentGames } from '@/lib/venue-clash-lookup';
+import { tournamentOverlapRefusal, type ProposedGameRow } from '@/lib/tournament-overlap-guard';
 
 type LaneRow = {
   id: string;
@@ -195,6 +196,29 @@ export const POST = withObservability(async (req: Request) => {
       // checks and formatting a second time. A lane resolved with no venue keeps its label
       // as the display text, which the rail expresses as the location-text fallback.
       const catalog = await loadTournamentVenueCatalog(tournamentId);
+      // Every lane's real place, resolved before anything is written (a refusal mid-loop would leave half the lanes moved).
+      const selections = new Map<string, { venueId: string | null; venueFacilityId: string | null; location: string | null }>();
+      for (const mapping of mappings) {
+        const lane = laneById.get(mapping.laneId)!;
+        const selection = resolveVenueSelectionFromCatalog(catalog, {
+          venueId: mapping.venueId,
+          venueFacilityId: mapping.venueFacilityId,
+          locationText: lane.label,
+        });
+        if (!selection.ok) return json({ error: selection.error }, 400);
+        selections.set(lane.id, selection.value);
+      }
+      // A37 (Tournament admin redesign Stage 3): a lane's games landing on a real diamond can't share it with another
+      // game of the tournament at once — refused, as every writer refuses it.
+      const { data: laneGames, error: laneGamesError } = await supabaseAdmin
+        .from('games').select('id, schedule_facility_lane_id').in('schedule_facility_lane_id', laneIds);
+      if (laneGamesError) throw laneGamesError;
+      const overlap = await tournamentOverlapRefusal(tournamentId, (laneGames ?? []).flatMap((g): ProposedGameRow[] => {
+        const place = selections.get(g.schedule_facility_lane_id as string);
+        return place ? [{ id: g.id as string, diamond_id: place.venueId, venue_facility_id: place.venueFacilityId, location: place.location }] : [];
+      }));
+      if (overlap) return json(overlap.body, overlap.status);
+
       // Club Tier Stage 6a: the games a lane lands on a real diamond are checked against the club's other programs.
       const placedGameIds: string[] = [];
 

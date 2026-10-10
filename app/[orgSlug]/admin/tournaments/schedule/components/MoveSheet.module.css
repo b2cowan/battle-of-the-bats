@@ -1,0 +1,13 @@
+/*
+ * THE PHONE'S MOVE SHEET (Tournament admin redesign Stage 3, S4) — its contents; the admin bottom sheet holds the frame.
+ * On the kit's tokens from the start: no old look.
+ */
+.body { display: block; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; }
+.body input,
+.body select { min-height: var(--tap-min, 44px); }
+.foot { display: flex; justify-content: flex-end; gap: 0.6rem; }
+.foot button { min-height: var(--tap-min, 44px); }
+.go { flex: 1 1 auto; }
+/* Held by the red line (or nothing changed): it looks held. The global .btn draws no disabled state (a /design finding). */
+.go:disabled { opacity: 0.5; cursor: not-allowed; }

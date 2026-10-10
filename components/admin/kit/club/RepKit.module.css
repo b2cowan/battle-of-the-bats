@@ -640,6 +640,24 @@
 .savePill[data-state='error'] .saveStatus,
 .savePill[data-state='held'] .saveStatus { color: var(--danger-light); }
 .saveRetry { background: none; border: none; padding: 0; cursor: pointer; font: inherit; color: inherit; text-decoration: underline; }
+/* A notice's ONE action (Undo after a move — Tournament admin redesign Stage 3, A36): the pill takes a tap only
+   when it carries one, and the action is a door's olive words, never a second button style. */
+.savePill[data-action] { pointer-events: auto; }
+.noticeAction {
+  margin-left: 0.6rem;
+  min-height: 1.75rem;
+  padding: 0 0.15rem;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--home-olive);
+  cursor: pointer;
+}
+.noticeAction:hover { text-decoration: underline; text-underline-offset: 3px; }
+.noticeAction:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+@media (max-width: 768px) { .noticeAction { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); } }
 /* A page carrying the pill leaves it a corner, so the page's last line is never under the word. */
 .savePillPage { padding-bottom: calc(2.25rem + 1.25rem); }
 @media (prefers-reduced-motion: reduce) { .savePill { transition: none; } }

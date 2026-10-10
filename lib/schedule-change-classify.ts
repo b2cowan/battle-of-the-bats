@@ -6,6 +6,7 @@
  * generator-lock flag, duration, team reassignment — none of those change where or when
  * somebody has to be.
  */
+import { zonedWallClockToUtc } from './timezone.ts';
 
 export type GameChangeKind = 'moved' | 'cancelled' | 'restored';
 
@@ -165,4 +166,90 @@ export function scheduleChangesFromRows(
     });
   }
   return changes;
+}
+
+// ── The sweep's collapse (moved here from lib/schedule-change-notices.ts, Tournament admin redesign Stage 3 Part 4) ──
+
+/** A queued notice, as the sweep claims it. */
+export interface QueuedNotice {
+  id: string;
+  game_id: string;
+  kind: GameChangeKind;
+  was_date: string | null;
+  was_time: string | null;
+  was_location: string | null;
+  created_at: string;
+}
+
+/** The game as it stands when the sweep sends. */
+export interface NoticeGameNow {
+  id: string;
+  game_date: string | null;
+  game_time: string | null;
+  location: string | null;
+  status: string | null;
+  division_id: string | null;
+}
+
+/**
+ * One entry per changed game: the LATEST state, measured against the EARLIEST baseline. Two moves in one editing
+ * session read as one correction ("was 2:00 p.m."), not a history the reader has to unpick — the same rule the
+ * in-portal bar follows.
+ *
+ * ⚠ A game that ENDS THE BATCH WHERE IT BEGAN tells nobody — moved and moved back, cancelled and reinstated,
+ * reinstated and cancelled again. This is what the schedule's Undo rests on (Stage 3 Part 4, A36): an Undo inside the
+ * quiet window leaves the game where its followers last heard it was. (It used to hold for a move only: a cancel
+ * undone inside the window sent "back on" to followers who never heard it was off.)
+ */
+export function collapseNotices<G extends NoticeGameNow>(
+  notices: readonly QueuedNotice[],
+  games: ReadonlyMap<string, G>,
+  stillPublished: ReadonlySet<string>,
+  nowMs: number,
+): Array<{ gameId: string; kind: GameChangeKind; was: { date: string | null; time: string | null; location: string | null }; now: G }> {
+  // Both picks are order-INDEPENDENT on purpose: the claim step returns rows from an UPDATE … RETURNING, whose order
+  // Postgres does not guarantee. Relying on input order here would silently pick the wrong "was" baseline.
+  const byGame = new Map<string, { first: QueuedNotice; last: QueuedNotice }>();
+  for (const n of notices) {
+    const seen = byGame.get(n.game_id);
+    if (!seen) { byGame.set(n.game_id, { first: n, last: n }); continue; }
+    // Ties on created_at (two rows written by the same transaction) break on id, so the pick is fully data-driven.
+    if (n.created_at < seen.first.created_at ||
+        (n.created_at === seen.first.created_at && n.id < seen.first.id)) seen.first = n;
+    if (n.created_at > seen.last.created_at ||
+        (n.created_at === seen.last.created_at && n.id >= seen.last.id)) seen.last = n;
+  }
+
+  const entries: Array<{ gameId: string; kind: GameChangeKind; was: { date: string | null; time: string | null; location: string | null }; now: G }> = [];
+  for (const [gameId, { first, last }] of byGame) {
+    const game = games.get(gameId);
+    if (!game) continue; // deleted between queue and sweep — nothing to announce
+
+    // The publish gate is re-tested HERE, not just at enqueue time. An organizer who pulls a division back to draft
+    // after making a change has deliberately hidden those times; sending the queued alert would publish them.
+    if (!game.division_id || !stillPublished.has(game.division_id)) continue;
+
+    // Read the kind from the game's CURRENT state, not the queued one: a move followed by a cancellation is a
+    // cancellation, and that self-heals whatever order the rows arrived in.
+    let kind: GameChangeKind = last.kind;
+    if (game.status === 'cancelled') kind = 'cancelled';
+    else if (last.kind === 'cancelled') kind = 'restored'; // cancelled then reinstated
+
+    // Already played, or the start time has passed — the message would arrive after the fact.
+    if (['submitted', 'completed', 'forfeit'].includes(game.status ?? '')) continue;
+    const startsAt = zonedWallClockToUtc(game.game_date, game.game_time);
+    if (startsAt && new Date(startsAt).getTime() <= nowMs) continue;
+
+    // Where the batch began: a 'restored' first row means the game was cancelled before it; any other, that it was on.
+    const beganCancelled = first.kind === 'restored';
+    if (
+      beganCancelled === (game.status === 'cancelled') &&
+      first.was_date === game.game_date &&
+      first.was_time === game.game_time &&
+      (first.was_location ?? null) === (game.location ?? null)
+    ) continue;
+
+    entries.push({ gameId, kind, was: { date: first.was_date, time: first.was_time, location: first.was_location }, now: game });
+  }
+  return entries;
 }

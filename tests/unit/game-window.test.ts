@@ -169,8 +169,13 @@ describe('the window wears what it promises', () => {
     assert.match(win, /changesOf\(f, s, \{ whenWhere: !holdWhenWhere/);
   });
   test('the refusal is the tournament\'s own overlap, checked before anything saves (A37)', () => {
-    assert.match(win, /checkVenueConflict\(/);
-    assert.match(win, /const refused = conflict\?\.kind === 'overlap';/);
+    assert.match(win, /useOverlapLine\(/);
+    const hook = readFileSync(new URL('../../app/[orgSlug]/admin/tournaments/schedule/components/useOverlapLine.tsx', import.meta.url), 'utf8');
+    assert.match(hook, /checkVenueConflict\(/);
+    assert.match(hook, /isRefusedOverlap\(conflict\)/);
+    assert.match(win, /const \{ refused: overlaps, line: overlapLine \} = useOverlapLine\(/);
+    // It holds only what THIS edit places (a legacy double-booking never traps ✓ over a notes edit).
+    assert.match(win, /const refused = overlaps && \(creating \|\| movePending \|\| form\.durationMinutes !== saved\.durationMinutes\);/);
   });
   test('one score editor in the product: the window\'s Score is a door to Results', () => {
     assert.match(win, /ctx\.resultsHref\(game\.id\)/);

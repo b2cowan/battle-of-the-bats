@@ -42,6 +42,7 @@ import {
 } from '@/lib/tournament-venue';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { clashReportForTournamentGames } from '@/lib/venue-clash-lookup';
+import { placesAGame, tournamentOverlapRefusal, type ProposedGameRow } from '@/lib/tournament-overlap-guard';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 
 /**
@@ -72,6 +73,22 @@ function resolvedVenueColumns(
 }
 
 class VenueSelectionError extends Error {}
+
+/**
+ * A37 (Tournament admin redesign Stage 3): the tournament's own overlap, refused by EVERY writer below before its first
+ * write — two of its games on one known diamond at once. The sentence is the one the schedule's field says
+ * (`lib/tournament-overlap.ts`); a 409, and nothing written. Club bookings never refuse (6a's report, after the save).
+ */
+async function overlapRefused(
+  tournamentId: string,
+  rows: readonly ProposedGameRow[],
+  removedIds?: Iterable<string>,
+): Promise<Response | null> {
+  const refusal = await tournamentOverlapRefusal(tournamentId, rows, { removedIds });
+  return refusal
+    ? new Response(JSON.stringify(refusal.body), { status: refusal.status, headers: { 'Content-Type': 'application/json' } })
+    : null;
+}
 
 function venueSelectionErrorResponse(err: VenueSelectionError) {
   return new Response(JSON.stringify({ error: err.message }), {
@@ -390,6 +407,10 @@ export const POST = withObservability(async (req: Request) => {
         return row;
       });
 
+      for (const tid of batchTournamentIds) {
+        const refused = await overlapRefused(tid as string, rows.filter((r: Record<string, unknown>) => r.tournament_id === tid) as ProposedGameRow[]);
+        if (refused) return refused;
+      }
       const { data: inserted, error } = await supabase.from('games').insert(rows).select('id');
       if (error) throw error;
       placedGameIds.push(...(inserted ?? []).map(r => r.id as string));
@@ -442,6 +463,10 @@ export const POST = withObservability(async (req: Request) => {
         away_slot_id:     g.awaySlotId || null,
         notes:            g.notes || null,
       }));
+      for (const tid of batchTournamentIds) {
+        const refused = await overlapRefused(tid as string, rows.filter((r: Record<string, unknown>) => r.tournament_id === tid));
+        if (refused) return refused;
+      }
       const { data: inserted, error } = await supabase.from('games').insert(rows).select('id');
       if (error) throw error;
       placedGameIds.push(...(inserted ?? []).map(r => r.id as string));
@@ -508,6 +533,23 @@ export const POST = withObservability(async (req: Request) => {
       // rows as it goes, so a resolver refusal mid-list would otherwise leave the bracket
       // half-saved behind a 400 that reads like nothing happened.
       const resolvedVenueByIndex = (games as any[]).map(g => resolvedVenueColumns(bracketCatalog, g));
+      // The games this save drops (still removable: scheduled or cancelled, never kept) free their diamonds.
+      const removableIds = (existing ?? [])
+        .filter(e => !submittedIds.has(e.id) && (e.status === 'scheduled' || e.status === 'cancelled') && !e.generator_locked)
+        .map(e => e.id);
+      const refusedBracket = await overlapRefused(divRow.tournament_id, (games as any[]).map((g, gi): ProposedGameRow => ({
+        id: g.sourceGameId || null,
+        division_id: divisionId,
+        game_date: g.date || null,
+        game_time: g.time || null,
+        ...resolvedVenueByIndex[gi],
+        is_playoff: true,
+        bracket_code: g.bracketCode || null,
+        home_placeholder: g.homePlaceholder || null,
+        away_placeholder: g.awayPlaceholder || null,
+        ...(g.sourceGameId ? {} : { status: 'scheduled', duration_minutes: typeof g.durationMinutes === 'number' ? g.durationMinutes : null }),
+      })), removableIds);
+      if (refusedBracket) return refusedBracket;
       const inserts: Record<string, unknown>[] = [];
       for (const [gi, g] of (games as any[]).entries()) {
         // Schedule + structure fields, shared by update + insert. Team ids and
@@ -565,9 +607,6 @@ export const POST = withObservability(async (req: Request) => {
       // Remove games dropped from the canvas — only if still removable (scheduled or
       // cancelled, never generator-locked). A scored game (submitted/completed) is
       // never silently deleted.
-      const removableIds = (existing ?? [])
-        .filter(e => !submittedIds.has(e.id) && (e.status === 'scheduled' || e.status === 'cancelled') && !e.generator_locked)
-        .map(e => e.id);
       if (removableIds.length) {
         const { error } = await supabase.from('games').delete().in('id', removableIds);
         if (error) throw error;
@@ -632,6 +671,12 @@ export const POST = withObservability(async (req: Request) => {
         ...(g.generatorLocked !== undefined ? { generator_locked: Boolean(g.generatorLocked) } : {}),
       }));
 
+      const refusedDraft = await overlapRefused(
+        divRow.tournament_id,
+        rows.map(r => ({ ...r, division_id: divisionId, status: 'scheduled' })),
+        replaceIds,
+      );
+      if (refusedDraft) return refusedDraft;
       const { data: result, error: rpcError } = await supabase.rpc('replace_division_round_robin_games', {
         p_division_id: divisionId,
         p_replace_ids: replaceIds,
@@ -945,6 +990,11 @@ export const PATCH = withObservability(async (req: Request) => {
         }), { status: 400, headers: { 'Content-Type': 'application/json' } });
       }
 
+      const refusedShift = await overlapRefused(bulkTournamentId, [
+        ...plan.shifts.map((sh): ProposedGameRow => ({ id: sh.id, game_date: sh.to.date, game_time: sh.to.time })),
+        ...plan.cancelIds.map((cid): ProposedGameRow => ({ id: cid, status: 'cancelled' })),
+      ]);
+      if (refusedShift) return refusedShift;
       const { data: result, error: rpcErr } = await supabaseAdmin.rpc('bulk_reschedule_games', {
         p_tournament_id: bulkTournamentId,
         p_shifts: plan.shifts.map((s) => ({ id: s.id, game_date: s.to.date, game_time: s.to.time })),
@@ -1136,6 +1186,10 @@ export const PATCH = withObservability(async (req: Request) => {
       if (body.awayPlaceholder  !== undefined) updates.away_placeholder   = body.awayPlaceholder || null;
       if (body.bracketCode      !== undefined) updates.bracket_code       = body.bracketCode || null;
       if (body.generatorLocked  !== undefined) updates.generator_locked   = Boolean(body.generatorLocked);
+      if (placesAGame(updates)) {
+        const refused = await overlapRefused(gameRow.tournamentId, [{ id, ...updates }]);
+        if (refused) return refused;
+      }
 
       const { error } = await supabase.from('games').update(updates).eq('id', id);
       if (error) throw error;
@@ -1159,6 +1213,8 @@ export const PATCH = withObservability(async (req: Request) => {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
       // Meant for a cancelled game, but nothing checks that — on a final game it would reopen the result.
       if (finalLocked) return finalResultLockedResponse();
+      const refused = await overlapRefused(gameRow.tournamentId, [{ id, status: 'scheduled' }]);
+      if (refused) return refused;
       scheduleBefore = await readScheduleSnapshot(id);
       const { error } = await supabase.from('games').update({ status: 'scheduled' }).eq('id', id);
       if (error) throw error;

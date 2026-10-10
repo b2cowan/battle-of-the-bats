@@ -112,3 +112,6 @@
   .chipPhone { display: inline-flex; }
   .chipDesk { display: none; }
 }
+
+/* After a move on the timeline lands on another of the club's bookings: 6a's amber line, above the grid (S4). */
+.crossNote { margin: 0 0 0.6rem; }

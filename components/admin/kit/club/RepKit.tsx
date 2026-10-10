@@ -433,24 +433,47 @@ export function SavePill({ saving, dirty, error, held, onRetry, inline = false }
  *
  * `news`: something the reader did NOT just do — the organizer sending a volunteer's score back (Stage 6,
  * A32) — lingers as long as a sentence notice (~8s, the standing rule), because nobody is looking for it.
+ *
+ * `action`: the notice's ONE action — Undo after a move (Tournament admin redesign Stage 3, A36: "Moved to 5:30 p.m. ·
+ * Diamond 3 · Undo"). Shared by every admin screen that wears the kit, club screens included. A notice with an action
+ * lingers as a sentence notice (~8s), holds while the pointer or the keyboard is on it (a timed control a person can
+ * reach), and leaves the moment its action is taken. The pill still never blocks a tap beside it; only it takes one.
  */
-export function NoticePill({ message, onDone, news = false, inline = false }: {
+export function NoticePill({ message, onDone, news = false, inline = false, action }: {
   message: string; onDone: () => void; news?: boolean;
   /** INSIDE A WINDOW (KitDialog's `status`): pinned by the window to its body's corner, as `SavePill inline` is. */
   inline?: boolean;
+  action?: { label: string; onAction: () => void };
 }) {
   const [phase, setPhase] = useState<'shown' | 'fading'>('shown');
+  const [held, setHeld] = useState(false);
   const done = useRef(onDone);
   useEffect(() => { done.current = onDone; }, [onDone]);
+  const hasAction = !!action;
   useEffect(() => {
-    const linger = news ? NEWS_LINGER_MS : LINGER_MS;
+    if (held) return;
+    const linger = news || hasAction ? NEWS_LINGER_MS : LINGER_MS;
     const fade = window.setTimeout(() => setPhase('fading'), linger);
     const leave = window.setTimeout(() => done.current(), linger + FADE_MS);
     return () => { window.clearTimeout(fade); window.clearTimeout(leave); };
-  }, [news]);
+  }, [news, hasAction, held]);
+  const hold = () => { setPhase('shown'); setHeld(true); };
+  const release = () => setHeld(false);
   return (
-    <div className={inline ? `${styles.savePill} ${styles.savePillInline}` : styles.savePill} data-state="saved" data-phase={phase} role="status">
+    <div
+      className={inline ? `${styles.savePill} ${styles.savePillInline}` : styles.savePill}
+      data-state="saved" data-phase={phase} data-action={hasAction ? '' : undefined} role="status"
+      onMouseEnter={hasAction ? hold : undefined}
+      onMouseLeave={hasAction ? release : undefined}
+      onFocus={hasAction ? hold : undefined}
+      onBlur={hasAction ? e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) release(); } : undefined}
+    >
       <span className={`${styles.saveStatus}${news ? ` ${styles.saveStatusNews}` : ''}`}>{news ? <Info size={13} aria-hidden /> : <Check size={13} aria-hidden />} {message}</span>
+      {action && (
+        <button type="button" className={styles.noticeAction} onClick={() => { action.onAction(); done.current(); }}>
+          {action.label}
+        </button>
+      )}
     </div>
   );
 }
